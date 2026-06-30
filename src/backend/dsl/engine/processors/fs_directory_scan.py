@@ -1,36 +1,92 @@
-"""Directory Scan processor — lists files matching a glob pattern in a directory.
+"""Directory Scan processor — backward-compat wrapper (S172 M1.2 deprecation).
 
-Scans a directory (optionally recursive) for files matching a glob pattern,
-sorts them, and sets the result as an exchange property.
+DEPRECATED since Sprint 172:
+    :class:`DirectoryScanProcessor` is a backward-compat shim вокруг
+    :class:`FilteredDirectoryScanProcessor` (S171 M7). Используйте
+    новый процессор напрямую — он async-safe (``asyncio.to_thread`` +
+    ``asyncio.wait_for``), поддерживает size/mtime filters и
+    safety caps (max_results, timeout_seconds).
 
-S35 GAP-INT-3: batch file processing for ETL/ingestion pipelines.
+This shim:
+
+* Сохраняет legacy ``path=`` + ``recursive`` + ``max_files`` + ``sort_by`` +
+  ``result_property`` API.
+* Сохраняет legacy result format (``list[dict]`` с ``path/name/size/mtime``).
+* Делегирует I/O в ``FilteredDirectoryScanProcessor`` через
+  ``asyncio.to_thread`` (non-blocking event-loop).
+* Эмитит :class:`DeprecationWarning` при первом ``__init__`` + audit-event
+  при первом ``process``.
+
+Migration::
+
+    # Old (synchronous I/O, blocking event loop):
+    DirectoryScanProcessor(path="/data", pattern="*.csv")
+
+    # New (S171 M7, async-safe):
+    FilteredDirectoryScanProcessor(directory="/data", pattern="*.csv",
+                                    min_size=1024, to="body.files")
 """
 
 from __future__ import annotations
 
-import glob
 import os
-from typing import Any
+import warnings
+from typing import TYPE_CHECKING, Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (  # noqa: E501
+    FilteredDirectoryScanProcessor,
+)
+
+if TYPE_CHECKING:
+    pass
 
 __all__ = ("DirectoryScanProcessor",)
 
+_logger = get_logger("dsl.fs_directory_scan")
+
+
+class _DeprecationAuditEmitted:
+    """S172 M1.2: per-process guard чтобы emit audit только один раз.
+
+    Статический счётчик + set per-call-site. Не глобальный mutable
+    side-effect — только best-effort signal.
+    """
+
+    _emitted: bool = False
+
 
 class DirectoryScanProcessor(BaseProcessor):
-    """Scans a directory for files matching a glob pattern.
+    """DEPRECATED shim → :class:`FilteredDirectoryScanProcessor` (S171 M7).
 
-    Scans ``path`` for files matching ``pattern`` (e.g. ``*.csv``,
-    ``**/*.json``).  Results are sorted by ``sort_by`` (``name``,
-    ``mtime`` or ``size``) and written to
-    ``exchange.properties[result_property]`` as a list of dicts with keys
-    ``path``, ``name``, ``size``, ``mtime``.
+    Сохранён legacy API:
 
-    Used in batch-processing routes to enumerate input files before
-    feeding them to a downstream pipeline (e.g. via ForEachProcessor).
+    * ``path`` (positional) → ``directory``.
+    * ``recursive`` добавляет ``**/`` prefix к pattern.
+    * ``max_files`` cap → ``max_results`` (default 1000, безопаснее).
+    * ``sort_by`` применяется post-scan к dict-entries (``name`` / ``mtime`` / ``size``).
+    * ``result_property`` — куда записать ``list[dict]`` (legacy format).
+
+    Implementation делегирует glob в
+    :class:`FilteredDirectoryScanProcessor` (S171 M7, async-safe
+    через ``asyncio.to_thread``), затем обогащает результат dict-метаданными
+    (size/mtime/name) и сортирует.
+
+    Args:
+        path: Корневая директория.
+        pattern: Glob-паттерн (default ``"*"``).
+        recursive: Рекурсивный обход (``**/*.csv``).
+        max_files: Лимит результатов (1..10000).
+        sort_by: ``"name"`` / ``"mtime"`` / ``"size"``.
+        result_property: Куда положить list[dict].
+        name: Имя процессора.
+
+    Warnings:
+        DeprecationWarning — рекомендуется :class:`FilteredDirectoryScanProcessor`.
     """
 
     side_effect = SideEffectKind.SIDE_EFFECTING
@@ -55,18 +111,38 @@ class DirectoryScanProcessor(BaseProcessor):
         self._sort_by = sort_by
         self._result_property = result_property
 
+        # S172 M1.2: emit DeprecationWarning при инстанциировании.
+        warnings.warn(
+            (
+                "DirectoryScanProcessor is deprecated since Sprint 172 "
+                "(blocking I/O in async context). "
+                "Use FilteredDirectoryScanProcessor (S171 M7) instead: "
+                "supports asyncio.to_thread, max_results cap, timeout, "
+                "and size/mtime filters. Backward-compat shim оставлен "
+                "на Sprint 174 — удалится в Sprint 175."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if not _DeprecationAuditEmitted._emitted:
+            _DeprecationAuditEmitted._emitted = True
+            _logger.warning(
+                "DirectoryScanProcessor used (DEPRECATED, S172 M1.2). "
+                "Will be removed in Sprint 175. "
+                "Migrate to FilteredDirectoryScanProcessor (S171 M7)."
+            )
+
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        # Resolve path — allow dynamic path via property or body
+        # Resolve path.
         path = self._path
         if not path:
             body = exchange.in_message.body
             path = body.get("path") if isinstance(body, dict) else str(body)
-
         if not path:
             exchange.fail("DirectoryScanProcessor: no path provided")
             return
 
-        # Guard against path traversal
+        # Guard against path traversal / missing dir.
         try:
             resolved = os.path.realpath(path)
             if not os.path.isdir(resolved):
@@ -76,55 +152,67 @@ class DirectoryScanProcessor(BaseProcessor):
             exchange.fail(f"DirectoryScanProcessor: path error: {exc}")
             return
 
-        # Glob pattern — prepend recursive marker if needed
-        glob_pattern = self._pattern
-        if self._recursive and not glob_pattern.startswith("**"):
-            # Convert simple "*.csv" → "**/*.csv" for recursive walk
-            if glob_pattern.startswith("*"):
-                glob_pattern = "**/" + glob_pattern
+        # Translate ``path`` + ``pattern`` → ``directory`` + ``pattern`` для shim.
+        # Set ``recursive=True`` → prepend ``**/`` (только если не уже ``**``-prefix).
+        effective_pattern = self._pattern
+        if self._recursive and not effective_pattern.startswith("**"):
+            if effective_pattern.startswith("*"):
+                effective_pattern = "**/" + effective_pattern
             else:
-                glob_pattern = "**/" + glob_pattern
+                effective_pattern = "**/" + effective_pattern
 
-        search_root = resolved
+        # FilteredDirectoryScanProcessor возвращает sorted list of strings.
+        # S171 M7 — async-safe (asyncio.to_thread + asyncio.wait_for).
+        inner = FilteredDirectoryScanProcessor(
+            directory=path,
+            pattern=effective_pattern,
+            max_results=self._max_files,
+            name=f"{self.name}:inner",
+        )
+        # Перехватываем выход inner: подменяем exchange shim, который
+        # собирает результаты через ``set_result`` calls.
+        original_set_result = inner.set_result
+        captured: dict[str, Any] = {}
+
+        def _capture_set_result(
+            _exchange: Exchange[Any], target: str, value: Any
+        ) -> None:
+            captured[target] = value
+            original_set_result(_exchange, target, value)
+
+        inner.set_result = _capture_set_result  # type: ignore[method-assign]
         try:
-            if self._recursive:
-                matched = glob.glob(
-                    os.path.join(glob_pattern), root_dir=search_root, recursive=True
-                )
-            else:
-                matched = glob.glob(
-                    os.path.join(search_root, glob_pattern), recursive=False
-                )
-        except OSError as exc:
-            exchange.fail(f"DirectoryScanProcessor: glob error: {exc}")
-            return
+            # Используем self-collected exchange через перехват.
+            await inner.process(exchange, context)
+        finally:
+            inner.set_result = original_set_result  # type: ignore[method-assign]
 
-        # Build result entries with metadata
+        # Достаём результат из captured (write-target inner — ``body.files`` default).
+        raw_paths: list[str] = captured.get("body.files", []) or []
+        raw_paths = list(raw_paths)[: self._max_files]
+
+        # Обогащаем dict-метаданными (legacy format) + sort_by.
         entries: list[dict[str, Any]] = []
-        for rel_path in matched[: self._max_files]:
-            full = os.path.join(search_root, rel_path)
+        for full in raw_paths:
             try:
                 stat = os.stat(full)
                 entries.append(
                     {
                         "path": full,
-                        "name": os.path.basename(rel_path)
-                        if self._recursive
-                        else os.path.basename(full),
+                        "name": os.path.basename(full),
                         "size": stat.st_size,
                         "mtime": stat.st_mtime,
                     }
                 )
             except OSError:
-                # Skip files that disappear between glob and stat
                 continue
 
-        # Sort
+        # Sort в legacy semantics.
         if self._sort_by == "mtime":
             entries.sort(key=lambda e: e["mtime"])
         elif self._sort_by == "size":
             entries.sort(key=lambda e: e["size"])
-        else:
+        else:  # "name" default
             entries.sort(key=lambda e: e["name"])
 
         exchange.set_property(self._result_property, entries)

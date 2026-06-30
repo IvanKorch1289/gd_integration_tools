@@ -11,7 +11,17 @@ S163 W13: добавлены max_connections check и per-message timeout
 
 S163 W33: option (A) bind at handshake — extract ``action_id`` из
 ``?action_id=xxx`` query param при connect, enforce per-route
-``pool_size`` через :func:`get_dsl_service().get_route_overrides`.
+``pool_size`` через :func:`get_dsl_service().get_route_overrides``.
+
+S172 M1.1 (security GAP fix, ARC-001): явная auth-проверка на handshake.
+Без валидного credential соединение отклоняется с WS close code 1008.
+Auth facade (:func:`ws_auth.extract_credential`) поддерживает три источника:
+
+* Sec-WebSocket-Protocol subprotocol (приоритет 1);
+* ``auth_session`` cookie (приоритет 2, если ``ws_settings.allow_cookies``);
+* ``?token=...`` query (приоритет 3, если ``ws_settings.allow_query_token``).
+
+Поддерживаются API-key и JWT (см. :class:`WSAuthenticator`).
 """
 
 import asyncio
@@ -23,6 +33,11 @@ from src.backend.core.config.services.websocket import ws_settings
 from src.backend.core.logging import get_logger
 from src.backend.dsl.service import get_dsl_service
 from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
+from src.backend.entrypoints.websocket.ws_auth import (
+    WSAuthError,
+    extract_credential,
+    get_ws_authenticator,
+)
 from src.backend.entrypoints.websocket.ws_manager import DEFAULT_ACTION_ID, ws_manager
 
 __all__ = ("ws_router",)
@@ -77,6 +92,73 @@ def _resolve_pool_limit(action_id: str | None) -> int | None:
     return None
 
 
+async def _authenticate_handshake(websocket: WebSocket) -> bool:
+    """Auth на WS handshake (S172 M1.1).
+
+    Закрывает connection с code 1008 при невалидном/missing credential.
+
+    Returns:
+        ``True`` если аутентификация успешна, ``False`` если закрыт.
+    """
+    # Accept уже вызван снаружи? Не вызываем здесь — caller решает accept/reject.
+    try:
+        subprotocol = websocket.headers.get("sec-websocket-protocol")
+    except Exception:
+        subprotocol = None
+    try:
+        cookies = dict(websocket.cookies) if websocket.cookies else {}
+    except Exception:
+        cookies = None
+    try:
+        query_token = websocket.query_params.get("token")
+    except Exception:
+        query_token = None
+
+    credential = extract_credential(
+        subprotocol=subprotocol,
+        cookies=cookies,
+        query_token=query_token,
+        allow_query=getattr(ws_settings, "allow_query_token", False),
+        allow_cookies=getattr(ws_settings, "allow_cookies", True),
+    )
+
+    if credential is None:
+        await websocket.close(code=1008, reason="auth_required")
+        logger.warning(
+            "WS rejected: no credential (subprotocol=%s cookies=%s)",
+            "yes" if subprotocol else "no",
+            "yes" if cookies else "no",
+        )
+        return False
+
+    authenticator = get_ws_authenticator()
+    try:
+        session = await authenticator.authenticate_via_facade(credential)
+    except WSAuthError as exc:
+        await websocket.close(code=1008, reason=f"auth_failed: {exc}")
+        logger.warning(
+            "WS rejected: auth failure source=%s method=%s reason=%s",
+            credential.source,
+            credential.method,
+            exc,
+        )
+        return False
+    except Exception as exc:
+        await websocket.close(code=1011, reason="auth_error")
+        logger.exception("WS rejected: auth error: %s", exc)
+        return False
+
+    # Stash session into state for downstream consumers.
+    websocket.state.ws_session = session
+    logger.debug(
+        "WS authenticated principal=%s source=%s admin=%s",
+        session.principal or session.client_id,
+        session.auth_source,
+        session.is_admin,
+    )
+    return True
+
+
 ws_router = APIRouter(tags=["WebSocket"])
 
 
@@ -91,6 +173,10 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     param. Если action_id передан, проверяется route_overrides["pool_size"]
     и текущий count в ws_manager. Reject с code 1008 если переполнен.
 
+    S172 M1.1: обязательная auth на handshake (если ``require_auth=True``
+    в :class:`WSSettings`). Закрытие с code 1008 при отсутствии/невалидности
+    credential.
+
     Протокол сообщений (JSON):
         Запрос: ``{"action": "route_id", "payload": {...}}``
         Ответ: ``{"action": "route_id", "result": ..., "error": null}``
@@ -101,6 +187,20 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         Без action_id — попадает в DEFAULT pool (limited by
         ``ws_settings.max_connections`` только).
     """
+    # S172 M1.1: опциональная auth на handshake. Можно отключить
+    # ``WSSettings.require_auth=False`` для dev/test режима.
+    require_auth = getattr(ws_settings, "require_auth", True)
+    if require_auth:
+        try:
+            await websocket.accept()
+        except Exception as exc:
+            logger.debug("WS accept failed pre-auth: %s", exc)
+            return
+        if not await _authenticate_handshake(websocket):
+            return
+    else:
+        await websocket.accept()
+
     # S163 W33: extract action_id из query params (option A bind at handshake).
     action_id_param = websocket.query_params.get("action_id") or None
 
@@ -149,9 +249,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     try:
         while True:
             # S163 W13: per-message timeout (защита от slow clients).
-            # S164 W34: removed inner `import asyncio` — module-level
-            # import (line 19) provides asyncio. Inner import делало
-            # asyncio local → UnboundLocalError на следующей итерации loop.
 
             try:
                 data = await asyncio.wait_for(

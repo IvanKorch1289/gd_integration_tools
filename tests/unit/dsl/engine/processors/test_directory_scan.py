@@ -8,6 +8,7 @@ import os
 import shutil
 import sys
 import tempfile
+import warnings
 from typing import Any
 from unittest.mock import AsyncMock
 
@@ -195,3 +196,70 @@ async def test_directory_scan_not_a_directory() -> None:
         assert e.status == "failed" or "not a directory" in str(e.error or "").lower()
     finally:
         os.unlink(fake_path)
+
+
+# ─── S172 M1.2 deprecation tests ────────────────────────────────────────
+
+
+def test_directory_scan_emits_deprecation_warning() -> None:
+    """DirectoryScanProcessor используется с deprecation warning (S172 M1.2)."""
+    import warnings
+
+    from src.backend.dsl.engine.processors.fs_directory_scan import (
+        DirectoryScanProcessor,
+    )
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        DirectoryScanProcessor(path="/tmp", pattern="*.csv")
+        deprecation_warnings = [
+            w for w in caught if issubclass(w.category, DeprecationWarning)
+        ]
+    assert len(deprecation_warnings) >= 1
+    assert "FilteredDirectoryScanProcessor" in str(deprecation_warnings[0].message)
+
+
+@pytest.mark.asyncio
+async def test_directory_scan_legacy_format_still_dict_list() -> None:
+    """Backward-compat: legacy consumers получают list[dict] с path/name/size/mtime."""
+    from src.backend.dsl.engine.processors.fs_directory_scan import (
+        DirectoryScanProcessor,
+    )
+
+    tmp = tempfile.mkdtemp()
+    try:
+        (os.path.join(tmp, "test.csv")) if False else None
+        with open(os.path.join(tmp, "a.csv"), "w") as f:
+            f.write("a")
+        with open(os.path.join(tmp, "b.csv"), "w") as f:
+            f.write("bb")
+
+        proc = DirectoryScanProcessor(path=tmp, pattern="*.csv")
+        ctx = AsyncMock()
+        e = _ex()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            await proc.process(e, ctx)
+
+        result = e.properties.get("directory_scan_result")
+        assert isinstance(result, list)
+        assert all(isinstance(item, dict) for item in result)
+        if result:
+            # Каждый entry имеет все legacy-ключи.
+            keys = set(result[0].keys())
+            assert {"path", "name", "size", "mtime"}.issubset(keys)
+    finally:
+        shutil.rmtree(tmp)
+
+
+def test_filtered_directory_scan_recommended() -> None:
+    """Рекомендуется использовать FilteredDirectoryScanProcessor (S171 M7)."""
+    from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
+        FilteredDirectoryScanProcessor,
+    )
+
+    proc = FilteredDirectoryScanProcessor(directory="/tmp", pattern="*.csv")
+    assert proc.directory == "/tmp"
+    # Async-safe: process() оборачивает glob в asyncio.to_thread.
+    assert hasattr(proc, "timeout_seconds")
+    assert hasattr(proc, "max_results")

@@ -83,6 +83,34 @@ class WSSettings(BaseSettingsWithLoader):
         "rate_limit_per_minute.",
     )
 
+    # ── Auth (S172 M1.1) ─────────────────────────────────────────────
+
+    require_auth: bool = Field(
+        default=True,
+        description=(
+            "Требовать валидный credential на WS handshake. "
+            "True (production) — connection без credential закрывается с "
+            "close code 1008. False (dev/test) — connection принимается без "
+            "проверки (как до S172)."
+        ),
+    )
+    allow_query_token: bool = Field(
+        default=False,
+        description=(
+            "Разрешить credential из ``?token=...`` query param. "
+            "Default OFF — query попадает в access logs. Включать только "
+            "для legacy clients, которые не умеют cookies/subprotocol."
+        ),
+    )
+    allow_cookies: bool = Field(
+        default=True,
+        description=(
+            "Разрешить credential из ``auth_session`` cookie на WS handshake. "
+            "Default ON — session-aware routes могут авторизоваться "
+            "через существующий cookie."
+        ),
+    )
+
 
 ws_settings = WSSettings()
 """Глобальный экземпляр WSSettings (lazy-resolved через BaseSettingsWithLoader)."""

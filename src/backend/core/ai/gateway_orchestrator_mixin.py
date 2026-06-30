@@ -13,6 +13,15 @@ MRO линеен: ``AIGateway(EnforcedInvokeMixin, PipelineStepsMixin)``.
 ``_apply_output_guards``, ``_apply_output_sanitizers``, ``_cost_track``).
 
 Audit-context: импортируется из :mod:`gateway_audit_mixin` (T-P1.1a).
+
+S172 M1.3 (ARC-003 refactor): deduplicated tool-policy enforcement.
+Раньше проверка ``enforce_tool_policy()`` вызывалась дважды — после
+policy resolution (step 1.5, S168 W9 P0-1 fix) и после prompt render
+(step 5, S36-W5 P0-1). Обе делали одно и то же — привели к
+единому helper ``_enforce_tool_policy_once()``, который вызывается
+один раз между capability check (step 2) и input sanitizers (step 3).
+Семантика identical: ``enforced_name = request.tool_name or request.workflow_id``,
+``policy.tools.whitelist/blacklist`` — backed by ``tools_policy.enforce_tool_policy``.
 """
 
 from __future__ import annotations
@@ -43,6 +52,43 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
     в :class:`PipelineStepsMixin`. Audit dataclass — в :mod:`gateway_audit_mixin`.
     """
 
+    def _enforce_tool_policy_once(
+        self, request: AIRequest, policy: object | None
+    ) -> None:
+        """Единая точка enforce tool whitelist/blacklist (S172 M1.3, ARC-003).
+
+        Раньше проверка :func:`enforce_tool_policy` вызывалась дважды —
+        после ``_resolve_policy`` (pre-S1) и после ``_render_prompt``
+        (S76 W3 follow-up). Обе делали одну и ту же работу, различаясь
+        только местом в pipeline. После ARC-003 refactor вызывается
+        один раз между capability check (step 2) и input sanitizers (step 3).
+
+        Args:
+            request: AIRequest — для извлечения ``tool_name`` / ``workflow_id``.
+            policy: :class:`AIPolicySpec` или ``None`` (default policy → no-op).
+
+        Raises:
+            ToolPolicyViolationError: При blacklist match или whitelist miss.
+
+        Notes:
+            S1 fix semantics сохранены: ``enforced_name = request.tool_name or
+            request.workflow_id``. Если whitelist+blacklist пустые — no-op
+            (backward-compat с pre-S76 policies).
+        """
+        if policy is None:
+            return
+        tools = getattr(policy, "tools", None)
+        if tools is None:
+            return
+        whitelist = getattr(tools, "whitelist", None) or []
+        blacklist = getattr(tools, "blacklist", None) or []
+        if not whitelist and not blacklist:
+            return
+        from src.backend.core.ai.policy.enforcer.tools_policy import enforce_tool_policy
+
+        enforced_name = request.tool_name or request.workflow_id
+        enforce_tool_policy(enforced_name, tools)
+
     async def _enforced_invoke(self, request: AIRequest) -> AIResponse:
         """Полный 9-step pipeline (impl S25 W1..W5 + S27 W2..W5).
 
@@ -72,25 +118,13 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             "policy_resolved", latency_ms=int(time.monotonic() * 1000) - start_ms
         )
 
-        # Шаг 1.5 (S168 W9 P0-1 + S1 fix): enforce tool policy per AIPolicySpec.tools.
-        # ToolsSpec declared in S76, now wired. Pre-S1 bug: enforcement
-        # проверял ``request.workflow_id`` как "tool name", что не имело
-        # смысла (workflow_id ≠ конкретный tool). S1 fix: предпочитаем
-        # ``request.tool_name`` если задан; иначе — fallback на workflow_id
-        # для backward-compat с pre-S1 кодом (workflow-level enforcement).
-        # on_violation ∈ {fail, warn, block} per spec.
-        # S1.b follow-up: per-tool-dispatch enforcement в ``ai_tool_dispatch.py``
-        # (там, где tool_name известен по факту вызова).
-        if policy is not None and getattr(policy, "tools", None) is not None:
-            from src.backend.core.ai.policy.enforcer.tools_policy import (
-                enforce_tool_policy,
-            )
-
-            enforced_name = request.tool_name or request.workflow_id
-            enforce_tool_policy(enforced_name, policy.tools)
-
         # Шаг 2: capability check (throws CapabilityDeniedError на fail)
         await self._check_capability(request)
+
+        # Шаг 2.5 (S172 M1.3 ARC-003): tool policy enforcement — единожды,
+        # сразу после capability check и перед sanitization.
+        # (Pre-M1.3: проверка делалась дважды — после step 1 и после step 5.)
+        self._enforce_tool_policy_once(request, policy)
 
         # Шаг 3: input sanitizers
         sanitized = await self._apply_input_sanitizers(request, policy)
@@ -116,19 +150,6 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         # Шаг 5: render prompt
         rendered = await self._render_prompt(request, policy, sanitized)
         ctx.rendered = rendered
-
-        # P0-1 (S36-W5 + S1 fix): per-invoke tool policy enforcement (S76 W3 follow-up).
-        # Проверяется ``AIPolicySpec.tools.whitelist/blacklist`` перед LLM call.
-        # S1 fix: предпочитаем ``request.tool_name`` если задан; иначе —
-        # workflow_id (backward-compat). Skip если whitelist+blacklist пустые
-        # (backward-compat с pre-S76).
-        if policy is not None and (policy.tools.whitelist or policy.tools.blacklist):
-            from src.backend.core.ai.policy.enforcer.tools_policy import (
-                enforce_tool_policy,
-            )
-
-            enforced_name = request.tool_name or request.workflow_id
-            enforce_tool_policy(enforced_name, policy.tools)
 
         # Шаг 6: invoke LLM
         completion = await self._invoke_llm(rendered, policy, request.stream)
