@@ -129,6 +129,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
         sanitizer: Any | None = None,
         llm_gateway: Any | None = None,
         policy_enforcer: Any | None = None,
+        token_budget: Any | None = None,
     ) -> None:
         """Инициализация фасада.
 
@@ -148,6 +149,9 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
                 — резолвится через DI singleton.
             policy_enforcer: :class:`AIPolicyEnforcer` для guards (шаги
                 4 и 7); при ``None`` — guards пропускаются (no-op).
+            token_budget: :class:`core.tenancy.token_budget.TokenBudget` для
+                per-tenant budget enforcement (S172 M4 ARC-007); при
+                ``None`` — budget enforcement пропускается (backward-compat).
         """
         self._policy_resolver = policy_resolver
         self._capability_gate = capability_gate
@@ -156,6 +160,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
         self._sanitizer = sanitizer
         self._llm_gateway = llm_gateway
         self._policy_enforcer = policy_enforcer
+        self._token_budget = token_budget
 
     async def get_policy(
         self, workflow_id: str, tenant_id: str | None = None
