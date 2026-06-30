@@ -114,12 +114,17 @@ def _iter_python_files() -> list[Path]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="S173 M8.4 — simple secret-leakage detector"
+        description="S173 M8.4 / S176 M11.3 — simple secret-leakage detector"
     )
     parser.add_argument(
         "--strict",
         action="store_true",
         help="Strict mode: exit 1 на любом finding (CI gate).",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output as JSON для CI integration (S176 M11.3).",
     )
     args = parser.parse_args(argv)
 
@@ -127,7 +132,31 @@ def main(argv: list[str] | None = None) -> int:
     for path in _iter_python_files():
         findings.extend(_scan_file(path))
 
-    if findings:
+    if args.json:
+        # S176 M11.3: JSON output mode для CI integration.
+        import json as _json
+
+        # Group findings по pattern_name для JSON aggregation.
+        by_pattern: dict[str, int] = {}
+        for f in findings:
+            by_pattern[f.pattern_name] = by_pattern.get(f.pattern_name, 0) + 1
+        payload = {
+            "scanned_dirs": list(_SCAN_DIRS),
+            "files_scanned": len(_iter_python_files()),
+            "total_findings": len(findings),
+            "by_pattern": by_pattern,
+            "findings": [
+                {
+                    "pattern": f.pattern_name,
+                    "file": str(f.file.relative_to(_ROOT)),
+                    "line": f.line,
+                    "match": f.match,
+                }
+                for f in findings
+            ],
+        }
+        print(_json.dumps(payload, indent=2, ensure_ascii=False))
+    elif findings:
         for f in findings[:20]:
             rel = f.file.relative_to(_ROOT)
             print(
