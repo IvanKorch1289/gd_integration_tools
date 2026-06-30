@@ -328,14 +328,22 @@ class E2BAgentSandbox:
         temperature: float,
         durable: bool,
         session_id: str | None,
+        max_wall_time_s: float | None = None,
     ) -> AgentSandboxResult:
         """Run agent в E2B cloud sandbox.
 
+        Args:
+            max_wall_time_s: Per-call timeout override. ``None`` → use
+                ``self._timeout`` (default 600s). Протокол-parity с
+                :meth:`ProcessPoolAgentSandbox.run_react` (ARC-008 M5
+                review A-1 fix).
+
         Raises:
             AgentSandboxConfigError: если API key не настроен.
-            AgentSandboxTimeoutError: при превышении ``timeout``.
+            AgentSandboxTimeoutError: при превышении timeout.
             AgentSandboxExecutionError: на E2B SDK errors.
         """
+        timeout = max_wall_time_s if max_wall_time_s is not None else self._timeout
         if self._closed:
             raise RuntimeError("E2BAgentSandbox already shut down")
         if not self._api_key:
@@ -420,7 +428,7 @@ class E2BAgentSandbox:
         try:
             result = await asyncio.wait_for(
                 loop.run_in_executor(None, _run_in_sandbox),
-                timeout=self._timeout,
+                timeout=timeout,
             )
             success = "error" not in result
             return AgentSandboxResult(
@@ -497,20 +505,40 @@ class AgentSandboxSelector:
 
 
 def resolve_agent_sandbox(
-    *, default_kind: str = "process_pool", e2b_api_key: str | None = None
+    *,
+    default_kind: str | None = None,
+    e2b_api_key: str | None = None,
+    use_settings_default: bool = True,
 ) -> AgentSandbox:
     """Convenience wrapper — singleton :class:`AgentSandboxSelector`.
 
+    M5.2 review wiring: ``AIWorkspaceSettings.default_agent_sandbox``
+    читается через :func:`_get_default_kind_from_settings` (lazy-import).
+    Caller может override через ``default_kind`` kwarg или
+    ``use_settings_default=False``.
+
     Args:
-        default_kind: см. :class:`AgentSandboxSelector`.
-        e2b_api_key: explicit API key.
+        default_kind: Override для ``AIWorkspaceSettings.default_agent_sandbox``.
+            ``None`` → читать из settings (M5.2 wiring).
+        e2b_api_key: explicit API key для ``"e2b"`` backend.
+        use_settings_default: ``False`` → fallback на hardcoded
+            ``"process_pool"`` (для тестов / для callers без DI).
 
     Returns:
         Singleton AgentSandbox instance (если ``process_pool``) или новый
         instance (если ``in_process`` / ``e2b``).
     """
+    if default_kind is None and use_settings_default:
+        try:
+            from src.backend.core.config.ai import ai_workspace_settings
+
+            default_kind = str(ai_workspace_settings.default_agent_sandbox)
+        except Exception:
+            default_kind = "process_pool"
+
     return AgentSandboxSelector(
-        default_kind=default_kind, e2b_api_key=e2b_api_key
+        default_kind=default_kind or "process_pool",
+        e2b_api_key=e2b_api_key,
     ).select()
 
 

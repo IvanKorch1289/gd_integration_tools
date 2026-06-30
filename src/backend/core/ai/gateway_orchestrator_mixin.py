@@ -133,9 +133,35 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             return None
         tenant_id = getattr(request, "tenant_id", "") or ""
         if not tenant_id:
-            logger.debug(
-                "_enforce_token_budget_pre_call: empty tenant_id → skip"
+            # D349 (M4 carry-over): audit-event для visibility.
+            # Background workers / misconfigured callers → _default tenant_id skipped.
+            logger.info(
+                "ai.budget.tenant_less_invocation",
+                extra={
+                    "correlation_id": getattr(
+                        request, "correlation_id", ""
+                    ),
+                    "workflow_id": getattr(request, "workflow_id", ""),
+                },
             )
+            try:
+                from src.backend.core.audit.facade import emit_audit_safe
+
+                emit_audit_safe(
+                    event_type="ai.budget.tenant_less_invocation",
+                    payload={
+                        "workflow_id": getattr(
+                            request, "workflow_id", ""
+                        ),
+                        "correlation_id": getattr(
+                            request, "correlation_id", ""
+                        ),
+                        "timestamp": str(__import__("time").time()),
+                    },
+                    severity="info",
+                )
+            except Exception:  # never fail caller
+                pass
             return None
         try:
             from src.backend.core.tenancy.budget_enforcer import (

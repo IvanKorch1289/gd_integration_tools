@@ -265,3 +265,74 @@ class TestResolveAgentSandbox:
             warnings.simplefilter("always")
             sb = resolve_agent_sandbox(default_kind="in_process")
         assert isinstance(sb, InProcessAgentSandbox)
+
+
+# ─── ARC-008 M5 review-closure tests ──────────────────────────────────
+
+
+class TestE2BProtocolParity:
+    """M5 review A-1 fix — ``max_wall_time_s`` override на ``E2BAgentSandbox.run_react``.
+
+    Протокол parity с :class:`ProcessPoolAgentSandbox.run_react`.
+    """
+
+    def test_e2b_run_react_signature_has_max_wall_time_s_param(self) -> None:
+        """``run_react`` принимает ``max_wall_time_s: float | None`` override."""
+        import inspect
+
+        from src.backend.services.ai.agent_sandbox import E2BAgentSandbox
+
+        sig = inspect.signature(E2BAgentSandbox.run_react)
+        assert "max_wall_time_s" in sig.parameters
+        param = sig.parameters["max_wall_time_s"]
+        assert param.default is None or isinstance(param.default, float)
+
+    def test_e2b_default_timeout_applied_when_override_none(self) -> None:
+        """Без override → ``self._timeout`` используется (default 600s)."""
+
+        from src.backend.services.ai.agent_sandbox import E2BAgentSandbox
+
+        backend = E2BAgentSandbox(api_key="e2b_test_xxx", timeout=123.0)
+        assert backend._timeout == 123.0
+
+
+class TestSelectorWarnOnMissingE2BKey:
+    """M5 review O-1 fix — selector warns при e2b без API key (lazy-validation
+    остаётся — но visibility улучшается через warning).
+    """
+
+    def test_e2b_select_without_key_emits_warning(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """select(e2b) без ctor-key и без E2B_API_KEY env → warning."""
+
+        import logging
+
+        from src.backend.services.ai.agent_sandbox import AgentSandboxSelector
+
+        monkeypatch.delenv("E2B_API_KEY", raising=False)
+        sel = AgentSandboxSelector()
+
+        with caplog.at_level(logging.WARNING):
+            sel.select(kind="e2b")
+        assert any(
+            "e2b backend selected" in r.message for r in caplog.records
+        ), "selector должен emit warning при e2b без API key"
+
+    def test_e2b_select_with_key_no_warning(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """select(e2b) c key → без warning (OK path)."""
+
+        import logging
+
+        from src.backend.services.ai.agent_sandbox import AgentSandboxSelector
+
+        monkeypatch.delenv("E2B_API_KEY", raising=False)
+        sel = AgentSandboxSelector(e2b_api_key="e2b_test_xxx")
+
+        with caplog.at_level(logging.WARNING):
+            sel.select(kind="e2b")
+        assert not any(
+            "e2b backend selected" in r.message for r in caplog.records
+        )
