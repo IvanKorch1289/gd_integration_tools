@@ -62,6 +62,42 @@ def _render_sidebar_search() -> None:
             st.caption(f"Ничего не найдено по запросу «{search}»")
 
 
+def _emit_page_render_event(
+    *, page_key: str, render_start: float
+) -> None:
+    """S173 M8.1: emit ``frontend.page.rendered`` audit-event.
+
+    Lightweight observability — non-blocking. Lazy-import
+    ``emit_audit_safe`` (dev-environments без full DI stack не
+    сломаются). Graceful fallback (return immediately) если facade
+    недоступен.
+    """
+    import time as _time
+
+    try:
+        from src.backend.core.audit.facade import emit_audit_safe
+
+        emit_audit_safe(
+            event_type="frontend.page.rendered",
+            payload={
+                "page_key": page_key,
+                "render_ms": int(
+                    (_time.monotonic() - render_start) * 1000
+                ),
+                "session_id": (
+                    st.runtime.scriptrunner.get_script_run_ctx().session_id
+                    if hasattr(st, "runtime") else None
+                ),
+            },
+            severity="info",
+        )
+    except Exception as _exc:  # pragma: no cover — never fail caller
+        import logging as _logging
+        _logging.getLogger("frontend.app").debug(
+            "frontend.page.rendered: audit-event emit failed: %s", _exc
+        )
+
+
 def _render_dashboard_sidebar() -> None:
     """Live-фильтр в sidebar главной страницы.
 
@@ -83,8 +119,22 @@ def render_dashboard() -> None:
 
     Вызывается как ``st.Page`` callback (см. ``_build_navigation``).
     Streamlit передаёт сюда rerun-state автоматически.
+
+    S173 M8.1: render-telemetry — structured audit-event при page render.
+    Emits ``frontend.page.rendered`` event with metrics snapshot для
+    observability. Lazy-import (dev-environments без full DI stack
+    не сломаются).
     """
+    import time as _time
+
+    render_start = _time.monotonic()
     _render_dashboard_sidebar()
+
+    # S173 M8.1: page-render audit-event.
+    _emit_page_render_event(
+        page_key="00_Главная",
+        render_start=render_start,
+    )
 
     # Header с логотипом
     col_title, col_logo = st.columns([8, 1])
