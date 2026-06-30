@@ -2,6 +2,11 @@
 
 См. ADR-NEW-20 / docs/adr/0067-ai-policy-spec-dsl.md.
 
+S172 M7.1 (ARC-010, typed-policy-DSL hardening): все spec-классы
+теперь используют ``extra="forbid"`` для отклонения typos в YAML
+(ранее тихо игнорировались). Cross-field валидация (consistency
+checks) — единая точка в :func:`_validate_cross_field_consistency`.
+
 Scaffold S25 W2: создаёт типовую модель + базовую валидацию.
 Полная резолюция (per-tenant override, JSON-Schema валидация, hot-reload) —
 в :class:`PolicyResolver` (см. :mod:`core.ai.policy.resolver`).
@@ -11,11 +16,14 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+# S172 M7.1: единый class-config для strict validation.
+_STRICT_CONFIG = ConfigDict(extra="forbid", validate_assignment=True)
 
 
 __all__ = (
@@ -32,6 +40,8 @@ __all__ = (
 
 
 class ModelRouterSpec(BaseModel):
+    model_config = _STRICT_CONFIG
+
     """Описание fallback chain моделей + RLM strategy.
 
     Attributes:
@@ -67,6 +77,8 @@ class ModelRouterSpec(BaseModel):
 
 
 class SanitizerRef(BaseModel):
+    model_config = _STRICT_CONFIG
+
     """Ссылка на input/output sanitizer.
 
     Attributes:
@@ -86,6 +98,8 @@ class SanitizerRef(BaseModel):
 
 
 class GuardRef(BaseModel):
+    model_config = _STRICT_CONFIG
+
     """Ссылка на input/output guard.
 
     Attributes:
@@ -106,6 +120,8 @@ class GuardRef(BaseModel):
 
 
 class BackendSpec(BaseModel):
+    model_config = _STRICT_CONFIG
+
     """Описание backend'а для memory layer.
 
     Attributes:
@@ -122,6 +138,8 @@ class BackendSpec(BaseModel):
 
 
 class MemorySpec(BaseModel):
+    model_config = _STRICT_CONFIG
+
     """Описание memory layer'а для AI-инвокации.
 
     Соответствует ``MemoryProtocol`` (ADR-NEW-18, S24 W3).
@@ -146,6 +164,8 @@ class MemorySpec(BaseModel):
 
 
 class BudgetSpec(BaseModel):
+    model_config = _STRICT_CONFIG
+
     """Бюджет AI-инвокации.
 
     Attributes:
@@ -167,6 +187,8 @@ class BudgetSpec(BaseModel):
 
 
 class AuditSpec(BaseModel):
+    model_config = _STRICT_CONFIG
+
     """Описание audit-секции AIPolicySpec.
 
     Attributes:
@@ -181,6 +203,8 @@ class AuditSpec(BaseModel):
 
 
 class ToolsSpec(BaseModel):
+    model_config = _STRICT_CONFIG
+
     """S76 W1 (FINAL_REPORT_V2 P0-B) — tools whitelist/blacklist для
     AI agent'а.
 
@@ -228,6 +252,8 @@ class ToolsSpec(BaseModel):
 
 
 class AIPolicySpec(BaseModel):
+    model_config = _STRICT_CONFIG
+
     """Декларативная политика AI per-workflow (ADR-NEW-20).
 
     YAML-описание в ``ai_policies/*.policy.yaml`` (global) и
@@ -282,3 +308,46 @@ class AIPolicySpec(BaseModel):
         before calling AIGateway.
         """
         return self.model_router.primary
+
+    @model_validator(mode="after")
+    def _validate_cross_field_consistency(self) -> "AIPolicySpec":
+        """S172 M7.1 (ARC-010) cross-field consistency checks.
+
+        Validates semantic invariants across nested spec-classes —
+        ловит misconfigurations которые отдельные field-validators
+        не видят.
+
+        Raises:
+            ValueError: на inconsistency (через Pydantic ValidationError).
+
+        Checks:
+            * tools.whitelist и tools.blacklist не пересекаются.
+            * budget.max_tokens_prompt ≥ max_tokens_completion.
+            * model_router.primary непустой.
+        """
+        tool_set = set(self.tools.whitelist)
+        blacklist_set = set(self.tools.blacklist)
+        conflict = tool_set & blacklist_set
+        if conflict:
+            raise ValueError(
+                f"tools.conflict: {sorted(conflict)!r} присутствуют "
+                f"одновременно в whitelist и blacklist — выберите одну "
+                f"стратегию (allowlist OR denylist, не обе)."
+            )
+
+        if self.budget.max_tokens_prompt < self.budget.max_tokens_completion:
+            raise ValueError(
+                f"budget.inconsistent_tokens: max_tokens_prompt="
+                f"{self.budget.max_tokens_prompt} < max_tokens_completion="
+                f"{self.budget.max_tokens_completion}; prompt budget должен "
+                f"быть ≥ completion budget."
+            )
+
+        if not self.model_router.primary.strip():
+            raise ValueError(
+                "model_router.primary must be non-empty string "
+                "(LiteLLM-формат: 'openai/gpt-4o-mini', "
+                "'openrouter/anthropic/claude-3.5-sonnet', etc.)"
+            )
+
+        return self
