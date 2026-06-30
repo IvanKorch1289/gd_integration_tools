@@ -341,6 +341,34 @@ def _build_navigation() -> st.navigation:
                 file=sys.stderr,
             )
 
+    # S177 M12.3: navigation-built summary event (success path).
+    # Emit on success even if no missing — observability для cold-start
+    # duration + section count.
+    try:
+        from src.backend.core.audit.facade import emit_audit_safe
+
+        total_pages = sum(
+            len(pages) for pages in pages_by_section.values()
+        )
+        section_count = len(pages_by_section)
+        emit_audit_safe(
+            event="frontend.navigation.built",
+            action="frontend.navigation_build",
+            outcome=("warning" if missing else "success"),
+            details={
+                "section_count": section_count,
+                "total_pages": total_pages,
+                "missing_count": len(missing),
+                "bootstrap_ms": bootstrap_ms,
+            },
+            severity=("info" if not missing else "warning"),
+        )
+    except Exception as _exc:  # pragma: no cover — never fail caller
+        import logging as _logging
+        _logging.getLogger("frontend.app").debug(
+            "frontend.navigation.built: audit-event emit failed: %s", _exc
+        )
+
     return st.navigation(pages_by_section)
 
 
