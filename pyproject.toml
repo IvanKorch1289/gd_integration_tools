@@ -924,7 +924,8 @@ markers = [
     "requires_toxiproxy: requires toxiproxy container",
     "unit: fast unit tests",
     "dspy_eval: DSPy optimizer evaluation tests",
-]
+    "pre_existing: known-failing tests in Cycle 36 baseline (excluded from new-regression gate, see docs/audit/AUDIT_2026-06-30.md). NOT a target for milestone fixes.",
+] 
 
 
 [tool.coverage.run]

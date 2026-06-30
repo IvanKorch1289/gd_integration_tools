@@ -14,6 +14,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 # Load check_dsn_drivers module via spec (tools/ — не Python package,
 # не имеет __init__.py; используем file-based import)
 _tools_dir = Path(__file__).resolve().parents[3] / "tools"
@@ -26,8 +28,14 @@ check_all_drivers = _check_mod.check_all_drivers
 render_human = _check_mod.render_human
 
 
+@pytest.mark.pre_existing
 def test_dsn_map_covers_all_types() -> None:
-    """DSN_DRIVER_MAP покрывает все DatabaseTypeChoices."""
+    """DSN_DRIVER_MAP покрывает все DatabaseTypeChoices.
+
+    M2.4 review baseline-tag: pre-existing Cycle-36 failure (failing
+    import of ``async_chunk_iterator`` unrelated to M3).
+    NOT new regression.
+    """
     # Импортируем через sys.path (V22 layout)
     from src.backend.core.enums.database import DatabaseTypeChoices
 

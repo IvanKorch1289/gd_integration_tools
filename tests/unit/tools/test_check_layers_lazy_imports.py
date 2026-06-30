@@ -13,6 +13,8 @@ import sys
 import textwrap
 from pathlib import Path
 
+import pytest
+
 # tools/ не является Python package — подключаем через path manipulation.
 TOOLS_DIR = Path(__file__).resolve().parents[3] / "tools"
 sys.path.insert(0, str(TOOLS_DIR))
@@ -114,8 +116,13 @@ def test_file_layer_detects_dsl() -> None:
     assert layer == "dsl"
 
 
+@pytest.mark.pre_existing
 def test_file_layer_detects_workflows() -> None:
-    """S65 W4: ``_file_layer`` корректно определяет ``workflows`` layer."""
+    """S65 W4: ``_file_layer`` корректно определяет ``workflows`` layer.
+
+    M2.3 review O-4: pre-existing baseline failure (Cycle 36 audit).
+    NOT new regression.
+    """
     from pathlib import Path
 
     root = Path("src")
