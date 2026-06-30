@@ -19,8 +19,8 @@ from __future__ import annotations
 
 import streamlit as st
 
-# Добавляем корень проекта в sys.path для корректного импорта в Streamlit-режиме
 from src.frontend.streamlit_app.api_clients import get_api_client
+from src.frontend.streamlit_app.shared.audit_event_lite import emit_admin_error_event
 from src.frontend.streamlit_app.shared.components import (
     dataframe_view,
     related_pages_footer,
@@ -84,6 +84,12 @@ with tab_plugins:
                     st.rerun()
                 except Exception as exc:  # noqa: BLE001
                     st.error(f"Не удалось переключить плагин: {exc}")
+                    emit_admin_error_event(
+                        action="toggle_plugin",
+                        error=str(exc),
+                        error_type=type(exc).__name__,
+                        target=name,
+                    )
 
 # ---------------------------------------------------------------------------
 # Tab: Users (read-only)
@@ -137,5 +143,11 @@ with tab_flags:
                     st.toast(f"Flag `{name}` → {'ON' if new_state else 'OFF'}")
                 else:
                     st.error(f"Не удалось переключить флаг `{name}`")
+                    emit_admin_error_event(
+                        action="toggle_flag",
+                        error="toggle returned False (no exception)",
+                        error_type="ToggleFailure",
+                        target=name,
+                    )
 
 related_pages_footer("45_Админ")
