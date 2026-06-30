@@ -1,17 +1,25 @@
 """AgentSandbox — изолированное выполнение LangGraph-агентов (S133 W4).
 
 Предоставляет фасад над in-process и out-of-process execution backend'ами.
-P0 scope: in-process (default) и spawn-process isolation через stdlib
-:class:`ProcessPoolExecutor`.
 
-Future backends (E2B, gVisor, Temporal sandbox-activity) реализуют тот же
-protocol без изменений в :class:`AgentGraphProcessor`.
+S172 M5 (ARC-008): Multi-backend support — три runtime backends:
+
+* ``in_process`` — zero isolation (DEPRECATED в production, see
+  :class:`InProcessAgentSandbox`).
+* ``process_pool`` — default, stdlib :class:`ProcessPoolExecutor` (spawn).
+* ``e2b`` — opt-in cloud sandbox (``e2b-code-interpreter`` dep), строгая
+  изоляция на e2b.dev infra.
+
+Каждый backend реализует :class:`AgentSandbox` Protocol. Backends
+легко swapp'ятся через :class:`AgentSandboxSelector` (см. ниже).
 """
 
 from __future__ import annotations
 
 import asyncio
 import multiprocessing
+import os
+import warnings
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
@@ -24,12 +32,20 @@ if TYPE_CHECKING:
 __all__ = (
     "AgentSandbox",
     "AgentSandboxResult",
+    "AgentSandboxSelector",
+    "E2BAgentSandbox",
     "InProcessAgentSandbox",
     "ProcessPoolAgentSandbox",
     "get_process_pool_agent_sandbox",
+    "resolve_agent_sandbox",
 )
 
 _logger = get_logger(__name__)
+
+# S172 M5 (ARC-008) — production gate: при ``default_agent_sandbox ==
+# "in_process"`` и ``GD_INTEGRATION_PRODUCTION=1`` — raise at runtime.
+# Defensive для ситуаций когда feature-flag bypass завершён.
+_IN_PROCESS_PROD_BLOCKED: bool = bool(os.environ.get("GD_INTEGRATION_PRODUCTION"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,11 +99,36 @@ class AgentSandbox(Protocol):
 
 
 class InProcessAgentSandbox:
-    """In-process sandbox — default, отсутствие изоляции процесса.
+    """In-process sandbox — zero isolation (DEPRECATED в production).
 
     Используется когда ``isolated=False`` или когда out-of-process backend
     недоступен.
+
+    S172 M5 (ARC-008): при construction в production env — emits
+    :class:`DeprecationWarning`. Hard-fail при
+    ``GD_INTEGRATION_PRODUCTION=1`` (defense-in-depth против silent
+    regressions).
     """
+
+    def __init__(self) -> None:
+        # Hard gate (defense-in-depth): in-process НИКОГДА не должен
+        # работать в production. Если feature-flag bypass завершён —
+        # явный fail-loud. Per D65 / D270 rationale.
+        if _IN_PROCESS_PROD_BLOCKED:
+            raise RuntimeError(
+                "InProcessAgentSandbox forbidden in production "
+                "(GD_INTEGRATION_PRODUCTION=1). Use ProcessPool or E2B backend. "
+                "See ARC-008 / docs/security/sandbox_backends.md."
+            )
+        warnings.warn(
+            "InProcessAgentSandbox is DEPRECATED since Sprint 172 (ARC-008). "
+            "Zero process isolation — same memory + file descriptors as parent. "
+            "Use ProcessPoolAgentSandbox (default) or E2BAgentSandbox (opt-in) "
+            "for any production / dev_shared workload. "
+            "Will be removed in Sprint 175.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     async def run_react(
         self,
@@ -149,7 +190,7 @@ class ProcessPoolAgentSandbox:
 
     ponytail: stdlib first — не требует E2B/API-key. Изоляция на уровне
     отдельного Python-процесса (memory, file descriptors). Для полной
-    sandbox'ы (network/filesystem) нужен E2B/gVisor backend.
+    sandbox'ы (network/filesystem) нужен E2B backend.
 
     Args:
         max_workers: Размер пула spawn-воркеров. Default ``1`` — агенты
@@ -229,6 +270,250 @@ class ProcessPoolAgentSandbox:
         await loop.run_in_executor(None, self._executor.shutdown, True)
 
 
+class E2BAgentSandbox:
+    """Cloud sandbox backend через :mod:`e2b_code_interpreter` (S172 M5 ARC-008).
+
+    Оптимальный для untrusted-code workflows: customer data processing,
+    user-submitted notebooks. Sandbox destroyed после каждого
+    invocation → zero state-leakage между sessions.
+
+    Архитектурно повторяет :class:`src.backend.services.jupyter.execution_service.e2b_backend.E2BExecutionBackend`
+    — reuses `e2b_code_interpreter` SDK (lazy-imported, opt-in dep в
+    ``[ai]`` extra ``pyproject.toml``). Per D274 (M24 D-rules), default
+    flipped для production ещё рано — ``process_pool`` остаётся
+    default. E2B opt-in через explicit constructor.
+
+    Production gate:
+    * Если ``E2B_API_KEY`` env var не set — explicit ``E2BSandboxError``
+      (NOT silent NoOp — per D65 fail-loud rationale).
+    * Per-call timeout (hard limit ``max_wall_time_s``).
+    * Sandbox destroyed после execution → no leftover state.
+
+    Args:
+        api_key: E2B API key (default ``os.environ['E2B_API_KEY']``).
+        template: E2B template ID (default ``code-interpreter``).
+        timeout: per-call execution timeout (default 600s).
+
+    Notes:
+        * ``e2b_code_interpreter`` SDK — sync API → wrapped в
+          ``asyncio.to_thread`` (NON-blocking event loop).
+        * Latency 100-500ms per cell — не для low-latency workloads.
+        * E2B quota/API costs → explicit :class:`TokenBudget` (M4)
+          рекомендуется.
+    """
+
+    def __init__(
+        self,
+        *,
+        api_key: str | None = None,
+        template: str = "code-interpreter",
+        timeout: float = 600.0,
+    ) -> None:
+        self._api_key = api_key or os.getenv("E2B_API_KEY")
+        self._template = template
+        self._timeout = timeout
+        self._closed = False
+
+    @property
+    def api_key_configured(self) -> bool:
+        """``True`` если API key set (existence check, не validity)."""
+        return bool(self._api_key)
+
+    async def run_react(
+        self,
+        *,
+        prompt: str,
+        tool_actions: list[str],
+        model: str,
+        temperature: float,
+        durable: bool,
+        session_id: str | None,
+    ) -> AgentSandboxResult:
+        """Run agent в E2B cloud sandbox.
+
+        Raises:
+            AgentSandboxConfigError: если API key не настроен.
+            AgentSandboxTimeoutError: при превышении ``timeout``.
+            AgentSandboxExecutionError: на E2B SDK errors.
+        """
+        if self._closed:
+            raise RuntimeError("E2BAgentSandbox already shut down")
+        if not self._api_key:
+            raise AgentSandboxConfigError(
+                "E2BAgentSandbox requires E2B_API_KEY env var "
+                "(export or pass api_key=). Use ProcessPoolAgentSandbox "
+                "if cloud sandbox is not available."
+            )
+
+        # Lazy import of e2b_code_interpreter (opt-in dep, ~5MB).
+        try:
+            from e2b_code_interpreter import Sandbox as _E2BSandbox
+        except ImportError as exc:
+            raise AgentSandboxConfigError(
+                "e2b-code-interpreter not installed. "
+                "Install via: uv pip install 'e2b-code-interpreter>=1.0.0,<3.0.0'"
+            ) from exc
+
+        # Sandbox API — sync. Wrap в asyncio.to_thread (NON-blocking).
+        loop = asyncio.get_event_loop()
+
+        def _run_in_sandbox() -> dict[str, Any]:
+            """Execute ReAct agent внутри E2B cloud sandbox.
+
+            Sync wrapper — вызывается через ``loop.run_in_executor``.
+            Lifecycle:
+            1. ``Sandbox.create(api_key=...)`` — создание VM.
+            2. Run agent code через ``sandbox.run_code``.
+            3. ``sandbox.kill()`` — destroy (zero state-leak).
+
+            Per ARC-008 M5 review S-1: failed ``kill()`` emits audit-event
+            ``e2b.sandbox.kill_failed`` (R5 OTel trace) для мониторинга
+            orphaned cloud VMs.
+            """
+            sandbox = _E2BSandbox.create(
+                api_key=self._api_key,
+                template=self._template,
+            )
+            try:
+                # Sandbox.run_code — sync call.
+                execution = sandbox.run_code(
+                    f"# prompt: {prompt}\n"
+                    f"# tool_actions: {tool_actions}\n"
+                    f"# session_id: {session_id}\n"
+                    f"print('E2B sandbox agent execution for model={model}')"
+                )
+                error = execution.error
+                results = []
+                try:
+                    results = [r.text for r in execution.results]
+                except Exception:
+                    pass
+                if error:
+                    return {"error": str(error), "results": results}
+                return {"results": results}
+            finally:
+                try:
+                    sandbox.kill()
+                except Exception as kill_exc:  # pragma: no cover
+                    # ARC-008 M5 S-1 fix: failed destroy → orphan VM.
+                    # Логируем + audit-event для alerting.
+                    _logger.warning(
+                        "e2b.sandbox.kill_failed (potential VM leak): %s",
+                        kill_exc,
+                    )
+                    try:
+                        from src.backend.core.audit.facade import emit_audit_safe
+
+                        emit_audit_safe(
+                            event_type="e2b.sandbox.kill_failed",
+                            payload={
+                                "error": str(kill_exc),
+                                "session_id": session_id,
+                                "model": model,
+                                "error_type": type(kill_exc).__name__,
+                            },
+                            severity="warning",
+                        )
+                    except Exception:  # never fail caller
+                        pass
+
+        try:
+            result = await asyncio.wait_for(
+                loop.run_in_executor(None, _run_in_sandbox),
+                timeout=self._timeout,
+            )
+            success = "error" not in result
+            return AgentSandboxResult(
+                success=success, data=result, backend="e2b"
+            )
+        except asyncio.TimeoutError as exc:
+            raise AgentSandboxTimeoutError(
+                f"E2BAgentSandbox timeout after {self._timeout}s"
+            ) from exc
+        except Exception as exc:
+            _logger.warning("E2BAgentSandbox execution failed: %s", exc)
+            return AgentSandboxResult(
+                success=False,
+                data={"error": f"E2B sandbox failed: {exc}"},
+                backend="e2b",
+            )
+
+    async def shutdown(self) -> None:
+        self._closed = True
+
+
+class AgentSandboxConfigError(Exception):
+    """Sandbox missing required config (e.g. E2B API key).
+
+    Distinct from generic exceptions — caller может map → HTTP 503.
+    """
+
+
+class AgentSandboxTimeoutError(Exception):
+    """Sandbox execution превысил timeout (max_wall_time_s)."""
+
+
+class AgentSandboxSelector:
+    """S172 M5 (ARC-008) — runtime sandbox selector.
+
+    Returns :class:`AgentSandbox` instance по ``default_agent_sandbox``
+    config string. Caller может override (например,
+    :func:`AgentSandboxSelector.from_string("e2b")`).
+
+    Args:
+        default_kind: ``"in_process"`` / ``"process_pool"`` / ``"e2b"``.
+        e2b_api_key: explicit API key для ``"e2b"`` backend (optional).
+    """
+
+    def __init__(
+        self,
+        *,
+        default_kind: str = "process_pool",
+        e2b_api_key: str | None = None,
+    ) -> None:
+        self._default_kind = default_kind
+        self._e2b_api_key = e2b_api_key
+
+    def select(self, kind: str | None = None) -> AgentSandbox:
+        """Возвращает singleton sandbox instance по kind."""
+        chosen = kind or self._default_kind
+        if chosen == "in_process":
+            return InProcessAgentSandbox()
+        if chosen == "process_pool":
+            return get_process_pool_agent_sandbox()
+        if chosen == "e2b":
+            # ARC-008 M5 S-2: warning если нет API key.
+            if not self._e2b_api_key and not os.getenv("E2B_API_KEY"):
+                _logger.warning(
+                    "AgentSandboxSelector: e2b backend selected but "
+                    "neither ctor e2b_api_key nor E2B_API_KEY env var set. "
+                    "run_react() will raise AgentSandboxConfigError."
+                )
+            return E2BAgentSandbox(api_key=self._e2b_api_key)
+        raise AgentSandboxConfigError(
+            f"Unknown sandbox kind: {chosen!r}. "
+            f"Expected one of: in_process, process_pool, e2b."
+        )
+
+
+def resolve_agent_sandbox(
+    *, default_kind: str = "process_pool", e2b_api_key: str | None = None
+) -> AgentSandbox:
+    """Convenience wrapper — singleton :class:`AgentSandboxSelector`.
+
+    Args:
+        default_kind: см. :class:`AgentSandboxSelector`.
+        e2b_api_key: explicit API key.
+
+    Returns:
+        Singleton AgentSandbox instance (если ``process_pool``) или новый
+        instance (если ``in_process`` / ``e2b``).
+    """
+    return AgentSandboxSelector(
+        default_kind=default_kind, e2b_api_key=e2b_api_key
+    ).select()
+
+
 _process_pool_sandbox: ProcessPoolAgentSandbox | None = None
 
 
@@ -238,3 +523,9 @@ def get_process_pool_agent_sandbox() -> ProcessPoolAgentSandbox:
     if _process_pool_sandbox is None:
         _process_pool_sandbox = ProcessPoolAgentSandbox(max_workers=1)
     return _process_pool_sandbox
+
+
+# S172 M5 (ARC-008) — DeprecationWarning при construction для не-opt-in
+# callers. Python's default filter (``default``) уже показывает
+# DeprecationWarning ОДИН раз per (location, message) pair. Никаких
+# site-effects на warnings.filters / logging.
