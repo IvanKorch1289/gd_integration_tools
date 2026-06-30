@@ -232,8 +232,33 @@ class APIKeyManager:
         Notes:
             S172 M2: stored hash = Argon2id PHC string (с per-key salt).
             Verify path остаётся backward-compat с legacy SHA-256.
+            S175 M10.3: pre-creation strength gate — generated random
+            key (~258 bits entropy) → обязательно pass validate_strength
+            (defensive: в случае secrets.token_urlsafe change-of-behavior,
+            system НЕ создаст weak key).
         """
+        from src.backend.core.auth.api_key_backend import APIKeyAuth, StrengthReport
+
+        # 1. Generate key.
         raw_key = f"gd_{secrets.token_urlsafe(32)}"
+        # 2. S175 M10.3: pre-creation strength gate (defensive).
+        strength: StrengthReport = APIKeyAuth.validate_strength(raw_key)
+        if not strength.is_acceptable:
+            # Should NEVER happen (secrets.token_urlsafe = 32 random bytes).
+            # Log + raise если secret generation bug обнаружен.
+            logger.error(
+                "create_client_key: generated key failed strength gate "
+                "(length=%d, entropy=%.1f, issues=%s). This is a "
+                "secrets.token_urlsafe regression — fix immediately.",
+                strength.length,
+                strength.entropy_bits,
+                strength.issues,
+            )
+            raise RuntimeError(
+                f"create_client_key: generated key failed strength gate "
+                f"(issues={list(strength.issues)}). This is a critical bug — "
+                f"token_urlsafe must return ≥ 32 random chars."
+            )
         key_hash = self._hash_key(raw_key)
         now = time.time()
 
@@ -305,6 +330,23 @@ class APIKeyManager:
             old_hash = key_data["key_hash"]
 
             new_raw = f"gd_{secrets.token_urlsafe(32)}"
+            # S175 M10.3: pre-creation strength gate (defensive — same
+            # gate as create_client_key).
+            from src.backend.core.auth.api_key_backend import APIKeyAuth, StrengthReport
+
+            rot_strength: StrengthReport = APIKeyAuth.validate_strength(
+                new_raw
+            )
+            if not rot_strength.is_acceptable:
+                logger.error(
+                    "rotate_client_key: generated key failed strength gate "
+                    "(issues=%s). secrets.token_urlsafe regression.",
+                    rot_strength.issues,
+                )
+                raise RuntimeError(
+                    f"rotate_client_key: generated key failed strength gate "
+                    f"(issues={list(rot_strength.issues)})"
+                )
             new_hash = self._hash_key(new_raw)
             now = time.time()
 
