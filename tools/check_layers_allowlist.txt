@@ -44,8 +44,6 @@ src/backend/core/messaging/dlq.py	core	src.backend.infrastructure.messaging.dlq_
 src/backend/core/messaging/dlq_policy.py	core	src.backend.infrastructure.messaging.dlq_base
 src/backend/core/messaging/event_bus.py	core	src.backend.infrastructure.clients.messaging.event_bus
 src/backend/core/net/outbound_http.py	core	src.backend.infrastructure.observability
-src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications
-src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications.gateway
 src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer
 src/backend/core/observability/metrics.py	core	src.backend.infrastructure.observability.metrics_registry
 src/backend/core/plugin_runtime/compat_checker.py	core	src.backend.services.plugins.manifest_toml

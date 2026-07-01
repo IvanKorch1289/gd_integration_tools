@@ -92,8 +92,6 @@ __all__ = (
     "get_jupyter_hub_user_class",
     "get_main_session_manager_factory",
     "get_main_session_manager_getter",
-    "get_notifications_gateway_factory",
-    "get_notification_gateway_class",
     "get_event_bus_class",
     "get_event_schema_validation_error_class",
     "get_flag_event_class",
@@ -315,20 +313,6 @@ def get_main_session_manager_getter() -> Any:
     from src.backend.infrastructure.database.session_manager import get_main_session_manager
 
     return get_main_session_manager
-
-
-def get_notifications_gateway_factory() -> Any:
-    """Возвращает ``notifications.get_gateway`` factory."""
-    from src.backend.infrastructure.notifications import get_gateway
-
-    return get_gateway
-
-
-def get_notification_gateway_class() -> Any:
-    """Возвращает ``notifications.gateway.NotificationGateway`` class."""
-    from src.backend.infrastructure.notifications.gateway import NotificationGateway
-
-    return NotificationGateway
 
 
 def get_event_bus_class() -> Any:
