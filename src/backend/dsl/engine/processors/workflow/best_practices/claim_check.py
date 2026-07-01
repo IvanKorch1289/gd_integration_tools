@@ -77,6 +77,12 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Применяет паттерн Claim Check: выгружает большой payload во внешнее хранилище и заменяет его токеном.
+
+        Args:
+            exchange: Текущий обмен с сообщением.
+            context: Контекст выполнения процессора.
+        """
         head, _, rest = self.source_property.partition(".")
         if head != "body":
             payload = exchange.in_message.body

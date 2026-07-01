@@ -113,6 +113,19 @@ files       │  (debounce=500 ms)     │
 `watchfiles.awatch` через `WatcherSpec.poll_interval` → `debounce_ms`.
 Зависимость `watchdog` удалена в Wave B.
 
+#### Canonical chains для extensions
+- Contract: `dsl/contracts/` → Pydantic DSL (Exchange, Message, Pipeline).
+- Wrapper: `dsl/engine/exchange.py`, `dsl/engine/pipeline.py` — runtime semantics.
+- Processors: `dsl/engine/processors/` — declarative EIP + AI pipelines.
+- Facade: `dsl/commands/action_registry.py` (ActionHandlerRegistry).
+- Builder: `dsl/builders/` — fluent Camel-style mixins (12-mixin MRO на RouteBuilder).
+  Импорт по canonical chain: `extensions/<x>/` → `core.dsl.protocols`
+  → `core.interfaces.*` (capability-gate) → `dsl.*` (impl, только через фасады).
+
+Правило V15 R-V15-4: extensions импортируют только 
+`gd_integration_tools.core.*` + capability-checked фасады. 
+Прямой импорт `infrastructure/` / `services/` запрещён.
+
 ### 2. Workflow / orchestration
 
 **Точки**:
@@ -199,7 +212,7 @@ CircuitBreaker, ExceptionHandler.
 | **Redis / KeyDB** | cache + state + RL | `infrastructure/cache/` (4 backend) |
 | **MongoDB** | doc-store: notebooks, ai_feedback, workflow_state, connector_configs, express_dialogs/sessions, agent_memory_* | `infrastructure/clients/` |
 | **Elasticsearch** | поиск: `gd_audit_logs`, `gd_orders` | `infrastructure/clients/` |
-| **ClickHouse** | audit-log + immutable | `infrastructure/audit/` (ADR-007, ADR-028) |
+| **ClickHouse** | audit-log + immutable | `infrastructure/audit/` (ADR-007, ADR-028) — см. Audit (canonical facade + impl) ниже |
 | **S3 / MinIO / LocalFS** | объектное хранилище | `infrastructure/storage/` |
 | **RabbitMQ + Kafka + Redis Streams** | messaging | `infrastructure/eventing/` (FastStream, ADR-013) |
 | **Qdrant** | vector store для RAG | `infrastructure/clients/storage/vector_store.py` |
@@ -213,7 +226,13 @@ CircuitBreaker, ExceptionHandler.
 - ABC: `src/backend/core/interfaces/`
 - Protocol-варианты: `src/backend/core/protocols.py`
 - Circuit Breaker: `infrastructure/resilience/breaker.py`
-- Retry: `infrastructure/resilience/retry.py`
+- Retry: `core/resilience/retry.py` (canonical: `with_retry`, `make_async_retry`,
+  `RetryPolicy` — `Retry` alias). `infrastructure/resilience/retry.py` — 
+  thin re-export для backward-compat.
+  Сосуществование с `core/orchestration/retry.py`: тот модуль — Pydantic для
+  durable workflow-шагов (`compensate`); НЕ объединяется с canonical.
+  Retry canonical path: `with_retry()` — единая точка вызова для всех async
+  retry-стратегий (exponential backoff, jitter, max_retries из `RetryPolicy`).
 - JSON: `utilities/json_codec.py`
 - Auth: `src/backend/core/auth.py`
 - Layer linter: `tools/checks/check_layers.py`
@@ -233,9 +252,15 @@ CircuitBreaker, ExceptionHandler.
 - хардкод конфигурации
 - bypass DI (`SomeClass()` вместо `get_*()`)
 
-## Поток данных (типовой)
+### Audit (canonical facade + impl)
+- Facade: `core/audit/facade/__init__.py` — per-domain split (S107 W3):
+  `_base/authorization/waf/capability/secrets/ai/banking`. 
+  Entry: `emit_audit()`, `emit_capability_check()`.
+- Impl: `infrastructure/audit/event_log.py` (ClickHouse sink), `event_log_streaming`.
+- Инвариант: extensions/entrypoints → facade → impl. Прямой импорт
+  `infrastructure/audit/` запрещён.
 
-1. Вход через entrypoint (REST / GraphQL / SOAP / Stream / MCP / …)
+## Поток данных (типовой)
 2. Middleware-цепочка (auth, rate limit, masking, audit, …)
 3. Валидация Pydantic-схемой
 4. Вызов `DslService.dispatch()` или прямой `service.method()`
@@ -251,6 +276,24 @@ CircuitBreaker, ExceptionHandler.
 - Postgres RLS + Redis prefixing + per-tenant rate limit + quotas + billing
 - Casbin tenant-scoped (IL-SEC2, ADR-028)
 - Открытый долг: `IL-BIZ1` — multi-tenant cache + Saga + PII audit
+
+## Resilience: Rate Limiter (canonical 4-layer)
+
+Rate Limiter построен по canonical 4-layer pattern:
+
+- Protocol layer: `core/resilience/rate_limiter.py:RateLimiter` (canonical Protocol).
+  Все новые RL-контракты имплементируют его.
+- Gateway contract: `core/interfaces/ratelimit_gateway.py:RateLimitChecker` —
+  отдельный контракт для per-route gateway (НЕ дубликат RateLimiter).
+- Policy layer: `core/resilience/resilience_profile.py:RateLimitPolicy` (frozen,
+  {rps, burst}) и `infrastructure/resilience/rate_limiter.py:RateLimiterPolicy`
+  (mutable, per-resource preset). Разные поля — НЕ объединяются.
+- Implementation: `infrastructure/resilience/unified_rate_limiter.py:RedisRateLimiter`,
+  `DistributedRedisRateLimiter`, `ResourceRateLimiter`.
+- Middleware: `entrypoints/middlewares/global_ratelimit.py:GlobalRateLimitMiddleware`,
+  `services/execution/middlewares/rate_limit_middleware.py:RateLimitMiddleware`.
+
+Правило V16: новые RL-реализации наследуют `core/resilience/rate_limiter.py:RateLimiter`.
 
 ## RAG stack (Wave 12 + 13)
 
@@ -325,6 +368,18 @@ CircuitBreaker, ExceptionHandler.
   (`infrastructure/decorators/caching/decorator.py`) → `redis_client`.
 - **Правило**: сервисы НЕ импортируют `CachingDecorator` напрямую — только через
   `core/resilience/cache_decorators.py`.
+
+#### FallbackCache (inline re-probe)
+`core/utils/redis_fallback.py:FallbackCache` — Protocol `RedisLike`, 
+graceful degrade → in-memory TTLCache через `_mark_degraded()`, recovery 
+через `_mark_recovered()` при успешной операции.
+
+Re-probe strategy: lazy recovery в каждом успешном `get()`/`set()`/`delete()`
+через `_mark_recovered()`. Нет `_last_redis_error_at` / `reprobe_interval` —
+просто булева `_degraded: bool` + счётчик `_consecutive_failures: int`.
+Ponytail staircase: без background-task — call-site ответственен
+(сам `get()` проверяет текущее состояние Degraded и пути).
+Caller может явно вызвать `reset_degradation()` для форсированного re-probe.
 
 ### Logging Architecture (Wave 2)
 

@@ -40,6 +40,12 @@ class ResequencerProcessor(BaseProcessor):
         self._lock = asyncio.Lock()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Переупорядочивает сообщения по номеру последовательности в рамках группы (Resequencer).
+
+        Args:
+            exchange: Текущий обмен с сообщением.
+            context: Контекст выполнения процессора.
+        """
         key = self._corr_key(exchange)
         body = exchange.in_message.body
 

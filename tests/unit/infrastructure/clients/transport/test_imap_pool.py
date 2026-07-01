@@ -17,7 +17,7 @@ try:
     )
 
     HAS_IMAP_POOL = True
-except ImportError, ModuleNotFoundError, AttributeError:
+except (ImportError, ModuleNotFoundError, AttributeError):
     HAS_IMAP_POOL = False
 
 

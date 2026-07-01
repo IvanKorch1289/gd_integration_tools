@@ -120,6 +120,7 @@ _skb_service_instance: APISKBService | None = None
 
 
 def get_skb_service() -> APISKBService:
+    """Фабрика: APISKBService (банковский API)."""
     global _skb_service_instance
     if _skb_service_instance is None:
         _skb_service_instance = APISKBService(skb_settings=settings.skb_api)

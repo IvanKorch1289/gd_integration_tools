@@ -1,21 +1,32 @@
-"""Унифицированный rate-limiter — single entry в `core/resilience/`.
+"""Canonical rate-limiter Protocol — единая точка входа для всех RL-контрактов.
 
-Sprint 1 V16 Single-Entry (Step 3.2): canonical-модуль, объединяющий два
-существующих механизма rate-limiting'а:
+RL_CONSOLIDATION — canonical hierarchy (4 слоя):
 
-- ``infrastructure/resilience/unified_rate_limiter.py`` — Redis token-bucket
-  для multi-instance-safe лимитов (используется в FastAPI middleware,
-  HTTP-клиенте, webhook-handler'е). Доступен через ``RedisRateLimiter`` /
-  ``get_rate_limiter()``.
-- ``pyrate_limiter`` — local in-memory rate-limiter для process-level
-  лимитов (singleton ``Limiter`` в ``entrypoints/dependencies/rate_limit.py``).
+    Protocol (этот модуль)
+      └─ RateLimiter: check(identifier, policy) -> dict[str, Any]
+      └─ RateLimitChecker (core/interfaces/ratelimit_gateway.py):
+         gateway-контракт check(identifier) -> tuple + check_route_override(route)
+         — ДРУГОЙ контракт, не дубликат (per-route gateway, не generic limiter)
+    Policy
+      ├─ RateLimitPolicy (core/resilience/resilience_profile.py):
+         frozen dataclass {rps, burst} — часть ResilienceProfile
+      └─ RateLimiterPolicy (infrastructure/resilience/rate_limiter.py):
+         dataclass {resource, limit, window_seconds} + as_rate_limit()
+         — ДРУГИЕ поля, per-resource preset, не дубликат
+    Implementation (infrastructure/resilience/)
+      ├─ RedisRateLimiter: INCR/EXPIRE token-bucket (multi-instance)
+      ├─ DistributedRedisRateLimiter: Lua EVALSHA token-bucket (Redis Cluster)
+      └─ ResourceRateLimiter: facade с per-resource presets (http/grpc/kafka/...)
+    Middleware
+      ├─ GlobalRateLimitMiddleware (entrypoints/middlewares/global_ratelimit.py)
+      └─ RateLimitMiddleware (services/execution/middlewares/rate_limit_middleware.py)
 
-Этот модуль предоставляет общий тип ``RateLimit`` / ``RateLimitExceeded`` /
-``RateLimiter`` Protocol-фасад. Конкретные backend'ы остаются на месте —
-callsite'ы переходят на canonical-имена через миграцию (Step 3.3).
+Правило: новые RL-контракты реализуют ``RateLimiter`` Protocol из этого модуля.
+``RateLimiterProtocol`` в ``core/interfaces/multi_protocol.py`` — thin re-export
+сюда. ``RateLimitChecker`` — отдельный gateway-контракт (другая сигнатура).
 
-Step 3.4 добавит сюда ``BoundedInMemoryBucket`` (size-cap + LRU eviction)
-и ``_pyrate_compat`` shutdown-hook helper.
+Sprint 1 V16 Single-Entry: конкретные backend'ы остаются в infrastructure/,
+callsite'ы переходят на canonical-имена через ``__getattr__`` lazy-import.
 """
 
 from __future__ import annotations

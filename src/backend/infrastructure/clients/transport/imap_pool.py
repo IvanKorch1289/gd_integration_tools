@@ -115,6 +115,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         _logger.info("imap pool stopped", extra={"name": self.name})
 
     async def health(self, mode: str = "fast") -> HealthResult:
+        """Проверяет состояние IMAP-пула: fast — метрики очереди, deep — NOOP через acquire."""
         if not self._started:
             return HealthResult.failed(error="pool not started", mode=mode)
 

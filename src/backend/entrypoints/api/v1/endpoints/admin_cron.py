@@ -86,9 +86,7 @@ def _resolve_callable(ref: str) -> Any:
 @router.get("/list", response_model=list[CronJobSummary])
 async def list_cron_jobs() -> list[CronJobSummary]:
     """Возвращает все зарегистрированные cron-jobs."""
-    from src.backend.infrastructure.scheduler.scheduler_manager import (
-        get_scheduler_manager,
-    )
+    from src.backend.core.scheduler import get_scheduler_manager
 
     manager = get_scheduler_manager()
     return [CronJobSummary(**j) for j in manager.list_jobs()]
@@ -99,9 +97,7 @@ async def list_cron_jobs() -> list[CronJobSummary]:
 )
 async def schedule_cron_job(request: CronScheduleRequest) -> CronJobSummary:
     """Регистрирует новый cron-job. ``callable_ref`` резолвится importlib."""
-    from src.backend.infrastructure.scheduler.scheduler_manager import (
-        get_scheduler_manager,
-    )
+    from src.backend.core.scheduler import get_scheduler_manager
 
     try:
         callable_ref = _resolve_callable(request.callable_ref)
@@ -137,9 +133,7 @@ async def schedule_cron_job(request: CronScheduleRequest) -> CronJobSummary:
 @router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_cron_job(job_id: str) -> None:
     """Удаляет cron-job по id."""
-    from src.backend.infrastructure.scheduler.scheduler_manager import (
-        get_scheduler_manager,
-    )
+    from src.backend.core.scheduler import get_scheduler_manager
 
     manager = get_scheduler_manager()
     try:
@@ -154,9 +148,7 @@ async def delete_cron_job(job_id: str) -> None:
 @router.post("/{job_id}/pause", status_code=status.HTTP_200_OK)
 async def pause_cron_job(job_id: str) -> dict[str, Any]:
     """Приостанавливает scheduled job."""
-    from src.backend.infrastructure.scheduler.scheduler_manager import (
-        get_scheduler_manager,
-    )
+    from src.backend.core.scheduler import get_scheduler_manager
 
     ok = get_scheduler_manager().pause_job(job_id)
     if not ok:
@@ -169,9 +161,7 @@ async def pause_cron_job(job_id: str) -> dict[str, Any]:
 @router.post("/{job_id}/resume", status_code=status.HTTP_200_OK)
 async def resume_cron_job(job_id: str) -> dict[str, Any]:
     """Возобновляет paused job."""
-    from src.backend.infrastructure.scheduler.scheduler_manager import (
-        get_scheduler_manager,
-    )
+    from src.backend.core.scheduler import get_scheduler_manager
 
     ok = get_scheduler_manager().resume_job(job_id)
     if not ok:
@@ -184,9 +174,7 @@ async def resume_cron_job(job_id: str) -> dict[str, Any]:
 @router.post("/{job_id}/run-now", status_code=status.HTTP_200_OK)
 async def run_cron_job_now(job_id: str) -> dict[str, Any]:
     """Sprint 12 K5 W3 — немедленный запуск job (modify next_run_time)."""
-    from src.backend.infrastructure.scheduler.scheduler_manager import (
-        get_scheduler_manager,
-    )
+    from src.backend.core.scheduler import get_scheduler_manager
 
     ok = get_scheduler_manager().run_job_now(job_id)
     if not ok:
@@ -199,9 +187,7 @@ async def run_cron_job_now(job_id: str) -> dict[str, Any]:
 @router.post("/validate", response_model=CronValidationResponse)
 async def validate_cron(request: CronValidationRequest) -> CronValidationResponse:
     """Dry-run preview — валидация выражения + Next N executions."""
-    from src.backend.infrastructure.scheduler.cron_validator import (
-        validate_cron_expression,
-    )
+    from src.backend.core.scheduler import validate_cron_expression
 
     result = validate_cron_expression(
         request.expression,
@@ -220,9 +206,7 @@ async def validate_cron(request: CronValidationRequest) -> CronValidationRespons
 @router.get("/dashboard", response_model=CronDashboardSummary)
 async def cron_dashboard() -> CronDashboardSummary:
     """Sprint 12 K5 W3 — сводка для page 14."""
-    from src.backend.infrastructure.scheduler.scheduler_manager import (
-        get_scheduler_manager,
-    )
+    from src.backend.core.scheduler import get_scheduler_manager
 
     jobs_raw = get_scheduler_manager().list_jobs()
     jobs = [CronJobSummary(**j) for j in jobs_raw]

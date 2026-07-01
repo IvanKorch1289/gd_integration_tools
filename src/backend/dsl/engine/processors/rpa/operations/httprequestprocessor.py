@@ -59,6 +59,7 @@ class HttpRequestProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Выполняет HTTP-запрос через httpx и пишет JSON/text-ответ в target."""
         request_kwargs: dict[str, Any] = {
             "headers": self.headers,
             "timeout": self.timeout,

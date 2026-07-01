@@ -146,7 +146,7 @@ class AuditEventLog:
         # Валидация limit (int, bounded)
         try:
             safe_limit = max(1, min(int(limit), 10000))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             safe_limit = 100
 
         # Build query с bound parameters через {name} syntax
@@ -172,6 +172,7 @@ _audit_log: AuditEventLog | None = None
 
 
 def get_audit_log() -> AuditEventLog:
+    """Возвращает singleton :class:`AuditEventLog` (lazy init)."""
     global _audit_log
     if _audit_log is None:
         _audit_log = AuditEventLog()
@@ -188,6 +189,7 @@ async def emit_audit_event(
     after: dict[str, Any] | None = None,
     **metadata: Any,
 ) -> None:
+    """Создаёт :class:`AuditEvent` и публикует через singleton ``get_audit_log()``."""
     event = AuditEvent(
         who=who,
         what=what,

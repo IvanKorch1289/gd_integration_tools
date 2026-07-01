@@ -59,6 +59,7 @@ _analytics_service_instance: AnalyticsService | None = None
 
 
 def get_analytics_service() -> AnalyticsService:
+    """Фабрика: AnalyticsService."""
     global _analytics_service_instance
     if _analytics_service_instance is None:
         _analytics_service_instance = AnalyticsService(

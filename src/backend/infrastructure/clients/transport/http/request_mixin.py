@@ -45,6 +45,33 @@ class RequestMixin(_HttpClientProtocol):
         read_timeout: float | None = None,
         total_timeout: float | None = None,
     ) -> dict[str, Any]:
+        """Выполняет HTTP-запрос с retry, Circuit Breaker и метриками.
+
+        Оборачивает ``httpx.AsyncClient.request`` в tenacity-retry (exponential
+        backoff) и Circuit Breaker guard. Логирует запрос/ответ, собирает
+        метрики (active_requests, latency, success rate).
+
+        Args:
+            method: HTTP-метод (GET, POST, ...).
+            url: Целевой URL.
+            headers: Дополнительные заголовки (мерджатся с _build_headers).
+            json: JSON-тело запроса.
+            params: Query-параметры.
+            data: Form-data или raw body.
+            files: Multipart-файлы (mapping name → FilePart).
+            auth_token: Bearer-токен для авторизации.
+            response_type: Тип парсинга ответа — ``"auto"``, ``"json"``,
+                ``"text"``, ``"bytes"``.
+            raise_for_status: Если ``True`` — рейзить HTTPStatusError на 4xx/5xx;
+                иначе возвращать стандартизованный error-response.
+            connect_timeout: Таймаут на соединение (override settings).
+            read_timeout: Таймаут на чтение (override settings).
+            total_timeout: Общий таймаут запроса (override settings).
+
+        Returns:
+            Стандартизованный dict с ключами ``status_code``, ``headers``,
+            ``body``, ``elapsed`` и т.д.
+        """
         start_time = monotonic()
         last_exception: Exception | None = None
 

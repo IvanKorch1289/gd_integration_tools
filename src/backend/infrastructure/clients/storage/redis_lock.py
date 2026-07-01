@@ -121,6 +121,11 @@ class RedisLock:
 async def acquire_lock(
     key: str, *, ttl_seconds: int = 60, blocking_timeout: float | None = None
 ) -> RedisLock | None:
+    """Пытается захватить Redis-лок; возвращает :class:`RedisLock` или ``None``.
+
+    ``None`` означает, что лок не удалось захватить (занят или таймаут).
+    Вызывающий код обязан сам вызвать ``lock.release()`` при выходе.
+    """
     lock = RedisLock(key, ttl_seconds=ttl_seconds)
     if await lock.acquire(blocking_timeout=blocking_timeout):
         return lock
@@ -131,6 +136,10 @@ async def acquire_lock(
 async def distributed_lock(
     key: str, *, ttl_seconds: int = 60, blocking_timeout: float | None = None
 ) -> AsyncIterator[bool]:
+    """Async context manager: захватывает Redis-лок, по выходу — отпускает.
+
+    Yielded value: ``True``, если лок захвачен, иначе ``False``.
+    """
     lock = RedisLock(key, ttl_seconds=ttl_seconds)
     acquired = await lock.acquire(blocking_timeout=blocking_timeout)
     try:

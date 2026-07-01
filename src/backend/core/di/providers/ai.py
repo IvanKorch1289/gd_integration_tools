@@ -46,6 +46,7 @@ def get_ai_sanitizer_provider() -> Any:
 
 
 def set_ai_sanitizer_provider(sanitizer: Any) -> None:
+    """Установить override для ``ai_sanitizer`` provider (test-инжекция)."""
     _overrides["ai_sanitizer"] = sanitizer
 
 
@@ -130,6 +131,7 @@ def get_llm_judge_metrics_provider() -> Any:
 
 
 def set_llm_judge_metrics_provider(recorder: Any) -> None:
+    """Установить override для ``llm_judge_metrics`` provider (test-инжекция)."""
     _overrides["llm_judge_metrics"] = recorder
 
 
@@ -152,6 +154,7 @@ def get_model_enum_provider() -> Any:
 
 
 def set_model_enum_provider(callable_: Any) -> None:
+    """Установить override для ``model_enum`` provider (test-инжекция)."""
     _overrides["model_enum"] = callable_
 
 
@@ -167,6 +170,7 @@ def get_vault_refresher_provider() -> Any:
 
 
 def set_vault_refresher_provider(refresher: Any) -> None:
+    """Установить override для ``vault_refresher`` provider (test-инжекция)."""
     _overrides["vault_refresher"] = refresher
 
 
@@ -182,6 +186,7 @@ def get_antivirus_service_provider() -> Any:
 
 
 def set_antivirus_service_provider(service: Any) -> None:
+    """Установить override для ``antivirus_service`` provider (test-инжекция)."""
     _overrides["antivirus_service"] = service
 
 

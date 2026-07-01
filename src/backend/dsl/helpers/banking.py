@@ -29,6 +29,7 @@ _SWIFT = re.compile(r"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")
 
 
 def validate_inn(inn: str) -> bool:
+    """Проверяет ИНН (10 или 12 цифр) по контрольной сумме."""
     if _INN10.match(inn):
         weights = (2, 4, 10, 3, 5, 9, 4, 6, 8)
         check = sum(int(inn[i]) * weights[i] for i in range(9)) % 11 % 10
@@ -43,14 +44,17 @@ def validate_inn(inn: str) -> bool:
 
 
 def validate_kpp(kpp: str) -> bool:
+    """Проверяет формат КПП (9 цифр)."""
     return bool(_KPP.match(kpp))
 
 
 def validate_bic(bic: str) -> bool:
+    """Проверяет формат БИК (9 цифр)."""
     return bool(_BIC.match(bic))
 
 
 def validate_swift(swift: str) -> bool:
+    """Проверяет формат SWIFT/BIC кода (8 или 11 символов)."""
     return bool(_SWIFT.match(swift.upper()))
 
 

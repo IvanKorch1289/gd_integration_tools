@@ -89,6 +89,7 @@ class ReconnectForever(ReconnectionStrategy):
     multiplier: float = 2.0
 
     async def run(self, client_name: str, dial: Callable[[], Awaitable[T]]) -> T:
+        """Вызывает dial с экспоненциальной задержкой до успеха."""
         attempt = 0
         delay = self.initial_delay
         while True:
@@ -134,6 +135,18 @@ class ReconnectN(ReconnectionStrategy):
     multiplier: float = 2.0
 
     async def run(self, client_name: str, dial: Callable[[], Awaitable[T]]) -> T:
+        """Выполняет подключение с экспоненциальной задержкой до N попыток, после чего бросает ReconnectionError.
+
+        Args:
+            client_name: Имя клиента для метрик и логирования.
+            dial: Асинхронная функция-фабрика подключения.
+
+        Returns:
+            Результат успешного вызова ``dial``.
+
+        Raises:
+            ReconnectionError: Если все попытки исчерпаны.
+        """
         delay = self.initial_delay
         last_exc: BaseException | None = None
         for i in range(1, self.attempts + 1):

@@ -69,6 +69,11 @@ LEGITIMATE_STDLIB_FILES = (
         r"logging\.basicConfig",
         "typer CLI basicConfig setup",
     ),
+    (
+        "src/backend/core/observability/logging_helpers.py",
+        r"^import logging$",
+        "stdlib API wrapper (accepts logging.Logger + uses .log/.INFO levels)",
+    ),
 )
 
 
@@ -93,9 +98,9 @@ def test_legitimate_stdlib_use_has_marker(
 
 
 def test_total_legitimate_count_matches_expectation() -> None:
-    """Должно быть ровно 8 legitimate stdlib uses (regression guard)."""
-    assert len(LEGITIMATE_STDLIB_FILES) == 8, (
-        f"LEGITIMATE_STDLIB_FILES должен быть длиной 8, got {len(LEGITIMATE_STDLIB_FILES)}. "
+    """Должно быть ровно 9 legitimate stdlib uses (regression guard)."""
+    assert len(LEGITIMATE_STDLIB_FILES) == 9, (
+        f"LEGITIMATE_STDLIB_FILES должен быть длиной 9, got {len(LEGITIMATE_STDLIB_FILES)}. "
         "При добавлении нового legitimate use — обновите ADR-0179."
     )
 

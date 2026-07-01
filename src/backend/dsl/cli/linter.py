@@ -221,7 +221,7 @@ class DSLLinter:
                 import tomllib
 
                 data = tomllib.loads(toml_path.read_text(encoding="utf-8"))
-            except OSError, ValueError:
+            except (OSError, ValueError):
                 return set()
 
         # route.toml: [[capabilities]] OR [route]::capabilities = [...]
@@ -426,6 +426,17 @@ def main(argv: list[str] | None = None) -> int:
         ),
         as_json: bool = typer.Option(False, "--json", help="Вывод в JSON формате."),
     ) -> None:
+        """Lint DSL-файлов: валидация route.toml + *.dsl.yaml с выводом issues.
+
+        Запускает ``lint_path`` по указанному пути, выводит issues в консоль
+        (rich) или JSON. При ``--strict`` warnings считаются errors. Exit
+        code 1 при наличии errors, 0 — иначе.
+
+        Args:
+            path: Каталог или ``*.dsl.yaml`` файл для проверки.
+            strict: Strict-режим: warnings → errors.
+            as_json: Вывод в JSON формате.
+        """
         if not path.exists():
             console.print(f"[red]ERROR: путь не найден: {path}[/red]")
             raise typer.Exit(code=2)

@@ -59,8 +59,10 @@ async def _pg_jsonb_find_one(
 
 
 def build_mongo_primary() -> MongoFindCallable:
+    """Резолв primary Mongo через chain pattern."""
     return _mongo_find_one
 
 
 def build_mongo_fallbacks() -> dict[str, MongoFindCallable]:
+    """Резолв fallback Mongos через chain pattern."""
     return {"pg_jsonb": _pg_jsonb_find_one}

@@ -92,7 +92,7 @@ async def _check_rate_limit(
         (True, remaining) если OK;
         (False, retry_after) если exceeded.
     """
-    from src.backend.infrastructure.resilience.unified_rate_limiter import (
+    from src.backend.core.resilience import (
         RateLimit,
         RateLimitExceeded,
         get_rate_limiter,

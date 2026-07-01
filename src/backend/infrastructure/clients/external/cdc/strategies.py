@@ -59,7 +59,7 @@ class _PollingStrategy(_CDCStrategy):
             cursor = RedisCursor(f"cdc:cursor:{key}")
             stored = await cursor.get_or_init(default.isoformat())
             return datetime.fromisoformat(stored)
-        except ImportError, ValueError, Exception:
+        except (ImportError, ValueError, Exception):
             return self._last_check_local.get(key, default)
 
     async def _advance_cursor(self, key: str, new_value: datetime) -> None:
@@ -71,7 +71,7 @@ class _PollingStrategy(_CDCStrategy):
 
             cursor = RedisCursor(f"cdc:cursor:{key}")
             await cursor.try_advance(new_value.isoformat())
-        except ImportError, Exception:
+        except (ImportError, Exception):
             logger.debug("CDC cursor advance via Redis failed", exc_info=True)
         self._last_check_local[key] = new_value
 
@@ -80,6 +80,16 @@ class _PollingStrategy(_CDCStrategy):
         sub: CDCSubscription,
         dispatch: Callable[[CDCSubscription, CDCEvent], Awaitable[None]],
     ) -> None:
+        """Polling-based CDC: периодически опрашивает таблицы на новые строки.
+
+        Использует watermark-курсор (Redis CAS, fallback in-memory) по
+        timestamp-колонке. На каждой итерации делает SELECT новых строк
+        batch'ом и диспатчит их как :class:`CDCEvent`.
+
+        Args:
+            sub: Подписка CDC (profile, tables, timestamp_column, batch_size).
+            dispatch: Callback для отправки каждого CDC-события.
+        """
         try:
             from sqlalchemy import text
 
@@ -168,6 +178,19 @@ class _ListenNotifyStrategy(_CDCStrategy):
         sub: CDCSubscription,
         dispatch: Callable[[CDCSubscription, CDCEvent], Awaitable[None]],
     ) -> None:
+        """PostgreSQL LISTEN/NOTIFY CDC — low-latency через pg_notify.
+
+        Подключается к PostgreSQL через asyncpg, слушает канал ``cdc_<table>``
+        (или кастомный). Уведомления складываются в bounded queue, затем
+        парсятся и диспатчатся как :class:`CDCEvent`.
+
+        Args:
+            sub: Подписка CDC (profile, tables, channel).
+            dispatch: Callback для отправки каждого CDC-события.
+
+        Note:
+            Требует триггер на таблице, вызывающий ``pg_notify()`` с JSON payload.
+        """
         try:
             import asyncpg
             import orjson
@@ -256,6 +279,19 @@ class _LogMinerStrategy(_CDCStrategy):
         sub: CDCSubscription,
         dispatch: Callable[[CDCSubscription, CDCEvent], Awaitable[None]],
     ) -> None:
+        """Oracle LogMiner CDC — чтение ``V$LOGMNR_CONTENTS``.
+
+        Поллирует LogMiner view по SCN (system change number), фильтрует
+        по таблицам подписки и операциям (INSERT/UPDATE/DELETE).
+        Производит базовый парсинг ``SQL_REDO`` для определения операции.
+
+        Args:
+            sub: Подписка CDC (profile, tables, batch_size).
+            dispatch: Callback для отправки каждого CDC-события.
+
+        Note:
+            Требует привилегии SELECT ANY TRANSACTION, EXECUTE_CATALOG_ROLE.
+        """
         try:
             from sqlalchemy import text
 

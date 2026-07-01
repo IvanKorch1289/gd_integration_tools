@@ -13,6 +13,7 @@ from src.backend.dsl.engine.middleware import (
 )
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processor_pool import ProcessorPool, get_processor_pool
+from src.backend.infrastructure.observability.tracing import TracingMiddleware
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.validation import pipeline_validator
 
@@ -54,6 +55,7 @@ def _default_middleware_factory() -> MiddlewareChain:
         [
             TimeoutMiddleware(default_timeout=30.0),
             ErrorNormalizerMiddleware(),
+            TracingMiddleware(),
             MetricsMiddleware(),
         ]
     )
@@ -205,7 +207,7 @@ class ExecutionEngine:
                 latency_ms=total_ms,
                 is_error=exchange.status == ExchangeStatus.failed,
             )
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             pass
 
     async def execute(
@@ -217,6 +219,24 @@ class ExecutionEngine:
         headers: dict[str, Any] | None = None,
         context: ExecutionContext | None = None,
     ) -> Exchange[Any]:
+        """Выполняет pipeline: последовательный прогон processors через middleware-chain.
+
+        Проверяет feature-flag и tenant-изоляцию, валидирует pipeline (опционально),
+        создаёт Exchange (или использует переданный) и поочерёдно вызывает каждый
+        processor через middleware-chain с tracing. При ошибке любого processor
+        exchange переводится в ``failed`` и выполнение останавливается.
+
+        Args:
+            pipeline: Конфигурация маршрута (route_id, processors, middleware).
+            exchange: Существующий exchange (если ``None`` — создаётся новый).
+            body: Тело запроса (если exchange не передан).
+            headers: Заголовки запроса (если exchange не передан).
+            context: Контекст выполнения (если ``None`` — создаётся новый).
+
+        Returns:
+            Exchange с финальным статусом (completed / failed) и trace-log
+            в свойстве ``_trace``.
+        """
         self._check_feature_flag(pipeline)
         tenant_id = self._check_tenant_aware(pipeline)
 

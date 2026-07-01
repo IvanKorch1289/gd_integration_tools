@@ -34,6 +34,7 @@ class TokenBudgetProcessor(BaseProcessor):
         return self._encoder
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обрезает текст до лимита токенов и обновляет exchange."""
         if self._source_property:
             text = exchange.properties.get(self._source_property, "")
         else:

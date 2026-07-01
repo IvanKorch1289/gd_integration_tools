@@ -254,7 +254,7 @@ class FTPClient:
             async with self._breaker.guard():
                 async with await self._get_client():
                     return True
-        except ConnectionError, TimeoutError, OSError, CircuitOpen:
+        except (ConnectionError, TimeoutError, OSError, CircuitOpen):
             return False
 
 

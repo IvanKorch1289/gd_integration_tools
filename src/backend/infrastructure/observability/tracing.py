@@ -21,6 +21,7 @@ _tracer = None
 
 
 def get_tracer():
+    """Фабрика: singleton OpenTelemetry tracer."""
     global _tracer
     if _tracer is not None:
         return _tracer
@@ -57,7 +58,7 @@ class TracingMiddleware(ProcessorMiddleware):
             )
             key = f"{id(exchange)}:{processor_name}"
             self._spans[key] = span
-        except AttributeError, TypeError:
+        except (AttributeError, TypeError):
             pass
 
     async def after(
@@ -84,5 +85,5 @@ class TracingMiddleware(ProcessorMiddleware):
                     str(error)[:200],
                 )
             span.end()
-        except AttributeError, TypeError:
+        except (AttributeError, TypeError):
             pass

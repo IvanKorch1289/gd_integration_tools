@@ -38,6 +38,7 @@ def get_api_key_manager_provider() -> Any:
 
 
 def set_api_key_manager_provider(manager: Any) -> None:
+    """Установить override для ``api_key_manager`` provider (test-инжекция)."""
     _overrides["api_key_manager"] = manager
 
 
@@ -80,6 +81,10 @@ def get_jwt_backend_provider() -> Any:
 
 
 def set_jwt_backend_provider(backend: Any) -> None:
+    """Установить/сбросить override для ``jwt_backend`` provider (test-инжекция).
+
+    ``None`` сбрасывает override и возвращает к singleton.
+    """
     if backend is None:
         _overrides.pop("jwt_backend", None)
     else:
@@ -102,6 +107,10 @@ def get_jwks_cache_provider() -> Any:
 
 
 def set_jwks_cache_provider(cache: Any) -> None:
+    """Установить/сбросить override для ``jwks_cache`` provider (test-инжекция).
+
+    ``None`` сбрасывает override и возвращает к singleton.
+    """
     if cache is None:
         _overrides.pop("jwks_cache", None)
     else:

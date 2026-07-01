@@ -129,6 +129,7 @@ class InMemoryQdrantFallback:
         limit: int = 5,
         query_filter: Any = None,
     ) -> list[Any]:
+        """In-memory fallback-поиск по косинусному сходству без Qdrant."""
         vecs = self._vec.get(collection_name, {})
         coll = self._coll.get(collection_name, {})
         if not vecs:

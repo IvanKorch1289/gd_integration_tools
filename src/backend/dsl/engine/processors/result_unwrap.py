@@ -110,6 +110,7 @@ class ResultUnwrapProcessor(BaseProcessor):
         exchange.set_property(target, value)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Разворачивает Result(Ok/Err) и пишет значение в target, при Err — fail."""
         try:
             from src.backend.core.config.features import feature_flags
 

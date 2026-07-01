@@ -171,6 +171,16 @@ class CircuitBreakerProcessor(BaseProcessor):
         return f"{self._DSL_NAMESPACE}.{route_id}"
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполяет processors под Circuit Breaker guard с fallback-цепочкой.
+
+        Создаёт/получает CB из registry (per-route namespace). При открытом
+        circuit — переход на fallback processors. При падении основного
+        процессора внутри CB guard — также fallback.
+
+        Args:
+            exchange: Текущий exchange; route_id используется для breaker-name.
+            context: Контекст выполнения маршрута.
+        """
         from src.backend.core.resilience.breaker import (
             BreakerSpec,
             CircuitOpen,

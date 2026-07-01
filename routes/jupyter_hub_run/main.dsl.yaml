@@ -1,0 +1,138 @@
+# Jupyter Hub Run Route (S170 NEW + S170 EXT).
+#
+# Поддерживает все способы передачи notebook:
+#
+# 1) POST /api/v1/jupyter/run         — JSON body (registry by name)
+# 2) POST /api/v1/jupyter/run-file    — multipart/form-data (upload .ipynb)
+# 3) POST /api/v1/jupyter/run-inline  — JSON body с base64 notebook
+# 4) GraphQL mutation `jupyterHubRun` — через auto-registered action
+# 5) SOAP envelope `<JupyterHubRun>`  — через auto-registered action
+# 6) MCP tool `jupyter_hub_run`       — через auto-registered action
+# 7) WebSocket message                — через auto-registered action
+#
+# Capabilities: jupyter.hub.run, net.outbound, audit.write.
+# Feature flag: jupyter_hub_enabled (default OFF).
+#
+# Pipeline (per endpoint):
+#   1. Лог старта
+#   2. feature flag check (через capability gate)
+#   3. call_function → services.jupyter.hub_run_adapter:run
+#       → run_hub_notebook (validate → papermill inject → Hub kernel)
+#   4. audit + response
+
+route_id: jupyter_hub_run
+source:
+  http:
+    method: POST
+    path: /api/v1/jupyter/run
+
+steps:
+  - log:
+      level: info
+      message: "jupyter_hub_run processing notebook=${body.notebook_name}"
+
+  - policy:
+      retry:
+        attempts: 1
+        backoff: none
+        on: timeout
+
+  - call_function:
+      ref: services.jupyter.hub_run_adapter:run
+      kwargs_from: body
+      result_property: hub_result
+
+  - audit:
+      action: jupyter.hub_run.completed
+      details:
+        notebook: "${hub_result.notebook_name}"
+        cells_executed: "${hub_result.cells_executed}"
+        duration_s: "${hub_result.duration_seconds}"
+
+  - to:
+      response:
+        code: 200
+        body:
+          status: ok
+          notebook_name: "${hub_result.notebook_name}"
+          cells_executed: "${hub_result.cells_executed}"
+          duration_seconds: "${hub_result.duration_seconds}"
+          errors: "${hub_result.errors}"
+          outputs: "${hub_result.outputs}"
+
+
+---
+# Multipart upload endpoint (.ipynb file as form-data field "notebook_file")
+route_id: jupyter_hub_run_file
+source:
+  http:
+    method: POST
+    path: /api/v1/jupyter/run-file
+
+steps:
+  - log:
+      level: info
+      message: "jupyter_hub_run_file upload"
+
+  - policy:
+      retry:
+        attempts: 1
+        backoff: none
+        on: timeout
+
+  # Save uploaded file to temp path (file_watch-style processor),
+  # then invoke orchestrator with explicit notebook_path.
+  - call_function:
+      ref: services.jupyter.hub_run_adapter:run
+      kwargs:
+        # ``body`` from multipart upload handler provides file bytes under
+        # ``body.notebook_file.content`` (bytes) и ``body.notebook_file.name``.
+        # DSL evaluates ``${{body.notebook_file.content}}`` as bytes literal.
+        notebook_name: "${{body.notebook_file.name}}"
+        notebook_content: "${{body.notebook_file.content}}"
+        parameters: "${{body.parameters or {}}}"
+        user_name: "${{body.user_name or 'default'}}"
+      result_property: hub_result
+
+  - audit:
+      action: jupyter.hub_run.completed.upload
+      details:
+        notebook: "${hub_result.notebook_name}"
+        cells_executed: "${hub_result.cells_executed}"
+
+  - to:
+      response:
+        code: 200
+        body:
+          status: ok
+          notebook_name: "${hub_result.notebook_name}"
+          cells_executed: "${hub_result.cells_executed}"
+          duration_seconds: "${hub_result.duration_seconds}"
+          errors: "${hub_result.errors}"
+
+
+---
+# Inline base64 endpoint (для JSON-RPC протоколов, удобно для SOAP/GraphQL прокси)
+route_id: jupyter_hub_run_inline
+source:
+  http:
+    method: POST
+    path: /api/v1/jupyter/run-inline
+
+steps:
+  - log:
+      level: info
+      message: "jupyter_hub_run_inline"
+
+  - call_function:
+      ref: services.jupyter.hub_run_adapter:run
+      kwargs_from: body
+      result_property: hub_result
+
+  - audit:
+      action: jupyter.hub_run.completed.inline
+
+  - to:
+      response:
+        code: 200
+        body: "${hub_result}"

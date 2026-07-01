@@ -183,4 +183,5 @@ class TechService:
 
 @app_state_singleton("tech_service", factory=TechService)
 def get_tech_service() -> TechService:
+    """Фабрика: TechService."""
     raise NotImplementedError  # заменяется декоратором

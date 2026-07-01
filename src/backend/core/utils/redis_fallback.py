@@ -25,10 +25,25 @@ from typing import Any, Protocol, runtime_checkable
 from cachetools import TTLCache
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.metrics_registry import metrics_registry
 
 __all__ = ("FallbackCache", "RedisErrorCategory", "RedisLike")
 
 _logger = get_logger("core.utils.redis_fallback")
+
+# ────────────────── Prometheus metrics (M3.1) ──────────────────
+# Регистрируем через metrics_registry singleton — идемпотентно, без циклов.
+# metrics_registry НЕ импортирует redis_fallback → no circular import.
+redis_fallback_operations_total = metrics_registry.counter(
+    "redis_fallback_operations_total",
+    "Total Redis fallback operations by op and outcome (success/degraded)",
+    labels=("op", "outcome"),
+)
+redis_fallback_consecutive_failures = metrics_registry.gauge(
+    "redis_fallback_consecutive_failures",
+    "Current consecutive Redis failures per op (gauge, decreases on recovery)",
+    labels=("op",),
+)
 
 
 class RedisErrorCategory:
@@ -146,6 +161,10 @@ class FallbackCache:
         """Обозначить, что Redis сейчас недоступен (lazy degrade)."""
         self._degraded = True
         self._consecutive_failures += 1
+        redis_fallback_operations_total.labels(op=op, outcome="degraded").inc()
+        redis_fallback_consecutive_failures.labels(op=op).set(
+            self._consecutive_failures
+        )
         _logger.warning(
             "redis fallback engaged op=%s failures=%d error=%s",
             op,
@@ -156,6 +175,9 @@ class FallbackCache:
     def _mark_recovered(self) -> None:
         """Обозначить, что Redis снова отвечает (lazy recovery)."""
         if self._degraded:
+            redis_fallback_operations_total.labels(
+                op="any", outcome="success"
+            ).inc()
             _logger.info(
                 "redis recovered after %d failures", self._consecutive_failures
             )

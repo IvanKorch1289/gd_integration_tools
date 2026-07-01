@@ -8,6 +8,8 @@ Wave C поставляет только Protocol + Pydantic-модели + in-m
 — Wave D, в `infrastructure/workflow/`.
 """
 
+from typing import Any
+
 from src.backend.core.workflow.backend import (
     WorkflowBackend,
     WorkflowHandle,
@@ -16,10 +18,23 @@ from src.backend.core.workflow.backend import (
 )
 from src.backend.core.workflow.fake_backend import FakeWorkflowBackend
 
+
+def __getattr__(name: str) -> Any:
+    """Lazy re-export create_workflow_backend из infrastructure (ponytail)."""
+    if name == "create_workflow_backend":
+        from src.backend.infrastructure.workflow.factory import (
+            create_workflow_backend,
+        )
+
+        return create_workflow_backend
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 __all__ = (
     "FakeWorkflowBackend",
     "WorkflowBackend",
     "WorkflowHandle",
     "WorkflowResult",
     "WorkflowStatus",
+    "create_workflow_backend",
 )

@@ -72,6 +72,7 @@ class TavilySearchProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Выполняет web-поиск через Tavily API и пишет результаты в target."""
         # Lazy import — capability-checked facade (D102)
         from src.backend.core.integrations.web_search import get_tavily_provider_class
         ProviderClass = get_tavily_provider_class()

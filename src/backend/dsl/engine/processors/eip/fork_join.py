@@ -59,6 +59,19 @@ class ForkJoinProcessor(BaseProcessor):
         self._timeout_seconds = timeout_seconds
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Параллельно выполняет ветки (fork) и объединяет результаты (join).
+
+        Каждая ветка получает собственный копию exchange (body + headers).
+        Ветки выполняются concurrently через ``asyncio.gather``; при
+        ``timeout_seconds`` — оборачивается в ``asyncio.wait_for``. Если любая
+        ветка упала — exchange переходит в ``failed``. Успешные результаты
+        агрегируются (collect/merge/first/all) и записываются в body.
+
+        Args:
+            exchange: Текущий exchange; результаты — в свойстве
+                ``fork_join_results`` и ``in_message.body``.
+            context: Контекст выполнения маршрута.
+        """
         # Делегируем выполнение в ParallelProcessor (battle-tested).
         # Run inline — повторяет логику ParallelProcessor._run_branch,
         # но это OK: композиция > дублирование.

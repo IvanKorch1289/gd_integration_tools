@@ -236,6 +236,7 @@ class EmailReadProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Подключается к IMAP-серверу, читает все письма из папки и пишет их в target."""
         import imaplib
 
         def _fetch() -> list[dict[str, str]]:

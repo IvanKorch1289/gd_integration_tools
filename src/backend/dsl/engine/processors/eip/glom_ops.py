@@ -183,6 +183,7 @@ class GlomTransformProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Трансформирует body через glom spec с поддержкой default/skip_missing."""
         body = exchange.in_message.body
         # Build target dict via per-key glom with default.
         new_body: dict[str, Any] = {}
@@ -195,7 +196,7 @@ class GlomTransformProcessor(BaseProcessor):
                     # НЕ pass default — glom raises PathAccessError для
                     # missing → skip output key.
                     value = glom.glom(body, source_path)
-            except glom.PathAccessError, glom.CheckError, glom.CoalesceError:
+            except (glom.PathAccessError, glom.CheckError, glom.CoalesceError):
                 if self._skip_missing:
                     value = self._default
                 else:

@@ -75,6 +75,7 @@ class PostgresCertBackend(CertBackend):
         description: str | None = None,
         uploaded_by: str | None = None,
     ) -> CertEntry:
+        """Сохраняет сертификат (upsert) в PostgreSQL с инкрементом версии."""
         fp = _fingerprint(pem)
         async with main_session_manager.create_session() as session:
             async with main_session_manager.transaction(session):

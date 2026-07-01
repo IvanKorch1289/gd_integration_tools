@@ -53,9 +53,8 @@ class FtpUploadProcessor(BaseProcessor):
         self.local_path = local_path
         self.remote_path = remote_path
 
-    async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
-    ) -> None:
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Загружает локальный файл на FTP-сервер."""
         if not os.path.exists(self.local_path):
             raise FileNotFoundError(f"FtpUploadProcessor: {self.local_path}")
 

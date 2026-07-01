@@ -179,4 +179,5 @@ class MessageReplayService:
 
 @app_state_singleton("replay_service", factory=MessageReplayService)
 def get_replay_service() -> MessageReplayService:
+    """Фабрика: MessageReplayService."""
     raise NotImplementedError  # заменяется декоратором

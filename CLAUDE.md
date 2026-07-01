@@ -59,6 +59,7 @@
 4. `ARCHITECTURE.md`;
 5. `.claude/rules/...`;
 6. `.claude/DECISIONS.md`;
+6.5. `.claude/DECISIONS.md` → `docs/rationale/` (YAGNI-обоснования);
 7. `.claude/KNOWN_ISSUES.md`;
 8. `.claude/CONTEXT.md`.
 
@@ -509,6 +510,7 @@ python tools/checks/check_layers.py
 - Settings: 30+ pydantic-settings модулей + hot-reload (watchfiles) verified
 - YAML profiles: 5 files (base + dev + dev_light + staging + prod) = 1274 lines, 38 keys
 - Constants: src/backend/core/config/constants.py (Constants dataclass + 7 re-exports)
+- `core/config/mixins.py` — миксины для новых Settings (rationale: docs/rationale/SETTINGS_MIXINS_YAGNI.md).
 - Consul: ConsulCertBackend + ConsulConfigSettingsSource (opt-in, file fallback)
 - D-rules D155-D159 (config patterns)
 

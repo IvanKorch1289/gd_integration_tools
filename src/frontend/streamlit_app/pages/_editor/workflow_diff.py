@@ -25,7 +25,7 @@ def render_workflow_diff() -> None:
         "Color-coded: зелёный=added, красный=removed, оранжевый=modified."
     )
     try:
-        from src.backend.services.dsl_portal import (
+        from src.backend.core.frontend_facade import (
             compute_step_diff,
             get_global_registry,
             to_graphviz,

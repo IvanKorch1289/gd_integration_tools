@@ -39,6 +39,7 @@ class FanoutDLQWriter:
         self._require_all = require_all
 
     async def write(self, envelope: DLQEnvelope) -> None:
+        """Параллельно пишет envelope во все writer'ы через TaskGroup."""
         async with asyncio.TaskGroup() as tg:
             results = [
                 tg.create_task(self._safe_write(w, envelope)) for w in self._writers

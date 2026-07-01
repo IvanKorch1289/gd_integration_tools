@@ -407,7 +407,7 @@ def _interactive_prompts() -> dict[str, object] | None:
             "with_frontend": with_frontend,
             "overwrite": overwrite,
         }
-    except KeyboardInterrupt, EOFError:
+    except (KeyboardInterrupt, EOFError):
         return None
 
 

@@ -8,6 +8,8 @@ if TYPE_CHECKING:
         _DSLStepExecutorProtocol,
     )
 
+from src.backend.infrastructure.workflow.executor.sequential_mixin import _run_processor
+
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.workflow.executor.state import WorkflowStep
@@ -58,9 +60,7 @@ class ControlFlowMixin:
             if sub_step.kind == "sequential":
                 for proc in sub_step.processors:
                     try:
-                        result = await asyncio.wait_for(
-                            proc(body), timeout=self._timeout_per_step_s
-                        )
+                        body = await _run_processor(proc, body, self._timeout_per_step_s)
                     except TimeoutError:
                         return StepResult(
                             outcome=StepOutcome.FAILED,
@@ -74,8 +74,6 @@ class ControlFlowMixin:
                                 )
                             ],
                         )
-                    if isinstance(result, dict):
-                        body = result
             else:
                 _logger.warning(
                     "branch sub-step kind=%s not supported inline, skipping",
@@ -141,9 +139,7 @@ class ControlFlowMixin:
             if body_step.kind == "sequential":
                 for proc in body_step.processors:
                     try:
-                        result = await asyncio.wait_for(
-                            proc(body), timeout=self._timeout_per_step_s
-                        )
+                        body = await _run_processor(proc, body, self._timeout_per_step_s)
                     except TimeoutError:
                         return StepResult(
                             outcome=StepOutcome.FAILED,
@@ -157,8 +153,6 @@ class ControlFlowMixin:
                                 )
                             ],
                         )
-                    if isinstance(result, dict):
-                        body = result
             else:
                 _logger.warning(
                     "loop body step kind=%s not supported inline, skipping",
@@ -223,13 +217,9 @@ class ControlFlowMixin:
                         if body_step.kind == "sequential":
                             for proc in body_step.processors:
                                 try:
-                                    result = await asyncio.wait_for(
-                                        proc(body), timeout=self._timeout_per_step_s
-                                    )
+                                    body = await _run_processor(proc, body, self._timeout_per_step_s)
                                 except TimeoutError:
                                     raise
-                                if isinstance(result, dict):
-                                    body = result
                     return body
 
             results = []
@@ -276,9 +266,7 @@ class ControlFlowMixin:
                     if body_step.kind == "sequential":
                         for proc in body_step.processors:
                             try:
-                                result = await asyncio.wait_for(
-                                    proc(final_body), timeout=self._timeout_per_step_s
-                                )
+                                final_body = await _run_processor(proc, final_body, self._timeout_per_step_s)
                             except TimeoutError:
                                 return StepResult(
                                     outcome=StepOutcome.FAILED,
@@ -292,9 +280,6 @@ class ControlFlowMixin:
                                         )
                                     ],
                                 )
-                            if isinstance(result, dict):
-                                final_body = result
-
         return StepResult(
             outcome=StepOutcome.CONTINUE,
             events=events

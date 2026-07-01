@@ -106,6 +106,7 @@ class PipesAndFiltersProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Прогоняет exchange через последовательность фильтров (Pipes & Filters EIP)."""
         total = len(self._steps)
         exchange.set_property("pipes_filters.total_steps", total)
         exchange.set_property("pipes_filters.completed", 0)

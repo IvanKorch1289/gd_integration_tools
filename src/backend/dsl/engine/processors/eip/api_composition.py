@@ -136,6 +136,7 @@ _cache: InMemoryCacheStore | None = None
 
 
 def get_cache_store() -> InMemoryCacheStore:
+    """Возвращает singleton :class:`InMemoryCacheStore` (lazy init)."""
     global _cache
     if _cache is None:
         _cache = InMemoryCacheStore()
@@ -143,6 +144,7 @@ def get_cache_store() -> InMemoryCacheStore:
 
 
 def reset_cache_store() -> InMemoryCacheStore:
+    """Сбрасывает singleton :class:`InMemoryCacheStore` и возвращает новый."""
     global _cache
     _cache = InMemoryCacheStore()
     return _cache
@@ -246,6 +248,18 @@ class APICompositionProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Параллельно опрашивает все API-источники и мержит результаты.
+
+        Все sources запрашиваются concurrently через ``asyncio.gather``. Если
+        source упал без fallback — exchange переводится в ``failed``. Результаты
+        мержатся по стратегии (merge_dicts / list / custom / as-is) и пишутся
+        в ``out_message``.
+
+        Args:
+            exchange: Текущий exchange; результаты — в свойстве
+                ``composition_results``, ошибки — в ``composition_errors``.
+            context: Контекст выполнения маршрута.
+        """
         tasks = [self._fetch_source(s) for s in self._sources]
         raw_results = await asyncio.gather(*tasks, return_exceptions=True)
 

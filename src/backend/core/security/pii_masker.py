@@ -31,7 +31,8 @@ API:
 * passport — RU ``XXXX XXXXXX``;
 * credit_card — 13–19 цифр группами;
 * jwt — Bearer-токен ``eyJ...`` (3 base64-сегмента через точку);
-* iban — IBAN до 34 символов.
+* iban — IBAN до 34 символов;
+* ssn — US Social Security Number ``XXX-XX-XXXX`` (M2.1).
 
 Порядок применения регексов важен — более специфичные паттерны
 применяются первыми, чтобы не быть «съеденными» более общими.
@@ -62,6 +63,8 @@ _RU_PASSPORT = re.compile(r"\b\d{4}\s\d{6}\b")
 _JWT = re.compile(r"\beyJ[\w\-]+\.[\w\-]+\.[\w\-]+\b")
 # IBAN — 2 буквы страны + 2 контрольные + до 30 символов (всего 15–34 длиной).
 _IBAN = re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b")
+# SSN (US Social Security Number) — 3-2-4 через дефис (M2.1).
+_SSN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 
 
 # Порядок применения. Specific-first: разделительные форматы и токены до
@@ -69,6 +72,7 @@ _IBAN = re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b")
 _DEFAULT_ORDER: tuple[str, ...] = (
     "jwt",
     "iban",
+    "ssn",
     "snils",
     "card",
     "passport",
@@ -88,6 +92,7 @@ def build_default_patterns() -> dict[str, re.Pattern[str]]:
     return {
         "jwt": _JWT,
         "iban": _IBAN,
+        "ssn": _SSN,
         "snils": _SNILS,
         "card": _CARD,
         "passport": _RU_PASSPORT,
@@ -101,7 +106,7 @@ class PIIMasker:
     """Маскировка PII в строках и структурах данных.
 
     Применяет набор compiled-regex-ов в детерминированном порядке.
-    По умолчанию использует :func:`build_default_patterns` (8 типов PII).
+    По умолчанию использует :func:`build_default_patterns` (9 типов PII).
 
     Examples:
         >>> masker = PIIMasker()

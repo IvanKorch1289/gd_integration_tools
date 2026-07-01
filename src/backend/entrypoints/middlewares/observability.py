@@ -154,6 +154,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         request: "Request",
         call_next: Callable[["Request"], Awaitable["Response"]],
     ) -> "Response":
+        """Оборачивает request observability-событием (duration, status, IDs)."""
         start = time.monotonic()
         response = await call_next(request)
         duration_ms = (time.monotonic() - start) * 1000

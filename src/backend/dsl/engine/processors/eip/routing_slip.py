@@ -114,6 +114,12 @@ class RoutingSlipProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет цепочку процессоров (Routing Slip) последовательно для одного exchange.
+
+        Args:
+            exchange: Текущий обмен с сообщением.
+            context: Контекст выполнения процессора.
+        """
         steps = self._steps_resolver(exchange)
         if asyncio.iscoroutine(steps):
             steps = await steps

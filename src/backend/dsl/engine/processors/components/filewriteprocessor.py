@@ -36,6 +36,19 @@ class FileWriteProcessor(BaseProcessor):
         self._encoding = encoding
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Асинхронно записывает тело exchange в файл (JSON/CSV/text/bytes).
+
+        Путь берётся из ``self._path`` или ``self._path_property``. Формат
+        определяется автоматически по расширению (``.json``, ``.csv``) или
+        явно через ``self._format``. Перед записью путь проходит
+        path-traversal валидацию.
+
+        Args:
+            exchange: Текущий exchange; body используется как содержимое файла.
+                Результат — в свойстве ``file_written``, путь — в заголовке
+                ``CamelFileName``.
+            context: Контекст выполнения маршрута.
+        """
         import aiofiles
 
         from src.backend.dsl.engine.processors._path_safety import (

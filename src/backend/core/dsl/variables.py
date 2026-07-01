@@ -220,6 +220,7 @@ class ConsulVariableBackend:
         return f"dsl/vars/{scope}/{key}"
 
     async def get(self, key: str, scope: VariableScope) -> Any | None:
+        """Читает переменную из Consul с in-process кэшем и TTL."""
         path = self._key_path(key, scope)
         # Cache hit + not expired → return cached.
         cached = self._cache.get(path)
@@ -329,6 +330,7 @@ class PostgresVariableBackend:
     name: str = "postgres"
 
     async def get(self, key: str, scope: VariableScope) -> Any | None:
+        """Читает переменную из PostgreSQL; None если сессия не задана."""
         if self.session is None:
             return None
         from sqlalchemy import select

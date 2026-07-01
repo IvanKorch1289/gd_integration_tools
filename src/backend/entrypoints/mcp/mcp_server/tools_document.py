@@ -43,6 +43,7 @@ def _register_document_tools(mcp: Any) -> None:
         ),
     )
     async def documents_to_markdown(path: str, mime: str | None = None) -> str:
+        """Конвертирует файл в Markdown через markitdown с fallback на plain-text."""
         from pathlib import Path as _Path
 
         from src.backend.core.ai.fs_facade import AIFsFacade

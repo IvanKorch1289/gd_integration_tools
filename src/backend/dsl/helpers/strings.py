@@ -9,6 +9,7 @@ __all__ = ("mask", "redact_pii", "slugify")
 
 
 def slugify(value: str) -> str:
+    """Преобразует строку в URL-slug (ASCII, lowercase, дефисы вместо пробелов)."""
     value = unicodedata.normalize("NFKD", value)
     value = value.encode("ascii", "ignore").decode("ascii")
     value = re.sub(r"[^\w\s-]", "", value).strip().lower()
@@ -18,6 +19,7 @@ def slugify(value: str) -> str:
 def mask(
     value: str, *, keep_first: int = 2, keep_last: int = 2, char: str = "*"
 ) -> str:
+    """Маскирует середину строки, оставляя ``keep_first``/``keep_last`` символов."""
     if len(value) <= keep_first + keep_last:
         return char * len(value)
     return (

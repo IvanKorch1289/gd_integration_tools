@@ -40,6 +40,7 @@ class TryCatchProcessor(BaseProcessor):
         self._finally = finally_processors or []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет try-процессоры, при ошибке — catch, затем всегда — finally."""
         caught = False
         try:
             await run_sub_processors(self._try, exchange, context)
@@ -140,6 +141,7 @@ class RetryProcessor(BaseProcessor):
         return base
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Повторяет sub-pipeline с backoff через tenacity, сбрасывая состояние Exchange между попытками."""
         from tenacity import AsyncRetrying, RetryError, stop_after_attempt
 
         last_error: str | None = None
@@ -177,7 +179,7 @@ class RetryProcessor(BaseProcessor):
                             last_error,
                         )
                         raise _RetryAbort(last_error or "failed")
-        except RetryError, _RetryAbort:
+        except (RetryError, _RetryAbort):
             exchange.fail(
                 f"All {self._max_attempts} attempts failed. Last: {last_error}"
             )

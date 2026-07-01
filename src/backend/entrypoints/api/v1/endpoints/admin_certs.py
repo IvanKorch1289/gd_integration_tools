@@ -65,7 +65,7 @@ async def list_expiring_certs(
     """
     if cert_store is None:
         from src.backend.core.config.cert_store import cert_store_settings
-        from src.backend.infrastructure.security.cert_store import CertStore
+        from src.backend.core.security.cert_store_facade import CertStore
 
         cert_store = CertStore.from_settings(cert_store_settings)
 

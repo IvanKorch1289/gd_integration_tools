@@ -276,11 +276,11 @@ async def test_start_invokes_callback(monkeypatch: pytest.MonkeyPatch) -> None:
 
     try:
         await asyncio.wait_for(task, timeout=2.0)
-    except asyncio.TimeoutError, asyncio.CancelledError:
+    except (asyncio.TimeoutError, asyncio.CancelledError):
         task.cancel()
         try:
             await task
-        except asyncio.CancelledError, Exception:
+        except (asyncio.CancelledError, Exception):
             pass
 
     assert len(received_events) >= 1
@@ -315,11 +315,11 @@ async def test_start_callback_error_does_not_stop(
 
     try:
         await asyncio.wait_for(task, timeout=2.0)
-    except asyncio.TimeoutError, asyncio.CancelledError:
+    except (asyncio.TimeoutError, asyncio.CancelledError):
         task.cancel()
         try:
             await task
-        except asyncio.CancelledError, Exception:
+        except (asyncio.CancelledError, Exception):
             pass
 
     # Проверяем: on_event был вызван хотя бы раз (и упал)

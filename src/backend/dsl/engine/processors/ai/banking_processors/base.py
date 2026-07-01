@@ -82,6 +82,7 @@ class _BankingAIProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Выполняет AI-обработку: строит prompt, вызывает LLM через instructor+litellm и пишет результат."""
         # Feature gate
         try:
             from src.backend.core.config.features import feature_flags

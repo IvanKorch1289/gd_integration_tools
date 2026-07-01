@@ -57,8 +57,10 @@ def _memory_singleton():
 
 
 def build_cache_primary() -> CacheGetCallable:
+    """Возвращает primary cache reader (Redis)."""
     return _redis_get
 
 
 def build_cache_fallbacks() -> dict[str, CacheGetCallable]:
+    """Возвращает словарь fallback cache readers (Memcached + in-memory)."""
     return {"memcached": _memcached_get, "memory": _memory_get}

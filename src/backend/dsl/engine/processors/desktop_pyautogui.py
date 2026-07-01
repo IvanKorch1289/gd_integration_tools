@@ -78,6 +78,18 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет desktop RPA-действие через pyautogui (screenshot/click/type/...).
+
+        Поддерживаемые действия: ``screenshot``, ``click``, ``type_text``,
+        ``press_key``, ``move``. Координаты, текст и клавиши берутся из
+        параметров. Результат (success-флаг) записывается в свойство
+        ``result_property``.
+
+        Args:
+            exchange: Текущий exchange; результат — в свойстве
+                ``result_property`` (default: ``pyautogui_result``).
+            context: Контекст выполнения маршрута.
+        """
         try:
             import pyautogui
         except ImportError:

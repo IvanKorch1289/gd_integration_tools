@@ -49,6 +49,12 @@ class ScatterGatherProcessor(BaseProcessor):
         )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет Scatter-Gather: параллельно рассылает сообщение во все маршруты и собирает результаты.
+
+        Args:
+            exchange: Текущий обмен с сообщением-источником.
+            context: Контекст выполнения процессора.
+        """
         tasks = [
             self._call_route(
                 rid, exchange.in_message.body, exchange.in_message.headers, context

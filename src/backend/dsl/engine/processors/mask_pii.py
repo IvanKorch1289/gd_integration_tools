@@ -198,7 +198,7 @@ class MaskPiiProcessor(BaseProcessor):
             # пишем в properties для downstream-консумеров.
             try:
                 setattr(request, attr, masked)
-            except AttributeError, TypeError:
+            except (AttributeError, TypeError):
                 exchange.set_property(f"masked_{attr}", masked)
 
     # ── Serialization ──

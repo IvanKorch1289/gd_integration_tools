@@ -133,6 +133,7 @@ class ZipArchiveProcessor(BaseProcessor):
         return result
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Запаковывает или распаковывает ZIP-архив из exchange body."""
         try:
             from src.backend.core.config.features import feature_flags
 

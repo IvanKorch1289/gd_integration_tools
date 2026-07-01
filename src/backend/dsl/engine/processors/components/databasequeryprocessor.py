@@ -47,6 +47,7 @@ class DatabaseQueryProcessor(BaseProcessor):
             raise ValueError(f"SQL command '{first_word}' is not allowed")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет параметризованный SQL-запрос с валидацией и пишет результат в exchange."""
         from sqlalchemy import text
 
         from src.backend.infrastructure.database.database import get_db_manager

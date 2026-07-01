@@ -64,6 +64,9 @@ class RpaPolicyMiddleware(BaseHTTPMiddleware):
         request: "Request",
         call_next: Callable[["Request"], Awaitable["Response"]],
     ) -> "Response":
+        """Применить role-gate к RPA endpoints + логировать policy violations."""
+        if not request.url.path.startswith(self.rpa_path_prefix):
+            return await call_next(request)
         if not request.url.path.startswith(self.rpa_path_prefix):
             return await call_next(request)
 

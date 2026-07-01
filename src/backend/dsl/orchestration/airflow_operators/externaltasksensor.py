@@ -84,6 +84,22 @@ class ExternalTaskSensor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Ожидает достижения внешним Airflow-задачей заданного состояния.
+
+        Поллит ``task_state_getter`` с интервалом ``poll_interval_s``, пока
+        состояние не попадёт в ``allowed`` (или ``check_fn`` не вернёт True).
+        При попадании в ``failed_states`` — рейзит RuntimeError. При истечении
+        ``timeout_s`` — рейзит TimeoutError.
+
+        Args:
+            exchange: Текущий exchange; ``execution_date`` берётся из заголовка.
+                Финальное состояние — в свойстве ``external_task_sensor.last_state``.
+            context: Контекст выполнения маршрута.
+
+        Raises:
+            TimeoutError: При превышении timeout.
+            RuntimeError: При достижении failed-состояния внешней задачей.
+        """
         execution_date = exchange.in_message.get_header("execution_date")
         import time
 

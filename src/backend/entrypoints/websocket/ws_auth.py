@@ -351,6 +351,7 @@ _instance: WSAuthenticator | None = None
 
 
 def get_ws_authenticator() -> WSAuthenticator:
+    """Возвращает singleton :class:`WSAuthenticator` (lazy init)."""
     global _instance
     if _instance is None:
         _instance = WSAuthenticator()

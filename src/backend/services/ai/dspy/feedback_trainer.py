@@ -131,16 +131,29 @@ class DSPyFeedbackTrainer:
         accuracy = (correct / total) if total > 0 else 0.0
         return {"total": total, "correct": correct, "accuracy": accuracy}
 
-    def optimize(self) -> dict[str, Any]:
-        """Optimization stub (D287, full DSPy в M28+).
+    async def optimize(
+        self,
+        *,
+        prompt_name: str = "rag_default",
+        tenant_id: str | None = None,
+        limit: int = 1000,
+    ) -> dict[str, Any]:
+        """Запустить prompt optimization через FeedbackTrainer.train().
 
         Returns:
-            dict with status and config.
+            dict с результатом: status, examples, prompt_version, backend, elapsed.
+            ``{"status": "noop", "reason": "..."}`` если trainer не сконфигурирован.
         """
         if self._inner is None:
             return {"status": "noop", "reason": "no inner trainer configured"}
+
+        result = await self._inner.train(
+            prompt_name=prompt_name, tenant_id=tenant_id, limit=limit
+        )
         return {
-            "status": "ready",
-            "backend": "dspy",
-            "inner": str(type(self._inner).__name__),
+            "status": "completed",
+            "examples_used": result.examples_used,
+            "prompt_version": result.prompt_version,
+            "backend": result.backend,
+            "elapsed_seconds": round(result.elapsed_seconds, 2),
         }

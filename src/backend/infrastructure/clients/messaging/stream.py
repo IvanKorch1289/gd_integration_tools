@@ -408,6 +408,7 @@ _stream_client: StreamClient | None = None
 
 
 def get_stream_client() -> StreamClient:
+    """Возвращает singleton :class:`StreamClient` (lazy init)."""
     global _stream_client
     if _stream_client is None:
         _stream_client = StreamClient()

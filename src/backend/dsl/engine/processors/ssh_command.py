@@ -99,6 +99,12 @@ class SshCommandProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет команду на удалённом хосте через SSH и записывает результат в свойства exchange.
+
+        Args:
+            exchange: Текущий обмен с параметрами подключения.
+            context: Контекст выполнения процессора.
+        """
         import asyncssh
 
         password = self._resolve_password(exchange)

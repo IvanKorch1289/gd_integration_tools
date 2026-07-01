@@ -56,6 +56,17 @@ class Neo4jQueryProcessor(BaseProcessor):
                 )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет Neo4j Cypher-запрос с параметрами и safety-check.
+
+        Подключается к Neo4j через ``AsyncGraphDatabase``, выполняет Cypher
+        с параметрами (из body при ``params_from_body``). Destructive-запросы
+        без MATCH-guard отклоняются на __init__. Результат — список dict-records.
+
+        Args:
+            exchange: Текущий exchange; параметры — из body (опционально).
+                Результат — в свойстве ``output``.
+            context: Контекст выполнения маршрута.
+        """
         try:
             from neo4j import AsyncGraphDatabase
         except ImportError:
@@ -215,6 +226,12 @@ class PriorityEnqueueProcessor(BaseProcessor):
         self._max_size = max_size
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Помещает сообщение в приоритетную очередь Redis (ZADD с составным score).
+
+        Args:
+            exchange: Текущий обмен с телом сообщения и заголовками.
+            context: Контекст выполнения процессора.
+        """
         import uuid
 
         import orjson

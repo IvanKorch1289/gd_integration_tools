@@ -177,7 +177,7 @@ class ImapMonitor:
         finally:
             try:
                 await client.logout()
-            except OSError, RuntimeError, AttributeError:
+            except (OSError, RuntimeError, AttributeError):
                 logger.debug("IMAP logout failed", exc_info=True)
 
     async def _fetch_messages(self, client: Any) -> list[dict[str, Any]]:
@@ -258,7 +258,7 @@ class ImapMonitor:
                     "x-email-subject": msg_data.get("subject", ""),
                 },
             )
-        except OSError, RuntimeError, ValueError, KeyError:
+        except (OSError, RuntimeError, ValueError, KeyError):
             logger.exception("Ошибка обработки email: %s", msg_data.get("subject"))
 
     async def _poll_loop(self) -> None:
@@ -268,7 +268,7 @@ class ImapMonitor:
                 messages = await self._fetch_unseen()
                 for msg_data in messages:
                     await self._dispatch_message(msg_data)
-            except OSError, RuntimeError, ConnectionError, TimeoutError:
+            except (OSError, RuntimeError, ConnectionError, TimeoutError):
                 logger.exception("IMAP poll ошибка")
 
             await asyncio.sleep(self.config.poll_interval)
@@ -315,7 +315,7 @@ class ImapMonitor:
             finally:
                 try:
                     await client.logout()
-                except OSError, RuntimeError, AttributeError:
+                except (OSError, RuntimeError, AttributeError):
                     logger.debug("IMAP logout failed", exc_info=True)
 
     async def start(self) -> None:

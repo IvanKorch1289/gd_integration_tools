@@ -145,4 +145,5 @@ class AnomalyDetector:
 
 @app_state_singleton("anomaly_detector", factory=AnomalyDetector)
 def get_anomaly_detector() -> AnomalyDetector:
+    """Фабрика: AnomalyDetectorService."""
     raise NotImplementedError  # заменяется декоратором

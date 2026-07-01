@@ -59,6 +59,7 @@ def _register_route_tools(mcp: Any) -> None:
         description="Выполняет DSL-маршрут по route_id с указанным payload. Возвращает результат Exchange.",
     )
     async def route_execute(route_id: str, payload: str = "{}") -> str:
+        """Выполняет DSL-маршрут по route_id с переданным payload, возвращает результат Exchange."""
         from src.backend.dsl.engine.execution_engine import ExecutionEngine
         from src.backend.dsl.registry import route_registry
 
@@ -71,7 +72,7 @@ def _register_route_tools(mcp: Any) -> None:
 
         try:
             parsed = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             parsed = {"raw": payload}
 
         engine = ExecutionEngine()

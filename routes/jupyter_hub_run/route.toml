@@ -1,0 +1,21 @@
+# route.toml (V11): manifest for route 'jupyter_hub_run' (S170 NEW).
+name = "jupyter_hub_run"
+version = "0.1.0"
+requires_core = ">=0.20,<0.21"
+
+# Capability gate: выполнение ноутбуков на Jupyter Hub.
+capabilities = ["net.outbound", "jupyter.hub.run", "audit.write"]
+
+tenant_aware = true
+feature_flag = { enabled = true, gate = "jupyter_hub_enabled" }
+
+slo = { p95_ms = 60000, timeout_ms = 600000 }
+schedule = "never"
+
+[transport]
+pool_size = 8
+message_timeout_s = 600.0
+default_timeout_s = 600.0
+
+[feature_flags]
+default = ["default"]

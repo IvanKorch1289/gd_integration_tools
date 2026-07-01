@@ -71,6 +71,7 @@ class MessageExpirationProcessor(BaseProcessor):
         self._clock: Clock = clock or RealClock()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Проверяет возраст сообщения и отбрасывает просроченные."""
         created_at = exchange.in_message.headers.get(self._header)
         if created_at is None:
             created_at = exchange.properties.get("created_at")
@@ -79,7 +80,7 @@ class MessageExpirationProcessor(BaseProcessor):
 
         try:
             age = self._clock.time() - float(created_at)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return
 
         if age <= self._ttl:

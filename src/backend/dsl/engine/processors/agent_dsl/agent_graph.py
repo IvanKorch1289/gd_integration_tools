@@ -48,6 +48,15 @@ Python contract::
             {"key": "decision", "workflow_id": "credit_decision", "description": "..."},
         ],
     )
+
+Security:
+    Pre-flight AgentToolPolicy gate (M2.1): перед вызовом ``sandbox.run_react``
+    processors фильтрует ``tool_actions`` через зарегистрированный
+    :class:`AgentToolPolicy` из DI. Если после фильтрации список пуст — sandbox
+    НЕ вызывается, возвращается ``{"error": "all tools denied by AgentToolPolicy",
+    "graph_type": "react"}`` (early-error). Defensive default: если policy
+    не зарегистрирована — ``tool_actions`` пропускаются без фильтрации
+    (backwards-compatible).
 """
 
 from __future__ import annotations
@@ -255,10 +264,18 @@ class AgentGraphProcessor(BaseAIProcessor):
         self, exchange: Exchange[Any], context: ExecutionContext
     ) -> dict[str, Any]:
         """Execute ReAct agent via configured sandbox."""
+        # Pre-flight AgentToolPolicy gate (M2.1): если все tools зафильтрованы
+        # по policy — не вызываем sandbox, возвращаем early-error.
+        filtered_tools = self._filter_tools_by_policy(self.tool_actions)
+        if not filtered_tools:
+            return {
+                "error": "all tools denied by AgentToolPolicy",
+                "graph_type": "react",
+            }
         prompt = self._prompt_with_context(exchange)
         result = await self._sandbox.run_react(
             prompt=prompt,
-            tool_actions=self.tool_actions,
+            tool_actions=filtered_tools,
             model=self.model,
             temperature=0.0,
             durable=False,
@@ -267,6 +284,40 @@ class AgentGraphProcessor(BaseAIProcessor):
         if result.success:
             return result.data
         return {"error": result.data.get("error", "unknown"), "graph_type": "react"}
+
+    def _filter_tools_by_policy(
+        self, tool_actions: list[str]
+    ) -> list[str]:
+        """Filter tool_actions через AgentToolPolicy (S170 P0-7, M2.1).
+
+        Defensive default: если policy не зарегистрирована в DI-реестре
+        или registry падает — пропускаем все tools без фильтрации
+        (backwards-compatible с pre-policy кодом).
+
+        Returns:
+            Список tools, для которых ``policy.check(tool) == "allow"``.
+        """
+        try:
+            from src.backend.ai.policy import AgentToolPolicy
+            from src.backend.core.svcs_registry import get_service, has_service
+        except ImportError:
+            return list(tool_actions)
+
+        try:
+            if not has_service(AgentToolPolicy):
+                return list(tool_actions)
+            policy = get_service(AgentToolPolicy)
+        except Exception:
+            return list(tool_actions)
+
+        allowed: list[str] = []
+        for tool in tool_actions:
+            try:
+                if policy.check(tool) == "allow":
+                    allowed.append(tool)
+            except Exception:
+                continue
+        return allowed
 
     def _extract_prompt(self, exchange: Exchange[Any]) -> str:
         """Extract prompt from exchange body or property."""

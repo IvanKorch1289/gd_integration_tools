@@ -203,7 +203,7 @@ def _emit_login_submit_event(
         details=None, severity=None, extra=None)``.
     """
     try:
-        from src.backend.core.audit.facade import emit_audit_safe
+        from src.backend.core.frontend_facade import emit_audit_safe
 
         emit_audit_safe(
             event="frontend.auth.login_submit",

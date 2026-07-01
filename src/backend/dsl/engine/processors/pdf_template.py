@@ -131,6 +131,19 @@ class PdfTemplateProcessor(BaseProcessor):
         exchange.set_property(self._target, value)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Генерирует PDF из Jinja2-шаблона через reportlab (sandboxed render).
+
+        Проверяет feature-flag ``proc_pdf_template``, рендерит Jinja2-шаблон
+        в ``SandboxedEnvironment``, затем рисует текст на canvas reportlab
+        (A4/A3/A5/LETTER) с автопереносом страниц. Результат (PDF bytes)
+        записывается в target (body-поле, property или exchange).
+
+        Args:
+            exchange: Текущий exchange; контекстные переменные для шаблона
+                собираются из exchange. Результат — в target (default:
+                ``body.pdf_bytes``).
+            context: Контекст выполнения маршрута.
+        """
         try:
             from src.backend.core.config.features import feature_flags
 

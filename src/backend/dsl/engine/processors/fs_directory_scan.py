@@ -133,6 +133,22 @@ class DirectoryScanProcessor(BaseProcessor):
             )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Депрекированный directory scan processor (shim на FilteredDirectoryScanProcessor).
+
+        Разрешает путь из ``self._path`` или exchange.body, проверяет path-traversal
+        и существование директории, затем делегирует к
+        :class:`FilteredDirectoryScanProcessor` (async-safe). Результат
+        обогащается metadata (size, mtime) и сортируется.
+
+        Args:
+            exchange: Текущий exchange; путь берётся из ``self._path`` либо
+                ``in_message.body["path"]``. Результат — в ``self._result_property``.
+            context: Контекст выполнения маршрута.
+
+        Warning:
+            Депрекирован (S172 M1.2). Используйте
+            :class:`FilteredDirectoryScanProcessor`.
+        """
         # Resolve path.
         path = self._path
         if not path:

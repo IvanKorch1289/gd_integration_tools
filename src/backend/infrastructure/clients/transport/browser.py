@@ -354,6 +354,7 @@ _browser_client: BrowserClient | None = None
 
 
 def get_browser_client() -> BrowserClient:
+    """Возвращает singleton :class:`BrowserClient` (lazy init)."""
     global _browser_client
     if _browser_client is None:
         _browser_client = BrowserClient()

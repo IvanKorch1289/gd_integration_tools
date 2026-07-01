@@ -72,8 +72,10 @@ async def _slack_send(payload: dict[str, Any]) -> None:
 
 
 def build_express_primary() -> NotificationCallable:
+    """Резолв primary Express broker через chain pattern."""
     return _express_send
 
 
 def build_express_fallbacks() -> dict[str, NotificationCallable]:
+    """Резолв fallback Express brokers через chain pattern."""
     return {"smtp": _smtp_send, "slack": _slack_send}

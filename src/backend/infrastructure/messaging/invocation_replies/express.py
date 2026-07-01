@@ -70,6 +70,7 @@ class ExpressReplyChannel(InvocationReplyChannel):
         return ReplyChannelKind.EXPRESS
 
     async def send(self, response: InvocationResponse) -> None:
+        """Доставляет invocation-response через Express notifier (Telegram-бот)."""
         recipient = self._resolve_recipient(response)
         if recipient is None:
             logger.warning(
@@ -141,6 +142,6 @@ def _format_body(response: InvocationResponse) -> str:
     payload["mode"] = response.mode.value
     try:
         body = json.dumps(payload, ensure_ascii=False, indent=2, default=str)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         body = repr(response)
     return f"```\n{body}\n```"

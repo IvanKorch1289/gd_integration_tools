@@ -235,6 +235,7 @@ class ConnectorRegistry:
 
 #: Глобальный helper для бизнес-кода — не хранит состояние, делегирует в singleton.
 def get_registry() -> ConnectorRegistry:
+    """Фабрика: connector registry singleton."""
     return ConnectorRegistry.instance()
 
 

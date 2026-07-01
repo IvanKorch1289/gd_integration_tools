@@ -143,6 +143,7 @@ class WebhookSignatureProcessor(BaseProcessor):
                 exchange.set_property("_signature_error", reason)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Проверяет HMAC-подпись webhook-запроса и применяет политику при несовпадении."""
         try:
             from src.backend.core.config.features import feature_flags
 

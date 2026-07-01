@@ -40,7 +40,22 @@ from src.backend.core.config.constants import consts
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.retry_budget import RetryBudget, RetryBudgetExhausted
 
-__all__ = ("Retry", "RetryBudgetExhausted", "RetryPolicy", "with_retry")
+__all__ = (
+    "Retry",
+    "RetryBudgetExhausted",
+    "RetryPolicy",
+    "make_async_retry",
+    "with_retry",
+)
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy re-export make_async_retry из infrastructure (ponytail)."""
+    if name == "make_async_retry":
+        from src.backend.infrastructure.resilience.retry import make_async_retry
+
+        return make_async_retry
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 logger = get_logger("resilience.retry")
 

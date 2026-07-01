@@ -45,9 +45,7 @@ def _collect_brokers() -> list[tuple[str, Any]]:
     корректный AsyncAPI без каналов вместо HTTP 500.
     """
     try:
-        from src.backend.infrastructure.clients.messaging.stream import (
-            get_stream_client,
-        )
+        from src.backend.core.messaging.stream_facade import get_stream_client
 
         client = get_stream_client()
     except Exception as _:

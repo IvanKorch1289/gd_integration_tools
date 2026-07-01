@@ -27,4 +27,6 @@ class TestWorkflowPublicApi:
             "WorkflowHandle",
             "WorkflowResult",
             "WorkflowStatus",
+            # S171 C1: lazy __getattr__ для create_workflow_backend (layer fix)
+            "create_workflow_backend",
         }

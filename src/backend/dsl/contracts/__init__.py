@@ -30,6 +30,14 @@ class Expectation:
     schema_ref: str | None = None
 
     def check(self, rows: Iterable[dict[str, Any]]) -> ExpectationResult:
+        """Проверяет строки на соответствие правилам (not_null, unique, regex, range).
+
+        Args:
+            rows: Итерируемая коллекция словарей-строк для валидации.
+
+        Returns:
+            Результат проверки с количеством провалившихся строк.
+        """
         rows = list(rows)
         failed = 0
         seen: set[Any] = set()
@@ -50,7 +58,7 @@ class Expectation:
             if self.range is not None and v is not None:
                 try:
                     nv = float(v)
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     failed += 1
                     continue
                 lo, hi = self.range
@@ -64,6 +72,7 @@ class Expectation:
 def check_expectations(
     expectations: list[Expectation], rows: Iterable[dict[str, Any]]
 ) -> list[ExpectationResult]:
+    """Проверяет список :class:`Expectation` против набора строк; возвращает результаты."""
     rows = list(rows)
     return [e.check(rows) for e in expectations]
 

@@ -39,6 +39,7 @@ class PartitionProcessor(BaseProcessor):
         self._predicate = predicate
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Разделяет список на matched/unmatched по field или predicate."""
         body = exchange.in_message.body
         if not isinstance(body, list):
             exchange.set_out(body=body, headers=dict(exchange.in_message.headers))
@@ -112,6 +113,7 @@ class FlattenProcessor(BaseProcessor):
         self._depth = depth
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Расплющивает nested lists до заданной глубины."""
         body = exchange.in_message.body
         if not isinstance(body, list):
             exchange.set_out(body=body, headers=dict(exchange.in_message.headers))
@@ -155,6 +157,7 @@ class UniqueProcessor(BaseProcessor):
         self._key_fn = key_fn
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """EIP Unique: оставить только первый элемент по каждому key (set-style dedup)."""
         body = exchange.in_message.body
         if not isinstance(body, list):
             exchange.set_out(body=body, headers=dict(exchange.in_message.headers))

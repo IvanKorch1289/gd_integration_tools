@@ -72,7 +72,7 @@ class QuotaTracker:
         )
         try:
             redis_client = _get_redis_factory_fn()()
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             return {"remaining": limit, "limit": limit, "reset_at": 0}
 
         now = int(time.time())

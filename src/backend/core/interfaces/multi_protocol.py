@@ -102,13 +102,9 @@ class RedisPubSubProtocol(Protocol):
         ...
 
 
-@runtime_checkable
-class RateLimiterProtocol(Protocol):
-    """Контракт rate limiter (per-tenant / per-namespace)."""
-
-    async def check(self, identifier: str, policy: Any) -> dict[str, Any]:
-        """Проверить лимит и вернуть метаданные (remaining, reset и т.д.)."""
-        ...
+# RL_CONSOLIDATION: thin re-export из canonical Protocol.
+# Идентичная сигнатура check(identifier, policy) -> dict[str, Any].
+from src.backend.core.resilience.rate_limiter import RateLimiter as RateLimiterProtocol
 
 
 @runtime_checkable

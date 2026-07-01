@@ -168,7 +168,7 @@ class MultiAgentSupervisor:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "multi_agent_supervisor_enabled", False))
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             return False
 
     def _is_langgraph_available(self) -> bool:

@@ -51,7 +51,7 @@ def _emit_crud_event(
     Graceful fallback (warning log).
     """
     try:
-        from src.backend.core.audit.facade import emit_audit_safe
+        from src.backend.core.frontend_facade import emit_audit_safe
 
         details: dict = {
             "page_key": "10_Заказы",

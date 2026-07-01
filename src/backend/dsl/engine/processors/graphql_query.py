@@ -97,6 +97,17 @@ class GraphQLQueryProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет GraphQL-запрос (POST) и записывает результат в exchange.
+
+        Формирует GraphQL payload (query, variables, operationName), добавляет
+        auth и content-type заголовки, отправляет POST через httpx. Проверяет
+        HTTP-статус, парсит JSON, обнаруживает GraphQL-level errors.
+
+        Args:
+            exchange: Текущий exchange; результат (data) — в ``out_message``
+                или свойстве ``result_property``.
+            context: Контекст выполнения маршрута.
+        """
         from src.backend.infrastructure.clients.transport.http_httpx import (
             get_httpx_client,
         )
@@ -154,6 +165,7 @@ class GraphQLQueryProcessor(BaseProcessor):
             exchange.fail(f"GraphQL query failed: {exc}")
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализация в YAML: endpoint + query + опц. variables/operation_name."""
         spec: dict[str, Any] = {"endpoint": self._endpoint, "query": self._query}
         if self._variables:
             spec["variables"] = self._variables

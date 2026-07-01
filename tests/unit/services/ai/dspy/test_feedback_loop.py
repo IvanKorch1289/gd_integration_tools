@@ -32,13 +32,13 @@ class TestDSPyFeedbackLoop:
         assert feedback["correct"] == 1
         assert feedback["accuracy"] == 0.5
 
-    def test_optimize_stub(self) -> None:
-        """optimize() — stub (D287, full DSPy в M28+)."""
+    @pytest.mark.asyncio
+    async def test_optimize_noop(self) -> None:
+        """optimize() без trainer → noop status."""
         from src.backend.services.ai.dspy.feedback_trainer import (
             DSPyFeedbackTrainer,
         )
         trainer = DSPyFeedbackTrainer()
-        result = trainer.optimize()
-        # Stub returns current config
+        result = await trainer.optimize()
         assert result is not None
-        assert "status" in result
+        assert result["status"] == "noop"

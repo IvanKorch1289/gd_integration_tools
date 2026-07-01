@@ -106,6 +106,18 @@ class ParallelProcessor(BaseProcessor):
         return branch_name, result, branch_exchange.error
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Параллельно выполняет несколько веток processors с разными стратегиями.
+
+        Стратегия ``all`` (default): ``asyncio.gather`` всех веток, ожидание всех.
+        Стратегия ``first``: ``asyncio.FIRST_COMPLETED``, отмена остальных веток.
+
+        Каждая ветка получает копию exchange. Результаты — в свойстве
+        ``parallel_results``, ошибки — в ``parallel_errors``.
+
+        Args:
+            exchange: Текущий exchange; body+headers копируются в каждую ветку.
+            context: Контекст выполнения маршрута.
+        """
         body = exchange.in_message.body
         headers = exchange.in_message.headers
 

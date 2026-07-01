@@ -44,6 +44,7 @@ def get_action_bus_service_provider() -> Any:
 
 
 def set_action_bus_service_provider(service: Any) -> None:
+    """Установить override для ``action_bus_service`` provider (test-инжекция)."""
     _overrides["action_bus_service"] = service
 
 
@@ -89,6 +90,7 @@ def get_scheduler_manager_provider() -> Any:
 
 
 def set_scheduler_manager_provider(manager: Any) -> None:
+    """Установить override для ``scheduler_manager`` provider (test-инжекция)."""
     _overrides["scheduler_manager"] = manager
 
 
@@ -107,6 +109,7 @@ def get_workflow_event_store_provider() -> Any:
 
 
 def set_workflow_event_store_provider(cls: Any) -> None:
+    """Установить override для ``workflow_event_store`` provider (test-инжекция)."""
     _overrides["workflow_event_store"] = cls
 
 
@@ -119,6 +122,7 @@ def get_workflow_state_store_provider() -> Any:
 
 
 def set_workflow_state_store_provider(cls: Any) -> None:
+    """Установить override для ``workflow_state_store`` provider (test-инжекция)."""
     _overrides["workflow_state_store"] = cls
 
 
@@ -142,6 +146,7 @@ def get_workflow_main_session_provider() -> Any:
 
 
 def set_workflow_main_session_provider(manager: Any) -> None:
+    """Установить override для ``workflow_main_session`` provider (test-инжекция)."""
     _overrides["workflow_main_session"] = manager
 
 
@@ -176,6 +181,7 @@ def get_resilience_coordinator_provider() -> Any:
 
 
 def set_resilience_coordinator_provider(coordinator: Any) -> None:
+    """Установить override для ``resilience_coordinator`` provider (test-инжекция)."""
     _overrides["resilience_coordinator"] = coordinator
 
 
@@ -188,6 +194,7 @@ def get_resilience_components_report_provider() -> Any:
 
 
 def set_resilience_components_report_provider(callable_: Any) -> None:
+    """Установить override для ``resilience_components_report`` provider (test-инжекция)."""
     _overrides["resilience_components_report"] = callable_
 
 
@@ -203,6 +210,7 @@ def get_rate_limiter_provider() -> Any:
 
 
 def set_rate_limiter_provider(limiter: Any) -> None:
+    """Установить override для ``rate_limiter`` provider (test-инжекция)."""
     _overrides["rate_limiter"] = limiter
 
 
@@ -233,6 +241,7 @@ def get_app_logger_provider() -> Any:
 
 
 def set_app_logger_provider(logger: Any) -> None:
+    """Установить override для ``app_logger`` provider (test-инжекция)."""
     _overrides["app_logger"] = logger
 
 
@@ -248,6 +257,7 @@ def get_correlation_context_setter_provider() -> Any:
 
 
 def set_correlation_context_setter_provider(setter: Any) -> None:
+    """Установить override для ``correlation_context_setter`` provider (test-инжекция)."""
     _overrides["correlation_context_setter"] = setter
 
 
@@ -260,6 +270,7 @@ def get_grpc_logger_provider() -> Any:
 
 
 def set_grpc_logger_provider(logger: Any) -> None:
+    """Установить override для ``grpc_logger`` provider (test-инжекция)."""
     _overrides["grpc_logger"] = logger
 
 
@@ -272,6 +283,7 @@ def get_stream_logger_provider() -> Any:
 
 
 def set_stream_logger_provider(logger: Any) -> None:
+    """Установить override для ``stream_logger`` provider (test-инжекция)."""
     _overrides["stream_logger"] = logger
 
 

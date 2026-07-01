@@ -84,7 +84,7 @@ def _fallback_snapshot(window_hours: int) -> dict[str, Any]:
     try:
         # S6 fix: используем dsl_portal facade вместо прямого импорта
         # ``src.backend.services.ai.costs`` (R3.10d).
-        from src.backend.services.dsl_portal import get_ai_cost_snapshot
+        from src.backend.core.frontend_facade import get_ai_cost_snapshot
 
         snap = get_ai_cost_snapshot(
             window_hours=window_hours,

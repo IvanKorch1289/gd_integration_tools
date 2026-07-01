@@ -42,6 +42,20 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        """Аудитирует HTTP-запрос: WHO/WHAT/CORRELATION + fire-and-forget запись.
+
+        Извлекает тело (из кэша или потока), выполняет downstream, затем
+        формирует audit-event (client_id, IP, payload_hash, request_id,
+        correlation_id, latency). Запись идёт асинхронно в Redis stream и
+        ClickHouse (fire-and-forget, ошибки не прерывают запрос).
+
+        Args:
+            request: Входящий HTTP-запрос.
+            call_next: Следующий middleware/endpoint в цепочке.
+
+        Returns:
+            Response от downstream.
+        """
         start = _time.monotonic()
         body_bytes: bytes = b""
 

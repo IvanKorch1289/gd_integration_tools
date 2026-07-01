@@ -35,6 +35,7 @@ def _register_convert_tools(mcp: Any) -> None:
         "Пример: from_format='json', to_format='yaml', data='{\"key\": \"value\"}'",
     )
     async def convert_format(from_format: str, to_format: str, data: str) -> str:
+        """Конвертирует данные между json/yaml/xml/csv/msgpack/bson через стратегии."""
         from src.backend.dsl.engine.processors.converters import _STRATEGIES
 
         key = f"{from_format}→{to_format}"
@@ -50,7 +51,7 @@ def _register_convert_tools(mcp: Any) -> None:
             if from_format in ("json", "dict"):
                 try:
                     input_data = orjson.loads(data)
-                except orjson.JSONDecodeError, TypeError:
+                except (orjson.JSONDecodeError, TypeError):
                     pass
 
             result = strategy.convert(input_data)

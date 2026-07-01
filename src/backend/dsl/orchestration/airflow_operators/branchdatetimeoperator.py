@@ -63,6 +63,7 @@ class BranchDateTimeOperator(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выбирает ветку по попаданию текущего времени в заданный интервал."""
         if self._use_execution_date:
             exec_date = exchange.in_message.get_header("execution_date")
             if isinstance(exec_date, datetime):

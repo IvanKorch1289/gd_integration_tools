@@ -68,6 +68,7 @@ class PerplexitySearchProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Выполняет web-поиск через Perplexity и записывает ответ в exchange."""
         # Lazy import — capability-checked facade (D102)
         from src.backend.core.integrations.web_search import get_perplexity_provider_class
         ProviderClass = get_perplexity_provider_class()

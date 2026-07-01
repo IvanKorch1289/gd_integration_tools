@@ -101,7 +101,7 @@ async def test_file_watcher_emits_added(tmp_path: Path) -> None:
         write_task.cancel()
         try:
             await write_task
-        except asyncio.CancelledError, Exception:
+        except (asyncio.CancelledError, Exception):
             pass
 
     assert event.change_type == "added"
@@ -131,7 +131,7 @@ async def test_file_watcher_emits_modified(tmp_path: Path) -> None:
         modify_task.cancel()
         try:
             await modify_task
-        except asyncio.CancelledError, Exception:
+        except (asyncio.CancelledError, Exception):
             pass
 
     assert event.change_type in (
@@ -163,7 +163,7 @@ async def test_file_watcher_emits_deleted(tmp_path: Path) -> None:
         delete_task.cancel()
         try:
             await delete_task
-        except asyncio.CancelledError, Exception:
+        except (asyncio.CancelledError, Exception):
             pass
 
     assert event.change_type == "deleted"

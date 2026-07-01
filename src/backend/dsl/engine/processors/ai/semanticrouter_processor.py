@@ -42,6 +42,18 @@ class SemanticRouterProcessor(BaseProcessor):
         self._namespace = namespace
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Маршрутизирует запрос по семантической близости через RAG search.
+
+        Извлекает query из body (через ``query_field``), выполняет RAG-поиск
+        по intents. Если top-score ≥ threshold — маршрутизирует в
+        соответствующий route. Иначе — fallback на ``default_route`` или fail.
+
+        Args:
+            exchange: Текущий exchange; query — из body. Результат —
+                intent и score в свойствах ``semantic_route_intent`` /
+                ``semantic_route_score``.
+            context: Контекст выполнения маршрута.
+        """
         body = exchange.in_message.body
         query = body.get(self._query_field, "") if isinstance(body, dict) else str(body)
 

@@ -124,6 +124,7 @@ class OrderServiceServicer(object):
 
 
 def add_OrderServiceServicer_to_server(servicer, server):
+    """Регистрирует OrderService servicer на gRPC сервере."""
     rpc_method_handlers = {
             'CreateOrder': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateOrder,

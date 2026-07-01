@@ -74,6 +74,12 @@ class BatchInsertProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет пакетную вставку (INSERT) строк в таблицу через SQLAlchemy executemany.
+
+        Args:
+            exchange: Текущий обмен со списком записей для вставки.
+            context: Контекст выполнения процессора.
+        """
         items = self._items if self._items is not None else exchange.in_message.body
         if not isinstance(items, list) or not items:
             exchange.set_property("batch_insert_result", {"affected": 0})
@@ -147,6 +153,22 @@ class BatchUpdateProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет batch UPDATE через SQLAlchemy executemany с группировкой.
+
+        Элементы группируются по идентичному набору update-колонок, каждая
+        группа выполняется одним bulk-запросом. Все идентификаторы (table,
+        columns, key_field) проходят SQL-injection валидацию (fail-fast).
+
+        Args:
+            exchange: Текущий exchange; items берутся из ``self._items`` либо
+                из ``in_message.body``. Результат — в свойстве
+                ``batch_update_result``.
+            context: Контекст выполнения маршрута.
+
+        Note:
+            Количество затронутых строк — в ``batch_update_result.affected``.
+            Исходные items передаются в ``out_message`` без изменений.
+        """
         items = self._items if self._items is not None else exchange.in_message.body
         if not isinstance(items, list) or not items:
             exchange.set_property("batch_update_result", {"affected": 0})
@@ -226,6 +248,16 @@ class BatchDeleteProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет batch DELETE через SQLAlchemy (``= ANY(:ids)`` для Postgres).
+
+        IDs берутся из ``self._ids`` либо ``in_message.body``. Table и key_field
+        проходят SQL-injection валидацию.
+
+        Args:
+            exchange: Текущий exchange; ids — из ``self._ids`` или body.
+                Результат — в свойстве ``batch_delete_result``.
+            context: Контекст выполнения маршрута.
+        """
         ids = self._ids if self._ids is not None else exchange.in_message.body
         if not isinstance(ids, list) or not ids:
             exchange.set_property("batch_delete_result", {"affected": 0})

@@ -140,6 +140,7 @@ class DbCallProcedureProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Вызывает хранимую SQL-процедуру через внешний session manager."""
         try:
             from src.backend.core.config.features import feature_flags
 

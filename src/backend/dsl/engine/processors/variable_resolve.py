@@ -93,6 +93,17 @@ class VariableResolveProcessor(BaseProcessor):
         self._resolver: ExpressionResolver | None = None
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Рекурсивно резолвит ``${var(...)}``-плейсхолдеры в dict-body exchange.
+
+        Обходит body (dict/list/str) и заменяет все ``${var(name)}`` на
+        значения из :class:`DSLVariableStore` в указанном scope. Опционально
+        при ``fail_on_unresolved=True`` — рейзит при нерезолвящихся переменных.
+
+        Args:
+            exchange: Текущий exchange; body (dict) обходит и обновляется in-place.
+                Результат резолва — в свойстве ``_variable_resolve_result``.
+            context: Контекст выполнения маршрута (для scope-резолва).
+        """
         body = exchange.in_message.body
         if not isinstance(body, dict):
             _logger.debug("variable_resolve: body is not dict, skipping")

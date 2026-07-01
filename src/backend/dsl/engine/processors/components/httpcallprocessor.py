@@ -44,6 +44,7 @@ class HttpCallProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет HTTP-запрос через общий http-клиент и пишет ответ в exchange."""
         from src.backend.infrastructure.clients.transport.http import (
             get_http_client_dependency,
         )

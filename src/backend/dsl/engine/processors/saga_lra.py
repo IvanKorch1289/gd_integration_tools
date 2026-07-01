@@ -104,6 +104,24 @@ class SagaLRAProcessor(BaseProcessor):
         self._run_id = run_id
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет distributed Saga (LRA) с checkpointing и compensation.
+
+        Шаги выполняются последовательно; после каждого шага состояние
+        сохраняется в БД (:class:`WorkflowStateRepository`). При ошибке
+        запускается compensation в обратном порядке для уже выполненных шагов.
+
+        Если репозиторий недоступен, выполняется in-memory fallback через
+        :meth:`_run_in_memory`.
+
+        Args:
+            exchange: Текущий exchange; используется для передачи workflow_id,
+                run_id и результата шагов.
+            context: Контекст выполнения маршрута.
+
+        Note:
+            При неудаче exchange переводится в ``failed`` с указанием номера
+            шага. При успехе устанавливается свойство ``saga_completed = True``.
+        """
         wf_id_str = (
             self._workflow_id
             or exchange.get_property("saga_workflow_id")

@@ -74,6 +74,7 @@ class RagQueryProcessor(BaseProcessor):
         self._output_property = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет RAG-запрос (adaptive/dense/sparse/hybrid) и пишет ответ в exchange."""
         body = exchange.in_message.body
         query = body.get(self._query_field, "") if isinstance(body, dict) else str(body)
         if not query:
@@ -116,6 +117,7 @@ class RagQueryProcessor(BaseProcessor):
         exchange.set_property(self._output_property, payload)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Возвращает DSL-спецификацию параметров RAG-запроса."""
         spec: dict[str, Any] = {}
         if self._query_field != "question":
             spec["query_field"] = self._query_field

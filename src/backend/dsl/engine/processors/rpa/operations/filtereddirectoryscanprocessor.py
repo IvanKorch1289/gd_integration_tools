@@ -69,6 +69,17 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Async-safe сканирование директории с фильтрами, cap и timeout.
+
+        Выполняет glob-сканирование в thread (``asyncio.to_thread``) с защитой
+        по timeout (``asyncio.wait_for``). Применяет фильтры: min/max size,
+        modified_after. Safety cap — ``max_results`` (предотвращает OOM/hang
+        на больших деревьях).
+
+        Args:
+            exchange: Текущий exchange; результат — в target (default: ``body.files``).
+            context: Контекст выполнения маршрута.
+        """
         def _scan() -> list[str]:
             root = Path(self.directory)
             if not root.exists():

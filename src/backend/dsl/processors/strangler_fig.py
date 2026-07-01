@@ -241,6 +241,12 @@ class StranglerFigProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Маршрутизирует запрос между старой и новой системами по traffic-split с fallback на старую при ошибке.
+
+        Args:
+            exchange: Текущий обмен с телом запроса.
+            context: Контекст выполнения процессора.
+        """
         body = exchange.in_message.body
         # 1. Check rollback
         if self._rollback.is_active:

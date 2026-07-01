@@ -78,6 +78,7 @@ async def upload_file_handler(
     multipart_field_name: str | None = None,
     x_api_key: str = Header(...),
 ) -> dict[str, Any]:
+    """Загружает файл через AV-сервис (scan + upload) и возвращает метаданные."""
     av_service = get_av_service()
     content = await file.read()
 

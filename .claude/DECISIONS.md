@@ -866,3 +866,11 @@ FastStream abstraction allows broker swap to NATS/Kafka without interface change
 |--------|-------|----------|--------|
 | R1.9 | Granian RSGI vs Uvicorn | ADR-0059 | Accepted (S6) |
 | R1.20 | PluginSandboxAdapter final strategy | ADR-0077 | Accepted (S28) |
+
+## DECISION — Rate Limiter canonical (V16 Step 3.1)
+- Дата: 2026-06-29, Sprint consolidation.
+- Decision: canonical Protocol — `core/resilience/rate_limiter.py:RateLimiter`.
+  `RateLimitChecker` — ОТДЕЛЬНЫЙ gateway-contract для per-route (не дубликат).
+- Rejected: объединение 3 RL Protocols (multi_protocol, rate_limiter, ratelimit_gateway)
+  в один — сломает разные contexts (HTTP, WS, per-tenant).
+- Rejected: переписать на единый `RateLimitChecker` — теряет generic Protocol.

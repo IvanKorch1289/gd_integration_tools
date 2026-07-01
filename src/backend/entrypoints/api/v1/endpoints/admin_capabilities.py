@@ -73,7 +73,7 @@ async def get_capability_audit_events(limit: int = 100) -> dict[str, Any]:
     """
     safe_limit = max(1, min(int(limit), 1000))
     try:
-        from src.backend.infrastructure.audit.event_log import get_audit_log
+        from src.backend.core.audit import get_audit_log
     except ImportError:
         return {"events": [], "limit": safe_limit, "stub": True}
 

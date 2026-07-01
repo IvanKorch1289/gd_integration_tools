@@ -279,7 +279,7 @@ class TemporalWorkerPool:
             for tq, worker in list(self._workers.items()):
                 try:
                     await worker.shutdown()
-                except RuntimeError, OSError, AttributeError:
+                except (RuntimeError, OSError, AttributeError):
                     _logger.exception(
                         "temporal.worker.shutdown_failed", extra={"task_queue": tq}
                     )

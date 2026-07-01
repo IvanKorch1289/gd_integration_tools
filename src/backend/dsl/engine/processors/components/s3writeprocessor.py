@@ -36,6 +36,7 @@ class S3WriteProcessor(BaseProcessor):
         self._content_type = content_type
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Записывает body в S3-бакет по ключу из параметра или property."""
         from src.backend.infrastructure.clients.storage.s3_pool import storage_client
 
         key = self._key

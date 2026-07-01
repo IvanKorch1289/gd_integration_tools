@@ -91,6 +91,7 @@ class JqProcessor(BaseProcessor):
         exchange.set_property(self._target, value)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет JMESPath-выражение над body и пишет результат в target."""
         try:
             from src.backend.core.config.features import feature_flags
 

@@ -133,7 +133,7 @@ async def sse_stream(request: Request) -> StreamingResponse:
         PII redaction per-tenant policy. На fail PII pipeline — прокидывает
         chunks без изменений (best-effort).
         """
-        from src.backend.infrastructure.security.pii_streaming import (
+        from src.backend.core.security.pii_streaming_facade import (
             PiiStreamPolicy,
             stream_filter,
         )

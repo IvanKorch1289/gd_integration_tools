@@ -34,6 +34,7 @@ class LLMFallbackProcessor(BaseProcessor):
         self._prompt_property = prompt_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Перебирает LLM-провайдеров до первого успешного ответа."""
         prompt = exchange.properties.get(self._prompt_property)
         if prompt is None:
             prompt = (

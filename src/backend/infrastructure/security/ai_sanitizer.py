@@ -32,6 +32,8 @@ _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
 _PHONE_RE = re.compile(r"\+?[78][\d\s\-()]{9,}\d")
 _INN_RE = re.compile(r"\b\d{10,12}\b")
 _SNILS_RE = re.compile(r"\b\d{3}-\d{3}-\d{3}\s?\d{2}\b")
+# US Social Security Number (M2.1)
+_SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 _PASSPORT_RE = re.compile(r"\b\d{2}\s?\d{2}\s?\d{6}\b")
 _CARD_RE = re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b")
 _API_KEY_RE = re.compile(
@@ -82,6 +84,7 @@ class AIDataSanitizer:
         mask_phones: bool = True,
         mask_inn: bool = True,
         mask_snils: bool = True,
+        mask_ssn: bool = True,
         mask_passport: bool = True,
         mask_cards: bool = True,
         mask_api_keys: bool = True,
@@ -101,6 +104,8 @@ class AIDataSanitizer:
             self._rules.append(("CARD", _CARD_RE))
         if mask_snils:
             self._rules.append(("SNILS", _SNILS_RE))
+        if mask_ssn:
+            self._rules.append(("SSN", _SSN_RE))
         if mask_passport:
             self._rules.append(("PASSPORT", _PASSPORT_RE))
         if mask_inn:

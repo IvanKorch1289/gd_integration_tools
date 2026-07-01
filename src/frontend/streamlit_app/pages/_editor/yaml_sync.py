@@ -18,7 +18,7 @@ from typing import Any, cast
 
 import yaml as _yaml
 
-from src.backend.services.dsl_portal import Pipeline, load_pipeline_from_yaml
+from src.backend.core.frontend_facade import Pipeline, load_pipeline_from_yaml
 
 __all__ = ("build_yaml_from_steps", "sync_yaml", "try_load", "yaml_to_steps")
 

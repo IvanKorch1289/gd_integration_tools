@@ -207,6 +207,15 @@ class CachingDecorator:
 
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            """Обёртка async-функции: проверяет кэш, обеспечивает single-flight lock и fallback на stale при ошибке.
+
+            Args:
+                *args: Позиционные аргументы декорируемой функции.
+                **kwargs: Именованные аргументы декорируемой функции.
+
+            Returns:
+                Результат функции или значение из кэша.
+            """
             key = self.key_builder(func, args, kwargs)
 
             cached = await self._get_cached_value(key)
@@ -266,7 +275,7 @@ class CachingDecorator:
         try:
             await redis_client().cache_set(key, json_dumps(value), self.expire)  # type: ignore[attr-defined]
             self._mark_redis_success()
-        except RedisConnectionError, RedisTimeoutError, RedisError, OSError:
+        except (RedisConnectionError, RedisTimeoutError, RedisError, OSError):
             self._mark_redis_failure()
         except Exception as exc:
             redis_client().logger.warning(  # type: ignore[attr-defined]

@@ -32,6 +32,23 @@ class WsdlImportGateway:
     kind: ImportSourceKind = ImportSourceKind.WSDL
 
     async def import_spec(self, source: ImportSource) -> ConnectorSpec:
+        """Импортирует WSDL-спецификацию и строит :class:`ConnectorSpec`.
+
+        Парсит WSDL через zeep, извлекает все service/port/operation bindings,
+        формирует :class:`EndpointSpec` для каждой операции (с request/response
+        schema) и собирает XSD-типы. Для in-memory content создаётся временный
+        файл (atomic, удаляется после использования).
+
+        Args:
+            source: Источник импорта (content, source_url, prefix).
+
+        Returns:
+            ``ConnectorSpec`` с endpoints, schemas и source_hash.
+
+        Raises:
+            ImportError: Если WSDL невалиден или zeep не смог его распарсить.
+            ValueError: Если в WSDL нет service или operations.
+        """
         from zeep import Client
         from zeep.exceptions import XMLParseError
 

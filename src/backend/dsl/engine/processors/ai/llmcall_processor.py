@@ -22,6 +22,25 @@ _DEFAULT_COST_PER_TOKEN: dict[str, float] = {
 }
 
 
+def _try_litellm_cost(model: str, prompt_tokens: int, completion_tokens: int) -> float | None:
+    """Попытка получить cost через litellm.cost_calculator.
+
+    Returns None если litellm недоступен или model unknown.
+    ponytail: ceiling — litellm может не знать pricing для custom/Ollama models.
+    """
+    try:
+        from litellm import completion_cost
+
+        cost = completion_cost(
+            model=model,
+            prompt="x" * prompt_tokens,
+            completion="x" * completion_tokens,
+        )
+        return float(cost) if cost is not None else None
+    except Exception:
+        return None
+
+
 class LLMCallProcessor(BaseProcessor):
     """Вызывает LLM с retry, rate-limit detection и cost tracking.
 
@@ -55,25 +74,43 @@ class LLMCallProcessor(BaseProcessor):
     def _compute_cost(
         self, model: str | None, prompt_tokens: int, completion_tokens: int
     ) -> float:
-        """Оценка стоимости через простую per-token формулу.
+        """Оценка стоимости: litellm pricing first, local fallback second.
 
-        S156 W8: litellm.completion_cost API изменился (>=1.0) и больше
-        не принимает prompt_tokens/completion_tokens. Local backup model
-        prices расходятся с test contract (gpt-4-0613 0.00099 vs test
-        expects 0.002). Use local _DEFAULT_COST_PER_TOKEN table for
-        predictable per-model pricing.
+        Priority:
+        1. ``litellm.completion_cost`` — если доступен и знает модель.
+        2. ``_DEFAULT_COST_PER_TOKEN`` — hardcoded fallback для predictable tests.
 
         Test contract (test_llmcall_processor.py): 100 tokens ×
-        0.00002 = 0.002 for gpt-4-0613.
+        0.00002 = 0.002 for gpt-4-0613 (fallback path).
         """
-        rate = _DEFAULT_COST_PER_TOKEN.get(
-            model or self._model or "unknown",
-            0.00002,  # 2e-5 default (gpt-4-0613 blended)
-        )
+        resolved = model or self._model or "unknown"
+
+        # ponytail: try litellm first for real-world pricing
+        litellm_cost = _try_litellm_cost(resolved, prompt_tokens, completion_tokens)
+        if litellm_cost is not None:
+            return litellm_cost
+
+        # Fallback: local table (predictable for tests, covers unknown models)
+        rate = _DEFAULT_COST_PER_TOKEN.get(resolved, 0.00002)
         return float(rate * (prompt_tokens + completion_tokens))
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет LLM-вызов с retry, Circuit Breaker и учётом стоимости.
 
+        При включённом ``feature_flags.ai_gateway_enforce`` запрос идёт через
+        единый :class:`AIGateway` (S30 closure). Иначе — legacy path через
+        ``ai_agent_service`` с tenacity-retry и Circuit Breaker guard.
+
+        Args:
+            exchange: Текущий exchange; prompt берётся из ``self._prompt_property``
+                либо из ``in_message.body``.
+            context: Контекст выполнения (маршрут, tenant, correlation).
+
+        Note:
+            Результат (content, usage, model) записывается в ``in_message.body``.
+            Метрики токенов и стоимости — в свойствах ``llm.tokens_used``,
+            ``llm.cost_usd``, ``llm.model``, ``llm.provider``.
+        """
         prompt = exchange.properties.get(self._prompt_property)
         if prompt is None:
             prompt = (
@@ -218,7 +255,7 @@ class LLMCallProcessor(BaseProcessor):
                         provider=self._provider,
                         model=self._model or "default",
                     )
-                except GatewayRateLimited, ValueError:
+                except (GatewayRateLimited, ValueError):
                     # Non-retryable + non-CB-failing — propagate.
                     raise
                 except RuntimeError as exc:

@@ -37,6 +37,23 @@ class OpenAPIImportGateway:
     kind: ImportSourceKind = ImportSourceKind.OPENAPI
 
     async def import_spec(self, source: ImportSource) -> ConnectorSpec:
+        """Импортирует OpenAPI 3.0/3.1 spec и строит :class:`ConnectorSpec`.
+
+        Парсит и валидирует spec через ``openapi_pydantic`` (версионо-зависимый
+        import: v3.0 vs v3.1). Извлекает servers, paths/operations, формирует
+        :class:`EndpointSpec` для каждого HTTP-метода. Собирает схемы
+        компонентов и security definitions.
+
+        Args:
+            source: Источник импорта (content, source_url, prefix).
+
+        Returns:
+            ``ConnectorSpec`` с endpoints, schemas, auth и source_hash.
+
+        Raises:
+            ValueError: Если версия OpenAPI не поддерживается.
+            ImportError: Если spec не прошёл валидацию.
+        """
         raw = (
             source.content
             if isinstance(source.content, bytes)

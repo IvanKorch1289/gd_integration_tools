@@ -2,23 +2,19 @@
 
 Содержит:
 
-- ``async_helpers`` — async iterator (``async_chunk_iterator``);
+- ``async_helpers`` — async iterator (``AsyncChunkIterator``);
 - ``cache_keys`` — детерминированные ключи кэша;
 - ``datetime_utils`` — pendulum/stdlib datetime хелперы (S57 W1);
 - ``json_utils`` — orjson-based JSON serialization;
 - ``metrics_registry`` — idempotent Prometheus factory;
-- ``redis_fallback`` — Redis → TTLCache fallback;
+- ``redis_fallback`` — Redis → TTLCache fallback (с periodic re-probe);
 - ``route_timeout`` — ``RouteTimeoutSpec`` frozen dataclass;
 - ``task_registry`` — централизованный реестр фоновых ``asyncio.Task``
   (V15 R-V15-11);
 - ``watchdog`` — deadline-эскалация для long-running async-задач.
-
-S5 fix (S36-W11): модули ``datetime_utils`` и ``json_utils`` мигрированы
-из удалённого ``core/util/`` пакета. Ранее сосуществовали ``core/util/``
-(2 файла) + ``core/utils/`` (8 файлов).
 """
 
-from src.backend.core.utils.async_helpers import async_chunk_iterator
+from src.backend.core.utils.async_helpers import AsyncChunkIterator, async_chunk_iterator
 from src.backend.core.utils.cache_keys import build_cache_key
 from src.backend.core.utils.datetime_utils import (
     ensure_utc,
@@ -41,33 +37,25 @@ from src.backend.core.utils.task_registry import (
 )
 from src.backend.core.utils.watchdog import Watchdog
 
-from src.backend.core.utils.async_utils import (
-    gather_with_timeout,
-    safe_gather,
-    run_sync_in_thread,
-)
-
 __all__ = (
-    "gather_with_timeout",
-    "safe_gather",
-    "run_sync_in_thread",
-    "build_cache_key",
-    "load_json",
-    "dump_json",
-    "now_utc",
+    "AsyncChunkIterator",
     "async_chunk_iterator",
+    "build_cache_key",
+    "dumps_bytes",
+    "dumps_str",
+    "ensure_utc",
     "FallbackCache",
-    "MetricsRegistry",
-    "RedisErrorCategory",
-    "RedisLike",
-    "RouteTimeoutSpec",
-    "TaskRegistry",
-    "Watchdog",
     "get_task_registry",
     "humanize_delta",
     "loads",
     "metrics_registry",
+    "MetricsRegistry",
     "parse_dt",
     "reset_task_registry",
+    "RedisErrorCategory",
+    "RedisLike",
+    "RouteTimeoutSpec",
+    "TaskRegistry",
     "utc_now",
+    "Watchdog",
 )

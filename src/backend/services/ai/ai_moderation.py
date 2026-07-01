@@ -165,6 +165,7 @@ _ragas: RagasEvaluator | None = None
 
 
 def get_moderation() -> ContentModeration:
+    """Фабрика: ContentModeration service."""
     global _moderation
     if _moderation is None:
         _moderation = ContentModeration()
@@ -172,6 +173,7 @@ def get_moderation() -> ContentModeration:
 
 
 def get_ragas() -> RagasEvaluator:
+    """Фабрика: RagasEvaluator service."""
     global _ragas
     if _ragas is None:
         _ragas = RagasEvaluator()

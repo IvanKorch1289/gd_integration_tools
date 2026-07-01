@@ -162,7 +162,7 @@ def _emit_sla_metric(
                 "SLA evaluations per workflow (level=none/soft/hard)",
                 labels=("workflow_id", "tenant_id", "level"),
             )
-        except ImportError, ValueError:
+        except (ImportError, ValueError):
             _sla_counter = False  # sentinel: do not retry
 
     if _sla_counter and _sla_counter is not False:

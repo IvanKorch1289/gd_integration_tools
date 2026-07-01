@@ -48,6 +48,12 @@ class RecipientListProcessor(BaseProcessor):
         )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет Recipient List: отправляет сообщение всем получателям параллельно или последовательно.
+
+        Args:
+            exchange: Текущий обмен с сообщением-источником.
+            context: Контекст выполнения процессора.
+        """
         recipients = self._expr(exchange)
         if not recipients:
             return

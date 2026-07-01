@@ -155,6 +155,21 @@ class SqlSensor:
         input: dict[str, Any],
         namespace: str = "default",
     ) -> bool:
+        """Поллит SQL-запрос до появления строк (или совпадения predicate).
+
+        Apache Airflow SqlSensor analogue (async через asyncpg). На каждой
+        итерации выполняет запрос, проверяет: если задан ``predicate`` —
+        jmespath над результатом, иначе — наличие строк. Exponential backoff.
+        При timeout возвращает ``False``.
+
+        Args:
+            trigger: Триггер с timeout.
+            input: Входные данные (не используются в SqlSensor).
+            namespace: Namespace сенсора.
+
+        Returns:
+            ``True`` при совпадении, ``False`` при timeout.
+        """
         start = time.monotonic()
         timeout_s = trigger.timeout.total_seconds() if trigger.timeout else None
         attempt = 0
@@ -243,6 +258,20 @@ class HttpSensor:
         input: dict[str, Any],
         namespace: str = "default",
     ) -> bool:
+        """Поллит HTTP-endpoint до совпадения status (и опционально body_match).
+
+        Apache Airflow HttpSensor analogue. На каждой итерации делает HTTP-запрос,
+        проверяет status и (если задан ``body_match``) — jmespath над body.
+        Exponential backoff между попытками. При timeout возвращает ``False``.
+
+        Args:
+            trigger: Триггер с timeout.
+            input: Входные данные (не используются в HttpSensor).
+            namespace: Namespace сенсора.
+
+        Returns:
+            ``True`` при совпадении, ``False`` при timeout.
+        """
         start = time.monotonic()
         timeout_s = trigger.timeout.total_seconds() if trigger.timeout else None
         attempt = 0
@@ -345,6 +374,21 @@ class S3Sensor:
         input: dict[str, Any],
         namespace: str = "default",
     ) -> bool:
+        """Поллит S3 object до его появления (head_object 200).
+
+        Apache Airflow S3KeySensor analogue (async через aioboto3). На каждой
+        итерации делает ``head_object``, проверяет 200. 404 — ожидаемое
+        состояние (waiting), другие ошибки — warning. Exponential backoff.
+        При timeout возвращает ``False``.
+
+        Args:
+            trigger: Триггер с timeout.
+            input: Входные данные (не используются в S3Sensor).
+            namespace: Namespace сенсора.
+
+        Returns:
+            ``True`` при появлении объекта, ``False`` при timeout.
+        """
         import aioboto3
 
         start = time.monotonic()

@@ -67,8 +67,10 @@ async def _sqlite_fts5_search(
 
 
 def build_search_primary() -> SearchCallable:
+    """Возвращает primary поиск (Elasticsearch)."""
     return _es_search
 
 
 def build_search_fallbacks() -> dict[str, SearchCallable]:
+    """Возвращает словарь fallback поисковиков (SQLite FTS5 snapshot)."""
     return {"sqlite_fts5": _sqlite_fts5_search}

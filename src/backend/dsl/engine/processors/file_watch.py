@@ -65,6 +65,17 @@ class FileWatchProcessor(BaseProcessor):
         self._include_subdirs = include_subdirs
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Сканирует директорию и возвращает файлы по glob-pattern.
+
+        Директория берётся из ``self._directory`` или свойства
+        ``watch_directory``. При ``include_subdirs`` — рекурсивный обход
+        через ``os.walk``. Результат — список dict с path, name, size, mtime.
+
+        Args:
+            exchange: Текущий exchange; результат — в свойстве
+                ``result_property`` (default: ``matched_files``).
+            context: Контекст выполнения маршрута.
+        """
         directory = exchange.get_property("watch_directory") or self._directory
 
         if not os.path.isdir(directory):

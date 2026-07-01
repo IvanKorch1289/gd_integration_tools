@@ -168,6 +168,7 @@ def query_parameter(
 
 
 def required_query_parameter(name: str, annotation: Any, description: str) -> Parameter:
+    """Создаёт обязательный FastAPI query-parameter (без default)."""
     return Parameter(
         name=name,
         kind=Parameter.KEYWORD_ONLY,
@@ -177,6 +178,7 @@ def required_query_parameter(name: str, annotation: Any, description: str) -> Pa
 
 
 def body_parameter(name: str, annotation: Any, description: str) -> Parameter:
+    """Создаёт обязательный FastAPI body-parameter."""
     return Parameter(
         name=name,
         kind=Parameter.KEYWORD_ONLY,
@@ -186,4 +188,5 @@ def body_parameter(name: str, annotation: Any, description: str) -> Parameter:
 
 
 def make_signature(*parameters: Parameter, return_annotation: Any = Any) -> Signature:
+    """Собирает :class:`inspect.Signature` из набора parameters и return annotation."""
     return Signature(parameters=list(parameters), return_annotation=return_annotation)

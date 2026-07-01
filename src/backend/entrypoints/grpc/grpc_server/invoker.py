@@ -48,6 +48,21 @@ class InvokerGRPCServicer(InvokerServiceServicer):
     async def Invoke(  # type: ignore[no-untyped-def]
         self, request, context
     ):
+        """Обрабатывает gRPC ``Invoke`` rpc — пробрасывает в единый :class:`Invoker`.
+
+        Парсит JSON-поля ``payload_json`` и ``metadata_json`` из protobuf-запроса,
+        валидирует ``mode`` и формирует :class:`InvocationRequest`. Вызов идёт
+        через ``app.state.invoker`` singleton — тот же, что для REST/WS/SOAP,
+        гарантируя идентичный результат из любого протокола.
+
+        Args:
+            request: ``InvokerInvokeRequest`` (action, payload_json, mode,
+                metadata_json, invocation_id, reply_channel).
+            context: gRPC servicer context.
+
+        Returns:
+            ``InvokerInvokeResponse`` с status, result_json, error.
+        """
         from src.backend.core.interfaces.invoker import (
             InvocationMode,
             InvocationRequest,

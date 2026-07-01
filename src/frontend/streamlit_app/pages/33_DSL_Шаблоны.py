@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid
+from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
@@ -84,7 +84,7 @@ def _render_workflow_templates() -> None:
     """Sprint 12 K3 W5 + K5 W1 — workflow templates с Mermaid preview."""
     # S6 fix: используем dsl_portal facade вместо прямого импорта
     # ``src.backend.services.workflows.template_registry`` (R3.10d).
-    from src.backend.services.dsl_portal import (
+    from src.backend.core.frontend_facade import (
         list_workflow_templates,
         search_workflow_templates,
     )

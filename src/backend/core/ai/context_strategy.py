@@ -81,7 +81,12 @@ class TokenBudget:
 
 
 class ContextStrategy(ABC):
-    """Abstract base для context strategies."""
+    """Abstract base для context strategies.
+
+    Опциональный ``summarizer`` callback (``Callable[[str], str]``)
+    позволяет заменить truncation-heuristic на LLM-powered summarization.
+    Если ``summarizer=None`` — используется truncation (backward compat).
+    """
 
     @abstractmethod
     def apply(
@@ -90,6 +95,7 @@ class ContextStrategy(ABC):
         budget: TokenBudget,
         *,
         count_tokens: Any = None,
+        summarizer: Any = None,
     ) -> list[ContextMessage]:
         """Apply strategy to messages within budget.
 
@@ -98,6 +104,9 @@ class ContextStrategy(ABC):
             budget: TokenBudget с лимитами.
             count_tokens: Callback ``(str) -> int`` для подсчёта токенов
                 (e.g. tiktoken). Если None — используется len(content).
+            summarizer: Опц. ``Callable[[str], str]`` — LLM-summarization
+                вместо truncation. ponytail: sync-callback, caller может
+                обернуть async-LLM через ``asyncio.run`` или pre-compute.
 
         Returns:
             Модифицированный список messages для передачи в LLM.
@@ -123,6 +132,7 @@ class RollingWindowStrategy(ContextStrategy):
         budget: TokenBudget,
         *,
         count_tokens: Any = None,
+        summarizer: Any = None,  # noqa: ARG002 — unused, для единого контракта
     ) -> list[ContextMessage]:
         """Применить стратегию усечения контекста к ``messages``.
 
@@ -200,22 +210,12 @@ class MapReduceStrategy(ContextStrategy):
         budget: TokenBudget,
         *,
         count_tokens: Any = None,
+        summarizer: Any = None,
     ) -> list[ContextMessage]:
-        """Применить стратегию усечения контекста к ``messages``.
+        """Применить map-reduce стратегию.
 
-        Конкретная стратегия (rolling window / map-reduce / hierarchical)
-        определена в наследнике. Все реализации возвращают новый список
-        сообщений, вписывающийся в ``budget``.
-
-        Args:
-            messages: Входной список сообщений (свежие — в конце).
-            budget: Лимит токенов для контекста.
-            count_tokens: Опциональный callable ``list[ContextMessage] -> int``.
-                Если не передан, используется эвристика (4 символа ≈ 1 токен).
-
-        Returns:
-            Новый список сообщений, вписывающийся в бюджет. ``[]`` если
-            входной список пуст.
+        При ``summarizer`` — LLM-конденсация старых сообщений.
+        Иначе — truncation-heuristic (backward compat).
         """
         if not messages:
             return []
@@ -245,16 +245,24 @@ class MapReduceStrategy(ContextStrategy):
         result: list[ContextMessage] = list(system_msgs)
 
         if older:
-            # Condense older messages into a summary placeholder
+            # Condense older messages: LLM summarization если available, иначе truncation
             older_text = "\n".join(
-                f"[{m.role}]: {m.content[:200]}{'...' if len(m.content) > 200 else ''}"
-                for m in older
+                f"[{m.role}]: {m.content}" for m in older
             )
+            if summarizer is not None:
+                try:
+                    summary = summarizer(older_text)
+                except Exception as exc:
+                    logger.warning("MapReduce summarizer failed, falling back to truncation: %s", exc)
+                    summary = older_text[:1000]
+            else:
+                # ponytail: truncation fallback — ceiling: loses semantic context
+                summary = older_text[:1000]
             condensation = ContextMessage(
                 role="system",
                 content=(
                     f"[Prior conversation summarized ({len(older)} messages): "
-                    f"{older_text[:1000]}{'...' if len(older_text) > 1000 else ''}]"
+                    f"{summary}{'...' if len(summary) >= 1000 else ''}]"
                 ),
             )
             t = _tokens(condensation)
@@ -294,22 +302,12 @@ class HierarchicalStrategy(ContextStrategy):
         budget: TokenBudget,
         *,
         count_tokens: Any = None,
+        summarizer: Any = None,
     ) -> list[ContextMessage]:
-        """Применить стратегию усечения контекста к ``messages``.
+        """Применить hierarchical стратегию.
 
-        Конкретная стратегия (rolling window / map-reduce / hierarchical)
-        определена в наследнике. Все реализации возвращают новый список
-        сообщений, вписывающийся в ``budget``.
-
-        Args:
-            messages: Входной список сообщений (свежие — в конце).
-            budget: Лимит токенов для контекста.
-            count_tokens: Опциональный callable ``list[ContextMessage] -> int``.
-                Если не передан, используется эвристика (4 символа ≈ 1 токен).
-
-        Returns:
-            Новый список сообщений, вписывающийся в бюджет. ``[]`` если
-            входной список пуст.
+        При ``summarizer`` — LLM-конденсация на каждом уровне.
+        Иначе — truncation-heuristic (backward compat).
         """
         if not messages:
             return []
@@ -338,14 +336,22 @@ class HierarchicalStrategy(ContextStrategy):
                 break
 
             group_size = max(1, self._base_group_size // (2**level))
-            # Summarize this group
+            # Summarize this group: LLM если available, иначе truncation
             group_text = "\n".join(
-                f"[{m.role}]: {m.content[:150]}{'...' if len(m.content) > 150 else ''}"
+                f"[{m.role}]: {m.content}"
                 for m in current_group[-group_size:]
             )
+            if summarizer is not None:
+                try:
+                    condensed_text = summarizer(group_text)
+                except Exception as exc:
+                    logger.warning("Hierarchical summarizer L%d failed: %s", level, exc)
+                    condensed_text = group_text[:500]
+            else:
+                condensed_text = group_text[:500]
             condensation = ContextMessage(
                 role="system",
-                content=f"[Earlier ({len(current_group)} msgs, level {level}): {group_text[:500]}{'...' if len(group_text) > 500 else ''}]",
+                content=f"[Earlier ({len(current_group)} msgs, level {level}): {condensed_text}]",
             )
             t = _tokens(condensation)
 

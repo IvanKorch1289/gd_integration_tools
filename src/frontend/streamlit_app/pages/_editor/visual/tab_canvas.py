@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.backend.services.dsl_portal import load_pipeline_from_yaml
+from src.backend.core.frontend_facade import load_pipeline_from_yaml
 from src.frontend.streamlit_app.pages._editor.constants import (
     PROCESSOR_ICONS,
     VISUAL_PROCESSORS,

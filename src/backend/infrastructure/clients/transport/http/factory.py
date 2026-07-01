@@ -11,6 +11,7 @@ _http_client_singleton: "HttpClient | None" = None
 
 
 async def get_http_client() -> AsyncGenerator["HttpClient"]:
+    """Async context manager: отдаёт :class:`HttpClient` и закрывает его при выходе."""
     # Lazy import to break circular dependency: __init__.py imports
     # factory functions, factory functions cannot import HttpClient
     # back from __init__.py (would be partial-init error).

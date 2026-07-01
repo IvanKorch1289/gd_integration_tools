@@ -510,3 +510,43 @@ class InfraMixin:
                 temperature=temperature,
             )
         )
+
+    def optimize_prompt(
+        self,
+        *,
+        prompt_name: str = "rag_default",
+        tenant_id: str | None = None,
+        limit: int = 1000,
+        result_property: str = "_optimize_result",
+    ) -> RouteBuilder:
+        """Запустить DSPy prompt optimization по собранному feedback.
+
+        Инициирует обучение: dataset (из feedback) → BootstrapFewShot →
+        publish оптимизированного prompt в Langfuse. Результат сохраняется
+        в ``exchange.properties[result_property]``.
+
+        Args:
+            prompt_name: Имя prompt для публикации (Langfuse).
+            tenant_id: Tenant scope (None = global).
+            limit: Максимум examples из feedback.
+            result_property: Куда сохранить результат.
+
+        Example::
+
+            builder.optimize_prompt(
+                prompt_name="credit_scoring_v2",
+                limit=500,
+            )
+        """
+        from src.backend.dsl.engine.processors.agent_dsl.optimize_prompt import (
+            OptimizePromptProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            OptimizePromptProcessor(
+                prompt_name=prompt_name,
+                tenant_id=tenant_id,
+                limit=limit,
+                result_property=result_property,
+            )
+        )

@@ -45,6 +45,7 @@ def _register_template_tools(mcp: Any) -> None:
         'Пример: template_id=\'etl.postgres_to_clickhouse\', params=\'{"source_query": "SELECT...", "target_table": "analytics.orders"}\'',
     )
     async def template_instantiate(template_id: str, params: str = "{}") -> str:
+        """Создаёт pipeline из шаблона по template_id с переданными параметрами."""
         from src.backend.dsl.templates_library import templates
 
         tmpl = templates.get(template_id)
@@ -55,7 +56,7 @@ def _register_template_tools(mcp: Any) -> None:
 
         try:
             parsed_params = orjson.loads(params) if params else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             return encode_json({"error": "Invalid JSON params"}).decode("utf-8")
 
         try:

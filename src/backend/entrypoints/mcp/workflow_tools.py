@@ -126,7 +126,7 @@ def _build_workflow_tool(
         """
         try:
             parsed_payload = orjson.loads(payload) if payload else {}
-        except orjson.JSONDecodeError, TypeError:
+        except (orjson.JSONDecodeError, TypeError):
             return orjson.dumps(
                 {"error": "invalid JSON payload", "raw": payload}
             ).decode()
@@ -299,11 +299,12 @@ def _register_catalog_tools(mcp: Any) -> None:
         ),
     )
     async def workflow_status(instance_id: str) -> str:
+        """Возвращает статус workflow-инстанса по UUID: status, last_error, finished_at."""
         from src.backend.core.di.providers import get_workflow_state_store_provider
 
         try:
             uid = UUID(instance_id)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return orjson.dumps({"error": f"invalid UUID: {instance_id!r}"}).decode()
 
         WorkflowInstanceStore = get_workflow_state_store_provider()

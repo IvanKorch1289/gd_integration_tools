@@ -29,6 +29,7 @@ def get_clickhouse_client_provider() -> Any:
 
 
 def set_clickhouse_client_provider(client: Any) -> None:
+    """Установить override для ``clickhouse_client`` provider (test-инжекция)."""
     _overrides["clickhouse_client"] = client
 
 
@@ -44,6 +45,7 @@ def get_mongo_client_provider() -> Any:
 
 
 def set_mongo_client_provider(factory: Any) -> None:
+    """Установить override для ``mongo_client`` provider (test-инжекция)."""
     _overrides["mongo_client"] = factory
 
 
@@ -59,6 +61,7 @@ def get_file_repo_provider() -> Any:
 
 
 def set_file_repo_provider(repo: Any) -> None:
+    """Установить override для ``file_repo`` provider (test-инжекция)."""
     _overrides["file_repo"] = repo
 
 
@@ -74,6 +77,7 @@ def get_connector_config_store_provider() -> Any:
 
 
 def set_connector_config_store_provider(store: Any) -> None:
+    """Установить override для ``connector_config_store`` provider (test-инжекция)."""
     _overrides["connector_config_store"] = store
 
 
@@ -89,6 +93,7 @@ def get_connector_registry_provider() -> Any:
 
 
 def set_connector_registry_provider(registry: Any) -> None:
+    """Установить override для ``connector_registry`` provider (test-инжекция)."""
     _overrides["connector_registry"] = registry
 
 
@@ -116,6 +121,7 @@ def get_cdc_client_provider() -> Any:
 
 
 def set_cdc_client_provider(client: Any) -> None:
+    """Установить override для ``cdc_client`` provider (test-инжекция)."""
     _overrides["cdc_client"] = client
 
 
@@ -131,6 +137,7 @@ def get_s3_service_provider() -> Any:
 
 
 def set_s3_service_provider(service: Any) -> None:
+    """Установить override для ``s3_service`` provider (test-инжекция)."""
     _overrides["s3_service"] = service
 
 

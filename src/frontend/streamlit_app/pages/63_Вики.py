@@ -24,7 +24,7 @@ st.title("Wiki — поиск по документации")
 
 # Lazy-import чтобы set_page_config был первым st-вызовом.
 # S6 fix: facade import через dsl_portal (R3.10d / S36).
-from src.backend.services.dsl_portal import get_whoosh_index  # noqa: E402
+from src.backend.core.frontend_facade import get_whoosh_index  # noqa: E402
 
 _WhooshIndex = get_whoosh_index()
 _REPO_ROOT = Path(__file__).resolve().parents[4]

@@ -124,4 +124,5 @@ class WebAutomationService:
 
 @app_state_singleton("web_automation_service", factory=WebAutomationService)
 def get_web_automation_service() -> WebAutomationService:
+    """Фабрика: WebAutomationService."""
     raise NotImplementedError  # заменяется декоратором

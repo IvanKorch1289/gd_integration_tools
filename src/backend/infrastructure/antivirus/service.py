@@ -120,6 +120,18 @@ class AntivirusService:
         multipart_field_name: str | None = None,
         file_key: str | None = None,
     ) -> dict[str, Any]:
+        """Сканирует байты файла через внешний antivirus-сервис по HTTP (multipart POST).
+
+        Args:
+            file_bytes: Содержимое файла для сканирования.
+            filename: Имя файла.
+            content_type: MIME-тип файла (опционально).
+            multipart_field_name: Имя multipart-поля (опционально).
+            file_key: Ключ файла в хранилище (опционально).
+
+        Returns:
+            Ответ antivirus-сервиса в виде словаря.
+        """
         resolved_content_type = self._resolve_content_type(
             filename=filename, content_type=content_type
         )
@@ -234,6 +246,7 @@ class AntivirusService:
             return {"status": "down", "error": str(exc)}
 @asynccontextmanager
 async def get_antivirus_service() -> AsyncGenerator[AntivirusService]:
+    """Фабрика: AntivirusService singleton."""
     service = AntivirusService(
         http_client=get_http_client_dependency(), s3_service=get_s3_service_dependency()
     )
@@ -247,6 +260,7 @@ _antivirus_service_dependency_instance: AntivirusService | None = None
 
 
 def get_antivirus_service_dependency() -> AntivirusService:
+    """FastAPI dependency: фабрика antivirus service для request handler."""
     global _antivirus_service_dependency_instance
     if _antivirus_service_dependency_instance is None:
         _antivirus_service_dependency_instance = AntivirusService(

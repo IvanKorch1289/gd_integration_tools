@@ -19,12 +19,14 @@ from __future__ import annotations
 import asyncio
 import multiprocessing
 import os
+import time
 import warnings
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.metrics_registry import metrics_registry
 
 if TYPE_CHECKING:
     pass
@@ -41,6 +43,19 @@ __all__ = (
 )
 
 _logger = get_logger(__name__)
+
+# ────────────────── Prometheus metrics (M3.1) ──────────────────
+
+agent_sandbox_runs_total = metrics_registry.counter(
+    "agent_sandbox_runs_total",
+    "Total agent sandbox runs by backend and outcome",
+    labels=("backend", "outcome"),
+)
+agent_sandbox_duration_seconds = metrics_registry.histogram(
+    "agent_sandbox_duration_seconds",
+    "Agent sandbox execution duration in seconds",
+    labels=("backend",),
+)
 
 # S172 M5 (ARC-008) — production gate: при ``default_agent_sandbox ==
 # "in_process"`` и ``GD_INTEGRATION_PRODUCTION=1`` — raise at runtime.

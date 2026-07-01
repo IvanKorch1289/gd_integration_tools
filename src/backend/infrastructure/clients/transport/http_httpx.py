@@ -356,7 +356,7 @@ class HttpxClient:
         try:
             async with bulkhead.guard():
                 return await self._time_limiter.run(_do_with_cb())
-        except RetryError, CircuitOpen, httpx.HTTPError:
+        except (RetryError, CircuitOpen, httpx.HTTPError):
             raise
 
 
@@ -364,6 +364,7 @@ _instance: HttpxClient | None = None
 
 
 def get_httpx_client() -> HttpxClient:
+    """Возвращает singleton :class:`HttpxClient` (lazy init)."""
     global _instance
     if _instance is None:
         _instance = HttpxClient()

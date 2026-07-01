@@ -107,6 +107,7 @@ class EvaluateRulesProcessor(BaseProcessor):
         self.params = params
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Вычисляет правила и записывает decision в body exchange."""
         from simpleeval import SimpleEval  # lazy-import
 
         ctx_dict = _resolve_path(exchange.in_message.body, self.params.context_from)

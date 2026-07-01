@@ -166,6 +166,7 @@ def get_redis_kv_client_provider() -> Any:
 
 
 def set_redis_kv_client_provider(client: Any) -> None:
+    """Установить override для ``redis_kv_client`` provider (test-инжекция)."""
     _overrides["redis_kv_client"] = client
 
 
@@ -182,6 +183,7 @@ def get_redis_stream_client_provider() -> Any:
 
 
 def set_redis_stream_client_provider(client: Any) -> None:
+    """Установить override для ``redis_stream_client`` provider (test-инжекция)."""
     _overrides["redis_stream_client"] = client
 
 
@@ -197,6 +199,7 @@ def get_signature_builder_provider() -> Any:
 
 
 def set_signature_builder_provider(builder: Any) -> None:
+    """Установить override для ``signature_builder`` provider (test-инжекция)."""
     _overrides["signature_builder"] = builder
 
 

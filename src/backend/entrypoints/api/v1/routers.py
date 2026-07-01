@@ -4,6 +4,15 @@ __all__ = ("get_v1_routers",)
 
 
 def get_v1_routers() -> APIRouter:
+    """Собирает и возвращает единый APIRouter v1 со всеми endpoint-группами.
+
+    Lazy-import всех v1 endpoint-routers (admin, auth, connectors, workflows,
+    invocations, RAG, HITL, plugins и т.д.) и монтирует их под соответствующими
+    prefix/tags в единый ``api_router_v1``.
+
+    Returns:
+        Единый ``APIRouter`` со всеми v1-маршрутами, готовый к ``app.include_router``.
+    """
     from src.backend.entrypoints.api.v1.endpoints.actions_inventory import (
         router as actions_inventory_router,
     )

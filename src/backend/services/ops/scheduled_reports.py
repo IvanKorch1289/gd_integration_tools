@@ -204,4 +204,5 @@ class ScheduledReportsService:
 
 @app_state_singleton("reports_service", factory=ScheduledReportsService)
 def get_reports_service() -> ScheduledReportsService:
+    """Фабрика: ScheduledReportsService."""
     raise NotImplementedError  # заменяется декоратором

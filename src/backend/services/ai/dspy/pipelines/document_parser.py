@@ -23,6 +23,7 @@ class _DocumentParserPipeline:
     )
 
     def forward(self, example: dict[str, Any]) -> str:
+        """Извлекает passport/dob/full_name из текста регулярками и эвристикой."""
         text = str(example.get("input") or example.get("context") or "")
         passport = ""
         dob = ""
@@ -48,6 +49,7 @@ class _DocumentParserPipeline:
         )
 
     def metric(self, example: dict[str, Any], output: str) -> float:
+        """Сравнивает распарсенный output с ожидаемым результатом (dspy metric)."""
         try:
             parsed = json.loads(output)
         except Exception as _:

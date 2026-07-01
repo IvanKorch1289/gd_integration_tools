@@ -60,7 +60,7 @@ class QdrantVectorStore(BaseVectorStore):
 
         try:
             await client.get_collection(self._collection_name)
-        except UnexpectedResponse, ValueError:
+        except (UnexpectedResponse, ValueError):
             await client.create_collection(
                 collection_name=self._collection_name,
                 vectors_config=VectorParams(
@@ -428,6 +428,7 @@ class FAISSVectorStore(BaseVectorStore):
         top_k: int = 5,
         where: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
+        """Ищет ближайшие векторы через FAISS и возвращает top-k документов с метаданными."""
         import numpy as np
 
         index = self._ensure_index()

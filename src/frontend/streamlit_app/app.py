@@ -75,7 +75,7 @@ def _emit_page_render_event(
     import time as _time
 
     try:
-        from src.backend.core.audit.facade import emit_audit_safe
+        from src.backend.core.frontend_facade import emit_audit_safe
 
         emit_audit_safe(
             event_type="frontend.page.rendered",
@@ -325,7 +325,7 @@ def _build_navigation() -> st.navigation:
             "bootstrap_ms": bootstrap_ms,
         }
         try:
-            from src.backend.core.audit.facade import emit_audit_safe
+            from src.backend.core.frontend_facade import emit_audit_safe
 
             emit_audit_safe(
                 event_type="frontend.nav.missing_pages",
@@ -345,7 +345,7 @@ def _build_navigation() -> st.navigation:
     # Emit on success even if no missing — observability для cold-start
     # duration + section count.
     try:
-        from src.backend.core.audit.facade import emit_audit_safe
+        from src.backend.core.frontend_facade import emit_audit_safe
 
         total_pages = sum(
             len(pages) for pages in pages_by_section.values()

@@ -59,6 +59,16 @@ class WorkflowConvertProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Конвертирует данные между форматами (JSON/YAML/string/dict).
+
+        Источник берётся из ``source_property`` (dotted path, e.g. ``body.data``
+        или имя property). Конвертация выполняется в потоке (``asyncio.to_thread``)
+        для больших payload. Результат записывается в target.
+
+        Args:
+            exchange: Текущий exchange; source — из source_property.
+            context: Контекст выполнения маршрута.
+        """
         # Resolve source from dotted path (simplified — just "body" or property)
         head, _, rest = self.source_property.partition(".")
         if head == "body":

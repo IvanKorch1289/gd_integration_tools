@@ -63,6 +63,7 @@ _dadata_service_instance: APIDADATAService | None = None
 
 
 def get_dadata_service() -> APIDADATAService:
+    """Фабрика: DaDataService (адресный API)."""
     global _dadata_service_instance
     if _dadata_service_instance is None:
         _dadata_service_instance = APIDADATAService(dadata_settings=settings.dadata_api)

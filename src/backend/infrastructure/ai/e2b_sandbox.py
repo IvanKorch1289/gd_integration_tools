@@ -61,6 +61,25 @@ class E2BSandbox(CodeSandbox):
         files: Mapping[str, bytes] | None = None,
         workspace: WorkspaceHandle | None = None,
     ) -> SandboxResult:
+        """Выполняет Python-код в E2B sandbox с capability-check и artifact-выгрузкой.
+
+        Проверяет capability ``code.execute``, создаёт E2B sandbox, опционально
+        загружает файлы, выполняет код. При наличии workspace артефакты
+        выгружаются в AI-filesystem facade. Sandbox гарантированно убивается
+        в ``finally``.
+
+        Args:
+            code: Python-код для выполнения.
+            timeout_s: Таймаут выполнения (секунды).
+            files: Файлы для загрузки в sandbox (relative_path → bytes).
+            workspace: Handle AI-workspace для сохранения артефактов.
+
+        Returns:
+            ``SandboxResult`` со stdout, stderr, exit_code и artifacts.
+
+        Raises:
+            RuntimeError: Если e2b-code-interpreter не установлен.
+        """
         if self._capability_check is not None:
             scope = workspace.session_id if workspace is not None else None
             self._capability_check(self._plugin, "code.execute", scope)

@@ -50,6 +50,7 @@ class HeaderMapPolicy:
 
     @classmethod
     def from_dict(cls, raw: dict[str, object] | None) -> HeaderMapPolicy:
+        """Создаёт HeaderMapPolicy из YAML-словаря с валидацией add/drop/override."""
         if not raw:
             return cls()
         add_val = raw.get("add") or {}

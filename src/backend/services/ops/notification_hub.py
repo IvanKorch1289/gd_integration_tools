@@ -291,4 +291,5 @@ class NotificationHub:
 
 @app_state_singleton("notification_hub", factory=NotificationHub)
 def get_notification_hub() -> NotificationHub:
+    """Фабрика: NotificationHubService."""
     raise NotImplementedError  # заменяется декоратором

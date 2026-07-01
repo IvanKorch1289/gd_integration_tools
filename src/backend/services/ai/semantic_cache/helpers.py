@@ -11,6 +11,7 @@ _l3_instance: L3RetrievalGraphCache | None = None
 
 
 def get_semantic_cache() -> SemanticCache:
+    """Фабрика: singleton SemanticCache."""
     global _instance
     if _instance is None:
         _instance = SemanticCache()

@@ -223,7 +223,7 @@ def _parse_facts(text: str) -> list[ExtractedFact]:
         body = entry.get("fact") or entry.get("text") or ""
         try:
             confidence = float(entry.get("confidence", 0.0))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             confidence = 0.0
         if body:
             facts.append(ExtractedFact(text=str(body), confidence=confidence))

@@ -15,6 +15,18 @@ VALUE_MARKER = "value"
 
 
 def to_jsonable(value: Any) -> Any:
+    """Рекурсивно конвертирует Python-объект в JSON-совместимое представление.
+
+    Поддерживает: Pydantic models, dataclasses, dict/list/tuple/set, UUID,
+    datetime, date, Decimal, bytes, Enum. Тип-маркеры (``__type__`` /
+    ``value``) сохраняются для восстановления через :func:`from_jsonable`.
+
+    Args:
+        value: Произвольный Python-объект.
+
+    Returns:
+        JSON-serializable представление (dict / list / scalar).
+    """
     if isinstance(value, BaseModel):
         return {
             key: to_jsonable(item)
@@ -52,6 +64,7 @@ def to_jsonable(value: Any) -> Any:
 
 
 def from_jsonable(value: Any) -> Any:
+    """Десериализовать tagged-dict через TYPE_MARKER (Enum/dataclass)."""
     if isinstance(value, list):
         return [from_jsonable(item) for item in value]
 

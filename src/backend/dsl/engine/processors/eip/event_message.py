@@ -185,6 +185,18 @@ class EventMessageProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обогащает exchange CloudEvents-совместимыми заголовками и опционально публикует.
+
+        Резолвит event_id, event_timestamp, event_source из заголовков или
+        генерирует defaults. Формирует :class:`EventMessageEnvelope`,
+        устанавливает CloudEvents-заголовки (id, type, version, timestamp,
+        source, topic). Если задан ``producer`` и ``topic`` — публикует
+        тело в внешний канал.
+
+        Args:
+            exchange: Текущий exchange; envelope — в свойстве ``event.envelope``.
+            context: Контекст выполнения маршрута.
+        """
         # Resolve event_id: explicit header > generated.
         existing_id = exchange.in_message.get_header(HEADER_EVENT_ID)
         event_id = str(existing_id) if existing_id else self._id_generator()

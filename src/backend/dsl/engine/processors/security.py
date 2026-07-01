@@ -73,6 +73,19 @@ class AuthValidateProcessor(BaseProcessor):
         super().__init__(name=name or f"auth:{','.join(self._methods_raw)}")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Проверяет аутентификацию запроса по списку auth-методов.
+
+        Извлекает request из exchange/context, перебирает указанные auth-методы
+        (JWT, API key, SAML и т.д.) через зарегистрированные verifiers.
+        Первый успешный verifier формирует :class:`AuthContext` в свойстве
+        ``result_property``. При ``AuthMethod.NONE`` или отсутствии request —
+        anonymous-контекст.
+
+        Args:
+            exchange: Текущий exchange; request — из свойства ``request``.
+                AuthContext — в свойстве ``result_property``.
+            context: Контекст выполнения маршрута.
+        """
         request = exchange.get_property("request") or getattr(context, "request", None)
 
         try:

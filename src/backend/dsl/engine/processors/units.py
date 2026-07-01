@@ -57,6 +57,17 @@ class UnitConversionProcessor(BaseProcessor):
         self._to_property = to_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Конвертирует единицы измерения через библиотеку ``pint``.
+
+        Поддерживает три формата тела: dict с ``value``+``unit`` (in-place),
+        list чисел (требуется ``from_unit``), bare number (требуется
+        ``from_unit``). Опциональное округление через ``precision``.
+
+        Args:
+            exchange: Текущий exchange; body — значение для конвертации.
+                Результат — в ``out_message`` или свойстве ``to_property``.
+            context: Контекст выполнения маршрута.
+        """
         try:
             import pint
         except ImportError:

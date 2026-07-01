@@ -128,8 +128,10 @@ async def _sqlite_ro_query(
 
 
 def build_database_primary() -> DBQueryCallable:
+    """Возвращает primary DB query callable (PostgreSQL через SQLAlchemy)."""
     return _pg_query
 
 
 def build_database_fallbacks() -> dict[str, DBQueryCallable]:
+    """Возвращает словарь fallback DB readers (read-only SQLite snapshot)."""
     return {"sqlite_ro": _sqlite_ro_query}

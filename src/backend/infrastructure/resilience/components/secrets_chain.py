@@ -72,8 +72,10 @@ async def _env_keyring_resolve(ref: str) -> str | None:
 
 
 def build_secrets_primary() -> SecretResolveCallable:
+    """Возвращает primary resolver секретов (HashiCorp Vault KV v2)."""
     return _vault_resolve
 
 
 def build_secrets_fallbacks() -> dict[str, SecretResolveCallable]:
+    """Возвращает словарь fallback resolvers (env-переменные + keyring)."""
     return {"env_keyring": _env_keyring_resolve}

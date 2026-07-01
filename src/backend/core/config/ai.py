@@ -17,6 +17,7 @@ from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.mixins import ConnectionMixin, LLMModelMixin, RetryMixin
 
 __all__ = (
     "AIProvidersSettings",
@@ -200,7 +201,7 @@ class OpenAISettings(BaseSettingsWithLoader):
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
 
 
-class MiniMaxSettings(BaseSettingsWithLoader):
+class MiniMaxSettings(LLMModelMixin, ConnectionMixin, RetryMixin, BaseSettingsWithLoader):
     """MiniMax M-series — китайская LLM-платформа с M2/M2.5 моделями.
 
     OpenAI-совместимый API. Endpoint: https://api.minimax.chat/v1
@@ -210,6 +211,7 @@ class MiniMaxSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "minimax"
     model_config = SettingsConfigDict(env_prefix="MINIMAX_", extra="forbid")
 
+    # override defaults (type=str для совместимости с _build_auth_headers)
     api_key: str = Field(default="", description="MiniMax API-ключ")
     model: str = Field(
         default="MiniMax-Text-01",
@@ -219,14 +221,14 @@ class MiniMaxSettings(BaseSettingsWithLoader):
         default="https://api.minimax.chat/v1",
         description="Base URL для MiniMax OpenAI-compatible API.",
     )
+    # не покрыто mixin
     timeout: float = Field(
         default=30.0, ge=1.0, description="Таймаут запроса к MiniMax API (сек)"
     )
-    max_retries: int = Field(default=3, ge=0, description="Количество retry при ошибках")
 
 
 
-class AIProvidersSettings(BaseSettingsWithLoader):
+class AIProvidersSettings(ConnectionMixin, BaseSettingsWithLoader):
     """Агрегированные настройки AI-провайдеров.
 
     Определяет порядок приоритета и общие параметры
@@ -271,14 +273,6 @@ class AIProvidersSettings(BaseSettingsWithLoader):
 
     custom_sensitive_fields: list[str] = Field(
         default_factory=list, description="Дополнительные поля для маскировки"
-    )
-
-    connect_timeout: float = Field(
-        default=10.0, ge=1.0, description="Таймаут подключения к AI API (сек)"
-    )
-
-    read_timeout: float = Field(
-        default=60.0, ge=1.0, description="Таймаут чтения ответа от AI API (сек)"
     )
 
     search_timeout: float = Field(

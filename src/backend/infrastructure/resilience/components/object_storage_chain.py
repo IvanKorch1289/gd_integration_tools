@@ -47,8 +47,10 @@ async def _local_fs_get(key: str) -> bytes:
 
 
 def build_object_storage_primary() -> StorageGetCallable:
+    """Резолв primary object storage через chain pattern."""
     return _primary_get
 
 
 def build_object_storage_fallbacks() -> dict[str, StorageGetCallable]:
+    """Резолв fallback object storages через chain pattern."""
     return {"local_fs": _local_fs_get}

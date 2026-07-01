@@ -85,6 +85,7 @@ class OnnxInferenceProcessor(BaseProcessor):
         return session
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет ONNX inference для входных features."""
         session = self._get_session()
         if session is None:
             exchange.fail("ONNX session unavailable")
@@ -136,6 +137,18 @@ class StreamingLLMProcessor(BaseProcessor):
         self._prompt_property = prompt_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет streaming LLM-запрос и публикует чанки в real-time.
+
+        Prompt берётся из свойства ``prompt_property`` или body. Если agent
+        поддерживает ``chat_stream`` — стримит чанки по SSE-каналу через
+        ``_publish_chunk``; иначе fallback в non-streaming режим. Финальный
+        результат (полный текст) записывается в body.
+
+        Args:
+            exchange: Текущий exchange; prompt — из ``prompt_property`` или body.
+                Результат — в ``in_message.body``.
+            context: Контекст выполнения маршрута.
+        """
         prompt = exchange.properties.get(self._prompt_property)
         if prompt is None:
             body = exchange.in_message.body
@@ -217,6 +230,7 @@ class EmbeddingProcessor(BaseProcessor):
         self._output = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Генерирует embedding для текста через заданного провайдера."""
         import os
 
         body = exchange.in_message.body
@@ -323,6 +337,7 @@ class OutboxProcessor(BaseProcessor):
             raise ValueError(f"Invalid outbox table name: {table_name}")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Записывает сообщение в outbox-таблицу БД для надёжной доставки (transactional outbox)."""
         import uuid
 
         import orjson

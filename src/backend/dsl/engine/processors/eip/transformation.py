@@ -142,6 +142,16 @@ class SplitterProcessor(BaseProcessor):
         self._processors = processors
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Splitter EIP: разбивает сообщение на части по jmespath и обрабатывает каждую.
+
+        Извлекает sub-items через jmespath-выражение, для каждого создаёт
+        отдельный sub-exchange и прогоняет через ``self._processors``.
+        Результаты собираются в свойство ``split_results``.
+
+        Args:
+            exchange: Текущий exchange; body используется как источник для split.
+            context: Контекст выполнения маршрута.
+        """
         import jmespath
 
         body = exchange.in_message.body
@@ -199,6 +209,19 @@ class ClaimCheckProcessor(BaseProcessor):
         self._threshold = threshold_bytes
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Реализует Claim Check EIP: выгрузка/восстановление больших сообщений.
+
+        Mode ``store``: сериализует тело, при превышении threshold (или если
+        ``store == "s3"``) — сохраняет в S3, иначе в Redis. В обмен
+        устанавливает token в ``_claim_token``.
+
+        Mode ``retrieve``: по token из exchange или body восстанавливает
+        исходный payload из S3/Redis и записывает в ``out_message``.
+
+        Args:
+            exchange: Текущий exchange; mode-dependent payload и token.
+            context: Контекст выполнения маршрута.
+        """
         import uuid
 
         if self._mode == "store":

@@ -43,6 +43,22 @@ class SagaProcessor(BaseProcessor):
         self._steps = steps
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет in-memory Saga: последовательные шаги с compensation.
+
+        Шаги выполняются по порядку; успешно выполненные добавляются в
+        ``completed_steps``. При ошибке шага ``N`` запускаются компенсации
+        шагов ``N-1, ..., 0`` в обратном порядке. Каждый шаг и compensation
+        аудитируется через ``_emit_saga_audit``.
+
+        Args:
+            exchange: Текущий exchange; при неудаче устанавливаются свойства
+                ``saga_failed_step``, ``saga_error``.
+            context: Контекст выполнения маршрута.
+
+        Note:
+            В отличие от :class:`SagaLRAProcessor`, не использует БД-checkpointing
+            (pure in-memory). При падении процесса состояние теряется.
+        """
         completed_steps: list[SagaStep] = []
         saga_workflow_id = (
             exchange.get_property("saga_workflow_id")

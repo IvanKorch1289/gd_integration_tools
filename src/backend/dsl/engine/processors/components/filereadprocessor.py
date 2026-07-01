@@ -34,6 +34,7 @@ class FileReadProcessor(BaseProcessor):
         self._binary = binary
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Читает файл с диска (текстовый или бинарный) с проверкой path-traversal и записывает содержимое в exchange."""
         import aiofiles
 
         from src.backend.dsl.engine.processors._path_safety import (

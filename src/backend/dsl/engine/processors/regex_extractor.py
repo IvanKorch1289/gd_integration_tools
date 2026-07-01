@@ -136,6 +136,7 @@ class RegexExtractorProcessor(BaseProcessor):
         exchange.set_property(self._target, value)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Извлекает данные из текста по regex (first/all/named/groups) и пишет в target."""
         try:
             from src.backend.core.config.features import feature_flags
 

@@ -175,7 +175,7 @@ async def get_running_count(workflow_id: str) -> RunningCountResponse:
     """
     counts: dict[str, int] = {}
     try:
-        from src.backend.infrastructure.workflow.factory import create_workflow_backend
+        from src.backend.core.workflow import create_workflow_backend
 
         backend = await create_workflow_backend(kind="auto")
         if hasattr(backend, "count_running_per_version"):

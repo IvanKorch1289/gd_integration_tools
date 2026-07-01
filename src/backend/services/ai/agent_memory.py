@@ -269,4 +269,5 @@ class AgentMemoryService:
 
 @app_state_singleton("agent_memory_service", factory=AgentMemoryService)
 def get_agent_memory_service() -> AgentMemoryService:
+    """Фабрика: singleton AgentMemoryService (MongoDB)."""
     raise NotImplementedError  # заменяется декоратором

@@ -129,6 +129,12 @@ class TokenStreamLLMProcessor(BaseProcessor):
             yield chunk
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет потоковую генерацию LLM: стримит чанки через publisher и накапливает полный текст.
+
+        Args:
+            exchange: Текущий обмен с промптом для модели.
+            context: Контекст выполнения процессора.
+        """
         prompt = exchange.properties.get(self._prompt_property)
         if not isinstance(prompt, str) or not prompt:
             body = exchange.in_message.body

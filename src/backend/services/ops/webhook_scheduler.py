@@ -165,4 +165,5 @@ class WebhookScheduler:
 
 @app_state_singleton("webhook_scheduler", factory=WebhookScheduler)
 def get_webhook_scheduler() -> WebhookScheduler:
+    """Фабрика: WebhookSchedulerService."""
     raise NotImplementedError  # заменяется декоратором

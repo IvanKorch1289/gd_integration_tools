@@ -77,6 +77,17 @@ class ConsulCertBackend(CertBackend):
         return f"{self._base}/{service_id}"
 
     async def get(self, service_id: str) -> CertEntry | None:
+        """Читает сертификат из Consul KV по ``service_id``.
+
+        Выполняет blocking Consul-операцию в thread (``asyncio.to_thread``).
+        Если ключ не найден или произошла ошибка — возвращает ``None``.
+
+        Args:
+            service_id: Идентификатор сервиса.
+
+        Returns:
+            ``CertEntry`` с PEM, fingerprint и expires_at, либо ``None``.
+        """
         try:
             client = self._client_factory()()
 
@@ -116,6 +127,26 @@ class ConsulCertBackend(CertBackend):
         description: str | None = None,
         uploaded_by: str | None = None,
     ) -> CertEntry:
+        """Сохраняет сертификат в Consul KV с optimistic version-bump.
+
+        Читает текущую версию из KV (если есть), инкрементирует и записывает
+        JSON-payload (pem, fingerprint, expires_at, description, version).
+        Блокирующие Consul-операции выполняются в thread через ``asyncio.to_thread``.
+
+        Args:
+            service_id: Идентификатор сервиса.
+            pem: PEM-сертификат.
+            fingerprint: Отпечаток (если ``None`` — вычисляется из pem).
+            expires_at: Дата истечения.
+            description: Описание сертификата.
+            uploaded_by: Кто загрузил.
+
+        Returns:
+            ``CertEntry`` с сохранёнными данными и bumped version.
+
+        Raises:
+            ConnectionError: Если Consul put не удался.
+        """
         client = self._client_factory()()
         # Read current version to bump.
         version = 1

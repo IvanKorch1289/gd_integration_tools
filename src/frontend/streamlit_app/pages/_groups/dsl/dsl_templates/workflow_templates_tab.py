@@ -52,7 +52,7 @@ def render_workflow_templates(client: APIClient) -> None:
 
     # S6 fix: используем dsl_portal facade вместо прямого импорта
     # ``src.backend.services.workflows.template_registry`` (R3.10d).
-    from src.backend.services.dsl_portal import (
+    from src.backend.core.frontend_facade import (
         list_workflow_templates,
         search_workflow_templates,
     )
@@ -105,7 +105,7 @@ def _render_template_card(tmpl, client: APIClient) -> None:
     with tab_graph:
         try:
             # S44 W2: facade import (was lazy direct dsl, layer violation).
-            from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid
+            from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid
 
             decl = WorkflowDeclaration.model_validate(tmpl.raw)
             mermaid = to_mermaid(decl)

@@ -54,6 +54,7 @@ class _ContextRecall:
         ]
 
     def score(self, sample: dict[str, Any], output: str) -> dict[str, float]:
+        """Считает recall@k, precision@k и MRR для retrieved vs ground_truth."""
         retrieved = [item.strip() for item in (output or "").split() if item.strip()]
         ground_truth = set(sample.get("ground_truth") or [])
 

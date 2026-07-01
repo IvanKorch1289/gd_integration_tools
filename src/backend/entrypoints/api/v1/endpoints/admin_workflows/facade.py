@@ -135,6 +135,7 @@ class _AdminWorkflowsFacade:
         ]
 
     async def retry_workflow(self, *, instance_id: UUID) -> dict[str, Any]:
+        """Перезапускает workflow из failed статуса в pending."""
         store = _instance_store()
         row = await store.get(instance_id)
         if row is None:
@@ -174,6 +175,7 @@ class _AdminWorkflowsFacade:
     async def cancel_workflow(
         self, *, instance_id: UUID, reason: str | None = None
     ) -> dict[str, Any]:
+        """Отменяет workflow, переводя его в terminal статус."""
         store = _instance_store()
         row = await store.get(instance_id)
         if row is None:
@@ -242,6 +244,26 @@ class _AdminWorkflowsFacade:
         timeout_s: int = 30,
         **payload: Any,
     ) -> WorkflowInstanceRef:
+        """Запускает workflow по имени с валидацией payload и опциональным ожиданием.
+
+        Ищет дескриптор в :class:`workflow_registry`, валидирует payload через
+        ``input_schema`` (если задан), создаёт instance через Action dispatcher
+        или instance store. При ``wait=True`` — блокирует до терминального
+        статуса или timeout.
+
+        Args:
+            workflow_name: Имя зарегистрированного workflow.
+            wait: Если ``True`` — ждать завершения (до ``timeout_s``).
+            timeout_s: Таймаут ожидания при ``wait=True``.
+            **payload: Параметры запуска (валидируются через input_schema).
+
+        Returns:
+            ``WorkflowInstanceRef`` со статусом, instance_id и ошибкой.
+
+        Raises:
+            HTTPException: 404 если workflow не найден; 422 при невалидном payload;
+                500 при отсутствии route_id binding.
+        """
         descriptor = workflow_registry.get(workflow_name)
         if descriptor is None:
             raise HTTPException(

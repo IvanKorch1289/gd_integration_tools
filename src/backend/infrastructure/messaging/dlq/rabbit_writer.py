@@ -36,6 +36,7 @@ class RabbitDLQWriter:
         self._queue_prefix = queue_prefix
 
     async def write(self, envelope: DLQEnvelope) -> None:
+        """Публикует DLQ envelope в RabbitMQ как persistent-сообщение."""
         from aio_pika import DeliveryMode, Message
 
         routing_key = f"{self._queue_prefix}{envelope.transport}"

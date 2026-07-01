@@ -80,6 +80,7 @@ class ContentBasedRouter(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Маршрутизирует exchange по первому matched predicate."""
         for idx, (predicate, endpoint) in enumerate(self._routes):
             try:
                 if predicate(exchange):

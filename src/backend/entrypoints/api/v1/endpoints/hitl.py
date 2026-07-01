@@ -56,6 +56,7 @@ async def list_pending(
 
 @router.get("/{signal_id}", summary="Get HITL signal details")
 async def get_signal(signal_id: str, request: Request) -> dict[str, Any]:
+    """Возвращает детали HITL-signal по ``signal_id`` (404 если не найден)."""
     svc = _service(request)
     signal = await svc.get(signal_id)
     if signal is None:

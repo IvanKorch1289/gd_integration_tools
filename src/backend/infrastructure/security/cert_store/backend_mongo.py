@@ -130,6 +130,7 @@ class MongoCertBackend(CertBackend):
         description: str | None = None,
         uploaded_by: str | None = None,
     ) -> CertEntry:
+        """Сохраняет сертификат (upsert) в MongoDB с инкрементом версии."""
         fp = _fingerprint(pem)
         db = self._db()
         coll = db[self._collection_name]

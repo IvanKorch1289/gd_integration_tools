@@ -112,6 +112,12 @@ class TransformCdcEventProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Трансформирует CDC-события: нормализует операции, фильтрует и проецирует поля.
+
+        Args:
+            exchange: Текущий обмен с CDC-событиями (или одиночным событием).
+            context: Контекст выполнения процессора.
+        """
         body = exchange.in_message.body
         if body is None:
             return

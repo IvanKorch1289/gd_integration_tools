@@ -22,6 +22,7 @@ class LLMParserProcessor(BaseProcessor):
         self._format = format
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Парсит ответ LLM (JSON/text) с опциональной валидацией по Pydantic-схеме."""
         body = exchange.in_message.body
         if not isinstance(body, str):
             return
@@ -33,7 +34,7 @@ class LLMParserProcessor(BaseProcessor):
                 text = text[start:end]
             try:
                 parsed = orjson.loads(text)
-            except orjson.JSONDecodeError, ValueError:
+            except (orjson.JSONDecodeError, ValueError):
                 exchange.fail(f"LLM output is not valid JSON: {text[:100]}")
                 return
         else:

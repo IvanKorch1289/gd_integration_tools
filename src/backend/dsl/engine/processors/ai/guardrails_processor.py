@@ -36,6 +36,7 @@ class GuardrailsProcessor(BaseProcessor):
         self._providers_config = providers_config
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Проверяет текст на длину, блок-паттерны и обязательные поля."""
         import re
 
         body = exchange.in_message.body

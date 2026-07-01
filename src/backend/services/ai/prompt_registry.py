@@ -164,6 +164,7 @@ _instance: PromptRegistry | None = None
 
 
 def get_prompt_registry() -> PromptRegistry:
+    """Фабрика: prompt registry service."""
     global _instance
     if _instance is None:
         _instance = PromptRegistry()

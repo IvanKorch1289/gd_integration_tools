@@ -106,7 +106,7 @@ def render_properties_panel(client: Any) -> None:
     st.divider()
     st.subheader("📋 Спецификация конвейера")
     try:
-        from src.backend.services.dsl_portal import load_pipeline_from_yaml
+        from src.backend.core.frontend_facade import load_pipeline_from_yaml
 
         pipeline = load_pipeline_from_yaml(st.session_state.yaml_output)
         with st.expander("JSON спецификация"):

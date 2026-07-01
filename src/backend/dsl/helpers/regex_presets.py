@@ -19,6 +19,7 @@ PRESETS: dict[str, re.Pattern[str]] = {
 
 
 def match(name: str, value: str) -> bool:
+    """Проверяет ``value`` по пресету ``name`` (``inn10``/``email``/``iban``/...)."""
     pattern = PRESETS.get(name)
     if pattern is None:
         raise KeyError(f"Unknown preset: {name}")

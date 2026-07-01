@@ -83,6 +83,7 @@ class ReplyProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Отправляет reply-сообщение через EventBus по correlation_id."""
         reply_to = (
             self._reply_channel
             or exchange.properties.get("reply_to")

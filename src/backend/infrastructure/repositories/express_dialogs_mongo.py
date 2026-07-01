@@ -69,6 +69,19 @@ class MongoExpressDialogStore:
         bubble: dict[str, Any] | None = None,
         keyboard: dict[str, Any] | None = None,
     ) -> None:
+        """Добавляет сообщение в MongoDB-диалог через upsert: создаёт сессию при первом обращении.
+
+        Args:
+            session_id: Идентификатор сессии диалога.
+            role: Роль отправителя сообщения.
+            body: Текст сообщения.
+            bot_id: Идентификатор бота (опционально).
+            group_chat_id: Идентификатор группового чата (опционально).
+            user_huid: Идентификатор пользователя (опционально).
+            sync_id: Идентификатор синхронизации (опционально).
+            bubble: Структура bubble-сообщения (опционально).
+            keyboard: Структура клавиатуры (опционально).
+        """
         message = ExpressMessage(
             role=role, body=body, sync_id=sync_id, bubble=bubble, keyboard=keyboard
         ).model_dump(mode="json")

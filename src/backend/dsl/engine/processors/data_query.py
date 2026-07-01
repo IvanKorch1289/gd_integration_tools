@@ -67,6 +67,18 @@ class JsonPathProcessor(BaseProcessor):
         self._stop_on_missing = stop_on_missing
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет JSONPath-операцию (extract/update/exists) над body.
+
+        Парсит body (str/bytes → JSON), компилирует JSONPath-выражение через
+        ``jsonpath_ng.ext``, затем в зависимости от mode: извлекает значения,
+        обновляет дерево, или проверяет существование.
+
+        Args:
+            exchange: Текущий exchange; body — целевой JSON. Результат extract —
+                в ``out_message`` или ``to_property``; результат exists —
+                в свойстве ``jsonpath_exists``.
+            context: Контекст выполнения маршрута.
+        """
         try:
             from jsonpath_ng.ext import parse as jp_parse
         except ImportError:

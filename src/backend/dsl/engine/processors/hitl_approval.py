@@ -97,6 +97,22 @@ class HitlApprovalProcessor(BaseProcessor):
         self._request_info_processors = request_info_processors or []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Регистрирует pending-signal в HitlService и ожидает решения.
+
+        Создаёт уникальный ``signal_id``, формирует payload из exchange (опционально
+        через jmespath-путь ``payload_path``), регистрирует сигнал в
+        :class:`HitlService` и ожидает решения (approve / reject / request_info).
+        При ``request_info`` выполняются ``request_info_processors`` и сигнал
+        перерегистрируется для повторного согласования.
+
+        Args:
+            exchange: Текущий exchange; из него извлекаются tenant_id, workflow_id
+                и payload. Результат записывается в ``exchange.properties["hitl_approval"]``.
+            context: Контекст выполнения маршрута.
+
+        Note:
+            При timeout или reject exchange переводится в ``failed``.
+        """
         signal_id = str(uuid.uuid4())
 
         # Извлекаем tenant_id из exchange properties или заголовков

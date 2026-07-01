@@ -78,8 +78,10 @@ def _build_eml(message: dict[str, Any]) -> EmailMessage:
 
 
 def build_smtp_primary() -> SmtpSendCallable:
+    """Резолв primary SMTP через chain pattern."""
     return _smtp_send
 
 
 def build_smtp_fallbacks() -> dict[str, SmtpSendCallable]:
+    """Резолв fallback SMTPs через chain pattern."""
     return {"file_mailer": _file_mailer_send}

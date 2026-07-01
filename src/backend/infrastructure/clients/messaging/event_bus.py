@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from src.backend.core.errors import BaseError
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.metrics_registry import metrics_registry
 
 __all__ = (
     "EventBus",
@@ -167,10 +168,22 @@ class EventBus:
         self._validate_event(channel, event)
 
         if not self._broker or not self._started:
+            eventbus_publish_total.labels(
+                channel=channel, outcome="skipped"
+            ).inc()
             logger.warning("EventBus not started, skipping publish to %s", channel)
             return
 
-        await self._broker.publish(event.model_dump(), channel=channel)
+        try:
+            await self._broker.publish(event.model_dump(), channel=channel)
+        except Exception:
+            eventbus_publish_total.labels(
+                channel=channel, outcome="error"
+            ).inc()
+            raise
+        eventbus_publish_total.labels(
+            channel=channel, outcome="success"
+        ).inc()
         logger.debug("Published to %s: %s", channel, event.__class__.__name__)
 
     async def publish_order_event(

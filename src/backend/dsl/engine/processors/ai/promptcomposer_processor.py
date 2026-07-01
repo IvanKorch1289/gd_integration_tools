@@ -26,6 +26,7 @@ class PromptComposerProcessor(BaseProcessor):
         self._output_property = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Композитит prompt из шаблона и RAG-контекста, подставляя недостающие переменные."""
         ctx_data = exchange.properties.get(self._context_property, "")
         if isinstance(ctx_data, list):
             ctx_data = "\n---\n".join(

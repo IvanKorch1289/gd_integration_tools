@@ -96,6 +96,7 @@ class MergeProcessor(BaseProcessor):
         self._mode = mode
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Объединяет значения из properties по mode: merge/zip/append."""
         values = [exchange.properties.get(p) for p in self._properties]
 
         if self._mode == "merge":
@@ -181,6 +182,12 @@ class BatchWindowProcessor(BaseProcessor):
         return "_default"
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Накапливает сообщения в буфер по группе и сбрасывает при достижении размера или таймаута окна.
+
+        Args:
+            exchange: Текущий обмен с сообщением.
+            context: Контекст выполнения процессора.
+        """
         group = self._resolve_group(exchange)
         async with self._lock:
             now = time.monotonic()
@@ -237,6 +244,7 @@ class DeduplicateProcessor(BaseProcessor):
         self._lock = asyncio.Lock()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Дедуплицирует exchange по ключу в скользящем окне."""
         key = self._key_fn(exchange)
         now = time.monotonic()
 
@@ -281,6 +289,7 @@ class FormatterProcessor(BaseProcessor):
         self._output_property = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Форматирует строку по шаблону, подставляя body и properties."""
         body = exchange.in_message.body
         variables: dict[str, Any] = {}
         if isinstance(body, dict):
@@ -337,6 +346,7 @@ class DebounceProcessor(BaseProcessor):
         self._lock = asyncio.Lock()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Подавляет duplicate-события в пределах delay_seconds (debounce по key)."""
         key = self._key_fn(exchange)
         now = time.monotonic()
 

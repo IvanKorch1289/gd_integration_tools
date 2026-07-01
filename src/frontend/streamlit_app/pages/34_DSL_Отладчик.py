@@ -34,7 +34,7 @@ if mode == "Пошаговый Debugger":
     """)
 
     try:
-        from src.backend.services.dsl_portal import list_route_ids
+        from src.backend.core.frontend_facade import list_route_ids
 
         available_routes = list_route_ids()
     except Exception as exc:
@@ -96,7 +96,7 @@ elif mode == "Аудит Replay":
     limit = st.slider("Записей", 10, 500, 50)
     if st.button("🔄 Обновить"):
         try:
-            from src.backend.services.dsl_portal import list_audit_records
+            from src.backend.core.frontend_facade import list_audit_records
 
             records = list_audit_records(count=limit)
             if not records:
@@ -124,7 +124,7 @@ elif mode == "Аудит Replay":
 else:  # Route Trace
     st.markdown("Live-исполнения маршрутов через DSL tracer.")
     try:
-        from src.backend.services.dsl_portal import list_recent_trace_events
+        from src.backend.core.frontend_facade import list_recent_trace_events
 
         events = list_recent_trace_events(limit=100)
         if events:

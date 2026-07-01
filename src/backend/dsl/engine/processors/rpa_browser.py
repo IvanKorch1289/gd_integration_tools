@@ -57,7 +57,7 @@ def _extract_domain(url: str) -> str:
 
         parsed = urlparse(url)
         return parsed.netloc or ""
-    except ValueError, TypeError, AttributeError:
+    except (ValueError, TypeError, AttributeError):
         return ""
 
 
@@ -161,6 +161,12 @@ class NavigateProcessor(BaseProcessor):
         self._url = url
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Выполняет переход браузера по URL с опциональным восстановлением и сохранением cookies.
+
+        Args:
+            exchange: Текущий обмен с контекстом RPA-сессии.
+            context: Контекст выполнения процессора.
+        """
         try:
             page = _get_or_create_page(exchange)
             ctx = exchange.properties.get("rpa.context")
@@ -374,6 +380,7 @@ class ScreenshotProcessor(BaseProcessor):
         self._to = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Делает скриншот страницы и сохраняет в property или body."""
         try:
             page = _get_or_create_page(exchange)
             kwargs: dict[str, Any] = {"full_page": self._full_page}

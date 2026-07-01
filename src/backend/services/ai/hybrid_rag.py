@@ -19,10 +19,24 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.metrics_registry import metrics_registry
 
 __all__ = ("HybridRAGSearch", "get_hybrid_rag")
 
 logger = get_logger("services.hybrid_rag")
+
+# ────────────────── Prometheus metrics (M3.1) ──────────────────
+
+rag_hybrid_search_total = metrics_registry.counter(
+    "rag_hybrid_search_total",
+    "Total Hybrid RAG searches by source and outcome",
+    labels=("source", "outcome"),
+)
+rag_hybrid_search_duration_seconds = metrics_registry.histogram(
+    "rag_hybrid_search_duration_seconds",
+    "Hybrid RAG search duration in seconds",
+    labels=("source",),
+)
 
 
 class HybridRAGSearch:
@@ -199,6 +213,7 @@ _instance: HybridRAGSearch | None = None
 
 
 def get_hybrid_rag() -> HybridRAGSearch:
+    """Фабрика: singleton HybridRAGSearch (BM25 + dense + rerank)."""
     global _instance
     if _instance is None:
         _instance = HybridRAGSearch()

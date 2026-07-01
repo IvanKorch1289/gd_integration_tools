@@ -84,6 +84,7 @@ class ForwardToProcessor(BaseProcessor):
         return self._spec
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Проксирует запрос к внешнему сервису по HTTP/SOAP/gRPC/queue."""
         body = exchange.in_message.body
         headers = (
             self._spec.header_policy.apply(exchange.in_message.headers or {})

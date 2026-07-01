@@ -222,7 +222,7 @@ class SSESource:
 
             try:
                 parsed = json.loads(raw)
-            except ValueError, TypeError:
+            except (ValueError, TypeError):
                 pass  # keep as raw string
         # Apply event_type filter (если задан)
         if self._event_type is not None and event_type != self._event_type:

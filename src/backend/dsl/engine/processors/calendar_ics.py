@@ -52,6 +52,20 @@ class IcsCalendarProcessor(BaseProcessor):
         self._prodid = prodid
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Парсит ICS-календарь в список событий или строит ICS из dict'ов.
+
+        Mode ``parse``: десериализует ICS (str/bytes) через ``icalendar``,
+        извлекает VEVENT-компоненты как dict. При ``only_first`` возвращает
+        только первый.
+
+        Mode ``build``: строит ICS-календарь из dict/list[dict], возвращает
+        ``bytes``.
+
+        Args:
+            exchange: Текущий exchange; body — ICS-строка (parse) или
+                dict/list[dict] (build). Результат — в ``out_message``.
+            context: Контекст выполнения маршрута.
+        """
         try:
             from icalendar import Calendar, Event
         except ImportError:

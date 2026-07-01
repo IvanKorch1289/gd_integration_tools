@@ -158,6 +158,7 @@ class RenderDocxProcessor(BaseProcessor):
         self.params = params
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Рендерит DOCX-шаблон с подстановкой плейсхолдеров из контекста."""
         from docx import Document  # lazy-import тяжёлой зависимости
 
         ctx_dict = _resolve_path(exchange.in_message.body, self.params.context_from)
@@ -209,6 +210,19 @@ class RenderXlsxProcessor(BaseProcessor):
         self.params = params
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Рендерит XLSX: replace-режим (placeholders) или append_table (list[dict]).
+
+        Lazy-import ``openpyxl``. Загружает существующий шаблон или создаёт
+        пустой Workbook. В ``append_table`` добавляет заголовки-ключи первой
+        записи и строки данных. В ``replace`` обходит ячейки и подставляет
+        ``{{key}}`` из контекста. Результат сохраняется во временный файл,
+        путь записывается в exchange.
+
+        Args:
+            exchange: Текущий exchange; data — из body (опционально через
+                ``context_from`` path). Путь к xlsx — в ``output_to``.
+            context: Контекст выполнения маршрута.
+        """
         from openpyxl import Workbook, load_workbook  # lazy-import
 
         data = _resolve_path(exchange.in_message.body, self.params.context_from)

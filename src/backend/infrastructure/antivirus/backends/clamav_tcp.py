@@ -42,7 +42,7 @@ class ClamAVTcpBackend(AntivirusBackend):
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection(self._host, self._port), timeout=2.0
             )
-        except TimeoutError, OSError:
+        except (TimeoutError, OSError):
             return False
         try:
             writer.write(b"zPING\0")
@@ -57,6 +57,14 @@ class ClamAVTcpBackend(AntivirusBackend):
                 pass
 
     async def scan_bytes(self, payload: bytes) -> AntivirusScanResult:
+        """Сканирует байты через ClamAV по TCP-протоколу INSTREAM с разбивкой на чанки.
+
+        Args:
+            payload: Байты для проверки.
+
+        Returns:
+            Результат сканирования с признаком заражения и метрикой задержки.
+        """
         start = time.monotonic()
         try:
             reader, writer = await asyncio.wait_for(
