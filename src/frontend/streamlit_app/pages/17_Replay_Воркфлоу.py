@@ -36,6 +36,7 @@ from src.frontend.streamlit_app.shared import (  # Sprint 43 W2 (TD-008 Group 3)
     related_pages_footer,
     setup_page,
 )
+from src.frontend.streamlit_app.shared.audit_event_lite import emit_streamlit_page_event
 
 setup_page()
 client = get_api_client()
@@ -55,6 +56,14 @@ def _list_workflow_ids(limit: int = 50) -> list[str]:
         ]
     except Exception as exc:  # noqa: BLE001
         st.error(f"Не удалось получить список workflows: {exc}")
+        emit_streamlit_page_event(
+            event="frontend.api.workflows_list_failed",
+            action="workflow.list",
+            outcome="failure",
+            page_key="17_Replay_Воркфлоу",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
         return []
 
 
@@ -68,6 +77,15 @@ def _fetch_events(workflow_id: str, page: int, size: int) -> list[dict[str, Any]
             return list(result or [])
     except Exception as exc:  # noqa: BLE001
         st.error(f"Не удалось получить events: {exc}")
+        emit_streamlit_page_event(
+            event="frontend.api.events_list_failed",
+            action="workflow.events_list",
+            outcome="failure",
+            page_key="17_Replay_Воркфлоу",
+            target=workflow_id,
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
         return []
 
 
@@ -176,7 +194,7 @@ _wf_id_compens = st.text_input("Workflow ID для saga timeline", key="saga_wf_
 if _wf_id_compens:
     try:
         # S6 fix: facade через dsl_portal (R3.10d / S36).
-        from src.backend.services.dsl_portal import get_saga_history
+        from src.backend.core.frontend_facade import get_saga_history
 
         records = get_saga_history(_wf_id_compens, limit=50)
     except Exception as exc:  # noqa: BLE001
