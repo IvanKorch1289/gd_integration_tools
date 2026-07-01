@@ -22,11 +22,8 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared.components import (
-    metric_row,
-    related_pages_footer,
-    setup_page,
-)
+from src.frontend.streamlit_app.shared import related_pages_footer, setup_page
+from src.frontend.streamlit_app.shared.audit_event_lite import emit_streamlit_page_event
 from src.frontend.streamlit_app.shared.streamlit_config import config
 
 setup_page()
@@ -177,18 +174,39 @@ with tab_list:
                         _cached_list.clear()
                     else:
                         st.error("Повтор не удался.")
+                        emit_streamlit_page_event(
+                            event="frontend.workflow.retry_failed",
+                            action="workflow.retry",
+                            outcome="failure",
+                            page_key="16_Воркфлоу",
+                            target=instance_id,
+                        )
                 if action_cols[1].button("🚫 Отменить", key=f"cancel_{instance_id}"):
                     if client.cancel_workflow(instance_id, reason="admin UI"):
                         st.success("Отмена поставлена в очередь.")
                         _cached_list.clear()
                     else:
                         st.error("Отмена не удалась.")
+                        emit_streamlit_page_event(
+                            event="frontend.workflow.cancel_failed",
+                            action="workflow.cancel",
+                            outcome="failure",
+                            page_key="16_Воркфлоу",
+                            target=instance_id,
+                        )
                 if action_cols[2].button("▶ Возобновить", key=f"resume_{instance_id}"):
                     if client.resume_workflow(instance_id):
                         st.success("Возобновлено.")
                         _cached_list.clear()
                     else:
                         st.error("Возобновление не удалось.")
+                        emit_streamlit_page_event(
+                            event="frontend.workflow.resume_failed",
+                            action="workflow.resume",
+                            outcome="failure",
+                            page_key="16_Воркфлоу",
+                            target=instance_id,
+                        )
                 if action_cols[3].button(
                         "📈 Показать таймлайн", key=f"tl_{instance_id}"
                     ):
