@@ -172,7 +172,7 @@ rpa = [
     # K3 Sprint 8 [wave:s8/k3-rpa-universal-stage1]: patchright (anti-detection
     # форк playwright). Используется в RPA Universal Stage 1; подключён
     # параллельно с playwright (legacy), полная миграция — Sprint 9 K3.
-    "patchright>=1.40.0,<2.0",
+    "patchright>=1.61.2,<2.0",
     "playwright>=1.48.0"
 ]
 # S74 W1 (FINAL_REPORT_V2 #9, направление #1): parameterized notebook execution.
