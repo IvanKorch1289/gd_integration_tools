@@ -166,7 +166,7 @@ auth-saml = [
 mcp = [
     # ADR-0070 §3 (S27 W4): FastMCP 3.2.4+ required для JWTAuthProvider
     # (JWTVerifier from fastmcp.server.auth.providers.jwt).
-    "fastmcp>=3.2.4"
+    "fastmcp>=3.4.3"
 ]
 rpa = [
     # K3 Sprint 8 [wave:s8/k3-rpa-universal-stage1]: patchright (anti-detection
