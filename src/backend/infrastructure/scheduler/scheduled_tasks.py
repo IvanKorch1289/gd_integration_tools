@@ -54,7 +54,7 @@ async def consolidate_idle_sessions():
     """
     try:
         scheduler_logger.info("Запуск LangMem consolidation...")
-        from src.backend.services.ai.langmem_service import get_langmem_service
+        from src.backend.services.ai.memory.langmem_service import get_langmem_service
 
         svc = get_langmem_service()
         report = await svc.consolidate()

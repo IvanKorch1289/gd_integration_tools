@@ -1279,6 +1279,27 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 211 — langmem migration complete (shim removed)
+
+### Step 2: 6 importers migrated to canonical, legacy shim deleted (FIXED)
+
+S210 добавил canonical API + оставил legacy как backward-compat shim. S211 завершает миграцию:
+
+- **6 importers мигрированы** с `services.ai.langmem_service` на `services.ai.memory.langmem_service`:
+  - `services/ai/memory/langmem/consolidation.py:88` (lazy import)
+  - `services/ai/memory/langmem/rlm.py:67` (lazy import)
+  - `infrastructure/scheduler/scheduled_tasks.py:57`
+  - `plugins/composition/setup_ai_stack.py:132`
+  - `entrypoints/api/v1/endpoints/langmem_admin.py:34,60` (2 imports)
+  - `tests/unit/services/ai/test_langmem_smoke.py:9`
+- **Legacy shim удалён**: `services/ai/langmem_service.py` — больше не нужен.
+
+Механический bulk-replace через `sed`: `s|services.ai.langmem_service import|services.ai.memory.langmem_service import|g`.
+
+**Net diff**: -286 LOC (legacy удалён) + 6 строк замены импортов.
+
+---
+
 ## [Unreleased] — Sprint 210 — langmem API consolidation
 
 ### Gap: langmem deprecation cleanup (FIXED)

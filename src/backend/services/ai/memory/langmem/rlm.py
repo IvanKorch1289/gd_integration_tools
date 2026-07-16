@@ -64,7 +64,7 @@ class RLMFeedbackProcessor:
     def _ensure_langmem(self) -> Any:
         if self._langmem is not None:
             return self._langmem
-        from src.backend.services.ai.langmem_service import get_langmem_service
+        from src.backend.services.ai.memory.langmem_service import get_langmem_service
 
         self._langmem = get_langmem_service()
         return self._langmem

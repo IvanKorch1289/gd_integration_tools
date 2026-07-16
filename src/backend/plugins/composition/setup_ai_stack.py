@@ -129,7 +129,7 @@ async def register_ai_stack_providers() -> None:
 
     if langmem_settings.enabled:
         try:
-            from src.backend.services.ai.langmem_service import LangMemService
+            from src.backend.services.ai.memory.langmem_service import LangMemService
 
             service = LangMemService(enabled=True)
             if app is not None:
