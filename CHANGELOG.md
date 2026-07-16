@@ -1279,6 +1279,20 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 220 — SNILS consolidation extended
+
+### S220: ai_sanitizer.py also uses shared SNILS
+
+S219 создал `core/security/pii_patterns.py` с public SNILS/INN/RU_PASSPORT. Применён только в 2 файлах (pii_masker.py, pii_filter.py). Найден ещё один потребитель с IDENTICAL SNILS regex: `infrastructure/security/ai_sanitizer.py:34`.
+
+**Fix**: заменён `_SNILS_RE = re.compile(...)` на `from src.backend.core.security.pii_patterns import SNILS as _SNILS_RE`.
+
+**Note**: `_INN_RE` оставлен локальным — он имеет другой semantic (`\b\d{10,12}\b` matches 10-12 digits, vs shared `\b\d{12}\b|\b\d{10}\b` matches 10 OR 12). Это by design для ai_sanitizer (looser match для pre-AI sanitization).
+
+После S220: только 1 SNILS regex определение в проекте (в `core/security/pii_patterns.py`).
+
+---
+
 ## [Unreleased] — Sprint 219 — PII patterns single source of truth
 
 ### Refactor: shared `core/security/pii_patterns.py` (S219)

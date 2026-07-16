@@ -30,8 +30,9 @@ __all__ = ("AIDataSanitizer", "MaskingEvent", "SanitizationResult")
 # Регулярные выражения для PII
 _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
 _PHONE_RE = re.compile(r"\+?[78][\d\s\-()]{9,}\d")
-_INN_RE = re.compile(r"\b\d{10,12}\b")
-_SNILS_RE = re.compile(r"\b\d{3}-\d{3}-\d{3}\s?\d{2}\b")
+_INN_RE = re.compile(r"\b\d{10,12}\b")  # S219: отличается semantic от pii_patterns.INN (10 OR 12).
+# S219: shared SNILS via core.security.pii_patterns (single source of truth).
+from src.backend.core.security.pii_patterns import SNILS as _SNILS_RE  # noqa: F401
 # US Social Security Number (M2.1)
 _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 _PASSPORT_RE = re.compile(r"\b\d{2}\s?\d{2}\s?\d{6}\b")
