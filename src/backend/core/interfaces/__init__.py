@@ -15,6 +15,14 @@ CircuitBreaker вынесен в ``core.resilience.breaker`` (canonical, purgato
 
 Публичный API сохранён: ``from src.backend.core.interfaces import X`` продолжает
 работать для всех ранее экспортируемых имён.
+
+Sprint 173 M2.4: backward-compat re-exports для
+``CircuitBreakerConfig`` / ``CircuitState`` / ``CircuitBreaker`` /
+``CircuitBreakerOpenError`` реализованы через module-level
+``__getattr__`` (lazy import), чтобы разорвать circular chain:
+``core.interfaces.__init__`` → ``core.resilience.breaker`` →
+``core.logging`` → ``infrastructure.logging.factory`` →
+``core.interfaces.log_sink`` → ``core.interfaces.__init__``.
 """
 
 from __future__ import annotations
@@ -22,7 +30,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
@@ -37,20 +45,67 @@ from src.backend.core.interfaces.secrets import SecretsBackend
 from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger
 
-# Backward compat (sibling W3 moved CircuitBreaker to core.resilience.breaker
-# but kept CircuitBreaker as alias; extend with aliases for the OTHER
-# renamed names so existing test imports like
-# `from src.backend.core.interfaces import CircuitBreakerConfig` still work):
-from src.backend.core.resilience.breaker import (  # noqa: E402
-    BreakerSpec as CircuitBreakerConfig,
-)
-from src.backend.core.resilience.breaker import BreakerState as CircuitState
-from src.backend.core.resilience.breaker import (
-    CircuitBreaker,  # already aliased in breaker.__init__ for backward compat
-)
-from src.backend.core.resilience.breaker import CircuitOpen as CircuitBreakerOpenError
-
 logger = get_logger(__name__)
+
+# Sprint 173 M2.4: backward-compat re-exports — lazy через __getattr__,
+# чтобы разорвать circular import (см. docstring).
+# Eager import этих имён ломает collection: breaker.py импортирует
+# core.logging, что триггерит infrastructure.logging.factory → … →
+# core.interfaces.log_sink → core.interfaces.__init__ → (back here).
+_CIRCUIT_BREAKER_REEXPORTS = (
+    "CircuitBreakerConfig",
+    "CircuitState",
+    "CircuitBreaker",
+    "CircuitBreakerOpenError",
+)
+
+if TYPE_CHECKING:
+    from src.backend.core.resilience.breaker import (
+        BreakerSpec as CircuitBreakerConfig,
+    )
+    from src.backend.core.resilience.breaker import (
+        BreakerState as CircuitState,
+    )
+    from src.backend.core.resilience.breaker import CircuitBreaker
+    from src.backend.core.resilience.breaker import CircuitOpen as CircuitBreakerOpenError
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy re-export для backward-compat CB-имён.
+
+    Args:
+        name: Имя атрибута модуля.
+
+    Returns:
+        Resolved symbol из ``core.resilience.breaker`` если name в
+        :data:`_CIRCUIT_BREAKER_REEXPORTS`, иначе raise AttributeError.
+
+    Notes:
+        Используется вместо eager ``from ... import ...`` чтобы
+        разорвать circular import chain при collection.
+    """
+    if name in _CIRCUIT_BREAKER_REEXPORTS:
+        from src.backend.core.resilience.breaker import (
+            BreakerSpec as CircuitBreakerConfig,
+        )
+        from src.backend.core.resilience.breaker import (
+            BreakerState as CircuitState,
+        )
+        from src.backend.core.resilience.breaker import CircuitBreaker
+        from src.backend.core.resilience.breaker import (
+            CircuitOpen as CircuitBreakerOpenError,
+        )
+
+        mapping = {
+            "CircuitBreakerConfig": CircuitBreakerConfig,
+            "CircuitState": CircuitState,
+            "CircuitBreaker": CircuitBreaker,
+            "CircuitBreakerOpenError": CircuitBreakerOpenError,
+        }
+        value = mapping[name]
+        globals()[name] = value  # cache for next access
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = (
     # Health
