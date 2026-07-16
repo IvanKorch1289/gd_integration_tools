@@ -1279,6 +1279,42 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 224 — infrastructure_facade auto-generation
+
+### Gap: 47 trivial getters consolidated via registry (S224)
+
+`core/di/providers/infrastructure_facade.py` содержал 44 inline `get_X()`
+функции, все со identical pattern: `from src.backend.<module> import Y;
+return Y`. Plus 3 special cases (`get_event_bus_facade_provider`,
+`get_dsl_variables_attr(name)`, `get_redis_client_factory`).
+
+**S224 Fix**: declarative registry + module-level auto-generation:
+
+- `_PROVIDERS_REGISTRY: dict[str, tuple[str, str]]` — 44 entries: name
+  → (module_path, attribute). Single source of truth.
+- `_load_provider(module_path, attr)` helper — lazy import + getattr.
+- Module-level loop: `for name, (mod, attr) in _PROVIDERS_REGISTRY.items():
+  globals()[f"get_{name}"] = _make_provider_getter(name, mod, attr)`.
+- 3 special cases остаются manual (non-standard signatures или разный semantic).
+
+**Метрики**:
+- Before: 492 LOC (44 inline get_X × ~4 lines + boilerplate)
+- After: 289 LOC (1 registry + 1 helper + 1 loop + 2 manual special cases)
+- Net: **-203 LOC (-41%)**
+
+**Quality wins**:
+- Adding new provider = 1 line в registry (vs 4 lines copy-paste).
+- Single source of truth — все module-path/attr mappings в одном месте.
+- Docstring генерируется автоматически (с comment про S224).
+- Без regression: callers используют `from infrastructure_facade import get_X` —
+  генерируемые функции биткомпатибельны (имя, return type, semantics).
+
+**Ponytail guard**: meta-programming оправдана для **однотипных сущностей**
+(44 provider'а с identical pattern). Если появятся 2-3 разных pattern —
+выделить в named factories, не оставлять auto-gen.
+
+---
+
 ## [Unreleased] — Sprint 223 — notification_hub thin adapter over NotificationGateway
 
 ### Gap: notification_hub deprecation cleanup (FIXED)
