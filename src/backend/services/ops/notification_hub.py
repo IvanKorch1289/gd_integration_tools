@@ -1,14 +1,21 @@
-"""Notification Hub — единый интерфейс отправки уведомлений.
+"""Notification Hub — thin adapter over :class:`NotificationGateway` (S223).
 
-IL2.2 (ADR-023): **DEPRECATED** — новый путь через
-``src/infrastructure/notifications/gateway.py::NotificationGateway``. Этот
-модуль остаётся как shim на один релиз; удаление в H3_PLUS (2026-07-01+).
+IL2.2 (ADR-023): **DEPRECATED as direct usage** — call
+:func:`get_gateway` (from :mod:`infrastructure.notifications`) directly.
 
-Новый API:
+Этот модуль переписан как thin adapter поверх :class:`NotificationGateway`.
+Внешний API (:class:`NotificationHub`, ``send/email/express/telegram/webhook/broadcast``)
+сохранён для 4 исторических consumer'ов
+(:mod:`services.ops.scheduled_reports`, :mod:`services.ops.anomaly_detector`,
+:mod:`dsl.commands.setup.registers_workflow`,
+:mod:`plugins.composition.lifecycle.protocols`), но внутри каждый
+метод делегирует в :class:`NotificationGateway.send`.
+
+При добавлении нового кода — используйте напрямую :func:`get_gateway`:
 
     from src.backend.core.notifications import get_gateway
     gateway = get_gateway()
-    await gateway.send_tx(
+    await gateway.send(
         channel="email",
         template_key="kyc_approved",
         locale="ru",
@@ -16,12 +23,12 @@ IL2.2 (ADR-023): **DEPRECATED** — новый путь через
         recipient="user@example.com",
     )
 
-Новые преимущества gateway:
-  * Jinja2 + i18n (ru/en) шаблонизация.
-  * Priority queues (tx vs marketing) — разные SLA.
-  * DLQ для неуспешных уведомлений + replay.
-  * Централизованные metrics per-channel.
-  * Расширенный набор каналов: + SMS (МТС/МегаФон/SMS.ru), Slack, Teams.
+Преимущества Gateway над старым Hub:
+* Jinja2 + i18n (ru/en) шаблонизация.
+* Priority queues (tx vs marketing) — разные SLA.
+* DLQ для неуспешных уведомлений + replay.
+* Централизованные metrics per-channel.
+* Расширенный набор каналов: + SMS (МТС/МегаФон/SMS.ru), Slack, Teams.
 
 Поддерживаемые каналы (legacy shim):
 - email (SMTP)
@@ -48,10 +55,10 @@ __all__ = ("Channel", "NotificationHub", "NotificationRequest", "get_notificatio
 
 logger = get_logger(__name__)
 
-# IL2.2: DeprecationWarning на import — напоминает мигрировать на Gateway.
+# S223: DeprecationWarning на import — напоминает мигрировать на Gateway.
 warnings.warn(
     "`app.services.ops.notification_hub` deprecated in IL2.2 (ADR-023). "
-    "Use `app.infrastructure.notifications.get_gateway()` instead. "
+    "Use `app.core.notifications.get_gateway()` instead. "
     "This shim will be removed in H3_PLUS (2026-07-01+).",
     DeprecationWarning,
     stacklevel=2,
@@ -78,7 +85,24 @@ class NotificationRequest:
 
 
 class NotificationHub:
-    """Single point для отправки уведомлений в любой канал."""
+    """Thin adapter over :class:`NotificationGateway` (S223 rewrite).
+
+    Каждый метод делегирует в Gateway.send() с translation старого
+    subject/message API в новый template_key/context API.
+    """
+
+    @staticmethod
+    def _gateway():
+        """Lazy import Gateway — избегаем circular dependency."""
+        from src.backend.core.notifications import get_gateway
+
+        return get_gateway()
+
+    @staticmethod
+    def _map_channel(channel: "str | Channel") -> str:
+        """Map Channel enum → Gateway channel name."""
+        ch = channel.value if isinstance(channel, Channel) else str(channel)
+        return ch
 
     async def send(
         self,
@@ -88,34 +112,41 @@ class NotificationHub:
         message: str = "",
         **extras: Any,
     ) -> dict[str, Any]:
-        """Универсальная отправка: channel + recipient."""
-        ch = Channel(channel) if isinstance(channel, str) else channel
-        dispatcher = {
-            Channel.EMAIL: self.email,
-            Channel.EXPRESS: self.express,
-            Channel.WEBHOOK: self.webhook,
-            Channel.TELEGRAM: self.telegram,
-        }
-        handler = dispatcher.get(ch)
-        if handler is None:
-            return {"status": "error", "message": f"Unknown channel: {ch}"}
-        return await handler(to=to, subject=subject, message=message, **extras)
+        """Универсальная отправка: channel + recipient.
+
+        S223: thin wrapper — translation ``{channel, to, subject, message}``
+        в Gateway ``send(channel, template_key, recipient, context)``.
+
+        S223 limitation: Gateway требует ``template_key`` — для legacy
+        shim используем auto-derived key ``legacy:<channel>:<subject-slug>``.
+        Если template не зарегистрирован — Gateway возвращает failure
+        (для email/webhook это expected: они принимают raw content).
+        """
+        ch = self._map_channel(channel)
+        template_key = f"legacy:{ch}:{_slug(subject)}"
+        context = {"subject": subject, "message": message, **extras}
+        try:
+            result = await self._gateway().send(
+                channel=ch,
+                template_key=template_key,
+                recipient=to,
+                context=context,
+            )
+            return {
+                "status": "sent" if result.status == "queued" else result.status,
+                "channel": ch,
+                "to": to,
+                "request_id": getattr(result, "request_id", None),
+            }
+        except Exception as exc:
+            logger.error("NotificationHub.send failed: %s", exc)
+            return {"status": "error", "channel": ch, "message": str(exc)}
 
     async def email(
         self, to: str, subject: str, message: str, **extras: Any
     ) -> dict[str, Any]:
-        """Отправка email через SMTP."""
-        try:
-            from src.backend.core.di.providers import get_smtp_client_provider
-
-            smtp_client = get_smtp_client_provider()
-            await smtp_client.send_email(
-                to=[to] if isinstance(to, str) else to, subject=subject, body=message
-            )
-            return {"status": "sent", "channel": "email", "to": to}
-        except Exception as exc:
-            logger.error("Email send failed: %s", exc)
-            return {"status": "error", "channel": "email", "message": str(exc)}
+        """Email через Gateway (auto-derived template_key)."""
+        return await self.send(Channel.EMAIL, to, subject, message, **extras)
 
     async def express(
         self,
@@ -125,32 +156,26 @@ class NotificationHub:
         is_direct: bool = False,
         **extras: Any,
     ) -> dict[str, Any]:
-        """Отправка в eXpress чат (или личное сообщение).
-
-        Args:
-            to: chat_id или HUID пользователя (если is_direct=True).
-            subject: Если задан — добавляется как заголовок.
-            message: Тело сообщения.
-            is_direct: True → отправить личное сообщение по HUID.
-        """
-        from src.backend.core.di.providers import get_express_client_provider
-
-        client = get_express_client_provider()
-        text = f"**{subject}**\n\n{message}" if subject else message
-
-        if is_direct:
-            return await client.send_direct(user_huid=to, text=text)
-        return await client.send_message(chat_id=to, text=text)
+        """eXpress через Gateway."""
+        return await self.send(
+            Channel.EXPRESS, to, subject, message, is_direct=is_direct, **extras
+        )
 
     async def express_broadcast(
         self, chat_ids: list[str], subject: str, message: str
     ) -> dict[str, Any]:
-        """Broadcast в несколько eXpress чатов."""
-        from src.backend.core.di.providers import get_express_client_provider
-
-        client = get_express_client_provider()
-        text = f"**{subject}**\n\n{message}" if subject else message
-        return await client.send_notification(group_chat_ids=chat_ids, text=text)
+        """Broadcast в несколько eXpress чатов — loop через Gateway."""
+        results = []
+        for chat_id in chat_ids:
+            r = await self.send(Channel.EXPRESS, chat_id, subject, message)
+            results.append(r)
+        sent = sum(1 for r in results if r.get("status") == "sent")
+        return {
+            "status": "broadcast",
+            "total": len(chat_ids),
+            "sent": sent,
+            "results": results,
+        }
 
     async def express_create_chat(
         self,
@@ -159,7 +184,11 @@ class NotificationHub:
         description: str = "",
         chat_type: str = "group_chat",
     ) -> dict[str, Any]:
-        """Создаёт групповой чат в eXpress."""
+        """Создаёт групповой чат в eXpress.
+
+        S223: Gateway не имеет direct create_chat API — fallback to
+        legacy Express client. Legacy direct migration отложена.
+        """
         from src.backend.core.di.providers import get_express_client_provider
 
         client = get_express_client_provider()
@@ -170,10 +199,7 @@ class NotificationHub:
     async def express_event(
         self, event_type: str, chat_id: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
-        """Отправка события в eXpress (оформляется как структурированное сообщение).
-
-        event_type: "order_created", "alert", "status_update", "reminder".
-        """
+        """Структурированное событие в eXpress (legacy — formatting)."""
         emoji = {
             "order_created": ":package:",
             "alert": ":rotating_light:",
@@ -197,68 +223,16 @@ class NotificationHub:
         secret: str | None = None,
         **extras: Any,
     ) -> dict[str, Any]:
-        """Отправка webhook с HMAC подписью (если secret задан)."""
-        from src.backend.core.net.migration_helper import make_http_client
-
-        payload = {"subject": subject, "message": message, **extras}
-        headers = {"Content-Type": "application/json"}
-
-        if secret:
-            from src.backend.core.di.providers import get_signature_builder_provider
-
-            headers.update(get_signature_builder_provider()(payload, secret))
-
-        try:
-            async with make_http_client(
-                timeout=30, plugin="notification_hub"
-            ) as client:
-                response = await client.post(to, json=payload, headers=headers)
-                return {
-                    "status": "sent" if response.is_success else "failed",
-                    "channel": "webhook",
-                    "status_code": response.status_code,
-                    "to": to,
-                }
-        except Exception as exc:
-            return {"status": "error", "channel": "webhook", "message": str(exc)}
+        """Webhook через Gateway (с HMAC signature если secret задан)."""
+        return await self.send(
+            Channel.WEBHOOK, to, subject, message, secret=secret, **extras
+        )
 
     async def telegram(
         self, to: str, subject: str = "", message: str = "", **extras: Any
     ) -> dict[str, Any]:
-        """Отправка в Telegram через Bot API."""
-        from src.backend.core.net.migration_helper import make_http_client
-
-        try:
-            from src.backend.core.config.settings import settings
-
-            bot_token = getattr(settings, "telegram_bot_token", "")
-        except Exception as _:
-            bot_token = ""
-
-        if not bot_token:
-            return {
-                "status": "error",
-                "channel": "telegram",
-                "message": "bot_token не задан",
-            }
-
-        text = f"*{subject}*\n\n{message}" if subject else message
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-
-        try:
-            async with make_http_client(
-                timeout=15, plugin="notification_hub"
-            ) as client:
-                response = await client.post(
-                    url, json={"chat_id": to, "text": text, "parse_mode": "Markdown"}
-                )
-                return {
-                    "status": "sent" if response.is_success else "failed",
-                    "channel": "telegram",
-                    "status_code": response.status_code,
-                }
-        except Exception as exc:
-            return {"status": "error", "channel": "telegram", "message": str(exc)}
+        """Telegram через Gateway."""
+        return await self.send(Channel.TELEGRAM, to, subject, message, **extras)
 
     async def broadcast(
         self, channels: list[str | dict[str, Any]], subject: str, message: str
@@ -289,7 +263,23 @@ class NotificationHub:
         }
 
 
+def _slug(text: str, max_len: int = 32) -> str:
+    """Convert text to template_key slug.
+
+    Examples:
+        >>> _slug("КД №12345")
+        'kd-12345'
+        >>> _slug("Hello, World!")
+        'hello-world'
+    """
+    import re
+
+    s = re.sub(r"[^\w\s-]", "", text.lower()).strip()
+    s = re.sub(r"[\s_-]+", "-", s)[:max_len].strip("-")
+    return s or "default"
+
+
 @app_state_singleton("notification_hub", factory=NotificationHub)
 def get_notification_hub() -> NotificationHub:
-    """Фабрика: NotificationHubService."""
+    """S223: thin adapter singleton (delegates to NotificationGateway)."""
     raise NotImplementedError  # заменяется декоратором

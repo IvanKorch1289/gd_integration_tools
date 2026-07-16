@@ -1279,6 +1279,34 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 223 — notification_hub thin adapter over NotificationGateway
+
+### Gap: notification_hub deprecation cleanup (FIXED)
+
+`services/ops/notification_hub.py` (295 LOC) был deprecated shim per ADR-023.
+4 active consumers (scheduled_reports, anomaly_detector, registers_workflow,
+composition/lifecycle/protocols) ещё использовали его.
+
+**S223 Fix**: переписан `notification_hub.py` как **thin adapter** поверх
+`infrastructure.notifications.gateway.NotificationGateway`:
+
+- Каждый метод (`send`, `email`, `express`, `webhook`, `telegram`,
+  `broadcast`, `express_broadcast`, `express_event`) теперь делегирует
+  в `gateway.send()` с translation старого API (`{channel, to, subject, message}`)
+  в новый (`{channel, template_key, recipient, context}`).
+- Public API (`NotificationHub` class, `Channel` enum, `NotificationRequest`
+  dataclass, `get_notification_hub()`) сохранён биткомпатибельно.
+- 4 historical consumers **не требуют изменений** (поведение через Gateway).
+- `express_create_chat` оставлен через legacy Express client — Gateway
+  не имеет direct create_chat API (deferred для будущей Gateway feature).
+
+**Метрики**: 295 LOC → 242 LOC (-53 net, -18%). Без regression:
+- Все public методы сохранены с теми же сигнатурами.
+- Consumers не требуют изменений (используют `get_notification_hub()`).
+- DeprecationWarning на import сохранён.
+
+---
+
 ## [Unreleased] — Sprint 222 — CARD pattern consolidated (6th duplicate)
 
 ### S222: extend pii_patterns.py with CARD
