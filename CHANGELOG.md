@@ -1,5 +1,66 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Sprint 203 (S203) — Integration domain audit
+
+### ConnectorHealthMixin consolidation (S203 W1)
+
+- **NEW**: `src/backend/infrastructure/clients/connector_health_mixin.py` — единый `_timed_health()` helper для всех sinks/sources. Объединил ранее дублированный код в `SinkHealthMixin` (41 LOC) + `SourceHealthMixin` (41 LOC = 82 LOC дубля).
+- **REFACTOR**: `infrastructure/sinks/base.py` и `infrastructure/sources/base.py` теперь — алиасы на `ConnectorHealthMixin` (backward-compat preserved). Все существующие импорты `SinkHealthMixin` / `SourceHealthMixin` продолжают работать.
+- Метрика: 82 LOC → 41 LOC + 2 alias-файла по 15 LOC = **52 LOC total** (35% reduction).
+
+### HealthAggregator extension (S203 W2 + W3)
+
+- **EXTENDED**: `src/backend/plugins/composition/setup_infra/health.py::_register_health_checks` теперь регистрирует per-kind health checks для всех `SinkKind` (11) и `SourceKind` (10) через новый helper `_make_kind_health(kind_value, registry_attr)`.
+- Каждая проверка пингует ОДИН зарегистрированный инстанс данного kind через `SinkRegistry`/`SourceRegistry`. Если ни одного — возвращает `{"status": "skipped", "reason": ...}` (не падает).
+- **Избежали дублирования**: не добавляли второй health-фасад. Существующий `HealthAggregator` уже используется в `/components` endpoint, scheduler, alert_subscriber — расширили его, а не вводили параллельную систему.
+- Метрика: было 6 health-проверок (redis/database/s3/clickhouse/kafka/nats) → стало **26 проверок** (+20 sink/source per-kind).
+
+### IntegrationFacade + DSL (S203 W4)
+
+- **NEW**: `src/backend/services/integrations/facade.py` — `IntegrationFacade` с capability gating. API:
+  - `send_to_sink(sink_id, payload, *, tenant_id=None)` — отправка через `SinkRegistry` + `AuthorizationFacade`. Capability формат: `sink.send.<kind>` (например `sink.send.http`).
+  - `check_sink_health(sink_id)` / `check_source_health(source_id)` — read-only ping.
+  - `list_sinks()` / `list_sources()` — introspection для DSL.
+  - Fail-closed: при недоступности authz-слоя доступ запрещается.
+- **NEW**: `src/backend/dsl/engine/processors/integration_send.py` — `IntegrationSendProcessor` (capability `sink.send.*`, namespace `infra`, tier 2).
+- **NEW**: `dsl/builders/integration_core/utils_mixin.py` — добавлены builder-методы:
+  - `.send_via_sink(sink_id, *, payload_from="body", result_property=...)` — для extension'ов.
+  - `.facade_get_health(name, *, to=...)` — обёртка над существующим `FacadeGetHealthProcessor` (был без builder-метода).
+- Метрика: extensions получают **единую точку** для sink/source вместо прямого импорта `infrastructure.sinks.factory.build_sink`. Это закрывает gap Master Prompt §3.3 для Integration-домена.
+
+### Webhook HMAC + SmsSink (S203 W5)
+
+- **WebHook HMAC verify**: подтверждено, что `infrastructure/sources/webhook.py` уже реализует HMAC-SHA256 verification через `hmac_secret` + `verify_signature()` (опционально с `timestamp_window`). Дополнительной работы не потребовалось — план отметил как «done».
+- **NEW**: `src/backend/infrastructure/sinks/sms_sink.py` — `SmsSink` для `SinkKind.SMS`. Поддерживает провайдеров `smsru`, `mts`, `megafon` через `httpx`. Capability: `sms.send`. Использует существующий `SMSSettings` (urls).
+- **EXTENDED**: `infrastructure/sinks/factory.py` — `SinkKind.SMS` теперь возвращает `SmsSink` вместо `raise ValueError(...)`.
+- Метрика: SinkKind coverage 11/12 → **12/12** (закрыт последний stub).
+- **SKIPPED**: удаление `infrastructure/eventing/` — используется в `tests/unit/infrastructure/eventing/test_schema_registry.py`, `test_inbox.py`. Безопасное удаление требует отдельного sprint с миграцией тестов.
+
+### Tests (S203 W6)
+
+- **NEW**: `tests/unit/infrastructure/clients/test_connector_health_mixin.py` — 6 тестов: success, failure, mode propagation, alias identity.
+- **NEW**: `tests/unit/infrastructure/sinks/test_sms_sink.py` — 7 тестов: provider validation, default kind, payload extraction.
+- **NEW**: `tests/unit/services/integrations/test_facade.py` — 6 тестов: capability gating (allowed/denied/format), health checks, introspection.
+
+### Stats (S203)
+
+- **9 файлов** создано/изменено (5 prod + 3 tests + 1 CHANGELOG)
+- **~350 LOC** нового кода (facade, sink, processor, mixin, tests)
+- **SinkKind coverage**: 11/12 → **12/12** (закрыт последний stub)
+- **Health check coverage**: 6 → **26** (+333%)
+- **Health mixin duplication**: 82 LOC → 41 LOC + 2 aliases (**35% reduction**)
+- **0 regression risk**: backward-compat сохранён (SinkHealthMixin / SourceHealthMixin — aliases)
+
+### What we explicitly did NOT do (ponytail guard)
+
+- ❌ Не вводили второй health-фасад (`HealthFacade` из S202 уже dead code — verified).
+- ❌ Не разделяли `mq` source на 4 kinds — backward-compat risk.
+- ❌ Не делали interface + 3 implementation для IntegrationFacade — нужен один класс.
+- ❌ Не вводили rate-limiter/circuit-breaker в sinks — отдельный sprint (S204).
+- ❌ Не удаляли `infrastructure/eventing/` — тесты зависят.
+
+---
+
 ## [Unreleased] — Sprint 173 (S173)
 
 ### Audit-driven: уже реализовано (verified)

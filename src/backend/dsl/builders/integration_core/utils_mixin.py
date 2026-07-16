@@ -378,3 +378,59 @@ class UtilsMixin:
             source=source,
             to=to,
         )
+
+    def send_via_sink(
+        self,
+        sink_id: str,
+        *,
+        payload_from: str = "body",
+        result_property: str = "integration_send_result",
+    ) -> RouteBuilder:
+        """Отправить payload через зарегистрированный Sink (capability-gated).
+
+        S203 W4: единая точка для DSL→extensions→IntegrationFacade→SinkRegistry.
+        Capability ``sink.send.<kind>`` проверяется в facade автоматически.
+
+        Args:
+            sink_id: Идентификатор Sink (зарегистрированный в SinkRegistry).
+            payload_from: Откуда брать payload (``"body"`` / ``"body.<field>"`` /
+                ``"properties.<name>"``).
+            result_property: Куда записать результат (``{ok, external_id, ...}``).
+
+        Example:
+            >>> .send_via_sink("alerts.http", payload_from="body.alert")
+        """
+        from src.backend.dsl.engine.processors.integration_send import (
+            IntegrationSendProcessor,
+        )
+
+        return self._add(  # type: ignore[attr-defined]
+            IntegrationSendProcessor(
+                sink_id=sink_id,
+                payload_from=payload_from,
+                result_property=result_property,
+            )
+        )
+
+    def facade_get_health(
+        self,
+        name: str,
+        *,
+        to: str = "body.health",
+    ) -> RouteBuilder:
+        """Ping инфраструктурного компонента через HealthAggregator (S203 W2).
+
+        Args:
+            name: Имя компонента (``"redis"``, ``"sink_http"``, ``"source_mq"`` и т.п.).
+            to: Куда записать dict со status/latency_ms/error.
+
+        Example:
+            >>> .facade_get_health("sink_http")
+            >>> .facade_get_health("source_webhook", to="body.webhook_health")
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.facade_get_health",
+            "FacadeGetHealthProcessor",
+            name=name,
+            to=to,
+        )
