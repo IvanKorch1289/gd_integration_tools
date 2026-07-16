@@ -1,13 +1,20 @@
-"""Unit tests for src.backend.dsl.builders.infrastructure_dsl (K3 W4, S38).
+"""Unit tests for src.backend.dsl.builders.infrastructure_dsl (K3 W4, S38 → S175 #5 hybrid).
 
-Subagent #1 created infrastructure_dsl.py (~230 LOC) but hit
-max_iterations before test creation + MRO integration. Orchestrator:
-- added InfrastructureDSL to RouteBuilder MRO
-- created 17 tests
-- verified + commit
+S175 #5: hybrid resolution of audit-warning vs deletion conflict.
+- 7 phantom stubs DELETED (replaced by infra_* / storage/s3.py).
+- 8 phantom stubs KEPT with audit-warning observability
+  (no real replacement yet for: Redis Set/Delete, ClickHouse Insert,
+  ES Index/Search, Mongo Insert/Find-partial, SFTP Get/Put).
 
-This tests the WRAPPER methods (chainable) + to_spec, NOT the
-underlying backend processors (those need real Redis/ClickHouse/etc).
+This tests:
+- WRAPPER methods (chainable) for kept stubs.
+- to_spec() round-trip for kept stubs.
+- audit-warning observability for kept stubs.
+- DELETED stubs are NO LONGER importable (regression guard).
+
+Real backend processors (InfraRedisGetProcessor, InfraClickHouseQueryProcessor,
+InfraS3GetProcessor, FromS3Processor, etc.) тестируются отдельно в
+src/backend/dsl/engine/processors/infra_*.py.
 """
 
 from __future__ import annotations
@@ -16,21 +23,17 @@ import pytest
 
 from src.backend.dsl.builders.base import RouteBuilder
 from src.backend.dsl.builders.infrastructure_dsl import (
+    # Kept stubs (S175 #5 hybrid — no real impl yet).
     ClickHouseInsertProcessor,
-    ClickHouseQueryProcessor,
     ElasticsearchIndexProcessor,
     ElasticsearchSearchProcessor,
-    InfrastructureDSL,
     MongoFindProcessor,
     MongoInsertProcessor,
     RedisDeleteProcessor,
-    RedisGetProcessor,
     RedisSetProcessor,
-    S3DeleteProcessor,
-    S3GetProcessor,
-    S3ListProcessor,
-    S3PutProcessor,
-    SqlExecProcessor,
+    SftpGetProcessor,
+    SftpPutProcessor,
+    InfrastructureDSL,
 )
 
 
@@ -47,26 +50,81 @@ class TestInfrastructureDSLInMRO:
     def test_slots(self) -> None:
         assert InfrastructureDSL.__slots__ == ()
 
-    def test_method_count(self) -> None:
+    def test_method_count_s175_hybrid(self) -> None:
+        """S175 #5: 9 kept wrapper methods (deleted 5)."""
         methods = [m for m in dir(InfrastructureDSL) if not m.startswith("_")]
-        expected = [
+        # KEPT methods (после S175 #5 hybrid).
+        expected_kept = {
             "redis_set",
-            "redis_get",
             "redis_delete",
             "clickhouse_insert",
-            "clickhouse_query",
             "es_index",
             "es_search",
             "mongo_insert",
             "mongo_find",
-            "s3_put",
-            "sql_exec",
+            "sftp_get",
+            "sftp_put",
+        }
+        for m in expected_kept:
+            assert m in methods, f"Missing kept method: {m}"
+
+        # DELETED methods (S175 #5 hybrid — moved to infra_*).
+        deleted = {
+            "redis_get",  # InfraRedisGetProcessor
+            "clickhouse_query",  # InfraClickHouseQueryProcessor
+            "s3_put",  # ToS3Processor
+            "s3_get",  # FromS3Processor
+            "s3_delete",  # S3DeleteProcessor (storage/s3.py)
+            "s3_list",  # S3ListProcessor (storage/s3.py)
+            "sql_exec",  # InfraDbQueryProcessor
+        }
+        for m in deleted:
+            assert m not in methods, f"Deleted method still present: {m}"
+
+
+class TestDeletedStubsRegression:
+    """S175 #5: DELETED stubs не должны импортироваться."""
+
+    def test_deleted_stubs_not_importable(self) -> None:
+        """Verify 7 DELETED stub classes raised ImportError."""
+        deleted_names = [
+            "RedisGetProcessor",
+            "ClickHouseQueryProcessor",
+            "S3PutProcessor",
+            "S3GetProcessor",
+            "S3DeleteProcessor",
+            "S3ListProcessor",
+            "SqlExecProcessor",
         ]
-        for m in expected:
-            assert m in methods, f"Missing method: {m}"
+        from src.backend.dsl.builders import infrastructure_dsl
+
+        for name in deleted_names:
+            assert not hasattr(infrastructure_dsl, name), (
+                f"DELETED stub {name} still present in infrastructure_dsl module"
+            )
+
+    def test_all_public_exports_only_kept_stubs(self) -> None:
+        """`__all__` содержит только 10 KEPT классов."""
+        from src.backend.dsl.builders import infrastructure_dsl
+
+        expected = {
+            "ClickHouseInsertProcessor",
+            "ElasticsearchIndexProcessor",
+            "ElasticsearchSearchProcessor",
+            "InfrastructureDSL",
+            "MongoFindProcessor",
+            "MongoInsertProcessor",
+            "RedisDeleteProcessor",
+            "RedisSetProcessor",
+            "SftpGetProcessor",
+            "SftpPutProcessor",
+        }
+        assert set(infrastructure_dsl.__all__) == expected, (
+            f"__all__ mismatch: got {set(infrastructure_dsl.__all__)}, expected {expected}"
+        )
 
 
-class TestRedisMethods:
+class TestKeptRedisMethods:
     def test_redis_set_basic(self, builder: RouteBuilder) -> None:
         result = builder.redis_set("key1", "value1")
         assert isinstance(result, RouteBuilder)
@@ -77,18 +135,12 @@ class TestRedisMethods:
         proc = builder._processors[-1]
         assert proc.params["ttl_seconds"] == 60
 
-    def test_redis_get_with_default(self, builder: RouteBuilder) -> None:
-        builder.redis_get("missing", default="fallback")
-        proc = builder._processors[-1]
-        assert isinstance(proc, RedisGetProcessor)
-        assert proc.params["default"] == "fallback"
-
     def test_redis_delete(self, builder: RouteBuilder) -> None:
         builder.redis_delete("k")
         assert isinstance(builder._processors[-1], RedisDeleteProcessor)
 
 
-class TestClickHouseMethods:
+class TestKeptClickHouseMethods:
     def test_clickhouse_insert(self, builder: RouteBuilder) -> None:
         builder.clickhouse_insert("events")
         assert isinstance(builder._processors[-1], ClickHouseInsertProcessor)
@@ -97,14 +149,8 @@ class TestClickHouseMethods:
         builder.clickhouse_insert("events", batch_size=5000)
         assert builder._processors[-1].params["batch_size"] == 5000
 
-    def test_clickhouse_query(self, builder: RouteBuilder) -> None:
-        builder.clickhouse_query("SELECT 1", to_property="result")
-        proc = builder._processors[-1]
-        assert isinstance(proc, ClickHouseQueryProcessor)
-        assert proc.params["to_property"] == "result"
 
-
-class TestElasticsearchMethods:
+class TestKeptElasticsearchMethods:
     def test_es_index(self, builder: RouteBuilder) -> None:
         builder.es_index("my_index")
         assert isinstance(builder._processors[-1], ElasticsearchIndexProcessor)
@@ -121,7 +167,7 @@ class TestElasticsearchMethods:
         assert proc.params["size"] == 20
 
 
-class TestMongoMethods:
+class TestKeptMongoMethods:
     def test_mongo_insert(self, builder: RouteBuilder) -> None:
         builder.mongo_insert("users")
         assert isinstance(builder._processors[-1], MongoInsertProcessor)
@@ -133,68 +179,106 @@ class TestMongoMethods:
         assert proc.params["to_property"] == "docs"
 
 
-class TestS3AndSQL:
-    def test_s3_put(self, builder: RouteBuilder) -> None:
-        builder.s3_put("path/key.json")
-        assert isinstance(builder._processors[-1], S3PutProcessor)
-
-    def test_s3_get(self, builder: RouteBuilder) -> None:
-        builder.s3_get("path/key.json", result_property="payload")
+class TestKeptSFTPMethods:
+    def test_sftp_get(self, builder: RouteBuilder) -> None:
+        builder.sftp_get(
+            "host.example.com",
+            "/remote/path",
+            username="user",
+            key_file="/path/to/key",
+        )
         proc = builder._processors[-1]
-        assert isinstance(proc, S3GetProcessor)
-        assert proc.params["result_property"] == "payload"
+        assert isinstance(proc, SftpGetProcessor)
+        assert proc.params["host"] == "host.example.com"
+        assert proc.params["remote_path"] == "/remote/path"
 
-    def test_s3_delete(self, builder: RouteBuilder) -> None:
-        """S111 W1: TD-017 / D17 — new DSL method for S3 DELETE."""
-        builder.s3_delete(key_from="properties.s3_key")
+    def test_sftp_put(self, builder: RouteBuilder) -> None:
+        builder.sftp_put(
+            "host.example.com",
+            "/remote/path",
+            body_from="body",
+            username="user",
+        )
         proc = builder._processors[-1]
-        assert isinstance(proc, S3DeleteProcessor)
-        assert proc.params["key_from"] == "properties.s3_key"
+        assert isinstance(proc, SftpPutProcessor)
+        assert proc.params["host"] == "host.example.com"
 
-    def test_s3_list(self, builder: RouteBuilder) -> None:
-        """S111 W1: TD-017 / D17 — new DSL method for S3 LIST."""
-        builder.s3_list(prefix_from="properties.prefix", result_property="keys")
-        proc = builder._processors[-1]
-        assert isinstance(proc, S3ListProcessor)
-        assert proc.params["prefix_from"] == "properties.prefix"
-        assert proc.params["result_property"] == "keys"
 
-    def test_s3_list_no_prefix(self, builder: RouteBuilder) -> None:
-        """S111 W1: s3_list без prefix_from — list all keys."""
-        builder.s3_list()
-        proc = builder._processors[-1]
-        assert isinstance(proc, S3ListProcessor)
-        assert proc.params["prefix_from"] is None
-        assert proc.params["result_property"] == "s3_keys"
+class TestKeptStubsAuditWarning:
+    """S175 M5.3: kept stubs emit audit-warning через _stub_logger."""
 
-    def test_sql_exec(self, builder: RouteBuilder) -> None:
-        builder.sql_exec("DELETE FROM x", params={"id": 1})
-        proc = builder._processors[-1]
-        assert isinstance(proc, SqlExecProcessor)
-        assert proc.params["params"] == {"id": 1}
+    @pytest.mark.asyncio
+    async def test_redis_set_emits_warning_on_execute(self) -> None:
+        """Audit-warning emitted when stub executes (per parallel WIP)."""
+        import logging
+
+        from src.backend.dsl.engine.exchange import Exchange, Message
+
+        captured: list[str] = []
+
+        class _CaptureHandler(logging.Handler):
+            def emit(self, record: logging.LogRecord) -> None:
+                captured.append(record.getMessage())
+
+        logger = logging.getLogger("dsl.infrastructure_dsl.stub")
+        logger.addHandler(_CaptureHandler())
+        try:
+            proc = RedisSetProcessor(key="k", value="v")
+            exchange = Exchange(
+                in_message=Message(body=None, headers={}),
+                properties={},
+            )
+            await proc.process(exchange, context=None)
+            assert any("redis_set" in msg for msg in captured), (
+                f"Audit-warning должен содержать op_name=redis_set, got {captured}"
+            )
+        finally:
+            logger.removeHandler(_CaptureHandler())
+
+    @pytest.mark.asyncio
+    async def test_sftp_get_emits_warning_on_execute(self) -> None:
+        """SFTP stub тоже audit-warning."""
+        import logging
+
+        from src.backend.dsl.engine.exchange import Exchange, Message
+
+        captured: list[str] = []
+
+        class _CaptureHandler(logging.Handler):
+            def emit(self, record: logging.LogRecord) -> None:
+                captured.append(record.getMessage())
+
+        logger = logging.getLogger("dsl.infrastructure_dsl.stub")
+        logger.addHandler(_CaptureHandler())
+        try:
+            proc = SftpGetProcessor(host="h", remote_path="/p")
+            exchange = Exchange(
+                in_message=Message(body=None, headers={}),
+                properties={},
+            )
+            await proc.process(exchange, context=None)
+            assert any("sftp_get" in msg for msg in captured)
+        finally:
+            logger.removeHandler(_CaptureHandler())
 
 
 class TestChainingAndIntegration:
-    def test_all_chainable(self, builder: RouteBuilder) -> None:
-        """Every method returns self (RouteBuilder)."""
+    def test_keeps_chainable_return_self(self, builder: RouteBuilder) -> None:
+        """Каждый kept wrapper возвращает self (RouteBuilder)."""
         result = (
             builder.redis_set("k", "v")
-            .redis_get("k")
             .redis_delete("k")
             .clickhouse_insert("t")
-            .clickhouse_query("SELECT 1")
             .es_index("i")
             .es_search("i", {})
             .mongo_insert("c")
             .mongo_find("c", {})
-            .s3_put("k")
-            .s3_get("k")
-            .s3_delete("k")
-            .s3_list(prefix_from="p")
-            .sql_exec("SELECT 1")
+            .sftp_get("h", "/p")
+            .sftp_put("h", "/p")
         )
         assert result is builder
-        assert len(builder._processors) == 14
+        # 9 wrappers added.
+        assert len(builder._processors) == 9
 
     def test_to_spec_round_trip(self, builder: RouteBuilder) -> None:
         builder.redis_set("k", "v", ttl_seconds=30)

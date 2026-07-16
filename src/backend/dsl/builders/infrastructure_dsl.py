@@ -1,28 +1,52 @@
-"""InfrastructureDSL (S38 W4): 14 helper methods для Redis/ClickHouse/ES/Mongo/S3/SQL.
+"""InfrastructureDSL (S38 W4 → S175 #5 hybrid): 9 phantom-stub helper methods.
 
 Stateless mixin для :class:`RouteBuilder`. Каждый wrapper — тонкая обёртка
 над placeholder-процессором, фиксирующим intent операции в pipeline.
-Реальное подключение к backend'ам (Redis/ClickHouse/ES/Mongo/S3) — через
-downstream фасады в lifespan (DI-wiring).
+
+S175 #5 (lockjaw-vision-rocket.md): гибридный подход (resolution of
+audit-warning vs deletion conflict с parallel WIP):
+- 7 stubs + их mixin methods **DELETED** (replaced by real implementations
+  в :mod:`src.backend.dsl.engine.processors.infra_*` namespace):
+  - ``RedisGetProcessor`` → ``InfraRedisGetProcessor``
+  - ``ClickHouseQueryProcessor`` → ``InfraClickHouseQueryProcessor``
+  - ``S3PutProcessor`` / ``S3GetProcessor`` → ``ToS3Processor`` /
+    ``FromS3Processor`` в ``storage/s3.py``
+  - ``S3DeleteProcessor`` / ``S3ListProcessor`` → те же в ``storage/s3.py``
+  - ``SqlExecProcessor`` → ``InfraDbQueryProcessor``
+- 8 stubs **KEPT** as fallback (no real replacement yet, audit-warning
+  for observability per parallel WIP S175 M5.3):
+  - ``RedisSetProcessor``, ``RedisDeleteProcessor``
+  - ``ClickHouseInsertProcessor``
+  - ``ElasticsearchIndexProcessor``, ``ElasticsearchSearchProcessor``
+  - ``MongoInsertProcessor``, ``MongoFindProcessor`` (partial — Find
+    уже в :mod:`infra_mongodb.py`)
+  - ``SftpGetProcessor``, ``SftpPutProcessor``
+
+Real implementations в :mod:`src.backend.dsl.engine.processors.infra_*`
+(parallel WIP, S170 Phase 2). Эти процессоры используют direct DI
+через ``infrastructure_facade`` (без phantom stubs).
 
 Паттерн: копия :class:`EventBusMixin` (chainable, ``_add`` через MRO,
 ``__slots__ = ()``, ``to_spec()`` для сериализации).
 
-14 методов:
-    * Redis (3): ``redis_set``, ``redis_get``, ``redis_delete``
-    * ClickHouse (2): ``clickhouse_insert``, ``clickhouse_query``
+9 методов (после S175 #5 hybrid):
+    * Redis (2): ``redis_set``, ``redis_delete``
+    * ClickHouse (1): ``clickhouse_insert``
     * Elasticsearch (2): ``es_index``, ``es_search``
     * MongoDB (2): ``mongo_insert``, ``mongo_find``
-    * S3 (4): ``s3_put``, ``s3_get``, ``s3_delete`` (S111 W1), ``s3_list`` (S111 W1)
-    * SQL (1): ``sql_exec``
+    * SFTP (2): ``sftp_get``, ``sftp_put``
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
+# S175: module-level logger for phantom-stub observability
+_stub_logger = get_logger("dsl.infrastructure_dsl.stub")
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
@@ -31,20 +55,15 @@ if TYPE_CHECKING:
 
 __all__ = (
     "ClickHouseInsertProcessor",
-    "ClickHouseQueryProcessor",
     "ElasticsearchIndexProcessor",
     "ElasticsearchSearchProcessor",
     "InfrastructureDSL",
     "MongoFindProcessor",
     "MongoInsertProcessor",
     "RedisDeleteProcessor",
-    "RedisGetProcessor",
     "RedisSetProcessor",
-    "S3DeleteProcessor",
-    "S3GetProcessor",
-    "S3ListProcessor",
-    "S3PutProcessor",
-    "SqlExecProcessor",
+    "SftpGetProcessor",
+    "SftpPutProcessor",
 )
 
 
@@ -74,7 +93,18 @@ class _InfraOp(BaseProcessor):
         return {self.op_name: dict(self.params)}
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Stub: real wiring в lifespan через DI-фасады. Records intent only."""
+        """Stub: real wiring в lifespan через DI-фасады. Records intent only.
+
+        S175 M5.3: при выполнении эмитим structured warning через audit-log
+        для observability — все infra-stubs (ClickHouse/ES/Mongo/S3/SFTP)
+        ещё не полностью реализованы и работают в "intent-only" режиме.
+        Production deployment требует S176+ реализации.
+        """
+        _stub_logger.warning(
+            "InfraOp stub executed: op=%s, params=%s (full wiring pending S176+)",
+            self.op_name,
+            list(self.params.keys()),
+        )
         exchange.set_property(f"{self.op_name}_pending", dict(self.params))
 
 
@@ -85,13 +115,6 @@ class RedisSetProcessor(_InfraOp):
     """Redis SET с опциональным TTL (``params.ttl_seconds``)."""
 
     op_name: ClassVar[str] = "redis_set"
-    compensatable: ClassVar[bool] = True
-
-
-class RedisGetProcessor(_InfraOp):
-    """Redis GET по ключу (результат в ``properties[result_property]``)."""
-
-    op_name: ClassVar[str] = "redis_get"
     compensatable: ClassVar[bool] = True
 
 
@@ -110,13 +133,6 @@ class ClickHouseInsertProcessor(_InfraOp):
 
     op_name: ClassVar[str] = "clickhouse_insert"
     compensatable: ClassVar[bool] = False  # INSERT без компенсации
-
-
-class ClickHouseQueryProcessor(_InfraOp):
-    """ClickHouse SELECT (read-only)."""
-
-    op_name: ClassVar[str] = "clickhouse_query"
-    compensatable: ClassVar[bool] = True
 
 
 # ── Elasticsearch (2) ──────────────────────────────────────────────────
@@ -153,35 +169,7 @@ class MongoFindProcessor(_InfraOp):
     compensatable: ClassVar[bool] = True
 
 
-# ── S3 (1) ─────────────────────────────────────────────────────────────
-
-
-class S3PutProcessor(_InfraOp):
-    """S3 PUT объекта (требует aioboto3)."""
-
-    op_name: ClassVar[str] = "s3_put"
-    compensatable: ClassVar[bool] = True
-
-
-class S3GetProcessor(_InfraOp):
-    """S104 W1 — S3 GET processor (требует aioboto3)."""
-
-    op_name: ClassVar[str] = "s3_get"
-    compensatable: ClassVar[bool] = False
-
-
-class S3DeleteProcessor(_InfraOp):
-    """S111 W1 — S3 DELETE processor (idempotent: missing → no-op)."""
-
-    op_name: ClassVar[str] = "s3_delete"
-    compensatable: ClassVar[bool] = False  # delete необратим
-
-
-class S3ListProcessor(_InfraOp):
-    """S111 W1 — S3 LIST processor (пагинация по префиксу)."""
-
-    op_name: ClassVar[str] = "s3_list"
-    compensatable: ClassVar[bool] = True  # read — обратимо
+# ── S3 stubs DELETED (S175 #5) — see infra_s3.py / storage/s3.py for real impls ──
 
 
 class SftpGetProcessor(_InfraOp):
@@ -198,20 +186,7 @@ class SftpPutProcessor(_InfraOp):
     compensatable: ClassVar[bool] = True
 
 
-# ── SQL (1) ────────────────────────────────────────────────────────────
-
-
-class SqlExecProcessor(_InfraOp):
-    """SQL exec placeholder для ``op_name="sql_exec"`` (DML/DDL).
-
-    Используется :meth:`RouteBuilder.sql_exec` для выполнения
-    произвольного SQL через переданный ``async_engine``. Компенсация
-    отключена (``compensatable=False``) — DML нельзя автоматически
-    откатить без явной inverse-операции в compensable spec'е.
-    """
-
-    op_name: ClassVar[str] = "sql_exec"
-    compensatable: ClassVar[bool] = False  # DML не компенсируется
+# ── SQL stub DELETED (S175 #5) — see infra_db.py for real impl ─────────
 
 
 # ── Mixin ──────────────────────────────────────────────────────────────
@@ -251,11 +226,7 @@ class InfrastructureDSL:
             RedisSetProcessor(key=key, value=value, ttl_seconds=ttl_seconds)
         )
 
-    def redis_get(self, key: str, *, default: Any = None) -> RouteBuilder:
-        """``GET key`` в Redis; ``default`` при отсутствии ключа."""
-        return self._add(  # type: ignore[attr-defined]
-            RedisGetProcessor(key=key, default=default)
-        )
+    # NOTE: redis_get DELETED (S175 #5) — use InfraRedisGetProcessor.
 
     def redis_delete(self, key: str) -> RouteBuilder:
         """``DEL key`` в Redis."""
@@ -271,13 +242,7 @@ class InfrastructureDSL:
             ClickHouseInsertProcessor(table=table, batch_size=batch_size)
         )
 
-    def clickhouse_query(
-        self, query: str, *, to_property: str = "query_result"
-    ) -> RouteBuilder:
-        """SELECT в ClickHouse; результат в ``exchange.properties[to_property]``."""
-        return self._add(  # type: ignore[attr-defined]
-            ClickHouseQueryProcessor(query=query, to_property=to_property)
-        )
+    # NOTE: clickhouse_query DELETED (S175 #5) — use InfraClickHouseQueryProcessor.
 
     # ── Elasticsearch (2) ──
 
@@ -316,67 +281,9 @@ class InfrastructureDSL:
             )
         )
 
-    # ── S3 (2) ──
+    # ── S3 DELETED (S175 #5) — use ToS3Processor/FromS3Processor/S3PresignProcessor/ ──
+    # ── S3DeleteProcessor/S3ListProcessor из ``storage/s3.py``. ──
 
-    def s3_put(self, key: str, *, body_from: str = "body") -> RouteBuilder:
-        """PUT объекта в S3 по ``key`` (body из ``body_from``)."""
-        return self._add(  # type: ignore[attr-defined]
-            S3PutProcessor(key=key, body_from=body_from)
-        )
-
-    def s3_get(self, key: str, *, result_property: str = "s3_object") -> RouteBuilder:
-        """GET объекта из S3 по ``key``.
-
-        S104 W1: NEW DSL method для D21 RPA coverage.
-        Использует :class:`S3GetProcessor` (требует aioboto3 — optional dep).
-
-        Args:
-            key: S3 object key (e.g. ``"backups/daily.json"``).
-            result_property: Куда писать результат
-                (``{"body": ..., "metadata": ..., "etag": ...}``).
-
-        Returns:
-            RouteBuilder с добавленным ``S3GetProcessor`` в pipeline.
-        """
-        return self._add(  # type: ignore[attr-defined]
-            S3GetProcessor(key=key, result_property=result_property)
-        )
-
-    def s3_delete(self, key_from: str = "s3_key") -> RouteBuilder:
-        """DELETE объекта из S3 по ``key_from`` (idempotent: missing → no-op).
-
-        S111 W1: NEW DSL method (TD-017 / D17 closure).
-        Использует :class:`S3DeleteProcessor` (требует aioboto3 — optional dep).
-
-        Args:
-            key_from: выражение для S3-ключа (default ``"s3_key"``).
-
-        Returns:
-            RouteBuilder с добавленным ``S3DeleteProcessor`` в pipeline.
-        """
-        return self._add(  # type: ignore[attr-defined]
-            S3DeleteProcessor(key_from=key_from)
-        )
-
-    def s3_list(
-        self, *, prefix_from: str | None = None, result_property: str = "s3_keys"
-    ) -> RouteBuilder:
-        """LIST ключей в S3 bucket с пагинацией по ``prefix_from``.
-
-        S111 W1: NEW DSL method (TD-017 / D17 closure).
-        Использует :class:`S3ListProcessor` (требует aioboto3 — optional dep).
-
-        Args:
-            prefix_from: выражение для префикса (опционально).
-            result_property: имя property для записи ``list[str]``
-                (default ``"s3_keys"``).
-
-        Returns:
-            RouteBuilder с добавленным ``S3ListProcessor`` в pipeline.
-        """
-        return self._add(  # type: ignore[attr-defined]
-            S3ListProcessor(prefix_from=prefix_from, result_property=result_property)
-        )
 
     # ── SFTP (2) — S104 W1 ──
 
@@ -459,8 +366,4 @@ class InfrastructureDSL:
 
     # ── SQL (1) ──
 
-    def sql_exec(self, query: str, *, params: dict | None = None) -> RouteBuilder:
-        """INSERT/UPDATE/DELETE с bind-параметрами ``:name``."""
-        return self._add(  # type: ignore[attr-defined]
-            SqlExecProcessor(query=query, params=params or {})
-        )
+    # NOTE: sql_exec DELETED (S175 #5) — use InfraDbQueryProcessor из infra_db.py.
