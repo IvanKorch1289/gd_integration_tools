@@ -249,6 +249,10 @@ class ToolsSpec(BaseModel):
     whitelist: list[str] = Field(default_factory=list)
     blacklist: list[str] = Field(default_factory=list)
     on_violation: Literal["fail", "warn", "block"] = "fail"
+    #: S209 fail-closed: при пустых whitelist+blacklist — дефолт deny-all
+    #: (security). Для backward-compat с pre-S209 policies (allow-all при
+    #: пустых списках) установите ``allow_all_tools=True`` явно.
+    allow_all_tools: bool = False
 
 
 class AIPolicySpec(BaseModel):

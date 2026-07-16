@@ -61,7 +61,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
     def _enforce_tool_policy_once(
         self, request: AIRequest, policy: object | None
     ) -> None:
-        """Единая точка enforce tool whitelist/blacklist (S172 M1.3, ARC-003).
+        """Единая точка enforce tool whitelist/blacklist (S172 M1.3, ARC-003, S209 fix).
 
         Раньше проверка :func:`enforce_tool_policy` вызывалась дважды —
         после ``_resolve_policy`` (pre-S1) и после ``_render_prompt``
@@ -74,12 +74,20 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             policy: :class:`AIPolicySpec` или ``None`` (default policy → no-op).
 
         Raises:
-            ToolPolicyViolationError: При blacklist match или whitelist miss.
+            ToolPolicyViolationError: При blacklist match или whitelist miss
+                ИЛИ при пустых whitelist+blacklist без явного opt-in
+                (``allow_all_tools=True``).
 
         Notes:
             S1 fix semantics сохранены: ``enforced_name = request.tool_name or
-            request.workflow_id``. Если whitelist+blacklist пустые — no-op
-            (backward-compat с pre-S76 policies).
+            request.workflow_id``.
+
+            S209 fail-closed: если policy.tools определён, но whitelist+blacklist
+            пустые И ``allow_all_tools=False`` (default) — теперь поднимается
+            :exc:`ToolPolicyViolationError` вместо silent no-op. Это закрывает
+            security gap где over-permissive policy случайно разрешала все tools.
+            Backward-compat: pre-S209 policies с пустыми списками должны явно
+            указать ``allow_all_tools=True``.
         """
         if policy is None:
             return
@@ -88,7 +96,19 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             return
         whitelist = getattr(tools, "whitelist", None) or []
         blacklist = getattr(tools, "blacklist", None) or []
+        # S209: пустые whitelist+blacklist → fail-closed default.
+        # Для backward-compat с pre-S209 policies — явный opt-in allow_all_tools.
         if not whitelist and not blacklist:
+            if not getattr(tools, "allow_all_tools", False):
+                from src.backend.core.ai.policy.enforcer.tools_policy import (
+                    ToolPolicyViolationError,
+                )
+
+                raise ToolPolicyViolationError(
+                    f"Tool policy for workflow_id={request.workflow_id!r} has empty "
+                    f"whitelist AND empty blacklist — deny-all by default (S209). "
+                    f"Set tools.allow_all_tools=True to opt into allow-all behavior."
+                )
             return
         from src.backend.core.ai.policy.enforcer.tools_policy import enforce_tool_policy
 

@@ -1279,6 +1279,24 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 209 — Tool policy fail-closed (security)
+
+### Gap: Tool policy no-op при пустых whitelist+blacklist (FIXED)
+
+`core/ai/gateway_orchestrator_mixin.py:91-92` — если policy.tools определён, но whitelist+blacklist оба пустые, метод делал silent no-op (allow all). Это security gap: over-permissive policy случайно разрешала все tools.
+
+**Fix** (S209 fail-closed):
+- `ToolsSpec.allow_all_tools: bool = False` (new field, default deny-all).
+- `_enforce_tool_policy_once`: при пустых списках + `allow_all_tools=False` → поднимает `ToolPolicyViolationError` ("deny-all by default (S209)").
+- Backward-compat: pre-S209 policies с пустыми списками должны явно указать `allow_all_tools=True` для сохранения старого поведения.
+
+**Тесты** (`tests/unit/core/ai/test_tool_policy_fail_closed.py`):
+- 5 кейсов: empty deny-all, empty + opt-in allow, no policy allow, no tools section allow, non-empty whitelist enforcement.
+
+**Production impact**: workflows с policy.tools=ToolsSpec() (пустые) теперь должны добавить `allow_all_tools=True` или определить whitelist. Audit рекомендуется перед rollout.
+
+---
+
 ## [Unreleased] — Sprint 208 — Small cleanups
 
 ### SmsSink export fix (S203 W5 followup)
