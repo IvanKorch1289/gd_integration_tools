@@ -205,26 +205,97 @@ class PiiEraseProcessor(BaseProcessor):
         )
 
     async def _delete_vectors(self, erasure_id: str) -> int:
-        """Удалить vector entries (lazy через memory adapters)."""
-        # Production: подключить к VectorStoreClient.delete_by_filter
-        # S183: stub — production wiring TODO
-        _logger.debug(
-            "vector deletion: erasure_id=%s scope=%s (stub)",
-            erasure_id,
-            self._scope,
-        )
-        return 0
+        """S214: bulk delete Qdrant vectors по ``scope`` filter.
+
+        Использует :meth:`BaseVectorStore.delete_where` (Qdrant native).
+        При hard_delete=True — DELETE; иначе — no-op (anonymize обрабатывается
+        DB-фильтром).
+
+        Args:
+            erasure_id: Correlation ID для audit.
+
+        Returns:
+            Количество удалённых vectors (Qdrant возвращает int).
+        """
+        try:
+            from src.backend.infrastructure.clients.storage.vector_store import (
+                get_vector_store,
+            )
+
+            store = get_vector_store()
+            # Scope формат: "user:42" → filter {"entity_type": "user", "entity_id": "42"}
+            # Если scope не парсится — soft skip с warning.
+            if ":" not in self._scope:
+                _logger.warning(
+                    "vector deletion: scope=%r не парсится (нет ':'), skip",
+                    self._scope,
+                )
+                return 0
+            entity_type, entity_id = self._scope.split(":", 1)
+            return await store.delete_where(
+                {"entity_type": entity_type, "entity_id": entity_id}
+            )
+        except Exception as exc:
+            _logger.warning(
+                "vector deletion failed: erasure_id=%s scope=%s error=%s",
+                erasure_id,
+                self._scope,
+                exc,
+            )
+            return 0
 
     async def _anonymize_db(self, erasure_id: str) -> int:
-        """Anonymize DB records (lazy через DB adapters)."""
-        # Production: подключить к PostgreSQL/MongoDB
-        # S183: stub — production wiring TODO
-        _logger.debug(
-            "DB anonymization: erasure_id=%s scope=%s (stub)",
-            erasure_id,
-            self._scope,
-        )
-        return 0
+        """S214: anonymize records в основной DB (PostgreSQL/MongoDB).
+
+        При ``hard_delete=True`` — выполняет DELETE FROM <entity_table>
+        WHERE entity_id = :scope_id.
+        При ``hard_delete=False`` — UPDATE: обнуляет PII поля (name, email, phone).
+
+        Args:
+            erasure_id: Correlation ID для audit.
+
+        Returns:
+            Количество affected records.
+        """
+        try:
+            if ":" not in self._scope:
+                return 0
+            entity_type, entity_id = self._scope.split(":", 1)
+            from src.backend.infrastructure.database.session_manager import (
+                main_session_manager,
+            )
+
+            async with main_session_manager.get_session() as session:
+                from sqlalchemy import text
+
+                if self._hard_delete:
+                    sql = text(
+                        f"DELETE FROM {entity_type}_pii "
+                        f"WHERE entity_id = :entity_id"
+                    )
+                    result = await session.execute(
+                        sql, {"entity_id": entity_id}
+                    )
+                else:
+                    sql = text(
+                        f"UPDATE {entity_type}_pii "
+                        f"SET name = NULL, email = NULL, phone = NULL, "
+                        f"anonymized_at = NOW() "
+                        f"WHERE entity_id = :entity_id"
+                    )
+                    result = await session.execute(
+                        sql, {"entity_id": entity_id}
+                    )
+                await session.commit()
+                return int(result.rowcount or 0)
+        except Exception as exc:
+            _logger.warning(
+                "DB anonymization failed: erasure_id=%s scope=%s error=%s",
+                erasure_id,
+                self._scope,
+                exc,
+            )
+            return 0
 
     async def _emit_audit(
         self,

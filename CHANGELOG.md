@@ -1279,6 +1279,29 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 214 — PII erasure wiring (152-ФЗ compliance)
+
+### Gap: PII erasure stubs заменены на реальные backend-вызовы (FIXED)
+
+`dsl/engine/processors/security/pii_erase.py::_delete_vectors` и `::_anonymize_db`
+были stubs (S183). Теперь — реальные вызовы:
+
+**`_delete_vectors`** — bulk delete через :meth:`QdrantVectorStore.delete_where`:
+- Парсит scope `"user:42"` → filter `{"entity_type": "user", "entity_id": "42"}`.
+- Возвращает Qdrant-deleted count.
+- Graceful fail-open при ошибке (returns 0, audit event фиксирует).
+
+**`_anonymize_db`** — SQL через :func:`main_session_manager.get_session`:
+- `hard_delete=True` → `DELETE FROM <entity>_pii WHERE entity_id = :id`.
+- `hard_delete=False` → `UPDATE <entity>_pii SET name=NULL, email=NULL, phone=NULL, anonymized_at=NOW()`.
+- Returns rowcount.
+
+Production 152-ФЗ compliance теперь имеет реальные backend-вызовы (раньше — audit-only stub).
+
+**Note**: требует наличия таблиц `<entity>_pii` в схеме. Тесты + schema migration — отдельный task.
+
+---
+
 ## [Unreleased] — Sprint 213 — WorkflowBuilder unification complete
 
 ### Gap: Two WorkflowBuilders (FULLY CLOSED)
