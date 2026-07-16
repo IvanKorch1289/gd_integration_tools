@@ -17,9 +17,10 @@
 * :class:`~src.infrastructure.sinks.mqtt_sink.MqttSink` — публикация в MQTT-брокер.
 * :class:`~src.infrastructure.sinks.s3_sink.S3Sink` — выгрузка в S3/MinIO
   (Sprint 3 W1 K3 — GAP-03 symmetry).
-* SMS — заглушка ``SmsSink`` (опционально, по требованию).
+* :class:`~src.infrastructure.sinks.sms_sink.SmsSink` — HTTP-based SMS
+  для российских провайдеров (smsru/mts/megafon) через httpx (S203 W5).
 
-Тяжёлые backend-зависимости (``grpcio``, ``zeep``, ``faststream``, ``aiosmtplib``)
+Тяжёлые backend-зависимости (``grpcio``, ``zeep``, ``faststream``, ``aiosmtplib``, ``httpx``)
 импортируются лениво в ``send()``/``health()`` — модуль ``infrastructure.sinks``
 поднимается без них (graceful: без бэкенда метод вернёт
 ``SinkResult(ok=False, details={"error": "<lib> not installed"})``).
@@ -34,6 +35,7 @@ from src.backend.infrastructure.sinks.http_sink import HttpSink
 from src.backend.infrastructure.sinks.mq_sink import MqSink
 from src.backend.infrastructure.sinks.mqtt_sink import MqttSink
 from src.backend.infrastructure.sinks.s3_sink import S3Sink
+from src.backend.infrastructure.sinks.sms_sink import SmsSink
 from src.backend.infrastructure.sinks.soap_sink import SoapSink
 from src.backend.infrastructure.sinks.webhook_sink import WebhookSink
 from src.backend.infrastructure.sinks.ws_sink import WsSink
@@ -46,6 +48,7 @@ __all__ = (
     "MqSink",
     "MqttSink",
     "S3Sink",
+    "SmsSink",
     "SoapSink",
     "WebhookSink",
     "WsSink",

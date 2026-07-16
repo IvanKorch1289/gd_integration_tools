@@ -1279,6 +1279,23 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 208 — Small cleanups
+
+### SmsSink export fix (S203 W5 followup)
+
+`src/backend/infrastructure/sinks/__init__.py`:
+- Docstring updated: "SMS — заглушка" → реальное описание `SmsSink` (smsru/mts/megafon через httpx).
+- Добавлен `SmsSink` в `__all__` — раньше класс был создан в S203 W5, но НЕ экспортирован из package root, что делало его неудобным для импорта из extensions.
+
+### Verified already-closed gaps
+
+Re-аудит показал что эти gaps уже были закрыты ранее (Master Prompt §4.2 P2 #16-17):
+
+- **Circuit Breaker consolidation → purgatory** ✅ closed: `core/resilience/breaker.py` использует `purgatory.AsyncCircuitBreakerFactory`. `infrastructure/clients/external/circuit_breakers.py` — thin adapter (64 LOC) над canonical registry. Все sinks (`@with_breaker`) используют purgatory-backend.
+- **Rate Limiter** — несколько реализаций, но разные use cases (HTTP middleware, distributed cluster, per-connector). Consolidation на `limits` library требует careful API mapping. P2 в Master Prompt §6.1.
+
+---
+
 ## [Unreleased] — Sprint 207 — Gap#2 closed (HITL cross-instance)
 
 ### Gap#2: RedisHitlSignalStore для cross-instance HITL (FIXED)
