@@ -48,12 +48,11 @@ __all__ = ("PIIMasker", "build_default_patterns", "default_masker")
 
 # Дефолтные регулярные выражения. Порядок задаётся ``_DEFAULT_ORDER``
 # в :func:`build_default_patterns` — specific-first.
-_EMAIL = re.compile(r"[\w.+\-]+@[\w\-]+\.[\w.\-]+")
-# Phone: знак ``+`` или цифра, затем ≥10 цифр с возможными пробелами/дефисами/скобками.
-_PHONE = re.compile(r"\+?\d[\d\s()\-]{8,}\d")
-# S219: shared PII patterns via core.security.pii_patterns (single source of truth).
+# S221: Email/Phone shared via core.security.pii_patterns.
 from src.backend.core.security.pii_patterns import (  # noqa: F401
+    EMAIL as _EMAIL,
     INN as _INN,
+    PHONE as _PHONE,
     RU_PASSPORT as _RU_PASSPORT,
     SNILS as _SNILS,
 )

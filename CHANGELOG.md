@@ -1279,6 +1279,28 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 221 — EMAIL/PHONE consolidated (5th duplicate)
+
+### S221: extend pii_patterns.py with EMAIL+PHONE
+
+После S219 (SNILS/INN/RU_PASSPORT) и S220 (ai_sanitizer SNILS) —
+найдены ещё 2 regex (EMAIL, PHONE) с IDENTICAL definitions в
+`pii_masker.py` и `pii_filter.py`. EMAIL regex даже имеет разный escape
+order (`[\w.+\-]+` vs `[\w.+-]+`), но тот же эффект.
+
+**Fix**: расширен `core/security/pii_patterns.py` — добавлены public
+`EMAIL` и `PHONE` compiled patterns. Оба файла (`pii_masker.py`,
+`pii_filter.py`) импортируют из shared module.
+
+**Метрики**:
+- `-4` LOC duplicate regex definitions (2 patterns × 2 files)
+- `+6` LOC в shared module
+- Net `+2` LOC, но single source of truth для 5 patterns (SNILS/INN/RU_PASSPORT/EMAIL/PHONE).
+
+После S221: только 1 определение EMAIL regex в проекте (раньше — 2-3 с разным escape order).
+
+---
+
 ## [Unreleased] — Sprint 220 — SNILS consolidation extended
 
 ### S220: ai_sanitizer.py also uses shared SNILS
