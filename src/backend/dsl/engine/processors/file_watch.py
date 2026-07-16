@@ -2,10 +2,16 @@
 
 Sprint 36: добавляет возможность мониторинга директорий в DSL-маршрутах.
 Использует ``watchdog`` для отслеживания изменений (lazy-import).
+
+S178 #2 (lockjaw-vision-rocket.md): blocking ``os.walk`` /
+``os.listdir`` обёрнуты в ``asyncio.to_thread`` чтобы не блокировать
+event loop при сканировании больших директорий. ``os.path.isdir`` и
+``os.stat`` тоже вынесены в thread pool.
 """
 
 from __future__ import annotations
 
+import asyncio
 import fnmatch
 import os
 from typing import Any, ClassVar
@@ -67,9 +73,9 @@ class FileWatchProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Сканирует директорию и возвращает файлы по glob-pattern.
 
-        Директория берётся из ``self._directory`` или свойства
-        ``watch_directory``. При ``include_subdirs`` — рекурсивный обход
-        через ``os.walk``. Результат — список dict с path, name, size, mtime.
+        S178 #2: blocking filesystem I/O (isdir/listdir/walk/stat) обёрнуты
+        в ``asyncio.to_thread`` чтобы не блокировать event loop.
+        Pattern matching остаётся в event loop (cheap CPU).
 
         Args:
             exchange: Текущий exchange; результат — в свойстве
@@ -78,43 +84,40 @@ class FileWatchProcessor(BaseProcessor):
         """
         directory = exchange.get_property("watch_directory") or self._directory
 
-        if not os.path.isdir(directory):
+        # S178 #2: isdir() — blocking, переносим в thread.
+        try:
+            exists = await asyncio.to_thread(os.path.isdir, directory)
+        except OSError as exc:
+            exchange.fail(f"file_watch: OS error checking {directory}: {exc}")
+            return
+
+        if not exists:
             exchange.fail(f"file_watch: directory does not exist: {directory}")
             return
 
-        matched: list[dict[str, Any]] = []
+        # S178 #2: walk/listdir/stat — все blocking, делаем в thread pool.
         try:
             if self._include_subdirs:
-                for root, _dirs, files in os.walk(directory):
-                    for filename in files:
-                        if fnmatch.fnmatch(filename, self._pattern):
-                            path = os.path.join(root, filename)
-                            stat = os.stat(path)
-                            matched.append(
-                                {
-                                    "path": path,
-                                    "name": filename,
-                                    "size": stat.st_size,
-                                    "mtime": stat.st_mtime,
-                                }
-                            )
+                raw_paths = await asyncio.to_thread(
+                    _walk_matching_files, directory, self._pattern
+                )
             else:
-                for filename in os.listdir(directory):
-                    if fnmatch.fnmatch(filename, self._pattern):
-                        path = os.path.join(directory, filename)
-                        if os.path.isfile(path):
-                            stat = os.stat(path)
-                            matched.append(
-                                {
-                                    "path": path,
-                                    "name": filename,
-                                    "size": stat.st_size,
-                                    "mtime": stat.st_mtime,
-                                }
-                            )
+                raw_paths = await asyncio.to_thread(
+                    _list_matching_files, directory, self._pattern
+                )
         except OSError as exc:
             exchange.fail(f"file_watch: OS error scanning {directory}: {exc}")
             return
+
+        matched: list[dict[str, Any]] = [
+            {
+                "path": path,
+                "name": os.path.basename(path),
+                "size": stat.st_size,
+                "mtime": stat.st_mtime,
+            }
+            for path, stat in raw_paths
+        ]
 
         exchange.set_property(self._result_property, matched)
         _logger.info(
@@ -133,3 +136,39 @@ class FileWatchProcessor(BaseProcessor):
         if self._include_subdirs:
             spec["include_subdirs"] = True
         return {"file_watch": spec}
+
+
+def _list_matching_files(
+    directory: str, pattern: str
+) -> list[tuple[str, os.stat_result]]:
+    """Sync helper: list files в directory matching glob pattern.
+
+    Returns:
+        List of (full_path, stat_result) tuples. Blocking I/O — вызывать
+        через ``asyncio.to_thread``.
+    """
+    matched: list[tuple[str, os.stat_result]] = []
+    for filename in os.listdir(directory):
+        if fnmatch.fnmatch(filename, pattern):
+            path = os.path.join(directory, filename)
+            if os.path.isfile(path):
+                matched.append((path, os.stat(path)))
+    return matched
+
+
+def _walk_matching_files(
+    directory: str, pattern: str
+) -> list[tuple[str, os.stat_result]]:
+    """Sync helper: recursive walk + glob filter.
+
+    Returns:
+        List of (full_path, stat_result) tuples. Blocking I/O — вызывать
+        через ``asyncio.to_thread``.
+    """
+    matched: list[tuple[str, os.stat_result]] = []
+    for root, _dirs, files in os.walk(directory):
+        for filename in files:
+            if fnmatch.fnmatch(filename, pattern):
+                path = os.path.join(root, filename)
+                matched.append((path, os.stat(path)))
+    return matched
