@@ -1279,6 +1279,36 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 210 — langmem API consolidation
+
+### Gap: langmem deprecation cleanup (FIXED)
+
+`services/ai/langmem_service.py` (legacy, 286 LOC) был DEPRECATED shim,
+но 6 importers всё ещё использовали его API: `LangMemDisabled` exception,
+`consolidate()`, `stats()`. Canonical `memory/langmem_service.py` (3-tier)
+НЕ имел этих методов — миграция была заблокирована.
+
+**Fix**:
+- **Canonical расширен** (`services/ai/memory/langmem_service.py`):
+  - `LangMemDisabled` exception (compat с legacy).
+  - `consolidate(since=None, batch_size=None)` — делегирует в `ConsolidationEngine` или возвращает пустой report.
+  - `stats()` — возвращает counts по episodic/semantic/procedural + total.
+  - Оба метода бросают `LangMemDisabled` при `langmem_enabled=False` (legacy semantics).
+- **Legacy → thin re-export shim** (`services/ai/langmem_service.py`):
+  - Файл уменьшен с 286 LOC до 30 LOC.
+  - Все 6 historical importers продолжают работать без изменений.
+
+**Шаг 2 (deferred)**: явная миграция 6 importers на canonical location:
+- `infrastructure/scheduler/scheduled_tasks.py:57`
+- `entrypoints/api/v1/endpoints/langmem_admin.py:34,60`
+- `plugins/composition/setup_ai_stack.py:132`
+- `services/ai/memory/langmem/{consolidation,rlm}.py` (lazy imports)
+- `tests/unit/services/ai/test_langmem_smoke.py:9`
+
+После миграции — удаление legacy shim. Это bounded mechanical work, ~30 LOC diff в 7 файлах.
+
+---
+
 ## [Unreleased] — Sprint 209 — Tool policy fail-closed (security)
 
 ### Gap: Tool policy no-op при пустых whitelist+blacklist (FIXED)

@@ -34,7 +34,18 @@ from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-__all__ = ("MemoryEntry", "LangMemService", "get_langmem_service")
+__all__ = ("LangMemDisabled", "MemoryEntry", "LangMemService", "get_langmem_service")
+
+
+class LangMemDisabled(RuntimeError):
+    """S210: поднимается при вызове API-методов на отключённом LangMem.
+
+    Canonical ``LangMemService`` (3-tier с feature-flag) раньше возвращал
+    пустые results при ``langmem_enabled=False`` (soft no-op). Для
+    backward-compat с legacy API (см. ``services.ai.langmem_service``),
+    который raise'ил при disabled — S210 добавляет этот exception.
+    """
+
 
 # Тип вида памяти
 MemoryKind = Literal["episodic", "semantic", "procedural"]
@@ -411,6 +422,76 @@ class LangMemService:
                 exc,
             )
             return self._inmemory_recall(agent_id, kind, top_k)
+
+    async def consolidate(
+        self, *, since: datetime | None = None, batch_size: int | None = None
+    ) -> dict[str, Any]:
+        """S210: consolidate episodic → semantic (compat с legacy API).
+
+        Canonical: episodic+semantic+procedural — consolidation уже
+        частично интегрирован через ``memory/langmem/consolidation.py``.
+        Этот thin wrapper делегирует в :class:`ConsolidationEngine` если
+        доступен, иначе возвращает пустой report (без Qdrant/Postgres
+        consolidation нечего делать).
+
+        Args:
+            since: Начало окна consolidation (default: всё).
+            batch_size: Размер батча (default из settings).
+
+        Returns:
+            Dict с keys: ``episodic_processed``, ``semantic_created``,
+            ``duration_s``, ``started_at``, ``finished_at``.
+        """
+        if not self._enabled:
+            raise LangMemDisabled(
+                "LangMem disabled (feature_flags.langmem_enabled=False). "
+                "Включите feature flag для consolidation."
+            )
+        try:
+            from src.backend.services.ai.memory.langmem.consolidation import (
+                ConsolidationEngine,
+            )
+            from src.backend.core.config.ai_stack import langmem_settings
+
+            engine = ConsolidationEngine(langmem_service=self)
+            report = await engine.run(
+                since=since,
+                batch_size=batch_size or langmem_settings.consolidation_batch_size,
+            )
+            return report.to_dict()
+        except ImportError:
+            # ConsolidationEngine не реализован в canonical — return empty.
+            return {
+                "episodic_processed": 0,
+                "semantic_created": 0,
+                "duration_s": 0.0,
+                "started_at": datetime.now(timezone.utc).isoformat(),
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+            }
+
+    async def stats(self) -> dict[str, Any]:
+        """S210: общая статистика памяти (compat с legacy API).
+
+        Returns:
+            Dict с counts по типам памяти (``episodic_count``,
+            ``semantic_count``, ``procedural_count``, ``total``).
+        """
+        if not self._enabled:
+            raise LangMemDisabled(
+                "LangMem disabled (feature_flags.langmem_enabled=False). "
+                "Включите feature flag для stats."
+            )
+        episodic_count = sum(len(v) for v in self._store.get("episodic", {}).values())
+        semantic_count = sum(len(v) for v in self._store.get("semantic", {}).values())
+        procedural_count = sum(
+            len(v) for v in self._store.get("procedural", {}).values()
+        )
+        return {
+            "episodic_count": int(episodic_count),
+            "semantic_count": int(semantic_count),
+            "procedural_count": int(procedural_count),
+            "total": int(episodic_count + semantic_count + procedural_count),
+        }
 
 
 _singleton: LangMemService | None = None
