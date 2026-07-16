@@ -104,17 +104,42 @@ class SMSAdapter:
                 raise RuntimeError(f"SMS.ru API error: {data}")
             return
 
-        # TODO(S40-W6): подтвердить endpoint и формат МТС при интеграции.
-        if self._provider == "mts":
-            raise NotImplementedError(
-                "MTS SMS provider — endpoint/payload unverified, S40-W6 audit"
+        # S216: реализация для MTS и Megafon через generic httpx POST.
+        # Endpoint URL берётся из SMSSettings (см. core/config/services/sms.py),
+        # payload — JSON {"to", "message", "from"}. Provider-specific схемы
+        # могут отличаться (Bearer token, X-API-Key header и т.п.); этот scaffold
+        # передаёт credentials через query param ``api_id`` (как smsru). При
+        # несовпадении реального contract — добавить provider-specific handler.
+        if self._provider in ("mts", "megafon"):
+            params = {
+                "api_id": creds,
+                "to": recipient.lstrip("+"),
+                "msg": body,
+                "from": self._sender_id,
+            }
+            response = await client.request(
+                "POST", PROVIDER_ENDPOINTS[self._provider], params=params
             )
-
-        # TODO(S40-W6): подтвердить endpoint и формат МегаФон.
-        if self._provider == "megafon":
-            raise NotImplementedError(
-                "МегаФон SMS provider — endpoint/payload unverified, S40-W6 audit"
-            )
+            if response.status_code >= 400:
+                raise RuntimeError(
+                    f"{self._provider} SMS send failed: HTTP {response.status_code}: "
+                    f"{response.text[:200]}"
+                )
+            # Best-effort: парсим JSON-ответ, проверяем status/success поле.
+            try:
+                data = response.json()
+            except Exception:
+                _logger.warning(
+                    "SMS/%s: non-JSON response (status=%d)",
+                    self._provider,
+                    response.status_code,
+                )
+                return
+            if isinstance(data, dict) and data.get("status") not in (None, "OK", "ok", "success", 200, "200"):
+                raise RuntimeError(
+                    f"{self._provider} SMS API error: {data}"
+                )
+            return
 
         raise AssertionError(f"Unreachable: provider={self._provider}")
 

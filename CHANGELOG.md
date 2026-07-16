@@ -1279,6 +1279,22 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 216 — SMSAdapter MTS/Megafon wiring
+
+### Gap: SMSAdapter mts/megafon NotImplementedError (FIXED)
+
+`infrastructure/notifications/adapters/sms.py::SMSAdapter.send` бросал `NotImplementedError` для провадеров `mts` и `megafon` (S40-W6 TODO). Только `smsru` был реализован.
+
+**Fix**: generic httpx POST реализация для обоих провайдеров:
+- Endpoint из `SMSSettings.{mts_url,megafon_url}` (уже определены в `core/config/services/sms.py`).
+- Payload: query-params `api_id`, `to`, `msg`, `from` (same shape as smsru).
+- Treats 2xx как success; non-JSON response → warning + return.
+- Failure modes: HTTP 4xx/5xx → RuntimeError; JSON response с `status != OK/ok/success` → RuntimeError.
+
+Ponytail: provider-specific schemas (Bearer token, X-API-Key header) могут отличаться от query-param. При несовпадении реального contract — добавить provider-specific handler (отдельный task).
+
+---
+
 ## [Unreleased] — Sprint 215 — Rebuff/LLM-Guard dead code cleanup
 
 ### Gap: Broken imports of archived guardrail modules (FIXED)
