@@ -64,7 +64,7 @@ class TestInvoke:
         fake_mod = MagicMock()
         fake_mod.fn = MagicMock(return_value=42)
         with patch("importlib.import_module", return_value=fake_mod):
-            result = await reg.invoke("s1", x=1)
+            result = await reg.invoke("s1", whitelist={"mod"}, x=1)
         assert result == 42
         fake_mod.fn.assert_called_once_with(x=1)
 
@@ -74,7 +74,7 @@ class TestInvoke:
         fake_mod = MagicMock()
         fake_mod.fn = AsyncMock(return_value=99)
         with patch("importlib.import_module", return_value=fake_mod):
-            result = await reg.invoke("s1")
+            result = await reg.invoke("s1", whitelist={"mod"})
         assert result == 99
 
     async def test_missing_skill(self) -> None:
@@ -93,7 +93,7 @@ class TestInvoke:
         reg._skills["s1"] = SkillSpec(id="s1", version="1", handler="mod:fn")
         with patch("importlib.import_module", side_effect=ImportError("no")):
             with pytest.raises(ImportError, match="cannot import"):
-                await reg.invoke("s1")
+                await reg.invoke("s1", whitelist={"mod"})
 
     async def test_attr_error(self) -> None:
         reg = SkillRegistry()
@@ -102,7 +102,7 @@ class TestInvoke:
         fake_mod.fn = None
         with patch("importlib.import_module", return_value=fake_mod):
             with pytest.raises(AttributeError, match="has no attribute"):
-                await reg.invoke("s1")
+                await reg.invoke("s1", whitelist={"mod"})
 
     async def test_whitelist_allowed_exact(self) -> None:
         """S2 fix: whitelist с exact match — module разрешён."""
@@ -145,16 +145,42 @@ class TestInvoke:
         mock_imp.assert_not_called()
 
     async def test_whitelist_none_no_check(self) -> None:
-        """S2 backward-compat: whitelist=None — check не выполняется."""
+        """S177 #5 backward-compat removed: whitelist=None теперь raise PermissionError.
+
+        Раньше (MVP-skip) whitelist=None → silent best-effort без check.
+        Теперь strict mode (call_function_whitelist_strict=True default)
+        требует whitelist parameter. Caller обязан передать whitelist
+        в production.
+        """
+        from src.backend.core.config.features import feature_flags
+
         reg = SkillRegistry()
         reg._skills["s1"] = SkillSpec(
             id="s1", version="1", handler="any.module:fn"
         )
-        fake_mod = MagicMock()
-        fake_mod.fn = MagicMock(return_value="ok")
-        with patch("importlib.import_module", return_value=fake_mod):
-            result = await reg.invoke("s1")  # whitelist=None
-        assert result == "ok"
+        with pytest.raises(PermissionError, match="whitelist required"):
+            # feature_flags.call_function_whitelist_strict=True default → PermissionError.
+            await reg.invoke("s1")
+
+    async def test_whitelist_none_with_strict_disabled(self) -> None:
+        """S177 #5: при ``call_function_whitelist_strict=False`` legacy compat — no PermissionError."""
+        from src.backend.core.config.features import feature_flags
+
+        original = feature_flags.call_function_whitelist_strict
+        feature_flags.call_function_whitelist_strict = False
+        try:
+            reg = SkillRegistry()
+            reg._skills["s1"] = SkillSpec(
+                id="s1", version="1", handler="any.module:fn"
+            )
+            fake_mod = MagicMock()
+            fake_mod.fn = MagicMock(return_value="ok")
+            with patch("importlib.import_module", return_value=fake_mod):
+                # whitelist=None + strict=False → backward-compat (legacy callers).
+                result = await reg.invoke("s1")
+            assert result == "ok"
+        finally:
+            feature_flags.call_function_whitelist_strict = original
 
 
 class TestListSkills:

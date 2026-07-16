@@ -295,11 +295,32 @@ class SkillRegistry:
         module_name, fn_name = skill.handler.rsplit(":", 1)
 
         # Module-whitelist check (S2 fix V21 pattern — same as
-        # CallFunctionProcessor._validate_module_whitelist). Activated
-        # только если caller передал ``whitelist``; иначе — fallback
-        # на «best-effort» (legacy callers, которые делают check
-        # на уровне SkillInvokeProcessor).
-        if whitelist:
+        # CallFunctionProcessor._validate_module_whitelist).
+        #
+        # S177 #5 (lockjaw-vision-rocket.md): убран MVP-skip — теперь
+        # если ``call_function_whitelist_strict`` flag включён и caller
+        # НЕ передал whitelist, raise PermissionError (вместо silent
+        # best-effort skip).
+        #
+        # Backward-compat: legacy callers без whitelist работают только
+        # при ``call_function_whitelist_strict=False`` (default ON → strict
+        # enforced). Production deployment должен передавать whitelist.
+        if whitelist is None:
+            try:
+                from src.backend.core.config.features import feature_flags
+
+                strict = bool(
+                    getattr(feature_flags, "call_function_whitelist_strict", True)
+                )
+            except Exception:
+                strict = True  # fail-closed
+            if strict:
+                raise PermissionError(
+                    f"SkillRegistry.invoke: whitelist required for skill_id="
+                    f"{skill_id!r} in strict mode (call_function_whitelist_strict=True). "
+                    f"Pass whitelist parameter or disable strict flag for legacy compat."
+                )
+        else:
             self._validate_module_whitelist(
                 module_name=module_name, whitelist=whitelist, skill_id=skill_id
             )
