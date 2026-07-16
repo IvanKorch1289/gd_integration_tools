@@ -30,21 +30,16 @@ from typing import Any
 
 __all__ = ("mask_pii", "redact_for_observability")
 
-# S221: Email/Phone shared via core.security.pii_patterns.
+# S222: Email/Phone/Card shared via core.security.pii_patterns.
+# S219: SNILS/INN/RU_PASSPORT (single source of truth).
 from src.backend.core.security.pii_patterns import (  # noqa: F401
+    CARD as _CARD,
     EMAIL as _EMAIL,
-    PHONE as _PHONE,
-)
-# RU SNILS — XXX-XXX-XXX YY.
-# S219: shared via core.security.pii_patterns (single source of truth).
-from src.backend.core.security.pii_patterns import (  # noqa: F401
     INN as _INN,
+    PHONE as _PHONE,
     RU_PASSPORT as _RU_PASSPORT,
     SNILS as _SNILS,
 )
-
-# Credit card — 13–19 цифр (groups через пробел/тире).
-_CARD = re.compile(r"\b(?:\d[ -]*?){13,19}\b")
 
 
 def redact_for_observability(value: Any) -> Any:

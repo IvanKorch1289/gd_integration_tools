@@ -17,6 +17,7 @@ from __future__ import annotations
 import re
 
 __all__ = (
+    "CARD",
     "EMAIL",
     "INN",
     "PHONE",
@@ -43,3 +44,9 @@ EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 # S221: Phone — E.164 (+7...) или RU-формат с пробелами/скобками/дефисами.
 # Якорь \+ или непрерывная цифровая последовательность ≥ 10.
 PHONE = re.compile(r"\+?\d[\d\s()\-]{8,}\d")
+
+# S222: Credit card — 13–19 цифр (flexible separators).
+# Shared between pii_masker и pii_filter (были скопированы с разным escape).
+# ai_sanitizer имеет STRICT 4-4-4-4 regex — намеренно другой semantic,
+# оставлен локальным.
+CARD = re.compile(r"\b(?:\d[ \-]?){13,19}\b")

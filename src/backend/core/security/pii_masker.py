@@ -48,16 +48,15 @@ __all__ = ("PIIMasker", "build_default_patterns", "default_masker")
 
 # Дефолтные регулярные выражения. Порядок задаётся ``_DEFAULT_ORDER``
 # в :func:`build_default_patterns` — specific-first.
-# S221: Email/Phone shared via core.security.pii_patterns.
+# S222: Email/Phone/Card/INN/RU_PASSPORT/SNILS shared via core.security.pii_patterns.
 from src.backend.core.security.pii_patterns import (  # noqa: F401
+    CARD as _CARD,
     EMAIL as _EMAIL,
     INN as _INN,
     PHONE as _PHONE,
     RU_PASSPORT as _RU_PASSPORT,
     SNILS as _SNILS,
 )
-# Credit card — 13–19 цифр группами через пробел/дефис.
-_CARD = re.compile(r"\b(?:\d[ \-]?){13,19}\b")
 # JWT — три base64url-сегмента, разделённых точкой (Bearer-токены, OAuth).
 _JWT = re.compile(r"\beyJ[\w\-]+\.[\w\-]+\.[\w\-]+\b")
 # IBAN — 2 буквы страны + 2 контрольные + до 30 символов (всего 15–34 длиной).

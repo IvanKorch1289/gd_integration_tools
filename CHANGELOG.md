@@ -1279,6 +1279,25 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 222 — CARD pattern consolidated (6th duplicate)
+
+### S222: extend pii_patterns.py with CARD
+
+После S221 (EMAIL+PHONE) — найден 3-й duplicate CARD regex в `pii_filter.py`.
+`pii_masker._CARD` и `pii_filter._CARD` имели почти identical regex с
+разным escape order.
+
+**Fix**: расширен `core/security/pii_patterns.py` — добавлен public `CARD`.
+Оба файла импортируют из shared.
+
+**Note**: `ai_sanitizer._CARD_RE` (\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b)
+оставлен локальным — это STRICT 4-4-4-4 формат (типичный для payment processors),
+другой semantic vs flexible 13-19.
+
+После S222: 6 patterns в shared module (SNILS/INN/RU_PASSPORT/EMAIL/PHONE/CARD).
+
+---
+
 ## [Unreleased] — Sprint 221 — EMAIL/PHONE consolidated (5th duplicate)
 
 ### S221: extend pii_patterns.py with EMAIL+PHONE
