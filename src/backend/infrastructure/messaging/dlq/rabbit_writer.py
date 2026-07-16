@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
@@ -35,6 +36,7 @@ class RabbitDLQWriter:
         self._exchange_name = exchange_name
         self._queue_prefix = queue_prefix
 
+    @require_capability("dlq.write", action="write")
     async def write(self, envelope: DLQEnvelope) -> None:
         """Публикует DLQ envelope в RabbitMQ как persistent-сообщение."""
         from aio_pika import DeliveryMode, Message

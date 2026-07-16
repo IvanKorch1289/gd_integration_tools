@@ -49,6 +49,8 @@ class FileListProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        if not await self.auth_check(exchange, action="read"):
+            return
         pattern = self.pattern or exchange.in_message.body.get("pattern")
         if not pattern:
             raise ValueError("FileListProcessor: pattern обязателен")

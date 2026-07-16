@@ -47,6 +47,8 @@ class CsvWriteProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        if not await self.auth_check(exchange, action="write"):
+            return
         if not self.rows:
             await asyncio.to_thread(lambda: open(self.dst, "w", encoding="utf-8").close())
             return

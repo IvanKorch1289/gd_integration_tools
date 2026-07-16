@@ -20,6 +20,7 @@ from src.backend.core.resilience.breaker import (  # noqa: E402
     BreakerSpec,
     get_breaker_registry,
 )
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
@@ -61,6 +62,7 @@ class KafkaDLQWriter:
         # чтобы msgspec (и orjson fallback) сериализовали без ошибок.
         return encode_json(envelope.model_dump(mode="json"))
 
+    @require_capability("dlq.write", action="write")
     async def write(self, envelope: DLQEnvelope) -> None:
         """Публикует envelope в ``dlq.{transport}``.
 

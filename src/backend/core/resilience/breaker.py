@@ -188,6 +188,16 @@ class BreakerRegistry:
         """
         return {name: br.state for name, br in self._breakers.items()}
 
+    def reset(self) -> None:
+        """Очистить реестр breaker'ов.
+
+        Используется только в test fixtures — production-код не должен
+        сбрасывать breaker'ы вручную. После вызова реестр пуст; следующий
+        ``get_or_create(name)`` создаст свежий breaker.
+        """
+        self._breakers.clear()
+        logger.info("BreakerRegistry reset (test only)")
+
     # purgatory listener: (name, event_type, event)
     def _on_event(self, name: str, event_type: str, event: Event) -> None:
         if event_type != "state_changed" or not isinstance(event, ContextChanged):

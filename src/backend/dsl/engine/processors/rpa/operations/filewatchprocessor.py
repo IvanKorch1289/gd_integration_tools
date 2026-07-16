@@ -63,6 +63,8 @@ class FileWatchProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        if not await self.auth_check(exchange, action="read"):
+            return
         """Блокирует выполнение до появления файлов в директории (watchdog, синхронно)."""
         try:
             from watchdog.events import FileSystemEventHandler

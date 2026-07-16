@@ -60,6 +60,8 @@ class HttpRequestProcessor(BaseProcessor):
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
         """Выполняет HTTP-запрос через httpx и пишет JSON/text-ответ в target."""
+        if not await self.auth_check(exchange, action="execute"):
+            return
         request_kwargs: dict[str, Any] = {
             "headers": self.headers,
             "timeout": self.timeout,

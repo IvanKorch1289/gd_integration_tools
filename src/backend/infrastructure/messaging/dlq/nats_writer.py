@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
@@ -29,6 +30,7 @@ class NATSDLQWriter:
         self._js = jetstream
         self._subject_prefix = subject_prefix
 
+    @require_capability("dlq.write", action="write")
     async def write(self, envelope: DLQEnvelope) -> None:
         subject = f"{self._subject_prefix}{envelope.transport}"
         payload = encode_json(envelope.model_dump(mode="json"))

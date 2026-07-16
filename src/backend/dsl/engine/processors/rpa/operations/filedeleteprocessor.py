@@ -48,6 +48,8 @@ class FileDeleteProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        if not await self.auth_check(exchange, action="write"):
+            return
         path = self.path or exchange.in_message.body.get("path")
         if not path:
             raise ValueError("FileDeleteProcessor: path обязателен")

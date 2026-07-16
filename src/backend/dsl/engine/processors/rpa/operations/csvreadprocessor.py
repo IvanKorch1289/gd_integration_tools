@@ -51,6 +51,8 @@ class CsvReadProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        if not await self.auth_check(exchange, action="read"):
+            return
         if self.content is not None:
             text = self.content
         elif self.src:
