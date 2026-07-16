@@ -1279,6 +1279,38 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 206 — Gap audit close-out
+
+Параллельный explore-агент проанализировал все deferred gaps и выдал оценку boundedness/risk. Итоги:
+
+| Gap | Статус |
+|-----|--------|
+| 1. Two WorkflowBuilder classes | ⚠️ **DEFERRED** — legacy `.step()/.compensate_with()` API используется в `extensions/core_entities/orders/workflows/orders_dsl.py` (PRODUCTION). Удаление legacy = breaking change. Требует полной миграции extension. |
+| 2. HITL Redis signal store | ⚠️ **DEFERRED** — medium (~250 LOC), builds on existing pub/sub. Требует отдельного sprint. |
+| 3. DSL → services module-level imports | ✅ **CLOSED** — 0 violations остаются (все 8 были исправлены в S202). Lazy imports — architecturally tolerated. |
+| 4. langmem deprecation cleanup | ⚠️ **DEFERRED** — canonical (`memory/langmem_service.py`) НЕ имеет `consolidate()`/`stats()`/`LangMemDisabled`. Миграция требует расширения canonical API (200+ LOC). |
+| 5. admin_plugins/endpoints.py auth | ✅ **FIXED** — router-level `require_admin(OPERATOR, SUPER_ADMIN)` восстановлен. |
+
+### Gap#5: admin_plugins auth guard restoration (FIXED)
+
+`src/backend/entrypoints/api/v1/endpoints/admin_plugins/endpoints.py` (8 routes) использовал только `_check_flag_enabled()` (feature flag, не auth) после S62 W1 decomp. Router-level `Depends(require_admin(...))` guard был **потерян** при декомпозиции из оригинального `admin_plugins.py:37-41`.
+
+**Fix**: добавлен `_ADMIN_GUARD_OPERATOR = Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))` + `dependencies=[...]` в router. Полностью соответствует оригинальному паттерну других admin endpoints.
+
+**Затронутые endpoints** (8):
+- GET `/admin/plugins` — list_plugins
+- GET `/admin/plugins/{name}/manifest`
+- POST `/admin/plugins/{name}/toggle` (destructive)
+- GET `/admin/plugins/{name}/versions`
+- GET `/admin/plugins/{name}/diff`
+- POST `/admin/plugins/{name}/rollback` (destructive)
+- GET `/admin/plugins/dependency-graph`
+- POST `/admin/plugins/scaffold` (destructive)
+
+Раньше все 8 были защищены только feature flag — security gap для admin panel.
+
+---
+
 ## [Unreleased] — Sprint 205 — P0 security claims verification
 
 ### P0 backlog re-verification (Sprint 173 + 202 claims audit)

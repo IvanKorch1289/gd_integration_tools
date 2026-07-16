@@ -10,8 +10,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.entrypoints.api.v1.endpoints.admin_plugins import helpers
 from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
     PluginDependencyGraph,
@@ -27,7 +28,18 @@ from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
     PluginVersionsResponse,
 )  # S62 W1: schemas
 
-router = APIRouter(prefix="/admin/plugins", tags=["admin"])
+# S206 fix: восстановлен router-level auth guard, потерянный при S62 W1 decomp.
+# Оригинал был в admin_plugins.py:37-41 — _ADMIN_GUARD_OPERATOR.
+# Plugin admin endpoints: OPERATOR + SUPER_ADMIN (destructive: toggle/rollback/scaffold).
+_ADMIN_GUARD_OPERATOR = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+)
+
+router = APIRouter(
+    prefix="/admin/plugins",
+    tags=["admin"],
+    dependencies=[_ADMIN_GUARD_OPERATOR],
+)
 
 _check_flag_enabled = helpers._check_flag_enabled
 _get_plugin_registry = helpers._get_plugin_registry
