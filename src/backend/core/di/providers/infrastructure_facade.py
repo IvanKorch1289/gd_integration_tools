@@ -104,6 +104,7 @@ __all__ = (
     "get_pipeline_event_class",
     "get_route_event_class",
     "get_event_bus_factory",
+    "get_event_bus_facade_provider",
     "get_workflow_builder_class",
     "get_dsl_step_executor_class",
     "get_durable_workflow_processor_class",
@@ -258,6 +259,25 @@ def get_event_bus_factory() -> Any:
     from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
 
     return get_event_bus
+
+
+def get_event_bus_facade_provider() -> Any:
+    """S205 fix: возвращает ``EventBusFacade`` instance для DSL EventBus wiring.
+
+    Раньше ``dsl/builders/eventbus_mixin.py::_resolve_event_bus_facade``
+    импортировал эту функцию, но она не существовала — facade никогда не
+    резолвился, всегда срабатывал fallback на legacy
+    ``core.messaging.event_bus.get_event_bus().publish()``.
+
+    С этим провайдером canonical capability-checked ``EventBusFacade.publish``
+    путь начинает работать. Без capability_check (default) — no-op для
+    capability contract, поведение идентично legacy пути.
+    """
+    from src.backend.services.messaging.eventbus_facade import (
+        get_event_bus_facade,
+    )
+
+    return get_event_bus_facade()
 
 
 def get_workflow_builder_class() -> Any:

@@ -1279,6 +1279,46 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 205 — P0 security claims verification
+
+### P0 backlog re-verification (Sprint 173 + 202 claims audit)
+
+Проведён re-audit 5 P0-claims из CHANGELOG через параллельного explore-агента. Результат:
+
+| P0 Claim | Статус | Файл |
+|----------|--------|------|
+| HITL signal wait (event-driven, no polling) | ✅ VERIFIED | `dsl/engine/processors/hitl_approval.py:247-265` — `await self._hitl_service.wait_for(signal_id)` |
+| EventBus DSL wiring через `EventBusFacade` | ⚠️ **PARTIAL → FIXED** | `dsl/builders/eventbus_mixin.py:38` импортировал `get_event_bus_facade_provider` — НЕ СУЩЕСТВОВАЛ |
+| Tool whitelist uses `request.tool_name` | ⚠️ PARTIAL (fallback на workflow_id при empty tool_name — by design) | `core/ai/gateway_orchestrator_mixin.py:95` |
+| Guard fail-closed on error | ⚠️ **PARTIAL → FIXED** | `core/ai/policy/enforcer/input_guard_mixin.py:192-199` — silent no-op when scanner missing |
+| InProcessAgentSandbox deprecated, default safer | ✅ VERIFIED | `services/ai/agent_sandbox.py:70-100, :447-448` |
+
+### Gap#1: EventBus facade provider missing (FIXED)
+
+**S205**: `get_event_bus_facade_provider()` НЕ СУЩЕСТВОВАЛ, хотя импортировался в `dsl/builders/eventbus_mixin.py:38`. Canonical capability-checked `EventBusFacade.publish` путь НИКОГДА не выполнялся — всегда fallback на legacy direct path.
+
+**Fix**:
+- `services/messaging/eventbus_facade.py` — добавлена `get_event_bus_facade()` lazy accessor
+- `core/di/providers/infrastructure_facade.py` — добавлена `get_event_bus_facade_provider()` + экспорт в `__all__`
+
+После фикса: `EventBusFacade.publish` начинает работать. Без `capability_check` (default) — поведение идентично legacy пути. Production может зарегистрировать `register_event_bus_facade_capability_check` для capability enforcement.
+
+### Gap#2: LLM-Guard silent no-op (FIXED)
+
+**S205**: `input_guard_mixin.py::_guard_input_llm_guard` при отсутствии scanner client возвращал `verdict="warned"`, что = prompt проходит БЕЗ ПРОВЕРКИ. Это security gap при выключенном `LLAMA_GUARD_ENABLED`.
+
+**Fix**: при `on_block="fail"` теперь бросает `GuardrailViolationError` (fail-closed). При `on_block="warn"` — оставлен soft-warn поведение (backward-compat для нестрогих policy).
+
+### Gap#3: Tool policy silent no-op (DEFERRED)
+
+`gateway_orchestrator_mixin.py:91-92` — `if not whitelist and not blacklist: return`. По docstring это **intentional backward-compat с pre-S76 policies**. Изменение может сломать существующие workflow'и без tool restrictions. Не правил — нужен feature-flag rollout или audit реальных production policy.
+
+### Stats (S205)
+
+- 2 security gaps closed (EventBus wiring, LLM-Guard)
+- 3 false CHANGELOG claims исправлены (verification report)
+- 0 regression risk (backward-compat preserved)
+
 ---
 
 ## [Unreleased] — Sprint 204 — Retrospective & unfinished cleanup

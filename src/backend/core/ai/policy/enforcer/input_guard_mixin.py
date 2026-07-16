@@ -188,12 +188,25 @@ class InputGuardMixin:
     async def _guard_input_llm_guard(
         self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef, on_block: str
     ) -> GuardResult:
-        """LLM Guard self-hosted input guard check (S35 W1)."""
+        """LLM Guard self-hosted input guard check (S35 W1, S205 fix).
+
+        S205 fix: если scanner client отсутствует и ``on_block="fail"`` —
+        бросаем :class:`GuardrailViolationError` вместо silent ``"warned"``.
+        Раньше возвращался "warned" verdict, что = prompt проходит без
+        проверки — security gap при выключенном LLAMA_GUARD_ENABLED.
+        """
         if self._llm_guard_client is None:
             logger.warning(
                 "AIPolicyEnforcer: llm_guard input guard requires llm_guard_client "
-                "— skipped. Set LLAMA_GUARD_ENABLED=1 for self-hosted scanner."
+                "— scanner disabled. Set LLAMA_GUARD_ENABLED=1 for self-hosted."
             )
+            if on_block == "fail":
+                raise GuardrailViolationError(
+                    guard_name=ref.name,
+                    flagged_categories=["llm_guard_disabled"],
+                    on_block=on_block,
+                    content=prompt,
+                )
             return GuardResult(
                 guard_name=ref.name, verdict="warned", categories=["llm_guard_disabled"]
             )

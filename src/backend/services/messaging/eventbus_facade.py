@@ -20,11 +20,29 @@ from typing import Any
 from src.backend.core.errors import ServiceError
 from src.backend.core.logging import get_logger
 
-__all__ = ("EventBusFacade",)
+__all__ = ("EventBusFacade", "get_event_bus_facade")
 
 _logger = get_logger("services.messaging.eventbus_facade")
 
 CapabilityChecker = Callable[[str, str, str | None], None]
+
+
+def get_event_bus_facade() -> EventBusFacade:
+    """S205: lazy singleton-аксессор :class:`EventBusFacade`.
+
+    Returns:
+        EventBusFacade инстанс, инициализированный через ``get_event_bus()``.
+        Без capability_check — публикация доступна всему коду (tests /
+        system-level integrations). В production передаётся ``capability_check``
+        через :func:`register_event_bus_facade_capability_check`.
+
+    Notes:
+        Не thread-safe singleton — caller ответственен за вызов из одного
+        места. Для FastAPI lifespan рекомендуется ``register_event_bus_facade``.
+    """
+    from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
+
+    return EventBusFacade(event_bus=get_event_bus())
 
 
 @dataclass
