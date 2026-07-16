@@ -115,6 +115,36 @@ class HitlPendingSignal:
             "is_resolved": self.is_resolved,
         }
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> HitlPendingSignal:
+        """S207: reconstruct from :meth:`to_dict` (для Redis/JSON deserialization).
+
+        Args:
+            data: Dict из :meth:`to_dict` (например из Redis hash value).
+
+        Returns:
+            Новый :class:`HitlPendingSignal` инстанс.
+        """
+        from datetime import datetime as _dt
+
+        created_raw = data.get("created_at")
+        created = _dt.fromisoformat(created_raw) if created_raw else _dt.now(UTC)
+        resolved_raw = data.get("resolved_at")
+        resolved = _dt.fromisoformat(resolved_raw) if resolved_raw else None
+        return cls(
+            signal_id=data["signal_id"],
+            workflow_id=data["workflow_id"],
+            tenant_id=data["tenant_id"],
+            signal_name=data["signal_name"],
+            initiator=data["initiator"],
+            title=data["title"],
+            payload=data.get("payload") or {},
+            created_at=created,
+            resolved_at=resolved,
+            resolved_action=data.get("resolved_action"),
+            resolved_by=data.get("resolved_by"),
+        )
+
 
 @runtime_checkable
 class HitlSignalStore(Protocol):

@@ -1279,6 +1279,35 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 207 — Gap#2 closed (HITL cross-instance)
+
+### Gap#2: RedisHitlSignalStore для cross-instance HITL (FIXED)
+
+Production с несколькими worker'ами раньше использовал :class:`InMemoryHitlSignalStore` — работал только в одном процессе. HITL approval на worker-A не был виден worker-B (signal_resolution = polling timeout → manual restart workflow).
+
+**Реализация** (`src/backend/services/workflows/hitl_signal_store_redis.py`, 200 LOC):
+- State layout: Redis hash `hitl:signals` (field=signal_id, value=JSON через `HitlPendingSignal.to_dict()`).
+- `mark_resolved` — атомарный CAS через Redis WATCH/MULTI (race-safety между instance'ами). При успехе — `publish` на existing `hitl:resolved:{tenant_id}` канал.
+- `wait_for` — pattern subscribe `hitl:resolved:*` с фильтром по `signal_id` в payload.
+- `get`/`list_pending` — HGET/HGETALL + filter in Python.
+- Lazy `get_redis_client().get_client(RedisKind.QUEUE)` для production; constructor accepts injected client для unit-тестов.
+
+**Дополнительно**:
+- `HitlPendingSignal.from_dict()` classmethod — reconstruct из Redis/JSON.
+- 8 unit-тестов (`test_hitl_signal_store_redis.py`) с in-memory mock redis: roundtrip, missing keys, tenant filter, idempotency check.
+
+**Production wiring**: требует opt-in selection в `services/workflows/__init__.py` или composition root. Default остаётся InMemory (backward-compat для dev_light + unit-тестов).
+
+### Оставшиеся gaps (deferred — bounded scope mismatch)
+
+| Gap | Статус |
+|-----|--------|
+| Two WorkflowBuilders | API migration required (legacy `.step()` в production extension) |
+| langmem deprecation cleanup | Canonical API extension required (`consolidate`/`stats`/`LangMemDisabled` отсутствуют) |
+| Tool policy no-op | Intentional backward-compat, feature-flag rollout required |
+
+---
+
 ## [Unreleased] — Sprint 206 — Gap audit close-out
 
 Параллельный explore-агент проанализировал все deferred gaps и выдал оценку boundedness/risk. Итоги:
