@@ -199,11 +199,16 @@ class WordWriteProcessor(BaseProcessor):
     Результат: bytes (.docx файл).
     """
 
+    required_capability: str | None = "rpa.word.write"
+    audit_event: str | None = "rpa.word.write"
+
     def __init__(self, *, name: str | None = None) -> None:
         super().__init__(name=name or "word_write")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="write"):
+            return
         import io
 
         try:
@@ -248,6 +253,9 @@ class ExcelReadProcessor(BaseProcessor):
     Body: bytes или str (путь). Результат: list[dict] (rows).
     """
 
+    required_capability: str | None = "rpa.excel.read"
+    audit_event: str | None = "rpa.excel.read"
+
     def __init__(
         self, *, sheet_name: str | None = None, name: str | None = None
     ) -> None:
@@ -256,6 +264,8 @@ class ExcelReadProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         import io
 
         try:

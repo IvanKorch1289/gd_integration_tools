@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.security.connector_auth import check_source_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
@@ -182,6 +183,7 @@ class MQSource:
         except Exception as _:
             return data.decode(errors="replace")
 
+    @with_breaker("mq_consumer", failure_threshold=20)
     async def _on_message(self, on_event: EventCallback, msg: Any) -> None:
         # Faststream передаёт декодированный body как первый аргумент;
         # мета-информация — в msg.raw_message и msg.headers (если доступно).

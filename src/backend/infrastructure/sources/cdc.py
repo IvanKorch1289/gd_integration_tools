@@ -20,6 +20,7 @@ from typing import Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.sources._lifecycle import graceful_cancel
@@ -138,6 +139,7 @@ class CDCSource:
                         "CDCSource %s: cursor close warning: %s", self._slot, exc
                     )
 
+    @with_breaker("cdc_reader")
     async def _emit(self, on_event: EventCallback, msg: Any) -> None:
         try:
             payload = {
