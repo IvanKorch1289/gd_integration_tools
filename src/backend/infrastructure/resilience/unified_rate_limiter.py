@@ -18,7 +18,13 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("RateLimitExceeded", "RedisRateLimiter", "get_rate_limiter")
+__all__ = (
+    "RateLimitExceeded",
+    "RateLimiterPolicy",
+    "RedisRateLimiter",
+    "ResourceRateLimiter",
+    "get_rate_limiter",
+)
 
 logger = get_logger("entrypoints.rate_limiter")
 
@@ -147,3 +153,90 @@ def get_rate_limiter() -> RedisRateLimiter:
     if _instance is None:
         _instance = RedisRateLimiter()
     return _instance
+
+
+# ──────────────────── Per-resource policies (S217) ────────────────────
+
+
+@dataclass(slots=True)
+class RateLimiterPolicy:
+    """Per-resource policy preset (ADR-005).
+
+    Переиспользует ``RateLimit`` как backend-agnostic representation.
+    Используется :class:`ResourceRateLimiter` для pre-defined политик
+    ``http``, ``grpc``, ``kafka``, ``mqtt``, ``websocket``.
+    """
+
+    resource: str
+    limit: int
+    window_seconds: int
+
+    def as_rate_limit(self, identifier: str) -> RateLimit:
+        """Convert policy to RateLimit instance.
+
+        Args:
+            identifier: Rate limit identifier.
+
+        Returns:
+            RateLimit instance.
+        """
+        return RateLimit(
+            limit=self.limit,
+            window_seconds=self.window_seconds,
+            key_prefix=f"rl:{self.resource}",
+        )
+
+
+class ResourceRateLimiter:
+    """Per-resource rate limiter facade (бывший infrastructure/resilience/rate_limiter.py).
+
+    Pre-defined policies для common resource types. Делегирует в
+    ``RedisRateLimiter.check`` через :meth:`acquire`.
+
+    Пример::
+
+        rl = ResourceRateLimiter()
+        await rl.acquire("http", "api.example.com")
+    """
+
+    DEFAULTS: dict[str, RateLimiterPolicy] = {
+        "http": RateLimiterPolicy(resource="http", limit=100, window_seconds=60),
+        "grpc": RateLimiterPolicy(resource="grpc", limit=60, window_seconds=60),
+        "kafka": RateLimiterPolicy(resource="kafka", limit=500, window_seconds=60),
+        "mqtt": RateLimiterPolicy(resource="mqtt", limit=200, window_seconds=60),
+        "websocket": RateLimiterPolicy(
+            resource="websocket", limit=100, window_seconds=60
+        ),
+    }
+
+    def __init__(self) -> None:
+        self._presets = dict(self.DEFAULTS)
+
+    def set_policy(self, resource: str, policy: RateLimiterPolicy) -> None:
+        """Override rate limit policy for a resource.
+
+        Args:
+            resource: Resource identifier.
+            policy: Rate limit policy.
+        """
+        self._presets[resource] = policy
+
+    async def acquire(self, resource: str, identifier: str) -> dict[str, Any]:
+        """Acquire rate limit slot for a resource.
+
+        Args:
+            resource: Resource identifier.
+            identifier: Client identifier.
+
+        Returns:
+            Rate limit check result.
+
+        Raises:
+            KeyError: If resource not found.
+        """
+        policy = self._presets.get(resource)
+        if policy is None:
+            raise KeyError(f"Unknown RL resource: {resource}")
+        return await get_rate_limiter().check(
+            identifier=identifier, policy=policy.as_rate_limit(identifier)
+        )

@@ -21,11 +21,11 @@ from src.backend.infrastructure.resilience.health import (
     register_resilience_health_checks,
     resilience_components_report,
 )
-from src.backend.infrastructure.resilience.rate_limiter import (
+from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
+from src.backend.infrastructure.resilience.unified_rate_limiter import (
     RateLimiterPolicy,
     ResourceRateLimiter,
 )
-from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
 
 __all__ = (
     "Bulkhead",

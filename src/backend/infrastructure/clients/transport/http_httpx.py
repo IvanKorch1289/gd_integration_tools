@@ -45,7 +45,7 @@ from src.backend.infrastructure.clients.transport.httpx_cache_adapter import (
     is_hishel_available,
 )
 from src.backend.infrastructure.resilience.bulkhead import registry as bulkhead_registry
-from src.backend.infrastructure.resilience.rate_limiter import (
+from src.backend.infrastructure.resilience.unified_rate_limiter import (
     RateLimitExceeded,
     ResourceRateLimiter,
 )

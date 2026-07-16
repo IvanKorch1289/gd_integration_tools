@@ -10,7 +10,7 @@ RL_CONSOLIDATION — canonical hierarchy (4 слоя):
     Policy
       ├─ RateLimitPolicy (core/resilience/resilience_profile.py):
          frozen dataclass {rps, burst} — часть ResilienceProfile
-      └─ RateLimiterPolicy (infrastructure/resilience/rate_limiter.py):
+      └─ RateLimiterPolicy (infrastructure/resilience/unified_rate_limiter.py, S217):
          dataclass {resource, limit, window_seconds} + as_rate_limit()
          — ДРУГИЕ поля, per-resource preset, не дубликат
     Implementation (infrastructure/resilience/)

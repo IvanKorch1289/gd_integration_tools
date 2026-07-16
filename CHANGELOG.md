@@ -1279,6 +1279,32 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 217 — Rate Limiter consolidation (Ponytail: deletion)
+
+### Gap: ResourceRateLimiter over-abstraction (FIXED — net -97 LOC)
+
+`infrastructure/resilience/rate_limiter.py` (97 LOC) был thin facade над
+`RedisRateLimiter` из `unified_rate_limiter.py` — обёртка для policy presets
+с единственным методом `acquire(resource, identifier)`, который делегировал
+в `RedisRateLimiter.check`.
+
+Per новой инструкции пользователя ("большие фичи реализуй, если сокращает
+кодовую базу / удобство без регрессии") — это подпадает: thin facade без
+функциональной ценности.
+
+**Fix**:
+- `RateLimiterPolicy` + `ResourceRateLimiter` **foldены** в `unified_rate_limiter.py` (S217).
+- `rate_limiter.py` **удалён** (-97 LOC).
+- `infrastructure/resilience/__init__.py` импортирует из unified.
+- `infrastructure/clients/transport/http_httpx.py` обновлён на новый import path.
+- `core/resilience/rate_limiter.py` Protocol — docstring reference обновлён (модуль не зависит от infrastructure напрямую).
+
+**Метрики**: -97 LOC, +83 LOC в unified_rate_limiter.py = **net -14 LOC**, минус 1 файл.
+
+Без regression: ResourceRateLimiter interface (DEFAULTS dict, set_policy, acquire) сохранён биткомпатибельно. Все 4 pre-defined policies (http/grpc/kafka/mqtt/websocket) доступны через тот же `ResourceRateLimiter()` ctor.
+
+---
+
 ## [Unreleased] — Sprint 216 — SMSAdapter MTS/Megafon wiring
 
 ### Gap: SMSAdapter mts/megafon NotImplementedError (FIXED)
