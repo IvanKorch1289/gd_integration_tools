@@ -24,6 +24,9 @@ from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.resilience.connector_retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.infrastructure.security.connector_rate_limiter import (
+    get_connector_rate_limiter,
+)
 from src.backend.dsl.codec.json import dumps_str
 
 __all__ = ("FileSink",)
@@ -72,6 +75,11 @@ class FileSink(Sink):
     @require_capability("file.write", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Сериализует ``payload`` (JSON если dict/list) и пишет в файл."""
+        # S1: per-connector rate limit (50/s, scope=path).
+        limiter = get_connector_rate_limiter()
+        limiter.register(f"{self.sink_id}_{self.kind}", "50/s", 50)
+        await limiter.check(f"{self.sink_id}_{self.kind}", scope=self.path)
+
         target = Path(self.path)
         try:
             target = self._safe_path(target)

@@ -19,6 +19,9 @@ from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.resilience.connector_retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.infrastructure.security.connector_rate_limiter import (
+    get_connector_rate_limiter,
+)
 
 __all__ = ("EmailSink",)
 
@@ -62,6 +65,11 @@ class EmailSink(Sink):
     @require_capability("email.send", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Формирует :class:`email.message.EmailMessage` и отправляет через aiosmtplib."""
+        # S1: per-connector rate limit (10/s — SMTP is slow).
+        limiter = get_connector_rate_limiter()
+        limiter.register(f"{self.sink_id}_{self.kind}", "10/s", 10)
+        await limiter.check(f"{self.sink_id}_{self.kind}")
+
         try:
             import aiosmtplib
         except ImportError:

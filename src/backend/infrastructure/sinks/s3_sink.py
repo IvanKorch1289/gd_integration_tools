@@ -29,6 +29,9 @@ from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.resilience.connector_retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.infrastructure.security.connector_rate_limiter import (
+    get_connector_rate_limiter,
+)
 
 __all__ = ("S3Sink",)
 
@@ -57,6 +60,11 @@ class S3Sink(Sink):
     @require_capability("s3.write", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Сериализует ``payload`` и выгружает в S3 через ``storage_client``."""
+        # S1: per-connector rate limit (30/s, scope=key).
+        limiter = get_connector_rate_limiter()
+        limiter.register(f"{self.sink_id}_{self.kind}", "30/s", 30)
+        await limiter.check(f"{self.sink_id}_{self.kind}", scope=self.key)
+
         try:
             from src.backend.infrastructure.clients.storage.s3_pool import (
                 storage_client,

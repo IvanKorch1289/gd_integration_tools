@@ -11,6 +11,9 @@ from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.resilience.connector_retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.infrastructure.security.connector_rate_limiter import (
+    get_connector_rate_limiter,
+)
 
 __all__ = ("HttpSink",)
 
@@ -45,6 +48,11 @@ class HttpSink(Sink):
     @require_capability("http.send", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Отправляет ``payload`` в ``url`` указанным методом."""
+        # S1: per-connector rate limit (100/s).
+        limiter = get_connector_rate_limiter()
+        limiter.register(f"{self.sink_id}_{self.kind}", "100/s", 100)
+        await limiter.check(f"{self.sink_id}_{self.kind}")
+
         try:
             import httpx
 
