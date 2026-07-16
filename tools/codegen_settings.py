@@ -641,7 +641,17 @@ def _apply_spec(spec: CodegenSpec, *, run_audit: bool = True) -> int:
 
 
 def _yaml_round_trip():
-    """Создать ruamel YAML с round-trip настройками (комментарии, порядок)."""
+    """Создать ruamel YAML с round-trip настройками (комментарии, порядок).
+
+    Безопасность: используется ``ruamel.yaml.YAML(typ="rt")``, который НЕ
+    конструирует произвольные Python-объекты через ``!!python/...`` теги
+    (в отличие от PyYAML ``yaml.load()`` — CVE-2017-18342). RCE-вектор
+    для spec-файлов отсутствует. ``safe_load`` не применим к ruamel API
+    (метод отсутствует в ``ruamel.yaml.YAML``); для явной защиты при
+    парсинге untrusted YAML используйте ``YAML(typ="safe")`` или
+    register custom constructor с ``raise ConstructorError`` для
+    ``!!python/object/apply:`` и подобных тегов.
+    """
     from ruamel.yaml import YAML
 
     yaml = YAML(typ="rt")

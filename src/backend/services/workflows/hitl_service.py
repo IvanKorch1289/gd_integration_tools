@@ -12,6 +12,13 @@ Pattern:
 
 In-memory backend для dev_light; production реализует
 :class:`HitlSignalStore` через Redis hash или Postgres table.
+
+Sprint 178 (HITL-1 ARC-010 closeout): :meth:`HitlService.resolve`
+дополнительно publishes в Redis pub/sub (per-tenant channel
+``hitl:resolved:{tenant_id}`` через :mod:`hitl_pubsub`). Это
+**additive notification** для cross-instance consumers
+(см. :mod:`hitl_pubsub_consumer`) — in-memory waiter продолжает
+работать. Failure в publish НЕ ломает resolve (best-effort).
 """
 
 from __future__ import annotations
@@ -364,6 +371,30 @@ class HitlService:
         resolved = await self._store.mark_resolved(
             signal_id, action=action, resolved_by=resolved_by
         )
+        # S178 HITL-1 closeout: cross-instance notification via Redis pub/sub.
+        # Best-effort: failure → log + continue (in-memory already updated).
+        try:
+            from src.backend.services.workflows.hitl_pubsub import (
+                publish_hitl_resolved,
+            )
+
+            await publish_hitl_resolved(
+                signal_id=resolved.signal_id,
+                workflow_id=resolved.workflow_id,
+                tenant_id=resolved.tenant_id,
+                action=action,
+                resolved_by=resolved_by,
+                payload=payload or {},
+            )
+        except Exception as exc:
+            # Ponytail: in-memory waiter works; pub/sub failure → log only.
+            logging.getLogger("services.workflows.hitl").warning(
+                "hitl.pubsub.publish_failed signal_id=%s: %s "
+                "(in-memory waiter continues, see hitl_pubsub_consumer "
+                "for cross-instance consumer)",
+                resolved.signal_id,
+                exc,
+            )
         if self._facade is not None:
             from src.backend.core.workflow.backend import WorkflowHandle
 

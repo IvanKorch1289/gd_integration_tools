@@ -59,7 +59,7 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	format format-check fix \
 	lint lint-strict \
 	type-check type-check-strict \
-	vulture-check refurb-check \
+	vulture-check refurb-check check-docstrings \
 	clean clean-all code-clean \
 	run run-fg stop restart status migrate rabbit-init frontend streamlit \
 	profile-memray profile-memray-flamegraph profile-memray-stats profile-mprof profile-pyspy \

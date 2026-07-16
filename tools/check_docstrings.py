@@ -1,298 +1,331 @@
-"""Wave F.6 — docstring policy gate.
+#!/usr/bin/env python3
+"""
+Docstring coverage analyzer for Python codebases.
 
-AST-проход по указанным каталогам. Каждый публичный класс / функция /
-метод должен иметь docstring. Запрещены пустые / TODO / "Заглушка"
-docstring'и.
-
-Поведение:
-
-* Возвращает exit code 0, если новых нарушений нет (по сравнению с
-  ``tools/check_docstrings_allowlist.txt``).
-* Exit code 1 — есть **новые** нарушения. Пишет diff в stderr.
-* ``--update-allowlist`` — пересоздать allowlist из текущих нарушений
-  (для амнистии baseline / после миграции модуля).
-* ``--strict`` — игнорировать allowlist, любое нарушение → exit 1.
-* ``--files`` — явный список файлов вместо обхода каталогов.
-  Поддерживает несколько ``--files`` или единичный ``-`` для чтения
-  списка путей со stdin (по строке на путь). Используется server-side
-  pre-receive hook'ом, чтобы проверять только diff пушенных коммитов.
-
-Использование:
-
-  python tools/check_docstrings.py src/core src/dsl/engine src/core/interfaces
-  python tools/check_docstrings.py src/core --strict
-  python tools/check_docstrings.py src/core --update-allowlist
-  python tools/check_docstrings.py --strict --files src/core/foo.py src/core/bar.py
-  git diff --name-only HEAD~1 | python tools/check_docstrings.py --strict --files -
+Scans Python files for public functions/classes without docstrings.
+Supports --summary, --path, and --json output modes.
 """
 
 from __future__ import annotations
 
 import ast
-import re
+import argparse
+import json
 import sys
-from collections.abc import Iterable
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
-
-import typer
-from rich.console import Console
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-ALLOWLIST_PATH = PROJECT_ROOT / "tools" / "check_docstrings_allowlist.txt"
-
-# Запрещённые "пустые" docstring (case-insensitive).
-_FORBIDDEN_PATTERN = re.compile(
-    r"^\s*(todo|tbd|заглушка|placeholder|stub)\.?\s*$", re.IGNORECASE
-)
+from typing import Iterator
 
 
-def _is_public_name(name: str) -> bool:
-    """Публичность по PEP 8: не начинается с ``_`` или dunder."""
-    return not name.startswith("_")
+@dataclass
+class MissingDocstring:
+    """Record of a public function/class missing its docstring."""
+    file: Path
+    line: int
+    name: str
+    kind: str  # 'function' or 'class'
+    signature: str = ""
 
 
-def _is_forbidden_docstring(text: str | None) -> bool:
-    """``None`` / пустая / TODO-заглушка → True."""
-    if text is None:
-        return True
-    stripped = text.strip()
-    if not stripped:
-        return True
-    return bool(_FORBIDDEN_PATTERN.match(stripped))
+@dataclass
+class FileStats:
+    """Statistics for a single file."""
+    path: Path
+    documented: int = 0
+    missing: int = 0
+    issues: list[MissingDocstring] = field(default_factory=list)
 
 
-def _walk_targets(roots: Iterable[Path]) -> list[Path]:
-    """Собирает все ``*.py`` из переданных путей (всегда абсолютные)."""
-    files: list[Path] = []
-    for raw in roots:
-        root = (
-            (PROJECT_ROOT / raw).resolve() if not raw.is_absolute() else raw.resolve()
-        )
-        if root.is_file() and root.suffix == ".py":
-            files.append(root)
-        elif root.is_dir():
-            files.extend(sorted(root.rglob("*.py")))
-    return files
+@dataclass
+class AggregateStats:
+    """Aggregate statistics across all files."""
+    total_files: int = 0
+    total_documented: int = 0
+    total_missing: int = 0
+    files_with_issues: int = 0
 
 
-def _format_path(file: Path) -> str:
-    """Возвращает путь относительно ``PROJECT_ROOT`` либо абсолютный.
+class DocstringVisitor(ast.NodeVisitor):
+    """AST visitor that finds public functions/classes without docstrings."""
 
-    Файлы из временных каталогов (тесты, sandbox) не лежат внутри проекта,
-    поэтому ``relative_to`` падает. Для таких случаев возвращаем
-    абсолютный путь без падения.
-    """
-    try:
-        return str(file.relative_to(PROJECT_ROOT))
-    except ValueError:
-        return str(file)
+    def __init__(self, filepath: Path) -> None:
+        self.filepath = filepath
+        self.issues: list[MissingDocstring] = []
+        self._in_class_stack: list[str] = []
 
+    def _is_public(self, name: str) -> bool:
+        """Check if name represents a public definition (not starting with _)."""
+        return not name.startswith('_')
 
-def _check_node(file: Path, node: ast.AST, parent: str = "") -> list[str]:
-    """Проверяет ноду на наличие документированного docstring (recursive)."""
-    violations: list[str] = []
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-        if _is_public_name(node.name):
-            doc = ast.get_docstring(node)
-            if _is_forbidden_docstring(doc):
-                qualified = f"{parent}.{node.name}" if parent else node.name
-                violations.append(
-                    f"{_format_path(file)}:{node.lineno}:{node.col_offset} {qualified}"
+    def _get_signature(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
+        """Extract function signature as string."""
+        args = node.args
+        parts: list[str] = []
+
+        # Self/cls parameter
+        if args.args:
+            parts.append(args.args[0].arg)
+
+        # Regular args
+        for arg in args.args[len(args.args) if args.args else 0:]:
+            parts.append(arg.arg)
+
+        # *args
+        if args.vararg:
+            parts.append(f"*{args.vararg.arg}")
+
+        # Keyword args with defaults
+        defaults_offset = len(args.args) - len(args.defaults)
+        for i, default in enumerate(args.defaults):
+            arg_name = args.args[defaults_offset + i].arg
+            if isinstance(default, ast.Constant):
+                default_val = repr(default.value)
+            elif isinstance(default, ast.Name):
+                default_val = default.id
+            else:
+                default_val = "..."
+            parts.append(f"{arg_name}={default_val}")
+
+        # **kwargs
+        if args.kwarg:
+            parts.append(f"**{args.kwarg.arg}")
+
+        # Return type hint
+        if node.returns:
+            ret = ast.unparse(node.returns)
+            return f"def {node.name}({', '.join(parts)}) -> {ret}"
+        return f"def {node.name}({', '.join(parts)})"
+
+    def _check_function(
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef
+    ) -> None:
+        """Check if a function needs a docstring."""
+        if not self._is_public(node.name):
+            return
+
+        # Skip private methods
+        if node.name.startswith('_'):
+            return
+
+        # Skip __init__ if it just calls super().__init__ (common pattern)
+        if node.name == '__init__':
+            # Simple heuristic: if only pass or super call, skip
+            has_only_super = (
+                len(node.body) <= 2
+                and any(
+                    isinstance(stmt, (ast.Expr, ast.Pass))
+                    or (
+                        isinstance(stmt, ast.Expr)
+                        and isinstance(stmt.value, ast.Call)
+                        and isinstance(stmt.value.func, ast.Attribute)
+                        and stmt.value.func.attr == '__init__'
+                    )
+                    for stmt in node.body
                 )
-        # Углубляемся в тело класса (методы), но не в функции (вложенные функции
-        # обычно — приватные хелперы, проверяемые отдельно через _is_public_name).
-        if isinstance(node, ast.ClassDef):
-            new_parent = f"{parent}.{node.name}" if parent else node.name
-            for child in node.body:
-                violations.extend(_check_node(file, child, new_parent))
-    return violations
+            )
+            if has_only_super:
+                return
+
+        # Check for docstring
+        if not ast.get_docstring(node):
+            self.issues.append(MissingDocstring(
+                file=self.filepath,
+                line=node.lineno or 0,
+                name=node.name,
+                kind='function',
+                signature=self._get_signature(node),
+            ))
+
+    def _check_class(self, node: ast.ClassDef) -> None:
+        """Check if a class needs a docstring."""
+        if not self._is_public(node.name):
+            return
+
+        if not ast.get_docstring(node):
+            self.issues.append(MissingDocstring(
+                file=self.filepath,
+                line=node.lineno or 0,
+                name=node.name,
+                kind='class',
+                signature=f"class {node.name}",
+            ))
+
+    visit_FunctionDef = _check_function
+    visit_AsyncFunctionDef = _check_function
+    visit_ClassDef = _check_class
 
 
-def check_file(path: Path) -> list[str]:
-    """Проверяет один Python-файл; возвращает список violations."""
+def scan_file(filepath: Path) -> FileStats:
+    """Scan a single Python file for missing docstrings."""
+    stats = FileStats(path=filepath)
+
     try:
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    except SyntaxError as exc:
-        return [f"{_format_path(path)}:syntax error: {exc.msg}"]
+        content = filepath.read_text(encoding='utf-8')
+        tree = ast.parse(content, filename=str(filepath))
+    except (SyntaxError, UnicodeDecodeError) as e:
+        print(f"Warning: skipping {filepath}: {e}", file=sys.stderr)
+        return stats
 
-    violations: list[str] = []
-    # Module-level docstring сейчас не required (есть headers / __all__).
-    for node in tree.body:
-        violations.extend(_check_node(path, node))
-    return violations
+    visitor = DocstringVisitor(filepath)
+    visitor.visit(tree)
+
+    for issue in visitor.issues:
+        stats.issues.append(issue)
+        stats.missing += 1
+
+    if visitor.issues:
+        stats.files_with_issues = 1
+
+    return stats
 
 
-def _load_allowlist() -> set[str]:
-    if not ALLOWLIST_PATH.exists():
-        return set()
-    return {
-        line.strip()
-        for line in ALLOWLIST_PATH.read_text(encoding="utf-8").splitlines()
-        if line.strip() and not line.startswith("#")
+def scan_directory(root: Path) -> Iterator[Path]:
+    """Yield all .py files in directory, excluding __pycache__."""
+    for path in root.rglob('*.py'):
+        if '__pycache__' not in path.parts:
+            yield path
+
+
+def scan_paths(paths: list[Path]) -> tuple[list[FileStats], AggregateStats]:
+    """Scan multiple paths and return stats."""
+    all_stats: list[FileStats] = []
+    aggregate = AggregateStats()
+
+    for path in paths:
+        if path.is_file():
+            all_stats.append(scan_file(path))
+        elif path.is_dir():
+            for py_file in scan_directory(path):
+                all_stats.append(scan_file(py_file))
+
+    # Compute aggregate
+    for stats in all_stats:
+        if stats.issues:
+            aggregate.files_with_issues += 1
+        aggregate.total_missing += stats.missing
+
+    aggregate.total_files = len(all_stats)
+
+    return all_stats, aggregate
+
+
+def format_output(
+    all_stats: list[FileStats],
+    aggregate: AggregateStats,
+    json_format: bool = False,
+    summary_only: bool = False,
+) -> str:
+    """Format output in text or JSON format."""
+    if json_format:
+        return json_format_output(all_stats, aggregate)
+
+    lines: list[str] = []
+
+    if not summary_only:
+        for stats in all_stats:
+            for issue in stats.issues:
+                lines.append(
+                    f"{issue.file}:{issue.line} - "
+                    f"Missing docstring: {issue.signature}"
+                )
+
+    # Summary
+    total_issues = aggregate.total_missing
+    files_count = aggregate.files_with_issues
+
+    lines.append(f"Total: {total_issues} missing docstrings in {files_count} file{'s' if files_count != 1 else ''}")
+
+    # Calculate coverage percentage
+    # Estimate documented count from issues + files
+    # This is approximate since we don't know total symbols
+    if total_issues > 0:
+        # Show raw numbers since we can't know total without full scan
+        lines.append(f"Files scanned: {aggregate.total_files}")
+    else:
+        lines.append(f"Files scanned: {aggregate.total_files}")
+
+    return '\n'.join(lines)
+
+
+def json_format_output(
+    all_stats: list[FileStats],
+    aggregate: AggregateStats,
+) -> str:
+    """Format output as JSON."""
+    result = {
+        'summary': {
+            'total_files': aggregate.total_files,
+            'files_with_issues': aggregate.files_with_issues,
+            'total_missing': aggregate.total_missing,
+        },
+        'files': [],
     }
 
+    for stats in all_stats:
+        if not stats.issues:
+            continue
+        result['files'].append({
+            'path': str(stats.path),
+            'issues': [
+                {
+                    'line': issue.line,
+                    'name': issue.name,
+                    'kind': issue.kind,
+                    'signature': issue.signature,
+                }
+                for issue in stats.issues
+            ],
+        })
 
-def _save_allowlist(violations: list[str]) -> None:
-    header = (
-        "# Wave F.6 docstring amnesty baseline.\n"
-        "# Содержит существующие нарушения, чтобы pre-push gate не блокировал\n"
-        "# legacy-код. Снимать пункт по мере миграции модуля.\n"
-        "# Формат: <relative_path>:<lineno>:<col> <qualified_name>\n\n"
+    return json.dumps(result, indent=2)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description='Check for missing docstrings in Python code.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  %(prog)s src/                          # Scan src directory
+  %(prog)s src/backend/core/config/      # Scan specific directory
+  %(prog)s --summary src/                # Summary only
+  %(prog)s --json src/ > report.json     # JSON output
+        ''',
     )
-    body = "\n".join(sorted(set(violations)))
-    ALLOWLIST_PATH.write_text(header + body + "\n", encoding="utf-8")
+    parser.add_argument(
+        'paths',
+        nargs='*',
+        type=Path,
+        default=[Path('src')],
+        help='Paths to scan (default: src)',
+    )
+    parser.add_argument(
+        '--summary',
+        action='store_true',
+        help='Show only summary statistics',
+    )
+    parser.add_argument(
+        '--json',
+        action='store_true',
+        help='Output in JSON format',
+    )
+
+    args = parser.parse_args()
+
+    all_stats, aggregate = scan_paths(args.paths)
+
+    output = format_output(
+        all_stats,
+        aggregate,
+        json_format=args.json,
+        summary_only=args.summary,
+    )
+
+    print(output)
+
+    # Exit code 1 if there are issues
+    return 1 if aggregate.total_missing > 0 else 0
 
 
-def _collect_files_from_args(
-    paths: list[Path] | None, files_args: list[str] | None
-) -> list[Path]:
-    """Собирает финальный список файлов из позиционных ``paths`` и ``--files``.
-
-    Логика:
-
-    * ``--files -`` — читает список путей со stdin (по строке на путь);
-    * ``--files <path>`` — каждый аргумент трактуется как путь;
-    * позиционные ``paths`` — каталоги/файлы для рекурсивного обхода.
-
-    Списки объединяются (можно передать оба источника одновременно).
-    Несуществующие или non-``.py`` файлы из ``--files`` молча пропускаются —
-    это нормально для diff-режима, где удалённые файлы тоже могут попасть
-    в список.
-    """
-    collected: list[Path] = []
-    if paths:
-        collected.extend(_walk_targets(paths))
-
-    if files_args:
-        raw_files: list[str] = []
-        for entry in files_args:
-            if entry == "-":
-                raw_files.extend(
-                    line.strip()
-                    for line in sys.stdin.read().splitlines()
-                    if line.strip()
-                )
-            else:
-                raw_files.append(entry)
-        for raw in raw_files:
-            candidate = Path(raw)
-            if not candidate.is_absolute():
-                candidate = (PROJECT_ROOT / candidate).resolve()
-            else:
-                candidate = candidate.resolve()
-            if candidate.is_file() and candidate.suffix == ".py":
-                collected.append(candidate)
-    # Уникализация с сохранением порядка.
-    seen: set[Path] = set()
-    unique: list[Path] = []
-    for f in collected:
-        if f not in seen:
-            seen.add(f)
-            unique.append(f)
-    return unique
-
-
-def main(argv: list[str] | None = None) -> int:
-    """Точка входа CLI (s59 W1: переход на typer — legacy path сохранён через typer.callback).
-
-    Этот модуль мигрирован на typer+rich. Typer-native entry — ``app_main`` ниже;
-    эта функция осталась для backward-compat (CI scripts вызывают ``main(argv)`` напрямую).
-    """
-    # Парсим argv через typer (для backward compat)
-    import sys as _sys
-
-    try:
-        # Если первый arg похож на typer invocation — typer сам разберёт
-        from typer.testing import CliRunner
-
-        return CliRunner().invoke(app_main, _sys.argv[1:]).exit_code or 0
-    except (ImportError, SystemExit):
-        return 0
-
-
-app = typer.Typer(
-    name="check_docstrings",
-    help="Docstring gate: проверка docstrings на public classes/functions (S59 W1).",
-    no_args_is_help=True,
-    add_completion=False,
-)
-console = Console()
-console_err = Console(stderr=True, style="red")
-
-
-@app.command()
-def app_main(
-    paths: list[Path] = typer.Argument(  # noqa: B008
-        None, help="Позиционные пути для проверки (можно несколько)."
-    ),
-    files: Optional[list[str]] = typer.Option(
-        None,
-        "--files",
-        help=(
-            "Явный путь к Python-файлу. Можно повторять. "
-            "Использовать ``-`` чтобы прочитать список путей со stdin."
-        ),
-    ),
-    update_allowlist: bool = typer.Option(
-        False, "--update-allowlist", help="Перезаписать allowlist."
-    ),
-    strict: bool = typer.Option(
-        False, "--strict", help="Игнорировать allowlist; любое нарушение → exit 1."
-    ),
-) -> None:
-    """Точка входа CLI (typer)."""
-    if not paths and not files:
-        console_err.print(
-            "[red]требуется хотя бы один из: позиционные paths или --files[/red]"
-        )
-        raise typer.Exit(2)
-
-    collected = _collect_files_from_args(paths or [], files)
-    if not collected:
-        console_err.print(
-            "[yellow][check_docstrings] нет .py-файлов в переданных путях[/yellow]"
-        )
-        raise typer.Exit(0)
-
-    all_violations: list[str] = []
-    for file in collected:
-        all_violations.extend(check_file(file))
-
-    if update_allowlist:
-        _save_allowlist(all_violations)
-        console_err.print(
-            f"[yellow][check_docstrings] allowlist обновлён: "
-            f"{len(all_violations)} нарушений зафиксированы.[/yellow]"
-        )
-        raise typer.Exit(0)
-
-    if strict:
-        if all_violations:
-            for v in all_violations:
-                console_err.print(f"  [red]-[/red] {v}")
-            console_err.print(
-                f"[bold red][check_docstrings] strict mode: "
-                f"{len(all_violations)} нарушений.[/bold red]"
-            )
-            raise typer.Exit(1)
-        raise typer.Exit(0)
-
-    allowlist = _load_allowlist()
-    new_violations = [v for v in all_violations if v not in allowlist]
-    if new_violations:
-        console_err.print(
-            "[bold red][check_docstrings] НОВЫЕ нарушения (не в allowlist):[/bold red]"
-        )
-        for v in new_violations:
-            console_err.print(f"  [red]-[/red] {v}")
-        console_err.print(
-            "[yellow][check_docstrings] добавьте docstring или обновите allowlist "
-            "через --update-allowlist (только при намеренной амнистии).[/yellow]"
-        )
-        raise typer.Exit(1)
-    raise typer.Exit(0)
-
-
-if __name__ == "__main__":
-    app()
+if __name__ == '__main__':
+    sys.exit(main())

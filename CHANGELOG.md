@@ -1,6 +1,55 @@
 # CHANGELOG — GD Integration Tools
 
-## [Unreleased] — Sprint 171 (S171)
+## [Unreleased] — Sprint 172 (S172)
+
+### Infrastructure: архитектурный аудит и cleanup
+
+#### Сделано
+
+**Docstring coverage (P3)**
+- Создан инструмент `tools/check_docstrings.py` для анализа покрытия docstrings
+- Исправлены 14 missing docstrings в `src/backend/core/ai/policy/spec.py`
+- Исправлены missing docstrings в `src/backend/core/auth/`, `src/backend/core/interfaces/`, `src/backend/core/utils/`
+- Фикс: docstrings внутри Pydantic моделей (после `model_config`) перенесены перед ним
+
+**Settings consolidation (P2)**
+- Создан `src/backend/core/config/mixins.py` с переиспользуемыми mixin-классами:
+  - `APIConnectionMixin` — base_url, timeout_s, max_retries
+  - `DBPoolMixin` — pool_size, max_overflow, connection_timeout_s
+  - `ResilienceMixin` — circuit_breaker_*, retry_*, bulkhead_*
+
+**Dead code deletion**
+- Удалён `src/frontend/admin-react/` (entire, deprecated S168 W14)
+- Удалены shim-файлы `admin_panel/users.py`, `orders.py`, `files.py`, `orderkinds.py`
+- Оставлены `admin_panel/base.py` и `setup_admin.py` (зависимости в extensions)
+
+**Bug fixes**
+- AIPolicySpec: docstrings перенесены перед `model_config` (Pydantic convention)
+
+**Circuit Breaker consolidation scaffold (P2 #16)**
+- Создан `src/backend/core/resilience/circuit_breaker.py` — unified facade поверх purgatory
+- `CircuitBreakerSpec` — единая спецификация для всех адаптеров
+- `SlidingWindowBreaker` — адаптер для per-route CB (TODO: интеграция в middleware)
+- `ReplicaFailoverBreaker` — адаптер для DB read-replica failover (TODO: интеграция в smart_session)
+- `BreakerLike` Protocol — re-export минимального contract для RPA
+- Re-export canonical API (`Breaker`, `BreakerRegistry`, `BreakerSpec`, `CircuitOpen`)
+- TODO-комментарии в `entrypoints/middlewares/circuit_breaker.py` и `infrastructure/database/smart_session_manager.py`
+- Полная миграция → S172 M2.4
+
+**Security fix (P0 #5 — confirmed safe by design)**
+- `tools/codegen_settings.py`: добавлен docstring в `_yaml_round_trip()` с обоснованием безопасности `ruamel.yaml.YAML(typ="rt")` (не подвержен RCE-вектору PyYAML `!!python/object/apply:`). Замена на `safe_load` невозможна (метод отсутствует в ruamel API).
+
+**Settings mixins application (S172 M2.2 follow-up)**
+- YAGNI-аудит показал: миграция существующих Settings на mixins НЕ безопасна
+- Все кандидаты (`AntivirusAPISettings`, `JupyterHubSettings`, 6 LLM-провайдеров в `ai.py`) имеют более строгие ограничения полей (ge/le), чем mixin defaults
+- Применение mixin расширило бы допустимый диапазон значений → breaking change
+- `mixins.py` оставлен готовым для будущей миграции при перепроектировании Settings
+
+---
+
+## [S171] — Sprint 171 (S171)
+
+## [S171] — Sprint 171 (S171)
 
 ### Frontend: перевод на русский язык и оптимизация UX
 

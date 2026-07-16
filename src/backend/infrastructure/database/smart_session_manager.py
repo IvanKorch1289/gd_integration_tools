@@ -242,7 +242,13 @@ class SmartSessionManager:
             # При ошибке не блокируем replica — fallback к circuit-breaker.
 
     def _record_replica_success(self) -> None:
-        """Регистрирует успешную операцию на replica — сбрасывает счётчик."""
+        """Регистрирует успешную операцию на replica — сбрасывает счётчик.
+
+        TODO(s172/m2.4): мигрировать на ``ReplicaFailoverBreaker`` из
+        ``src.backend.core.resilience.circuit_breaker``. Текущий mini-CB
+        (manual counter + timestamp) несовместим с multi-pod deployments —
+        каждый pod считает failures независимо.
+        """
         if self._consecutive_failures:
             _logger.debug("smart_session.replica_recovered")
         self._consecutive_failures = 0

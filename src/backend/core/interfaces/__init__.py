@@ -95,6 +95,13 @@ __all__ = (
 
 
 class HealthStatus(Enum):
+    """Статус health check компонента.
+
+    - HEALTHY: компонент полностью работоспособен
+    - DEGRADED: компонент работает с ограничениями
+    - UNHEALTHY: компонент неработоспособен
+    """
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -102,6 +109,15 @@ class HealthStatus(Enum):
 
 @dataclass(slots=True)
 class HealthReport:
+    """Результат health check для конкретного компонента.
+
+    Attributes:
+        name: Имя компонента.
+        status: Текущий статус.
+        latency_ms: Задержка проверки в миллисекундах.
+        details: Дополнительная информация (версия, метрики).
+    """
+
     name: str
     status: HealthStatus
     latency_ms: float | None = None
@@ -163,6 +179,18 @@ class ManagedResource(AsyncLifecycle, Healthcheck):
 
 @dataclass(slots=True)
 class PoolMetrics:
+    """Метрики connection pool.
+
+    Attributes:
+        name: Имя пула.
+        active: Активные соединения.
+        idle: Простаивающие соединения.
+        max_size: Максимальный размер пула.
+        waiters: Ожидающие запросов.
+        created_total: Всего созданных соединений.
+        errors_total: Всего ошибок.
+    """
+
     name: str
     active: int = 0
     idle: int = 0

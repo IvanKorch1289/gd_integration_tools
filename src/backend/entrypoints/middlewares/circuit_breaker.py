@@ -32,6 +32,11 @@ middleware был REMOVED в A2 (ADR-005) — global-state bug.
 * Single-process (per-worker) — K8s multi-pod → use shared state
   (deferred S81+).
 * Sync sliding window (deque) — не high-throughput optimized.
+
+TODO(s172/m2.4): заменить deque-based state-machine на
+``src.backend.core.resilience.circuit_breaker.SlidingWindowBreaker``.
+Текущая реализация — per-process, in-memory; при multi-worker K8s
+нужен shared state (Redis-backed listener purgatory).
 """
 
 from __future__ import annotations

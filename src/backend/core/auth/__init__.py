@@ -74,6 +74,19 @@ __all__ = (
 
 
 class AuthMethod(str, Enum):
+    """Метод аутентификации запроса.
+
+    Поддерживаемые значения:
+    - NONE: без аутентификации
+    - API_KEY: API key в заголовке
+    - JWT: Bearer token (RS256)
+    - BASIC: HTTP Basic auth
+    - MTLS: Mutual TLS (client certificate)
+    - SAML: SAML 2.0 SSO
+    - EXPRESS: Express auth (S15)
+    - EXPRESS_JWT: Express + JWT combined (S15)
+    """
+
     NONE = "none"
     API_KEY = "api_key"
     JWT = "jwt"

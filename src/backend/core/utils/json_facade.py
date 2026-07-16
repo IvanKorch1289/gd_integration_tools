@@ -36,5 +36,7 @@ except ImportError:
         _logger.warning("json_facade.orjson_missing using_stdlib")
         return json.dumps(obj, **kwargs)
 
+    @staticmethod
     def loads(data: bytes | str) -> Any:
+        """Десериализовать JSON-строку в Python-объект."""
         return json.loads(data)

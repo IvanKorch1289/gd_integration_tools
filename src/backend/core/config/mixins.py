@@ -16,7 +16,14 @@ Defaults взяты из существующих файлов (``core/config/ai
 
 from pydantic import BaseModel, Field, SecretStr
 
-__all__ = ("ConnectionMixin", "RetryMixin", "LLMModelMixin")
+__all__ = (
+    "ConnectionMixin",
+    "RetryMixin",
+    "LLMModelMixin",
+    "APIConnectionMixin",
+    "DBPoolMixin",
+    "ResilienceMixin",
+)
 
 
 class ConnectionMixin(BaseModel):
@@ -146,4 +153,92 @@ class LLMModelMixin(BaseModel):
         ge=0.0,
         le=2.0,
         description="Температура генерации (0 — детерминированно, 2 — креативно).",
+    )
+
+
+class APIConnectionMixin(BaseModel):
+    """Базовые параметры HTTP/API клиента.
+
+    Покрывает дубли в AntivirusAPISettings, SKBAPISettings, DadataAPISettings:
+    base_url, timeout_s, max_retries, retry_backoff_factor.
+    """
+
+    base_url: str = Field(
+        default="",
+        description="Базовый URL API-сервиса.",
+        examples=["https://api.example.com"],
+    )
+
+    timeout_s: float = Field(
+        default=30.0,
+        gt=0,
+        description="Общий таймаут HTTP-запроса (сек).",
+        examples=[30.0],
+    )
+
+    max_retries: int = Field(
+        default=3,
+        ge=0,
+        description="Максимальное число повторных попыток.",
+        examples=[3],
+    )
+
+    retry_backoff_factor: float = Field(
+        default=1.0,
+        ge=0.0,
+        description="Множитель экспоненциальной задержки между retry.",
+        examples=[1.0],
+    )
+
+
+class DBPoolMixin(BaseModel):
+    """Параметры пула соединений БД.
+
+    Покрывает дубли в DatabaseConnectionSettings:
+    pool_size, pool_timeout_s, max_overflow.
+    ponytail: только 3 ключевых параметра, остальное в конкретном классе.
+    """
+
+    pool_size: int = Field(
+        default=10,
+        ge=1,
+        description="Размер пула соединений.",
+        examples=[20],
+    )
+
+    pool_timeout_s: float = Field(
+        default=30.0,
+        gt=0,
+        description="Таймаут ожидания свободного соединения в пуле (сек).",
+        examples=[30.0],
+    )
+
+    max_overflow: int = Field(
+        default=10,
+        ge=0,
+        description="Максимум временных соединений сверх пула.",
+        examples=[10],
+    )
+
+
+class ResilienceMixin(BaseModel):
+    """Circuit breaker и retry-политика для внешних сервисов.
+
+    Покрывает дубли в HttpBaseSettings, DatabaseConnectionSettings,
+    AntivirusAPISettings: circuit_breaker_max_failures, circuit_breaker_reset_timeout.
+    ponytail: минимальный набор для resilience.
+    """
+
+    circuit_breaker_max_failures: int = Field(
+        default=5,
+        ge=0,
+        description="Число неудач до размыкания circuit breaker.",
+        examples=[5],
+    )
+
+    circuit_breaker_reset_timeout: float = Field(
+        default=60.0,
+        ge=0.0,
+        description="Таймаут сброса circuit breaker (сек).",
+        examples=[60.0],
     )

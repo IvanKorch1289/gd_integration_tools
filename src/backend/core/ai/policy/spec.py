@@ -40,8 +40,6 @@ __all__ = (
 
 
 class ModelRouterSpec(BaseModel):
-    model_config = _STRICT_CONFIG
-
     """Описание fallback chain моделей + RLM strategy.
 
     Attributes:
@@ -68,6 +66,8 @@ class ModelRouterSpec(BaseModel):
             Если None — strategy degrades to ``"failover"`` behaviour.
     """
 
+    model_config = _STRICT_CONFIG
+
     primary: str
     fallback: list[str] = Field(default_factory=list)
     timeout_s: float = 30.0
@@ -77,8 +77,6 @@ class ModelRouterSpec(BaseModel):
 
 
 class SanitizerRef(BaseModel):
-    model_config = _STRICT_CONFIG
-
     """Ссылка на input/output sanitizer.
 
     Attributes:
@@ -92,14 +90,14 @@ class SanitizerRef(BaseModel):
             ``"skip"`` — обойти sanitizer без логирования.
     """
 
+    model_config = _STRICT_CONFIG
+
     name: str
     config: dict[str, Any] = Field(default_factory=dict)
     on_error: Literal["fail", "warn", "skip"] = "fail"
 
 
 class GuardRef(BaseModel):
-    model_config = _STRICT_CONFIG
-
     """Ссылка на input/output guard.
 
     Attributes:
@@ -114,14 +112,14 @@ class GuardRef(BaseModel):
             ``"dlq"`` — отправить запрос в Dead Letter Queue.
     """
 
+    model_config = _STRICT_CONFIG
+
     name: str
     config: dict[str, Any] = Field(default_factory=dict)
     on_block: Literal["fail", "warn", "dlq"] = "fail"
 
 
 class BackendSpec(BaseModel):
-    model_config = _STRICT_CONFIG
-
     """Описание backend'а для memory layer.
 
     Attributes:
@@ -132,14 +130,14 @@ class BackendSpec(BaseModel):
         ttl: TTL в секундах (если применимо).
     """
 
+    model_config = _STRICT_CONFIG
+
     backend: str
     namespace: str
     ttl: int | None = None
 
 
 class MemorySpec(BaseModel):
-    model_config = _STRICT_CONFIG
-
     """Описание memory layer'а для AI-инвокации.
 
     Соответствует ``MemoryProtocol`` (ADR-NEW-18, S24 W3).
@@ -155,6 +153,8 @@ class MemorySpec(BaseModel):
             ``infrastructure/secrets/`` ключами Vault.
     """
 
+    model_config = _STRICT_CONFIG
+
     short_term: BackendSpec | None = None
     long_term: BackendSpec | None = None
     episodic: BackendSpec | None = None
@@ -164,8 +164,6 @@ class MemorySpec(BaseModel):
 
 
 class BudgetSpec(BaseModel):
-    model_config = _STRICT_CONFIG
-
     """Бюджет AI-инвокации.
 
     Attributes:
@@ -179,6 +177,8 @@ class BudgetSpec(BaseModel):
             gap-ai-8.
     """
 
+    model_config = _STRICT_CONFIG
+
     max_tokens_prompt: int = Field(default=8000, ge=1)
     max_tokens_completion: int = Field(default=2000, ge=1)
     max_cost_usd: float = Field(default=0.50, ge=0)
@@ -187,8 +187,6 @@ class BudgetSpec(BaseModel):
 
 
 class AuditSpec(BaseModel):
-    model_config = _STRICT_CONFIG
-
     """Описание audit-секции AIPolicySpec.
 
     Attributes:
@@ -198,13 +196,13 @@ class AuditSpec(BaseModel):
         schema_version: Версия audit-схемы. Используется при breaking-changes.
     """
 
+    model_config = _STRICT_CONFIG
+
     extra_attrs: dict[str, str] = Field(default_factory=dict)
     schema_version: int = 1
 
 
 class ToolsSpec(BaseModel):
-    model_config = _STRICT_CONFIG
-
     """S76 W1 (FINAL_REPORT_V2 P0-B) — tools whitelist/blacklist для
     AI agent'а.
 
@@ -246,14 +244,14 @@ class ToolsSpec(BaseModel):
         ```
     """
 
+    model_config = _STRICT_CONFIG
+
     whitelist: list[str] = Field(default_factory=list)
     blacklist: list[str] = Field(default_factory=list)
     on_violation: Literal["fail", "warn", "block"] = "fail"
 
 
 class AIPolicySpec(BaseModel):
-    model_config = _STRICT_CONFIG
-
     """Декларативная политика AI per-workflow (ADR-NEW-20).
 
     YAML-описание в ``ai_policies/*.policy.yaml`` (global) и
@@ -284,6 +282,8 @@ class AIPolicySpec(BaseModel):
             :exc:`PolicyNotResolvedError` если resolver не нашёл подходящую
             политику. ``False`` — fallback default-pass-through.
     """
+
+    model_config = _STRICT_CONFIG
 
     name: str
     version: int = 1

@@ -68,6 +68,10 @@ vulture-check: check-env ## Run informational dead code scan
 	@$(UV_RUN) vulture $(SOURCE_DIR) --config pyproject.toml || printf '%s\n' "Vulture found possible dead code"
 	@$(SUCCESS) "Vulture scan finished!"
 
+check-docstrings: ##@ Quality Check for missing docstrings in public API
+	@$(INFO) "Checking docstring coverage..."
+	@python3 tools/check_docstrings.py $(SOURCE_DIR) $(if $(SUMMARY),--summary,) $(if $(JSON),--json,)
+
 refurb-check: check-env ## Check for modern Python idioms
 	@$(INFO) "Running Refurb to modernize code..."
 	@if $(UV_RUN) refurb --version >/dev/null 2>&1; then \

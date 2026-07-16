@@ -101,6 +101,40 @@ async def test_resolve_unknown_raises_key_error() -> None:
         )
 
 
+@pytest.mark.asyncio
+async def test_resolve_publishes_hitl_event() -> None:
+    """S178 HITL-1: resolve publishes в Redis pub/sub (best-effort)."""
+    import sys
+    from unittest.mock import MagicMock, patch
+
+    fake_module = MagicMock()
+    captured: list[dict] = []
+
+    async def _capture(**kwargs):
+        captured.append(kwargs)
+
+    fake_module.publish_hitl_resolved = _capture
+
+    with patch.dict(
+        sys.modules,
+        {"src.backend.services.workflows.hitl_pubsub": fake_module},
+    ):
+        svc = HitlService(store=InMemoryHitlSignalStore())
+        await svc.register_pending(_signal("s-1", tenant="t-x"))
+        await svc.resolve(
+            signal_id="s-1",
+            action=HitlAction.APPROVE,
+            resolved_by="operator@bank.local",
+            payload={"comment": "ok"},
+        )
+
+    assert len(captured) == 1
+    assert captured[0]["signal_id"] == "s-1"
+    assert captured[0]["tenant_id"] == "t-x"
+    assert captured[0]["action"] == HitlAction.APPROVE
+    assert captured[0]["resolved_by"] == "operator@bank.local"
+
+
 def test_to_dict_shape() -> None:
     sig = _signal("s-1")
     body = sig.to_dict()
