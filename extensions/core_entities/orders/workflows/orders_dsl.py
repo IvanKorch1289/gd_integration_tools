@@ -1,7 +1,17 @@
 """DSL durable workflows: единственная реализация order-флоу проекта.
 
-Заменили устаревший внешний workflow-движок (см. ADR-031 и ``docs/DEPRECATIONS.md``);
-зависимость физически удалена из ``pyproject.toml`` в Wave F.1 / 2026-05-01.
+S213: мигрировано с legacy ``infrastructure.workflow.builder`` (step-based)
+на canonical ``dsl.workflow.builder`` (saga-based). Возвратный тип изменён:
+``DurableWorkflowProcessor`` → ``WorkflowDeclaration`` (Pydantic).
+
+API mapping:
+* ``.description(text)``                → ``.description(text)``
+* ``.max_attempts(n)``                  → ``.default_retry(RetryPolicy(max_attempts=n))``
+* ``.step(name, processors=[fn])``      → ``.saga().forward(ActivityDeclaration(name=module:fn))``
+* ``.compensate_with([steps])``         → ``.saga().compensate(ActivityDeclaration(...))``
+* ``.loop(while_=..., body=..., max_iter=N)`` → ``SensorDeclaration(predicate=..., timeout_s=N*poll)``
+* ``.sub_workflow(name, wait=True)``    → ``ActivityDeclaration(name=workflow_name, args={"sub_workflow": name, "wait": True})``
+* ``.build()``                          → ``.build()`` (returns ``WorkflowDeclaration``)
 
 Соответствие старых workflow-флоу и текущих DSL-workflow::
 
@@ -12,23 +22,6 @@
     get_skb_order_result_workflow         │ orders.poll_skb_result
     send_skb_order_result_workflow        │ orders.send_skb_result
     order_processing_workflow             │ orders.full_processing (композит)
-
-Архитектурные отличия от прежней реализации::
-
-    * ``managed_pause(delay)`` → ``WorkflowBuilder.wait(duration_s=delay)``
-      (state-sourced, перевыживает рестарт worker'а).
-    * ``for _ in range(MAX_RESULT_ATTEMPTS + 1)`` polling loop →
-      ``.loop(while_="result == null", max_iter=MAX_RESULT_ATTEMPTS + 1)``.
-    * ``create_skb_order_task(retries=N, retry_delay_seconds=T)`` → единый
-      ``max_attempts=N`` + runner's exponential backoff.
-    * Хардкод chain из ``order_processing_workflow`` → композиция через
-      ``.sub_workflow(..., wait=True)``, что даёт durable pause между
-      child-шагами.
-
-Процессоры (async callables принимающие dict и возвращающие dict) — thin
-wrapper-ы над сервисами из services.core.orders / services.ops.notification_hub.
-Они используют существующий ``dispatch_action()`` чтобы сохранить единую
-точку диспатча и корректно работать multi-protocol.
 """
 
 from __future__ import annotations
@@ -38,10 +31,14 @@ from typing import Any
 
 from src.backend.core.config.constants import consts
 from src.backend.core.config.settings import settings
-from src.backend.core.workflow.builder import (
-    DurableWorkflowProcessor,
-    WorkflowBuilder,
-    WorkflowStep,
+from src.backend.core.ai.retry_policy import RetryPolicy
+from src.backend.dsl.workflow.builder import WorkflowBuilder
+from src.backend.dsl.workflow.spec import (
+    ActivityDeclaration,
+    SagaDeclaration,
+    SensorDeclaration,
+    SleepDeclaration,
+    WorkflowDeclaration,
 )
 
 __all__ = (
@@ -136,120 +133,143 @@ async def _call_send_skb_result(body: dict[str, Any]) -> dict[str, Any]:
     return body
 
 
+def _proc_ref(fn: Any) -> str:
+    """Module:fn reference для ActivityDeclaration.name (для runtime registry).
+
+    Args:
+        fn: callable.
+
+    Returns:
+        ``"{module}:{qualname}"`` — резолвится через existing call_function
+        registry (см. ``CallFunctionProcessor``).
+    """
+    return f"{fn.__module__}:{fn.__qualname__}"
+
+
 # -- Workflow spec-ы ---------------------------------------------------
 
 
-def send_notification_workflow_spec() -> DurableWorkflowProcessor:
+def send_notification_workflow_spec() -> WorkflowDeclaration:
     """Эквивалент ``send_notification_workflow``.
 
     Один шаг — отправка email. При отказе (SMTP down) — retry через
     runner backoff (max_attempts из Settings).
     """
     return (
-        WorkflowBuilder("notifications.send_email")
+        WorkflowBuilder(name="notifications.send_email")
         .description("Отправка email уведомления через NotificationGateway")
-        .max_attempts(settings.tasks.flow_max_attempts)
-        .step("send_email", processors=[_call_notification_send])
+        .default_retry(RetryPolicy(max_attempts=settings.tasks.flow_max_attempts))
+        .saga()
+        .forward(
+            name="send_email",
+            args={"processor": _proc_ref(_call_notification_send)},
+        )
+        .end_saga()
         .build()
     )
 
 
-def create_skb_order_workflow_spec() -> DurableWorkflowProcessor:
+def create_skb_order_workflow_spec() -> WorkflowDeclaration:
     """Эквивалент ``create_skb_order_workflow``.
 
     Sequence: создать заказ в SKB → notify клиента об успехе.
-    При любом failure — compensate (notify клиенту с error).
+    При любом failure — compensate (notify клиента с error).
     """
     return (
-        WorkflowBuilder("orders.create_skb")
+        WorkflowBuilder(name="orders.create_skb")
         .description("Создать заказ в SKB + уведомить клиента")
-        .max_attempts(settings.tasks.flow_max_attempts)
-        .step("create_in_skb", processors=[_call_create_skb_order])
-        .step("notify_created", processors=[_call_notification_send])
-        .compensate_with(
-            [
-                WorkflowStep(
-                    kind="sequential",
-                    name="notify_failed_create",
-                    processors=(_call_notification_send,),
-                )
-            ]
+        .default_retry(RetryPolicy(max_attempts=settings.tasks.flow_max_attempts))
+        .saga()
+        .forward(
+            name="create_in_skb",
+            args={"processor": _proc_ref(_call_create_skb_order)},
         )
+        .forward(
+            name="notify_created",
+            args={"processor": _proc_ref(_call_notification_send)},
+        )
+        .compensate(
+            name="notify_failed_create",
+            args={"processor": _proc_ref(_call_notification_send)},
+        )
+        .end_saga()
         .build()
     )
 
 
-def poll_skb_result_workflow_spec() -> DurableWorkflowProcessor:
+def poll_skb_result_workflow_spec() -> WorkflowDeclaration:
     """Эквивалент ``get_skb_order_result_workflow`` с durable poll-loop.
 
     Логика прежней реализации: ``for _ in range(MAX_RESULT_ATTEMPTS + 1):
     result = get_skb_result(); if not result: managed_pause(RETRY_DELAY);
     else: break``.
 
-    В DSL: ``loop(while_="skb_result is None", body=[get, wait], max_iter=N)``.
-    Каждая итерация loop_iter — event в event store; при рестарте worker'а
-    state восстанавливается replay'ем.
+    В new DSL: ``SensorDeclaration`` с predicate (JMESPath) и timeout
+    ``max_iter * poll_interval``. При timeout — sensor fail →
+    workflow failure → compensate chain (если есть).
     """
     max_iter = consts.MAX_RESULT_ATTEMPTS + 1
+    poll_interval = float(consts.RETRY_DELAY)
+    total_timeout = max_iter * poll_interval
+
     return (
-        WorkflowBuilder("orders.poll_skb_result")
+        WorkflowBuilder(name="orders.poll_skb_result")
         .description(
             f"Durable polling результата заказа из SKB (до {max_iter} попыток, "
-            f"delay={consts.RETRY_DELAY}s между попытками)"
+            f"delay={poll_interval}s между попытками)"
         )
-        .max_attempts(1)  # loop сам управляет retry через max_iter
-        .loop(
-            name="skb_poll",
-            # skb_result может быть dict (готов) или None (не готов).
-            # JMESPath: `skb_result == null` → True пока не готов.
-            while_="skb_result == null",
-            body=[
-                WorkflowStep(
-                    kind="sequential",
-                    name="request_skb_result",
-                    processors=(_call_get_skb_result,),
-                ),
-                WorkflowStep(
-                    kind="wait",
-                    name="retry_delay",
-                    duration_s=float(consts.RETRY_DELAY),
-                ),
-            ],
-            max_iter=max_iter,
+        # S213: loop сам управляет retry — max_attempts=1 на уровне шага,
+        # реальный retry budget — у SensorDeclaration.timeout_s.
+        .default_retry(RetryPolicy(max_attempts=1))
+        .then(
+            ActivityDeclaration(
+                name="request_skb_result",
+                args={
+                    "processor": _proc_ref(_call_get_skb_result),
+                    "result_key": "skb_result",
+                },
+            )
+        )
+        .then(
+            SensorDeclaration(
+                predicate="skb_result == null",
+                poll_interval_s=poll_interval,
+                timeout_s=total_timeout,
+            )
         )
         .build()
     )
 
 
-def send_skb_result_workflow_spec() -> DurableWorkflowProcessor:
+def send_skb_result_workflow_spec() -> WorkflowDeclaration:
     """Эквивалент ``send_skb_order_result_workflow``.
 
     Один шаг — отправить готовый результат в downstream систему.
     """
     return (
-        WorkflowBuilder("orders.send_skb_result")
+        WorkflowBuilder(name="orders.send_skb_result")
         .description("Отправка финального результата заказа")
-        .max_attempts(settings.tasks.flow_max_attempts)
-        .step("send_final", processors=[_call_send_skb_result])
-        .compensate_with(
-            [
-                WorkflowStep(
-                    kind="sequential",
-                    name="notify_send_failed",
-                    processors=(_call_notification_send,),
-                )
-            ]
+        .default_retry(RetryPolicy(max_attempts=settings.tasks.flow_max_attempts))
+        .saga()
+        .forward(
+            name="send_final",
+            args={"processor": _proc_ref(_call_send_skb_result)},
         )
+        .compensate(
+            name="notify_send_failed",
+            args={"processor": _proc_ref(_call_notification_send)},
+        )
+        .end_saga()
         .build()
     )
 
 
-def order_processing_workflow_spec() -> DurableWorkflowProcessor:
+def order_processing_workflow_spec() -> WorkflowDeclaration:
     """Эквивалент композитного ``order_processing_workflow``.
 
     Полная цепочка: create → durable_delay(INITIAL_DELAY) → poll → send.
-    Использует ``.sub_workflow(..., wait=True)`` — parent pause до
-    child completion.
+    Использует sub-workflow ActivityDeclaration для durable-pause между
+    child-шагами.
 
     Преимущества над прежней реализацией:
       * durable-pause (INITIAL_DELAY 60min) переживает рестарт worker'а.
@@ -258,24 +278,49 @@ def order_processing_workflow_spec() -> DurableWorkflowProcessor:
         (notify клиента, cancel в SKB).
     """
     return (
-        WorkflowBuilder("orders.full_processing")
+        WorkflowBuilder(name="orders.full_processing")
         .description(
             "Полный цикл заказа: create → wait → poll → send. "
             "Durable через event sourcing, survives worker restart."
         )
-        .max_attempts(1)  # Каждый sub-flow имеет собственный retry budget.
-        .sub_workflow("orders.create_skb", wait=True, name="step_create")
-        .wait(name="initial_delay", duration_s=float(consts.INITIAL_DELAY))
-        .sub_workflow("orders.poll_skb_result", wait=True, name="step_poll")
-        .sub_workflow("orders.send_skb_result", wait=True, name="step_send")
-        .compensate_with(
-            [
-                WorkflowStep(
-                    kind="sequential",
-                    name="notify_critical_failure",
-                    processors=(_call_notification_send,),
-                )
-            ]
+        # Каждый sub-flow имеет собственный retry budget.
+        .default_retry(RetryPolicy(max_attempts=1))
+        .then(
+            ActivityDeclaration(
+                name="step_create",
+                args={
+                    "sub_workflow": "orders.create_skb",
+                    "wait": True,
+                    "result_key": "skb_order",
+                },
+            )
+        )
+        .then(SleepDeclaration(name="initial_delay", duration_s=float(consts.INITIAL_DELAY)))
+        .then(
+            ActivityDeclaration(
+                name="step_poll",
+                args={
+                    "sub_workflow": "orders.poll_skb_result",
+                    "wait": True,
+                    "result_key": "skb_result",
+                },
+            )
+        )
+        .then(
+            ActivityDeclaration(
+                name="step_send",
+                args={
+                    "sub_workflow": "orders.send_skb_result",
+                    "wait": True,
+                    "result_key": "send_result",
+                },
+            )
+        )
+        .then(
+            ActivityDeclaration(
+                name="notify_critical_failure",
+                args={"processor": _proc_ref(_call_notification_send)},
+            )
         )
         .build()
     )
@@ -284,8 +329,8 @@ def order_processing_workflow_spec() -> DurableWorkflowProcessor:
 # -- Bulk registration helper ------------------------------------------
 
 
-def build_all_order_workflows() -> dict[str, DurableWorkflowProcessor]:
-    """Возвращает mapping workflow_name → DurableWorkflowProcessor.
+def build_all_order_workflows() -> dict[str, WorkflowDeclaration]:
+    """Возвращает mapping workflow_name → WorkflowDeclaration.
 
     Используется lifecycle-регистратором (startup) для bulk-регистрации
     в ``WorkflowRegistry`` + автоматического MCP export (IL-WF1.5).
@@ -296,8 +341,8 @@ def build_all_order_workflows() -> dict[str, DurableWorkflowProcessor]:
         )
         from src.backend.workflows.registry import workflow_registry
 
-        for name, processor in build_all_order_workflows().items():
-            workflow_registry.register(processor, route_id=name)
+        for name, declaration in build_all_order_workflows().items():
+            workflow_registry.register(declaration, route_id=name)
     """
     return {
         "notifications.send_email": send_notification_workflow_spec(),

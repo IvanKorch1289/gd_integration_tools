@@ -105,7 +105,6 @@ __all__ = (
     "get_route_event_class",
     "get_event_bus_factory",
     "get_event_bus_facade_provider",
-    "get_workflow_builder_class",
     "get_dsl_step_executor_class",
     "get_durable_workflow_processor_class",
     "get_workflow_spec_class",
@@ -278,13 +277,6 @@ def get_event_bus_facade_provider() -> Any:
     )
 
     return get_event_bus_facade()
-
-
-def get_workflow_builder_class() -> Any:
-    """Возвращает ``workflow.builder.WorkflowBuilder`` class."""
-    from src.backend.infrastructure.workflow.builder import WorkflowBuilder
-
-    return WorkflowBuilder
 
 
 def get_dsl_step_executor_class() -> Any:

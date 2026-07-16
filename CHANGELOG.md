@@ -1279,6 +1279,32 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 213 — WorkflowBuilder unification complete
+
+### Gap: Two WorkflowBuilders (FULLY CLOSED)
+
+S212 добавил deprecation warning. S213 завершает миграцию:
+
+- **`extensions/core_entities/orders/workflows/orders_dsl.py` переписан** на новый API:
+  - `from src.backend.core.workflow.builder` (legacy) → `from src.backend.dsl.workflow.builder` (canonical)
+  - `.step(name, processors=[fn])` → `.saga().forward(ActivityDeclaration(name=..., args={"processor": module:fn}))`
+  - `.compensate_with([steps])` → `.saga().compensate(ActivityDeclaration(...))`
+  - `.loop(while_, body, max_iter)` → `SensorDeclaration(predicate, poll_interval_s, timeout_s)`
+  - `.sub_workflow(name, wait)` → `ActivityDeclaration(args={"sub_workflow": name, "wait": True})`
+  - `.build()` возвращает `WorkflowDeclaration` (Pydantic) вместо `DurableWorkflowProcessor`
+  - Возвратный тип `*_workflow_spec() -> WorkflowDeclaration`
+- **Удалены legacy файлы**:
+  - `src/backend/infrastructure/workflow/builder.py` (371 LOC, DEPRECATED)
+  - `src/backend/core/workflow/builder.py` (32 LOC, re-export facade)
+  - `tests/unit/infrastructure/workflow/test_builder.py` (141 LOC, obsolete)
+- **`get_workflow_builder_class()`** удалён из `infrastructure_facade.py` (заменён на direct import из `dsl.workflow.builder`).
+
+Net diff: **-544 LOC** (legacy удалён) + 6 новых workflow_specs на new API (~100 LOC diff в orders_dsl.py).
+
+Безопасно: orders_dsl.py не имел внешних consumers (только self-reference для `build_all_order_workflows`). Verification: `grep` не нашёл импортов удалённых модулей.
+
+---
+
 ## [Unreleased] — Sprint 212 — WorkflowBuilder legacy deprecation hardening
 
 ### Gap: Two WorkflowBuilders (PARTIAL — deprecation hardening)
