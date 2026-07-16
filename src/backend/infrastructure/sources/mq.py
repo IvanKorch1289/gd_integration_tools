@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.core.security.connector_auth import check_source_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
 if TYPE_CHECKING:
@@ -185,6 +186,27 @@ class MQSource:
         # Faststream передаёт декодированный body как первый аргумент;
         # мета-информация — в msg.raw_message и msg.headers (если доступно).
         try:
+            # S172 (Wave S2): capability check на каждое сообщение.
+            # Здесь per-event (не на start), потому что MQ consumer
+            # долгоживущий и сообщения могут приходить от разных
+            # producers с разными tenant. Auth — лёгкий (in-memory check).
+            if not await check_source_capability(
+                f"mq.{self._transport}.read",
+                action="read",
+                principal="anonymous",
+                extra_ctx={
+                    "topic": self._topic,
+                    "transport": self._transport,
+                    "group": self._group,
+                    "source_id": self.source_id,
+                },
+            ):
+                logger.warning(
+                    "mq_source_capability_denied: topic=%s transport=%s",
+                    self._topic,
+                    self._transport,
+                )
+                return
             payload = self._decode_payload(msg)
             metadata: dict[str, Any] = {
                 "topic": self._topic,

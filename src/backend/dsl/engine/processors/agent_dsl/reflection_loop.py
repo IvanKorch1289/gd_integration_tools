@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
-from src.backend.services.ai.gateway.exceptions import GatewayUnavailable
+from src.backend.core.ai.errors import GatewayUnavailable
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

@@ -106,7 +106,7 @@ async def test_send_handles_publish_exception(monkeypatch: pytest.MonkeyPatch) -
 async def test_health_true(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_broker = _install_fake_broker(monkeypatch, "rabbit")
     sink = MqSink(sink_id="q7", broker="rabbit", url="amqp://x", topic="t")
-    assert await sink.health() is True
+    h = await sink.health(); assert h.status == "ok"
     fake_broker.connect.assert_awaited_once()
     fake_broker.close.assert_awaited_once()
 
@@ -117,7 +117,7 @@ async def test_health_false_when_broker_missing(
 ) -> None:
     monkeypatch.setitem(sys.modules, "faststream.kafka", None)  # type: ignore[arg-type]
     sink = MqSink(sink_id="q8", broker="kafka", url="k", topic="t")
-    assert await sink.health() is False
+    h = await sink.health(); assert h.status == "failed"
 
 
 @pytest.mark.asyncio
@@ -125,4 +125,4 @@ async def test_health_false_on_exception(monkeypatch: pytest.MonkeyPatch) -> Non
     fake_broker = _install_fake_broker(monkeypatch, "redis")
     fake_broker.connect = AsyncMock(side_effect=OSError("fail"))
     sink = MqSink(sink_id="q9", broker="redis", url="r", topic="t")
-    assert await sink.health() is False
+    h = await sink.health(); assert h.status == "failed"

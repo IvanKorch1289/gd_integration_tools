@@ -21,12 +21,23 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
+
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 __all__ = ("router",)
 
-router = APIRouter(prefix="/admin/workflow-audit", tags=["admin", "workflow"])
+
+# S202 audit fix: workflow audit (ClickHouse query bypass) — require admin role.
+_WORKFLOW_AUDIT_GUARD = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+)
+router = APIRouter(
+    prefix="/admin/workflow-audit",
+    tags=["admin", "workflow"],
+    dependencies=[_WORKFLOW_AUDIT_GUARD],
+)
 
 
 _ALLOWED_EVENT_TYPES = frozenset(

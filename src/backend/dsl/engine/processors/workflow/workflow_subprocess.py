@@ -37,7 +37,6 @@ async def run_workflow_by_id(
     Returns:
         Результат workflow (dict).
     """
-    from src.backend.dsl.workflow.orchestrator import OrchestratorSpec
     from src.backend.dsl.workflow.launcher import WorkflowLauncher
 
     launcher = WorkflowLauncher(installed_workflows={workflow_id: "1.0.0"})

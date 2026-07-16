@@ -22,6 +22,9 @@ class FileMoveProcessor(BaseProcessor):
     Значения можно передать через body (dict с ключами src, dst).
     """
 
+    required_capability: str | None = "rpa.file.move"
+    audit_event: str | None = "rpa.file.move"
+
     def __init__(
         self,
         src: str | None = None,
@@ -37,6 +40,8 @@ class FileMoveProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="write"):
+            return
         import shutil
 
         body = exchange.in_message.body

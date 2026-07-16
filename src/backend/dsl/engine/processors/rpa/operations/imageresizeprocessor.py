@@ -22,6 +22,9 @@ class ImageResizeProcessor(BaseProcessor):
     Body: bytes. Результат: bytes (resized image).
     """
 
+    required_capability: str | None = "rpa.image.resize"
+    audit_event: str | None = "rpa.image.resize"
+
     def __init__(
         self,
         *,
@@ -37,6 +40,8 @@ class ImageResizeProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         import io
 
         try:

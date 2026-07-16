@@ -129,7 +129,8 @@ async def test_health_true() -> None:
 
     with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
         sink = WebhookSink(sink_id="w6", url="http://hook.test", event="evt")
-        assert await sink.health() is True
+        result = await sink.health()
+        assert result.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -138,14 +139,16 @@ async def test_health_false_on_exception() -> None:
 
     with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
         sink = WebhookSink(sink_id="w7", url="http://hook.test", event="evt")
-        assert await sink.health() is False
+        result = await sink.health()
+        assert result.status == "failed"
 
 
 @pytest.mark.asyncio
 async def test_health_false_when_httpx_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "httpx", None)  # type: ignore[arg-type]
     sink = WebhookSink(sink_id="w8", url="http://hook.test", event="evt")
-    assert await sink.health() is False
+    result = await sink.health()
+    assert result.status == "failed"
 
 
 @pytest.mark.asyncio

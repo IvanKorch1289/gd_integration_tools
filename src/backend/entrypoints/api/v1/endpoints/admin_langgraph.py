@@ -6,18 +6,28 @@
   установка ``checkpoint_id`` как активного.
 
 Эндпоинты доступны только при ``feature_flags.langgraph_checkpoint_ui=True``.
-Auth = admin-only (через существующий require_admin guard).
+S202 audit fix: добавлен ``require_admin`` (ранее docstring не соответствовал
+действительности — guard отсутствовал).
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.config.features import feature_flags
 
-router = APIRouter(prefix="/admin/langgraph", tags=["admin", "langgraph"])
+# S202 audit fix: LangGraph checkpoint restore — security-critical, admin only.
+_LANGGRAPH_GUARD = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+)
+router = APIRouter(
+    prefix="/admin/langgraph",
+    tags=["admin", "langgraph"],
+    dependencies=[_LANGGRAPH_GUARD],
+)
 
 
 def _guard_enabled() -> None:

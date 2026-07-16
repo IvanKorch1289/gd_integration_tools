@@ -22,12 +22,17 @@ class ImageOcrProcessor(BaseProcessor):
     Body: bytes (изображение). Результат: {"text": "...", "confidence": float}
     """
 
+    required_capability: str | None = "rpa.image.ocr"
+    audit_event: str | None = "rpa.image.ocr"
+
     def __init__(self, *, lang: str = "eng+rus", name: str | None = None) -> None:
         super().__init__(name=name or "ocr")
         self._lang = lang
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         import io
 
         try:

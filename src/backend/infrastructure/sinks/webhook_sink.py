@@ -17,6 +17,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.resilience.connector_breaker import with_breaker
+from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.dsl.codec.json import dumps_bytes
 
@@ -45,6 +48,9 @@ class WebhookSink(Sink):
     extra_headers: dict[str, str] = field(default_factory=dict)
     kind: SinkKind = field(default=SinkKind.WEBHOOK, init=False)
 
+    @with_breaker("webhook_sink")
+    @with_retry(max_attempts=3)
+    @require_capability("webhook.write", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Подписывает и отправляет ``payload`` на ``url``.
 

@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.security.signatures import (
     DEFAULT_TIMESTAMP_WINDOW,
@@ -152,6 +153,7 @@ class WebhookSource:
             )
         return ts
 
+    @require_capability("webhook.read", action="read")
     async def verify_and_dispatch(
         self, raw_body: bytes, headers: Mapping[str, str], *, payload: Any = None
     ) -> None:

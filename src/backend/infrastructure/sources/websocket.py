@@ -14,6 +14,7 @@ from typing import Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.core.security.connector_auth import check_source_capability
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.sources._lifecycle import graceful_cancel
@@ -88,6 +89,25 @@ class WebSocketSource:
             raise RuntimeError(
                 "websockets не установлен; добавь его в pyproject.toml."
             ) from exc
+
+        # S172 (Wave S2): capability check на старте WS-сессии.
+        # Делается один раз — auth на каждое сообщение было бы слишком
+        # дорого (WS-сессии могут жить часами).
+        if not await check_source_capability(
+            "ws.read",
+            action="read",
+            principal="anonymous",
+            extra_ctx={
+                "url": self._url,
+                "source_id": self.source_id,
+            },
+        ):
+            logger.warning(
+                "ws_source_capability_denied: url=%s source_id=%s",
+                self._url,
+                self.source_id,
+            )
+            return
 
         while not self._stop_event.is_set():
             try:

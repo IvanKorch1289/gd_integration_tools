@@ -111,7 +111,7 @@ async def test_send_returns_false_on_upload_exception(
 @pytest.mark.asyncio
 async def test_health_true(fake_storage_client: MagicMock) -> None:
     sink = S3Sink(sink_id="s7", bucket="b", key="k")
-    assert await sink.health() is True
+    h = await sink.health(); assert h.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -122,7 +122,7 @@ async def test_health_false_when_import_fails(monkeypatch: pytest.MonkeyPatch) -
         None,  # type: ignore[arg-type]
     )
     sink = S3Sink(sink_id="s8", bucket="b", key="k")
-    assert await sink.health() is False
+    h = await sink.health(); assert h.status == "failed"
 
 
 def test_coerce_payload_bytes() -> None:

@@ -222,10 +222,14 @@ class CardTokenizeProcessor(BaseProcessor):
         """Format-preserving token (S183 stub).
 
         Production: заменить на PCI-DSS vault FF1/FF3 encryption.
-        S183: генерируем cryptographically secure hex string с BIN prefix.
+        S183: генерируем cryptographically secure digit string с BIN prefix.
+
+        S202 audit fix: использует ``secrets.randbelow(10)`` чтобы получить
+        digits вместо hex chars (0-9 + a-f), которые ломали PAN validation
+        в downstream системах.
         """
-        # Random 10 hex chars (FPE-like substitution для non-BIN digits)
-        random_part = secrets.token_hex(5)
+        rng = secrets.SystemRandom()
+        random_part = "".join(str(rng.randrange(10)) for _ in range(10))
         if bin_prefix:
             return f"{bin_prefix}{random_part}{pan[-1]}"  # check digit preserved
         return random_part + pan[-1]

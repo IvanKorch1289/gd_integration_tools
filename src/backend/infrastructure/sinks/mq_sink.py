@@ -17,7 +17,13 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.resilience.connector_breaker import with_breaker
+from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.infrastructure.security.connector_rate_limiter import (
+    get_connector_rate_limiter,
+)
 from src.backend.dsl.codec.json import dumps_str
 
 __all__ = ("MqSink",)
@@ -49,8 +55,18 @@ class MqSink(Sink):
     extra: dict[str, Any] = field(default_factory=dict)
     kind: SinkKind = field(default=SinkKind.MQ, init=False)
 
+    @with_breaker("mq_sink", failure_threshold=10)
+    @with_retry(max_attempts=5, initial_backoff=0.5)
+    @require_capability("mq.write", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Публикует ``payload`` через FastStream-broker."""
+        # S1: per-connector rate limit. Kafka/Redis — 500/s, Rabbit/NATS — 200/s.
+        limiter = get_connector_rate_limiter()
+        rate = "500/s" if self.broker in ("kafka", "redis") else "200/s"
+        burst = 500 if self.broker in ("kafka", "redis") else 200
+        limiter.register(f"{self.sink_id}_{self.broker}", rate, burst)
+        await limiter.check(f"{self.sink_id}_{self.broker}")
+
         broker = await self._build_broker()
         if broker is None:
             return SinkResult(

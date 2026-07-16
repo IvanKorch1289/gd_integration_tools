@@ -562,7 +562,8 @@ async def test_health_initially_false() -> None:
     src = MongoSource(
         MongoSourceConfig(connection_url="mongodb://localhost", database="db1")
     )
-    assert await src.health() is False
+    result = await src.health()
+    assert result.status == "failed"
 
 
 @pytest.mark.asyncio
@@ -578,7 +579,8 @@ async def test_health_ping_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_client.admin.command = AsyncMock(return_value={"ok": 1.0})
     src._client = fake_client
 
-    assert await src.health() is True
+    result = await src.health()
+    assert result.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -592,7 +594,8 @@ async def test_health_ping_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_client.admin.command = AsyncMock(side_effect=ConnectionError("mongo down"))
     src._client = fake_client
 
-    assert await src.health() is False
+    result = await src.health()
+    assert result.status == "failed"
 
 
 @pytest.mark.asyncio

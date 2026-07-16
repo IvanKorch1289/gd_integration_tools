@@ -121,21 +121,21 @@ async def test_health_true(fake_zeep: types.ModuleType) -> None:
     fake_client = MagicMock()
     fake_zeep.Client = lambda *a, **k: fake_client  # type: ignore[misc]
     sink = SoapSink(sink_id="s7", wsdl_url="http://test/wsdl", operation="op")
-    assert await sink.health() is True
+    h = await sink.health(); assert h.status == "ok"
 
 
 @pytest.mark.asyncio
 async def test_health_false_when_zeep_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "zeep", None)  # type: ignore[arg-type]
     sink = SoapSink(sink_id="s8", wsdl_url="http://test/wsdl", operation="op")
-    assert await sink.health() is False
+    h = await sink.health(); assert h.status == "failed"
 
 
 @pytest.mark.asyncio
 async def test_health_false_on_exception(fake_zeep: types.ModuleType) -> None:
     fake_zeep.Client = MagicMock(side_effect=RuntimeError("boom"))  # type: ignore[misc]
     sink = SoapSink(sink_id="s9", wsdl_url="http://test/wsdl", operation="op")
-    assert await sink.health() is False
+    h = await sink.health(); assert h.status == "failed"
 
 
 def test_get_client_caches_instance(fake_zeep: types.ModuleType) -> None:

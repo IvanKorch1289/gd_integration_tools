@@ -25,6 +25,10 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
+from src.backend.core.ai.agent_sandbox_protocol import (  # noqa: F401
+    AgentSandbox,
+    AgentSandboxResult,
+)
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.metrics_registry import metrics_registry
 
@@ -61,56 +65,6 @@ agent_sandbox_duration_seconds = metrics_registry.histogram(
 # "in_process"`` и ``GD_INTEGRATION_PRODUCTION=1`` — raise at runtime.
 # Defensive для ситуаций когда feature-flag bypass завершён.
 _IN_PROCESS_PROD_BLOCKED: bool = bool(os.environ.get("GD_INTEGRATION_PRODUCTION"))
-
-
-@dataclass(frozen=True, slots=True)
-class AgentSandboxResult:
-    """Результат выполнения агентского шага в sandbox.
-
-    Attributes:
-        success: True если sandbox-выполнение завершилось без исключения.
-        data: Словарь-результат (формат ``build_and_run_agent``) либо
-            ``{"error": str}`` при ``success=False``.
-        backend: Имя backend'а, который произвёл выполнение.
-    """
-
-    success: bool
-    data: dict[str, Any]
-    backend: str
-
-
-@runtime_checkable
-class AgentSandbox(Protocol):
-    """Backend-agnostic sandbox для LangGraph ReAct-агента."""
-
-    async def run_react(
-        self,
-        *,
-        prompt: str,
-        tool_actions: list[str],
-        model: str,
-        temperature: float,
-        durable: bool,
-        session_id: str | None,
-    ) -> AgentSandboxResult:
-        """Запустить ReAct-агента в sandbox.
-
-        Args:
-            prompt: Пользовательский prompt.
-            tool_actions: Список action-имён, доступных как tools.
-            model: LLM model identifier.
-            temperature: Sampling temperature.
-            durable: Включить durable checkpointing.
-            session_id: Опц. LangGraph thread_id.
-
-        Returns:
-            :class:`AgentSandboxResult`.
-        """
-        ...
-
-    async def shutdown(self) -> None:
-        """Освободить ресурсы backend'а (идемпотентно)."""
-        ...
 
 
 class InProcessAgentSandbox:

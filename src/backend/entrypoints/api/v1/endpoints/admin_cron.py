@@ -16,12 +16,23 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
+
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 __all__ = ("router",)
 
-router = APIRouter(prefix="/admin/cron", tags=["admin", "scheduler"])
+
+# S202 audit fix: cron scheduler CRUD — require admin role.
+_CRON_GUARD = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+)
+router = APIRouter(
+    prefix="/admin/cron",
+    tags=["admin", "scheduler"],
+    dependencies=[_CRON_GUARD],
+)
 
 
 class CronJobSummary(BaseModel):

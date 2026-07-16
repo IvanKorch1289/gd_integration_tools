@@ -130,7 +130,8 @@ async def test_health_returns_true_when_connect_ok(
     fake_aiomqtt: types.ModuleType,
 ) -> None:
     sink = MqttSink(sink_id="m6", broker_host="h", topic="t/x")
-    assert await sink.health() is True
+    result = await sink.health()
+    assert result.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -139,7 +140,8 @@ async def test_health_returns_false_when_aiomqtt_missing(
 ) -> None:
     monkeypatch.setitem(sys.modules, "aiomqtt", None)  # type: ignore[arg-type]
     sink = MqttSink(sink_id="m7", broker_host="h", topic="t/x")
-    assert await sink.health() is False
+    result = await sink.health()
+    assert result.status == "failed"
 
 
 def test_factory_builds_mqtt_sink() -> None:
@@ -188,7 +190,8 @@ async def test_health_returns_false_on_connect_exception(
     fake_module.Client = _BoomClient  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "aiomqtt", fake_module)
     sink = MqttSink(sink_id="m10", broker_host="h", topic="t/x")
-    assert await sink.health() is False
+    result = await sink.health()
+    assert result.status == "failed"
 
 
 def test_tls_context_mtls() -> None:

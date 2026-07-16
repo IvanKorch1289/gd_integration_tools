@@ -74,6 +74,9 @@ from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
 from src.backend.dsl.engine.processors.agent_dsl.agent_security_check import (
     AgentSecurityCheckProcessor,
 )
+from src.backend.dsl.engine.processors.agent_dsl.ai_tool_dispatch import (
+    AIToolDispatchProcessor,
+)
 
 __all__: tuple[str, ...] = (
     "AgentBranchProcessor",
@@ -82,6 +85,7 @@ __all__: tuple[str, ...] = (
     "AgentParallelProcessor",
     "AgentRunProcessor",
     "AgentSecurityCheckProcessor",
+    "AIToolDispatchProcessor",
     "LangGraphAgentProcessor",
     "PlanExecuteProcessor",
     "ReflectionLoopProcessor",

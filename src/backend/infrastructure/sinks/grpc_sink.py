@@ -14,7 +14,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.resilience.connector_breaker import with_breaker
+from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.infrastructure.security.connector_rate_limiter import (
+    get_connector_rate_limiter,
+)
 from src.backend.dsl.codec.json import dumps_bytes
 
 __all__ = ("GrpcSink",)
@@ -49,8 +55,16 @@ class GrpcSink(Sink):
     metadata: list[tuple[str, str]] = field(default_factory=list)
     kind: SinkKind = field(default=SinkKind.GRPC, init=False)
 
+    @with_breaker("grpc_sink")
+    @with_retry(max_attempts=3)
+    @require_capability("grpc.invoke", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Открывает канал, вызывает unary RPC и возвращает ответ."""
+        # S1: per-connector rate limit. Scope — per-method для изоляции.
+        limiter = get_connector_rate_limiter()
+        limiter.register(f"{self.sink_id}_grpc", "60/s", 60)
+        await limiter.check(f"{self.sink_id}_grpc", scope=self.full_method)
+
         try:
             from grpc import aio as grpc_aio
             from grpc import ssl_channel_credentials

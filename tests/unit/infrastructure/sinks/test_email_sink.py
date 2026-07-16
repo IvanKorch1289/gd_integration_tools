@@ -149,7 +149,8 @@ async def test_health_true_when_connect_ok(monkeypatch: pytest.MonkeyPatch) -> N
     fake_mod.SMTP = lambda **_: fake_client
     monkeypatch.setitem(sys.modules, "aiosmtplib", fake_mod)
     sink = EmailSink(sink_id="e10", host="smtp.test", from_addr="f@test")
-    assert await sink.health() is True
+    result = await sink.health()
+    assert result.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -160,7 +161,8 @@ async def test_health_false_when_connect_fails(monkeypatch: pytest.MonkeyPatch) 
     fake_mod.SMTP = lambda **_: fake_client
     monkeypatch.setitem(sys.modules, "aiosmtplib", fake_mod)
     sink = EmailSink(sink_id="e11", host="smtp.test", from_addr="f@test")
-    assert await sink.health() is False
+    result = await sink.health()
+    assert result.status == "failed"
 
 
 @pytest.mark.asyncio
@@ -169,4 +171,5 @@ async def test_health_false_when_aiosmtplib_missing(
 ) -> None:
     monkeypatch.setitem(sys.modules, "aiosmtplib", None)  # type: ignore[arg-type]
     sink = EmailSink(sink_id="e12", host="smtp.test", from_addr="f@test")
-    assert await sink.health() is False
+    result = await sink.health()
+    assert result.status == "failed"

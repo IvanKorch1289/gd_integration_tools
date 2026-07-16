@@ -131,9 +131,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
                 self.result_property,
                 {
                     "dispatched": False,
-                    "reason": selection_reason
-                    if (selection_reason := "no_selection")
-                    else "no_selection",
+                    "reason": "no_selection",
                     "query_chars": len(query),
                     "available_tools_count": len(self.available_tool_ids),
                 },

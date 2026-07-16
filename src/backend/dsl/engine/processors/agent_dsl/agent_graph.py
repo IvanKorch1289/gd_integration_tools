@@ -65,7 +65,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
-from src.backend.services.ai.agent_sandbox import AgentSandbox, InProcessAgentSandbox
+from src.backend.core.ai.agent_sandbox_protocol import AgentSandbox
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -170,6 +170,8 @@ class AgentGraphProcessor(BaseAIProcessor):
             self._sandbox = get_process_pool_agent_sandbox()
         else:
             # Явный opt-in в zero-isolation: warning + audit event в _run.
+            from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
+
             self._sandbox = InProcessAgentSandbox()
 
     def _capability_scope(self, exchange: Exchange[Any]) -> str | None:

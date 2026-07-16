@@ -22,12 +22,17 @@ class TemplateRenderProcessor(BaseProcessor):
     Результат: str (rendered text).
     """
 
+    required_capability: str | None = "rpa.template.render"
+    audit_event: str | None = "rpa.template.render"
+
     def __init__(self, template: str, *, name: str | None = None) -> None:
         super().__init__(name=name or "render_template")
         self._template = template
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         try:
             from jinja2.sandbox import SandboxedEnvironment
         except ImportError:

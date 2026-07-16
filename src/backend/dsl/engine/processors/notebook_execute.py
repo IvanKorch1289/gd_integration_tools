@@ -7,7 +7,7 @@ Output: Exchange property ``notebook_outputs`` (list[dict]).
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.di.providers.jupyter import (
     get_notebook_execution_service_provider,
@@ -18,10 +18,11 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry.processor import processor
-from src.backend.services.jupyter.execution_service import (
-    JupyterExecutionError,
-    NotebookExecutionService,
-)
+
+if TYPE_CHECKING:
+    from src.backend.services.jupyter.execution_service import (
+        NotebookExecutionService,
+    )
 
 __all__ = ("NotebookExecuteProcessor",)
 
@@ -99,7 +100,7 @@ class NotebookExecuteProcessor(BaseProcessor):
                 cells=cells,
                 timeout_seconds=self._timeout,
             )
-        except JupyterExecutionError as exc:
+        except Exception as exc:
             _logger.error("Notebook execution failed: %s", exc)
             raise
 

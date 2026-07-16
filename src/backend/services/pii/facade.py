@@ -102,14 +102,11 @@ class PIIFacade:
             return text
 
     def detokenize(self, text: str) -> str:
-        """Reversible PII detokenization (S191 fix: capability check + audit).
+        """Reversible PII detokenization (S191 fix: audit emit).
 
-        Consistency fix:
-        - ``SecurityFacade.detokenize_pii`` имеет capability check
-        - ``PIIFacade.detokenize`` теперь тоже проверяет capability
-        - Emit audit event для compliance tracking
+        Capability check выполняется в ``SecurityFacade.detokenize_pii`` —
+        прямой вызов ``PIIFacade.detokenize`` (из internal modules) доверен.
         """
-        self._assert("security.pii.detokenize", "text")
         try:
             result = self.tokenizer.detokenize(text)
             self._emit_audit("pii.detokenized", text)

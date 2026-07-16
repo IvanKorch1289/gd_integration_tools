@@ -35,6 +35,9 @@ class PdfReadProcessor(BaseProcessor):
         .pdf_read(extract_tables=True)
     """
 
+    required_capability: str | None = "rpa.pdf.read"
+    audit_event: str | None = "rpa.pdf.read"
+
     def __init__(
         self, *, extract_tables: bool = False, name: str | None = None
     ) -> None:
@@ -43,6 +46,8 @@ class PdfReadProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         import io
 
         from src.backend.utilities.pdf_reader import read_pdf
@@ -94,11 +99,16 @@ class PdfMergeProcessor(BaseProcessor):
     Body: list[bytes] — список PDF-файлов. Результат: bytes (merged PDF).
     """
 
+    required_capability: str | None = "rpa.pdf.merge"
+    audit_event: str | None = "rpa.pdf.merge"
+
     def __init__(self, *, name: str | None = None) -> None:
         super().__init__(name=name or "pdf_merge")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="execute"):
+            return
         import io
 
         try:
@@ -138,11 +148,16 @@ class WordReadProcessor(BaseProcessor):
     Body: bytes или str (путь). Результат: {"text": "...", "paragraphs": [...]}
     """
 
+    required_capability: str | None = "rpa.word.read"
+    audit_event: str | None = "rpa.word.read"
+
     def __init__(self, *, name: str | None = None) -> None:
         super().__init__(name=name or "word_read")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         import io
 
         try:

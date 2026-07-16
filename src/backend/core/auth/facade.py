@@ -129,7 +129,7 @@ class AuthFacade:
                 claims = self.jwt.decode(token)
                 # S183 fix: blacklist check
                 jti = claims.get("jti")
-                if jti and self._is_blacklisted(jti):
+                if jti and await self._is_blacklisted(jti):
                     return AuthResult(
                         is_authenticated=False,
                         metadata={"error": "token_revoked"},
@@ -183,11 +183,12 @@ class AuthFacade:
             secret = parts[2]
 
             # Fetch stored hash + metadata from API key registry
-            from src.backend.infrastructure.security.api_key_manager import (
-                get_api_key_manager,
+            # S202 audit fix: use DI provider instead of direct infra import
+            from src.backend.core.di.providers.auth import (
+                get_api_key_manager_provider,
             )
 
-            manager = get_api_key_manager()
+            manager = get_api_key_manager_provider()
             stored = await manager.get(key_id)
             if stored is None:
                 return AuthResult(is_authenticated=False)
@@ -267,21 +268,30 @@ class AuthFacade:
             logger.debug("mTLS verify failed: %s", exc)
             return AuthResult(is_authenticated=False)
 
-    def _is_blacklisted(self, jti: str) -> bool:
+    async def _is_blacklisted(self, jti: str) -> bool:
         """S183: check JWT blacklist.
 
         Args:
             jti: JWT ID.
 
         Returns:
-            True если blacklisted (fail-closed на ошибке).
+            True если blacklisted (fail-closed на ошибке Redis недоступности).
+
+        S202 audit fix: использует RedisJwtBlacklist с правильным redis
+        client (не конструктор без аргументов), await для async ``is_revoked``.
+        Fail-closed: если Redis недоступен — токен считается отозванным.
         """
         try:
             from src.backend.core.auth.jwt_blacklist import (
                 RedisJwtBlacklist,
             )
+            from src.backend.infrastructure.clients.storage.redis import (
+                get_redis_client,
+            )
 
-            return RedisJwtBlacklist().is_revoked(jti)
+            redis_client = await get_redis_client().get_client("cache")
+            blacklist = RedisJwtBlacklist(redis_client)
+            return await blacklist.is_revoked(jti)
         except Exception as exc:
             logger.debug(
                 "jwt blacklist check failed: %s — fail-closed (treat as revoked)",

@@ -28,6 +28,9 @@ class EncryptProcessor(BaseProcessor):
         name: имя процессора.
     """
 
+    required_capability: str | None = "rpa.crypto.encrypt"
+    audit_event: str | None = "rpa.crypto.encrypt"
+
     def __init__(
         self,
         key: str,
@@ -43,6 +46,8 @@ class EncryptProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="execute"):
+            return
         try:
             from cryptography.fernet import Fernet
         except ImportError:

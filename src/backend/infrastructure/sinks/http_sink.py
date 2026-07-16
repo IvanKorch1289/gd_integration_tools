@@ -7,6 +7,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.resilience.connector_breaker import with_breaker
+from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("HttpSink",)
@@ -37,6 +40,9 @@ class HttpSink(Sink):
     timeout: float = 10.0
     kind: SinkKind = field(default=SinkKind.HTTP, init=False)
 
+    @with_breaker("http_sink")
+    @with_retry(max_attempts=3)
+    @require_capability("http.send", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Отправляет ``payload`` в ``url`` указанным методом."""
         try:

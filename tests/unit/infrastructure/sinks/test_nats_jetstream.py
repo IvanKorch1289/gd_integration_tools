@@ -220,7 +220,8 @@ async def test_sink_health_false_when_nats_missing(
     """health возвращает False при отсутствии nats-py."""
     monkeypatch.setitem(sys.modules, "nats", None)  # type: ignore[arg-type]
     sink = NATSJetStreamSink(sink_id="s6")
-    assert await sink.health() is False
+    result = await sink.health()
+    assert result.status == "failed"
 
 
 @pytest.mark.asyncio
@@ -232,7 +233,8 @@ async def test_sink_health_false_on_connect_exception(
     fake_nats.connect = AsyncMock(side_effect=OSError("nope"))
     monkeypatch.setitem(sys.modules, "nats", fake_nats)
     sink = NATSJetStreamSink(sink_id="s7")
-    assert await sink.health() is False
+    result = await sink.health()
+    assert result.status == "failed"
 
 
 @pytest.mark.asyncio

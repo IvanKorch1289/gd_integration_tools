@@ -103,8 +103,15 @@ class MemoryRecallProcessor(BaseAIProcessor):
             exchange.set_property(self.result_property, [])
             return
 
+        # S202 audit fix: UnifiedMemoryGateway.recall_semantic uses keyword args.
         try:
-            records = await backend.recall(namespace, query, k=self.k)
+            facts = await backend.recall_semantic(
+                tenant_id=namespace, query=query, top_k=self.k
+            )
+            records = [
+                {"content": f.content, "confidence": f.confidence}
+                for f in (facts or [])
+            ]
         except Exception as exc:
             _logger.warning("%s: recall failed (%s) — empty result", self.name, exc)
             records = []
@@ -150,21 +157,22 @@ class MemoryRecallProcessor(BaseAIProcessor):
 
     @staticmethod
     def _resolve_backend() -> Any | None:
-        """Lazy-резолв :class:`MemoryProtocol` backend через DI (S202 fix).
+        """Lazy-резолв :class:`UnifiedMemoryGateway` через app_state (S202 fix).
 
-        S202: теперь пытается использовать UnifiedMemoryGateway вместо
-        постоянного возврата None (scaffold → silent no-op).
+        S202: теперь пытается использовать UnifiedMemoryGateway singleton
+        из ``app.state.memory_gateway`` (composition root registers it).
+        Возвращает ``None`` если gateway не зарегистрирован (dev_light без
+        memory backends).
         """
         try:
             from src.backend.services.ai.memory_gateway import (
-                UnifiedMemoryGateway,
+                get_memory_gateway,
             )
 
-            return UnifiedMemoryGateway()
+            return get_memory_gateway()
         except Exception as exc:
-            _logger.warning(
-                "memory_recall._resolve_backend failed: %s — "
-                "recall returns empty list",
+            _logger.debug(
+                "memory_recall._resolve_backend: gateway not registered: %s",
                 exc,
             )
             return None

@@ -96,14 +96,7 @@ class WorkflowBackend(Protocol):
         ...
 
     async def cancel_workflow(self, *, handle: WorkflowHandle) -> None:
-        ...
-
-    # S202 fix: compensate_workflow removed from Protocol.
-    # Был объявлен, но НИ ОДИН backend (Temporal/LiteTemporal/PgRunner/Fake)
-    # не реализовывал его. Saga compensation работает через COMPENSATE_SIGNAL
-    # в compensation.py → compile_saga_step → DSL compiler.
-    # Protocol method был unreachable dead contract (GAP-1 из аудита).
-        """Отменить выполняющийся workflow."""
+        """Отменить выполняющийся workflow (cancel через backend API)."""
         ...
 
     async def await_completion(
@@ -111,6 +104,12 @@ class WorkflowBackend(Protocol):
     ) -> WorkflowResult:
         """Дождаться финального состояния workflow."""
         ...
+
+    # S202 fix: compensate_workflow removed from Protocol.
+    # Был объявлен, но НИ ОДИН backend (Temporal/LiteTemporal/PgRunner/Fake)
+    # не реализовывал его. Saga compensation работает через COMPENSATE_SIGNAL
+    # в compensation.py → compile_saga_step → DSL compiler.
+    # Protocol method был unreachable dead contract (GAP-1 из аудита).
 
     async def replay(self, *, workflow_name: str, history: bytes) -> None:
         """Прогнать историю через текущий код — для CI versioning gate."""

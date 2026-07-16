@@ -106,7 +106,14 @@ class MemoryStoreProcessor(BaseAIProcessor):
             return
 
         try:
-            await backend.store(namespace, resolved_key, value, ttl_s=self.ttl_s)
+            # S202 audit fix: UnifiedMemoryGateway.save_fact uses keyword args.
+            # namespace → tenant_id, key → fact_key, value → content.
+            # TTL сохраняется через short-term backend (Mongo TTL).
+            await backend.save_fact(
+                tenant_id=namespace,
+                fact_key=resolved_key,
+                content=str(value),
+            )
         except Exception as exc:
             _logger.warning("%s: store failed (%s) — drop", self.name, exc)
 
@@ -182,21 +189,20 @@ class MemoryStoreProcessor(BaseAIProcessor):
 
     @staticmethod
     def _resolve_backend() -> Any | None:
-        """Lazy-резолв :class:`MemoryProtocol` (S202 fix).
+        """Lazy-резолв :class:`UnifiedMemoryGateway` через app_state (S202 fix).
 
-        S202: теперь пытается использовать UnifiedMemoryGateway вместо
-        постоянного возврата None (scaffold → silent no-op).
+        S202: теперь пытается использовать UnifiedMemoryGateway singleton
+        из ``app.state.memory_gateway`` (composition root registers it).
         """
         try:
             from src.backend.services.ai.memory_gateway import (
-                UnifiedMemoryGateway,
+                get_memory_gateway,
             )
 
-            return UnifiedMemoryGateway()
+            return get_memory_gateway()
         except Exception as exc:
-            _logger.warning(
-                "memory_store._resolve_backend failed: %s — "
-                "store is no-op",
+            _logger.debug(
+                "memory_store._resolve_backend: gateway not registered: %s",
                 exc,
             )
             return None

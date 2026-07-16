@@ -31,6 +31,9 @@ class RegexProcessor(BaseProcessor):
         name: имя процессора.
     """
 
+    required_capability: str | None = "rpa.regex.execute"
+    audit_event: str | None = "rpa.regex.execute"
+
     def __init__(
         self,
         pattern: str,
@@ -50,6 +53,8 @@ class RegexProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         import re
 
         # W34: source resolution.

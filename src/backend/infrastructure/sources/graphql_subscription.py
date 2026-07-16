@@ -27,6 +27,9 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.core.security.connector_auth import check_source_capability
+
 if TYPE_CHECKING:
     pass
 
@@ -88,6 +91,10 @@ class GraphQLSubscriptionSource:
         self._headers = headers or {}
         self._subscription_id: str = str(uuid.uuid4())
 
+    async def health(self, mode: str = "fast") -> HealthResult:
+        """Stateless stream source — всегда ok, если модуль импортируется."""
+        return HealthResult.ok(latency_ms=0.0, mode=mode, kind="graphql")
+
     async def stream(self) -> AsyncIterator[GraphQLEvent]:
         """Async-генератор событий из GraphQL subscription.
 
@@ -101,6 +108,7 @@ class GraphQLSubscriptionSource:
         Raises:
             RuntimeError: Если ``gql`` или ``gql.transport.websockets``
                 не установлены в окружении.
+            PermissionError: Если ``graphql.read`` capability denied.
             Exception: Сетевые ошибки пробрасываются без подавления.
         """
         try:
@@ -110,6 +118,20 @@ class GraphQLSubscriptionSource:
             raise RuntimeError(
                 "gql не установлен; добавь 'gql[websockets]' в pyproject.toml."
             ) from exc
+
+        # S172 (Wave S2): capability check на старте stream-сессии.
+        if not await check_source_capability(
+            "graphql.read",
+            action="read",
+            principal="anonymous",
+            extra_ctx={
+                "endpoint_url": self._endpoint_url,
+                "subscription_id": self._subscription_id,
+            },
+        ):
+            raise PermissionError(
+                f"graphql.read denied for endpoint={self._endpoint_url!r}"
+            )
 
         transport = WebsocketsTransport(url=self._endpoint_url, headers=self._headers)
         async with gql.Client(transport=transport) as session:

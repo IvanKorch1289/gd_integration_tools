@@ -15,6 +15,9 @@ from email.message import EmailMessage
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.resilience.connector_breaker import with_breaker
+from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("EmailSink",)
@@ -54,6 +57,9 @@ class EmailSink(Sink):
     default_subject: str = ""
     kind: SinkKind = field(default=SinkKind.MAIL, init=False)
 
+    @with_breaker("email_sink")
+    @with_retry(max_attempts=3, initial_backoff=2.0)
+    @require_capability("email.send", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Формирует :class:`email.message.EmailMessage` и отправляет через aiosmtplib."""
         try:

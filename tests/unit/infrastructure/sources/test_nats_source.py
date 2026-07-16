@@ -342,7 +342,8 @@ async def test_stop_idempotent(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_health_initially_false() -> None:
     """health() == False до запуска stream()."""
     src = NatsSource(subject="x")
-    assert await src.health() is False
+    result = await src.health()
+    assert result.status == "failed"
 
 
 @pytest.mark.asyncio

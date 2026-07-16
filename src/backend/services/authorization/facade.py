@@ -137,6 +137,17 @@ class AuthorizationFacade:
         if auth_result is not None and not auth_result.allowed:
             return auth_result
 
+        # S202 audit fix: require authentication — anonymous requests denied.
+        # Если ни token, ни cookie, ни capability не заданы — reject.
+        if auth_result is None and not required_capability:
+            return AuthDecision(
+                allowed=False,
+                method="anonymous",
+                subject="",
+                tenant_id=None,
+                reason="no authentication provided",
+            )
+
         # 2. Authorization phase (capability + policy)
         subject = auth_result.subject if auth_result else "_system"
         tenant_id = auth_result.tenant_id if auth_result else None
@@ -352,22 +363,57 @@ class AuthorizationFacade:
         session_id: str,
         required_capability: str | None = None,
     ) -> AuthDecision:
-        """Cookie session verification (S186).
+        """Cookie session verification (S202 audit fix).
 
-        Production: интеграция с Redis session store.
-        S186 stub: возвращает False (production wiring TODO).
+        S186: stub возвращал всегда False. S202: реализует Redis-backed
+        session lookup. Sessions хранятся как JSON под ключом
+        ``session:{session_id}`` с TTL.
+
+        Fail-closed: при отсутствии Redis или ошибке парсинга — отказ.
         """
-        # Production: lookup session в Redis session store
-        # S186: stub — production wiring TODO
-        _logger.debug(
-            "cookie session check: session_id=%s (stub)",
-            session_id,
-        )
-        return AuthDecision(
-            allowed=False,
-            method="cookie",
-            reason="session store not implemented",
-        )
+        try:
+            import json as _json
+
+            from src.backend.infrastructure.clients.storage.redis import (
+                get_redis_client,
+            )
+
+            redis_client = await get_redis_client().get_client("cache")
+            raw = await redis_client.get(f"session:{session_id}")
+            if raw is None:
+                return AuthDecision(
+                    allowed=False,
+                    method="cookie",
+                    reason="session not found or expired",
+                )
+            data = _json.loads(raw)
+            subject = str(data.get("subject", ""))
+            tenant_id = data.get("tenant_id")
+            capabilities = list(data.get("capabilities", []) or [])
+
+            if required_capability and required_capability not in capabilities:
+                return AuthDecision(
+                    allowed=False,
+                    method="cookie",
+                    subject=subject,
+                    tenant_id=tenant_id,
+                    reason=f"missing capability: {required_capability}",
+                )
+
+            return AuthDecision(
+                allowed=True,
+                method="cookie",
+                subject=subject,
+                tenant_id=tenant_id,
+                scopes=tuple(capabilities),
+            )
+        except Exception as exc:
+            _logger.debug("cookie session check failed: %s", exc)
+            return AuthDecision(
+                allowed=False,
+                method="cookie",
+                reason="session lookup failed",
+            )
 
     async def _check_capability(
         self,

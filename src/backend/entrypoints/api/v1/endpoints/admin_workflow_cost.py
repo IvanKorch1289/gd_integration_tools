@@ -12,12 +12,23 @@ from datetime import UTC
 from decimal import Decimal
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
+
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 __all__ = ("router",)
 
-router = APIRouter(prefix="/admin/workflow-cost", tags=["admin", "workflow", "cost"])
+
+# S202 audit fix: workflow cost data (ClickHouse query bypass) — require admin role.
+_WORKFLOW_COST_GUARD = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+)
+router = APIRouter(
+    prefix="/admin/workflow-cost",
+    tags=["admin", "workflow", "cost"],
+    dependencies=[_WORKFLOW_COST_GUARD],
+)
 
 
 class CostEstimateRequest(BaseModel):

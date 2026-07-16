@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.source import SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.core.security.connector_auth import check_source_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
 if TYPE_CHECKING:
@@ -94,6 +95,23 @@ class NATSJetStreamSource:
                 "nats-py не установлен. Добавьте 'nats-py>=2.7' в зависимости "
                 "(S3 Wave 3 cutover). Временно используйте pytest.importorskip('nats')."
             ) from exc
+
+        # S172 (Wave S2): capability check на старте stream-сессии.
+        if not await check_source_capability(
+            "nats.read",
+            action="read",
+            principal="anonymous",
+            extra_ctx={
+                "subject": self._subject,
+                "stream": self._stream,
+                "durable": self._durable,
+                "source_id": self.source_id,
+            },
+        ):
+            raise PermissionError(
+                f"nats.read denied for stream={self._stream!r} "
+                f"durable={self._durable!r}"
+            )
 
         async with self._lock:
             if self._nc is not None:

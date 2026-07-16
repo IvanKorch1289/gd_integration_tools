@@ -98,7 +98,7 @@ async def test_send_handles_channel_exception(fake_grpc: tuple[Any, MagicMock]) 
 async def test_health_true(fake_grpc: tuple[Any, MagicMock]) -> None:
     _fake_mod, fake_channel = fake_grpc
     sink = GrpcSink(sink_id="g5", target="localhost:50051", full_method="/svc/m")
-    assert await sink.health() is True
+    h = await sink.health(); assert h.status == "ok"
     fake_channel.channel_ready.assert_awaited_once()
     fake_channel.close.assert_awaited_once()
 
@@ -107,7 +107,7 @@ async def test_health_true(fake_grpc: tuple[Any, MagicMock]) -> None:
 async def test_health_false_when_grpc_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "grpc", None)  # type: ignore[arg-type]
     sink = GrpcSink(sink_id="g6", target="localhost:50051", full_method="/svc/m")
-    assert await sink.health() is False
+    h = await sink.health(); assert h.status == "failed"
 
 
 @pytest.mark.asyncio
@@ -115,4 +115,4 @@ async def test_health_false_on_exception(fake_grpc: tuple[Any, MagicMock]) -> No
     _fake_mod, fake_channel = fake_grpc
     fake_channel.channel_ready = AsyncMock(side_effect=OSError("fail"))
     sink = GrpcSink(sink_id="g7", target="localhost:50051", full_method="/svc/m")
-    assert await sink.health() is False
+    h = await sink.health(); assert h.status == "failed"

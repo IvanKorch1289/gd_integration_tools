@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from extensions.core_admin.schemas.route import (
     AdminCacheInvalidatePatternSchema,
@@ -9,6 +9,7 @@ from extensions.core_admin.schemas.route import (
     AdminToggleFeatureFlagQuerySchema,
     AdminToggleRouteQuerySchema,
 )
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
@@ -19,7 +20,13 @@ from src.backend.services.core.admin import get_admin_service
 __all__ = ("router",)
 
 
-router = APIRouter()
+# S202 audit fix: require admin role для всех admin-endpoints.
+# Минимум OPERATOR (для non-destructive ops); SUPER_ADMIN неявно разрешён.
+_ADMIN_GUARD = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.TENANT_ADMIN))
+)
+
+router = APIRouter(dependencies=[_ADMIN_GUARD])
 
 
 ActionRouterBuilder(router).add_actions(

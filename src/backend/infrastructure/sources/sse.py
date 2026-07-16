@@ -32,6 +32,12 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.infrastructure.security.connector_rate_limiter import (
+    get_connector_rate_limiter,
+)
+from src.backend.core.security.connector_auth import check_source_capability
+
 __all__ = ("SSEEvent", "SSESource")
 
 if TYPE_CHECKING:
@@ -105,12 +111,34 @@ class SSESource:
         """Остановить stream (cancel heartbeat + reconnect)."""
         self._stopped.set()
 
+    async def health(self, mode: str = "fast") -> HealthResult:
+        """Stateless stream source — всегда ok, если модуль импортируется."""
+        return HealthResult.ok(latency_ms=0.0, mode=mode, kind="sse")
+
     async def stream(self) -> AsyncIterator[SSEEvent]:
         """Async-генератор SSE-событий с auto-reconnect.
 
         Yields:
             :class:`SSEEvent` для каждого распарсенного SSE-сообщения.
+
+        Raises:
+            PermissionError: Если ``sse.read`` capability denied.
         """
+        # S172 (Wave S2): capability check на старте stream-сессии.
+        # Делается один раз — auth на каждое событие было бы слишком
+        # дорого (HTTP keep-alive stream может жить часами).
+        if not await check_source_capability(
+            "sse.read", action="read", principal="anonymous",
+            extra_ctx={"url": self._url, "subscription_id": self._subscription_id},
+        ):
+            raise PermissionError(
+                f"sse.read denied for stream url={self._url!r}"
+            )
+        # S1: per-connector rate limit (per subscription).
+        limiter = get_connector_rate_limiter()
+        limiter.register(f"sse_{self._subscription_id[:8]}", "50/s", 50)
+        await limiter.check(f"sse_{self._subscription_id[:8]}", scope=self._url)
+
         retries = 0
         backoff = self._reconnect_initial_delay_s
 

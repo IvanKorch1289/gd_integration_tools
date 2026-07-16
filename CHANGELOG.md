@@ -1038,6 +1038,75 @@ uv sync   # install deps if needed
 
 ---
 
+## S202 audit: domain bug fixes (security + workflow + agent)
+
+### Security fixes (8 bugs from agent audit)
+
+| # | File | Bug | Fix |
+|---|------|-----|-----|
+| 1 | `services/security/facade.py` | JWT blacklist 3-way broken: missing redis arg, dict API mismatch, wrong `__contains__` | Refactor на async API (`revoke`/`is_revoked`/`unrevoke`), proper Redis client через `get_redis_client().get_client("cache")`, in-memory fallback через `_InMemoryJwtBlacklist` с тем же async API |
+| 2 | `core/auth/facade.py:_is_blacklisted` | Все JWT с `jti` отзывались (missing redis arg + unawaited async) | Async метод, awaits `is_revoked`, fail-closed на ошибке |
+| 3 | `services/pii/facade.py:detokenize` | Crashes: calls nonexistent `_assert()` | Удалён вызов (capability check уже в `SecurityFacade.detokenize_pii`) |
+| 4 | `services/secrets/facade.py` | `get`/`set`/`list` vs `get_secret`/`set_secret`/`list_keys` — silent AttributeError | Исправлены на правильные имена методов |
+| 5 | `core/ai/security/agent_security.py:_run_hooks` | Hooks never enforce — results ignored | Возвращает `SecurityDecision | None`; callers honor hook denials |
+| 6 | `services/authorization/facade.py:authorize` | Unauthenticated requests get `allowed=True` | Reject when no token AND no cookie AND no required_capability |
+| 7 | `core/auth/facade.py:_verify_api_key` | `core` → `infrastructure` layer violation | Use `get_api_key_manager_provider()` from `core/di/providers/auth` |
+| 8 | `dsl/engine/processors/security/card_tokenize.py` | "Format-preserving" token uses hex (a-f), breaks PAN validation | Использует `secrets.SystemRandom().randrange(10)` для digits |
+
+### Workflow + Agent fixes (11 bugs from agent audit)
+
+| # | File | Bug | Fix |
+|---|------|-----|-----|
+| 1 | `core/workflow/backend.py:106-107` | Orphaned docstring + `...` from deleted `compensate_workflow` | Moved comment outside method body, clean docstring |
+| 2-3 | `dsl/.../memory_recall.py` | `UnifiedMemoryGateway()` без args + `recall()` не существует | Use `get_memory_gateway()` (app_state singleton), call `recall_semantic(tenant_id, query, top_k)` |
+| 4-5 | `dsl/.../memory_store.py` | Same as 2-3 + `store()` doesn't exist | Use `get_memory_gateway()`, call `save_fact(tenant_id, fact_key, content)` |
+| 6 | `workflow/workflow_subprocess.py:required_capability` | Declared but never enforced (BaseProcessor doesn't check) | Documented; future: move to BaseAIProcessor |
+| 7 | `workflow/workflow_subprocess.py:run_workflow_by_id` | Stub returns "started" without running | Documented (minimal contract, production wiring TODO) |
+| 8 | `workflow_subprocess.py:40` | Dead import `OrchestratorSpec` | Removed |
+| 9 | `ai_tool_dispatch.py:22-27` | Stale docstring claiming NotImplementedError | Updated to reflect actual implementation |
+| 10 | `ai_tool_dispatch.py:134-136` | Dead walrus operator | Replaced with simple literal `"no_selection"` |
+| 11 | `agent_dsl/__init__.py` | `AIToolDispatchProcessor` missing from `__all__` | Added import + export |
+
+### Admin endpoints auth (8 endpoints without AuthorizationFacade)
+
+| # | File | Role guard |
+|---|------|------------|
+| 1 | `admin.py` | OPERATOR + READ_ONLY + TENANT_ADMIN |
+| 2 | `admin_ip_restriction.py` | SUPER_ADMIN + TENANT_ADMIN (security-critical) |
+| 3 | `admin_workflow_audit.py` | OPERATOR + READ_ONLY + SUPER_ADMIN |
+| 4 | `admin_workflow_cost.py` | OPERATOR + READ_ONLY + SUPER_ADMIN |
+| 5 | `admin_langgraph.py` | OPERATOR + SUPER_ADMIN (checkpoint restore) |
+| 6 | `admin_feature_flags.py` | OPERATOR + SUPER_ADMIN |
+| 7 | `admin_cron.py` | OPERATOR + SUPER_ADMIN |
+| 8 | `admin_connectors.py` | OPERATOR + SUPER_ADMIN |
+| 9 | `admin_workflows/__init__.py` | OPERATOR + SUPER_ADMIN |
+
+### AuthorizationFacade cookie session
+
+`AuthorizationFacade._check_cookie_session()` was a hardcoded stub (always False).
+S202 fix: реализует Redis-backed session lookup через `session:{session_id}` keys
+with JSON encoding. Fail-closed на ошибке.
+
+### DSL → services layer violations
+
+9 module-level DSL→services violations fixed:
+- 4 gateway exceptions: импорт из `core.ai.errors` instead of `services.ai.gateway.exceptions`
+- 1 AgentSandbox Protocol: moved to `core/ai/agent_sandbox_protocol.py`
+- 1 BrowserCookieStore: TYPE_CHECKING import
+- 3 NotebookExecutionService: TYPE_CHECKING import, except → Exception + log
+
+### Test syntax fixes (6 files)
+
+- `tests/unit/infrastructure/sinks/test_*_sink.py` — broken `assert h=await ...;` pattern
+  replaced with `h = await ...; assert ...`. 16 broken assertions fixed.
+
+### AgentSandbox Protocol extraction
+
+Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dataclass.
+`services/ai/agent_sandbox.py` re-exports from core (backward-compat).
+
+---
+
 ## S172-S202: Structural Audit & Domain Hardening (Retrospective)
 
 ### Domains covered

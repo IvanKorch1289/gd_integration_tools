@@ -144,7 +144,8 @@ async def test_health_true_on_2xx() -> None:
 
     with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
         sink = HttpSink(sink_id="h7", url="http://api.test/")
-        assert await sink.health() is True
+        result = await sink.health()
+        assert result.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -154,7 +155,8 @@ async def test_health_true_on_4xx() -> None:
 
     with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
         sink = HttpSink(sink_id="h8", url="http://api.test/")
-        assert await sink.health() is True
+        result = await sink.health()
+        assert result.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -164,7 +166,8 @@ async def test_health_false_on_5xx() -> None:
 
     with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
         sink = HttpSink(sink_id="h9", url="http://api.test/")
-        assert await sink.health() is False
+        result = await sink.health()
+        assert result.status == "failed"
 
 
 @pytest.mark.asyncio
@@ -173,11 +176,13 @@ async def test_health_false_on_exception() -> None:
 
     with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
         sink = HttpSink(sink_id="h10", url="http://api.test/")
-        assert await sink.health() is False
+        result = await sink.health()
+        assert result.status == "failed"
 
 
 @pytest.mark.asyncio
 async def test_health_false_when_httpx_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "httpx", None)  # type: ignore[arg-type]
     sink = HttpSink(sink_id="h11", url="http://api.test/")
-    assert await sink.health() is False
+    result = await sink.health()
+    assert result.status == "failed"

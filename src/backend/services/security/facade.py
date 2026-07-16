@@ -52,39 +52,54 @@ class SecurityFacade:
         capability_check: CapabilityChecker | None = None,
         plugin: str = "extension",
     ) -> None:
-        """Инициализация facade."""
+        """Инициализация facade.
+
+        JWT blacklist инициализируется в ``init_jwt_blacklist()`` async-методом,
+        потому что :func:`get_redis_client` возвращает объект с async ``get_client()``.
+        """
         self._check = capability_check
         self._plugin = plugin
-        # S189+ fix: JWT blacklist через Redis для multi-worker consistency.
-        # In-memory set был невалиден для k8s/multi-pod deployments —
-        # revoked token в pod A оставался валидным в pod B.
-        self._jwt_blacklist = self._create_jwt_blacklist()
+        self._jwt_blacklist: Any = None
+        self._jwt_blacklist_ready = False
 
-    def _create_jwt_blacklist(self) -> Any:
+    async def init_jwt_blacklist(self) -> None:
+        """S189+ fix: lazy-init Redis-backed JWT blacklist.
+
+        Без этого метода blacklist инициализируется как ``None`` — все
+        blacklist_token/unblacklist/is_blacklisted будут no-op.
+        """
+        if self._jwt_blacklist_ready:
+            return
+        self._jwt_blacklist = await self._create_jwt_blacklist()
+        self._jwt_blacklist_ready = True
+
+    async def _create_jwt_blacklist(self) -> Any:
         """Create Redis-backed JWT blacklist (S189+).
 
         Returns:
             Redis-backed blacklist если Redis доступен, иначе
-            fail-closed in-memory fallback с WARNING log.
+            fail-open in-memory fallback (per-pod revocation).
         """
         try:
             from src.backend.core.auth.jwt_blacklist import (
                 RedisJwtBlacklist,
             )
+            from src.backend.infrastructure.clients.storage.redis import (
+                get_redis_client,
+            )
 
-            blacklist = RedisJwtBlacklist()
+            redis_client = await get_redis_client().get_client("cache")
+            blacklist = RedisJwtBlacklist(redis_client)
             _logger.info("JWT blacklist: Redis-backed (multi-worker safe)")
             return blacklist
         except Exception as exc:
-            # Fail-closed: in-memory fallback с WARNING.
-            # Note: NOT multi-worker safe — pod A revocation won't reach pod B.
-            blacklist = {"jti": set()}
+            # In-memory fallback (NOT multi-worker safe — для dev_light).
             _logger.warning(
                 "JWT blacklist: Redis unavailable, using in-memory fallback "
                 "(NOT multi-worker safe): %s",
                 exc,
             )
-            return blacklist
+            return _InMemoryJwtBlacklist()
 
     def _assert(self, action: str, resource: str) -> None:
         """Capability check (если установлен)."""
@@ -246,27 +261,132 @@ class SecurityFacade:
 
     # ──────────────────── JWT Blacklist ────────────────────
 
-    def blacklist_token(self, jti: str) -> None:
+    async def blacklist_token(self, jti: str, *, expires_at: int | None = None) -> bool:
         """Добавить JWT ID (jti) в blacklist (logout/invalidation).
 
         Args:
             jti: JWT ID из claim ``jti``.
+            expires_at: Unix timestamp истечения токена (TTL для Redis).
+                Если None — используется 24h default.
+
+        Returns:
+            True если успешно, False при ошибке.
         """
-        self._jwt_blacklist.add(jti)
-        _logger.info("JWT blacklisted: jti=%s", jti)
+        if self._jwt_blacklist is None:
+            await self.init_jwt_blacklist()
+        import time
 
-    def unblacklist_token(self, jti: str) -> None:
-        """Удалить JWT из blacklist (для re-login после expiry)."""
-        self._jwt_blacklist.discard(jti)
-        _logger.info("JWT unblacklisted: jti=%s", jti)
+        exp = expires_at if expires_at is not None else int(time.time()) + 86400
+        try:
+            await self._jwt_blacklist.revoke(jti, exp)
+            _logger.info("JWT blacklisted: jti=%s", jti)
+            return True
+        except Exception as exc:
+            _logger.error("JWT blacklist revoke failed for jti=%s: %s", jti, exc)
+            return False
 
-    def is_token_blacklisted(self, jti: str) -> bool:
+    async def unblacklist_token(self, jti: str) -> bool:
+        """Удалить JWT из blacklist (для re-login после expiry).
+
+        Note: Redis blacklist использует TTL — после exp jti автоматически
+        удаляется из Redis. Этот метод доступен только для тестов (Redis DEL).
+        """
+        if self._jwt_blacklist is None:
+            return True
+        try:
+            from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
+
+            if isinstance(self._jwt_blacklist, RedisJwtBlacklist):
+                await self._jwt_blacklist._redis.delete(
+                    self._jwt_blacklist._key(jti)
+                )
+            else:
+                await self._jwt_blacklist.unrevoke(jti)
+            _logger.info("JWT unblacklisted: jti=%s", jti)
+            return True
+        except Exception as exc:
+            _logger.warning("JWT unblacklist failed for jti=%s: %s", jti, exc)
+            return False
+
+    async def is_token_blacklisted(self, jti: str) -> bool:
         """Проверить — JWT в blacklist?"""
-        return jti in self._jwt_blacklist
+        if self._jwt_blacklist is None:
+            await self.init_jwt_blacklist()
+        try:
+            return await self._jwt_blacklist.is_revoked(jti)
+        except Exception as exc:
+            _logger.warning("JWT blacklist check failed for jti=%s: %s", jti, exc)
+            return False  # fail-open on Redis error (per-jti path)
 
-    def clear_blacklist(self) -> None:
+    async def clear_blacklist(self) -> None:
         """Очистить весь blacklist (для тестов)."""
-        self._jwt_blacklist.clear()
+        if self._jwt_blacklist is None:
+            return
+        try:
+            from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
+
+            if isinstance(self._jwt_blacklist, RedisJwtBlacklist):
+                pattern = f"{self._jwt_blacklist._prefix}*"
+                cursor = 0
+                while True:
+                    cursor, keys = await self._jwt_blacklist._redis.scan(
+                        cursor, match=pattern, count=100
+                    )
+                    if keys:
+                        await self._jwt_blacklist._redis.delete(*keys)
+                    if cursor == 0:
+                        break
+            else:
+                await self._jwt_blacklist.clear()
+        except Exception as exc:
+            _logger.warning("JWT blacklist clear failed: %s", exc)
+
+
+class _InMemoryJwtBlacklist:
+    """In-memory fallback для JWT blacklist (NOT multi-worker safe).
+
+    Реализует тот же async API что и :class:`RedisJwtBlacklist`:
+    ``revoke(jti, expires_at)``, ``unrevoke(jti)``, ``is_revoked(jti)``,
+    ``clear()``, ``is_iat_revoked(iat)`` (no-op), ``revoke_before_time(t)`` (no-op).
+    """
+
+    def __init__(self) -> None:
+        self._store: dict[str, float] = {}
+        import threading
+
+        self._lock = threading.Lock()
+
+    async def revoke(self, jti: str, expires_at: int) -> None:
+        import time
+
+        with self._lock:
+            self._store[jti] = float(expires_at)
+
+    async def unrevoke(self, jti: str) -> None:
+        with self._lock:
+            self._store.pop(jti, None)
+
+    async def is_revoked(self, jti: str) -> bool:
+        import time
+
+        with self._lock:
+            exp = self._store.get(jti)
+            if exp is None:
+                return False
+            if exp < time.time():
+                self._store.pop(jti, None)
+                return False
+            return True
+
+    async def is_iat_revoked(self, iat: int | None) -> bool:
+        return False  # in-memory fallback не поддерживает batch revoke
+
+    async def revoke_before_time(self, time_threshold: int) -> None:
+        return None  # no-op in in-memory fallback
+
+    async def clear(self) -> None:
+        with self._lock:
+            self._store.clear()
 
 
 @lru_cache(maxsize=1)

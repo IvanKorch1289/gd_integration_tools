@@ -11,8 +11,9 @@ Backward-compat: ``from src.backend.entrypoints.api.v1.endpoints.admin_workflows
 
 from __future__ import annotations
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
@@ -86,7 +87,13 @@ __all__ = (
 # --- Router ----------------------------------------------------------------
 
 
-router = APIRouter(tags=["Admin · Workflows"])
+# S202 audit fix: workflow lifecycle (retry/cancel/resume/trigger) — admin role required.
+_WORKFLOWS_GUARD = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+)
+router = APIRouter(
+    tags=["Admin · Workflows"], dependencies=[_WORKFLOWS_GUARD]
+)
 builder = ActionRouterBuilder(router)
 
 common_tags = ("Admin · Workflows",)

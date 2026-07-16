@@ -80,7 +80,7 @@ async def test_send_handles_exception(fake_websockets: types.ModuleType) -> None
 @pytest.mark.asyncio
 async def test_health_true(fake_websockets: types.ModuleType) -> None:
     sink = WsSink(sink_id="w5", url="ws://test")
-    assert await sink.health() is True
+    h = await sink.health(); assert h.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -89,7 +89,7 @@ async def test_health_false_when_websockets_missing(
 ) -> None:
     monkeypatch.setitem(sys.modules, "websockets", None)  # type: ignore[arg-type]
     sink = WsSink(sink_id="w6", url="ws://test")
-    assert await sink.health() is False
+    h = await sink.health(); assert h.status == "failed"
 
 
 @pytest.mark.asyncio
@@ -99,4 +99,4 @@ async def test_health_false_on_exception(fake_websockets: types.ModuleType) -> N
     fake_ctx.__aexit__ = AsyncMock(return_value=None)
     fake_websockets.connect = MagicMock(return_value=fake_ctx)
     sink = WsSink(sink_id="w7", url="ws://test")
-    assert await sink.health() is False
+    h = await sink.health(); assert h.status == "failed"

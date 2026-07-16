@@ -9,16 +9,25 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.config.config_loader import _resolve_repo_root
 from src.backend.core.security.ip_restriction_store import get_ip_restriction_store
 
 __all__ = ("router",)
 
 
-router = APIRouter(prefix="/ip-restriction", tags=["Admin · IP Restriction"])
+# S202 audit fix: IP-restriction CRUD — security-critical, require SUPER_ADMIN.
+_IP_RESTRICTION_GUARD = Depends(
+    require_admin((AdminRole.SUPER_ADMIN, AdminRole.TENANT_ADMIN))
+)
+router = APIRouter(
+    prefix="/ip-restriction",
+    tags=["Admin · IP Restriction"],
+    dependencies=[_IP_RESTRICTION_GUARD],
+)
 
 
 class _AdminIPRestrictionSchema(BaseModel):

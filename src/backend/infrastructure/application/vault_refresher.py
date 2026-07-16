@@ -216,6 +216,32 @@ class VaultSecretRefresher:
                     "vault rotation callback error",
                     extra={"path": path, "error": str(exc)},
                 )
+        # S5 (Security Wave): также триггернуть connector_rotator,
+        # чтобы подписанные коннекторы перечитать с новыми credentials.
+        await self._fan_out_to_connectors(path, new_secrets)
+
+    async def _fan_out_to_connectors(
+        self, path: str, new_secrets: dict[str, Any]
+    ) -> None:
+        """Прокидывает ротацию в ConnectorRotator (lazy import)."""
+        try:
+            from src.backend.infrastructure.secrets.connector_rotator import (
+                get_connector_rotator,
+            )
+
+            rotator = get_connector_rotator()
+            reloaded = await rotator.on_rotation(path, new_secrets)
+            if reloaded:
+                logger.info(
+                    "connectors reloaded",
+                    extra={"path": path, "count": reloaded},
+                )
+        except Exception as exc:  # noqa: BLE001
+            # Connector bridge — best-effort: не валим основной rotation loop.
+            logger.error(
+                "connector rotator fan-out failed",
+                extra={"path": path, "error": str(exc)},
+            )
 
 
 from src.backend.core.di import app_state_singleton

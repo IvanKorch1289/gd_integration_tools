@@ -14,6 +14,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.resilience.connector_breaker import with_breaker
+from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("SoapSink",)
@@ -46,6 +49,9 @@ class SoapSink(Sink):
         default_factory=threading.Lock, init=False, repr=False
     )
 
+    @with_breaker("soap_sink")
+    @with_retry(max_attempts=3)
+    @require_capability("soap.invoke", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Вызывает SOAP-операцию через ``asyncio.to_thread`` (zeep — sync)."""
         try:

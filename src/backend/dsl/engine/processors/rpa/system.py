@@ -35,6 +35,9 @@ class ShellExecProcessor(BaseProcessor):
         .shell("ls", args=["-la", "/data"], allowed_commands=["ls", "cat", "wc"])
     """
 
+    required_capability: str | None = "rpa.shell.exec"
+    audit_event: str | None = "rpa.shell.exec"
+
     def __init__(
         self,
         command: str,
@@ -52,6 +55,8 @@ class ShellExecProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="execute"):
+            return
         import asyncio
 
         if self._allowed and self._command not in self._allowed:
@@ -104,6 +109,9 @@ class EmailComposeProcessor(BaseProcessor):
     body_template поддерживает {variable} подстановки из exchange body.
     """
 
+    required_capability: str | None = "rpa.email.send"
+    audit_event: str | None = "rpa.email.send"
+
     def __init__(
         self, to: str, subject: str, body_template: str, *, name: str | None = None
     ) -> None:
@@ -114,6 +122,8 @@ class EmailComposeProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="execute"):
+            return
         body = exchange.in_message.body
         variables = body if isinstance(body, dict) else {"body": body}
         try:
@@ -173,6 +183,8 @@ class TerminalExecProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        if not await self.auth_check(exchange, action="execute"):
+            return
         proc = await asyncio.create_subprocess_shell(
             self.command,
             stdout=asyncio.subprocess.PIPE,
@@ -237,6 +249,8 @@ class EmailReadProcessor(BaseProcessor):
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
         """Подключается к IMAP-серверу, читает все письма из папки и пишет их в target."""
+        if not await self.auth_check(exchange, action="read"):
+            return
         import imaplib
 
         def _fetch() -> list[dict[str, str]]:

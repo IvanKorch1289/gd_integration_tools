@@ -18,7 +18,13 @@ import orjson
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.connector_breaker import with_breaker
+from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.infrastructure.security.connector_rate_limiter import (
+    get_connector_rate_limiter,
+)
 
 __all__ = ("NATSJetStreamSink",)
 
@@ -46,6 +52,9 @@ class NATSJetStreamSink(Sink):
     timeout: float = 10.0
     kind: SinkKind = field(default=SinkKind.NATS_JS, init=False)
 
+    @with_breaker("nats_js_sink")
+    @with_retry(max_attempts=5)
+    @require_capability("nats.write", action="write")
     async def publish(
         self, subject: str, data: bytes, headers: dict[str, str] | None = None
     ) -> SinkResult:
@@ -59,6 +68,11 @@ class NATSJetStreamSink(Sink):
         Returns:
             :class:`SinkResult` с флагом успеха и метаданными.
         """
+        # S1: per-connector rate limit. Scope — per-subject для изоляции.
+        limiter = get_connector_rate_limiter()
+        limiter.register(f"{self.sink_id}_nats_js", "200/s", 200)
+        await limiter.check(f"{self.sink_id}_nats_js", scope=subject)
+
         try:
             import nats
         except ImportError:

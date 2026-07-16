@@ -94,7 +94,7 @@ async def test_send_handles_write_exception(
 @pytest.mark.asyncio
 async def test_health_true_when_writable(tmp_path: Path) -> None:
     sink = FileSink(sink_id="f7", path=str(tmp_path / "out.txt"), ensure_dir=True)
-    assert await sink.health() is True
+    h = await sink.health(); assert h.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -103,4 +103,4 @@ async def test_health_false_when_not_writable(
 ) -> None:
     sink = FileSink(sink_id="f8", path=str(tmp_path / "out.txt"), ensure_dir=False)
     monkeypatch.setattr(Path, "is_dir", lambda self: False)
-    assert await sink.health() is False
+    h = await sink.health(); assert h.status == "failed"

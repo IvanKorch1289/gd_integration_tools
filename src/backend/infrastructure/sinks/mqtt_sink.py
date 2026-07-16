@@ -20,7 +20,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.resilience.connector_breaker import with_breaker
+from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.infrastructure.security.connector_rate_limiter import (
+    get_connector_rate_limiter,
+)
 from src.backend.dsl.codec.json import dumps_bytes
 
 __all__ = ("MqttSink",)
@@ -89,12 +95,20 @@ class MqttSink(Sink):
             )
         return ctx
 
+    @with_breaker("mqtt_sink")
+    @with_retry(max_attempts=3)
+    @require_capability("mqtt.write", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Публикует ``payload`` в ``topic`` MQTT-брокера.
 
         ``payload`` сериализуется через :func:`dumps_bytes` (orjson)
         если это не ``bytes``/``str``.
         """
+        # S1: per-connector rate limit (по умолчанию 100/s, 200/s для MQTT).
+        limiter = get_connector_rate_limiter()
+        limiter.register(f"{self.sink_id}_mqtt", "200/s", 200)
+        await limiter.check(f"{self.sink_id}_mqtt")
+
         try:
             import aiomqtt
         except ImportError:

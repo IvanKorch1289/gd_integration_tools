@@ -23,6 +23,9 @@ class ArchiveProcessor(BaseProcessor):
     mode="create": body=list of {"name": str, "data": bytes} → bytes
     """
 
+    required_capability: str | None = "rpa.archive.execute"
+    audit_event: str | None = "rpa.archive.execute"
+
     def __init__(
         self, *, mode: str = "extract", format: str = "zip", name: str | None = None
     ) -> None:
@@ -32,6 +35,8 @@ class ArchiveProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, выбрасывает exceptions для error handling pipeline."""
+        if not await self.auth_check(exchange, action="execute"):
+            return
         body = exchange.in_message.body
         if self._mode == "extract":
             if not isinstance(body, bytes):

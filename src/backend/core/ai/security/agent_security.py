@@ -481,9 +481,11 @@ class AgentSecurityFramework:
                 reason=f"dangerous_command: {desc}",
                 matched_pattern=desc,
             )
-            self._run_hooks(
+            hook_decision = self._run_hooks(
                 "pre_tool", {"command": command, "decision": decision}
             )
+            if hook_decision is not None and not hook_decision.allowed:
+                return hook_decision
             return decision
 
         return SecurityDecision(allowed=True)
@@ -517,10 +519,12 @@ class AgentSecurityFramework:
                 reason=f"forbidden_path: {desc}",
                 matched_pattern=desc,
             )
-            self._run_hooks(
+            hook_decision = self._run_hooks(
                 "pre_tool",
                 {"file_path": file_path, "decision": decision},
             )
+            if hook_decision is not None and not hook_decision.allowed:
+                return hook_decision
             return decision
 
         # 2. Whitelist / blacklist policy
@@ -530,10 +534,12 @@ class AgentSecurityFramework:
                 threat_level=ThreatLevel.HIGH,
                 reason=f"path_not_allowed: {file_path}",
             )
-            self._run_hooks(
+            hook_decision = self._run_hooks(
                 "pre_tool",
                 {"file_path": file_path, "decision": decision},
             )
+            if hook_decision is not None and not hook_decision.allowed:
+                return hook_decision
             return decision
 
         # 3. File size check
@@ -546,10 +552,12 @@ class AgentSecurityFramework:
                 threat_level=ThreatLevel.MEDIUM,
                 reason=f"file_too_large: {file_size_bytes} bytes",
             )
-            self._run_hooks(
+            hook_decision = self._run_hooks(
                 "pre_tool",
                 {"file_path": file_path, "decision": decision},
             )
+            if hook_decision is not None and not hook_decision.allowed:
+                return hook_decision
             return decision
 
         return SecurityDecision(allowed=True)
@@ -616,35 +624,36 @@ class AgentSecurityFramework:
         self,
         trigger: str,
         context: dict[str, Any],
-    ) -> list[dict[str, Any]]:
-        """Run all hooks matching trigger."""
-        if not self._policy.enable_workflow_hooks:
-            return []
+    ) -> SecurityDecision | None:
+        """Run all hooks matching trigger.
 
-        results = []
+        Returns:
+            First denying :class:`SecurityDecision` если hook blocked операцию,
+            иначе ``None``. Caller должен проверить возвращаемое значение и
+            вернуть denial decision если hook заблокировал.
+
+        S202 audit fix: ранее результаты hooks игнорировались — pre-made
+        decision возвращался без проверки hook denials.
+        """
+        if not self._policy.enable_workflow_hooks:
+            return None
+
         for hook in self._hooks:
-            if hook.trigger == trigger:
-                try:
-                    decision = hook.check_fn(hook.name, context)
-                    results.append(
-                        {
-                            "hook": hook.name,
-                            "trigger": trigger,
-                            "allowed": decision.allowed,
-                            "reason": decision.reason,
-                        }
-                    )
-                    if not decision.allowed and self._policy.strict_mode:
-                        _logger.warning(
-                            "hook denied: hook=%s reason=%s",
-                            hook.name,
-                            decision.reason,
-                        )
-                except Exception as exc:
-                    _logger.warning(
-                        "hook %s raised: %s", hook.name, exc
-                    )
-        return results
+            if hook.trigger != trigger:
+                continue
+            try:
+                decision = hook.check_fn(hook.name, context)
+            except Exception as exc:
+                _logger.warning("hook %s raised: %s", hook.name, exc)
+                continue
+            if not decision.allowed:
+                _logger.warning(
+                    "hook denied: hook=%s reason=%s",
+                    hook.name,
+                    decision.reason,
+                )
+                return decision
+        return None
 
 
 @lru_cache(maxsize=1)

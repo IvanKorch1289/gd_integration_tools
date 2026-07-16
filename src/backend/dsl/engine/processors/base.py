@@ -34,10 +34,16 @@ class BaseProcessor(ABC):
             ``False`` для irreversible-операций (отправка email, физическое
             действие RPA). Saga блокирует compensate-цепочку, если
             процессор без compensatable.
+        required_capability: Имя capability для auth-gate (``"rpa.file.list"``).
+            Если задано — ``auth_check`` (helper) делает
+            capability-check через :class:`AuthorizationFacade` перед
+            выполнением. Если ``None`` — auth-check пропускается.
+            (S172 Wave S2 — connector authorization.)
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
     compensatable: ClassVar[bool] = True
+    required_capability: ClassVar[str | None] = None
 
     def __init__(self, name: str | None = None) -> None:
         self.name = name or self.__class__.__name__
@@ -63,6 +69,72 @@ class BaseProcessor(ABC):
             exchange.set_property(field, value)
             return
         exchange.set_property(target, value)
+
+    async def auth_check(
+        self,
+        exchange: Exchange[Any],
+        *,
+        action: str = "execute",
+        principal: str = "anonymous",
+    ) -> bool:
+        """Capability-gate для процессора (S172 Wave S2).
+
+        Если процессор определяет :attr:`required_capability` — проверяет
+        его через :class:`AuthorizationFacade`. Наследники вызывают этот
+        метод в начале :meth:`process` для per-step authorization.
+
+        При denied — записывает ошибку в exchange и возвращает ``False``.
+        Caller (subclass ``process()``) должен проверить return value
+        и прервать выполнение (``return`` / ``exchange.stop()``).
+
+        Args:
+            exchange: DSL Exchange (для tenant_id + audit).
+            action: Действие (``"read"`` / ``"write"`` / ``"execute"``).
+            principal: Caller identity (default ``"anonymous"``).
+
+        Returns:
+            ``True`` если доступ разрешён (или capability не задана),
+            ``False`` если denied.
+        """
+        if self.required_capability is None:
+            return True
+
+        try:
+            from src.backend.core.security.connector_auth import (
+                check_source_capability,
+            )
+
+            tenant_id: str | None = None
+            try:
+                meta = getattr(exchange, "meta", None)
+                if meta is not None:
+                    tenant_id = getattr(meta, "tenant_id", None)
+            except Exception:  # pragma: no cover
+                tenant_id = None
+
+            allowed = await check_source_capability(
+                self.required_capability,
+                action=action,
+                principal=principal,
+                extra_ctx={
+                    "tenant_id": tenant_id,
+                    "processor": self.name,
+                    "processor_class": type(self).__name__,
+                },
+            )
+            if not allowed:
+                exchange.set_error(
+                    f"{self.name}: capability '{self.required_capability}' denied"
+                )
+                exchange.stop()
+                return False
+            return True
+        except Exception as exc:  # pragma: no cover — fail-closed
+            exchange.set_error(
+                f"{self.name}: auth_check error: {exc}"
+            )
+            exchange.stop()
+            return False
 
     @abstractmethod
     async def process(

@@ -17,9 +17,10 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
@@ -209,7 +210,13 @@ def _get_facade() -> _AdminConnectorsFacade:
 # --- Router ----------------------------------------------------------------
 
 
-router = APIRouter(tags=["Admin · Infrastructure"])
+# S202 audit fix: connector reload/config CRUD — require admin role.
+_CONNECTORS_GUARD = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+)
+router = APIRouter(
+    tags=["Admin · Infrastructure"], dependencies=[_CONNECTORS_GUARD]
+)
 builder = ActionRouterBuilder(router)
 
 common_tags = ("Admin · Infrastructure",)
