@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.source import SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 if TYPE_CHECKING:
     pass
@@ -187,9 +188,11 @@ class NATSJetStreamSource:
         self._running = False
         await self._close()
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Быстрая проверка: соединение с NATS установлено."""
-        return self._nc is not None and not self._nc.is_closed
+        if self._nc is not None and not self._nc.is_closed:
+            return HealthResult.ok(latency_ms=0.0, mode=mode)
+        return HealthResult.failed(error="Not started", mode=mode)
 
     async def fetch_consumer_info(self) -> dict[str, Any]:
         """Снимок состояния durable consumer (S13 K3 W5).

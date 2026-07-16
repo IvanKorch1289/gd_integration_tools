@@ -63,10 +63,19 @@ class AdminService:
             from src.backend.core.security.authorization_gateway import (
                 AuthorizationGateway,
             )
-            from src.backend.core.security.capabilities.gate import CapabilityGate
+            # S198 fix: use CapabilityFacade singleton + adapter
+            # вместо direct CapabilityGate() (минуя facade pattern).
+            from src.backend.services.capabilities.facade import (
+                get_capability_facade,
+            )
+            from src.backend.services.admin._capability_adapter import (
+                FacadeCapabilityAdapter,
+            )
 
-            # Global singleton — same pattern as other services
-            return AuthorizationGateway(capability_gateway=CapabilityGate())
+            capability_facade = get_capability_facade()
+            return AuthorizationGateway(
+                capability_gateway=FacadeCapabilityAdapter(capability_facade)
+            )
         except Exception as exc:
             logger.warning("AuthorizationGateway unavailable: %s", exc)
             return None

@@ -31,6 +31,8 @@ import hmac
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator
 
+from src.backend.infrastructure.clients.base_connector import HealthResult
+
 
 @dataclass(slots=True)
 class TelegramUpdate:
@@ -118,6 +120,10 @@ class TelegramWebhookSource:
             Полный webhook URL для setWebhook API call.
         """
         return f"{public_base_url.rstrip('/')}/api/v1/telegram/{self.bot_token}"
+
+    async def health(self, mode: str = "fast") -> HealthResult:
+        """Health: stateless webhook config — всегда ok."""
+        return HealthResult.ok(latency_ms=0.0, mode=mode)
 
 
 def _verify_payload_signature(

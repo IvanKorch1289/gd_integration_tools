@@ -10,6 +10,7 @@ from typing import Any
 
 from src.backend.core.interfaces.vector_store import BaseVectorStore
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.connector_resilience import resilient
 
 __all__ = (
     "BaseVectorStore",
@@ -71,6 +72,7 @@ class QdrantVectorStore(BaseVectorStore):
         self._collection_ready = True
         return client
 
+    @resilient(name="qdrant_upsert", max_attempts=3)
     async def upsert(
         self,
         embeddings: list[list[float]],
@@ -231,7 +233,17 @@ class QdrantVectorStore(BaseVectorStore):
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            import time
+            start = time.monotonic()
+            ping = getattr(self, "ping", None)
+            if ping is None:
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            result = await ping() if asyncio.iscoroutinefunction(ping) else ping()
+            return {
+                "status": "ok" if result else "down",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                "error": None,
+            }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
 class ChromaVectorStore(BaseVectorStore):
@@ -263,6 +275,7 @@ class ChromaVectorStore(BaseVectorStore):
         logger.info("Chroma collection '%s' ready", self._collection_name)
         return self._collection
 
+    @resilient(name="qdrant_upsert", max_attempts=3)
     async def upsert(
         self,
         embeddings: list[list[float]],
@@ -380,7 +393,17 @@ class ChromaVectorStore(BaseVectorStore):
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            import time
+            start = time.monotonic()
+            ping = getattr(self, "ping", None)
+            if ping is None:
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            result = await ping() if asyncio.iscoroutinefunction(ping) else ping()
+            return {
+                "status": "ok" if result else "down",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                "error": None,
+            }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
 class FAISSVectorStore(BaseVectorStore):
@@ -402,6 +425,7 @@ class FAISSVectorStore(BaseVectorStore):
         self._index = faiss.IndexFlatL2(self._dimension)
         return self._index
 
+    @resilient(name="qdrant_upsert", max_attempts=3)
     async def upsert(
         self,
         embeddings: list[list[float]],
@@ -487,7 +511,17 @@ class FAISSVectorStore(BaseVectorStore):
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            import time
+            start = time.monotonic()
+            ping = getattr(self, "ping", None)
+            if ping is None:
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            result = await ping() if asyncio.iscoroutinefunction(ping) else ping()
+            return {
+                "status": "ok" if result else "down",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                "error": None,
+            }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
 def get_vector_store(backend: str | None = None, **kwargs: Any) -> BaseVectorStore:

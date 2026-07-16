@@ -22,6 +22,7 @@ Feature-flag: ``feature_flags.route_loader_hot_reload``
 from __future__ import annotations
 
 import asyncio
+import hashlib
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import Any
@@ -88,6 +89,9 @@ class RouteHotReloader:
         self._stop = asyncio.Event()
         # Per-route locks
         self._locks: dict[str, asyncio.Lock] = {}
+        # S178: content-hash cache для skip no-op reload
+        # (file changed event но содержимое идентично → не reload)
+        self._content_hashes: dict[str, str] = {}
 
     @property
     def enabled(self) -> bool:
@@ -171,12 +175,18 @@ class RouteHotReloader:
                     _logger.exception("hot_reloader.on_event_callback_raised")
 
     async def _do_reload(self, route_name: str) -> ReloadEvent:
-        """Реальная логика reload через loader."""
+        """Реальная логика reload через loader.
+
+        S178: skip no-op reload через content-hash cache — если
+        содержимое manifest не изменилось (touch event или editor
+        save без изменений), не делаем unload+load cycle.
+        """
         manifest_path = self._root / route_name / "route.toml"
         if not manifest_path.exists():
             # route был удалён — unload только
             try:
                 await self._unload_one(route_name)
+                self._content_hashes.pop(route_name, None)
                 return ReloadEvent(
                     route_name=route_name, change_kind="removed", success=True
                 )
@@ -191,9 +201,28 @@ class RouteHotReloader:
                     error=str(exc),
                 )
 
+        # S178: content-hash check (S179 code-review fix: hashlib на module level)
+        try:
+            content_hash = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        except OSError:
+            content_hash = None
+
+        if content_hash and self._content_hashes.get(route_name) == content_hash:
+            _logger.debug(
+                "hot_reloader.no_change_skipped",
+                extra={"route_name": route_name},
+            )
+            return ReloadEvent(
+                route_name=route_name,
+                change_kind="modified",
+                success=True,
+            )
+
         try:
             await self._unload_one(route_name)
             self._loader._load_one(manifest_path)
+            if content_hash:
+                self._content_hashes[route_name] = content_hash
             _logger.info(
                 "hot_reloader.route_reloaded", extra={"route_name": route_name}
             )

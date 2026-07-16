@@ -1,19 +1,13 @@
-"""Mem0 memory backend — implements MemoryProtocol (W10 GAP-AI, S35 W1).
+"""Mem0 memory backend — DEPRECATED (S202).
 
-Wraps ``mem0ai`` SDK as a :class:`MemoryProtocol` backend.
+S202: ``mem0ai`` SDK был REMOVED from pyproject.toml dependencies.
+This module is now dead code — ``Mem0MemoryAdapter`` will always
+fail-open (returns empty results) since the SDK cannot be imported.
 
-Namespace convention: ``"<tenant_id>:<scope>"`` → mem0ai ``user_id``.
-Example: ``"acme:credit_chat"`` → mem0ai ``user_id="acme:credit_chat"``
+Canonical replacement: ``UnifiedMemoryGateway`` (MongoDB + Postgres/Qdrant)
+in ``services/ai/memory_gateway.py``.
 
-Usage::
-
-    from src.backend.services.ai.memory.mem0_backend import Mem0MemoryAdapter
-
-    backend = Mem0MemoryAdapter()
-    await backend.store("acme:chat", "user_prefs", {"pref": "dark_mode"})
-    records = await backend.recall("acme:chat", "dark mode preferences", k=5)
-
-Feature-flag: ``feature_flags.mem0ai_enabled`` (default-OFF).
+This file will be removed in the next major version.
 """
 
 from __future__ import annotations

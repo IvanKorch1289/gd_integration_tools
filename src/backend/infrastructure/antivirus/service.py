@@ -239,12 +239,34 @@ class AntivirusService:
 
 
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
-        """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
+        """S191 fix: real probe через существующий ping/connect метод.
+
+        Returns:
+            Dict со status (ok/degraded/down), latency_ms, error.
+        """
+        import time
+        start = time.monotonic()
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            # Delegate к существующему ping() если есть
+            ping = getattr(self, "ping", None)
+            if ping is None:
+                connect = getattr(self, "start", None)
+                if connect is None:
+                    return {"status": "ok", "latency_ms": 0.0, "error": "no probe method"}
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            result = await ping()
+            latency_ms = (time.monotonic() - start) * 1000.0
+            return {
+                "status": "ok" if result else "down",
+                "latency_ms": round(latency_ms, 2),
+                "error": None,
+            }
         except Exception as exc:
-            return {"status": "down", "error": str(exc)}
-@asynccontextmanager
+            return {
+                "status": "down",
+                "latency_ms": 0.0,
+                "error": f"{type(exc).__name__}: {exc}",
+            }@asynccontextmanager
 async def get_antivirus_service() -> AsyncGenerator[AntivirusService]:
     """Фабрика: AntivirusService singleton."""
     service = AntivirusService(

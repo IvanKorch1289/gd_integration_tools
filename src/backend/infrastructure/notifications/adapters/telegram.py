@@ -33,6 +33,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("TelegramAdapter",)
 
@@ -122,19 +123,33 @@ class TelegramAdapter:
             message_id,
         )
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Проверка доступности Telegram интеграции."""
-        if self._bot_token_provider is not None:
-            try:
-                return bool(self._bot_token_provider())
-            except Exception as _:
-                return False
-        try:
-            from src.backend.core.config.telegram import telegram_bot_settings
+        import time
 
-            return bool(telegram_bot_settings.enabled and telegram_bot_settings.bot_id)
-        except Exception as _:
-            return False
+        start = time.perf_counter()
+        try:
+            if self._bot_token_provider is not None:
+                ok = bool(self._bot_token_provider())
+                source = "bot_token_provider"
+            else:
+                from src.backend.core.config.telegram import telegram_bot_settings
+
+                ok = bool(telegram_bot_settings.enabled and telegram_bot_settings.bot_id)
+                source = "telegram_bot_settings"
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            if ok:
+                return HealthResult.ok(latency_ms=latency_ms, mode=mode, source=source)
+            return HealthResult.failed(
+                error=f"Telegram not configured ({source})",
+                mode=mode,
+                latency_ms=latency_ms,
+            )
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
 
     def _build_config(self) -> Any:
         """Собирает ``TelegramBotConfig`` из callable-провайдера или settings."""

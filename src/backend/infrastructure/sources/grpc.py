@@ -19,6 +19,7 @@ from typing import Any
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 
 __all__ = ("GrpcSource",)
@@ -90,8 +91,10 @@ class GrpcSource:
         await graceful_cancel(self._task, source_id=self.source_id)
         self._task = None
 
-    async def health(self) -> bool:
-        return self._task is not None and not self._task.done()
+    async def health(self, mode: str = "fast") -> HealthResult:
+        if self._task is not None and not self._task.done():
+            return HealthResult.ok(latency_ms=0.0, mode=mode)
+        return HealthResult.failed(error="Not started", mode=mode)
 
     async def _run(self, on_event: EventCallback) -> None:
         import grpc

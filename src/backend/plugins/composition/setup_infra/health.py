@@ -155,6 +155,10 @@ async def _register_health_checks() -> None:
         aggregator.register("clickhouse", _clickhouse_health)
     aggregator.register("kafka", _kafka_health)
     aggregator.register("nats", _nats_health)
+
+    # Wave 1: auto-include all ConnectorRegistry clients in /health
+    aggregator.include_registry(True)
+
     app_logger.info(
         "Health checks registered: redis, database, s3, clickhouse, kafka, nats"
     )

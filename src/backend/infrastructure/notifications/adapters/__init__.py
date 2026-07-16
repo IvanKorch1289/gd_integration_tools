@@ -4,7 +4,7 @@
 
   * ``kind`` — string identifier канала ("email", "sms", ...).
   * ``async send(recipient, subject, body, metadata)`` — отправка.
-  * ``async health() -> bool`` — liveness-probe.
+  * ``async health(mode="fast") -> HealthResult`` — liveness-probe.
 
 Адаптеры инжектируются в NotificationGateway через `register_channel()`.
 

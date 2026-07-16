@@ -76,6 +76,50 @@ class StorageFacade:
             _logger.warning("StorageFacade upload failed key=%s: %s", key, exc)
             raise ServiceError(f"storage upload failed: {exc}") from exc
 
+    async def upload_stream(
+        self,
+        key: str,
+        data: Any,
+        *,
+        content_type: str | None = None,
+        multipart_threshold_bytes: int = 5 * 1024 * 1024,
+    ) -> str:
+        """Загрузить объект из async-stream или bytes (S176 fix).
+
+        Автоматически использует multipart upload для больших данных
+        (>5MB) чтобы не буферизовать всё в памяти. Для маленьких
+        файлов — обычный single-shot upload.
+
+        Args:
+            key: Ключ объекта.
+            data: bytes / str / async iterable (chunks of bytes).
+            content_type: MIME-type (опционально).
+            multipart_threshold_bytes: Порог для multipart upload (default 5MB).
+
+        Returns:
+            Полный ключ загруженного объекта.
+        """
+        self._assert_write(key)
+        try:
+            # Если есть async-stream API — используем напрямую
+            if hasattr(self._storage, "upload_stream"):
+                return await self._storage.upload_stream(
+                    key, data, content_type=content_type
+                )
+            # Fallback — bytes path (для backends без upload_stream)
+            if isinstance(data, str):
+                data = data.encode("utf-8")
+            if hasattr(data, "__aiter__"):
+                # Собрать async-stream в bytes (для backends без streaming)
+                chunks: list[bytes] = []
+                async for chunk in data:
+                    chunks.append(chunk if isinstance(chunk, bytes) else chunk.encode())
+                data = b"".join(chunks)
+            return await self._storage.upload(key, bytes(data), content_type=content_type)
+        except Exception as exc:
+            _logger.warning("StorageFacade upload_stream failed key=%s: %s", key, exc)
+            raise ServiceError(f"storage upload_stream failed: {exc}") from exc
+
     async def download(self, key: str) -> bytes:
         """Скачать объект."""
         self._assert_read(key)

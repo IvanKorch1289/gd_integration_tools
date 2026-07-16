@@ -9,11 +9,13 @@ API совместим с ``aiosmtplib >= 3.0``; для 5.x работает (т
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from email.message import EmailMessage
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("EmailSink",)
 
@@ -121,12 +123,13 @@ class EmailSink(Sink):
             msg.set_content(body)
         return msg
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Проверка доступности SMTP-сервера через ``EHLO``."""
         try:
             import aiosmtplib
         except ImportError:
-            return False
+            return HealthResult.failed(error="aiosmtplib not installed", mode=mode)
+        start = time.perf_counter()
         client = aiosmtplib.SMTP(
             hostname=self.host,
             port=self.port,
@@ -136,6 +139,10 @@ class EmailSink(Sink):
         try:
             await client.connect()
             await client.quit()
-        except Exception as _:
-            return False
-        return True
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
+        latency_ms = (time.perf_counter() - start) * 1000.0
+        return HealthResult.ok(latency_ms=latency_ms, mode=mode)

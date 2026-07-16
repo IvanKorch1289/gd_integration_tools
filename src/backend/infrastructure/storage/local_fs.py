@@ -28,6 +28,7 @@ import aiofiles
 import aiofiles.os
 
 from src.backend.core.interfaces.storage import ObjectStorage
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("LocalFSStorage",)
 
@@ -178,13 +179,28 @@ class LocalFSStorage(ObjectStorage):
         await aiofiles.os.replace(str(tmp), str(path))
         return str(path)
 
-    async def healthcheck(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Проверяет доступность base_path (readable + writable)."""
+        import time
+
+        start = time.perf_counter()
         try:
             if not self._base.exists():
-                return False
+                latency_ms = (time.perf_counter() - start) * 1000.0
+                return HealthResult.failed(
+                    error="base_path does not exist", mode=mode, latency_ms=latency_ms
+                )
             if not os.access(str(self._base), os.R_OK | os.W_OK):
-                return False
-            return True
-        except Exception:
-            return False
+                latency_ms = (time.perf_counter() - start) * 1000.0
+                return HealthResult.failed(
+                    error="base_path not readable/writable",
+                    mode=mode,
+                    latency_ms=latency_ms,
+                )
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.ok(latency_ms=latency_ms, mode=mode)
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )

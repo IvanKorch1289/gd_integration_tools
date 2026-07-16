@@ -150,8 +150,24 @@ class MemoryRecallProcessor(BaseAIProcessor):
 
     @staticmethod
     def _resolve_backend() -> Any | None:
-        """Lazy-резолв :class:`MemoryProtocol` backend через DI."""
-        return None
+        """Lazy-резолв :class:`MemoryProtocol` backend через DI (S202 fix).
+
+        S202: теперь пытается использовать UnifiedMemoryGateway вместо
+        постоянного возврата None (scaffold → silent no-op).
+        """
+        try:
+            from src.backend.services.ai.memory_gateway import (
+                UnifiedMemoryGateway,
+            )
+
+            return UnifiedMemoryGateway()
+        except Exception as exc:
+            _logger.warning(
+                "memory_recall._resolve_backend failed: %s — "
+                "recall returns empty list",
+                exc,
+            )
+            return None
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML."""

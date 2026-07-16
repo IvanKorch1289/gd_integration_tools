@@ -131,22 +131,12 @@ class KycAmlVerifyProcessor(_BankingAIProcessor):
     async def _check_capability(
         self, exchange: Exchange[Any], context: ExecutionContext
     ) -> bool:
-        """Verify ai.banking.kyc_aml capability."""
-        try:
-            from src.backend.core.security.capabilities import CapabilityGate
+        """Verify ai.banking.kyc_aml capability (S190 — unified facade pattern).
 
-            gate = CapabilityGate()
-            gate.check(self.capability, scope=None)
-            return True
-        except Exception as exc:
-            exchange.fail(f"capability_denied: {self.capability} - {exc}")
-            await emit_banking_audit(
-                event=f"{self.audit_event_prefix}.capability_denied",
-                processor=self.name,
-                params={},
-                error=str(exc),
-            )
-            return False
+        Мигрировано с inline gate.check() на CapabilityFacade.check_or_raise()
+        для unified capability semantics + plugin attribution.
+        """
+        return await self._check_capability_via_facade(exchange)
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
@@ -255,21 +245,12 @@ class AntiFraudScoreProcessor(_BankingAIProcessor):
     async def _check_capability(
         self, exchange: Exchange[Any], context: ExecutionContext
     ) -> bool:
-        try:
-            from src.backend.core.security.capabilities import CapabilityGate
+        """Verify capability (S190 — unified facade pattern).
 
-            gate = CapabilityGate()
-            gate.check(self.capability, scope=None)
-            return True
-        except Exception as exc:
-            exchange.fail(f"capability_denied: {self.capability} - {exc}")
-            await emit_banking_audit(
-                event=f"{self.audit_event_prefix}.capability_denied",
-                processor=self.name,
-                params={},
-                error=str(exc),
-            )
-            return False
+        Мигрировано с inline gate.check() на CapabilityFacade.check_or_raise()
+        для unified capability semantics + plugin attribution.
+        """
+        return await self._check_capability_via_facade(exchange)
 
     def to_spec(self) -> dict[str, Any] | None:
         """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""

@@ -26,6 +26,7 @@ from typing import Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = (
     "PG_CDC_CURSORS_DDL",
@@ -218,8 +219,10 @@ class CdcPostgresLogicalSource:
             await self._inner.stop()
             self._inner = None
 
-    async def health(self) -> bool:
-        return self._inner is not None and await self._inner.health()
+    async def health(self, mode: str = "fast") -> HealthResult:
+        if self._inner is None:
+            return HealthResult.failed(error="Not started", mode=mode)
+        return await self._inner.health(mode=mode)
 
     async def _emit_snapshot_marker(self, on_event: EventCallback) -> None:
         """В режиме ``full`` эмитим первое событие-маркер начала snapshot."""

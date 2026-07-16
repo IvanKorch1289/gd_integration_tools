@@ -124,7 +124,13 @@ class ToS3Processor(BaseProcessor):
             return
         try:
             storage = _get_storage_facade(context)
-            if self._is_async_stream(data):
+            # S176 fix: для bytes >5MB используем upload_stream с multipart
+            if isinstance(data, (bytes, bytearray)) and len(data) > 5 * 1024 * 1024:
+                # Large file — delegate to upload_stream (multipart upload)
+                full_key = await storage.upload_stream(
+                    key, iter([bytes(data)]), content_type=content_type
+                )
+            elif self._is_async_stream(data):
                 full_key = await storage.upload_stream(
                     key, data, content_type=content_type
                 )

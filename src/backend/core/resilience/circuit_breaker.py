@@ -107,18 +107,29 @@ class SlidingWindowBreaker:
 
     @property
     def state(self) -> str:
-        """Текущее состояние breaker'а."""
-        if self._state == "open":
-            # Проверяем recovery
-            assert self._open_since is not None
-            if time.monotonic() - self._open_since >= self._spec.recovery_timeout:
-                self._state = "half_open"
+        """Текущее состояние breaker'а (идемпотентно — без side-effects).
+
+        Code-review fix: property не должна мутировать состояние.
+        Используйте :meth:`_check_recovery` явно если нужна transition.
+        """
         return self._state
 
     @property
     def is_open(self) -> bool:
-        """Открыт ли breaker."""
-        return self.state == "open"
+        """Открыт ли breaker (с автоматической проверкой recovery)."""
+        self._check_recovery()
+        return self._state == "open"
+
+    def _check_recovery(self) -> None:
+        """Проверить и применить recovery transition: open → half_open.
+
+        Code-review fix: выделено из property ``state`` для соблюдения
+        idempotency contract. ``is_open`` и ``guard`` явно вызывают этот
+        метод перед чтением состояния.
+        """
+        if self._state == "open" and self._open_since is not None:
+            if time.monotonic() - self._open_since >= self._spec.recovery_timeout:
+                self._state = "half_open"
 
     def _record_failure(self) -> None:
         """Зарегистрировать failure; открыть breaker при превышении threshold в window."""
@@ -148,8 +159,8 @@ class SlidingWindowBreaker:
         Raises:
             CircuitOpen: Если breaker открыт.
         """
-        current_state = self.state
-        if current_state == "open":
+        self._check_recovery()
+        if self._state == "open":
             raise CircuitOpen(f"SlidingWindowBreaker '{self._name}' is open")
         try:
             yield
@@ -214,19 +225,20 @@ class ReplicaFailoverBreaker:
 
     @property
     def is_open(self) -> bool:
-        """Открыт ли breaker (с учётом recovery_timeout)."""
-        if self._state == "open" and self._opened_at is not None:
-            if time.monotonic() - self._opened_at >= self._spec.recovery_timeout:
-                self._state = "half_open"
+        """Открыт ли breaker (с автоматической проверкой recovery)."""
+        self._check_recovery()
         return self._state == "open"
 
     @property
     def state(self) -> str:
-        """Текущее состояние breaker'а."""
+        """Текущее состояние breaker'а (идемпотентно)."""
+        return self._state
+
+    def _check_recovery(self) -> None:
+        """Проверить и применить recovery: open → half_open (code-review fix)."""
         if self._state == "open" and self._opened_at is not None:
             if time.monotonic() - self._opened_at >= self._spec.recovery_timeout:
                 self._state = "half_open"
-        return self._state
 
 
 # ────────────────── Public re-exports (canonical names already exist) ──────

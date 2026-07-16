@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.dsl.codec.json import dumps_bytes
 
 __all__ = ("WebhookSink",)
@@ -125,19 +127,34 @@ class WebhookSink(Sink):
             details={"status_code": response.status_code, "signed": bool(self.secret)},
         )
 
-    async def health(self) -> bool:
-        """HEAD-запрос на webhook-URL; ``True`` если адрес отвечает."""
+    async def health(self, mode: str = "fast") -> HealthResult:
+        """HEAD-запрос на webhook-URL; ``ok`` если адрес отвечает."""
         try:
             import httpx
 
             from src.backend.core.net import OutboundHttpClient
         except ImportError:
-            return False
+            return HealthResult.failed(error="httpx not installed", mode=mode)
+        start = time.perf_counter()
         try:
             async with OutboundHttpClient(
                 timeout=httpx.Timeout(self.timeout)
             ) as client:
                 response = await client.request("HEAD", self.url)
-        except Exception as _:
-            return False
-        return response.status_code < 500
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            if response.status_code < 500:
+                return HealthResult.ok(
+                    latency_ms=latency_ms,
+                    mode=mode,
+                    status_code=response.status_code,
+                )
+            return HealthResult.failed(
+                error=f"HTTP {response.status_code}",
+                mode=mode,
+                latency_ms=latency_ms,
+            )
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )

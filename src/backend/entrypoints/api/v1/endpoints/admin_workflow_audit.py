@@ -75,27 +75,17 @@ class WorkflowAuditInventoryResponse(BaseModel):
 
 
 async def _get_clickhouse_client() -> Any:
-    """Создаёт async ClickHouse-клиент через ``clickhouse_connect``."""
-    from clickhouse_connect import get_async_client
+    """Получает singleton ClickHouse-клиент через DI (S176 fix).
 
-    from src.backend.core.config import settings
+    S176 fix: было inline ``clickhouse_connect.get_async_client()`` на каждый
+    вызов (bypass pool). Теперь singleton через :func:`get_admin_clickhouse_client` —
+    переиспользует HTTPX connection pool между requests.
+    """
+    from src.backend.infrastructure.clients.storage.clickhouse_admin_client import (
+        get_admin_clickhouse_client,
+    )
 
-    host = (
-        getattr(settings.clickhouse, "host", "localhost")
-        if hasattr(settings, "clickhouse")
-        else "localhost"
-    )
-    port = (
-        getattr(settings.clickhouse, "port", 8123)
-        if hasattr(settings, "clickhouse")
-        else 8123
-    )
-    database = (
-        getattr(settings.clickhouse, "database", "default")
-        if hasattr(settings, "clickhouse")
-        else "default"
-    )
-    return await get_async_client(host=host, port=port, database=database)
+    return await get_admin_clickhouse_client()
 
 
 @router.get(

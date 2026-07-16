@@ -70,7 +70,14 @@ class HttpRequestProcessor(BaseProcessor):
             else:
                 request_kwargs["content"] = str(self.body)
 
-        async with httpx.AsyncClient() as client:
+        # S195 fix: use make_http_client facade (WAF + capability gate)
+        # вместо raw httpx.AsyncClient. Eliminates inline HTTP bypass.
+        from src.backend.core.net.migration_helper import make_http_client
+
+        async with make_http_client(
+            timeout=self.timeout,
+            plugin="rpa.httprequestprocessor",
+        ) as client:
             response = await client.request(
                 self.method, self.url, **request_kwargs
             )

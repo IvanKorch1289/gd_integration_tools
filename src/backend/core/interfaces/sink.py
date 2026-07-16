@@ -9,7 +9,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+
+if TYPE_CHECKING:
+    from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("Sink", "SinkKind", "SinkResult")
 
@@ -86,6 +89,10 @@ class Sink(Protocol):
         """
         ...
 
-    async def health(self) -> bool:
-        """Быстрая проверка работоспособности (для health-aggregator)."""
+    async def health(self, mode: str = "fast") -> HealthResult:
+        """Health-проверка канала.
+
+        Args:
+            mode: ``"fast"`` (<100ms PING) или ``"deep"`` (<2s smoke-test).
+        """
         ...

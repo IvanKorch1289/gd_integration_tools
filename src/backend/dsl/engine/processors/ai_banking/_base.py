@@ -2,6 +2,9 @@
 
 Extracted from ``ai_banking.py`` god-file (828 LOC).
 Backward-compat: re-exported via ``ai_banking/__init__.py``.
+
+S190: добавлен helper ``_check_capability_via_facade`` для миграции
+inline ``gate.check()`` pattern → unified ``CapabilityFacade.check_or_raise``.
 """
 
 from __future__ import annotations
@@ -30,6 +33,53 @@ class _BankingAIProcessor(BaseProcessor):
     capability: str = "ai.banking.base"
     audit_event_prefix: str = "banking"
     COST_PER_1K_TOKENS: float = 0.02
+
+    async def _check_capability_via_facade(
+        self,
+        exchange: Exchange[Any],
+    ) -> bool:
+        """S190: unified capability check через CapabilityFacade.
+
+        Заменяет inline ``gate.check(self.capability, scope=None)`` pattern
+        в banking processors на единый facade call. Преимущества:
+        - Plugin attribution (audit logging знает кто вызвал)
+        - Scope binding (может быть tenant_id)
+        - Fail-closed semantics через CapabilityDeniedError
+        - Переиспользует ту же facade что extensions и DSL routes
+
+        Returns:
+            True если capability granted. На deny — exchange.fail()
+            с emit banking audit event.
+        """
+        try:
+            from src.backend.services.capabilities.facade import (
+                get_capability_facade,
+            )
+
+            get_capability_facade().check_or_raise(
+                plugin=f"dsl.engine.processors.ai_banking.{self.__class__.__name__}",
+                capability=self.capability,
+                scope=None,
+            )
+            return True
+        except Exception as exc:
+            from src.backend.core.security.capabilities import (
+                CapabilityDeniedError,
+            )
+
+            if isinstance(exc, CapabilityDeniedError):
+                exchange.fail(f"capability_denied: {self.capability}")
+                # CapabilityDeniedError emit audit, не нужно дубль
+                return False
+
+            # Other exception — log + fail
+            exchange.fail(f"capability_check_error: {self.capability} - {exc}")
+            _logger.warning(
+                "banking capability check failed: %s - %s",
+                self.capability,
+                exc,
+            )
+            return False
 
     async def _call_llm(
         self,

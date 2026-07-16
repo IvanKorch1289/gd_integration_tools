@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.security.signatures import (
     DEFAULT_TIMESTAMP_WINDOW,
     verify_signature,
@@ -88,8 +89,10 @@ class WebhookSource:
             self._on_event = None
         logger.info("WebhookSource stopped: id=%s", self.source_id)
 
-    async def health(self) -> bool:
-        return self._on_event is not None
+    async def health(self, mode: str = "fast") -> HealthResult:
+        if self._on_event is not None:
+            return HealthResult.ok(latency_ms=0.0, mode=mode)
+        return HealthResult.failed(error="Not started", mode=mode)
 
     # ──────────────── Public verify+dispatch (вызывается из FastAPI router) ─
 

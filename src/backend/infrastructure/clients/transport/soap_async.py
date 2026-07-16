@@ -85,12 +85,15 @@ class AsyncSoapClient:
         }
         if headers:
             hdr.update(headers)
-        # S168 W10 P1-7: явный connection pool limits
-        # (max_connections=50, max_keepalive_connections=20 — SOAP burst
-        # обычно ≤20 RPS; httpx default 100/20 перебор для per-call).
-        limits = httpx.Limits(max_connections=50, max_keepalive_connections=20)
-        async with httpx.AsyncClient(
-            http2=True, timeout=self.timeout, limits=limits
+        # S191 fix: use make_http_client facade (WAF + capability gate)
+        # вместо raw httpx.AsyncClient. Eliminates inline HTTP bypass.
+        from src.backend.core.net.migration_helper import make_http_client
+
+        async with make_http_client(
+            timeout=self.timeout,
+            plugin="transport.soap_async",
+            http2=True,
+            limits=httpx.Limits(max_connections=50, max_keepalive_connections=20),
         ) as client:
             resp = await client.post(
                 self.endpoint, content=envelope_xml.encode("utf-8"), headers=hdr

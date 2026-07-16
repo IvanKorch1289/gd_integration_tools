@@ -1,0 +1,175 @@
+"""PIIFacade — unified facade для PII operations (S183 I-2).
+
+Закрывает gap — ранее не было единого facade для PII masking/tokenization.
+Теперь extensions и DSL могут использовать единый entry-point:
+
+- :func:`mask_pii()` — irreversible PII masking (regex-based)
+- :func:`tokenize_pii()` / :func:`detokenize_pii()` — reversible tokenization (Presidio)
+- :func:`add_custom_pattern()` — register custom PII pattern
+- :func:`list_patterns()` — list active PII patterns
+
+
+Ponytail: thin wrapper, не дублирует логику.
+"""
+
+from __future__ import annotations
+
+import re
+from functools import lru_cache
+from typing import Any
+
+from src.backend.core.logging import get_logger
+
+__all__ = ("PIIFacade", "get_pii_facade")
+
+_logger = get_logger("services.pii.facade")
+
+
+class PIIFacade:
+    """Unified facade для PII masking/tokenization operations.
+
+    """
+
+    def __init__(self) -> None:
+        """Инициализация facade."""
+        self._masker: Any | None = None
+        self._tokenizer: Any | None = None
+
+    @property
+    def masker(self) -> Any:
+        if self._masker is None:
+            from src.backend.core.security.pii_masker import default_masker
+
+            self._masker = default_masker
+        return self._masker
+
+    @property
+    def tokenizer(self) -> Any:
+        """Lazy accessor для PIITokenizer (reversible)."""
+        if self._tokenizer is None:
+            from src.backend.core.security.pii_tokenizer import PIITokenizer
+
+            self._tokenizer = PIITokenizer()
+        return self._tokenizer
+
+    def mask(self, text: str) -> str:
+        """Irreversible PII masking (regex-based, S191 fix: audit emit).
+
+        Args:
+            text: Текст с PII (email, phone, INN, SNILS, card, etc.).
+
+        Returns:
+            Masked text: ``"Иван И.***"``, ``"i.***@example.com"``, etc.
+        """
+        try:
+            result = self.masker.mask(text)
+            self._emit_audit("pii.masked", text)
+            return result
+        except Exception as exc:
+            _logger.warning("PII mask failed: %s", exc)
+            return text
+
+    def mask_struct(self, obj: Any) -> Any:
+        """Рекурсивно mask PII в dict/list/str structures.
+
+        Args:
+            obj: Python object (dict, list, tuple, str).
+
+        Returns:
+            Same structure с masked strings.
+        """
+        try:
+            return self.masker.mask_struct(obj)
+        except Exception as exc:
+            _logger.warning("PII mask_struct failed: %s", exc)
+            return obj
+
+    def tokenize(self, text: str) -> str:
+        """Reversible PII tokenization (Presidio-based, S191 fix: audit emit).
+
+        Args:
+            text: Текст с PII.
+
+        Returns:
+            Tokenized text с placeholders ``<PII_TYPE_xxx>``.
+        """
+        try:
+            result = self.tokenizer.tokenize(text)
+            self._emit_audit("pii.tokenized", text)
+            return result
+        except Exception as exc:
+            _logger.warning("PII tokenize failed: %s", exc)
+            return text
+
+    def detokenize(self, text: str) -> str:
+        """Reversible PII detokenization (S191 fix: capability check + audit).
+
+        Consistency fix:
+        - ``SecurityFacade.detokenize_pii`` имеет capability check
+        - ``PIIFacade.detokenize`` теперь тоже проверяет capability
+        - Emit audit event для compliance tracking
+        """
+        self._assert("security.pii.detokenize", "text")
+        try:
+            result = self.tokenizer.detokenize(text)
+            self._emit_audit("pii.detokenized", text)
+            return result
+        except Exception as exc:
+            _logger.warning("PII detokenize failed: %s", exc)
+            return text
+
+    def _emit_audit(self, event: str, payload: str) -> None:
+        """S191 fix: emit PII audit event для compliance tracking."""
+        try:
+            from src.backend.core.observability.logging_helpers import (
+                log_audit_event_lite,
+            )
+
+            log_audit_event_lite(
+                _logger,
+                severity="warning",
+                event=event,
+                payload_size=len(payload),
+            )
+        except Exception as exc:
+            _logger.debug("PII audit emit failed: %s", exc)
+
+    def add_custom_pattern(
+        self,
+        name: str,
+        pattern: str,
+        replacement: str = "[REDACTED]",
+    ) -> None:
+        """Добавить custom PII pattern.
+
+        Args:
+            name: Pattern name (e.g., ``"card_pan"``).
+            pattern: Regex pattern.
+            replacement: Replacement string.
+        """
+        try:
+
+            if not hasattr(self.masker, "_patterns"):
+                _logger.warning("Cannot add custom pattern to %s", type(self.masker))
+                return
+
+            compiled = re.compile(pattern)
+            self.masker._patterns[name] = (compiled, replacement)
+            _logger.info("Custom PII pattern added: %s", name)
+        except Exception as exc:
+            _logger.warning("Failed to add custom pattern %s: %s", name, exc)
+
+    def list_patterns(self) -> list[str]:
+        """Список активных PII pattern names."""
+        try:
+            if hasattr(self.masker, "_patterns"):
+                return list(self.masker._patterns.keys())
+        except Exception:
+            pass
+        return []
+
+
+@lru_cache(maxsize=1)
+def get_pii_facade() -> PIIFacade:
+    """Lazy singleton глобального :class:`PIIFacade`."""
+    return PIIFacade()

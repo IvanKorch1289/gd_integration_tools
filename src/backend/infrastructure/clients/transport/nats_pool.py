@@ -25,6 +25,9 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.connector_resilience import resilient
+from src.backend.core.tenancy.quotas import QuotaTracker
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("NatsConnectionPool",)
 
@@ -57,6 +60,8 @@ class NatsConnectionPool:
         self._nc: Any | None = None
         self._started: bool = False
         self._lock = asyncio.Lock()
+        # S182: QuotaTracker для rate limiting per client
+        self._quota = QuotaTracker(prefix="nats")
 
     async def start(self) -> None:
         """Start the pool and establish persistent NATS connection."""
@@ -107,10 +112,27 @@ class NatsConnectionPool:
                 raise RuntimeError(f"NATS reconnect failed: {exc}") from exc
         yield self._nc
 
+    @resilient(name="nats_publish", max_attempts=3)
     async def publish(
         self, subject: str, data: bytes, headers: dict[str, str] | None = None
     ) -> Any:
-        """Publish to NATS JetStream via pooled connection."""
+        """Publish to NATS JetStream via pooled connection.
+
+        S182: rate-limited через QuotaTracker (2000 msg/min per client).
+        """
+        # S182: rate limit check
+        quota_result = await self._quota.consume(
+            tenant_id=self._name,
+            resource="publish",
+            units=1,
+            limit=2000,  # 2000 msg/min per client
+            period_seconds=60,
+        )
+        if not quota_result.get("allowed", True):
+            from src.backend.core.tenancy.quotas import QuotaExceeded
+            raise QuotaExceeded(
+                f"NATS publish rate limit exceeded for client {self._name}"
+            )
         if not self._started or self._nc is None:
             raise RuntimeError(f"NatsConnectionPool not started: {self._name}")
         if not self._nc.is_connected:
@@ -118,8 +140,10 @@ class NatsConnectionPool:
         js = self._nc.jetstream()
         return await js.publish(subject, data, headers=headers or None)
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Check if NATS connection is alive."""
         if self._nc is None:
-            return False
-        return self._nc.is_connected
+            return HealthResult.failed(error="NATS connection not initialized", mode=mode)
+        if not self._nc.is_connected:
+            return HealthResult.failed(error="NATS not connected", mode=mode)
+        return HealthResult.ok(latency_ms=0.0, mode=mode)

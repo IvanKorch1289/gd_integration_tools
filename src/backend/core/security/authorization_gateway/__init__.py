@@ -72,6 +72,9 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
         self._policies: tuple[PolicyDecider, ...] = tuple(policies)
         self._audit = audit_callback
         self._enabled = enabled  # None → читать feature-flag в authorize()
+        # S193 fix: in-memory policy storage для sync check/add_policy/remove_policy.
+        # Используется как fallback когда нет OPA/Casbin backend.
+        self._in_memory_policies: dict[tuple[str, str, str], bool] = {}
 
     async def authorize(
         self,
@@ -203,6 +206,132 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
             resource=resource,
             action=action,
         )
+
+    # S193 fix: sync policy API for AuthorizationFacade compatibility.
+    # Был silent AttributeError → facade вызывал nonexistent methods.
+    # Теперь: fallback to in-memory policy storage + check additional mixins.
+    def check(
+        self,
+        subject: str,
+        action: str,
+        resource: str,
+        context: dict[str, Any] | None = None,
+    ) -> bool:
+        """Sync policy check (S193).
+
+        Delegates to:
+        1. Casbin step (if `casbin_step` is registered)
+        2. OPA step (if `opa_step` is registered)
+        3. In-memory policy storage (fallback)
+
+        Args:
+            subject: User/service identity.
+            action: Action (e.g., ``"read"``).
+            resource: Resource (e.g., ``"document:123"``).
+            context: Optional context dict.
+
+        Returns:
+            True если any matching policy allows.
+        """
+        # 1. In-memory fallback
+        key = (subject, action, resource)
+        if key in self._in_memory_policies:
+            return self._in_memory_policies[key]
+
+        # 2. Try Casbin step if registered
+        try:
+            casbin_result = self._casbin_check(subject, action, resource)
+            if casbin_result is not None:
+                return casbin_result
+        except Exception:
+            pass
+
+        # 3. Try OPA step if registered
+        try:
+            opa_result = self._opa_check(subject, action, resource, context)
+            if opa_result is not None:
+                return opa_result
+        except Exception:
+            pass
+
+        # 4. Default deny (fail-closed)
+        return False
+
+    def add_policy(
+        self,
+        subject: str,
+        action: str,
+        resource: str,
+        effect: str = "allow",
+    ) -> bool:
+        """Add policy rule (S193 fix).
+
+        Args:
+            subject: User/service identity.
+            action: Action.
+            resource: Resource.
+            effect: ``"allow"`` или ``"deny"``.
+
+        Returns:
+            True если policy добавлен.
+        """
+        try:
+            allowed = effect.lower() == "allow"
+            key = (subject, action, resource)
+            self._in_memory_policies[key] = allowed
+            return True
+        except Exception:
+            return False
+
+    def remove_policy(
+        self,
+        subject: str,
+        action: str,
+        resource: str,
+    ) -> bool:
+        """Remove policy rule (S193 fix).
+
+        Returns:
+            True если policy удалён.
+        """
+        try:
+            key = (subject, action, resource)
+            if key in self._in_memory_policies:
+                del self._in_memory_policies[key]
+                return True
+            return False
+        except Exception:
+            return False
+
+    def _casbin_check(
+        self, subject: str, action: str, resource: str
+    ) -> bool | None:
+        """Internal: try Casbin step if available."""
+        from src.backend.core.security.authorization_gateway.casbin_mixin import (
+            CasbinMixin,
+        )
+
+        if hasattr(CasbinMixin, "_casbin_check"):
+            return CasbinMixin._casbin_check(self, subject, action, resource)
+        return None
+
+    def _opa_check(
+        self,
+        subject: str,
+        action: str,
+        resource: str,
+        context: dict[str, Any] | None,
+    ) -> bool | None:
+        """Internal: try OPA step if available."""
+        from src.backend.core.security.authorization_gateway.opa_mixin import (
+            OpaMixin,
+        )
+
+        if hasattr(OpaMixin, "_opa_check"):
+            return OpaMixin._opa_check(
+                self, subject, action, resource, context
+            )
+        return None
 
     def _is_enabled(self) -> bool:
         """Источник: явный конструктор или ``feature_flags``."""

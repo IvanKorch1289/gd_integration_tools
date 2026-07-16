@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.source import SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 if TYPE_CHECKING:
     pass
@@ -229,11 +230,13 @@ class NatsSource:
         self._running = False
         await self._close()
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Быстрая проверка: соединение с NATS установлено и открыто."""
         async with self._lock:
             nc = self._nc
-        return nc is not None and not getattr(nc, "is_closed", True)
+        if nc is not None and not getattr(nc, "is_closed", True):
+            return HealthResult.ok(latency_ms=0.0, mode=mode)
+        return HealthResult.failed(error="Not started", mode=mode)
 
     async def _close(self) -> None:
         """Закрывает NATS-соединение если открыто."""

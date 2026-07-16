@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 _logger = get_logger(__name__)
 
@@ -49,7 +50,10 @@ class EmailAdapter:
             html=self._html,
         )
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
+        import time
+
+        start = time.perf_counter()
         try:
             from src.backend.infrastructure.clients.transport.smtp import (
                 get_smtp_client,
@@ -58,9 +62,20 @@ class EmailAdapter:
             smtp = get_smtp_client()
             # SMTPClient обычно имеет свой check — используем его или просто
             # проверяем наличие pool-а.
-            return bool(smtp)
-        except Exception as _:
-            return False
+            if not smtp:
+                latency_ms = (time.perf_counter() - start) * 1000.0
+                return HealthResult.failed(
+                    error="SMTP client not available",
+                    mode=mode,
+                    latency_ms=latency_ms,
+                )
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.ok(latency_ms=latency_ms, mode=mode)
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
 
 
 # Не запускаем Protocol check здесь: EmailAdapter требует from_address.

@@ -15,10 +15,12 @@ singleton ``MqttHandler`` в Sink-слой).
 from __future__ import annotations
 
 import ssl
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.dsl.codec.json import dumps_bytes
 
 __all__ = ("MqttSink",)
@@ -133,12 +135,13 @@ class MqttSink(Sink):
             },
         )
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Health: connect к брокеру без публикации (CONNECT/DISCONNECT)."""
         try:
             import aiomqtt
         except ImportError:
-            return False
+            return HealthResult.failed(error="aiomqtt not installed", mode=mode)
+        start = time.perf_counter()
         try:
             async with aiomqtt.Client(
                 hostname=self.broker_host,
@@ -149,6 +152,11 @@ class MqttSink(Sink):
                 tls_context=self._build_tls_context(),
                 timeout=self.timeout,
             ):
-                return True
-        except Exception as _:
-            return False
+                pass
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
+        latency_ms = (time.perf_counter() - start) * 1000.0
+        return HealthResult.ok(latency_ms=latency_ms, mode=mode)

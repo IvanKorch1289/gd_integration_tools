@@ -2,6 +2,9 @@
 
 Provides capability-checked access to circuit breaker, rate limiter,
 bulkhead, and retry for extensions and DSL processors.
+
+S174: добавлены методы ``bulkhead()`` и ``with_retry()`` для полноты
+resilience-API. Раньше были только ``check_rate_limit()`` и ``get_breaker()``.
 """
 
 from __future__ import annotations
@@ -97,3 +100,106 @@ class ResilienceFacade:
                 error_type=type(exc).__name__,
             )
             raise ServiceError(f"Failed to get breaker: {exc}") from exc
+
+    def bulkhead(
+        self,
+        name: str,
+        *,
+        min_concurrent: int = 2,
+        max_concurrent: int = 50,
+        initial_concurrent: int = 10,
+    ) -> Any:
+        """Получить или создать :class:`AdaptiveBulkhead` по имени (S174).
+
+        Используется для ограничения concurrent-нагрузки на downstream.
+        Адаптивный bulkhead увеличивает max_concurrent при устойчивой
+        высокой нагрузке и уменьшает при низкой.
+
+        Args:
+            name: Имя bulkhead'а (например, ``"kafka_produce"``).
+            min_concurrent: Минимум concurrent слотов.
+            max_concurrent: Максимум concurrent слотов.
+            initial_concurrent: Стартовое значение.
+
+        Returns:
+            AdaptiveBulkhead instance.
+
+        Raises:
+            ServiceError: Если не удалось получить/создать bulkhead.
+        """
+        self._assert("resilience.bulkhead", name)
+        try:
+            from src.backend.core.resilience.backpressure.bulkhead import (
+                AdaptiveBulkhead,
+            )
+            from src.backend.core.resilience.bulkhead_registry import (
+                get_bulkhead_registry,
+            )
+
+            registry = get_bulkhead_registry()
+            existing = registry.get(name)
+            if existing is not None:
+                return existing
+
+            bulkhead = AdaptiveBulkhead(
+                min_concurrent=min_concurrent,
+                max_concurrent=max_concurrent,
+                initial_concurrent=initial_concurrent,
+            )
+            registry.register(name, bulkhead)
+            return bulkhead
+        except Exception as exc:
+            log_audit_event_lite(
+                _logger,
+                severity="warning",
+                event="resilience.bulkhead.get_failed",
+                message=f"Failed to get bulkhead {name}: {exc}",
+                bulkhead_name=name,
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
+            raise ServiceError(f"Failed to get bulkhead: {exc}") from exc
+
+    def with_retry(
+        self,
+        *,
+        max_attempts: int = 3,
+        initial_backoff: float = 0.5,
+        backoff_multiplier: float = 2.0,
+        retry_on: tuple[type[BaseException], ...] | None = None,
+    ) -> Any:
+        """Создать :func:`with_retry` decorator с capability check (S174).
+
+        Decorator wraps async function с retry logic. При capability
+        violation — возвращает identity decorator (no-op).
+
+        Args:
+            max_attempts: Максимум попыток.
+            initial_backoff: Стартовая задержка (сек).
+            backoff_multiplier: Множитель экспоненциального backoff.
+            retry_on: Tuple exception-классов для retry (default: Exception).
+
+        Returns:
+            ``with_retry`` decorator function.
+        """
+        self._assert("resilience.retry", "default")
+        try:
+            from src.backend.core.resilience import RetryPolicy, with_retry
+
+            policy = RetryPolicy(
+                max_attempts=max_attempts,
+                initial_backoff=initial_backoff,
+                backoff_multiplier=backoff_multiplier,
+                retry_on=retry_on or (Exception,),
+            )
+            return with_retry(policy)
+        except Exception as exc:
+            log_audit_event_lite(
+                _logger,
+                severity="warning",
+                event="resilience.retry.get_failed",
+                message=f"Failed to create retry policy: {exc}",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
+            raise ServiceError(f"Failed to create retry: {exc}") from exc

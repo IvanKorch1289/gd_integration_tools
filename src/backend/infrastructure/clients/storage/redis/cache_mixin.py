@@ -12,6 +12,13 @@ from src.backend.infrastructure.clients.storage.redis._protocol import (
 redis_logger = get_logger("redis")
 
 
+# S178 fix: batch limit для bulk_get/bulk_set (anti-misuse protection).
+# 1000 keys — достаточно для большинства use-cases, защищает pipeline от
+# blocking при случайном misuse (например, list comprehension с
+# неправильной размерностью).
+_MAX_BATCH_LIMIT: int = 1000
+
+
 RedisKind = Literal["cache", "queue", "limits"]
 
 
@@ -98,6 +105,10 @@ class CacheMixin(_RedisClientProtocol):
         с cluster-режимом (pipeline разносит команды по нодам). Для
         пустого ``keys`` возвращает пустой список без обращения к Redis.
 
+        S178 fix: добавлен batch limit (default 1000) для защиты от
+        случайного misuse — слишком большой батч блокирует pipeline
+        и может вызвать timeout у других Redis-клиентов.
+
         Args:
             keys: ключи для чтения.
 
@@ -105,9 +116,17 @@ class CacheMixin(_RedisClientProtocol):
             Список значений в исходном порядке; ``None`` для отсутствующих
             ключей.
 
+        Raises:
+            ValueError: если ``len(keys) > _MAX_BATCH_LIMIT``.
         """
         if not keys:
             return []
+
+        if len(keys) > _MAX_BATCH_LIMIT:
+            raise ValueError(
+                f"bulk_get: batch size {len(keys)} exceeds limit {_MAX_BATCH_LIMIT}. "
+                f"Split into multiple calls."
+            )
 
         async def op(conn: Redis) -> list[bytes | None]:
             async with conn.pipeline(transaction=False) as pipe:
@@ -126,13 +145,23 @@ class CacheMixin(_RedisClientProtocol):
         ``expire`` единым вызовом и быть совместимым с cluster-режимом
         (``MSET`` требует общего hash-tag для всех ключей).
 
+        S178 fix: добавлен batch limit (default 1000) — см. ``bulk_get``.
+
         Args:
             items: словарь ``{key: value}``.
             expire: единый TTL в секундах; ``None`` — без TTL.
 
+        Raises:
+            ValueError: если ``len(items) > _MAX_BATCH_LIMIT``.
         """
         if not items:
             return
+
+        if len(items) > _MAX_BATCH_LIMIT:
+            raise ValueError(
+                f"bulk_set: batch size {len(items)} exceeds limit {_MAX_BATCH_LIMIT}. "
+                f"Split into multiple calls."
+            )
 
         async def op(conn: Redis) -> None:
             async with conn.pipeline(transaction=False) as pipe:

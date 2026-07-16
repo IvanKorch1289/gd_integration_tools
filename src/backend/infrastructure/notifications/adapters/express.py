@@ -19,6 +19,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("ExpressAdapter",)
 
@@ -85,14 +86,28 @@ class ExpressAdapter:
             sync_id,
         )
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Проверка доступности Express интеграции."""
+        import time
+
+        start = time.perf_counter()
         try:
             from src.backend.core.config.express import express_settings
 
-            return bool(express_settings.enabled and express_settings.bot_id)
-        except Exception as _:
-            return False
+            ok = bool(express_settings.enabled and express_settings.bot_id)
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            if ok:
+                return HealthResult.ok(latency_ms=latency_ms, mode=mode)
+            return HealthResult.failed(
+                error="Express integration disabled or bot_id missing",
+                mode=mode,
+                latency_ms=latency_ms,
+            )
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
 
 
 # Compile-time проверка соответствия протоколу.

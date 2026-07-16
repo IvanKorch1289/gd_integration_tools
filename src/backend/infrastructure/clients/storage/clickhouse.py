@@ -22,6 +22,7 @@ from typing import Any
 
 from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.connector_resilience import resilient
 
 __all__ = ("ClickHouseClient", "get_clickhouse_client")
 
@@ -181,6 +182,7 @@ class ClickHouseClient:
         self._last_used_at = time.monotonic()
         return self._client
 
+    @resilient(name="clickhouse_execute", max_attempts=3)
     async def execute(self, query: str, params: dict[str, Any] | None = None) -> str:
         """Выполняет произвольный SQL-запрос с retry на transient errors."""
         from tenacity import (
@@ -206,6 +208,7 @@ class ClickHouseClient:
 
         return await _execute_with_retry()
 
+    @resilient(name="clickhouse_query", max_attempts=3)
     async def query(
         self, sql: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
@@ -277,10 +280,14 @@ class ClickHouseClient:
             path: путь до ``.sql`` файла (``str`` или ``pathlib.Path``).
                 Файл может содержать одно или несколько DDL-statement'ов
                 разделённых ``;``.
+
+        S176: sync ``Path.read_text`` обёрнут в ``asyncio.to_thread`` чтобы не
+        блокировать event loop при больших DDL-файлах (>100KB).
         """
+        import asyncio
         from pathlib import Path as _Path
 
-        text = _Path(str(path)).read_text(encoding="utf-8")
+        text = await asyncio.to_thread(_Path(str(path)).read_text, encoding="utf-8")
         # Разбиваем по `;` чтобы прогнать каждый statement отдельно.
         # Пустые сегменты пропускаются (хвостовая `;`, комментарии и т. п.).
         for stmt in text.split(";"):
@@ -304,7 +311,17 @@ class ClickHouseClient:
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            import time
+            start = time.monotonic()
+            ping = getattr(self, "ping", None)
+            if ping is None:
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            result = await ping() if asyncio.iscoroutinefunction(ping) else ping()
+            return {
+                "status": "ok" if result else "down",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                "error": None,
+            }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
 def _create_clickhouse_client() -> ClickHouseClient:

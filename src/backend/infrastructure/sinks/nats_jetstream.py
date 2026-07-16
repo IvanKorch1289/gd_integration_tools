@@ -10,6 +10,7 @@ cutover (Wave 3). Без установленной библиотеки ``publi
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -17,6 +18,7 @@ import orjson
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("NATSJetStreamSink",)
 
@@ -119,21 +121,26 @@ class NATSJetStreamSink(Sink):
 
         return await self.publish(self.default_subject, data)
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Health: подключение к NATS без публикации (CONNECT/DISCONNECT)."""
         try:
             import nats
         except ImportError:
-            return False
+            return HealthResult.failed(error="nats-py not installed", mode=mode)
+        start = time.perf_counter()
         nc = None
         try:
             nc = await nats.connect(self.nats_url)
-            return True
-        except Exception as _:
-            return False
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
         finally:
             if nc is not None:
                 try:
                     await nc.close()
                 except Exception as _hc_exc:
                     logger.debug("NATSJetStreamSink health close error: %s", _hc_exc)
+        latency_ms = (time.perf_counter() - start) * 1000.0
+        return HealthResult.ok(latency_ms=latency_ms, mode=mode)

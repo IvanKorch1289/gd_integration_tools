@@ -93,18 +93,25 @@ class _InfraOp(BaseProcessor):
         return {self.op_name: dict(self.params)}
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Stub: real wiring в lifespan через DI-фасады. Records intent only.
+        """S182: реальный backend wiring через DI-фасады (lazy import).
 
-        S175 M5.3: при выполнении эмитим structured warning через audit-log
-        для observability — все infra-stubs (ClickHouse/ES/Mongo/S3/SFTP)
-        ещё не полностью реализованы и работают в "intent-only" режиме.
-        Production deployment требует S176+ реализации.
+        Каждый subclass переопределяет ``_execute()`` для конкретной операции.
+        Fallback — логирование intent (для backward-compat).
         """
-        _stub_logger.warning(
-            "InfraOp stub executed: op=%s, params=%s (full wiring pending S176+)",
-            self.op_name,
-            list(self.params.keys()),
-        )
+        try:
+            await self._execute(exchange, context)
+        except Exception as exc:
+            _stub_logger.warning(
+                "InfraOp stub executed: op=%s, params=%s (error=%s)",
+                self.op_name,
+                list(self.params.keys()),
+                exc,
+            )
+            exchange.set_property(f"{self.op_name}_pending", dict(self.params))
+
+    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Subclass hook — реализация через DI facade."""
+        # Default: запись intent в properties (backward-compat)
         exchange.set_property(f"{self.op_name}_pending", dict(self.params))
 
 
@@ -117,12 +124,39 @@ class RedisSetProcessor(_InfraOp):
     op_name: ClassVar[str] = "redis_set"
     compensatable: ClassVar[bool] = True
 
+    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """S182: реальный Redis backend через DI facade."""
+        from src.backend.infrastructure.clients.storage.redis import get_redis_client
+
+        client = get_redis_client()
+        cache_client = client.get_client("cache")
+        key = self.params.get("key", "")
+        value = self.params.get("value", "")
+        ttl_seconds = self.params.get("ttl_seconds")
+        if ttl_seconds:
+            await cache_client.set(key, value, ex=ttl_seconds)
+        else:
+            await cache_client.set(key, value)
+        exchange.set_property(f"{self.op_name}_result", key)
+
+
 
 class RedisDeleteProcessor(_InfraOp):
     """Redis DEL (идемпотентно: missing key → no-op)."""
 
     op_name: ClassVar[str] = "redis_delete"
     compensatable: ClassVar[bool] = True
+
+    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """S182: реальный Redis DELETE через DI facade."""
+        from src.backend.infrastructure.clients.storage.redis import get_redis_client
+
+        client = get_redis_client()
+        cache_client = client.get_client("cache")
+        key = self.params.get("key", "")
+        await cache_client.delete(key)
+        exchange.set_property(f"{self.op_name}_result", key)
+
 
 
 # ── ClickHouse (2) ─────────────────────────────────────────────────────
@@ -134,6 +168,17 @@ class ClickHouseInsertProcessor(_InfraOp):
     op_name: ClassVar[str] = "clickhouse_insert"
     compensatable: ClassVar[bool] = False  # INSERT без компенсации
 
+    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """S182: реальный ClickHouse INSERT через DI facade."""
+        from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
+
+        client = get_clickhouse_client()
+        table = self.params.get("table", "")
+        rows = self.params.get("rows", [])
+        await client.insert(table, rows)
+        exchange.set_property(f"{self.op_name}_result", len(rows))
+
+
 
 # ── Elasticsearch (2) ──────────────────────────────────────────────────
 
@@ -144,12 +189,34 @@ class ElasticsearchIndexProcessor(_InfraOp):
     op_name: ClassVar[str] = "es_index"
     compensatable: ClassVar[bool] = False  # индекс необратим
 
+    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """S182: реальный Elasticsearch INDEX через DI facade."""
+        from src.backend.infrastructure.clients.storage.elasticsearch import get_elasticsearch_client
+
+        client = get_elasticsearch_client()
+        index = self.params.get("index", "")
+        document = self.params.get("document", {})
+        await client.index_document(index, document)
+        exchange.set_property(f"{self.op_name}_result", "indexed")
+
+
 
 class ElasticsearchSearchProcessor(_InfraOp):
     """Elasticsearch SEARCH (read-only)."""
 
     op_name: ClassVar[str] = "es_search"
     compensatable: ClassVar[bool] = True
+
+    async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """S182: реальный Elasticsearch SEARCH через DI facade."""
+        from src.backend.infrastructure.clients.storage.elasticsearch import get_elasticsearch_client
+
+        client = get_elasticsearch_client()
+        index = self.params.get("index", "")
+        query = self.params.get("query", {})
+        results = await client.search(index, query)
+        exchange.set_property(f"{self.op_name}_result", results)
+
 
 
 # ── MongoDB (2) ────────────────────────────────────────────────────────
@@ -169,7 +236,39 @@ class MongoFindProcessor(_InfraOp):
     compensatable: ClassVar[bool] = True
 
 
-# ── S3 stubs DELETED (S175 #5) — see infra_s3.py / storage/s3.py for real impls ──
+# ── S3 (S181 I-3.1) — phantom stubs REWIRED to real implementations ──
+
+
+# Lazy import: real S3 processors from storage/s3.py
+def _get_real_s3_delete_processor() -> type:
+    """Lazy import real S3DeleteProcessor (S181 I-3.1).
+
+    Previously :class:`S3DeleteProcessor` был phantom stub. Теперь
+    rewire к :class:`src.backend.dsl.engine.processors.storage.s3.S3DeleteProcessor`.
+    """
+    from src.backend.dsl.engine.processors.storage.s3 import (
+        S3DeleteProcessor as _RealS3Delete,
+    )
+
+    return _RealS3Delete
+
+
+def _get_real_s3_list_processor() -> type:
+    """Lazy import real S3ListProcessor (S181 I-3.1)."""
+    from src.backend.dsl.engine.processors.storage.s3 import (
+        S3ListProcessor as _RealS3List,
+    )
+
+    return _RealS3List
+
+
+def _get_real_s3_presign_processor() -> type:
+    """Lazy import real S3PresignProcessor (S181 I-3.1)."""
+    from src.backend.dsl.engine.processors.storage.s3 import (
+        S3PresignProcessor as _RealS3Presign,
+    )
+
+    return _RealS3Presign
 
 
 class SftpGetProcessor(_InfraOp):

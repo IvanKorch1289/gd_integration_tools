@@ -319,6 +319,19 @@ def _evaluate_strength(raw: str) -> StrengthReport:
     # Sequential chars detection.
     if raw and len(set(raw)) == 1:
         issues.append("all_same_character")
+    # S195 fix: detect sequential runs (e.g., "abcd", "1234") — common weak pattern
+    if raw and len(raw) >= 4:
+        # Check ascending/descending sequence in ASCII chars
+        is_sequential = all(
+            ord(raw[i + 1]) - ord(raw[i]) == 1
+            for i in range(min(4, len(raw) - 1))
+        )
+        is_reverse_seq = all(
+            ord(raw[i]) - ord(raw[i + 1]) == 1
+            for i in range(min(4, len(raw) - 1))
+        )
+        if is_sequential or is_reverse_seq:
+            issues.append("sequential_chars")
     # Rough entropy: log2(unique_chars) * length.
     unique = len(set(raw)) if raw else 0
     entropy_bits = (unique.bit_length() if unique else 0) * len(raw) if raw else 0.0

@@ -176,6 +176,21 @@ class PollCDCBackend(CDCSource):
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            import time
+            start = time.monotonic()
+            # Real probe: check is_running / is_open properties
+            running = getattr(self, "_running", None)
+            if running is False:
+                return {"status": "down", "latency_ms": 0.0, "error": "not running"}
+            # Try connect/ping if available
+            connect = getattr(self, "connect", None)
+            if connect is None:
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            await connect()
+            return {
+                "status": "ok",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                "error": None,
+            }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}

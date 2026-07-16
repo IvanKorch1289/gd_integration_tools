@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Literal
 from watchfiles import Change
 
 from src.backend.core.interfaces.source import EventCallback, SourceKind
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 if TYPE_CHECKING:
     pass
@@ -254,9 +255,11 @@ class FileWatcherSource:
                 pass
             self._watch_task = None
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Health check: always healthy if not crashed."""
-        return self._running
+        if self._running:
+            return HealthResult.ok(latency_ms=0.0, mode=mode)
+        return HealthResult.failed(error="Not running", mode=mode)
 
     async def stream(self) -> AsyncIterator[FileEvent]:
         """Асинхронный генератор событий файловой системы.

@@ -20,6 +20,9 @@ dependencies = [
     "python-multipart>=0.0.18",
     "sqladmin>=0.25.1,<1.0.0",  # SECURITY: DoS fix (vulnerable <= 0.25.0)
     "argon2-cffi>=23.1.0,<24.0.0",
+    # S183: cryptography for mTLS / x509 cert verification (core/auth/mtls_backend.py).
+    # Раньше был только в mypy.overrides — теперь primary dep.
+    "cryptography>=42.0.0,<46.0.0",
     "aiosmtplib>=3.0.2,<4.0.0",
     "sqlalchemy-utils>=0.41.2,<1.0.0",
     "passlib>=1.7.4,<2.0.0",  # S171: required by sqlalchemy_utils PasswordType in 20036813ff7c migration
@@ -68,6 +71,7 @@ dependencies = [
     "structlog>=24.4.0,<25.0.0",
     "redis>=5.0.0,<6.0.0",
     "aiomqtt>=2.0.0,<3.0.0",
+    "nats-py>=2.9.0,<3.0.0",  # NATS source/sink (infrastructure/sources/nats.py)
     "aioimaplib>=1.0.0,<2.0.0",
     "pyyaml>=6.0.2,<7.0.0",
     "grpc-interceptor>=0.15.4,<1.0.0",
@@ -138,6 +142,11 @@ security = [
     # K4 Sprint 55 W5: user-approved performance libraries.
     # rich: terminal UI (tables, progress bars, syntax highlighting).
     "rich>=14.0.0,<15.0.0",
+]
+db_drivers = [
+    "oracledb>=2.5.0,<3.0.0",     # Oracle (CDC, external_db)
+    "aioodbc>=5.0.0,<6.0.0",      # MSSQL
+    "aiomysql>=0.2.0,<1.0.0",     # MySQL
 ]
 # === K4 Sprint 24 W1 (ADR-NEW-16): Presidio + ru NER PII layer. ===
 # presidio-anonymizer — replace/redact/hash операторы для PII;

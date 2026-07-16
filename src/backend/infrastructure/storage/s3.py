@@ -40,6 +40,7 @@ from src.backend.core.config.services.storage import FileStorageSettings
 from src.backend.core.errors import ServiceError
 from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("S3ObjectStorage",)
 
@@ -472,12 +473,19 @@ class S3ObjectStorage(ObjectStorage):
 
     # ── health probe ─────────────────────────────────────────────────────
 
-    async def healthcheck(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Лёгкая проверка доступности bucket (для /healthz)."""
+        import time
+
+        start = time.perf_counter()
         try:
             async with self._open() as s3:
                 await s3.head_bucket(Bucket=self._bucket)
-            return True
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.ok(latency_ms=latency_ms, mode=mode)
         except (BotoCoreError, ClientError, OSError) as exc:
-            self.logger.warning("S3ObjectStorage.healthcheck failed: %s", exc)
-            return False
+            self.logger.warning("S3ObjectStorage.health failed: %s", exc)
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )

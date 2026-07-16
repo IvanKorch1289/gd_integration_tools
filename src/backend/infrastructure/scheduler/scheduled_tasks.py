@@ -9,20 +9,22 @@ scheduler_logger = get_logger("scheduler")
 
 async def check_all_services():
     """
-    Проверяет статус всех сервисов.
+    Проверяет статус всех сервисов через HealthAggregator.
     Если какой-либо сервис неактивен, отправляет уведомление по электронной почте через Redis Stream.
     """
-    from src.backend.infrastructure.monitoring.health_check import (
-        get_healthcheck_service,
+    from src.backend.infrastructure.application.health_aggregator import (
+        get_health_aggregator,
     )
 
     try:
         scheduler_logger.info("Запуск проверки состояния всех сервисов...")
 
-        async with get_healthcheck_service() as health_check:
-            result = await health_check.check_all_services()
+        aggregator = get_health_aggregator()
+        result = await aggregator.check_all(mode="fast")
 
-        if not result.get("is_all_services_active"):
+        is_all_active = result.get("status") == "ok"
+
+        if not is_all_active:
             from src.backend.infrastructure.clients.messaging.stream import (
                 get_stream_client,
             )

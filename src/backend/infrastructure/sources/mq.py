@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 if TYPE_CHECKING:
     pass
@@ -93,8 +94,10 @@ class MQSource:
                 self._broker = None
         logger.info("MQSource stopped: id=%s", self.source_id)
 
-    async def health(self) -> bool:
-        return self._broker is not None
+    async def health(self, mode: str = "fast") -> HealthResult:
+        if self._broker is not None:
+            return HealthResult.ok(latency_ms=0.0, mode=mode)
+        return HealthResult.failed(error="Not started", mode=mode)
 
     # ─────────────────── broker selection ───────────────────
 

@@ -132,26 +132,19 @@ async def get_workflow_cost_history(
     from datetime import datetime, timedelta
 
     try:
-        from clickhouse_connect import get_async_client
+        # S176 fix: singleton ClickHouse client через DI (вместо inline get_async_client)
+        from src.backend.infrastructure.clients.storage.clickhouse_admin_client import (
+            get_admin_clickhouse_client,
+        )
 
-        from src.backend.core.config import settings
-
-        host = (
-            getattr(settings.clickhouse, "host", "localhost")
-            if hasattr(settings, "clickhouse")
-            else "localhost"
-        )
-        port = (
-            getattr(settings.clickhouse, "port", 8123)
-            if hasattr(settings, "clickhouse")
-            else 8123
-        )
-        database = (
-            getattr(settings.clickhouse, "database", "default")
-            if hasattr(settings, "clickhouse")
-            else "default"
-        )
-        client = await get_async_client(host=host, port=port, database=database)
+        client = await get_admin_clickhouse_client()
+        if client is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="ClickHouse admin client unavailable",
+            )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

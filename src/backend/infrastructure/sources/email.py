@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Any
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.sources._lifecycle import graceful_cancel
 from src.backend.infrastructure.sources.email_utils import parse_email
 
@@ -157,9 +158,11 @@ class EmailSource:
         self._task = None
         logger.info("EmailSource stopped: id=%s", self.source_id)
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Health: задача жива и не упала."""
-        return self._task is not None and not self._task.done()
+        if self._task is not None and not self._task.done():
+            return HealthResult.ok(latency_ms=0.0, mode=mode)
+        return HealthResult.failed(error="Not started", mode=mode)
 
     # ──────────────── filter helpers ────────────────────────────────────
 

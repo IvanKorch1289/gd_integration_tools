@@ -25,6 +25,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("S3Sink",)
 
@@ -81,7 +82,7 @@ class S3Sink(Sink):
             },
         )
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Health: попытка lazy-импорта ``storage_client``.
 
         Полноценную проверку bucket'а делать дорого (HEAD bucket
@@ -93,8 +94,8 @@ class S3Sink(Sink):
                 storage_client,  # noqa: F401
             )
         except ImportError:
-            return False
-        return True
+            return HealthResult.failed(error="storage_client not available", mode=mode)
+        return HealthResult.ok(latency_ms=0.0, mode=mode)
 
 
 def _coerce_payload(payload: Any) -> bytes:

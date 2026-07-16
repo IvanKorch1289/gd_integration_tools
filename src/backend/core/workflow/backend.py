@@ -98,15 +98,11 @@ class WorkflowBackend(Protocol):
     async def cancel_workflow(self, *, handle: WorkflowHandle) -> None:
         ...
 
-    async def compensate_workflow(
-        self, *, handle: WorkflowHandle, request: "CompensateWorkflowRequest"
-    ) -> None:
-        """Saga compensation: signal workflow с COMPENSATE_SIGNAL.
-
-        Temporal не имеет native compensation — используется signal.
-        Worker должен зарегистрировать handler для COMPENSATE_SIGNAL.
-        """
-        ...
+    # S202 fix: compensate_workflow removed from Protocol.
+    # Был объявлен, но НИ ОДИН backend (Temporal/LiteTemporal/PgRunner/Fake)
+    # не реализовывал его. Saga compensation работает через COMPENSATE_SIGNAL
+    # в compensation.py → compile_saga_step → DSL compiler.
+    # Protocol method был unreachable dead contract (GAP-1 из аудита).
         """Отменить выполняющийся workflow."""
         ...
 

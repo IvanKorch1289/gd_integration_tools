@@ -194,6 +194,76 @@ def build_default_registry() -> MiddlewareRegistry:
     )
     # V7: глобальный defense-in-depth auth-guard.
     registry.register_builtin("auth_required", AuthRequiredMiddleware, order=620)
+    # S183: AI tool whitelist enforcement (S-3 fix — Master Prompt §3.3).
+    # Layer 3 — после auth, до DSL execution.
+    from src.backend.entrypoints.middlewares.ai_tool_whitelist import (
+        AIToolWhitelistMiddleware,
+    )
+
+    registry.register_builtin(
+        "ai_tool_whitelist",
+        AIToolWhitelistMiddleware,
+        {"enabled": settings.feature_flags.ai_agent_dsl_enabled},
+        order=640,
+    )
+    # S183: WebSocket rate limit (registered after auth, Layer 3).
+    from src.backend.entrypoints.middlewares.ws_rate_limit import (
+        WebSocketRateLimitMiddleware,
+    )
+
+    registry.register_builtin(
+        "ws_rate_limit",
+        WebSocketRateLimitMiddleware,
+        order=660,
+    )
+    # S183: Webhook signature verification (Layer 3, before auth).
+    from src.backend.entrypoints.middlewares.webhook_signature import (
+        WebhookSignatureMiddleware,
+    )
+
+    registry.register_builtin(
+        "webhook_signature",
+        WebhookSignatureMiddleware,
+        order=680,
+    )
+    # S183: PII masking in response (Layer 3, after auth).
+    from src.backend.entrypoints.middlewares.pii_masking_response import (
+        PIIMaskingResponseMiddleware,
+    )
+
+    registry.register_builtin(
+        "pii_masking_response",
+        PIIMaskingResponseMiddleware,
+        order=700,
+    )
+    # S183: RPA policy deny-by-default (Layer 3, after auth).
+    # Per Master Prompt §3.3: обязателен для банковской шины.
+    from src.backend.entrypoints.middlewares.rpa_policy import (
+        RpaPolicyMiddleware,
+    )
+
+    registry.register_builtin(
+        "rpa_policy",
+        RpaPolicyMiddleware,
+        order=720,
+    )
+    # S184: CSRF protection для cookie-based auth (Layer 3, after auth).
+    # Double-Submit Cookie pattern для state-changing methods.
+    from src.backend.entrypoints.middlewares.csrf import (
+        CSRFMiddleware,
+    )
+
+    registry.register_builtin(
+        "csrf",
+        CSRFMiddleware,
+        {
+            "enabled": settings.secure.csrf_enabled
+            if hasattr(settings.secure, "csrf_enabled")
+            else True,
+            "safe_paths": ("/api/v1/webhook/", "/api/v1/auth/login"),
+        },
+        order=740,
+    )
 
     # Layer 4: logging / metrics (750-999) --------------------------------- #
     registry.register_builtin("audit_log", AuditLogMiddleware, order=760)

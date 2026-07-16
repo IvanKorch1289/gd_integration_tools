@@ -1,10 +1,12 @@
 """Async Elasticsearch client — index, search, aggregate, bulk."""
 
+import asyncio
 from __future__ import annotations
 
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.connector_resilience import resilient
 
 __all__ = ("ElasticSearchClient", "get_elasticsearch_client")
 
@@ -83,6 +85,7 @@ class ElasticSearchClient:
             await self.connect()
         return self._client
 
+    @resilient(name="elasticsearch_index", max_attempts=3)
     async def index_document(
         self, index: str, document: dict[str, Any], doc_id: str | None = None
     ) -> dict[str, Any]:
@@ -113,6 +116,7 @@ class ElasticSearchClient:
         logger.info("Bulk indexed %d documents into %s", success, prefixed)
         return {"indexed": success, "errors": errors}
 
+    @resilient(name="elasticsearch_search", max_attempts=3)
     async def search(
         self,
         index: str,
@@ -245,7 +249,17 @@ class ElasticSearchClient:
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            import time
+            start = time.monotonic()
+            ping = getattr(self, "ping", None)
+            if ping is None:
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            result = await ping() if asyncio.iscoroutinefunction(ping) else ping()
+            return {
+                "status": "ok" if result else "down",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                "error": None,
+            }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
 _es_client: ElasticSearchClient | None = None

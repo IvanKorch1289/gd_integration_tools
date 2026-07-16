@@ -17,6 +17,7 @@ DSL entry-point ``RouteBuilder.from_mongo(...)`` создаёт экземпля
 from __future__ import annotations
 
 import asyncio
+import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -24,6 +25,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.source import SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 if TYPE_CHECKING:
     pass
@@ -320,18 +322,23 @@ class MongoSource:
         self._running = False
         await self._close()
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Быстрая проверка: client подключён (ping) или ещё ни разу не было connect."""
         async with self._lock:
             client = self._client
         if client is None:
-            return False
+            return HealthResult.failed(error="Not connected", mode=mode)
+        start = time.perf_counter()
         try:
             # motor: client.admin.command("ping") — async-ping без полного query
             await client.admin.command("ping")  # type: ignore[attr-defined]
-        except Exception:
-            return False
-        return True
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.ok(latency_ms=latency_ms, mode=mode)
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
 
     async def _close(self) -> None:
         """Закрывает Mongo client если открыт."""

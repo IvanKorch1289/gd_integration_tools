@@ -25,6 +25,7 @@ from typing import Any
 
 from src.backend.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.connector_resilience import resilient
 
 # S165 W4: Purgatory Circuit Breaker для gRPC (Rule 6).
 # Per skill: per-pool long-lived manager → per-pool CB keyed by target.

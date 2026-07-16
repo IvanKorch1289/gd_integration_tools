@@ -18,7 +18,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 __all__ = (
     "EmbeddingProcessor",
     "OnnxInferenceProcessor",
-    "OutboxProcessor",
+    "OutboxTransactionProcessor",
     "StreamingLLMProcessor",
 )
 
@@ -301,7 +301,7 @@ class EmbeddingProcessor(BaseProcessor):
             return resp.json()["embedding"]
 
 
-class OutboxProcessor(BaseProcessor):
+class OutboxTransactionProcessor(BaseProcessor):
     """Transactional Outbox pattern — guaranteed delivery.
 
     Записывает сообщение в outbox-таблицу БД в той же транзакции,

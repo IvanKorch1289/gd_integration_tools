@@ -7,6 +7,7 @@ Wave 21.3c. Используется в dev_light, где Vault недоступ
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 from pathlib import Path
@@ -57,7 +58,7 @@ class EnvSecretsBackend(SecretsBackend):
         """
         self._cache[key] = value
         os.environ[key] = value
-        self._flush()
+        await self._async_flush()
 
     async def delete_secret(self, key: str) -> bool:
         """Delete secret from environment and cache.
@@ -71,7 +72,7 @@ class EnvSecretsBackend(SecretsBackend):
         existed = key in self._cache or key in os.environ
         self._cache.pop(key, None)
         os.environ.pop(key, None)
-        self._flush()
+        await self._async_flush()
         return existed
 
     async def list_keys(self, prefix: str | None = None) -> list[str]:
@@ -88,8 +89,21 @@ class EnvSecretsBackend(SecretsBackend):
             keys = {k for k in keys if k.startswith(prefix)}
         return sorted(keys)
 
+    async def _async_flush(self) -> None:
+        """Async-обёртка для sync ``_flush`` через ``asyncio.to_thread``.
+
+        S176 fix: sync ``mkdir`` + ``write_text`` блокировали event loop
+        при большом cache (>100 secrets). Теперь offloaded в thread pool.
+        """
+        await asyncio.to_thread(self._flush)
+
     def _flush(self) -> None:
-        """Сохраняет cache в JSON, если задан ``persistence_path``."""
+        """Сохраняет cache в JSON, если задан ``persistence_path``.
+
+        S176: вызывается только из ``_async_flush`` через ``asyncio.to_thread``
+        или напрямую из sync-context (init/teardown). Не вызывайте напрямую
+        из async-методов — используйте ``await self._async_flush()``.
+        """
         if self._path is None:
             return
         try:

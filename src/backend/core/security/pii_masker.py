@@ -66,6 +66,24 @@ _IBAN = re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b")
 # SSN (US Social Security Number) — 3-2-4 через дефис (M2.1).
 _SSN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 
+# S191 fix: дополнительные patterns для критичных PII в банковской шине.
+# Russian surnames (с заглавной буквы + окончания): Иванов, Петрова, Сидоров.
+_RU_SURNAMES = re.compile(
+    r"\b[А-ЯЁ][а-яё]+(ов|ова|ев|ева|ин|ина|ский|ская)\b"
+)
+# Russian given names (отчество): Иванович, Петровна.
+_RU_PATRONYMICS = re.compile(r"\b[А-ЯЁ][а-яё]+вич|вна\b")
+# БИК (Банковский идентификационный код) — 9 цифр, начинается с 04 (РФ) или 03 (Беларусь).
+_BIK = re.compile(r"\b(04|03)\d{7}\b")
+# ОГРН — 13 цифр (юр.лица) или ОГРНИП — 15 цифр (ИП).
+_OGRN = re.compile(r"\b\d{13}\b|\b\d{15}\b")
+# OpenAI API keys — sk-... или sk-proj-...
+_OPENAI_KEY = re.compile(r"\bsk-[A-Za-z0-9\-_]{20,}\b")
+# GitHub Personal Access Tokens — ghp_...
+_GITHUB_PAT = re.compile(r"\bghp_[A-Za-z0-9]{30,}\b")
+# AWS Access Key ID — AKIA...
+_AWS_ACCESS_KEY = re.compile(r"\bAKIA[0-9A-Z]{16}\b")
+
 
 # Порядок применения. Specific-first: разделительные форматы и токены до
 # сплошных цифровых последовательностей. См. docstring модуля.
@@ -79,6 +97,14 @@ _DEFAULT_ORDER: tuple[str, ...] = (
     "email",
     "inn",
     "phone",
+    # S191: дополнительные patterns для banking
+    "ru_surnames",
+    "ru_patronymics",
+    "bik",
+    "ogrn",
+    "openai_key",
+    "github_pat",
+    "aws_access_key",
 )
 
 
@@ -99,6 +125,14 @@ def build_default_patterns() -> dict[str, re.Pattern[str]]:
         "email": _EMAIL,
         "inn": _INN,
         "phone": _PHONE,
+        # S191: дополнительные banking patterns
+        "ru_surnames": _RU_SURNAMES,
+        "ru_patronymics": _RU_PATRONYMICS,
+        "bik": _BIK,
+        "ogrn": _OGRN,
+        "openai_key": _OPENAI_KEY,
+        "github_pat": _GITHUB_PAT,
+        "aws_access_key": _AWS_ACCESS_KEY,
     }
 
 

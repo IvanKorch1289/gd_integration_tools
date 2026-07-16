@@ -72,6 +72,16 @@ class UnifiedPoolManager:
         self._pools: dict[str, PoolRegistration] = {}
         self._started: bool = False
 
+    @property
+    def is_started(self) -> bool:
+        """S181: public read-only accessor для ``start_monitors()`` lifecycle.
+
+        Используется в ``lifecycle.py:_start_pool_monitors()`` для guard
+        от повторного запуска мониторов. Раньше код ссылался на этот
+        атрибут напрямую, но только ``_started`` существовало — bug.
+        """
+        return self._started
+
     # ------------------------------------------------------------------
     # Регистрация
     # ------------------------------------------------------------------

@@ -12,10 +12,12 @@ default; здесь используется только `Broker.publish(...)`,
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.dsl.codec.json import dumps_str
 
 __all__ = ("MqSink",)
@@ -70,17 +72,24 @@ class MqSink(Sink):
 
         return SinkResult(ok=True, details={"broker": self.broker, "topic": self.topic})
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Health: connect/close без публикации."""
         broker = await self._build_broker()
         if broker is None:
-            return False
+            return HealthResult.failed(
+                error=f"faststream/{self.broker} not installed", mode=mode
+            )
+        start = time.perf_counter()
         try:
             await broker.connect()
             await broker.close()
-        except Exception as _:
-            return False
-        return True
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
+        latency_ms = (time.perf_counter() - start) * 1000.0
+        return HealthResult.ok(latency_ms=latency_ms, mode=mode)
 
     async def _build_broker(self) -> Any:
         """Lazy-конструирование FastStream-broker по типу."""

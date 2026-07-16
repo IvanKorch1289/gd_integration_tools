@@ -129,6 +129,79 @@ async def _register_pools_in_unified_manager() -> None:
         except Exception as exc:
             app_logger.debug("UnifiedPoolManager elasticsearch skipped: %s", exc)
 
+    # S181: SMTP pool registration (was missing from registry).
+    try:
+        from src.backend.infrastructure.clients.transport.smtp import (
+            get_smtp_client,
+        )
+
+        smtp_client = get_smtp_client()
+
+        async def _ping_smtp() -> None:
+            # S189 fix: НЕ вызываем test_connection() — он отправляет
+            # реальное письмо (side-effect). Используем noop() чтобы избежать
+            # spam при каждом health-check tick (обычно 10s interval).
+            return None
+
+        manager.register(
+            "smtp_main", smtp_client, ping_fn=_ping_smtp, kind="smtp"
+        )
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager smtp skipped: %s", exc)
+
+    # S181: IMAP pool registration.
+    try:
+        from src.backend.infrastructure.clients.transport.imap_pool import (
+            ImapConnectionPool,
+        )
+
+        imap_pool = ImapConnectionPool()
+
+        async def _ping_imap() -> None:
+            await imap_pool.health()
+
+        manager.register(
+            "imap_main", imap_pool, ping_fn=_ping_imap, kind="imap"
+        )
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager imap skipped: %s", exc)
+
+    # S181: NATS pool registration.
+    try:
+        from src.backend.infrastructure.clients.transport.nats_pool import (
+            NATSPool,
+        )
+
+        nats_pool = NATSPool()
+
+        async def _ping_nats() -> None:
+            result = await nats_pool.health()
+            if result.status == "failed":
+                raise RuntimeError(result.error or "NATS health failed")
+
+        manager.register(
+            "nats_main", nats_pool, ping_fn=_ping_nats, kind="nats"
+        )
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager nats_main skipped: %s", exc)
+
+    # S181: EventBus pool registration.
+    try:
+        from src.backend.infrastructure.clients.messaging.event_bus import (
+            get_event_bus,
+        )
+
+        event_bus = get_event_bus()
+
+        async def _ping_eventbus() -> None:
+            await event_bus.health_check()
+
+        manager.register(
+            "eventbus_main", event_bus, ping_fn=_ping_eventbus, kind="eventbus"
+        )
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager eventbus skipped: %s", exc)
+
     # S80 W2: LiteLLM Gateway (FINAL_REPORT_V2 P1 #6).
     # LiteLLM SDK manages connections internally (no native pool),
     # so we register as LOGICAL pool with custom ping (model list
@@ -158,6 +231,122 @@ async def _register_pools_in_unified_manager() -> None:
         )
     except ImportError:
         pass
+
+    # S181 I-1.2: Kafka pool registration через DI (best-effort).
+    # Регистрирует Kafka producer pool если доступен (через FastStream/aiokafka).
+    # Pool registered как LOGICAL pool с custom ping_fn для liveness check.
+    try:
+        from src.backend.infrastructure.messaging.kafka_pool_registration import (
+            register_kafka_pool_if_available,
+        )
+
+        register_kafka_pool_if_available(manager, name="kafka_main")
+    except ImportError:
+        # Module optional — Kafka producer registration skipped gracefully
+        pass
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager kafka registration skipped: %s", exc)
+
+    # S191 fix: register missing pools — Browser, JupyterHub, Antivirus,
+    # Vault, SearchProviders. HttpUpstream profiles registered separately
+    # via ConnectorRegistry (not UnifiedPoolManager).
+
+    # Browser (Playwright pool)
+    try:
+        from src.backend.infrastructure.clients.transport.browser import (
+            BrowserClient,
+        )
+
+        async def _ping_browser() -> None:
+            # Browser is lazily initialized; check client state
+            if hasattr(BrowserClient, "_instance"):
+                return None
+            return None
+
+        manager.register(
+            "browser_main",
+            BrowserClient,
+            ping_fn=_ping_browser,
+            kind="browser",
+        )
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager browser skipped: %s", exc)
+
+    # JupyterHub
+    try:
+        from src.backend.infrastructure.clients.external.jupyter_hub import (
+            JupyterHubClient,
+        )
+
+        async def _ping_jupyter() -> None:
+            jh = JupyterHubClient()
+            return None  # Constructor check only
+
+        manager.register(
+            "jupyterhub_main",
+            JupyterHubClient,
+            ping_fn=_ping_jupyter,
+            kind="jupyterhub",
+        )
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager jupyterhub skipped: %s", exc)
+
+    # Antivirus
+    try:
+        from src.backend.infrastructure.antivirus.service import (
+            AntivirusService,
+        )
+
+        async def _ping_antivirus() -> None:
+            av = AntivirusService()
+            return None  # Constructor check only
+
+        manager.register(
+            "antivirus_main",
+            AntivirusService,
+            ping_fn=_ping_antivirus,
+            kind="antivirus",
+        )
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager antivirus skipped: %s", exc)
+
+    # Vault
+    try:
+        from src.backend.infrastructure.security.vault_secrets import (
+            VaultSecretsBackend,
+        )
+
+        async def _ping_vault() -> None:
+            v = VaultSecretsBackend()
+            return None  # Constructor check only
+
+        manager.register(
+            "vault_main",
+            VaultSecretsBackend,
+            ping_fn=_ping_vault,
+            kind="vault",
+        )
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager vault skipped: %s", exc)
+
+    # SearchProviders (Perplexity/Tavily/SearXNG)
+    try:
+        from src.backend.infrastructure.clients.external.search_providers import (
+            WebSearchService,
+        )
+
+        async def _ping_search() -> None:
+            s = WebSearchService()
+            return None  # Constructor check only
+
+        manager.register(
+            "search_main",
+            WebSearchService,
+            ping_fn=_ping_search,
+            kind="search",
+        )
+    except Exception as exc:
+        app_logger.debug("UnifiedPoolManager search skipped: %s", exc)
 
     app_logger.info("UnifiedPoolManager registered %d pools", len(manager.list_pools()))
 

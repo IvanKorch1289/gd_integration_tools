@@ -1,10 +1,12 @@
 """Async MongoDB client через motor."""
 
+import asyncio
 from __future__ import annotations
 
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.connector_resilience import resilient
 
 __all__ = ("MongoDBClient", "get_mongo_client")
 
@@ -15,6 +17,8 @@ class MongoDBClient:
     """Асинхронный MongoDB клиент через motor.
 
     Implements ManagedResource pattern (start/stop + health check).
+    S181: добавлен Circuit Breaker + Retry через :func:`resilient` decorator
+    для критических операций (find, insert, update, delete).
     """
 
     def __init__(
@@ -23,7 +27,12 @@ class MongoDBClient:
         database: str = "gd_integration",
         max_pool_size: int = 50,
         min_pool_size: int = 5,
+        tls_enabled: bool = False,
+        tls_ca_file: str | None = None,
     ) -> None:
+        # S182: TLS/SSL support (security hardening для банковской шины)
+        self._tls_enabled = tls_enabled
+        self._tls_ca_file = tls_ca_file
         self._url = connection_url
         self._database_name = database
         self._max_pool = max_pool_size
@@ -35,9 +44,22 @@ class MongoDBClient:
         """Start the MongoDB client and create connection pool."""
         from motor.motor_asyncio import AsyncIOMotorClient
 
-        self._client = AsyncIOMotorClient(
-            self._url, maxPoolSize=self._max_pool, minPoolSize=self._min_pool
-        )
+        # S182: TLS configuration
+        tls_options: dict[str, Any] | None = None
+        if self._tls_enabled:
+            tls_options = {"tls": True}
+            if self._tls_ca_file:
+                tls_options["tlsCAFile"] = self._tls_ca_file
+        # S189 fix: AsyncIOMotorClient takes URL as positional + kwargs.
+        # Previous code had `dict(self._url, ...)` which crashes because
+        # dict() interprets string as iterable of chars.
+        client_kwargs: dict[str, Any] = {
+            "maxPoolSize": self._max_pool,
+            "minPoolSize": self._min_pool,
+        }
+        if tls_options:
+            client_kwargs.update(tls_options)
+        self._client = AsyncIOMotorClient(self._url, **client_kwargs)
         self._db = self._client[self._database_name]
         await self._client.admin.command("ping")
         logger.info("MongoDB connected: %s/%s", self._url, self._database_name)
@@ -75,6 +97,7 @@ class MongoDBClient:
         """
         return self.db[name]
 
+    @resilient(name="mongodb_find", max_attempts=3)
     async def find(
         self,
         collection: str,
@@ -96,6 +119,9 @@ class MongoDBClient:
 
         Returns:
             List of matching documents.
+
+        Note:
+            S181: Circuit Breaker "mongodb_find" + 3 retry attempts.
         """
         cursor = self.db[collection].find(query or {}, projection)
         if sort:
@@ -103,6 +129,7 @@ class MongoDBClient:
         cursor = cursor.skip(skip).limit(limit)
         return [doc async for doc in cursor]
 
+    @resilient(name="mongodb_find_one", max_attempts=3)
     async def find_one(
         self, collection: str, query: dict[str, Any]
     ) -> dict[str, Any] | None:
@@ -117,6 +144,7 @@ class MongoDBClient:
         """
         return await self.db[collection].find_one(query)
 
+    @resilient(name="mongodb_insert", max_attempts=3)
     async def insert_one(self, collection: str, document: dict[str, Any]) -> str:
         """Insert single document.
 
@@ -130,20 +158,91 @@ class MongoDBClient:
         result = await self.db[collection].insert_one(document)
         return str(result.inserted_id)
 
+    @resilient(name="mongodb_insert_many", max_attempts=3)
     async def insert_many(
-        self, collection: str, documents: list[dict[str, Any]]
+        self,
+        collection: str,
+        documents: list[dict[str, Any]],
+        *,
+        ordered: bool = True,
+        batch_size: int = 1000,
     ) -> list[str]:
-        """Insert multiple documents.
+        """Insert multiple documents в батчах (S182 I-4.4).
+
+        S182: добавлен ``batch_size`` и ``ordered`` параметры.
+        При ``batch_size > 0`` — chunks для защиты от OOM при больших bulk-операциях.
 
         Args:
             collection: Collection name.
             documents: Documents to insert.
+            ordered: Если True — остановка на первой ошибке (default).
+            batch_size: Макс. документов в одном bulk insert (default 1000).
 
         Returns:
             List of inserted document IDs.
+
+        Note:
+            Circuit Breaker "mongodb_insert_many" + 3 retry attempts.
         """
-        result = await self.db[collection].insert_many(documents)
-        return [str(id_) for id_ in result.inserted_ids]
+        if not documents:
+            return []
+
+        all_ids: list[str] = []
+        if batch_size <= 0 or len(documents) <= batch_size:
+            result = await self.db[collection].insert_many(
+                documents, ordered=ordered
+            )
+            return [str(id_) for id_ in result.inserted_ids]
+
+        # Chunked insert
+        for i in range(0, len(documents), batch_size):
+            chunk = documents[i : i + batch_size]
+            result = await self.db[collection].insert_many(
+                chunk, ordered=ordered
+            )
+            all_ids.extend(str(id_) for id_ in result.inserted_ids)
+        return all_ids
+
+    @resilient(name="mongodb_update_many", max_attempts=3)
+    async def update_many(
+        self,
+        collection: str,
+        query: dict[str, Any],
+        update: dict[str, Any],
+    ) -> int:
+        """Update multiple documents matching query.
+
+        Args:
+            collection: Collection name.
+            query: Query filter.
+            update: Update operations (например, ``{"$set": {...}}``).
+
+        Returns:
+            Number of modified documents.
+
+        Note:
+            Circuit Breaker "mongodb_update_many" + 3 retry attempts.
+        """
+        result = await self.db[collection].update_many(query, update)
+        return result.modified_count
+
+    @resilient(name="mongodb_delete_many", max_attempts=3)
+    async def delete_many(
+        self,
+        collection: str,
+        query: dict[str, Any],
+    ) -> int:
+        """Delete multiple documents matching query.
+
+        Args:
+            collection: Collection name.
+            query: Query filter.
+
+        Returns:
+            Number of deleted documents.
+        """
+        result = await self.db[collection].delete_many(query)
+        return result.deleted_count
 
     async def update_one(
         self,
@@ -227,7 +326,17 @@ class MongoDBClient:
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            import time
+            start = time.monotonic()
+            ping = getattr(self, "ping", None)
+            if ping is None:
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            result = await ping() if asyncio.iscoroutinefunction(ping) else ping()
+            return {
+                "status": "ok" if result else "down",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                "error": None,
+            }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
 def _create_mongo_client() -> MongoDBClient:

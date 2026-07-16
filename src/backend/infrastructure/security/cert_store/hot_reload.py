@@ -67,7 +67,11 @@ class CertFileWatcher:
     async def _on_file_event(
         self, file_path: Path, event_type: str
     ) -> None:
-        """Обработать событие файла (add/modify/delete)."""
+        """Обработать событие файла (add/modify/delete).
+
+        S176: sync FS read обёрнут в ``asyncio.to_thread`` чтобы не блокировать
+        event loop при больших cert-файлах (>10KB).
+        """
         if not self._should_handle(file_path):
             return
         cert_id = self._cert_id_from_path(file_path)
@@ -76,8 +80,10 @@ class CertFileWatcher:
                 await self.store.delete(cert_id)
                 _logger.info("cert.hot_reload.delete id=%s", cert_id)
             else:
-                # add или modify
-                pem = file_path.read_text(encoding="utf-8")
+                # add или modify — offload sync read to thread
+                import asyncio
+
+                pem = await asyncio.to_thread(file_path.read_text, encoding="utf-8")
                 await self.store.set(cert_id, pem=pem)
                 _logger.info(
                     "cert.hot_reload.%s id=%s size=%d",

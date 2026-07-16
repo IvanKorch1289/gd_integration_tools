@@ -33,6 +33,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("EmailIMAPSource", "EmailMessage")
 
@@ -176,6 +177,10 @@ class EmailIMAPSource:
 
         async for msg in self._idle_stream():
             yield msg
+
+    async def health(self, mode: str = "fast") -> HealthResult:
+        """Health: stateless streamer — всегда ok если объект создан."""
+        return HealthResult.ok(latency_ms=0.0, mode=mode)
 
     # ── внутренние методы ───────────────────────────────────────────
 

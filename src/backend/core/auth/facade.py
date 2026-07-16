@@ -127,6 +127,13 @@ class AuthFacade:
         try:
             if method == "jwt":
                 claims = self.jwt.decode(token)
+                # S183 fix: blacklist check
+                jti = claims.get("jti")
+                if jti and self._is_blacklisted(jti):
+                    return AuthResult(
+                        is_authenticated=False,
+                        metadata={"error": "token_revoked"},
+                    )
                 return AuthResult(
                     is_authenticated=True,
                     method="jwt",
@@ -137,14 +144,150 @@ class AuthFacade:
                     metadata=dict(claims),
                 )
             if method == "api_key":
-                # API key validation — uses ldap_client_factory or local registry.
-                # Per backend agnostic — for now, return unauthenticated.
-                logger.debug("api_key verification not yet implemented in facade")
-                return AuthResult(is_authenticated=False)
+                # S183 fix: API key verification через Argon2id backend.
+                # Раньше был stub, всегда возвращал is_authenticated=False.
+                return await self._verify_api_key(token)
+            if method == "saml":
+                # S183 fix: SAML assertion verification через SamlSpHandler
+                return await self._verify_saml(token)
+            if method == "mtls":
+                # S183 fix: mTLS client cert verification
+                return await self._verify_mtls(token)
         except Exception as exc:
             logger.debug("verify_request failed: %s", exc)
             return AuthResult(is_authenticated=False, metadata={"error": str(exc)})
         return AuthResult(is_authenticated=False)
+
+    async def _verify_api_key(self, api_key: str) -> AuthResult:
+        """S183: API key verification через Argon2id backend.
+
+        Args:
+            api_key: Plain API key.
+
+        Returns:
+            AuthResult с subject/tenant_id если валидна.
+        """
+        try:
+            from src.backend.core.auth.api_key_backend import APIKeyAuth
+
+            api_key_auth = APIKeyAuth()
+            # API key format: ``ak_<key_id>_<secret>`` — extract key_id
+            if not api_key.startswith("ak_"):
+                return AuthResult(is_authenticated=False)
+
+            parts = api_key.split("_", 2)
+            if len(parts) != 3:
+                return AuthResult(is_authenticated=False)
+
+            key_id = f"{parts[0]}_{parts[1]}"
+            secret = parts[2]
+
+            # Fetch stored hash + metadata from API key registry
+            from src.backend.infrastructure.security.api_key_manager import (
+                get_api_key_manager,
+            )
+
+            manager = get_api_key_manager()
+            stored = await manager.get(key_id)
+            if stored is None:
+                return AuthResult(is_authenticated=False)
+
+            # Argon2id verify
+            if not api_key_auth.verify(secret, stored["hash"]):
+                return AuthResult(is_authenticated=False)
+
+            return AuthResult(
+                is_authenticated=True,
+                method="api_key",
+                subject=stored.get("subject", key_id),
+                tenant_id=stored.get("tenant_id"),
+                groups=stored.get("groups", []),
+                capabilities=stored.get("capabilities", []),
+                metadata={"key_id": key_id},
+            )
+        except Exception as exc:
+            logger.debug("API key verify failed: %s", exc)
+            return AuthResult(is_authenticated=False)
+
+    async def _verify_saml(self, assertion: str) -> AuthResult:
+        """S183: SAML assertion verification.
+
+        Args:
+            assertion: Base64-encoded SAML assertion.
+
+        Returns:
+            AuthResult с NameID/subject.
+        """
+        try:
+            from src.backend.core.auth.saml import SamlSpHandler
+
+            handler = SamlSpHandler()
+            claims = handler.verify_assertion(assertion)
+            return AuthResult(
+                is_authenticated=True,
+                method="saml",
+                subject=claims.get("name_id", ""),
+                tenant_id=claims.get("tenant_id"),
+                groups=claims.get("groups", []),
+                capabilities=claims.get("capabilities", []),
+                metadata=claims,
+            )
+        except Exception as exc:
+            logger.debug("SAML verify failed: %s", exc)
+            return AuthResult(is_authenticated=False)
+
+    async def _verify_mtls(self, cert_pem: str) -> AuthResult:
+        """S183: mTLS client cert verification.
+
+        Args:
+            cert_pem: PEM-encoded client certificate.
+
+        Returns:
+            AuthResult с CN/subject.
+        """
+        try:
+            from cryptography import x509
+            from cryptography.hazmat.backends import default_backend
+
+            cert = x509.load_pem_x509_certificate(
+                cert_pem.encode(), default_backend()
+            )
+            cn = None
+            for attr in cert.subject:
+                if attr.oid == x509.NameOID.COMMON_NAME:
+                    cn = attr.value
+                    break
+            return AuthResult(
+                is_authenticated=True,
+                method="mtls",
+                subject=cn or "",
+                metadata={"fingerprint": cert.fingerprint(default_backend()).hex()},
+            )
+        except Exception as exc:
+            logger.debug("mTLS verify failed: %s", exc)
+            return AuthResult(is_authenticated=False)
+
+    def _is_blacklisted(self, jti: str) -> bool:
+        """S183: check JWT blacklist.
+
+        Args:
+            jti: JWT ID.
+
+        Returns:
+            True если blacklisted (fail-closed на ошибке).
+        """
+        try:
+            from src.backend.core.auth.jwt_blacklist import (
+                RedisJwtBlacklist,
+            )
+
+            return RedisJwtBlacklist().is_revoked(jti)
+        except Exception as exc:
+            logger.debug(
+                "jwt blacklist check failed: %s — fail-closed (treat as revoked)",
+                exc,
+            )
+            return True  # S193 fix: fail-closed — security > availability
 
     def check_permission(self, auth: AuthResult, required_capability: str) -> bool:
         """S164 W2: check if authenticated subject has required capability.
@@ -154,13 +297,26 @@ class AuthFacade:
             required_capability: Capability name (e.g. ``"admin.read.capabilities"``).
 
         Returns:
-            ``True`` if subject has capability OR is_admin.
+            ``True`` if subject has capability OR has SUPER_ADMIN role.
         """
         if not auth.is_authenticated:
             return False
-        # Admin bypass — superusers can do anything.
-        if "admin" in auth.groups:
-            return True
+        # S189+ fix: используем AdminRole enum вместо membership-only "admin" check.
+        # "admin" в groups membership-only — privilege escalation risk
+        # (любой IdP group с именем "admin" получал bypass).
+        try:
+            from src.backend.core.auth.admin_roles import (
+                AdminRole,
+                extract_admin_roles,
+            )
+
+            roles = extract_admin_roles(auth.metadata)
+            if AdminRole.SUPER_ADMIN in roles:
+                return True
+        except Exception:
+            # Fallback: если AdminRole import failed — НЕ bypass (fail-closed)
+            pass
+
         if required_capability in auth.capabilities:
             return True
         return False

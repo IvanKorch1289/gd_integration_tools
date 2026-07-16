@@ -19,6 +19,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 _logger = get_logger(__name__)
 
@@ -78,11 +79,26 @@ class SlackAdapter:
                 f"Slack webhook failed: {response.status_code} {response.text[:200]}"
             )
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
+        import time
+
+        start = time.perf_counter()
         try:
-            return bool(self._webhook_url_provider())
-        except Exception as _:
-            return False
+            url = self._webhook_url_provider()
+            if not url:
+                latency_ms = (time.perf_counter() - start) * 1000.0
+                return HealthResult.failed(
+                    error="Slack webhook URL missing",
+                    mode=mode,
+                    latency_ms=latency_ms,
+                )
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.ok(latency_ms=latency_ms, mode=mode)
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
 
 
 assert isinstance(

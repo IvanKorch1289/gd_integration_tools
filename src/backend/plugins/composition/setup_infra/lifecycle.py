@@ -134,6 +134,50 @@ async def ending() -> None:
     await perform_infrastructure_operation(ending_operations)
 
 
+async def _register_agent_security_workflow_hooks() -> None:
+    """S189: register AgentSecurityFramework workflow hooks.
+
+    До этого hooks были определены, но никогда не регистрировались в
+    production startup — только в тестах. Это значит banking/RPA/code/data_export
+    workflow-specific проверки НЕ выполнялись в production.
+    """
+    try:
+        from src.backend.core.ai.security.workflow_hooks import (
+            register_all_workflow_hooks,
+        )
+        from src.backend.core.ai.security.agent_security import (
+            get_agent_security_framework,
+        )
+
+        register_all_workflow_hooks(get_agent_security_framework())
+        app_logger.info("AgentSecurityFramework workflow hooks registered")
+    except Exception as exc:
+        # Non-fatal: framework optional в некоторых профилях
+        app_logger.debug(
+            "AgentSecurityFramework hooks registration skipped: %s", exc
+        )
+
+
+async def _start_pool_monitors() -> None:
+    """Запустить фоновые мониторы пулов (S173 P0 fix).
+
+    Без этого вызова :class:`PoolHealthMonitor` не активен — health-check
+    пулов работает только при первом get_metrics() вызове. После добавления
+    мониторы стартуют при старте приложения и дают early-warning об исчерпании
+    пулов / idle timeouts.
+
+    S173: добавлено как critical fix после Infrastructure audit (start_monitors
+    не вызывался → health monitors оставались незапущенными).
+    """
+    from src.backend.infrastructure.clients.unified_pool_manager import (
+        get_unified_pool_manager,
+    )
+
+    manager = get_unified_pool_manager()
+    if not manager.is_started:  # type: ignore[attr-defined]
+        await manager.start_monitors()
+
+
 starting_operations: list[OperationItem] = [
     (
         "register_default_degradation_features",
@@ -143,6 +187,13 @@ starting_operations: list[OperationItem] = [
     ("register_health_checks", _register_health_checks, None),
     ("register_pools_in_unified_manager", _register_pools_in_unified_manager, None),
     ("warmup_connection_pools", _warmup_connection_pools, None),
+    ("start_pool_monitors", _start_pool_monitors, None),  # S173: critical fix
+    # S189: register AgentSecurityFramework workflow hooks (banking/rpa/code/data)
+    (
+        "register_agent_security_workflow_hooks",
+        _register_agent_security_workflow_hooks,
+        None,
+    ),
     ("init_workflow_audit_sink", _init_workflow_audit_sink, _clickhouse_enabled),
     (
         "start_scheduler_with_leader_election",

@@ -29,6 +29,7 @@ from typing import Any, Final, Literal
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 _logger = get_logger(__name__)
 
@@ -117,12 +118,26 @@ class SMSAdapter:
 
         raise AssertionError(f"Unreachable: provider={self._provider}")
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
+        import time
+
+        start = time.perf_counter()
         try:
             creds = self._credentials_provider()
-            return bool(creds)
-        except Exception as _:
-            return False
+            if not creds:
+                latency_ms = (time.perf_counter() - start) * 1000.0
+                return HealthResult.failed(
+                    error="SMS credentials missing",
+                    mode=mode,
+                    latency_ms=latency_ms,
+                )
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.ok(latency_ms=latency_ms, mode=mode)
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
 
 
 assert isinstance(

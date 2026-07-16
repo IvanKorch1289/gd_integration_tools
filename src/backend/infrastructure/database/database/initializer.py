@@ -218,6 +218,23 @@ class DatabaseInitializer:
             for conn in connections:
                 await conn.close()
 
+
+    @resilient(name="postgres_query", max_attempts=3)
+    async def execute_with_resilience(
+        self, query: Any, params: dict[str, Any] | None = None
+    ) -> Any:
+        """Execute raw SQL query с CB + Retry (S182 I-4.5).
+
+        Args:
+            query: SQL statement.
+            params: Optional bind parameters.
+
+        Returns:
+            Query result.
+        """
+        async with self.async_engine.begin() as conn:
+            return await conn.execute(query, params or {})
+
     def get_async_engine(self) -> AsyncEngine:
         """
         Возвращает асинхронный engine.

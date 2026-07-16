@@ -88,8 +88,21 @@ class SmartSessionManager:
         cooldown_seconds: float = 30.0,
         lag_budget_bytes: int = 10 * 1024 * 1024,  # 10 MB
         lag_check_interval_seconds: float = 5.0,
+        use_breaker_facade: bool = True,
     ) -> None:
-        """Инициализирует менеджер с двумя session-фабриками."""
+        """Инициализирует менеджер с двумя session-фабриками.
+
+        Args:
+            primary_sessionmaker: ``async_sessionmaker`` primary-engine'а.
+            replica_sessionmaker: Опц. ``async_sessionmaker`` replica.
+            failure_threshold: Число подряд failures до открытия breaker'а.
+            cooldown_seconds: Длительность open-state.
+            lag_budget_bytes: Макс. допустимый replication lag в байтах.
+            lag_check_interval_seconds: Интервал проверки lag.
+            use_breaker_facade: S173 — если True, использовать
+                :class:`ReplicaFailoverBreaker` из unified facade.
+                Если False — legacy manual counter (backward-compat).
+        """
         self._primary = primary_sessionmaker
         self._replica = replica_sessionmaker
         self._failure_threshold = failure_threshold
@@ -103,6 +116,21 @@ class SmartSessionManager:
         self._last_lag_check: float = 0.0
         self._current_replay_lag_bytes: int = 0
         self._lag_exceeded: bool = False
+        # S173 M2.4: ReplicaFailoverBreaker facade (lazy init)
+        self._use_breaker_facade = use_breaker_facade
+        if use_breaker_facade:
+            from src.backend.core.resilience.circuit_breaker import (
+                CircuitBreakerSpec,
+                ReplicaFailoverBreaker,
+            )
+
+            self._breaker_facade = ReplicaFailoverBreaker(
+                name="smart_session_replica",
+                spec=CircuitBreakerSpec(
+                    failure_threshold=failure_threshold,
+                    recovery_timeout=cooldown_seconds,
+                ),
+            )
 
     @property
     def has_replica(self) -> bool:
@@ -112,6 +140,8 @@ class SmartSessionManager:
     @property
     def replica_breaker_open(self) -> bool:
         """Возвращает ``True`` если circuit-breaker сейчас в open state."""
+        if getattr(self, "_use_breaker_facade", False):
+            return self._breaker_facade.is_open
         return time.monotonic() < self._breaker_open_until
 
     @property
@@ -248,7 +278,16 @@ class SmartSessionManager:
         ``src.backend.core.resilience.circuit_breaker``. Текущий mini-CB
         (manual counter + timestamp) несовместим с multi-pod deployments —
         каждый pod считает failures независимо.
+
+        S173 M2.4 done: интегрировано через опциональный флаг
+        ``use_breaker_facade=True`` (default). При True — все
+        success/failure идут через :class:`ReplicaFailoverBreaker`; при
+        False — legacy manual counter (backward-compat).
         """
+        if getattr(self, "_use_breaker_facade", False):
+            self._breaker_facade.on_success()
+            return
+
         if self._consecutive_failures:
             _logger.debug("smart_session.replica_recovered")
         self._consecutive_failures = 0
@@ -256,6 +295,15 @@ class SmartSessionManager:
 
     def _record_replica_failure(self) -> None:
         """Регистрирует ошибку replica; открывает breaker по достижении threshold."""
+        if getattr(self, "_use_breaker_facade", False):
+            self._breaker_facade.on_failure()
+            if self._breaker_facade.is_open:
+                _logger.warning(
+                    "smart_session.replica_breaker_opened",
+                    extra={"cooldown_seconds": self._cooldown},
+                )
+            return
+
         self._consecutive_failures += 1
         _logger.warning(
             "smart_session.replica_failure",

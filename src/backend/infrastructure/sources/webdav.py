@@ -20,6 +20,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.sources.file_watcher import FileEvent
 
 __all__ = ("WebDAVSource", "WebDAVSourceConfig")
@@ -161,3 +162,8 @@ class WebDAVSource:
     async def close(self) -> None:
         """Graceful shutdown."""
         self._closed = True
+
+    async def health(self, mode: str = "fast") -> HealthResult:
+        if not self._closed:
+            return HealthResult.ok(latency_ms=0.0, mode=mode)
+        return HealthResult.failed(error="Source closed", mode=mode)

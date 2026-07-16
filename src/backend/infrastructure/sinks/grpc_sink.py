@@ -9,10 +9,12 @@ fully-qualified ``service`` + ``method`` имена. Ленивый импорт
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.dsl.codec.json import dumps_bytes
 
 __all__ = ("GrpcSink",)
@@ -83,13 +85,14 @@ class GrpcSink(Sink):
             },
         )
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Health: попытка установить gRPC-канал и сразу закрыть."""
         try:
             from grpc import aio as grpc_aio
             from grpc import ssl_channel_credentials
         except ImportError:
-            return False
+            return HealthResult.failed(error="grpcio not installed", mode=mode)
+        start = time.perf_counter()
         try:
             if self.secure:
                 channel = grpc_aio.secure_channel(
@@ -101,6 +104,10 @@ class GrpcSink(Sink):
                 await channel.channel_ready()
             finally:
                 await channel.close()
-        except Exception as _:
-            return False
-        return True
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
+        latency_ms = (time.perf_counter() - start) * 1000.0
+        return HealthResult.ok(latency_ms=latency_ms, mode=mode)

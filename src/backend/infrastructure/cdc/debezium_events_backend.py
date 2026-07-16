@@ -51,13 +51,21 @@ _DEBEZIUM_OP_MAP: dict[str, CDCOperation] = {
 
 
 def parse_debezium_event(
-    raw: dict[str, Any], *, kafka_offset: int, kafka_partition: int
+    raw: dict[str, Any],
+    *,
+    kafka_offset: int,
+    kafka_partition: int,
+    topic: str | None = None,
 ) -> CDCEvent | None:
     """Превратить Debezium-payload в `CDCEvent`.
 
     :param raw: словарь, распарсенный из Kafka-message value.
     :param kafka_offset: смещение message в partition (для cursor).
     :param kafka_partition: номер partition.
+    :param topic: полное имя Kafka topic (``<prefix>.<table>``).
+        S178 fix: cursor теперь сохраняет topic для корректного
+        ``TopicPartition`` в ``ack()``/``replay()``. Раньше использовался
+        ``backend="debezium"`` как topic — ломалось для tables с разными prefixes.
     :returns: ``CDCEvent`` или ``None`` если payload не Debezium-формат.
     """
     op = raw.get("op")
@@ -77,7 +85,11 @@ def parse_debezium_event(
         source=f"debezium:{source_meta.get('db', '?')}",
         table=table,
         timestamp=ts,
-        cursor=CDCCursor(value=f"{kafka_partition}:{kafka_offset}", backend="debezium"),
+        cursor=CDCCursor(
+            value=f"{kafka_partition}:{kafka_offset}",
+            backend="debezium",
+            topic=topic,
+        ),
         new=raw.get("after"),
         old=raw.get("before"),
         metadata={
@@ -220,7 +232,10 @@ class DebeziumEventsCDCBackend(CDCSource):
             for tp, messages in result.items():
                 for msg in messages:
                     event = parse_debezium_event(
-                        msg.value, kafka_offset=msg.offset, kafka_partition=tp.partition
+                        msg.value,
+                        kafka_offset=msg.offset,
+                        kafka_partition=tp.partition,
+                        topic=tp.topic,
                     )
                     if event is not None:
                         yield event
@@ -240,7 +255,11 @@ class DebeziumEventsCDCBackend(CDCSource):
             )
 
             partition_str, offset_str = cursor.value.split(":")
-            tp = TopicPartition(cursor.backend, int(partition_str))
+            # S178 fix: use cursor.topic (actual Kafka topic), not cursor.backend
+            # (which is just "debezium" identifier). Fallback to cursor.backend
+            # for backward-compat с cursor'ами до fix.
+            topic = cursor.topic or cursor.backend
+            tp = TopicPartition(topic, int(partition_str))
             # commit offset+1 (next message to read)
             await self._consumer.commit(
                 {tp: OffsetAndMetadata(int(offset_str) + 1, "")}
@@ -271,7 +290,9 @@ class DebeziumEventsCDCBackend(CDCSource):
             from aiokafka import TopicPartition  # type: ignore[import-not-found]
 
             partition_str, offset_str = start_cursor.value.split(":")
-            tp = TopicPartition(start_cursor.backend, int(partition_str))
+            # S178 fix: use cursor.topic (actual Kafka topic), not cursor.backend.
+            topic = start_cursor.topic or start_cursor.backend
+            tp = TopicPartition(topic, int(partition_str))
             self._consumer.seek(tp, int(offset_str))
         except (ValueError, KeyError) as exc:
             _logger.error(
@@ -328,6 +349,21 @@ class DebeziumEventsCDCBackend(CDCSource):
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            import time
+            start = time.monotonic()
+            # Real probe: check is_running / is_open properties
+            running = getattr(self, "_running", None)
+            if running is False:
+                return {"status": "down", "latency_ms": 0.0, "error": "not running"}
+            # Try connect/ping if available
+            connect = getattr(self, "connect", None)
+            if connect is None:
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            await connect()
+            return {
+                "status": "ok",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                "error": None,
+            }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}

@@ -33,10 +33,10 @@ middleware был REMOVED в A2 (ADR-005) — global-state bug.
   (deferred S81+).
 * Sync sliding window (deque) — не high-throughput optimized.
 
-TODO(s172/m2.4): заменить deque-based state-machine на
-``src.backend.core.resilience.circuit_breaker.SlidingWindowBreaker``.
-Текущая реализация — per-process, in-memory; при multi-worker K8s
-нужен shared state (Redis-backed listener purgatory).
+S173 M2.4 done: опциональная интеграция с :class:`SlidingWindowBreaker`
+через флаг ``use_sliding_window_breaker=True`` (default). При True —
+per-route CB через unified facade (purgatory-ready). При False —
+legacy deque-based state-machine (backward-compat).
 """
 
 from __future__ import annotations
@@ -124,12 +124,27 @@ class CircuitBreakerMiddleware:
         *,
         default_policy: BreakerPolicy | None = None,
         route_policies: dict[str, BreakerPolicy] | None = None,
+        use_sliding_window_breaker: bool = True,
     ) -> None:
+        """Инициализация middleware.
+
+        Args:
+            app: ASGI-приложение.
+            default_policy: Политика по умолчанию для всех routes.
+            route_policies: Словарь prefix → BreakerPolicy для per-route конфигурации.
+            use_sliding_window_breaker: S173 — если True, использовать
+                :class:`SlidingWindowBreaker` из unified facade
+                (purgatory-ready). Если False — legacy deque state-machine
+                (backward-compat).
+        """
         self.app = app
         self._default_policy = default_policy or BreakerPolicy()
         self._route_policies = route_policies or {}
+        self._use_sliding_window_breaker = use_sliding_window_breaker
         # Per-route state (NOT global — instance-scoped)
         self._states: dict[str, RouteBreakerState] = {}
+        # S173: SlidingWindowBreaker per-route (created lazily)
+        self._sliding_breakers: dict[str, Any] = {}
 
     def _get_policy(self, route: str) -> BreakerPolicy:
         """Get policy для конкретного route (longest-prefix match)."""
@@ -147,6 +162,24 @@ class CircuitBreakerMiddleware:
         if route not in self._states:
             self._states[route] = RouteBreakerState()
         return self._states[route]
+
+    def _get_sliding_breaker(self, route: str, policy: BreakerPolicy) -> Any:
+        """S173: get or create SlidingWindowBreaker per-route."""
+        from src.backend.core.resilience.circuit_breaker import (
+            CircuitBreakerSpec,
+            SlidingWindowBreaker,
+        )
+
+        if route not in self._sliding_breakers:
+            spec = CircuitBreakerSpec(
+                failure_threshold=policy.failure_threshold,
+                recovery_timeout=policy.reset_timeout,
+                window_seconds=policy.window_seconds,
+            )
+            self._sliding_breakers[route] = SlidingWindowBreaker(
+                name=f"route:{route}", spec=spec
+            )
+        return self._sliding_breakers[route]
 
     def _should_allow(self, state: RouteBreakerState, policy: BreakerPolicy) -> bool:
         """S81 W1 — state machine check.
@@ -208,21 +241,40 @@ class CircuitBreakerMiddleware:
 
         path: str = scope.get("path", "/")
         policy = self._get_policy(path)
-        state = self._get_state(path)
 
-        if not self._should_allow(state, policy):
-            # Circuit OPEN — return 503 immediately
-            _logger.info("Circuit OPEN — rejecting request for %s", path)
-            response = JSONResponse(
-                status_code=503,
-                content={
-                    "error": "circuit_breaker_open",
-                    "path": path,
-                    "state": state.state.value,
-                },
-            )
-            await response(scope, receive, send)
-            return
+        # S173: SlidingWindowBreaker facade path
+        if self._use_sliding_window_breaker:
+            breaker = self._get_sliding_breaker(path, policy)
+            if breaker.is_open:
+                _logger.info(
+                    "Circuit OPEN (sliding_breaker) — rejecting request for %s", path
+                )
+                response = JSONResponse(
+                    status_code=503,
+                    content={
+                        "error": "circuit_breaker_open",
+                        "path": path,
+                        "state": breaker.state,
+                    },
+                )
+                await response(scope, receive, send)
+                return
+        else:
+            # Legacy deque-based path (backward-compat)
+            state = self._get_state(path)
+            if not self._should_allow(state, policy):
+                # Circuit OPEN — return 503 immediately
+                _logger.info("Circuit OPEN — rejecting request for %s", path)
+                response = JSONResponse(
+                    status_code=503,
+                    content={
+                        "error": "circuit_breaker_open",
+                        "path": path,
+                        "state": state.state.value,
+                    },
+                )
+                await response(scope, receive, send)
+                return
 
         # Capture status code from send
         status_code = 500
@@ -238,6 +290,12 @@ class CircuitBreakerMiddleware:
 
         # Record outcome
         if status_code >= 500 and status_code not in policy.excluded_statuses:
-            self._record_failure(state, policy)
+            if self._use_sliding_window_breaker:
+                self._get_sliding_breaker(path, policy)._record_failure()
+            else:
+                self._record_failure(state, policy)
         else:
-            self._record_success(state)
+            if self._use_sliding_window_breaker:
+                self._get_sliding_breaker(path, policy)._record_success()
+            else:
+                self._record_success(state)

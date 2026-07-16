@@ -27,13 +27,28 @@ _logger = get_logger("workflow.executor")
 
 
 def _is_exchange_wrapping_enabled() -> bool:
-    """Feature-flag для dict→Exchange wrapping (B1-phase-2 gradual rollout)."""
+    """Feature-flag для dict→Exchange wrapping.
+
+    S175: default изменён на True — bug A-2 fix. Все BaseProcessor-наследники
+    ожидают ``Exchange[Any]`` в ``process(self, exchange, context)``. Передача
+    dict ломает контракт (380+ процессоров). При True — Exchange wrapping
+    активен по умолчанию.
+
+    Для backward-compat с legacy processors, ожидающими dict, можно отключить
+    через feature-flag ``workflow_exchange_wrapping=False``. Но это deprecated —
+    S176+ все процессоры должны быть мигрированы на Exchange API.
+
+    ponytail: ceiling — Exchange wrapping добавляет ~10% overhead на каждый
+    proc call; upgrade path — мигрировать legacy processors на native
+    Exchange API.
+    """
     try:
         from src.backend.core.config.features import feature_flags
 
-        return bool(getattr(feature_flags, "workflow_exchange_wrapping", False))
+        return bool(getattr(feature_flags, "workflow_exchange_wrapping", True))
     except Exception:
-        return False
+        # S175: fallback default — True (безопасный путь через Exchange)
+        return True
 
 
 async def _run_processor(proc: Any, body: dict[str, Any], timeout: float) -> dict[str, Any]:

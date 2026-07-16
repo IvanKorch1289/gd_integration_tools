@@ -32,6 +32,7 @@ from typing import Any
 
 from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("FallbackObjectStorage",)
 
@@ -277,27 +278,71 @@ class FallbackObjectStorage(ObjectStorage):
         """True если primary supports presigned (default True)."""
         return self._primary.supports_presigned()
 
-    async def healthcheck(self) -> bool:
-        """Healthcheck: primary если available, иначе secondary.
+    async def health(self, mode: str = "fast") -> HealthResult:
+        """Health: primary если available, иначе secondary.
 
         Используется ``ResilienceCoordinator`` (W26) для breaker state.
         """
+        import time
+
+        start = time.perf_counter()
+        # --- primary ---
+        primary_error: str | None = None
         try:
-            if hasattr(self._primary, "healthcheck"):
-                return await self._primary.healthcheck()
-            # Fallback: try exists() на well-known key
-            return await self._primary.exists("__healthcheck__")
+            if hasattr(self._primary, "health"):
+                result = await self._primary.health(mode=mode)
+                if result.status == "ok":
+                    return result
+                primary_error = result.error or "primary health not ok"
+            else:
+                # Legacy backend без health(): probe via exists().
+                await self._primary.exists("__healthcheck__")
+                latency_ms = (time.perf_counter() - start) * 1000.0
+                return HealthResult.ok(latency_ms=latency_ms, mode=mode)
         except BaseException as exc:
             if not self._should_fallback(exc):
-                return False
+                latency_ms = (time.perf_counter() - start) * 1000.0
+                return HealthResult.failed(
+                    error=f"{type(exc).__name__}: {exc}",
+                    mode=mode,
+                    latency_ms=latency_ms,
+                )
+            primary_error = f"{type(exc).__name__}: {exc}"
             _logger.warning(
-                "FallbackObjectStorage[%s] healthcheck primary failed: %s",
+                "FallbackObjectStorage[%s] health primary failed: %s",
                 self._name,
                 type(exc).__name__,
             )
-            try:
-                if hasattr(self._secondary, "healthcheck"):
-                    return await self._secondary.healthcheck()
-                return await self._secondary.exists("__healthcheck__")
-            except BaseException:
-                return False
+
+        # --- secondary ---
+        try:
+            if hasattr(self._secondary, "health"):
+                result = await self._secondary.health(mode=mode)
+                latency_ms = (time.perf_counter() - start) * 1000.0
+                if result.status == "ok":
+                    return HealthResult.degraded(
+                        error=f"primary failed ({primary_error}); secondary ok",
+                        mode=mode,
+                        latency_ms=latency_ms,
+                    )
+                return HealthResult.failed(
+                    error=f"primary failed ({primary_error}); "
+                    f"secondary not ok: {result.error}",
+                    mode=mode,
+                    latency_ms=latency_ms,
+                )
+            await self._secondary.exists("__healthcheck__")
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.degraded(
+                error=f"primary failed ({primary_error}); secondary ok via exists()",
+                mode=mode,
+                latency_ms=latency_ms,
+            )
+        except BaseException as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"primary failed ({primary_error}); "
+                f"secondary failed: {type(exc).__name__}: {exc}",
+                mode=mode,
+                latency_ms=latency_ms,
+            )

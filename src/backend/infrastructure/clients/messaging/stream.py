@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from typing import Any
@@ -401,7 +402,17 @@ class StreamClient:
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            import time
+            start = time.monotonic()
+            ping = getattr(self, "ping", None)
+            if ping is None:
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            result = await ping() if asyncio.iscoroutinefunction(ping) else ping()
+            return {
+                "status": "ok" if result else "down",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                "error": None,
+            }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
 _stream_client: StreamClient | None = None

@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import asyncio
 import threading
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("SoapSink",)
 
@@ -96,13 +98,22 @@ class SoapSink(Sink):
         method = getattr(service, self.operation)
         return method(**kwargs)
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Health: успешная загрузка WSDL."""
+        start = time.perf_counter()
         try:
             client = await asyncio.to_thread(self._get_client)
-        except Exception as _:
-            return False
-        return client is not None
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
+        latency_ms = (time.perf_counter() - start) * 1000.0
+        if client is not None:
+            return HealthResult.ok(latency_ms=latency_ms, mode=mode)
+        return HealthResult.failed(
+            error="zeep not installed", mode=mode, latency_ms=latency_ms
+        )
 
 
 def _summarize(result: Any) -> str:

@@ -163,15 +163,20 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
     # Capability check via MCPNamespace.capabilities_required (ADR-0070 §3)
     try:
         from src.backend.core.security.capabilities import CapabilityDeniedError
-        from src.backend.core.security.capabilities.gate import CapabilityGate
         from src.backend.entrypoints.mcp.namespaces import get_namespace_for_action
+        # S201 fix: use CapabilityFacade instead of direct CapabilityGate()
+        from src.backend.services.capabilities.facade import (
+            get_capability_facade,
+        )
 
         ns = get_namespace_for_action(action_name)
         if ns is not None and ns.capabilities_required:
-            gate = CapabilityGate()
+            cap_facade = get_capability_facade()
             for cap in ns.capabilities_required:
                 try:
-                    gate.check(plugin="mcp", capability=cap, requested_scope=None)
+                    cap_facade.check_or_raise(
+                        plugin="mcp", capability=cap, scope=None
+                    )
                 except CapabilityDeniedError:
                     return f"capability_denied:{cap}"
     except Exception as _:

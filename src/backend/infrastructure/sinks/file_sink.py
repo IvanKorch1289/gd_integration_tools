@@ -14,11 +14,13 @@ from __future__ import annotations
 import asyncio
 import os
 import tempfile
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.dsl.codec.json import dumps_str
 
 __all__ = ("FileSink",)
@@ -108,17 +110,29 @@ class FileSink(Sink):
         os.replace(tmp_path, target)
         return written
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Доступна ли parent-директория для записи."""
+        start = time.perf_counter()
         target = Path(self.path)
         try:
             target = self._safe_path(target)
-        except ValueError:
-            return False
+        except ValueError as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
         parent = target.parent
         if self.ensure_dir:
             try:
                 parent.mkdir(parents=True, exist_ok=True)
-            except OSError:
-                return False
-        return parent.is_dir() and os.access(parent, os.W_OK)
+            except OSError as exc:
+                latency_ms = (time.perf_counter() - start) * 1000.0
+                return HealthResult.failed(
+                    error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                )
+        latency_ms = (time.perf_counter() - start) * 1000.0
+        if parent.is_dir() and os.access(parent, os.W_OK):
+            return HealthResult.ok(latency_ms=latency_ms, mode=mode)
+        return HealthResult.failed(
+            error=f"parent dir not writable: {parent}", mode=mode, latency_ms=latency_ms
+        )

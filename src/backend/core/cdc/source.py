@@ -30,12 +30,27 @@ INSERT/UPDATE."""
 
 
 class CDCCursor(BaseModel):
-    """Opaque-курсор для resume / replay."""
+    """Opaque-курсор для resume / replay.
+
+    Attributes:
+        value: Cursor value (формат backend-specific, обычно
+            ``"<partition>:<offset>"`` для Kafka).
+        backend: Backend identifier (``"debezium"``, ``"polling"``, etc.).
+        topic: Полное имя Kafka topic (S178 fix для Debezium cursor mismatch).
+            Раньше использовался ``backend`` как topic name, но actual
+            subscribed topic — ``<prefix>.<table>``. Теперь cursor несёт
+            полный topic для корректного ``TopicPartition`` в ack/replay.
+
+    Note:
+        ``topic`` опционален для backward-compat — старые cursor'ы без
+        ``topic`` будут работать через fallback (S179+ можно удалить).
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     value: str = Field(min_length=1)
     backend: str = Field(min_length=1)
+    topic: str | None = Field(default=None, min_length=1)
 
 
 class CDCEvent(BaseModel):

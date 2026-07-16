@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = ("HttpSink",)
 
@@ -70,14 +72,15 @@ class HttpSink(Sink):
             },
         )
 
-    async def health(self) -> bool:
-        """HEAD-запрос на URL; ``True`` при 2xx/3xx/4xx (адрес отвечает)."""
+    async def health(self, mode: str = "fast") -> HealthResult:
+        """HEAD-запрос на URL; ``ok`` при 2xx/3xx/4xx (адрес отвечает)."""
         try:
             import httpx
 
             from src.backend.core.net import OutboundHttpClient
         except ImportError:
-            return False
+            return HealthResult.failed(error="httpx not installed", mode=mode)
+        start = time.perf_counter()
         try:
             async with OutboundHttpClient(
                 timeout=httpx.Timeout(self.timeout)
@@ -86,7 +89,21 @@ class HttpSink(Sink):
                 # имеет shortcut'а ``head``, request совместим со всеми
                 # методами + поддерживает WAF-проверку.
                 response = await client.request("HEAD", self.url)
-        except Exception as _:
-            return False
-        # 4xx считаем как «адрес отвечает» (метод не разрешён, и т.п.).
-        return response.status_code < 500
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            # 4xx считаем как «адрес отвечает» (метод не разрешён, и т.п.).
+            if response.status_code < 500:
+                return HealthResult.ok(
+                    latency_ms=latency_ms,
+                    mode=mode,
+                    status_code=response.status_code,
+                )
+            return HealthResult.failed(
+                error=f"HTTP {response.status_code}",
+                mode=mode,
+                latency_ms=latency_ms,
+            )
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )

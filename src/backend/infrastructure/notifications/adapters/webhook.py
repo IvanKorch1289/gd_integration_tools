@@ -25,6 +25,7 @@ from urllib.parse import urlparse
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 _logger = get_logger(__name__)
 
@@ -84,17 +85,24 @@ class WebhookAdapter:
                 f"webhook POST failed: {response.status_code} {response.text[:200]}"
             )
 
-    async def health(self) -> bool:
+    async def health(self, mode: str = "fast") -> HealthResult:
         """Проверить, что upstream зарегистрирован."""
+        import time
+
+        start = time.perf_counter()
         try:
             from src.backend.infrastructure.clients.transport.http_upstream import (
                 upstream_registry,
             )
 
             upstream_registry.get(self._upstream_name)
-            return True
-        except Exception as _:
-            return False
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.ok(latency_ms=latency_ms, mode=mode)
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start) * 1000.0
+            return HealthResult.failed(
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+            )
 
 
 def _url_is_safe(url: str, allow_internal: bool) -> bool:

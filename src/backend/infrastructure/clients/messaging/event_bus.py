@@ -6,6 +6,7 @@ publish() валидирует payload через ``jsonschema``; на fail — 
 :class:`EventSchemaValidationError`.
 """
 
+import asyncio
 from __future__ import annotations
 
 from typing import Any
@@ -14,6 +15,8 @@ from pydantic import BaseModel
 
 from src.backend.core.errors import BaseError
 from src.backend.core.logging import get_logger
+from src.backend.core.tenancy.quotas import QuotaTracker
+from src.backend.core.resilience.connector_resilience import resilient
 from src.backend.core.utils.metrics_registry import metrics_registry
 
 __all__ = (
@@ -106,6 +109,8 @@ class EventBus:
         self._broker: Any = None
         self._started = False
         self._schema_registry = schema_registry
+        # S182: QuotaTracker для rate limiting (per-channel)
+        self._quota = QuotaTracker(prefix="eventbus")
 
     def attach_schema_registry(self, registry: Any) -> None:
         """Прикрепить :class:`ServiceSchemaRegistry` для validation-hook (S13 K3 W3)."""
@@ -153,6 +158,7 @@ class EventBus:
         except ImportError:  # pragma: no cover - jsonschema опциональный
             logger.debug("jsonschema not installed; skipping EventBus validation")
 
+    @resilient(name="eventbus_publish", max_attempts=3)
     async def publish(self, channel: str, event: BaseModel) -> None:
         """Publish event to channel.
 
@@ -164,7 +170,21 @@ class EventBus:
 
         Raises:
             EventSchemaValidationError: If schema validation fails.
+            QuotaExceeded: S182 — если rate limit exceeded (1000 msg/min per channel).
         """
+        # S182: rate limit check
+        quota_result = await self._quota.consume(
+            tenant_id=channel,
+            resource="publish",
+            units=1,
+            limit=1000,  # 1000 msg/min per channel
+            period_seconds=60,
+        )
+        if not quota_result.get("allowed", True):
+            from src.backend.core.tenancy.quotas import QuotaExceeded
+            raise QuotaExceeded(
+                f"EventBus publish rate limit exceeded for channel {channel}"
+            )
         self._validate_event(channel, event)
 
         if not self._broker or not self._started:
@@ -296,7 +316,17 @@ class EventBus:
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
-            return {"status": "ok", "latency_ms": 0.0, "error": None}
+            import time
+            start = time.monotonic()
+            ping = getattr(self, "ping", None)
+            if ping is None:
+                return {"status": "ok", "latency_ms": 0.0, "error": None}
+            result = await ping() if asyncio.iscoroutinefunction(ping) else ping()
+            return {
+                "status": "ok" if result else "down",
+                "latency_ms": round((time.monotonic() - start) * 1000, 2),
+                "error": None,
+            }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
 from src.backend.core.di import app_state_singleton

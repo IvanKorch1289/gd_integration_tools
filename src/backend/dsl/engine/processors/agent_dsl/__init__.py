@@ -66,12 +66,23 @@ from src.backend.dsl.engine.processors.agent_dsl.skill_invoke import (
     SkillInvokeProcessor,
 )
 
+# S202 fix: export LangGraphAgentProcessor (был orphaned — не в __all__)
+from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
+    LangGraphAgentProcessor,
+)
+# S187: export agent_security_check processor
+from src.backend.dsl.engine.processors.agent_dsl.agent_security_check import (
+    AgentSecurityCheckProcessor,
+)
+
 __all__: tuple[str, ...] = (
     "AgentBranchProcessor",
     "AgentGraphProcessor",
     "AgentLoopProcessor",
     "AgentParallelProcessor",
     "AgentRunProcessor",
+    "AgentSecurityCheckProcessor",
+    "LangGraphAgentProcessor",
     "PlanExecuteProcessor",
     "ReflectionLoopProcessor",
     "GuardrailsApplyProcessor",
