@@ -51,14 +51,14 @@ __all__ = ("PIIMasker", "build_default_patterns", "default_masker")
 _EMAIL = re.compile(r"[\w.+\-]+@[\w\-]+\.[\w.\-]+")
 # Phone: знак ``+`` или цифра, затем ≥10 цифр с возможными пробелами/дефисами/скобками.
 _PHONE = re.compile(r"\+?\d[\d\s()\-]{8,}\d")
-# RU SNILS — ``XXX-XXX-XXX YY`` (с пробелом или без перед последними двумя).
-_SNILS = re.compile(r"\b\d{3}-\d{3}-\d{3}\s?\d{2}\b")
-# INN — 10 цифр (юр.лицо) или 12 цифр (физ.лицо) сплошняком.
-_INN = re.compile(r"\b\d{12}\b|\b\d{10}\b")
+# S219: shared PII patterns via core.security.pii_patterns (single source of truth).
+from src.backend.core.security.pii_patterns import (  # noqa: F401
+    INN as _INN,
+    RU_PASSPORT as _RU_PASSPORT,
+    SNILS as _SNILS,
+)
 # Credit card — 13–19 цифр группами через пробел/дефис.
 _CARD = re.compile(r"\b(?:\d[ \-]?){13,19}\b")
-# RU passport — 4 цифры + пробел + 6 цифр.
-_RU_PASSPORT = re.compile(r"\b\d{4}\s\d{6}\b")
 # JWT — три base64url-сегмента, разделённых точкой (Bearer-токены, OAuth).
 _JWT = re.compile(r"\beyJ[\w\-]+\.[\w\-]+\.[\w\-]+\b")
 # IBAN — 2 буквы страны + 2 контрольные + до 30 символов (всего 15–34 длиной).

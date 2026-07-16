@@ -1279,6 +1279,30 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 219 — PII patterns single source of truth
+
+### Refactor: shared `core/security/pii_patterns.py` (S219)
+
+3 regex patterns (`_SNILS`, `_INN`, `_RU_PASSPORT`) были скопированы в двух файлах:
+- `core/security/pii_masker.py` (DSL/audit masking)
+- `infrastructure/observability/pii_filter.py` (structlog masking)
+
+При изменении формата легко пропустить одно из мест → расхождение regex → inconsistent masking behavior. S219 консолидирует.
+
+**Fix**:
+- **NEW** `src/backend/core/security/pii_patterns.py` (34 LOC): public `SNILS`, `INN`, `RU_PASSPORT` compiled patterns.
+- `core/security/pii_masker.py`: 3 local regex definitions replaced with `from src.backend.core.security.pii_patterns import (...)`.
+- `infrastructure/observability/pii_filter.py`: same import — local `_SNILS`/`_INN`/`_RU_PASSPORT` removed (kept `_EMAIL`, `_PHONE`, `_CARD` local since pii_masker doesn't use them).
+
+**Метрики**: -6 LOC duplicate regex definitions, +34 LOC new module = net +28 LOC. **Но** удобство/правила:
+- Single source of truth для 3 patterns.
+- Будущие изменения (например, добавление `XX-XX-XXXXX` варианта SNILS) — одно место.
+- pii_filter использует те же compiled patterns, что и pii_masker (consistency).
+
+Без regression: `from pii_patterns import SNILS as _SNILS` даёт тот же compiled `re.Pattern` объект.
+
+---
+
 ## [Unreleased] — Sprint 218 — PII Recognizers base class (S218)
 
 ### Refactor: RegexPiiRecognizer base class для 7 Presidio recognizers

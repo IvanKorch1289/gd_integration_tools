@@ -37,15 +37,15 @@ _EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 # съедания 10-/12-значных INN в составе текста — INN маскируется раньше).
 _PHONE = re.compile(r"\+?\d[\d\s()\-]{8,}\d")
 # RU SNILS — XXX-XXX-XXX YY.
-_SNILS = re.compile(r"\b\d{3}-\d{3}-\d{3}\s?\d{2}\b")
-# INN — 10 (LE) или 12 (individual) цифр сплошняком (разделители
-# пробелами означают, что это уже не INN, а phone/passport).
-_INN = re.compile(r"\b\d{12}\b|\b\d{10}\b")
+# S219: shared via core.security.pii_patterns (single source of truth).
+from src.backend.core.security.pii_patterns import (  # noqa: F401
+    INN as _INN,
+    RU_PASSPORT as _RU_PASSPORT,
+    SNILS as _SNILS,
+)
+
 # Credit card — 13–19 цифр (groups через пробел/тире).
 _CARD = re.compile(r"\b(?:\d[ -]*?){13,19}\b")
-# RU passport — 4 цифры + пробел + 6 цифр (стандартный формат серия+номер).
-# Без пробела 10 цифр — это INN, не passport.
-_RU_PASSPORT = re.compile(r"\b\d{4}\s\d{6}\b")
 
 
 def redact_for_observability(value: Any) -> Any:
