@@ -2,15 +2,15 @@
 
 Содержит:
     * LlamaGuardRuntime — модерация через Llama Guard (GGUF / llama.cpp).
-    * LLMGuardClient — self-hosted scanner (PromptInjection, Toxicity, etc.).
+
+.. note::
+    ``LLMGuardClient`` был удалён 2026-07-16: upstream ``protectai/llm-guard``
+    архивирован 2026-07-09 (см. ``research/agent-framework/REPORT.md`` F4.1).
+    Используйте ``LlamaGuardRuntime`` или ``LakeraClient`` как замену.
 """
 
 from __future__ import annotations
 
 from src.backend.core.ai.guardrails.llamaguard import GuardResult, LlamaGuardRuntime
-from src.backend.core.ai.guardrails.llm_guard_client import (
-    LLMGuardClient,
-    LLMGuardResult,
-)
 
-__all__ = ("GuardResult", "LLMGuardClient", "LLMGuardResult", "LlamaGuardRuntime")
+__all__ = ("GuardResult", "LlamaGuardRuntime")

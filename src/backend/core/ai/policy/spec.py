@@ -102,8 +102,8 @@ class GuardRef(BaseModel):
 
     Attributes:
         name: Идентификатор guard'а в формате ``"<engine>:<variant>"``.
-            Примеры: ``"nemo:colang:topics"``, ``"llama_guard:safe_v3"``,
-            ``"rebuff:default"``, ``"lakera:strict"``.
+            Примеры: ``"nemo:colang:topics"``, ``"nemo:prompt_injection"``,
+            ``"llama_guard:safe_v3"``, ``"lakera:strict"``.
         config: Опциональные параметры engine'а
             (threshold, allowed_topics, и т. п.).
         on_block: Поведение при блокировке guard'ом:

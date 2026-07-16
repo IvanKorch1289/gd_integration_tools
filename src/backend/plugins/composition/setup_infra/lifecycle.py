@@ -145,7 +145,7 @@ async def _register_agent_security_workflow_hooks() -> None:
         from src.backend.core.ai.security.workflow_hooks import (
             register_all_workflow_hooks,
         )
-        from src.backend.core.ai.security.agent_security import (
+        from src.backend.core.ai.security import (
             get_agent_security_framework,
         )
 

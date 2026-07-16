@@ -64,7 +64,8 @@ class Sprints2427Flags(BaseSettings):
             "Активирует self-hosted defense-in-depth pipeline: NeMo Guardrails (Colang "
             "input rails, jailbreak detection, banking topic filter) + Llama Guard 3 "
             "output classifier (vLLM/TGI). Per-tenant policy через tenant_config.py. "
-            "При False — только Rebuff/Lakera SaaS-вызовы по существующим capabilities. "
+            "При False — только Lakera SaaS-вызовы по существующим capabilities "
+            "(Rebuff удалён S172 — research/agent-framework/REPORT.md F4.2). "
             "default-OFF до 100/100 jailbreak gold-set (block rate >= 95%) + p95 <= 80ms."
         ),
     )

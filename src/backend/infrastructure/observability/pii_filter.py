@@ -30,12 +30,11 @@ from typing import Any
 
 __all__ = ("mask_pii", "redact_for_observability")
 
-# Email — RFC 5321-совместимое упрощение.
-_EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
-# Phone — E.164 (+7...) или RU-формат (+7 (xxx) xxx-xx-xx).
-# Якорь \+ или непрерывная цифровая последовательность ≥ 10 (избегаем
-# съедания 10-/12-значных INN в составе текста — INN маскируется раньше).
-_PHONE = re.compile(r"\+?\d[\d\s()\-]{8,}\d")
+# S221: Email/Phone shared via core.security.pii_patterns.
+from src.backend.core.security.pii_patterns import (  # noqa: F401
+    EMAIL as _EMAIL,
+    PHONE as _PHONE,
+)
 # RU SNILS — XXX-XXX-XXX YY.
 # S219: shared via core.security.pii_patterns (single source of truth).
 from src.backend.core.security.pii_patterns import (  # noqa: F401

@@ -75,7 +75,11 @@ class AIInvocationPayload(BaseModel):
 
     # Guard results
     guard_type: str | None = None
-    """Тип guard'а: 'nemo', 'rebuff', 'lakera', 'llama_guard'."""
+    """Тип guard'а: 'nemo' (canonical, S172), 'llama_guard', 'lakera'.
+
+    Исторические значения ('rebuff', 'llm_guard') сохранены для
+    backward-compat audit-events pre-S172 — research/agent-framework/REPORT.md F4.1,F4.2.
+    """
     guard_verdict: str | None = None
     """Вердикт: 'passed', 'blocked', 'warned'."""
     guard_categories: list[str] = Field(default_factory=list)

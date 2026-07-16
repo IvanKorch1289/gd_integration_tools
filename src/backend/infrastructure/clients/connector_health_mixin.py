@@ -8,10 +8,6 @@ mixin (раньше — две почти идентичные копии по 4
     class MyConnector(ConnectorHealthMixin):
         async def health(self, mode: str = "fast") -> HealthResult:
             return await self._timed_health(self._probe, mode)
-
-Backwards-compat: ``infrastructure.sinks.base.SinkHealthMixin`` и
-``infrastructure.sources.base.SourceHealthMixin`` — алиасы на этот mixin,
-чтобы внешние extension'ы и существующие импорты продолжали работать.
 """
 
 from __future__ import annotations

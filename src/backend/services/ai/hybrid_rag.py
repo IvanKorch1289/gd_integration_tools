@@ -5,9 +5,9 @@
 2. Dense vector (semantic) — находит близкие по смыслу
 3. Cross-encoder rerank — финальная оценка (query, document) pairs
 
-Все компоненты опциональны:
-- BM25 через rank_bm25 (или fallback: просто vector search)
-- Cross-encoder через sentence-transformers (или fallback: rank by score)
+Компоненты:
+- BM25 через rank_bm25 (установлен в [project].dependencies — S172)
+- Cross-encoder через sentence-transformers (установлен в [project].optional-dependencies].rag)
 
 Multi-instance safety:
 - Vector store (Chroma/FAISS) — shared centralized storage
@@ -56,7 +56,8 @@ class HybridRAGSearch:
 
     def _try_init(self) -> None:
         """Lazy-init BM25 + BGE FlagReranker (gap-ai-3.1, ADR-0074)."""
-        # BM25 — lexical fallback
+        # BM25 — lexical (rank_bm25 в core deps с S172, ImportError теперь не ожидается,
+        # но проверка остаётся для dev_light стендов без numpy).
         try:
             from rank_bm25 import BM25Okapi  # noqa: F401
 

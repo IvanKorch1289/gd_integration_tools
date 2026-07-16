@@ -31,7 +31,7 @@ class GuardResult:
     """Результат одного guard check для audit-события.
 
     Attributes:
-        guard_name: Идентификатор (``"llama_guard:safe_v3"``, ``"rebuff"``, etc.).
+        guard_name: Идентификатор (``"llama_guard:safe_v3"``, ``"nemo:prompt_injection"``, etc.).
         verdict: Вердикт (``"passed"``, ``"blocked"``, ``"warned"``).
         categories: Срабоавшие категории при блокировке.
     """
@@ -42,7 +42,7 @@ class GuardResult:
 
 
 class GuardrailViolationError(Exception):
-    """Выходной guard заблокировал контент (Llama Guard / NeMo / Rebuff / Lakera).
+    """Выходной guard заблокировал контент (Llama Guard / NeMo / Lakera).
 
     Attributes:
         guard_name: Идентификатор guard'а (``"llama_guard:safe_v3"``, etc.).

@@ -95,7 +95,7 @@ class InputMixin(_PipelineStepsProtocol):
     async def _apply_input_guards(
         self, sanitized: str, policy: AIPolicySpec | None
     ) -> list[GuardResult]:
-        """Шаг 4: input guards (NeMo Colang + Rebuff/Lakera).
+        """Шаг 4: input guards (NeMo Colang + Lakera).
 
         При наличии :class:`AIPolicyEnforcer` с настроенными guards вызывает
         :meth:`AIPolicyEnforcer.guard_input`. Иначе — no-op.

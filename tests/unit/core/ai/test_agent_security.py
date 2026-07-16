@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.core.ai.security.agent_security import (
+from src.backend.core.ai.security import (
     AgentSecurityFramework,
     AgentSecurityPolicy,
     DangerousCommandDetector,
@@ -222,7 +222,7 @@ class TestAgentSecurityFramework:
         def my_hook(subject: str, context: dict) -> SecurityDecision:
             return SecurityDecision(allowed=True, reason="custom check passed")
 
-        from src.backend.core.ai.security.agent_security import SecurityHook
+        from src.backend.core.ai.security import SecurityHook
 
         framework.register_hook(
             SecurityHook(

@@ -370,7 +370,7 @@ async def test_input_guards_no_enforcer_returns_empty() -> None:
         workflow_pattern="*",
         tenant_pattern="*",
         model_router=ModelRouterSpec(primary="m"),
-        input_guards=[GuardRef(name="llm_guard:PromptInjection")],
+        input_guards=[GuardRef(name="nemo:PromptInjection")],
     )
     result = await mixin._apply_input_guards("prompt", policy)
     assert result == []
@@ -410,7 +410,7 @@ async def test_input_guards_happy_path() -> None:
     enforcer = MagicMock()
     enforcer.guard_input = AsyncMock(
         return_value=[
-            GuardResult(guard_name="llm_guard:PromptInjection", verdict="passed")
+            GuardResult(guard_name="nemo:PromptInjection", verdict="passed")
         ]
     )
     policy = AIPolicySpec(
@@ -418,7 +418,7 @@ async def test_input_guards_happy_path() -> None:
         workflow_pattern="*",
         tenant_pattern="*",
         model_router=ModelRouterSpec(primary="m"),
-        input_guards=[GuardRef(name="llm_guard:PromptInjection")],
+        input_guards=[GuardRef(name="nemo:PromptInjection")],
     )
     mixin = _make_mixin(_policy_enforcer=enforcer)
     result = await mixin._apply_input_guards("hello", policy)

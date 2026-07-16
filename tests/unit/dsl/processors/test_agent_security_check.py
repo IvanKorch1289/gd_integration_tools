@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.backend.core.ai.security.agent_security import (
+from src.backend.core.ai.security import (
     SecurityDecision,
     ThreatLevel,
 )

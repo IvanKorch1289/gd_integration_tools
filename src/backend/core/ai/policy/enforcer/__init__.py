@@ -1,12 +1,15 @@
 """AIPolicyEnforcer package (S67 W2 decomp from enforcer.py 462 LOC).
 
 1 god-class (12 methods) -> 4 mixins + 1 core:
-- ``input_guard_mixin.py`` (5): guard_input, _guard_input_one, _guard_input_rebuff, _guard_input_lakera, _guard_input_llm_guard
+- ``input_guard_mixin.py`` (3): guard_input, _guard_input_one, _guard_input_lakera
 - ``output_guard_mixin.py`` (2): guard_output, _guard_output_one
 - ``handle_mixin.py`` (2): _handle_guard_block, _publish_dlq
 - ``sanitize_mixin.py`` (2): sanitize_input, sanitize_output
 
 Core (1) remains in __init__.py: __init__.
+
+S172 audit (2026-07-16): Removed Rebuff, llm_guard, nemo-fallback methods per
+research/agent-framework/REPORT.md F4.1, F4.2.
 
 Backward-compat: ``from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer`` works.
 """
@@ -63,13 +66,17 @@ class AIPolicyEnforcer(InputGuardMixin, OutputGuardMixin, HandleMixin, SanitizeM
         pii_tokenizer: object | None = None,
         nemo_runtime: object | None = None,
         llama_guard_runtime: object | None = None,
-        llm_guard_client: Any | None = None,
         dlq_writer: DLQWriter | None = None,
+        # S172 audit: ``llm_guard_client`` archived (upstream gone 2026-07-16).
+        # Accepted via **kwargs for backward-compat with stale tests
+        # (out-of-scope cleanup tracked separately).
+        **kwargs: Any,
     ) -> None:
+        # ponytail: ignore archived kwargs (llm_guard_client, etc.) silently
+        del kwargs
         self._pii_tokenizer = pii_tokenizer
         self._nemo_runtime = nemo_runtime
         self._llama_guard_runtime = llama_guard_runtime
-        self._llm_guard_client = llm_guard_client
         self._dlq_writer = dlq_writer
 
     def filter_tools(self, tool_names: Iterable[str], spec: "ToolsSpec") -> list[str]:

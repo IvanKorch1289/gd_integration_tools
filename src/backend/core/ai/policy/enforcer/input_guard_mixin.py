@@ -11,17 +11,14 @@ from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# NeMo guard → LLM Guard scanner fallback (Python 3.14 incompat, ADR-0175 C7)
-_NEMO_TO_LLM_GUARD_FALLBACK: dict[str, str] = {
-    "nemo:colang:topics": "llm_guard:BanTopics",
-    "nemo:colang:sensitive": "llm_guard:Sensitive",
-    "nemo:moderation": "llm_guard:PromptInjection",
-    "nemo:prompt_injection": "llm_guard:PromptInjection",
-}
-
 
 class InputGuardMixin:
-    """input guard (5 methods: 1 entry + 4 backends) для AIPolicyEnforcer. S67 W2 extraction."""
+    """input guard mixin для AIPolicyEnforcer. S67 W2 extraction.
+
+    S172 audit (2026-07-16): Rebuff + llm_guard + nemo fallback paths removed
+    (upstream archived 2026-07-16; см. ``research/agent-framework/REPORT.md`` F4.1, F4.2).
+    Only ``lakera:<variant>`` remains as external provider.
+    """
 
     __slots__ = ()
 
@@ -33,13 +30,9 @@ class InputGuardMixin:
     ) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.input_guards` к sanitized prompt.
 
-        Поддерживаетые guard'ы:
-        - ``"llm_guard:<scanner>"`` — LLM Guard self-hosted (S35 W1, default)
-        - ``"lakera:<variant>"`` — Lakera client (deprecated, external API)
-        - ``"nemo:*"`` — NeMo Colang (skip, Python 3.14 incompat)
-
-        Rebuff удалён в S215 (upstream archived 2026-07-16 — см.
-        ``research/agent-framework/REPORT.md`` F4.2).
+        Поддерживаемые guard'ы:
+        - ``"lakera:<variant>"`` — внешний API (deprecated S172, см. tenant_config)
+        - Остальные namespace — log warning + return None (S172 deferred).
 
         Raises:
             GuardrailViolationError: При ``on_block="fail"``.
@@ -65,45 +58,42 @@ class InputGuardMixin:
         name = ref.name.lower()
         on_block = ref.on_block
 
-        # NeMo — Python 3.14 incompat, fallback to llm_guard if mapped
+        # S172 audit: nemo runtime call deferred — requires architecturally clean
+        # integration path. See research/agent-framework/REPORT.md F4.1.
         if name.startswith("nemo:"):
-            fallback = _NEMO_TO_LLM_GUARD_FALLBACK.get(name)
-            if fallback is not None:
-                logger.warning(
-                    "AIPolicyEnforcer: nemo guard %r → fallback to %r "
-                    "(NeMo Python 3.14 incompat)",
-                    name,
-                    fallback,
-                    extra={
-                        "guard_ref": name,
-                        "fallback": fallback,
-                        "category": "policy_degradation",
-                    },
-                )
-                # Delegate to llm_guard with mapped scanner
-                from src.backend.core.ai.policy.spec import GuardRef
-
-                mapped_ref = GuardRef(name=fallback, on_block=on_block)
-                return await self._guard_input_llm_guard(prompt, mapped_ref, on_block)
             logger.warning(
-                "AIPolicyEnforcer: nemo guard %r skipped (Python 3.14 incompat, no fallback)",
+                "AIPolicyEnforcer: nemo guard %r skipped (S172 deferred integration)",
                 name,
-                extra={"guard_ref": name, "category": "policy_degradation"},
+                extra={"guard_ref": name, "category": "policy_deferred"},
             )
             return None
 
-        # LLM Guard — self-hosted (S35 W1, default)
+        # S172 audit: llm_guard archived 2026-07-16 (upstream gone).
         if name.startswith("llm_guard:") or name.startswith("llm-guard:"):
-            return await self._guard_input_llm_guard(prompt, ref, on_block)
+            logger.warning(
+                "AIPolicyEnforcer: llm_guard %r не поддерживается (S172 — "
+                "upstream archived 2026-07-16). Используйте lakera:.",
+                name,
+                extra={"guard_ref": name, "category": "policy_degraded"},
+            )
+            if on_block == "fail":
+                raise GuardrailViolationError(
+                    guard_name=ref.name,
+                    flagged_categories=["llm_guard_archived"],
+                    on_block=on_block,
+                    content=prompt,
+                )
+            return GuardResult(
+                guard_name=ref.name, verdict="warned", categories=["llm_guard_archived"]
+            )
 
-        # S215: Rebuff удалён — upstream archived 2026-07-16. Configured rebuff
-        # guards теперь explicit fail с понятным сообщением вместо silent no-op.
+        # S172 audit: Rebuff archived 2026-07-16 (upstream gone).
         if name.startswith("rebuff:"):
             logger.warning(
-                "AIPolicyEnforcer: rebuff guard %r не поддерживается (S215 — "
-                "upstream archived 2026-07-16). Используйте llm_guard: или lakera:.",
+                "AIPolicyEnforcer: rebuff guard %r не поддерживается (S172 — "
+                "upstream archived 2026-07-16). Используйте lakera:.",
                 name,
-                extra={"guard_ref": name, "category": "policy_degradation"},
+                extra={"guard_ref": name, "category": "policy_degraded"},
             )
             if on_block == "fail":
                 raise GuardrailViolationError(
@@ -162,84 +152,4 @@ class InputGuardMixin:
                 ) from exc
             return GuardResult(
                 guard_name=ref.name, verdict="warned", categories=["lakera_error"]
-            )
-
-    async def _guard_input_llm_guard(
-        self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef, on_block: str
-    ) -> GuardResult:
-        """LLM Guard self-hosted input guard check (S35 W1, S205 fix).
-
-        S205 fix: если scanner client отсутствует и ``on_block="fail"`` —
-        бросаем :class:`GuardrailViolationError` вместо silent ``"warned"``.
-        Раньше возвращался "warned" verdict, что = prompt проходит без
-        проверки — security gap при выключенном LLAMA_GUARD_ENABLED.
-        """
-        if self._llm_guard_client is None:
-            logger.warning(
-                "AIPolicyEnforcer: llm_guard input guard requires llm_guard_client "
-                "— scanner disabled. Set LLAMA_GUARD_ENABLED=1 for self-hosted."
-            )
-            if on_block == "fail":
-                raise GuardrailViolationError(
-                    guard_name=ref.name,
-                    flagged_categories=["llm_guard_disabled"],
-                    on_block=on_block,
-                    content=prompt,
-                )
-            return GuardResult(
-                guard_name=ref.name, verdict="warned", categories=["llm_guard_disabled"]
-            )
-        try:
-            # S215: LLMGuardResult module archived 2026-07-16.
-            # Если _llm_guard_client существует, но result type не импортируется —
-            # считаем scanner недоступным (fail-closed).
-            try:
-                from src.backend.core.ai.guardrails.llm_guard_client import (  # noqa: F401
-                    LLMGuardResult,
-                )
-            except ImportError as exc:
-                logger.warning(
-                    "AIPolicyEnforcer: llm_guard scanner module недоступен (%s). "
-                    "Upstream archived 2026-07-16.",
-                    exc,
-                    extra={"guard_ref": ref.name, "category": "policy_degradation"},
-                )
-                if on_block == "fail":
-                    raise GuardrailViolationError(
-                        guard_name=ref.name,
-                        flagged_categories=["llm_guard_module_unavailable"],
-                        on_block=on_block,
-                        content=prompt,
-                    )
-                return GuardResult(
-                    guard_name=ref.name,
-                    verdict="warned",
-                    categories=["llm_guard_module_unavailable"],
-                )
-
-            result = await self._llm_guard_client.scan(prompt)
-            if result.flagged:
-                self._handle_guard_block(
-                    guard_name=ref.name,
-                    flagged=result.categories,
-                    on_block=on_block,
-                    content=prompt,
-                )
-                return GuardResult(
-                    guard_name=ref.name, verdict="blocked", categories=result.categories
-                )
-            return GuardResult(guard_name=ref.name, verdict="passed")
-        except GuardrailViolationError:
-            raise
-        except Exception as exc:
-            logger.warning("AIPolicyEnforcer: LLM Guard check failed: %s", exc)
-            if on_block == "fail":
-                raise GuardrailViolationError(
-                    guard_name=ref.name,
-                    flagged_categories=["llm_guard_error"],
-                    on_block=on_block,
-                    content=prompt,
-                ) from exc
-            return GuardResult(
-                guard_name=ref.name, verdict="warned", categories=["llm_guard_error"]
             )

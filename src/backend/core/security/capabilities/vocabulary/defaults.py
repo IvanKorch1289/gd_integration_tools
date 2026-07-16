@@ -220,11 +220,25 @@ def _build_ai_rag_capabilities(
     )
     vocab.register(
         CapabilityDef(
+            name="ai.guardrails.nemo",
+            matcher=dot_glob,
+            description=(
+                "Вызов NeMo Colang self-check guard (S172, replaces Rebuff). "
+                "scope = '*' или provider-id. "
+                "research/agent-framework/REPORT.md F4.2."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
             name="ai.guardrails.rebuff",
             matcher=dot_glob,
             description=(
-                "Вызов Rebuff prompt-injection detector. "
-                "scope = '*' или provider-id (S11 K1 W2)."
+                "[DEPRECATED S172] Вызов Rebuff prompt-injection detector — "
+                "upstream archived 2026; capability сохранён для backward-compat "
+                "grants в existing roles. "
+                "Migrate to ai.guardrails.nemo. "
+                "research/agent-framework/REPORT.md F4.2."
             ),
         )
     )
@@ -323,8 +337,9 @@ def _build_ai_safety_capabilities(
             matcher=dot_glob,
             description=(
                 "Чтение per-tenant guardrail policy "
-                "(NeMo/LlamaGuard/Rebuff/Lakera enable map) из tenant_config.py; "
-                "scope = tenant-id или '*' (S24 W2, ADR-NEW-17)."
+                "(NeMo/LlamaGuard/Lakera enable map) из tenant_config.py; "
+                "scope = tenant-id или '*' (S24 W2, ADR-NEW-17, "
+                "S172: Rebuff заменён на NeMo, F4.2)."
             ),
         )
     )

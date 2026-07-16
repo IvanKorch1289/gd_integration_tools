@@ -76,12 +76,13 @@ class AIRAGFlags(BaseSettings):
 
     guardrails_per_tenant: bool = Field(
         default=True,
-        title="K1 S11 W2: per-tenant guardrails (Lakera + Rebuff)",
+        title="K1 S11 W2: per-tenant guardrails (Lakera + NeMo)",
         description=(
             "K1 Sprint 11 Wave 2 (wave:s11/k1-w2-guardrails-per-tenant). "
-            "Owner: K1 Security. Подключает Lakera Guard / Rebuff клиенты "
+            "Owner: K1 Security. Подключает Lakera Guard / NeMo Colang клиенты "
             "с per-tenant thresholds (TenantSettings.guardrails). "
-            "Capabilities: ai.guardrails.lakera:external, ai.guardrails.rebuff:external. "
+            "Capabilities: ai.guardrails.lakera:external, ai.guardrail.evaluate. "
+            "Rebuff удалён S172 (archived upstream) — research/agent-framework/REPORT.md F4.2. "
             "default-OFF до coordination с tenant-config."
         ),
     )

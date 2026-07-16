@@ -36,7 +36,7 @@ from __future__ import annotations
 
 from typing import Any, ClassVar, Literal
 
-from src.backend.core.ai.security.agent_security import (
+from src.backend.core.ai.security import (
     SecurityDecision,
     ThreatLevel,
 )

@@ -18,13 +18,14 @@ ConnectorRegistry (см. `src/infrastructure/registry.py`) централизо�
 
 from __future__ import annotations
 
-import time
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from src.backend.core.config.pooling import DEFAULT_POOLING_PROFILE, PoolingProfile
+from src.backend.infrastructure.clients.connector_health_mixin import (
+    ConnectorHealthMixin,
+)
 
 HealthMode = Literal["fast", "deep"]
 HealthStatus = Literal["ok", "degraded", "failed"]
@@ -73,7 +74,7 @@ class HealthResult:
         )
 
 
-class InfrastructureClient(ABC):
+class InfrastructureClient(ConnectorHealthMixin, ABC):
     """Базовый абстрактный класс для всех infra-клиентов.
 
     Каждый клиент обязан реализовать ``start``/``stop``/``health``.
@@ -149,24 +150,6 @@ class InfrastructureClient(ABC):
         """
         await self.stop()
         await self.start()
-
-    # -- Helpers -------------------------------------------------------
-
-    async def _timed_health(
-        self, probe: Callable[[], Any], mode: HealthMode
-    ) -> HealthResult:
-        """Helper для клиентов: оборачивает probe-колбек в timing + exception handling."""
-        start = time.perf_counter()
-        try:
-            extra = await probe() if callable(probe) else {}
-            latency_ms = (time.perf_counter() - start) * 1000.0
-            details = extra if isinstance(extra, dict) else {}
-            return HealthResult.ok(latency_ms=latency_ms, mode=mode, **details)
-        except Exception as exc:
-            latency_ms = (time.perf_counter() - start) * 1000.0
-            return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
-            )
 
 
 class ConnectorValidationError(RuntimeError):

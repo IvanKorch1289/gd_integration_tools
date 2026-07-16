@@ -47,18 +47,6 @@ class TestConnectorHealthMixin:
         result = await h._timed_health(probe, "deep")
         assert result.mode == "deep"
 
-    async def test_sink_alias_is_same_class(self) -> None:
-        """Backward-compat: SinkHealthMixin = ConnectorHealthMixin."""
-        from src.backend.infrastructure.sinks.base import SinkHealthMixin
-
-        assert SinkHealthMixin is ConnectorHealthMixin
-
-    async def test_source_alias_is_same_class(self) -> None:
-        """Backward-compat: SourceHealthMixin = ConnectorHealthMixin."""
-        from src.backend.infrastructure.sources.base import SourceHealthMixin
-
-        assert SourceHealthMixin is ConnectorHealthMixin
-
 
 @pytest.mark.asyncio
 class TestMakeKindHealth:

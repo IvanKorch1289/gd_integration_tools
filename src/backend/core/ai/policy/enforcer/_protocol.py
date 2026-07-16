@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from src.backend.core.ai.errors import GuardResult
@@ -15,7 +15,6 @@ class _AIPolicyEnforcerProtocol(Protocol):
     _pii_tokenizer: object | None
     _nemo_runtime: object | None
     _llama_guard_runtime: object | None
-    _llm_guard_client: Any | None
     _dlq_writer: DLQWriter | None
 
     async def guard_input(
@@ -24,13 +23,7 @@ class _AIPolicyEnforcerProtocol(Protocol):
     async def _guard_input_one(
         self, prompt: str, ref: GuardRef
     ) -> GuardResult | None: ...
-    async def _guard_input_rebuff(
-        self, prompt: str, ref: GuardRef, on_block: str
-    ) -> GuardResult: ...
     async def _guard_input_lakera(
-        self, prompt: str, ref: GuardRef, on_block: str
-    ) -> GuardResult: ...
-    async def _guard_input_llm_guard(
         self, prompt: str, ref: GuardRef, on_block: str
     ) -> GuardResult: ...
     async def guard_output(

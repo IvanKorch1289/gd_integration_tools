@@ -1,18 +1,15 @@
 """Per-tenant guardrails clients (Sprint 11 K1 W2).
 
-LLM Guard (self-hosted) — primary scanner (S35 W1, replaces Rebuff/Lakera external APIs).
-Lakera Guard + Rebuff — deprecated, kept for backward-compat (external API calls).
+.. note::
+    LLM Guard (S35 W1) and Rebuff (Sprint 11) clients were removed 2026-07-16
+    after both upstream libraries were archived by their maintainers.
+    See ``research/agent-framework/REPORT.md`` F4.1, F4.2.
 
-LLM Guard scanners: PromptInjection, Toxicity, Anonymize, Sensitive, BanTopics, EncodedKeywords.
-No external API calls — CPU-based, MIT licensed.
+Lakera Guard (external API) and NeMo Guard are the remaining providers.
+NeMo is self-hosted; Lakera remains the only third-party API integration.
 """
 
-from src.backend.core.ai.guardrails.llm_guard_client import (
-    LLMGuardClient,
-    LLMGuardResult,
-)
 from src.backend.services.ai.guardrails.lakera_client import LakeraClient, LakeraResult
-from src.backend.services.ai.guardrails.rebuff_client import RebuffClient, RebuffResult
 from src.backend.services.ai.guardrails.tenant_config import (
     GuardrailsConfig,
     GuardrailsThresholds,
@@ -21,10 +18,6 @@ from src.backend.services.ai.guardrails.tenant_config import (
 __all__ = (
     "GuardrailsConfig",
     "GuardrailsThresholds",
-    "LLMGuardClient",
-    "LLMGuardResult",
     "LakeraClient",
     "LakeraResult",
-    "RebuffClient",
-    "RebuffResult",
 )

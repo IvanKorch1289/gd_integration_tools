@@ -99,6 +99,10 @@ dependencies = [
     "python-docx>=1.1,<2.0",
     "markitdown>=0.1.5,<1.0.0",
     "whoosh-reloaded>=2.7.5,<3.0.0",
+    # S172: rank-bm25 для HybridRAGSearch (services/ai/hybrid_rag.py) — promoted
+    # из [project.optional-dependencies].rag в core deps, чтобы default `uv sync`
+    # давал BM25 без `-E rag`. Pure-Python (numpy dep), Python 3.14 wheel ok.
+    "rank-bm25>=0.2.2,<1.0.0",
     "sentry-sdk[fastapi]>=2.20.0,<3.0.0",
     "typer>=0.12.0,<1.0.0",
     "pydash>=8.0,<9.0",
@@ -128,6 +132,19 @@ ai = [
     # отсутствие пакетов не ломает CLI (skip-режим).
     "inspect-ai>=0.3",
     "dspy-ai>=2.5",
+    # S172: presidio-ru-recognizers — checksum-validated ИНН/СНИЛС/ОГРН drop-ins
+    # для уже-используемого Presidio. Custom recognizers в services/ai/pii/recognizers/
+    # остаются как fallback; не удалять до явного перехода.
+    "presidio-ru-recognizers>=0.1.0,<0.2.0",
+    # S172: deepeval — agentic metrics (Task Completion, Plan Adherence, Tool Correctness).
+    # Active maintainer Confident AI. Lazy-import в services/ai/eval/.
+    "deepeval>=1.0.0,<2.0.0",
+    # S172: deepteam вынесен из .ai в отдельный .redteam extra — см. ниже.
+    # Причина: upstream deepteam==1.0.4 имеет requires_python<3.14 (metadata
+    # mismatch — реальный код pure-Python py3-none-any и работает на 3.14,
+    # но pip resolver на проекте с requires-python=">=3.14,<3.15" отвергает).
+    # Изолированный extra позволяет выбирать: ставить redteam на 3.12/3.13,
+    # либо на 3.14 через `pip install deepteam --ignore-requires-python`.
 ]
 security = [
     "presidio-analyzer>=2.2.0",
@@ -156,15 +173,24 @@ db_drivers = [
 # в Dockerfile / make pii-bootstrap target (~1.5GB).
 # Lazy-import в services/ai/pii/presidio_analyzer.py; default-OFF feature-flag
 # PRESIDIO_PII_ENABLED — graceful fallback на AIDataSanitizer (regex).
-# llm-guard (S35 W1) — self-hosted CPU scanner (MIT), replaces Rebuff/Lakera external APIs.
-# S168 W16 P1-5: pydantic-ai>=1.99.0 конфликт с tiktoken разрешён —
-# LiteLLMModelAdapter реализован (полный Model Protocol). 1.107.0
-# установлен, conflict с hypothesis/llm-guard тиктокен остаётся
-# в S35 W4 note.
+# llm-guard (S35 W1) — REMOVED 2026-07-16: protectai/llm-guard archived 2026-07-09
+# (см. research/agent-framework/REPORT.md F4.1). Self-hosted scanner больше не
+# поставляется; используйте LlamaGuardRuntime (core/ai/guardrails/llamaguard.py)
+# или внешний Lakera Guard API как замену.
 ai-safety = [
     "presidio-analyzer>=2.2.0",
     "presidio-anonymizer>=2.2.0",
     "spacy>=3.8.13",
+]
+# S172: deepteam — OWASP Top 10 for LLMs 2025 + OWASP Top 10 for Agents 2026.
+# Red-team CI. Lazy-import в services/ai/redteam/.
+# Изолирован от .ai из-за upstream-блокера: deepteam==1.0.4 metadata
+# requires_python<3.14, а проект требует ">=3.14,<3.15" → pip resolver
+# отвергает на 3.14. Сам пакет pure-Python (py3-none-any wheel) — runtime
+# работает на 3.14. Workaround: `pip install deepteam --ignore-requires-python`.
+# Этот extra безопасно ставится на 3.12/3.13; на 3.14 — через override.
+redteam = [
+    "deepteam>=1.0.4,<2.0.0",
 ]
 # === К1 Security (Sprint 1 V16, S6 DoD): SAML SP-initiated SSO + SLO. ===
 # python3-saml тянет xmlsec (C-ext) — устанавливается отдельным extra,
@@ -242,6 +268,10 @@ analytics = [
 ]
 rag = [
     "sentence-transformers>=3.0.0,<6.0.0",
+    # S172: rank-bm25 promoted to [project].dependencies (core) — см. строку
+    # выше с whoosh-reloaded. Дубль здесь оставлен намеренно: гарантирует тот
+    # же upper-bound <1.0.0 для пользователей `uv sync --extra rag` даже
+    # если кто-то вручную override'нёт основной dependencies.
     "rank-bm25>=0.2.2,<1.0.0",
     "chromadb>=0.5.0,<2.0.0",  # SECURITY: CVE pre-auth code injection (vulnerable <= 1.5.9). Fix version not yet on PyPI — MONITOR
 ]
@@ -623,11 +653,6 @@ ignore_missing_imports = true
 # в dev_light без xmlsec C-extension SamlBackend остаётся доступен,
 # но :meth:`is_available` возвращает False.
 module = "onelogin.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-# Optional AI/ML deps — not installed in dev_light.
-module = "llm_guard.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

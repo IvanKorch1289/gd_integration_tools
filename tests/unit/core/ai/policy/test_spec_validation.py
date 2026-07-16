@@ -119,7 +119,7 @@ def test_full_policy_spec_with_guards_and_sanitizers() -> None:
         input_sanitizers=[SanitizerRef(name="pii_tokenizer:reversible:ru_strict")],
         input_guards=[
             GuardRef(name="nemo:colang:topics"),
-            GuardRef(name="rebuff:default"),
+            GuardRef(name="nemo:colang:sensitive"),
         ],
         output_guards=[GuardRef(name="llama_guard:safe_v3", on_block="dlq")],
         output_sanitizers=[SanitizerRef(name="presidio:ru_anonymize", on_error="warn")],

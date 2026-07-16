@@ -4,16 +4,20 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
+logger = get_logger(__name__)
 
 
 class GuardrailsProcessor(BaseProcessor):
     """Проверяет LLM output на безопасность и соответствие ожиданиям.
 
     Валидации: max_length, blocklist regex, required dict keys,
-    + опциональные внешние провайдеры Lakera Guard / Rebuff (Sprint 11 K1 W2)
+    + опциональные внешние провайдеры Lakera Guard / NeMo Guardrails (Sprint 11 K1 W2;
+    Rebuff удалён S172 — см. research/agent-framework/REPORT.md F4.2)
     с per-tenant конфигурацией через TenantContext.
 
     Активация внешних провайдеров: ``feature_flags.guardrails_per_tenant=True``;
@@ -94,24 +98,19 @@ class GuardrailsProcessor(BaseProcessor):
                     return
 
         if "rebuff" in config.enabled_providers:
-            try:
-                from src.backend.services.ai.guardrails.rebuff_client import (
-                    RebuffClient,
-                )
-
-                rebuff_result = await RebuffClient().detect(text)
-                if (
-                    rebuff_result.injected
-                    and rebuff_result.score >= config.thresholds.rebuff_threshold
-                ):
-                    exchange.fail(
-                        f"Guardrail/rebuff: prompt injection (score={rebuff_result.score:.2f})"
-                    )
-                    return
-            except Exception as exc:
-                if config.block_on_failure:
-                    exchange.fail(f"Guardrail/rebuff: provider error: {exc}")
-                    return
+            # S172: Rebuff archived 2025-05-16 — see
+            # research/agent-framework/REPORT.md F4.2.
+            # Provider removed; tenant-config retains legacy field
+            # ``rebuff_threshold`` for audit back-compat but does not invoke.
+            logger.warning(
+                "guardrails: rebuff provider requested but archived "
+                "(S172). Configure lakera/nemo instead. See "
+                "research/agent-framework/REPORT.md F4.2.",
+                extra={
+                    "guard_name": "rebuff",
+                    "category": "guardrail_legacy",
+                },
+            )
 
         if "nemo" in config.enabled_providers:
             try:

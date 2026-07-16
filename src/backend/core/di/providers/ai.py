@@ -81,6 +81,29 @@ def set_pii_tokenizer_provider(impl: Any) -> None:
     _overrides["pii_tokenizer"] = impl
 
 
+# ─────────────── Agent security framework (S172 facade promotion) ───────────────
+
+
+def get_agent_security_framework_provider() -> Any:
+    """Возвращает singleton :class:`AgentSecurityFramework` (S172 facade).
+
+    Lazy-провайдер для framework-фасада ``core.ai.security``. Использует
+    ``@lru_cache`` singleton из самого модуля — здесь просто реэкспорт
+    для консистентности с остальными DI-провайдерами (test-инжекция через
+    :func:`set_agent_security_framework_provider` если потребуется).
+    """
+    if "agent_security_framework" in _overrides:
+        return _overrides["agent_security_framework"]
+    from src.backend.core.ai.security import get_agent_security_framework
+
+    return get_agent_security_framework()
+
+
+def set_agent_security_framework_provider(framework: Any) -> None:
+    """Test-override для ``agent_security_framework`` provider."""
+    _overrides["agent_security_framework"] = framework
+
+
 def _resolve_pii_token_registry() -> Any:
     """Lazy-собирает :class:`RedisTokenRegistry` с :class:`EnvAESGCMKeyProvider`.
 
@@ -214,6 +237,7 @@ def get_skill_registry() -> Any:
 
 
 __all__ = (
+    "get_agent_security_framework_provider",
     "get_ai_sanitizer_provider",
     "get_antivirus_service_provider",
     "get_llm_judge_metrics_provider",
@@ -221,6 +245,7 @@ __all__ = (
     "get_pii_tokenizer_provider",
     "get_skill_registry",
     "get_vault_refresher_provider",
+    "set_agent_security_framework_provider",
     "set_ai_sanitizer_provider",
     "set_antivirus_service_provider",
     "set_llm_judge_metrics_provider",

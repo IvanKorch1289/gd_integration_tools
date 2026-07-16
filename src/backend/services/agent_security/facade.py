@@ -9,7 +9,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from src.backend.core.ai.security.agent_security import (
+from src.backend.core.ai.security import (
     AgentSecurityFramework,
     FileModificationPolicy,
     SecurityDecision,

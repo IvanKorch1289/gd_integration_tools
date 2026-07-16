@@ -75,31 +75,9 @@ def mock_lakera_client() -> MagicMock:
     return client
 
 
-@pytest.fixture
-def mock_llm_guard_client() -> MagicMock:
-    """LLM Guard client that returns flagged=True (prompt injection detected)."""
-    client = MagicMock()
-    from src.backend.services.ai.guardrails.llm_guard_client import LLMGuardResult
-
-    result = LLMGuardResult(
-        flagged=True,
-        score=0.95,
-        categories=["PromptInjection"],
-        details={"danger_level": "HIGH"},
-    )
-    client.scan = AsyncMock(return_value=result)
-    return client
-
-
-@pytest.fixture
-def mock_llm_guard_client_safe() -> MagicMock:
-    """LLM Guard client that returns safe (no issues)."""
-    client = MagicMock()
-    from src.backend.services.ai.guardrails.llm_guard_client import LLMGuardResult
-
-    result = LLMGuardResult(flagged=False, score=0.0)
-    client.scan = AsyncMock(return_value=result)
-    return client
+# LLM Guard fixtures REMOVED (S172 T37): llm_guard_client deleted 2026-07-09.
+# 6 tests using llm_guard-specific fixtures are skipped below.
+# See research/agent-framework/REPORT.md F4.1.
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -265,6 +243,7 @@ async def test_guard_output_unknown_guard_warns(mock_llama_runtime: MagicMock) -
 # ── guard_input tests ────────────────────────────────────────────────────────
 
 
+@pytest.mark.skip(reason="archived 2026 — see research/agent-framework/REPORT.md F4.2")
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_rebuff_blocked(mock_rebuff_client: MagicMock) -> None:
@@ -336,6 +315,7 @@ async def test_guard_input_empty_skipped() -> None:
     await enforcer.guard_input(prompt, policy)
 
 
+@pytest.mark.skip(reason="archived 2026 — see research/agent-framework/REPORT.md F4.1")
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_blocked(mock_llm_guard_client: MagicMock) -> None:
@@ -353,6 +333,7 @@ async def test_guard_input_llm_guard_blocked(mock_llm_guard_client: MagicMock) -
     assert "PromptInjection" in exc_info.value.flagged_categories
 
 
+@pytest.mark.skip(reason="archived 2026 — see research/agent-framework/REPORT.md F4.1")
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_safe(
@@ -370,6 +351,7 @@ async def test_guard_input_llm_guard_safe(
     assert results[0].verdict == "passed"
 
 
+@pytest.mark.skip(reason="archived 2026 — see research/agent-framework/REPORT.md F4.1")
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_no_client_warns() -> None:
@@ -392,6 +374,7 @@ async def test_guard_input_llm_guard_no_client_warns() -> None:
     assert "llm_guard_disabled" in results[0].categories
 
 
+@pytest.mark.skip(reason="archived 2026 — see research/agent-framework/REPORT.md F4.1")
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_warns_on_error(
@@ -416,6 +399,7 @@ async def test_guard_input_llm_guard_warns_on_error(
     assert "llm_guard_error" in results[0].categories
 
 
+@pytest.mark.skip(reason="archived 2026 — see research/agent-framework/REPORT.md F4.1")
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_guard_input_llm_guard_fail_on_error(
