@@ -130,8 +130,21 @@ class SkillInvokeProcessor(BaseAIProcessor):
 
     @staticmethod
     def _resolve_registry() -> Any | None:
-        """Lazy-резолв :class:`SkillRegistry` через DI singleton."""
-        return None
+        """Lazy-резолв :class:`SkillRegistry` через DI singleton (S202 fix).
+
+        Returns:
+            :class:`SkillRegistry` singleton или ``None`` если registry
+            не зарегистрирован в ``app.state.skill_registry``.
+        """
+        try:
+            from src.backend.core.di.providers.ai import get_skill_registry
+
+            return get_skill_registry()
+        except Exception as exc:
+            _logger.debug(
+                "skill_invoke._resolve_registry: registry not available: %s", exc
+            )
+            return None
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML."""

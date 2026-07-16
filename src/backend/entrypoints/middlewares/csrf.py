@@ -94,11 +94,19 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 import secrets
 
                 token = secrets.token_urlsafe(32)
+                # S202 audit fix: ``secure`` от deployment setting, не от
+                # request scheme (за TLS proxy ``request.url.scheme == http``
+                # → cookie без Secure → MITM downgrade risk).
+                from src.backend.core.config.settings import settings
+
+                cookie_secure = getattr(
+                    getattr(settings, "secure", None), "cookie_secure", True
+                )
                 response.set_cookie(
                     self._cookie_name,
                     token,
                     httponly=False,  # readable by JS для header echo
-                    secure=request.url.scheme == "https",
+                    secure=cookie_secure,
                     samesite="lax",
                     max_age=3600,
                 )

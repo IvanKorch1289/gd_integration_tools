@@ -46,7 +46,14 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
             action: click
             x: 100
             y: 200
+
+    S202 audit fix: required_capability + auth_check для enforce
+    capability gating (ранее capability объявлен в декораторе но
+    runtime check отсутствовал).
     """
+
+    required_capability: ClassVar[str | None] = "rpa.desktop.automate"
+    audit_event: ClassVar[str | None] = "rpa.desktop.automate"
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING
     compensatable: ClassVar[bool] = False
@@ -79,6 +86,10 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет desktop RPA-действие через pyautogui (screenshot/click/type/...).
+        S202: capability gate через auth_check.
+        """
+        if not await self.auth_check(exchange, action="automate"):
+            return
 
         Поддерживаемые действия: ``screenshot``, ``click``, ``type_text``,
         ``press_key``, ``move``. Координаты, текст и клавиши берутся из

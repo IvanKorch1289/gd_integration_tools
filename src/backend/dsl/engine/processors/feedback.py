@@ -27,7 +27,7 @@ Builder::
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
@@ -83,6 +83,9 @@ class FeedbackProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        # S202 audit fix: capability gate
+        if not await self.auth_check(exchange, action='submit'):
+            return
         """Сохраняет ответ + label в FeedbackService."""
         rating: Any = (
             _resolve(exchange, self._rating_from)

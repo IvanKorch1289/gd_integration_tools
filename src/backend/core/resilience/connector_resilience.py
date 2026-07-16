@@ -42,7 +42,6 @@ def resilient(
     max_attempts: int = 3,
     initial_backoff: float = 0.5,
     backoff_multiplier: float = 2.0,
-    excluded_exceptions: tuple[type[BaseException], ...] | None = None,
 ) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     """Decorator: добавляет Circuit Breaker + Retry к async методу коннектора.
 
@@ -51,12 +50,18 @@ def resilient(
         max_attempts: Максимум retry попыток (default 3).
         initial_backoff: Стартовая задержка retry (сек).
         backoff_multiplier: Множитель exponential backoff.
-        excluded_exceptions: Исключения, которые НЕ retry (например, ValueError).
 
     Returns:
         Decorated async function с CB guard + tenacity retry.
+
+    S202 audit fix: убран ``excluded_exceptions`` параметр — он был
+    silently ignored (оба branch ternary возвращали ``(Exception,)``).
+    S202: ``RetryPolicy`` не поддерживает excluded exceptions; добавление
+    поддержки потребует изменения ``RetryPolicy`` и ``with_retry`` — вне
+    scope текущего фикса. Если нужны excluded — добавить ``excluded: tuple``
+    поле в ``RetryPolicy`` и обработать в ``with_retry`` через
+    ``retry_if_not_exception_type``.
     """
-    excluded = excluded_exceptions or ()
 
     def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         """Wrap async function с CB + retry."""
@@ -76,7 +81,7 @@ def resilient(
                 max_attempts=max_attempts,
                 initial_backoff=initial_backoff,
                 backoff_multiplier=backoff_multiplier,
-                retry_on=(Exception,) if not excluded else (Exception,),
+                retry_on=(Exception,),
             )
 
             # Wrap in breaker guard + retry

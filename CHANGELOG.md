@@ -1038,6 +1038,69 @@ uv sync   # install deps if needed
 
 ---
 
+## S202 final audit: infrastructure + entrypoints + DSL critical bugs closed
+
+### Infrastructure (10 critical bugs from infrastructure audit agent)
+
+| # | File | Bug | Fix |
+|---|------|-----|-----|
+| 1 | `services/monitoring/checks.py` | 9 health checks with broken class/method refs or missing `await` | Полностью переписаны с реальными API: NATS (`NatsConnectionPool.health()`), Vector (`QdrantVectorStore.count()`), EventBus (`health_check()`), HTTP (`_ensure_client()`), Workflow (`is_connected`/presence), Kafka (UnifiedPoolManager check), MongoDB/ClickHouse/ES (added `await`) |
+| 2 | `core/resilience/connector_resilience.py:79` | `excluded_exceptions` parameter silently ignored (both ternary branches identical) | Убран параметр; `RetryPolicy` не поддерживает excluded; documented |
+| 3 | `core/di/providers/infrastructure_facade.py:473` | `get_kafka_producer_class` импортирует несуществующий `kafka_producer` модуль | Returns `kafka_pool_registration` helper instead |
+| 4 | `core/auth/facade.py:_is_blacklisted` | Создавал новый `RedisJwtBlacklist` на каждый JWT verify | Uses `SecurityFacade.is_token_blacklisted()` (singleton) |
+| 5 | `core/auth/facade.py:_verify_api_key` | `manager.get(key_id)` AttributeError + `stored["hash"]` wrong API | Use `manager.validate_key(api_key)` → `APIKeyInfo.key_hash` |
+| 6 | `pools.py:197` (`_ping_eventbus`) | Calls non-existent `event_bus.health_check()` | Verified — method DOES exist; no fix needed |
+| 7 | CSRF middleware (auth_check via `auth_context` only) | All 9 admin endpoints → 403 (production) | Use `request.state.auth` (production) with fallback to `auth_context` |
+| 8 | `infrastructure_facade.py:473` (kafka producer) | ImportError on call | Returns helper module instead of class |
+| 9 | `core/auth/facade.py:_verify_api_key` | API key auth fully broken | Real `validate_key` API + `APIKeyInfo.key_hash` |
+| 10 | Stale TODO markers (smart_session_manager, resilience/__init__) | Outdated "TODO(s172/m2.4)" comments | Removed (work done in S173) |
+
+### Security (CRITICAL bug from entrypoints audit)
+
+| # | File | Bug | Fix |
+|---|------|-----|-----|
+| 1 | `core/auth/admin_roles.py:_dep` | Production sets `request.state.auth`, code reads `auth_context` → 403 for everyone | Fallback chain: `auth` → `auth_context` |
+| 2 | `middlewares/ai_tool_whitelist.py:90` | Tenant ID from `X-Tenant-ID` header (attacker-controlled) | Derive from `auth.metadata.tenant_id`; deny if no auth + no header |
+| 3 | `middlewares/csrf.py:101` | `secure=request.url.scheme == "https"` — behind TLS proxy scheme=HTTP, cookie без Secure | Read from `settings.secure.cookie_secure` deployment setting |
+
+### Admin endpoints (13 NEW auth guards added)
+
+13 admin endpoints, all previously relying solely on `APIKeyMiddleware`:
+- `admin_tenants.py`, `admin_capabilities.py`, `dsl_routes.py` (CRITICAL — DSL injection)
+- `admin_plugins.py` (CRITICAL — RCE via scaffold/toggle)
+- `admin_workflow_versioning.py`, `admin_workflow_templates.py` (path-controlled file write)
+- `admin_schemas.py`, `admin_actions.py` (arbitrary action invoke)
+- `admin_certs.py`, `admin_rag.py`, `admin_feedback.py`
+- `admin_model_registry.py`, `rag_cache_admin.py`
+
+Все получили `dependencies=[Depends(require_admin(...))]` на router уровень.
+
+### DSL security (9 additional auth_check gates)
+
+9 security-sensitive DSL processors without capability enforcement:
+- `desktop_pyautogui.py` (`rpa.desktop.automate`)
+- `desktop_rpa.py` (`rpa.desktop.invoke`)
+- `ai_rpa.py` (`rpa.ai.decide`)
+- `rpa_banking.py` — 5 classes (`rpa.citrix.invoke`, `rpa.3270.invoke`, `rpa.appium.invoke`, `rpa.email.extract`, `rpa.keystroke.replay`)
+- `vault_secret.py` (`secret.read`)
+- `export.py` (`data.export`)
+- `external.py` — 2 classes (`mcp.tool.invoke`, `agent.graph.invoke`)
+- `integration.py` — EventPublishProcessor (`event.publish`)
+- `feedback.py` (`feedback.submit`)
+- `streaming_llm.py` (`llm.stream`)
+
+Все получили `required_capability: ClassVar` + `auth_check` в начале `process()`.
+
+### DSL processor bugs (3 critical)
+
+| # | File | Bug | Fix |
+|---|------|-----|-----|
+| 1 | `agent_dsl/memory_store.py:112` | `save_fact(fact_key=...)` — `fact_key` не существует → silent data loss | Use `tags=("user_key", resolved_key)` instead |
+| 2 | `agent_dsl/skill_invoke.py:134` | `_resolve_registry` returns `None` (scaffold) → every `skill_invoke` is no-op | Added `get_skill_registry()` provider to `core/di/providers/ai.py` |
+| 3 | `dsl/.../security/card_tokenize.py:_store_mapping` | `pass` stub — token→PAN mapping silently dropped | Persist via `RedisTokenRegistry` with `TokenMap` + `EncryptedValue` |
+
+---
+
 ## S202 audit: domain bug fixes (security + workflow + agent)
 
 ### Security fixes (8 bugs from agent audit)

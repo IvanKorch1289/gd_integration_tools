@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -21,7 +21,12 @@ class ExportProcessor(BaseProcessor):
 
     Результат — bytes в ``exchange.properties[output_property]``.
     Поддерживаемые форматы: csv, xlsx/excel, pdf, json, parquet.
+
+    S202 audit fix: required_capability + auth_check для enforce.
     """
+
+    required_capability: ClassVar[str | None] = "data.export"
+    audit_event: ClassVar[str | None] = "data.exported"
 
     def __init__(
         self,
@@ -36,6 +41,9 @@ class ExportProcessor(BaseProcessor):
         self._title = title
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """S202: capability gate."""
+        if not await self.auth_check(exchange, action="export"):
+            return
         from src.backend.services.io.export_service import export
 
         body = exchange.in_message.body

@@ -1,15 +1,8 @@
-"""Health checks для всех зарегистрированных коннекторов (Sprint I-2).
+"""Health checks для всех зарегистрированных коннекторов (S202 audit fix).
 
-Расширяет покрытие с 7 (db, redis, s3, graylog, smtp, rabbitmq) до 15+:
-- Kafka (admin client list_topics)
-- MongoDB (ping)
-- ClickHouse (HTTP /ping)
-- Elasticsearch (cluster.health)
-- NATS (connection.is_connected)
-- Vector stores (Qdrant/Chroma)
-- HTTP transport (sample HEAD request)
-- EventBus (Redis ping)
-- Workflow (Temporal availability)
+S202 audit: предыдущая версия содержала 9 broken references — неправильные
+имена классов/методов или пропущенные ``await``. Текущая версия использует
+реальные API клиентов и корректные signatures.
 
 Все checks — async callable возвращающие bool, ловят exceptions internally
 для graceful degradation.
@@ -51,18 +44,19 @@ HealthCheckFn = Callable[[], Coroutine[Any, Any, bool]]
 
 
 async def check_kafka() -> bool:
-    """Kafka liveness check через admin client.
+    """Kafka liveness check.
 
-    Returns:
-        True если Kafka broker доступен, False иначе.
+    S202: ``infrastructure.messaging.kafka_producer`` module doesn't exist
+    (Kafka uses pool registration через ``kafka_pool_registration``).
+    Проверяем registered pool в ``UnifiedPoolManager`` если доступен.
     """
     try:
-        from src.backend.infrastructure.messaging.kafka_producer import (
-            KafkaProducer,
+        from src.backend.infrastructure.clients.unified_pool_manager import (
+            get_unified_pool_manager,
         )
 
-        producer = KafkaProducer()
-        return producer.is_available()
+        manager = get_unified_pool_manager()
+        return "kafka_main" in manager.list_pools()
     except Exception as exc:
         _logger.debug("check_kafka failed: %s", exc)
         return False
@@ -72,10 +66,9 @@ async def check_kafka() -> bool:
 
 
 async def check_mongodb() -> bool:
-    """MongoDB liveness check через Motor ping.
+    """MongoDB liveness check через ping.
 
-    Returns:
-        True если MongoDB отвечает на ping, False иначе.
+    S202 fix: добавлен ``await`` (раньше возвращал coroutine — always-truthy).
     """
     try:
         from src.backend.infrastructure.clients.storage.mongodb import (
@@ -83,7 +76,7 @@ async def check_mongodb() -> bool:
         )
 
         client = MongoDBClient()
-        return client.ping()
+        return await client.ping()
     except Exception as exc:
         _logger.debug("check_mongodb failed: %s", exc)
         return False
@@ -93,10 +86,9 @@ async def check_mongodb() -> bool:
 
 
 async def check_clickhouse() -> bool:
-    """ClickHouse liveness check через HTTP /ping.
+    """ClickHouse liveness check через /ping.
 
-    Returns:
-        True если ClickHouse отвечает на /ping, False иначе.
+    S202 fix: добавлен ``await``.
     """
     try:
         from src.backend.infrastructure.clients.storage.clickhouse import (
@@ -104,7 +96,7 @@ async def check_clickhouse() -> bool:
         )
 
         client = get_clickhouse_client()
-        return client.ping()
+        return await client.ping()
     except Exception as exc:
         _logger.debug("check_clickhouse failed: %s", exc)
         return False
@@ -114,10 +106,9 @@ async def check_clickhouse() -> bool:
 
 
 async def check_elasticsearch() -> bool:
-    """Elasticsearch liveness check через cluster.health.
+    """Elasticsearch liveness check.
 
-    Returns:
-        True если ES cluster healthy, False иначе.
+    S202 fix: добавлен ``await``.
     """
     try:
         from src.backend.infrastructure.clients.storage.elasticsearch import (
@@ -125,7 +116,7 @@ async def check_elasticsearch() -> bool:
         )
 
         client = ElasticsearchClient()
-        return client.ping()
+        return await client.ping()
     except Exception as exc:
         _logger.debug("check_elasticsearch failed: %s", exc)
         return False
@@ -135,18 +126,19 @@ async def check_elasticsearch() -> bool:
 
 
 async def check_nats() -> bool:
-    """NATS liveness check через connection.is_connected.
+    """NATS liveness check.
 
-    Returns:
-        True если NATS connection активна, False иначе.
+    S202 fix: правильное имя класса ``NatsConnectionPool`` (не ``NATSPool``)
+    и правильный method ``health()`` (не ``is_connected()``).
     """
     try:
         from src.backend.infrastructure.clients.transport.nats_pool import (
-            NATSPool,
+            NatsConnectionPool,
         )
 
-        pool = NATSPool()
-        return pool.is_connected()
+        pool = NatsConnectionPool()
+        result = await pool.health()
+        return getattr(result, "status", None) != "failed"
     except Exception as exc:
         _logger.debug("check_nats failed: %s", exc)
         return False
@@ -158,16 +150,17 @@ async def check_nats() -> bool:
 async def check_qdrant() -> bool:
     """Qdrant liveness check.
 
-    Returns:
-        True если Qdrant отвечает, False иначе.
+    S202 fix: правильное имя класса ``QdrantVectorStore`` (не
+    ``VectorStoreClient``). ``count()`` — lightweight probe (vs full query).
     """
     try:
         from src.backend.infrastructure.clients.storage.vector_store import (
-            VectorStoreClient,
+            QdrantVectorStore,
         )
 
-        client = VectorStoreClient(backend="qdrant")
-        return client.is_available()
+        client = QdrantVectorStore()
+        await client.count()
+        return True
     except Exception as exc:
         _logger.debug("check_qdrant failed: %s", exc)
         return False
@@ -177,16 +170,18 @@ async def check_qdrant() -> bool:
 
 
 async def check_eventbus() -> bool:
-    """EventBus liveness check (Redis backend).
+    """EventBus liveness check.
 
-    Returns:
-        True если EventBus broker доступен, False иначе.
+    S202 fix: правильный method ``health_check()`` (не ``is_available()``).
     """
     try:
-        from src.backend.core.messaging.event_bus import get_event_bus
+        from src.backend.infrastructure.clients.messaging.event_bus import (
+            get_event_bus,
+        )
 
         bus = get_event_bus()
-        return bus.is_available()
+        result = await bus.health_check()
+        return isinstance(result, dict) and result.get("status") != "failed"
     except Exception as exc:
         _logger.debug("check_eventbus failed: %s", exc)
         return False
@@ -196,11 +191,10 @@ async def check_eventbus() -> bool:
 
 
 async def check_http() -> bool:
-    """HTTP transport liveness check (sample HEAD request).
+    """HTTP transport liveness check.
 
-    Использует localhost health endpoint или upstream pool ping.
-    Returns:
-        True если HTTP client готов, False иначе.
+    S202 fix: ``HttpxClient`` имеет ``_ensure_client()`` (private). Используем
+    presence check — singleton instance и async client construction.
     """
     try:
         from src.backend.infrastructure.clients.transport.http_httpx import (
@@ -208,7 +202,8 @@ async def check_http() -> bool:
         )
 
         client = get_httpx_client()
-        return client.is_ready()
+        await client._ensure_client()  # type: ignore[attr-defined]
+        return True
     except Exception as exc:
         _logger.debug("check_http failed: %s", exc)
         return False
@@ -218,10 +213,10 @@ async def check_http() -> bool:
 
 
 async def check_workflow() -> bool:
-    """Workflow backend (Temporal / Lite / PgRunner) liveness check.
+    """Workflow backend liveness check.
 
-    Returns:
-        True если workflow backend доступен, False иначе.
+    S202 fix: workflow backends не имеют ``is_available()``. Проверяем
+    backend instance presence + ``is_connected``-like attribute fallback.
     """
     try:
         from src.backend.infrastructure.workflow.factory import (
@@ -229,7 +224,15 @@ async def check_workflow() -> bool:
         )
 
         backend = get_workflow_backend()
-        return backend.is_available()
+        # Backends не имеют единого is_available — проверяем базовое
+        # наличие instance + опциональные атрибуты.
+        if backend is None:
+            return False
+        # Некоторые backends (Temporal) имеют ``is_connected``
+        if hasattr(backend, "is_connected"):
+            return bool(backend.is_connected)
+        # Fake / Lite — без remote connection, presence check достаточен.
+        return True
     except Exception as exc:
         _logger.debug("check_workflow failed: %s", exc)
         return False

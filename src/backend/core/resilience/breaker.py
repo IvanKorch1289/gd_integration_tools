@@ -193,9 +193,18 @@ class BreakerRegistry:
 
         Используется только в test fixtures — production-код не должен
         сбрасывать breaker'ы вручную. После вызова реестр пуст; следующий
-        ``get_or_create(name)`` создаст свежий breaker.
+        ``get_or_create(name)`` создаст свежий breaker. Также чистит
+        in-memory store purgatory (``AsyncInMemoryRepository.breakers``),
+        иначе открытые breaker'ы переживают reset через свой собственный
+        state.
         """
         self._breakers.clear()
+        try:
+            self._factory.uow.contexts.breakers.clear()
+        except AttributeError:
+            # Custom uow (например, Redis) — reset не делаем, test должен
+            # сам управлять состоянием backend'а.
+            pass
         logger.info("BreakerRegistry reset (test only)")
 
     # purgatory listener: (name, event_type, event)

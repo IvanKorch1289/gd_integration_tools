@@ -13,14 +13,20 @@ from collections import deque
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 from src.backend.core.di.app_state import get_three_tier_rag_cache_from_state
 from src.backend.services.cache.metrics import get_metrics_snapshot
 
 __all__ = ("record_invalidation_event", "router", "get_three_tier_cache")
 
-router = APIRouter()
+# S202 audit fix: require admin role
+_ADMIN_GUARD_OPERATOR = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+)
+
+router = APIRouter(dependencies=[_ADMIN_GUARD_OPERATOR])
 
 _EVENTS_RING: deque[dict[str, Any]] = deque(maxlen=200)
 

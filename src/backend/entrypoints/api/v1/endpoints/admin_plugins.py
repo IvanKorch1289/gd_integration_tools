@@ -23,7 +23,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from pydantic import BaseModel, Field
 
 from src.backend.core.logging import get_logger
@@ -32,7 +33,12 @@ logger = get_logger(__name__)
 
 __all__ = ("router",)
 
-router = APIRouter(prefix="/admin/plugins", tags=["admin"])
+# S202 audit fix: require admin role
+_ADMIN_GUARD_OPERATOR = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+)
+
+router = APIRouter(dependencies=[_ADMIN_GUARD_OPERATOR], prefix="/admin/plugins", tags=["admin"])
 
 
 # ─── Pydantic-схемы запроса/ответа ────────────────────────────────────────────

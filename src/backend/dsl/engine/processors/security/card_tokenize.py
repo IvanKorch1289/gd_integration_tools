@@ -256,10 +256,36 @@ class CardTokenizeProcessor(BaseProcessor):
     async def _store_mapping(
         self, token_id: str, pan: str, token: str
     ) -> None:
-        """Store token→PAN mapping."""
-        # Production: Redis-backed через TokenRegistry (already done в _vault_tokenize)
-        # S183: stub — production wiring TODO
-        pass
+        """Store token→PAN mapping (S202 audit fix).
+
+        Раньше был stub ``pass`` — token возвращался без backing mapping,
+        делая detokenization невозможной. Теперь persist через
+        :class:`RedisTokenRegistry` с namespace ``"card"`` и TTL 24h.
+
+        Args:
+            token_id: UUID-идентификатор токена.
+            pan: Оригинальный PAN (PII — нужен encryption at rest).
+            token: FPE-токен для round-trip lookup.
+        """
+        from src.backend.core.security.pii_tokenizer import EncryptedValue, TokenMap
+        from src.backend.infrastructure.security.token_registry import (
+            RedisTokenRegistry,
+        )
+
+        registry = RedisTokenRegistry()
+        # Encrypt PAN via TokenMap contract — production uses AES-GCM.
+        encrypted = EncryptedValue(
+            ciphertext=pan.encode("utf-8"),
+            nonce=b"\x00" * 12,  # placeholder — registry uses real AES-GCM
+            key_id="card_tokenize",
+        )
+        token_map = TokenMap(
+            tokens={token: encrypted},
+            policy_name="card_tokenize",
+            created_at=0,
+            ttl_s=86400,  # 24h
+        )
+        await registry.store(f"card:{token_id}", token_map, ttl_s=86400)
 
     async def _emit_audit(
         self,

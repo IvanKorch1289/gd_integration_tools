@@ -189,22 +189,25 @@ class AuthFacade:
             )
 
             manager = get_api_key_manager_provider()
-            stored = await manager.get(key_id)
-            if stored is None:
+            # S202 audit fix: use ``validate_key`` (returns APIKeyInfo) instead
+            # of non-existent ``.get(key_id)``. APIKeyInfo has ``key_hash``
+            # attribute, not ``["hash"]``.
+            info = await manager.validate_key(api_key)
+            if info is None or not info.is_active:
                 return AuthResult(is_authenticated=False)
 
             # Argon2id verify
-            if not api_key_auth.verify(secret, stored["hash"]):
+            if not api_key_auth.verify(secret, info.key_hash):
                 return AuthResult(is_authenticated=False)
 
             return AuthResult(
                 is_authenticated=True,
                 method="api_key",
-                subject=stored.get("subject", key_id),
-                tenant_id=stored.get("tenant_id"),
-                groups=stored.get("groups", []),
-                capabilities=stored.get("capabilities", []),
-                metadata={"key_id": key_id},
+                subject=info.client_id,
+                tenant_id=None,
+                groups=[],
+                capabilities=[],
+                metadata={"client_id": info.client_id, "key_version": info.version},
             )
         except Exception as exc:
             logger.debug("API key verify failed: %s", exc)
@@ -277,21 +280,15 @@ class AuthFacade:
         Returns:
             True если blacklisted (fail-closed на ошибке Redis недоступности).
 
-        S202 audit fix: использует RedisJwtBlacklist с правильным redis
-        client (не конструктор без аргументов), await для async ``is_revoked``.
-        Fail-closed: если Redis недоступен — токен считается отозванным.
+        S202 audit fix: использует :class:`SecurityFacade` singleton вместо
+        создания нового ``RedisJwtBlacklist`` на каждый вызов
+        (был performance hit + inconsistent state).
         """
         try:
-            from src.backend.core.auth.jwt_blacklist import (
-                RedisJwtBlacklist,
-            )
-            from src.backend.infrastructure.clients.storage.redis import (
-                get_redis_client,
-            )
+            from src.backend.services.security.facade import get_security_facade
 
-            redis_client = await get_redis_client().get_client("cache")
-            blacklist = RedisJwtBlacklist(redis_client)
-            return await blacklist.is_revoked(jti)
+            facade = get_security_facade()
+            return await facade.is_token_blacklisted(jti)
         except Exception as exc:
             logger.debug(
                 "jwt blacklist check failed: %s — fail-closed (treat as revoked)",

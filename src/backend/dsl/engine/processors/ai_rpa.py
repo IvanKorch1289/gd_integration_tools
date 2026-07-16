@@ -69,12 +69,20 @@ class AIRpaProcessor(BaseProcessor):
     Args:
         task: Описание задачи на естественном языке.
         ui_context: Dict с UI-данными (``screenshot``, ``dom_snapshot``, ``element_info``).
-        action_property: Exchange property для записи выбранного action.
-        model: LLM model для принятия решений (default ``gpt-4o``).
-        temperature: Temperature для LLM (default ``0.1``).
-        to: Опц. путь записи результата (``body.<field>`` / ``property:<name>``).
-        name: Имя процессора для трейсов.
-        max_retries: Максимальное количество retry при невалидном ответе (default 3).
+
+    S202 audit fix: required_capability + auth_check для enforce gating
+    (AI-driven RPA = sensitive, требует capability).
+    """
+
+    required_capability: ClassVar[str | None] = "rpa.ai.decide"
+    audit_event: ClassVar[str | None] = "rpa.ai.decided"
+
+    action_property: Exchange property для записи выбранного action.
+    model: LLM model для принятия решений (default ``gpt-4o``).
+    temperature: Temperature для LLM (default ``0.1``).
+    to: Опц. путь записи результата (``body.<field>`` / ``property:<name>``).
+    name: Имя процессора для трейсов.
+    max_retries: Максимальное количество retry при невалидном ответе (default 3).
     """
 
     name = "ai_rpa"
@@ -103,6 +111,9 @@ class AIRpaProcessor(BaseProcessor):
         self._max_retries = max_retries
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """S202: capability gate через auth_check."""
+        if not await self.auth_check(exchange, action="decide"):
+            return
         """Анализирует задачу + UI-контекст через LLM, записывает action."""
         llm_client = self._get_llm_client(context)
         if llm_client is None:

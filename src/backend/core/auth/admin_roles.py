@@ -111,7 +111,13 @@ def require_admin(
     allowed: frozenset[AdminRole] = frozenset(roles) | {AdminRole.SUPER_ADMIN}
 
     async def _dep(request: Request) -> AuthContext:
-        ctx: AuthContext | None = getattr(request.state, "auth_context", None)
+        # S202 audit fix: production code sets ``request.state.auth`` (см.
+        # ``AuthRequiredMiddleware``, ``auth_selector.require_auth``),
+        # но ``admin_roles`` читал ``auth_context``. Fallback chain:
+        # auth → auth_context — оба имена поддерживаются для backward-compat.
+        ctx: AuthContext | None = getattr(request.state, "auth", None)
+        if ctx is None:
+            ctx = getattr(request.state, "auth_context", None)
         if ctx is None:
             raise AdminAuthorizationError(required=tuple(allowed), actual=frozenset())
         actual = extract_admin_roles(ctx)

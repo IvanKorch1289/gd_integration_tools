@@ -274,15 +274,10 @@ class SmartSessionManager:
     def _record_replica_success(self) -> None:
         """Регистрирует успешную операцию на replica — сбрасывает счётчик.
 
-        TODO(s172/m2.4): мигрировать на ``ReplicaFailoverBreaker`` из
-        ``src.backend.core.resilience.circuit_breaker``. Текущий mini-CB
-        (manual counter + timestamp) несовместим с multi-pod deployments —
-        каждый pod считает failures независимо.
-
-        S173 M2.4 done: интегрировано через опциональный флаг
-        ``use_breaker_facade=True`` (default). При True — все
-        success/failure идут через :class:`ReplicaFailoverBreaker`; при
-        False — legacy manual counter (backward-compat).
+        Интегрировано через опциональный флаг ``use_breaker_facade=True``
+        (default). При True — все success/failure идут через
+        :class:`ReplicaFailoverBreaker`; при False — legacy manual counter
+        (backward-compat).
         """
         if getattr(self, "_use_breaker_facade", False):
             self._breaker_facade.on_success()

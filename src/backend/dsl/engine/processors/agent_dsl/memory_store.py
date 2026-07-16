@@ -106,13 +106,15 @@ class MemoryStoreProcessor(BaseAIProcessor):
             return
 
         try:
-            # S202 audit fix: UnifiedMemoryGateway.save_fact uses keyword args.
-            # namespace → tenant_id, key → fact_key, value → content.
-            # TTL сохраняется через short-term backend (Mongo TTL).
+            # S202 fix: UnifiedMemoryGateway.save_fact uses keyword args.
+            # The caller-provided key is preserved in ``tags`` (last tag) so
+            # recall-side filters can scope to it. Content = value (gateway
+            # generates its own fact_<uuid> identifier internally).
+            tags = ("user_key", resolved_key)
             await backend.save_fact(
                 tenant_id=namespace,
-                fact_key=resolved_key,
                 content=str(value),
+                tags=tags,
             )
         except Exception as exc:
             _logger.warning("%s: store failed (%s) — drop", self.name, exc)

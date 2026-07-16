@@ -14,12 +14,19 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from pydantic import BaseModel
 
 __all__ = ("router",)
 
+# S202 audit fix: require admin role
+_ADMIN_GUARD_READ = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+)
+
 router = APIRouter(
+    dependencies=[_ADMIN_GUARD_READ],
     prefix="/admin/workflow-versioning", tags=["admin", "workflow", "versioning"]
 )
 

@@ -19,7 +19,8 @@ from __future__ import annotations
 from collections import Counter as CollectionsCounter
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 from src.backend.core.logging import get_logger
 
@@ -27,7 +28,12 @@ __all__ = ("router",)
 
 logger = get_logger("entrypoints.admin_tenants")
 
-router = APIRouter()
+# S202 audit fix: require admin role
+_ADMIN_GUARD_READ = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+)
+
+router = APIRouter(dependencies=[_ADMIN_GUARD_READ])
 
 
 _DEFAULT_AUDIT_LIMIT = 2000

@@ -1,7 +1,7 @@
 """Integration processors — EventBus, Agent Memory, Reply-channel."""
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -18,6 +18,9 @@ __all__ = (
 class EventPublishProcessor(BaseProcessor):
     """Публикует событие из pipeline через EventBus."""
 
+    required_capability: ClassVar[str | None] = 'event.publish'
+    audit_event: ClassVar[str | None] = 'event.publish'
+
     def __init__(
         self,
         channel: str,
@@ -29,6 +32,9 @@ class EventPublishProcessor(BaseProcessor):
         self._event_factory = event_factory
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        # S202 audit fix: capability gate
+        if not await self.auth_check(exchange, action='publish'):
+            return
         from pydantic import BaseModel
 
         from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus

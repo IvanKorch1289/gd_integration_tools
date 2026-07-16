@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -9,6 +9,9 @@ __all__ = ("AgentGraphProcessor", "CDCProcessor", "MCPToolProcessor")
 
 class MCPToolProcessor(BaseProcessor):
     """Вызывает внешний MCP tool из DSL pipeline."""
+
+    required_capability: ClassVar[str | None] = 'mcp.tool.invoke'
+    audit_event: ClassVar[str | None] = 'mcp.tool.invoke'
 
     def __init__(
         self,
@@ -25,6 +28,12 @@ class MCPToolProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        # S202 audit fix: capability gate
+        if not await self.auth_check(exchange, action='invoke'):
+            return
+        # S202 audit fix: capability gate
+        if not await self.auth_check(exchange, action='invoke'):
+            return
         from fastmcp import Client
 
         async with Client(self.tool_uri) as client:
@@ -40,6 +49,9 @@ class MCPToolProcessor(BaseProcessor):
 
 class AgentGraphProcessor(BaseProcessor):
     """Запускает LangGraph-агента внутри DSL pipeline."""
+
+    required_capability: ClassVar[str | None] = 'agent.graph.invoke'
+    audit_event: ClassVar[str | None] = 'agent.graph.invoke'
 
     def __init__(
         self, graph_name: str, tools: list[str], *, name: str | None = None

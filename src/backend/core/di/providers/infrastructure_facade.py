@@ -469,6 +469,12 @@ def get_mongodb_client_class() -> Any:
 
 
 def get_kafka_producer_class() -> Any:
-    """Возвращает ``clients.messaging.kafka_producer.KafkaProducer`` class."""
-    from src.backend.infrastructure.clients.messaging.kafka_producer import KafkaProducer
-    return KafkaProducer
+    """Возвращает ``kafka_pool_registration`` helper.
+
+    S202 audit fix: модуль ``clients.messaging.kafka_producer`` НЕ
+    существует (Kafka pool registration через ``kafka_pool_registration``).
+    Возвращаем registration helper вместо отсутствующего класса.
+    """
+    from src.backend.infrastructure.messaging import kafka_pool_registration
+
+    return kafka_pool_registration

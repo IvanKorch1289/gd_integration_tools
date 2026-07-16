@@ -190,12 +190,36 @@ def set_antivirus_service_provider(service: Any) -> None:
     _overrides["antivirus_service"] = service
 
 
+# ─────────────── Skill registry (S202 audit fix) ───────────────
+
+
+def get_skill_registry() -> Any:
+    """Возвращает singleton :class:`SkillRegistry` для DSL ``skill_invoke``.
+
+    S202 audit: ``SkillInvokeProcessor._resolve_registry`` возвращал ``None``
+    (scaffold), что делало каждый ``skill_invoke`` step silent no-op.
+    Composition root должен зарегистрировать singleton через
+    ``app.state.skill_registry = SkillRegistry()``.
+
+    Returns:
+        :class:`SkillRegistry` или ``None`` если singleton не зарегистрирован.
+    """
+    try:
+        from src.backend.core.di import app_state_singleton
+
+        return app_state_singleton("skill_registry", factory=None)()
+    except Exception as exc:
+        _overrides.get("_skill_registry_error")  # touch to keep linter happy
+        return None
+
+
 __all__ = (
     "get_ai_sanitizer_provider",
     "get_antivirus_service_provider",
     "get_llm_judge_metrics_provider",
     "get_model_enum_provider",
     "get_pii_tokenizer_provider",
+    "get_skill_registry",
     "get_vault_refresher_provider",
     "set_ai_sanitizer_provider",
     "set_antivirus_service_provider",

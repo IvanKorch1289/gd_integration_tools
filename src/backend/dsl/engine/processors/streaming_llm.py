@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
@@ -27,6 +27,9 @@ __all__ = ("TokenStreamLLMProcessor",)
 
 class TokenStreamLLMProcessor(BaseProcessor):
     """Стримит токены LLM в SSE / WS / Webhook publisher."""
+
+    required_capability: ClassVar[str | None] = 'llm.stream'
+    audit_event: ClassVar[str | None] = 'llm.stream'
 
     def __init__(
         self,
@@ -129,6 +132,9 @@ class TokenStreamLLMProcessor(BaseProcessor):
             yield chunk
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        # S202 audit fix: capability gate
+        if not await self.auth_check(exchange, action='stream'):
+            return
         """Выполняет потоковую генерацию LLM: стримит чанки через publisher и накапливает полный текст.
 
         Args:

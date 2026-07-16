@@ -12,7 +12,8 @@ from __future__ import annotations
 from datetime import datetime, timezone, timedelta
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from pydantic import BaseModel, Field
 
 from src.backend.core.logging import get_logger
@@ -26,7 +27,12 @@ __all__ = (
     "EXPIRING_MAX_DAYS",
 )
 
-router = APIRouter(prefix="/admin/certs", tags=["admin", "certs"])
+# S202 audit fix: require admin role
+_ADMIN_GUARD_READ = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+)
+
+router = APIRouter(dependencies=[_ADMIN_GUARD_READ], prefix="/admin/certs", tags=["admin", "certs"])
 
 EXPIRING_DEFAULT_DAYS = 30
 EXPIRING_MAX_DAYS = 365

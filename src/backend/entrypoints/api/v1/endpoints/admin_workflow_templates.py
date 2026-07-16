@@ -14,12 +14,19 @@ from pathlib import Path
 from typing import Any
 
 import yaml as _yaml
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from pydantic import BaseModel, Field
 
 __all__ = ("router",)
 
+# S202 audit fix: require admin role
+_ADMIN_GUARD_OPERATOR = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+)
+
 router = APIRouter(
+    dependencies=[_ADMIN_GUARD_OPERATOR],
     prefix="/admin/workflow-templates", tags=["admin", "workflow", "templates"]
 )
 

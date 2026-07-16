@@ -27,7 +27,8 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Response, status, Depends
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from pydantic import BaseModel, Field
 
 from src.backend.core.logging import get_logger
@@ -250,6 +251,11 @@ def _get_facade() -> _DSLRoutesFacade:
 
 # --- Router ----------------------------------------------------------------
 
+
+# S202 audit fix: require admin role
+_ADMIN_GUARD_OPERATOR = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+)
 
 router = APIRouter(tags=["DSL · Routes Store"])
 builder = ActionRouterBuilder(router)

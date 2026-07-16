@@ -99,6 +99,10 @@ class ExternalDbQueryProcessor(BaseProcessor):
 
         from src.backend.core.di.providers import get_external_session_manager_provider
 
+        # S202 fix: внешний SQL требует capability (DB access — read/write).
+        if not await self.auth_check(exchange, action="query"):
+            return
+
         params = self._collect_params(exchange)
         session_manager = get_external_session_manager_provider()(self._profile)
 

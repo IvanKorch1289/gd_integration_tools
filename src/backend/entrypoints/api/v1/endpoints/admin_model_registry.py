@@ -12,11 +12,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 from src.backend.core.config.features import feature_flags
 
-router = APIRouter(prefix="/admin/model-registry", tags=["admin", "model_registry"])
+# S202 audit fix: require admin role
+_ADMIN_GUARD_READ = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+)
+
+router = APIRouter(dependencies=[_ADMIN_GUARD_READ], prefix="/admin/model-registry", tags=["admin", "model_registry"])
 
 
 def _guard_enabled() -> None:

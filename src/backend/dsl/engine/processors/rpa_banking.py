@@ -32,7 +32,12 @@ class CitrixSessionProcessor(BaseProcessor):
 
     Процессор только сохраняет операцию в property для делегирования в сервис,
     чтобы не тянуть pywinauto в основной поток.
+
+    S202 audit fix: required_capability + auth_check для enforce.
     """
+
+    required_capability: ClassVar[str | None] = "rpa.citrix.invoke"
+    audit_event: ClassVar[str | None] = "rpa.citrix.invoked"
 
     def __init__(self, operation: str, session_id: str) -> None:
         super().__init__(name=f"citrix:{operation}")
@@ -49,7 +54,9 @@ class CitrixSessionProcessor(BaseProcessor):
         self.session_id = session_id
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
+        """S202: capability gate через auth_check."""
+        if not await self.auth_check(exchange, action="invoke"):
+            return
         exchange.set_property("rpa_backend", "citrix")
         exchange.set_property("rpa_operation", self.operation)
         exchange.set_property("rpa_session_id", self.session_id)
@@ -64,7 +71,12 @@ class TerminalEmulator3270Processor(BaseProcessor):
     """IBM 3270 терминальный эмулятор. Нужен x3270/py3270.
 
     Для интеграции с легаси мейнфрейм-системами (COBOL-back-office).
+
+    S202 audit fix: required_capability + auth_check для enforce.
     """
+
+    required_capability: ClassVar[str | None] = "rpa.3270.invoke"
+    audit_event: ClassVar[str | None] = "rpa.3270.invoked"
 
     def __init__(self, host: str, port: int = 23, action: str = "query") -> None:
         super().__init__(name=f"3270:{host}")
@@ -73,7 +85,9 @@ class TerminalEmulator3270Processor(BaseProcessor):
         self.action = action
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
+        """S202: capability gate через auth_check."""
+        if not await self.auth_check(exchange, action="invoke"):
+            return
         exchange.set_property("rpa_backend", "3270")
         exchange.set_property("rpa_host", self.host)
         exchange.set_property("rpa_port", self.port)
@@ -94,7 +108,12 @@ class AppiumMobileProcessor(BaseProcessor):
 
     Используется только для внутренних сценариев (тест-кабинеты, партнёрские
     приложения с контрактом). НЕ для обхода защиты боевых приложений.
+
+    S202 audit fix: required_capability + auth_check для enforce.
     """
+
+    required_capability: ClassVar[str | None] = "rpa.appium.invoke"
+    audit_event: ClassVar[str | None] = "rpa.appium.invoked"
 
     def __init__(self, platform: str, app_package: str, operation: str) -> None:
         super().__init__(name=f"appium:{platform}:{operation}")
@@ -105,7 +124,9 @@ class AppiumMobileProcessor(BaseProcessor):
         self.operation = operation
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
+        """S202: capability gate через auth_check."""
+        if not await self.auth_check(exchange, action="invoke"):
+            return
         exchange.set_property("rpa_backend", "appium")
         exchange.set_property("appium_platform", self.platform)
         exchange.set_property("appium_app", self.app_package)
@@ -129,7 +150,12 @@ class EmailDrivenProcessor(BaseProcessor):
     IMAP-клиент парсит письма, извлекает структурированные данные
     (table/CSV/PDF attachment) и кладёт в exchange.out_message.body.
     Реальный IMAP-клиент — в сервисе email_driven.
+
+    S202 audit fix: required_capability + auth_check для enforce.
     """
+
+    required_capability: ClassVar[str | None] = "rpa.email.extract"
+    audit_event: ClassVar[str | None] = "rpa.email.extracted"
 
     def __init__(
         self,
@@ -143,7 +169,9 @@ class EmailDrivenProcessor(BaseProcessor):
         self.extract = extract
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
+        """S202: capability gate через auth_check."""
+        if not await self.auth_check(exchange, action="extract"):
+            return
         exchange.set_property("email_mailbox", self.mailbox)
         exchange.set_property("email_subject_filter", self.subject_filter or "")
         exchange.set_property("email_extract", self.extract)
@@ -166,14 +194,21 @@ class KeystrokeReplayProcessor(BaseProcessor):
 
     Сценарий хранится в YAML: [{action: type, text: "..."}, {action: click, x: 100}].
     Для legacy-приложений без скриптинга.
+
+    S202 audit fix: required_capability + auth_check для enforce.
     """
+
+    required_capability: ClassVar[str | None] = "rpa.keystroke.replay"
+    audit_event: ClassVar[str | None] = "rpa.keystroke.replayed"
 
     def __init__(self, script_name: str) -> None:
         super().__init__(name=f"keystroke:{script_name}")
         self.script_name = script_name
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
+        """S202: capability gate через auth_check."""
+        if not await self.auth_check(exchange, action="replay"):
+            return
         exchange.set_property("rpa_backend", "keystroke")
         exchange.set_property("keystroke_script", self.script_name)
         exchange.set_property("rpa_action", "rpa.keystroke.replay")

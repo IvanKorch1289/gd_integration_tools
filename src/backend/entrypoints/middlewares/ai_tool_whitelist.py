@@ -87,7 +87,27 @@ class AIToolWhitelistMiddleware(BaseHTTPMiddleware):
 
             payload = json.loads(body) if body else {}
             tool_name = payload.get("tool_name") or payload.get("name")
-            tenant_id = request.headers.get("X-Tenant-ID", "default")
+            # S202 audit fix: tenant_id из auth context, не из header
+            # (защита от tenant-spoofing — attacker не может подделать X-Tenant-ID
+            # чтобы получить доступ к tools другого тенанта).
+            ctx = getattr(request.state, "auth", None) or getattr(
+                request.state, "auth_context", None
+            )
+            tenant_id = (
+                (ctx.metadata.get("tenant_id") if ctx and ctx.metadata else None)
+                or request.headers.get("X-Tenant-ID")
+                or "default"
+            )
+            if not ctx and not request.headers.get("X-Tenant-ID"):
+                # No auth + no header — deny by default (don't fall through to
+                # 'default' tenant which may have permissive grants).
+                return JSONResponse(
+                    {
+                        "error": "missing_tenant",
+                        "detail": "tenant_id required via auth context or X-Tenant-ID header",
+                    },
+                    status_code=400,
+                )
         except Exception:
             # Malformed body — пропускаем (другие middleware обработают)
             return await call_next(request)

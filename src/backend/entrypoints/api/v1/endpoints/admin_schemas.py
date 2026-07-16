@@ -14,7 +14,8 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 from src.backend.services.schema_registry import (
     SchemaEntry,
@@ -28,7 +29,12 @@ from src.backend.services.schema_registry import (
 __all__ = ("router",)
 
 
-router = APIRouter()
+# S202 audit fix: require admin role
+_ADMIN_GUARD_READ = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+)
+
+router = APIRouter(dependencies=[_ADMIN_GUARD_READ])
 
 FormatLiteral = Literal["jsonschema", "openapi", "asyncapi"]
 

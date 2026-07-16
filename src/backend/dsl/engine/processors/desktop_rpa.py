@@ -54,7 +54,13 @@ class DesktopRpaProcessor(BaseProcessor):
             см. Pydantic-модели в windows-worker handler'е).
         to: Опц. путь записи ответа (``body.<field>`` / ``property:<name>``).
         name: Имя процессора для трейсов.
+
+    S202 audit fix: required_capability + auth_check для enforce
+    capability gating (ранее отсутствовало).
     """
+
+    required_capability: ClassVar[str | None] = "rpa.desktop.invoke"
+    audit_event: ClassVar[str | None] = "rpa.desktop.invoked"
 
     name = "desktop_rpa"
 
@@ -81,6 +87,9 @@ class DesktopRpaProcessor(BaseProcessor):
         self._to = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """S202: capability gate через auth_check."""
+        if not await self.auth_check(exchange, action="invoke"):
+            return
         """Выполняет action через DesktopRpaClient из ExecutionContext."""
         client: DesktopRpaClient | None = getattr(context, "desktop_rpa_client", None)
         if client is None:

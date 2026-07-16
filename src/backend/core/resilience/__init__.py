@@ -12,11 +12,9 @@ import X`` остаются валидными за счёт re-export'ов.
 - :mod:`self_healer` — SelfHealer + ``get_self_healer``.
 - :mod:`breaker` — CircuitBreaker (alias на ``Breaker``), ``BreakerSpec``,
   ``BreakerRegistry``, ``CircuitOpen``.
-- :mod:`circuit_breaker` — S172 M2.3 scaffold: ``CircuitBreakerSpec``,
-  ``SlidingWindowBreaker``, ``ReplicaFailoverBreaker``, ``BreakerLike``.
-  Re-export canonical API. TODO(s172/m2.4): интегрировать в
-  ``entrypoints/middlewares/circuit_breaker.py`` и
-  ``infrastructure/database/smart_session_manager.py``.
+- :mod:`circuit_breaker` — ``CircuitBreakerSpec``, ``SlidingWindowBreaker``,
+  ``ReplicaFailoverBreaker``, ``BreakerLike``. Re-export canonical API.
+  Интегрировано в smart_session_manager через ``_breaker_facade``.
 - :mod:`retry` — ``RetryPolicy`` (alias ``Retry``), ``with_retry``.
 - :mod:`rate_limiter` — ``RateLimit`` / ``RateLimitExceeded`` / ``RateLimiter``
   Protocol; re-export ``RedisRateLimiter`` для multi-instance use case.
