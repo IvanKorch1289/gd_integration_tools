@@ -1279,6 +1279,36 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 218 — PII Recognizers base class (S218)
+
+### Refactor: RegexPiiRecognizer base class для 7 Presidio recognizers
+
+PII recognizers в `services/ai/pii/recognizers/` следовали единому паттерну:
+1. Define regex patterns как class attributes.
+2. Define context words.
+3. `__init__` конструирует Pattern list и вызывает `super().__init__(supported_entity, ..., patterns=..., context=...)`.
+
+Boilerplate повторялся в 7 файлах. S218: extract base class `RegexPiiRecognizer` с class-attribute-driven constructor.
+
+**Changes**:
+- **NEW** `src/backend/services/ai/pii/recognizers/_base.py` (71 LOC): `RegexPiiRecognizer(PatternRecognizer)` base class.
+- **Migrated** 7 recognizers (`AddressRuRecognizer`, `BankAccountRuRecognizer`, `CreditCaseRecognizer`, `DriverLicenseRuRecognizer`, `InnRecognizer`, `PassportRuRecognizer`, `SnilsRecognizer`) → наследуют `RegexPiiRecognizer`, объявляют только `SUPPORTED_ENTITY`/`PATTERNS`/`CONTEXT` class attributes.
+- Checksum recognizers (`Inn`, `Snils`, `Passport`, `CreditCase`) сохраняют `validate_result` override — base class его не отменяет.
+
+**Метрики**:
+- Before: 586 LOC (8 recognizers, 0 base).
+- After: 579 LOC (7 recognizers + 1 base + 1 __init__).
+- Pattern length per recognizer: 25-97 LOC → 57-76 LOC (boilerplate -75%, content unchanged).
+
+**Качественный выигрыш** (beyond LOC):
+- Новый recognizer добавляется за ~15-20 LOC вместо ~30-50.
+- Single source of truth для constructor signature (вместо копипасты в 7 файлах).
+- Все class attributes (`SUPPORTED_ENTITY`, `PATTERNS`, `CONTEXT`) явно видны — легче аудитить.
+
+Без regression: `PatternRecognizer` constructor signature идентичен, `validate_result`/`supported_entity`/`patterns`/`context` API сохранён.
+
+---
+
 ## [Unreleased] — Sprint 217 — Rate Limiter consolidation (Ponytail: deletion)
 
 ### Gap: ResourceRateLimiter over-abstraction (FIXED — net -97 LOC)

@@ -1,4 +1,4 @@
-"""Recognizer паспорт РФ (серия 4 цифры + номер 6 цифр) с context-валидацией.
+"""Recognizer паспорт РФ (серия 4 цифры + номер 6 цифр, S218 refactor).
 
 Формат паспорта гражданина РФ: ``SSSS NNNNNN`` (серия + номер); серия отражает
 код субъекта + год бланка (без жёсткой валидации). Без context-keywords любая
@@ -6,16 +6,20 @@
 карты, временные коды), поэтому recognizer полагается на Presidio's
 context-mechanism — context_similarity_factor поднимает score только если
 рядом встречаются "паспорт", "серия", "выдан", "ОВД" и т.п.
+
+S218: refactored на базе :class:`RegexPiiRecognizer` + validate_result override.
 """
 
 from __future__ import annotations
 
-from presidio_analyzer import Pattern, PatternRecognizer
+from presidio_analyzer import Pattern
+
+from src.backend.services.ai.pii.recognizers._base import RegexPiiRecognizer
 
 __all__ = ("PassportRuRecognizer",)
 
 
-class PassportRuRecognizer(PatternRecognizer):
+class PassportRuRecognizer(RegexPiiRecognizer):
     """Presidio recognizer для паспорта РФ (контекстно-зависимый).
 
     Регистрирует entity type `PASSPORT_RU`. Высокий итоговый score достигается
@@ -24,30 +28,25 @@ class PassportRuRecognizer(PatternRecognizer):
     и любых 10-знач последовательностях).
     """
 
-    def __init__(self) -> None:
-        patterns = [
-            Pattern(
-                name="passport_ru_series_number",
-                regex=r"\b(\d{2}\s?\d{2})\s+(\d{6})\b",
-                score=0.3,
-            )
-        ]
-        super().__init__(
-            supported_entity="PASSPORT_RU",
-            supported_language="ru",
-            patterns=patterns,
-            context=[
-                "паспорт",
-                "паспорта",
-                "серия",
-                "номер паспорта",
-                "выдан",
-                "ОВД",
-                "ФМС",
-                "УФМС",
-                "код подразделения",
-            ],
+    SUPPORTED_ENTITY = "PASSPORT_RU"
+    PATTERNS = [
+        Pattern(
+            name="passport_ru_series_number",
+            regex=r"\b(\d{2}\s?\d{2})\s+(\d{6})\b",
+            score=0.3,
         )
+    ]
+    CONTEXT = [
+        "паспорт",
+        "паспорта",
+        "серия",
+        "номер паспорта",
+        "выдан",
+        "ОВД",
+        "ФМС",
+        "УФМС",
+        "код подразделения",
+    ]
 
     def validate_result(self, pattern_text: str) -> bool:
         """Validate-hook: чёткий формат серия+номер.

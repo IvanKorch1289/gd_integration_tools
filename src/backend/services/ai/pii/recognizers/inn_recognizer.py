@@ -1,4 +1,4 @@
-"""Recognizer ИНН (10 или 12 цифр) с checksum-валидацией ФНС (S24 W1).
+"""Recognizer ИНН (10 или 12 цифр) с checksum-валидацией ФНС (S24 W1, S218 refactor).
 
 ИНН (Идентификационный Номер Налогоплательщика):
 
@@ -9,16 +9,15 @@
 веса [2, 4, 10, 3, 5, 9, 4, 6, 8] для 10-знач формы и [7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
 + [3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8] для 12-знач формы. Каждая контрольная цифра =
 sum(d_i × w_i) mod 11 mod 10. Это позволяет отсеять случайные 10/12-значные числа.
+
+S218: refactored на базе :class:`RegexPiiRecognizer` + validate_result override.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from presidio_analyzer import Pattern
 
-from presidio_analyzer import Pattern, PatternRecognizer
-
-if TYPE_CHECKING:
-    pass
+from src.backend.services.ai.pii.recognizers._base import RegexPiiRecognizer
 
 __all__ = ("InnRecognizer",)
 
@@ -47,7 +46,7 @@ def _inn_checksum_valid(value: str) -> bool:
     return cs1 == digits[10] and cs2 == digits[11]
 
 
-class InnRecognizer(PatternRecognizer):
+class InnRecognizer(RegexPiiRecognizer):
     """Presidio recognizer для ИНН с checksum-валидацией ФНС.
 
     Регистрирует entity type `INN_RU`. Высокий score (0.9) при валидной
@@ -55,16 +54,11 @@ class InnRecognizer(PatternRecognizer):
     Presidio's score-threshold по умолчанию).
     """
 
-    def __init__(self) -> None:
-        patterns = [
-            Pattern(name="inn_10_12_digits", regex=r"\b\d{10}(\d{2})?\b", score=0.4)
-        ]
-        super().__init__(
-            supported_entity="INN_RU",
-            supported_language="ru",
-            patterns=patterns,
-            context=["ИНН", "инн", "налогоплательщик", "налоговый"],
-        )
+    SUPPORTED_ENTITY = "INN_RU"
+    PATTERNS = [
+        Pattern(name="inn_10_12_digits", regex=r"\b\d{10}(\d{2})?\b", score=0.4)
+    ]
+    CONTEXT = ["ИНН", "инн", "налогоплательщик", "налоговый"]
 
     def validate_result(self, pattern_text: str) -> bool:
         """Validate-hook Presidio: True повышает score, False — отсеивает."""

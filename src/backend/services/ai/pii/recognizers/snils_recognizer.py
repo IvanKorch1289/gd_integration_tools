@@ -1,4 +1,4 @@
-"""Recognizer СНИЛС (Страховой Номер Индивидуального Лицевого Счёта).
+"""Recognizer СНИЛС (Страховой Номер Индивидуального Лицевого Счёта, S218 refactor).
 
 СНИЛС: 11 цифр формата ``XXX-XXX-XXX YY`` или ``XXXXXXXXX YY`` без разделителей.
 9 серийных + 2 контрольные.
@@ -11,13 +11,17 @@
     * CS == 100 или CS == 101 → контрольная цифра 00;
     * CS < 100 → контрольная цифра = CS;
     * иначе → невалидный СНИЛС.
+
+S218: refactored на базе :class:`RegexPiiRecognizer` + validate_result override.
 """
 
 from __future__ import annotations
 
 import re
 
-from presidio_analyzer import Pattern, PatternRecognizer
+from presidio_analyzer import Pattern
+
+from src.backend.services.ai.pii.recognizers._base import RegexPiiRecognizer
 
 __all__ = ("SnilsRecognizer",)
 
@@ -45,28 +49,23 @@ def _snils_check_digit_valid(value: str) -> bool:
     return expected == check
 
 
-class SnilsRecognizer(PatternRecognizer):
+class SnilsRecognizer(RegexPiiRecognizer):
     """Presidio recognizer для СНИЛС с ПФР checksum-валидацией.
 
     Регистрирует entity type `SNILS_RU`. Поддерживает форматы:
     ``XXX-XXX-XXX YY``, ``XXX-XXX-XXX-YY``, ``XXX XXX XXX YY``, ``XXXXXXXXXYY``.
     """
 
-    def __init__(self) -> None:
-        patterns = [
-            Pattern(
-                name="snils_dashed",
-                regex=r"\b\d{3}[-\s]\d{3}[-\s]\d{3}[\s-]?\d{2}\b",
-                score=0.5,
-            ),
-            Pattern(name="snils_plain", regex=r"\b\d{11}\b", score=0.3),
-        ]
-        super().__init__(
-            supported_entity="SNILS_RU",
-            supported_language="ru",
-            patterns=patterns,
-            context=["СНИЛС", "снилс", "страховой номер", "ПФР", "пенсионный"],
-        )
+    SUPPORTED_ENTITY = "SNILS_RU"
+    PATTERNS = [
+        Pattern(
+            name="snils_dashed",
+            regex=r"\b\d{3}[-\s]\d{3}[-\s]\d{3}[\s-]?\d{2}\b",
+            score=0.5,
+        ),
+        Pattern(name="snils_plain", regex=r"\b\d{11}\b", score=0.3),
+    ]
+    CONTEXT = ["СНИЛС", "снилс", "страховой номер", "ПФР", "пенсионный"]
 
     def validate_result(self, pattern_text: str) -> bool:
         """Validate-hook Presidio: проверяет ПФР checksum."""

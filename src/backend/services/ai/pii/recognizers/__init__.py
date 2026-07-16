@@ -35,6 +35,7 @@ from src.backend.services.ai.pii.recognizers.passport_ru_recognizer import (
     PassportRuRecognizer,
 )
 from src.backend.services.ai.pii.recognizers.snils_recognizer import SnilsRecognizer
+from src.backend.services.ai.pii.recognizers._base import RegexPiiRecognizer
 
 __all__ = (
     "AddressRuRecognizer",
@@ -43,5 +44,6 @@ __all__ = (
     "DriverLicenseRuRecognizer",
     "InnRecognizer",
     "PassportRuRecognizer",
+    "RegexPiiRecognizer",
     "SnilsRecognizer",
 )
