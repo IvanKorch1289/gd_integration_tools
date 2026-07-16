@@ -1281,6 +1281,65 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 
 ---
 
+## [Unreleased] — Sprint 204 — Retrospective & unfinished cleanup
+
+### Per-connector rate limit on 4 sinks (S202 unfinished, closed)
+
+`77c747ce fix(s202-cleanup): per-connector rate limit on 4 sinks (S202 unfinished)`
+
+S202 audit запланировал per-connector rate-limiting для Sinks, но коммит не был сделан — work остался в working tree как uncommitted. Закрыто одним коммитом:
+
+- **EmailSink**: 10/s (SMTP медленный)
+- **FileSink**: 50/s (scope=path — per-path limit)
+- **HttpSink**: 100/s
+- **S3Sink**: 30/s (scope=key — per-key limit)
+
+Все через существующий `get_connector_rate_limiter()` из `infrastructure/security/connector_rate_limiter.py`. Один паттерн, разные лимиты по типу sink.
+
+### Dead code removed (ponytail guard)
+
+- `vault_backend.get_secret()` — добавлен в S202 audit cleanup, но **0 импортов** в репо. `CredentialProvider` использует `get_versioned()` напрямую. Удалено перед коммитом.
+
+### Remaining gaps status (S202 → S204)
+
+| Gap | Status S204 |
+|-----|-------------|
+| 8 admin endpoints → AuthorizationFacade | ✅ закрыто в `92cb884b` (S202-final) — 13 endpoints получили `require_admin()` |
+| DSL → services direct imports (8 violations) | 🟡 частично — 9 module-level исправлено в S202, остальные — lazy imports в functions (architecturally tolerated) |
+| Two WorkflowBuilder classes | P3 (deferred — большой refactor) |
+| HITL cross-instance (Redis signal store) | P2 (deferred — InMemoryHitlSignalStore OK для single-process) |
+| Presidio NER for PII | P2 (deferred — нужен ML model) |
+| `ai_tool_dispatch.py` scaffold | P3 (deferred) |
+| `langmem_service.py` duplicate implementations | P3 (deferred — разные backends, не dead code) |
+| `unified_pool_manager.get_metrics` exotic kinds | P3 (deferred — generic fallback достаточен) |
+
+### Retrospective: S172-S204
+
+**Stats (cumulative)**:
+
+- **220 файлов** изменено за 32 sprint'а (S172-S204)
+- **18 коммитов** в окне ретроспективы
+- **5 facade'ов** создано/унифицировано (HealthAggregator/IntegrationFacade/ConnectorHealthMixin/SmsSink/AuthorizationFacade)
+- **26 health checks** работают (было 6 в начале)
+- **109+ unit-тестов** (S202 final: 19 новых в S203)
+
+**Закрыто за эту ретроспективу (S204)**:
+
+1. ✅ Per-connector rate limit на 4 sinks — `77c747ce`
+2. ✅ Dead code `vault_backend.get_secret` — удалён
+3. ✅ Working tree очищен (uncommitted leftovers = 0)
+
+**Ponytail compliance summary**:
+
+- ❌ Не вводили параллельные системы (HealthFacade dead code не стали расширять)
+- ❌ Не делали interface + N implementations
+- ❌ Не удаляли eventing/ (тесты зависят)
+- ✅ Удалили dead code при обнаружении (`get_secret`)
+- ✅ Backward-compat через алиасы (`SinkHealthMixin` / `SourceHealthMixin`)
+- ✅ Использовали библиотечный код (`connector_rate_limiter`) вместо кастомного
+
+---
+
 ## Earlier sprints
 
 See git history for earlier sprint changes (S170 and before).
