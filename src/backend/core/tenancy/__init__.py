@@ -13,7 +13,9 @@ from dataclasses import dataclass
 __all__ = (
     "QuotaExceeded",
     "QuotaTracker",
+    "SLOEvaluation",
     "TenantContext",
+    "TenantSLO",
     "current_tenant",
     "get_tenant_id",
     "set_tenant",
@@ -93,3 +95,4 @@ class tenant_scope:
 
 # Re-exports после определения symbols (порядок важен для избежания циклов).
 from src.backend.core.tenancy.quotas import QuotaExceeded, QuotaTracker  # noqa: E402
+from src.backend.core.tenancy.slo import SLOEvaluation, TenantSLO  # noqa: E402, E501 (S178 #4)
