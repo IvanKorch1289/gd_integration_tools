@@ -1,6 +1,22 @@
 # DEPRECATED V16 Sprint 1 — будет удалён после Single-Entry refactor финала.
 # Temporal native (infrastructure/workflow/temporal_*) заменяет state-machine.
 # См. PLAN.md V16 §4 Sprint 1 Workflow Single-Entry refactor.
+#
+# S212 (Sprint 212): DEPRECATED — emit warning на import. Canonical API:
+#     from src.backend.dsl.workflow.builder import WorkflowBuilder, SagaBuilder
+#
+# Миграция: новый API — saga-based (saga().forward().compensate().end_saga().build()).
+# Legacy API — step()-based. Mapping:
+#     .step(name, processors=[...])    →  .saga().forward(WorkflowStep(name, kind="sequential", processors=...))
+#     .compensate_with([steps])        →  .saga().compensate(step) для каждого
+#     .loop(name, while_=..., body=...) →  no direct equivalent (use retry policy on step)
+#     .sub_workflow(name, wait=...)    →  .saga().forward(WorkflowStep(kind="sub_flow", ...))
+#     .max_attempts(n)                  →  .default_retry(RetryPolicy(max_attempts=n))
+#     .description(text)                →  .description(text)  (same)
+#     .build()                          →  .build()  (different return type: WorkflowDeclaration, not DurableWorkflowProcessor)
+#
+# Production consumers (требуют миграции в собственных sprint'ах):
+#     - extensions/core_entities/orders/workflows/orders_dsl.py (308 LOC, multiple workflow specs)
 """Fluent builder для durable workflow спеков (IL-WF1.3).
 
 ``WorkflowBuilder`` — Pythonic fluent API над :class:`WorkflowSpec`.
@@ -68,6 +84,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -81,6 +98,16 @@ from src.backend.infrastructure.workflow.executor import (
 __all__ = ("WorkflowBuilder",)
 
 _logger = get_logger("workflow.builder")
+
+# S212: emit DeprecationWarning на import. Canonical API:
+#     from src.backend.dsl.workflow.builder import WorkflowBuilder
+warnings.warn(
+    "infrastructure.workflow.builder is DEPRECATED (S212). "
+    "Migrate to dsl.workflow.builder.WorkflowBuilder (saga-based API). "
+    "See migration table in module docstring.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 class WorkflowBuilder:

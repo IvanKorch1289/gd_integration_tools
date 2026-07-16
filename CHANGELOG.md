@@ -1279,6 +1279,40 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 212 — WorkflowBuilder legacy deprecation hardening
+
+### Gap: Two WorkflowBuilders (PARTIAL — deprecation hardening)
+
+Полная миграция legacy `infrastructure/workflow/builder.py` (371 LOC, step-based API)
+на новый `dsl/workflow/builder/` (saga-based API) требует переписать:
+- `extensions/core_entities/orders/workflows/orders_dsl.py` (308 LOC, 6 workflow specs используют `.step()`, `.compensate_with()`, `.loop()`, `.sub_workflow()`, `.max_attempts()`)
+- И другие extension'ы, использующие legacy API (audit по `infrastructure.workflow.builder` импортам)
+
+API mapping (новый → legacy):
+| Legacy method | New equivalent |
+|---------------|----------------|
+| `.step(name, processors=[...])` | `.saga().forward(WorkflowStep(...))` |
+| `.compensate_with([steps])` | `.saga().compensate(step)` для каждого |
+| `.loop(while_, body, max_iter)` | no direct equivalent (use retry policy) |
+| `.sub_workflow(name, wait=...)` | `.saga().forward(WorkflowStep(kind="sub_flow", ...))` |
+| `.max_attempts(n)` | `.default_retry(RetryPolicy(max_attempts=n))` |
+| `.description(text)` | `.description(text)` (same) |
+| `.build()` | `.build()` (different return type) |
+
+**S212 bounded fix** (минимальный non-breaking):
+- Добавлен `warnings.warn(DeprecationWarning)` на import `infrastructure/workflow/builder.py`.
+- Обновлён docstring с explicit migration table.
+- Production extensions продолжают работать (warning логируется).
+
+**Deferred** (требует per-extension migration sprint):
+- Полный rewrite `orders_dsl.py` для saga-based API.
+- Удаление `infrastructure/workflow/builder.py` после миграции ВСЕХ consumers.
+- Сейчас 4 importers (orders_dsl + 1 test + facade + executor indirect).
+
+Это **большой coordinated refactor** который не помещается в bounded turn. Документирован как deferred для будущего sprint.
+
+---
+
 ## [Unreleased] — Sprint 211 — langmem migration complete (shim removed)
 
 ### Step 2: 6 importers migrated to canonical, legacy shim deleted (FIXED)
