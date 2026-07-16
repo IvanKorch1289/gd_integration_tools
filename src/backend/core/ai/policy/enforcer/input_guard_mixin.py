@@ -35,9 +35,11 @@ class InputGuardMixin:
 
         Поддерживаетые guard'ы:
         - ``"llm_guard:<scanner>"`` — LLM Guard self-hosted (S35 W1, default)
-        - ``"rebuff:<variant>"`` — Rebuff client (deprecated, external API)
         - ``"lakera:<variant>"`` — Lakera client (deprecated, external API)
         - ``"nemo:*"`` — NeMo Colang (skip, Python 3.14 incompat)
+
+        Rebuff удалён в S215 (upstream archived 2026-07-16 — см.
+        ``research/agent-framework/REPORT.md`` F4.2).
 
         Raises:
             GuardrailViolationError: При ``on_block="fail"``.
@@ -94,9 +96,25 @@ class InputGuardMixin:
         if name.startswith("llm_guard:") or name.startswith("llm-guard:"):
             return await self._guard_input_llm_guard(prompt, ref, on_block)
 
-        # Rebuff
+        # S215: Rebuff удалён — upstream archived 2026-07-16. Configured rebuff
+        # guards теперь explicit fail с понятным сообщением вместо silent no-op.
         if name.startswith("rebuff:"):
-            return await self._guard_input_rebuff(prompt, ref, on_block)
+            logger.warning(
+                "AIPolicyEnforcer: rebuff guard %r не поддерживается (S215 — "
+                "upstream archived 2026-07-16). Используйте llm_guard: или lakera:.",
+                name,
+                extra={"guard_ref": name, "category": "policy_degradation"},
+            )
+            if on_block == "fail":
+                raise GuardrailViolationError(
+                    guard_name=ref.name,
+                    flagged_categories=["rebuff_archived"],
+                    on_block=on_block,
+                    content=prompt,
+                )
+            return GuardResult(
+                guard_name=ref.name, verdict="warned", categories=["rebuff_archived"]
+            )
 
         # Lakera
         if name.startswith("lakera:"):
@@ -104,45 +122,6 @@ class InputGuardMixin:
 
         logger.warning("AIPolicyEnforcer: unknown input guard %r — skipped", name)
         return None
-
-    async def _guard_input_rebuff(
-        self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef, on_block: str
-    ) -> GuardResult:
-        """Rebuff input guard check."""
-        try:
-            from src.backend.services.ai.guardrails.rebuff_client import RebuffClient
-
-            client = RebuffClient()
-            result = await client.detect(prompt)
-            if result.injected:
-                categories = result.metadata.get("categories", [])
-                self._handle_guard_block(
-                    guard_name=ref.name,
-                    flagged=categories or ["prompt_injection"],
-                    on_block=on_block,
-                    content=prompt,
-                )
-                # on_block != fail — block handled (dlq/warn), return blocked result
-                return GuardResult(
-                    guard_name=ref.name,
-                    verdict="blocked",
-                    categories=categories or ["prompt_injection"],
-                )
-            return GuardResult(guard_name=ref.name, verdict="passed")
-        except GuardrailViolationError:
-            raise
-        except Exception as exc:
-            logger.warning("AIPolicyEnforcer: Rebuff check failed: %s", exc)
-            if on_block == "fail":
-                raise GuardrailViolationError(
-                    guard_name=ref.name,
-                    flagged_categories=["rebuff_error"],
-                    on_block=on_block,
-                    content=prompt,
-                ) from exc
-            return GuardResult(
-                guard_name=ref.name, verdict="warned", categories=["rebuff_error"]
-            )
 
     async def _guard_input_lakera(
         self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef, on_block: str
@@ -211,9 +190,34 @@ class InputGuardMixin:
                 guard_name=ref.name, verdict="warned", categories=["llm_guard_disabled"]
             )
         try:
-            from src.backend.core.ai.guardrails.llm_guard_client import LLMGuardResult
+            # S215: LLMGuardResult module archived 2026-07-16.
+            # Если _llm_guard_client существует, но result type не импортируется —
+            # считаем scanner недоступным (fail-closed).
+            try:
+                from src.backend.core.ai.guardrails.llm_guard_client import (  # noqa: F401
+                    LLMGuardResult,
+                )
+            except ImportError as exc:
+                logger.warning(
+                    "AIPolicyEnforcer: llm_guard scanner module недоступен (%s). "
+                    "Upstream archived 2026-07-16.",
+                    exc,
+                    extra={"guard_ref": ref.name, "category": "policy_degradation"},
+                )
+                if on_block == "fail":
+                    raise GuardrailViolationError(
+                        guard_name=ref.name,
+                        flagged_categories=["llm_guard_module_unavailable"],
+                        on_block=on_block,
+                        content=prompt,
+                    )
+                return GuardResult(
+                    guard_name=ref.name,
+                    verdict="warned",
+                    categories=["llm_guard_module_unavailable"],
+                )
 
-            result: LLMGuardResult = await self._llm_guard_client.scan(prompt)
+            result = await self._llm_guard_client.scan(prompt)
             if result.flagged:
                 self._handle_guard_block(
                     guard_name=ref.name,

@@ -1279,6 +1279,24 @@ Created `src/backend/core/ai/agent_sandbox_protocol.py` с Protocol + Result dat
 - langmem memory subsystem has parallel implementations — consolidation needed
 - Pool metrics for exotic kinds (mongodb/nats/eventbus) return only metadata
 
+## [Unreleased] — Sprint 215 — Rebuff/LLM-Guard dead code cleanup
+
+### Gap: Broken imports of archived guardrail modules (FIXED)
+
+`services/ai/guardrails/{rebuff_client,llm_guard_client}.py` и `core/ai/guardrails/llm_guard_client.py` удалены (upstream archived 2026-07-16), но код в `input_guard_mixin.py` всё ещё пытался импортировать их. Результат — silent no-op: configured `rebuff:`/`llm_guard:` guards возвращали "warned" без проверки (security gap).
+
+**Fix** (`core/ai/policy/enforcer/input_guard_mixin.py`):
+- `_guard_input_rebuff` метод **удалён** (~40 LOC).
+- Dispatch для `rebuff:*` → explicit warning + fail-closed при `on_block="fail"`.
+- `_guard_input_llm_guard` обёрнут в try/except ImportError — если scanner module недоступен, explicit warning + fail-closed при `on_block="fail"`.
+- Docstring обновлён: удалён Rebuff, добавлен комментарий о S215 archival.
+
+Production-safe: configured guards больше не молчат — оператор получает явный `category="policy_degradation"` audit event + (при `on_block="fail"`) `GuardrailViolationError`.
+
+**Net diff**: ~30 LOC removed (метод + dispatch), fail-closed semantic.
+
+---
+
 ## [Unreleased] — Sprint 214 — PII erasure wiring (152-ФЗ compliance)
 
 ### Gap: PII erasure stubs заменены на реальные backend-вызовы (FIXED)
