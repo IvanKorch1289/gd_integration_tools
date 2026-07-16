@@ -1,36 +1,40 @@
-"""Unified infrastructure facade через core/di/providers (Milestone 1 — isolation).
+"""Backward-compat facade — bridge re-exports + remaining accessors.
 
-Single entry point для доменов, которые до этого были импортированы
-напрямую из ``src.backend.infrastructure.*`` в core/ файлах.
+Decomposed from the original monolithic 856-LOC file (S171) into 6 focused
+bridge modules. This file remains the single import surface; all 51 import
+sites and monkeypatch string paths (``infrastructure_facade.get_X``) keep
+working unchanged.
 
-Lazy imports внутри функций (preserves import-time isolation):
-infrastructure modules не загружаются до первого вызова provider'а.
+Re-exported from bridge modules:
+    * ``observability_bridge`` — correlation, client_metrics, metrics_registry,
+      prometheus exporters, logging
+    * ``resilience_bridge``   — bulkhead, profile_store, rate limiter
+    * ``dlq_bridge``          — DLQEnvelope/Reason/Writer/base module
+    * ``health_bridge``       — HealthResult/Mode, InfrastructureClient,
+      health_check factory, pool health
+    * ``search_bridge``       — WebSearchService + tavily/searxng/perplexity
+    * ``cdc_bridge``          — CDC adapters + debezium/poll/listen-notify backends
 
-Доступные провайдеры:
-    * ``get_correlation_id()`` — observability/correlation (re-export facade)
-    * ``get_client_metrics()`` — observability/client_metrics (lazy load)
-    * ``get_dlq_envelope_class()`` — DLQEnvelope class (lazy load)
-    * ``get_dlq_base_module()`` — full dlq_base module (lazy load)
-    * ``get_external_db_registry()`` — db accessors
-    * ``get_profile_store_memory_class()`` — resilience
-    * ``get_prometheus_exporter()`` — prometheus helpers
-    * ``get_prompt_cache_middleware()`` — AI prompt cache
-    * ``get_bulkhead_class()`` + ``get_bulkhead_registry_class()`` — resilience
+Retained inline (domains without a dedicated bridge yet):
+    database, AI (prompt cache, e2b), event_bus, workflow, scheduler,
+    repositories, jupyter_hub, storage clients (redis/clickhouse/mongo/kafka/
+    object_storage), security (token registry), caching decorators, RAG cache.
 
-Использование::
-
-    from src.backend.core.di.providers.infrastructure_facade import (
-        get_correlation_id,
-        get_dlq_envelope_class,
-    )
-
-    cid = get_correlation_id()
-    Envelope = get_dlq_envelope_class()
+Lazy imports inside functions (preserves import-time isolation): infrastructure
+modules are not loaded until first call of a provider.
 """
 
 from __future__ import annotations
 
 from typing import Any
+
+# --- Bridge re-exports (50 accessors moved to focused modules) ---------------
+from src.backend.core.di.providers.observability_bridge import *  # noqa: F401,F403
+from src.backend.core.di.providers.resilience_bridge import *  # noqa: F401,F403
+from src.backend.core.di.providers.dlq_bridge import *  # noqa: F401,F403
+from src.backend.core.di.providers.health_bridge import *  # noqa: F401,F403
+from src.backend.core.di.providers.search_bridge import *  # noqa: F401,F403
+from src.backend.core.di.providers.cdc_bridge import *  # noqa: F401,F403
 
 __all__ = (
     "get_bulkhead_attr",
@@ -129,42 +133,11 @@ __all__ = (
 )
 
 
-def get_correlation_id() -> Any:
-    """Возвращает текущий correlation_id из contextvar (string).
-
-    Per D102 (single-source-of-truth через facade), provider
-    вызывает underlying function и возвращает её value,
-    а не саму function.
-
-    S171 M12 R4 #3 fix: ранее возвращалась function <get_correlation_id>,
-    что ломало audit_service.emit (test_emit_uses_correlation_id_from_contextvar).
-    """
-    from src.backend.infrastructure.observability.correlation import (
-        get_correlation_id as _get_cid,
-    )
-    return _get_cid()
-
-
-def get_client_metrics() -> Any:
-    """Возвращает ``observability.client_metrics`` module."""
-    from src.backend.infrastructure.observability import client_metrics
-
-    return client_metrics
-
-
-def get_dlq_envelope_class() -> Any:
-    """Возвращает ``DLQEnvelope`` class."""
-    from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
-
-    return DLQEnvelope
-
-
-def get_dlq_base_module() -> Any:
-    """Возвращает ``messaging.dlq_base`` module."""
-    from src.backend.infrastructure.messaging import dlq_base
-
-    return dlq_base
-
+# --- Remaining accessors (domains without a dedicated bridge) ----------------
+# These cover database, AI, event_bus, workflow, scheduler, repositories,
+# jupyter_hub, storage clients, security, caching, RAG cache. They are kept
+# inline to preserve the exact public surface until a follow-up wave extracts
+# their own bridge modules.
 
 def get_external_db_registry() -> Any:
     """Возвращает ``database.database.accessors.get_external_db_registry``."""
@@ -175,95 +148,11 @@ def get_external_db_registry() -> Any:
     return get_external_db_registry
 
 
-def get_profile_store_memory_class() -> Any:
-    """Возвращает ``InMemoryResilienceProfileStore`` class."""
-    from src.backend.infrastructure.resilience.profile_store_memory import (
-        InMemoryResilienceProfileStore,
-    )
-
-    return InMemoryResilienceProfileStore
-
-
-def get_prometheus_exporter() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter`` module."""
-    from src.backend.infrastructure.observability import prometheus_temporal_exporter
-
-    return prometheus_temporal_exporter
-
-
 def get_prompt_cache_middleware() -> Any:
     """Возвращает ``ai.prompt_cache_middleware`` module."""
     from src.backend.infrastructure.ai import prompt_cache_middleware
 
     return prompt_cache_middleware
-
-
-def get_bulkhead_class() -> Any:
-    """Возвращает ``resilience.bulkhead.Bulkhead`` class."""
-    from src.backend.infrastructure.resilience.bulkhead import Bulkhead
-
-    return Bulkhead
-
-
-def get_bulkhead_registry_class() -> Any:
-    """Возвращает ``resilience.bulkhead.BulkheadRegistry`` class."""
-    from src.backend.infrastructure.resilience.bulkhead import BulkheadRegistry
-
-    return BulkheadRegistry
-
-
-def get_health_result_class() -> Any:
-    """Возвращает ``clients.base_connector.HealthResult`` class."""
-    from src.backend.infrastructure.clients.base_connector import HealthResult
-
-    return HealthResult
-
-
-def get_default_labels_tuple() -> Any:
-    """Возвращает ``observability.metrics_registry.DEFAULT_LABELS`` tuple.
-
-    Используется в metrics consumers (services/ai/metrics.py,
-    services/workflows/sla_alerting.py) для инициализации
-    ``MetricsRegistry(default_labels=...)``.
-    """
-    from src.backend.infrastructure.observability.metrics_registry import DEFAULT_LABELS
-
-    return DEFAULT_LABELS
-
-
-def get_metrics_registry_class() -> Any:
-    """Возвращает ``observability.metrics_registry.MetricsRegistry`` class."""
-    from src.backend.infrastructure.observability.metrics_registry import MetricsRegistry
-
-    return MetricsRegistry
-
-
-def get_metrics_registry_singleton() -> Any:
-    """Возвращает ``observability.metrics_registry.metrics_registry`` singleton."""
-    from src.backend.infrastructure.observability import metrics_registry
-
-    return metrics_registry
-
-
-def get_pool_entry_class() -> Any:
-    """Возвращает ``clients.pool_health.PoolEntry`` class."""
-    from src.backend.infrastructure.clients.pool_health import PoolEntry
-
-    return PoolEntry
-
-
-def get_pool_health_monitor_class() -> Any:
-    """Возвращает ``clients.pool_health.PoolHealthMonitor`` class."""
-    from src.backend.infrastructure.clients.pool_health import PoolHealthMonitor
-
-    return PoolHealthMonitor
-
-
-def get_pool_monitor_factory() -> Any:
-    """Возвращает ``clients.pool_health.get_pool_monitor`` factory."""
-    from src.backend.infrastructure.clients.pool_health import get_pool_monitor
-
-    return get_pool_monitor
 
 
 def get_abstract_repository_class() -> Any:
@@ -466,105 +355,11 @@ def get_caching_decorator_class() -> Any:
     return CachingDecorator
 
 
-def get_poll_cdc_backend_class() -> Any:
-    """Возвращает ``cdc.poll_backend.PollCDCBackend`` class."""
-    from src.backend.infrastructure.cdc.poll_backend import PollCDCBackend
-
-    return PollCDCBackend
-
-
-def get_listen_notify_cdc_backend_class() -> Any:
-    """Возвращает ``cdc.listen_notify_backend.ListenNotifyCDCBackend`` class."""
-    from src.backend.infrastructure.cdc.listen_notify_backend import (
-        ListenNotifyCDCBackend,
-    )
-
-    return ListenNotifyCDCBackend
-
-
-def get_debezium_cdc_backend_class() -> Any:
-    """Возвращает ``cdc.debezium_events_backend.DebeziumEventsCDCBackend`` class."""
-    from src.backend.infrastructure.cdc.debezium_events_backend import (
-        DebeziumEventsCDCBackend,
-    )
-
-    return DebeziumEventsCDCBackend
-
-
-def get_cdc_client_adapter_class() -> Any:
-    """Возвращает ``cdc.cdc_client_adapter.CDCClientAdapter`` class."""
-    from src.backend.infrastructure.cdc.cdc_client_adapter import CDCClientAdapter
-
-    return CDCClientAdapter
-
-
 def get_dsl_variables_helper() -> Any:
     """Возвращает ``database.models.dsl_variables`` helper."""
     from src.backend.infrastructure.database.models import dsl_variables
 
     return dsl_variables
-
-
-def get_unified_rate_limiter_attr(name: str) -> Any:
-    """Возвращает атрибут из ``resilience.unified_rate_limiter``.
-
-    Args:
-        name: имя атрибута (например ``"RateLimit"``).
-    """
-    from src.backend.infrastructure.resilience import unified_rate_limiter
-
-    return getattr(unified_rate_limiter, name)
-
-
-def get_rate_limit_class() -> Any:
-    """Возвращает ``resilience.unified_rate_limiter.RateLimit`` class."""
-    from src.backend.infrastructure.resilience.unified_rate_limiter import RateLimit
-
-    return RateLimit
-
-
-def get_rate_limit_exceeded_class() -> Any:
-    """Возвращает ``resilience.unified_rate_limiter.RateLimitExceeded``."""
-    from src.backend.infrastructure.resilience.unified_rate_limiter import RateLimitExceeded
-
-    return RateLimitExceeded
-
-
-def get_redis_rate_limiter_class() -> Any:
-    """Возвращает ``resilience.unified_rate_limiter.RedisRateLimiter`` class."""
-    from src.backend.infrastructure.resilience.unified_rate_limiter import RedisRateLimiter
-
-    return RedisRateLimiter
-
-
-def get_rate_limiter_factory() -> Any:
-    """Возвращает ``resilience.unified_rate_limiter.get_rate_limiter`` factory."""
-    from src.backend.infrastructure.resilience.unified_rate_limiter import get_rate_limiter
-
-    return get_rate_limiter
-
-
-
-
-
-def get_prometheus_temporal_exporter_class() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter.PrometheusTemporalExporter`` class."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import PrometheusTemporalExporter
-
-    return PrometheusTemporalExporter
-
-
-def get_prometheus_temporal_exporter_factory() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter.get_prometheus_temporal_exporter`` factory."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import get_prometheus_temporal_exporter
-
-    return get_prometheus_temporal_exporter
-
-
-
-
-
-
 
 
 def get_scheduler_manager_class() -> Any:
@@ -581,106 +376,10 @@ def get_scheduler_manager_factory() -> Any:
     return get_scheduler_manager
 
 
-def get_search_providers_module() -> Any:
-    """Возвращает ``clients.external.search_providers`` module."""
-    from src.backend.infrastructure.clients.external import search_providers
-    return search_providers
-
-
-def get_base_search_provider_class() -> Any:
-    """Возвращает ``clients.external.search_providers.BaseSearchProvider`` class."""
-    from src.backend.infrastructure.clients.external.search_providers import BaseSearchProvider
-
-    return BaseSearchProvider
-
-
-def get_perplexity_provider_class() -> Any:
-    """Возвращает ``clients.external.search_providers.PerplexityProvider`` class."""
-    from src.backend.infrastructure.clients.external.search_providers import PerplexityProvider
-
-    return PerplexityProvider
-
-
-def get_searxng_provider_class() -> Any:
-    """Возвращает ``clients.external.search_providers.SearXNGProvider`` class."""
-    from src.backend.infrastructure.clients.external.search_providers import SearXNGProvider
-
-    return SearXNGProvider
-
-
-def get_tavily_provider_class() -> Any:
-    """Возвращает ``clients.external.search_providers.TavilyProvider`` class."""
-    from src.backend.infrastructure.clients.external.search_providers import TavilyProvider
-
-    return TavilyProvider
-
-
-def get_web_search_service_class() -> Any:
-    """Возвращает ``clients.external.search_providers.WebSearchService`` class."""
-    from src.backend.infrastructure.clients.external.search_providers import WebSearchService
-
-    return WebSearchService
-
-
 def get_caching_decorator_module() -> Any:
     """Возвращает ``decorators.caching.decorator`` module."""
     from src.backend.infrastructure.decorators.caching import decorator as _mod
     return _mod
-
-
-
-
-
-def get_health_mode_class() -> Any:
-    """Возвращает ``clients.base_connector.HealthMode`` class."""
-    from src.backend.infrastructure.clients.base_connector import HealthMode
-
-    return HealthMode
-
-
-def get_infrastructure_client_class() -> Any:
-    """Возвращает ``clients.base_connector.InfrastructureClient`` class."""
-    from src.backend.infrastructure.clients.base_connector import InfrastructureClient
-
-    return InfrastructureClient
-
-
-def get_bulkhead_attr(name: str) -> Any:
-    """Возвращает атрибут из ``resilience.bulkhead`` (Bulkhead, BulkheadRegistry).
-
-    Args:
-        name: имя атрибута.
-    """
-    from src.backend.infrastructure.resilience import bulkhead
-
-    return getattr(bulkhead, name)
-
-
-def get_record_scale_event() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter.record_scale_event``."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-        record_scale_event,
-    )
-
-    return record_scale_event
-
-
-def get_set_task_queue_depth() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter.set_task_queue_depth``."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-        set_task_queue_depth,
-    )
-
-    return set_task_queue_depth
-
-
-def get_set_workers_active() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter.set_workers_active``."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import (
-        set_workers_active,
-    )
-
-    return set_workers_active
 
 
 def get_inject_openai_prompt_cache() -> Any:
@@ -713,38 +412,6 @@ def get_redis_token_registry_class() -> Any:
     from src.backend.infrastructure.security.token_registry import RedisTokenRegistry
 
     return RedisTokenRegistry
-
-
-def get_logger_protocol_class() -> Any:
-    """Возвращает ``logging.base.LoggerProtocol`` class."""
-    from src.backend.infrastructure.logging.base import LoggerProtocol
-    return LoggerProtocol
-
-
-def get_logger_factory() -> Any:
-    """Возвращает ``core.logging.get_logger`` factory."""
-    from src.backend.core.logging import get_logger
-    return get_logger
-
-def get_web_search_service_factory() -> Any:
-    """Возвращает ``clients.external.search_providers.get_web_search_service`` factory."""
-    from src.backend.infrastructure.clients.external.search_providers import get_web_search_service
-    return get_web_search_service
-
-def get_debezium_events_cdc_backend_class() -> Any:
-    """Возвращает ``cdc.debezium_events_backend.DebeziumEventsCDCBackend`` class."""
-    from src.backend.infrastructure.cdc.debezium_events_backend import DebeziumEventsCDCBackend
-
-    return DebeziumEventsCDCBackend
-
-
-def get_in_memory_resilience_profile_store_class() -> Any:
-    """Возвращает ``resilience.profile_store_memory.InMemoryResilienceProfileStore`` class."""
-    from src.backend.infrastructure.resilience.profile_store_memory import (
-        InMemoryResilienceProfileStore,
-    )
-
-    return InMemoryResilienceProfileStore
 
 
 def get_env_aesgcm_key_provider_class() -> Any:
@@ -782,61 +449,12 @@ def get_inject_prompt_cache_factory() -> Any:
     return inject_prompt_cache
 
 
-def get_client_metrics_module() -> Any:
-    """Возвращает ``observability.client_metrics`` module."""
-    from src.backend.infrastructure.observability import client_metrics
-
-    return client_metrics
-
-
-def get_correlation_module() -> Any:
-    """Возвращает ``observability.correlation`` module."""
-    from src.backend.infrastructure.observability import correlation
-
-    return correlation
-
-
-def get_dlq_reason_class() -> Any:
-    """Возвращает ``messaging.dlq_base.DLQReason`` class."""
-    from src.backend.infrastructure.messaging.dlq_base import DLQReason
-
-    return DLQReason
-
-
-def get_dlq_writer_class() -> Any:
-    """Возвращает ``messaging.dlq_base.DLQWriter`` class."""
-    from src.backend.infrastructure.messaging.dlq_base import DLQWriter
-
-    return DLQWriter
-
-
-def get_default_labels_attr(name: str) -> Any:
-    """Возвращает атрибут ``observability.metrics_registry.<name>`` (DEFAULT_LABELS)."""
-    from src.backend.infrastructure.observability import metrics_registry
-
-    return getattr(metrics_registry, name)
-
-
-def get_metrics_registry_factory() -> Any:
-    """Возвращает ``observability.metrics_registry.metrics_registry`` singleton."""
-    from src.backend.infrastructure.observability.metrics_registry import metrics_registry
-
-    return metrics_registry
-
-
-
 def get_object_storage_class() -> Any:
     """Возвращает ``storage.object_storage.ObjectStorage`` class."""
     from src.backend.infrastructure.storage.object_storage import ObjectStorage
 
     return ObjectStorage
 
-
-def get_health_check_factory() -> Any:
-    """Возвращает ``application.health_aggregator.get_health_check`` factory."""
-    from src.backend.infrastructure.application.health_aggregator import get_health_check
-
-    return get_health_check
 
 def get_clickhouse_client_class() -> Any:
     """Возвращает ``clients.storage.clickhouse.ClickHouseClient`` class."""
