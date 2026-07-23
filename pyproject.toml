@@ -168,7 +168,7 @@ security = [
 ]
 db_drivers = [
     "oracledb>=2.5.0,<3.0.0",     # Oracle (CDC, external_db)
-    "aioodbc>=5.0.0,<6.0.0",      # MSSQL
+    "aioodbc>=0.5.0,<1.0.0",      # MSSQL (latest available is 0.5.0)
     "aiomysql>=0.2.0,<1.0.0",     # MySQL
 ]
 # === K4 Sprint 24 W1 (ADR-NEW-16): Presidio + ru NER PII layer. ===
