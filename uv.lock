@@ -3205,7 +3205,7 @@ requires-dist = [
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=9.1.0,<10.0.0" },
     { name = "sphinx-copybutton", marker = "extra == 'docs'", specifier = ">=0.5,<1" },
     { name = "sphinx-multiversion", marker = "extra == 'docs'", specifier = ">=0.2.4,<1.0.0" },
-    { name = "sqladmin", specifier = ">=0.25.1,<1.0.0" },
+    { name = "sqladmin", specifier = ">=0.29.0,<1.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.41,<3.0.0" },
     { name = "sqlalchemy-continuum", specifier = ">=1.5.2,<2.0.0" },
     { name = "sqlalchemy-utils", specifier = ">=0.41.2,<1.0.0" },
@@ -9232,7 +9232,7 @@ wheels = [
 
 [[package]]
 name = "sqladmin"
-version = "0.27.2"
+version = "0.29.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -9241,9 +9241,9 @@ dependencies = [
     { name = "starlette", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "wtforms", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a7/f5/68e3e1ad93a3c3258b81f9188790e1be4c9ff378f5eef74c8fc2ea5c3c82/sqladmin-0.27.2.tar.gz", hash = "sha256:43d77311a073bc8d39111486ef7ca211564fecd7db5018d6c344505611798858", size = 1030141, upload-time = "2026-06-08T11:17:55.606Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/17/b7/47f955c5f4cbf61b48900f2f77dcff44dec39cab4b8d557567ebf8fc404f/sqladmin-0.29.0.tar.gz", hash = "sha256:901f0c0c11ea29748b997053d77984664abc32be0ee1edcd91b300fce0dcf51c", size = 994200, upload-time = "2026-07-13T10:29:55.386Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/9c/b6abad980b558cb47a10834c7fcddafee27bec25f17daade823ece0da921/sqladmin-0.27.2-py3-none-any.whl", hash = "sha256:22866b38b7effa509ea488f397e16ed0e011e390f625527e1b253be6abba093f", size = 1045962, upload-time = "2026-06-08T11:17:57.115Z" },
+    { url = "https://files.pythonhosted.org/packages/87/d5/72dff3db2ff23ec553bcabe220d1ece0ee2d364eaf776a40e26a7c25f9d8/sqladmin-0.29.0-py3-none-any.whl", hash = "sha256:bbace5509f763e313708db01edd3053dacc878dcb09e7cace27dc355d31de41f", size = 1013301, upload-time = "2026-07-13T10:29:53.539Z" },
 ]
 
 [[package]]
