@@ -12,7 +12,7 @@ default_retry_policy:
   initial_interval_s: 1.0
   backoff_coefficient: 2.0
   maximum_interval_s: 30.0
-  maximum_attempts: 3
+  max_attempts: 3
 steps:
   - type: activity
     name: receive_dataset

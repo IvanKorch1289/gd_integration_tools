@@ -7,7 +7,7 @@ default_retry_policy:
   initial_interval_s: 2.0
   backoff_coefficient: 2.0
   maximum_interval_s: 60.0
-  maximum_attempts: 3
+  max_attempts: 3
 steps:
   - type: activity
     name: prepare_dataset

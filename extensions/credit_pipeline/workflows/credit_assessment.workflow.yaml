@@ -22,7 +22,7 @@ activities:
     function: extensions.credit_pipeline.services.clients.skb:fetch_for_workflow
     timeout_seconds: 30
     retry:
-      maximum_attempts: 3
+      max_attempts: 3
       backoff_coefficient: 2.0
 
   - name: fetch_nbki_report
@@ -30,7 +30,7 @@ activities:
     function: extensions.credit_pipeline.services.clients.skb:fetch_for_workflow
     timeout_seconds: 30
     retry:
-      maximum_attempts: 3
+      max_attempts: 3
       backoff_coefficient: 2.0
 
   - name: normalize_responses

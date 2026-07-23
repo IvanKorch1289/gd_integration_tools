@@ -54,6 +54,39 @@ class LangGraphAgentProcessor(BaseAIProcessor):
         self.max_iterations = max_iterations
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        # Cycle 4b swarm (D418 real): explicit auth_check before
+        # delegating to AI graph service. Parent BaseAIProcessor has
+        # process() inherited from _base, but this class overrides
+        # process() entirely (no call to super().process()) so we
+        # must enforce capability ourselves.
+        if self.required_capability:
+            try:
+                from src.backend.core.security.capabilities.gate import (
+                    get_capability_gate,
+                )
+                gate = get_capability_gate()
+                check = getattr(gate, "check", None) if gate else None
+                if check is not None:
+                    check("core", self.required_capability, None)
+            except Exception as exc:  # noqa: BLE001
+                import logging
+                logging.getLogger(__name__).warning(
+                    "%s: auth_check failed (%s) — deny by default",
+                    self.name, exc,
+                )
+                exchange.fail(f"{self.name}: capability denied")
+                return
+
+        # Cycle 4c swarm (AI-5 hardening): cap query length to prevent
+        # prompt-injection abuse via oversized query.
+        if self.query and len(self.query) > 4000:
+            import logging
+            logging.getLogger(__name__).warning(
+                "%s: query truncated from %d to 4000 chars (S227 cycle 4)",
+                self.name, len(self.query),
+            )
+            self.query = self.query[:4000]
+
         from src.backend.services.ai.ai_graph import build_and_run_agent
         result = await build_and_run_agent(
             query=self.query,

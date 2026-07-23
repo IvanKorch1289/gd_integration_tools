@@ -38,7 +38,6 @@ from typing import Any, ClassVar, Literal
 
 from src.backend.core.ai.security import (
     SecurityDecision,
-    ThreatLevel,
 )
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
@@ -115,6 +114,19 @@ class AgentSecurityCheckProcessor(BaseProcessor):
             exchange.properties["agent_security_decision"] = SecurityDecision
             При block: exchange.fail()
         """
+        # Cycle 4b swarm (D418 real): cap value length to prevent
+        # abuse via oversized security-check inputs (potential DoS via
+        # huge file_path or prompt string). The actual security check
+        # is delegated to AgentSecurity facade; this is just a defensive
+        # cap at the DSL boundary.
+        if self._value and len(self._value) > 100_000:  # 100KB
+            import logging
+            logging.getLogger(__name__).warning(
+                "%s: value truncated from %d to 100000 chars (S227 cycle 4 hardening)",
+                self.name, len(self._value),
+            )
+            self._value = self._value[:100_000]
+
         try:
             from src.backend.services.agent_security.facade import (
                 get_agent_security_facade,
