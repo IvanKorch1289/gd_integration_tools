@@ -159,6 +159,21 @@ class SagaLRAProcessor(BaseProcessor):
         if repo is None:
             return await self._run_in_memory(exchange, context)
 
+        # Cycle 19 P1.4 fix: if previous run left state in 'compensating'
+        # or terminal-failure state, do NOT resume forward — would
+        # re-execute already-compensated side effects. Fall through to
+        # in-memory (no persistent resume) which will surface the error.
+        terminal_states = {"compensating", "rolled_back", "compensation_failed"}
+        if state_record.state in terminal_states:
+            import logging
+            logging.getLogger(__name__).warning(
+                "SagaLRA persistent resume skipped: previous state=%r "
+                "(terminal/compensation state). Forwarding to in-memory "
+                "execution which will not repeat forward steps.",
+                state_record.state,
+            )
+            return await self._run_in_memory(exchange, context)
+
         start_idx = state_record.step_index + 1
 
         for i in range(start_idx, len(self._steps)):

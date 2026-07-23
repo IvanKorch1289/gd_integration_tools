@@ -10,9 +10,10 @@ import logging
 import re
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
@@ -40,6 +41,14 @@ def _sanitize_error(raw: str | None) -> str | None:
     if len(redacted) > _MAX_ERROR_LEN:
         redacted = redacted[:_MAX_ERROR_LEN] + "... (truncated)"
     return redacted
+
+
+# B1 (meta-coord Horizon 1): DSL Console endpoints execute arbitrary YAML.
+# Without auth, unauthenticated clients could trigger arbitrary processor
+# chains (incl. call_function, RPA, sink writes). Require admin role.
+_DSL_CONSOLE_GUARD = Depends(
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+)
 
 
 class InlineDSLRequest(BaseModel):
@@ -285,7 +294,7 @@ def _get_facade() -> _DSLConsoleFacade:
     return _FACADE
 
 
-router = APIRouter(tags=["DSL Console"])
+router = APIRouter(dependencies=[_DSL_CONSOLE_GUARD], tags=["DSL Console"])
 builder = ActionRouterBuilder(router)
 
 

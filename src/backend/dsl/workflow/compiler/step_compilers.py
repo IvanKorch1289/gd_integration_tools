@@ -157,6 +157,16 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
         # Запускаем compensation в reverse-порядке относительно ВЫПОЛНЕННЫХ
         # forward-шагов; compensate-цепочка декларации соответствует
         # forward индексам по позиции (best-effort при разной длине).
+        # Cycle 19 (meta-coord P1.2 fix): log WARNING when compensate count
+        # does not match completed forward steps (silent skip was misleading).
+        if len(decl.compensate) < len(decl.forward):
+            workflow.logger.warning(
+                "saga compensate count (%d) < forward count (%d); "
+                "compensation for forward steps beyond compensate length "
+                "will be silently skipped",
+                len(decl.compensate),
+                len(decl.forward),
+            )
         for compensate_idx in range(len(completed) - 1, -1, -1):
             if compensate_idx >= len(decl.compensate):
                 continue
@@ -164,6 +174,15 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
                 await compile_activity_step(decl.compensate[compensate_idx], ctx)
             except Exception as comp_exc:
                 if decl.strict_compensate:
+                    # Cycle 19 P1.3 fix: log so operators can correlate
+                    # when original exception is replaced by comp_exc.
+                    workflow.logger.warning(
+                        "saga compensation failed for step %d "
+                        "(strict_compensate=True, re-raising comp_exc "
+                        "instead of original): %s",
+                        compensate_idx,
+                        comp_exc,
+                    )
                     raise comp_exc
                 workflow.logger.warning(
                     "saga compensation failed for step %d: %s", compensate_idx, comp_exc
@@ -194,6 +213,15 @@ async def compile_signal_wait_step(
                 _signal_received, timeout=timedelta(seconds=decl.timeout_s)
             )
         except TimeoutError:
+            # Cycle 19 P2.1 fix: log WARNING so timeout-vs-success is visible.
+            # Workflow continues with payload=None; downstream steps must
+            # handle the None case explicitly.
+            workflow.logger.warning(
+                "wait_signal timeout: signal %r not received within %ss; "
+                "continuing workflow with payload=None",
+                decl.signal_name,
+                decl.timeout_s,
+            )
             return None
     else:
         await workflow.wait_condition(_signal_received)
