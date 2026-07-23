@@ -19,7 +19,7 @@ import RetryPolicy`` продолжали работать.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from src.backend.core.logging import get_logger
 
@@ -35,19 +35,39 @@ class RetryPolicy(BaseModel):
     backward compat.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    # Cycle 9 swarm (D423 unification): accept legacy field name aliases
+    # from the older retry policy classes (initial_interval_s →
+    # initial_delay_s, backoff_coefficient → multiplier, maximum_interval_s →
+    # max_delay_s). Populated via validation_alias for backward compat
+    # with resilience_profile.py and retry.py callers.
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
 
-    max_attempts: int = Field(default=3, ge=1, description="Максимум попыток.")
+    max_attempts: int = Field(
+        default=3,
+        ge=1,
+        description="Максимум попыток.",
+        validation_alias=AliasChoices("max_attempts", "maximum_attempts", "max_tries"),
+    )
     initial_interval_s: float = Field(
-        default=1.0, gt=0.0, description="Начальный интервал retry в секундах."
+        default=1.0,
+        gt=0.0,
+        description="Начальный интервал retry в секундах.",
+        validation_alias=AliasChoices("initial_interval_s", "initial_delay_s", "delay_s"),
     )
     backoff_coefficient: float = Field(
-        default=2.0, ge=1.0, description="Коэффициент экспоненциального backoff."
+        default=2.0,
+        ge=1.0,
+        description="Коэффициент экспоненциального backoff.",
+        validation_alias=AliasChoices("backoff_coefficient", "multiplier", "backoff_multiplier"),
     )
     maximum_interval_s: float | None = Field(
         default=None,
         gt=0.0,
         description="Верхняя граница интервала retry; None — без ограничения.",
+        validation_alias=AliasChoices("maximum_interval_s", "max_delay_s", "max_interval"),
     )
     non_retryable_errors: tuple[str, ...] = Field(
         default=(), description="Имена ошибок, при которых retry НЕ выполняется."
