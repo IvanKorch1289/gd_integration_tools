@@ -6,7 +6,6 @@ W26.5: маршрут регистрируется декларативно че
 результат с трейсом процессоров.
 """
 
-import logging
 import re
 from typing import Any
 

@@ -27,7 +27,10 @@ def _build_app(verifier=None) -> FastAPI:
         return {"principal": auth.principal if auth else ""}
 
     # Подменяем верификаторы.
-    import src.backend.entrypoints.api.dependencies.auth_selector as auth_selector
+    # S96 W1: реализация переехала в core.auth.auth_selector.
+    # Deprecated shim намеренно НЕ ре-экспортирует _VERIFIERS (private
+    # symbol — см. S162 W5), поэтому импортируем напрямую из core.
+    import src.backend.core.auth.auth_selector as auth_selector
 
     original = auth_selector._VERIFIERS
     auth_selector._VERIFIERS = (  # type: ignore[assignment]
