@@ -78,14 +78,11 @@ class WorkflowSpec:
     Атрибуты:
       * ``name`` — публичное имя для trigger / MCP.
       * ``steps`` — основная цепочка top-level.
-      * ``max_attempts`` — default retry-budget до hard-fail + compensate.
+      * ``max_attempts`` — default retry-budget до hard-fail.
       * ``default_timeout_s`` — дефолтный timeout per step.
 
-    Note (S227 cycle 4 — D419 dead contract closure):
-      Per-step compensation via ``saga_step.compensate`` is the
-      supported rollback path. The earlier ``compensators`` top-level
-      field was a dead contract (never invoked anywhere in code,
-      including tests). Removed in this cycle.
+    Compensation: per-step ``saga_step.compensate`` (StepKind
+    ``compensate``) — canonical rollback path.
     """
 
     name: str

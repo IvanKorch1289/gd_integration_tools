@@ -18,6 +18,12 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 
+if TYPE_CHECKING:
+    from src.backend.infrastructure.resilience.bulkhead import (
+        Bulkhead,
+        BulkheadRegistry,
+    )
+
 def __getattr__(name: str) -> Any:
     if not TYPE_CHECKING:
         if name in ("Bulkhead", "BulkheadRegistry"):

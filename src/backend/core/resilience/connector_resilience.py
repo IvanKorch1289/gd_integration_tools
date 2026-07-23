@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 import functools
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Any, ParamSpec, TypeVar
 
 from src.backend.core.logging import get_logger
@@ -95,11 +95,12 @@ def resilient(
 
                     return await _inner()
             except Exception as exc:
+                # ponytail: excluded_exceptions removed in S202 (was silently ignored).
+                # If re-added: restore excluded param + retry_if_not_exception_type.
                 _logger.debug(
-                    "resilient.%s failed: %s (excluded=%s)",
+                    "resilient.%s failed: %s",
                     name,
                     exc,
-                    any(isinstance(exc, e) for e in excluded),
                 )
                 raise
 

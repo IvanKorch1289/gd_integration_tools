@@ -17,7 +17,10 @@ Inspired by D102 (facade) + D187 (facade single-import):
 # ruff: noqa: E501
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from src.backend.infrastructure.security.cert_store.backend_base import CertBackend
 
 from src.backend.core.logging import get_logger
 

@@ -169,10 +169,10 @@ async def _register_pools_in_unified_manager() -> None:
     # S181: NATS pool registration.
     try:
         from src.backend.infrastructure.clients.transport.nats_pool import (
-            NATSPool,
+            NatsConnectionPool,
         )
 
-        nats_pool = NATSPool()
+        nats_pool = NatsConnectionPool()
 
         async def _ping_nats() -> None:
             result = await nats_pool.health()

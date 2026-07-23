@@ -138,17 +138,19 @@ class SecurityFacade:
         self,
         payload: bytes | str,
         signature: str,
+        timestamp: int,
         secret: str,
         *,
-        timestamp_window: int = 300,
+        window_seconds: int = 300,
     ) -> bool:
         """HMAC signature verification.
 
         Args:
             payload: Подписанные данные.
             signature: HMAC signature (hex).
+            timestamp: Unix timestamp из header.
             secret: Секрет.
-            timestamp_window: Окно timestamp validity (сек, default 300).
+            window_seconds: Окно timestamp validity (сек, default 300).
 
         Returns:
             True если signature валидна.
@@ -157,7 +159,7 @@ class SecurityFacade:
             verify_signature as _verify,
         )
 
-        return _verify(payload, signature, secret, timestamp_window=timestamp_window)
+        return _verify(payload, signature, timestamp, secret, window_seconds=window_seconds)
 
     # ──────────────────── PII ────────────────────
 
@@ -172,25 +174,26 @@ class SecurityFacade:
         """
         self._assert("security.pii.tokenize", "text")
         try:
-            from src.backend.core.security.pii_tokenizer import PIITokenizer
+            from src.backend.core.security.pii_tokenizer import PIIPolicy, PIITokenizer
 
             tokenizer = PIITokenizer()
-            return tokenizer.tokenize(text)
+            policy = PIIPolicy(name="ru_strict_reversible")
+            masked_text, _token_map = await tokenizer.mask_reversible(text, policy)
+            return masked_text
         except Exception as exc:
             _logger.warning("tokenize_pii failed: %s", exc)
             return text
 
     async def detokenize_pii(self, text: str) -> str:
-        """Reversible PII detokenization."""
-        self._assert("security.pii.detokenize", "text")
-        try:
-            from src.backend.core.security.pii_tokenizer import PIITokenizer
+        """Reversible PII detokenization.
 
-            tokenizer = PIITokenizer()
-            return tokenizer.detokenize(text)
-        except Exception as exc:
-            _logger.warning("detokenize_pii failed: %s", exc)
-            return text
+        Note: detokenization requires the original TokenMap. This method
+        returns the text as-is if no token map is available (caller must
+        pass it through PIITokenizer.unmask directly).
+        """
+        self._assert("security.pii.detokenize", "text")
+        _logger.debug("detokenize_pii: use PIITokenizer.unmask(masked_text, token_map) directly")
+        return text
 
     async def mask_pii(self, text: str) -> str:
         """One-way PII masking (irreversible).
@@ -206,7 +209,7 @@ class SecurityFacade:
             from src.backend.core.security.pii_masker import PIIMasker
 
             masker = PIIMasker()
-            return masker.mask(text)
+            return masker.mask_text(text)
         except Exception as exc:
             _logger.warning("mask_pii failed: %s", exc)
             return text
@@ -357,7 +360,6 @@ class _InMemoryJwtBlacklist:
         self._lock = threading.Lock()
 
     async def revoke(self, jti: str, expires_at: int) -> None:
-        import time
 
         with self._lock:
             self._store[jti] = float(expires_at)

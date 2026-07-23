@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
+from src.backend.core.types.invocation_command import ActionCommandSchema
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -36,7 +37,9 @@ class _BaseEntityProcessor(BaseProcessor):
         result_property: str | None = None,
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name or f"entity_base_{entity}")
+        if not entity or "." in entity:
+            raise ValueError(f"entity name must be non-empty and contain no dots: {entity!r}")
+        super().__init__(name=name or f"entity_{self._verb}:{entity}")
         self._entity = entity
         self._payload_from = payload_from
         self._result_property = result_property or f"{entity}_result"
@@ -55,3 +58,18 @@ class _BaseEntityProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Default no-op — subclasses override."""
         return None
+
+    async def _dispatch(
+        self,
+        payload: dict[str, Any],
+        context: ExecutionContext,
+        exchange: Exchange[Any],
+    ) -> Any:
+        """Формирует action command, диспетчеризирует, пишет результат в exchange."""
+        command = ActionCommandSchema(action=f"{self._entity}.{self._verb}", payload=payload)
+        result = await context.action_registry.dispatch(command)
+        exchange.set_property(self._result_property, result)
+        if result is not None:
+            exchange.out_message = exchange.out_message or type(exchange.in_message)()
+            exchange.out_message.body = result
+        return result

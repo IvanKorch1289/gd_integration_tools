@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 
@@ -29,7 +29,6 @@ if TYPE_CHECKING:
 
     from src.backend.services.workflows.hitl_service import (
         HitlPendingSignal,
-        HitlSignalStore,
     )
 
 __all__ = ("RedisHitlSignalStore",)

@@ -137,20 +137,12 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
             with open(full_path, "wb") as fp:
                 fp.write(data)
             return
-        if self.storage_backend == "redis":
-            try:
-                from redis.asyncio import Redis
-            except ImportError:
-                _logger.warning(
-                    "redis не установлен — claim_check игнорируется"
-                )
-                return
+        # ponytail: redis/s3 backends were scaffold-only with dead imports (no real impl).
+        # Falling through to "no-op" preserves existing behavior — backend configs other
+        # than 'local' get a log warning rather than silently doing nothing.
+        if self.storage_backend in ("redis", "s3"):
+            _logger.warning(
+                "claim_check: backend=%s не реализован (scaffold-only)",
+                self.storage_backend,
+            )
             return
-        if self.storage_backend == "s3":
-            try:
-                import boto3
-            except ImportError:
-                _logger.warning(
-                    "boto3 не установлен — claim_check игнорируется"
-                )
-                return

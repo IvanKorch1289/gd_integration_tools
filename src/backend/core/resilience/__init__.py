@@ -9,7 +9,6 @@ import X`` остаются валидными за счёт re-export'ов.
   ``degradation_manager``.
 - :mod:`retry_budget` — RetryBudget + ``get_retry_budget`` + RetryBudgetExhausted.
 - :mod:`bulkhead` — Bulkhead + ``get_bulkhead``.
-- :mod:`self_healer` — SelfHealer + ``get_self_healer``.
 - :mod:`breaker` — CircuitBreaker (alias на ``Breaker``), ``BreakerSpec``,
   ``BreakerRegistry``, ``CircuitOpen``.
 - :mod:`circuit_breaker` — ``CircuitBreakerSpec``, ``SlidingWindowBreaker``,
@@ -44,12 +43,7 @@ from src.backend.core.resilience.cache_decorators import (
     multi_cached,
 )
 
-# decorators.policy зависит от breaker/cache_decorators/rate_limiter/retry —
-# импортируется ПОСЛЕ degradation и остальных модулей пакета, чтобы избежать
-# циклической зависимости при загрузке __init__.py.
-from src.backend.core.resilience.decorators import policy
-
-# degradation ИМПОРТИРУЕТСЯ ДО decorators.policy: rate_limiter подтягивает
+# degradation ИМПОРТИРУЕТСЯ ДО остальных: rate_limiter подтягивает
 # infrastructure/resilience/__init__.py → coordinator.py, который делает
 # обратный импорт ``from src.backend.core.resilience import DegradationManager``.
 # Если этот блок окажется НИЖЕ decorators, поднимется циклическая
@@ -79,7 +73,6 @@ from src.backend.core.resilience.retry_budget import (
     RetryBudgetExhausted,
     get_retry_budget,
 )
-from src.backend.core.resilience.self_healer import SelfHealer, get_self_healer
 
 __all__ = (
     "AdaptiveTimeoutConfig",
@@ -104,7 +97,6 @@ __all__ = (
     "RetryBudget",
     "RetryBudgetExhausted",
     "RetryPolicy",
-    "SelfHealer",
     "cached",
     "degradation_manager",
     "get_breaker_registry",
@@ -112,9 +104,7 @@ __all__ = (
     "get_graceful_degradation_registry",
     "get_rate_limiter",
     "get_retry_budget",
-    "get_self_healer",
     "invalidate",
     "multi_cached",
-    "policy",
     "with_retry",
 )

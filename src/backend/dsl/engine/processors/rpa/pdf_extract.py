@@ -7,7 +7,6 @@ Pattern (D273, Ponytail): thin wrapper, skip if pypdf not installed.
 from __future__ import annotations
 
 import io
-from typing import Any
 
 from src.backend.core.logging import get_logger
 

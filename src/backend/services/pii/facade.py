@@ -62,7 +62,7 @@ class PIIFacade:
             Masked text: ``"Иван И.***"``, ``"i.***@example.com"``, etc.
         """
         try:
-            result = self.masker.mask(text)
+            result = self.masker.mask_text(text)
             self._emit_audit("pii.masked", text)
             return result
         except Exception as exc:
@@ -79,22 +79,20 @@ class PIIFacade:
             Same structure с masked strings.
         """
         try:
-            return self.masker.mask_struct(obj)
+            return self.masker.mask_dict(obj)
         except Exception as exc:
             _logger.warning("PII mask_struct failed: %s", exc)
             return obj
 
     def tokenize(self, text: str) -> str:
-        """Reversible PII tokenization (Presidio-based, S191 fix: audit emit).
+        """Reversible PII tokenization — delegates to PIIMasker.mask_text as sync fallback.
 
-        Args:
-            text: Текст с PII.
-
-        Returns:
-            Tokenized text с placeholders ``<PII_TYPE_xxx>``.
+        PIITokenizer.mask_reversible is async and requires PIIPolicy + returns
+        tuple[str, TokenMap]. For sync facade path, use mask_text (regex-based).
+        For full reversible tokenization, use SecurityFacade.tokenize_pii (async).
         """
         try:
-            result = self.tokenizer.tokenize(text)
+            result = self.masker.mask_text(text)
             self._emit_audit("pii.tokenized", text)
             return result
         except Exception as exc:
@@ -102,18 +100,13 @@ class PIIFacade:
             return text
 
     def detokenize(self, text: str) -> str:
-        """Reversible PII detokenization (S191 fix: audit emit).
+        """Reversible PII detokenization — no-op without TokenMap.
 
-        Capability check выполняется в ``SecurityFacade.detokenize_pii`` —
-        прямой вызов ``PIIFacade.detokenize`` (из internal modules) доверен.
+        Detokenization requires the original TokenMap from mask_reversible.
+        Use ``PIITokenizer.unmask(masked_text, token_map)`` directly.
         """
-        try:
-            result = self.tokenizer.detokenize(text)
-            self._emit_audit("pii.detokenized", text)
-            return result
-        except Exception as exc:
-            _logger.warning("PII detokenize failed: %s", exc)
-            return text
+        _logger.debug("PII detokenize: requires TokenMap, use PIITokenizer.unmask directly")
+        return text
 
     def _emit_audit(self, event: str, payload: str) -> None:
         """S191 fix: emit PII audit event для compliance tracking."""
@@ -142,16 +135,15 @@ class PIIFacade:
         Args:
             name: Pattern name (e.g., ``"card_pan"``).
             pattern: Regex pattern.
-            replacement: Replacement string.
+            replacement: Ignored for regex-based masker (patterns are dict[str, re.Pattern]).
         """
         try:
-
             if not hasattr(self.masker, "_patterns"):
                 _logger.warning("Cannot add custom pattern to %s", type(self.masker))
                 return
 
             compiled = re.compile(pattern)
-            self.masker._patterns[name] = (compiled, replacement)
+            self.masker._patterns[name] = compiled
             _logger.info("Custom PII pattern added: %s", name)
         except Exception as exc:
             _logger.warning("Failed to add custom pattern %s: %s", name, exc)

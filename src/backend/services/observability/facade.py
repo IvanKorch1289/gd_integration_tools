@@ -24,7 +24,6 @@ Ponytail: НЕ дублирует существующие модули. Дел�
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from contextlib import asynccontextmanager, contextmanager
 from functools import lru_cache
 from typing import Any

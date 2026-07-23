@@ -87,7 +87,6 @@ class TavilySearchProcessor(BaseProcessor):
             if cursor is not None:
                 resolved_query = str(cursor)
 
-        provider = get_tavily_provider()
         response = await provider.search(
             query=resolved_query,
             search_depth=self.search_depth,

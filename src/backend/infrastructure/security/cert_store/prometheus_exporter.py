@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
 
@@ -41,7 +41,7 @@ class CertPrometheusExporter:
 
     def __init__(self) -> None:
         try:
-            from prometheus_client import (
+            from prometheus_client import (  # noqa: F401 — used dynamically in render()
                 CollectorRegistry,
                 Counter,
                 Gauge,

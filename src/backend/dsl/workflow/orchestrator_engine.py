@@ -152,9 +152,9 @@ class OrchestratorEngine:
             True если enabled, False если disabled (default-OFF).
         """
         try:
-            from src.backend.core.config.features import FeatureFlags
+            from src.backend.core.config.features import feature_flags
 
-            return getattr(FeatureFlags, "workflow_orchestrator_enabled", False)
+            return getattr(feature_flags, "workflow_orchestrator_enabled", False)
         except ImportError:
             return False
 

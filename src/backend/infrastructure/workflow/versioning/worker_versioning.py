@@ -114,7 +114,7 @@ class WorkerVersioningHelper:
         if self.use_versioning:
             # Lazy import — temporalio SDK ~15-20MB
             try:
-                from temporalio.worker import (
+                from temporalio.worker import (  # noqa: F401 — VersioningIntent reserved for future use
                     DeploymentConfig,
                     VersioningIntent,
                     WorkerDeploymentOptions,

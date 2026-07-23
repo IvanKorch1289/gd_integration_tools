@@ -88,40 +88,11 @@ class AgentToolPolicy(BaseModel):
         self._tool_call_count = 0
 
     def is_allowed(self, tool_name: str) -> bool:
-        """Удобный shortcut — возвращает True только для ALLOW (не AUDIT).
-
-        Используйте когда нужен bool, а не enum.
-        """
+        """Удобный shortcut — возвращает True если tool разрешён (ALLOW или AUDIT)."""
         result = self.check(tool_name)
-        return result == ToolPermission.ALLOW
-
-
-    def check(self, tool_name: str) -> Any:
-        """Проверить tool — возвращает ToolPermission (default-deny, D269).
-
-        Args:
-            tool_name: Имя tool.
-
-        Returns:
-            ToolPermission.ALLOW если разрешён, иначе ToolPermission.DENY.
-        """
-        from src.backend.core.logging import get_logger
-        _logger = get_logger("ai.tool_policy")
-        if tool_name in self.allowed_tools:
-            _logger.debug("ai.tool_policy.allow tool=%s", tool_name)
-            return "allow"
-        if tool_name in self.denied_tools:
-            _logger.warning(
-                "ai.tool_policy.deny tool=%s reason=denied", tool_name
-            )
-            return "deny"
-        # Default-deny для unknown tools
-        _logger.warning(
-            "ai.tool_policy.deny tool=%s reason=unknown_default_deny", tool_name
-        )
-        return "deny"
+        return result in (ToolPermission.ALLOW, ToolPermission.AUDIT)
 
     def enforce(self, tool_name: str) -> bool:
-        """Проверить и audit-log — возвращает True если разрешён (D269)."""
+        """Проверить и audit-log — возвращает True если разрешён (ALLOW или AUDIT)."""
         result = self.check(tool_name)
-        return result == "allow"
+        return result in (ToolPermission.ALLOW, ToolPermission.AUDIT)

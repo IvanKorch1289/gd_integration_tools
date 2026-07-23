@@ -19,6 +19,7 @@ References:
 
 from __future__ import annotations
 
+import hmac
 from collections.abc import Iterable
 from typing import Any
 
@@ -138,7 +139,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 status_code=403,
             )
 
-        if cookie_token != header_token:
+        if not hmac.compare_digest(cookie_token, header_token):
             return JSONResponse(
                 {
                     "error": "csrf_token_mismatch",

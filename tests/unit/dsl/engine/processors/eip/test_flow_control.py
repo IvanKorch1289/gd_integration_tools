@@ -68,7 +68,7 @@ async def test_wire_tap_runs_async() -> None:
 
     mock_task = MagicMock()
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.get_task_registry"
+        "src.backend.dsl.engine.processors.eip.flow_control.wire_tap.get_task_registry"
     ) as mock_reg:
         mock_registry = MagicMock()
         mock_registry.create_task.return_value = mock_task
@@ -90,7 +90,7 @@ async def test_wire_tap_ignores_tap_failure() -> None:
 
     mock_task = MagicMock()
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.get_task_registry"
+        "src.backend.dsl.engine.processors.eip.flow_control.wire_tap.get_task_registry"
     ) as mock_reg:
         mock_registry = MagicMock()
         mock_registry.create_task.return_value = mock_task
@@ -113,7 +113,7 @@ async def test_throttler_allows_under_rate() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep"
+        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
     ) as mock_sleep:
         await proc.process(e, ctx)
 
@@ -131,7 +131,7 @@ async def test_throttler_sleeps_when_over_rate() -> None:
     await proc.process(e, ctx)
 
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep"
+        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
     ) as mock_sleep:
         await proc.process(e, ctx)
         mock_sleep.assert_called_once()
@@ -157,7 +157,7 @@ async def test_delay_by_ms() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep"
+        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
     ) as mock_sleep:
         await proc.process(e, ctx)
         mock_sleep.assert_called_once_with(0.1)
@@ -171,11 +171,11 @@ async def test_delay_by_scheduled_time() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.time.time",
+        "src.backend.dsl.engine.processors.eip.flow_control.delay.time.time",
         return_value=500.0,
     ):
         with patch(
-            "src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep"
+            "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
         ) as mock_sleep:
             await proc.process(e, ctx)
             mock_sleep.assert_called_once_with(500.0)
@@ -189,11 +189,11 @@ async def test_delay_no_sleep_when_past() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.dsl.engine.processors.eip.flow_control.time.time",
+        "src.backend.dsl.engine.processors.eip.flow_control.delay.time.time",
         return_value=500.0,
     ):
         with patch(
-            "src.backend.dsl.engine.processors.eip.flow_control.asyncio.sleep"
+            "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
         ) as mock_sleep:
             await proc.process(e, ctx)
             mock_sleep.assert_not_called()

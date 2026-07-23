@@ -5,15 +5,12 @@ Split из entity.py godfile.
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 
-from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
+
+from ._resolve import _resolve
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import (
-    BaseProcessor,
-    handle_processor_error,
-)
 from src.backend.dsl.engine.processors.entity._legacy import _BaseEntityProcessor
 
 __all__ = ("EntityListProcessor",)

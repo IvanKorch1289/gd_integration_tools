@@ -40,7 +40,7 @@ from src.backend.infrastructure.security.connector_rate_limiter import (
 
     get_connector_rate_limiter,
 )
-from src.backend.infrastructure.sinks._timeouts import DEFAULT_SINK_TIMEOUT_S
+from src.backend.infrastructure.sinks._timeouts import DEFAULT_SINK_TIMEOUT_S  # noqa: F401 — re-exported for sink factory
 
 __all__ = ("SmsSink",)
 

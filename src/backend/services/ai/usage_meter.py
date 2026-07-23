@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+import tiktoken
+
 __all__ = ("UsageStats", "estimate_tokens", "extract_usage")
 
 
@@ -58,23 +60,34 @@ def extract_usage(response: Any) -> UsageStats:
     return UsageStats(prompt_tokens=prompt, completion_tokens=completion)
 
 
-def estimate_tokens(messages: list[dict[str, Any]], *, factor: float = 1.3) -> int:
-    """Грубая оценка токенов запроса (для pre-call reserve).
+def estimate_tokens(
+    messages: list[dict[str, Any]],
+    *,
+    model: str = "gpt-4",
+    factor: float = 1.3,
+) -> int:
+    """Оценка токенов запроса (для pre-call reserve).
 
-    Использует ``len(text) / 4 * factor`` (правило большого пальца для
-    английского + 30% запас).
+    Использует tiktoken для точного подсчёта, с запасом ``factor``.
+    tiktoken.encode — sync, но быстрый (микросекунды), безопасен в async-контексте.
 
     Args:
         messages: chat-completion messages.
+        model: имя модели для выбора encoding (fallback → cl100k_base).
         factor: множитель для запаса (default 1.3).
     """
-    total_chars = 0
+    try:
+        encoding = tiktoken.encoding_for_model(model)
+    except KeyError:
+        encoding = tiktoken.get_encoding("cl100k_base")
+
+    total_tokens = 0
     for message in messages:
         content = message.get("content", "")
         if isinstance(content, str):
-            total_chars += len(content)
+            total_tokens += len(encoding.encode(content))
         elif isinstance(content, list):
             for chunk in content:
                 if isinstance(chunk, dict) and "text" in chunk:
-                    total_chars += len(chunk["text"])
-    return max(1, int(total_chars / 4 * factor))
+                    total_tokens += len(encoding.encode(chunk["text"]))
+    return max(1, int(total_tokens * factor))

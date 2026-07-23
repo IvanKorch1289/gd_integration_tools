@@ -165,25 +165,3 @@ class StorageFacade:
             _logger.warning("StorageFacade presigned_url failed key=%s: %s", key, exc)
             raise ServiceError(f"storage presigned_url failed: {exc}") from exc
 
-    async def upload_stream(
-        self,
-        key: str,
-        stream: Any,
-        content_type: str | None = None,
-        *,
-        metadata: dict[str, Any] | None = None,
-    ) -> str:
-        """Потоковая загрузка объекта из async-итератора чанков.
-
-        Raises:
-            CapabilityDeniedError: недостаточно прав.
-            ServiceError: ошибка backend'а.
-        """
-        self._assert_write(key)
-        try:
-            return await self._storage.upload_stream(
-                key, stream, content_type=content_type, metadata=metadata
-            )
-        except Exception as exc:
-            _logger.warning("StorageFacade upload_stream failed key=%s: %s", key, exc)
-            raise ServiceError(f"storage upload_stream failed: {exc}") from exc

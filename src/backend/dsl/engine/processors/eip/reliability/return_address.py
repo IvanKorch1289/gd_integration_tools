@@ -5,8 +5,12 @@ Camel EIP: https://camel.apache.org/components/latest/eips/return-address.html
 
 from __future__ import annotations
 
+import asyncio
+import threading
+from collections.abc import Awaitable, Callable
 from typing import Any, ClassVar
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -17,6 +21,8 @@ from src.backend.dsl.engine.processors.base import (
 from src.backend.dsl.engine.processors.eip.reliability._legacy import HEADER_RETURN_ADDRESS
 
 __all__ = ("ReturnAddressProcessor", "HEADER_RETURN_ADDRESS")
+
+_log = get_logger(__name__)
 
 
 # ── ReturnAddressProcessor ──────────────────────────────────────────

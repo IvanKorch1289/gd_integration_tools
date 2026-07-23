@@ -67,12 +67,26 @@ class RpaPolicyMiddleware(BaseHTTPMiddleware):
         """Применить role-gate к RPA endpoints + логировать policy violations."""
         if not request.url.path.startswith(self.rpa_path_prefix):
             return await call_next(request)
-        if not request.url.path.startswith(self.rpa_path_prefix):
-            return await call_next(request)
 
-        # Path matches RPA → check role
-        roles_header = request.headers.get("x-roles", "")
-        roles = {r.strip() for r in roles_header.split(",") if r.strip()}
+        # Path matches RPA → check role from trusted auth context (not client header)
+        auth = getattr(request.state, "auth", None)
+        if auth is None:
+            # No auth context → deny (fail-closed)
+            from starlette.responses import JSONResponse
+
+            _logger.warning(
+                "rpa_policy DENY path=%s method=%s reason=no_auth_context",
+                request.url.path, request.method,
+            )
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "detail": "authentication required for RPA endpoints",
+                    "code": "rpa_policy_no_auth",
+                },
+            )
+
+        roles = set(getattr(auth, "roles", []) or [])
         if self.required_role not in roles:
             from starlette.responses import JSONResponse
 
@@ -80,7 +94,7 @@ class RpaPolicyMiddleware(BaseHTTPMiddleware):
                 "rpa_policy DENY path=%s method=%s client=%s roles=%s",
                 request.url.path, request.method,
                 request.client.host if request.client else "?",
-                roles_header,
+                ",".join(sorted(roles)),
             )
             return JSONResponse(
                 status_code=403,

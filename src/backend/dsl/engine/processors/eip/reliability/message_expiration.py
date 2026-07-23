@@ -20,11 +20,14 @@ from src.backend.dsl.engine.processors.base import (
     BaseProcessor,
     handle_processor_error,
 )
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.eip.reliability._legacy import (
     HEADER_EXPIRATION,
     HEADER_MESSAGE_ID,
     ExpirationResolver,
 )
+
+_log = get_logger(__name__)
 
 __all__ = (
     "MessageExpirationProcessor",

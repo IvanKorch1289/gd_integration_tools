@@ -15,10 +15,7 @@ from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
-__all__ = ("MqttSettings",)
-
-mqtt_settings: MqttSettings
-"""Глобальный экземпляр MqttSettings."""
+__all__ = ("MqttSettings", "get_mqtt_settings")
 
 
 class MqttSettings(BaseSettingsWithLoader):
@@ -58,4 +55,17 @@ class MqttSettings(BaseSettingsWithLoader):
     )
 
 
-mqtt_settings = MqttSettings()
+from functools import lru_cache
+
+
+@lru_cache(maxsize=1)
+def get_mqtt_settings() -> MqttSettings:
+    """Возвращает singleton MqttSettings (lazy, не падает при import)."""
+    return MqttSettings()
+
+
+def __getattr__(name: str):  # type: ignore[misc]
+    # ponytail: backward-compat for `from ...mqtt import mqtt_settings`
+    if name == "mqtt_settings":
+        return get_mqtt_settings()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

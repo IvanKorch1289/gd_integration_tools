@@ -5,14 +5,14 @@ Split из eip/flow_control.py godfile.
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+import asyncio
+import time
+from typing import Any
 
-from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import (
     BaseProcessor,
-    handle_processor_error,
 )
 
 __all__ = ("ThrottlerProcessor",)

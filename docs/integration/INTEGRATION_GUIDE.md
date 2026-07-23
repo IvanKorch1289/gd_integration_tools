@@ -142,9 +142,9 @@ Plus `cdc_transform.py` for event filtering/transformation.
 ## Directory scan DSL (M7 new)
 
 ```python
-# src/backend/dsl/engine/processors/rpa/operations/directoryscanprocessor.py
-from src.backend.dsl.engine.processors.rpa.operations.directoryscanprocessor import (
-    DirectoryScanProcessor,
+# src/backend/dsl/engine/processors/rpa/operations/filtereddirectoryscanprocessor.py
+from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
+    FilteredDirectoryScanProcessor,
 )
 
 p = FilteredDirectoryScanProcessor(  # M7 NEW (renamed from DirectoryScanProcessor)

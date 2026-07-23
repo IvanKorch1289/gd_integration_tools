@@ -78,7 +78,7 @@ def check_expectations(
 
 
 # S171 M10 P2: schema-registry (R1, D175)
-from src.backend.dsl.contracts.schema_registry import (
+from src.backend.dsl.contracts.schema_registry import (  # noqa: F401 — re-exported for downstream consumers
     SchemaNotFoundError,
     SchemaRegistry,
 )

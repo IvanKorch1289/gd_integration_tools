@@ -11,7 +11,6 @@ from typing import Any
 
 from src.backend.core.ai.security import (
     AgentSecurityFramework,
-    FileModificationPolicy,
     SecurityDecision,
     SecurityHook,
     get_agent_security_framework,

@@ -75,9 +75,9 @@ def _compensate_handler(
     state: WorkflowState,
     instance: WorkflowInstanceRow,
 ) -> StepResult:
-    """compensate kind: runner вызывает compensators отдельным путём при FAILED.
+    """compensate kind: no-op в normal forward flow.
 
-    В normal flow возвращает CONTINUE (no-op).
+    Возвращает CONTINUE.
     """
     return StepResult(outcome=StepOutcome.CONTINUE, events=[])
 

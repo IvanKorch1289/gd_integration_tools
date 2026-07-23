@@ -80,7 +80,7 @@ def _emit_otel(event: dict[str, Any], service_name: str) -> None:
 def _emit_prometheus(event: dict[str, Any]) -> None:
     """Emit Prometheus metric (если starlette_exporter установлен)."""
     try:
-        from starlette_exporter.metrics import (
+        from starlette_exporter.metrics import (  # noqa: F401 — optional dep
             _HISTOGRAM,
             _LABELS,
             _METHOD_LABEL,

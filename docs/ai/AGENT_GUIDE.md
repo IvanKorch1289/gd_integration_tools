@@ -269,7 +269,7 @@ p = TemplateRenderProcessor(
 ### 4.5 Prompt caching (savings ~90%)
 
 ```python
-# src/backend/services/ai/prompt_cache.py
+# src/backend/infrastructure/ai/prompt_cache_middleware.py
 # Cache key: (model, system_message_hash)
 # TTL: 1h default
 # Use for: long system prompts that don't change between calls
@@ -329,7 +329,7 @@ p = MemoryStoreProcessor(
 
 ### 5.4 RAG vs Memory
 
-- **RAG** (RAG_GUIDE.md): document corpus, vector search
+- **RAG** (docs/RAG_INGEST.md): document corpus, vector search
 - **Memory** (this section): per-thread state, episodic/semantic facts
 
 ---

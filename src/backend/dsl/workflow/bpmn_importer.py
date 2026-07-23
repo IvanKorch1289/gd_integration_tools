@@ -23,8 +23,9 @@ PLAN V18.1 [wave:s4/k3-bpmn-import].
         - ``<bpmn:sequenceFlow>``  — определяет топологический порядок
           step'ов; condition expressions используются для веток
           gateway.
-    * Топологическая сортировка через простой обход графа sequence-flow
-      от ``startEvent`` к ``endEvent``.
+    * Топологическая сортировка sequence-flow через
+      :class:`graphlib.TopologicalSorter` (stdlib) с детекцией циклов
+      (``CycleError``) от ``startEvent`` к ``endEvent``.
 
 Использование:
     >>> from src.backend.dsl.workflow.bpmn_importer import import_bpmn
@@ -48,6 +49,7 @@ PLAN V18.1 [wave:s4/k3-bpmn-import].
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
+from graphlib import CycleError, TopologicalSorter
 from typing import Any, Final
 
 from src.backend.core.logging import get_logger
@@ -253,14 +255,26 @@ def _collect_sequence_flows(process: ET.Element) -> dict[str, list[dict[str, str
 def _topological_order(
     elements: dict[str, ET.Element], flows: dict[str, list[dict[str, str]]]
 ) -> list[str]:
-    """Простой DFS-обход от startEvent до endEvent.
+    """Топологическая сортировка sequence-flow через :class:`graphlib.TopologicalSorter`.
 
-    Возвращает плоский упорядоченный список node-id. Для gateway'ев
-    проходит по всем веткам, но каждую вершину посещает только один раз
-    (gateway-fan-in сходится в одной точке).
+    Заменяет ручной DFS-обход (Sprint 4) на stdlib-реализацию с
+    встроенной детекцией циклов — критично для production safety: цикл
+    в sequence-flow приводил бы к бесконечному выполнению workflow.
+
+    :class:`graphlib.TopologicalSorter` ожидает ``graph[node]`` = набор
+    **предшественников** (узлов, идущих раньше). BPMN-edge
+    ``source → target`` означает, что ``source`` предшествует
+    ``target``, поэтому ``source`` заносится в predecessors узла
+    ``target``. ``static_order()`` возвращает узлы от ``startEvent`` к
+    ``endEvent``. ``CycleError`` (в т.ч. self-loop, A→A) оборачивается в
+    :class:`BpmnImportError`.
 
     BPMN допускает множественные startEvent (race-start). В Sprint 4
     поддерживается ровно один startEvent — иначе :class:`BpmnImportError`.
+
+    Raises:
+        BpmnImportError: Отсутствует или более одного startEvent, либо
+            граф sequence-flow содержит цикл.
     """
     starts = [
         node_id for node_id, el in elements.items() if _strip_ns(el.tag) == "startEvent"
@@ -276,19 +290,19 @@ def _topological_order(
             "Sprint 4 поддерживает ровно один startEvent."
         )
 
-    order: list[str] = []
-    visited: set[str] = set()
+    # graph[node] = множество предшественников (формат TopologicalSorter).
+    # Все узлы-элементы инициализируются пустым множеством, чтобы
+    # изолированные узлы (без входящих flow) тоже попали в topo-порядок.
+    graph: dict[str, set[str]] = {node_id: set() for node_id in elements}
+    for source, edges in flows.items():
+        for edge in edges:
+            graph.setdefault(edge["target"], set()).add(source)
 
-    def _dfs(node_id: str) -> None:
-        if node_id in visited:
-            return
-        visited.add(node_id)
-        if node_id in elements:
-            order.append(node_id)
-        for edge in flows.get(node_id, []):
-            _dfs(edge["target"])
-
-    _dfs(starts[0])
+    ts: TopologicalSorter[str] = TopologicalSorter(graph)
+    try:
+        order = list(ts.static_order())
+    except CycleError as exc:
+        raise BpmnImportError(f"BPMN cycle detected: {exc}") from exc
     return order
 
 

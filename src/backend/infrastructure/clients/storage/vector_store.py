@@ -6,6 +6,7 @@ ABC ``BaseVectorStore`` вынесен в ``core/interfaces/vector_store.py``
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from src.backend.core.interfaces.vector_store import BaseVectorStore
@@ -262,7 +263,6 @@ class ChromaVectorStore(BaseVectorStore):
         if self._collection is not None:
             return self._collection
 
-        import asyncio
 
         import chromadb  # type: ignore[import-not-found]
 
@@ -284,7 +284,6 @@ class ChromaVectorStore(BaseVectorStore):
         metadatas: list[dict[str, Any]] | None = None,
     ) -> None:
         """Insert или update vectors в Chroma collection (async via to_thread)."""
-        import asyncio
 
         collection = await self._ensure_collection()
         kwargs: dict[str, Any] = {
@@ -307,7 +306,6 @@ class ChromaVectorStore(BaseVectorStore):
         Returns:
             list[dict] с ``id``, ``document``, ``metadata``, ``distance``.
         """
-        import asyncio
 
         collection = await self._ensure_collection()
         kwargs: dict[str, Any] = {
@@ -339,14 +337,12 @@ class ChromaVectorStore(BaseVectorStore):
 
     async def delete(self, ids: list[str]) -> None:
         """Удалить vectors по list of IDs (async via to_thread)."""
-        import asyncio
 
         collection = await self._ensure_collection()
         await asyncio.to_thread(collection.delete, ids=ids)
 
     async def count(self) -> int:
         """Количество vectors в Chroma collection."""
-        import asyncio
 
         collection = await self._ensure_collection()
         return await asyncio.to_thread(collection.count)
@@ -360,7 +356,6 @@ class ChromaVectorStore(BaseVectorStore):
         Returns:
             int count удалённых vectors (``before - after``).
         """
-        import asyncio
 
         collection = await self._ensure_collection()
         before = await asyncio.to_thread(collection.count)
@@ -377,7 +372,6 @@ class ChromaVectorStore(BaseVectorStore):
         Returns:
             int count (через ``collection.get(where=...)``).
         """
-        import asyncio
 
         collection = await self._ensure_collection()
         result = await asyncio.to_thread(collection.get, where=where, include=[])

@@ -29,12 +29,18 @@ ci: ## К1 V15 — composite CI gate (lint + type + tests + security + WAF stric
 	@$(MAKE) check-ai-safety
 	@$(MAKE) check-python3-syntax
 	@$(MAKE) check-task-registry
+	@$(MAKE) test-collection-check
 	@$(SUCCESS) "CI gate passed"
 
 pr: ## К1 V15 — composite PR gate (ci + docs)
 	@$(MAKE) ci
 	@$(MAKE) docs
 	@$(SUCCESS) "PR gate passed"
+
+test-collection-check: ## Sanity gate — verify all tests collect without ImportError
+	@$(INFO) "Checking test collection (catches circular imports, missing modules)..."
+	set -o pipefail; $(UV_RUN) pytest --co -q tests/ 2>&1 | tail -3
+	@$(SUCCESS) "Test collection OK"
 
 check-strict-full: ## Clean caches and run all strict checks including mypy
 	@$(MAKE) clean

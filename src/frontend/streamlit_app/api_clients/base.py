@@ -65,6 +65,11 @@ class BaseAPIClient:
         # 0.0 = deterministic (default, backward-compatible).
         self._jitter_ratio: float = max(0.0, min(1.0, jitter_ratio))
 
+    @property
+    def base_url(self) -> str:
+        """Public accessor для base URL (используется в Streamlit pages)."""
+        return self._base_url
+
     def set_token(self, token: str | None) -> None:
         """Установить JWT token для последующих запросов."""
         self._token = token

@@ -131,9 +131,15 @@ class TestAgentGraphToolPolicyWireUp:
     async def test_no_policy_registered_no_filtering(
         self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
-        """Без registered policy — все tools проходят (defensive default)."""
+        """Без registered policy — все tools БЛОКИРУЮТСЯ (fail-closed).
+
+        Cycle 2: изменено с fail-open на fail-closed для security gate.
+        Если нужен legacy fail-open — установить env AGENT_TOOL_POLICY_FAIL_OPEN=true.
+        """
+        import os
         from src.backend.core.svcs_registry import clear_registry
 
+        old_value = os.environ.pop("AGENT_TOOL_POLICY_FAIL_OPEN", None)
         clear_registry()
         try:
             fake = _FakeSandbox()
@@ -145,9 +151,41 @@ class TestAgentGraphToolPolicyWireUp:
                 name="test_proc",
             )
             await proc.process(exchange, context)
+            # Fail-closed: без policy — tools заблокированы → sandbox не вызывается
+            assert len(fake.calls) == 0
+        finally:
+            if old_value is not None:
+                os.environ["AGENT_TOOL_POLICY_FAIL_OPEN"] = old_value
+            _reset_policy()
+
+    async def test_no_policy_fail_open_via_env(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None:
+        """Opt-in fail-open через env AGENT_TOOL_POLICY_FAIL_OPEN=true."""
+        import os
+        from src.backend.core.svcs_registry import clear_registry
+
+        old_value = os.environ.get("AGENT_TOOL_POLICY_FAIL_OPEN")
+        os.environ["AGENT_TOOL_POLICY_FAIL_OPEN"] = "true"
+        clear_registry()
+        try:
+            fake = _FakeSandbox()
+            proc = AgentGraphProcessor(
+                graph_type="react",
+                prompt_inline="Find user",
+                tool_actions=["db.query", "http.get"],
+                sandbox=fake,
+                name="test_proc",
+            )
+            await proc.process(exchange, context)
+            # Opt-in fail-open: tools пропускаются
             assert len(fake.calls) == 1
             assert fake.calls[0]["tool_actions"] == ["db.query", "http.get"]
         finally:
+            if old_value is None:
+                os.environ.pop("AGENT_TOOL_POLICY_FAIL_OPEN", None)
+            else:
+                os.environ["AGENT_TOOL_POLICY_FAIL_OPEN"] = old_value
             _reset_policy()
 
 

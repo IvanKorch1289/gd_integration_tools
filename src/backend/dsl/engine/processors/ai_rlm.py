@@ -207,8 +207,7 @@ class AIRLMProcessor(BaseProcessor):
                 )
                 result.calls += 1
                 content = self._extract_content(resp)
-                # Simple heuristic: if JSON contains "relevant": true
-                if '"relevant"' in content and "true" in content.lower():
+                if self._is_relevant(content):
                     relevant_chunks.append(chunk)
                 result.tokens_used += self._estimate_tokens(
                     prompt
@@ -273,6 +272,26 @@ class AIRLMProcessor(BaseProcessor):
             result.answer = f"[Direct] Failed to get answer: {exc}"
 
         return result
+
+    @staticmethod
+    def _is_relevant(content: str) -> bool:
+        """Determine chunk relevance from LLM JSON response.
+
+        Prefers structured parsing via ``orjson.loads`` so that
+        ``{"relevant": false}`` is correctly rejected. Falls back to
+        a substring heuristic when the response is not valid JSON.
+        """
+        import orjson
+
+        try:
+            parsed = orjson.loads(content)
+        except (ValueError, TypeError):
+            # Fallback heuristic: keep backward-compat with non-JSON responses.
+            return '"relevant"' in content and "true" in content.lower()
+
+        if isinstance(parsed, dict):
+            return bool(parsed.get("relevant"))
+        return False
 
     @staticmethod
     def _extract_content(response: Any) -> str:

@@ -17,9 +17,10 @@ offset management.
 from __future__ import annotations
 
 import asyncio
-import json
 from collections.abc import Awaitable, Callable
 from typing import Any
+
+import orjson
 
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
@@ -84,7 +85,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                 group_id=self._group_id,
                 auto_offset_reset=self._auto_offset_reset,
                 enable_auto_commit=False,  # manual commit after dispatch
-                value_deserializer=lambda b: json.loads(b.decode("utf-8")),
+                value_deserializer=lambda b: orjson.loads(b),
             )
             await consumer.start()
         self._consumer = consumer

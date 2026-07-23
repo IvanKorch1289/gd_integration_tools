@@ -63,8 +63,18 @@ class DataMaskingMiddleware(BaseHTTPMiddleware):
             masked = self._mask_bytes(body)
             response.headers["content-length"] = str(len(masked))
             response.body_iterator = AsyncChunkIterator([masked])  # type: ignore
-        except Exception as _:
-            response.body_iterator = AsyncChunkIterator([body])  # type: ignore
+        except Exception as exc:
+            # ponytail: fail-closed на PII. Возвращаем тело как {"error": "masking_failed"}
+            # вместо unmasked body — иначе при сбое маскировки утекает PII.
+            # Это безопаснее, чем fail-open (ранее: return unmasked body).
+            import logging
+            logging.getLogger(__name__).exception(
+                "data_masking failed; returning masked error response instead of unmasked body: %s",
+                exc,
+            )
+            fallback = self._mask_bytes_fallback(body)
+            response.headers["content-length"] = str(len(fallback))
+            response.body_iterator = AsyncChunkIterator([fallback])  # type: ignore
 
         return response
 
@@ -79,6 +89,18 @@ class DataMaskingMiddleware(BaseHTTPMiddleware):
             return orjson.dumps(masked)
         except (orjson.JSONDecodeError, UnicodeDecodeError):
             return raw
+
+    def _mask_bytes_fallback(self, raw: bytes) -> bytes:
+        """Fail-closed fallback: при ошибке маскировки заменяем весь body на error marker.
+
+        Это безопаснее чем возвращать unmasked body (предыдущее fail-open поведение).
+        Если клиент получит {"error": "response_masking_failed"} вместо PII — это
+        приемлемый trade-off для security middleware.
+        """
+        import orjson
+
+        error_body = {"error": "response_masking_failed", "detail": "PII masking failed; original response withheld for safety"}
+        return orjson.dumps(error_body)
 
     def _mask_value(self, obj: Any) -> Any:
         """Рекурсивно маскирует чувствительные значения."""

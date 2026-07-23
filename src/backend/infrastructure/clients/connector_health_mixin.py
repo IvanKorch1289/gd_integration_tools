@@ -14,12 +14,13 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from src.backend.infrastructure.clients.base_connector import (
-    HealthMode,
-    HealthResult,
-)
+if TYPE_CHECKING:
+    from src.backend.infrastructure.clients.base_connector import (
+        HealthMode,
+        HealthResult,
+    )
 
 __all__ = ("ConnectorHealthMixin",)
 
@@ -41,6 +42,8 @@ class ConnectorHealthMixin:
         """
         start = time.perf_counter()
         try:
+            from src.backend.infrastructure.clients.base_connector import HealthResult
+
             extra = await probe() if callable(probe) else {}
             latency_ms = (time.perf_counter() - start) * 1000.0
             details = extra if isinstance(extra, dict) else {}

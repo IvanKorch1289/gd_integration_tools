@@ -47,15 +47,12 @@ class FallbackCertBackend(CertBackend):
 
     async def save(self, service_id: str, pem: str, expires_at: datetime | None = None) -> None:
         """Save через primary."""
-        from datetime import datetime
         await self._primary.save(service_id, pem, expires_at)
 
     async def history(self, service_id: str) -> list[CertEntry]:
-        from src.backend.infrastructure.security.cert_store.backend_base import CertEntry
         return []
 
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
-        from src.backend.infrastructure.security.cert_store.backend_base import CertEntry
         return []
 
     async def get(self, service_id: str) -> CertEntry | None:

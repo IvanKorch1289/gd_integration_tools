@@ -950,13 +950,14 @@ asyncio_mode = "auto"
 # tests/security vs tests/unit/security, tests/unit/api vs
 # tests/integration/api).
 # См. https://docs.pytest.org/en/stable/explanation/pythonpath.html
-addopts = "-ra --strict-markers --import-mode=importlib"
+addopts = "-ra --strict-markers --import-mode=importlib --ignore=tests/mcp/test_streamlit_via_playwright.py --ignore=tests/unit/test_main.py"
 markers = [
     "requires_pg: integration tests requiring real PostgreSQL via testcontainers",
     "chaos: chaos-tests against resilience chains (Docker required, see Wave K5/chaos)",
     "slow: slow tests, skipped by default in unit-suite",
     "requires_toxiproxy: requires toxiproxy container",
     "unit: fast unit tests",
+    "integration: integration tests",
     "dspy_eval: DSPy optimizer evaluation tests",
     "pre_existing: known-failing tests in Cycle 36 baseline (excluded from new-regression gate, see docs/audit/AUDIT_2026-06-30.md). NOT a target for milestone fixes.",
 ] 

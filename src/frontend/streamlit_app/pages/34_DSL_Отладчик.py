@@ -105,10 +105,8 @@ elif mode == "Аудит Replay":
                 for rec in records:
                     with st.expander(
                         f"{rec.get('method', '?')} {rec.get('path', '?')} — "
-(
-                            f"{rec.get('status_code', '?')} "
-                            f"[{rec.get('duration_ms', 0):.1f}мс]"
-                        )
+                        f"{rec.get('status_code', '?')} "
+                        f"[{rec.get('duration_ms', 0):.1f}мс]"
                     ):
                         st.json(rec)
                         if st.button(

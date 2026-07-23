@@ -184,46 +184,35 @@ class ClickHouseClient:
 
     @resilient(name="clickhouse_execute", max_attempts=3)
     async def execute(self, query: str, params: dict[str, Any] | None = None) -> str:
-        """Выполняет произвольный SQL-запрос с retry на transient errors."""
-        from tenacity import (
-            retry,
-            retry_if_exception_type,
-            stop_after_attempt,
-            wait_exponential,
-        )
+        """Выполняет произвольный SQL-запрос с retry на transient errors.
 
-        @retry(
-            stop=stop_after_attempt(3),
-            wait=wait_exponential(multiplier=1, min=1, max=10),
-            retry=retry_if_exception_type((ConnectionError, TimeoutError, OSError)),
-        )
-        async def _execute_with_retry() -> str:
-            client = await self._ensure_client()
-            request_params = {"database": self._database, "query": query}
-            if params:
-                request_params.update(params)
-            response = await client.get("/", params=request_params)
-            response.raise_for_status()
-            return response.text
-
-        return await _execute_with_retry()
+        Retry handled solely by ``@resilient(max_attempts=3)`` —
+        no inner tenacity retry to avoid 3×3=9 attempts.
+        """
+        client = await self._ensure_client()
+        request_params = {"database": self._database, "query": query}
+        if params:
+            request_params.update(params)
+        response = await client.get("/", params=request_params)
+        response.raise_for_status()
+        return response.text
 
     @resilient(name="clickhouse_query", max_attempts=3)
     async def query(
         self, sql: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """SELECT запрос, возвращает список словарей."""
-        import json
+        import orjson
 
         full_query = f"{sql} FORMAT JSONEachRow"
         raw = await self.execute(full_query, params)
         if not raw.strip():
             return []
-        return [json.loads(line) for line in raw.strip().split("\n") if line.strip()]
+        return [orjson.loads(line) for line in raw.strip().split("\n") if line.strip()]
 
     async def insert(self, table: str, rows: list[dict[str, Any]]) -> int:
         """Batch INSERT — разбивает на chunk-и по ``max_batch_size``."""
-        import json
+        import orjson
 
         if not rows:
             return 0
@@ -233,7 +222,9 @@ class ClickHouseClient:
 
         for i in range(0, len(rows), self._max_batch_size):
             chunk = rows[i : i + self._max_batch_size]
-            data = "\n".join(json.dumps(row, default=str) for row in chunk)
+            data = "\n".join(
+                orjson.dumps(row, default=str).decode() for row in chunk
+            )
             response = await client.post(
                 "/",
                 params={

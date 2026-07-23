@@ -222,13 +222,13 @@ class ControlFlowMixin:
                                     raise
                     return body
 
-            results = []
-            async with asyncio.TaskGroup() as tg:
-                tasks = [
-                    tg.create_task(_process_item(item, idx))
-                    for idx, item in enumerate(collection)
-                ]
-            results = [t.result() for t in tasks]
+            # ponytail: gather(return_exceptions=True) preserves per-task results
+            # (incl. Exception objects), unlike TaskGroup which raises ExceptionGroup.
+            # Existing error-check below then correctly detects failed items.
+            results = await asyncio.gather(
+                *(_process_item(item, idx) for idx, item in enumerate(collection)),
+                return_exceptions=True,
+            )
 
             # Check for exceptions in results
             errors: list[Exception] = []

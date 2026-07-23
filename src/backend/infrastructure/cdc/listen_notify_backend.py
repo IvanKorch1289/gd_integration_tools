@@ -20,6 +20,10 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
 from src.backend.core.logging import get_logger

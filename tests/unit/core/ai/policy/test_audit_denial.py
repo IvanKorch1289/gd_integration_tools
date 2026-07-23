@@ -19,7 +19,7 @@ class TestToolPolicyAudit:
             AgentToolPolicy,
             ToolPermission,
         )
-        policy = AgentToolPolicy(agent_id="test", allowed_tools=["test_tool"])
+        policy = AgentToolPolicy(agent_id="test", allowed_tools=["test_tool"], audit_all=False)
         status = policy.check("test_tool")
         assert status == ToolPermission.ALLOW
 

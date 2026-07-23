@@ -15,6 +15,8 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
+from cachetools import LRUCache
+
 from src.backend.core.logging import get_logger
 
 __all__ = ("STRATEGIES", "AdaptiveStrategySelector", "StrategyDecision")
@@ -85,8 +87,7 @@ class AdaptiveStrategySelector:
         cache_size: int = 512,
         llm_classify: Callable[[str], Awaitable[tuple[str, float]]] | None = None,
     ) -> None:
-        self._cache_size = cache_size
-        self._cache: dict[str, tuple[str, float]] = {}
+        self._cache: LRUCache[str, tuple[str, float]] = LRUCache(maxsize=cache_size)
         self._llm_classify = llm_classify
         self._stats: dict[str, int] = dict.fromkeys(STRATEGIES, 0)
 
@@ -116,9 +117,8 @@ class AdaptiveStrategySelector:
             except Exception as exc:
                 logger.warning("strategy LLM classifier failed: %s", exc)
 
-        # LRU eviction.
-        if len(self._cache) >= self._cache_size:
-            self._cache.pop(next(iter(self._cache)))
+        # cachetools.LRUCache автоматически вытесняет least-recently-used
+        # при превышении maxsize на __setitem__; hit через __getitem__ обновляет recency.
         self._cache[key] = (strategy, confidence)
         self._stats[strategy] = self._stats.get(strategy, 0) + 1
 

@@ -23,18 +23,12 @@ Apache Camel EIP catalog (reliability / routing-metadata):
 
 from __future__ import annotations
 
-import asyncio
-import threading
-import uuid
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timedelta, timezone
-from typing import Any, ClassVar
+from datetime import datetime
+from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = (
     "CorrelationIdentifierProcessor",

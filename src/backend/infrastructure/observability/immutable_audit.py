@@ -132,11 +132,19 @@ class ImmutableAuditStore:
                 )
         except Exception as exc:
             logger.error("Не удалось прочитать fallback secret_key: %s", exc)
-        logger.error(
-            "AUDIT_SECRET_KEY отсутствует — использую пустой ключ "
-            "(integrity guarantees ослаблены!)"
+        # Dev-only bypass: позволяет запустить инстанс без секретного ключа
+        # в защищённой среде разработки. В production это должно быть выключено.
+        if os.environ.get("ALLOW_INSECURE_AUDIT_KEY"):
+            logger.warning(
+                "AUDIT_SECRET_KEY отсутствует — ALLOW_INSECURE_AUDIT_KEY=1, "
+                "использую пустой ключ (ТОЛЬКО для dev/test!)."
+            )
+            return b""
+        raise RuntimeError(
+            "AUDIT_SECRET_KEY не задан — невозможно инициализировать "
+            "tamper-evident audit chain. Установите AUDIT_SECRET_KEY или "
+            "ALLOW_INSECURE_AUDIT_KEY=1 для dev/test."
         )
-        return b""
 
     @staticmethod
     def _canonical_json(event: dict[str, Any]) -> bytes:

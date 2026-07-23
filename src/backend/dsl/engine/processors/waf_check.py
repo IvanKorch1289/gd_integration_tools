@@ -119,7 +119,6 @@ class WafCheckProcessor(BaseProcessor):
 
         self.set_result(exchange, self.target, decision)
         if findings and self.action == "block":
-            from src.backend.core.errors import AuthorizationError
             ex_text = (
                 f"WAF blocked request. Rules: {', '.join(findings)}"
             )

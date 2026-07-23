@@ -24,7 +24,6 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
-from src.backend.core.tenancy.quotas import QuotaTracker
 
 if TYPE_CHECKING:
     from aioimaplib import IMAP4_SSL

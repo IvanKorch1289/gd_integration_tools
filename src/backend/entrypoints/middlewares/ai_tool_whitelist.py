@@ -20,7 +20,7 @@ Spec: см. Master Prompt §3.3 / Plan S-3 (S174 → S183).
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request

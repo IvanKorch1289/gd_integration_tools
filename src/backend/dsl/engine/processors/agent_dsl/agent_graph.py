@@ -292,44 +292,47 @@ class AgentGraphProcessor(BaseAIProcessor):
     ) -> list[str]:
         """Filter tool_actions через AgentToolPolicy (S170 P0-7, M2.1).
 
-        Defensive default: если policy не зарегистрирована в DI-реестре
-        или registry падает — пропускаем все tools без фильтрации
-        (backwards-compatible с pre-policy кодом).
+        Fail-closed: если policy недоступна/не зарегистрирована/падает —
+        возвращаем пустой список (запрет ВСЕХ tools). Это безопаснее
+        fail-open, который пропускал все tools при сбое policy-check.
+
+        ponytail: trade-off fail-closed — extensions с неполным DI рискуют
+        потерять tool actions. Альтернатива — explicit fallback opt-in
+        через env `AGENT_TOOL_POLICY_FAIL_OPEN=true` (см. ниже).
 
         Returns:
             Список tools, для которых ``policy.check(tool) == "allow"``.
         """
+        import os
+        fail_open_env = os.environ.get("AGENT_TOOL_POLICY_FAIL_OPEN", "").lower() in (
+            "1", "true", "yes"
+        )
+
         try:
             from src.backend.ai.policy import AgentToolPolicy
             from src.backend.core.svcs_registry import get_service, has_service
         except ImportError:
-            # Cycle 3 swarm: log the silent-fallback so operators can see
-            # that the tool policy gate is not active. Fail-open is
-            # retained for backwards-compat, but no longer invisible.
-            import logging
-            logging.getLogger(__name__).warning(
+            _logger.warning(
                 "agent_graph tool_policy: AgentToolPolicy import failed; "
-                "running with NO tool filtering (all tool_actions allowed)"
+                "blocking all tools (fail-closed)"
             )
-            return list(tool_actions)
+            return [] if not fail_open_env else list(tool_actions)
 
         try:
             if not has_service(AgentToolPolicy):
-                import logging
-                logging.getLogger(__name__).warning(
+                _logger.warning(
                     "agent_graph tool_policy: AgentToolPolicy not registered in DI; "
-                    "running with NO tool filtering (all tool_actions allowed)"
+                    "blocking all tools (fail-closed)"
                 )
-                return list(tool_actions)
+                return [] if not fail_open_env else list(tool_actions)
             policy = get_service(AgentToolPolicy)
         except Exception:
-            import logging
-            logging.getLogger(__name__).warning(
+            _logger.warning(
                 "agent_graph tool_policy: failed to resolve AgentToolPolicy from DI; "
-                "running with NO tool filtering (all tool_actions allowed)",
+                "blocking all tools (fail-closed)",
                 exc_info=True,
             )
-            return list(tool_actions)
+            return [] if not fail_open_env else list(tool_actions)
 
         allowed: list[str] = []
         for tool in tool_actions:

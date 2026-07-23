@@ -87,29 +87,32 @@ def _render_body() -> None:
             )
             action_cols = st.columns(4)
             if action_cols[0].button("Pause", key=f"pause_{name}"):
-                try:
-                    asyncio.run(client.pause_schedule(name)) if hasattr(
-                        client, "pause_schedule"
-                    ) else None
-                    st.success(f"Paused {name}")
-                except Exception as exc:  # noqa: BLE001
-                    st.error(f"Ошибка pause: {exc}")
+                if not hasattr(client, "pause_schedule"):
+                    st.error("pause_schedule недоступен для этого клиента")
+                else:
+                    try:
+                        asyncio.run(client.pause_schedule(name))
+                        st.success(f"Paused {name}")
+                    except Exception as exc:  # noqa: BLE001
+                        st.error(f"Ошибка pause: {exc}")
             if action_cols[1].button("Resume", key=f"resume_{name}"):
-                try:
-                    asyncio.run(client.resume_schedule(name)) if hasattr(
-                        client, "resume_schedule"
-                    ) else None
-                    st.success(f"Resumed {name}")
-                except Exception as exc:  # noqa: BLE001
-                    st.error(f"Ошибка resume: {exc}")
+                if not hasattr(client, "resume_schedule"):
+                    st.error("resume_schedule недоступен для этого клиента")
+                else:
+                    try:
+                        asyncio.run(client.resume_schedule(name))
+                        st.success(f"Resumed {name}")
+                    except Exception as exc:  # noqa: BLE001
+                        st.error(f"Ошибка resume: {exc}")
             if action_cols[2].button("Run now", key=f"run_{name}"):
-                try:
-                    asyncio.run(client.run_schedule_now(name)) if hasattr(
-                        client, "run_schedule_now"
-                    ) else None
-                    st.success(f"Triggered {name}")
-                except Exception as exc:  # noqa: BLE001
-                    st.error(f"Ошибка run-now: {exc}")
+                if not hasattr(client, "run_schedule_now"):
+                    st.error("run_schedule_now недоступен для этого клиента")
+                else:
+                    try:
+                        asyncio.run(client.run_schedule_now(name))
+                        st.success(f"Triggered {name}")
+                    except Exception as exc:  # noqa: BLE001
+                        st.error(f"Ошибка run-now: {exc}")
             if action_cols[3].button("Удалить", key=f"delete_{name}"):
                 try:
                     asyncio.run(client.delete_schedule(name)) if hasattr(

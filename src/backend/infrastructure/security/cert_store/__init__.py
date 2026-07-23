@@ -60,6 +60,6 @@ def create_cert_store() -> CertStore:
 
 
 # S171 M16: file watcher для cert hot-reload (D245)
-from src.backend.infrastructure.security.cert_store.hot_reload import (
+from src.backend.infrastructure.security.cert_store.hot_reload import (  # noqa: F401 — re-exported for public API
     CertFileWatcher,
 )

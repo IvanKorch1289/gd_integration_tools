@@ -16,6 +16,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
+from src.backend.infrastructure.resilience.retry import make_async_retry
 
 __all__ = ("TgiBatchClient",)
 
@@ -64,15 +65,24 @@ class TgiBatchClient:
                         "return_full_text": False,
                     },
                 }
-                response = await self._client.post(
-                    f"{self._url}/generate", json=payload, timeout=self._timeout
-                )
-                data = response.json() if hasattr(response, "json") else response
-                if isinstance(data, list) and data:
-                    return str(data[0].get("generated_text", ""))
-                if isinstance(data, dict):
-                    return str(data.get("generated_text", ""))
-                return ""
+
+                @make_async_retry(max_attempts=3)
+                async def _do_post() -> str:
+                    response = await self._client.post(
+                        f"{self._url}/generate",
+                        json=payload,
+                        timeout=self._timeout,
+                    )
+                    if hasattr(response, "raise_for_status"):
+                        response.raise_for_status()
+                    data = response.json() if hasattr(response, "json") else response
+                    if isinstance(data, list) and data:
+                        return str(data[0].get("generated_text", ""))
+                    if isinstance(data, dict):
+                        return str(data.get("generated_text", ""))
+                    return ""
+
+                return await _do_post()
 
     async def batch_completions(
         self,

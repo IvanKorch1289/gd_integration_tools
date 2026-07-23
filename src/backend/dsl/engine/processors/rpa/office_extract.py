@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import zipfile
 from io import BytesIO
-from typing import Any
 
 from src.backend.core.logging import get_logger
 

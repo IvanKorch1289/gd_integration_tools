@@ -6,7 +6,7 @@
 1. ``BaseSettingsWithLoader`` ищет ``config_profiles/`` через
    ``consts.ROOT_DIR``, а по умолчанию ``ROOT_DIR`` указывает на ``src/``.
    Подменяем на ближайший каталог-предок с ``pyproject.toml``
-   (worktree-safe). Также подгружаем ``.env`` оттуда, если он есть.
+   (worktree-safe).
 2. ``LoggerManager`` (singleton при импорте ``logging_service``) пытается
    подключиться к Graylog. Через env ``LOG_HOST=""`` отключаем graylog
    handler — :meth:`GraylogHandler.enabled` возвращает False.
@@ -36,7 +36,6 @@ import sys
 from pathlib import Path
 
 import pytest
-from dotenv import load_dotenv
 
 from src.backend.core.config.constants import consts
 
@@ -59,25 +58,13 @@ def _find_repo_root_with_config() -> Path | None:
 _REPO_ROOT = _find_repo_root_with_config()
 if _REPO_ROOT is not None:
     consts.ROOT_DIR = _REPO_ROOT
-    env_file = _REPO_ROOT / ".env"
-    if env_file.exists():
-        load_dotenv(env_file)
-    else:
-        # Worktree без своего .env (типично для git worktree-копий). Идём
-        # вверх по parents и ищем ближайший .env-файл — обычно это .env
-        # основного репозитория.
-        for parent in _REPO_ROOT.parents:
-            candidate = parent / ".env"
-            if candidate.exists():
-                load_dotenv(candidate)
-                break
 
 # (2) Отключаем graylog в LoggerManager до импорта logger-модулей.
 os.environ.setdefault("LOG_HOST", "")
 os.environ.setdefault("LOG_UDP_PORT", "1")
 
 # (3) Безопасные fallback-дефолты для обязательных env-vars. ``setdefault``
-# не перезатирает реальные значения из ``.env`` или CI-конфига.
+# не перезатирает реальные значения из CI-конфига.
 # Redis (см. src/core/config/services/cache.py:RedisSettings).
 os.environ.setdefault("REDIS_HOST", "localhost")
 os.environ.setdefault("REDIS_PORT", "6379")
@@ -96,6 +83,7 @@ os.environ.setdefault("FS_SECRET_KEY", "")
 
 
 # (4) Cleanup hook для importlib-stub pollution (см. module docstring).
+# TODO: migrate to monkeypatch.setitem for per-test isolation
 _POLLUTED_MODULE_KEYS = (
     "src.backend.plugins.composition",
     "src.backend.plugins.composition.lifecycle",

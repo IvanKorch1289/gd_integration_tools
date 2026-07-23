@@ -83,7 +83,6 @@ class PerplexitySearchProcessor(BaseProcessor):
             if cursor is not None:
                 resolved_query = str(cursor)
 
-        provider = get_perplexity_provider()
         response = await provider.search(
             query=resolved_query,
             model=self.model,
