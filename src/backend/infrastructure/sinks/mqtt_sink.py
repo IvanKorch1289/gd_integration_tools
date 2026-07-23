@@ -29,6 +29,8 @@ from src.backend.infrastructure.security.connector_rate_limiter import (
 )
 from src.backend.dsl.codec.json import dumps_bytes
 
+from src.backend.infrastructure.sinks._timeouts import DEFAULT_SINK_TIMEOUT_S
+
 __all__ = ("MqttSink",)
 
 
@@ -75,7 +77,7 @@ class MqttSink(Sink):
     ca_cert_path: str = ""
     client_cert_path: str = ""
     client_key_path: str = ""
-    timeout: float = 10.0
+    timeout: float = DEFAULT_SINK_TIMEOUT_S  # Cycle 12: externalized to sinks/_timeouts
     kind: SinkKind = field(default=SinkKind.MQTT, init=False)
 
     def _build_tls_context(self) -> ssl.SSLContext | None:

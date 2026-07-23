@@ -23,8 +23,10 @@ from src.backend.core.resilience.connector_retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.security.connector_rate_limiter import (
+
     get_connector_rate_limiter,
 )
+from src.backend.infrastructure.sinks._timeouts import DEFAULT_SINK_TIMEOUT_S
 
 __all__ = ("NATSJetStreamSink",)
 
@@ -49,7 +51,7 @@ class NATSJetStreamSink(Sink):
     sink_id: str
     nats_url: str = "nats://localhost:4222"
     default_subject: str = ""
-    timeout: float = 10.0
+    timeout: float = DEFAULT_SINK_TIMEOUT_S  # Cycle 12: externalized to sinks/_timeouts
     kind: SinkKind = field(default=SinkKind.NATS_JS, init=False)
 
     @with_breaker("nats_js_sink")

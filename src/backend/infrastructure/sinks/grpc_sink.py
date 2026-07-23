@@ -23,6 +23,8 @@ from src.backend.infrastructure.security.connector_rate_limiter import (
 )
 from src.backend.dsl.codec.json import dumps_bytes
 
+from src.backend.infrastructure.sinks._timeouts import DEFAULT_SINK_TIMEOUT_S
+
 __all__ = ("GrpcSink",)
 
 
@@ -50,7 +52,7 @@ class GrpcSink(Sink):
     sink_id: str
     target: str
     full_method: str
-    timeout: float = 10.0
+    timeout: float = DEFAULT_SINK_TIMEOUT_S  # Cycle 12: externalized to sinks/_timeouts
     secure: bool = True
     metadata: list[tuple[str, str]] = field(default_factory=list)
     kind: SinkKind = field(default=SinkKind.GRPC, init=False)

@@ -19,6 +19,8 @@ from src.backend.core.resilience.connector_retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
+from src.backend.infrastructure.sinks._timeouts import SOAP_SINK_TIMEOUT_S
+
 __all__ = ("SoapSink",)
 
 
@@ -42,7 +44,7 @@ class SoapSink(Sink):
     operation: str
     service_name: str | None = None
     port_name: str | None = None
-    timeout: float = 30.0
+    timeout: float = SOAP_SINK_TIMEOUT_S  # Cycle 12: externalized to sinks/_timeouts
     kind: SinkKind = field(default=SinkKind.SOAP, init=False)
     _client: Any = field(default=None, init=False, repr=False)
     _lock: threading.Lock = field(
