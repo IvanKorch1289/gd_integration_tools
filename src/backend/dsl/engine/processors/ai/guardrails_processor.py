@@ -120,6 +120,15 @@ class GuardrailsProcessor(BaseProcessor):
 
                 runtime = await get_nemo_guardrails_runtime()
                 if runtime is None:
+                    # Cycle 10 swarm (AI-5 hardening): log warning so
+                    # silent NeMo-unavailable is visible. Per Analyst #5,
+                    # previous silent return was a fail-open risk.
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        "%s: NeMo guardrails runtime unavailable (GPU/FF); "
+                        "skipping NeMo check (S227 cycle 10 hardening)",
+                        self.name,
+                    )
                     return  # GPU/FF unavailable — skip NeMo silently
                 prompt = exchange.get_property("llm.original_prompt", "")
                 nemo_result = await runtime.check_output(prompt=prompt, completion=text)
