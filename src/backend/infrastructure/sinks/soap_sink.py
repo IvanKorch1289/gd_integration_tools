@@ -8,6 +8,7 @@ Lazy-импорт. WSDL загружается лениво при первом 
 from __future__ import annotations
 
 import asyncio
+import logging
 import threading
 import time
 from dataclasses import dataclass, field
@@ -17,6 +18,8 @@ from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.resilience.connector_retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
+
+_logger = logging.getLogger(__name__)
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
 from src.backend.infrastructure.sinks._timeouts import SOAP_SINK_TIMEOUT_S
@@ -94,6 +97,18 @@ class SoapSink(Sink):
             except ImportError:
                 return None
             transport = Transport(timeout=self.timeout)
+            # Cycle 20 P0-7: WSDL SSRF surface. Allow only http(s) URLs;
+            # file:// and other schemes are denied to prevent reading
+            # local files or reaching internal-network endpoints.
+            from urllib.parse import urlparse
+            parsed = urlparse(self.wsdl_url)
+            if parsed.scheme not in ("http", "https"):
+                _logger.error(
+                    "SOAP sink WSDL denied: scheme %r not in (http, https); "
+                    "wsdl_url=%s",
+                    parsed.scheme, self.wsdl_url,
+                )
+                return None
             self._client = Client(self.wsdl_url, transport=transport)
             return self._client
 

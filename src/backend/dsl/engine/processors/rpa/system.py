@@ -171,7 +171,10 @@ class TerminalExecProcessor(BaseProcessor):
         command: str,
         timeout: float = 30.0,
         to: str = "body.output",
-        shell: bool = True,
+        # Cycle 20 P0-5: shell=False by default to deny shell metachar
+        # injection. Operators must explicitly opt-in to shell=True
+        # (still requires rpa.shell.exec capability).
+        shell: bool = False,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"terminal_exec:{command[:30]}")

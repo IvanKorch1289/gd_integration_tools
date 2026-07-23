@@ -84,6 +84,14 @@ class MCPToolProcessor(BaseAIProcessor):
             raise ValueError("MCPToolProcessor: tool_uri обязателен")
         if not tool_name:
             raise ValueError("MCPToolProcessor: tool_name обязателен")
+        # Cycle 20 P0-4: file:// transport bypasses network policy and
+        # enables arbitrary code execution via Python stdlib. Deny at
+        # construction time; only http(s) is policy-approved.
+        if tool_uri.startswith("file:"):
+            raise ValueError(
+                "MCPToolProcessor: file:// transport denied (RCE surface); "
+                "use http(s):// only"
+            )
         super().__init__(name=name or f"mcp_tool:{tool_name}")
         self.tool_uri = tool_uri
         self.tool_name = tool_name

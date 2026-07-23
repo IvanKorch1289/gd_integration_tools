@@ -147,8 +147,14 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
     """
     try:
         from src.backend.core.config.ai_stack import mcp_settings
-    except Exception as _:
-        return None
+    except Exception as exc:
+        # Cycle 20 P0-3: fail-CLOSED. Settings import error means we cannot
+        # verify policy — deny by default rather than grant.
+        import logging
+        logging.getLogger(__name__).warning(
+            "MCP authz fail-CLOSED: cannot import mcp_settings (%s)", exc
+        )
+        return f"mcp_settings unavailable: {type(exc).__name__}"
     if not mcp_settings.tool_authz_enabled:
         return None
 

@@ -125,6 +125,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                     continue
 
                 for tp, messages in msg_batch.items():
+                    last_successful_offset: int | None = None
                     for msg in messages:
                         try:
                             # Debezium ChangeEvent JSON → CDCEvent
@@ -135,15 +136,30 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                             )
                             if event is not None:
                                 await dispatch(sub, event)
+                            last_successful_offset = msg.offset
                         except Exception as exc:
                             logger.exception(
-                                "CDC Kafka dispatch error: topic=%s offset=%s err=%s",
+                                "CDC Kafka dispatch error: topic=%s offset=%s err=%s; "
+                                "STOPPING batch — will not commit, event will "
+                                "be re-delivered on next poll",
                                 tp.topic,
                                 msg.offset,
                                 exc,
                             )
-                    # Commit offset after successful dispatch
-                    await consumer.commit({tp: msg.offset + 1})
+                            # Cycle 20 P0-1: do NOT commit past failed event.
+                            # Break out of message loop; outer caller will
+                            # retry from last successful offset.
+                            break
+                    # Commit only up to the LAST successful message offset.
+                    if last_successful_offset is not None:
+                        try:
+                            await consumer.commit(
+                                {tp: last_successful_offset + 1}
+                            )
+                        except Exception as commit_exc:
+                            logger.warning(
+                                "CDC Kafka offset commit failed: %s", commit_exc
+                            )
         finally:
             await consumer.stop()
             self._consumer = None

@@ -62,7 +62,23 @@ class CDCClientAdapter(CDCSource):
                 try:
                     self._queue.put_nowait(event)
                 except asyncio.QueueFull:
-                    logger.warning("CDC adapter queue full, dropping event")
+                    # Cycle 20 P0-6: QueueFull → silent drop was data-loss.
+                    # Apply backpressure: block briefly, then drop with
+                    # ERROR (not warning) so DLQ/Dashboard sees the loss.
+                    logger.error(
+                        "CDC adapter queue FULL: applying backpressure "
+                        "(event may be dropped after 5s)"
+                    )
+                    try:
+                        await asyncio.wait_for(
+                            self._queue.put(event), timeout=5.0
+                        )
+                    except asyncio.TimeoutError:
+                        logger.error(
+                            "CDC adapter queue OVERFLOW after backpressure: "
+                            "EVENT DROPPED (consider increasing "
+                            "queue size or adding DLQ)"
+                        )
 
         self._sub_id = await self._client.subscribe(
             profile=self._profile,
