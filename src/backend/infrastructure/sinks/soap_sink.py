@@ -74,10 +74,10 @@ class SoapSink(Sink):
 
         try:
             result = await asyncio.to_thread(self._invoke_sync, client, kwargs)
-        except Exception as exc:
-            return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
-            )
+        except Exception:
+            # Cycle 22 P1-6: re-raise transport exception so
+            # @with_retry / @with_breaker decorators can see it.
+            raise
 
         return SinkResult(
             ok=True,

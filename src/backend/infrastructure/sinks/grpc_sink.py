@@ -88,10 +88,13 @@ class GrpcSink(Sink):
                 )
             finally:
                 await channel.close()
-        except Exception as exc:
-            return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
-            )
+        except ImportError:
+            # ImportError is non-retryable: surface as SinkResult(ok=False).
+            return SinkResult(ok=False, details={"error": "grpcio not installed"})
+        # Cycle 22 P1-6: let transport exceptions propagate so the
+        # @with_retry / @with_breaker decorators on send() can see them.
+        # Previously, except Exception returned SinkResult(ok=False) which
+        # bypassed retry/breaker entirely.
 
         return SinkResult(
             ok=True,

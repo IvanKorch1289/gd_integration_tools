@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections import OrderedDict
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -170,6 +171,16 @@ class WebhookSource:
             )
         self._verify_hmac(raw_body, headers)
         ts = self._verify_timestamp(headers)
+        # Cycle 22 P1-1 fix: in-process dedup via Delivery-Id header.
+        # GitHub/Stripe send this header on retries. If we've seen the
+        # same id within the last 10 minutes, drop the duplicate.
+        delivery_id = self._extract_delivery_id(headers)
+        if delivery_id and self._is_duplicate(delivery_id):
+            logger.info(
+                "Webhook dedup: dropping duplicate delivery_id=%s source=%s",
+                delivery_id, self.source_id,
+            )
+            return
         event_time = (
             datetime.fromtimestamp(ts, tz=UTC) if ts is not None else datetime.now(UTC)
         )
@@ -181,3 +192,34 @@ class WebhookSource:
             metadata={"headers": dict(headers)},
         )
         await self._on_event(event)
+
+    # Cycle 22 P1-1: in-process dedup cache (LRU, 10min TTL).
+    _DEDUP_MAX = 10_000
+    _DEDUP_TTL_S = 600.0
+    _dedup_cache: OrderedDict[str, float] = OrderedDict()
+
+    @classmethod
+    def _extract_delivery_id(cls, headers: Mapping[str, str]) -> str | None:
+        for k, v in headers.items():
+            kl = k.lower()
+            if kl in ("x-delivery-id", "x-github-delivery", "x-request-id"):
+                return v
+        return None
+
+    @classmethod
+    def _is_duplicate(cls, delivery_id: str) -> bool:
+        now = time.monotonic()
+        # Drop expired
+        while cls._dedup_cache:
+            oldest_id, ts = next(iter(cls._dedup_cache.items()))
+            if now - ts > cls._DEDUP_TTL_S:
+                cls._dedup_cache.popitem(last=False)
+            else:
+                break
+        if delivery_id in cls._dedup_cache:
+            cls._dedup_cache.move_to_end(delivery_id)
+            return True
+        cls._dedup_cache[delivery_id] = now
+        if len(cls._dedup_cache) > cls._DEDUP_MAX:
+            cls._dedup_cache.popitem(last=False)
+        return False

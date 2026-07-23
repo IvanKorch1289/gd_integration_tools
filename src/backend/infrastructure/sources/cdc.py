@@ -128,6 +128,9 @@ class CDCSource:
                 async for msg in cursor:
                     if self._stop_event.is_set():
                         break
+                    # Cycle 22 P0-2: only send_feedback AFTER _emit
+                    # succeeds. If on_event fails (now raises), we skip
+                    # feedback — PG will redeliver on next reconnect.
                     await self._emit(on_event, msg)
                     if hasattr(msg, "cursor"):
                         await msg.cursor.send_feedback(flush_lsn=msg.data_start)
@@ -161,4 +164,9 @@ class CDCSource:
             )
             await on_event(event)
         except Exception as exc:
+            # Cycle 22 P0-2 fix: re-raise so outer loop does NOT call
+            # send_feedback(flush_lsn=...) on failed dispatch. Without
+            # this, PG advances the LSN even though consumer failed —
+            # silent at-most-once instead of at-least-once.
             logger.error("CDCSource on_event failed: %s", exc)
+            raise
