@@ -6,24 +6,6 @@ Funcs: .
 
 from __future__ import annotations
 
-"""Внутренние store-helpers для workflow-стека (Sprint 4 К3-B §3).
-
-Объединяет API, ранее разнесённое по 4 deprecated-модулям
-(``state.py`` / ``state_store.py`` / ``event_store.py`` /
-``state_projector.py``). Минимально-достаточный набор, необходимый:
-
-* :class:`PgRunnerWorkflowBackend` — узкий create/get/cancel/await-completion
-  адаптер поверх Postgres backend'а;
-* :class:`DurableWorkflowRunner` (``runner.py``) — orchestration loop:
-  ``list_pending``/``try_lock``/``read_events``/``replay`` →
-  ``WorkflowState`` → ``append`` → ``unlock``;
-* :class:`DSLStepExecutor` (``executor.py``) — пользуется
-  ``WorkflowState.replay`` для resume-after-crash сценариев.
-
-Sprint 4 К3-B §3 — удалены 4 legacy-файла (985 LOC), Mongo-проекция
-(``state_projector.py``) убрана без замены: новый стек идёт на Temporal
-native (см. :mod:`temporal_backend`), pg_runner оставлен legacy fallback.
-"""
 
 from datetime import UTC, datetime, timedelta
 from typing import Any

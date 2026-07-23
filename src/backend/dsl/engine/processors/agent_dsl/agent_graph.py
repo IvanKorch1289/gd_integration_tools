@@ -303,13 +303,32 @@ class AgentGraphProcessor(BaseAIProcessor):
             from src.backend.ai.policy import AgentToolPolicy
             from src.backend.core.svcs_registry import get_service, has_service
         except ImportError:
+            # Cycle 3 swarm: log the silent-fallback so operators can see
+            # that the tool policy gate is not active. Fail-open is
+            # retained for backwards-compat, but no longer invisible.
+            import logging
+            logging.getLogger(__name__).warning(
+                "agent_graph tool_policy: AgentToolPolicy import failed; "
+                "running with NO tool filtering (all tool_actions allowed)"
+            )
             return list(tool_actions)
 
         try:
             if not has_service(AgentToolPolicy):
+                import logging
+                logging.getLogger(__name__).warning(
+                    "agent_graph tool_policy: AgentToolPolicy not registered in DI; "
+                    "running with NO tool filtering (all tool_actions allowed)"
+                )
                 return list(tool_actions)
             policy = get_service(AgentToolPolicy)
         except Exception:
+            import logging
+            logging.getLogger(__name__).warning(
+                "agent_graph tool_policy: failed to resolve AgentToolPolicy from DI; "
+                "running with NO tool filtering (all tool_actions allowed)",
+                exc_info=True,
+            )
             return list(tool_actions)
 
         allowed: list[str] = []

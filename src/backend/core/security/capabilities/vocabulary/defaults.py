@@ -1,4 +1,10 @@
+"""S62 W2 — defaults.py part of vocabulary decomp.
+
+build_default_vocabulary (388 LOC, BIG function).
+"""
+
 from __future__ import annotations
+
 
 from src.backend.core.security.capabilities.matchers import (
     ExactAliasMatcher,
@@ -13,10 +19,6 @@ from src.backend.core.security.capabilities.vocabulary.vocabulary import (
     CapabilityVocabulary,  # S62 W2: cross-import
 )
 
-"""S62 W2 — defaults.py part of vocabulary decomp.
-
-build_default_vocabulary (388 LOC, BIG function).
-"""
 
 
 def _build_base_capabilities(

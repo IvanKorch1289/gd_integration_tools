@@ -7,26 +7,6 @@ core activity declarations (activity/saga/pause/resume/signal_wait/sleep).
 
 from __future__ import annotations
 
-"""Pydantic-декларации DSL workflow (план V16.2 §4.3, Sprint 4).
-
-Модуль определяет тип-безопасные декларации шагов workflow для
-последующей компиляции в Temporal ``@workflow.defn``. Все типы
-используют ``discriminator="type"`` для корректной de-сериализации
-из YAML/JSON.
-
-Архитектура:
-    * Каждый шаг — отдельная Pydantic-модель с дискриминатором ``type``.
-    * :class:`WorkflowDeclaration` агрегирует список шагов.
-    * Compiler (отдельный модуль) парсит декларацию и эмитит Temporal
-      workflow-определение через Jinja2 + ``temporalio.workflow.defn``.
-
-Типы шагов:
-    * :class:`ActivityDeclaration` — atomic-задача (Temporal activity).
-    * :class:`SagaDeclaration` — forward + compensation цепочка.
-    * :class:`SignalWaitDeclaration` — durable ожидание внешнего сигнала.
-    * :class:`SleepDeclaration` — durable sleep.
-    * :class:`SensorDeclaration` — periodic-предикат с polling-интервалом.
-"""
 
 from typing import Any, Literal
 

@@ -1,9 +1,3 @@
-from __future__ import annotations
-
-from src.backend.core.security.capabilities.gate._protocol import (
-    _CapabilityGateProtocol,
-)
-
 """ADR-044 — runtime :class:`CapabilityGate` + subset-checker.
 
 Plugin/route декларирует свои capabilities при load; gate проверяет
@@ -25,6 +19,14 @@ Sprint 36 (V15 GAP, Subagent A) additions:
 * Default tenant = :data:`SYSTEM_TENANT_ID` (``"_system"``) — backward
   compat с existing call sites.
 """
+
+from __future__ import annotations
+
+
+from src.backend.core.security.capabilities.gate._protocol import (
+    _CapabilityGateProtocol,
+)
+
 
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Final

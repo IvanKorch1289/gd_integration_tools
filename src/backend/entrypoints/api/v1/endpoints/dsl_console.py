@@ -146,7 +146,17 @@ class _DSLConsoleFacade:
             )
 
         except Exception as exc:
-            return InlineDSLResponse(status="error", error=str(exc))
+            # S232/S202 audit fix (Cycle 3 swarm): do not leak raw exception
+            # string to public client. Log full trace server-side, return
+            # generic message with exception class only.
+            import logging
+            logging.getLogger(__name__).exception(
+                "DSL console inline execute failed: route_id=%s", route_id
+            )
+            return InlineDSLResponse(
+                status="error",
+                error=f"{type(exc).__name__}: internal error (see server logs)",
+            )
 
     async def execute_registered_route(
         self, *, route_id: str, body: dict[str, Any] | None = None
@@ -182,7 +192,15 @@ class _DSLConsoleFacade:
                 trace=trace,
             )
         except Exception as exc:
-            return ExecuteRegisteredResponse(status="error", error=str(exc))
+            # Cycle 3 swarm: do not leak raw exception string to public client.
+            import logging
+            logging.getLogger(__name__).exception(
+                "DSL console execute_registered_route failed: route_id=%s", route_id
+            )
+            return ExecuteRegisteredResponse(
+                status="error",
+                error=f"{type(exc).__name__}: internal error (see server logs)",
+            )
 
     async def dry_run(
         self, *, route: dict[str, Any], sample_payload: Any = None, seed: int = 0
@@ -199,7 +217,12 @@ class _DSLConsoleFacade:
                 waterfall=waterfall_lines(result, width=40),
             )
         except Exception as exc:
-            return DryRunResponse(error=str(exc))
+            # Cycle 3 swarm: do not leak raw exception string to public client.
+            import logging
+            logging.getLogger(__name__).exception("DSL console dry_run failed")
+            return DryRunResponse(
+                error=f"{type(exc).__name__}: internal error (see server logs)"
+            )
 
 
 _FACADE = _DSLConsoleFacade()
