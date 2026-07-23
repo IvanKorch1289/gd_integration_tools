@@ -55,17 +55,14 @@ class VaultSecretProcessor(BaseProcessor):
 
     S202 audit fix: required_capability + auth_check для enforce gating
     на чтение секретов.
+
+    Attributes:
+        version: Конкретная версия секрета (0 = current).
+        name: Опциональное имя процессора для трассировки.
     """
 
     required_capability: ClassVar[str | None] = "secret.read"
     audit_event: ClassVar[str | None] = "secret.read"
-
-    version: Конкретная версия секрета (0 = current).
-    name: Опциональное имя процессора для трассировки.
-
-    Body contract: не используется (input — это ``path``).
-    Output: ``exchange.properties[output_field] = str | VaultReadResult``.
-    """
 
     side_effect: ClassVar[Any] = "READ"
     compensatable: ClassVar[bool] = True

@@ -1,7 +1,8 @@
 """Async Elasticsearch client — index, search, aggregate, bulk."""
 
-import asyncio
 from __future__ import annotations
+
+import asyncio
 
 from typing import Any
 

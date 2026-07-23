@@ -86,10 +86,8 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет desktop RPA-действие через pyautogui (screenshot/click/type/...).
+
         S202: capability gate через auth_check.
-        """
-        if not await self.auth_check(exchange, action="automate"):
-            return
 
         Поддерживаемые действия: ``screenshot``, ``click``, ``type_text``,
         ``press_key``, ``move``. Координаты, текст и клавиши берутся из
@@ -97,10 +95,13 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
         ``result_property``.
 
         Args:
-            exchange: Текущий exchange; результат — в свойстве
+            exchange: Текущий exchange; результат -- в свойстве
                 ``result_property`` (default: ``pyautogui_result``).
             context: Контекст выполнения маршрута.
         """
+        if not await self.auth_check(exchange, action="automate"):
+            return
+
         try:
             import pyautogui
         except ImportError:

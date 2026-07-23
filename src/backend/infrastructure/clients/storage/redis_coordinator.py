@@ -9,8 +9,9 @@
 Все операции atomic через Redis commands.
 """
 
-import asyncio
 from __future__ import annotations
+
+import asyncio
 
 from collections.abc import AsyncIterator
 from typing import Any

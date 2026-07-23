@@ -6,8 +6,9 @@ publish() валидирует payload через ``jsonschema``; на fail — 
 :class:`EventSchemaValidationError`.
 """
 
-import asyncio
 from __future__ import annotations
+
+import asyncio
 
 from typing import Any
 

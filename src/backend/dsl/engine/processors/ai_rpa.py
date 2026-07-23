@@ -77,6 +77,7 @@ class AIRpaProcessor(BaseProcessor):
     required_capability: ClassVar[str | None] = "rpa.ai.decide"
     audit_event: ClassVar[str | None] = "rpa.ai.decided"
 
+    """
     action_property: Exchange property для записи выбранного action.
     model: LLM model для принятия решений (default ``gpt-4o``).
     temperature: Temperature для LLM (default ``0.1``).
