@@ -6,7 +6,7 @@
 [groups.home]
 title = "Home / Getting Started"
 pages = [
-    "00_Главная",
+    "00_Вход",
     "04_Обучение",
 ]
 

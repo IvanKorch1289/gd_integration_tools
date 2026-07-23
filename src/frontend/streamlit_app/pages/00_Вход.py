@@ -1,7 +1,7 @@
 """Login page — S169.
 
 Auth gate: пользователь видит эту страницу до успешного login.
-После login — редирект на ``00_Главная``.
+После login — редирект на ``00_Вход`` (эту же страницу, либо home).
 
 Backend endpoints:
 * ``GET /auth/methods`` — список available methods.

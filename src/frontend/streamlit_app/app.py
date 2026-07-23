@@ -132,7 +132,7 @@ def render_dashboard() -> None:
 
     # S173 M8.1: page-render audit-event.
     _emit_page_render_event(
-        page_key="00_Главная",
+        page_key="00_Вход",
         render_start=render_start,
     )
 
