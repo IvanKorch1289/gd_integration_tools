@@ -337,7 +337,7 @@ class AgentGraphProcessor(BaseAIProcessor):
         allowed: list[str] = []
         for tool in tool_actions:
             try:
-                if policy.check(tool) == "allow":
+                if policy.is_allowed(tool):
                     allowed.append(tool)
             except Exception:
                 continue

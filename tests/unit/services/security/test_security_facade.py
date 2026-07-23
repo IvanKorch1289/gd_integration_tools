@@ -93,6 +93,7 @@ class TestSecurityFacadeSignatures:
             result = facade.verify_signature(
                 payload=b"data",
                 signature="abc123",
+                timestamp=1234567890,
                 secret="secret",
             )
             assert result is True

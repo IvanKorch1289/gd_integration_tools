@@ -189,6 +189,34 @@ class TestAgentGraphToolPolicyWireUp:
             _reset_policy()
 
 
+    async def test_default_audit_all_true_allows_tools(
+        self, exchange: Exchange[Any], context: ExecutionContext
+    ) -> None:
+        """Default audit_all=True: tools are allowed (AUDIT treated as allowed by is_allowed)."""
+        from src.backend.core.svcs_registry import clear_registry, register_factory
+
+        clear_registry()
+        register_factory(
+            AgentToolPolicy,
+            lambda: AgentToolPolicy(agent_id="test", allowed_tools=["db.query"], audit_all=True),
+        )
+        try:
+            fake = _FakeSandbox()
+            proc = AgentGraphProcessor(
+                graph_type="react",
+                prompt_inline="Find user",
+                tool_actions=["db.query"],
+                sandbox=fake,
+                name="test_proc_audit",
+            )
+            await proc.process(exchange, context)
+            # audit_all=True returns AUDIT, but is_allowed() treats it as allowed
+            assert len(fake.calls) == 1
+            assert "db.query" in fake.calls[0]["tool_actions"]
+        finally:
+            _reset_policy()
+
+
 def _reset_policy() -> None:
     """Восстанавливает default policy для изоляции тестов."""
     from src.backend.core.svcs_registry import clear_registry, register_factory
