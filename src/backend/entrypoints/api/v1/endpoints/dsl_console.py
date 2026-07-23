@@ -6,6 +6,8 @@ W26.5: маршрут регистрируется декларативно че
 результат с трейсом процессоров.
 """
 
+import logging
+import re
 from typing import Any
 
 from fastapi import APIRouter
@@ -17,6 +19,27 @@ from src.backend.entrypoints.api.generator.actions import (
 )
 
 __all__ = ("router",)
+
+# Cycle-15 swarm: sanitize processor-set exchange.error before returning to
+# the public client. Backend exceptions (S3, ML, SMTP, etc.) can leak
+# hostnames, bucket paths, SQL fragments, provider URLs.
+_SANITIZE_RE = re.compile(
+    r"(?i)(?:"
+    r"https?://[^\s'\"]+"
+    r"|/(?:tmp|var|etc|home|root|Users)[^\s'\"]*"
+    r"|(?:password|token|api_key|secret)\s*=\s*\S+"
+    r")"
+)
+_MAX_ERROR_LEN = 500
+
+
+def _sanitize_error(raw: str | None) -> str | None:
+    if raw is None:
+        return None
+    redacted = _SANITIZE_RE.sub("<redacted>", raw)
+    if len(redacted) > _MAX_ERROR_LEN:
+        redacted = redacted[:_MAX_ERROR_LEN] + "... (truncated)"
+    return redacted
 
 
 class InlineDSLRequest(BaseModel):
@@ -171,7 +194,7 @@ class _DSLConsoleFacade:
             return InlineDSLResponse(
                 status=exchange.status.value,
                 result=result,
-                error=exchange.error,
+                error=_sanitize_error(exchange.error),
                 trace=trace,
             )
 
@@ -218,7 +241,7 @@ class _DSLConsoleFacade:
             return ExecuteRegisteredResponse(
                 status=exchange.status.value,
                 body=result,
-                error=exchange.error,
+                error=_sanitize_error(exchange.error),
                 trace=trace,
             )
         except Exception as exc:

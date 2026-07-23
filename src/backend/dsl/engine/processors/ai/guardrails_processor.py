@@ -72,9 +72,28 @@ class GuardrailsProcessor(BaseProcessor):
         from src.backend.core.config.features import feature_flags
 
         if not feature_flags.guardrails_per_tenant:
+            # S227 cycle 14 (D433): warn so silent skip is visible — per-tenant
+            # guardrails OFF means external provider checks (Lakera/NeMo) are
+            # skipped without audit. Operators can correlate via processor name.
+            logger.warning(
+                "%s: guardrails_per_tenant feature flag disabled — "
+                "external provider checks skipped (S227 cycle 14 D433)",
+                self.name,
+                extra={"guard_name": "feature_flag_off"},
+            )
             return
         config = self._resolve_config()
         if not config or not config.enabled_providers:
+            # S227 cycle 14 (D433): warn so silent skip is visible — no
+            # providers configured for this tenant means external checks
+            # are skipped without audit. Operators can correlate via
+            # processor name + tenant id from context.
+            logger.warning(
+                "%s: no guardrails providers configured — "
+                "external provider checks skipped (S227 cycle 14 D433)",
+                self.name,
+                extra={"guard_name": "no_providers_configured"},
+            )
             return
 
         if "lakera" in config.enabled_providers:
@@ -93,6 +112,16 @@ class GuardrailsProcessor(BaseProcessor):
                     )
                     return
             except Exception as exc:
+                # S227 cycle 14 (D433): warn so silent exception swallow is
+                # visible. Without block_on_failure, the failure is hidden
+                # and the request continues — operators need visibility.
+                logger.warning(
+                    "%s: Lakera provider error (block_on_failure=False, "
+                    "continuing without check): %s (S227 cycle 14 D433)",
+                    self.name,
+                    exc,
+                    extra={"guard_name": "lakera", "error": str(exc)},
+                )
                 if config.block_on_failure:
                     exchange.fail(f"Guardrail/lakera: provider error: {exc}")
                     return
@@ -136,6 +165,16 @@ class GuardrailsProcessor(BaseProcessor):
                     )
                     return
             except Exception as exc:
+                # S227 cycle 14 (D433): warn so silent exception swallow is
+                # visible. Without block_on_failure, the failure is hidden
+                # and the request continues — operators need visibility.
+                logger.warning(
+                    "%s: NeMo provider error (block_on_failure=False, "
+                    "continuing without check): %s (S227 cycle 14 D433)",
+                    self.name,
+                    exc,
+                    extra={"guard_name": "nemo", "error": str(exc)},
+                )
                 if config.block_on_failure:
                     exchange.fail(f"Guardrail/nemo: provider error: {exc}")
                     return
