@@ -165,8 +165,24 @@ class ClickHouseBulkWriter:
             if self._on_failure is not None:
                 try:
                     await self._on_failure(batch, exc)
-                except Exception as _:
-                    logger.exception("clickhouse_bulk.on_failure_callback_raised")
+                except Exception as cb_exc:
+                    # Cycle 20 P1-2: requeue batch on callback failure to
+                    # avoid data loss. If requeue also fails (queue full),
+                    # data is lost — ERROR log with batch contents count.
+                    logger.exception(
+                        "clickhouse_bulk.on_failure_callback_raised: "
+                        "requeueing batch of %d rows to avoid loss",
+                        len(batch),
+                    )
+                    try:
+                        for row in batch:
+                            await self._queue.put(row)
+                    except Exception as requeue_exc:
+                        logger.error(
+                            "clickhouse_bulk.REQUEUE_FAILED: %d rows "
+                            "POTENTIALLY LOST (callback=%s, requeue=%s)",
+                            len(batch), cb_exc, requeue_exc,
+                        )
             return 0
 
 

@@ -180,8 +180,11 @@ class LdapQueryProcessor(BaseProcessor):
         }
         if self._bind_dn:
             spec["bind_dn"] = self._bind_dn
+        # Cycle 20 P1-3: to_spec() is security boundary — credentials
+        # are runtime secrets, never serialized. Operator should store
+        # in Vault and reference via credential_ref.
         if self._password:
-            spec["password"] = self._password
+            spec["password"] = "<redacted: use credential_ref>"
         if self._attributes:
             spec["attributes"] = self._attributes
         if self._target != "body.ldap_result":

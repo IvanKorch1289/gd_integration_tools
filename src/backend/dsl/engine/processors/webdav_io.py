@@ -194,8 +194,9 @@ class WebDavProcessor(BaseProcessor):
         }
         if self._username:
             spec["username"] = self._username
+        # Cycle 20 P1-3: never serialize runtime password.
         if self._password:
-            spec["password"] = self._password
+            spec["password"] = "<redacted: use credential_ref>"
         if self._source != "body":
             spec["source"] = self._source
         if self._target != "body.webdav_result":
