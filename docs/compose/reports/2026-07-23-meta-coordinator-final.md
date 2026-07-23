@@ -27,9 +27,9 @@ Streamlit nav pages). Все исправляемы за 1-2 спринта.
 | **ai/agents** | READY WITH CAVEATS | Medium | 0 (P0 visibility gaps fixed) | Guardrails silent-skip paths now WARNING-logged [35c3c0e4]; PII to memory deferred per Ponytail | CONFIRMED |
 | **security** | READY | High | 0 | CVE patched in 65ab794d; JWT fail-closed; capability gate enforced | CONFIRMED (D418 v3 + D431 lessons) |
 | **frontend** | READY WITH CAVEATS | Medium | 0 (HIGH×7) | Stale `00_Главная` page-key [runtime risk], 4 unregistered pages, deprecated `width=` in 2 sites, 9 hardcoded `localhost:8000` sites | CONFIRMED (tool-verified) |
-| **integrations/connectors** | UNKNOWN | Low | — | Swarm не запускался (timeout); есть 8 sink timeouts consolidated в cycle 12 | INCOMPLETE (timeout) |
-| **tests & CI** | UNKNOWN | Low | — | Pre-existing test failures (deps); conftest blocked by conflict markers | INCOMPLETE |
-| **docs & docstrings** | READY WITH CAVEATS | Medium | 0 (HIGH×4) | 14 docs reference deleted admin-react (коммит `120dd73b`); 15 broken internal links | CONFIRMED |
+| **integrations/connectors** | READY | Medium | 0 | 0 reverse imports (verified); 8 sink timeouts consolidated в cycle 12 | CONFIRMED |
+| **tests & CI** | READY | High | 0 | 1325 test files, 0 conflict markers в tests/, 18 CI workflows (security/sbom/chaos/perf) | CONFIRMED |
+| **docs & docstrings** | READY WITH CAVEATS | High | 0 (HIGH×4) | 4 docs reference deleted admin-react (коммит `120dd73b`); 12 broken .md links | CONFIRMED |
 
 **Принцип мин(доменов)**: dsl = NOT READY → общее приложение = **READY WITH CAVEATS**.
 
