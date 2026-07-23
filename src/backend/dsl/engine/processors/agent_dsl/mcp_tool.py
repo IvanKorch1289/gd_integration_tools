@@ -33,6 +33,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
+from src.backend.dsl.engine.processors.agent_dsl._timeouts import DEFAULT_MCP_TIMEOUT_S
+
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -75,7 +77,7 @@ class MCPToolProcessor(BaseAIProcessor):
         tool_name: str,
         arguments_property: str = "body",
         result_property: str = "mcp_result",
-        timeout_s: float = 30.0,
+        timeout_s: float = DEFAULT_MCP_TIMEOUT_S,  # Cycle 13: externalized to _timeouts
         name: str | None = None,
     ) -> None:
         if not tool_uri:

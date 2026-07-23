@@ -37,6 +37,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 from src.backend.core.ai.errors import GatewayUnavailable
+from src.backend.dsl.engine.processors.agent_dsl._timeouts import DEFAULT_AGENT_TIMEOUT_S
+
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -75,7 +77,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
         stop_verdict: str = "ok",
         result_property: str = "reflection_result",
         history_property: str | None = "reflection_history",
-        timeout_s: float = 300.0,
+        timeout_s: float = DEFAULT_AGENT_TIMEOUT_S,  # Cycle 13: externalized to _timeouts
         name: str | None = None,
     ) -> None:
         if not generator_workflow_id:

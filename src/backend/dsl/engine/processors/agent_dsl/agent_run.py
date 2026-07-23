@@ -37,6 +37,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
 from src.backend.core.ai.errors import GatewayUnavailable
+from src.backend.dsl.engine.processors.agent_dsl._timeouts import DEFAULT_AGENT_TIMEOUT_S
+
 
 if TYPE_CHECKING:
     from src.backend.core.ai.gateway import AIRequest
@@ -92,7 +94,7 @@ class AgentRunProcessor(BaseAIProcessor):
         policy_ref: str | None = None,
         context_property: str | None = "body",
         result_property: str = "agent_result",
-        timeout_s: float = 300.0,
+        timeout_s: float = DEFAULT_AGENT_TIMEOUT_S,  # Cycle 13: externalized to _timeouts
         max_retries: int = 3,
         name: str | None = None,
     ) -> None:
