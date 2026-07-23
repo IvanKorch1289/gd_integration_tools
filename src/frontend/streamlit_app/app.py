@@ -146,7 +146,7 @@ def render_dashboard() -> None:
             _project_root / "src" / "static" / "images" / "kuban_credit_logo.svg"
         )
         if logo_path.exists():
-            st.image(str(logo_path), width=120)
+            st.image(str(logo_path), width="stretch")
 
     # Login CTA
     if not is_authenticated():

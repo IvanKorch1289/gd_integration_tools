@@ -135,7 +135,7 @@ with tab_model:
         # Streamlit bar_chart: x=model, y=total_cost_usd.
         chart_data = {item["model"]: item["total_cost_usd"] for item in by_model}
         st.bar_chart(chart_data, x_label="model", y_label="cost USD")
-        st.dataframe(by_model, width=2000)
+        st.dataframe(by_model, width="stretch")
     else:
         st.info("Нет данных по моделям для выбранного окна.")
 
