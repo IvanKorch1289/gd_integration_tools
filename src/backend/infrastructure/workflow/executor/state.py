@@ -78,15 +78,18 @@ class WorkflowSpec:
     Атрибуты:
       * ``name`` — публичное имя для trigger / MCP.
       * ``steps`` — основная цепочка top-level.
-      * ``compensators`` — общий rollback при failure (выполняется runner'ом
-        через `StepOutcome.FAILED` + `compensate` events).
       * ``max_attempts`` — default retry-budget до hard-fail + compensate.
       * ``default_timeout_s`` — дефолтный timeout per step.
+
+    Note (S227 cycle 4 — D419 dead contract closure):
+      Per-step compensation via ``saga_step.compensate`` is the
+      supported rollback path. The earlier ``compensators`` top-level
+      field was a dead contract (never invoked anywhere in code,
+      including tests). Removed in this cycle.
     """
 
     name: str
     steps: tuple[WorkflowStep, ...]
-    compensators: tuple[WorkflowStep, ...] = ()
     max_attempts: int = 10
     default_timeout_s: float = 300.0
 

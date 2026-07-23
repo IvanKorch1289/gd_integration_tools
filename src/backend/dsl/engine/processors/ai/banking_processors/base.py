@@ -95,6 +95,18 @@ class _BankingAIProcessor(BaseProcessor):
 
         prompt = self._build_prompt(exchange)
 
+        # Cycle 4 swarm (AI-5 hardening): cap prompt length to prevent
+        # abuse via oversized or attacker-controlled body values. Full
+        # AIGateway migration deferred (would require ResultSchema →
+        # AIRequest adapter); this is minimal defense-in-depth.
+        if len(prompt) > 8000:
+            import logging
+            logging.getLogger(__name__).warning(
+                "%s: prompt truncated from %d to 8000 chars (S227 cycle 4)",
+                self.name, len(prompt),
+            )
+            prompt = prompt[:8000]
+
         try:
             import instructor  # type: ignore[import-not-found]
             import litellm  # type: ignore[import-not-found]

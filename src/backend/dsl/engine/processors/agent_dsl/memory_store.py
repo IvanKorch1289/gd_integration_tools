@@ -105,6 +105,22 @@ class MemoryStoreProcessor(BaseAIProcessor):
             )
             return
 
+        # Cycle 4 swarm (AI-5 hardening): warn if value contains PII-like
+        # patterns. NOT a full scrubber (that's pii_mask processor's job) —
+        # just a visibility log so operators can spot accidental PII
+        # storage to long-term memory. Cheap regex check, no deps.
+        import re
+        value_str = str(value)
+        if re.search(r"\b\d{16}\b|\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b|"
+                     r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b|"
+                     r"\b\d{3}-\d{2}-\d{4}\b|"
+                     r"\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b", value_str):
+            _logger.warning(
+                "%s: value may contain PII (card/email/SSN/INN) — "
+                "consider routing via pii_mask processor first (S227 cycle 4)",
+                self.name,
+            )
+
         try:
             # S202 fix: UnifiedMemoryGateway.save_fact uses keyword args.
             # The caller-provided key is preserved in ``tags`` (last tag) so

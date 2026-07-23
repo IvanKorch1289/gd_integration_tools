@@ -323,14 +323,32 @@ class AIToolDispatchProcessor(BaseAIProcessor):
             return None
         return parsed
 
+    # Cycle 4 swarm (AI-5): cap query length to prevent prompt-injection
+    # abuse via oversized or attacker-controlled exchange property values.
+    _MAX_QUERY_LEN = 2000
+
     def _resolve_query(self, exchange: Exchange[Any]) -> str | None:
-        """Получить query: статичный → из property → None."""
+        """Получить query: статичный → из property → None.
+
+        Cycle 4 hardening: cap query at _MAX_QUERY_LEN chars. Truncate
+        (not raise) so legitimate long queries still work; log
+        warning for visibility.
+        """
+        raw: str | None = None
         if self.query is not None:
-            return self.query
-        if self.query_property is not None:
+            raw = self.query
+        elif self.query_property is not None:
             value = exchange.get_property(self.query_property)
-            return str(value) if value is not None else None
-        return None
+            raw = str(value) if value is not None else None
+        if raw is None:
+            return None
+        if len(raw) > self._MAX_QUERY_LEN:
+            _logger.warning(
+                "%s: query truncated from %d to %d chars (S227 cycle 4 hardening)",
+                self.name, len(raw), self._MAX_QUERY_LEN,
+            )
+            return raw[: self._MAX_QUERY_LEN]
+        return raw
 
     def _resolve_tools_description(self) -> str:
         """Сериализует whitelist tools в JSON-schema описание.

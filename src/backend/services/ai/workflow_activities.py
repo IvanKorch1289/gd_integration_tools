@@ -124,12 +124,23 @@ async def _execute_llm_call(
     """
     gateway = _resolve_gateway()
 
+    # Cycle 4 swarm (AI-5 hardening): cap max_tokens if None to prevent
+    # unbounded LLM calls. Budget 4096 tokens is a reasonable default for
+    # workflow LLM activities. If explicit max_tokens is given, use it.
+    effective_max_tokens = input_.max_tokens
+    if effective_max_tokens is None or effective_max_tokens <= 0:
+        effective_max_tokens = 4096
+        import logging
+        logging.getLogger(__name__).debug(
+            "workflow_activities: max_tokens not set, defaulting to 4096 (S227 cycle 4)"
+        )
+
     # acompletion API: prompt → response
     response = await gateway.acompletion(
         messages=[{"role": "user", "content": input_.prompt}],
         model=input_.model,
         temperature=input_.temperature,
-        max_tokens=input_.max_tokens,
+        max_tokens=effective_max_tokens,
         tools=input_.tools,
     )
 

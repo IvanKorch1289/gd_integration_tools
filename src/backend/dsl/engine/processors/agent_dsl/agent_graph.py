@@ -340,22 +340,42 @@ class AgentGraphProcessor(BaseAIProcessor):
                 continue
         return allowed
 
+    # Cycle 4 swarm (AI-5): cap prompt length to prevent prompt-injection
+    # abuse via oversized or attacker-controlled exchange body values.
+    _MAX_PROMPT_LEN = 4000
+
     def _extract_prompt(self, exchange: Exchange[Any]) -> str:
-        """Extract prompt from exchange body or property."""
+        """Extract prompt from exchange body or property.
+
+        Cycle 4 hardening: cap at _MAX_PROMPT_LEN chars.
+        """
         body = exchange.in_message.body
+        prompt: str | None = None
         if isinstance(body, dict):
-            prompt = body.get("prompt")
-            if isinstance(prompt, str) and prompt:
-                return prompt
-            content = body.get("content")
-            if isinstance(content, str) and content:
-                return content
-        if isinstance(body, str):
-            return body
-        return str(body or "")
+            for key in ("prompt", "content"):
+                val = body.get(key)
+                if isinstance(val, str) and val:
+                    prompt = val
+                    break
+        if prompt is None:
+            if isinstance(body, str):
+                prompt = body
+            else:
+                prompt = str(body or "")
+        if len(prompt) > self._MAX_PROMPT_LEN:
+            import logging
+            logging.getLogger(__name__).warning(
+                "%s: prompt truncated from %d to %d chars (S227 cycle 4 hardening)",
+                self.name, len(prompt), self._MAX_PROMPT_LEN,
+            )
+            prompt = prompt[: self._MAX_PROMPT_LEN]
+        return prompt
 
     def _prompt_with_context(self, exchange: Exchange[Any]) -> str:
-        """Build prompt with exchange context for ReAct agent."""
+        """Build prompt with exchange context for ReAct agent.
+
+        Cycle 4 hardening: cap total prompt at _MAX_PROMPT_LEN.
+        """
         prompt = self.prompt_inline or ""
         body = exchange.in_message.body
         if isinstance(body, dict):
@@ -364,6 +384,13 @@ class AgentGraphProcessor(BaseAIProcessor):
             )
             if user_input:
                 prompt = f"{prompt}\n\nContext: {user_input}"
+        if len(prompt) > self._MAX_PROMPT_LEN:
+            import logging
+            logging.getLogger(__name__).warning(
+                "%s: composed prompt truncated from %d to %d chars (S227 cycle 4 hardening)",
+                self.name, len(prompt), self._MAX_PROMPT_LEN,
+            )
+            prompt = prompt[: self._MAX_PROMPT_LEN]
         return prompt
 
     def _build_payload(self, exchange: Exchange[Any]) -> dict[str, Any]:

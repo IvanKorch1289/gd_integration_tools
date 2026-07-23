@@ -86,6 +86,31 @@ class DryRunResponse(BaseModel):
 class _DSLConsoleFacade:
     """Адаптер для inline-выполнения DSL pipeline."""
 
+    # Cycle 4 swarm (AI-7 hardening): in-process token-bucket rate limit
+    # for the 3 public DSL console endpoints. No external dep (per D420) —
+    # simplest possible token-bucket (refills 10 tokens/min, max 10
+    # outstanding). For multi-instance you'd need Redis, but this is
+    # defensive in-process rate-limit that catches script-kiddie hammering.
+    _RATE_LIMIT = 10
+    _RATE_WINDOW_S = 60.0
+
+    def __init__(self) -> None:
+        import time
+        self._tokens = float(self._RATE_LIMIT)
+        self._last_refill = time.monotonic()
+
+    def _consume(self) -> bool:
+        import time
+        now = time.monotonic()
+        elapsed = now - self._last_refill
+        if elapsed >= self._RATE_WINDOW_S:
+            self._tokens = float(self._RATE_LIMIT)
+            self._last_refill = now
+        if self._tokens >= 1.0:
+            self._tokens -= 1.0
+            return True
+        return False
+
     async def execute_inline(
         self,
         *,
@@ -94,6 +119,11 @@ class _DSLConsoleFacade:
         headers: dict[str, Any] | None = None,
     ) -> InlineDSLResponse:
         """Выполняет DSL pipeline из YAML для отладки."""
+        if not self._consume():
+            return InlineDSLResponse(
+                status="error",
+                error=f"rate limit: max {self._RATE_LIMIT} requests per {int(self._RATE_WINDOW_S)}s",
+            )
         payload = payload or {}
         headers = headers or {}
         try:
