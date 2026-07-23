@@ -29,6 +29,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
+from src.backend.core.logging import get_logger
+
 __all__ = (
     "HitlAction",
     "HitlPendingSignal",
@@ -476,7 +478,7 @@ class HitlService:
         except (ImportError, AttributeError, RuntimeError) as exc:
             # Audit-sink best-effort: не должен ломать HITL-resolve.
             # Раньше было except Exception: pass — скрывало баги (V22 K-OP-1).
-            logging.getLogger("workflow.hitl").warning(
+            get_logger("workflow.hitl").warning(
                 "audit sink emit failed for signal_id=%s: %s", signal_id, exc
             )
 

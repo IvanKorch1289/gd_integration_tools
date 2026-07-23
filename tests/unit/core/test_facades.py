@@ -18,12 +18,10 @@ class TestFacadesImport:
     def test_timeout_retry_facades(self) -> None:
         from src.backend.core.facades import (
             with_timeout,
-            async_timeout,
             retry_async,
             default_retryable,
         )
         assert callable(with_timeout)
-        assert callable(async_timeout)
         assert callable(retry_async)
         assert isinstance(default_retryable(), tuple)
 

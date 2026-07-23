@@ -21,12 +21,13 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
-import json
+import orjson
 import pickle
 from typing import Any, Protocol
 
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.json_utils import dumps_bytes, loads
 
 __all__ = (
     "QueryResultCache",
@@ -86,7 +87,7 @@ class JsonSerializer:
         Returns:
             JSON bytes.
         """
-        return json.dumps(obj, ensure_ascii=False, default=str).encode("utf-8")
+        return dumps_bytes(obj, default=str)
 
     def loads(self, data: bytes) -> Any:
         """Deserialize JSON bytes to object.
@@ -97,7 +98,7 @@ class JsonSerializer:
         Returns:
             Deserialized object.
         """
-        return json.loads(data)
+        return loads(data)
 
 
 class OrjsonSerializer:
@@ -173,7 +174,11 @@ class QueryResultCache:
     ) -> str:
         normalized = " ".join(sql.split())
         param_hash = hashlib.sha256(
-            json.dumps(params, sort_keys=True, default=str).encode("utf-8")
+            orjson.dumps(
+                params,
+                option=orjson.OPT_SORT_KEYS | orjson.OPT_NON_STR_KEYS,
+                default=str,
+            )
         ).hexdigest()[:16]
         digest = hashlib.sha256(
             f"{profile}:{normalized}:{param_hash}".encode("utf-8")
@@ -254,7 +259,7 @@ class QueryResultCache:
         if not raw:
             return 0
         try:
-            keys: list[str] = json.loads(raw)
+            keys: list[str] = loads(raw)
         except Exception as exc:  # noqa: BLE001
             logger.warning("qrc_index_corrupt", idx_key=idx_key, exc=str(exc))
             await self._backend.delete(idx_key)
@@ -289,11 +294,11 @@ class QueryResultCache:
             idx_key = self._index_key(profile, table)
             raw = await self._backend.get(idx_key)
             try:
-                keys: list[str] = json.loads(raw) if raw else []
+                keys: list[str] = loads(raw) if raw else []
             except Exception:  # noqa: BLE001,S110
                 keys = []
             if key not in keys:
                 keys.append(key)
                 await self._backend.set(
-                    idx_key, json.dumps(keys).encode("utf-8"), ttl=None
+                    idx_key, dumps_bytes(keys), ttl=None
                 )

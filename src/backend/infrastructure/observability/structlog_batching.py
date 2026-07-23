@@ -39,15 +39,16 @@ Lessons из ``feedback_wave_7_performance.md``:
 from __future__ import annotations
 
 import asyncio
-import logging
 import time
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
+from src.backend.core.logging import get_logger
+
 __all__ = ("BatchedLogEvent", "BatchingStructlogWrapper", "get_batching_wrapper")
 
-_INTERNAL_LOG = logging.getLogger("infrastructure.observability.structlog_batching")
+_INTERNAL_LOG = get_logger("infrastructure.observability.structlog_batching")
 
 
 @dataclass

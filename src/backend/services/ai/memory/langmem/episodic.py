@@ -32,7 +32,7 @@ class EpisodicMemory:
         meta: dict[str, Any] | None = None,
     ) -> int:
         """Добавляет эпизод. Возвращает id записи."""
-        from src.backend.services.ai.langmem_models import LangMemEpisodic
+        from src.backend.core.domain.models.langmem_models import LangMemEpisodic
 
         async with self._session_factory() as session:
             row = LangMemEpisodic(
@@ -52,7 +52,7 @@ class EpisodicMemory:
         self, *, session_id: str | None = None, limit: int = 20
     ) -> list[dict[str, Any]]:
         """Возвращает последние эпизоды (опционально фильтр по session_id)."""
-        from src.backend.services.ai.langmem_models import LangMemEpisodic
+        from src.backend.core.domain.models.langmem_models import LangMemEpisodic
 
         async with self._session_factory() as session:
             from sqlalchemy import select as sa_select

@@ -1,8 +1,6 @@
-"""Сервис OrderKind (миграция из ядра — Sprint 7, R-V15-16).
+"""Сервис OrderKind (V11 plugin layout, R-V15-16).
 
-Каноническое расположение в V11 plugin layout. Старый модуль
-``src.backend.services.core.orderkinds`` сохраняется как backward-compat
-shim и эмитит DeprecationWarning.
+Каноническое расположение OrderKindService.
 """
 
 from __future__ import annotations

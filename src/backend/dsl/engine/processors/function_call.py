@@ -230,23 +230,7 @@ class CallFunctionProcessor(BaseProcessor):
 
         payload = self._resolve_payload(exchange)
 
-        # Sprint 40 W2: DI support via @inject or explicit inject list
-        if getattr(fn, "__inject_markers__", False) or self._inject:
-            from src.backend.dsl.di.container import Container
-
-            kwargs = Container.resolve_signature(fn, exchange=exchange, context=context)
-            # Override with payload if function has single positional arg
-            sig = __import__("inspect").signature(fn)
-            params = list(sig.parameters.items())
-            if len(params) >= 1 and params[0][0] not in kwargs:
-                kwargs[params[0][0]] = payload
-            elif len(params) >= 2 and params[1][0] not in kwargs:
-                kwargs[params[1][0]] = payload
-            else:
-                kwargs.setdefault("payload", payload)
-            result = fn(**kwargs)
-        else:
-            result = fn(payload)
+        result = fn(payload)
         if hasattr(result, "__await__"):
             result = await result
         exchange.set_property(self.result_property, result)

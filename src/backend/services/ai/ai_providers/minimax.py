@@ -1,9 +1,8 @@
-"""Sprint 170 M3 — MiniMax provider (OpenAI-compatible).
+"""MiniMax provider via litellm (B1_LITELLM).
 
-MiniMax M-series (minimax-m2, minimax-m2.5, MiniMax-Text-01). OpenAI-compatible API.
-Endpoint: https://api.minimax.chat/v1
-
-Uses OutboundHttpClient через WAF + capability gate.
+MiniMax M-series — OpenAI-compatible. Делегирует к OpenAIProvider,
+который использует ``litellm.acompletion`` / ``aembedding``
+с ``api_base`` = MiniMax endpoint.
 """
 from __future__ import annotations
 
@@ -16,7 +15,7 @@ from src.backend.services.ai.ai_providers.openai import OpenAIProvider
 class MiniMaxProvider:
     """MiniMax M-series — OpenAI-compatible Chinese LLM.
 
-    Ponytail: наследует OpenAIProvider, переопределяет только defaults.
+    Ponytail: наследует OpenAIProvider (litellm), переопределяет только defaults.
     """
 
     name = "minimax"
@@ -38,15 +37,15 @@ class MiniMaxProvider:
         )
 
     async def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> dict[str, Any]:
-        """Chat completion через MiniMax API."""
+        """Chat completion через MiniMax API (litellm)."""
         return await self._delegate.chat(messages, **kwargs)
 
     async def embeddings(self, texts: list[str], **kwargs: Any) -> list[list[float]]:
-        """Embeddings через MiniMax API."""
+        """Embeddings через MiniMax API (litellm)."""
         if not self.api_key:
             raise RuntimeError("MINIMAX_API_KEY not set")
         return await self._delegate.embeddings(texts, **kwargs)
 
-    async def extract_text(self, content: bytes, **kwargs: Any) -> str:
-        """Extract text (delegates to OpenAI)."""
-        return await self._delegate.extract_text(content, **kwargs)
+    def extract_text(self, response: dict[str, Any]) -> str:
+        """litellm нормализует ответ к OpenAI-формату."""
+        return self._delegate.extract_text(response)

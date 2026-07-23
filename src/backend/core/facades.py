@@ -18,7 +18,6 @@ from src.backend.core.di.providers.ai import get_pii_tokenizer_provider
 
 # Timeout + Retry (core/utils, no circular issues)
 from src.backend.core.utils.timeout_helper import (
-    async_timeout,
     with_timeout,
 )
 from src.backend.core.utils.retry_helper import (
@@ -35,7 +34,6 @@ __all__ = (
     "get_pii_tokenizer_provider",
     # Timeout (eager)
     "with_timeout",
-    "async_timeout",
     # Retry (eager)
     "retry_async",
     "default_retryable",

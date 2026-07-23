@@ -8,6 +8,8 @@ Wave C поставляет только Protocol + Pydantic-модели + in-m
 — Wave D, в `infrastructure/workflow/`.
 """
 
+from __future__ import annotations
+
 from typing import Any
 
 from src.backend.core.workflow.backend import (

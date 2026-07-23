@@ -184,8 +184,6 @@ src/backend/dsl/engine/processor_pool.py:45:4 PoolMetrics.avg_duration_ms
 src/backend/dsl/engine/processor_pool.py:51:4 PoolMetrics.inc_submitted
 src/backend/dsl/engine/processor_pool.py:55:4 PoolMetrics.inc_completed
 src/backend/dsl/engine/processor_pool.py:62:4 PoolMetrics.snapshot
-src/backend/dsl/engine/processors/ai/banking_processors/base.py:148:4 _BankingAIProcessor.to_spec
-src/backend/dsl/engine/processors/ai/banking_processors/base.py:82:4 _BankingAIProcessor.process
 src/backend/dsl/engine/processors/ai/cache_processor.py:37:4 CacheProcessor.process
 src/backend/dsl/engine/processors/ai/cachewrite_processor.py:37:4 CacheWriteProcessor.process
 src/backend/dsl/engine/processors/ai/guardrails_processor.py:38:4 GuardrailsProcessor.process
@@ -218,8 +216,6 @@ src/backend/dsl/engine/processors/batch.py:195:4 BatchUpdateProcessor.to_spec
 src/backend/dsl/engine/processors/batch.py:228:4 BatchDeleteProcessor.process
 src/backend/dsl/engine/processors/batch.py:247:4 BatchDeleteProcessor.to_spec
 src/backend/dsl/engine/processors/batch.py:76:4 BatchInsertProcessor.process
-src/backend/dsl/engine/processors/calendar_ics.py:140:4 IcsCalendarProcessor.to_spec
-src/backend/dsl/engine/processors/calendar_ics.py:54:4 IcsCalendarProcessor.process
 src/backend/dsl/engine/processors/components/databasequeryprocessor.py:49:4 DatabaseQueryProcessor.process
 src/backend/dsl/engine/processors/components/filereadprocessor.py:36:4 FileReadProcessor.process
 src/backend/dsl/engine/processors/components/filewriteprocessor.py:38:4 FileWriteProcessor.process
@@ -245,8 +241,6 @@ src/backend/dsl/engine/processors/data_store.py:86:4 DataStoreDeleteProcessor.to
 src/backend/dsl/engine/processors/db_call_procedure.py:142:4 DbCallProcedureProcessor.process
 src/backend/dsl/engine/processors/db_call_procedure.py:172:4 DbCallProcedureProcessor.to_spec
 src/backend/dsl/engine/processors/db_crud.py:195:4 DbCrudProcessor.process
-src/backend/dsl/engine/processors/desktop_pyautogui.py:120:4 DesktopPyAutoGUIProcessor.to_spec
-src/backend/dsl/engine/processors/desktop_pyautogui.py:80:4 DesktopPyAutoGUIProcessor.process
 src/backend/dsl/engine/processors/documents.py:160:4 RenderDocxProcessor.process
 src/backend/dsl/engine/processors/documents.py:186:4 RenderDocxProcessor.to_spec
 src/backend/dsl/engine/processors/documents.py:211:4 RenderXlsxProcessor.process

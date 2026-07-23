@@ -30,7 +30,7 @@ class ProceduralMemory:
         tenant: str | None = None,
     ) -> int:
         """Сохраняет процедурную запись. Возвращает id."""
-        from src.backend.services.ai.langmem_models import LangMemProcedural
+        from src.backend.core.domain.models.langmem_models import LangMemProcedural
 
         async with self._session_factory() as session:
             row = LangMemProcedural(
@@ -43,7 +43,7 @@ class ProceduralMemory:
 
     async def recall(self, *, limit: int = 20) -> list[dict[str, Any]]:
         """Возвращает последние процедурные записи (по updated_at desc)."""
-        from src.backend.services.ai.langmem_models import LangMemProcedural
+        from src.backend.core.domain.models.langmem_models import LangMemProcedural
 
         async with self._session_factory() as session:
             from sqlalchemy import select as sa_select

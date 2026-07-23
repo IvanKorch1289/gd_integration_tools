@@ -115,7 +115,6 @@ def test_no_new_circuit_breaker_files_since_s93() -> None:
     known_locations = {
         "src/backend/core/resilience/breaker.py",  # canonical
         "src/backend/core/utils/circuit_breaker.py",  # deprecated shim
-        "src/backend/infrastructure/clients/external/circuit_breakers.py",  # facade
         "src/backend/entrypoints/middlewares/circuit_breaker.py",  # per-route middleware
     }
     found: list[Path] = []

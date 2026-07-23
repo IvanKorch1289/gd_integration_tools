@@ -80,7 +80,7 @@ async def lifespan(app: FastAPI):
 
     startup_completed = False
     try:
-        await run_startup(app, task_registry)
+        await run_startup(app)
         startup_completed = True
         app.state.infrastructure_ready = True
         app_logger.info("Приложение успешно запущено")

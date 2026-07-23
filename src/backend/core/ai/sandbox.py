@@ -25,7 +25,25 @@ logger = get_logger(__name__)
 if TYPE_CHECKING:
     from src.backend.core.ai.workspace_manager import WorkspaceHandle
 
-__all__ = ("CodeSandbox", "NoOpSandbox", "SandboxResult")
+
+class BudgetExceededError(Exception):
+    """Raised when agent token/cost budget is exhausted.
+
+    Attributes:
+        budget_type: Type of budget exceeded (``token`` or ``cost``).
+        limit: The budget limit that was exceeded.
+        consumed: Actual consumption that triggered the error.
+    """
+
+    def __init__(self, *, budget_type: str, limit: float, consumed: float) -> None:
+        self.budget_type = budget_type
+        self.limit = limit
+        self.consumed = consumed
+        super().__init__(
+            f"{budget_type} budget exceeded: consumed {consumed} > limit {limit}"
+        )
+
+__all__ = ("BudgetExceededError", "CodeSandbox", "NoOpSandbox", "SandboxResult")
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +73,8 @@ class CodeSandbox(Protocol):
         code: str,
         *,
         timeout_s: float = 30.0,
+        token_budget: int = 4096,
+        cost_budget_usd: float = 0.10,
         files: Mapping[str, bytes] | None = None,
         workspace: WorkspaceHandle | None = None,
     ) -> SandboxResult:
@@ -63,6 +83,10 @@ class CodeSandbox(Protocol):
         Args:
             code: Тело Python-скрипта.
             timeout_s: Жёсткий лимит времени исполнения (секунды).
+            token_budget: Максимальное количество токенов для агента.
+                При превышении выбрасывается ``BudgetExceededError``.
+            cost_budget_usd: Максимальная стоимость исполнения (USD).
+                При превышении выбрасывается ``BudgetExceededError``.
             files: Опц. дополнительные файлы для пробрасывания внутрь
                 sandbox'а в момент старта (``{relative_path: bytes}``).
             workspace: Опц. handle, в который sandbox обязан сохранить
@@ -72,6 +96,7 @@ class CodeSandbox(Protocol):
             :class:`SandboxResult`.
 
         Raises:
+            BudgetExceededError: Превышен token или cost budget.
             CapabilityDeniedError: Caller не задекларировал ``code.execute``.
             RuntimeError: Sandbox-провайдер недоступен (NoOp).
         """
@@ -91,6 +116,8 @@ class NoOpSandbox:
         code: str,
         *,
         timeout_s: float = 30.0,
+        token_budget: int = 4096,
+        cost_budget_usd: float = 0.10,
         files: Mapping[str, bytes] | None = None,
         workspace: WorkspaceHandle | None = None,
     ) -> SandboxResult:
@@ -104,6 +131,8 @@ class NoOpSandbox:
         Args:
             code: Исходный код Python для исполнения (игнорируется).
             timeout_s: Максимальное время исполнения (игнорируется).
+            token_budget: Лимит токенов (игнорируется).
+            cost_budget_usd: Лимит стоимости (игнорируется).
             files: Дополнительные файлы для контекста (игнорируется).
             workspace: Handle на workspace для AI Safety (игнорируется).
 

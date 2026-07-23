@@ -32,10 +32,3 @@ class TestTimeoutHelper:
             await asyncio.sleep(0.5)
         result = await with_timeout(medium(), timeout=2.0, slow_threshold=0.1, op="test_op")
         assert result is None
-
-    @pytest.mark.asyncio
-    async def test_async_timeout_context_manager(self) -> None:
-        """Context manager for inline use (soft deadline — does not raise)."""
-        from src.backend.core.utils.timeout_helper import async_timeout
-        async with async_timeout(2.0):
-            await asyncio.sleep(0.01)

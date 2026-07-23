@@ -33,6 +33,18 @@ from src.backend.dsl.engine.processors.ai_banking.identity import (  # S50 W3: r
     KycAmlResult,
     KycAmlVerifyProcessor,
 )
+from src.backend.dsl.engine.processors.ai_banking.loan import (  # B3: migrated from S59
+    LoanEligibilityProcessor,
+    LoanEligibilityResult,
+)
+from src.backend.dsl.engine.processors.ai_banking.risk import (  # B3: migrated from S59
+    RiskAssessmentProcessor,
+    RiskAssessmentResult,
+)
+from src.backend.dsl.engine.processors.ai_banking.segmentation import (  # B3: migrated from S59
+    CustomerSegmentationProcessor,
+    CustomerSegmentationResult,
+)
 
 __all__ = (
     "_BankingAIProcessor",
@@ -42,6 +54,8 @@ __all__ = (
     "CreditScoringResult",
     "CreditScoringRagProcessor",
     "CustomerChatbotProcessor",
+    "CustomerSegmentationProcessor",
+    "CustomerSegmentationResult",
     "DocumentClassifierProcessor",
     "DocumentClassifierResult",
     "FinDocOcrLlmProcessor",
@@ -49,5 +63,9 @@ __all__ = (
     "FrancotypingResult",
     "KycAmlResult",
     "KycAmlVerifyProcessor",
+    "LoanEligibilityProcessor",
+    "LoanEligibilityResult",
+    "RiskAssessmentProcessor",
+    "RiskAssessmentResult",
     "TransactionCategorizerProcessor",
 )

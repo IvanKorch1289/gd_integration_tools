@@ -33,14 +33,14 @@ class InfraMixin:
         on_block: str = "warn",
         categories: list[str] | None = None,
     ) -> RouteBuilder:
-        """Content safety через Llama Guard 3 (S27 W2).
+        """Content safety через LLM Guard (S27 W2).
 
         Args:
             stage: ``"input"`` (проверка prompt) или ``"output"`` (completion).
             source_property: Dot-path к тексту. Default зависит от ``stage``.
             on_block: ``"dlq"`` / ``"fail"`` / ``"warn"`` — политика при unsafe.
             categories: Опц. список категорий
-                (default OAI moderation set от LlamaGuardRuntime).
+                (default scanner set от LLMGuardClient).
 
         Example::
 

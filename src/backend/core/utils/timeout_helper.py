@@ -18,8 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import AsyncIterator, Awaitable
-from contextlib import asynccontextmanager
+from collections.abc import Awaitable
 from typing import TypeVar
 
 from src.backend.core.logging import get_logger
@@ -28,7 +27,7 @@ _logger = get_logger(__name__)
 
 T = TypeVar("T")
 
-__all__ = ("with_timeout", "async_timeout")
+__all__ = ("with_timeout",)
 
 
 async def with_timeout(
@@ -68,26 +67,3 @@ async def with_timeout(
         elapsed = time.monotonic() - start
         _logger.warning("timeout op=%s elapsed=%.3fs limit=%.3fs", op or "?", elapsed, timeout)
         raise
-
-
-@asynccontextmanager
-async def async_timeout(timeout: float) -> AsyncIterator[None]:
-    """Context manager для inline-использования.
-
-    Example::
-
-        async with async_timeout(2.0):
-            await asyncio.sleep(1.0)
-    """
-    task = asyncio.current_task()
-    if task is None:
-        raise RuntimeError("async_timeout must be used inside a task")
-    loop = asyncio.get_running_loop()
-    deadline = loop.time() + timeout
-    try:
-        yield
-    finally:
-        if loop.time() > deadline:
-            # Note: we cannot cancel self; this is a soft check.
-            # For HARD timeout use ``with_timeout()`` instead.
-            _logger.debug("async_timeout: soft deadline exceeded (%.3fs)", timeout)

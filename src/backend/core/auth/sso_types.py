@@ -7,7 +7,6 @@ Per ADR-0054 §2: per-tenant IdP configuration в Vault с
 
 * :class:`SsoRegistry` (read-through cache от Vault) — S125 W2.
 * :class:`require_sso_auth` decorator — S125 W3.
-* ``services/admin/sso.py`` (backward-compat shim) — S125 W4.
 
 Public API (экспортируется из ``core.auth``):
 

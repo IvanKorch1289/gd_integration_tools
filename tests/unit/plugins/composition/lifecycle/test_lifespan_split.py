@@ -102,6 +102,9 @@ def signals_module() -> ModuleType:
 def startup_module() -> ModuleType:
     """Load startup.py isolated."""
     _stub_broken_packages()
+    # Pre-load outbox_setup.py (startup.py imports register_outbox_dispatcher from it).
+    _outbox_setup = _load_isolated("outbox_setup.py")
+    sys.modules["src.backend.plugins.composition.lifecycle.outbox_setup"] = _outbox_setup
     return _load_isolated("startup.py")
 
 
@@ -144,7 +147,7 @@ def test_lifespan_reexports_startup_function(
 
 
 def test_startup_exposes_run_startup(startup_module: ModuleType) -> None:
-    """``startup.py`` экспортирует ``run_startup(app, task_registry)``."""
+    """``startup.py`` экспортирует ``run_startup(app)``."""
     assert hasattr(startup_module, "run_startup")
     assert callable(startup_module.run_startup)
     # Проверяем signature через inspect.
@@ -152,7 +155,7 @@ def test_startup_exposes_run_startup(startup_module: ModuleType) -> None:
 
     sig = inspect.signature(startup_module.run_startup)
     params = list(sig.parameters.keys())
-    assert params == ["app", "task_registry"]
+    assert params == ["app"]
 
 
 def test_startup_exposes_outbox_dispatcher(startup_module: ModuleType) -> None:

@@ -1,7 +1,6 @@
 """TokenStreamLLMProcessor — token-level стриминг LLM (К4 MVP, Шаг 6).
 
-Параллельный с :class:`dsl.engine.processors.ml_inference.StreamingLLMProcessor`
-процессор поверх :class:`LiteLLMGateway` с native streaming. Поддерживает
+Процессор поверх :class:`LiteLLMGateway` с native streaming. Поддерживает
 output_mode = ``sse | ws | webhook``. На отмене (CancelledError) корректно
 закрывает upstream-stream через ``stream.aclose()``.
 

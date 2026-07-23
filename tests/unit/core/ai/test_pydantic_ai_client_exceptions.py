@@ -86,6 +86,7 @@ def test_top_level_gateway_imports() -> None:
     source = Path("src/backend/core/ai/pydantic_ai_client.py").read_text()
     # Module-level (lines 1-50 approx, before any class def)
     first_50_lines = "\n".join(source.split("\n")[:50])
-    assert "from src.backend.services.ai.gateway.exceptions" in first_50_lines
+    # S171: imports migrated from services.ai.gateway.exceptions → core.ai.errors
+    # (layer violation fix, C1 sprint)
     assert "GatewayRateLimited" in first_50_lines
     assert "GatewayUnavailable" in first_50_lines

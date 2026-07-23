@@ -1,4 +1,4 @@
-"""Core EIP-методы: transform / filter / cdc.
+"""Core EIP-методы: transform / filter.
 
 Sprint 60 W4 — split из eip.py (1354 LOC).
 """
@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any, cast
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors import (
-    CDCProcessor,
     FilterProcessor,
     TransformProcessor,
 )
@@ -23,7 +22,7 @@ __all__ = ("CoreEIPsMixin",)
 
 
 class CoreEIPsMixin(EIPMixinBase):
-    """Базовые EIP-паттерны: transform, filter, cdc."""
+    """Базовые EIP-паттерны: transform, filter."""
 
     def transform(self, expression: str) -> "RouteBuilder":
         """Трансформирует body через JMESPath-выражение."""
@@ -37,36 +36,4 @@ class CoreEIPsMixin(EIPMixinBase):
         return cast(
             "RouteBuilder",
             self._add(FilterProcessor(predicate=predicate)),  # type: ignore[attr-defined]
-        )
-
-    def cdc(
-        self,
-        profile: str,
-        tables: list[str],
-        target_action: str,
-        *,
-        strategy: str = "polling",
-        interval: float = 5.0,
-        timestamp_column: str = "updated_at",
-        batch_size: int = 100,
-        channel: str | None = None,
-    ) -> "RouteBuilder":
-        """Change Data Capture — подписка на изменения в БД.
-
-        strategy: polling (любая БД), listen_notify (PostgreSQL), logminer (Oracle).
-        """
-        return cast(
-            "RouteBuilder",
-            self._add(  # type: ignore[attr-defined]
-                CDCProcessor(
-                    profile=profile,
-                    tables=tables,
-                    target_action=target_action,
-                    strategy=strategy,
-                    interval=interval,
-                    timestamp_column=timestamp_column,
-                    batch_size=batch_size,
-                    channel=channel,
-                )
-            ),
         )

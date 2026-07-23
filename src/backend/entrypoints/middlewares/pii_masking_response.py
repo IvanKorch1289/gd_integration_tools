@@ -42,7 +42,7 @@ from starlette.types import ASGIApp
 
 from src.backend.core.logging import get_logger
 from src.backend.core.security.pii_masker import default_masker
-from src.backend.core.utils.async_helpers import AsyncChunkIterator
+from src.backend.core.utils.async_helpers import async_chunk_iterator
 
 __all__ = ("PIIMaskingResponseMiddleware",)
 
@@ -109,12 +109,12 @@ class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
                 exc,
             )
             body_iter: Any = response
-            body_iter.body_iterator = AsyncChunkIterator([body])
+            body_iter.body_iterator = async_chunk_iterator([body])
             return response
 
         response.headers["content-length"] = str(len(masked))
         body_iter = response
-        body_iter.body_iterator = AsyncChunkIterator([masked])
+        body_iter.body_iterator = async_chunk_iterator([masked])
         return response
 
     # ----------------------------------------------------------------- helpers

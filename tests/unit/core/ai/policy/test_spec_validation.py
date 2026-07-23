@@ -145,3 +145,132 @@ def test_poc_yaml_loads_into_spec() -> None:
     assert len(policy.input_guards) == 2
     assert policy.memory is not None
     assert policy.memory.tenant_isolation is True
+
+
+# ─── S172 M7.1 (ARC-010) typed-policy DSL hardening tests ─────────────
+
+
+class TestStrictExtraForbid:
+    """``extra="forbid"`` отклоняет typos в YAML policy."""
+
+    def test_unknown_field_in_aipolicyspec_rejected(self) -> None:
+        """``unknown_typo_field`` → ValidationError."""
+        from src.backend.core.ai.policy.spec import AIPolicySpec
+
+        spec_kwargs = {
+            "name": "test",
+            "version": 1,
+            "workflow_pattern": "wf_*",
+            "tenant_pattern": "*",
+            "model_router": {"primary": "gpt-4o-mini"},
+            "budget": {},
+            "audit": {},
+            "tools": {"whitelist": [], "blacklist": []},
+        }
+        with pytest.raises(ValidationError):
+            AIPolicySpec.model_validate(
+                {**spec_kwargs, "unknown_typo_field": "oops"},
+            )
+
+    def test_unknown_field_in_budgetspec_rejected(self) -> None:
+        """``BudgetSpec.cost`` (typo для ``max_cost_usd``) → reject."""
+        from src.backend.core.ai.policy.spec import BudgetSpec
+
+        with pytest.raises(ValidationError):
+            BudgetSpec.model_validate({"cost": 0.10})
+
+    def test_unknown_field_in_toolspec_rejected(self) -> None:
+        """``ToolsSpec.foo`` (typo) → reject."""
+        from src.backend.core.ai.policy.spec import ToolsSpec
+
+        with pytest.raises(ValidationError):
+            ToolsSpec.model_validate({"foo": "bar"})
+
+
+class TestCrossFieldConsistency:
+    """Cross-field валидация (ARC-010 M7.1) — internal invariants."""
+
+    def test_tools_whitelist_blacklist_intersection_rejected(self) -> None:
+        """Один tool в whitelist И blacklist → reject."""
+        from src.backend.core.ai.policy.spec import AIPolicySpec
+
+        spec_kwargs = {
+            "name": "test",
+            "version": 1,
+            "workflow_pattern": "wf_*",
+            "tenant_pattern": "*",
+            "model_router": {"primary": "gpt-4o-mini"},
+            "budget": {},
+            "audit": {},
+        }
+        with pytest.raises(ValidationError, match="tools.conflict"):
+            AIPolicySpec.model_validate(
+                {
+                    **spec_kwargs,
+                    "tools": {
+                        "whitelist": ["allowed_a", "shared"],
+                        "blacklist": ["denied", "shared"],
+                    },
+                },
+            )
+
+    def test_tools_no_intersection_accepted(self) -> None:
+        """whitelist и blacklist disjoint → accept."""
+        from src.backend.core.ai.policy.spec import AIPolicySpec
+
+        spec = AIPolicySpec.model_validate(
+            {
+                "name": "test",
+                "version": 1,
+                "workflow_pattern": "wf_*",
+                "tenant_pattern": "*",
+                "model_router": {"primary": "gpt-4o-mini"},
+                "budget": {},
+                "audit": {},
+                "tools": {
+                    "whitelist": ["a", "b"],
+                    "blacklist": ["c", "d"],
+                },
+            },
+        )
+        assert spec.tools.whitelist == ["a", "b"]
+
+    def test_empty_primary_rejected(self) -> None:
+        """``model_router.primary = ""`` → reject (no empty model)."""
+        from src.backend.core.ai.policy.spec import AIPolicySpec
+
+        spec_kwargs = {
+            "name": "test",
+            "version": 1,
+            "workflow_pattern": "wf_*",
+            "tenant_pattern": "*",
+            "model_router": {"primary": ""},
+            "budget": {},
+            "audit": {},
+            "tools": {},
+        }
+        with pytest.raises(ValidationError, match="model_router.primary"):
+            AIPolicySpec.model_validate(spec_kwargs)
+
+    def test_budget_prompt_less_than_completion_rejected(self) -> None:
+        """``max_tokens_prompt < max_tokens_completion`` → reject."""
+        from src.backend.core.ai.policy.spec import AIPolicySpec
+
+        with pytest.raises(
+            ValidationError, match="budget.inconsistent_tokens"
+        ):
+            AIPolicySpec.model_validate(
+                {
+                    "name": "test",
+                    "version": 1,
+                    "workflow_pattern": "wf_*",
+                    "tenant_pattern": "*",
+                    "model_router": {"primary": "gpt-4o-mini"},
+                    "budget": {
+                        "max_tokens_prompt": 1000,
+                        "max_tokens_completion": 2000,
+                    },
+                    "audit": {},
+                    "tools": {},
+                },
+            )

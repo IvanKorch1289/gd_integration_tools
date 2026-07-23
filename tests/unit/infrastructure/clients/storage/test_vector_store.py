@@ -58,17 +58,3 @@ def test_qdrant_class_importable() -> None:
     )
 
     assert QdrantVectorStore is not None
-
-
-def test_chroma_class_importable() -> None:
-    from src.backend.infrastructure.clients.storage.vector_store import (
-        ChromaVectorStore,
-    )
-
-    assert ChromaVectorStore is not None
-
-
-def test_faiss_class_importable() -> None:
-    from src.backend.infrastructure.clients.storage.vector_store import FAISSVectorStore
-
-    assert FAISSVectorStore is not None

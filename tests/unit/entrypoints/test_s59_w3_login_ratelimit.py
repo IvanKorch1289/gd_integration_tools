@@ -102,7 +102,7 @@ async def test_check_ip_rate_limit_ok() -> None:
     )
 
     with patch(
-        "src.backend.infrastructure.resilience.unified_rate_limiter.get_rate_limiter",
+        "src.backend.core.resilience.get_rate_limiter",
         return_value=mock_limiter,
     ):
         req = _build_request(client_host="1.2.3.4")
@@ -122,7 +122,7 @@ async def test_check_ip_rate_limit_exceeded_raises_429() -> None:
     )
 
     with patch(
-        "src.backend.infrastructure.resilience.unified_rate_limiter.get_rate_limiter",
+        "src.backend.core.resilience.get_rate_limiter",
         return_value=mock_limiter,
     ):
         req = _build_request(client_host="9.9.9.9")
@@ -139,7 +139,7 @@ async def test_check_ip_rate_limit_backend_unavailable_503() -> None:
     mock_limiter.check = AsyncMock(side_effect=RuntimeError("redis connection refused"))
 
     with patch(
-        "src.backend.infrastructure.resilience.unified_rate_limiter.get_rate_limiter",
+        "src.backend.core.resilience.get_rate_limiter",
         return_value=mock_limiter,
     ):
         req = _build_request(client_host="5.5.5.5")
@@ -167,7 +167,7 @@ async def test_check_username_rate_limit_ok() -> None:
     )
 
     with patch(
-        "src.backend.infrastructure.resilience.unified_rate_limiter.get_rate_limiter",
+        "src.backend.core.resilience.get_rate_limiter",
         return_value=mock_limiter,
     ):
         await check_username_rate_limit("alice")
@@ -185,7 +185,7 @@ async def test_check_username_rate_limit_exceeded() -> None:
     )
 
     with patch(
-        "src.backend.infrastructure.resilience.unified_rate_limiter.get_rate_limiter",
+        "src.backend.core.resilience.get_rate_limiter",
         return_value=mock_limiter,
     ):
         with pytest.raises(LoginRateLimitExceeded) as exc_info:
@@ -287,7 +287,7 @@ async def test_tarpit_delays_response_on_exceeded(
     )
 
     with patch(
-        "src.backend.infrastructure.resilience.unified_rate_limiter.get_rate_limiter",
+        "src.backend.core.resilience.get_rate_limiter",
         return_value=mock_limiter,
     ):
         req = _build_request(client_host="1.1.1.1")

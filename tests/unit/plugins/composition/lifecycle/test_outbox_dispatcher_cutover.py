@@ -55,7 +55,7 @@ def _load_lifespan_isolated() -> ModuleType:
         "src.backend.plugins.composition.lifecycle": True,
         "src.backend.plugins.composition.lifecycle.bootstrap": False,  # module
         "src.backend.plugins.composition.lifecycle.protocols": False,  # module
-        "src.backend.plugins.composition.lifecycle.v11": False,  # module
+        "src.backend.plugins.composition.lifecycle.plugin_loader": False,  # module
         "src.backend.plugins.composition.lifecycle.watchers": False,  # module
     }
     for mod_name, is_package in broken_pkgs_and_subs.items():
@@ -79,10 +79,10 @@ def _load_lifespan_isolated() -> ModuleType:
         "src.backend.plugins.composition.lifecycle.bootstrap.register_storage_singletons": MagicMock(),
         "src.backend.plugins.composition.lifecycle.bootstrap.validate_cache_layers": MagicMock(),
         "src.backend.plugins.composition.lifecycle.protocols.register_protocol_providers": MagicMock(),
-        "src.backend.plugins.composition.lifecycle.v11.bootstrap_v11_plugin_loader": AsyncMock(),
-        "src.backend.plugins.composition.lifecycle.v11.bootstrap_v11_route_loader": AsyncMock(),
-        "src.backend.plugins.composition.lifecycle.v11.shutdown_plugin_loaders": AsyncMock(),
-        "src.backend.plugins.composition.lifecycle.v11.start_v11_hot_reload": AsyncMock(),
+        "src.backend.plugins.composition.lifecycle.plugin_loader.bootstrap_v11_plugin_loader": AsyncMock(),
+        "src.backend.plugins.composition.lifecycle.plugin_loader.bootstrap_v11_route_loader": AsyncMock(),
+        "src.backend.plugins.composition.lifecycle.plugin_loader.shutdown_plugin_loaders": AsyncMock(),
+        "src.backend.plugins.composition.lifecycle.plugin_loader.start_v11_hot_reload": AsyncMock(),
         "src.backend.plugins.composition.lifecycle.watchers.start_dsl_yaml_watcher": MagicMock(),
         "src.backend.plugins.composition.lifecycle.watchers.stop_dsl_yaml_watcher": MagicMock(),
     }
@@ -114,8 +114,8 @@ def _load_lifespan_isolated() -> ModuleType:
             setattr(_existing, full_name.rsplit(".", 1)[-1], stub_obj)
 
     # 4. Загружаем startup.py напрямую (минуя __init__.py).
-    # startup.py содержит реальную ``_register_outbox_dispatcher`` функцию.
-    # Это НОВЫЙ home после S111 W2 рефактора lifespan.py.
+    # startup.py содержит реальную ``register_outbox_dispatcher`` функцию
+    # (в outbox_setup.py), ре-экспортируемую как ``_register_outbox_dispatcher``.
     lifecycle_dir = (
         Path(__file__).parent.parent.parent.parent.parent.parent
         / "src"
@@ -124,6 +124,18 @@ def _load_lifespan_isolated() -> ModuleType:
         / "composition"
         / "lifecycle"
     )
+
+    # 4a. Pre-load outbox_setup.py (startup.py imports register_outbox_dispatcher from it).
+    outbox_setup_path = lifecycle_dir / "outbox_setup.py"
+    outbox_spec = importlib.util.spec_from_file_location(
+        "src.backend.plugins.composition.lifecycle.outbox_setup", outbox_setup_path
+    )
+    assert outbox_spec is not None and outbox_spec.loader is not None
+    outbox_module = importlib.util.module_from_spec(outbox_spec)
+    sys.modules["src.backend.plugins.composition.lifecycle.outbox_setup"] = outbox_module
+    outbox_spec.loader.exec_module(outbox_module)
+
+    # 5. Загружаем startup.py напрямую (минуя __init__.py).
     startup_path = lifecycle_dir / "startup.py"
     spec = importlib.util.spec_from_file_location("_startup_isolated", startup_path)
     assert spec is not None and spec.loader is not None
@@ -133,7 +145,7 @@ def _load_lifespan_isolated() -> ModuleType:
     # ``from .startup import _register_outbox_dispatcher`` нашёл его.
     sys.modules["src.backend.plugins.composition.lifecycle.startup"] = startup_module
 
-    # 5. Загружаем lifespan.py напрямую (минуя __init__.py).
+    # 6. Загружаем lifespan.py напрямую (минуя __init__.py).
     # lifespan.py ре-экспортирует ``_register_outbox_dispatcher`` из startup.
     lifespan_path = lifecycle_dir / "lifespan.py"
     spec = importlib.util.spec_from_file_location("_lifespan_isolated", lifespan_path)

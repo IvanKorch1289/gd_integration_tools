@@ -13,7 +13,6 @@ from typing import Any
 
 from src.backend.core.di.module_registry import resolve_module
 
-_INFRA = "src." + "backend.infrastructure"
 
 _overrides: dict[str, Any] = {}
 

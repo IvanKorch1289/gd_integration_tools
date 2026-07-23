@@ -1,8 +1,7 @@
-"""S68 W4 - openai.py part of ai_providers decomp.
+"""OpenAI provider via litellm (B1_LITELLM).
 
-OpenAI provider (extract_text, embeddings, chat).
-
-Classes: OpenAIProvider.
+litellm нормализует вызов и ответ к OpenAI-формату для любого совместимого
+backend'а (OpenAI, vLLM, LocalAI, OpenRouter, MiniMax, и т.д.).
 """
 
 from __future__ import annotations
@@ -10,21 +9,17 @@ from __future__ import annotations
 import os
 from typing import Any
 
-import httpx
 
-from src.backend.core.net import OutboundHttpClient
+def _litellm_model(model: str) -> str:
+    """Добавляет ``openai/`` prefix если его нет — для litellm routing."""
+    return model if "/" in model else f"openai/{model}"
 
 
 class OpenAIProvider:
-    """OpenAI GPT-провайдер.
+    """OpenAI GPT-провайдер через ``litellm.acompletion`` / ``aembedding``.
 
     Requires: OPENAI_API_KEY env (+ опционально OPENAI_BASE_URL для azure/
     openai-compatible прокси вроде LiteLLM / vLLM).
-    Models: gpt-4o / gpt-4o-mini / gpt-4-turbo.
-
-    Поддержка tool-calling и streaming идентична OpenAI-API, так что провайдер
-    работает с любым openai-compatible backend'ом (LocalAI, vLLM, LiteLLM,
-    OpenRouter, Ollama openai-endpoint).
     """
 
     name = "openai"
@@ -43,7 +38,7 @@ class OpenAIProvider:
         ).rstrip("/")
 
     def extract_text(self, response: dict[str, Any]) -> str:
-        """OpenAI-format: ``choices[0].message.content``."""
+        """litellm нормализует все ответы к OpenAI-формату."""
         try:
             choices = response.get("choices", [])
             if choices:
@@ -56,21 +51,22 @@ class OpenAIProvider:
     async def embeddings(
         self, texts: list[str], *, model: str | None = None
     ) -> list[list[float]]:
-        """Embeddings через ``/embeddings`` endpoint (batch-запрос)."""
+        """Embeddings через ``litellm.aembedding``."""
         if not self.api_key:
             raise RuntimeError("OPENAI_API_KEY not set")
-        payload = {"model": model or "text-embedding-3-small", "input": texts}
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        async with OutboundHttpClient(timeout=httpx.Timeout(60)) as client:
-            resp = await client.post(
-                f"{self.base_url}/embeddings", headers=headers, json=payload
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return [item["embedding"] for item in data.get("data", [])]
+        import litellm
+
+        response = await litellm.aembedding(
+            model=_litellm_model(model or "text-embedding-3-small"),
+            input=texts,
+            api_key=self.api_key,
+            api_base=self.base_url,
+        )
+        data = getattr(response, "data", None) or response.get("data", [])
+        return [
+            list(item["embedding"] if isinstance(item, dict) else item.embedding)
+            for item in data
+        ]
 
     async def chat(
         self,
@@ -82,27 +78,21 @@ class OpenAIProvider:
         tools: list[dict] | None = None,
         stream: bool = False,
     ) -> dict[str, Any]:
-        """Chat completion через OpenAI / openai-compatible API."""
+        """Chat completion через ``litellm.acompletion``."""
         if not self.api_key:
             raise RuntimeError("OPENAI_API_KEY not set")
+        import litellm
 
-        payload: dict[str, Any] = {
-            "model": model or self.model,
+        kwargs: dict[str, Any] = {
+            "model": _litellm_model(model or self.model),
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature,
             "stream": stream,
+            "api_key": self.api_key,
+            "api_base": self.base_url,
         }
         if tools:
-            payload["tools"] = tools
-
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        async with OutboundHttpClient(timeout=httpx.Timeout(60)) as client:
-            resp = await client.post(
-                f"{self.base_url}/chat/completions", headers=headers, json=payload
-            )
-            resp.raise_for_status()
-            return resp.json()
+            kwargs["tools"] = tools
+        response = await litellm.acompletion(**kwargs)
+        return response.model_dump() if hasattr(response, "model_dump") else dict(response)

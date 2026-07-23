@@ -1,6 +1,6 @@
 """Capability-checked facade для database initializer (S124 W1 bonus).
 
-ADR-0207: services/ai/langmem_service.py импортирует ``get_db_initializer``
+ADR-0207: services/ai/memory/langmem_service.py импортирует ``get_db_initializer``
 из ``infrastructure.database.session_manager`` для доступа к
 ``async_session_maker`` (private attr, не module-level export).
 """

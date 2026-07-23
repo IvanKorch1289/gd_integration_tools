@@ -34,7 +34,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from advanced_alchemy.repository import SQLAlchemyAsyncRepository
 
-    from src.backend.services.ai.langmem_models import (
+    from src.backend.core.domain.models.langmem_models import (
         LangMemEpisodic,
         LangMemProcedural,
     )
@@ -66,7 +66,7 @@ def get_episodic_repository(session: Any) -> SQLAlchemyAsyncRepository[LangMemEp
 
     Требует ``advanced_alchemy`` (поднимется через ``uv sync``).
     """
-    from src.backend.services.ai.langmem_models import LangMemEpisodic
+    from src.backend.core.domain.models.langmem_models import LangMemEpisodic
 
     base_cls = _resolve_repository_cls()
 
@@ -80,7 +80,7 @@ def get_procedural_repository(
     session: Any,
 ) -> SQLAlchemyAsyncRepository[LangMemProcedural]:
     """Возвращает Procedural-репозиторий для :class:`LangMemProcedural`."""
-    from src.backend.services.ai.langmem_models import LangMemProcedural
+    from src.backend.core.domain.models.langmem_models import LangMemProcedural
 
     base_cls = _resolve_repository_cls()
 

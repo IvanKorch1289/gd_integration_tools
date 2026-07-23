@@ -14,9 +14,7 @@ S58 W6: расширен для unified auth (password + LDAP) с auto-provision
 * :meth:`UserService.login` — DEPRECATED, оставлен для backward compat
   (вызывает :meth:`_login_password` + warning).
 
-Каноническое расположение в V11 plugin layout. Старый модуль
-``src.backend.services.core.users`` сохраняется как backward-compat
-shim и эмитит DeprecationWarning.
+Каноническое расположение в V11 plugin layout (R-V15-16).
 """
 
 from __future__ import annotations

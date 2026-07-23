@@ -4,14 +4,11 @@
 Проверяет:
 * parse manifest V11 (ADR-042);
 * совместимость с целевой версией ядра ``0.2.x``;
-* корректность объявленных capabilities (db.read/db.write на ``orderkinds``);
-* импорт shim'а ``src.backend.services.core.orderkinds`` отдаёт
-  каноническое имя из extensions/ (R-V15-16).
+* корректность объявленных capabilities (db.read/db.write на ``orderkinds``).
 """
 
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 
 from src.backend.core.plugin_runtime.manifest import load_plugin_manifest
@@ -39,26 +36,3 @@ def test_orderkinds_manifest_declares_db_capabilities() -> None:
     caps = {(c.name, c.scope) for c in manifest.capabilities}
     assert ("db.read", "orderkinds") in caps
     assert ("db.write", "orderkinds") in caps
-
-
-def test_orderkinds_shim_emits_deprecation_warning() -> None:
-    """Legacy shim ``src.backend.services.core.orderkinds`` всё ещё работает."""
-    import importlib
-
-    legacy = "src.backend.services.core.orderkinds"
-    # Сбрасываем кеш, чтобы warning стрельнул на import-е.
-    import sys
-
-    sys.modules.pop(legacy, None)
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        mod = importlib.import_module(legacy)
-    # Проверяем, что shim предоставляет ту же поверхность.
-    assert hasattr(mod, "get_order_kind_service")
-    assert hasattr(mod, "OrderKindService")
-    # И DeprecationWarning был эмитирован.
-    assert any(
-        issubclass(w.category, DeprecationWarning)
-        and "orderkinds" in str(w.message).lower()
-        for w in caught
-    )

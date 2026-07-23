@@ -93,7 +93,7 @@ def test_schedule_invalid_callable_ref(client_app: TestClient) -> None:
 
 def test_list_jobs(client_app: TestClient, scheduler_mock: Any) -> None:
     with patch(
-        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        "src.backend.core.scheduler.get_scheduler_manager",
         return_value=scheduler_mock,
     ):
         response = client_app.get("/admin/cron/list")
@@ -105,7 +105,7 @@ def test_list_jobs(client_app: TestClient, scheduler_mock: Any) -> None:
 
 def test_pause_resume_cron_job(client_app: TestClient, scheduler_mock: Any) -> None:
     with patch(
-        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        "src.backend.core.scheduler.get_scheduler_manager",
         return_value=scheduler_mock,
     ):
         r1 = client_app.post("/admin/cron/job-1/pause")
@@ -121,7 +121,7 @@ def test_pause_missing_job_returns_404(
 ) -> None:
     scheduler_mock.pause_job.return_value = False
     with patch(
-        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        "src.backend.core.scheduler.get_scheduler_manager",
         return_value=scheduler_mock,
     ):
         response = client_app.post("/admin/cron/nonexistent/pause")
@@ -130,7 +130,7 @@ def test_pause_missing_job_returns_404(
 
 def test_run_now(client_app: TestClient, scheduler_mock: Any) -> None:
     with patch(
-        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        "src.backend.core.scheduler.get_scheduler_manager",
         return_value=scheduler_mock,
     ):
         response = client_app.post("/admin/cron/job-1/run-now")
@@ -140,7 +140,7 @@ def test_run_now(client_app: TestClient, scheduler_mock: Any) -> None:
 
 def test_dashboard_summary(client_app: TestClient, scheduler_mock: Any) -> None:
     with patch(
-        "src.backend.infrastructure.scheduler.scheduler_manager.get_scheduler_manager",
+        "src.backend.core.scheduler.get_scheduler_manager",
         return_value=scheduler_mock,
     ):
         response = client_app.get("/admin/cron/dashboard")

@@ -26,7 +26,6 @@ from src.backend.entrypoints.middlewares.request_id import RequestIDMiddleware
 from src.backend.entrypoints.middlewares.security_headers import (
     SecurityHeadersMiddleware,
 )
-from src.backend.entrypoints.middlewares.versioning import APIVersion
 
 # ─── AuthMethodHeaderMiddleware ─────────────────────────────────────────────
 
@@ -167,21 +166,3 @@ async def test_security_headers() -> None:
     assert result.headers["X-Frame-Options"] == "DENY"
     assert result.headers["X-Content-Type-Options"] == "nosniff"
     assert "Strict-Transport-Security" in result.headers
-
-
-# ─── APIVersion ─────────────────────────────────────────────────────────────
-
-
-def test_api_version_headers() -> None:
-    v = APIVersion(version="1.0")
-    assert v.as_headers() == {"API-Version": "1.0"}
-
-
-def test_api_version_deprecated() -> None:
-    v = APIVersion(version="1.0", deprecated=True)
-    assert v.as_headers()["Deprecation"] == "true"
-
-
-def test_api_version_sunset() -> None:
-    v = APIVersion(version="1.0", sunset="2025-01-01")
-    assert v.as_headers()["Sunset"] == "2025-01-01"

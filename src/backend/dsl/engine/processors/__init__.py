@@ -27,8 +27,11 @@ from src.backend.dsl.engine.processors.ai_banking import (
     AppealProcessorAI,
     CreditScoringRagProcessor,
     CustomerChatbotProcessor,
+    CustomerSegmentationProcessor,
     FinDocOcrLlmProcessor,
     KycAmlVerifyProcessor,
+    LoanEligibilityProcessor,
+    RiskAssessmentProcessor,
     TransactionCategorizerProcessor,
 )
 from src.backend.dsl.engine.processors.ai_rpa import AIRpaProcessor
@@ -131,9 +134,10 @@ from src.backend.dsl.engine.processors.entity import (
     EntityUpdateProcessor,
 )
 from src.backend.dsl.engine.processors.export import ExportProcessor
-from src.backend.dsl.engine.processors.external import (
+from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
     AgentGraphProcessor,
-    CDCProcessor,
+)
+from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import (
     MCPToolProcessor,
 )
 from src.backend.dsl.engine.processors.generic import (
@@ -274,6 +278,7 @@ __all__ = (
     "CostTrackerProcessor",
     "CreditScoringRagProcessor",
     "CustomerChatbotProcessor",
+    "CustomerSegmentationProcessor",
     "DataMaskingProcessor",
     "DataStoreDeleteProcessor",
     "DataStoreGetProcessor",
@@ -336,6 +341,7 @@ __all__ = (
     "LLMParserProcessor",
     "LineageTrackerProcessor",
     "LoadBalancerProcessor",
+    "LoanEligibilityProcessor",
     "LogProcessor",
     "LoopProcessor",
     "MCPToolProcessor",
@@ -374,6 +380,7 @@ __all__ = (
     "ResequencerProcessor",
     "RestorePIIProcessor",
     "RetryProcessor",
+    "RiskAssessmentProcessor",
     "Rule",
     "RunScenarioProcessor",
     "S3ReadProcessor",

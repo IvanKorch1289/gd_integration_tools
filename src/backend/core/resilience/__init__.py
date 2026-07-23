@@ -1,4 +1,4 @@
-"""Resilience patterns — graceful degradation, retry, breaker, rate-limiter, bulkhead, self-healing.
+"""Resilience patterns — graceful degradation, retry, breaker, rate-limiter, bulkhead.
 
 Sprint 1 V16 Single-Entry: пакет образован из бывшего файла-модуля
 ``core/resilience.py``. Существующие импорты ``from src.backend.core.resilience

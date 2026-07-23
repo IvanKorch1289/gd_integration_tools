@@ -123,6 +123,92 @@
       "title": "_RouteTimeoutModel",
       "type": "object"
     },
+    "_RouteTransportModel": {
+      "additionalProperties": false,
+      "description": "S163 W17: per-transport overrides в ``[transport]`` секции route.toml.\n\nOverride values для стандартных settings (WSSettings, GRPCSettings,\nGraphQLSettings и т.п.) на уровне route. Читаются handlers через\n``DslService.get_route_overrides(route_id)``.\n\nExample route.toml::\n\n    [transport]\n    pool_size = 100              # WS max_connections, gRPC max_concurrent_streams\n    message_timeout_s = 15.0     # WS per-message timeout\n    max_message_size = 131072    # WS max_message_size\n    default_timeout_s = 30.0     # gRPC unary call timeout\n    max_message_size_bytes = 4194304  # gRPC max incoming message\n    query_timeout_s = 10.0       # GraphQL query timeout\n\nНе все поля применимы ко всем transports (handlers фильтруют по имени).",
+      "properties": {
+        "default_timeout_s": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default Timeout S"
+        },
+        "max_message_size": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Message Size"
+        },
+        "max_message_size_bytes": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Message Size Bytes"
+        },
+        "message_timeout_s": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Message Timeout S"
+        },
+        "pool_size": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pool Size"
+        },
+        "query_timeout_s": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Query Timeout S"
+        }
+      },
+      "title": "_RouteTransportModel",
+      "type": "object"
+    },
     "_SecurityModel": {
       "additionalProperties": false,
       "description": "Pydantic-модель для секции ``[security]`` в route.toml.\n\nИспользует ``extra=\"forbid\"`` чтобы поймать опечатки в полях\nсекции на этапе load.",
@@ -258,6 +344,17 @@
       ],
       "default": null
     },
+    "transport": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/_RouteTransportModel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "version": {
       "minLength": 1,
       "title": "Version",
@@ -270,6 +367,6 @@
     "requires_core",
     "pipelines"
   ],
-  "title": "RouteManifestV11",
+  "title": "RouteManifest",
   "type": "object"
 }

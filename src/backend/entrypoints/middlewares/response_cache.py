@@ -17,7 +17,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from src.backend.core.utils.async_helpers import AsyncChunkIterator
+from src.backend.core.utils.async_helpers import async_chunk_iterator
 
 __all__ = ("ResponseCacheMiddleware",)
 
@@ -66,7 +66,7 @@ class ResponseCacheMiddleware(BaseHTTPMiddleware):
 
         response.headers["ETag"] = etag
         response.headers["Cache-Control"] = f"public, max-age={self._max_age}"
-        response.body_iterator = AsyncChunkIterator([body])  # type: ignore
+        response.body_iterator = async_chunk_iterator([body])  # type: ignore
 
         return response
 

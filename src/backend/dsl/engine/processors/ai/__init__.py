@@ -6,11 +6,11 @@ completes the migration by switching __init__.py to import from the
 per-class files (not from ai_processors.py).
 """
 
-# Banking AI processors
-from src.backend.dsl.engine.processors.ai.banking_processors import (
-    CreditScoreProcessor,
+# Banking AI processors — migrated from ai/banking_processors/ (S59) to ai_banking/ (S50)
+# Duplicates resolved: CreditScoreProcessor≈CreditScoringRagProcessor (S50 kept),
+# FraudDetectionProcessor≈AntiFraudScoreProcessor (S50 kept).
+from src.backend.dsl.engine.processors.ai_banking import (
     CustomerSegmentationProcessor,
-    FraudDetectionProcessor,
     LoanEligibilityProcessor,
     RiskAssessmentProcessor,
 )
@@ -61,9 +61,7 @@ from src.backend.dsl.engine.processors.ai.vectorsearch_processor import (
 __all__ = (
     "CacheProcessor",
     "CacheWriteProcessor",
-    "CreditScoreProcessor",
     "CustomerSegmentationProcessor",
-    "FraudDetectionProcessor",
     "GetFeedbackExamplesProcessor",
     "GuardrailsProcessor",
     "LLMCallProcessor",

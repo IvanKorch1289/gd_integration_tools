@@ -120,7 +120,7 @@ class Sprint19DXFlags(BaseSettings):
         title="K4 S19 W3: Banking AI processors - CreditScore, FraudDetection, RiskAssessment, CustomerSegmentation, LoanEligibility",
         description=(
             "K4 Sprint 19 Wave 3 (S-L4-1 closure). Owner: K4 AI. "
-            "При True активирует 5 AI-процессоров в dsl/engine/processors/ai/banking_processors.py: "
+            "При True активирует 5 AI-процессоров в dsl/engine/processors/ai_banking/: "
             "CreditScoreProcessor / FraudDetectionProcessor / RiskAssessmentProcessor / "
             "CustomerSegmentationProcessor / LoanEligibilityProcessor — LLM call через "
             "instructor/litellm + structured output Pydantic + capability-gate ai.llm.litellm. "

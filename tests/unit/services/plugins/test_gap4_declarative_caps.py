@@ -47,7 +47,7 @@ from src.backend.services.plugins.manifest_toml import (
     PluginTenantDecl,
     load_plugin_manifest,
 )
-from tests.unit.services.plugins.test_loader_v11_frontend_pages import (  # S168 W15-17: test_loader → test_loader_v11_frontend_pages
+from tests.unit.services.plugins.test_loader_v11_frontend_pages import (
     _build_loader,
     _FakeActions,
     _FakeProcessors,

@@ -8,7 +8,7 @@ Wave 3: единая функция ``build_cache_key`` для всех слоё
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -39,6 +39,8 @@ def build_cache_key(
         "args": args[1:] if exclude_self and args else args,
         "kwargs": dict(sorted(kwargs.items())),
     }
-    payload = json.dumps(key_data, sort_keys=True, default=str)
+    payload = orjson.dumps(
+        key_data, option=orjson.OPT_SORT_KEYS | orjson.OPT_NON_STR_KEYS, default=str
+    ).decode("utf-8")
     digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
     return f"{prefix}:{digest}"

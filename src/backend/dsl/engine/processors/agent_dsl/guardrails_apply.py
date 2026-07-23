@@ -1,7 +1,7 @@
-"""GuardrailsApplyProcessor — content safety через :class:`LlamaGuardRuntime` (S27 W2).
+"""GuardrailsApplyProcessor — content safety через :class:`LLMGuardClient` (S27 W2).
 
-Декларативный шаг проверки prompt'а / completion'а через Llama Guard 3
-(:mod:`core.ai.guardrails.llamaguard`). Поддерживает 3 политики при unsafe:
+Декларативный шаг проверки prompt'а / completion'а через LLM Guard
+(:mod:`core.ai.guardrails.llm_guard_client`). Поддерживает 3 политики при unsafe:
 
 * ``"dlq"`` — отправить в DLQ через ``exchange.set_property("dlq", ...)`` + stop;
 * ``"fail"`` — установить error и остановить exchange;
@@ -55,15 +55,15 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
         source_property: Dot-path к тексту для проверки. Default
             зависит от ``stage`` (см. выше).
         on_block: Политика при ``unsafe``: ``"dlq"`` / ``"fail"`` / ``"warn"``.
-        categories: Опц. список категорий Llama Guard
-            (``"hate"`` / ``"violence"`` / ``"sexual"`` / ``"unsafe"``).
-            ``None`` = DEFAULT_CATEGORIES от LlamaGuardRuntime.
+        categories: Опц. список категорий
+            (``"PromptInjection"`` / ``"Toxicity"`` / ``"Anonymize"``).
+            ``None`` = DEFAULT_SCANNERS от LLMGuardClient.
         name: Имя процессора.
 
     Notes:
-        При недоступности :class:`LlamaGuardRuntime` (lazy-import упал или
+        При недоступности :class:`LLMGuardClient` (lazy-import упал или
         runtime ``None``) — silent pass-through + WARNING лог. Это нужно
-        чтобы CI/dev окружения без llama-cpp-python не падали на DSL-routes.
+        чтобы CI/dev окружения без llm-guard не падали на DSL-routes.
     """
 
     audit_event: ClassVar[str | None] = "ai.guardrails.apply"
@@ -104,7 +104,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
         runtime = self._resolve_runtime()
         if runtime is None:
             _logger.warning(
-                "%s: LlamaGuardRuntime недоступен — pass-through", self.name
+                "%s: LLMGuardClient недоступен — pass-through", self.name
             )
             return
 
@@ -181,7 +181,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
 
     @staticmethod
     def _resolve_runtime() -> Any | None:
-        """Lazy-резолв :class:`LlamaGuardRuntime` (S24 W2 partial)."""
+        """Lazy-резолв :class:`LLMGuardClient` (S24 W2 partial)."""
         return None
 
     def to_spec(self) -> dict[str, Any]:

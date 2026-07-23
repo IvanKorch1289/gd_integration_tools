@@ -4,10 +4,11 @@ from logging import Handler
 from typing import Any
 
 from src.backend.core.config.settings import LogStorageSettings, settings
+from src.backend.core.logging import get_logger
 
 __all__ = ("GraylogHandler", "get_graylog_handler", "graylog_handler")
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 
 class GraylogHandler:

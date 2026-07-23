@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.backend.dsl.engine.processors import AgentGraphProcessor, MCPToolProcessor
+from src.backend.dsl.engine.processors import MCPToolProcessor
 
 if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder
@@ -43,13 +43,7 @@ class AILlMMixin:
             )
         )
 
-    def agent_graph(self, graph_name: str, tools: list[str]) -> RouteBuilder:
-        """Запуск LangGraph-агента."""
-        return self._add(  # type: ignore[attr-defined]
-            AgentGraphProcessor(graph_name=graph_name, tools=tools)
-        )
-
-    def scrape(
+    def scrape_url(
         self,
         url: str | None = None,
         *,

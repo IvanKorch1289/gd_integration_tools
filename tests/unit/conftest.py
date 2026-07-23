@@ -89,7 +89,7 @@ _POLLUTED_MODULE_KEYS = (
     "src.backend.plugins.composition.lifecycle",
     "src.backend.plugins.composition.lifecycle.bootstrap",
     "src.backend.plugins.composition.lifecycle.protocols",
-    "src.backend.plugins.composition.lifecycle.v11",
+    "src.backend.plugins.composition.lifecycle.plugin_loader",
     "src.backend.plugins.composition.lifecycle.watchers",
     "src.backend.plugins.composition.lifecycle.startup",
     "src.backend.plugins.composition.lifecycle.lifespan",

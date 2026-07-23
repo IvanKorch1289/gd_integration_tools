@@ -58,7 +58,6 @@ def _collect_processors() -> list[dict[str, Any]]:
         "src.backend.dsl.engine.processors.ai",
         "src.backend.dsl.engine.processors.rpa",
         "src.backend.dsl.engine.processors.web",
-        "src.backend.dsl.engine.processors.external",
         "src.backend.dsl.engine.processors.integration",
         "src.backend.dsl.engine.processors.export",
         "src.backend.dsl.engine.processors.dq_check",

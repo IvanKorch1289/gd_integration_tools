@@ -8,6 +8,4 @@
 
 from __future__ import annotations
 
-from src.backend.entrypoints.middlewares.versioning import APIVersion
-
-__all__ = ("APIVersion",)
+__all__ = ()

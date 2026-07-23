@@ -63,16 +63,6 @@ class TestVectorStoreHealth:
         assert hasattr(QdrantVectorStore, "health_check")
         assert "mode" in inspect.signature(QdrantVectorStore.health_check).parameters
 
-    @pytest.mark.asyncio
-    async def test_chroma_health(self) -> None:
-        from src.backend.infrastructure.clients.storage.vector_store import ChromaVectorStore
-        assert hasattr(ChromaVectorStore, "health_check")
-
-    @pytest.mark.asyncio
-    async def test_faiss_health(self) -> None:
-        from src.backend.infrastructure.clients.storage.vector_store import FAISSVectorStore
-        assert hasattr(FAISSVectorStore, "health_check")
-
 
 class TestElasticsearchHealth:
     @pytest.mark.asyncio

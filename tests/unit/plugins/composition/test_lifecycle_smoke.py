@@ -81,11 +81,11 @@ def test_module_exposes_all_bootstrap_helpers() -> None:
         "register_protocol_providers": lifecycle.protocols,
         "start_dsl_yaml_watcher": lifecycle.watchers,
         "stop_dsl_yaml_watcher": lifecycle.watchers,
-        "bootstrap_v11_plugin_loader": lifecycle.v11,
-        "bootstrap_v11_route_loader": lifecycle.v11,
-        "start_v11_hot_reload": lifecycle.v11,
-        "shutdown_plugin_loaders": lifecycle.v11,
-        "handle_v11_changes": lifecycle.v11,
+        "bootstrap_v11_plugin_loader": lifecycle.plugin_loader,
+        "bootstrap_v11_route_loader": lifecycle.plugin_loader,
+        "start_v11_hot_reload": lifecycle.plugin_loader,
+        "shutdown_plugin_loaders": lifecycle.plugin_loader,
+        "handle_v11_changes": lifecycle.plugin_loader,
     }
     for name, owner in expected.items():
         assert hasattr(owner, name), f"{name} missing from {owner.__name__}"
@@ -139,19 +139,19 @@ def _make_lifespan_patches() -> list[Any]:
             new=AsyncMock(),
         ),
         patch(
-            "src.backend.plugins.composition.lifecycle.v11.bootstrap_v11_plugin_loader",
+            "src.backend.plugins.composition.lifecycle.plugin_loader.bootstrap_v11_plugin_loader",
             new=AsyncMock(),
         ),
         patch(
-            "src.backend.plugins.composition.lifecycle.v11.bootstrap_v11_route_loader",
+            "src.backend.plugins.composition.lifecycle.plugin_loader.bootstrap_v11_route_loader",
             new=AsyncMock(),
         ),
         patch(
-            "src.backend.plugins.composition.lifecycle.v11.start_v11_hot_reload",
+            "src.backend.plugins.composition.lifecycle.plugin_loader.start_v11_hot_reload",
             new=AsyncMock(),
         ),
         patch(
-            "src.backend.plugins.composition.lifecycle.v11.shutdown_plugin_loaders",
+            "src.backend.plugins.composition.lifecycle.plugin_loader.shutdown_plugin_loaders",
             new=AsyncMock(),
         ),
         patch("src.backend.plugins.composition.setup_infra.starting", new=AsyncMock()),
@@ -216,7 +216,7 @@ async def test_lifespan_raises_runtime_error_on_early_startup_failure() -> None:
     try:
         # Подменяем bootstrap, который вызывается ДО ``startup_completed=True``.
         with patch(
-            "src.backend.plugins.composition.lifecycle.v11.bootstrap_v11_plugin_loader",
+            "src.backend.plugins.composition.lifecycle.plugin_loader.bootstrap_v11_plugin_loader",
             new=AsyncMock(side_effect=RuntimeError("simulated bootstrap failure")),
         ):
             app = FastAPI()
@@ -244,7 +244,7 @@ async def test_handle_v11_changes_plugin_toml_triggers_plugin_reload() -> None:
     app.state.plugin_loader = plugin_loader
     app.state.route_loader = route_loader
 
-    await lifecycle.v11.handle_v11_changes(app, {("change", "/x/y/plugin.toml")})
+    await lifecycle.plugin_loader.handle_v11_changes(app, {("change", "/x/y/plugin.toml")})
 
     assert plugin_loader.discover_and_load.await_count == 1
     assert route_loader.unload_all.await_count == 0
@@ -261,7 +261,7 @@ async def test_handle_v11_changes_route_toml_triggers_route_reload() -> None:
     app.state.plugin_loader = plugin_loader
     app.state.route_loader = route_loader
 
-    await lifecycle.v11.handle_v11_changes(app, {("change", "/x/y/route.toml")})
+    await lifecycle.plugin_loader.handle_v11_changes(app, {("change", "/x/y/route.toml")})
 
     assert route_loader.unload_all.await_count == 1
     assert route_loader.discover_and_load.await_count == 1
@@ -279,7 +279,7 @@ async def test_handle_v11_changes_dsl_yaml_triggers_route_reload() -> None:
     app.state.plugin_loader = plugin_loader
     app.state.route_loader = route_loader
 
-    await lifecycle.v11.handle_v11_changes(app, {("change", "/x/pipeline.dsl.yaml")})
+    await lifecycle.plugin_loader.handle_v11_changes(app, {("change", "/x/pipeline.dsl.yaml")})
 
     assert route_loader.unload_all.await_count == 1
     assert plugin_loader.discover_and_load.await_count == 0
@@ -295,7 +295,7 @@ async def test_handle_v11_changes_irrelevant_path_does_nothing() -> None:
     app.state.plugin_loader = plugin_loader
     app.state.route_loader = route_loader
 
-    await lifecycle.v11.handle_v11_changes(app, {("change", "/x/random.py")})
+    await lifecycle.plugin_loader.handle_v11_changes(app, {("change", "/x/random.py")})
 
     assert plugin_loader.discover_and_load.await_count == 0
     assert route_loader.unload_all.await_count == 0
@@ -306,7 +306,7 @@ async def test_handle_v11_changes_no_loaders_does_not_crash() -> None:
     app = FastAPI()
     # Намеренно НЕ устанавливаем plugin_loader / route_loader.
 
-    await lifecycle.v11.handle_v11_changes(app, {("change", "/x/plugin.toml")})
+    await lifecycle.plugin_loader.handle_v11_changes(app, {("change", "/x/plugin.toml")})
 
     # Если дошли сюда — тест пройден.
     assert True
@@ -326,7 +326,7 @@ async def test_start_v11_hot_reload_skipped_when_feature_flag_disabled(
     monkeypatch.setattr(settings.v11, "hot_reload_enabled", False)
 
     app = FastAPI()
-    await lifecycle.v11.start_v11_hot_reload(app)  # noqa: F841
+    await lifecycle.plugin_loader.start_v11_hot_reload(app)  # noqa: F841
 
     # Возвращаемое значение не важно (None), но state НЕ должен содержать task.
     assert getattr(app.state, "v11_hot_reload_task", None) is None
@@ -344,7 +344,7 @@ async def test_start_v11_hot_reload_skipped_when_no_loaders_and_no_dirs(
     app = FastAPI()
     # Намеренно не заполняем state.
 
-    await lifecycle.v11.start_v11_hot_reload(app)  # noqa: F841
+    await lifecycle.plugin_loader.start_v11_hot_reload(app)  # noqa: F841
 
     assert getattr(app.state, "v11_hot_reload_task", None) is None
 
@@ -360,7 +360,7 @@ async def test_shutdown_plugin_loaders_handles_missing_loaders() -> None:
     # Не устанавливаем plugin_loader / route_loader / v11_hot_reload_task.
 
     # Не должно бросить.
-    await lifecycle.v11.shutdown_plugin_loaders(app)
+    await lifecycle.plugin_loader.shutdown_plugin_loaders(app)
 
 
 async def test_shutdown_plugin_loaders_calls_unload_all() -> None:
@@ -375,7 +375,7 @@ async def test_shutdown_plugin_loaders_calls_unload_all() -> None:
     plugin_loader.shutdown_all = AsyncMock()
     app.state.plugin_loader = plugin_loader
 
-    await lifecycle.v11.shutdown_plugin_loaders(app)
+    await lifecycle.plugin_loader.shutdown_plugin_loaders(app)
 
     assert route_loader.unload_all.await_count == 1
     assert plugin_loader.shutdown_all.await_count == 1
@@ -394,7 +394,7 @@ async def test_shutdown_plugin_loaders_cancels_hot_reload_task() -> None:
     app.state.v11_hot_reload_task = task
 
     # Не должно бросить.
-    await lifecycle.v11.shutdown_plugin_loaders(app)
+    await lifecycle.plugin_loader.shutdown_plugin_loaders(app)
 
 
 # --------------------------------------------------------------------------- #

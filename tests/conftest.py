@@ -2,14 +2,13 @@
 Корневой conftest для всей тестовой инфраструктуры.
 
 Предоставляет:
-  - svcs_container: изолированный DI-контейнер на каждый тест
   - test_db: SQLAlchemy async engine против тестовой БД
   - test_cache: Redis клиент против тестового Redis
   - _set_test_env_vars: pytest_configure hook (S159 W3) sets DB
     env vars BEFORE module-level settings instantiation (env =
     pyproject.toml directive is a pytest-env plugin feature, not core).
 
-Зависимости: pytest-asyncio, svcs.
+Зависимости: pytest-asyncio.
 """
 
 from __future__ import annotations
@@ -17,7 +16,6 @@ from __future__ import annotations
 import os
 
 import pytest
-import svcs
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -49,20 +47,6 @@ def pytest_configure(config: pytest.Config) -> None:
     }
     for key, value in test_env.items():
         os.environ.setdefault(key, value)
-
-
-@pytest.fixture
-def svcs_container() -> svcs.Container:
-    """Изолированный svcs.Container для одного теста.
-
-    Создаётся поверх глобального Registry; все регистрации видны,
-    но стейт сбрасывается после теста.
-    """
-    from src.backend.core.svcs_registry import registry
-
-    container = svcs.Container(registry)
-    yield container
-    container.close()
 
 
 @pytest.fixture

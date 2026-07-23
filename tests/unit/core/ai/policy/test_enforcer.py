@@ -78,6 +78,31 @@ def mock_lakera_client() -> MagicMock:
 # LLM Guard fixtures REMOVED (S172 T37): llm_guard_client deleted 2026-07-09.
 # 6 tests using llm_guard-specific fixtures are skipped below.
 # See research/agent-framework/REPORT.md F4.1.
+@pytest.fixture
+def mock_llm_guard_client() -> MagicMock:
+    """LLM Guard client that returns flagged=True (prompt injection detected)."""
+    client = MagicMock()
+    from src.backend.core.ai.guardrails.llm_guard_client import LLMGuardResult
+
+    result = LLMGuardResult(
+        flagged=True,
+        score=0.95,
+        categories=["PromptInjection"],
+        details={"danger_level": "HIGH"},
+    )
+    client.scan = AsyncMock(return_value=result)
+    return client
+
+
+@pytest.fixture
+def mock_llm_guard_client_safe() -> MagicMock:
+    """LLM Guard client that returns safe (no issues)."""
+    client = MagicMock()
+    from src.backend.core.ai.guardrails.llm_guard_client import LLMGuardResult
+
+    result = LLMGuardResult(flagged=False, score=0.0)
+    client.scan = AsyncMock(return_value=result)
+    return client
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

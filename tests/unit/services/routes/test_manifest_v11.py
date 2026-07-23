@@ -1,5 +1,5 @@
 # ruff: noqa: S101
-"""Unit-тесты RouteManifestV11 (ADR-043 / ADR-044)."""
+"""Unit-тесты RouteManifest (ADR-043 / ADR-044)."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import pytest
 from pydantic import ValidationError
 
 from src.backend.core.security.capabilities import CapabilityRef
-from src.backend.services.routes.manifest_toml import (  # S168 W15-17: v11 → toml
+from src.backend.services.routes.manifest_toml import (
     RouteManifestError,
     RouteManifest,
     load_route_manifest,
@@ -40,9 +40,9 @@ scope = "*.cbr.ru"
 """
 
 
-class TestRouteManifestV11:
+class TestRouteManifest:
     def test_minimal_valid(self) -> None:
-        m = RouteManifestV11(
+        m = RouteManifest(
             name="x", version="0.1.0", requires_core=">=0.1", pipelines=("p.dsl.yaml",)
         )
         assert m.requires_plugins == {}
@@ -51,7 +51,7 @@ class TestRouteManifestV11:
         assert m.tags == ()
 
     def test_full_construction(self) -> None:
-        m = RouteManifestV11(
+        m = RouteManifest(
             name="credit",
             version="1.0.0",
             requires_core=">=0.2,<0.3",
@@ -67,13 +67,13 @@ class TestRouteManifestV11:
 
     def test_pipelines_required_non_empty(self) -> None:
         with pytest.raises(ValidationError):
-            RouteManifestV11(
+            RouteManifest(
                 name="x", version="1.0.0", requires_core=">=0.1", pipelines=()
             )
 
     def test_invalid_route_name(self) -> None:
         with pytest.raises(ValidationError):
-            RouteManifestV11(
+            RouteManifest(
                 name="Credit-Pipeline",
                 version="1.0.0",
                 requires_core=">=0.1",
@@ -83,7 +83,7 @@ class TestRouteManifestV11:
     @pytest.mark.parametrize("bad_spec", ["NOT_A_SPEC", "@@@"])
     def test_invalid_requires_core(self, bad_spec: str) -> None:
         with pytest.raises(ValidationError):
-            RouteManifestV11(
+            RouteManifest(
                 name="x",
                 version="1.0.0",
                 requires_core=bad_spec,
@@ -92,7 +92,7 @@ class TestRouteManifestV11:
 
     def test_invalid_requires_plugins_spec(self) -> None:
         with pytest.raises(ValidationError) as exc_info:
-            RouteManifestV11(
+            RouteManifest(
                 name="x",
                 version="1.0.0",
                 requires_core=">=0.1",
@@ -102,7 +102,7 @@ class TestRouteManifestV11:
         assert "requires_plugins" in str(exc_info.value).lower()
 
     def test_feature_flag_accepts_bool(self) -> None:
-        m = RouteManifestV11(
+        m = RouteManifest(
             name="x",
             version="1.0.0",
             requires_core=">=0.1",
@@ -112,7 +112,7 @@ class TestRouteManifestV11:
         assert m.feature_flag is True
 
     def test_is_compatible_with_core(self) -> None:
-        m = RouteManifestV11(
+        m = RouteManifest(
             name="x",
             version="1.0.0",
             requires_core=">=0.2,<0.3",
@@ -122,7 +122,7 @@ class TestRouteManifestV11:
         assert m.is_compatible_with_core("0.3.0") is False
 
     def test_missing_plugins_returns_unmet(self) -> None:
-        m = RouteManifestV11(
+        m = RouteManifest(
             name="x",
             version="1.0.0",
             requires_core=">=0.1",
@@ -137,14 +137,14 @@ class TestRouteManifestV11:
 
     def test_requires_workflows_default_empty(self) -> None:
         """requires_workflows defaults to empty dict."""
-        m = RouteManifestV11(
+        m = RouteManifest(
             name="x", version="1.0.0", requires_core=">=0.1", pipelines=("p.dsl.yaml",)
         )
         assert m.requires_workflows == {}
 
     def test_requires_workflows_valid_spec(self) -> None:
         """requires_workflows accepts valid SemVer specs."""
-        m = RouteManifestV11(
+        m = RouteManifest(
             name="x",
             version="1.0.0",
             requires_core=">=0.1",
@@ -159,7 +159,7 @@ class TestRouteManifestV11:
     def test_invalid_requires_workflows_spec(self) -> None:
         """Invalid SemVer spec in requires_workflows raises ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            RouteManifestV11(
+            RouteManifest(
                 name="x",
                 version="1.0.0",
                 requires_core=">=0.1",
@@ -170,7 +170,7 @@ class TestRouteManifestV11:
 
     def test_missing_workflows_returns_unmet(self) -> None:
         """missing_workflows returns workflows that are absent or incompatible."""
-        m = RouteManifestV11(
+        m = RouteManifest(
             name="x",
             version="1.0.0",
             requires_core=">=0.1",
@@ -185,7 +185,7 @@ class TestRouteManifestV11:
 
     def test_extra_field_forbidden(self) -> None:
         with pytest.raises(ValidationError):
-            RouteManifestV11.model_validate(
+            RouteManifest.model_validate(
                 {
                     "name": "x",
                     "version": "1.0.0",

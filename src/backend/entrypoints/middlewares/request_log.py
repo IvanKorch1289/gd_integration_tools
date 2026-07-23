@@ -2,7 +2,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
-from src.backend.core.utils.async_helpers import AsyncChunkIterator
+from src.backend.core.utils.async_helpers import async_chunk_iterator
 
 __all__ = ("InnerRequestLoggingMiddleware",)
 
@@ -163,5 +163,5 @@ class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
         chunks = []
         async for chunk in response.body_iterator:  # type: ignore
             chunks.append(chunk)
-        response.body_iterator = AsyncChunkIterator(chunks)  # type: ignore
+        response.body_iterator = async_chunk_iterator(chunks)  # type: ignore
         return b"".join(chunks)

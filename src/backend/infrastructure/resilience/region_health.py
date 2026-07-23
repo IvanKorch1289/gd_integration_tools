@@ -13,8 +13,9 @@ Full split (4 files) — separate WIP.
 
 from __future__ import annotations
 
-import logging
 from typing import Callable
+
+from src.backend.core.logging import get_logger
 
 from src.backend.infrastructure.resilience.region_routing import (
     Region,
@@ -23,7 +24,7 @@ from src.backend.infrastructure.resilience.region_routing import (
     set_region_status,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class RegionHealthChecker:

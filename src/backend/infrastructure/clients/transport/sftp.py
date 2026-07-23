@@ -32,7 +32,7 @@ __all__ = ("BaseSftpClient", "SftpClient", "_resolve_known_hosts", "get_sftp_cli
 logger = get_logger(__name__)
 
 # S163 W11: retry helper для data-transfer operations (см. ftp.py W8).
-# Module-level decorator (аналогично soap_async.py W10).
+# Module-level decorator (pattern W10).
 try:
     from src.backend.infrastructure.resilience.retry import make_async_retry
 except ImportError:  # pragma: no cover

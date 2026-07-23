@@ -9,14 +9,11 @@ from src.backend.infrastructure.eventing.cloudevents import (
     parse_envelope,
 )
 from src.backend.infrastructure.eventing.inbox import Inbox
-from src.backend.infrastructure.eventing.outbox import OutboxEvent, OutboxPublisher
 from src.backend.infrastructure.eventing.schema_registry import SchemaRegistry
 
 __all__ = (
     "CloudEvent",
     "Inbox",
-    "OutboxEvent",
-    "OutboxPublisher",
     "SchemaRegistry",
     "envelope",
     "parse_envelope",

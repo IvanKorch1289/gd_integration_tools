@@ -1,14 +1,14 @@
 """Protocol-контракт quotas backend (Sprint 11 S10-carryover/layer-violations-zero).
 
-Отделяет публичные dataclass-результаты от реализации в
-``services/billing/quotas_service.py``. ``core/auth/quotas.py``
-зависит только от этих типов и Protocol-интерфейса, не от services.
+Отделяет публичные dataclass-результаты от реализации в backend-слое.
+``core/auth/quotas.py`` зависит только от этих типов и Protocol-интерфейса,
+не от конкретного сервиса.
 
-Импл-сервис (`QuotasService`) реализует :class:`QuotasBackend`
-структурно (Python duck-typing) и регистрируется в DI-контейнере.
+Импл-сервис реализует :class:`QuotasBackend` структурно (Python duck-typing)
+и регистрируется в DI-контейнере.
 ``QuotaCheckResult`` / ``QuotaUsage`` объявлены структурно как
-:class:`Protocol`, чтобы существующие dataclass-реализации в
-services/billing продолжали удовлетворять контракту без изменений.
+:class:`Protocol`, чтобы dataclass-реализации продолжали
+удовлетворять контракту без изменений.
 """
 
 from __future__ import annotations
