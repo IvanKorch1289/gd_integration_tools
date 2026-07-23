@@ -142,11 +142,10 @@ ai = [
     # S172: presidio-ru-recognizers — checksum-validated ИНН/СНИЛС/ОГРН drop-ins
     # для уже-используемого Presidio. Custom recognizers в services/ai/pii/recognizers/
     # остаются как fallback; не удалять до явного перехода.
-    "presidio-ru-recognizers>=0.1.0,<0.2.0",
-    # S172: deepeval — agentic metrics (Task Completion, Plan Adherence, Tool Correctness).
-    # Active maintainer Confident AI. Lazy-import в services/ai/eval/.
-    "deepeval>=1.0.0,<2.0.0",
-    # S172: deepteam вынесен из .ai в отдельный .redteam extra — см. ниже.
+    "presidio-ru-recognizers>=0.1.0,<1.0.0",
+    # REMOVED deepeval from core deps: pins tenacity<8.5 conflicting with core tenacity>=9.0.
+    # deepeval moved to optional extra [ai-eval] below.
+    # REMOVED deepteam: см. ниже.
     # Причина: upstream deepteam==1.0.4 имеет requires_python<3.14 (metadata
     # mismatch — реальный код pure-Python py3-none-any и работает на 3.14,
     # но pip resolver на проекте с requires-python=">=3.14,<3.15" отвергает).
@@ -198,6 +197,11 @@ ai-safety = [
 # Этот extra безопасно ставится на 3.12/3.13; на 3.14 — через override.
 redteam = [
     "deepteam>=1.0.4,<2.0.0",
+]
+# deepeval вынесен сюда из core deps — pin tenacity<8.5 конфликтует с core tenacity>=9.0.
+# Использовать `pip install 'gd-advanced-tools[ai-eval]'` для включения eval-метрик.
+ai-eval = [
+    "deepeval>=1.0.0,<2.0.0",
 ]
 # === К1 Security (Sprint 1 V16, S6 DoD): SAML SP-initiated SSO + SLO. ===
 # python3-saml тянет xmlsec (C-ext) — устанавливается отдельным extra,
