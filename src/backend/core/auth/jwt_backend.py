@@ -297,7 +297,10 @@ class JwtBackend:
             except JwtVerificationError:
                 raise
             except Exception as exc:
-                _logger.warning("JWT blacklist check failed: %s", exc)
+                # Fail-closed: если blacklist недоступен, лучше отказать в
+                # валидации, чем принять потенциально revoked токен.
+                _logger.error("JWT blacklist check failed (fail-closed): %s", exc)
+                raise JwtVerificationError("JWT blacklist недоступен") from exc
 
         # S18 W4 (S-L8-5): batch-revoke barrier по iat. Проверяется
         # независимо от jti — токен может иметь iat без jti. hasattr-guard
@@ -312,7 +315,9 @@ class JwtBackend:
             except JwtVerificationError:
                 raise
             except Exception as exc:
-                _logger.warning("JWT iat-revoke check failed: %s", exc)
+                # Fail-closed: см. is_revoked.
+                _logger.error("JWT iat-revoke check failed (fail-closed): %s", exc)
+                raise JwtVerificationError("JWT blacklist недоступен") from exc
 
         return JwtClaims(
             sub=str(claims.get("sub") or ""),

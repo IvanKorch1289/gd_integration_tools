@@ -96,23 +96,31 @@ class LoanEligibilityProcessor(_BankingAIProcessor):
         exchange.set_property("loan_max_amount", result.max_amount)
 
     def _build_prompt(self, body: dict[str, Any]) -> str:
+        # S227 cycle 14 (D432): per-field 1000-char truncation prevents
+        # prompt-injection via oversized string fields + matches the
+        # document.py pattern. Each field is truncated to keep prompt total
+        # bounded.
+        def _t(v: Any) -> str:
+            s = str(v) if v is not None else ""
+            return s[:1000] if len(s) > 1000 else s
+
         return (
             "Определи eligibility для кредита и предложи условия.\n\n"
-            f"- кредитный балл: {body.get('credit_score', '')}\n"
-            f"- годовой доход: {body.get('annual_income', '')}\n"
-            f"- запрошенная сумма: {body.get('requested_amount', '')}\n"
-            f"- желаемый срок: {body.get('loan_term_months', '')} месяцев\n"
-            f"- текущий долг: {body.get('existing_debt', '')}\n"
-            f"- статус занятости: {body.get('employment_status', '')}\n\n"
+            f"- кредитный балл: {_t(body.get('credit_score'))}\n"
+            f"- годовой доход: {_t(body.get('annual_income'))}\n"
+            f"- запрошенная сумма: {_t(body.get('requested_amount'))}\n"
+            f"- желаемый срок: {_t(body.get('loan_term_months'))} месяцев\n"
+            f"- текущий долг: {_t(body.get('existing_debt'))}\n"
+            f"- статус занятости: {_t(body.get('employment_status'))}\n\n"
             "Верни JSON:\n"
-            '{\n'
+            "{\n"
             '  "eligible": true|false,\n'
             '  "max_amount": number,\n'
             '  "interest_rate": number,\n'
             '  "term_months": int,\n'
             '  "decision_reasons": ["reason1", "reason2"],\n'
             '  "conditions": ["condition1"]\n'
-            '}'
+            "}"
         )
 
     async def _check_capability(
@@ -124,8 +132,10 @@ class LoanEligibilityProcessor(_BankingAIProcessor):
         для unified capability semantics + plugin attribution.
         """
         return await self._check_capability_via_facade(exchange)
+
+
 def to_spec(self) -> dict[str, Any] | None:
-        spec: dict[str, Any] = {}
-        if self.model:
-            spec["model"] = self.model
-        return {"loan_eligibility": spec}
+    spec: dict[str, Any] = {}
+    if self.model:
+        spec["model"] = self.model
+    return {"loan_eligibility": spec}

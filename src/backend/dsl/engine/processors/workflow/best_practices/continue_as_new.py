@@ -57,6 +57,8 @@ class WorkflowContinueAsNewProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        if not await self.auth_check(exchange, action="request"):
+            return
         marker = {
             "requested": True,
             "same_workflow_id": self.same_workflow_id,

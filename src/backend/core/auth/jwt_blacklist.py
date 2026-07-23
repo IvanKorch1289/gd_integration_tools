@@ -71,12 +71,13 @@ class RedisJwtBlacklist:
         return f"{self._prefix}{self._REVOKE_BEFORE_SUFFIX}"
 
     async def is_revoked(self, jti: str) -> bool:
-        """Проверяет, отозван ли токен по его ``jti``."""
-        try:
-            value = await self._redis.get(self._key(jti))
-        except Exception as exc:
-            _logger.warning("JWT blacklist GET failed for jti=%s: %s", jti, exc)
-            return False
+        """Проверяет, отозван ли токен по его ``jti``.
+
+        Fail-closed: ошибки Redis пробрасываются вызывающему коду, чтобы
+        :class:`JwtBackend.decode` и :class:`SecurityFacade.is_token_blacklisted`
+        не приняли revoked-токен при недоступном blacklist.
+        """
+        value = await self._redis.get(self._key(jti))
         return value is not None
 
     async def revoke(self, jti: str, expires_at: int) -> None:
@@ -133,9 +134,10 @@ class RedisJwtBlacklist:
               иначе custom JWT без iat станут невалидными);
             * ``False`` при отсутствии barrier в Redis;
             * ``True`` если ``int(iat) < stored_threshold``;
-            * ``False`` в любом другом случае (включая ошибки Redis —
-              fail-open для backward-compat с per-jti path; security
-              compensation: per-jti gate всё равно срабатывает).
+            * ``False`` при некорректном типе ``threshold`` в Redis
+              (defensive — corrupted barrier не должен блокировать всё);
+            * При ошибке Redis — исключение пробрасывается (fail-closed,
+              см. :meth:`is_revoked`).
         """
         if iat is None:
             return False
@@ -146,11 +148,7 @@ class RedisJwtBlacklist:
                 "JWT blacklist is_iat_revoked: некорректный iat=%r — skip", iat
             )
             return False
-        try:
-            value = await self._redis.get(self._revoke_before_key())
-        except Exception as exc:
-            _logger.warning("JWT blacklist GET revoke_before failed: %s", exc)
-            return False
+        value = await self._redis.get(self._revoke_before_key())
         if value is None:
             return False
         try:

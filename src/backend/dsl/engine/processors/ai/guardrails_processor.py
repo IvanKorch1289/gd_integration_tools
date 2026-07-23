@@ -106,10 +106,7 @@ class GuardrailsProcessor(BaseProcessor):
                 "guardrails: rebuff provider requested but archived "
                 "(S172). Configure lakera/nemo instead. See "
                 "research/agent-framework/REPORT.md F4.2.",
-                extra={
-                    "guard_name": "rebuff",
-                    "category": "guardrail_legacy",
-                },
+                extra={"guard_name": "rebuff", "category": "guardrail_legacy"},
             )
 
         if "nemo" in config.enabled_providers:
@@ -124,6 +121,7 @@ class GuardrailsProcessor(BaseProcessor):
                     # silent NeMo-unavailable is visible. Per Analyst #5,
                     # previous silent return was a fail-open risk.
                     import logging
+
                     logging.getLogger(__name__).warning(
                         "%s: NeMo guardrails runtime unavailable (GPU/FF); "
                         "skipping NeMo check (S227 cycle 10 hardening)",

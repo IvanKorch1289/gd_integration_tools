@@ -312,14 +312,14 @@ class SecurityFacade:
             return False
 
     async def is_token_blacklisted(self, jti: str) -> bool:
-        """Проверить — JWT в blacklist?"""
+        """Проверить — JWT в blacklist?
+
+        Fail-closed: ошибки blacklist пробрасываются (см.
+        :meth:`RedisJwtBlacklist.is_revoked`).
+        """
         if self._jwt_blacklist is None:
             await self.init_jwt_blacklist()
-        try:
-            return await self._jwt_blacklist.is_revoked(jti)
-        except Exception as exc:
-            _logger.warning("JWT blacklist check failed for jti=%s: %s", jti, exc)
-            return False  # fail-open on Redis error (per-jti path)
+        return await self._jwt_blacklist.is_revoked(jti)
 
     async def clear_blacklist(self) -> None:
         """Очистить весь blacklist (для тестов)."""

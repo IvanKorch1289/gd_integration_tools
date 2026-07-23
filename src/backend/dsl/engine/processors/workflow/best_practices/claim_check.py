@@ -83,6 +83,8 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
             exchange: Текущий обмен с сообщением.
             context: Контекст выполнения процессора.
         """
+        if not await self.auth_check(exchange, action="store"):
+            return
         head, _, rest = self.source_property.partition(".")
         if head != "body":
             payload = exchange.in_message.body

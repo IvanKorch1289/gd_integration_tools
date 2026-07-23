@@ -133,15 +133,28 @@ class UnifiedAISink:
             from src.backend.core.security.pii_tokenizer import PIITokenizer
 
             pii_mask = PIITokenizer()
-        except Exception as _:
-            pii_mask = None
+        except Exception as exc:
+            # PII-tokenizer недоступен — без маскировки событие утечёт в
+            # ClickHouse с потенциальным PII. Fail-closed: отказываем в записи.
+            logger.error(
+                "audit.ai_unified_sink: PII tokenizer init failed, "
+                "dropping event (fail-closed): %s",
+                exc,
+            )
+            return
 
         error_msg = event.error_message
         if pii_mask is not None and error_msg:
             try:
                 error_msg = pii_mask.mask_irreversible(error_msg)
-            except Exception as _:
-                pass
+            except Exception as exc:
+                # Маскирование упало — нельзя записывать error_msg без маски.
+                logger.error(
+                    "audit.ai_unified_sink: PII mask failed, dropping event "
+                    "(fail-closed): %s",
+                    exc,
+                )
+                return
 
         details: dict[str, Any] = {
             "model_used": event.model_used,

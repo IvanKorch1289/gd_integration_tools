@@ -84,6 +84,8 @@ class WorkflowSubprocessProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        if not await self.auth_check(exchange, action="invoke"):
+            return
         # Resolve input from dotted path
         head, _, rest = self.input_from.partition(".")
         if head == "body":

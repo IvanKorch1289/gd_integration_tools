@@ -70,10 +70,7 @@ class CustomerSegmentationProcessor(_BankingAIProcessor):
             event=f"{self.audit_event_prefix}.completed",
             processor=self.name,
             params={},
-            result={
-                "segment": result.segment,
-                "confidence": result.confidence,
-            },
+            result={"segment": result.segment, "confidence": result.confidence},
         )
         exchange.in_message.set_body(
             {
@@ -86,19 +83,26 @@ class CustomerSegmentationProcessor(_BankingAIProcessor):
         exchange.set_property("customer_segment", result.segment)
 
     def _build_prompt(self, body: dict[str, Any]) -> str:
+        # S227 cycle 14 (D432): per-field 1000-char truncation prevents
+        # prompt-injection via oversized string fields. ``demographics`` /
+        # ``account_activity`` are high-risk for PII leakage — bounded.
+        def _t(v: Any) -> str:
+            s = str(v) if v is not None else ""
+            return s[:1000] if len(s) > 1000 else s
+
         return (
             "Определи сегмент клиента и порекомендуй продукты.\n\n"
-            f"- демография: {body.get('demographics', '')}\n"
-            f"- активность: {body.get('account_activity', '')}\n"
-            f"- текущие продукты: {body.get('product_holdings', '')}\n"
-            f"- предпочитаемый канал: {body.get('channel_preference', '')}\n\n"
+            f"- демография: {_t(body.get('demographics'))}\n"
+            f"- активность: {_t(body.get('account_activity'))}\n"
+            f"- текущие продукты: {_t(body.get('product_holdings'))}\n"
+            f"- предпочитаемый канал: {_t(body.get('channel_preference'))}\n\n"
             "Верни JSON:\n"
-            '{\n'
+            "{\n"
             '  "segment": "mass|affluent|business|vip|new",\n'
             '  "confidence": 0.0-1.0,\n'
             '  "characteristics": ["char1", "char2"],\n'
             '  "recommended_products": ["product1", "product2"]\n'
-            '}'
+            "}"
         )
 
     async def _check_capability(
@@ -110,8 +114,10 @@ class CustomerSegmentationProcessor(_BankingAIProcessor):
         для unified capability semantics + plugin attribution.
         """
         return await self._check_capability_via_facade(exchange)
+
+
 def to_spec(self) -> dict[str, Any] | None:
-        spec: dict[str, Any] = {}
-        if self.model:
-            spec["model"] = self.model
-        return {"customer_segmentation": spec}
+    spec: dict[str, Any] = {}
+    if self.model:
+        spec["model"] = self.model
+    return {"customer_segmentation": spec}

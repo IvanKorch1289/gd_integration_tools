@@ -133,11 +133,17 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
     def _build_prompt(
         self, customer: dict[str, Any], amount: float, product: str, rag_context: str
     ) -> str:
-        customer_json = (
-            orjson.dumps(customer).decode()
-            if isinstance(customer, dict)
-            else str(customer)
-        )
+        # S227 cycle 14 (D432): bound customer JSON dump to 8000 chars to
+        # prevent prompt-injection via oversized customer blobs. Matches
+        # document.py truncation style. RAG context is also bounded.
+        if isinstance(customer, dict):
+            customer_json = orjson.dumps(customer).decode()
+            if len(customer_json) > 8000:
+                customer_json = customer_json[:8000] + "...<truncated>"
+        else:
+            customer_json = str(customer)
+        if len(rag_context) > 8000:
+            rag_context = rag_context[:8000] + "...<truncated>"
         return f'Analyze this credit application using the policy documents for context.\n\nCustomer: {customer_json}\nRequested Amount: {amount}\nProduct: {product}\n\nPolicy Documents (RAG context):\n{rag_context}\n\nRespond with JSON:\n{{\n  "approved": true|false,\n  "limit": number or null,\n  "rate": number or null,\n  "citations": ["doc_ref1", "doc_ref2"],\n  "reasons": ["reason1", "reason2"]\n}}'
 
     async def _check_capability(
@@ -149,12 +155,14 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
         для unified capability semantics + plugin attribution.
         """
         return await self._check_capability_via_facade(exchange)
+
+
 def to_spec(self) -> dict[str, Any] | None:
-        """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
-        spec: dict[str, Any] = {}
-        if self.product != "retail":
-            spec["product"] = self.product
-        return {"credit_scoring_rag": spec}
+    """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
+    spec: dict[str, Any] = {}
+    if self.product != "retail":
+        spec["product"] = self.product
+    return {"credit_scoring_rag": spec}
 
 
 class CustomerChatbotProcessor(BaseProcessor):

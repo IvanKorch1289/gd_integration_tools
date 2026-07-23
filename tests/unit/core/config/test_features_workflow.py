@@ -40,7 +40,8 @@ class TestWorkflowFlagsClass:
         assert "workflow_yaml_round_trip" in names
         assert "workflow_bpmn_import" in names
         assert "workflow_gateways_enabled" in names
-        assert len(names) == 4
+        assert "workflow_orchestrator_enabled" in names
+        assert len(names) == 5
 
 
 class TestWorkflowFlagsComposition:
@@ -49,7 +50,9 @@ class TestWorkflowFlagsComposition:
         assert hasattr(feature_flags, "workflow_yaml_round_trip")
         assert hasattr(feature_flags, "workflow_bpmn_import")
         assert hasattr(feature_flags, "workflow_gateways_enabled")
+        assert hasattr(feature_flags, "workflow_orchestrator_enabled")
         assert feature_flags.workflow_gateways_enabled is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
+        assert feature_flags.workflow_orchestrator_enabled is False  # default-OFF (S28 W4)
 
     def test_feature_flags_class_mro(self) -> None:
         from src.backend.core.config.features import FeatureFlags

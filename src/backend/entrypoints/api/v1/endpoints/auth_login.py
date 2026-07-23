@@ -168,21 +168,17 @@ async def login(payload: LoginRequest) -> LoginResponse:
 
     # Issue JWT
     is_superuser = bool(getattr(user, "is_superuser", False))
-    try:
-        # encode() returns (token_str, expires_in_seconds) — см. jwt_backend
-        result = jwt_encode(
-            subject=user.username,
-            claims={"auth_method": payload.method, "is_superuser": is_superuser},
-        )
-        if isinstance(result, tuple) and len(result) == 2:
-            token, expires_in = result
-        else:
-            token = result
-            expires_in = 3600
-    except (TypeError, ValueError) as exc:
-        # Fallback: просто return mock-token в dev mode (НЕ для prod!)
-        _logger.warning("auth.login.jwt_encode_failed err=%s — using mock token", exc)
-        token = f"mock-jwt-{user.username}-{int(time.time())}"
+    # encode() returns (token_str, expires_in_seconds) — см. jwt_backend.
+    # Никаких mock-fallback: encode-ошибка должна быть видна как 5xx, а не как
+    # 200 OK с поддельным токеном, который сломает каждый downstream verify.
+    result = jwt_encode(
+        subject=user.username,
+        claims={"auth_method": payload.method, "is_superuser": is_superuser},
+    )
+    if isinstance(result, tuple) and len(result) == 2:
+        token, expires_in = result
+    else:
+        token = result
         expires_in = 3600
     elapsed_ms = (time.monotonic() - start) * 1000
     _logger.info(

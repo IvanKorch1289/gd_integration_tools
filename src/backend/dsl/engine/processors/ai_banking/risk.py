@@ -69,10 +69,7 @@ class RiskAssessmentProcessor(_BankingAIProcessor):
             event=f"{self.audit_event_prefix}.completed",
             processor=self.name,
             params={"loan_amount": body.get("loan_amount")},
-            result={
-                "risk_level": result.risk_level,
-                "risk_score": result.risk_score,
-            },
+            result={"risk_level": result.risk_level, "risk_score": result.risk_score},
         )
         exchange.in_message.set_body(
             {
@@ -86,20 +83,27 @@ class RiskAssessmentProcessor(_BankingAIProcessor):
         exchange.set_property("risk_score", result.risk_score)
 
     def _build_prompt(self, body: dict[str, Any]) -> str:
+        # S227 cycle 14 (D432): per-field 1000-char truncation prevents
+        # prompt-injection via oversized string fields. ``customer_profile``
+        # is the most likely vector for PII / injection — bounded explicitly.
+        def _t(v: Any) -> str:
+            s = str(v) if v is not None else ""
+            return s[:1000] if len(s) > 1000 else s
+
         return (
             "Проведи комплексную оценку рисков по кредитной заявке.\n\n"
-            f"- профиль клиента: {body.get('customer_profile', '')}\n"
-            f"- запрошенная сумма: {body.get('loan_amount', '')}\n"
-            f"- цель кредита: {body.get('loan_purpose', '')}\n"
-            f"- стоимость залога: {body.get('collateral_value', '')}\n"
-            f"- рыночные условия: {body.get('market_conditions', '')}\n\n"
+            f"- профиль клиента: {_t(body.get('customer_profile'))}\n"
+            f"- запрошенная сумма: {_t(body.get('loan_amount'))}\n"
+            f"- цель кредита: {_t(body.get('loan_purpose'))}\n"
+            f"- стоимость залога: {_t(body.get('collateral_value'))}\n"
+            f"- рыночные условия: {_t(body.get('market_conditions'))}\n\n"
             "Верни JSON:\n"
-            '{\n'
+            "{\n"
             '  "risk_level": "low|medium|high|critical",\n'
             '  "risk_score": 0.0-1.0,\n'
             '  "risk_factors": ["factor1", "factor2"],\n'
             '  "mitigation_suggestions": ["suggestion1", "suggestion2"]\n'
-            '}'
+            "}"
         )
 
     async def _check_capability(
@@ -111,8 +115,10 @@ class RiskAssessmentProcessor(_BankingAIProcessor):
         для unified capability semantics + plugin attribution.
         """
         return await self._check_capability_via_facade(exchange)
+
+
 def to_spec(self) -> dict[str, Any] | None:
-        spec: dict[str, Any] = {}
-        if self.model:
-            spec["model"] = self.model
-        return {"risk_assessment": spec}
+    spec: dict[str, Any] = {}
+    if self.model:
+        spec["model"] = self.model
+    return {"risk_assessment": spec}

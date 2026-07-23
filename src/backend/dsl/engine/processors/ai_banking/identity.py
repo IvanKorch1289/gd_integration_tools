@@ -116,16 +116,22 @@ class KycAmlVerifyProcessor(_BankingAIProcessor):
     def _build_prompt(
         self, customer: dict[str, Any], documents: list[dict[str, Any]]
     ) -> str:
-        customer_info = (
-            orjson.dumps(customer).decode()
-            if isinstance(customer, dict)
-            else str(customer)
-        )
-        docs_info = (
-            orjson.dumps(documents).decode()
-            if isinstance(documents, list)
-            else str(documents)
-        )
+        # S227 cycle 14 (D432): bound customer JSON + documents list to
+        # 8000 chars each to prevent prompt-injection via oversized KYC
+        # payloads. Highest-risk vector in this domain — KYC blobs include
+        # full passport / SSN / address history.
+        if isinstance(customer, dict):
+            customer_info = orjson.dumps(customer).decode()
+            if len(customer_info) > 8000:
+                customer_info = customer_info[:8000] + "...<truncated>"
+        else:
+            customer_info = str(customer)
+        if isinstance(documents, list):
+            docs_info = orjson.dumps(documents).decode()
+            if len(docs_info) > 8000:
+                docs_info = docs_info[:8000] + "...<truncated>"
+        else:
+            docs_info = str(documents)
         return f'Analyze the following customer and documents for KYC/AML verification.\n\nCustomer: {customer_info}\n\nDocuments: {docs_info}\n\nJurisdiction: {self.jurisdiction}\n\nRespond with JSON:\n{{\n  "decision": "approve|review|reject",\n  "score": 0.0-1.0,\n  "reasons": ["reason1", "reason2"],\n  "kyc_jurisdiction": "{self.jurisdiction}"\n}}'
 
     async def _check_capability(

@@ -91,6 +91,8 @@ class WafCheckProcessor(BaseProcessor):
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
         """Проверяет payload на WAF-паттерны и применяет действие (log/block/warn)."""
+        if not await self.auth_check(exchange, action="check"):
+            return
         head, _, rest = self.source_property.partition(".")
         if head != "body":
             payload = exchange.in_message.body

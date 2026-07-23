@@ -72,5 +72,16 @@ class WorkflowFlags(BaseSettings):
         ),
     )
 
+    workflow_orchestrator_enabled: bool = Field(
+        default=False,
+        title="Workflow: OrchestratorEngine (агентная маршрутизация между LLM-агентами)",
+        description=(
+            "S28 W4: OrchestratorEngine.route(task) с JMESPath routing rules. "
+            "При True — evaluates routing rules и выбирает agent; "
+            "при False — fallback на default_agent (или ошибка, если не указан). "
+            "default-OFF до интеграции с AgentRegistry и production-smoke."
+        ),
+    )
+
 
 __all__ = ("WorkflowFlags",)

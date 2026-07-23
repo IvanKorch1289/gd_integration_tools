@@ -14,10 +14,10 @@
     * :class:`CapabilityDeniedError` импортируется из существующей
       подсистемы :mod:`core.security.capabilities` (ADR-044), не
       дублируется.
-    * Если runtime-контекст плагина недоступен (например, в unit-тесте
-      без поднятого PluginLoader) — обёртка пропускает проверку,
-      записав WARNING в audit-канал. Это позволяет существующим
-      activity'ям работать в legacy-сценариях без миграции.
+    * Если runtime-контекст плагина недоступен — обёртка поднимает
+      :class:`CapabilityDeniedError` (fail-closed, V22). Вызывающий
+      код обязан инициализировать контекст через
+      :func:`set_active_capability_context` до запуска activity.
     * temporalio импортируется лениво только для аннотаций; сам guard
       не вызывает Temporal API напрямую.
 
@@ -209,12 +209,19 @@ def capability_guarded_activity(capabilities: tuple[str, ...]) -> Callable[[F], 
 
             context = get_active_capability_context()
             if context is None:
-                _logger.warning(
-                    "capability_guarded_activity: контекст не установлен; "
-                    "пропуск проверки для %s (fail-open legacy)",
+                # Fail-closed: контекст не установлен = проверка пропущена =
+                # небезопасный путь. Legacy-soft-mode выключен (V22 R-V15-1).
+                _logger.error(
+                    "capability_guarded_activity: контекст не установлен для %s — "
+                    "deny (fail-closed)",
                     fn.__name__,
                 )
-                return await fn(*args, **kwargs)
+                raise CapabilityDeniedError(
+                    plugin_name=fn.__name__,
+                    capability="<missing-context>",
+                    scope="<unset>",
+                    reason="capability context not initialized",
+                )
 
             for capability in capabilities:
                 try:

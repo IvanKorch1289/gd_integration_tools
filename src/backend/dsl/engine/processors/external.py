@@ -28,11 +28,7 @@ class MCPToolProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        # S202 audit fix: capability gate
-        if not await self.auth_check(exchange, action='invoke'):
-            return
-        # S202 audit fix: capability gate
-        if not await self.auth_check(exchange, action='invoke'):
+        if not await self.auth_check(exchange, action="invoke"):
             return
         from fastmcp import Client
 
@@ -62,6 +58,8 @@ class AgentGraphProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        if not await self.auth_check(exchange, action="invoke"):
+            return
         from src.backend.services.ai.ai_graph import build_and_run_agent
 
         body = exchange.in_message.body

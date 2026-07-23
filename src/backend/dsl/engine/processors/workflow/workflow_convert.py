@@ -69,6 +69,8 @@ class WorkflowConvertProcessor(BaseProcessor):
             exchange: Текущий exchange; source — из source_property.
             context: Контекст выполнения маршрута.
         """
+        if not await self.auth_check(exchange, action="convert"):
+            return
         # Resolve source from dotted path (simplified — just "body" or property)
         head, _, rest = self.source_property.partition(".")
         if head == "body":
