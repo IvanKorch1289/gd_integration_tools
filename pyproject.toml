@@ -199,9 +199,10 @@ redteam = [
     "deepteam>=1.0.4,<2.0.0",
 ]
 # deepeval вынесен сюда из core deps — pin tenacity<8.5 конфликтует с core tenacity>=9.0.
+# deepeval>=2.0.0 требует tenacity>=8.0,<10.0 — совместимо с core tenacity>=9.0.
 # Использовать `pip install 'gd-advanced-tools[ai-eval]'` для включения eval-метрик.
 ai-eval = [
-    "deepeval>=1.0.0,<2.0.0",
+    "deepeval>=2.0.0,<5.0.0",
 ]
 # === К1 Security (Sprint 1 V16, S6 DoD): SAML SP-initiated SSO + SLO. ===
 # python3-saml тянет xmlsec (C-ext) — устанавливается отдельным extra,
