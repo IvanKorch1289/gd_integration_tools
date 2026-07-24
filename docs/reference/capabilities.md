@@ -6,9 +6,10 @@
 |---|---|---|---|---|
 | `ai.feedback.train` | ✅ | `ExactAliasMatcher` | ➖ | Запуск DSPy training-loop по labeled feedback + публикация prompt-version (S11 K4 W5). |
 | `ai.guardrail.evaluate` | ✅ | `GlobScopeMatcher` | ➖ | Вызов defense-in-depth guardrails pipeline (NeMo Colang input rails + Llama Guard 3 output classifier); scope = tenant-id или '*' (S24 W2, ADR-NEW-17). |
-| `ai.guardrail.policy_read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение per-tenant guardrail policy (NeMo/LlamaGuard/Rebuff/Lakera enable map) из tenant_config.py; scope = tenant-id или '*' (S24 W2, ADR-NEW-17). |
+| `ai.guardrail.policy_read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение per-tenant guardrail policy (NeMo/LlamaGuard/Lakera enable map) из tenant_config.py; scope = tenant-id или '*' (S24 W2, ADR-NEW-17, S172: Rebuff заменён на NeMo, F4.2). |
 | `ai.guardrails.lakera` | ✅ | `GlobScopeMatcher` | ➖ | Вызов Lakera Guard prompt-injection / PII detector. scope = '*' или конкретный provider-id (S11 K1 W2). |
-| `ai.guardrails.rebuff` | ✅ | `GlobScopeMatcher` | ➖ | Вызов Rebuff prompt-injection detector. scope = '*' или provider-id (S11 K1 W2). |
+| `ai.guardrails.nemo` | ✅ | `GlobScopeMatcher` | ➖ | Вызов NeMo Colang self-check guard (S172, replaces Rebuff). scope = '*' или provider-id. research/agent-framework/REPORT.md F4.2. |
+| `ai.guardrails.rebuff` | ✅ | `GlobScopeMatcher` | ➖ | [DEPRECATED S172] Вызов Rebuff prompt-injection detector — upstream archived 2026; capability сохранён для backward-compat grants в existing roles. Migrate to ai.guardrails.nemo. research/agent-framework/REPORT.md F4.2. |
 | `ai.invoke` | ✅ | `GlobScopeMatcher` | ➖ | Вызов LLM через единую точку входа AIGateway (ADR-NEW-19). Проверяется на каждый AIGateway.invoke(request.workflow_id); scope = workflow_id pattern или '*' (S25 W1). |
 | `ai.memory.delete` | ✅ | `GlobScopeMatcher` | ➖ | Удаление user-memory из MemoryProtocol (GDPR / 152-ФЗ user-erasure); scope = tenant-id или '*' (S24 W3, ADR-NEW-18). |
 | `ai.memory.read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение из MemoryProtocol (LangGraph Checkpointer / Mem0 / AgentMemory); namespace = '<tenant_id>:<scope>'; scope = tenant-id или '*' (S24 W3, ADR-NEW-18). |

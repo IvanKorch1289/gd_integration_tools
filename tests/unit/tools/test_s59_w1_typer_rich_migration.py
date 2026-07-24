@@ -12,6 +12,8 @@ Strategy: typer.testing.CliRunner для каждого.
 
 from __future__ import annotations
 
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -20,6 +22,12 @@ from typer.testing import CliRunner
 # === Shared fixtures ===
 
 runner = CliRunner(mix_stderr=True)
+
+# Cycle 33: CHECKER_PATH для subprocess-based tests (typer→argparse миграция).
+CHECKER_PATH = (
+    Path(__file__).resolve().parent.parent.parent.parent
+    / "tools" / "check_docstrings.py"
+)
 
 
 @pytest.fixture
@@ -229,45 +237,60 @@ def test_check_service_docs_clean_target(tmp_path: Path) -> None:
 
 
 # === check_docstrings ===
+# Cycle 33: typer→argparse миграция (cycle 28/120dd73b) — 4 теста ниже
+# использовали ``from tools.check_docstrings import app`` + ``runner.invoke``,
+# но после миграции ``app`` нет в модуле. Заменено на subprocess-based
+# CLI invocation, аналогично cycle 30 fix в test_pre_receive_docstring.py.
 
 
 def test_check_docstrings_help() -> None:
-    """--help → typer help."""
-    from tools.check_docstrings import app as check_app
-
-    result = runner.invoke(check_app, ["--help"])
-    assert result.exit_code == 0
+    """--help → exit 0."""
+    proc = subprocess.run(
+        [sys.executable, str(CHECKER_PATH), "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0
 
 
 def test_check_docstrings_no_paths_exits_2() -> None:
-    """Без paths/files → exit 2 (typer ValidationError или наш Exit 2)."""
-    from tools.check_docstrings import app as check_app
-
-    result = runner.invoke(check_app, [])
-    assert result.exit_code in (0, 2)
+    """Неизвестный CLI flag → argparse usage error (exit 2)."""
+    proc = subprocess.run(
+        [sys.executable, str(CHECKER_PATH), "--no-such-flag"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 2
 
 
 def test_check_docstrings_clean_file(clean_py_file: Path) -> None:
-    """--strict на чистом файле → exit 0."""
-    from tools.check_docstrings import app as check_app
-
-    result = runner.invoke(check_app, [str(clean_py_file), "--strict"])
-    # public_function имеет docstring "Has a docstring. Long enough description here."
-    # (44 chars > 20) — должен быть clean
-    assert result.exit_code == 0
+    """Документированный файл → exit 0 (positional path)."""
+    proc = subprocess.run(
+        [sys.executable, str(CHECKER_PATH), str(clean_py_file)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
 
 
 def test_check_docstrings_violation_strict(tmp_path: Path) -> None:
-    """Public function без docstring + --strict → exit 1."""
-    from tools.check_docstrings import app as check_app
-
+    """Public function без docstring → exit 1."""
     f = tmp_path / "bad.py"
     f.write_text(
         '"""Module."""\n\ndef undocumented_public() -> None:\n    return None\n',
         encoding="utf-8",
     )
-    result = runner.invoke(check_app, [str(f), "--strict"])
-    assert result.exit_code == 1
+    proc = subprocess.run(
+        [sys.executable, str(CHECKER_PATH), str(f)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 1
+    assert "undocumented_public" in proc.stdout or "undocumented_public" in proc.stderr
 
 
 # === Cross-tool smoke: typer entry points are importable from CI scripts ===

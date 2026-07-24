@@ -273,6 +273,84 @@ def test_cli_unknown_flag_errors() -> None:
 
 
 # --------------------------------------------------------------------------- #
+# --module-level opt-in (Cycle 32): проверяет module-level docstrings         #
+# --------------------------------------------------------------------------- #
+def test_cli_module_level_off_by_default(tmp_path: Path) -> None:
+    """Без ``--module-level`` флага — module docstring не проверяется.
+
+    Файл без module docstring + без function/class → exit 0 (default mode).
+    """
+    target = tmp_path / "no_module_doc.py"
+    # Module с non-trivial stmts, но без module docstring.
+    target.write_text(
+        "CONST_A = 1\n"
+        "CONST_B = 2\n"
+        "CONST_C = 3\n",
+        encoding="utf-8",
+    )
+    proc = subprocess.run(
+        [sys.executable, str(CHECKER_PATH), str(target)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_cli_module_level_flag_catches_missing(tmp_path: Path) -> None:
+    """``--module-level`` → ловит module без docstring (exit 1)."""
+    target = tmp_path / "no_module_doc.py"
+    target.write_text(
+        "CONST_A = 1\n"
+        "CONST_B = 2\n"
+        "CONST_C = 3\n",
+        encoding="utf-8",
+    )
+    proc = subprocess.run(
+        [sys.executable, str(CHECKER_PATH), "--module-level", str(target)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 1
+    # Output format: ``<path>:1 - Missing docstring: module``
+    # (signature field is "module", name field is "<module>").
+    assert "module" in proc.stdout
+    assert "Missing docstring" in proc.stdout
+
+
+def test_cli_module_level_skips_init_file(tmp_path: Path) -> None:
+    """``--module-level`` skip'ает __init__.py (re-exports не требуют docstring)."""
+    target = tmp_path / "__init__.py"
+    target.write_text(
+        "from .foo import bar\n"
+        "from .baz import qux\n"
+        "__all__ = (\"bar\", \"qux\")\n",
+        encoding="utf-8",
+    )
+    proc = subprocess.run(
+        [sys.executable, str(CHECKER_PATH), "--module-level", str(target)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_cli_module_level_skips_trivial_module(tmp_path: Path) -> None:
+    """``--module-level`` skip'ает trivial modules (≤2 non-docstring stmts)."""
+    target = tmp_path / "trivial.py"
+    target.write_text("X = 1\n", encoding="utf-8")  # 1 stmt only
+    proc = subprocess.run(
+        [sys.executable, str(CHECKER_PATH), "--module-level", str(target)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0
+
+
+# --------------------------------------------------------------------------- #
 # Pre-receive hook сценарии                                                   #
 # --------------------------------------------------------------------------- #
 def test_push_with_documented_file_passes(sandbox: dict[str, Path]) -> None:
