@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import pytest
 import subprocess
-from pathlib import Path
 
 
 class TestCheckDocstrings:

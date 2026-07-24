@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 
 from src.backend.infrastructure.clients.external.cdc.events import (
-    CDCEvent,
     CDCSubscription,
 )
 from src.backend.infrastructure.clients.external.cdc.kafka_strategy import (

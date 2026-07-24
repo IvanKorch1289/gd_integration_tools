@@ -1,6 +1,5 @@
 """Tests for run_cpu_bound (S171 M6 — performance helper)."""
 from __future__ import annotations
-import asyncio
 
 import pytest
 

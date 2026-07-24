@@ -10,7 +10,6 @@ Per D102 (single-source-of-truth through facade), infrastructure_facade
 # ruff: noqa: S101
 from __future__ import annotations
 
-import pytest
 
 
 class TestCorrelationIdProvider:

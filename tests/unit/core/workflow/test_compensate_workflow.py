@@ -7,9 +7,7 @@ Pattern (Ponytail, D173): тонкая обёртка над signal_workflow.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 
 
 class TestCompensateWorkflow:

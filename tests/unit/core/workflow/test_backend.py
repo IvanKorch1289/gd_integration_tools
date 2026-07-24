@@ -19,6 +19,7 @@ from src.backend.core.workflow.backend import (
     WorkflowResult,
     WorkflowStatus,
 )
+from src.backend.core.workflow.compensation import CompensateWorkflowRequest
 
 
 class TestWorkflowHandle:
@@ -125,7 +126,7 @@ class _FakeBackend:
         self,
         *,
         handle: WorkflowHandle,
-        request: "CompensateWorkflowRequest",
+        request: CompensateWorkflowRequest,
     ) -> None:
         pass
 

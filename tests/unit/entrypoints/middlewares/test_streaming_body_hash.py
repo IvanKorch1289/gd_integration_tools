@@ -5,8 +5,6 @@ in memory for hash computation.
 """
 from __future__ import annotations
 import hashlib
-import io
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 

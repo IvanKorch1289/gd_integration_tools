@@ -12,7 +12,6 @@ Pattern (D275, Ponytail): thin wrapper.
 from __future__ import annotations
 from datetime import datetime, timezone
 
-import pytest
 
 
 class TestBatchAggregatorProcessor:

@@ -8,9 +8,7 @@ Pattern (Ponytail, D172): тонкая обёртка над temporalio SDK.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from unittest.mock import MagicMock
 
-import pytest
 
 
 class TestWorkerVersioningHelper:
@@ -60,7 +58,6 @@ class TestWorkerVersioningHelper:
     def test_parse_build_id_from_git_sha(self) -> None:
         """Build ID может быть git SHA или semantic version."""
         from src.backend.infrastructure.workflow.versioning.worker_versioning import (
-            WorkerVersioningHelper,
             parse_build_id,
         )
         # Semver

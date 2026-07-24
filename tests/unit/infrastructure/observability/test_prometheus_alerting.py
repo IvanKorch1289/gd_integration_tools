@@ -6,7 +6,6 @@ Pattern (D285, Ponytail): thin wrapper над prometheus_client.
 # ruff: noqa: S101
 from __future__ import annotations
 
-import pytest
 
 
 class TestPrometheusAlertManager:

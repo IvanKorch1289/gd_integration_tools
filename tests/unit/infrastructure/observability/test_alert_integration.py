@@ -5,7 +5,6 @@ Pattern (D289, Ponytail): PrometheusAlertManager интегрирован с D25
 """
 # ruff: noqa: S101
 from __future__ import annotations
-import pytest
 
 
 class TestAlertIntegration:

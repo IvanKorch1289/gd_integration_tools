@@ -8,10 +8,8 @@ Pattern (D256, D237 TDD): RED → GREEN → review.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from datetime import datetime, timezone, timedelta
-from unittest.mock import AsyncMock, MagicMock
+from datetime import datetime, timezone
 
-import pytest
 
 
 class TestAdminCertsExpiring:

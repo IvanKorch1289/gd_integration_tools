@@ -24,7 +24,6 @@ from src.backend.core.interfaces import (
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitBreakerOpenError,
-    CircuitState,
     HealthReport,
     HealthStatus,
     PoolMetrics,

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.core.tenancy import SLOEvaluation, TenantSLO
+from src.backend.core.tenancy import TenantSLO
 
 
 class TestTenantSLODefault:

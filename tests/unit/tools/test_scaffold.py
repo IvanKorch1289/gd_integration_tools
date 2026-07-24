@@ -10,7 +10,6 @@ M14.3: fix path bug.
 # ruff: noqa: S101
 from __future__ import annotations
 
-from pathlib import Path
 import subprocess
 
 

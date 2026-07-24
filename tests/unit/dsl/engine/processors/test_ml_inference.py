@@ -14,8 +14,6 @@ import pytest
 from src.backend.dsl.engine.processors.ml_inference import (
     EmbeddingProcessor,
     OnnxInferenceProcessor,
-    OutboxTransactionProcessor as OutboxProcessor,
-    StreamingLLMProcessor,
 )
 
 

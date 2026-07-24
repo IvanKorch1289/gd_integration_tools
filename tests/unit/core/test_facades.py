@@ -1,7 +1,6 @@
 """Tests for unified middleware facades (S171 M7)."""
 from __future__ import annotations
 
-import pytest
 
 
 class TestFacadesImport:

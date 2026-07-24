@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 from src.backend.dsl.engine.processors.ai.sanitizepii_processor import SanitizePIIProcessor
 from src.backend.dsl.engine.exchange import Exchange

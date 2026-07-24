@@ -8,9 +8,6 @@ from src.backend.infrastructure.security.connector_rate_limiter import (
     ConnectorRateLimiter,
     get_connector_rate_limiter,
 )
-from src.backend.infrastructure.resilience.unified_rate_limiter import (
-    RateLimitExceeded,
-)
 
 
 @pytest.mark.unit

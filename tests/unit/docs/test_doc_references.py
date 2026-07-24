@@ -6,7 +6,6 @@ Validates src/backend/ + extensions/ paths cited in docs/.
 # ruff: noqa: S101
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import pytest

@@ -14,6 +14,7 @@ from src.backend.core.workflow.backend import (
     WorkflowHandle,
     WorkflowResult,
 )
+from src.backend.core.workflow.compensation import CompensateWorkflowRequest
 
 
 class TestWorkflowHandle:
@@ -133,7 +134,7 @@ class TestWorkflowBackendProtocol:
                 self,
                 *,
                 handle: WorkflowHandle,
-                request: "CompensateWorkflowRequest",
+                request: CompensateWorkflowRequest,
             ) -> None: ...
 
         assert issubclass(FakeBackend, WorkflowBackend)

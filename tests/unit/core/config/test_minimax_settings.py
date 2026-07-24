@@ -1,7 +1,6 @@
 """Tests for MiniMaxSettings (Sprint 170 M3 dir 1)."""
 from __future__ import annotations
 
-import pytest
 
 
 class TestMiniMaxSettingsDefaults:

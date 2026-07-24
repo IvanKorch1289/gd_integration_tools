@@ -7,9 +7,7 @@ Pattern (D269, Ponytail): thin wrapper, audit event на DENY.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from unittest.mock import MagicMock
 
-import pytest
 
 
 class TestToolPolicyAudit:
@@ -40,7 +38,6 @@ class TestToolPolicyAudit:
         )
         policy = AgentToolPolicy(agent_id="test", allowed_tools=["safe"])
         # Mock logger
-        from src.backend.core.logging import get_logger
         # Просто check — должна быть audit log запись
         policy.check("dangerous")
         # Проверим что есть audit_event attribute

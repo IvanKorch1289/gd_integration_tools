@@ -10,7 +10,6 @@ Pattern (Ponytail, D169): handler — тонкая обёртка, lazy temporal
 from __future__ import annotations
 from unittest.mock import MagicMock
 
-import pytest
 
 
 class TestContinueAsNewHandler:

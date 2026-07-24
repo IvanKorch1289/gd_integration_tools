@@ -6,7 +6,6 @@ Pattern (D277): thin wrapper.
 # ruff: noqa: S101
 from __future__ import annotations
 
-import pytest
 
 
 class TestEncodingDetectProcessor:

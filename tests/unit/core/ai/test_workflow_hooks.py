@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-import pytest
 
 from src.backend.core.ai.security import (
     AgentSecurityFramework,
-    SecurityDecision,
     ThreatLevel,
 )
 from src.backend.core.ai.security.workflow_hooks import (

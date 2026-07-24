@@ -6,7 +6,6 @@ Pattern (D270, Ponytail): settings flag.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-import pytest
 
 
 class TestDefaultSandbox:

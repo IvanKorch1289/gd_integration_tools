@@ -150,7 +150,7 @@ class TestAgentToolPolicyIntegration:
     """Интеграция с svcs_registry DI."""
 
     def test_di_factory_returns_default_policy(self) -> None:
-        from src.backend.core.svcs_registry import get_service, register_factory
+        from src.backend.core.svcs_registry import get_service
 
         # get_service должен вернуть default AgentToolPolicy instance
         policy = get_service(AgentToolPolicy)

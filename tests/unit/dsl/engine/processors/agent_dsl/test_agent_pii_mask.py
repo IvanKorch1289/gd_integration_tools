@@ -51,7 +51,6 @@ class TestAgentDictPIIMaskForTools:
         masked = ex.in_message.body["args"]
         assert "[EMAIL_1]" in masked["to"]
         assert "[PHONE_1]" in masked["phone"]
-        ex.set_property.assert_any_call("pii_token_map", mock.ANY) if False else None
 
     def test_for_tools_has_correct_capability(self) -> None:
         from src.backend.dsl.engine.processors.agent_dsl.agent_pii_mask import (

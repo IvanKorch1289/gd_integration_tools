@@ -152,7 +152,6 @@ class TestInvoke:
         требует whitelist parameter. Caller обязан передать whitelist
         в production.
         """
-        from src.backend.core.config.features import feature_flags
 
         reg = SkillRegistry()
         reg._skills["s1"] = SkillSpec(

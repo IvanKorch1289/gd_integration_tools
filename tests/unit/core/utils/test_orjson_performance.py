@@ -5,7 +5,6 @@ Pattern (D290, Ponytail): verify orjson is consistently used для hot paths.
 # ruff: noqa: S101
 from __future__ import annotations
 
-import pytest
 
 
 class TestOrjsonAdoption:
