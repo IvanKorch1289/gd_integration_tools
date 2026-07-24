@@ -13,9 +13,9 @@ step-by-step instructions, verification, troubleshooting.
 |---|----------|--------|--------|
 | 1 | [AI agent с tools whitelist + CapabilityGate](01-ai-agent-tools-whitelist.md) | S76+S79 | ✅ ready |
 | 2 | [Multi-instance outbox claim (atomicity + lease)](02-outbox-multi-instance-claim.md) | S72 | ✅ ready |
-| 3 | [Notebook execution с E2B sandbox](03-notebook-e2b-sandbox.md) | S75 | ✅ ready |
-| 4 | [CircuitBreaker deployment (per-route resilience)](04-circuit-breaker-deployment.md) | S81 | ✅ ready |
-| 5 | [LiteLLM Gateway в PoolHealthMonitor](05-litellm-pool-health-monitoring.md) | S80 | ✅ ready |
+| 3 | [Notebook execution с E2B sandbox](03-e2b-jupyter-sandbox.md) | S75 | ✅ ready |
+| 4 | [CircuitBreaker deployment (per-route resilience)](04-circuit-breaker-middleware.md) | S81 | ✅ ready |
+| 5 | [LiteLLM Gateway в PoolHealthMonitor](05-pool-health-monitoring.md) | S80 | ✅ ready |
 
 ## Cookbook structure (template)
 

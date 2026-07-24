@@ -167,26 +167,32 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
                 len(decl.compensate),
                 len(decl.forward),
             )
+        # Cycle 27 W1+H2: collect all compensation errors and chain them
+        # with the original via raise ... from ... so the original
+        # exception is preserved. Previously, strict_compensate=True
+        # re-raised comp_exc, swallowing the original cause.
+        comp_errors: list[BaseException] = []
         for compensate_idx in range(len(completed) - 1, -1, -1):
             if compensate_idx >= len(decl.compensate):
                 continue
             try:
                 await compile_activity_step(decl.compensate[compensate_idx], ctx)
             except Exception as comp_exc:
-                if decl.strict_compensate:
-                    # Cycle 19 P1.3 fix: log so operators can correlate
-                    # when original exception is replaced by comp_exc.
-                    workflow.logger.warning(
-                        "saga compensation failed for step %d "
-                        "(strict_compensate=True, re-raising comp_exc "
-                        "instead of original): %s",
-                        compensate_idx,
-                        comp_exc,
-                    )
-                    raise comp_exc
+                comp_errors.append(comp_exc)
                 workflow.logger.warning(
-                    "saga compensation failed for step %d: %s", compensate_idx, comp_exc
+                    "saga compensation failed for step %d: %s",
+                    compensate_idx,
+                    comp_exc,
                 )
+        if comp_errors and decl.strict_compensate:
+            # Chain: original exc is the primary, comp errors are cause chain.
+            # Allow caller to inspect both via __cause__ / __context__.
+            workflow.logger.error(
+                "saga strict_compensate=True: original exc + %d "
+                "compensation errors; re-raising original with chained cause",
+                len(comp_errors),
+            )
+            raise exc from comp_errors[-1]
         raise exc
     return None
 
@@ -213,15 +219,22 @@ async def compile_signal_wait_step(
                 _signal_received, timeout=timedelta(seconds=decl.timeout_s)
             )
         except TimeoutError:
-            # Cycle 19 P2.1 fix: log WARNING so timeout-vs-success is visible.
-            # Workflow continues with payload=None; downstream steps must
-            # handle the None case explicitly.
+            # Cycle 27 H1: default behavior is "raise" (fail-loud).
+            # Operators must explicitly set on_timeout="continue" for
+            # legacy silent-skip behavior.
             workflow.logger.warning(
                 "wait_signal timeout: signal %r not received within %ss; "
-                "continuing workflow with payload=None",
+                "on_timeout=%r",
                 decl.signal_name,
                 decl.timeout_s,
+                decl.on_timeout,
             )
+            if decl.on_timeout == "raise":
+                raise TimeoutError(
+                    f"wait_signal: signal {decl.signal_name!r} not received "
+                    f"within {decl.timeout_s}s"
+                ) from None
+            # "continue" branch: return None, downstream MUST handle None
             return None
     else:
         await workflow.wait_condition(_signal_received)

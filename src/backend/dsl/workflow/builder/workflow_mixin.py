@@ -33,6 +33,7 @@ class WorkflowMixin(_WorkflowBuilderProtocol):
         return WorkflowDeclaration(
             name=self._name,
             description=self._description,
+            version=self._version,
             steps=self._steps,
             default_timeout_s=self._default_timeout_s,
             default_retry_policy=self._default_retry_policy,

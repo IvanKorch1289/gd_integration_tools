@@ -59,6 +59,10 @@ class WorkflowBuilder:
         """Установить человекочитаемое описание workflow."""
         ...
 
+    def version(self, ver: str) -> Self:
+        """Установить semver-версию workflow (Cycle 27 W3)."""
+        ...
+
     def escalate(
         self,
         *,

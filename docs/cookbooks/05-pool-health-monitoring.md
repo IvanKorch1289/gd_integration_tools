@@ -1,7 +1,7 @@
 # Cookbook 05: Pool Health Monitoring for LiteLLM Gateway
 
 **Sprint**: S80
-**ADR**: [ADR-0162](../adr/0162-sprint-80-litemlm-pool-closure.md)
+**ADR**: [ADR-0162](../adr/0162-sprint-80-litellm-pool-registration-closure.md)
 **Status**: Production-ready
 
 ## Use Case

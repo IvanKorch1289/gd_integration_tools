@@ -53,6 +53,7 @@ class WorkflowBuilder(
     __slots__ = (
         "_name",
         "_description",
+        "_version",
         "_steps",
         "_default_timeout_s",
         "_default_retry_policy",
@@ -62,6 +63,7 @@ class WorkflowBuilder(
     def __init__(self, name: str, *, description: str | None = None) -> None:
         self._name = name
         self._description = description
+        self._version: str = "1.0"
         self._steps: list[WorkflowStep] = []
         self._default_timeout_s: float = 300.0
         self._default_retry_policy: RetryPolicy | None = None
@@ -70,6 +72,16 @@ class WorkflowBuilder(
     def description(self, text: str) -> Self:
         """Установить человекочитаемое описание workflow."""
         self._description = text
+        return self
+
+    def version(self, ver: str) -> Self:
+        """Установить semver-версию workflow (например, ``"2.1"``).
+
+        Cycle 27 W3: builder now пробрасывает user-supplied version в
+        ``WorkflowDeclaration.version`` через ``build()``. Без этого
+        вызова версия всегда была default ``"1.0"``.
+        """
+        self._version = ver
         return self
 
     def default_timeout(self, seconds: float) -> Self:

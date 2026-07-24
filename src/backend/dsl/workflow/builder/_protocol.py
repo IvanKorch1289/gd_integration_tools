@@ -16,6 +16,7 @@ class _WorkflowBuilderProtocol(Protocol):
 
     _name: str
     _description: str | None
+    _version: str
     _steps: list[WorkflowStep]
     _default_timeout_s: float
     _default_retry_policy: RetryPolicy | None

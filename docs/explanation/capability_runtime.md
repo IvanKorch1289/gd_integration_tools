@@ -39,6 +39,6 @@ plugin.toml
 
 ## Связанные документы
 
-* [ADR-042 plugin.toml schema](../../docs/adr/ADR-042-plugin-toml-schema.md)
-* [ADR-044 capability vocabulary](../../docs/adr/ADR-044-capability-vocabulary.md)
+* Plugin TOML schema (см. `src/backend/plugins/composition/`).
+* Capability vocabulary (см. `src/backend/core/security/capabilities/`).
 * Streamlit page **71_Capabilities** — live heatmap.

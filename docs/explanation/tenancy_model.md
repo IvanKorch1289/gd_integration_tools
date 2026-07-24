@@ -23,5 +23,4 @@
 (если Redis недоступен — quota не блокируется, событие в логи).
 
 См. также:
-* [ADR Tenancy](../../docs/adr/ADR-Tenancy.md) (если существует);
 * Streamlit page **70_Tenants** — admin UI.

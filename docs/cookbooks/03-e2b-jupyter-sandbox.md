@@ -1,7 +1,7 @@
 # Cookbook 03: Secure AI Code Execution with E2B Sandbox
 
 **Sprint**: S75
-**ADR**: [ADR-0157](../adr/0157-sprint-75-e2b-kernelspec-closure.md)
+**ADR**: [ADR-0157](../adr/0157-sprint-75-jupyter-execution-final-closure.md)
 **Status**: Production-ready
 
 ## Use Case

@@ -123,7 +123,13 @@ class SignalWaitDeclaration(BaseModel):
 
     Plan V16.2 §4.3::
 
-        .wait_for_signal(signal_name, timeout=...)
+        .wait_for_signal(signal_name, timeout=..., on_timeout=...)
+
+    Cycle 27 H1: added ``on_timeout`` to control failure mode.
+    - ``"raise"`` (default, fail-loud): raise TimeoutError when timeout
+      elapses — workflow FAILS, surfaces the issue to operators.
+    - ``"continue"`` (legacy, opt-in): return payload=None silently;
+      downstream steps MUST handle None. Cycle 19 default was this.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -132,6 +138,13 @@ class SignalWaitDeclaration(BaseModel):
     signal_name: str = Field(min_length=1, description="Имя сигнала Temporal.")
     timeout_s: float | None = Field(
         default=None, gt=0.0, description="Timeout ожидания; None — бесконечно."
+    )
+    on_timeout: Literal["raise", "continue"] = Field(
+        default="raise",
+        description=(
+            "Поведение при timeout: 'raise' (Cycle 27 default, fail-loud) "
+            "или 'continue' (legacy: вернуть None, продолжить workflow)."
+        ),
     )
     output_key: str | None = Field(
         default=None, description="Имя property для сохранения payload сигнала."
