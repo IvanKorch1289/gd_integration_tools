@@ -117,3 +117,41 @@ class TestMigrationCompleteness:
             assert "from src.backend.core.utils.metrics_registry" in content, (
                 f"{p} not migrated to core path"
             )
+
+    def test_observability_bridge_no_infrastructure_metrics_registry(self):
+        """Cycle 29 retrospective fix: observability_bridge must NOT
+        import the removed infrastructure.observability.metrics_registry.
+
+        The bridge runs at DI init time (no try/except protection),
+        so a runtime ImportError would silently break DI for all
+        observability consumers.
+        """
+        path = "src/backend/core/di/providers/observability_bridge.py"
+        with open(path) as f:
+            content = f.read()
+        # All references to metrics_registry in this file must use
+        # the core source, not the removed infrastructure path.
+        import re
+        # Find all import statements
+        for match in re.finditer(
+            r"from\s+([\w\.]*metrics_registry[\w\.]*)\s+import",
+            content,
+        ):
+            target = match.group(1)
+            assert "core.utils" in target, (
+                f"observability_bridge.py imports from {target} "
+                f"(should be from src.backend.core.utils.metrics_registry)"
+            )
+
+    def test_snapshot_job_patch_target_updated(self):
+        """Cycle 29 retrospective: test_snapshot_job.py must patch
+        the canonical core path, not the removed infrastructure path.
+        """
+        path = "tests/unit/infrastructure/resilience/test_snapshot_job.py"
+        if not os.path.exists(path):
+            return  # not in this branch
+        with open(path) as f:
+            content = f.read()
+        assert "infrastructure.observability.metrics_registry" not in content, (
+            "test_snapshot_job.py still patches removed infrastructure path"
+        )

@@ -1,5 +1,43 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Sprint 204 (S204) — Deep Audit hardening continuation
+
+### P0 security hardening
+
+- **FIXED**: `src/backend/core/ai/gateway_orchestrator_mixin.py` теперь не использует `workflow_id` как fallback для tool policy. При ограниченной whitelist/blacklist отсутствие `AIRequest.tool_name` завершается fail-closed через `ToolPolicyViolationError`; явный `allow_all_tools=True` workflow-only режим сохранён.
+- **FIXED**: `src/backend/core/ai/policy/enforcer/input_guard_mixin.py` — ошибки Lakera fail-closed по умолчанию. `GuardRef.fail_open=False` является явным override только для provider failure и эмитит `ai.guardrail.provider_failure` через canonical audit facade; успешный `flagged=True` всегда блокируется.
+- Метрика: **26 targeted P0 tests passed**; новые regression cases покрывают исходные bypasses и explicit override.
+- Layer impact: core-only изменения, новых cross-layer нарушений нет.
+
+### P1 layer and DI integrity
+
+- **REFACTORED**: `core/api` больше не lazy-import'ит `infrastructure`/`dsl`; upper-layer `SchedulerManager`/`WorkflowBuilder` остаются в разрешённой composition boundary `src.backend.sdk`. Исправлен scheduler registry key.
+- **FIXED**: LDAP factory переведена на core-owned `ldap_contract.py` + composition registration; runtime `core → services` fallback удалён. Stale layer allowlist entries удалены только после проверки gate.
+- **CONSOLIDATED**: metrics registry остаётся canonical в `core.utils.metrics_registry`; stale infrastructure import allowlist entry удалён.
+- Метрика: **47 targeted DI/API tests passed**, layer gate: **0 new violations**, Ruff: passed.
+
+### P2 correctness/performance
+
+- **FIXED**: ClickHouse `batch_size` проходит protocol → processor → client; rows читаются из Exchange body, oversized payload и invalid batch size завершаются явным исключением до внешнего вызова; chunking покрыт fake-client тестами.
+- **FIXED**: `PgRunnerWorkflowBackend.replay()` больше не silent no-op: возвращает явный `NotImplementedError` с документированным non-production ограничением.
+- Метрика: **30 P2 targeted tests passed**; связанные ClickHouse/workflow проверки — passed, два pre-existing unrelated failure зафиксированы в отчёте.
+
+### P4 hygiene and CI gates
+
+- **CONSOLIDATED**: module whitelist matching вынесен в `core.security.module_whitelist` и используется и `CallFunctionProcessor`, и `SkillRegistry`; новые unit tests проходят.
+- **ADDED**: targeted blocking Ruff `ERA001,RUF005` и strict vulture wrapper gates в GitHub/GitLab CI. Legacy decorator-wired modules не удалялись.
+- Метрика: **43 whitelist/skill/function tests passed**; targeted Ruff/vulture checks passed. Broad custom grep scan всё ещё содержит pre-existing baseline findings и не заявляется полностью зелёным.
+
+### What we explicitly did NOT do
+
+- ❌ Не добавляли новую зависимость, raw asyncpg pool или вторую реализацию cache/SSH/browser/EIP/CDC.
+- ❌ Не меняли уже закрытые symlink, sandbox, YAML safe-load и endpoint auth реализации.
+- ❌ Не выполняли массовую миграцию 35+ Streamlit страниц и не включали запрет всех legacy frontend imports одним breaking diff; следующий шаг — ratchet + доменные API-клиенты.
+- ❌ Не удаляли 292 потенциально decorator-wired модуля и не переписывали RouteBuilder MRO без characterization tests и отдельного ADR.
+- ❌ Не создавали git commit/push в этой сессии.
+
+---
+
 ## [Unreleased] — Sprint 203 (S203) — Integration domain audit
 
 ### ConnectorHealthMixin consolidation (S203 W1)
@@ -169,6 +207,41 @@ Per Master Prompt P1-#2: устрани `core→services` нарушения.
 - ❌ Не добавлял `get_ad_directory_client_provider` в `core/api/__init__.py` (это в `core/di/providers/auth.py`; extensions импортируют из facade, не из провайдеров).
 
 Refs: Master Prompt P1-#2, DEEP_AUDIT_REPORT R3.10d, S172 Ponytail pattern.
+
+### core→services retrospective fixes (cycle 29 retrospective)
+
+Per general-31 review of cycle 29:
+
+**P1-#2 runtime fix** (commit in this retrospective):
+- `src/backend/core/auth/ldap_client_factory.py:111` — added runtime
+  import of `AdServerConfig` (was only TYPE_CHECKING before, causing
+  NameError on DI success path).
+- Fallback still has runtime imports (preserved for dev_light).
+- DI success path now has `AdServerConfig` available for client construction.
+
+**P1-#4 runtime fix** (commit in this retrospective):
+- `src/backend/core/di/providers/observability_bridge.py:151` —
+  `get_default_labels_attr` now imports from
+  `src.backend.core.utils.metrics_registry` (was importing from
+  removed `infrastructure.observability.metrics_registry`).
+- `tests/unit/infrastructure/resilience/test_snapshot_job.py:45` —
+  patch target updated to canonical core source.
+
+**P1-#3 AST test note** (Ponytail-YAGNI):
+- ruff 0.15.16 (current pin) does not support
+  `flake8-tidy-imports.banned-api` / `per-file-ignores` syntax
+  (added in 0.6+). When ruff upgraded to ≥0.6, uncomment
+  config block in `pyproject.toml:873-890`.
+- Until then, AST-based test
+  `tests/unit/frontend/test_layer_boundary.py` (7/7 PASS)
+  provides tool-agnostic enforcement. CI gate: `pytest tests/unit/frontend/test_layer_boundary.py`.
+
+**What we explicitly did NOT do** (cycle 29 retrospective):
+- ❌ Did NOT do ruff upgrade (separate ADR task, not cycle 29 scope).
+- ❌ Did NOT add cycle-29 CHANGELOG entry for these retrospective fixes
+  (they are fixes for cycle 29 issues, not new features).
+- ❌ Did NOT migrate frontend to new `core.api` facade
+  (existing `frontend_facade` pattern works; cosmetic change).
 
 ### metrics_registry deduplication (cycle 29 — Master Prompt P1-#4)
 

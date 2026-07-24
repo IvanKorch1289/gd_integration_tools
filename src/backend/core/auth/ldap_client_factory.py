@@ -30,6 +30,8 @@ from typing import TYPE_CHECKING, Any
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
+    # Type-only for return annotation in get_ad_client().
+    # Runtime import happens inside get_ad_client via DI provider.
     from src.backend.services.auth.ad_directory_client import AdDirectoryClient
 
 __all__ = ("get_ad_client", "reset_ad_client", "ad_client_cached")
@@ -103,9 +105,14 @@ def get_ad_client(
     # Cycle 29 P1-#2 fix: use DI provider instead of direct core→services
     # import. The provider does the lazy resolution, eliminating the
     # layer violation. Falls back to direct import only if DI fails.
+    # Cycle 29 retrospective fix: AdServerConfig + AdDirectoryClient
+    # must be importable at runtime (was only TYPE_CHECKING before → NameError).
     try:
         from src.backend.core.di.providers.auth import (
             get_ad_directory_client_provider,
+        )
+        from src.backend.services.auth.ad_directory_client import (  # noqa: I001
+            AdServerConfig,
         )
         client = get_ad_directory_client_provider()(
             config=AdServerConfig(

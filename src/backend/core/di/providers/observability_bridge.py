@@ -147,8 +147,13 @@ def get_logger_factory() -> Any:
 
 
 def get_default_labels_attr(name: str) -> Any:
-    """Возвращает атрибут ``observability.metrics_registry.<name>`` (DEFAULT_LABELS)."""
-    from src.backend.infrastructure.observability import metrics_registry
+    """Возвращает атрибут ``core.utils.metrics_registry.<name>`` (DEFAULT_LABELS).
+
+    Cycle 29 P1-#4 retrospective fix: was importing from
+    ``infrastructure.observability`` (removed in cycle 29 commit f02f1f34).
+    Now imports from canonical core source.
+    """
+    from src.backend.core.utils import metrics_registry
 
     return getattr(metrics_registry, name)
 

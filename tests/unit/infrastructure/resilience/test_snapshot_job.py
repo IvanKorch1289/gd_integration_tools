@@ -40,9 +40,13 @@ def reset_snapshot_state() -> None:
 
 @pytest.fixture
 def mock_metrics() -> Any:
-    """Замоканный metrics_registry с gauge/counter."""
+    """Замоканный metrics_registry с gauge/counter.
+
+    Cycle 29 P1-#4 retrospective fix: patch target updated to canonical
+    core source (was infrastructure.observability which was removed).
+    """
     with patch(
-        "src.backend.infrastructure.observability.metrics_registry.metrics_registry"
+        "src.backend.core.utils.metrics_registry.metrics_registry"
     ) as reg:
         age_gauge = MagicMock()
         rows_gauge = MagicMock()
