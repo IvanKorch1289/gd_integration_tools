@@ -6,11 +6,12 @@
 
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
-from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
+if TYPE_CHECKING:
+    from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
 
-_T = TypeVar("_T", bound=_RouteBuilderProtocol)
+_T = TypeVar("_T", bound="_RouteBuilderProtocol")
 
 
 class TelegramSourcesMixin:

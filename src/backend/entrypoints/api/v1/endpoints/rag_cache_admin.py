@@ -19,7 +19,7 @@ from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.di.app_state import get_three_tier_rag_cache_from_state
 from src.backend.services.cache.metrics import get_metrics_snapshot
 
-__all__ = ("record_invalidation_event", "router", "get_three_tier_cache")
+__all__ = ("record_invalidation_event", "router")
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_OPERATOR = Depends(
@@ -36,12 +36,8 @@ def record_invalidation_event(event: dict[str, Any]) -> None:
     _EVENTS_RING.append({"ts": datetime.now(UTC).isoformat(), **event})
 
 
-# S93 W1 C1: shim для backward-compat с core/di/providers/cache.py.
-# Реальная имплементация — в core/di/app_state.get_three_tier_rag_cache_from_state.
-# TODO(S94): удалить после миграции callsite'ов.
+# S93 W1 C1: прямой вызов канонического resolver'а из core/di/app_state.
 _get_three_tier_cache = get_three_tier_rag_cache_from_state
-# Re-export под старым именем для public API compatibility
-get_three_tier_cache = get_three_tier_rag_cache_from_state
 
 
 @router.get("/rag-cache/stats", summary="Снимок hit/miss по tier'ам RAG-кэша")

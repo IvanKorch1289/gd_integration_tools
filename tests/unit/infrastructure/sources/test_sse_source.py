@@ -58,7 +58,13 @@ class _FakeAsyncClient:
 async def test_sse_parses_simple_event() -> None:
     """Простое SSE-событие парсится в SSEEvent."""
     _FakeAsyncClient._shared_resp = _make_sse_response(["data: hello world", "", ""])
-    with patch("httpx.AsyncClient", _FakeAsyncClient):
+    with (
+        patch("httpx.AsyncClient", _FakeAsyncClient),
+        patch(
+            "src.backend.infrastructure.sources.sse.check_source_capability",
+            return_value=True,
+        ),
+    ):
         source = SSESource(url="https://example.com/events", reconnect_max_retries=0)
         events: list[SSEEvent] = []
         async for evt in source.stream():
@@ -77,7 +83,13 @@ async def test_sse_parses_named_event_with_id() -> None:
     _FakeAsyncClient._shared_resp = _make_sse_response(
         ["event: order.created", "id: evt-42", 'data: {"order_id": 1}', "", ""]
     )
-    with patch("httpx.AsyncClient", _FakeAsyncClient):
+    with (
+        patch("httpx.AsyncClient", _FakeAsyncClient),
+        patch(
+            "src.backend.infrastructure.sources.sse.check_source_capability",
+            return_value=True,
+        ),
+    ):
         source = SSESource(
             url="https://example.com/events", parse_json=True, reconnect_max_retries=0
         )
@@ -101,7 +113,13 @@ async def test_sse_multi_line_data() -> None:
     _FakeAsyncClient._shared_resp = _make_sse_response(
         ["data: line1", "data: line2", "data: line3", "", ""]
     )
-    with patch("httpx.AsyncClient", _FakeAsyncClient):
+    with (
+        patch("httpx.AsyncClient", _FakeAsyncClient),
+        patch(
+            "src.backend.infrastructure.sources.sse.check_source_capability",
+            return_value=True,
+        ),
+    ):
         source = SSESource(
             url="https://example.com/events", parse_json=False, reconnect_max_retries=0
         )
@@ -121,7 +139,13 @@ async def test_sse_handles_keep_alive_comments() -> None:
     _FakeAsyncClient._shared_resp = _make_sse_response(
         [": this is a comment", "data: real-event", "", ""]
     )
-    with patch("httpx.AsyncClient", _FakeAsyncClient):
+    with (
+        patch("httpx.AsyncClient", _FakeAsyncClient),
+        patch(
+            "src.backend.infrastructure.sources.sse.check_source_capability",
+            return_value=True,
+        ),
+    ):
         source = SSESource(
             url="https://example.com/events", parse_json=False, reconnect_max_retries=0
         )
