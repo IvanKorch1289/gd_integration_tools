@@ -48,6 +48,15 @@ class RenderTemplateProcessor(BaseProcessor):
         result_property: str = "rendered",
         name: str | None = None,
     ) -> None:
+        """Сохранить шаблон + параметры для последующего рендеринга.
+
+        Args:
+            template_string: Исходный Jinja2-шаблон.
+            context_from: Откуда брать контекст (``body``, ``body.<key>``,
+                ``properties.<key>``).
+            result_property: Куда сохранить результат в ``exchange.properties``.
+            name: Опц. имя процессора.
+        """
         super().__init__(name=name or "render_template")
         self._template_string = template_string
         self._context_from = context_from
@@ -55,6 +64,16 @@ class RenderTemplateProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Отрисовать шаблон и положить результат в properties + out.
+
+        Args:
+            exchange: Текущий exchange (in_message.body используется как контекст).
+            context: Контекст исполнения workflow (не используется).
+
+        Side Effects:
+            - ``exchange.properties[result_property]`` — отрисованная строка.
+            - ``exchange.out_message`` копируется из in_message (preserves body).
+        """
         from jinja2 import Template
 
         tmpl = Template(self._template_string, autoescape=True)
@@ -66,6 +85,7 @@ class RenderTemplateProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализовать в dict для DSL round-trip (Phase 4: yaml_io)."""
         return {
             "render_template": {
                 "template_string": self._template_string,
@@ -86,6 +106,18 @@ class RenderTemplateFileProcessor(BaseProcessor):
         result_property: str = "rendered",
         name: str | None = None,
     ) -> None:
+        """Сохранить путь к шаблону + параметры.
+
+        Args:
+            path: Путь к .j2 файлу (защищён от path-traversal).
+            context_from: Откуда брать контекст (``body``, ``body.<key>``,
+                ``properties.<key>``).
+            result_property: Куда сохранить результат в ``exchange.properties``.
+            name: Опц. имя процессора.
+
+        Raises:
+            ValueError: При path-traversal (``..`` или абсолютный путь).
+        """
         super().__init__(name=name or f"render_template_file({path})")
         self._path = path
         self._context_from = context_from
@@ -93,6 +125,20 @@ class RenderTemplateFileProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Загрузить шаблон с диска и отрисовать.
+
+        Args:
+            exchange: Текущий exchange.
+            context: Контекст исполнения workflow (не используется).
+
+        Side Effects:
+            - ``exchange.properties[result_property]`` — отрисованная строка.
+            - ``exchange.out_message`` копируется из in_message.
+
+        Raises:
+            jinja2.TemplateNotFound: Если файл шаблона не существует.
+            ValueError: При path-traversal (``_safe_template_path``).
+        """
         from jinja2 import Environment, FileSystemLoader
 
         safe_path = _safe_template_path(self._path)
@@ -108,6 +154,7 @@ class RenderTemplateFileProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Сериализовать в dict для DSL round-trip (Phase 4: yaml_io)."""
         return {
             "render_template_file": {
                 "path": self._path,

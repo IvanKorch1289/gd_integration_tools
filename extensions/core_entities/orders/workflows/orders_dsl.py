@@ -85,13 +85,21 @@ async def _call_notification_send(body: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _call_create_skb_order(body: dict[str, Any]) -> dict[str, Any]:
-    """Processor: создать заказ в SKB через OrderService."""
-    from src.backend.entrypoints.base import dispatch_action
+    """Processor: создать заказ в SKB через OrderService.
+
+    Phase 1 fix: использует core facade ``get_action_bus_service_provider``
+    вместо прямого импорта ``src.backend.entrypoints.base.dispatch_action``.
+    Это соответствует правилу extensions → core-only.
+    """
+    from src.backend.core.di.providers.workflow import (
+        get_action_bus_service_provider,
+    )
 
     order_id = body.get("order_id") or body.get("id")
     if order_id is None:
         raise ValueError("create_skb_order: order_id/id отсутствует в payload")
-    result = await dispatch_action(
+    bus = get_action_bus_service_provider()()
+    result = await bus.dispatch(
         action="orders.create_skb_order",
         payload={"order_id": order_id},
         source="workflow",
@@ -103,11 +111,17 @@ async def _call_create_skb_order(body: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _call_get_skb_result(body: dict[str, Any]) -> dict[str, Any]:
-    """Processor: запрос результата заказа из SKB (polling step)."""
-    from src.backend.entrypoints.base import dispatch_action
+    """Processor: запрос результата заказа из SKB (polling step).
+
+    Phase 1 fix: использует core facade вместо entrypoints direct.
+    """
+    from src.backend.core.di.providers.workflow import (
+        get_action_bus_service_provider,
+    )
 
     order_id = body.get("order_id") or body.get("id")
-    result = await dispatch_action(
+    bus = get_action_bus_service_provider()()
+    result = await bus.dispatch(
         action="orders.get_file_and_json",
         payload={"order_id": order_id},
         source="workflow",
@@ -119,11 +133,17 @@ async def _call_get_skb_result(body: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _call_send_skb_result(body: dict[str, Any]) -> dict[str, Any]:
-    """Processor: отправить финальный результат заказа."""
-    from src.backend.entrypoints.base import dispatch_action
+    """Processor: отправить финальный результат заказа.
+
+    Phase 1 fix: использует core facade вместо entrypoints direct.
+    """
+    from src.backend.core.di.providers.workflow import (
+        get_action_bus_service_provider,
+    )
 
     order_id = body.get("order_id") or body.get("id")
-    result = await dispatch_action(
+    bus = get_action_bus_service_provider()()
+    result = await bus.dispatch(
         action="orders.send_order_data",
         payload={"order_id": order_id},
         source="workflow",

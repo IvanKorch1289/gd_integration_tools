@@ -45,6 +45,22 @@ class ShadowModeProcessor(BaseProcessor):
         self._processors = processors
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Запустить nested processors в shadow mode (read-only dry-run).
+
+        Args:
+            exchange: Текущий exchange.
+            context: Контекст исполнения workflow.
+
+        Side Effects:
+            - ``exchange.properties["shadow_mode"]`` устанавливается в ``True``
+              на время выполнения nested processors.
+            - Восстанавливается исходное значение ``shadow_mode`` после
+              завершения (даже при exception).
+
+        Notes:
+            Nested processors, поддерживающие shadow flag, должны пропускать
+            side effects и только логировать попытки.
+        """
         was_shadow = exchange.get_property("shadow_mode", False)
         exchange.set_property("shadow_mode", True)
         try:

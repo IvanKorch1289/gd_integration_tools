@@ -294,7 +294,11 @@ class WebhookTrigger:
         """Регистрирует FastAPI route для webhook → DSL dispatch (idempotent)."""
         if self._route_added:
             return
-        # Try to find FastAPI app from common locations
+        # Try to find FastAPI app from common locations.
+        # Phase 2 fix: documented graceful cross-layer lookup. The
+        # entrypoints module is optional (dev_light build may omit it),
+        # so this fallback is intentional and protected by try/except.
+        # TODO Phase 4: replace with core.di.providers.http.get_app_provider.
         app = self._app
         if app is None:
             try:

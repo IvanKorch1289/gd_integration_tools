@@ -34,6 +34,23 @@ class DQCheckProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Проверить тело сообщения по правилам Data Quality.
+
+        Args:
+            exchange: Текущий exchange (содержит in_message.body).
+            context: Контекст исполнения workflow.
+
+        Side Effects:
+            - ``exchange.properties["dq_result"]`` — результат проверки
+              (dict с ключами ``is_clean``, ``violations``).
+            - При ``fail_on_violation=True`` и наличии нарушений:
+              ``exchange.fail()`` с количеством нарушений.
+
+        Raises:
+            Exception: Любая ошибка DQ-проверки пробрасывается через
+                ``handle_processor_error`` decorator (автоматический
+                ``exchange.fail()`` + логирование).
+        """
         from src.backend.services.ops.data_quality import get_dq_monitor
 
         monitor = get_dq_monitor()

@@ -145,10 +145,43 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
     forward-шагов, которые УЖЕ выполнились до ошибки. Если compensate
     падает — лог + продолжение (best-effort), исходный exception
     re-raise после завершения compensation.
+
+    Phase 6 fix (cycle 28): при наличии ``compensate_map`` используется
+    explicit name→step mapping вместо positional ``compensate[]``.
+    ``compensate_map`` validated в ``validate_compensate_map`` (Pydantic
+    model_validator); ошибки валидации → ValidationError на build().
     """
     from temporalio import workflow
 
     completed: list[ActivityDeclaration] = []
+    # Phase 6: resolve compensation step lookup. Prefer explicit
+    # ``compensate_map`` (forward_name → compensate_step); fallback to
+    # positional ``compensate[]`` (index-based).
+    compensate_by_name: dict[str, ActivityDeclaration] = {}
+    if decl.compensate_map:
+        # Build name→step index from forward (used to resolve map values).
+        forward_by_name = {step.name: step for step in decl.forward}
+        for fwd_name, comp_name in decl.compensate_map.items():
+            if fwd_name not in forward_by_name:
+                workflow.logger.warning(
+                    "saga compensate_map references unknown forward step: %s",
+                    fwd_name,
+                )
+                continue
+            # comp_name must reference an ActivityDeclaration in compensate[]
+            comp_step = next(
+                (s for s in decl.compensate if s.name == comp_name),
+                None,
+            )
+            if comp_step is None:
+                workflow.logger.warning(
+                    "saga compensate_map: forward=%s → compensate=%s "
+                    "not found in compensate[]",
+                    fwd_name,
+                    comp_name,
+                )
+                continue
+            compensate_by_name[fwd_name] = comp_step
     try:
         for forward_step in decl.forward:
             await compile_activity_step(forward_step, ctx)
@@ -159,7 +192,8 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
         # forward индексам по позиции (best-effort при разной длине).
         # Cycle 19 (meta-coord P1.2 fix): log WARNING when compensate count
         # does not match completed forward steps (silent skip was misleading).
-        if len(decl.compensate) < len(decl.forward):
+        # Phase 6: prefer explicit map when available.
+        if not compensate_by_name and len(decl.compensate) < len(decl.forward):
             workflow.logger.warning(
                 "saga compensate count (%d) < forward count (%d); "
                 "compensation for forward steps beyond compensate length "
@@ -171,17 +205,28 @@ async def compile_saga_step(decl: SagaDeclaration, ctx: dict[str, Any]) -> Any:
         # with the original via raise ... from ... so the original
         # exception is preserved. Previously, strict_compensate=True
         # re-raised comp_exc, swallowing the original cause.
+        # Phase 6: when compensate_map is present, look up compensate step
+        # by forward_name; otherwise fall back to positional compensate[].
         comp_errors: list[BaseException] = []
-        for compensate_idx in range(len(completed) - 1, -1, -1):
-            if compensate_idx >= len(decl.compensate):
-                continue
+        for completed_step in reversed(completed):
+            if compensate_by_name:
+                comp_step = compensate_by_name.get(completed_step.name)
+                if comp_step is None:
+                    # No compensation mapped for this forward step
+                    continue
+            else:
+                # Positional fallback (backward compat)
+                idx = completed.index(completed_step)
+                if idx >= len(decl.compensate):
+                    continue
+                comp_step = decl.compensate[idx]
             try:
-                await compile_activity_step(decl.compensate[compensate_idx], ctx)
+                await compile_activity_step(comp_step, ctx)
             except Exception as comp_exc:
                 comp_errors.append(comp_exc)
                 workflow.logger.warning(
-                    "saga compensation failed for step %d: %s",
-                    compensate_idx,
+                    "saga compensation failed for step %s: %s",
+                    comp_step.name,
                     comp_exc,
                 )
         if comp_errors and decl.strict_compensate:

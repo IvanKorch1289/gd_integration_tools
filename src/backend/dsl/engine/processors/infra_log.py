@@ -33,7 +33,22 @@ if TYPE_CHECKING:
     meta={"tier": 1, "category": "infra"},
 )
 class InfraLogWriteProcessor(BaseProcessor):
+    """DSL processor для записи структурированных логов из pipeline.
+
+    Использует ``get_logger_factory`` facade для получения logger'а.
+    Поддерживает стандартные уровни: debug, info, warning, error, critical.
+    """
+
     def __init__(self, level: str, message: str) -> None:
+        """Создать процессор с фиксированным уровнем и сообщением.
+
+        Args:
+            level: Уровень логирования (``debug|info|warning|error|critical``).
+            message: Текст сообщения для логирования.
+
+        Raises:
+            ValueError: Если ``level`` не из допустимого набора.
+        """
         super().__init__(name="infra_log_write")
         if level not in ("debug", "info", "warning", "error", "critical"):
             raise ValueError(f"Invalid log level: {level}")
@@ -41,6 +56,17 @@ class InfraLogWriteProcessor(BaseProcessor):
         self.message = message
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Записать сообщение в лог через facade logger.
+
+        Args:
+            exchange: Текущий exchange (не используется, для совместимости API).
+            context: Контекст исполнения workflow (не используется).
+
+        Notes:
+            ``exchange`` и ``context`` принимаются для совместимости с
+            базовым ``BaseProcessor.process`` API, но не используются —
+            процессор stateless и не модифицирует exchange.
+        """
         from src.backend.core.di.providers.infrastructure_facade import (
             get_logger_factory as _get_logger_factory_fn,
         )
