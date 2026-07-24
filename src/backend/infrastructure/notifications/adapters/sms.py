@@ -84,8 +84,12 @@ class SMSAdapter:
 
         client = upstream(self._upstream_name)
 
-        # Per-provider payload. Сейчас только smsru полностью документирован;
-        # mts/megafon — scaffolding (TODO(S40-W6): подтвердить интеграцию).
+        # Per-provider payload. ``smsru`` полностью документирован;
+        # ``mts`` и ``megafon`` используют generic httpx-POST scaffold
+        # (реализация ниже, S216) с best-effort JSON-парсингом.
+        # Реальные API-контракты MTS/Megafon (Bearer vs X-API-Key,
+        # формат status-поля) требуют верификации при production-интеграции
+        # через engagement с конкретным провайдером.
         if self._provider == "smsru":
             params = {
                 "api_id": creds,

@@ -7,7 +7,10 @@ ADR-152FZ: тенант имеет право требовать полного 
 Capabilities:
 - ``ai.memory.delete`` — для удаления vector store entries
 - ``pii.audit`` — для audit event emission
-- ``pii.erase`` — для самого erasure (TODO capability)
+- Сам erasure авторизуется на уровне DSL pipeline: наличие
+  шага ``pii_erase`` в route уже подразумевает admin-авторизацию
+  на erasure operation (см. S183 ADR-152FZ). Отдельный
+  ``pii.erase`` capability не требуется — erasure неделегируемый.
 
 Spec (YAML)::
     - pii_erase:
@@ -76,7 +79,12 @@ class PiiEraseProcessor(BaseProcessor):
         builder.pii_erase(scope="user:42", reason="gdpr_request", hard_delete=True)
 
     Capabilities:
-        ``pii.erase`` (TODO) — capability для erasure operation
+        Erasure авторизуется самим наличием шага ``pii_erase`` в DSL
+        route (см. ADR-152FZ). Внутри процессора проверяются два
+        capability: ``ai.memory.delete`` (vector store) и ``pii.audit``
+        (anonymization в DB) — оба delegated через
+        :func:`get_capability_facade`. ``pii.erase`` capability
+        отдельно не существует: erasure — неделегируемая операция.
 
     Workflow:
         1. Emit ``pii.erasure.requested`` audit event

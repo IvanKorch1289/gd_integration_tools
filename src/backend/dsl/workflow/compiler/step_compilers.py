@@ -23,7 +23,7 @@ workflow) и эмитит соответствующий ``temporalio.workflow.*
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import UTC, timedelta
+from datetime import timedelta
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -259,9 +259,10 @@ async def compile_pause_step(decl: PauseDeclaration, ctx: dict[str, Any]) -> Any
 
     workflow.pause()
     if decl.output_key:
-        from datetime import datetime
-
-        ctx.setdefault("_outputs", {})[decl.output_key] = datetime.now(UTC).isoformat()
+        # Cycle 25 W2: use Temporal deterministic time API for replay-safe
+        # timestamps (datetime.now() would diverge on workflow replay).
+        pause_ts = workflow.now()
+        ctx.setdefault("_outputs", {})[decl.output_key] = pause_ts.isoformat()
     return None
 
 

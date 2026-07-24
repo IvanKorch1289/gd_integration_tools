@@ -117,6 +117,10 @@ class SoapSource:
                             await on_event(event)
                         except Exception as exc:
                             logger.error("SoapSource on_event failed: %s", exc)
+                            # Cycle 25 I1: do NOT update _last_hash on
+                            # callback failure — otherwise event is lost
+                            # and next poll won't detect it as changed.
+                            continue
                     self._last_hash = body_hash
                     first = False
                 try:

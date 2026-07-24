@@ -56,7 +56,7 @@ class GrpcSource:
         request_module: str,
         request_class: str,
         request_kwargs: dict[str, Any] | None = None,
-        secure: bool = False,
+        secure: bool = True,  # Cycle 25 I2: secure by default (was False)
         reconnect_delay_seconds: float = 2.0,
     ) -> None:
         self.source_id = source_id

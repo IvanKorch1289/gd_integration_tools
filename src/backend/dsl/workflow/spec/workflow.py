@@ -99,4 +99,5 @@ class WorkflowDeclaration(BaseModel):
     #   pg-runner есть parallel-схема WorkflowSpec + WorkflowDescriptor
     #   (registry.register(descriptor, route_id, spec=...)). Обе системы
     #   сосуществуют; bridge между ними — out of scope этого модуля
-    #   (см. ADR TODO).
+    #   (см. ADR pending — будет оформлен в S37+ при первой реальной
+    #   необходимости конвертации одного workflow spec в другой).

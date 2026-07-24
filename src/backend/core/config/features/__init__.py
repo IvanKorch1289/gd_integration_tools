@@ -9,7 +9,8 @@
     - default-OFF для всех новых flag'ов;
     - переход на default-ON — отдельным PR с указанием Wave/staging-smoke;
     - переменная окружения переопределяет default;
-    - flag-deprecation — отдельный шаг (после Wave закрытия) с TODO в коде.
+    - flag-deprecation — отдельный шаг (после Wave закрытия) с
+      пометкой ``# DEPRECATED`` и ``removal_version`` в коде.
 
 Использование:
     Через pydantic-settings (env_prefix=FEATURE_):
