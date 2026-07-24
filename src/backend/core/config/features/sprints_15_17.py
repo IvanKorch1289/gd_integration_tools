@@ -128,7 +128,7 @@ class Sprints1517Flags(BaseSettings):
         title="K2 S17 W1: MetricsRegistry strict (отказ при inline Counter/Histogram/Gauge)",
         description=(
             "K2 Sprint 17 Wave W1+W2 (D11). Owner: K2 Observability. ETA: S17. "
-            "Активирует strict-режим infrastructure/observability/metrics_registry.py — "
+            "Активирует strict-режим core/utils/metrics_registry.py — "
             "Counter/Histogram/Gauge регистрируются ТОЛЬКО через MetricsRegistry "
             "с обязательными labels {tenant_id, route_id, component, env}. "
             "default-OFF до миграции 52 inline callsites."

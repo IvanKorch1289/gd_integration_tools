@@ -1,11 +1,11 @@
 """Capability-checked facade для metrics registry (S120 W4).
 
 ADR-0207: services/* observability (metrics.py, sla_alerting.py) импортируют
-``metrics_registry`` из ``infrastructure.observability.metrics_registry``.
+``metrics_registry`` из ``core.utils.metrics_registry``.
 Этот facade переносит публичную поверхность в ``core.observability``.
 
 Migration path:
-- ``from src.backend.infrastructure.observability.metrics_registry import ...``
+- ``from src.backend.core.utils.metrics_registry import ...``
   → ``from src.backend.core.observability.metrics import ...``
 """
 

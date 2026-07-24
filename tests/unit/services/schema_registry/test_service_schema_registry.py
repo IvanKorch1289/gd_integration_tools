@@ -208,7 +208,7 @@ def test_from_snapshot_wrong_version_raises() -> None:
 
 
 def test_metrics_counters_are_incremented() -> None:
-    from src.backend.infrastructure.observability.metrics_registry import (
+    from src.backend.core.utils.metrics_registry import (
         MetricsRegistry,
     )
 

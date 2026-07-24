@@ -74,21 +74,21 @@ def get_default_labels_tuple() -> Any:
     services/workflows/sla_alerting.py) для инициализации
     ``MetricsRegistry(default_labels=...)``.
     """
-    from src.backend.infrastructure.observability.metrics_registry import DEFAULT_LABELS
+    from src.backend.core.utils.metrics_registry import DEFAULT_LABELS
 
     return DEFAULT_LABELS
 
 
 def get_metrics_registry_class() -> Any:
     """Возвращает ``observability.metrics_registry.MetricsRegistry`` class."""
-    from src.backend.infrastructure.observability.metrics_registry import MetricsRegistry
+    from src.backend.core.utils.metrics_registry import MetricsRegistry
 
     return MetricsRegistry
 
 
 def get_metrics_registry_singleton() -> Any:
     """Возвращает ``observability.metrics_registry.metrics_registry`` singleton."""
-    from src.backend.infrastructure.observability import metrics_registry
+    from src.backend.core.utils.metrics_registry import metrics_registry
 
     return metrics_registry
 
@@ -155,7 +155,7 @@ def get_default_labels_attr(name: str) -> Any:
 
 def get_metrics_registry_factory() -> Any:
     """Возвращает ``observability.metrics_registry.metrics_registry`` singleton."""
-    from src.backend.infrastructure.observability.metrics_registry import metrics_registry
+    from src.backend.core.utils.metrics_registry import metrics_registry
 
     return metrics_registry
 

@@ -170,6 +170,43 @@ Per Master Prompt P1-#2: устрани `core→services` нарушения.
 
 Refs: Master Prompt P1-#2, DEEP_AUDIT_REPORT R3.10d, S172 Ponytail pattern.
 
+### metrics_registry deduplication (cycle 29 — Master Prompt P1-#4)
+
+Per Master Prompt P1-#4: "Удали src/backend/infrastructure/observability/metrics_registry.py,
+оставь core/utils/metrics_registry.py как единственный источник".
+
+**REFACTOR**: 18 importers мигрированы с `infrastructure.observability.metrics_registry`
+на `core.utils.metrics_registry`:
+- 14 production files в `infrastructure/` (observability, secrets, workflow, ai, scheduler, resilience, cache).
+- 5 test files (services schema, observability tests, workflows, integration).
+- 3 docstring references обновлены (core/observability/metrics.py, config features, observability_bridge).
+
+**REMOVED**: `src/backend/infrastructure/observability/metrics_registry.py` (18 LOC) — был
+backward-compat re-export (D11 cycle 17). Теперь canonical source — только
+`src/backend/core/utils/metrics_registry.py` (201 LOC).
+
+**FIXED**: `src/backend/core/di/providers/observability_bridge.py:77, 84, 91` —
+3 import sites мигрированы (3 прямых ссылки на удалённый path). Это был
+**скрытый core→infrastructure** layer violation (DI provider в core lazy-импортировал
+из infrastructure) — теперь полностью в core.
+
+**Tests**: 6 new tests в `tests/unit/core/utils/test_metrics_registry_dedup.py` — все PASS in 0.30s:
+- `TestMetricsRegistrySingleSource` (3): canonical exists, duplicate removed, no imports of removed path.
+- `TestMetricsReExportsWork` (1): core import works.
+- `TestMigrationCompleteness` (2): all 14 importers migrated to core path.
+
+**Verification**:
+- `grep -r "from src.backend.infrastructure.observability.metrics_registry"` → 0 matches (excluding test self-reference).
+- `ast.parse` on 23 modified files: PASS.
+- 0 layer violations introduced (consolidation, not new deps).
+
+**What we explicitly did NOT do**:
+- ❌ Не удалял `infrastructure/observability/` directory — содержит ~15 other valid files (correlation, client_metrics, prometheus_temporal_exporter, nats_metrics, и т.д.).
+- ❌ Не устранял `infrastructure.observability → infrastructure.X` sub-imports (submodule pattern, valid).
+- ❌ Не делал mass migration других дублирующих модулей (out of P1-#4 scope).
+
+Refs: Master Prompt P1-#4, DEEP_AUDIT_REPORT D11, src/backend/core/utils/metrics_registry.py (canonical, S20).
+
 ### Audit-driven: уже реализовано (verified)
 
 **HITL signal wait (P0 #4 — confirmed DONE)**

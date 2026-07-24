@@ -51,7 +51,7 @@ def _ensure_tier_metrics() -> None:
     if _tier_initialized:
         return
     try:
-        from src.backend.infrastructure.observability.metrics_registry import (
+        from src.backend.core.utils.metrics_registry import (
             metrics_registry,
         )
 

@@ -20,7 +20,7 @@ __all__ = (
 )
 
 try:  # pragma: no cover
-    from src.backend.infrastructure.observability.metrics_registry import (
+    from src.backend.core.utils.metrics_registry import (
         metrics_registry,
     )
 

@@ -33,7 +33,7 @@ def _ensure_metrics() -> dict[str, Any]:
     if _metrics:
         return _metrics
     try:
-        from src.backend.infrastructure.observability.metrics_registry import (
+        from src.backend.core.utils.metrics_registry import (
             metrics_registry,
         )
 

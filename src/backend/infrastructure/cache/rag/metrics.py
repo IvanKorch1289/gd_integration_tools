@@ -24,7 +24,7 @@ def _ensure() -> None:
     if _initialized:
         return
     try:
-        from src.backend.infrastructure.observability.metrics_registry import (
+        from src.backend.core.utils.metrics_registry import (
             metrics_registry,
         )
 

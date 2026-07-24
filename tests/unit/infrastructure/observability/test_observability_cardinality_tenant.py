@@ -16,7 +16,7 @@ from __future__ import annotations
 import pytest
 from prometheus_client import CollectorRegistry
 
-from src.backend.infrastructure.observability.metrics_registry import (
+from src.backend.core.utils.metrics_registry import (
     DEFAULT_LABELS,
     MetricsRegistry,
 )

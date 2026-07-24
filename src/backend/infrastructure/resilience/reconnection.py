@@ -37,7 +37,7 @@ from dataclasses import dataclass
 from typing import Any, Final, TypeVar
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.observability.metrics_registry import metrics_registry
+from src.backend.core.utils.metrics_registry import metrics_registry
 
 _logger = get_logger(__name__)
 

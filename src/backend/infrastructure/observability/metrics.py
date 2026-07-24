@@ -3,7 +3,7 @@
 D11 (S17 K2-W2 sweep):
     Все 17 ранее inline-метрик (``Counter(...)`` / ``Histogram(...)`` /
     ``Gauge(...)``) переведены на единый :data:`metrics_registry`
-    (см. :mod:`infrastructure.observability.metrics_registry`).
+    (см. :mod:`core.utils.metrics_registry`).
     Регистрация выполняется один раз при импорте модуля; повторный
     импорт безопасен — :class:`MetricsRegistry` idempotent и возвращает
     тот же instance без ``DuplicatedTimeSeries``.
@@ -26,7 +26,7 @@ from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.middleware import ProcessorMiddleware
-from src.backend.infrastructure.observability.metrics_registry import metrics_registry
+from src.backend.core.utils.metrics_registry import metrics_registry
 
 __all__ = (
     "PrometheusMetricsMiddleware",
