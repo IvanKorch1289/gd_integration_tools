@@ -136,6 +136,40 @@ Refs: Master Prompt P1-#1, DEEP_AUDIT_REPORT R3.10d, `src/backend/sdk/__init__.p
 
 ## [Unreleased] — Sprint 173 (S173)
 
+### core→services layer violation fix (cycle 29 — Master Prompt P1-#2)
+
+Per Master Prompt P1-#2: устрани `core→services` нарушения.
+
+**Проверка текущего состояния** (cycle 28 S172 partial fixes):
+- ✅ `core/workflow/__init__.py` — УЖЕ использует lazy `__getattr__` через `resolve_module` (S172 pattern). Нет нарушений.
+- ⚠ `core/auth/ldap_client_factory.py:99-103` — direct `from src.backend.services.auth.ad_directory_client import ...` (lazy, но **всё ещё нарушает** R3.10d).
+
+**Fix** (P1-#2 реализован):
+- **NEW**: `src/backend/core/di/providers/auth.py` — добавлены 2 провайдера:
+  - `get_ad_directory_client_provider()` — singleton через `resolve_module("auth.ad_directory_client")`.
+  - `set_ad_directory_client_provider(instance)` — test-инжекция.
+  - Оба экспортируются в `__all__` для public API.
+- **REFACTOR**: `src/backend/core/auth/ldap_client_factory.py:101` — заменил direct import на DI provider call. Fallback на direct import сохранён **только** внутри `except ImportError` (Ponytail pattern для dev_light-сборок).
+- **DOC**: docstring обновлён с explicit description новой flow (DI + fallback).
+
+**Tests**: 8 new tests в `tests/unit/core/auth/test_ldap_client_factory_di.py` — все PASS in 0.19s:
+- `TestAdDirectoryProvider` (3): provider function exists, in __all__, uses module_registry.
+- `TestLdapClientFactoryMigration` (3): uses DI, has fallback, no module-level direct import.
+- `TestNoCoreWorkflowBuilder` (1): confirms Master Prompt's path is outdated (lazy pattern S172).
+- `TestLayerViolationsClosed` (1): direct core→services count = 0 at module level.
+
+**Master Prompt P1-#2 verification**:
+- ✅ `core/auth/ldap_client_factory.py:99` direct import → DI provider (cycle 29 fix).
+- ✅ `core/workflow/builder.py:13` — file doesn't exist; replaced by `core/workflow/__init__.py` with lazy `__getattr__` (S172). Master Prompt path outdated.
+
+**What we explicitly did NOT do**:
+- ❌ Не создавал Protocol-класс для AD client (Ponytail-YAGNI — duck typing sufficient для singleton).
+- ❌ Не устранял TYPE_CHECKING imports из `services/*` (это type-only, не runtime — допустимо по R3.10d).
+- ❌ Не делал mass migration всех core→services (Master Prompt упоминал 2 файла; проверены 2 — оба исправлены).
+- ❌ Не добавлял `get_ad_directory_client_provider` в `core/api/__init__.py` (это в `core/di/providers/auth.py`; extensions импортируют из facade, не из провайдеров).
+
+Refs: Master Prompt P1-#2, DEEP_AUDIT_REPORT R3.10d, S172 Ponytail pattern.
+
 ### Audit-driven: уже реализовано (verified)
 
 **HITL signal wait (P0 #4 — confirmed DONE)**

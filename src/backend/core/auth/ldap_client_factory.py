@@ -17,7 +17,9 @@ Singleton wrapper над :class:`AdDirectoryClient` который:
     ad_user = await client.find_user("alice@example.com")
 
 Почему не DI/inject: ``AdDirectoryClient`` создаётся ОДИН раз на
-process (per-env). Это соответствует pattern других core clients
+process (per-env). Cycle 29 P1-#2: использует ``get_ad_directory_client_provider``
+для layer-independent lookup; ленивый fallback на direct import остаётся
+для dev_light-сборки (когда DI module registry не зарегистрирован).
 (см. ``core/auth/jwt_backend.py``, ``core/auth/api_key_backend.py``).
 """
 
@@ -98,24 +100,45 @@ def get_ad_client(
         _logger.debug("get_ad_client: ldap_settings not configured, no client")
         return None
 
-    # ponytail: lazy imports to avoid layer violation (core → services)
-    from src.backend.services.auth.ad_directory_client import (
-        AdDirectoryClient,
-        AdServerConfig,
-    )
-
-    # Конструируем AdServerConfig → AdDirectoryClient
-    config = AdServerConfig(
-        server_uri=settings.server_uri,
-        bind_dn=settings.bind_dn,
-        bind_password=settings.bind_password,
-        search_base=settings.search_base,
-        use_ssl=settings.use_ssl,
-        timeout_seconds=settings.timeout_seconds,
-        user_id_attribute=settings.user_id_attribute,
-        group_attribute=settings.group_attribute,
-    )
-    client = AdDirectoryClient(config=config, connection_factory=connection_factory)
+    # Cycle 29 P1-#2 fix: use DI provider instead of direct core→services
+    # import. The provider does the lazy resolution, eliminating the
+    # layer violation. Falls back to direct import only if DI fails.
+    try:
+        from src.backend.core.di.providers.auth import (
+            get_ad_directory_client_provider,
+        )
+        client = get_ad_directory_client_provider()(
+            config=AdServerConfig(
+                server_uri=settings.server_uri,
+                bind_dn=settings.bind_dn,
+                bind_password=settings.bind_password,
+                search_base=settings.search_base,
+                use_ssl=settings.use_ssl,
+                timeout_seconds=settings.timeout_seconds,
+                user_id_attribute=settings.user_id_attribute,
+                group_attribute=settings.group_attribute,
+            ),
+            connection_factory=connection_factory,
+        )
+    except ImportError:
+        # Ponytail fallback: direct import (only if DI module not registered).
+        from src.backend.services.auth.ad_directory_client import (
+            AdDirectoryClient,
+            AdServerConfig,
+        )
+        client = AdDirectoryClient(
+            config=AdServerConfig(
+                server_uri=settings.server_uri,
+                bind_dn=settings.bind_dn,
+                bind_password=settings.bind_password,
+                search_base=settings.search_base,
+                use_ssl=settings.use_ssl,
+                timeout_seconds=settings.timeout_seconds,
+                user_id_attribute=settings.user_id_attribute,
+                group_attribute=settings.group_attribute,
+            ),
+            connection_factory=connection_factory,
+        )
     _ad_client_instance = client
     _logger.info(
         "get_ad_client: instantiated AdDirectoryClient for %s", settings.server_uri

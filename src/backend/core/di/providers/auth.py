@@ -158,4 +158,27 @@ __all__ = (
     "set_api_key_manager_provider",
     "set_jwks_cache_provider",
     "set_jwt_backend_provider",
+    "get_ad_directory_client_provider",
+    "set_ad_directory_client_provider",
 )
+
+
+# ─────────────── Cycle 29 P1-#2: AD/LDAP directory client provider ────────────
+
+
+def get_ad_directory_client_provider() -> Any:
+    """Возвращает singleton :class:`AdDirectoryClient`.
+
+    Реализация: ``services.auth.ad_directory_client.get_ad_directory_client``.
+    Модуль может отсутствовать в усечённой dev_light-сборке — провайдер
+    бросает ``ImportError``, вызывающий код обязан его обработать.
+    """
+    if "ad_directory_client" in _overrides:
+        return _overrides["ad_directory_client"]
+    module = resolve_module("auth.ad_directory_client")
+    return module.get_ad_directory_client()
+
+
+def set_ad_directory_client_provider(instance: Any) -> None:
+    """Override singleton (test-инжекция)."""
+    _overrides["ad_directory_client"] = instance
