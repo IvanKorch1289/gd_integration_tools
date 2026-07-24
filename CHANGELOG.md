@@ -73,7 +73,7 @@ Per DEEP_AUDIT_REPORT.md critical findings, текущий статус:
 | 6 | SHA-256 without salt for API keys | ✓ DONE | S172: Argon2id primary + dual-verify (DEEP_AUDIT 6). |
 | 7 | Guard failures return "passed" | ✓ DONE | S172: Rebuff/llm_guard/Nemo removed (forced-allow eliminated). |
 | 8 | SOAP/GraphQL/SSE without auth | ⚠ PARTIAL | SSE ✓ (auth dependency present). WebSocket/SOAP ❌ (no auth in handler). |
-| 9 | Symlink escape in AI workspace | ⚠ PARTIAL | `fs_facade.py:143` — `(handle.path / rel).resolve()` всё ещё ПОСЛЕ конкатенации. DEEP_AUDIT 9 не исправлен (требуется `.resolve()` ДО `path / rel`). |
+| 9 | Symlink escape in AI workspace | ✓ DONE (cycle 29) | `fs_facade.py:143` — `handle.path.resolve()` ДО concat, затем `(handle_root / rel).resolve()`. Закрыт TOCTOU window. |
 | 10 | `yaml.load` without safe_load | ✓ DONE | `tools/codegen_settings.py:656` — НЕ содержит yaml.load (строка пустая; loaders используют `safe_load`). |
 
 **P0 critical work remaining** (estimated effort):
@@ -89,6 +89,48 @@ Per DEEP_AUDIT_REPORT.md critical findings, текущий статус:
 - ❌ Не удаляли `infrastructure/observability/metrics_registry.py` — проверка импортов не завершена.
 - ❌ Не добавляли batch-лимиты (Redis bulk, ClickHouse) — P2 work, не P0.
 - ❌ Не реализовывали EIP Aggregator/Enrich, SSH DSL, Browser RPA DSL — P3 work, не P0.
+
+### core/api facade (cycle 29 — Master Prompt P1-#1)
+
+- **NEW**: `src/backend/core/api/__init__.py` — **canonical public API facade** для ``extensions/``.
+  - **THIN re-export** от существующего `src/backend/sdk` (cycle 36 S170) — НЕ дублирует SDK, а расширяет.
+  - Экспортирует 4 новые категории через lazy ``__getattr__`` (cycle 36 S170 pattern):
+    - **DI providers**: `get_scheduler_provider`, `get_redis_client_class`, `get_mongodb_client_class`, `get_elasticsearch_client_class`, `get_clickhouse_client_class`.
+    - **AIGateway**: `AIGateway` (canonical LLM entry point, ADR-NEW-19).
+    - **SchedulerManager**: production-путь поверх APScheduler/Temporal.
+    - **WorkflowBuilder**: DSL fluent API (re-exported from `dsl.workflow.builder`).
+  - Re-exports 18 symbols из `src.backend.sdk` (Exchange, Pipeline, get_service, Clock, BaseError, и т.д.).
+  - ``__all__`` явно перечисляет публичный API; IDE tab-completion через ``__dir__()``.
+- **NEW**: `tests/unit/core/api/test_api_facade.py` — 9 tests (все PASS in 2.0s).
+  - TestFacadeExists: файл + parses + __all__ содержит 4 новые категории.
+  - TestFacadeReExports: docstring references SDK, нет дубликатов class definitions.
+  - TestFacadeRuntime: imports cleanly, lazy loads work, tab-completion works.
+  - TestBoundaryRule: документирует extensions → core.api only (R3.10d).
+- **Метрика**: 1 facade module (~170 LOC) + 9 tests (~95 LOC) = **265 LOC total**.
+- **Boundary rule (R3.10d)**: ``extensions/`` импортирует ТОЛЬКО ``src.backend.sdk`` + ``src.backend.core.api`` — никогда напрямую ``services/*`` или ``infrastructure/*``.
+
+**What we explicitly did NOT do** (per Master Prompt):
+- ❌ Не дублировали SDK (cycle 36 S170 уже создал `src/backend/sdk/__init__.py` с 22 public exports) — facade только re-exports.
+- ❌ Не определяли новые классы в facade — только re-export через `__getattr__` (lazy pattern).
+- ❌ Не мигрировали существующие extensions на `core.api` (массовая миграция — отдельный cycle).
+- ❌ Не создавали ruff-правило для CI проверки `extensions → core.api only` — отдельный cycle.
+
+**Migration path** для extensions (P1-#1 followup):
+```python
+# OLD (cycle 27 и ранее):
+from src.backend.core.auth.auth_selector import AuthMethod, require_auth
+from src.backend.dsl.workflow.builder import WorkflowBuilder
+from src.backend.core.di.providers.scheduler import get_scheduler_provider
+
+# NEW (cycle 29+ recommended):
+from src.backend.core.api import (
+    AuthMethod, require_auth,       # re-exported from core.auth
+    WorkflowBuilder,                # new in __all__
+    get_scheduler_provider,         # new in __all__
+)
+```
+
+Refs: Master Prompt P1-#1, DEEP_AUDIT_REPORT R3.10d, `src/backend/sdk/__init__.py` (cycle 36).
 
 ---
 
