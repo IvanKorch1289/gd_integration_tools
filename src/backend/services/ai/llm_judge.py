@@ -20,6 +20,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
+from pydantic import BaseModel, ConfigDict, field_validator
+
 from src.backend.core.logging import get_logger
 
 __all__ = ("JudgeVerdict", "LLMJudge", "get_llm_judge")
@@ -39,6 +41,47 @@ class JudgeVerdict:
     verdict: str  # "ok" | "warning" | "fail"
     explanation: str
     metadata: dict[str, Any] = field(default_factory=dict)
+
+
+class _JudgeResponse(BaseModel):
+    """Pydantic schema для LLM-judge JSON response.
+
+    M7: замена кастомного ``parsed.get(key, default)`` extraction на
+    Pydantic ``model_validate_json``. Преимущества:
+
+    - Type coercion: ``"0.5"`` (string) → ``0.5`` (float) автоматически;
+    - Permissive defaults: отсутствующие поля → тихий default (как раньше);
+    - ``extra="ignore"``: лишние поля от LLM не ломают парсинг;
+    - Лучшие ошибки при структурных поломках (ValidationError caught
+      outer try/except → same "error" verdict path, без regression).
+
+    Instructor migration (бывший TODO:91) заблокирован двумя способами
+    (instructor в [ai-2026] extra — не установлен; ai_agent.chat()
+    не экспонирует litellm). Pydantic-native parsing — замена без
+    новых deps и без рефакторинга ai_agent.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    hallucination: float = 0.0
+    relevance: float = 0.0
+    toxicity: float = 0.0
+    verdict: str = "unknown"
+    explanation: str = ""
+
+    @field_validator("verdict", "explanation", mode="before")
+    @classmethod
+    def _coerce_none_to_default(cls, v: object) -> object:
+        """Сохраняет silent-fallback семантику кастомного парсинга.
+
+        Оригинальный код: ``str(parsed.get("verdict", "unknown"))``
+        для ``{"verdict": null}`` возвращал ``"None"`` (баг).
+        Текущий код: Pydantic validation error → outer except →
+        verdict="error". Оба варианта хуже правильного. Этот
+        validator приводит ``None`` к строковому default, чтобы
+        match original silent-fallback contract (zero regression).
+        """
+        return v if v is not None else cls.model_fields["verdict"].default
 
 
 _JUDGE_PROMPT = """You are an impartial quality evaluator. Score the following LLM response:
@@ -69,8 +112,6 @@ class LLMJudge:
     ) -> JudgeVerdict:
         """Оценивает один (query, response) pair."""
         try:
-            import orjson
-
             from src.backend.services.ai.ai_agent import get_ai_agent_service
 
             agent = get_ai_agent_service()
@@ -88,9 +129,11 @@ class LLMJudge:
             else:
                 content = str(result)
 
-            # TODO: migrate to instructor for structured output
-            # (instructor.from_litellm + Pydantic response_model) — blocked on
-            # ai_agent.chat() abstraction which doesn't expose litellm directly.
+            # M7: Pydantic ``model_validate_json`` вместо custom extraction
+            # (замена кастома на библиотеку). Fallback chain для malformed
+            # JSON сохранён: сначала пробуем full content, затем —
+            # extract first {...} object. Markdown fence stripping —
+            # без изменений.
             content_clean = content.strip()
             # Strip markdown code fences if present (```json ... ``` or '''...''')
             for fence in ("```", "'''"):
@@ -103,23 +146,23 @@ class LLMJudge:
                     break
 
             try:
-                parsed = orjson.loads(content_clean)
-            except orjson.JSONDecodeError:
+                parsed = _JudgeResponse.model_validate_json(content_clean)
+            except (ValueError, TypeError):
                 # Fallback: extract first JSON object from surrounding text
                 start = content_clean.find("{")
                 end = content_clean.rfind("}") + 1
                 if start < 0 or end <= start:
                     raise ValueError("No JSON in judge response") from None
-                parsed = orjson.loads(content_clean[start:end])
+                parsed = _JudgeResponse.model_validate_json(content_clean[start:end])
 
             verdict = JudgeVerdict(
                 timestamp=datetime.now(UTC).isoformat(),
                 model=self._model,
-                hallucination_score=float(parsed.get("hallucination", 0.0)),
-                relevance_score=float(parsed.get("relevance", 0.0)),
-                toxicity_score=float(parsed.get("toxicity", 0.0)),
-                verdict=str(parsed.get("verdict", "unknown")),
-                explanation=str(parsed.get("explanation", ""))[:500],
+                hallucination_score=parsed.hallucination,
+                relevance_score=parsed.relevance,
+                toxicity_score=parsed.toxicity,
+                verdict=parsed.verdict,
+                explanation=parsed.explanation[:500],
                 metadata=metadata or {},
             )
 
