@@ -59,7 +59,7 @@ repos:
         # Old: src/backend/core src/backend/dsl/engine src/backend/core/interfaces
         # Amnesty baseline для services/entrypoints/infrastructure в tools/check_docstrings_allowlist.txt
         # (snapshot S101 W3). Реальный ratchet начинается с S102+ W1.
-        entry: uv run python tools/check_docstrings.py --allowlist tools/check_docstrings_allowlist.txt src/backend/core src/backend/dsl src/backend/dsl/engine src/backend/core/interfaces src/backend/services src/backend/entrypoints src/backend/infrastructure src/backend/ai
+        entry: uv run python tools/check_docstrings.py --allowlist tools/check_docstrings_allowlist.txt src/backend/core src/backend/dsl src/backend/dsl/engine src/backend/core/interfaces src/backend/services src/backend/entrypoints src/backend/infrastructure src/backend/ai extensions
         language: system
         types: [python]
         pass_filenames: false

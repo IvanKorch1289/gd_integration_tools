@@ -159,9 +159,13 @@ mapfile -t unique_files < <(printf '%s\n' "${all_files[@]}" | sort -u)
 
 info "Запуск check_docstrings.py --strict для ${#unique_files[@]} файлов..."
 
-# Передаём список через stdin (--files -) чтобы избежать ARG_MAX-лимита.
-if printf '%s\n' "${unique_files[@]}" \
-    | (cd "${PROJECT_DIR}" && "${PYTHON_BIN}" "${CHECKER_REL}" --strict --files -); then
+# Передаём пути как positional args (новый argparse API после typer→argparse миграции).
+# Allowlist исключает baseline-амнистию из tools/check_docstrings_allowlist.txt.
+# Cycle 30: убран --strict --files (аргапарс их не знает; commit 120dd73b).
+info "Запуск check_docstrings.py для ${#unique_files[@]} файлов..."
+if (cd "${PROJECT_DIR}" && "${PYTHON_BIN}" "${CHECKER_REL}" \
+        --allowlist "${PROJECT_DIR}/tools/check_docstrings_allowlist.txt" \
+        "${unique_files[@]}"); then
     info "OK: все публичные def/class документированы."
     exit 0
 else

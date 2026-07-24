@@ -58,23 +58,33 @@ class DocstringVisitor(ast.NodeVisitor):
         return not name.startswith('_')
 
     def _get_signature(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
-        """Extract function signature as string."""
+        """Extract function signature as string.
+
+        Cycle 30 fix: оригинал использовал ``args.args[len(args.args):]``
+        — пустой slice, regular args выпадали из signature. Теперь явно
+        пропускаем ``self/cls`` (если это instance/class method) и
+        добавляем все regular args, defaults, *args, kwonly, **kwargs.
+        """
         args = node.args
         parts: list[str] = []
 
-        # Self/cls parameter
-        if args.args:
-            parts.append(args.args[0].arg)
+        # Пропускаем self/cls (первый positional arg в методах).
+        # Heuristic: если первый arg называется self/cls — это метод.
+        # Для top-level functions первый arg — обычный параметр.
+        regular_args = list(args.args)
+        is_method = bool(regular_args and regular_args[0].arg in ("self", "cls"))
+        if is_method:
+            regular_args = regular_args[1:]
 
-        # Regular args
-        for arg in args.args[len(args.args) if args.args else 0:]:
+        # Positional-only (Python 3.8+): /  до первого / .
+        posonly = list(args.posonlyargs)
+        # Regular args (после /)
+        for arg in regular_args:
             parts.append(arg.arg)
 
-        # *args
-        if args.vararg:
-            parts.append(f"*{args.vararg.arg}")
-
-        # Keyword args with defaults
+        # Defaults применяются к последним N regular args.
+        # Defaults размещены в конце args.args ИЛИ в конце posonlyargs.
+        # Простой случай: defaults привязаны к args.args (most common).
         defaults_offset = len(args.args) - len(args.defaults)
         for i, default in enumerate(args.defaults):
             arg_name = args.args[defaults_offset + i].arg
@@ -82,19 +92,39 @@ class DocstringVisitor(ast.NodeVisitor):
                 default_val = repr(default.value)
             elif isinstance(default, ast.Name):
                 default_val = default.id
+            elif isinstance(default, ast.Attribute):
+                default_val = ast.unparse(default)
+            elif isinstance(default, (ast.List, ast.Tuple, ast.Dict, ast.Set)):
+                default_val = ast.unparse(default)
             else:
                 default_val = "..."
             parts.append(f"{arg_name}={default_val}")
+
+        # *args
+        if args.vararg:
+            parts.append(f"*{args.vararg.arg}")
+
+        # Keyword-only (после * или *args)
+        # kw_defaults — список длиной len(kwonlyargs); None = default required.
+        for i, arg in enumerate(args.kwonlyargs):
+            default_node = args.kw_defaults[i] if i < len(args.kw_defaults) else None
+            if default_node is None:
+                parts.append(arg.arg)
+            elif isinstance(default_node, ast.Constant):
+                parts.append(f"{arg.arg}={default_node.value!r}")
+            else:
+                parts.append(f"{arg.arg}={ast.unparse(default_node)}")
 
         # **kwargs
         if args.kwarg:
             parts.append(f"**{args.kwarg.arg}")
 
         # Return type hint
+        prefix = "async def " if isinstance(node, ast.AsyncFunctionDef) else "def "
         if node.returns:
             ret = ast.unparse(node.returns)
-            return f"def {node.name}({', '.join(parts)}) -> {ret}"
-        return f"def {node.name}({', '.join(parts)})"
+            return f"{prefix}{node.name}({', '.join(parts)}) -> {ret}"
+        return f"{prefix}{node.name}({', '.join(parts)})"
 
     def _check_function(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef
@@ -107,23 +137,12 @@ class DocstringVisitor(ast.NodeVisitor):
         if node.name.startswith('_'):
             return
 
-        # Skip __init__ if it just calls super().__init__ (common pattern)
+        # Skip __init__ ONLY if body is exactly ``super().__init__()``
+        # (with optional ``pass``). Cycle 30 fix: оригинал использовал
+        # ``isinstance(stmt, ast.Expr)`` который матчил ЛЮБОЕ выражение,
+        # не только super().__init__().
         if node.name == '__init__':
-            # Simple heuristic: if only pass or super call, skip
-            has_only_super = (
-                len(node.body) <= 2
-                and any(
-                    isinstance(stmt, (ast.Expr, ast.Pass))
-                    or (
-                        isinstance(stmt, ast.Expr)
-                        and isinstance(stmt.value, ast.Call)
-                        and isinstance(stmt.value.func, ast.Attribute)
-                        and stmt.value.func.attr == '__init__'
-                    )
-                    for stmt in node.body
-                )
-            )
-            if has_only_super:
+            if self._is_trivial_init(node):
                 return
 
         # Check for docstring
@@ -136,8 +155,34 @@ class DocstringVisitor(ast.NodeVisitor):
                 signature=self._get_signature(node),
             ))
 
+    def _is_trivial_init(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        """True если __init__ содержит ТОЛЬКО super().__init__() (± pass)."""
+        body = node.body
+        # Допускаем первую stmt = docstring (skip), далее super call + pass.
+        stmts = [s for s in body if not (
+            isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant)
+            and isinstance(s.value.value, str)
+        )]
+        # Допустимые формы: [] (пустой), [Pass], [super().__init__()], [super().__init__(), Pass]
+        if all(isinstance(s, ast.Pass) for s in stmts):
+            return True
+        if len(stmts) == 1:
+            s = stmts[0]
+            if (isinstance(s, ast.Expr)
+                    and isinstance(s.value, ast.Call)
+                    and isinstance(s.value.func, ast.Attribute)
+                    and s.value.func.attr == '__init__'):
+                return True
+        return False
+
     def _check_class(self, node: ast.ClassDef) -> None:
-        """Check if a class needs a docstring."""
+        """Check if a class needs a docstring.
+
+        Cycle 30 fix: оригинал НЕ вызывал generic_visit, поэтому
+        методы классов не посещались. ``visit_FunctionDef`` /
+        ``visit_AsyncFunctionDef`` срабатывали только на module-level
+        functions. Теперь рекурсивно обходим тело класса.
+        """
         if not self._is_public(node.name):
             return
 
@@ -149,6 +194,8 @@ class DocstringVisitor(ast.NodeVisitor):
                 kind='class',
                 signature=f"class {node.name}",
             ))
+        # Visit class body для методов (Cycle 30 fix).
+        self.generic_visit(node)
 
     visit_FunctionDef = _check_function
     visit_AsyncFunctionDef = _check_function

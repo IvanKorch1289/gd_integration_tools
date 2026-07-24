@@ -209,14 +209,14 @@ def test_hook_passes_bash_syntax() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# CLI --files режим                                                           #
+# CLI positional-path режим (новый argparse API после typer→argparse миграции) #
 # --------------------------------------------------------------------------- #
-def test_cli_files_mode_passes_for_documented(tmp_path: Path) -> None:
-    """``--files`` принимает явный список и не падает на документированном."""
+def test_cli_positional_path_passes_for_documented(tmp_path: Path) -> None:
+    """Positional path принимает файл и не падает на документированном."""
     target = tmp_path / "ok.py"
     _make_python_file(target, with_doc=True)
     proc = subprocess.run(
-        [sys.executable, str(CHECKER_PATH), "--strict", "--files", str(target)],
+        [sys.executable, str(CHECKER_PATH), str(target)],
         capture_output=True,
         text=True,
         check=False,
@@ -224,28 +224,35 @@ def test_cli_files_mode_passes_for_documented(tmp_path: Path) -> None:
     assert proc.returncode == 0, proc.stdout + proc.stderr
 
 
-def test_cli_files_mode_fails_for_missing_docstring(tmp_path: Path) -> None:
-    """``--files --strict`` ловит публичную функцию без docstring."""
+def test_cli_positional_path_fails_for_missing_docstring(tmp_path: Path) -> None:
+    """Positional path ловит публичную функцию без docstring."""
     target = tmp_path / "bad.py"
     _make_python_file(target, with_doc=False)
     proc = subprocess.run(
-        [sys.executable, str(CHECKER_PATH), "--strict", "--files", str(target)],
+        [sys.executable, str(CHECKER_PATH), str(target)],
         capture_output=True,
         text=True,
         check=False,
     )
     assert proc.returncode == 1
-    # S59 W1: typer+rich uses stderr (console_err) for violations.
     assert "public_function" in proc.stderr or "public_function" in proc.stdout
 
 
-def test_cli_files_mode_reads_stdin(tmp_path: Path) -> None:
-    """``--files -`` принимает список путей со stdin."""
-    target = tmp_path / "ok.py"
-    _make_python_file(target, with_doc=True)
+def test_cli_allowlist_filters(tmp_path: Path) -> None:
+    """``--allowlist`` подавляет issues из списка (exit 0 на missing)."""
+    target = tmp_path / "bad.py"
+    _make_python_file(target, with_doc=False)
+    allowlist = tmp_path / "allowlist.txt"
+    # Allowlist формат: path:lineno:col qualified_name.
+    # _make_python_file помещает ``public_function`` на line 3
+    # (после module docstring).
+    allowlist.write_text(f"{target}:3:4 public_function\n", encoding="utf-8")
     proc = subprocess.run(
-        [sys.executable, str(CHECKER_PATH), "--strict", "--files", "-"],
-        input=str(target) + "\n",
+        [
+            sys.executable, str(CHECKER_PATH),
+            "--allowlist", str(allowlist),
+            str(target),
+        ],
         capture_output=True,
         text=True,
         check=False,
@@ -253,16 +260,16 @@ def test_cli_files_mode_reads_stdin(tmp_path: Path) -> None:
     assert proc.returncode == 0, proc.stdout + proc.stderr
 
 
-def test_cli_files_mode_requires_input() -> None:
-    """Без paths и без --files CLI отвечает usage-error (exit 2)."""
+def test_cli_unknown_flag_errors() -> None:
+    """Неизвестный CLI flag → argparse usage error (exit 2)."""
     proc = subprocess.run(
-        [sys.executable, str(CHECKER_PATH), "--strict"],
+        [sys.executable, str(CHECKER_PATH), "--no-such-flag"],
         capture_output=True,
         text=True,
         check=False,
     )
     assert proc.returncode == 2
-    assert "paths" in proc.stderr or "--files" in proc.stderr
+    assert "--no-such-flag" in proc.stderr or "unrecognized" in proc.stderr.lower()
 
 
 # --------------------------------------------------------------------------- #
