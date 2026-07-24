@@ -59,6 +59,37 @@
 - ❌ Не вводили rate-limiter/circuit-breaker в sinks — отдельный sprint (S204).
 - ❌ Не удаляли `infrastructure/eventing/` — тесты зависят.
 
+### Deep Audit P0 status (2026-07-23 cycle 28 — S203 final)
+
+Per DEEP_AUDIT_REPORT.md critical findings, текущий статус:
+
+| # | Finding | Status | Comment |
+|---|---|---|---|
+| 1 | InProcessAgentSandbox zero-isolation (default) | ⚠ PARTIAL | S172 частично: `ProcessPoolAgentSandbox` существует, но НЕ единственный default — InProcess всё ещё reachable (DEEP_AUDIT 1). Требуется: `InProcess` → opt-in только при `GD_INTEGRATION_PRODUCTION != true`. |
+| 2 | Tool whitelist enforced on `workflow_id` not `tool_name` | ⚠ PARTIAL | S172/S209: fail-closed when `whitelist+blacklist` empty. Fallback `request.tool_name or request.workflow_id` line 115 ВСЁ ЕЩЁ присутствует — но workflow-level policy это legitimate use case (DEEP_AUDIT 2). Требует дизайн-решения. |
+| 3 | Module whitelist bypass in SkillRegistry | ✓ DONE | S172 fixed (DEEP_AUDIT 3) — `skill_registry.py` теперь валидирует modules. |
+| 4 | 35+ layer violations (frontend→backend) | ⚠ PARTIAL | S172-S203 fix: 12 доменных API-клиентов в `frontend/streamlit_app/api_clients/`. Remaining: 16 hardcoded `localhost:8000` calls (cycle 25 F2 closed 6 of 22). |
+| 5 | Admin endpoints without auth | ✓ DONE | S203: `admin_plugins.py` теперь requires admin role. |
+| 6 | SHA-256 without salt for API keys | ✓ DONE | S172: Argon2id primary + dual-verify (DEEP_AUDIT 6). |
+| 7 | Guard failures return "passed" | ✓ DONE | S172: Rebuff/llm_guard/Nemo removed (forced-allow eliminated). |
+| 8 | SOAP/GraphQL/SSE without auth | ⚠ PARTIAL | SSE ✓ (auth dependency present). WebSocket/SOAP ❌ (no auth in handler). |
+| 9 | Symlink escape in AI workspace | ⚠ PARTIAL | `fs_facade.py:143` — `(handle.path / rel).resolve()` всё ещё ПОСЛЕ конкатенации. DEEP_AUDIT 9 не исправлен (требуется `.resolve()` ДО `path / rel`). |
+| 10 | `yaml.load` without safe_load | ✓ DONE | `tools/codegen_settings.py:656` — НЕ содержит yaml.load (строка пустая; loaders используют `safe_load`). |
+
+**P0 critical work remaining** (estimated effort):
+- **P0-#2** (tool_name mandatory): 30 LOC + 1 regression test. **Cycles 0-2 here.**
+- **P0-#8** (WS/SOAP auth): 60 LOC × 2 entrypoints + 2 tests.
+- **P0-#9** (symlink escape): 5 LOC fix + 1 regression test.
+- **P0-#1** (sandbox default): 20 LOC + integration test (re-verify with env var).
+
+**What we explicitly did NOT do** (по этой сессии):
+- ❌ Не реализовывали P1-#1 (single-entry `core/api/__init__.py` facade) — out of scope, отдельный ADR-нужен.
+- ❌ Не устраняли `core→services` (ldap_client_factory.py:99) и `core→infrastructure` (core/workflow/builder.py:13) — требует Protocol/DI refactor, out of P0 scope.
+- ❌ Не реализовывали 214 layer violations refactor (ADR-0249 Ponytail-YAGNI).
+- ❌ Не удаляли `infrastructure/observability/metrics_registry.py` — проверка импортов не завершена.
+- ❌ Не добавляли batch-лимиты (Redis bulk, ClickHouse) — P2 work, не P0.
+- ❌ Не реализовывали EIP Aggregator/Enrich, SSH DSL, Browser RPA DSL — P3 work, не P0.
+
 ---
 
 ## [Unreleased] — Sprint 173 (S173)

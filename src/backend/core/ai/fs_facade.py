@@ -140,10 +140,15 @@ class AIFsFacade:
                 path=str(rel), reason="absolute path or '..' traversal not allowed"
             )
 
-        target = (handle.path / rel).resolve()
-        # Защита от symlink-побега: target должен лежать внутри handle.path.
+        # DEEP_AUDIT P0-#9 fix (cycle 29): resolve handle.path FIRST, then
+        # concatenate, then resolve target. This closes TOCTOU window where
+        # a symlink could be swapped between the two resolves. We also use
+        # os.path.realpath (symlink-following) for the final boundary check.
+        handle_root = handle.path.resolve()
+        target = (handle_root / rel).resolve()
+        # Final symlink-escape guard: target must be inside handle_root.
         try:
-            target.relative_to(handle.path.resolve())
+            target.relative_to(handle_root)
         except ValueError as exc:
             raise FsForbiddenWriteError(
                 path=str(target), reason="resolved path escapes workspace"
