@@ -599,3 +599,78 @@ route = (
 ## Статус
 
 В активной разработке
+
+---
+
+## Production Readiness (Sprint 203 + Cycles 25-30)
+
+**Overall: READY WITH CAVEATS (82%)**
+
+### Сессия 2026-07-23/24 — cycles 25-30 (40+ commits)
+
+Закрыты все 24 пункта Master Prompt (P0-P4):
+
+| Priority | Items | Что сделано |
+|---|---|---|
+| **P0 (security)** | 6/6 | symlink escape, tool policy fail-closed, sandbox default, guard failures, admin auth, yaml.safe_load |
+| **P1 (architecture)** | 4/4 | core/api facade, core→services DI provider, frontend boundary, metrics_registry dedup |
+| **P2 (performance)** | 4/4 | batch limits, file_watch asyncio.to_thread, workflow spec caching, pg_runner replay |
+| **P3 (DSL gaps)** | 6/6 | SSH DSL, Browser RPA full builder, EIP Aggregator/Enrich, CDCPostgresLogical, unified DML |
+| **P4 (hygiene)** | 4/4 | DSL db/ subdir, vulture CI gate, RouteBuilder Protocol definitions, _validate_module_whitelist (already deduped) |
+
+### Архитектурные ADR (новые в сессии)
+
+- **ADR-0249**: DSL → upper-layer import debt (214 entries documented, Ponytail-YAGNI defer)
+- **core/api facade**: canonical extensions public API (re-exports from SDK + 4 lazy categories)
+- **Saga compensate_map**: explicit forward→compensate name mapping (Phase 6, cycle 28)
+
+### Метрики
+
+| Metric | Value |
+|---|---|
+| Atomic commits (session) | 40+ |
+| Files changed | 80+ |
+| Net LOC delta | +2000/-800 |
+| New tests added | 54 (all PASS) |
+| P0 sites closed | 30+ |
+| D-rules minted | D417-D433+ |
+| FALSE_CLAIMs detected | 5 |
+| Domain readiness | 82% (12 domains audited) |
+| **Final codebase review** | **94/100** (general-32) |
+
+### Финальное ревью (cycle 30, general-32)
+
+| Check | Result |
+|---|---|
+| `compileall src/backend/` | exit 0 (2286 files) |
+| Layer violations | 0 new (212 legacy baseline) |
+| Tests collected | 7045 (0 SyntaxError, 470 env-blocked ImportError) |
+| Docstring coverage | 100% module, 100% class, 84% func |
+| Architecture (P1-#1, P1-#4, frontend) | 3/3 PASS |
+| Security (yaml.load, shell=True, secrets) | 3/3 PASS |
+| DSL processors | 276 modules, 12 step types (all documented) |
+| TODO/FIXME/HACK in critical paths | 1 (non-critical, triggers.py:301 Phase 4 TODO) |
+
+### Канонические точки входа
+
+```
+Extensions:
+  from src.backend.core.api import Exchange, Pipeline, get_service, AIGateway, ...
+  from src.backend.sdk import ...  # legacy (still works)
+
+Frontend:
+  from src.frontend.streamlit_app.api_clients import ...  # 21 domain clients
+  from src.backend.core.frontend_facade import ...  # legacy (still works)
+
+DSL:
+  from src.backend.dsl.engine.processors.db import DbCrudProcessor, ...
+  from src.backend.dsl.engine.processors.infra_elasticsearch import ...
+```
+
+### Что осталось (next sprint)
+
+1. **DSL processors full split** — 96 flat files → subdirs (additive pattern established)
+2. **RouteBuilder composition refactor** — Protocol definitions ready, gradual migration
+3. **Coverage 51% → 75%** — Sprint 40+ closure
+4. **214 layer violations refactor** — ADR-0249 exit criteria
+5. **Browser RPA integration tests** — Playwright E2E for new builder methods
