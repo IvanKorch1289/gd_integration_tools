@@ -23,7 +23,7 @@ class MissingDocstring:
     file: Path
     line: int
     name: str
-    kind: str  # 'function' or 'class'
+    kind: str  # 'function' | 'class' | 'module'
     signature: str = ""
 
 
@@ -48,10 +48,16 @@ class AggregateStats:
 class DocstringVisitor(ast.NodeVisitor):
     """AST visitor that finds public functions/classes without docstrings."""
 
-    def __init__(self, filepath: Path) -> None:
+    def __init__(
+        self,
+        filepath: Path,
+        *,
+        enable_module_check: bool = False,
+    ) -> None:
         self.filepath = filepath
         self.issues: list[MissingDocstring] = []
         self._in_class_stack: list[str] = []
+        self.enable_module_check = enable_module_check
 
     def _is_public(self, name: str) -> bool:
         """Check if name represents a public definition (not starting with _)."""
@@ -197,13 +203,52 @@ class DocstringVisitor(ast.NodeVisitor):
         # Visit class body для методов (Cycle 30 fix).
         self.generic_visit(node)
 
+    def _check_module_docstring(self, tree: ast.Module) -> None:
+        """Cycle 32 (M12): опциональная проверка module-level docstring.
+
+        По умолчанию ВЫКЛЮЧЕНА (через ``enable_module_check``). Включается
+        CLI флагом ``--module-level``. Не все модули требуют docstring
+        (e.g. ``__init__.py`` re-exports, простые протоколы), поэтому
+        opt-in — чтобы gate оставался green для legacy.
+        """
+        if not self.enable_module_check:
+            return
+        if ast.get_docstring(tree):
+            return
+        # Skip __init__.py — обычно re-exports, docstring не нужен.
+        if self.filepath.name == "__init__.py":
+            return
+        # Skip empty / trivial modules (≤2 non-docstring stmts).
+        non_docstring_stmts = [
+            s for s in tree.body
+            if not (
+                isinstance(s, ast.Expr)
+                and isinstance(s.value, ast.Constant)
+                and isinstance(s.value.value, str)
+            )
+        ]
+        if len(non_docstring_stmts) <= 2:
+            return
+        self.issues.append(MissingDocstring(
+            file=self.filepath,
+            line=1,
+            name="<module>",
+            kind='module',
+            signature="module",
+        ))
+
     visit_FunctionDef = _check_function
     visit_AsyncFunctionDef = _check_function
     visit_ClassDef = _check_class
 
 
-def scan_file(filepath: Path) -> FileStats:
-    """Scan a single Python file for missing docstrings."""
+def scan_file(filepath: Path, *, enable_module_check: bool = False) -> FileStats:
+    """Scan a single Python file for missing docstrings.
+
+    Cycle 32: ``enable_module_check`` (default False) — также проверяет
+    наличие module-level docstring. Не все модули требуют его, поэтому
+    opt-in. Активируется CLI флагом ``--module-level``.
+    """
     stats = FileStats(path=filepath)
 
     try:
@@ -213,8 +258,13 @@ def scan_file(filepath: Path) -> FileStats:
         print(f"Warning: skipping {filepath}: {e}", file=sys.stderr)
         return stats
 
-    visitor = DocstringVisitor(filepath)
+    visitor = DocstringVisitor(
+        filepath,
+        enable_module_check=enable_module_check,
+    )
     visitor.visit(tree)
+    # Module-level check (cycle 32) — отдельная проверка после обхода.
+    visitor._check_module_docstring(tree)
 
     for issue in visitor.issues:
         stats.issues.append(issue)
@@ -233,17 +283,25 @@ def scan_directory(root: Path) -> Iterator[Path]:
             yield path
 
 
-def scan_paths(paths: list[Path]) -> tuple[list[FileStats], AggregateStats]:
+def scan_paths(
+    paths: list[Path],
+    *,
+    enable_module_check: bool = False,
+) -> tuple[list[FileStats], AggregateStats]:
     """Scan multiple paths and return stats."""
     all_stats: list[FileStats] = []
     aggregate = AggregateStats()
 
     for path in paths:
         if path.is_file():
-            all_stats.append(scan_file(path))
+            all_stats.append(scan_file(
+                path, enable_module_check=enable_module_check,
+            ))
         elif path.is_dir():
             for py_file in scan_directory(path):
-                all_stats.append(scan_file(py_file))
+                all_stats.append(scan_file(
+                    py_file, enable_module_check=enable_module_check,
+                ))
 
     # Compute aggregate
     for stats in all_stats:
@@ -356,6 +414,7 @@ Examples:
   %(prog)s --json src/ > report.json     # JSON output
   %(prog)s --allowlist tools/check_docstrings_allowlist.txt \\
       src/backend/core                   # Skip allowlisted entries
+  %(prog)s --module-level src/backend/    # Also check module docstrings
         ''',
     )
     parser.add_argument(
@@ -381,10 +440,17 @@ Examples:
         default=None,
         help='Path to allowlist file (skip listed entries)',
     )
+    parser.add_argument(
+        '--module-level',
+        action='store_true',
+        help='Also check module-level docstrings (default: OFF, opt-in)',
+    )
 
     args = parser.parse_args()
 
-    all_stats, aggregate = scan_paths(args.paths)
+    all_stats, aggregate = scan_paths(
+        args.paths, enable_module_check=args.module_level,
+    )
 
     # Filter out allowlisted entries
     if args.allowlist is not None:
