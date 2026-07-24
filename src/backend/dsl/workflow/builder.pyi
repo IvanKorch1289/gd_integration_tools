@@ -129,8 +129,11 @@ class WorkflowBuilder:
         """Добавить reflect-шаг для procedural memory update (S28 W3)."""
         ...
 
-    def resume(self, checkpoint_id: Union[str, None] = ...) -> Self:
-        """Добавить resume-шаг для возобновления paused workflow (S35 GAP-DSL-2)."""
+    def resume(self) -> Self:
+        """Добавить resume-шаг для возобновления paused workflow (S35 GAP-DSL-2).
+
+        Cycle-26: ``checkpoint_id`` kwarg удалён — был dead contract.
+        """
         ...
 
     def saga(self) -> SagaBuilder:

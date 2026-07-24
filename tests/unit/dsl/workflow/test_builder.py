@@ -237,7 +237,7 @@ def test_builder_pause_resume_round_trip() -> None:
     wf1 = (
         WorkflowBuilder("flow")
         .pause(output_key="ts")
-        .resume(checkpoint_id="ckpt-1")
+        .resume()
         .build()
     )
     payload = wf1.model_dump()

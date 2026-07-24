@@ -141,18 +141,18 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
         self._steps.append(PauseDeclaration(output_key=output_key))
         return self
 
-    def resume(self, checkpoint_id: str | None = None) -> Self:
+    def resume(self) -> Self:
         """Добавить resume-шаг для возобновления paused workflow (S35 GAP-DSL-2).
 
         Вызывает ``workflow.resume()`` из Temporal SDK.
 
-        Args:
-            checkpoint_id: Опц. checkpoint_id для восстановления состояния.
+        Cycle-26: ``checkpoint_id`` параметр удалён (cycle-26 audit) — был dead
+        contract, ``compile_resume_step`` его не использует.
 
         Returns:
             Self для chain.
         """
-        self._steps.append(ResumeDeclaration(checkpoint_id=checkpoint_id))
+        self._steps.append(ResumeDeclaration())
         return self
 
     def escalate(

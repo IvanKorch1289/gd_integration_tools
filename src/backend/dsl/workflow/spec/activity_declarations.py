@@ -100,24 +100,22 @@ class ResumeDeclaration(BaseModel):
     Вызывает ``workflow.resume()`` — снимает флаг паузы и позволяет
     workflow продолжить выполнение с места ``pause()``.
 
+    Cycle-26: ``checkpoint_id`` поле удалено (cycle-26 audit) — было dead contract,
+    compiler ``compile_resume_step`` его не использует.
+
     YAML::
 
         steps:
-          - resume:
-              checkpoint_id: "my_checkpoint"
+          - resume: {}
 
     Python::
 
-        WorkflowBuilder("credit.flow").resume(checkpoint_id="my_checkpoint")
+        WorkflowBuilder("credit.flow").resume()
     """
 
     model_config = ConfigDict(extra="forbid")
 
     type: Literal["resume"] = "resume"
-    checkpoint_id: str | None = Field(
-        default=None,
-        description="Опциональный checkpoint_id для восстановления состояния.",
-    )
 
 
 class SignalWaitDeclaration(BaseModel):
