@@ -68,6 +68,11 @@ vulture-check: check-env ## Run informational dead code scan
 	@$(UV_RUN) vulture $(SOURCE_DIR) --config pyproject.toml || printf '%s\n' "Vulture found possible dead code"
 	@$(SUCCESS) "Vulture scan finished!"
 
+vulture-gate: check-env ## Run strict dead code gate (CI-blocking)
+	@$(INFO) "Running vulture dead code gate (min-confidence 80)..."
+	@$(UV_RUN) vulture $(SOURCE_DIR) --min-confidence 80 --config pyproject.toml
+	@$(SUCCESS) "Vulture gate passed!"
+
 check-docstrings: ##@ Quality Check for missing docstrings in public API
 	@$(INFO) "Checking docstring coverage..."
 	@python3 tools/check_docstrings.py $(SOURCE_DIR) $(if $(SUMMARY),--summary,) $(if $(JSON),--json,)
@@ -172,6 +177,16 @@ api-fuzz: check-env ## S6 K2: schemathesis API fuzzing через tools/api_fuzz
 		--openapi http://$(UVICORN_HOST):$(UVICORN_PORT)/openapi.json \
 		--report dist/schemathesis-report.json \
 		|| $(WARN) "[api-fuzz] warn-only: feature_flag schemathesis_gate_enabled=false"
+
+# P1 S172 W2: Architecture ratchet — архитектурный запрет на прямые
+# импорты src.backend.* из src/frontend/*. Включает:
+# 1. Frontend layer boundary (test_layer_boundary.py): проверка facade-only.
+# 2. api_clients/ boundary (test_arch_ratchet.py): thin-client boundary.
+# При нарушении — exit 1 (CI-blocking).
+arch-ratchet: check-env ## P1 S172 W2: architecture ratchet (frontend layer + api_clients boundary)
+	@$(INFO) "Running frontend architecture ratchet..."
+	@$(UV_RUN) pytest tests/unit/frontend/test_layer_boundary.py tests/unit/frontend/test_arch_ratchet.py -q --no-header
+	@$(SUCCESS) "Architecture ratchet passed!"
 
 
 

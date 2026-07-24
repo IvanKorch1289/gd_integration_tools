@@ -79,6 +79,40 @@ class RPAMixin:
             "src.backend.dsl.engine.processors.web", "ScreenshotProcessor", url=url
         )
 
+    def browser_launch(self, *, headless: bool = True) -> RouteBuilder:
+        """Запустить browser сессию через Playwright pool (P3 gap closure).
+
+        Cycle 30 P3: добавлен builder method для BrowserLaunchProcessor.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa_browser",
+            "BrowserLaunchProcessor",
+            headless=headless,
+        )
+
+    def wait_for_selector(self, selector: str, *, timeout_s: float = 30.0) -> RouteBuilder:
+        """Ждать появления элемента на странице (P3 gap closure).
+
+        Cycle 30 P3: добавлен builder method для WaitForProcessor.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa_browser",
+            "WaitForProcessor",
+            selector=selector,
+            timeout_s=timeout_s,
+        )
+
+    def print_pdf(self, *, format: str = "A4") -> RouteBuilder:
+        """Сохранить текущую страницу как PDF (P3 gap closure).
+
+        Cycle 30 P3: добавлен builder method для PdfProcessor.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa_browser",
+            "PdfProcessor",
+            format=format,
+        )
+
     def run_scenario(self, steps: list[dict] | None = None) -> RouteBuilder:
         """Multi-step web сценарий (navigate/click/fill/extract)."""
         return self._add_lazy(  # type: ignore[attr-defined]

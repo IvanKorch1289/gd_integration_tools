@@ -246,3 +246,35 @@ class RouteBuilder(  # type: ignore[misc]
             middlewares=list(self._middlewares),
             route_overrides=dict(self._route_overrides),  # S163 W15
         )
+
+
+# Cycle 30 P4-#4: Protocol interfaces documenting RouteBuilder contract.
+# These are NOT the composition refactor (which would break 200+ tests
+# and require multi-week migration), but they document the public API
+# surface that a future CompositionRouteBuilder must satisfy.
+#
+# Migration path (per Master Prompt P4-#4):
+# 1. Protocol definitions (this commit) -- documents contract.
+# 2. CompositionRouteBuilder alongside RouteBuilder -- parallel impl.
+# 3. Gradual migration of callers from RouteBuilder to CompositionRouteBuilder.
+# 4. Eventually RouteBuilder becomes a thin wrapper or is removed.
+
+from typing import Protocol as _Protocol, runtime_checkable as _runtime_checkable
+
+
+@_runtime_checkable
+class _RouteProcessorSteps(_Protocol):
+    """Contract: processor chain management."""
+
+    def _add_processor(self, processor: Any) -> Any: ...
+    def _add_lazy(self, module: str, cls_name: str, **kwargs: Any) -> Any: ...
+
+
+@_runtime_checkable
+class _RouteCore(_Protocol):
+    """Contract: core route identity + output."""
+
+    @property
+    def route_id(self) -> str: ...
+    def to(self, sink: str, **kwargs: Any) -> Any: ...
+    def log(self, level: str = "info", message: str = "") -> Any: ...
