@@ -57,9 +57,11 @@ jobs:
         run: uv run python tools/build_adr_index.py
 
       - name: Sphinx build
+        # Cycle 31: добавлен ``-j auto`` для параллельного build (~2-4x speedup
+        # на multi-core runner). --keep-going не падать на warnings.
         run: |
           mkdir -p docs/build
-          uv run sphinx-build -b html --keep-going \
+          uv run sphinx-build -b html --keep-going -j auto \
               -d docs/build/.doctrees docs docs/build/html
 
       - name: Upload HTML artifact

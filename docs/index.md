@@ -6,10 +6,15 @@ Universal domain-agnostic integration platform (Python 3.14+, Apache-Camel/Airfl
 
 ## Diátaxis toctree
 
-- [Tutorials](tutorials/index.md)
-- [How-to Guides](how-to/index.md)
-- [Reference](reference/index.md)
-- [Explanation](explanation/index.md)
+```{toctree}
+:maxdepth: 2
+:caption: Documentation
+:titlesonly:
+tutorials/index
+how-to/index
+reference/index
+explanation/index
+```
 
 ## Quick Links
 

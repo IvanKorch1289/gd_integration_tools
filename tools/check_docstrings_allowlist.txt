@@ -3,6 +3,18 @@
 # legacy-код. Снимать пункт по мере миграции модуля.
 # Формат: <relative_path>:<lineno>:<col> <qualified_name>
 
+
+# Cycle 29 (M9): docstring policy gate re-snapshot.
+# 101 entries добавляются как amnesty baseline, чтобы разблокировать
+# pre-push hook. S29+ W1+ ratchet: новые violations (не в этом списке)
+# блокируют push. Снимать пункт по мере миграции модуля в S30+.
+
+# Cycle 30 (M10): fresh snapshot после recursive class body visit.
+# tools/check_docstrings.py теперь посещает методы классов (generic_visit).
+# S30+ W1+ ratchet начинается с этого baseline. Снимать по мере рефакторинга.
+
+# Cycle 30 (M10): extensions/ added to pre-commit scope per AGENTS.md.
+# Business logic lives ONLY in extensions/<name>/ — gate теперь покрывает.
 src/backend/core/audit/interfaces.py:14:4 AuditBackend.emit
 src/backend/core/audit/interfaces.py:35:4 LangfuseCallbackBackend.flush
 src/backend/core/auth/__init__.py:44:0 AuthMethod
@@ -50,7 +62,6 @@ src/backend/core/di/providers/workflow.py:262:0 set_grpc_logger_provider
 src/backend/core/di/providers/workflow.py:274:0 set_stream_logger_provider
 src/backend/core/di/providers/workflow.py:46:0 set_action_bus_service_provider
 src/backend/core/di/providers/workflow.py:91:0 set_scheduler_manager_provider
-src/backend/core/errors_explainer.py:23:0 ExplainedError
 src/backend/core/interfaces/__init__.py:101:4 Healthcheck.check_health
 src/backend/core/interfaces/__init__.py:111:4 MessageBroker.publish
 src/backend/core/interfaces/__init__.py:116:4 MessageBroker.subscribe
@@ -159,9 +170,6 @@ src/backend/core/resilience/breaker.py:127:4 BreakerRegistry.get_or_create
 src/backend/core/resilience/breaker.py:138:4 BreakerRegistry.get
 src/backend/core/resilience/breaker.py:141:4 BreakerRegistry.list_states
 src/backend/core/resilience/breaker.py:93:4 Breaker.is_open
-src/backend/core/resilience/bulkhead.py:20:4 Bulkhead.register
-src/backend/core/resilience/bulkhead.py:34:4 Bulkhead.release
-src/backend/core/resilience/bulkhead.py:38:4 Bulkhead.stats
 src/backend/core/resilience/degradation.py:159:4 DegradationManager.register
 src/backend/core/resilience/degradation.py:164:4 DegradationManager.report_failure
 src/backend/core/resilience/degradation.py:175:4 DegradationManager.report_success
@@ -230,8 +238,6 @@ src/backend/dsl/engine/processors/control_flow/flow.py:41:4 TryCatchProcessor.pr
 src/backend/dsl/engine/processors/control_flow/parallel.py:107:4 ParallelProcessor.process
 src/backend/dsl/engine/processors/control_flow/parallel.py:39:4 PipelineRefProcessor.process
 src/backend/dsl/engine/processors/control_flow/saga.py:37:4 SagaProcessor.process
-src/backend/dsl/engine/processors/data_query.py:125:4 JsonPathProcessor.to_spec
-src/backend/dsl/engine/processors/data_query.py:69:4 JsonPathProcessor.process
 src/backend/dsl/engine/processors/data_store.py:27:4 DataStoreSetProcessor.process
 src/backend/dsl/engine/processors/data_store.py:34:4 DataStoreSetProcessor.to_spec
 src/backend/dsl/engine/processors/data_store.py:54:4 DataStoreGetProcessor.process
@@ -329,8 +335,6 @@ src/backend/dsl/engine/processors/graphql_query.py:99:4 GraphQLQueryProcessor.pr
 src/backend/dsl/engine/processors/hitl_approval.py:100:4 HitlApprovalProcessor.process
 src/backend/dsl/engine/processors/html_template.py:123:4 HtmlTemplateProcessor.process
 src/backend/dsl/engine/processors/html_template.py:150:4 HtmlTemplateProcessor.to_spec
-src/backend/dsl/engine/processors/ics_calendar.py:151:4 IcsCalendarProcessor.process
-src/backend/dsl/engine/processors/ics_calendar.py:179:4 IcsCalendarProcessor.to_spec
 src/backend/dsl/engine/processors/integration.py:113:4 AwaitReplyProcessor.process
 src/backend/dsl/engine/processors/integration.py:31:4 EventPublishProcessor.process
 src/backend/dsl/engine/processors/integration.py:58:4 MemoryLoadProcessor.process
@@ -351,12 +355,6 @@ src/backend/dsl/engine/processors/notebook_execute.py:109:4 NotebookExecuteProce
 src/backend/dsl/engine/processors/notebook_execute.py:81:4 NotebookExecuteProcessor.process
 src/backend/dsl/engine/processors/notebook_export.py:81:4 NotebookExportProcessor.process
 src/backend/dsl/engine/processors/notebook_export.py:99:4 NotebookExportProcessor.to_spec
-src/backend/dsl/engine/processors/patterns.py:183:4 BatchWindowProcessor.process
-src/backend/dsl/engine/processors/patterns.py:239:4 DeduplicateProcessor.process
-src/backend/dsl/engine/processors/patterns.py:283:4 FormatterProcessor.process
-src/backend/dsl/engine/processors/patterns.py:339:4 DebounceProcessor.process
-src/backend/dsl/engine/processors/patterns.py:64:4 SwitchProcessor.process
-src/backend/dsl/engine/processors/patterns.py:98:4 MergeProcessor.process
 src/backend/dsl/engine/processors/pdf_template.py:133:4 PdfTemplateProcessor.process
 src/backend/dsl/engine/processors/pdf_template.py:193:4 PdfTemplateProcessor.to_spec
 src/backend/dsl/engine/processors/proxy/expose.py:76:4 ExposeProxyProcessor.spec
@@ -412,8 +410,6 @@ src/backend/dsl/engine/processors/template_engine.py:68:4 RenderTemplateProcesso
 src/backend/dsl/engine/processors/template_engine.py:95:4 RenderTemplateFileProcessor.process
 src/backend/dsl/engine/processors/unit_conversion.py:121:4 UnitConversionProcessor.process
 src/backend/dsl/engine/processors/unit_conversion.py:149:4 UnitConversionProcessor.to_spec
-src/backend/dsl/engine/processors/units.py:114:4 UnitConversionProcessor.to_spec
-src/backend/dsl/engine/processors/units.py:59:4 UnitConversionProcessor.process
 src/backend/dsl/engine/processors/validate_response.py:120:4 ResponseValidatorProcessor.process
 src/backend/dsl/engine/processors/validate_response.py:135:4 ResponseValidatorProcessor.to_spec
 src/backend/dsl/engine/processors/web.py:104:4 ExtractProcessor.process
@@ -436,11 +432,6 @@ src/backend/dsl/engine/validation.py:29:4 ValidationResult.errors
 src/backend/dsl/engine/validation.py:33:4 ValidationResult.warnings
 src/backend/dsl/engine/validation.py:47:4 PipelineValidator.validate
 src/backend/dsl/engine/versioning.py:41:4 PipelineSnapshot.to_dict
-
-# Cycle 29 (M9): docstring policy gate re-snapshot.
-# 101 entries добавляются как amnesty baseline, чтобы разблокировать
-# pre-push hook. S29+ W1+ ratchet: новые violations (не в этом списке)
-# блокируют push. Снимать пункт по мере миграции модуля в S30+.
 src/backend/core/security/credential_provider.py:116:0 get_credential_provider
 src/backend/dsl/cli/lint.py:58:0 main
 src/backend/dsl/contracts/__init__.py:17:0 ExpectationResult
@@ -544,10 +535,6 @@ src/backend/services/ops/notification_hub.py:68:0 Channel
 src/backend/services/ops/scheduled_reports.py:42:0 ReportRun
 src/backend/dsl/engine/processors/infra_elasticsearch.py:43:0 InfraElasticsearchSearchProcessor
 src/backend/dsl/engine/processors/infra_elasticsearch.py:83:0 InfraElasticsearchIndexProcessor
-
-# Cycle 30 (M10): fresh snapshot после recursive class body visit.
-# tools/check_docstrings.py теперь посещает методы классов (generic_visit).
-# S30+ W1+ ratchet начинается с этого baseline. Снимать по мере рефакторинга.
 src/backend/core/ai/pydantic_ai_client.py:462:0 model_name
 src/backend/core/ai/pydantic_ai_client.py:466:0 provider
 src/backend/core/ai/pydantic_ai_client.py:470:0 base_url
@@ -1344,9 +1331,6 @@ src/backend/services/sources/registry.py:87:0 get
 src/backend/services/sources/registry.py:92:0 all
 src/backend/services/wiki/whoosh_index.py:231:0 doc_count
 src/backend/services/workflows/sla_alerting.py:86:0 dispatch
-
-# Cycle 30 (M10): extensions/ added to pre-commit scope per AGENTS.md.
-# Business logic lives ONLY in extensions/<name>/ — gate теперь покрывает.
 extensions/core_entities/files/tests/test_repository_pattern.py:12:0 test_repository_class_instantiable
 extensions/core_entities/files/tests/test_repository_pattern.py:28:0 test_repository_respects_facade_boundary
 extensions/core_entities/files/tests/test_repository_pattern.py:6:0 test_repository_inherits_sqlalchemy_base
@@ -1380,3 +1364,13 @@ extensions/osint_agent/tests/test_osint_workflow.py:66:0 test_dict_with_content
 extensions/osint_agent/tests/test_osint_workflow.py:70:0 test_list_of_dicts
 extensions/osint_agent/tests/test_osint_workflow.py:80:0 test_parse_full_report
 extensions/test_plug/plugin.py:17:0 healthcheck
+
+# Cycle 31 (M11): fresh entries после удаления deleted-file snapshot.
+# Файлы data_query.py, ics_calendar.py, patterns.py, units.py, errors_explainer.py
+# были переименованы/объединены в generic.py. Добавляем новые lines.
+src/backend/dsl/engine/processors/generic.py:107:4 process
+src/backend/dsl/engine/processors/generic.py:137:4 process
+src/backend/dsl/engine/processors/generic.py:162:4 process
+src/backend/dsl/engine/processors/generic.py:186:4 process
+src/backend/dsl/engine/processors/generic.py:231:4 process
+src/backend/dsl/engine/processors/generic.py:260:4 process

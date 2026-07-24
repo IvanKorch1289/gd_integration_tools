@@ -157,6 +157,17 @@ autoapi_ignore = [
 autoapi_member_order = "bysource"
 autoapi_python_use_imodule_names = True
 
+# Cycle 31: explicit autoapi_options — default ``["members", "undoc-members",
+# "show-inheritance", "show-module-summary", "imported-members"]`` слишком
+# жадный (40-60% build time от imported-members + undoc-members).
+# Ручной выбор: показать иерархию классов, skip импортированные модули
+# (на них всё равно есть cross-refs).
+autoapi_options = [
+    "members",
+    "show-inheritance",
+    "show-module-summary",
+]
+
 # S34 W1: Suppress expected warnings for narrow-scope autoapi.
 # Import resolution warnings: we document core/dsl/engine/interfaces but some modules
 # import from infrastructure/ which is outside scope.
