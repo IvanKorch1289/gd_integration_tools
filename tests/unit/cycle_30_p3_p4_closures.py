@@ -110,3 +110,27 @@ class TestRouteBuilderProtocols:
         with open(path) as f:
             content = f.read()
         assert "Migration path" in content or "CompositionRouteBuilder" in content
+
+
+class TestDSLProcessorsDirSplit:
+    """P4-#1: DSL processors directory split (additive, non-breaking)."""
+
+    def test_db_subdir_exists(self):
+        """db/ subdir must exist with re-exports."""
+        path = "src/backend/dsl/engine/processors/db/__init__.py"
+        assert os.path.exists(path), f"{path} missing"
+
+    def test_db_subdir_reexports(self):
+        """db/ must re-export all 3 DB processors."""
+        path = "src/backend/dsl/engine/processors/db/__init__.py"
+        with open(path) as f:
+            content = f.read()
+        for cls in ["DbCallProcedureProcessor", "DbCrudProcessor",
+                    "DbQueryExternalProcessor"]:
+            assert cls in content, f"Missing re-export: {cls}"
+
+    def test_flat_files_still_work(self):
+        """Existing flat imports must not be broken (additive pattern)."""
+        for f in ["db_call_procedure.py", "db_crud.py", "db_query_external.py"]:
+            path = f"src/backend/dsl/engine/processors/{f}"
+            assert os.path.exists(path), f"Flat file removed (should still exist): {f}"
