@@ -39,7 +39,8 @@ class GrpcSource:
         request_module: Путь к модулю с request-message классом.
         request_class: Имя request-класса.
         request_kwargs: Аргументы конструктора request (``param=value``).
-        secure: Использовать ли TLS (default ``False``, для prod установить ``True``).
+        secure: Использовать ли TLS (default ``True``; для plaintext
+            нужен явный ``secure=False`` — устаревший небезопасный режим).
         reconnect_delay_seconds: Задержка перед реконнектом.
     """
 

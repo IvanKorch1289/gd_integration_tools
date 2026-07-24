@@ -41,4 +41,4 @@ src/frontend/  →  src/backend/entrypoints/  →  src/backend/services/  →  s
 | Agent isolation | 🟡 | E2B sandbox scaffold |
 | Notifications | 🟡 | Email only, Telegram/Push scaffold |
 
-See [ADRs](adr/index.md) for detailed decisions.
+See [ADRs](adr/INDEX.md) for detailed decisions.
