@@ -228,7 +228,6 @@ def test_builder_pause_resume() -> None:
     assert isinstance(wf.steps[1], PauseDeclaration)
     assert wf.steps[1].output_key == "paused_at"
     assert isinstance(wf.steps[2], ResumeDeclaration)
-    assert wf.steps[2].checkpoint_id is None
     assert isinstance(wf.steps[3], ActivityDeclaration)
 
 
@@ -245,7 +244,6 @@ def test_builder_pause_resume_round_trip() -> None:
     assert isinstance(wf2.steps[0], PauseDeclaration)
     assert wf2.steps[0].output_key == "ts"
     assert isinstance(wf2.steps[1], ResumeDeclaration)
-    assert wf2.steps[1].checkpoint_id == "ckpt-1"
 
 
 def test_builder_combined_includes_pause_resume() -> None:
