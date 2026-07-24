@@ -26,6 +26,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from src.frontend.streamlit_app.config import get_api_base_url
+
 if TYPE_CHECKING:
     # TYPE_CHECKING-only for type hints (cycle-safe, no runtime
     # backend import from frontend per layer rules).
@@ -138,7 +140,7 @@ def _deploy_template(tmpl, target: str, client: APIClient) -> None:
     try:
         import httpx as requests
 
-        base_url = getattr(client, "base_url", "http://localhost:8000")
+        base_url = getattr(client, "base_url", get_api_base_url())
         resp = requests.post(
             f"{base_url}/api/v1/admin/workflow-templates/{tmpl.name}/deploy",
             json={"target_dir": target, "overwrite": False},

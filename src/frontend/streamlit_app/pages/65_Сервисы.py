@@ -10,6 +10,7 @@ import httpx
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
+from src.frontend.streamlit_app.config import get_api_base_url
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
@@ -140,7 +141,7 @@ try:
 except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
     st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     config = {}
-base_url = config.get("base_url", "http://localhost:8000")
+base_url = config.get("base_url", get_api_base_url())
 
 doc_services: dict[str, str] = {
     "Swagger UI": "/docs",

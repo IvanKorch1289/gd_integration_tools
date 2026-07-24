@@ -12,6 +12,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
+from src.frontend.streamlit_app.config import get_api_base_url
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     require_auth,
@@ -58,7 +59,7 @@ if st.button("Оценить", type="primary", disabled=not workflow_id):
     try:
         import httpx as requests
 
-        base_url = getattr(client, "base_url", "http://localhost:8000")
+        base_url = getattr(client, "base_url", get_api_base_url())
         payload = {
             "workflow_id": workflow_id,
             "input_size_bytes": int(input_size),

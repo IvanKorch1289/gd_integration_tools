@@ -18,6 +18,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from src.frontend.streamlit_app.config import get_api_base_url
+
 
 def _supported_timezones() -> list[str]:
     try:
@@ -79,7 +81,7 @@ def _render_body() -> None:
             # Fallback: api_client не имеет _request — собираем вручную через requests
             import httpx as requests
 
-            base_url = getattr(client, "base_url", "http://localhost:8000")
+            base_url = getattr(client, "base_url", get_api_base_url())
             body = requests.post(
                 f"{base_url}/api/v1/admin/cron/validate",
                 json={
@@ -121,7 +123,7 @@ def _render_body() -> None:
             try:
                 import httpx as requests
 
-                base_url = getattr(client, "base_url", "http://localhost:8000")
+                base_url = getattr(client, "base_url", get_api_base_url())
                 resp = requests.post(
                     f"{base_url}/api/v1/admin/cron/schedule",
                     json={

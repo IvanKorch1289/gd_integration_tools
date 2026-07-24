@@ -21,6 +21,7 @@ import streamlit as st
 
 from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid
 from src.frontend.streamlit_app.api_clients import get_api_client
+from src.frontend.streamlit_app.config import get_api_base_url
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     require_auth,
@@ -145,7 +146,7 @@ def _render_workflow_templates() -> None:
                 try:
                     import httpx as requests
 
-                    base_url = getattr(client, "base_url", "http://localhost:8000")
+                    base_url = getattr(client, "base_url", get_api_base_url())
                     resp = requests.post(
                         f"{base_url}/api/v1/admin/workflow-templates/"
                         f"{tmpl.name}/deploy",

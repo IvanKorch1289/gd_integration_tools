@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.config import get_api_base_url
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     require_auth,
@@ -59,7 +60,7 @@ else:
                         )
 
                         client = get_api_client()
-                        base_url = getattr(client, "base_url", "http://localhost:8000")
+                        base_url = getattr(client, "base_url", get_api_base_url())
                         resp = requests.post(
                             f"{base_url}/api/v1/admin/workflow-versioning/"
                             f"{selected}/pin",
@@ -86,7 +87,7 @@ else:
                     from src.frontend.streamlit_app.api_clients import get_api_client
 
                     client = get_api_client()
-                    base_url = getattr(client, "base_url", "http://localhost:8000")
+                    base_url = getattr(client, "base_url", get_api_base_url())
                     resp = requests.post(
                         f"{base_url}/api/v1/admin/workflow-versioning/"
                         f"{selected}/rollback",
@@ -112,7 +113,7 @@ else:
         from src.frontend.streamlit_app.api_clients import get_api_client
 
         client = get_api_client()
-        base_url = getattr(client, "base_url", "http://localhost:8000")
+        base_url = getattr(client, "base_url", get_api_base_url())
         resp = requests.get(
             f"{base_url}/api/v1/admin/workflow-versioning/{selected}/running-count",
             timeout=5,
