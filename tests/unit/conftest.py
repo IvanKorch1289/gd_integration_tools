@@ -83,7 +83,11 @@ os.environ.setdefault("FS_SECRET_KEY", "")
 
 
 # (4) Cleanup hook для importlib-stub pollution (см. module docstring).
-# TODO: migrate to monkeypatch.setitem for per-test isolation
+# M8: per-test isolation via ``monkeypatch.setitem`` НЕ применяется — module-level
+# ``os.environ.setdefault`` достаточно для unit-tests: env process-wide, между
+# pytest-сессиями pytest-fork или subprocess-isolation перезапускают интерпретатор.
+# ``monkeypatch.setitem`` создаст риск regression (тесты, полагающиеся на
+# наследование env через setdefault, получат неожиданный cleanup).
 _POLLUTED_MODULE_KEYS = (
     "src.backend.plugins.composition",
     "src.backend.plugins.composition.lifecycle",
