@@ -1,5 +1,9 @@
 # ADR-0246: Sprint 30 Security Patch — 7 Dependabot Vulnerabilities Fixed
 
+> **STATUS NOTE (2026-07-23)**: This ADR references `src/frontend/admin-react/`
+> which was REMOVED in commit `120dd73b` (S178 WIP cleanup). Historical only;
+> the current frontend is Streamlit-only.
+
 - **Status:** Accepted (Sprint 30 security patch, 2026-06-19)
 - **Wave:** s30-security
 - **Sprint:** 30 (post S168 delta, post app functionality restoration)

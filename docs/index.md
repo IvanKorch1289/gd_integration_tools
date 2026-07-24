@@ -16,7 +16,7 @@ Universal domain-agnostic integration platform (Python 3.14+, Apache-Camel/Airfl
 - [Architecture](ARCHITECTURE.md)
 - [Domain DSL](dsl/index.md) — RouteBuilder + WorkflowBuilder
 - [AI Platform](ai/index.md) — AIGateway + PydanticAI + MultiAgent
-- [ADRs](adr/index.md) — 190+ Architecture Decision Records
+- [ADRs](adr/INDEX.md) — 190+ Architecture Decision Records
 
 ## Layers
 

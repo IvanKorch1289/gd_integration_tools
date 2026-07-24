@@ -1,5 +1,9 @@
 # ADR-0194: Sprint 108 closure — Dependabot security audit + TD-008 verify + TD-004 AI migration + AI tool registry e2e tests
 
+> **STATUS NOTE (2026-07-23)**: This ADR references `src/frontend/admin-react/`
+> which was REMOVED in commit `120dd73b` (S178 WIP cleanup). Historical only;
+> the current frontend is Streamlit-only.
+
 **Date:** 2026-06-13
 **Status:** ACCEPTED
 **Sprint:** S108 (5 waves: W1 security, W2 verify, W3 TD-004, W4 e2e, W5 closure)

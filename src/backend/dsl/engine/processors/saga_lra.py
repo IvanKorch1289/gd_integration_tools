@@ -134,7 +134,12 @@ class SagaLRAProcessor(BaseProcessor):
         try:
             workflow_id = uuid.UUID(str(wf_id_str))
         except ValueError:
-            workflow_id = uuid.uuid5(uuid.NAMESPACE_DNS, str(wf_id_str))
+            # Cycle 25 W4: when workflow_id is not a valid UUID, generate
+            # uuid5 from route_id + run_id so different runs of the same
+            # route get distinct persistent keys (prevents silent
+            # cross-execution state collision).
+            seed = f"{wf_id_str}::{run_id}"
+            workflow_id = uuid.uuid5(uuid.NAMESPACE_DNS, seed)
 
         repo = await self._get_repo()
         state_record = None

@@ -2,6 +2,11 @@
 
 **Дата**: 2026-06-05 | **Severity**: 🔴 critical (3 RCE) + 🟠 medium (1 open redirect) | **Status**: patched (configs), apply needed (deps)
 
+> **STATUS NOTE (2026-07-23)**: This document references `src/frontend/admin-react/` 
+> which was REMOVED in commit `120dd73b` (S178 WIP cleanup, ADR-NEW-8).
+> `admin-react/package.json` patches below are HISTORICAL — 
+> codebase is now Streamlit-only. References below no longer apply.
+
 ## TL;DR
 
 GitHub push detection found 4 уязвимости в dependencies. Все 4 verified

@@ -1,7 +1,7 @@
 import os
 from typing import ClassVar, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -120,6 +120,21 @@ class SecureSettings(BaseSettingsWithLoader):
                 "CORS wildcard '*' запрещён в prod. Укажите явный список origin."
             )
         return value
+
+    @model_validator(mode="after")
+    def _forbid_wildcard_with_credentials(self) -> "SecuritySettings":
+        """Cycle 25 S1: never allow wildcard origin WITH credentials enabled.
+
+        Browsers reject this combination, but misconfiguration can leak
+        credentials via CSRF. Block at model-level (not just diagnostic).
+        """
+        if "*" in self.cors_origins and self.cors_allow_credentials:
+            raise ValueError(
+                "CORS misconfiguration: wildcard origin '*' combined with "
+                "credentials=True is forbidden. Specify explicit origins or "
+                "disable credentials."
+            )
+        return self
 
     routes_without_api_key: list[str] = Field(
         ...,
