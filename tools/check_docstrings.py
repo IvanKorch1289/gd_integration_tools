@@ -280,6 +280,23 @@ def json_format_output(
     return json.dumps(result, indent=2)
 
 
+def load_allowlist(path: Path) -> set[str]:
+    """Load allowlist из file.
+
+    Формат allowlist: одна запись на строку, ``<path>:<lineno>:<col> <qualified_name>``.
+    Пустые строки и комментарии (начинающиеся с ``#``) игнорируются.
+    Возвращает set точных строк для O(1) lookup.
+    """
+    entries: set[str] = set()
+    if not path.is_file():
+        return entries
+    for line in path.read_text(encoding='utf-8').splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith('#'):
+            entries.add(stripped)
+    return entries
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description='Check for missing docstrings in Python code.',
@@ -290,6 +307,8 @@ Examples:
   %(prog)s src/backend/core/config/      # Scan specific directory
   %(prog)s --summary src/                # Summary only
   %(prog)s --json src/ > report.json     # JSON output
+  %(prog)s --allowlist tools/check_docstrings_allowlist.txt \\
+      src/backend/core                   # Skip allowlisted entries
         ''',
     )
     parser.add_argument(
@@ -309,10 +328,54 @@ Examples:
         action='store_true',
         help='Output in JSON format',
     )
+    parser.add_argument(
+        '--allowlist',
+        type=Path,
+        default=None,
+        help='Path to allowlist file (skip listed entries)',
+    )
 
     args = parser.parse_args()
 
     all_stats, aggregate = scan_paths(args.paths)
+
+    # Filter out allowlisted entries
+    if args.allowlist is not None:
+        allowlist = load_allowlist(args.allowlist)
+        if allowlist:
+            # Index allowlist by (rel_path, lineno) → set of qualified_names
+            # so we can match both ``MethodName`` and ``ClassName.MethodName``.
+            allowlist_by_loc: dict[tuple[str, int], set[str]] = {}
+            for entry in allowlist:
+                # entry: ``<rel_path>:<lineno>:<col> <qualified_name>``
+                # Split on first 3 colons, then whitespace separates col from name.
+                parts = entry.split(":", 2)
+                if len(parts) < 3:
+                    continue
+                p, ln, rest = parts[0], int(parts[1]), parts[2].strip()
+                # ``rest`` is ``<col> <qualified_name>`` (e.g. ``0 AuthMethod``
+                # or ``4 AuditBackend.emit``). Take the last whitespace-separated
+                # token as the qualified name.
+                qname = rest.split()[-1] if rest else ""
+                # qname может быть ``Foo.method`` или ``top_level_func``
+                bare = qname.rsplit(".", 1)[-1]
+                if not bare:
+                    continue
+                allowlist_by_loc.setdefault((p, ln), set()).add(bare)
+            for stats in all_stats:
+                rel_path = str(stats.path)
+                filtered_issues = []
+                for issue in stats.issues:
+                    bare_names = allowlist_by_loc.get((rel_path, issue.line), set())
+                    if issue.name in bare_names:
+                        # Skip: covered by allowlist (either top-level or class member).
+                        continue
+                    filtered_issues.append(issue)
+                stats.issues = filtered_issues
+                stats.missing = len(filtered_issues)
+            # Recompute aggregate after filter
+            aggregate.total_missing = sum(s.missing for s in all_stats)
+            aggregate.files_with_issues = sum(1 for s in all_stats if s.issues)
 
     output = format_output(
         all_stats,

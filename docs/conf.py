@@ -48,6 +48,66 @@ templates_path = ["_templates"]
 # Исключаем build-артефакты и системные файлы
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
+# Cycle 29 (M9): autodoc_mock_imports для protobuf auto-generated модулей.
+# autoapi следует по импортам из documented scope и при попытке резолвить
+# ``auto.files_pb2.DESCRIPTOR`` падает с KeyError (DESCRIPTOR — runtime attr,
+# не AST attribute, autoapi его не видит). Mock-импорт делает модули
+# "виртуальными" — autoapi видит имя, но не пытается парсить тело.
+autodoc_mock_imports = [
+    "grpc",
+    "google.protobuf",
+    "google.protobuf.descriptor",
+    "src.backend.entrypoints.grpc.protobuf",
+    "src.backend.entrypoints.grpc.protobuf.auto",
+    "src.backend.entrypoints.grpc.protobuf.files_pb2",
+    "src.backend.entrypoints.grpc.protobuf.files_pb2_grpc",
+    "src.backend.entrypoints.grpc.protobuf.orders_pb2",
+    "src.backend.entrypoints.grpc.protobuf.orders_pb2_grpc",
+    "src.backend.entrypoints.grpc.protobuf.orderkinds_pb2",
+    "src.backend.entrypoints.grpc.protobuf.orderkinds_pb2_grpc",
+    "src.backend.entrypoints.grpc.protobuf.users_pb2",
+    "src.backend.entrypoints.grpc.protobuf.users_pb2_grpc",
+    "src.backend.entrypoints.grpc.protobuf.invoker_pb2",
+    "src.backend.entrypoints.grpc.protobuf.invoker_pb2_grpc",
+]
+
+
+# Cycle 29 (M9): workaround для autoapi KeyError на protobuf DESCRIPTOR.
+# autodoc_mock_imports не помогает — autoapi имеет собственный discovery,
+# который игнорирует autodoc-моки. Патчим ``AutoapiSummary.get_items``
+# чтобы пропускал KeyError при lookup runtime-attrs (DESCRIPTOR, _descriptor,
+# __doc__ extensions и т.п.). Это runtime-only fix в conf.py, не меняет
+# исходный код autoapi.
+def _patch_autoapi_directive_get_items() -> None:
+    """Skip KeyError для runtime-only attrs в autoapi get_items lookup."""
+    try:
+        from autoapi.directives import AutoapiSummary
+    except ImportError:
+        return
+
+    _original_get_items = AutoapiSummary.get_items
+
+    def _safe_get_items(  # type: ignore[no-untyped-def]
+        self, names
+    ) -> list:
+        """get_items с защитой от KeyError на runtime-only attrs."""
+        items: list = []
+        for name in names:
+            try:
+                obj = self.env.autoapi_all_objects[name]
+            except KeyError:
+                # DESCRIPTOR / _builder / __getstate__ — runtime attrs,
+                # не AST-detected. Skip без прерывания build.
+                continue
+            # Delegate the rest к оригинальному loop'у через вызов с одним name
+            items.extend(_original_get_items(self, [name]))
+        return items
+
+    AutoapiSummary.get_items = _safe_get_items
+
+
+_patch_autoapi_directive_get_items()
+
 # Тема: pydata-sphinx-theme (уже в [dev] dependency-group, ADR совместима с 3.14)
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
@@ -87,6 +147,12 @@ autoapi_ignore = [
     "*/migrations/*",
     "*/__init__.py",  # skip top-level init files unless they have docs
     "*/.venv/*",
+    # Cycle 29 (M9): protobuf auto-generated модули (pb2/pb2_grpc) содержат
+    # ``DESCRIPTOR`` attribute, который autoapi пытается резолвить через
+    # ``all_objects`` lookup → KeyError ломает весь build. Exclude полностью —
+    # protobuf docstring'и бесполезны (генерируются из .proto, не из Python).
+    "*_pb2.py",
+    "*_pb2_grpc.py",
 ]
 autoapi_member_order = "bysource"
 autoapi_python_use_imodule_names = True
