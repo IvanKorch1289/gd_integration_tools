@@ -15,7 +15,7 @@
 | infrastructure | 78/100 | 🟡 maturing | DLQ coverage, custom dataloaders |
 | security | 84/100 | 🟢 stable | fail-closed env vars validation |
 | auth | 80/100 | 🟡 maturing | LDAP fallback, OAuth refresh |
-| dsl | 85/100 | 🟢 stable | 214 layer violations in allowlist (Ponytail-YAGNI) |
+| **dsl** | **72/100** | 🟡 **needs work** | 190 direct upper-layer imports; method docstrings 49%; missing YAML round-trip test |
 | workflow | 82/100 | 🟢 stable | Saga forward/compensation index mapping |
 | ai | 76/100 | 🟡 maturing | docstring coverage, sandbox consistency |
 | services | 80/100 | 🟡 maturing | extensions→core violation (1 file) |
@@ -24,7 +24,7 @@
 | frontend | 75/100 | 🟡 maturing | docstring coverage 35–63% |
 | tests | 78/100 | 🟡 maturing | coverage 51.04% vs 75% aspirational |
 
-**Overall readiness**: 81% (READY WITH CAVEATS — documented in meta-coord matrix)
+**Overall readiness**: 79% (READY WITH CAVEATS — documented in meta-coord matrix; DSL revised down 85→72 after general-29 audit)
 
 ---
 
@@ -147,18 +147,31 @@
 
 ---
 
-### 5. DSL — Score: 85/100
+### 5. DSL — Score: 72/100 (per general-29 audited)
 
 | Aspect | Value | Status |
 |---|---|---|
 | .py files | 581 | 🟢 |
-| Processors | 99 (8 infra + 91 functional) | 🟢 |
-| Infra processors (via facade) | 8/8 wired (`mongodb, redis, clickhouse, kafka, db, s3, elasticsearch, log`) | 🟢 |
-| Builders | 27 (`builders/`) | 🟢 |
-| Workflow step types | 6 (Activity, Saga, Pause, Resume, SignalWait, Sleep) | 🟢 |
-| Workflow docs | yes (`workflow/spec/`) | 🟢 |
-| Tests | 337 in `tests/unit/dsl/` (98 in `engine/processors/`) | 🟢 |
-| Layer violations in allowlist | 214 (Ponytail-YAGNI per ADR-0249) | 🟡 |
+| DSL processor files | 98 (excluding `_path_safety.py` and `__init__.py`) | 🟢 |
+| DSL builder files | 31 (`builders/`) | 🟢 |
+| Infra processors (via facade) | 9 files / 10 import sites (9 distinct, `infra_elasticsearch` uses facade in 2 places) | 🟢 |
+| Agent processor classes | 53 (21 agent_dsl + 20 ai + 12 ai_banking) | 🟢 |
+| LLM provider adapters | 5 (MiniMax, OpenAI, Gemini, Claude, Ollama) | 🟢 |
+| Workflow step types | **12** declarations + `WorkflowDeclaration` container (13 total) | 🟢 |
+| Tests | 329 (`tests/unit/dsl/`) + 5 (`tests/unit/infrastructure/workflow/`) + 43 (`tests/unit/core/ai/`) | 🟢 |
+| Layer violations (allowlist) | 214 (Ponytail-YAGNI per ADR-0249) | 🟡 |
+
+**Docstring coverage** (sampled 10 deterministic random DSL processors, `random.seed(42)`):
+- module docstrings: 80% (8/10)
+- class docstrings: 100% (42/42)
+- method docstrings: **48.9%** (46/94) ← low
+
+**Layer independence** (DSL direct upper-layer imports):
+- `dsl → services`: 93 import lines
+- `dsl → infrastructure`: 95 import lines
+- `dsl → entrypoints`: **2 import lines** (allowlist-tracked)
+  - `commands/setup/registers_workflow.py:210` → `src.backend.entrypoints.webhook.transformer`
+  - `orchestration/triggers.py:301` → `src.backend.entrypoints.api.app`
 
 **Step types coverage** (per cycle-22+ work):
 - `compile_saga_step` now uses `raise exc from comp_errors[-1]` (cycle 27 W1)
@@ -167,15 +180,21 @@
 - `ResumeDeclaration.checkpoint_id` dead field removed (cycle 26 A2)
 
 **Custom code**:
-- `dsl/cli/debug.py` and `dsl/cli/generate.py` still use `click` (could migrate to `typer` which is already in pyproject.toml)
+- `dsl/cli/debug.py` and `dsl/cli/generate.py` still use `click` (could migrate to `typer`)
 - `dsl/cli/linter.py` already uses `typer`
+
+**YAML round-trip coverage** (per general-29):
+- `to_yaml` at `dsl/workflow/yaml_io.py:91`, `from_yaml` at `:112`
+- Positive round-trip unit test: **MISSING** (only test_visualize.py uses `diff`)
+- Gap: no equality assertion after `to_yaml → from_yaml`
 
 **To reach 100%**:
 1. Migrate 2 CLI files from `click` to `typer` (already in deps)
-2. Refactor 214 layer violations → DI facades (2000-5000 LOC, per ADR-0249)
-3. Add DSL processor for vector DB (Qdrant) wrap (per dep analysis)
-4. Add Saga forward/compensation explicit mapping (needs ADR+spec change)
-5. Add DSL processor for PDF/Word/Excel parsing (per dep analysis)
+2. Add positive `WorkflowDeclaration` `to_yaml`/`from_yaml` round-trip test
+3. Increase method docstring coverage from 49% → 80%
+4. Refactor 190 direct upper-layer DSL imports → DI facades (2000-5000 LOC, per ADR-0249)
+5. Migrate 2 `dsl → entrypoints` imports to core protocols (`commands/setup/registers_workflow.py:210`, `orchestration/triggers.py:301`)
+6. Add DSL processor for Qdrant / PDF / Word / Excel (per dep analysis)
 
 ---
 
@@ -184,23 +203,33 @@
 | Aspect | Value | Status |
 |---|---|---|
 | .py files | 28 (`infrastructure/workflow/`) | 🟢 |
-| Step types | 6 (+ Sensor, AgentInvoke, Reflect, Checkpoint, Guardrail, Escalate = 12 total) | 🟢 |
+| Step types | **12** (Activity, Saga, Pause, Resume, SignalWait, Sleep, Sensor, AgentInvoke, Reflect, Checkpoint, Guardrail, Escalate) + WorkflowDeclaration container = **13** | 🟢 |
 | SagaLRA | state-check, persistent resume | 🟢 (cycle 19+27) |
 | Strict compensate | chains cause with `from comp_errors[-1]` | 🟢 (cycle 27) |
 | Wait signal timeout | default `'raise'` fail-loud | 🟢 (cycle 27) |
-| Tests | 38 (`tests/unit/infrastructure/workflow/`) + 14 (`tests/unit/dsl/workflow/`) | 🟡 |
+| Tests | 5 (`tests/unit/infrastructure/workflow/`) + 14 (`tests/unit/dsl/workflow/`) | 🟡 |
+| YAML round-trip | `to_yaml`/`from_yaml` exist; positive test MISSING | 🟠 |
+| Doc coverage (sample) | class 100%, func 100% | 🟢 |
+
+**Step types docs** (per general-29):
+- All 12 step declarations have class docstrings ✅
+- Dedicated user-facing Markdown documentation for each step: **NOT FOUND**
+- `WorkflowDeclaration` container at `dsl/workflow/spec/workflow.py:51`
 
 **Pending items**:
 - Saga forward/compensation index mapping (needs ADR + spec change)
 - WorkflowMixin.build version propagation (cycle 27 W3 — FIXED)
 - Deterministic Temporal time API used in pause (cycle 25 W2)
+- WorkflowDeclaration YAML round-trip test (no positive equality test exists)
 
 **To reach 100%**:
 1. Add Saga explicit `forward_step_id` mapping (ADR needed)
-2. Implement `SagaHistory` query API
-3. Add `WorkflowRegistry` (global workflow lookup)
-4. Add Temporal Cloud workflows support
-5. Add more step type tests (12 total, ~3 tests/step needed)
+2. Add positive `WorkflowDeclaration` YAML round-trip test
+3. Write dedicated Markdown docs per step type
+4. Implement `SagaHistory` query API
+5. Add `WorkflowRegistry` (global workflow lookup)
+6. Add Temporal Cloud workflows support
+7. Add more step type tests (12 total, ~3 tests/step needed)
 
 ---
 
@@ -377,8 +406,8 @@
 | infrastructure | 78 | 95 | DLQ + tests + facade migration | High |
 | security | 84 | 95 | OIDC, MFA, rotation | Medium |
 | auth | 80 | 95 | OAuth refresh, LDAP scenarios | Medium |
-| dsl | 85 | 95 | typer migration + dep wraps | Low |
-| workflow | 82 | 95 | Saga explicit mapping (ADR) | Medium |
+| dsl | 72 | 95 | typer migration + dep wraps + YAML round-trip test + method docstrings | Medium |
+| workflow | 82 | 95 | Saga explicit mapping (ADR) + dedicated step docs | Medium |
 | ai | 76 | 90 | docstring + provider audit | Low |
 | services | 80 | 90 | docstring improvement | Low |
 | entrypoints | 85 | 95 | docstring + OpenAPI auto-validation | Low |
