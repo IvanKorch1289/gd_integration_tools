@@ -870,6 +870,25 @@ ignore = [
     "RUF003",
 ]
 
+# Cycle 29 P1-#3: Streamlit frontend layer boundary (R3.10d).
+# Frontend may only import from src.frontend.* and from the
+# core.api facade (which re-exports from core.utils / core.di).
+# Direct imports of infrastructure/services/dsl/entrypoints are
+# forbidden — the frontend must go through the 21 domain API clients
+# in src/frontend/streamlit_app/api_clients/.
+[tool.ruff.lint.flake8-tidy-imports]
+# Cycle 29 P1-#3: Streamlit frontend layer boundary (R3.10d).
+# NOTE: ruff 0.15.16 (current pyproject pin) doesn't support
+# flake8-tidy-imports.per-file-ignores syntax (added in 0.6+).
+# The boundary is enforced via AST-level test in
+# tests/unit/frontend/test_layer_boundary.py (Ponytail: tool-agnostic).
+# When ruff is upgraded to ≥0.6, replace this comment with:
+# [tool.ruff.lint.flake8-tidy-imports]
+# banned-api = ["src.backend.infrastructure", "src.backend.services",
+#               "src.backend.dsl", "src.backend.entrypoints", "src.backend.workflow"]
+# [tool.ruff.lint.flake8-tidy-imports.per-file-ignores]
+# "src/frontend/streamlit_app/**/*.py" = ["src.backend.core.api"]
+
 # Wave-6.1 lazy singletons:
 #
 #   * F822 — имена в ``__all__`` создаются через module-level

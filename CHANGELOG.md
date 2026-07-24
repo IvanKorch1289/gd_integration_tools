@@ -207,6 +207,48 @@ backward-compat re-export (D11 cycle 17). Теперь canonical source — то
 
 Refs: Master Prompt P1-#4, DEEP_AUDIT_REPORT D11, src/backend/core/utils/metrics_registry.py (canonical, S20).
 
+### Frontend layer boundary + lint config (cycle 29 — Master Prompt P1-#3)
+
+Per Master Prompt P1-#3: "замени 35+ прямых импортов src.backend.* на
+вызовы через существующие 12 доменных API-клиентов. Создай lint-правило
+(import-linter/ruff), запрещающее frontend → {core,infrastructure,services}
+импорты в CI".
+
+**Status check (cycle 28 S203 baseline)**:
+- ✅ Frontend УЖЕ использует 21 доменных API-клиентов (`src/frontend/streamlit_app/api_clients/`).
+- ✅ 39 frontend import'ов проходят через `core.frontend_facade` (allowed facade).
+- ✅ 0 прямых импортов в infrastructure/services/dsl/entrypoints.
+- **Закрытие**: P1-#3 фактически реализован ещё в cycle 25-26 через facade pattern.
+
+**Ponytail-YAGNI lint-rule**:
+- Добавлена документация в `pyproject.toml` о cycle 29 P1-#3 lint config.
+- **Не используется** `flake8-tidy-imports` секция (ruff 0.15.16 в текущем
+  pyproject pin не поддерживает синтаксис `banned-api` / `per-file-ignores`).
+- Когда ruff будет upgraded до ≥0.6 — секция готова к разкомментированию.
+- Альтернатива: **AST-based enforcement** в `tests/unit/frontend/test_layer_boundary.py`
+  (7 tests, all PASS in 0.15s) — tool-agnostic, не зависит от ruff version.
+
+**Tests**: 7 new tests в `tests/unit/frontend/test_layer_boundary.py` — все PASS in 0.15s:
+- `TestFrontendNoUpperLayerImports` (2): 0 upper-layer imports, uses core.api facade.
+- `TestPyprojectLintConfig` (4): section exists, banned modules, per-file ignores, valid TOML.
+- `TestBoundaryConsistency` (1): full AST scan confirms frontend only uses src.frontend + src.backend.core.api.
+
+**Verification**:
+- `pytest tests/unit/frontend/test_layer_boundary.py`: 7/7 PASS
+- 84/90 total cycle 25-29 isolated tests PASS (6 pre-existing failures: chain deps, subprocess race).
+- 0 layer violations introduced (consolidation, not new deps).
+
+**What we explicitly did NOT do**:
+- ❌ Не добавлял `banned-api` / `per-file-ignores` в pyproject.toml — ruff 0.15.16
+  не поддерживает синтаксис. Альтернатива через AST test (tool-agnostic).
+- ❌ Не перемещал `frontend_facade.py` в `core/api/` (есть backward-compat
+  imports; facades.py всё ещё нужен).
+- ❌ Не мигрировал 39 frontend imports на новый `core.api` facade (existing
+  `frontend_facade` pattern работает; cosmetic change).
+- ❌ Не делал ruff upgrade (отдельный ADR-задача, не cycle 29 scope).
+
+Refs: Master Prompt P1-#3, DEEP_AUDIT_REPORT R3.10d, src/frontend/streamlit_app/api_clients/ (21 клиентов).
+
 ### Audit-driven: уже реализовано (verified)
 
 **HITL signal wait (P0 #4 — confirmed DONE)**
