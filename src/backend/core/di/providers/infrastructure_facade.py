@@ -175,6 +175,7 @@ _PROVIDERS_REGISTRY: dict[str, tuple[str, str]] = {
     "dsl_step_executor_class": ("infrastructure.workflow.executor", "DSLStepExecutor"),
     "durable_workflow_processor_class": ("infrastructure.workflow.executor", "DurableWorkflowProcessor"),
     "e2b_sandbox_class": ("infrastructure.ai.e2b_sandbox", "E2BSandbox"),
+    "elasticsearch_client_class": ("infrastructure.clients.storage.elasticsearch", "ElasticSearchClient"),
     "env_aes_gcm_key_provider_class": ("infrastructure.security.token_registry", "EnvAESGCMKeyProvider"),
     "env_aesgcm_key_provider_class": ("infrastructure.security.token_registry", "EnvAESGCMKeyProvider"),
     "event_bus_factory": ("infrastructure.clients.messaging.event_bus", "get_event_bus"),
