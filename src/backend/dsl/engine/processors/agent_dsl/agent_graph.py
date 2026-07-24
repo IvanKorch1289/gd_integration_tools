@@ -114,7 +114,7 @@ class AgentGraphProcessor(BaseAIProcessor):
         max_handoffs: int = 5,
         result_property: str = "agent_graph_result",
         sandbox: AgentSandbox | None = None,
-        isolated: bool = False,
+        isolated: bool = True,  # Cycle 30 P0-#6: ProcessPool default (was False)
         name: str | None = None,
     ) -> None:
         if graph_type not in GRAPH_TYPES:
