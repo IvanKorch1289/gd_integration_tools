@@ -55,6 +55,7 @@ class MessageLoggingMiddleware(BaseMiddleware):
     async def consume_scope(
         self, call_next: Callable[[Any], Awaitable[Any]], msg: StreamMessage[Any]
     ) -> Any:
+        """FastStream consumer scope (RabbitMQ)."""
         stream_logger.info(
             "Получено сообщение id=%s correlation_id=%s",
             getattr(msg, "message_id", None),
@@ -65,6 +66,7 @@ class MessageLoggingMiddleware(BaseMiddleware):
     async def publish_scope(
         self, call_next: Callable[..., Awaitable[Any]], msg: Any, **options: Any
     ) -> Any:
+        """FastStream publisher scope (RabbitMQ)."""
         stream_logger.info(
             "Публикация сообщения payload=%s options=%s",
             _safe_repr_message(msg),
@@ -243,6 +245,7 @@ class StreamClient:
         delay: timedelta | None = None,
         cron: str | None = None,
     ) -> str | None:
+        """Publish message to RabbitMQ queue (с delay / cron support)."""
         if self.rabbit_router is None:
             raise RuntimeError("Rabbit router не инициализирован")
 
@@ -267,6 +270,7 @@ class StreamClient:
         delay: timedelta | None = None,
         cron: str | None = None,
     ) -> str | None:
+        """Publish message to Redis Stream (с delay / cron support)."""
         if self.redis_router is None:
             raise RuntimeError("Redis router не инициализирован")
 
