@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     meta={"tier": 1, "category": "infra"},
 )
 class InfraElasticsearchSearchProcessor(BaseProcessor):
+    """ES processor: InfraElasticsearchSearchProcessor (search/index operation)."""
     def __init__(
         self,
         index: str,
@@ -56,6 +57,7 @@ class InfraElasticsearchSearchProcessor(BaseProcessor):
         self.target = to
 
     async def process(self, exchange: "Exchange[Any]", context: "ExecutionContext") -> None:
+        """ES search: выполнить query и положить results в exchange."""
         from src.backend.core.di.providers.infrastructure_facade import (
             get_elasticsearch_client_class,
         )
@@ -81,6 +83,7 @@ class InfraElasticsearchSearchProcessor(BaseProcessor):
     meta={"tier": 1, "category": "infra"},
 )
 class InfraElasticsearchIndexProcessor(BaseProcessor):
+    """ES processor: InfraElasticsearchIndexProcessor (search/index operation)."""
     def __init__(
         self,
         index: str,
@@ -96,6 +99,7 @@ class InfraElasticsearchIndexProcessor(BaseProcessor):
         self.target = to
 
     async def process(self, exchange: "Exchange[Any]", context: "ExecutionContext") -> None:
+        """ES index: отправить document на indexing."""
         from src.backend.core.di.providers.infrastructure_facade import (
             get_elasticsearch_client_class,
         )
