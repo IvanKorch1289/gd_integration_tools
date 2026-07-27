@@ -1,0 +1,77 @@
+# AIPolicySpec v1 — basic agent (M8 reference).
+#
+# Политика для простого agent loop (LangGraph ReAct) с tool whitelist
+# и минимальным memory. Используется как default для workflow_pattern=
+# "agent_*" если tenant не переопределил.
+#
+# Демонстрирует tool policy + memory на in-memory checkpointer.
+
+name: agent_basic
+version: 1
+workflow_pattern: "agent_*"
+tenant_pattern: "*"
+
+model_router:
+  primary: "openai/gpt-4o"
+  fallback:
+    - "openrouter/anthropic/claude-3.5-sonnet"
+  timeout_s: 60.0
+  retry_attempts: 2
+
+input_sanitizers:
+  - name: "pii_tokenizer:reversible:en_default"
+    on_error: "warn"
+
+input_guards:
+  - name: "lakera:default"
+    config:
+      categories: ["prompt_injection", "jailbreak"]
+      threshold: 0.7
+    on_block: "fail"
+
+output_guards:
+  - name: "lakera:default"
+    config:
+      categories: ["pii", "toxic"]
+      threshold: 0.7
+    on_block: "warn"
+
+output_sanitizers:
+  - name: "presidio:en_anonymize"
+    on_error: "warn"
+
+# In-memory checkpointer (для multi-turn agent loop).
+memory:
+  short_term:
+    backend: "memory"
+    namespace: "agent:session:{tenant_id}:{session_id}"
+    ttl: 3600
+  long_term: null
+  checkpointer:
+    backend: "in_memory"
+    namespace: "agent:checkpoints"
+  tenant_isolation: true
+  encryption: false  # in-memory only
+
+budget:
+  max_tokens_prompt: 8000
+  max_tokens_completion: 2000
+  max_cost_usd: 0.5
+  ttl_s: 1800
+
+# Tool policy: explicit whitelist (deny-by-default).
+tool_policy:
+  allow:
+    - "core.actions.echo"
+    - "core.actions.http_get"
+  deny:
+    - "core.actions.file_write"
+    - "core.actions.shell_exec"
+  max_calls_per_run: 20
+
+audit:
+  extra_attrs:
+    domain: "agent"
+  schema_version: 1
+
+required: false

@@ -130,7 +130,7 @@ def test_full_policy_spec_with_guards_and_sanitizers() -> None:
 
 
 def test_poc_yaml_loads_into_spec() -> None:
-    """PoC ``ai_policies/credit_check_strict.policy.yaml`` валиден."""
+    """PoC ``ai_policies/credit_check_strict.policy.yaml`` валиден (M8 v2)."""
     repo_root = Path(__file__).resolve().parents[5]
     yaml_path = repo_root / "ai_policies" / "credit_check_strict.policy.yaml"
     if not yaml_path.exists():
@@ -140,11 +140,20 @@ def test_poc_yaml_loads_into_spec() -> None:
     assert policy.name == "credit_check_strict"
     assert policy.required is True
     assert policy.workflow_pattern == "credit_check*"
+    # M8: version bumped to 2 (removed orphan rebuff/llama_guard refs).
+    assert policy.version == 2
     assert policy.budget.max_cost_usd == 0.25
     assert policy.audit.extra_attrs["compliance"] == "152-FZ"
-    assert len(policy.input_guards) == 2
+    # M8: input_guards = 1 (was 2 — rebuff:default удалён в S172).
+    assert len(policy.input_guards) == 1
+    assert policy.input_guards[0].name == "nemo:colang:topics"
+    # M8: output_guards = 1 (was 1 — заменён на lakera:default).
+    assert len(policy.output_guards) == 1
+    assert policy.output_guards[0].name == "lakera:default"
     assert policy.memory is not None
     assert policy.memory.tenant_isolation is True
+    # M8: mem0+pgvector → qdrant.
+    assert policy.memory.long_term.backend == "qdrant"
 
 
 # ─── S172 M7.1 (ARC-010) typed-policy DSL hardening tests ─────────────

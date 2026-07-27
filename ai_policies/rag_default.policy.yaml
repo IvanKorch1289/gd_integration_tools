@@ -1,0 +1,62 @@
+# AIPolicySpec v1 — RAG default (M8 reference).
+#
+# Минимальная политика для RAG-флоу (без agent loop, без memory).
+# Используется как default для workflow_pattern="rag_*" если tenant
+# не переопределил. Содержит только PII input sanitization + cost cap.
+#
+# Демонстрирует минимальный контракт: model_router + budget +
+# input_sanitizers (без guards, без output sanitizers, без memory).
+#
+# Применяется AIGateway.invoke() для workflow_pattern="rag_*".
+
+name: rag_default
+version: 1
+workflow_pattern: "rag_*"
+tenant_pattern: "*"
+
+model_router:
+  primary: "openai/gpt-4o-mini"
+  fallback:
+    - "ollama/qwen2.5"
+  timeout_s: 20.0
+  retry_attempts: 1
+
+# PII reversible mask для query (UNMASK в ответе).
+input_sanitizers:
+  - name: "pii_tokenizer:reversible:en_default"
+    config:
+      entity_types:
+        - PERSON
+        - EMAIL
+        - PHONE_NUMBER
+        - SSN
+      ttl_s: 600
+    on_error: "warn"
+
+# Минимальные guards: только jailbreak detection.
+input_guards:
+  - name: "lakera:default"
+    config:
+      categories: ["prompt_injection"]
+      threshold: 0.8
+    on_block: "fail"
+
+# Нет output guards (RAG — augmentation, не generation).
+# Нет output sanitizers (reversible mask в input автоматически
+# unmask'ится при response assembly).
+
+# Нет memory (stateless RAG query).
+memory: null
+
+budget:
+  max_tokens_prompt: 2000
+  max_tokens_completion: 500
+  max_cost_usd: 0.05
+  ttl_s: 600
+
+audit:
+  extra_attrs:
+    domain: "rag"
+  schema_version: 1
+
+required: false  # RAG может работать с default policy без policy lookup
