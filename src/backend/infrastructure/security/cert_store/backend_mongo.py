@@ -81,6 +81,7 @@ class MongoCertBackend(CertBackend):
     name = "mongo"
 
     def __init__(self, collection_name: str = "certs") -> None:
+        """Метод __init__ (см. signature)."""
         self._collection_name = collection_name
         self._history_collection_name = f"{collection_name}_history"
         self._client: Any | None = None
@@ -108,6 +109,7 @@ class MongoCertBackend(CertBackend):
         return self._client[self._db_name]
 
     async def get(self, service_id: str) -> CertEntry | None:
+        """Получить cert из MongoDB по ``key``."""
         coll = self._db()[self._collection_name]
         doc = await coll.find_one({"_id": service_id})
         if doc is None:
@@ -167,6 +169,7 @@ class MongoCertBackend(CertBackend):
         )
 
     async def history(self, service_id: str) -> list[CertEntry]:
+        """Метод history (см. signature)."""
         coll = self._db()[self._history_collection_name]
         cursor = coll.find({"service_id": service_id}).sort("version", 1)
         result: list[CertEntry] = []
@@ -201,6 +204,7 @@ class MongoCertBackend(CertBackend):
         return cert_result.deleted_count > 0
 
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
+        """Метод list_expiring (см. signature)."""
         coll = self._db()[self._collection_name]
         cursor = coll.find({"expires_at": {"$lte": before}})
         result: list[CertEntry] = []

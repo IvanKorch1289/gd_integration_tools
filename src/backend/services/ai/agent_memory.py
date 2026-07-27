@@ -53,6 +53,7 @@ class AgentMemoryService:
         long_term_ttl_seconds: int = 86400 * 30,
         client_factory: Any | None = None,
     ) -> None:
+        """Метод __init__ (см. signature)."""
         self._max_messages = max_short_term_messages
         self._short_ttl = short_term_ttl_seconds
         self._long_ttl = long_term_ttl_seconds
@@ -65,6 +66,7 @@ class AgentMemoryService:
         self._trim_lock = asyncio.Lock()
 
     def _client(self) -> MongoClientProtocol:
+        """Метод _client (см. signature)."""
         factory = self._client_factory or get_mongo_client_provider()
         return factory()
 
@@ -229,6 +231,7 @@ class AgentMemoryService:
         return {d["fact_key"]: d["value"] for d in docs}
 
     async def set_fact(self, session_id: str, fact_key: str, value: str) -> None:
+        """Метод set_fact (см. signature)."""
         client = self._client()
         await client.update_one(
             _FACTS,
@@ -243,12 +246,14 @@ class AgentMemoryService:
         )
 
     async def delete_fact(self, session_id: str, fact_key: str) -> None:
+        """Метод delete_fact (см. signature)."""
         client = self._client()
         await client.delete_one(
             _FACTS, {"session_id": session_id, "fact_key": fact_key}
         )
 
     async def load_memory(self, session_id: str) -> dict[str, Any]:
+        """Метод load_memory (см. signature)."""
         return {
             "conversation": await self.get_conversation(session_id),
             "scratchpad": await self.get_scratchpad(session_id),
@@ -256,6 +261,7 @@ class AgentMemoryService:
         }
 
     async def save_memory(self, session_id: str, memory: dict[str, Any]) -> None:
+        """Метод save_memory (см. signature)."""
         if "scratchpad" in memory:
             await self.set_scratchpad(session_id, memory["scratchpad"])
         if "facts" in memory:
@@ -263,6 +269,7 @@ class AgentMemoryService:
                 await self.set_fact(session_id, k, v)
 
     async def session_exists(self, session_id: str) -> bool:
+        """Метод session_exists (см. signature)."""
         client = self._client()
         return bool(await client.count(_MESSAGES, {"session_id": session_id}))
 

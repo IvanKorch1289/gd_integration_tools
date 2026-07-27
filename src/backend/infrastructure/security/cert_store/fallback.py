@@ -41,6 +41,7 @@ class FallbackCertBackend(CertBackend):
         secondary: CertBackend,
         tertiary: CertBackend | None = None,
     ) -> None:
+        """Метод __init__ (см. signature)."""
         self._primary = primary
         self._secondary = secondary
         self._tertiary = tertiary
@@ -57,12 +58,15 @@ class FallbackCertBackend(CertBackend):
         await self._primary.save(service_id, pem, expires_at)
 
     async def history(self, service_id: str) -> list[CertEntry]:
+        """Метод history (см. signature)."""
         return []
 
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
+        """Метод list_expiring (см. signature)."""
         return []
 
     async def get(self, service_id: str) -> CertEntry | None:
+        """Метод get (см. signature)."""
         for name, backend in self._chain:
             if backend is None:
                 continue

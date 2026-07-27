@@ -59,6 +59,7 @@ class PostgresCertBackend(CertBackend):
     name = "postgres"
 
     async def get(self, service_id: str) -> CertEntry | None:
+        """Получить cert из Postgres по ``key``."""
         async with get_main_session_manager().create_session() as session:
             row = (
                 await session.execute(
@@ -123,6 +124,7 @@ class PostgresCertBackend(CertBackend):
         )
 
     async def history(self, service_id: str) -> list[CertEntry]:
+        """Метод history (см. signature)."""
         async with get_main_session_manager().create_session() as session:
             rows = (
                 (
@@ -148,6 +150,7 @@ class PostgresCertBackend(CertBackend):
         ]
 
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
+        """Метод list_expiring (см. signature)."""
         async with get_main_session_manager().create_session() as session:
             rows = (
                 (
@@ -162,6 +165,7 @@ class PostgresCertBackend(CertBackend):
 
     @staticmethod
     def _to_entry(row: CertRecord) -> CertEntry:
+        """Метод _to_entry (см. signature)."""
         return CertEntry(
             service_id=row.service_id,
             pem=row.pem,

@@ -24,10 +24,12 @@ _COLLECTION = "connector_configs"
 
 
 def _utc_now() -> datetime:
+    """Метод _utc_now (см. signature)."""
     return datetime.now(UTC)
 
 
 def _doc_to_entry(doc: dict[str, Any]) -> ConnectorConfigEntry:
+    """Метод _doc_to_entry (см. signature)."""
     payload = dict(doc)
     payload["name"] = payload.pop("_id", payload.get("name", ""))
     return ConnectorConfigEntry.model_validate(payload)
@@ -37,12 +39,15 @@ class MongoConnectorConfigStore:
     """Mongo-реализация ``ConnectorConfigStore``."""
 
     def __init__(self, client_factory: Any | None = None) -> None:
+        """Метод __init__ (см. signature)."""
         self._client_factory = client_factory or get_mongo_client
 
     def _client(self) -> MongoDBClient:
+        """Метод _client (см. signature)."""
         return self._client_factory()
 
     async def ensure_indexes(self) -> None:
+        """Метод ensure_indexes (см. signature)."""
         try:
             collection = self._client().collection(_COLLECTION)
             await collection.create_index("enabled", name="enabled_idx")
@@ -51,6 +56,7 @@ class MongoConnectorConfigStore:
             logger.warning("MongoConnectorConfigStore: ensure_indexes failed: %s", exc)
 
     async def get(self, name: str) -> ConnectorConfigEntry | None:
+        """Метод get (см. signature)."""
         doc = await self._client().find_one(_COLLECTION, {"_id": name})
         return _doc_to_entry(doc) if doc else None
 
@@ -62,6 +68,7 @@ class MongoConnectorConfigStore:
         enabled: bool = True,
         user: str | None = None,
     ) -> ConnectorConfigEntry:
+        """Метод save (см. signature)."""
         existing = await self.get(name)
         version = (existing.version + 1) if existing else 1
         entry = ConnectorConfigEntry(
@@ -80,12 +87,14 @@ class MongoConnectorConfigStore:
         return entry
 
     async def list_all(self) -> list[ConnectorConfigEntry]:
+        """Метод list_all (см. signature)."""
         docs = await self._client().find(
             _COLLECTION, query={}, limit=1000, sort=[("updated_at", -1)]
         )
         return [_doc_to_entry(d) for d in docs]
 
     async def delete(self, name: str) -> bool:
+        """Метод delete (см. signature)."""
         deleted = await self._client().delete_one(_COLLECTION, {"_id": name})
         return deleted > 0
 

@@ -28,11 +28,13 @@ class RedisCertTransport:
         redis_url: str,
         channel: str = DEFAULT_CHANNEL,
     ) -> None:
+        """Метод __init__ (см. signature)."""
         self._redis_url = redis_url
         self._channel = channel
         self._redis: Any = None
 
     def _ensure_redis(self) -> Any:
+        """Метод _ensure_redis (см. signature)."""
         if self._redis is not None:
             return self._redis
         try:
@@ -47,6 +49,7 @@ class RedisCertTransport:
         return self._redis
 
     def _format_message(self, cert_id: str, action: str = "set") -> dict[str, Any]:
+        """Метод _format_message (см. signature)."""
         return {
             "cert_id": cert_id,
             "action": action,
@@ -54,6 +57,7 @@ class RedisCertTransport:
         }
 
     def publish(self, cert_id: str, *, action: str = "set") -> None:
+        """Метод publish (см. signature)."""
         redis = self._ensure_redis()
         msg = self._format_message(cert_id, action=action)
         redis.publish(self._channel, json.dumps(msg))
@@ -63,12 +67,14 @@ class RedisCertTransport:
         )
 
     def subscribe(self) -> Any:
+        """Метод subscribe (см. signature)."""
         redis = self._ensure_redis()
         pubsub = redis.pubsub()
         pubsub.subscribe(self._channel)
         return self._listen(pubsub)
 
     async def _listen(self, pubsub: Any) -> Any:
+        """Метод _listen (см. signature)."""
         async for message in pubsub.listen():
             if message["type"] != "message":
                 continue
@@ -80,6 +86,7 @@ class RedisCertTransport:
             yield data
 
     def attach(self, store: Any) -> None:
+        """Метод attach (см. signature)."""
         from src.backend.infrastructure.security.cert_store.store import CertStore
 
         if not isinstance(store, CertStore):
@@ -88,6 +95,7 @@ class RedisCertTransport:
             )
 
         async def on_update(cert_id: str) -> None:
+            """Метод on_update (см. signature)."""
             self.publish(cert_id, action="set")
 
         store.subscribe_updates(on_update)

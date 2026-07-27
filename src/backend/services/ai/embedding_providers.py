@@ -52,7 +52,9 @@ class EmbeddingProviderUnavailable(RuntimeError):
 class EmbeddingProvider(Protocol):
     """Async provider эмбеддингов."""
 
-    async def embed(self, texts: list[str]) -> list[list[float]]: ...
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Метод embed (см. signature)."""
+        ...
 
 
 class SentenceTransformerEmbeddingProvider:
@@ -64,10 +66,12 @@ class SentenceTransformerEmbeddingProvider:
     """
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
+        """Метод __init__ (см. signature)."""
         self._model_name = model_name
         self._model: Any = None
 
     def _ensure_model(self) -> Any:
+        """Метод _ensure_model (см. signature)."""
         if self._model is not None:
             return self._model
         try:
@@ -82,7 +86,9 @@ class SentenceTransformerEmbeddingProvider:
         return self._model
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Метод embed (см. signature)."""
         def _encode() -> list[list[float]]:
+            """Метод _encode (см. signature)."""
             model = self._ensure_model()
             vectors = model.encode(texts, convert_to_numpy=True)
             return [v.tolist() for v in vectors]
@@ -103,6 +109,7 @@ class FastembedEmbeddingProvider:
     """
 
     def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5") -> None:
+        """Метод __init__ (см. signature)."""
         self._check_runtime_compatibility()
         self._model_name = model_name
         self._model: Any = None
@@ -119,6 +126,7 @@ class FastembedEmbeddingProvider:
             )
 
     def _ensure_model(self) -> Any:
+        """Метод _ensure_model (см. signature)."""
         if self._model is not None:
             return self._model
         try:
@@ -134,7 +142,9 @@ class FastembedEmbeddingProvider:
         return self._model
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Метод embed (см. signature)."""
         def _encode() -> list[list[float]]:
+            """Метод _encode (см. signature)."""
             model = self._ensure_model()
             return [vec.tolist() for vec in model.embed(texts)]
 
@@ -147,11 +157,13 @@ class OllamaEmbeddingProvider:
     def __init__(
         self, model_name: str = "nomic-embed-text", base_url: str | None = None
     ) -> None:
+        """Метод __init__ (см. signature)."""
         self._model_name = model_name
         self._base_url = base_url
         self._provider: Any = None
 
     def _ensure_provider(self) -> Any:
+        """Метод _ensure_provider (см. signature)."""
         if self._provider is not None:
             return self._provider
         from src.backend.services.ai.ai_providers import OllamaProvider
@@ -160,6 +172,7 @@ class OllamaEmbeddingProvider:
         return self._provider
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Метод embed (см. signature)."""
         provider = self._ensure_provider()
         return await provider.embeddings(texts, model=self._model_name)
 
@@ -173,12 +186,14 @@ class OpenAIEmbeddingProvider:
         base_url: str | None = None,
         api_key: str | None = None,
     ) -> None:
+        """Метод __init__ (см. signature)."""
         self._model_name = model_name
         self._base_url = base_url
         self._api_key = api_key
         self._provider: Any = None
 
     def _ensure_provider(self) -> Any:
+        """Метод _ensure_provider (см. signature)."""
         if self._provider is not None:
             return self._provider
         from src.backend.services.ai.ai_providers import OpenAIProvider
@@ -189,6 +204,7 @@ class OpenAIEmbeddingProvider:
         return self._provider
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Метод embed (см. signature)."""
         provider = self._ensure_provider()
         return await provider.embeddings(texts, model=self._model_name)
 

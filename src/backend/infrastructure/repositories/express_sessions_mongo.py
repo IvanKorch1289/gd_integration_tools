@@ -27,10 +27,12 @@ _TTL_SECONDS = 3600
 
 
 def _utc_now() -> datetime:
+    """Метод _utc_now (см. signature)."""
     return datetime.now(UTC)
 
 
 def _doc_to_session(doc: dict[str, Any]) -> ExpressSession:
+    """Метод _doc_to_session (см. signature)."""
     payload = dict(doc)
     payload.pop("_id", None)
     return ExpressSession.model_validate(payload)
@@ -40,12 +42,15 @@ class MongoExpressSessionStore:
     """Mongo-реализация ``ExpressSessionStore``."""
 
     def __init__(self, client_factory: Any | None = None) -> None:
+        """Метод __init__ (см. signature)."""
         self._client_factory = client_factory or get_mongo_client
 
     def _client(self) -> MongoDBClient:
+        """Метод _client (см. signature)."""
         return self._client_factory()
 
     async def ensure_indexes(self) -> None:
+        """Метод ensure_indexes (см. signature)."""
         try:
             collection = self._client().collection(_COLLECTION)
             await collection.create_index(
@@ -59,6 +64,7 @@ class MongoExpressSessionStore:
     async def create(
         self, bot_id: str, *, initial_context: dict[str, Any] | None = None
     ) -> str:
+        """Метод create (см. signature)."""
         session_id = uuid4().hex
         now = _utc_now()
         await self._client().insert_one(
@@ -76,12 +82,14 @@ class MongoExpressSessionStore:
         return session_id
 
     async def get(self, session_id: str) -> ExpressSession | None:
+        """Метод get (см. signature)."""
         doc = await self._client().find_one(_COLLECTION, {"_id": session_id})
         return _doc_to_session(doc) if doc else None
 
     async def update_context(
         self, session_id: str, context_delta: dict[str, Any]
     ) -> None:
+        """Метод update_context (см. signature)."""
         if not context_delta:
             return
         update = {f"context.{k}": v for k, v in context_delta.items()}
@@ -91,6 +99,7 @@ class MongoExpressSessionStore:
         )
 
     async def ping(self, session_id: str) -> None:
+        """Метод ping (см. signature)."""
         await self._client().update_one(
             _COLLECTION,
             query={"_id": session_id},
