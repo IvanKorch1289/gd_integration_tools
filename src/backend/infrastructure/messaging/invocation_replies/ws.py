@@ -37,7 +37,9 @@ class WsConnection(Protocol):
     Изолирует backend от конкретного фреймворка.
     """
 
-    async def send_json(self, data: dict[str, Any]) -> None: ...
+    async def send_json(self, data: dict[str, Any]) -> None:
+        """Отправить JSON data через WebSocket channel."""
+        ...
 
 
 class WsReplyChannel(InvocationReplyChannel):
@@ -49,6 +51,7 @@ class WsReplyChannel(InvocationReplyChannel):
 
     @property
     def kind(self) -> ReplyChannelKind:
+        """Вернуть channel kind (WebSocket)."""
         return ReplyChannelKind.WS
 
     async def register(self, invocation_id: str, connection: WsConnection) -> None:
@@ -62,6 +65,7 @@ class WsReplyChannel(InvocationReplyChannel):
             self._connections.pop(invocation_id, None)
 
     async def send(self, response: InvocationResponse) -> None:
+        """Отправить response через WebSocket channel."""
         async with self._lock:
             connection = self._connections.get(response.invocation_id)
         if connection is None:
@@ -78,6 +82,7 @@ class WsReplyChannel(InvocationReplyChannel):
             )
 
     async def fetch(self, invocation_id: str) -> InvocationResponse | None:
+        """Fetch invocation response по ``invocation_id`` (no-op для WS, request-reply)."""
         return None
 
 
