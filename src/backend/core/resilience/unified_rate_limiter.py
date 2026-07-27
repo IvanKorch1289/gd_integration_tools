@@ -73,10 +73,14 @@ class UnifiedRateLimiter:
             RateLimitResult с информацией о результате.
         """
         try:
-            from src.backend.core.resilience import RateLimit, get_rate_limiter
+            from src.backend.core.di.providers.infrastructure_facade import (
+                get_rate_limit_class,
+                get_rate_limiter_factory,
+            )
 
-            limiter = get_rate_limiter()
-            policy = RateLimit(limit=limit, window_seconds=window_seconds)
+            limiter = get_rate_limiter_factory()()
+            rate_limit_class = get_rate_limit_class()
+            policy = rate_limit_class(limit=limit, window_seconds=window_seconds)
             result = await limiter.check(identifier, policy)
             allowed = bool(result.get("allowed", True))
             remaining = int(result.get("remaining", limit))
@@ -105,13 +109,12 @@ class UnifiedRateLimiter:
             return self._backend_cache["backend"]
 
         try:
-            from src.backend.infrastructure.resilience.unified_rate_limiter import (
-                UnifiedRateLimiter as InfraRL,
+            from src.backend.core.di.providers.infrastructure_facade import (
+                get_redis_rate_limiter_class,
             )
 
-            # У Infrastructure-версии есть атрибут backend
-            instance = InfraRL()
-            backend = getattr(instance, "backend", "unknown")
+            get_redis_rate_limiter_class()
+            backend = "redis"
         except Exception:
             backend = "unknown"
 

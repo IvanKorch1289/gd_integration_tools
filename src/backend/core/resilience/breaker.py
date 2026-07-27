@@ -199,12 +199,10 @@ class BreakerRegistry:
         state.
         """
         self._breakers.clear()
-        try:
-            self._factory.uow.contexts.breakers.clear()
-        except AttributeError:
-            # Custom uow (например, Redis) — reset не делаем, test должен
-            # сам управлять состоянием backend'а.
-            pass
+        contexts = self._factory.uow.contexts
+        breakers = getattr(contexts, "breakers", None)
+        if breakers is not None:
+            breakers.clear()
         logger.info("BreakerRegistry reset (test only)")
 
     # purgatory listener: (name, event_type, event)

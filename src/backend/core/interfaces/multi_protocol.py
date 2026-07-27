@@ -150,6 +150,10 @@ class LoggerProtocol(Protocol):
     (``app_logger``, ``stream_logger``, ``grpc_logger`` и т.д.).
     """
 
+    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Выполнить операцию debug."""
+        ...
+
     def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Выполнить операцию info."""
         ...

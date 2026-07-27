@@ -1,9 +1,11 @@
 """Tests for CredentialProvider."""
 from __future__ import annotations
 
+from unittest.mock import AsyncMock
 
 import pytest
 
+from src.backend.core.interfaces.secrets import SecretsBackend
 from src.backend.core.security.credential_provider import (
     CredentialProvider,
     CredentialSpec,
@@ -26,6 +28,25 @@ async def test_resolve_env(monkeypatch: pytest.MonkeyPatch) -> None:
     provider.register_spec(CredentialSpec(name="k1", secret_ref="env:KAFKA_PASSWORD"))
     cred = await provider.get("k1")
     assert cred.value == {"value": "secret123"}
+
+
+@pytest.mark.unit
+async def test_resolve_vault_uses_registered_secrets_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    backend = AsyncMock(spec=SecretsBackend)
+    backend.get_secret.return_value = "vault-value"
+    monkeypatch.setattr(
+        "src.backend.core.svcs_registry.get_service",
+        lambda _contract: backend,
+    )
+    provider = CredentialProvider()
+    provider.register_spec(CredentialSpec(name="vault", secret_ref="vault:kv/data"))
+
+    cred = await provider.get("vault")
+
+    assert cred.value == {"value": "vault-value"}
+    backend.get_secret.assert_awaited_once_with("kv/data")
 
 
 @pytest.mark.unit

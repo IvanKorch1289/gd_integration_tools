@@ -20,8 +20,8 @@ from collections import Counter as CollectionsCounter
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.logging import get_logger
 
 __all__ = ("router",)

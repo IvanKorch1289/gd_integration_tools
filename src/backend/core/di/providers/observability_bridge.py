@@ -94,17 +94,19 @@ def get_metrics_registry_singleton() -> Any:
 
 
 def get_prometheus_temporal_exporter_class() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter.PrometheusTemporalExporter`` class."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import PrometheusTemporalExporter
+    """Возвращает legacy exporter class, если он есть в optional backend."""
+    from src.backend.infrastructure.observability import prometheus_temporal_exporter
 
-    return PrometheusTemporalExporter
+    # Compatibility-only dynamic attribute: current lightweight backend exports
+    # functions, while older installations may still provide the class.
+    return getattr(prometheus_temporal_exporter, "PrometheusTemporalExporter")
 
 
 def get_prometheus_temporal_exporter_factory() -> Any:
-    """Возвращает ``observability.prometheus_temporal_exporter.get_prometheus_temporal_exporter`` factory."""
-    from src.backend.infrastructure.observability.prometheus_temporal_exporter import get_prometheus_temporal_exporter
+    """Возвращает legacy exporter factory, если он есть в optional backend."""
+    from src.backend.infrastructure.observability import prometheus_temporal_exporter
 
-    return get_prometheus_temporal_exporter
+    return getattr(prometheus_temporal_exporter, "get_prometheus_temporal_exporter")
 
 
 def get_record_scale_event() -> Any:

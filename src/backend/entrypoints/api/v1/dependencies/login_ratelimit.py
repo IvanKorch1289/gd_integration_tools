@@ -29,10 +29,14 @@ ADR-0085 Open Item: rate limiting для login endpoint (anti-brute-force).
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING, Protocol, cast
 
 from fastapi import HTTPException, Request, status
 
 from src.backend.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from src.backend.core.resilience import RateLimiter
 
 __all__ = (
     "check_ip_rate_limit",
@@ -53,6 +57,14 @@ USERNAME_WINDOW_SECONDS = 300  # 5 min
 TARPIT_DELAY_SECONDS = 1.0  # при exceeded (tarpit)
 
 _logger = get_logger("security.auth.ratelimit")
+
+
+class _RateLimiterProvider(Protocol):
+    """Callable contract for the lazy rate-limiter export."""
+
+    def __call__(self) -> RateLimiter:
+        """Return the configured limiter."""
+        ...
 
 
 class LoginRateLimitExceeded(HTTPException):
@@ -104,11 +116,16 @@ async def _check_rate_limit(
         key_prefix="login",
         tenant_aware=False,
     )
+    limiter_provider = cast(_RateLimiterProvider, get_rate_limiter)
+    rate_limit_exceeded = cast(type[Exception], RateLimitExceeded)
     try:
-        limiter = get_rate_limiter()
+        limiter = limiter_provider()
         result = await limiter.check(identifier, policy)
-    except RateLimitExceeded as exc:
-        return False, int(exc.retry_after or window_seconds)
+    except rate_limit_exceeded as exc:
+        retry_after = getattr(exc, "retry_after", None)
+        if not isinstance(retry_after, int):
+            retry_after = window_seconds
+        return False, retry_after
     except (ImportError, RuntimeError) as exc:
         # Redis недоступен — fail-secure (deny).
         # Раньше был fail-open (allow) — небезопасно для login endpoint.

@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends
+
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 # S202 audit fix: require admin role

@@ -151,12 +151,14 @@ def _default_whitelist_check(tenant_id: str, tool_name: str) -> bool:
     try:
         from src.backend.core.security.capabilities import CapabilityGate
 
-        # Проверяем capability pattern: ``agent.tools.invoke.<tool_name>``
-        return CapabilityGate.check(
+        # ``check`` signals allow by returning normally and deny by raising.
+        gate = CapabilityGate()
+        gate.check(
             tenant_id,
             f"agent.tools.invoke.{tool_name}",
             f"tool:{tool_name}",
         )
+        return True
     except Exception:
         # Deny-by-default при ошибке
         return False

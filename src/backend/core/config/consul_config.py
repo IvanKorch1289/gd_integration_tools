@@ -86,6 +86,29 @@ class ConsulConfigStore:
             return value
         return default
 
+    def items(self, prefix: str) -> list[tuple[str, Any]]:
+        """Вернуть декодированные KV-пары под ``prefix``.
+
+        Consul ``recurse=True`` возвращает список записей; ошибки чтения
+        трактуются так же fail-silent, как одиночный :meth:`get`.
+        """
+        try:
+            _index, entries = self._get_client().kv.get(prefix, recurse=True)
+        except Exception as exc:
+            _logger.warning("Consul list %s failed: %s", prefix, exc)
+            return []
+
+        result: list[tuple[str, Any]] = []
+        for entry in entries or ():
+            key = entry.get("Key")
+            if not isinstance(key, str):
+                continue
+            value = entry.get("Value")
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
+            result.append((key, value))
+        return result
+
     def put(self, key: str, value: str) -> bool:
         """Записать значение в Consul KV.
 

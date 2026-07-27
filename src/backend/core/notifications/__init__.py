@@ -25,9 +25,7 @@ def _get_notif_gateway() -> Any:
 
 def _get_ng_cls() -> Any:
     """Возвращает ``notifications.gateway.NotificationGateway`` class."""
-    from src.backend.infrastructure.notifications.gateway import (
-        NotificationGateway,
-    )
+    from src.backend.infrastructure.notifications.gateway import NotificationGateway
 
     return NotificationGateway
 

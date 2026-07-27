@@ -14,7 +14,10 @@
 - ``watchdog`` — deadline-эскалация для long-running async-задач.
 """
 
-from src.backend.core.utils.async_helpers import AsyncChunkIterator, async_chunk_iterator
+from src.backend.core.utils.async_helpers import (
+    AsyncChunkIterator,
+    async_chunk_iterator,
+)
 from src.backend.core.utils.cache_keys import build_cache_key
 from src.backend.core.utils.datetime_utils import (
     ensure_utc,

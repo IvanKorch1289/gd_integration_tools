@@ -10,7 +10,7 @@ try:
 
     _USE_XXHASH = True
 except ImportError:
-    
+
     _USE_XXHASH = False
 
 from fastapi import Request, Response

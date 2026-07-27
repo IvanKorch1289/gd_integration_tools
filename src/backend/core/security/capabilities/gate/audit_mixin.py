@@ -22,14 +22,12 @@ Sprint 36 (V15 GAP, Subagent A) additions:
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Final
 
 from src.backend.core.security.capabilities.gate._protocol import (
     _CapabilityGateProtocol,
 )
-
-
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     pass

@@ -12,11 +12,11 @@ from typing import Any
 
 from fastapi import HTTPException, status
 
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints.api.v1.endpoints.admin_plugins.schemas import (
     PluginManifest,
     PluginSummary,
 )
-from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 

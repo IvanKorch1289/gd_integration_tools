@@ -170,10 +170,9 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
     try:
         from src.backend.core.security.capabilities import CapabilityDeniedError
         from src.backend.entrypoints.mcp.namespaces import get_namespace_for_action
+
         # S201 fix: use CapabilityFacade instead of direct CapabilityGate()
-        from src.backend.services.capabilities.facade import (
-            get_capability_facade,
-        )
+        from src.backend.services.capabilities.facade import get_capability_facade
 
         ns = get_namespace_for_action(action_name)
         if ns is not None and ns.capabilities_required:

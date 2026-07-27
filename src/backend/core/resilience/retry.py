@@ -21,6 +21,7 @@ Pydantic-``RetryPolicy`` для durable workflow-шагов (с ``compensate``).
 
 from __future__ import annotations
 
+import asyncio
 import functools
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -28,6 +29,7 @@ from typing import Any, ParamSpec, TypeVar
 
 from tenacity import (
     AsyncRetrying,
+    RetryCallState,
     RetryError,
     retry_if_exception_type,
     retry_if_not_exception_type,
@@ -44,22 +46,17 @@ __all__ = (
     "Retry",
     "RetryBudgetExhausted",
     "RetryPolicy",
+    "async_retry",
+    "default_retryable",
     "make_async_retry",
+    "retry_async",
     "with_retry",
 )
-
-
-def __getattr__(name: str) -> Any:
-    """Lazy re-export make_async_retry из infrastructure (ponytail)."""
-    if name == "make_async_retry":
-        from src.backend.infrastructure.resilience.retry import make_async_retry
-
-        return make_async_retry
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 logger = get_logger("resilience.retry")
 
 P = ParamSpec("P")
+T = TypeVar("T")
 R = TypeVar("R")
 
 
@@ -142,3 +139,102 @@ def with_retry(
         return wrapper
 
     return decorator
+
+
+def default_retryable() -> tuple[type[BaseException], ...]:
+    """Return the default transient exception types for async operations."""
+    return (ConnectionError, OSError, asyncio.TimeoutError)
+
+
+async def retry_async(
+    coro_fn: Callable[..., Awaitable[T]],
+    *,
+    max_attempts: int = 3,
+    base_delay: float = 0.5,
+    max_delay: float = 10.0,
+    retryable: tuple[type[BaseException], ...] | None = None,
+    op: str | None = None,
+    args: tuple[Any, ...] = (),
+    kwargs: dict[str, Any] | None = None,
+) -> T:
+    """Run an async callable with exponential-backoff retries."""
+    retry_types = retryable or default_retryable()
+    call_kwargs = kwargs or {}
+
+    try:
+        async for attempt in AsyncRetrying(
+            stop=stop_after_attempt(max_attempts),
+            wait=wait_exponential(multiplier=base_delay, max=max_delay),
+            retry=retry_if_exception_type(retry_types),
+            reraise=True,
+        ):
+            with attempt:
+                if attempt.retry_state.attempt_number > 1:
+                    logger.warning(
+                        "retry op=%s attempt=%d/%d",
+                        op or "?",
+                        attempt.retry_state.attempt_number,
+                        max_attempts,
+                    )
+                return await coro_fn(*args, **call_kwargs)
+    except RetryError as exc:
+        final_exception = exc.last_attempt.exception() if exc.last_attempt else None
+        if final_exception is not None:
+            raise final_exception from None
+        raise
+    raise RuntimeError("retry_async exited without result")
+
+
+def make_async_retry(
+    *,
+    max_attempts: int = 3,
+    initial_backoff: float = 1.0,
+    multiplier: float = 2.0,
+    max_backoff: float = 30.0,
+    on: tuple[type[BaseException], ...] = (Exception,),
+) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
+    """Create an async tenacity retry decorator for legacy call sites."""
+
+    def decorator(fn: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+        @functools.wraps(fn)
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            retrying = AsyncRetrying(
+                stop=stop_after_attempt(max_attempts),
+                wait=wait_exponential(
+                    multiplier=initial_backoff,
+                    exp_base=multiplier,
+                    max=max_backoff,
+                ),
+                retry=retry_if_exception_type(on),
+                reraise=True,
+                before_sleep=_log_before_sleep(fn.__name__),
+            )
+            async for attempt in retrying:
+                with attempt:
+                    return await fn(*args, **kwargs)
+            raise RuntimeError(
+                f"make_async_retry: {fn.__name__} exited without result"
+            )
+
+        return wrapper
+
+    return decorator
+
+
+def _log_before_sleep(fn_name: str) -> Callable[[RetryCallState], None]:
+    """Build the debug callback used by :func:`make_async_retry`."""
+
+    def callback(retry_state: RetryCallState) -> None:
+        exc = retry_state.outcome.exception() if retry_state.outcome else None
+        logger.debug(
+            "retry attempt=%d fn=%s exc=%r next_sleep=%.2fs",
+            retry_state.attempt_number,
+            fn_name,
+            exc,
+            retry_state.next_action.sleep if retry_state.next_action else 0,
+        )
+
+    return callback
+
+
+async_retry = make_async_retry()

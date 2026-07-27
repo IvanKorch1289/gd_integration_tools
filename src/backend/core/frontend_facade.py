@@ -14,15 +14,13 @@ from src.backend.core.di.providers import (
     get_express_bot_client_factory_provider,
     get_express_botx_message_class_provider,
 )
-from src.backend.core.interfaces.import_gateway import (
-    ImportSource,
-    ImportSourceKind,
-)
+from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
 from src.backend.core.logging import get_logger
 from src.backend.core.messaging import (
     FakeOutbox,
     OutboxBackend,
     OutboxEvent,
+    OutboxEventStatus,
 )
 from src.backend.services.dsl_portal import (
     Pipeline,
@@ -55,6 +53,7 @@ __all__ = (
     "FakeOutbox",
     "OutboxBackend",
     "OutboxEvent",
+    "OutboxEventStatus",
     # G1_FRONTEND: audit
     "emit_audit_safe",
     # G1_FRONTEND: import_gateway

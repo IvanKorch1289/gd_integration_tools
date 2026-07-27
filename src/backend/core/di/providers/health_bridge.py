@@ -13,7 +13,11 @@ Covers:
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import Any
+
+HealthCheck = Callable[[], Awaitable[dict[str, Any]]]
+HealthCheckFactory = Callable[[str], HealthCheck]
 
 __all__ = (
     "get_health_result_class",
@@ -68,8 +72,16 @@ def get_infrastructure_client_class() -> Any:
     return InfrastructureClient
 
 
-def get_health_check_factory() -> Any:
-    """Возвращает ``application.health_aggregator.get_health_check`` factory."""
-    from src.backend.infrastructure.application.health_aggregator import get_health_check
+def get_health_check_factory() -> HealthCheckFactory:
+    """Адаптировать canonical ``HealthAggregator.check_single`` к DSL factory."""
+    from src.backend.infrastructure.application.health_aggregator import (
+        get_health_aggregator,
+    )
 
-    return get_health_check
+    def factory(name: str) -> HealthCheck:
+        async def check() -> dict[str, Any]:
+            return await get_health_aggregator().check_single(name)
+
+        return check
+
+    return factory

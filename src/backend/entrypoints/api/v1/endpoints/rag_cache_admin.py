@@ -13,9 +13,9 @@ from collections import deque
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Depends
-from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.di.app_state import get_three_tier_rag_cache_from_state
 from src.backend.services.cache.metrics import get_metrics_snapshot
 

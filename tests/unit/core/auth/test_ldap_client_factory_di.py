@@ -200,10 +200,12 @@ class TestLdapClientFactoryRuntimeSymbols:
         # services.auth.ad_directory_client (would be layer violation).
         # The runtime import is inside a try/except block.
         import re
+        # Match: try: ... from ... import ... (multi-line until except).
+        # Accept either `from core.auth.ldap_contract import A, B` or
+        # `from core.auth.ldap_contract import A\nfrom ... import B`.
         match = re.search(
-            r"try:.*?from src\.backend\.core\.auth\.ldap_contract import \((.*?)\)",
+            r"try:\s*\n\s*from src\.backend\.core\.auth\.ldap_contract import ([^\n]+)",
             content,
-            re.S,
         )
         assert match is not None, (
             "DI success path must import AdServerConfig from core "

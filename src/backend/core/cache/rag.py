@@ -9,6 +9,7 @@ from __future__ import annotations
 from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
     get_three_tier_rag_cache_class as _get_three_tier_rag_cache_cls,
 )
+
 ThreeTierRagCache = _get_three_tier_rag_cache_cls()
 
 __all__ = ("ThreeTierRagCache",)

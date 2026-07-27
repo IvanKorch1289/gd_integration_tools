@@ -67,7 +67,15 @@ from src.backend.core.resilience.rate_limiter import (
     RedisRateLimiter,
     get_rate_limiter,
 )
-from src.backend.core.resilience.retry import Retry, RetryPolicy, with_retry
+from src.backend.core.resilience.retry import (
+    Retry,
+    RetryPolicy,
+    async_retry,
+    default_retryable,
+    make_async_retry,
+    retry_async,
+    with_retry,
+)
 from src.backend.core.resilience.retry_budget import (
     RetryBudget,
     RetryBudgetExhausted,
@@ -97,6 +105,10 @@ __all__ = (
     "RetryBudget",
     "RetryBudgetExhausted",
     "RetryPolicy",
+    "async_retry",
+    "default_retryable",
+    "make_async_retry",
+    "retry_async",
     "cached",
     "degradation_manager",
     "get_breaker_registry",

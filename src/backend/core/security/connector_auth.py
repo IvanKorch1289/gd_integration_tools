@@ -172,9 +172,7 @@ async def check_source_capability(
         При недоступности AuthorizationFacade — fail-closed (returns False).
     """
     try:
-        from src.backend.services.authorization.facade import (
-            get_authorization_facade,
-        )
+        from src.backend.services.authorization.facade import get_authorization_facade
     except Exception as exc:  # pragma: no cover
         _logger.debug(
             "authorization_facade_unavailable: %s; failing closed", exc

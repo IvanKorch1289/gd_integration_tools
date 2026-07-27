@@ -12,14 +12,29 @@ from __future__ import annotations
 
 from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
     get_event_bus_class as _get_event_bus_cls,
-    get_event_schema_validation_error_class as _get_event_sve_cls,
-    get_flag_event_class as _get_flag_event_cls,
-    get_generic_event_class as _get_generic_event_cls,
-    get_order_event_class as _get_order_event_cls,
-    get_pipeline_event_class as _get_pipeline_event_cls,
-    get_route_event_class as _get_route_event_cls,
+)
+from src.backend.core.di.providers.infrastructure_facade import (
     get_event_bus_factory as _get_event_bus_fn,
 )
+from src.backend.core.di.providers.infrastructure_facade import (
+    get_event_schema_validation_error_class as _get_event_sve_cls,
+)
+from src.backend.core.di.providers.infrastructure_facade import (
+    get_flag_event_class as _get_flag_event_cls,
+)
+from src.backend.core.di.providers.infrastructure_facade import (
+    get_generic_event_class as _get_generic_event_cls,
+)
+from src.backend.core.di.providers.infrastructure_facade import (
+    get_order_event_class as _get_order_event_cls,
+)
+from src.backend.core.di.providers.infrastructure_facade import (
+    get_pipeline_event_class as _get_pipeline_event_cls,
+)
+from src.backend.core.di.providers.infrastructure_facade import (
+    get_route_event_class as _get_route_event_cls,
+)
+
 EventBus = _get_event_bus_cls()
 EventSchemaValidationError = _get_event_sve_cls()
 FlagEvent = _get_flag_event_cls()

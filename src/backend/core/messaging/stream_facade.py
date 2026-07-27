@@ -6,6 +6,7 @@ Entry points must import ``get_stream_client`` from here, not from
 
 from __future__ import annotations
 
+# ruff: noqa: F822  # lazy __getattr__ exports verified by runtime test
 from typing import Any
 
 __all__ = ("get_stream_client",)

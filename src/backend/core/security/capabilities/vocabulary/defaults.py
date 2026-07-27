@@ -5,7 +5,6 @@ build_default_vocabulary (388 LOC, BIG function).
 
 from __future__ import annotations
 
-
 from src.backend.core.security.capabilities.matchers import (
     ExactAliasMatcher,
     GlobScopeMatcher,
@@ -18,7 +17,6 @@ from src.backend.core.security.capabilities.vocabulary.models import (
 from src.backend.core.security.capabilities.vocabulary.vocabulary import (
     CapabilityVocabulary,  # S62 W2: cross-import
 )
-
 
 
 def _build_base_capabilities(
@@ -156,6 +154,52 @@ def _build_base_capabilities(
             name="workflow.signal",
             matcher=dot_glob,
             description="Сигнал workflow через WorkflowFacade.",
+        )
+    )
+    # P3 S172 W2: message-level claim-check capability (EIP ClaimCheckProcessor).
+    # Парный с workflow.claim_check.store (single-payload) — message-уровень
+    # обслуживает in_message.body на каждом pipeline-шаге с tenant context.
+    vocab.register(
+        CapabilityDef(
+            name="message.claim_check.store",
+            matcher=exact,
+            description=(
+                "Сохранение claim token в Redis/S3 через EIP ClaimCheckProcessor "
+                "store-режим (message-level payload offload)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="message.claim_check.retrieve",
+            matcher=exact,
+            description=(
+                "Восстановление payload по claim token через EIP "
+                "ClaimCheckProcessor retrieve-режим."
+            ),
+        )
+    )
+    # P3 S172 W2: Temporal workflow best-practices capabilities (workflow/best_practices).
+    # Регистрируем не-зарегистрированные ранее capabilities чтобы
+    # BaseProcessor.auth_check находил их в vocabulary (default-deny).
+    vocab.register(
+        CapabilityDef(
+            name="workflow.claim_check.store",
+            matcher=exact,
+            description=(
+                "Сохранение Temporal workflow payload через WorkflowClaimCheckProcessor "
+                "(Temporal best practice для больших event-history)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="workflow.continue_as_new.request",
+            matcher=exact,
+            description=(
+                "Запрос Continue-As-New в Temporal workflow "
+                "(Temporal best practice для долгоживущих executions)."
+            ),
         )
     )
     vocab.register(

@@ -14,9 +14,10 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, status, Depends
-from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
+
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 __all__ = ("router",)
 

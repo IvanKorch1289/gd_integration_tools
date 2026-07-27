@@ -60,14 +60,12 @@ _CIRCUIT_BREAKER_REEXPORTS = (
 )
 
 if TYPE_CHECKING:
-    from src.backend.core.resilience.breaker import (
-        BreakerSpec as CircuitBreakerConfig,
-    )
-    from src.backend.core.resilience.breaker import (
-        BreakerState as CircuitState,
-    )
+    from src.backend.core.resilience.breaker import BreakerSpec as CircuitBreakerConfig
+    from src.backend.core.resilience.breaker import BreakerState as CircuitState
     from src.backend.core.resilience.breaker import CircuitBreaker
-    from src.backend.core.resilience.breaker import CircuitOpen as CircuitBreakerOpenError
+    from src.backend.core.resilience.breaker import (
+        CircuitOpen as CircuitBreakerOpenError,
+    )
 
 
 def __getattr__(name: str) -> Any:
@@ -88,9 +86,7 @@ def __getattr__(name: str) -> Any:
         from src.backend.core.resilience.breaker import (
             BreakerSpec as CircuitBreakerConfig,
         )
-        from src.backend.core.resilience.breaker import (
-            BreakerState as CircuitState,
-        )
+        from src.backend.core.resilience.breaker import BreakerState as CircuitState
         from src.backend.core.resilience.breaker import CircuitBreaker
         from src.backend.core.resilience.breaker import (
             CircuitOpen as CircuitBreakerOpenError,

@@ -95,6 +95,19 @@ class TestAuthFacadeAPIKey:
         assert result.is_authenticated is False
 
 
+class TestAuthFacadeSAML:
+    """SAML verification must use the configured ACS flow."""
+
+    @pytest.mark.asyncio
+    async def test_raw_assertion_fails_closed(self) -> None:
+        facade = AuthFacade()
+
+        result = await facade.verify_request("raw-assertion", method="saml")
+
+        assert result.is_authenticated is False
+        assert result.metadata == {"error": "saml_requires_acs_flow"}
+
+
 class TestAuthFacadePermissions:
     """Тесты check_permission."""
 

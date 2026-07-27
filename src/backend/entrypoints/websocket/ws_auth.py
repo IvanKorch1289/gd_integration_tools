@@ -229,7 +229,7 @@ class WSAuthenticator:
             )
 
             backend = JwtBackend()
-            claims = backend.decode(token)
+            claims = await backend.decode(token)
         except ImportError as exc:
             raise WSAuthError(f"JWT backend unavailable: {exc}")
         except JwtVerificationError as exc:
@@ -240,15 +240,15 @@ class WSAuthenticator:
         if claims is None:
             raise WSAuthError("JWT decode returned None")
 
-        principal = str(claims.get("sub", "")) or "anonymous"
-        groups_list = claims.get("groups", [])
+        principal = claims.sub or "anonymous"
+        groups_list = claims.raw.get("groups", [])
         if not isinstance(groups_list, list):
             groups_list = []
         groups = {str(g) for g in groups_list}
-        is_admin = bool(claims.get("is_admin", False)) or "admin" in groups
+        is_admin = bool(claims.raw.get("is_admin", False)) or "admin" in groups
 
         # Стабильный hash для ACL lookup (совместимость с Redis-форматом).
-        api_key_hash = "jwt:" + str(claims.get("jti", principal))
+        api_key_hash = "jwt:" + str(claims.jti or principal)
 
         logger.debug(
             "ws.auth.jwt_verified principal=%s admin=%s groups=%d",

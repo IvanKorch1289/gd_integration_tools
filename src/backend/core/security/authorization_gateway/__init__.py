@@ -323,9 +323,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
         context: dict[str, Any] | None,
     ) -> bool | None:
         """Internal: try OPA step if available."""
-        from src.backend.core.security.authorization_gateway.opa_mixin import (
-            OpaMixin,
-        )
+        from src.backend.core.security.authorization_gateway.opa_mixin import OpaMixin
 
         if hasattr(OpaMixin, "_opa_check"):
             return OpaMixin._opa_check(

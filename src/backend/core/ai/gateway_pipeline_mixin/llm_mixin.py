@@ -205,6 +205,8 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
         # вызовах с идентичным prompt).
         from src.backend.core.di.providers.infrastructure_facade import (
             get_inject_openai_prompt_cache as _get_iopc,
+        )
+        from src.backend.core.di.providers.infrastructure_facade import (
             get_inject_prompt_cache as _get_ipc,
         )
         inject_openai_prompt_cache = _get_iopc()

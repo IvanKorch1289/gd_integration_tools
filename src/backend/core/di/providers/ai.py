@@ -14,7 +14,6 @@ from typing import Any
 
 from src.backend.core.di.module_registry import resolve_module
 
-
 _overrides: dict[str, Any] = {}
 
 
@@ -111,6 +110,8 @@ def _resolve_pii_token_registry() -> Any:
     """
     from src.backend.core.di.providers.infrastructure_facade import (
         get_env_aesgcm_key_provider_class as _get_eakp_cls,
+    )
+    from src.backend.core.di.providers.infrastructure_facade import (
         get_redis_token_registry_class as _get_rtr_cls,
     )
     EnvAESGCMKeyProvider = _get_eakp_cls()
@@ -230,7 +231,7 @@ def get_skill_registry() -> Any:
         from src.backend.core.di import app_state_singleton
 
         return app_state_singleton("skill_registry", factory=None)()
-    except Exception as exc:
+    except Exception:
         _overrides.get("_skill_registry_error")  # touch to keep linter happy
         return None
 

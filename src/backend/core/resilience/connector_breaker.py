@@ -18,8 +18,9 @@ Usage::
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Any, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from src.backend.core.resilience.breaker import (
     BreakerSpec,
@@ -38,7 +39,10 @@ def with_breaker(
     *,
     failure_threshold: int = 5,
     recovery_seconds: float = 30.0,
-) -> Any:
+) -> Callable[
+    [Callable[_P, Awaitable[_R]]],
+    Callable[_P, Awaitable[_R]],
+]:
     """Per-connector circuit breaker decorator.
 
     Args:
@@ -54,7 +58,9 @@ def with_breaker(
     registry = get_breaker_registry()
     breaker = registry.get_or_create(name, spec)
 
-    def decorator(func: Any) -> Any:
+    def decorator(
+        func: Callable[_P, Awaitable[_R]],
+    ) -> Callable[_P, Awaitable[_R]]:
         @wraps(func)
         async def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
             async with breaker.guard():

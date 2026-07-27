@@ -13,7 +13,6 @@
 - Graylog — для централизованного логирования.
 """
 
-from src.backend.entrypoints.middlewares import _body_hash
 import time as _time
 from datetime import UTC, datetime
 
@@ -22,6 +21,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.types import ASGIApp
 
 from src.backend.core.logging import get_logger
+from src.backend.entrypoints.middlewares import _body_hash
 
 __all__ = ("AuditLogMiddleware",)
 

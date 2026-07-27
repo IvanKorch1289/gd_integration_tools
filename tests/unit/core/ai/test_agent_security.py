@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from src.backend.core.ai.security import (
     AgentSecurityFramework,
     AgentSecurityPolicy,
@@ -11,6 +10,14 @@ from src.backend.core.ai.security import (
     SecurityDecision,
     ThreatLevel,
 )
+
+
+def test_agent_security_module_all_exports_resolve() -> None:
+    """Every declared public export is available at runtime."""
+    from src.backend.core.ai.security import agent_security
+
+    for symbol in agent_security.__all__:
+        assert getattr(agent_security, symbol) is not None
 
 
 class TestDangerousCommandDetector:
@@ -213,6 +220,15 @@ class TestAgentSecurityFramework:
         )
         assert decision.allowed is False
         assert "too_large" in decision.reason
+
+    def test_mask_output_masks_pii(self) -> None:
+        """Output masking invokes the default masker instance."""
+        framework = AgentSecurityFramework()
+
+        decision = framework.mask_output("Email: user@example.com")
+
+        assert decision.masked_input != "Email: user@example.com"
+        assert "user@example.com" not in decision.masked_input
 
     def test_register_workflow_hook(self) -> None:
         """Register workflow hook works."""

@@ -65,6 +65,23 @@ class TestConsulConfigStore:
         mock_consul.kv.get.return_value = (1, {"Value": "already-str"})
         assert store.get("key") == "already-str"
 
+    def test_items_decodes_recursive_values(
+        self, store: ConsulConfigStore, mock_consul: MagicMock
+    ) -> None:
+        mock_consul.kv.get.return_value = (
+            1,
+            [
+                {"Key": "runtime/app/enabled", "Value": b"true"},
+                {"Key": "runtime/app/limit", "Value": "10"},
+            ],
+        )
+
+        assert store.items("runtime/app/") == [
+            ("runtime/app/enabled", "true"),
+            ("runtime/app/limit", "10"),
+        ]
+        mock_consul.kv.get.assert_called_once_with("runtime/app/", recurse=True)
+
     # ------------------------------------------------------------------
     # put
     # ------------------------------------------------------------------

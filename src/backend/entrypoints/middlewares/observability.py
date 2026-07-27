@@ -27,10 +27,11 @@ Usage::
 """
 from __future__ import annotations
 
+import importlib
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -39,6 +40,12 @@ if TYPE_CHECKING:
     from starlette.types import ASGIApp
 
 __all__ = ("ObservabilityConfig", "ObservabilityMiddleware")
+
+
+class _PrometheusMetrics(Protocol):
+    _LABELS: tuple[str, ...]
+    _METHOD_LABEL: str
+    _STATUS_LABEL: str
 
 
 @dataclass(frozen=True)
@@ -80,11 +87,9 @@ def _emit_otel(event: dict[str, Any], service_name: str) -> None:
 def _emit_prometheus(event: dict[str, Any]) -> None:
     """Emit Prometheus metric (если starlette_exporter установлен)."""
     try:
-        from starlette_exporter.metrics import (  # noqa: F401 — optional dep
-            _HISTOGRAM,
-            _LABELS,
-            _METHOD_LABEL,
-            _STATUS_LABEL,
+        metrics = cast(
+            _PrometheusMetrics,
+            importlib.import_module("starlette_exporter.metrics"),
         )
 
         # starlette_exporter экспортирует только через PrometheusMiddleware.
@@ -93,10 +98,10 @@ def _emit_prometheus(event: dict[str, Any]) -> None:
         # Мы дополняем (а не дублируем) — флаг prometheus_enabled=True
         # подразумевает, что PrometheusMiddleware тоже в стеке.
         labels = {
-            _METHOD_LABEL: event["method"],
-            _STATUS_LABEL: str(event["status_code"]),
+            metrics._METHOD_LABEL: event["method"],
+            metrics._STATUS_LABEL: str(event["status_code"]),
         }
-        if all(k in labels for k in _LABELS):
+        if all(k in labels for k in metrics._LABELS):
             # Просто no-op signal — PrometheusMiddleware сделает настоящий emit
             pass
     except ImportError:

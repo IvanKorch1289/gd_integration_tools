@@ -29,6 +29,7 @@ Sprint 1 V16 Single-Entry: конкретные backend'ы остаются в i
 callsite'ы переходят на canonical-имена через ``__getattr__`` lazy-import.
 """
 
+# ruff: noqa: F822  # lazy __getattr__ exports verified by runtime test (tests/unit/core/resilience/test_unified_rate_limiter.py)
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable

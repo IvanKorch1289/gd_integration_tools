@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from src.backend.core.auth.jwt_backend import JwtClaims
 from src.backend.entrypoints.websocket.ws_auth import (
     WS_AUTH_COOKIE_NAME,
     WSAuthenticator,
@@ -118,13 +119,41 @@ class TestWSAuthenticatorJWT:
             await authenticator.authenticate_jwt("")
 
     @pytest.mark.asyncio
+    async def test_jwt_decode_is_awaited_before_claim_access(
+        self, authenticator: WSAuthenticator
+    ) -> None:
+        """Async JwtBackend.decode is awaited before reading claims."""
+
+        class _FakeBackend:
+            async def decode(self, token: str) -> JwtClaims:
+                return JwtClaims(
+                    sub="user-1",
+                    iss=None,
+                    aud=None,
+                    exp=None,
+                    jti="jti-1",
+                    raw={"groups": ["ops"]},
+                )
+
+        with patch(
+            "src.backend.core.auth.jwt_backend.JwtBackend", _FakeBackend
+        ), patch.object(
+            authenticator, "_load_groups", new=AsyncMock(return_value={"ops"})
+        ):
+            session = await authenticator.authenticate_jwt("valid.token.value")
+
+        assert session.principal == "user-1"
+        assert session.api_key_hash == "jwt:jti-1"
+        assert session.allowed_groups == {"ops"}
+
+    @pytest.mark.asyncio
     async def test_jwt_decode_failure_raises(
         self, authenticator: WSAuthenticator
     ) -> None:
         """Backend rejects malformed/expired token → WSAuthError."""
 
         class _FakeBackend:
-            def decode(self, token: str) -> dict[str, object]:
+            async def decode(self, token: str) -> JwtClaims:
                 raise RuntimeError("invalid signature")
 
         with patch(

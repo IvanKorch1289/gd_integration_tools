@@ -27,10 +27,10 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Response, status, Depends
-from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.tracer import TraceEvent, get_tracer  # Sprint 44 W1

@@ -176,7 +176,11 @@ class TemporalWorkerScaler:
         try:
             from src.backend.core.di.providers.infrastructure_facade import (
                 get_record_scale_event as _get_rse,
+            )
+            from src.backend.core.di.providers.infrastructure_facade import (
                 get_set_task_queue_depth as _get_stqd,
+            )
+            from src.backend.core.di.providers.infrastructure_facade import (
                 get_set_workers_active as _get_swa,
             )
             _record = _get_rse()

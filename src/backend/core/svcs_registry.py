@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Hashable
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from src.backend.core.logging import get_logger
 
@@ -110,7 +110,7 @@ def get_service(key: Hashable | type[T]) -> T | Any:
                 f"Сервис '{key}' не зарегистрирован. Доступные: {available}"
             )
         instance = factory()
-        _singletons[key] = instance
+        _singletons[cast(Hashable, key)] = instance
         return instance
 
 

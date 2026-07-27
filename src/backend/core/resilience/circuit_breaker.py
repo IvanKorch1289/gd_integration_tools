@@ -18,6 +18,7 @@ S173 M2.4: реализованы обёртки:
 
 from __future__ import annotations
 
+import importlib.util
 import time
 from collections import deque
 from collections.abc import AsyncIterator
@@ -27,15 +28,9 @@ from typing import Final, Protocol, runtime_checkable
 
 # ────────────────── Probe purgatory availability (lazy, без side-effects) ────
 
-try:
-    from purgatory.domain.model import OpenedState as _PurgatoryOpenedState
-    from purgatory import AsyncCircuitBreakerFactory as _PurgatoryFactory
-
-    HAS_PURGATORY: Final[bool] = True
-except ImportError:  # pragma: no cover — guarded для minimal envs
-    HAS_PURGATORY = False
-    _PurgatoryOpenedState = None  # type: ignore[assignment]
-    _PurgatoryFactory = None  # type: ignore[assignment]
+# Probe without importing the optional package or binding its concrete types;
+# the canonical breaker implementation owns all actual purgatory interactions.
+HAS_PURGATORY: Final = importlib.util.find_spec("purgatory") is not None
 
 
 # ────────────────── Unified spec ────────────────────────────────────────────

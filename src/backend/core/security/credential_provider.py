@@ -92,12 +92,12 @@ class CredentialProvider:
     async def _resolve(self, spec: CredentialSpec) -> dict[str, Any]:
         """Реальное разрешение credentials из vault/env."""
         if spec.is_vault:
-            # Lazy import для избежания circular
-            from src.backend.infrastructure.secrets.vault_backend import (
-                get_secret,
-            )
+            from src.backend.core.interfaces.secrets import SecretsBackend
+            from src.backend.core.svcs_registry import get_service
+
             vault_path = spec.secret_ref.removeprefix("vault:")
-            return await get_secret(vault_path)
+            value = await get_service(SecretsBackend).get_secret(vault_path)
+            return {"value": value or ""}
         if spec.secret_ref.startswith("env:"):
             import os
 

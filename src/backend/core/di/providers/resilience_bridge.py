@@ -92,20 +92,26 @@ def get_rate_limit_class() -> Any:
 
 def get_rate_limit_exceeded_class() -> Any:
     """Возвращает ``resilience.unified_rate_limiter.RateLimitExceeded``."""
-    from src.backend.infrastructure.resilience.unified_rate_limiter import RateLimitExceeded
+    from src.backend.infrastructure.resilience.unified_rate_limiter import (
+        RateLimitExceeded,
+    )
 
     return RateLimitExceeded
 
 
 def get_redis_rate_limiter_class() -> Any:
     """Возвращает ``resilience.unified_rate_limiter.RedisRateLimiter`` class."""
-    from src.backend.infrastructure.resilience.unified_rate_limiter import RedisRateLimiter
+    from src.backend.infrastructure.resilience.unified_rate_limiter import (
+        RedisRateLimiter,
+    )
 
     return RedisRateLimiter
 
 
 def get_rate_limiter_factory() -> Any:
     """Возвращает ``resilience.unified_rate_limiter.get_rate_limiter`` factory."""
-    from src.backend.infrastructure.resilience.unified_rate_limiter import get_rate_limiter
+    from src.backend.infrastructure.resilience.unified_rate_limiter import (
+        get_rate_limiter,
+    )
 
     return get_rate_limiter

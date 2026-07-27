@@ -151,6 +151,7 @@ class TestEnforcedInvokePolicy:
         # Policy must have .name as str (audit ctx reads ctx.policy_name = policy.name)
         policy = MagicMock()
         policy.name = "credit_check_v1"
+        policy.tools = None
         gw._resolve_policy.return_value = policy
         request = AIRequest(workflow_id="wf1", tenant_id="t1", correlation_id="c1")
 

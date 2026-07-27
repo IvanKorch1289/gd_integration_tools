@@ -171,7 +171,7 @@ class AuthFacade:
             from src.backend.core.auth.api_key_backend import APIKeyAuth
 
             api_key_auth = APIKeyAuth()
-            # API key format: ``ak_<key_id>_<secret>`` — extract key_id
+            # API key format: ``ak_<key_id>_<secret>`` — extract the secret
             if not api_key.startswith("ak_"):
                 return AuthResult(is_authenticated=False)
 
@@ -179,14 +179,14 @@ class AuthFacade:
             if len(parts) != 3:
                 return AuthResult(is_authenticated=False)
 
-            key_id = f"{parts[0]}_{parts[1]}"
+            # key_id (parts[0] + parts[1]) is embedded in the api_key string
+            # already and is derived inside ``manager.validate_key`` from the
+            # full token; not used here directly.
             secret = parts[2]
 
             # Fetch stored hash + metadata from API key registry
             # S202 audit fix: use DI provider instead of direct infra import
-            from src.backend.core.di.providers.auth import (
-                get_api_key_manager_provider,
-            )
+            from src.backend.core.di.providers.auth import get_api_key_manager_provider
 
             manager = get_api_key_manager_provider()
             # S202 audit fix: use ``validate_key`` (returns APIKeyInfo) instead
@@ -222,23 +222,15 @@ class AuthFacade:
         Returns:
             AuthResult с NameID/subject.
         """
-        try:
-            from src.backend.core.auth.saml import SamlSpHandler
-
-            handler = SamlSpHandler()
-            claims = handler.verify_assertion(assertion)
-            return AuthResult(
-                is_authenticated=True,
-                method="saml",
-                subject=claims.get("name_id", ""),
-                tenant_id=claims.get("tenant_id"),
-                groups=claims.get("groups", []),
-                capabilities=claims.get("capabilities", []),
-                metadata=claims,
-            )
-        except Exception as exc:
-            logger.debug("SAML verify failed: %s", exc)
-            return AuthResult(is_authenticated=False)
+        # SAML verification requires the canonical ACS flow: configured
+        # SamlBackend, InResponseTo and an injected signature validator.  A raw
+        # assertion alone cannot satisfy that contract, so fail closed instead
+        # of constructing SamlSpHandler with a non-existent legacy API.
+        logger.debug("SAML assertion requires the configured ACS flow")
+        return AuthResult(
+            is_authenticated=False,
+            metadata={"error": "saml_requires_acs_flow"},
+        )
 
     async def _verify_mtls(self, cert_pem: str) -> AuthResult:
         """S183: mTLS client cert verification.
@@ -312,10 +304,7 @@ class AuthFacade:
         # "admin" в groups membership-only — privilege escalation risk
         # (любой IdP group с именем "admin" получал bypass).
         try:
-            from src.backend.core.auth.admin_roles import (
-                AdminRole,
-                extract_admin_roles,
-            )
+            from src.backend.core.auth.admin_roles import AdminRole, extract_admin_roles
 
             roles = extract_admin_roles(auth.metadata)
             if AdminRole.SUPER_ADMIN in roles:

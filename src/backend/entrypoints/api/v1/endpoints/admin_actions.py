@@ -17,10 +17,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status, Depends
-from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)

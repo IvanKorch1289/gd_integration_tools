@@ -14,9 +14,10 @@ from pathlib import Path
 from typing import Any
 
 import yaml as _yaml
-from fastapi import APIRouter, HTTPException, status, Depends
-from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
+
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 __all__ = ("router",)
 

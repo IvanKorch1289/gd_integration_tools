@@ -8,9 +8,10 @@ Wave 3: единая функция ``build_cache_key`` для всех слоё
 from __future__ import annotations
 
 import hashlib
-import orjson
 from collections.abc import Awaitable, Callable
 from typing import Any
+
+import orjson
 
 
 def build_cache_key(

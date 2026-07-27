@@ -18,8 +18,9 @@ RBAC-middleware (admin role).
 
 from __future__ import annotations
 
+from collections.abc import Awaitable
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, Protocol
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -27,6 +28,17 @@ from pydantic import BaseModel, Field
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 __all__ = ("router",)
+
+
+class _ClickHouseClient(Protocol):
+    """Structural type for clickhouse_connect AsyncClient (S176 fix).
+
+    ``clickhouse_connect`` exports ``AsyncClient`` whose signatures are
+    not exposed in this project's stubs; ``Any``-flavoured Protocol keeps
+    annotations honest without runtime change to the API call.
+    """
+
+    def query(self, *args: Any, **kwargs: Any) -> Awaitable[Any]: ...
 
 
 # S202 audit fix: workflow audit (ClickHouse query bypass) — require admin role.
@@ -85,7 +97,7 @@ class WorkflowAuditInventoryResponse(BaseModel):
     )
 
 
-async def _get_clickhouse_client() -> Any:
+async def _get_clickhouse_client() -> _ClickHouseClient:
     """Получает singleton ClickHouse-клиент через DI (S176 fix).
 
     S176 fix: было inline ``clickhouse_connect.get_async_client()`` на каждый
@@ -96,7 +108,10 @@ async def _get_clickhouse_client() -> Any:
         get_admin_clickhouse_client,
     )
 
-    return await get_admin_clickhouse_client()
+    client = await get_admin_clickhouse_client()
+    if client is None:
+        raise RuntimeError("ClickHouse admin client unavailable")
+    return client
 
 
 @router.get(

@@ -11,8 +11,11 @@ from typing import Any
 
 from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
     get_scheduler_manager_class as _get_sm_cls,
+)
+from src.backend.core.di.providers.infrastructure_facade import (
     get_scheduler_manager_factory as _get_sm_fn,
 )
+
 SchedulerManager = _get_sm_cls()
 get_scheduler_manager = _get_scheduler_manager = _get_sm_fn()
 scheduler_manager = _get_sm_fn()()

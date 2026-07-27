@@ -9,13 +9,13 @@ Production: integration с Prometheus alert (DEFER M21+).
 # ruff: noqa: E501
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, Query, Depends
-from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)

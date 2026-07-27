@@ -5,11 +5,9 @@ CapabilityDef data class.
 
 from __future__ import annotations
 
-
 from dataclasses import dataclass, field
 
 from src.backend.core.security.capabilities.matchers import ScopeMatcher
-
 
 
 @dataclass

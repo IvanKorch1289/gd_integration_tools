@@ -14,9 +14,9 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, Query, Depends
-from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.services.schema_registry import (
     SchemaEntry,
     SchemaKind,

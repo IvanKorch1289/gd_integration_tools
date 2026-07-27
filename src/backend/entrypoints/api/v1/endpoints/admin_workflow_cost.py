@@ -8,9 +8,10 @@ Endpoints (mount /api/v1/admin/workflow-cost):
 
 from __future__ import annotations
 
+from collections.abc import Awaitable
 from datetime import UTC
 from decimal import Decimal
-from typing import Any
+from typing import Any, Protocol
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -18,6 +19,10 @@ from pydantic import BaseModel, Field
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
 
 __all__ = ("router",)
+
+
+class _ClickHouseClient(Protocol):
+    def query(self, *args: Any, **kwargs: Any) -> Awaitable[Any]: ...
 
 
 # S202 audit fix: workflow cost data (ClickHouse query bypass) — require admin role.
@@ -148,7 +153,7 @@ async def get_workflow_cost_history(
             get_admin_clickhouse_client,
         )
 
-        client = await get_admin_clickhouse_client()
+        client: _ClickHouseClient | None = await get_admin_clickhouse_client()
         if client is None:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

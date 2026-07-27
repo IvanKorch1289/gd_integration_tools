@@ -17,14 +17,15 @@ Usage::
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    # Type-checkers видят явный public API
-    from src.backend.core.di.providers.infrastructure_facade import (
-        get_logger_protocol_class as _get_logger_protocol_cls,
-    )
-    LoggerProtocol = _get_logger_protocol_cls()
+    # Static contract for the runtime-lazy facade below.  The implementation
+    # remains infrastructure-backed, while core callers depend on a Protocol.
+    from src.backend.core.interfaces.multi_protocol import LoggerProtocol
+
+    get_logger: Callable[[str], LoggerProtocol]
 
 __all__ = (
     "LoggerProtocol",

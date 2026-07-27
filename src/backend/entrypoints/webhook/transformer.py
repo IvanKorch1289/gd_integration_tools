@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 import orjson
@@ -187,7 +187,16 @@ class WebhookRelay:
             try:
                 import jmespath
 
-                return jmespath.search(rule.jmespath_expression, payload) or payload
+                transformed = jmespath.search(rule.jmespath_expression, payload)
+                if not isinstance(transformed, dict) or not all(
+                    isinstance(key, str) for key in transformed
+                ):
+                    logger.debug(
+                        "jmespath transform returned non-object; rule denied",
+                        extra={"rule_id": rule.id},
+                    )
+                    return None
+                return cast(dict[str, Any], transformed)
             except ImportError:
                 return payload
         return payload
@@ -232,7 +241,10 @@ class WebhookRelay:
                 raise _HTTPError(f"HTTP {resp.status_code}")
 
         try:
-            return await _attempt()
+            result = await _attempt()
+            if not isinstance(result, dict):
+                raise TypeError("Webhook sender returned a non-dict result")
+            return result
         except Exception as exc:
             last_error = str(exc)
 

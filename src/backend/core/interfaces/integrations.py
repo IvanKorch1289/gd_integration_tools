@@ -82,12 +82,23 @@ class ClickHouseClientProtocol(Protocol):
     """Контракт async ClickHouse-клиента для analytics.
 
     Реализация: ``infrastructure.clients.storage.clickhouse.ClickHouseClient``.
+
+    Cycle 29 P2: ``insert`` принимает опциональный ``batch_size`` — chunking
+    реально доходит до клиента (а не навешивается поверх singleton'а через
+    ``max_batch_size``). Caller (DSL processor, BulkWriter) может управлять
+    размером батча per-call без пересоздания клиента.
     """
 
     async def query(
         self, sql: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]: ...
-    async def insert(self, table: str, rows: list[dict[str, Any]]) -> int: ...
+    async def insert(
+        self,
+        table: str,
+        rows: list[dict[str, Any]],
+        *,
+        batch_size: int | None = None,
+    ) -> int: ...
     async def aggregate(
         self,
         table: str,

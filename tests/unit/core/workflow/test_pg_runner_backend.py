@@ -429,5 +429,32 @@ class TestAwaitCompletion:
 
 @pytest.mark.asyncio
 class TestReplay:
-    async def test_replay_is_noop(self, backend: PgRunnerWorkflowBackend) -> None:
-        await backend.replay(workflow_name="wf", history=b"any-bytes")
+    """Cycle 29 P2: silent no-op заменён на явный ``NotImplementedError``.
+
+    pg-runner backend — dev/staging-only fallback (ADR-045); replay-gate
+    CI работает с :class:`TemporalWorkflowBackend`. Любая попытка
+    вызвать ``replay()`` теперь fail-loud вместо silent skip.
+    """
+
+    async def test_replay_raises_not_implemented(
+        self, backend: PgRunnerWorkflowBackend
+    ) -> None:
+        """Regression (Cycle 29 P2): silent no-op больше не допустим."""
+        with pytest.raises(NotImplementedError, match="pg-runner does not implement"):
+            await backend.replay(workflow_name="wf", history=b"any-bytes")
+
+    async def test_replay_raises_for_empty_history(
+        self, backend: PgRunnerWorkflowBackend
+    ) -> None:
+        with pytest.raises(NotImplementedError):
+            await backend.replay(workflow_name="wf", history=b"")
+
+    async def test_replay_raises_for_temporal_format_history(
+        self, backend: PgRunnerWorkflowBackend
+    ) -> None:
+        """Temporal ``WorkflowHistory.from_json`` bytes НЕ должны silent skip'аться."""
+        with pytest.raises(NotImplementedError):
+            await backend.replay(
+                workflow_name="wf",
+                history=b'{"events": [{"eventId": 1}]}',
+            )

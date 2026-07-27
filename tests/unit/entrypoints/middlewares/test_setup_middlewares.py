@@ -46,6 +46,14 @@ class TestBuildDefaultRegistry:
         assert registry is mock_registry
         assert mock_registry.register_builtin.call_count >= 10
 
+    def test_websocket_rate_limit_module_is_importable(self) -> None:
+        from src.backend.entrypoints.middlewares.ws_rate_limit import (
+            WebSocketRateLimitMiddleware,
+            WSRateLimitMiddleware,
+        )
+
+        assert WSRateLimitMiddleware is WebSocketRateLimitMiddleware
+
 
 class TestSetupMiddlewares:
     """Tests for setup_middlewares."""

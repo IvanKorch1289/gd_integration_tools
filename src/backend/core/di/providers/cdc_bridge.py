@@ -58,6 +58,8 @@ def get_cdc_client_adapter_class() -> Any:
 
 def get_debezium_events_cdc_backend_class() -> Any:
     """Возвращает ``cdc.debezium_events_backend.DebeziumEventsCDCBackend`` class."""
-    from src.backend.infrastructure.cdc.debezium_events_backend import DebeziumEventsCDCBackend
+    from src.backend.infrastructure.cdc.debezium_events_backend import (
+        DebeziumEventsCDCBackend,
+    )
 
     return DebeziumEventsCDCBackend

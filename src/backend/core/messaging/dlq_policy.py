@@ -16,13 +16,13 @@ Routing по ``dlq_class`` в :class:`DLQEnvelope`:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import Protocol
 
-if TYPE_CHECKING:
-    from src.backend.core.di.providers.infrastructure_facade import (
-        get_dlq_envelope_class as _get_dlq_env_cls,
-    )
-    DLQEnvelope = _get_dlq_env_cls()
+
+class _DLQEnvelope(Protocol):
+    """Structural subset consumed by the retention-policy resolver."""
+
+    dlq_class: str
 
 __all__ = ("DLQPolicy", "DLQPolicyRegistry", "default_policy_registry")
 
@@ -71,7 +71,7 @@ class DLQPolicyRegistry:
     def list_all(self) -> list[DLQPolicy]:
         return list(self._policies.values())
 
-    def resolve_for_envelope(self, envelope: DLQEnvelope) -> DLQPolicy:
+    def resolve_for_envelope(self, envelope: _DLQEnvelope) -> DLQPolicy:
         """Возвращает policy на основе ``envelope.dlq_class``."""
         return self.get_or_default(envelope.dlq_class)
 

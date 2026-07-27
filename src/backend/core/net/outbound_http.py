@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Mapping
+from contextlib import AbstractAsyncContextManager
 from typing import Any
 
 import httpx
@@ -168,7 +169,7 @@ class OutboundHttpClient:
         headers: Mapping[str, str] | None = None,
         params: Mapping[str, str] | None = None,
         timeout: httpx.Timeout | float | None = None,
-    ) -> httpx.Response:
+    ) -> AbstractAsyncContextManager[httpx.Response]:
         """Streaming HTTP-запрос с обязательной WAF-проверкой (S36-W7).
 
         Используется для SSE / chunked download / long-poll сценариев,

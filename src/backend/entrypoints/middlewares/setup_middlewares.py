@@ -38,6 +38,7 @@ def build_default_registry() -> MiddlewareRegistry:
     from fastapi.middleware.trustedhost import TrustedHostMiddleware
     from starlette_exporter import PrometheusMiddleware
 
+    from src.backend.core.config.features import feature_flags
     from src.backend.core.config.settings import settings
     from src.backend.entrypoints.middlewares.admin_ip import IPRestrictionMiddleware
     from src.backend.entrypoints.middlewares.api_key import APIKeyMiddleware
@@ -203,7 +204,7 @@ def build_default_registry() -> MiddlewareRegistry:
     registry.register_builtin(
         "ai_tool_whitelist",
         AIToolWhitelistMiddleware,
-        {"enabled": settings.feature_flags.ai_agent_dsl_enabled},
+        {"enabled": feature_flags.ai_agent_dsl_enabled},
         order=640,
     )
     # S183: WebSocket rate limit (registered after auth, Layer 3).
@@ -238,9 +239,7 @@ def build_default_registry() -> MiddlewareRegistry:
     )
     # S183: RPA policy deny-by-default (Layer 3, after auth).
     # Per Master Prompt §3.3: обязателен для банковской шины.
-    from src.backend.entrypoints.middlewares.rpa_policy import (
-        RpaPolicyMiddleware,
-    )
+    from src.backend.entrypoints.middlewares.rpa_policy import RpaPolicyMiddleware
 
     registry.register_builtin(
         "rpa_policy",
@@ -249,9 +248,7 @@ def build_default_registry() -> MiddlewareRegistry:
     )
     # S184: CSRF protection для cookie-based auth (Layer 3, after auth).
     # Double-Submit Cookie pattern для state-changing methods.
-    from src.backend.entrypoints.middlewares.csrf import (
-        CSRFMiddleware,
-    )
+    from src.backend.entrypoints.middlewares.csrf import CSRFMiddleware
 
     registry.register_builtin(
         "csrf",

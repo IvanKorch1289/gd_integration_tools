@@ -23,9 +23,14 @@ from __future__ import annotations
 # но не на private helpers из infrastructure.repositories.base.*).
 from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
     get_abstract_repository_class as _get_ar_cls,
-    get_sqlalchemy_repository_class as _get_sr_cls,
+)
+from src.backend.core.di.providers.infrastructure_facade import (
     get_repository_for_model_factory as _get_rfm_fn,
 )
+from src.backend.core.di.providers.infrastructure_facade import (
+    get_sqlalchemy_repository_class as _get_sr_cls,
+)
+
 AbstractRepository = _get_ar_cls()
 SQLAlchemyRepository = _get_sr_cls()
 get_repository_for_model = _get_rfm_fn()
