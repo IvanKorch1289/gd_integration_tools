@@ -131,11 +131,13 @@ class APIClient(BaseAPIClient):
     def set_override(
         self, flag: str, value: Any, tenant_id: str | None = None, actor: str = "ui"
     ) -> dict[str, Any] | None:
+        """Установить feature flag override для ``tenant_id`` (admin)."""
         return self._flags.set_override(flag, value, tenant_id, actor)
 
     def clear_override(
         self, flag: str, tenant_id: str | None = None, actor: str = "ui"
     ) -> dict[str, Any] | None:
+        """Очистить feature flag override для ``tenant_id`` (admin)."""
         return self._flags.clear_override(flag, tenant_id, actor)
 
     # ── Config (2) ─────────────────────────────────────────────────
@@ -159,6 +161,7 @@ class APIClient(BaseAPIClient):
     def get_workflow_events(
         self, instance_id: str, **kwargs: Any
     ) -> list[dict[str, Any]]:
+        """Получить events workflow instance (audit trail)."""
         return self._workflows.get_workflow_events(instance_id, **kwargs)
 
     def retry_workflow(self, instance_id: str) -> bool:
@@ -176,6 +179,7 @@ class APIClient(BaseAPIClient):
     def trigger_workflow(
         self, workflow_name: str, payload: dict[str, Any], **kwargs: Any
     ) -> dict[str, Any] | None:
+        """Запустить workflow по имени с payload; вернуть initial state."""
         return self._workflows.trigger_workflow(workflow_name, payload, **kwargs)
 
     # ── DSL Routes (8) ─────────────────────────────────────────────
@@ -253,6 +257,7 @@ class APIClient(BaseAPIClient):
     def get_audit_events(
         self, plugin: str | None = None, **kwargs: Any
     ) -> list[dict[str, Any]]:
+        """Получить audit events (с фильтром по plugin)."""
         return self._capability.get_audit_events(plugin, **kwargs)
 
     def get_dependency_graph(self) -> dict[str, Any]:
