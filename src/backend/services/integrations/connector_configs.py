@@ -19,7 +19,9 @@ __all__ = ("ConnectorConfigEntry", "ConnectorConfigStore")
 class ConnectorConfigStore(Protocol):
     """Контракт хранилища конфигов коннекторов."""
 
-    async def get(self, name: str) -> ConnectorConfigEntry | None: ...
+    async def get(self, name: str) -> ConnectorConfigEntry | None:
+        """Получить connector config по ``name``; None если не найдено."""
+        ...
 
     async def save(
         self,
@@ -28,10 +30,18 @@ class ConnectorConfigStore(Protocol):
         *,
         enabled: bool = True,
         user: str | None = None,
-    ) -> ConnectorConfigEntry: ...
+    ) -> ConnectorConfigEntry:
+        """Сохранить connector config (enabled + audit user)."""
+        ...
 
-    async def list_all(self) -> list[ConnectorConfigEntry]: ...
+    async def list_all(self) -> list[ConnectorConfigEntry]:
+        """Список всех connector configs."""
+        ...
 
-    async def delete(self, name: str) -> bool: ...
+    async def delete(self, name: str) -> bool:
+        """Удалить connector config по ``name``."""
+        ...
 
-    async def ensure_indexes(self) -> None: ...
+    async def ensure_indexes(self) -> None:
+        """Создать MongoDB indexes (idempotent)."""
+        ...
