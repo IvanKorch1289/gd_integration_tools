@@ -227,6 +227,7 @@ class ClickProcessor(BaseProcessor):
         self._timeout_ms = int(timeout * 1000)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: browser click по selector."""
         try:
             page = _get_or_create_page(exchange)
             await page.click(self._selector, timeout=self._timeout_ms)
@@ -246,6 +247,7 @@ class FillProcessor(BaseProcessor):
         self._value = value
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: fill form fields."""
         try:
             page = _get_or_create_page(exchange)
             await page.fill(self._selector, self._value)
@@ -280,6 +282,7 @@ class ExtractProcessor(BaseProcessor):
         self._to = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: extract text/data from page."""
         try:
             page = _get_or_create_page(exchange)
             element = await page.query_selector(self._selector)
@@ -346,6 +349,7 @@ class WaitForProcessor(BaseProcessor):
         self._timeout_ms = int(timeout * 1000)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: WaitForProcessor browser automation."""
         try:
             page = _get_or_create_page(exchange)
             if self._selector is not None:
@@ -425,6 +429,7 @@ class PdfProcessor(BaseProcessor):
         self._to = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: PdfProcessor browser automation."""
         try:
             page = _get_or_create_page(exchange)
             kwargs: dict[str, Any] = {
