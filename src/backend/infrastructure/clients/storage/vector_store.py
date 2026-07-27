@@ -463,6 +463,7 @@ class FAISSVectorStore(BaseVectorStore):
         ids: list[str],
         metadatas: list[dict[str, Any]] | None = None,
     ) -> None:
+        """Insert or update vectors + documents + metadata."""
         import numpy as np
 
         index = self._ensure_index()
@@ -509,15 +510,18 @@ class FAISSVectorStore(BaseVectorStore):
         return results
 
     async def delete(self, ids: list[str]) -> None:
+        """Delete vectors по списку ``ids``."""
         for doc_id in ids:
             self._id_map.pop(doc_id, None)
             self._docs.pop(doc_id, None)
             self._metas.pop(doc_id, None)
 
     async def count(self) -> int:
+        """Общее количество vectors в collection."""
         return len(self._docs)
 
     async def delete_where(self, where: dict[str, Any]) -> int:
+        """Delete vectors matching ``where`` filter; вернуть count удалённых."""
         to_remove = [
             doc_id
             for doc_id, meta in self._metas.items()
@@ -530,6 +534,7 @@ class FAISSVectorStore(BaseVectorStore):
         return len(to_remove)
 
     async def count_where(self, where: dict[str, Any]) -> int:
+        """Count vectors matching ``where`` filter."""
         return sum(
             1
             for meta in self._metas.values()
