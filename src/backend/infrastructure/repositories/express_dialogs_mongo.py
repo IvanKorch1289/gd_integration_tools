@@ -45,6 +45,7 @@ class MongoExpressDialogStore:
         return self._client_factory()
 
     async def ensure_indexes(self) -> None:
+        """Создать MongoDB indexes (idempotent)."""
         try:
             collection = self._client().collection(_COLLECTION)
             await collection.create_index(
@@ -121,12 +122,14 @@ class MongoExpressDialogStore:
             )
 
     async def get_by_session(self, session_id: str) -> ExpressDialog | None:
+        """Получить dialog по session_id."""
         doc = await self._client().find_one(_COLLECTION, {"_id": session_id})
         return _doc_to_dialog(doc) if doc else None
 
     async def list_by_chat(
         self, group_chat_id: str, limit: int = 100
     ) -> list[ExpressDialog]:
+        """Список dialogs в group_chat (с pagination)."""
         docs = await self._client().find(
             _COLLECTION,
             query={"group_chat_id": group_chat_id},
@@ -138,6 +141,7 @@ class MongoExpressDialogStore:
     async def update_context(
         self, session_id: str, context_delta: dict[str, Any]
     ) -> None:
+        """Обновить context (merge delta в existing dict)."""
         if not context_delta:
             return
         update = {f"context.{k}": v for k, v in context_delta.items()}
