@@ -66,6 +66,7 @@ class DataQualityMonitor(RuleManagementMixin, CheckMixin, SchemaMixin, ApplyMixi
 
 # --- Top-level re-exports (S55 W4 decomp: preserve original public surface) ---
 class DQSeverity(str, Enum):
+    """Severity enum (INFO / WARNING / ERROR / CRITICAL)."""
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -74,6 +75,7 @@ class DQSeverity(str, Enum):
 
 @dataclass
 class DQViolation:
+    """Single data-quality violation (field, severity, message)."""
     rule: str
     field: str
     severity: DQSeverity
@@ -115,6 +117,7 @@ class DQRemediationResult:
 
     @property
     def is_clean(self) -> bool:
+        """True если нет violations (severity >= ERROR)."""
         return len(self.violations) == 0
 
 
