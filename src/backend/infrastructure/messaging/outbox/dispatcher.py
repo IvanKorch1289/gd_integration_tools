@@ -78,6 +78,13 @@ class _BackendDLQHandler:
 
     Вызывает ``backend.enqueue`` с обновлённым event (status=DLQ,
     error_class/error_message заполнены из ``reason``).
+
+    M5 note: ``backend.enqueue`` пишет в **ту же** outbox-таблицу
+    (status=``"dlq"`` фильтр). Для физически отдельной DLQ-таблицы
+    (требующей schema migration) подмените ``dlq`` в :class:`OutboxDispatcher`
+    на кастомный :class:`DLQHandler`, который пишет, например, в
+    :class:`src.backend.infrastructure.messaging.dlq.inbox_writer.InboxDLQWriter`
+    (``dlq_inbox`` table) — см. ``OutboxDispatcher(..., dlq=custom)``.
     """
 
     def __init__(self, backend: OutboxBackend) -> None:

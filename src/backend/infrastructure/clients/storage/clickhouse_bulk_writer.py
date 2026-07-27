@@ -48,6 +48,9 @@ class BulkWriterStats:
         rows_flushed: накопленное число успешно сохранённых строк.
         flush_count: число успешных flush'ей.
         flush_failures: число ошибок flush'а (попадают в DLQ).
+        rows_lost: M5.3 — накопленное число строк, потерянных
+            (callback raise + requeue fail). Мониторим через
+            prometheus; >0 → алёрт.
         last_flush_at: timestamp последнего flush'а (UTC seconds).
     """
 
@@ -56,6 +59,9 @@ class BulkWriterStats:
         self.rows_flushed = 0
         self.flush_count = 0
         self.flush_failures = 0
+        # M5.3: track permanently-failed rows separately from
+        # ``flush_failures`` (which counts ATTEMPTS, not rows).
+        self.rows_lost = 0
         self.last_flush_at: float | None = None
 
 
@@ -178,10 +184,16 @@ class ClickHouseBulkWriter:
                         for row in batch:
                             await self._queue.put(row)
                     except Exception as requeue_exc:
+                        # M5.3: track permanently-failed rows in metrics.
+                        # Pre-M5: только ERROR-лог (трудно алёртить).
+                        # Post-M5: ``self.stats.rows_lost`` мониторим через
+                        # Prometheus; >0 → алёрт в Grafana.
+                        self.stats.rows_lost += len(batch)
                         logger.error(
                             "clickhouse_bulk.REQUEUE_FAILED: %d rows "
-                            "POTENTIALLY LOST (callback=%s, requeue=%s)",
-                            len(batch), cb_exc, requeue_exc,
+                            "PERMANENTLY LOST (callback=%s, requeue=%s, "
+                            "table=%s)",
+                            len(batch), cb_exc, requeue_exc, self._table,
                         )
             return 0
 
