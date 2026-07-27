@@ -36,6 +36,7 @@ logger = get_logger(__name__)
 
 @dataclass(slots=True)
 class ServiceMeta:
+    """Service metadata dataclass (name, version, capabilities)."""
     name: str
     service_cls: type
     service_getter: Callable
@@ -53,6 +54,7 @@ class ServiceDSLRegistry:
         self._services: dict[str, ServiceMeta] = {}
 
     def register(self, meta: ServiceMeta) -> None:
+        """Зарегистрировать service ``meta`` в registry."""
         self._services[meta.name] = meta
         logger.info(
             "ServiceDSL registered: %s (%d methods, protocols=%s)",
@@ -62,9 +64,11 @@ class ServiceDSLRegistry:
         )
 
     def list_services(self) -> list[ServiceMeta]:
+        """Список всех зарегистрированных services."""
         return list(self._services.values())
 
     def get(self, name: str) -> ServiceMeta | None:
+        """Получить service metadata по ``name``; None если не найдено."""
         return self._services.get(name)
 
     def register_all_actions(self) -> None:
