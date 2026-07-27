@@ -23,11 +23,11 @@
 
 | Source | Gap | Workaround | Sprint |
 |---|---|---|---|
-| Generic `EventBus.subscribe` (без reply-to) | Нет DSL-шага для подписки на произвольный канал EventBus и yielding events в pipeline. | Использовать `cdc_capture` (если события из CDC) или `email_trigger` (если email). Для cross-route: publish в dedicated MQ-канал + `mq_source`. | Future: DSL `event_subscribe: { channel: "events.orders" }` step. |
+| Generic `EventBus.subscribe` (без reply-to) | ✅ **FW2 DONE** — `RouteBuilder.from_event_subscribe(channel, consumer_group=None, filter=None)`. | Использовать новый builder. | FW2 |
 | Browser events (DOM event listener → DSL) | `rpa_browser.py` покрывает RPA-автоматизацию, но не real-time browser events. | RPA use case: `.rpa_browser(selector=, event=)`. | Future: dedicated browser-event channel. |
 | OCR events | `rpa_ocr` покрывает batch OCR, но не streaming OCR. | Batch mode через `rpa_ocr` + downstream NLP. | Future. |
 | Webhook subscription management | `webhook_signature` валидирует, но не управляет подписками. | `webhook_source` registration через `ConnectorRegistry`. | Done. |
-| EventBus filter (consumer-group pattern) | Нет DSL-шага для selective subscription (consumer group + filter). | `cdc_capture` с table filter. | Future. |
+| EventBus filter (consumer-group pattern) | ✅ **FW2 PARTIAL** — `filter` callable сохраняется в ``_source_config`` для runtime-фильтрации. | FW2 builder supports per-route filter. | FW2 |
 
 ## Как добавить новый event source
 

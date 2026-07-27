@@ -28,6 +28,9 @@ logger = get_logger(__name__)
 from src.backend.dsl.builders.sources_mixin.cdc_sources_mixin import (
     CdcSourcesMixin,  # S57 W2: MRO
 )
+from src.backend.dsl.builders.sources_mixin.event_sources_mixin import (
+    EventSourcesMixin,  # FW2: generic EventBus subscription
+)
 from src.backend.dsl.builders.sources_mixin.external_sources_mixin import (
     ExternalSourcesMixin,  # S132 W4: gRPC stream (TD-011 partial)
 )
@@ -70,7 +73,8 @@ class SourcesMixin(
     ScheduleSourcesMixin,
     TelegramSourcesMixin,  # S97 W4: Telegram Bot
     ExternalSourcesMixin,  # S132 W4: NATS/Mongo/gRPC (TD-011)
+    EventSourcesMixin,  # FW2: generic EventBus
 ):
-    """Sources mixin (10 mixins = 14 methods)."""
+    """Sources mixin (11 mixins = 15 methods)."""
 
     __slots__ = ()
