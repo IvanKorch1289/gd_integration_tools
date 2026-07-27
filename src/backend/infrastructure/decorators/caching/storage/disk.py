@@ -107,6 +107,7 @@ class DiskTTLCache:
         self._cache.close()
 
     async def get(self, key: str, renew_ttl: bool = False) -> CacheEnvelope | None:
+        """Получить cache entry; опц. обновить TTL при чтении (``renew_ttl=True``)."""
         envelope = await asyncio.to_thread(self._get_sync, key)
 
         if (
@@ -126,15 +127,19 @@ class DiskTTLCache:
         ttl_seconds: int | None,
         stale_if_error_seconds: int = 0,
     ) -> None:
+        """Сохранить ``value`` с TTL + опц. stale_if_error."""
         await asyncio.to_thread(
             self._set_sync, key, value, ttl_seconds, stale_if_error_seconds
         )
 
     async def delete(self, *keys: str) -> None:
+        """Удалить один или несколько ключей."""
         await asyncio.to_thread(self._delete_sync, *keys)
 
     async def delete_pattern(self, pattern: str) -> None:
+        """Удалить все ключи matching pattern (Redis SCAN-style)."""
         await asyncio.to_thread(self._delete_pattern_sync, pattern)
 
     async def close(self) -> None:
+        """Закрыть cache backend (graceful shutdown)."""
         await asyncio.to_thread(self._close_sync)
