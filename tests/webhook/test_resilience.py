@@ -47,6 +47,29 @@ def _enable_flags(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
+def _allow_webhook_capability(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Allow only this fixture's connector call; production auth stays fail-closed."""
+    from src.backend.services.authorization.facade import AuthDecision
+
+    class _AllowWebhook:
+        async def check_principal(self, **kwargs: Any) -> AuthDecision:
+            return AuthDecision(
+                allowed=True,
+                method="test_fixture",
+                subject="webhook-test",
+                tenant_id=None,
+                scopes=("webhook.write",),
+                reason="fixture allow",
+                audit_id="",
+            )
+
+    monkeypatch.setattr(
+        "src.backend.services.authorization.facade.get_authorization_facade",
+        lambda: _AllowWebhook(),
+    )
+
+
+@pytest.fixture(autouse=True)
 def _reset_policy() -> None:
     """Reset module-level RPACallPolicy singleton."""
     set_rpa_policy(None)

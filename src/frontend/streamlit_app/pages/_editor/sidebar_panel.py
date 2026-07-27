@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.frontend.streamlit_app.pages._editor.constants import default_yaml
 from src.frontend.streamlit_app.pages._editor.history import (
     can_redo,
     can_undo,
@@ -49,7 +50,6 @@ def render_editor_sidebar(client) -> None:
         else:
             st.error("Не удалось загрузить маршрут")
     if cols[1].button("Новый", width='stretch'):
-        from src.frontend.streamlit_app.pages._editor.yaml_sync import default_yaml
         st.session_state.yaml = default_yaml()
         st.session_state.last_load_route = None
         st.rerun()
@@ -82,9 +82,6 @@ def render_editor_sidebar(client) -> None:
         ):
             if client.delete_dsl_route(st.session_state.last_load_route):
                 st.success(f"Удалён {st.session_state.last_load_route!r}")
-                from src.frontend.streamlit_app.pages._editor.yaml_sync import (
-                    default_yaml,
-                )
                 st.session_state.yaml = default_yaml()
                 st.session_state.last_load_route = None
                 st.rerun()

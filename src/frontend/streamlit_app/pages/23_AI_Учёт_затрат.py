@@ -12,7 +12,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Mapping
+from typing import Any, Protocol, runtime_checkable
 
 import streamlit as st
 
@@ -22,6 +23,34 @@ from src.frontend.streamlit_app.shared.components import (
 )
 from src.frontend.streamlit_app.shared.streamlit_config import config
 
+
+@runtime_checkable
+class _SnapshotSerializable(Protocol):
+    """Legacy in-process snapshot object returned by the current facade."""
+
+    def to_dict(self) -> object: ...
+
+
+def _snapshot_to_dict(snapshot: object) -> dict[str, Any]:
+    """Accept both REST mappings and the facade's legacy snapshot object."""
+    if isinstance(snapshot, Mapping):
+        payload = snapshot
+    elif isinstance(snapshot, _SnapshotSerializable):
+        payload = snapshot.to_dict()
+    else:
+        raise TypeError("AI cost snapshot must be a mapping or expose to_dict()")
+
+    if not isinstance(payload, Mapping):
+        raise TypeError("AI cost snapshot to_dict() must return a mapping")
+
+    result: dict[str, Any] = {}
+    for key, value in payload.items():
+        if not isinstance(key, str):
+            raise TypeError("AI cost snapshot keys must be strings")
+        result[key] = value
+    return result
+
+
 try:
     from src.frontend.streamlit_app.utils.api_client import api_get  # type: ignore[import-not-found]  # noqa: I001
 except Exception:  # noqa: BLE001
@@ -30,6 +59,7 @@ except Exception:  # noqa: BLE001
         import os
 
         import httpx
+
         base_url = os.environ.get("API_BASE_URL", "http://localhost:8000")
         with httpx.Client(timeout=config.HTTP_TIMEOUT_SEC) as client:
             resp = client.get(f"{base_url}/api/v1{path}", params=params)
@@ -49,9 +79,16 @@ st.caption(
 with st.sidebar:
     st.header("Фильтры")
     window_hours = st.selectbox("Окно (часы)", [1, 6, 24, 72, 168], index=2)
-    tenant_filter = st.text_input("ID тенанта", value="", key="ai_cost_id_1").strip() or None
-    model_filter = st.text_input("Содержит модель", value="", key="ai_cost_text_2").strip() or None
-    pipeline_filter = st.text_input("Содержит pipeline", value="", key="ai_cost_pipeline_3").strip() or None
+    tenant_filter = (
+        st.text_input("ID тенанта", value="", key="ai_cost_id_1").strip() or None
+    )
+    model_filter = (
+        st.text_input("Содержит модель", value="", key="ai_cost_text_2").strip() or None
+    )
+    pipeline_filter = (
+        st.text_input("Содержит pipeline", value="", key="ai_cost_pipeline_3").strip()
+        or None
+    )
     top_n = st.slider("Топ N", min_value=5, max_value=100, value=20)
 
 
@@ -82,18 +119,18 @@ def _fallback_snapshot(window_hours: int) -> dict[str, Any]:
     не подключён (R2 admin facade) или backend недоступен.
     """
     try:
-        # S6 fix: используем dsl_portal facade вместо прямого импорта
-        # ``src.backend.services.ai.costs`` (R3.10d).
+        # The facade is annotated as a mapping but currently may forward the
+        # DashboardSnapshot object. Keep both response shapes runtime-safe.
         from src.backend.core.frontend_facade import get_ai_cost_snapshot
 
-        snap = get_ai_cost_snapshot(
+        snapshot: object = get_ai_cost_snapshot(
             window_hours=window_hours,
             tenant_id=tenant_filter,
             model_filter=model_filter,
             pipeline_filter=pipeline_filter,
             top_n=top_n,
         )
-        return snap.to_dict()
+        return _snapshot_to_dict(snapshot)
     except Exception as exc:  # noqa: BLE001
         return {"backend": "error", "error": str(exc)}
 
@@ -110,7 +147,6 @@ backend = data.get("backend") or "unknown"
 if backend == "disabled":
     st.warning(
         "Dashboard disabled — включите feature_flag "
-
         "FEATURE_AI_COST_DASHBOARD_STRICT=true."
     )
 elif backend == "error":

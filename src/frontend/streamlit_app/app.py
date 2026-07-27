@@ -18,6 +18,7 @@ S172 → S173 миграция:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import streamlit as st
 
@@ -28,6 +29,10 @@ from src.frontend.streamlit_app.api_clients import (
 )
 from src.frontend.streamlit_app.shared.auth_state import is_authenticated
 from src.frontend.streamlit_app.shared.page_registry import PAGE_METADATA
+
+# Streamlit exposes Page/navigation as factories but no public result type in
+# the installed stubs; Any keeps annotations honest without changing runtime.
+StreamlitPage = Any
 
 _project_root = Path(__file__).resolve().parents[3]
 
@@ -117,7 +122,7 @@ def _render_dashboard_sidebar() -> None:
 def render_dashboard() -> None:
     """Главная: KPI + Health + login CTA + onboarding tips.
 
-    Вызывается как ``st.Page`` callback (см. ``_build_navigation``).
+    Вызывается как ``StreamlitPage`` callback (см. ``_build_navigation``).
     Streamlit передаёт сюда rerun-state автоматически.
 
     S173 M8.1: render-telemetry — structured audit-event при page render.
@@ -274,7 +279,7 @@ NAV_SECTIONS: dict[str, list[str]] = {
 }
 
 
-def _build_navigation() -> st.navigation:
+def _build_navigation() -> StreamlitPage:
     """Собрать sections dict и вернуть ``st.navigation``.
 
     Missing page-keys логируются в stderr (НЕ крашат boot — fallback to flat).
@@ -285,7 +290,7 @@ def _build_navigation() -> st.navigation:
     import time
 
     bootstrap_start = time.monotonic()
-    pages_by_section: dict[str, list[st.Page]] = {}
+    pages_by_section: dict[str, list[StreamlitPage]] = {}
 
     # Dashboard — default
     pages_by_section["🏠 Главная"] = [
@@ -296,7 +301,7 @@ def _build_navigation() -> st.navigation:
 
     missing: list[str] = []
     for section_name, page_keys in NAV_SECTIONS.items():
-        section_pages: list[st.Page] = []
+        section_pages: list[StreamlitPage] = []
         for key in page_keys:
             meta = PAGE_METADATA.get(key)
             if meta is None:

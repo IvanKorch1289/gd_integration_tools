@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import Protocol, cast
 
 import streamlit as st
 
@@ -19,6 +20,30 @@ from src.frontend.streamlit_app.shared.components import (
     setup_page,
 )
 
+
+class _WhooshHit(Protocol):
+    """Search-hit fields rendered by this page."""
+
+    title: str
+    path: str
+    score: float
+    snippet: str
+
+
+class _WhooshIndex(Protocol):
+    """Structural API used from the optional Whoosh implementation."""
+
+    def build(self, force: bool = False) -> int: ...
+    def search(
+        self, query: str, top: int = 20, *, category: str | None = None
+    ) -> list[_WhooshHit]: ...
+    def doc_count(self) -> int: ...
+
+
+class _WhooshIndexFactory(Protocol):
+    def __call__(self) -> _WhooshIndex: ...
+
+
 setup_page()
 st.title("Wiki — поиск по документации")
 
@@ -26,7 +51,10 @@ st.title("Wiki — поиск по документации")
 # S6 fix: facade import через dsl_portal (R3.10d / S36).
 from src.backend.core.frontend_facade import get_whoosh_index  # noqa: E402
 
-_WhooshIndex = get_whoosh_index()
+# The facade deliberately returns ``Any`` to keep optional Whoosh imports lazy;
+# narrow only the callable surface consumed by this page instead of ignoring mypy.
+_whoosh_index_factory = cast(_WhooshIndexFactory, get_whoosh_index())
+
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 _DSL_DIR = _REPO_ROOT / "docs" / "dsl"
 
@@ -34,7 +62,7 @@ _DSL_DIR = _REPO_ROOT / "docs" / "dsl"
 @st.cache_resource(show_spinner=False)
 def _get_index() -> _WhooshIndex:
     """Создаёт/открывает WhooshIndex; сборка на первом обращении."""
-    idx = _WhooshIndex()
+    idx = _whoosh_index_factory()
     idx.build(force=False)
     return idx
 
@@ -73,6 +101,7 @@ if query:
             # Тем не менее, sanitize HTML перед render: strip <script>, on-*,
             # javascript: URLs. Markdown-разметка (**, ```) сохраняется.
             import html
+
             safe = html.escape(h.snippet, quote=False)
             # Restore escaped markdown markers (теряются при html.escape)
             for marker in ("**", "`", "\n- ", "\n# "):

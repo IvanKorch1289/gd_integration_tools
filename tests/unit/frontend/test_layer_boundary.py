@@ -20,6 +20,8 @@ import os
 import re
 import tomllib
 
+import pytest
+
 
 class TestFrontendNoUpperLayerImports:
     """Frontend must not import directly from upper layers."""
@@ -49,8 +51,8 @@ class TestFrontendNoUpperLayerImports:
                     content = fp.read()
                 # Strip docstrings/comments
                 lines = [
-                    l for l in content.split("\n")
-                    if not l.strip().startswith(("#", '"', "'", "*"))
+                    line for line in content.split("\n")
+                    if not line.strip().startswith(("#", '"', "'", "*"))
                 ]
                 code = "\n".join(lines)
                 for mod in self.FORBIDDEN_TOP_LEVELS:
@@ -127,7 +129,11 @@ class TestBoundaryConsistency:
     """frontend/core/services/infrastructure все следуют boundary rules."""
 
     def test_frontend_layer_is_core_api_only(self):
-        """Frontend imports only from src.frontend.* + src.backend.core.api."""
+        """Frontend imports only from src.frontend.* + src.backend.core.api.
+
+        Ловит обе формы: ``from src.backend.X import ...`` и
+        ``import src.backend.X``.
+        """
         violations = []
         for root, _, files in os.walk("src/frontend/streamlit_app"):
             if "__pycache__" in root:
@@ -138,8 +144,10 @@ class TestBoundaryConsistency:
                 p = os.path.join(root, f)
                 with open(p) as fp:
                     content = fp.read()
-                # Find all src.backend.* imports
-                matches = re.findall(r"from (src\.backend\.[\w\.]+)", content)
+                # Unified: catches both 'from' and 'import' styles.
+                matches = re.findall(
+                    r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content
+                )
                 for mod in matches:
                     if mod == "src.backend.core.api":
                         continue  # allowed facade
@@ -150,3 +158,118 @@ class TestBoundaryConsistency:
         # Note: 39 imports via frontend_facade (allowed); 0 violations
         # because all frontend imports go through allowed facades
         assert not violations, f"Frontend violations: {violations[:5]}"
+
+
+# P1 S172 W2: ratchet for thin API-client boundary.
+# api_clients/ имеет особенно строгий контракт: только HTTP-клиенты,
+# facade-импорты (frontend_facade / core.api) и api-stdlib. Любой import
+# который обходит facade → немедленная blocking-failure.
+class TestApiClientsBoundaryRatchet:
+    """Architecture ratchet (P1 S172 W2): api_clients/ imports only via approved facade."""
+
+    ALLOWED_FACADES = frozenset(
+        {
+            "src.backend.core.api",
+            "src.backend.core.frontend_facade",
+        }
+    )
+
+    def test_api_clients_only_use_facade(self):
+        """api_clients/*.py must import only from approved facades.
+
+        Ловит обе формы: ``from src.backend.X import ...`` и
+        ``import src.backend.X``.
+        """
+        import os
+
+        api_dir = "src/frontend/streamlit_app/api_clients"
+        if not os.path.isdir(api_dir):
+            pytest.skip("api_clients directory not found")
+
+        violations: list[tuple[str, str]] = []
+        for f in sorted(os.listdir(api_dir)):
+            if not f.endswith(".py") or f.startswith("_") or f == "__init__.py":
+                continue
+            p = os.path.join(api_dir, f)
+            with open(p) as fp:
+                content = fp.read()
+            # Unified: catches both 'from' and 'import' styles.
+            matches = re.findall(
+                r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content
+            )
+            for mod in matches:
+                if mod in self.ALLOWED_FACADES:
+                    continue
+                if mod.startswith("src.backend.core.frontend_facade"):
+                    continue
+                if mod.startswith("src.backend.core.api"):
+                    continue
+                violations.append((p, mod))
+
+        assert not violations, (
+            f"api_clients/ имеет {len(violations)} обходных импортов: "
+            f"{violations[:5]} "
+            f"(Approved: {sorted(self.ALLOWED_FACADES)})"
+        )
+
+    def test_no_bare_src_backend_infrastructure_in_frontend(self):
+        """Top-level запрет: ни один файл во frontend не импортирует напрямую infrastructure."""
+        import os
+
+        violations: list[tuple[str, str]] = []
+        for root, _, files in os.walk("src/frontend/streamlit_app"):
+            if "__pycache__" in root:
+                continue
+            for f in files:
+                if not f.endswith(".py"):
+                    continue
+                p = os.path.join(root, f)
+                with open(p) as fp:
+                    content = fp.read()
+                forbidden = [
+                    "src.backend.infrastructure",
+                    "src.backend.services",
+                    "src.backend.dsl",
+                    "src.backend.entrypoints",
+                    "src.backend.workflow",
+                ]
+                for forbidden_mod in forbidden:
+                    pattern = re.compile(
+                        rf"from {re.escape(forbidden_mod)}"
+                        r"[\.\w]*|"
+                        rf"import {re.escape(forbidden_mod)}"
+                    )
+                    if pattern.search(content):
+                        violations.append((p, forbidden_mod))
+        assert not violations, (
+            f"Frontend => upper-layer нарушений: {len(violations)}; "
+            f"sample: {violations[:5]}"
+        )
+
+    def test_ratchet_command_present(self):
+        """CI command доступен через `make arch-ratchet` (P1 S172 W2)."""
+        # Target определён в make/quality.mk (sub-make), но также зарегистрирован
+        # в root Makefile PHONY list.
+        with open("Makefile") as f:
+            mf_content = f.read()
+        with open("make/quality.mk") as f:
+            qm_content = f.read()
+        assert "arch-ratchet" in mf_content, (
+            "Makefile PHONY list contains 'arch-ratchet' — expected"
+        )
+        assert "arch-ratchet:" in qm_content, (
+            "make/quality.mk target 'arch-ratchet:' missing — добавь documented CI command"
+        )
+
+
+def test_frontend_ratchet_documented_in_make_quality() -> None:
+    """P1 S172 W2: Makefile `arch-ratchet` определён и использует pytest."""
+    with open("make/quality.mk") as f:
+        content = f.read()
+    assert "arch-ratchet:" in content, (
+        "make/quality.mk target 'arch-ratchet' missing — добавь documented CI command"
+    )
+    # Должен запускать тесты ratchet.
+    assert "test_layer_boundary" in content or "test_arch_ratchet" in content, (
+        "make/quality.mk 'arch-ratchet' не вызывает ratchet-тесты"
+    )

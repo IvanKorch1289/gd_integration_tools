@@ -48,6 +48,10 @@ __all__ = [
     "run_hub_notebook",
     "NotebookSpec",
     "NotebookRegistry",
+    # Composition-bound extension API (S172 P1).
+    "get_scheduler_provider",
+    "SchedulerManager",
+    "WorkflowBuilder",
     # AI Tool Policy (S170 P0-7)
     "AgentToolPolicy",
 ]
@@ -86,6 +90,20 @@ def __getattr__(name: str):
         from src.backend.ai.policy import AgentToolPolicy
 
         return AgentToolPolicy
+    if name == "get_scheduler_provider":
+        from src.backend.core.di.providers.scheduler import get_scheduler_provider
+
+        return get_scheduler_provider
+    if name == "SchedulerManager":
+        from src.backend.infrastructure.scheduler.scheduler_manager import (
+            SchedulerManager,
+        )
+
+        return SchedulerManager
+    if name == "WorkflowBuilder":
+        from src.backend.dsl.workflow.builder import WorkflowBuilder
+
+        return WorkflowBuilder
     # S172 M3 ARC-006 — Extension DI infrastructure-module registry.
     if name == "register_infra_module":
         from src.backend.core.di.module_registry import register_extension_module

@@ -5,6 +5,7 @@ from __future__ import annotations
 from src.frontend.streamlit_app.shared.components import (
     dataframe_view,
     metric_row,
+    related_pages_footer,
     setup_page,
 )
 from src.frontend.streamlit_app.shared.constants import (
@@ -37,6 +38,7 @@ __all__ = [
     "setup_page",
     "metric_row",
     "dataframe_view",
+    "related_pages_footer",
     # Sprint 43 W2 (TD-008 Group 3)
     "text_search",
     "multiselect_filter",

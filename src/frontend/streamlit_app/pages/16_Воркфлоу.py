@@ -22,7 +22,11 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
-from src.frontend.streamlit_app.shared import metric_row, related_pages_footer, setup_page
+from src.frontend.streamlit_app.shared import (
+    metric_row,
+    related_pages_footer,
+    setup_page,
+)
 from src.frontend.streamlit_app.shared.audit_event_lite import emit_streamlit_page_event
 from src.frontend.streamlit_app.shared.streamlit_config import config
 

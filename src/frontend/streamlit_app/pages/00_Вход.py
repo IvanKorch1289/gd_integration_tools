@@ -14,7 +14,8 @@ Streamlit auto-discovers ``00_*.py`` файлы в ``pages/`` и сортиру�
 
 from __future__ import annotations
 
-from typing import Literal
+from collections.abc import Mapping
+from typing import Literal, TypedDict
 
 import httpx
 import streamlit as st
@@ -22,28 +23,80 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients.auth import AuthClient
 from src.frontend.streamlit_app.shared import auth_state
 
-_LOGIN_METHOD_LABELS: dict[str, str] = {
+LoginMethod = Literal["password", "ldap"]
+
+
+class _AuthMethodsInfo(TypedDict):
+    """Validated auth response fields consumed by the login UI."""
+
+    methods: list[LoginMethod]
+    deprecations: dict[str, str]
+
+
+_LOGIN_METHOD_LABELS: dict[LoginMethod, str] = {
     "password": "Логин / пароль",
     "ldap": "LDAP / AD",
 }
 
 
-def _fetch_methods(client: AuthClient) -> dict[str, object]:
+def _default_auth_methods() -> _AuthMethodsInfo:
+    return {"methods": ["password"], "deprecations": {}}
+
+
+def _normalize_auth_methods(payload: object) -> _AuthMethodsInfo:
+    """Validate the untrusted API mapping before the UI accesses its values."""
+    if not isinstance(payload, Mapping):
+        st.warning(
+            "Backend вернул некорректный список auth-методов. "
+            "Используется безопасный fallback: password."
+        )
+        return _default_auth_methods()
+
+    raw_methods = payload.get("methods")
+    if not isinstance(raw_methods, list):
+        st.warning(
+            "Backend вернул некорректное поле methods. "
+            "Используется безопасный fallback: password."
+        )
+        return _default_auth_methods()
+
+    methods: list[LoginMethod] = []
+    for method in raw_methods:
+        if method == "password":
+            methods.append("password")
+        elif method == "ldap":
+            methods.append("ldap")
+
+    if not methods:
+        st.warning(
+            "Backend не вернул поддерживаемых auth-методов. "
+            "Используется безопасный fallback: password."
+        )
+        return _default_auth_methods()
+
+    deprecations: dict[str, str] = {}
+    raw_deprecations = payload.get("deprecations")
+    if isinstance(raw_deprecations, Mapping):
+        for method in methods:
+            note = raw_deprecations.get(method)
+            if isinstance(note, str):
+                deprecations[method] = note
+    elif raw_deprecations is not None:
+        st.warning("Backend вернул некорректные deprecations; поле проигнорировано.")
+
+    return {"methods": methods, "deprecations": deprecations}
+
+
+def _fetch_methods(client: AuthClient) -> _AuthMethodsInfo:
     """``GET /auth/methods`` с fallback на defaults при недоступности backend."""
     try:
-        return client.get_methods()  # type: ignore[no-any-return]
+        return _normalize_auth_methods(client.get_methods())
     except (httpx.ConnectError, httpx.HTTPError) as exc:
         st.warning(
             f"Не удалось получить список auth-методов: {exc}. "
             "Используются defaults (только password)."
         )
-        return {
-            "methods": ["password"],
-            "ldap_enabled": False,
-            "password_enabled": True,
-            "default_method": "password",
-            "deprecations": {},
-        }
+        return _default_auth_methods()
 
 
 def render_login() -> None:
@@ -65,26 +118,22 @@ def render_login() -> None:
 
     client = AuthClient()
     methods_info = _fetch_methods(client)
-    available_methods: list[str] = methods_info.get("methods", ["password"])  # type: ignore[assignment]
-    methods_info.get("default_method", "password")  # type: ignore[assignment]
+    available_methods = methods_info["methods"]
+    deprecations = methods_info["deprecations"]
 
     # UI: tabs если несколько methods, иначе одна форма
     if len(available_methods) > 1:
-        tab_labels = [_LOGIN_METHOD_LABELS.get(m, m) for m in available_methods]
+        tab_labels = [_LOGIN_METHOD_LABELS[method] for method in available_methods]
         tabs = st.tabs(tab_labels)
         for tab, method in zip(tabs, available_methods, strict=True):
             with tab:
                 _render_login_form(
-                    client,
-                    method=method,  # type: ignore[arg-type]
-                    deprecation_note=methods_info.get("deprecations", {}).get(method),  # type: ignore[union-attr]
+                    client, method=method, deprecation_note=deprecations.get(method)
                 )
     else:
-        method = available_methods[0] if available_methods else "password"
+        method = available_methods[0]
         _render_login_form(
-            client,
-            method=method,  # type: ignore[arg-type]
-            deprecation_note=methods_info.get("deprecations", {}).get(method),  # type: ignore[union-attr]
+            client, method=method, deprecation_note=deprecations.get(method)
         )
 
     st.divider()
@@ -139,7 +188,7 @@ def _render_login_form(
             submit = st.form_submit_button(
                 _LOGIN_METHOD_LABELS.get(method, method),
                 type="primary",
-                width='stretch',
+                width="stretch",
             )
         with col_extra:
             if method == "password":
@@ -151,18 +200,12 @@ def _render_login_form(
                 # S174 M9.4: failed-submission telemetry (security
                 # observability — repeated empty-submits могут указывать
                 # на credential-stuffing).
-                _emit_login_submit_event(
-                    outcome="empty",
-                    method=method,
-                )
+                _emit_login_submit_event(outcome="empty", method=method)
                 return
             try:
                 auth_state.login(username=username, password=password, method=method)
                 st.success("Вход выполнен!")
-                _emit_login_submit_event(
-                    outcome="success",
-                    method=method,
-                )
+                _emit_login_submit_event(outcome="success", method=method)
                 st.rerun()
             except PermissionError as exc:
                 st.error(
@@ -170,24 +213,14 @@ def _render_login_form(
                 )
                 st.caption(f"Backend: {exc}")
                 # S174 M9.4: auth-failure telemetry (security).
-                _emit_login_submit_event(
-                    outcome="auth_failure",
-                    method=method,
-                )
+                _emit_login_submit_event(outcome="auth_failure", method=method)
             except httpx.HTTPError as exc:
                 st.error(f"Ошибка соединения с сервером: {exc}")
-                _emit_login_submit_event(
-                    outcome="connection_error",
-                    method=method,
-                )
+                _emit_login_submit_event(outcome="connection_error", method=method)
 
 
 # S174 M9.4: login-submit audit-event helper.
-def _emit_login_submit_event(
-    *,
-    outcome: str,
-    method: str,
-) -> None:
+def _emit_login_submit_event(*, outcome: str, method: str) -> None:
     """Emit ``frontend.auth.login_submit`` audit-event.
 
     Args:

@@ -97,8 +97,8 @@ def test_get_ad_client_caches_instance() -> None:
     with (
         patch.object(ldap_module, "ldap_settings", mock_settings),
         patch(
-            "src.backend.core.auth.ldap_client_factory.AdDirectoryClient",
-            return_value=mock_client,
+            "src.backend.core.di.providers.auth.get_ad_directory_client_provider",
+            return_value=MagicMock(return_value=mock_client),
         ),
     ):
         first = ldap_client_factory.get_ad_client()
@@ -398,8 +398,8 @@ def test_auth_methods_with_ldap_enabled(client: TestClient) -> None:
     with (
         patch.object(ldap_module, "ldap_settings", mock_settings),
         patch(
-            "src.backend.core.auth.ldap_client_factory.AdDirectoryClient",
-            return_value=mock_client,
+            "src.backend.core.di.providers.auth.get_ad_directory_client_provider",
+            return_value=MagicMock(return_value=mock_client),
         ),
     ):
         r = client.get("/api/v1/auth/methods")
