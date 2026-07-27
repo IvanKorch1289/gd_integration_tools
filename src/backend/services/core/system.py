@@ -45,6 +45,7 @@ class SystemService:
 
     @property
     def tech(self) -> Any:
+        """Вернуть singleton tech-user context (admin bypass для system)."""
         if self._tech is None:
             from src.backend.services.core.tech import get_tech_service
 
@@ -53,6 +54,7 @@ class SystemService:
 
     @property
     def admin(self) -> Any:
+        """Вернуть singleton admin context (все capabilities)."""
         if self._admin is None:
             from src.backend.services.core.admin import get_admin_service
 
@@ -103,6 +105,7 @@ class SystemService:
     # ── Cache Management (Redis) ────────────────────────────
 
     async def list_cache_keys(self, pattern: str = "*") -> list[str]:
+        """Список cache keys matching ``pattern`` (default ``*``)."""
         return await self.admin.list_cache_keys(pattern=pattern)
 
     async def invalidate_cache(self, pattern: str = "*") -> dict[str, Any]:
