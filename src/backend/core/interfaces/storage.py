@@ -19,22 +19,34 @@ class ObjectStorage(ABC):
     @abstractmethod
     async def upload(
         self, key: str, data: bytes, content_type: str | None = None
-    ) -> str: ...
+    ) -> str:
+        """Upload ``data`` (bytes) под ``key``; вернуть URL/etag."""
+        ...
 
     @abstractmethod
-    async def download(self, key: str) -> bytes: ...
+    async def download(self, key: str) -> bytes:
+        """Download bytes по ``key``; raise NotFound если отсутствует."""
+        ...
 
     @abstractmethod
-    async def delete(self, key: str) -> None: ...
+    async def delete(self, key: str) -> None:
+        """Delete object по ``key`` (no-op если не существует)."""
+        ...
 
     @abstractmethod
-    async def exists(self, key: str) -> bool: ...
+    async def exists(self, key: str) -> bool:
+        """True если ``key`` существует в object storage."""
+        ...
 
     @abstractmethod
-    async def list_keys(self, prefix: str = "") -> list[str]: ...
+    async def list_keys(self, prefix: str = "") -> list[str]:
+        """Список ключей с префиксом ``prefix`` (lexicographic order)."""
+        ...
 
     @abstractmethod
-    async def presigned_url(self, key: str, expires_in: int = 3600) -> str: ...
+    async def presigned_url(self, key: str, expires_in: int = 3600) -> str:
+        """Сгенерировать pre-signed URL для ``key`` (TTL = ``expires_in`` сек)."""
+        ...
 
     async def upload_stream(
         self,
