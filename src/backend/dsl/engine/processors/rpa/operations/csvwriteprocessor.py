@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import csv
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -28,7 +28,7 @@ class CsvWriteProcessor(BaseProcessor):
         delimiter: CSV delimiter (default ``","``).
     """
 
-    required_capability: str | None = "rpa.file.csv.write"
+    required_capability: ClassVar[str | None] = "rpa.file.csv.write"
     audit_event: str | None = "rpa.file.csv.write"
 
     def __init__(
@@ -62,4 +62,4 @@ class CsvWriteProcessor(BaseProcessor):
 
         await asyncio.to_thread(_write)
         _rpa_logger.info("csv_write dst=%s rows=%d", self.dst, len(self.rows))
-        exchange.in_message.body["written"] = len(self.rows)
+        self.set_result(exchange, "body.written", len(self.rows))

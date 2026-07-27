@@ -10,10 +10,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors import (
-    FilterProcessor,
-    TransformProcessor,
-)
+from src.backend.dsl.engine.processors import FilterProcessor, TransformProcessor
 
 if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder

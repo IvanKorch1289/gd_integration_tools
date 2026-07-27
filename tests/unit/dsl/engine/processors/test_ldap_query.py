@@ -95,6 +95,9 @@ class TestLdapQueryProcessor:
         }
 
     def test_to_spec_full(self) -> None:
+        # Cycle 20 P1-3: to_spec() must never serialize the runtime password.
+        # The placeholder is identical for every processor so downstream
+        # tooling can pattern-match it.
         proc = LdapQueryProcessor(
             "ldaps://host",
             "dc=example",
@@ -111,7 +114,7 @@ class TestLdapQueryProcessor:
             "search_base": "dc=example",
             "search_filter": "(obj=person)",
             "bind_dn": "cn=admin",
-            "password": "secret",
+            "password": "<redacted: use credential_ref>",
             "attributes": ["cn", "mail"],
             "to": "body.users",
             "use_ssl": True,

@@ -63,9 +63,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.ai.agent_sandbox_protocol import AgentSandbox
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
-from src.backend.core.ai.agent_sandbox_protocol import AgentSandbox
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext

@@ -53,9 +53,7 @@ class IntegrationSendProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Извлекает payload и публикует через IntegrationFacade."""
-        from src.backend.services.integrations.facade import (
-            get_integration_facade,
-        )
+        from src.backend.services.integrations.facade import get_integration_facade
 
         # Извлечение payload: "body" → in_message.body; "body.<field>" → field;
         # "properties.<name>" → exchange.properties[name].

@@ -14,11 +14,10 @@ from typing import Any, Callable, ClassVar
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import (
-    BaseProcessor,
-    handle_processor_error,
+from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.dsl.engine.processors.eip.reliability._legacy import (
+    HEADER_CORRELATION_ID,
 )
-from src.backend.dsl.engine.processors.eip.reliability._legacy import HEADER_CORRELATION_ID
 
 __all__ = ("CorrelationIdentifierProcessor", "HEADER_CORRELATION_ID", "IdFactory")
 

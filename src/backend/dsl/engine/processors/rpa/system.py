@@ -14,8 +14,7 @@ Categories:
 from __future__ import annotations
 
 import asyncio
-
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
@@ -35,7 +34,7 @@ class ShellExecProcessor(BaseProcessor):
         .shell("ls", args=["-la", "/data"], allowed_commands=["ls", "cat", "wc"])
     """
 
-    required_capability: str | None = "rpa.shell.exec"
+    required_capability: ClassVar[str | None] = "rpa.shell.exec"
     audit_event: str | None = "rpa.shell.exec"
 
     def __init__(
@@ -109,7 +108,7 @@ class EmailComposeProcessor(BaseProcessor):
     body_template поддерживает {variable} подстановки из exchange body.
     """
 
-    required_capability: str | None = "rpa.email.send"
+    required_capability: ClassVar[str | None] = "rpa.email.send"
     audit_event: str | None = "rpa.email.send"
 
     def __init__(
@@ -162,7 +161,7 @@ class TerminalExecProcessor(BaseProcessor):
         shell: Use ``/bin/sh -c`` (default True).
     """
 
-    required_capability: str | None = "rpa.shell.exec"
+    required_capability: ClassVar[str | None] = "rpa.shell.exec"
     audit_event: str | None = "rpa.shell.exec"
 
     def __init__(
@@ -226,7 +225,7 @@ class EmailReadProcessor(BaseProcessor):
         to: Куда записать emails (default ``"body.emails"``).
     """
 
-    required_capability: str | None = "rpa.email.read"
+    required_capability: ClassVar[str | None] = "rpa.email.read"
     audit_event: str | None = "rpa.email.read"
 
     def __init__(

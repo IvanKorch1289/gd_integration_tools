@@ -6,10 +6,9 @@ Glob-поиск файлов. async via ``asyncio.to_thread``.
 from __future__ import annotations
 
 import asyncio
-
 import glob
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -30,7 +29,7 @@ class FileListProcessor(BaseProcessor):
         to: Куда записать список (default ``"body.files"``).
     """
 
-    required_capability: str | None = "rpa.file.list"
+    required_capability: ClassVar[str | None] = "rpa.file.list"
     audit_event: str | None = "rpa.file.list"
 
     def __init__(

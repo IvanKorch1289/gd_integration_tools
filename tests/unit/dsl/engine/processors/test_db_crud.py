@@ -1,14 +1,18 @@
-"""Tests для DSL db_insert/db_upsert/db_delete (S95 W1)."""
+"""Tests для DSL db_insert/db_upsert/db_delete (S95 W1) + execute_dml P3 unified DML."""
 
 from __future__ import annotations
 
 import pytest
 
 from src.backend.dsl.engine.processors.db_crud import (
+    SUPPORTED_DIALECTS,
     DbCrudProcessor,
     build_delete_sql,
     build_insert_sql,
     build_upsert_sql,
+    build_upsert_sql_dialect,
+    build_upsert_sql_merge,
+    build_upsert_sql_mysql,
 )
 
 # ─────────── SQL Builder Tests (no DB) ───────────
@@ -180,3 +184,296 @@ def test_dsl_persistence_total_method_count() -> None:
     #            read_file, write_file, read_s3, write_s3, file_move
     # + 3 new: db_insert, db_upsert, db_delete
     assert len(methods) >= 12, f"Expected >=12, got {len(methods)}: {methods}"
+
+
+# ─────────── P3 unified DML: dialect-aware UPSERT (minimal) ───────────
+
+
+def test_supported_dialects_set() -> None:
+    """P3 unified DML: ровно 5 диалектов (PG/SQLite/MySQL/Oracle/MSSQL)."""
+    assert SUPPORTED_DIALECTS == frozenset(
+        {"postgresql", "sqlite", "mysql", "oracle", "mssql"}
+    )
+
+
+def test_build_upsert_sql_mysql_uses_duplicate_key() -> None:
+    sql, params = build_upsert_sql_mysql(
+        "users", {"id": 1, "name": "Alice"}, conflict_keys=["id"]
+    )
+    assert "INSERT INTO" in sql
+    assert "ON DUPLICATE KEY UPDATE" in sql
+    assert '"name" = VALUES("name")' in sql
+    # id is conflict key → NOT in update set
+    assert '"id" = VALUES("id")' not in sql
+    assert params == {"id": 1, "name": "Alice"}
+
+
+def test_build_upsert_sql_mysql_rejects_unsafe_identifier() -> None:
+    with pytest.raises(ValueError, match="Invalid SQL identifier"):
+        build_upsert_sql_mysql("users", {"1; DROP TABLE x;--": 1}, conflict_keys=["id"])
+
+
+def test_build_upsert_sql_mysql_no_update_cols_keeps_clause() -> None:
+    """Если все columns = conflict_keys → ON DUPLICATE KEY UPDATE c = c (no-op)."""
+    sql, _ = build_upsert_sql_mysql("users", {"id": 1}, conflict_keys=["id"])
+    assert "ON DUPLICATE KEY UPDATE" in sql
+
+
+def test_build_upsert_sql_merge_uses_merge_into() -> None:
+    sql, params = build_upsert_sql_merge(
+        "users", {"id": 1, "name": "Alice"}, conflict_keys=["id"]
+    )
+    assert sql.startswith("MERGE INTO")
+    assert "USING (SELECT" in sql
+    assert "ON t.\"id\" = src.\"id\"" in sql
+    assert "WHEN MATCHED THEN UPDATE SET" in sql
+    assert "WHEN NOT MATCHED THEN INSERT" in sql
+    assert "src.\"name\"" in sql
+    assert params == {"id": 1, "name": "Alice"}
+
+
+def test_build_upsert_sql_merge_rejects_unsafe_identifier() -> None:
+    with pytest.raises(ValueError, match="Invalid SQL identifier"):
+        build_upsert_sql_merge(
+            "users", {"col; DROP TABLE x;--": 1}, conflict_keys=["id"]
+        )
+
+
+def test_build_upsert_sql_dispatch_postgres_uses_on_conflict() -> None:
+    sql, _ = build_upsert_sql_dialect(
+        "postgresql", "users", {"id": 1, "name": "A"}, ["id"]
+    )
+    assert "ON CONFLICT" in sql
+    assert "ON DUPLICATE KEY" not in sql
+    assert "MERGE INTO" not in sql
+
+
+def test_build_upsert_sql_dispatch_sqlite_uses_on_conflict() -> None:
+    """SQLite — тот же ON CONFLICT path, что и PostgreSQL."""
+    sql, _ = build_upsert_sql_dialect(
+        "sqlite", "users", {"id": 1, "name": "A"}, ["id"]
+    )
+    assert "ON CONFLICT" in sql
+    assert "ON DUPLICATE KEY" not in sql
+
+
+def test_build_upsert_sql_dispatch_mysql_uses_duplicate_key() -> None:
+    sql, _ = build_upsert_sql_dialect(
+        "mysql", "users", {"id": 1, "name": "A"}, ["id"]
+    )
+    assert "ON DUPLICATE KEY UPDATE" in sql
+    assert "ON CONFLICT" not in sql
+
+
+def test_build_upsert_sql_dispatch_oracle_uses_merge() -> None:
+    sql, _ = build_upsert_sql_dialect(
+        "oracle", "users", {"id": 1, "name": "A"}, ["id"]
+    )
+    assert "MERGE INTO" in sql
+    assert "ON CONFLICT" not in sql
+    assert "ON DUPLICATE KEY" not in sql
+
+
+def test_build_upsert_sql_dispatch_mssql_uses_merge() -> None:
+    sql, _ = build_upsert_sql_dialect(
+        "mssql", "users", {"id": 1, "name": "A"}, ["id"]
+    )
+    assert "MERGE INTO" in sql
+
+
+def test_build_upsert_sql_dialect_rejects_unknown() -> None:
+    with pytest.raises(ValueError, match="Unsupported dialect"):
+        build_upsert_sql_dialect("clickhouse", "users", {"id": 1}, ["id"])
+
+
+def test_processor_default_dialect_is_postgresql() -> None:
+    """Backward-compat: default dialect остаётся PostgreSQL."""
+    proc = DbCrudProcessor(
+        operation="UPSERT",
+        table="users",
+        data={"id": 1, "name": "A"},
+        conflict_keys=["id"],
+    )
+    assert proc._dialect == "postgresql"
+
+
+def test_processor_upsert_mysql_dialect_uses_duplicate_key() -> None:
+    """MySQL dialect проводят SQL через DbCrudProcessor до DatabaseQueryProcessor."""
+    from unittest.mock import AsyncMock, patch
+
+    proc = DbCrudProcessor(
+        operation="UPSERT",
+        table="users",
+        data={"id": 1, "name": "A"},
+        conflict_keys=["id"],
+        dialect="mysql",
+    )
+    with patch(
+        "src.backend.dsl.engine.processors.components.databasequeryprocessor.DatabaseQueryProcessor.process",
+        new=AsyncMock(),
+    ) as mock_proc:
+        from src.backend.dsl.engine.exchange import Exchange, Message
+
+        ex = Exchange(in_message=Message(body={"id": 1, "name": "A"}))
+        # Запускаем event loop коротко; mock не смотрит на SQL, но dispatcher
+        # применит MySQL UPSERT builder.
+        import asyncio
+
+        asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
+    assert mock_proc.await_count == 1
+
+
+def test_processor_rejects_unknown_dialect() -> None:
+    with pytest.raises(ValueError, match="dialect must be one of"):
+        DbCrudProcessor(
+            operation="INSERT", table="users", data={"id": 1}, dialect="mongo"
+        )
+
+
+def test_execute_dml_method_present_on_persistence_mixin() -> None:
+    """execute_dml — единый entry-point surface в PersistenceMixin.
+
+    Не импортируем модуль (cycle через transport/__init__.py → builders.base
+    → integration.py → transport). Используем text-based introspection.
+    """
+    from pathlib import Path
+
+    p = Path("src/backend/dsl/builders/transport/persistence.py")
+    if not p.exists():
+        pytest.skip("persistence module not found")
+    src = p.read_text(encoding="utf-8")
+    assert "def execute_dml(" in src, "PersistenceMixin.execute_dml missing"
+    assert "dialect: str = \"postgresql\"" in src, "execute_dml default dialect missing"
+    # Сигнатура многострочная — собираем строки до первого '): RouteBuilder'.
+    lines = src.splitlines()
+    start_idx = next(
+        (i for i, ln in enumerate(lines) if ln.strip().startswith("def execute_dml(")),
+        None,
+    )
+    assert start_idx is not None, "execute_dml def-line not found"
+    sig_lines = [lines[start_idx]]
+    for ln in lines[start_idx + 1 :]:
+        sig_lines.append(ln)
+        if "RouteBuilder)" in ln or "RouteBuilder," in ln:
+            break
+    sig = "\n".join(sig_lines)
+    for kw in (
+        "operation",
+        "table",
+        "data",
+        "where",
+        "conflict_keys",
+        "dialect",
+        "result_property",
+    ):
+        assert kw in sig, f"execute_dml kwarg {kw} missing in signature"
+
+
+# ─────────── P3 unified DML: dialect validation + non-UPSERT safe paths ───────────
+
+
+def test_processor_dialect_passes_for_non_upsert_ops() -> None:
+    """Dialect допустим для INSERT/UPDATE/DELETE (P3 contract surface)."""
+    for dialect in SUPPORTED_DIALECTS:
+        proc = DbCrudProcessor(
+            operation="INSERT", table="t", data={"a": 1}, dialect=dialect
+        )
+        assert proc._dialect == dialect
+        proc_del = DbCrudProcessor(
+            operation="DELETE", table="t", where={"a": 1}, dialect=dialect
+        )
+        assert proc_del._dialect == dialect
+
+
+def test_processor_dialect_rejects_unsupported() -> None:
+    """Только 5 диалектов допустимы; ClickHouse не supported (P3 contract)."""
+    with pytest.raises(ValueError, match="dialect must be one of"):
+        DbCrudProcessor(
+            operation="INSERT", table="t", data={"a": 1}, dialect="clickhouse"
+        )
+    with pytest.raises(ValueError, match="dialect must be one of"):
+        DbCrudProcessor(
+            operation="INSERT", table="t", data={"a": 1}, dialect="postgres"
+        )  # alias not accepted
+
+
+def test_build_upsert_sql_dialect_invalid_rejected() -> None:
+    """build_upsert_sql_dialect: ValueError на unknown dialect (no driver fallback)."""
+    with pytest.raises(ValueError, match="Unsupported dialect"):
+        build_upsert_sql_dialect("mongodb", "users", {"id": 1}, ["id"])
+
+
+def test_processor_upsert_oracle_routes_to_merge() -> None:
+    """Oracle dialect → MERGE INTO syntax через DbCrudProcessor."""
+    proc = DbCrudProcessor(
+        operation="UPSERT",
+        table="users",
+        data={"id": 1, "name": "Alice"},
+        conflict_keys=["id"],
+        dialect="oracle",
+    )
+    assert proc._dialect == "oracle"
+    # _dialect пробрасывается в build_upsert_sql_dialect; проверим,
+    # что сохранённое значение действительно "oracle" (для runtime dispatch).
+    sql, _ = build_upsert_sql_dialect(
+        proc._dialect, proc._table, proc._data, proc._conflict_keys
+    )
+    assert sql.startswith("MERGE INTO")
+    assert "WHEN MATCHED THEN UPDATE SET" in sql
+
+
+def test_processor_upsert_mssql_routes_to_merge() -> None:
+    """MSSQL dialect → MERGE INTO syntax."""
+    proc = DbCrudProcessor(
+        operation="UPSERT",
+        table="users",
+        data={"id": 1, "name": "Alice"},
+        conflict_keys=["id"],
+        dialect="mssql",
+    )
+    sql, _ = build_upsert_sql_dialect(
+        proc._dialect, proc._table, proc._data, proc._conflict_keys
+    )
+    assert sql.startswith("MERGE INTO")
+
+
+def test_processor_insert_rejects_unsafe_identifier_via_dialect() -> None:
+    """Безопасность identifiers сохраняется независимо от dialect.
+
+    ``DbCrudProcessor.process`` обёрнут в :func:`handle_processor_error`,
+    поэтому ValueError из SQL builder не пробрасывается — записывается в
+    ``exchange.error`` + stopping exchange. Проверяем этот fail-closed path.
+    """
+    from src.backend.dsl.engine.exchange import Exchange, Message
+
+    for dialect in SUPPORTED_DIALECTS:
+        proc = DbCrudProcessor(
+            operation="INSERT",
+            table="users; DROP TABLE users;--",
+            data={"id": 1},
+            dialect=dialect,
+        )
+        ex = Exchange(in_message=Message(body={"id": 1}))
+        import asyncio
+
+        asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
+        assert ex.error is not None, (
+            f"dialect={dialect}: unsafe identifier должен маркировать exchange"
+        )
+        assert "Invalid SQL identifier" in ex.error, (
+            f"dialect={dialect}: ожидаемая ошибка identifier, got: {ex.error!r}"
+        )
+
+
+def test_processor_dialect_postgres_safe_params_preserved() -> None:
+    """PostgreSQL dialect: bind-params сохраняются (no f-string injection)."""
+    proc = DbCrudProcessor(
+        operation="INSERT",
+        table="users",
+        data={"name": "Robert'); DROP TABLE users;--"},
+        dialect="postgresql",
+    )
+    # Value в params как есть, не интерполируется в SQL.
+    sql, params = build_insert_sql(proc._table, proc._data)
+    assert "DROP TABLE" not in sql
+    assert params["name"] == "Robert'); DROP TABLE users;--"

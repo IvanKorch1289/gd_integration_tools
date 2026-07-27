@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.backend.dsl.engine.processors.rpa.system import (
-    ShellExecProcessor,
-    EmailComposeProcessor,
-)
+import pytest
+
 from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.rpa.system import (
+    EmailComposeProcessor,
+    ShellExecProcessor,
+)
 
 
 class TestShellExecProcessor:
@@ -19,6 +20,7 @@ class TestShellExecProcessor:
     async def test_process_executes_shell(self) -> None:
         # S164 W1: updated to match actual ShellExecProcessor API.
         processor = ShellExecProcessor(command="echo", allowed_commands=["echo"])
+        processor.auth_check = AsyncMock(return_value=True)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = "hello"
@@ -49,6 +51,7 @@ class TestEmailComposeProcessor:
             subject="Test",
             body_template="Hello {name}",
         )
+        processor.auth_check = AsyncMock(return_value=True)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = {"name": "World"}

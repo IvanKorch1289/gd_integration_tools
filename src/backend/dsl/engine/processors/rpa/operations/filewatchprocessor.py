@@ -6,9 +6,8 @@ Async wrapper: запускает Observer в thread, ждёт timeout.
 from __future__ import annotations
 
 import asyncio
-
 import threading
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -42,7 +41,7 @@ class FileWatchProcessor(BaseProcessor):
         to: Куда записать список изменений (default ``"body.changes"``).
     """
 
-    required_capability: str | None = "rpa.file.watch"
+    required_capability: ClassVar[str | None] = "rpa.file.watch"
     audit_event: str | None = "rpa.file.watch"
 
     def __init__(

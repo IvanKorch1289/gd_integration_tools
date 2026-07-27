@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import csv
 import io
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -30,7 +30,7 @@ class CsvReadProcessor(BaseProcessor):
         to: Куда записать rows (default ``"body.rows"``).
     """
 
-    required_capability: str | None = "rpa.file.csv.read"
+    required_capability: ClassVar[str | None] = "rpa.file.csv.read"
     audit_event: str | None = "rpa.file.csv.read"
 
     def __init__(

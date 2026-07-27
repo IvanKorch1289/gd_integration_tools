@@ -7,14 +7,11 @@ from __future__ import annotations
 
 import asyncio
 import time
-
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import (
-    BaseProcessor,
-)
+from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processors.patterns.merge import _record_batch_flush
 
 __all__ = ("BatchWindowProcessor",)

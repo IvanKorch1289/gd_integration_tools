@@ -9,12 +9,6 @@ per-class files (not from ai_processors.py).
 # Banking AI processors — migrated from ai/banking_processors/ (S59) to ai_banking/ (S50)
 # Duplicates resolved: CreditScoreProcessor≈CreditScoringRagProcessor (S50 kept),
 # FraudDetectionProcessor≈AntiFraudScoreProcessor (S50 kept).
-from src.backend.dsl.engine.processors.ai_banking import (
-    CustomerSegmentationProcessor,
-    LoanEligibilityProcessor,
-    RiskAssessmentProcessor,
-)
-
 # Per-class AI processors (extracted from ai_processors.py, ADR-0102)
 from src.backend.dsl.engine.processors.ai.cache_processor import CacheProcessor
 from src.backend.dsl.engine.processors.ai.cachewrite_processor import (
@@ -56,6 +50,11 @@ from src.backend.dsl.engine.processors.ai.tokenbudget_processor import (
 )
 from src.backend.dsl.engine.processors.ai.vectorsearch_processor import (
     VectorSearchProcessor,
+)
+from src.backend.dsl.engine.processors.ai_banking import (
+    CustomerSegmentationProcessor,
+    LoanEligibilityProcessor,
+    RiskAssessmentProcessor,
 )
 
 __all__ = (

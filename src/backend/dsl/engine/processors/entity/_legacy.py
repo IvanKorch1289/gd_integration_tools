@@ -11,10 +11,7 @@ from src.backend.core.types.invocation_command import ActionCommandSchema
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import (
-    BaseProcessor,
-    handle_processor_error,
-)
+from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 
 class _BaseEntityProcessor(BaseProcessor):
@@ -27,6 +24,7 @@ class _BaseEntityProcessor(BaseProcessor):
         name: имя процессора.
     """
 
+    _verb: ClassVar[str] = ""
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL
 
     def __init__(

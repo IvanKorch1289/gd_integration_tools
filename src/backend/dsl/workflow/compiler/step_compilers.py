@@ -304,37 +304,35 @@ async def compile_sleep_step(decl: SleepDeclaration, ctx: dict[str, Any]) -> Any
     return None
 
 
+_RESUME_SIGNAL = "__dsl_resume__"
+
+
 async def compile_pause_step(decl: PauseDeclaration, ctx: dict[str, Any]) -> Any:
-    """Приостановить workflow через ``workflow.pause()``.
+    """Приостановить workflow до внешнего resume-signal.
 
-    Args:
-        decl: Декларация pause-шага.
-        ctx: Рантайм-контекст workflow.
-
-    Saves pause timestamp to ``ctx["_outputs"][output_key]`` if output_key is set.
+    Temporal Python SDK не имеет ``workflow.pause()``. Durable pause реализован
+    через ``workflow.wait_condition``; emitter регистрирует signal-handler с
+    именем :data:`_RESUME_SIGNAL` для workflow, содержащих pause-step.
     """
     from temporalio import workflow
 
-    workflow.pause()
+    signals = ctx.setdefault("_signals", {})
+    await workflow.wait_condition(lambda: _RESUME_SIGNAL in signals)
+    signals.pop(_RESUME_SIGNAL, None)
     if decl.output_key:
-        # Cycle 25 W2: use Temporal deterministic time API for replay-safe
-        # timestamps (datetime.now() would diverge on workflow replay).
         pause_ts = workflow.now()
         ctx.setdefault("_outputs", {})[decl.output_key] = pause_ts.isoformat()
     return None
 
 
 async def compile_resume_step(decl: ResumeDeclaration, ctx: dict[str, Any]) -> Any:
-    """Возобновить paused workflow через ``workflow.resume()``.
+    """Подтвердить обработку внешнего resume-signal.
 
-    Args:
-        decl: Декларация resume-шага.
-        ctx: Рантайм-контекст workflow (зарезервирован).
+    Само возобновление выполняет signal-handler, разблокирующий pause-step;
+    declaration-step очищает возможный дубликат сигнала детерминированно.
     """
-    from temporalio import workflow
-
-    del ctx
-    workflow.resume()
+    del decl
+    ctx.setdefault("_signals", {}).pop(_RESUME_SIGNAL, None)
     return None
 
 

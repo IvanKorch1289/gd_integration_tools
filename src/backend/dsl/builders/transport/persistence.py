@@ -141,6 +141,64 @@ class PersistenceMixin:
             result_property=result_property,
         )
 
+    def execute_dml(
+        self,
+        operation: str,
+        table: str,
+        *,
+        dialect: str = "postgresql",
+        data: dict[str, Any] | None = None,
+        where: dict[str, Any] | None = None,
+        conflict_keys: list[str] | None = None,
+        result_property: str = "db_crud_result",
+    ) -> RouteBuilder:
+        """Unified DML вызов с явным dialect (P3 unified DML).
+
+        Тонкий wrapper поверх :class:`DbCrudProcessor` с exposed
+        ``dialect`` параметром. Поддерживает:
+
+        * ``postgresql`` / ``sqlite`` — ``ON CONFLICT ... DO UPDATE``
+        * ``mysql`` — ``ON DUPLICATE KEY UPDATE``
+        * ``oracle`` / ``mssql`` — ``MERGE INTO ... USING ...``
+
+        Same safety contract as :meth:`db_insert` / :meth:`db_upsert` /
+        :meth:`db_delete`:
+        * identifiers (table, columns) — whitelist через ``_quote_identifier``
+        * values — bind-params (не f-string SQL)
+        * no multi-statement (валидация в DatabaseQueryProcessor)
+        * DDL/DROP/GRANT/REVOKE blocked.
+
+        Args:
+            operation: ``INSERT`` | ``UPDATE`` | ``DELETE`` | ``UPSERT``.
+            table: Table name.
+            dialect: ``postgresql`` (default) / ``sqlite`` / ``mysql`` /
+                ``oracle`` / ``mssql``. Affects UPSERT syntax only
+                (INSERT/DELETE/UPDATE are ANSI-compatible).
+            data: Column → value (для INSERT/UPSERT/UPDATE).
+            where: Column → value (для DELETE/UPDATE).
+            conflict_keys: PK/unique columns (для UPSERT).
+            result_property: Куда положить result.
+
+        Example::
+
+            RouteBuilder.from_("orders.create", source="http:/orders")
+                .execute_dml("INSERT", "orders", data={"id": 1, "status": "new"})
+                .execute_dml("UPSERT", "users", dialect="mysql",
+                             data={"id": 1, "name": "x"}, conflict_keys=["id"])
+                .build()
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.db_crud",
+            "DbCrudProcessor",
+            operation=operation,
+            table=table,
+            dialect=dialect,
+            data=data,
+            where=where,
+            conflict_keys=conflict_keys,
+            result_property=result_property,
+        )
+
     def db_delete(
         self,
         table: str,

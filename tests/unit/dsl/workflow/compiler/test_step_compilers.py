@@ -23,8 +23,11 @@ from typing import Any
 import pytest
 
 from src.backend.dsl.workflow.compiler.step_compilers import (
+    _RESUME_SIGNAL,
     _build_retry_policy,
     compile_activity_step,
+    compile_pause_step,
+    compile_resume_step,
     compile_saga_step,
     compile_sensor_step,
     compile_signal_wait_step,
@@ -33,6 +36,8 @@ from src.backend.dsl.workflow.compiler.step_compilers import (
 )
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
+    PauseDeclaration,
+    ResumeDeclaration,
     RetryPolicy,
     SagaDeclaration,
     SensorDeclaration,
@@ -219,6 +224,31 @@ async def test_signal_wait_with_timeout_records_call(
     wait_calls = [r for r in recorder if r["kind"] == "wait_condition"]
     assert len(wait_calls) == 1
     assert wait_calls[0]["timeout"] == timedelta(seconds=120.0)
+
+
+# ---------- compile_pause_step / compile_resume_step ----------
+
+
+@pytest.mark.asyncio
+async def test_pause_step_waits_for_and_consumes_resume_signal(
+    temporal_mock: tuple[SimpleNamespace, list[Any]],
+) -> None:
+    _, recorder = temporal_mock
+    ctx: dict[str, Any] = {"_signals": {_RESUME_SIGNAL: {"by": "operator"}}}
+
+    await compile_pause_step(PauseDeclaration(), ctx)
+
+    assert [item["kind"] for item in recorder] == ["wait_condition"]
+    assert _RESUME_SIGNAL not in ctx["_signals"]
+
+
+@pytest.mark.asyncio
+async def test_resume_step_clears_duplicate_resume_signal() -> None:
+    ctx: dict[str, Any] = {"_signals": {_RESUME_SIGNAL: {}}}
+
+    await compile_resume_step(ResumeDeclaration(), ctx)
+
+    assert _RESUME_SIGNAL not in ctx["_signals"]
 
 
 # ---------- compile_sleep_step ----------

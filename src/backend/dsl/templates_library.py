@@ -83,7 +83,7 @@ def _web_scrape_scheduled(
     builder = RouteBuilder.from_(
         route_id, source=f"cron:{cron}", description="Scheduled scraping"
     )
-    builder = builder.scrape(url, selectors={"items": selector})
+    builder = builder.scrape_url(url, selectors={"items": selector})
 
     if max_pages > 1:
         builder = builder.paginate(

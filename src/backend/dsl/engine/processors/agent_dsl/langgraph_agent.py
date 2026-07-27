@@ -6,7 +6,8 @@ Thin wrapper над :func:`src.backend.services.ai.ai_graph.build_and_run_agent`
 Ponytail: 1-line DSL поверх существующей core-функции, без абстракций.
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
@@ -35,8 +36,8 @@ class LangGraphAgentProcessor(BaseAIProcessor):
         >>> p = LangGraphAgentProcessor(query="What is INN 7707083893?", thread_id="t1")
     """
 
-    required_capability: str | None = "agent.run"
-    audit_event: str | None = "ai.agent.run"
+    required_capability: ClassVar[str | None] = "agent.run"
+    audit_event: ClassVar[str | None] = "ai.agent.run"
 
     def __init__(
         self,
@@ -54,28 +55,9 @@ class LangGraphAgentProcessor(BaseAIProcessor):
         self.max_iterations = max_iterations
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        # Cycle 4b swarm (D418 real): explicit auth_check before
-        # delegating to AI graph service. Parent BaseAIProcessor has
-        # process() inherited from _base, but this class overrides
-        # process() entirely (no call to super().process()) so we
-        # must enforce capability ourselves.
-        if self.required_capability:
-            try:
-                from src.backend.core.security.capabilities.gate import (
-                    get_capability_gate,
-                )
-                gate = get_capability_gate()
-                check = getattr(gate, "check", None) if gate else None
-                if check is not None:
-                    check("core", self.required_capability, None)
-            except Exception as exc:  # noqa: BLE001
-                import logging
-                logging.getLogger(__name__).warning(
-                    "%s: auth_check failed (%s) — deny by default",
-                    self.name, exc,
-                )
-                exchange.fail(f"{self.name}: capability denied")
-                return
+        # The canonical BaseProcessor gate is async and fail-closed.
+        if not await self.auth_check(exchange, action="execute"):
+            return
 
         # Cycle 4c swarm (AI-5 hardening): cap query length to prevent
         # prompt-injection abuse via oversized query.

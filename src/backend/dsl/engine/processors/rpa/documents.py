@@ -14,7 +14,7 @@ Categories:
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
@@ -35,7 +35,7 @@ class PdfReadProcessor(BaseProcessor):
         .pdf_read(extract_tables=True)
     """
 
-    required_capability: str | None = "rpa.pdf.read"
+    required_capability: ClassVar[str | None] = "rpa.pdf.read"
     audit_event: str | None = "rpa.pdf.read"
 
     def __init__(
@@ -99,7 +99,7 @@ class PdfMergeProcessor(BaseProcessor):
     Body: list[bytes] — список PDF-файлов. Результат: bytes (merged PDF).
     """
 
-    required_capability: str | None = "rpa.pdf.merge"
+    required_capability: ClassVar[str | None] = "rpa.pdf.merge"
     audit_event: str | None = "rpa.pdf.merge"
 
     def __init__(self, *, name: str | None = None) -> None:
@@ -148,7 +148,7 @@ class WordReadProcessor(BaseProcessor):
     Body: bytes или str (путь). Результат: {"text": "...", "paragraphs": [...]}
     """
 
-    required_capability: str | None = "rpa.word.read"
+    required_capability: ClassVar[str | None] = "rpa.word.read"
     audit_event: str | None = "rpa.word.read"
 
     def __init__(self, *, name: str | None = None) -> None:
@@ -199,7 +199,7 @@ class WordWriteProcessor(BaseProcessor):
     Результат: bytes (.docx файл).
     """
 
-    required_capability: str | None = "rpa.word.write"
+    required_capability: ClassVar[str | None] = "rpa.word.write"
     audit_event: str | None = "rpa.word.write"
 
     def __init__(self, *, name: str | None = None) -> None:
@@ -253,7 +253,7 @@ class ExcelReadProcessor(BaseProcessor):
     Body: bytes или str (путь). Результат: list[dict] (rows).
     """
 
-    required_capability: str | None = "rpa.excel.read"
+    required_capability: ClassVar[str | None] = "rpa.excel.read"
     audit_event: str | None = "rpa.excel.read"
 
     def __init__(

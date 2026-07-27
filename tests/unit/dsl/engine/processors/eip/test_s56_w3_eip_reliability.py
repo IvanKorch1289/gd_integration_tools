@@ -36,6 +36,21 @@ def _ctx() -> ExecutionContext:
     return ExecutionContext()
 
 
+def test_legacy_processor_exports_resolve_lazily() -> None:
+    """Legacy ``__all__`` names resolve to the split processor classes."""
+    from src.backend.dsl.engine.processors.eip.reliability import _legacy
+
+    expected = {
+        "CorrelationIdentifierProcessor": CorrelationIdentifierProcessor,
+        "MessageExpirationProcessor": MessageExpirationProcessor,
+        "RedeliveryPolicyProcessor": RedeliveryPolicyProcessor,
+        "ReturnAddressProcessor": ReturnAddressProcessor,
+    }
+    assert set(_legacy.__all__) == set(expected)
+    for name, processor in expected.items():
+        assert getattr(_legacy, name) is processor
+
+
 # ── CorrelationIdentifierProcessor ──────────────────────────────────
 
 

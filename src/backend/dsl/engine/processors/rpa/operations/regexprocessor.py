@@ -5,7 +5,7 @@ Per-processor file split.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
@@ -31,7 +31,7 @@ class RegexProcessor(BaseProcessor):
         name: имя процессора.
     """
 
-    required_capability: str | None = "rpa.regex.execute"
+    required_capability: ClassVar[str | None] = "rpa.regex.execute"
     audit_event: str | None = "rpa.regex.execute"
 
     def __init__(

@@ -234,23 +234,12 @@ class CardTokenizeProcessor(BaseProcessor):
         return random_part + pan[-1]
 
     async def _vault_tokenize(self, pan: str) -> str:
-        """Vault-based tokenization (lazy через TokenRegistry)."""
-        # Production: TokenRegistry.register() → vault format-preserving token
-        try:
-            from src.backend.infrastructure.security.token_registry import (
-                TokenRegistry,
-            )
+        """Vault method currently shares the format-preserving token generator.
 
-            registry = TokenRegistry()
-            token_id = await registry.register(
-                namespace="card",
-                plaintext=pan,
-                format_preserving=True,
-            )
-            return token_id
-        except Exception as exc:
-            _logger.warning("vault_tokenize fallback to FPE: %s", exc)
-            return self._format_preserving_token(pan, "")
+        The encrypted token mapping is persisted separately by ``_store_mapping``;
+        ``RedisTokenRegistry`` intentionally has no ``register`` API.
+        """
+        return self._format_preserving_token(pan, "")
 
     async def _store_mapping(
         self, token_id: str, pan: str, token: str

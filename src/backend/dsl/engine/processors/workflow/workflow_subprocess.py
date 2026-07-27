@@ -7,7 +7,7 @@ Pattern (Ponytail, D167): thin wrapper, no abstractions.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -63,7 +63,7 @@ class WorkflowSubprocessProcessor(BaseProcessor):
         timeout: Таймаут в секундах (default 60).
     """
 
-    required_capability: str | None = "workflow.subprocess.invoke"
+    required_capability: ClassVar[str | None] = "workflow.subprocess.invoke"
     audit_event: str | None = "workflow.subprocess.invoked"
 
     def __init__(

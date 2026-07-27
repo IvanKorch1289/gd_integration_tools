@@ -36,9 +36,7 @@ from __future__ import annotations
 
 from typing import Any, ClassVar, Literal
 
-from src.backend.core.ai.security import (
-    SecurityDecision,
-)
+from src.backend.core.ai.security import SecurityDecision
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext

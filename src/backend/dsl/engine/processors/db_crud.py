@@ -30,9 +30,22 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 __all__ = (
     "CRUDOperation",
     "DbCrudProcessor",
+    "SUPPORTED_DIALECTS",
     "build_delete_sql",
     "build_insert_sql",
     "build_upsert_sql",
+    "build_upsert_sql_dialect",
+    "build_upsert_sql_merge",
+    "build_upsert_sql_mysql",
+)
+
+
+# DML dialects (P3 unified DML — minimal dialect-aware UPSERT).
+# PostgreSQL/SQLite: ON CONFLICT ... DO UPDATE (existing path).
+# MySQL: INSERT ... ON DUPLICATE KEY UPDATE.
+# Oracle/MSSQL: MERGE INTO ... USING ... ON ... WHEN MATCHED ...
+SUPPORTED_DIALECTS: frozenset[str] = frozenset(
+    {"postgresql", "sqlite", "mysql", "oracle", "mssql"}
 )
 
 
@@ -59,7 +72,7 @@ def _quote_identifier(name: str) -> str:
     Raises:
         ValueError: Если identifier содержит unsafe characters.
     """
-    if not _IDENTIFIER_RE.match(name):
+    if not _IDENTIFIER_RE.fullmatch(name):
         raise ValueError(
             f"Invalid SQL identifier: {name!r}. "
             "Only [A-Za-z0-9_] allowed (start with letter/_)."
@@ -152,6 +165,120 @@ def build_delete_sql(table: str, where: dict[str, Any]) -> tuple[str, dict[str, 
     return sql, dict(where)
 
 
+def build_upsert_sql_mysql(
+    table: str, data: dict[str, Any], conflict_keys: list[str]
+) -> tuple[str, dict[str, Any]]:
+    """MySQL UPSERT: ``INSERT INTO t (...) VALUES (...) ON DUPLICATE KEY UPDATE c=VALUES(c)``.
+
+    Identifiers are quoted the same way as PostgreSQL path (double-quote
+    MySQL honors ANSI_QUOTES — non-default but valid). ``conflict_keys``
+    are skipped in UPDATE clause (they drive the conflict path).
+    """
+    if not data:
+        raise ValueError("db_upsert: data cannot be empty")
+    if not conflict_keys:
+        raise ValueError("db_upsert: conflict_keys cannot be empty (PK required)")
+    cols = list(data)
+    for col in cols + conflict_keys:
+        _quote_identifier(col)
+    table_q = _quote_identifier(table)
+    cols_q = ", ".join(_quote_identifier(c) for c in cols)
+    placeholders = ", ".join(f":{c}" for c in cols)
+    update_cols = [c for c in cols if c not in conflict_keys]
+    if not update_cols:
+        update_clause = "c = c"  # no-op to keep ON DUPLICATE KEY valid
+    else:
+        update_clause = ", ".join(
+            f"{_quote_identifier(c)} = VALUES({_quote_identifier(c)})"
+            for c in update_cols
+        )
+    sql = (
+        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "  # noqa: S608
+        f"ON DUPLICATE KEY UPDATE {update_clause}"
+    )
+    return sql, dict(data)
+
+
+def build_upsert_sql_merge(
+    table: str, data: dict[str, Any], conflict_keys: list[str]
+) -> tuple[str, dict[str, Any]]:
+    """Oracle/MSSQL UPSERT: ``MERGE INTO t USING (SELECT ... AS src) ... ON ... WHEN MATCHED ...``.
+
+    Uses bind-parameters (:p1, :p2) consistent with the Postgres path.
+    Identifier quoting follows the existing ``_quote_identifier`` (double
+    quote) — works for both Oracle and MSSQL with default settings.
+    """
+    if not data:
+        raise ValueError("db_upsert: data cannot be empty")
+    if not conflict_keys:
+        raise ValueError("db_upsert: conflict_keys cannot be empty (PK required)")
+    cols = list(data)
+    for col in cols + conflict_keys:
+        _quote_identifier(col)
+    table_q = _quote_identifier(table)
+    on_clause = " AND ".join(
+        f"t.{_quote_identifier(k)} = src.{_quote_identifier(k)}" for k in conflict_keys
+    )
+    update_cols = [c for c in cols if c not in conflict_keys]
+    if update_cols:
+        update_set = ", ".join(
+            f"t.{_quote_identifier(c)} = src.{_quote_identifier(c)}"
+            for c in update_cols
+        )
+        matched_clause = f"WHEN MATCHED THEN UPDATE SET {update_set}"
+        insert_cols = ", ".join(_quote_identifier(c) for c in cols)
+        insert_vals = ", ".join(f"src.{_quote_identifier(c)}" for c in cols)
+        not_matched_clause = (
+            f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"  # noqa: S608
+            # Identifiers quoted via ``_quote_identifier`` (whitelist regex);
+            # all values bound via ``:name`` placeholders in MERGE ... USING.
+        )
+    else:
+        # All columns are conflict keys → no-op on match, plain insert.
+        matched_clause = "WHEN MATCHED THEN UPDATE SET"
+        matched_clause += " " + " = ".join(
+            f"{_quote_identifier(conflict_keys[0])} = {_quote_identifier(conflict_keys[0])}"
+        )
+        insert_cols = ", ".join(_quote_identifier(c) for c in cols)
+        insert_vals = ", ".join(f"src.{_quote_identifier(c)}" for c in cols)
+        not_matched_clause = (
+            f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"  # noqa: S608
+            # Same whitelist as the ``if`` branch above; values bound.
+        )
+    # Identifiers above go through ``_quote_identifier`` (whitelist regex)
+    # and every user value is bound via ``:name`` placeholders.
+    sql = (
+        f"MERGE INTO {table_q} AS t "  # noqa: S608
+        f"USING (SELECT {', '.join(f':{c} AS {_quote_identifier(c)}' for c in cols)}) AS src "
+        f"ON {on_clause} {matched_clause} {not_matched_clause}"
+    )
+    return sql, dict(data)
+
+
+def build_upsert_sql_dialect(
+    dialect: str,
+    table: str,
+    data: dict[str, Any],
+    conflict_keys: list[str],
+) -> tuple[str, dict[str, Any]]:
+    """Dispatch UPSERT SQL build by dialect.
+
+    Supported: ``postgresql`` / ``sqlite`` (ON CONFLICT),
+    ``mysql`` (ON DUPLICATE KEY), ``oracle`` / ``mssql`` (MERGE).
+    """
+    if dialect not in SUPPORTED_DIALECTS:
+        raise ValueError(
+            f"Unsupported dialect: {dialect!r}. Supported: "
+            f"{sorted(SUPPORTED_DIALECTS)}"
+        )
+    if dialect in ("postgresql", "sqlite"):
+        return build_upsert_sql(table, data, conflict_keys)
+    if dialect == "mysql":
+        return build_upsert_sql_mysql(table, data, conflict_keys)
+    # oracle / mssql
+    return build_upsert_sql_merge(table, data, conflict_keys)
+
+
 class DbCrudProcessor(BaseProcessor):
     """Универсальный CRUD-процессор для DSL.
 
@@ -161,12 +288,15 @@ class DbCrudProcessor(BaseProcessor):
         data: Column → value (для INSERT/UPSERT).
         where: Column → value (для DELETE; condition dict).
         conflict_keys: PK/unique columns (для UPSERT).
+        dialect: SQL dialect (P3 unified DML). Default ``postgresql``.
+            Affects UPSERT syntax only; INSERT/DELETE are ANSI-compatible.
         result_property: Куда положить result.
     """
 
     __slots__ = (
         "_conflict_keys",
         "_data",
+        "_dialect",
         "_operation",
         "_result_property",
         "_table",
@@ -183,6 +313,7 @@ class DbCrudProcessor(BaseProcessor):
         data: dict[str, Any] | None = None,
         where: dict[str, Any] | None = None,
         conflict_keys: list[str] | None = None,
+        dialect: str = "postgresql",
         result_property: str = "db_crud_result",
         name: str | None = None,
     ) -> None:
@@ -191,11 +322,19 @@ class DbCrudProcessor(BaseProcessor):
             raise ValueError(
                 f"operation must be INSERT|UPSERT|DELETE, got {operation!r}"
             )
+        if dialect not in SUPPORTED_DIALECTS:
+            raise ValueError(
+                f"dialect must be one of {sorted(SUPPORTED_DIALECTS)}, "
+                f"got {dialect!r}"
+            )
+        # INSERT/DELETE keyword validation in DatabaseQueryProcessor covers
+        # destructive SQL; dialect dispatch only changes UPSERT syntax.
         self._operation = operation
         self._table = table
         self._data = dict(data) if data else {}
         self._where = dict(where) if where else {}
         self._conflict_keys = list(conflict_keys or [])
+        self._dialect = dialect
         self._result_property = result_property
 
     @handle_processor_error
@@ -204,12 +343,15 @@ class DbCrudProcessor(BaseProcessor):
         if self._operation == "INSERT":
             sql, params = build_insert_sql(self._table, self._data)
         elif self._operation == "UPSERT":
-            sql, params = build_upsert_sql(self._table, self._data, self._conflict_keys)
+            sql, params = build_upsert_sql_dialect(
+                self._dialect, self._table, self._data, self._conflict_keys
+            )
         else:  # DELETE
             sql, params = build_delete_sql(self._table, self._where)
 
         _logger.info(
-            "db_crud: op=%s table=%s sql=%s", self._operation, self._table, sql
+            "db_crud: op=%s dialect=%s table=%s sql=%s",
+            self._operation, self._dialect, self._table, sql,
         )
 
         # 2. Execute via DatabaseQueryProcessor (reuses connection pool + retry)

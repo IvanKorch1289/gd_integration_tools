@@ -7,7 +7,6 @@ retry + SLA + memory scope policies.
 
 from __future__ import annotations
 
-
 from typing import Literal  # noqa: E402
 
 from pydantic import BaseModel, ConfigDict, Field  # noqa: E402

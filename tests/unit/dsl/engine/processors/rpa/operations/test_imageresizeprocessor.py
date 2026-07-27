@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import io
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -28,6 +28,10 @@ from src.backend.dsl.engine.processors.rpa.operations.imageresizeprocessor impor
 
 def _exchange_with(body: Any) -> Exchange[Any]:
     return Exchange(in_message=Message(body=body, headers={}))
+
+
+def _allow(processor: ImageResizeProcessor) -> None:
+    processor.auth_check = AsyncMock(return_value=True)
 
 
 def _make_png(width: int = 10, height: int = 10, color: str = "red") -> bytes:
@@ -47,6 +51,7 @@ def _make_png(width: int = 10, height: int = 10, color: str = "red") -> bytes:
 async def test_image_resize_resizes_to_target_dimensions() -> None:
     """bytes 10×10 → resize 50×50 → валидный PNG."""
     proc = ImageResizeProcessor(width=50, height=50, output_format="PNG")
+    _allow(proc)
     ex = _exchange_with(_make_png(10, 10))
 
     await proc.process(ex, context=MagicMock())
@@ -65,6 +70,7 @@ async def test_image_resize_resizes_to_target_dimensions() -> None:
 async def test_image_resize_keeps_aspect_by_width() -> None:
     """Только width задан — высота пропорциональна."""
     proc = ImageResizeProcessor(width=20, output_format="PNG")
+    _allow(proc)
     ex = _exchange_with(_make_png(40, 10))
 
     await proc.process(ex, context=MagicMock())
@@ -79,6 +85,7 @@ async def test_image_resize_keeps_aspect_by_width() -> None:
 async def test_image_resize_keeps_aspect_by_height() -> None:
     """Только height задан — ширина пропорциональна."""
     proc = ImageResizeProcessor(height=30, output_format="PNG")
+    _allow(proc)
     ex = _exchange_with(_make_png(20, 60))
 
     await proc.process(ex, context=MagicMock())
@@ -96,6 +103,7 @@ async def test_image_resize_keeps_aspect_by_height() -> None:
 async def test_image_resize_rejects_non_bytes_body() -> None:
     """Body не bytes → exchange.fail без побочных эффектов."""
     proc = ImageResizeProcessor(width=10, height=10)
+    _allow(proc)
     ex = _exchange_with("not bytes")  # type: ignore[arg-type]
 
     await proc.process(ex, context=MagicMock())
@@ -245,6 +253,7 @@ async def test_image_resize_uses_context_manager(
     _install_tracked_pil_open(monkeypatch, tracker)
 
     proc = ImageResizeProcessor(width=16, height=16, output_format="PNG")
+    _allow(proc)
     ex = _exchange_with(_make_png(20, 20))
 
     await proc.process(ex, context=MagicMock())
@@ -273,6 +282,7 @@ async def test_image_resize_releases_on_resize_exception(
     _install_raising_pil_open(monkeypatch, tracker)
 
     proc = ImageResizeProcessor(width=16, height=16, output_format="PNG")
+    _allow(proc)
     ex = _exchange_with(_make_png(20, 20))
 
     with patch(
@@ -297,6 +307,7 @@ async def test_image_resize_no_dimensions_copies_bytes(
     _install_tracked_pil_open(monkeypatch, tracker)
 
     proc = ImageResizeProcessor()  # без width/height
+    _allow(proc)
     ex = _exchange_with(_make_png(8, 8))
 
     await proc.process(ex, context=MagicMock())

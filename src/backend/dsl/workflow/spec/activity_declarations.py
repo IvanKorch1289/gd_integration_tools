@@ -7,7 +7,6 @@ core activity declarations (activity/saga/pause/resume/signal_wait/sleep).
 
 from __future__ import annotations
 
-
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -111,10 +110,10 @@ class SagaDeclaration(BaseModel):
 
 
 class PauseDeclaration(BaseModel):
-    """Pause-шаг: приостановка workflow через Temporal API (S35 GAP-DSL-2).
+    """Pause-шаг: durable ожидание внешнего resume-signal.
 
-    Вызывает ``workflow.pause()`` — устанавливает флаг, который
-    предотвращает продолжение выполнения workflow до вызова ``resume()``.
+    Compiler использует ``workflow.wait_condition``; emitter автоматически
+    регистрирует внутренний signal-handler ``__dsl_resume__``.
 
     YAML::
 
@@ -136,10 +135,10 @@ class PauseDeclaration(BaseModel):
 
 
 class ResumeDeclaration(BaseModel):
-    """Resume-шаг: возобновление paused workflow через Temporal API (S35 GAP-DSL-2).
+    """Resume-шаг: подтверждение внешнего resume-signal.
 
-    Вызывает ``workflow.resume()`` — снимает флаг паузы и позволяет
-    workflow продолжить выполнение с места ``pause()``.
+    Фактическое возобновление выполняет зарегистрированный Temporal
+    signal-handler; step очищает возможный дубликат сигнала.
 
     Cycle-26: ``checkpoint_id`` поле удалено (cycle-26 audit) — было dead contract,
     compiler ``compile_resume_step`` его не использует.

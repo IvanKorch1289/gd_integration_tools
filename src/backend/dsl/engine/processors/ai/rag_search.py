@@ -4,6 +4,7 @@ Thin wrapper над :class:`src.backend.services.ai.hybrid_rag.HybridRAGSearch.s
 Ponytail: facade-isolated, BM25+vector+reranker hybrid.
 """
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger

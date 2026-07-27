@@ -8,7 +8,7 @@ Pattern (Ponytail, D168): thin wrapper, no abstractions.
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -30,7 +30,7 @@ class WorkflowConvertProcessor(BaseProcessor):
         to: Куда записать результат (default ``"body.converted"``).
     """
 
-    required_capability: str | None = "workflow.convert.format"
+    required_capability: ClassVar[str | None] = "workflow.convert.format"
     audit_event: str | None = "workflow.convert.format"
 
     SUPPORTED = ("json", "yaml", "dict", "string")

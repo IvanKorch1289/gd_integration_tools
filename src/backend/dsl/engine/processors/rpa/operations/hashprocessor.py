@@ -5,7 +5,7 @@ Per-processor file split.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
@@ -29,7 +29,7 @@ class HashProcessor(BaseProcessor):
         name: имя процессора для observability.
     """
 
-    required_capability: str | None = "rpa.hash.compute"
+    required_capability: ClassVar[str | None] = "rpa.hash.compute"
     audit_event: str | None = "rpa.hash.compute"
 
     def __init__(

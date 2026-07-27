@@ -259,7 +259,8 @@ class RouteBuilder(  # type: ignore[misc]
 # 3. Gradual migration of callers from RouteBuilder to CompositionRouteBuilder.
 # 4. Eventually RouteBuilder becomes a thin wrapper or is removed.
 
-from typing import Protocol as _Protocol, runtime_checkable as _runtime_checkable
+from typing import Protocol as _Protocol
+from typing import runtime_checkable as _runtime_checkable
 
 
 @_runtime_checkable

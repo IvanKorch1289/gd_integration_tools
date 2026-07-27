@@ -2,16 +2,32 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.backend.dsl.engine.processors.rpa.operations.filemoveprocessor import FileMoveProcessor
-from src.backend.dsl.engine.processors.rpa.operations.regexprocessor import RegexProcessor
-from src.backend.dsl.engine.processors.rpa.operations.templaterenderprocessor import TemplateRenderProcessor
-from src.backend.dsl.engine.processors.rpa.operations.hashprocessor import HashProcessor
-from src.backend.dsl.engine.processors.rpa.operations.encryptprocessor import EncryptProcessor
-from src.backend.dsl.engine.processors.rpa.operations.decryptprocessor import DecryptProcessor
+import pytest
+
 from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.rpa.operations.decryptprocessor import (
+    DecryptProcessor,
+)
+from src.backend.dsl.engine.processors.rpa.operations.encryptprocessor import (
+    EncryptProcessor,
+)
+from src.backend.dsl.engine.processors.rpa.operations.filemoveprocessor import (
+    FileMoveProcessor,
+)
+from src.backend.dsl.engine.processors.rpa.operations.hashprocessor import HashProcessor
+from src.backend.dsl.engine.processors.rpa.operations.regexprocessor import (
+    RegexProcessor,
+)
+from src.backend.dsl.engine.processors.rpa.operations.templaterenderprocessor import (
+    TemplateRenderProcessor,
+)
+
+
+def _allow(processor: object) -> None:
+    """Bypass production fail-closed auth_check в unit-тестах."""
+    processor.auth_check = AsyncMock(return_value=True)  # type: ignore[attr-defined]
 
 
 class TestFileMoveProcessor:
@@ -21,6 +37,7 @@ class TestFileMoveProcessor:
     async def test_process_moves_file(self) -> None:
         # S164 W1: updated to match actual FileMoveProcessor API (src/dst/mode).
         processor = FileMoveProcessor(src="a.txt", dst="b.txt", mode="move")
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = None  # параметры переданы в __init__
@@ -39,6 +56,7 @@ class TestRegexProcessor:
     @pytest.mark.asyncio
     async def test_process_extracts_regex(self) -> None:
         processor = RegexProcessor(pattern=r"\d+", source="body", target="result")
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = "abc123def456"
@@ -55,6 +73,7 @@ class TestTemplateRenderProcessor:
     @pytest.mark.asyncio
     async def test_process_renders_template(self) -> None:
         processor = TemplateRenderProcessor(template="Hello {{ name }}")
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = {"name": "World"}
@@ -71,6 +90,7 @@ class TestHashProcessor:
     @pytest.mark.asyncio
     async def test_process_hashes_data(self) -> None:
         processor = HashProcessor(algorithm="sha256", source="body", target="hash")
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = b"test data"
@@ -87,6 +107,7 @@ class TestEncryptProcessor:
     @pytest.mark.asyncio
     async def test_process_encrypts_data(self) -> None:
         processor = EncryptProcessor(key="secret-key-1234567890123456", source="body", target="encrypted")
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = "sensitive data"
@@ -107,6 +128,7 @@ class TestDecryptProcessor:
     @pytest.mark.asyncio
     async def test_process_decrypts_data(self) -> None:
         processor = DecryptProcessor(key="secret-key-1234567890123456", source="body", target="decrypted")
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = b"encrypted data"

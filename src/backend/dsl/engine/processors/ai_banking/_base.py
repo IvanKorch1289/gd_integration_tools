@@ -52,9 +52,7 @@ class _BankingAIProcessor(BaseProcessor):
             с emit banking audit event.
         """
         try:
-            from src.backend.services.capabilities.facade import (
-                get_capability_facade,
-            )
+            from src.backend.services.capabilities.facade import get_capability_facade
 
             get_capability_facade().check_or_raise(
                 plugin=f"dsl.engine.processors.ai_banking.{self.__class__.__name__}",
@@ -63,9 +61,7 @@ class _BankingAIProcessor(BaseProcessor):
             )
             return True
         except Exception as exc:
-            from src.backend.core.security.capabilities import (
-                CapabilityDeniedError,
-            )
+            from src.backend.core.security.capabilities import CapabilityDeniedError
 
             if isinstance(exc, CapabilityDeniedError):
                 exchange.fail(f"capability_denied: {self.capability}")

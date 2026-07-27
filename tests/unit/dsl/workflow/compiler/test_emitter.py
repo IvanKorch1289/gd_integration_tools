@@ -83,6 +83,13 @@ def test_signal_names_collected_from_signal_steps() -> None:
     assert set(compiled.signal_names) == {"manager_approve", "auditor_approve"}
 
 
+def test_pause_step_registers_internal_resume_signal() -> None:
+    decl = WorkflowBuilder("paused.flow").pause().build()
+    compiled = compile_workflow(decl)
+    assert compiled.signal_names == ("__dsl_resume__",)
+    assert hasattr(compiled.cls, "_on_signal___dsl_resume__")
+
+
 def test_signal_names_deduplicated() -> None:
     decl = (
         WorkflowBuilder("hitl.dup")

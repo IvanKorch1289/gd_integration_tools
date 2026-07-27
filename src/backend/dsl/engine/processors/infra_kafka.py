@@ -8,6 +8,7 @@ Kafka message production через facade::
           order_id: 1
 """
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.processors.base import BaseProcessor

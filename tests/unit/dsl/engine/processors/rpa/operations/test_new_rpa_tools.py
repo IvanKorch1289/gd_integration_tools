@@ -8,10 +8,11 @@
 5. ImageConvertProcessor — pillow format conversion
 """
 from __future__ import annotations
+
 import asyncio
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -25,6 +26,7 @@ class TestFileDeleteProcessor:
         target = tmp_path / "delete_me.txt"
         target.write_text("data")
         p = FileDeleteProcessor(path=str(target))
+        p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
         ex.in_message = MagicMock()
         ex.in_message.body = {}
@@ -46,6 +48,7 @@ class TestFileListProcessor:
         (tmp_path / "b.txt").write_text("b")
         (tmp_path / "c.log").write_text("c")
         p = FileListProcessor(pattern=str(tmp_path / "*.txt"), to="body.files")
+        p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
         ex.in_message = MagicMock()
         ex.in_message.body = {}
@@ -75,6 +78,7 @@ class TestFileWatchProcessor:
             FileWatchProcessor,
         )
         p = FileWatchProcessor(directory=str(tmp_path), pattern="*.txt", timeout=0.1)
+        p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
         ex.in_message = MagicMock()
         ex.in_message.body = {}
@@ -93,10 +97,9 @@ class TestFileWatchProcessor:
 class TestTerminalExecProcessor:
     @pytest.mark.asyncio
     async def test_exec_runs_command(self) -> None:
-        from src.backend.dsl.engine.processors.rpa.system import (
-            TerminalExecProcessor,
-        )
+        from src.backend.dsl.engine.processors.rpa.system import TerminalExecProcessor
         p = TerminalExecProcessor(command="echo hello", timeout=2.0, to="body.output")
+        p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
         ex.in_message = MagicMock()
         ex.in_message.body = {}
@@ -109,10 +112,9 @@ class TestTerminalExecProcessor:
     @pytest.mark.asyncio
     async def test_exec_timeout_raises(self) -> None:
         """subprocess timeout → raise TimeoutError."""
-        from src.backend.dsl.engine.processors.rpa.system import (
-            TerminalExecProcessor,
-        )
+        from src.backend.dsl.engine.processors.rpa.system import TerminalExecProcessor
         p = TerminalExecProcessor(command="sleep 10", timeout=0.1)
+        p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
         ex.in_message = MagicMock()
         ex.in_message.body = {}

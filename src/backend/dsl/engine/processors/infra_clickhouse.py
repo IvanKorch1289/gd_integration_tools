@@ -7,6 +7,7 @@ ClickHouse analytical queries через facade::
         to: body.result
 """
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.engine.processors.base import BaseProcessor

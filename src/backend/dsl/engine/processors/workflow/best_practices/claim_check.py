@@ -23,8 +23,9 @@ import asyncio
 import hashlib
 import json
 import os
+import tempfile
 import uuid
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -34,6 +35,9 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 _logger = get_logger("dsl.workflow.claim_check")
+
+#: Default TTL для redis claim-check entries (1h).
+_DEFAULT_TTL_SECONDS: int = 3600
 
 
 class WorkflowClaimCheckProcessor(BaseProcessor):
@@ -45,12 +49,13 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         bucket: Имя bucket (для s3) или префикс (для local/redis).
         max_size_bytes: Порог размера (по умолчанию 1MB; payload меньше — не сохраняем).
         to: Куда записать claim token (по умолчанию "body.payload_claim").
+        ttl_seconds: TTL для redis backend (default 3600).
     """
 
-    required_capability: str | None = "workflow.claim_check.store"
-    audit_event: str | None = "workflow.claim_check.stored"
+    required_capability: ClassVar[str | None] = "workflow.claim_check.store"
+    audit_event: ClassVar[str | None] = "workflow.claim_check.stored"
 
-    SUPPORTED_BACKENDS = ("s3", "redis", "local")
+    SUPPORTED_BACKENDS: ClassVar[tuple[str, ...]] = ("s3", "redis", "local")
 
     def __init__(
         self,
@@ -60,6 +65,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         bucket: str = "claim-checks",
         max_size_bytes: int = 1_048_576,
         to: str = "body.payload_claim",
+        ttl_seconds: int = _DEFAULT_TTL_SECONDS,
         name: str | None = None,
     ) -> None:
         if storage_backend not in self.SUPPORTED_BACKENDS:
@@ -73,6 +79,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         self.bucket = bucket
         self.max_size_bytes = max_size_bytes
         self.target = to
+        self.ttl_seconds = ttl_seconds
 
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
@@ -112,7 +119,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
             f"-{uuid.uuid4().hex[:8]}"
         )
 
-        await asyncio.to_thread(self._store_payload, claim_id, serialized)
+        await self._store(claim_id, serialized)
 
         claim_token = {
             "claim_id": claim_id,
@@ -127,24 +134,99 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         )
         self.set_result(exchange, self.target, claim_token)
 
-    def _store_payload(self, claim_id: str, data: bytes) -> None:
-        """Ленивая запись payload в storage (для local)."""
+    async def _store(self, claim_id: str, data: bytes) -> None:
+        """Dispatch store по backend (local=sync file, redis/s3=async client).
+
+        Args:
+            claim_id: Уникальный идентификатор claim'а.
+            data: Сериализованный payload (bytes).
+        """
         if self.storage_backend == "local":
-            base = os.environ.get(
-                "CLAIM_CHECK_LOCAL_PATH",
-                "/tmp/claim_checks",
-            )
-            os.makedirs(base, exist_ok=True)
-            full_path = os.path.join(base, claim_id.replace("/", "_"))
-            with open(full_path, "wb") as fp:
-                fp.write(data)
-            return
-        # ponytail: redis/s3 backends were scaffold-only with dead imports (no real impl).
-        # Falling through to "no-op" preserves existing behavior — backend configs other
-        # than 'local' get a log warning rather than silently doing nothing.
-        if self.storage_backend in ("redis", "s3"):
-            _logger.warning(
-                "claim_check: backend=%s не реализован (scaffold-only)",
-                self.storage_backend,
-            )
-            return
+            await asyncio.to_thread(self._store_local, claim_id, data)
+        elif self.storage_backend == "redis":
+            await self._store_redis(claim_id, data)
+        elif self.storage_backend == "s3":
+            await self._store_s3(claim_id, data)
+
+    def _store_local(self, claim_id: str, data: bytes) -> None:
+        """Запись payload в локальную файловую систему (для dev)."""
+        base = os.environ.get(
+            "CLAIM_CHECK_LOCAL_PATH",
+            os.path.join(tempfile.gettempdir(), "claim_checks"),
+        )
+        os.makedirs(base, exist_ok=True)
+        full_path = os.path.join(base, claim_id.replace("/", "_"))
+        with open(full_path, "wb") as fp:
+            fp.write(data)
+
+    async def _store_redis(self, claim_id: str, data: bytes) -> None:
+        """Запись payload в Redis с TTL (lazy import — redis опциональная зависимость).
+
+        Args:
+            claim_id: Ключ для Redis.
+            data: Сериализованный payload (bytes).
+
+        Raises:
+            ConnectionError: при недоступности Redis (propagated to caller).
+        """
+        from src.backend.infrastructure.clients.storage.redis import redis_client
+
+        await redis_client.cache_set(claim_id, data, expire=self.ttl_seconds)
+
+    async def _store_s3(self, claim_id: str, data: bytes) -> None:
+        """Запись payload в S3/MinIO (lazy import — aiobotocore опциональная зависимость).
+
+        Args:
+            claim_id: Ключ объекта в S3.
+            data: Сериализованный payload (bytes).
+
+        Raises:
+            Exception: при ошибке S3 (propagated to caller).
+        """
+        from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
+
+        s3 = get_s3_client()
+        await s3.put_object(
+            key=claim_id,
+            body=data,
+            metadata={"ttl_seconds": str(self.ttl_seconds)},
+        )
+
+    async def load_payload(self, claim_id: str) -> bytes | None:
+        """Загрузка payload по claim_id из внешнего хранилища.
+
+        Args:
+            claim_id: Идентификатор claim'а (из claim_token["claim_id"]).
+
+        Returns:
+            Сериализованный payload (bytes) или ``None`` если не найден/expired.
+        """
+        if self.storage_backend == "local":
+            return await asyncio.to_thread(self._load_local, claim_id)
+        if self.storage_backend == "redis":
+            return await self._load_redis(claim_id)
+        if self.storage_backend == "s3":
+            return await self._load_s3(claim_id)
+        return None
+
+    def _load_local(self, claim_id: str) -> bytes | None:
+        """Чтение payload из локальной файловой системы."""
+        base = os.environ.get("CLAIM_CHECK_LOCAL_PATH", os.path.join(tempfile.gettempdir(), "claim_checks"))
+        full_path = os.path.join(base, claim_id.replace("/", "_"))
+        if not os.path.exists(full_path):
+            return None
+        with open(full_path, "rb") as fp:
+            return fp.read()
+
+    async def _load_redis(self, claim_id: str) -> bytes | None:
+        """Чтение payload из Redis."""
+        from src.backend.infrastructure.clients.storage.redis import redis_client
+
+        return await redis_client.cache_get(claim_id)
+
+    async def _load_s3(self, claim_id: str) -> bytes | None:
+        """Чтение payload из S3/MinIO."""
+        from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
+
+        s3 = get_s3_client()
+        return await s3.get_object_bytes(claim_id)

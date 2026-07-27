@@ -184,7 +184,10 @@ class LdapQueryProcessor(BaseProcessor):
         # are runtime secrets, never serialized. Operator should store
         # in Vault and reference via credential_ref.
         if self._password:
-            spec["password"] = "<redacted: use credential_ref>"
+            # ``password`` here is a dict key in the YAML spec — the
+            # value is the redacted placeholder string, never the
+            # runtime secret (Cycle 20 P1-3 contract).
+            spec["password"] = "<redacted: use credential_ref>"  # noqa: S105
         if self._attributes:
             spec["attributes"] = self._attributes
         if self._target != "body.ldap_result":

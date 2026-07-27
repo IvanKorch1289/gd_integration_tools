@@ -158,8 +158,9 @@ class AgentDictPIIMaskProcessor(BaseAIProcessor):
             target_property=target_property,
             language=language,
         )
-        instance.required_capability = cls._CAPABILITY_FOR_TOOLS
-        instance.audit_event = cls._AUDIT_FOR_TOOLS
+        # Per-instance policy is deliberate; class defaults remain immutable.
+        instance.__dict__["required_capability"] = cls._CAPABILITY_FOR_TOOLS
+        instance.__dict__["audit_event"] = cls._AUDIT_FOR_TOOLS
         instance.name = f"agent_pii_tool_mask:{scope}"
         return instance
 
@@ -183,8 +184,9 @@ class AgentDictPIIMaskProcessor(BaseAIProcessor):
             target_property=target_property,
             language=language,
         )
-        instance.required_capability = cls._CAPABILITY_FOR_ACTIONS
-        instance.audit_event = cls._AUDIT_FOR_ACTIONS
+        # Per-instance policy is deliberate; class defaults remain immutable.
+        instance.__dict__["required_capability"] = cls._CAPABILITY_FOR_ACTIONS
+        instance.__dict__["audit_event"] = cls._AUDIT_FOR_ACTIONS
         instance.name = f"agent_pii_action_mask:{scope}"
         return instance
 

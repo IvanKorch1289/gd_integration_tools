@@ -19,6 +19,7 @@ DuckDB соединение — in-process (default). Опция ``persistent_pa
 
 from __future__ import annotations
 
+import importlib
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
@@ -79,7 +80,9 @@ class DuckDbQueryProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет SQL и кладёт результат в body как list[dict]."""
         try:
-            import duckdb
+            # Optional dependency is resolved lazily; its runtime API is exercised
+            # through DuckDB's own connection object, so no package-wide stub is needed.
+            duckdb = importlib.import_module("duckdb")
         except ImportError:
             raise RuntimeError("duckdb не установлен — добавьте в зависимости проекта")
 

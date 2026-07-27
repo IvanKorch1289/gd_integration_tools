@@ -9,7 +9,7 @@ Ponytail (D250, D251): thin wrapper над capability-checked facade.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -34,7 +34,7 @@ class PerplexitySearchProcessor(BaseProcessor):
         to: Куда положить результат (default "body.perplexity_result").
     """
 
-    required_capability: str | None = "web_search.perplexity.invoke"
+    required_capability: ClassVar[str | None] = "web_search.perplexity.invoke"
     audit_event: str | None = "web_search.perplexity.invoked"
 
     VALID_MODELS = ("sonar", "sonar-pro", "sonar-reasoning")
@@ -72,9 +72,9 @@ class PerplexitySearchProcessor(BaseProcessor):
         if not await self.auth_check(exchange, action="invoke"):
             return
         # Lazy import — capability-checked facade (D102)
-        from src.backend.core.integrations.web_search import get_perplexity_provider_class
-        ProviderClass = get_perplexity_provider_class()
-        provider = ProviderClass()
+        from src.backend.core.integrations.web_search import PerplexityProvider
+
+        provider = PerplexityProvider()
 
         resolved_query = self.query
         head, _, rest = self.query.partition(".")

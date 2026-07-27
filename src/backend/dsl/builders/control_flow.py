@@ -49,6 +49,7 @@ class ControlFlowMixin:
     Контракт см. в ``base.py``.
     """
 
+    _route_overrides: dict[str, Any]
     __slots__ = ()
 
     # ── Ветвление / условия ──

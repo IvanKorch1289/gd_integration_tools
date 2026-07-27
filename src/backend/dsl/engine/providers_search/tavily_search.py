@@ -10,7 +10,7 @@ Ponytail (D250, D251): thin wrapper над capability-checked facade.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -36,7 +36,7 @@ class TavilySearchProcessor(BaseProcessor):
         to: Куда положить результат (default "body.tavily_result").
     """
 
-    required_capability: str | None = "web_search.tavily.invoke"
+    required_capability: ClassVar[str | None] = "web_search.tavily.invoke"
     audit_event: str | None = "web_search.tavily.invoked"
 
     VALID_DEPTHS = ("basic", "advanced")
@@ -76,9 +76,9 @@ class TavilySearchProcessor(BaseProcessor):
         if not await self.auth_check(exchange, action="invoke"):
             return
         # Lazy import — capability-checked facade (D102)
-        from src.backend.core.integrations.web_search import get_tavily_provider_class
-        ProviderClass = get_tavily_provider_class()
-        provider = ProviderClass()
+        from src.backend.core.integrations.web_search import TavilyProvider
+
+        provider = TavilyProvider()
 
         resolved_query = self.query
         head, _, rest = self.query.partition(".")

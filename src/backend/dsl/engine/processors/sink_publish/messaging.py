@@ -221,7 +221,9 @@ class MqttPublishProcessor(BaseProcessor):
             spec["username"] = self._username
         # Cycle 20 P1-3: never serialize runtime password.
         if self._password is not None:
-            spec["password"] = "<redacted: use credential_ref>"
+            # ``password`` dict key; value is the redacted placeholder
+            # string, runtime secret is never serialized.
+            spec["password"] = "<redacted: use credential_ref>"  # noqa: S105
         if self._payload_property is not None:
             spec["payload_property"] = self._payload_property
         return {"mqtt_publish": spec}

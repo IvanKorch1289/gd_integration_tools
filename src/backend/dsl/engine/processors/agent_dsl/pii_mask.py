@@ -216,9 +216,7 @@ class PIIMaskProcessor(BaseAIProcessor):
     def _resolve_tokenizer() -> Any | None:
         """Lazy-резолв :class:`PIITokenizer` через DI provider."""
         try:
-            from src.backend.core.di.providers.ai import (
-                get_pii_tokenizer_provider,
-            )
+            from src.backend.core.di.providers.ai import get_pii_tokenizer_provider
             provider = get_pii_tokenizer_provider()
             return provider() if provider else None
         except Exception as exc:

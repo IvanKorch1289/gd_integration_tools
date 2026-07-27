@@ -100,7 +100,9 @@ class DaskComputeProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет graph и сохраняет результат в body / header."""
-        import dask.bag as db
+        # Optional dependency is resolved lazily; Dask Bag is intentionally
+        # structural here because multiple supported Dask versions expose it.
+        db = importlib.import_module("dask.bag")
 
         body = exchange.in_message.body
         if body is None:

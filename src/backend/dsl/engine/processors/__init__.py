@@ -4,6 +4,8 @@
     from src.backend.dsl.engine.processors import BaseProcessor, DispatchActionProcessor, ...
 """
 
+from src.backend.dsl.engine.processors.agent_dsl.agent_graph import AgentGraphProcessor
+from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import MCPToolProcessor
 from src.backend.dsl.engine.processors.ai import (
     CacheProcessor,
     CacheWriteProcessor,
@@ -134,12 +136,6 @@ from src.backend.dsl.engine.processors.entity import (
     EntityUpdateProcessor,
 )
 from src.backend.dsl.engine.processors.export import ExportProcessor
-from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
-    AgentGraphProcessor,
-)
-from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import (
-    MCPToolProcessor,
-)
 from src.backend.dsl.engine.processors.generic import (
     AbTestRouterProcessor,
     BulkheadProcessor,

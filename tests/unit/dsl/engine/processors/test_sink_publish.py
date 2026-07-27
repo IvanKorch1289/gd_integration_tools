@@ -331,7 +331,9 @@ class TestMqttPublishProcessor:
         assert spec["qos"] == 1
         assert spec["retain"] is True
         assert spec["username"] == "u"
-        assert spec["password"] == "p"
+        # Cycle 20 P1-3: runtime password is never serialized — replaced
+        # with a redacted placeholder so the YAML spec cannot leak secrets.
+        assert spec["password"] == "<redacted: use credential_ref>"
 
 
 @pytest.mark.asyncio

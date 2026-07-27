@@ -26,6 +26,7 @@ class _RouteBuilderProtocol(Protocol):
     _middlewares: list[Any]
     _processors: list[BaseProcessor]
     _protocol: Any
+    _route_overrides: dict[str, Any]
     _transport_config: Any
 
     def _add(self, processor: BaseProcessor) -> Self: ...

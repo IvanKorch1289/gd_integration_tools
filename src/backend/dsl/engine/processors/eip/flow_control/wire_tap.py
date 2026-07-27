@@ -11,9 +11,7 @@ from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
-from src.backend.dsl.engine.processors.base import (
-    BaseProcessor,
-)
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _eip_logger = get_logger("dsl.eip")
 

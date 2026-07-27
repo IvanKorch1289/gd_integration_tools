@@ -24,6 +24,13 @@ from __future__ import annotations
 from src.backend.dsl.engine.processors.entity._legacy import (  # noqa: F401
     _BaseEntityProcessor,
 )
+
+# S175: _resolve helper restored (parallel WIP forgot to migrate from
+# original entity.py). _resolve используется audit.py и другими
+# callers для namespace-path resolution.
+from src.backend.dsl.engine.processors.entity._resolve import (
+    _resolve,  # noqa: F401, E501
+)
 from src.backend.dsl.engine.processors.entity.create import (  # noqa: F401
     EntityCreateProcessor,
 )
@@ -39,11 +46,6 @@ from src.backend.dsl.engine.processors.entity.list import (  # noqa: F401
 from src.backend.dsl.engine.processors.entity.update import (  # noqa: F401
     EntityUpdateProcessor,
 )
-
-# S175: _resolve helper restored (parallel WIP forgot to migrate from
-# original entity.py). _resolve используется audit.py и другими
-# callers для namespace-path resolution.
-from src.backend.dsl.engine.processors.entity._resolve import _resolve  # noqa: F401, E501
 
 __all__ = (
     "EntityCreateProcessor",

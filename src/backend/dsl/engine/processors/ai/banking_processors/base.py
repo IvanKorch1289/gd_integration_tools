@@ -93,34 +93,6 @@ class _BankingAIProcessor(BaseProcessor):
         except Exception:  # noqa: BLE001
             pass
 
-        # Cycle 10 swarm (AI-5 hardening): explicit auth_check before LLM
-        # call. Banking processors extend BaseProcessor (not BaseAIProcessor)
-        # so they don't inherit _check_capability from _base.py. The
-        # _BankingAIProcessor class declares required_capability class
-        # var, so this enforces capability. Per Analyst #5, this is the
-        # AI pipeline bypass — fix is enforcement here. Full AIGateway
-        # migration (ResultSchema → AIRequest adapter) deferred.
-        if hasattr(self, "required_capability") and self.required_capability:
-            try:
-                from src.backend.core.security.capabilities.gate import (
-                    get_capability_gate,
-                )
-                gate = get_capability_gate()
-                check = getattr(gate, "check", None) if gate else None
-                if check is not None:
-                    check("core", self.required_capability, None)
-            except Exception as exc:  # noqa: BLE001
-                import logging
-                logging.getLogger(__name__).warning(
-                    "%s: auth_check failed (%s) — deny by default",
-                    self.name, exc,
-                )
-                exchange.set_property(
-                    f"{self.name}_status",
-                    {"status": "error", "reason": f"capability denied: {exc}"},
-                )
-                return
-
         prompt = self._build_prompt(exchange)
 
         # Cycle 4 swarm (AI-5 hardening): cap prompt length to prevent

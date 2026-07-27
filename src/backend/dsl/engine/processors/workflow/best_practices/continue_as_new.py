@@ -14,7 +14,7 @@ Pattern (Ponytail, D169): тонкий wrapper, без абстракций.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -38,7 +38,7 @@ class WorkflowContinueAsNewProcessor(BaseProcessor):
         search_attributes: Атрибуты для поиска (по умолчанию None).
     """
 
-    required_capability: str | None = "workflow.continue_as_new.request"
+    required_capability: ClassVar[str | None] = "workflow.continue_as_new.request"
     audit_event: str | None = "workflow.continue_as_new.requested"
 
     def __init__(

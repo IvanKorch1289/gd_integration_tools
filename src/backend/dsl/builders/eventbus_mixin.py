@@ -35,7 +35,9 @@ def _resolve_event_bus_facade() -> Any:
         (dev_light / unit-tests без DI).
     """
     try:
-        from src.backend.core.di.providers import get_event_bus_facade_provider
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_event_bus_facade_provider,
+        )
 
         return get_event_bus_facade_provider()
     except (ImportError, AttributeError, RuntimeError):

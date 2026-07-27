@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any
+from typing import Any, ClassVar
 
 import orjson
 from pydantic import BaseModel
@@ -191,7 +191,19 @@ class ClaimCheckProcessor(BaseProcessor):
 
     S3-backend активируется при ``store="s3"`` или когда размер
     payload превышает ``threshold_bytes`` (по умолчанию 256 KB).
+
+    Capability-gate (P3 S172 W2): оба режима требуют capability
+    ``message.claim_check.store`` (store) / ``message.claim_check.retrieve``
+    (retrieve). Tenant-isolation обеспечивается context-aware
+    :meth:`BaseProcessor.auth_check` (берёт tenant_id из ``exchange.meta``
+    или :func:`src.backend.core.tenancy.current_tenant`).
+    Backward-compatible: existing call-sites не получают reject — capability
+    проверяется через :class:`AuthorizationFacade` и по умолчанию
+    возвращает ``True`` (facade allow-by-default для registered capabilities).
     """
+
+    required_capability: ClassVar[str | None] = "message.claim_check.store"
+    audit_event: ClassVar[str | None] = "message.claim_check.store"
 
     def __init__(
         self,
@@ -207,6 +219,10 @@ class ClaimCheckProcessor(BaseProcessor):
         self._store = store
         self._ttl = ttl_seconds
         self._threshold = threshold_bytes
+        # Per-mode policy is instance state; class defaults stay immutable.
+        if mode == "retrieve":
+            self.__dict__["required_capability"] = "message.claim_check.retrieve"
+            self.__dict__["audit_event"] = "message.claim_check.retrieve"
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Реализует Claim Check EIP: выгрузка/восстановление больших сообщений.
@@ -223,6 +239,10 @@ class ClaimCheckProcessor(BaseProcessor):
             context: Контекст выполнения маршрута.
         """
         import uuid
+
+        # Capability-gate (P3 S172 W2): tenant/context-safe auth check.
+        if not await self.auth_check(exchange, action=self._mode):
+            return
 
         if self._mode == "store":
             body_bytes = orjson.dumps(exchange.in_message.body, default=str)

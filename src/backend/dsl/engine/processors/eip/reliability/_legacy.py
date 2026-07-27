@@ -23,6 +23,7 @@ Apache Camel EIP catalog (reliability / routing-metadata):
 
 from __future__ import annotations
 
+# ruff: noqa: F822  # lazy __getattr__ exports verified by runtime test
 from collections.abc import Awaitable, Callable
 from datetime import datetime
 from typing import Any
@@ -55,5 +56,34 @@ ExpirationResolver = Callable[
     [Exchange[Any]], datetime | None | Awaitable[datetime | None]
 ]
 RedeliveryAttempt = tuple[int, float]  # (attempt_number, delay_seconds)
+
+
+def __getattr__(name: str) -> Any:
+    """Resolve processor classes lazily for backward-compatible imports."""
+    if name == "CorrelationIdentifierProcessor":
+        from src.backend.dsl.engine.processors.eip.reliability.correlation_identifier import (
+            CorrelationIdentifierProcessor,
+        )
+
+        return CorrelationIdentifierProcessor
+    if name == "MessageExpirationProcessor":
+        from src.backend.dsl.engine.processors.eip.reliability.message_expiration import (
+            MessageExpirationProcessor,
+        )
+
+        return MessageExpirationProcessor
+    if name == "RedeliveryPolicyProcessor":
+        from src.backend.dsl.engine.processors.eip.reliability.redelivery_policy import (
+            RedeliveryPolicyProcessor,
+        )
+
+        return RedeliveryPolicyProcessor
+    if name == "ReturnAddressProcessor":
+        from src.backend.dsl.engine.processors.eip.reliability.return_address import (
+            ReturnAddressProcessor,
+        )
+
+        return ReturnAddressProcessor
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

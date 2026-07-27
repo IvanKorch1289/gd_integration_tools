@@ -9,7 +9,7 @@ Pattern (Ponytail, D171): тонкий wrapper.
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -61,7 +61,7 @@ class WafCheckProcessor(BaseProcessor):
         to: Куда записать результат (по умолчанию "waf_decision").
     """
 
-    required_capability: str | None = "security.waf.check"
+    required_capability: ClassVar[str | None] = "security.waf.check"
     audit_event: str | None = "security.waf.checked"
 
     ACTIONS = ("block", "flag")
@@ -121,9 +121,5 @@ class WafCheckProcessor(BaseProcessor):
 
         self.set_result(exchange, self.target, decision)
         if findings and self.action == "block":
-            ex_text = (
-                f"WAF blocked request. Rules: {', '.join(findings)}"
-            )
-            
             exchange.stop()
             # log only — do not raise (marking test expects flag/block via property)

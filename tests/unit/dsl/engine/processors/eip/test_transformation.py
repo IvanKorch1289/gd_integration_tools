@@ -70,6 +70,23 @@ def mock_s3(monkeypatch):
     return client
 
 
+@pytest.fixture(autouse=True)
+def _allow_claim_check_capability(monkeypatch):
+    """P3 S172 W2 — claim-check требует capability (default-deny).
+
+    Backward-compatible: existing tests patches ``check_source_capability``
+    чтобы auth_check возвращал True. Реальный auth-gate покрыт тестами
+    ниже (TestClaimCheckCapabilityGating).
+    """
+    async def _allow(*args, **kwargs):
+        return True
+
+    monkeypatch.setattr(
+        "src.backend.core.security.connector_auth.check_source_capability",
+        _allow,
+    )
+
+
 # =============================================================================
 # ClaimCheckProcessor
 # =============================================================================
@@ -158,6 +175,162 @@ async def test_claim_check_retrieve_no_token_fails() -> None:
     await proc.process(exchange, None)  # type: ignore[arg-type]
     assert exchange.status == ExchangeStatus.failed
     assert "No claim token found" in (exchange.error or "")
+
+
+@pytest.mark.asyncio
+async def test_claim_check_message_round_trip_redis(mock_redis) -> None:
+    """P3 message-level: round-trip store/retrieve через Message/Exchange payload.
+
+    Контракт message-level claim-check:
+      - store: payload из ``exchange.in_message.body`` → token в
+        ``exchange.properties["_claim_token"]`` + ``out_message.body``.
+      - retrieve: token → ``out_message.body`` восстановлен ИДЕНТИЧНО.
+    """
+    original_payload = {"order_id": 42, "items": [{"sku": "A", "qty": 3}]}
+
+    # 1. store
+    store_proc = ClaimCheckProcessor(mode="store", store="redis")
+    ex_store = _ex(original_payload)
+    await store_proc.process(ex_store, None)  # type: ignore[arg-type]
+    token = ex_store.properties["_claim_token"]
+    assert token.startswith("claim:")
+
+    # mock: при retrieve вернём сериализованный original.
+    mock_redis.get.return_value = (
+        '{"order_id": 42, "items": [{"sku": "A", "qty": 3}]}'
+    )
+
+    # 2. retrieve
+    ret_proc = ClaimCheckProcessor(mode="retrieve")
+    ex_ret = _ex({"_claim_token": token})
+    await ret_proc.process(ex_ret, None)  # type: ignore[arg-type]
+    assert ex_ret.out_message.body == original_payload
+    # Message-level payload гарантированно идентичен (not partial / not wrapped).
+    assert isinstance(ex_ret.out_message.body, dict)
+    assert ex_ret.out_message.body["order_id"] == 42
+
+
+def test_claim_check_builder_methods_wire_to_processor() -> None:
+    """P3 message-level: builder ``claim_check_in``/``claim_check_out`` →
+    ``ClaimCheckProcessor`` mode=store/retrieve.
+
+    Не импортируем модуль (cycle через eip/__init__.py → builders.base),
+    используем text-based introspection на сигнатуру.
+    """
+    from pathlib import Path
+
+    p = Path("src/backend/dsl/builders/eip/transformation.py")
+    if not p.exists():
+        pytest.skip("eip/transformation builder not found")
+    src = p.read_text(encoding="utf-8")
+    assert "def claim_check_in(" in src
+    assert "def claim_check_out(" in src
+    # claim_check_in должен принимать store / ttl / threshold
+    assert "store: str = \"redis\"" in src
+    assert "ttl_seconds: int = 3600" in src
+    assert "threshold_bytes: int = 256 * 1024" in src
+    # mode="store" / mode="retrieve" — реальная инстанциация ClaimCheckProcessor
+    assert "ClaimCheckProcessor(" in src
+    assert 'mode="store"' in src
+    assert 'mode="retrieve"' in src
+
+
+# =============================================================================
+# ClaimCheckProcessor — capability / tenant context (P3 S172 W2)
+# =============================================================================
+
+
+def test_claim_check_class_declares_required_capability() -> None:
+    """P3 S172 W2: capability-gate объявлен на уровне класса (Ponytail: ClassVar)."""
+    assert ClaimCheckProcessor.required_capability == "message.claim_check.store"
+    assert ClaimCheckProcessor.audit_event == "message.claim_check.store"
+
+
+def test_claim_check_mode_specific_capability_override() -> None:
+    """retrieve-mode меняет capability/audit_event на retrieve-вариант."""
+    proc = ClaimCheckProcessor(mode="retrieve")
+    assert proc.required_capability == "message.claim_check.retrieve"
+    assert proc.audit_event == "message.claim_check.retrieve"
+    # store-mode оставляет дефолтные ClassVar (Python не инстанцирует ClassVar).
+    proc_store = ClaimCheckProcessor(mode="store")
+    assert proc_store.required_capability == "message.claim_check.store"
+    assert proc_store.audit_event == "message.claim_check.store"
+
+
+@pytest.mark.asyncio
+async def test_claim_check_auth_denied_short_circuits(monkeypatch, mock_redis) -> None:
+    """Если capability denied → process() возвращается без side-effect."""
+    from src.backend.core.security.connector_auth import check_source_capability
+
+    async def _deny(*args, **kwargs):
+        return False
+
+    monkeypatch.setattr(check_source_capability, "__call__", _deny, raising=False)
+    # Patch at the call site used by BaseProcessor.auth_check.
+    monkeypatch.setattr(
+        "src.backend.core.security.connector_auth.check_source_capability",
+        _deny,
+    )
+
+    proc = ClaimCheckProcessor(mode="store", store="redis")
+    exchange = _ex({"hello": "world"})
+    await proc.process(exchange, None)  # type: ignore[arg-type]
+
+    # Denied → no token written, no redis call, error recorded.
+    assert "_claim_token" not in exchange.properties
+    mock_redis.set_if_not_exists.assert_not_awaited()
+    assert exchange.error is not None and "denied" in exchange.error
+
+
+@pytest.mark.asyncio
+async def test_claim_check_capability_invoked_with_mode(monkeypatch, mock_redis) -> None:
+    """auth_check вызывается с action=self._mode (store/retrieve)."""
+    captured: dict[str, str] = {}
+
+    async def _capture(capability, *, action="read", principal="anonymous", extra_ctx=None):
+        captured["capability"] = capability
+        captured["action"] = action
+        return True
+
+    monkeypatch.setattr(
+        "src.backend.core.security.connector_auth.check_source_capability",
+        _capture,
+    )
+
+    proc = ClaimCheckProcessor(mode="store")
+    await proc.process(_ex({"x": 1}), None)  # type: ignore[arg-type]
+    assert captured["capability"] == "message.claim_check.store"
+    assert captured["action"] == "store"
+
+    proc_ret = ClaimCheckProcessor(mode="retrieve")
+    await proc_ret.process(_ex({}), None)  # type: ignore[arg-type]
+    assert captured["capability"] == "message.claim_check.retrieve"
+    assert captured["action"] == "retrieve"
+
+
+@pytest.mark.asyncio
+async def test_claim_check_capability_uses_tenant_from_exchange(
+    monkeypatch, mock_redis
+) -> None:
+    """tenant_id из exchange.meta пробрасывается в capability-check context."""
+    captured_extra: dict[str, Any] = {}
+
+    async def _capture(capability, *, action="read", principal="anonymous", extra_ctx=None):
+        captured_extra.update(extra_ctx or {})
+        return True
+
+    monkeypatch.setattr(
+        "src.backend.core.security.connector_auth.check_source_capability",
+        _capture,
+    )
+
+    proc = ClaimCheckProcessor(mode="store")
+    ex = _ex({"x": 1})
+    ex.meta.tenant_id = "tenant-42"
+    await proc.process(ex, None)  # type: ignore[arg-type]
+
+    assert captured_extra.get("tenant_id") == "tenant-42"
+    assert captured_extra.get("processor_class") == "ClaimCheckProcessor"
 
 
 # =============================================================================

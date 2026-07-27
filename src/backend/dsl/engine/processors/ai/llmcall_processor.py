@@ -5,11 +5,11 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from src.backend.core.ai.errors import GatewayRateLimited
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.core.ai.errors import GatewayRateLimited
 
 # S156 W8: fallback per-token cost table (litellm may not be installed,
 # or its API may change — we keep a simple model→rate table as fallback).

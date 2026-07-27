@@ -213,9 +213,7 @@ class MemoryStoreProcessor(BaseAIProcessor):
         из ``app.state.memory_gateway`` (composition root registers it).
         """
         try:
-            from src.backend.services.ai.memory_gateway import (
-                get_memory_gateway,
-            )
+            from src.backend.services.ai.memory_gateway import get_memory_gateway
 
             return get_memory_gateway()
         except Exception as exc:

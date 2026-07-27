@@ -46,7 +46,7 @@ def scrape_and_store(
     builder = RouteBuilder.from_(
         route_id, source=f"scrape:{url}", description=description or f"Scrape: {url}"
     )
-    builder = builder.scrape(url, selectors=selectors)
+    builder = builder.scrape_url(url, selectors=selectors)
 
     if paginate:
         builder = builder.paginate(

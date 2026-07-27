@@ -4,6 +4,7 @@ Thin wrapper над :func:`src.backend.services.ai.prompt_registry.get_prompt_re
 Ponytail: возвращает template text по имени.
 """
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger

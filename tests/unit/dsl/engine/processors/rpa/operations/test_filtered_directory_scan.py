@@ -1,7 +1,8 @@
 """Tests for FilteredDirectoryScanProcessor (S171 M7)."""
 from __future__ import annotations
+
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -26,6 +27,7 @@ class TestFilteredDirectoryScanProcessor:
         p = FilteredDirectoryScanProcessor(
             directory=str(tmp_path), pattern="**/*.txt", to="body.files"
         )
+        p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
         ex.in_message = MagicMock()
         ex.in_message.body = {}
@@ -47,6 +49,7 @@ class TestFilteredDirectoryScanProcessor:
         p = FilteredDirectoryScanProcessor(
             directory=str(tmp_path), pattern="*.txt", min_size=100, to="body.files"
         )
+        p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
         ex.in_message = MagicMock()
         ex.in_message.body = {}

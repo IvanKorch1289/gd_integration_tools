@@ -32,6 +32,7 @@ Note:
 
 from __future__ import annotations
 
+import re
 import time
 import uuid
 from dataclasses import dataclass
@@ -46,6 +47,24 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 __all__ = ("ErasureResult", "PiiEraseProcessor")
 
 _logger = get_logger("dsl.security.pii_erase")
+
+# Whitelist для entity_type в ``{entity_type}_pii`` table — только
+# [A-Za-z0-9_], начинается с буквы/_ (см. db_crud ``_IDENTIFIER_RE``).
+_ENTITY_TYPE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _validate_entity_type(entity_type: str) -> str:
+    """Return ``entity_type`` если проходит whitelist, иначе raise.
+
+    S608 mitigation: гарантирует, что ``entity_type`` подставляется в SQL
+    только как safe-identifier.
+    """
+    if not _ENTITY_TYPE_RE.fullmatch(entity_type):
+        raise ValueError(
+            f"pii_erase: invalid entity_type {entity_type!r} "
+            "(only [A-Za-z0-9_] allowed)"
+        )
+    return entity_type
 
 
 @dataclass(slots=True, frozen=True)
@@ -141,9 +160,7 @@ class PiiEraseProcessor(BaseProcessor):
         # Step 2: vector store deletion (lazy через capability gate)
         vectors_deleted = 0
         try:
-            from src.backend.services.capabilities.facade import (
-                get_capability_facade,
-            )
+            from src.backend.services.capabilities.facade import get_capability_facade
 
             cap_facade = get_capability_facade()
             if cap_facade.check("dsl", "ai.memory.delete", scope=self._scope):
@@ -158,9 +175,7 @@ class PiiEraseProcessor(BaseProcessor):
         # Step 3: DB anonymization
         records_anonymized = 0
         try:
-            from src.backend.services.capabilities.facade import (
-                get_capability_facade,
-            )
+            from src.backend.services.capabilities.facade import get_capability_facade
 
             cap_facade = get_capability_facade()
             if cap_facade.check("dsl", "pii.audit", scope=self._scope):
@@ -269,6 +284,7 @@ class PiiEraseProcessor(BaseProcessor):
             if ":" not in self._scope:
                 return 0
             entity_type, entity_id = self._scope.split(":", 1)
+            _validate_entity_type(entity_type)
             from src.backend.infrastructure.database.session_manager import (
                 main_session_manager,
             )
@@ -277,19 +293,25 @@ class PiiEraseProcessor(BaseProcessor):
                 from sqlalchemy import text
 
                 if self._hard_delete:
+                    # ``entity_type`` was validated above by
+                    # :func:`_validate_entity_type` (regex whitelist) → no
+                    # SQL injection surface; values still bind via
+                    # ``:entity_id``.
                     sql = text(
-                        f"DELETE FROM {entity_type}_pii "
-                        f"WHERE entity_id = :entity_id"
+                        f"DELETE FROM {entity_type}_pii "  # noqa: S608
+                        f"WHERE entity_id = :entity_id"  # noqa: S608
+                        # ``entity_type`` validated by regex whitelist; values bound.
                     )
                     result = await session.execute(
                         sql, {"entity_id": entity_id}
                     )
                 else:
                     sql = text(
-                        f"UPDATE {entity_type}_pii "
-                        f"SET name = NULL, email = NULL, phone = NULL, "
-                        f"anonymized_at = NOW() "
-                        f"WHERE entity_id = :entity_id"
+                        f"UPDATE {entity_type}_pii "  # noqa: S608
+                        f"SET name = NULL, email = NULL, phone = NULL, "  # noqa: S608
+                        f"anonymized_at = NOW() "  # noqa: S608
+                        f"WHERE entity_id = :entity_id"  # noqa: S608
+                        # Same whitelist as DELETE branch above.
                     )
                     result = await session.execute(
                         sql, {"entity_id": entity_id}

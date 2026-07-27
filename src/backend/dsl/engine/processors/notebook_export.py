@@ -20,9 +20,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry.processor import processor
 
 if TYPE_CHECKING:
-    from src.backend.services.jupyter.execution_service import (
-        NotebookExecutionService,
-    )
+    from src.backend.services.jupyter.execution_service import NotebookExecutionService
 
 __all__ = ("NotebookExportProcessor",)
 

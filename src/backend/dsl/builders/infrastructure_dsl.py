@@ -129,7 +129,7 @@ class RedisSetProcessor(_InfraOp):
         from src.backend.infrastructure.clients.storage.redis import get_redis_client
 
         client = get_redis_client()
-        cache_client = client.get_client("cache")
+        cache_client = await client.get_client("cache")
         key = self.params.get("key", "")
         value = self.params.get("value", "")
         ttl_seconds = self.params.get("ttl_seconds")
@@ -152,7 +152,7 @@ class RedisDeleteProcessor(_InfraOp):
         from src.backend.infrastructure.clients.storage.redis import get_redis_client
 
         client = get_redis_client()
-        cache_client = client.get_client("cache")
+        cache_client = await client.get_client("cache")
         key = self.params.get("key", "")
         await cache_client.delete(key)
         exchange.set_property(f"{self.op_name}_result", key)
@@ -163,20 +163,89 @@ class RedisDeleteProcessor(_InfraOp):
 
 
 class ClickHouseInsertProcessor(_InfraOp):
-    """ClickHouse INSERT (batch). INSERT не имеет meaningful compensation."""
+    """ClickHouse INSERT (batch). INSERT не имеет meaningful compensation.
+
+    Cycle 29 P2:
+
+    * ``rows_from`` — выражение exchange-property (например ``"body.rows"``),
+      откуда берётся список строк для INSERT. По умолчанию ``"body"`` —
+      тогда весь body трактуется как список ``list[dict[str, Any]]``.
+    * ``batch_size`` пробрасывается в ``client.insert(batch_size=...)`` —
+      реально доходит до client и управляет chunking'ом.
+    * Oversized body (длиннее ``MAX_INSERT_ROWS``) → ``exchange.fail()`` —
+      fail-fast без HTTP-запроса.
+    """
 
     op_name: ClassVar[str] = "clickhouse_insert"
     compensatable: ClassVar[bool] = False  # INSERT без компенсации
 
     async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """S182: реальный ClickHouse INSERT через DI facade."""
-        from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse_client
+        from src.backend.infrastructure.clients.storage.clickhouse import (
+            MAX_INSERT_ROWS,
+            get_clickhouse_client,
+        )
 
         client = get_clickhouse_client()
         table = self.params.get("table", "")
-        rows = self.params.get("rows", [])
-        await client.insert(table, rows)
-        exchange.set_property(f"{self.op_name}_result", len(rows))
+        rows_from: str = self.params.get("rows_from", "body")
+        batch_size = self.params.get("batch_size")
+
+        # Достаём rows из exchange-property (по умолчанию — ``body``).
+        rows = self._resolve_rows(exchange, rows_from)
+
+        if rows is None:
+            exchange.fail(
+                f"clickhouse_insert: rows_from={rows_from!r} "
+                "missing or not a list of dicts"
+            )
+            return
+
+        # Fail-fast: защита от OOM / runaway-ETL.
+        if len(rows) > MAX_INSERT_ROWS:
+            exchange.fail(
+                f"clickhouse_insert: refusing oversized batch "
+                f"({len(rows)} > MAX_INSERT_ROWS={MAX_INSERT_ROWS}); "
+                "split caller-side before insert()"
+            )
+            return
+
+        n = await client.insert(table, rows, batch_size=batch_size)
+        exchange.set_property(f"{self.op_name}_result", n)
+
+    @staticmethod
+    def _resolve_rows(exchange: Exchange[Any], rows_from: str) -> list[Any] | None:
+        """Достать список строк из exchange по dotted-path выражению.
+
+        Поддерживает пути вида ``"body"`` или ``"body.rows"`` (точка =
+        спуск в dict / list индекс через ``int``).
+        Возвращает ``None`` если property отсутствует, не dict или
+        не ``list[dict[str, Any]]``.
+        """
+        cur: Any = exchange.in_message
+        for part in rows_from.split("."):
+            if cur is None:
+                return None
+            if hasattr(cur, part):
+                cur = getattr(cur, part)
+                continue
+            if isinstance(cur, dict):
+                cur = cur.get(part)
+                continue
+            if isinstance(cur, list):
+                try:
+                    idx = int(part)
+                except ValueError:
+                    return None
+                cur = cur[idx] if -len(cur) <= idx < len(cur) else None
+                continue
+            return None
+        if not isinstance(cur, list):
+            return None
+        # Разрешаем list[dict] — каждая строка должна быть dict (row-format).
+        if not all(isinstance(r, dict) for r in cur):
+            return None
+        return cur
 
 
 
@@ -191,7 +260,9 @@ class ElasticsearchIndexProcessor(_InfraOp):
 
     async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """S182: реальный Elasticsearch INDEX через DI facade."""
-        from src.backend.infrastructure.clients.storage.elasticsearch import get_elasticsearch_client
+        from src.backend.infrastructure.clients.storage.elasticsearch import (
+            get_elasticsearch_client,
+        )
 
         client = get_elasticsearch_client()
         index = self.params.get("index", "")
@@ -209,7 +280,9 @@ class ElasticsearchSearchProcessor(_InfraOp):
 
     async def _execute(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """S182: реальный Elasticsearch SEARCH через DI facade."""
-        from src.backend.infrastructure.clients.storage.elasticsearch import get_elasticsearch_client
+        from src.backend.infrastructure.clients.storage.elasticsearch import (
+            get_elasticsearch_client,
+        )
 
         client = get_elasticsearch_client()
         index = self.params.get("index", "")
@@ -335,10 +408,26 @@ class InfrastructureDSL:
 
     # ── ClickHouse (2) ──
 
-    def clickhouse_insert(self, table: str, *, batch_size: int = 1000) -> RouteBuilder:
-        """Batch INSERT в ClickHouse ``table`` из exchange body."""
+    def clickhouse_insert(
+        self,
+        table: str,
+        *,
+        batch_size: int = 1000,
+        rows_from: str = "body",
+    ) -> RouteBuilder:
+        """Batch INSERT в ClickHouse ``table`` из exchange body.
+
+        Cycle 29 P2:
+
+        * ``rows_from`` (default ``"body"``) — dotted-path выражение
+          exchange-property, откуда берётся ``list[dict]``.
+        * ``batch_size`` (default 1000) — chunking пробрасывается в
+          :meth:`ClickHouseClient.insert`, а не игнорируется.
+        """
         return self._add(  # type: ignore[attr-defined]
-            ClickHouseInsertProcessor(table=table, batch_size=batch_size)
+            ClickHouseInsertProcessor(
+                table=table, batch_size=batch_size, rows_from=rows_from
+            )
         )
 
     # NOTE: clickhouse_query DELETED (S175 #5) — use InfraClickHouseQueryProcessor.

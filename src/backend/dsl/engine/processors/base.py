@@ -100,9 +100,7 @@ class BaseProcessor(ABC):
             return True
 
         try:
-            from src.backend.core.security.connector_auth import (
-                check_source_capability,
-            )
+            from src.backend.core.security.connector_auth import check_source_capability
 
             tenant_id: str | None = None
             try:

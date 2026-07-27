@@ -25,8 +25,15 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.dsl.workflow.compiler.step_compilers import dispatch_step_compile
-from src.backend.dsl.workflow.spec import SignalWaitDeclaration, WorkflowDeclaration
+from src.backend.dsl.workflow.compiler.step_compilers import (
+    _RESUME_SIGNAL,
+    dispatch_step_compile,
+)
+from src.backend.dsl.workflow.spec import (
+    PauseDeclaration,
+    SignalWaitDeclaration,
+    WorkflowDeclaration,
+)
 
 __all__ = ("CompiledWorkflow", "compile_workflow", "compile_workflows")
 
@@ -54,11 +61,13 @@ class CompiledWorkflow:
 
 
 def _collect_signal_names(decl: WorkflowDeclaration) -> tuple[str, ...]:
-    """Извлечь имена сигналов из всех :class:`SignalWaitDeclaration` шагов."""
+    """Извлечь signal-wait names и внутренний resume-signal для pause."""
     names: list[str] = []
     for step in decl.steps:
         if isinstance(step, SignalWaitDeclaration) and step.signal_name not in names:
             names.append(step.signal_name)
+        elif isinstance(step, PauseDeclaration) and _RESUME_SIGNAL not in names:
+            names.append(_RESUME_SIGNAL)
     return tuple(names)
 
 

@@ -34,11 +34,12 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.ai.errors import GatewayUnavailable
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.agent_dsl._base import BaseAIProcessor
-from src.backend.core.ai.errors import GatewayUnavailable
-from src.backend.dsl.engine.processors.agent_dsl._timeouts import DEFAULT_AGENT_TIMEOUT_S
-
+from src.backend.dsl.engine.processors.agent_dsl._timeouts import (
+    DEFAULT_AGENT_TIMEOUT_S,
+)
 
 if TYPE_CHECKING:
     from src.backend.core.ai.gateway import AIRequest

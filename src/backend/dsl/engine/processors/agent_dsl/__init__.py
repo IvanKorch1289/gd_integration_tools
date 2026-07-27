@@ -44,8 +44,21 @@ from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (
     AgentParallelProcessor,
 )
 from src.backend.dsl.engine.processors.agent_dsl.agent_run import AgentRunProcessor
+
+# S187: export agent_security_check processor
+from src.backend.dsl.engine.processors.agent_dsl.agent_security_check import (
+    AgentSecurityCheckProcessor,
+)
+from src.backend.dsl.engine.processors.agent_dsl.ai_tool_dispatch import (
+    AIToolDispatchProcessor,
+)
 from src.backend.dsl.engine.processors.agent_dsl.guardrails_apply import (
     GuardrailsApplyProcessor,
+)
+
+# S202 fix: export LangGraphAgentProcessor (был orphaned — не в __all__)
+from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
+    LangGraphAgentProcessor,
 )
 from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import MCPToolProcessor
 from src.backend.dsl.engine.processors.agent_dsl.memory_recall import (
@@ -64,18 +77,6 @@ from src.backend.dsl.engine.processors.agent_dsl.reflection_loop import (
 )
 from src.backend.dsl.engine.processors.agent_dsl.skill_invoke import (
     SkillInvokeProcessor,
-)
-
-# S202 fix: export LangGraphAgentProcessor (был orphaned — не в __all__)
-from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
-    LangGraphAgentProcessor,
-)
-# S187: export agent_security_check processor
-from src.backend.dsl.engine.processors.agent_dsl.agent_security_check import (
-    AgentSecurityCheckProcessor,
-)
-from src.backend.dsl.engine.processors.agent_dsl.ai_tool_dispatch import (
-    AIToolDispatchProcessor,
 )
 
 __all__: tuple[str, ...] = (

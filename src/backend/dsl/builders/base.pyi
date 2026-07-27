@@ -426,8 +426,19 @@ class RouteBuilder:
         """Клик по CSS-селектору."""
         ...
 
-    def clickhouse_insert(self, table: str, *, batch_size: int = ...) -> RouteBuilder:
-        """Batch INSERT в ClickHouse ``table`` из exchange body."""
+    def clickhouse_insert(
+        self,
+        table: str,
+        *,
+        batch_size: int = ...,
+        rows_from: str = ...,
+    ) -> RouteBuilder:
+        """Batch INSERT в ClickHouse ``table`` из exchange body.
+
+        Cycle 29 P2: ``rows_from`` (default ``"body"``) — dotted-path
+        exchange-property, откуда берётся ``list[dict]``. ``batch_size``
+        пробрасывается в :meth:`ClickHouseClient.insert`.
+        """
         ...
 
     def clickhouse_query(self, query: str, *, to_property: str = ...) -> RouteBuilder:

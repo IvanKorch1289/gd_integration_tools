@@ -8,8 +8,7 @@ Capability: rpa.http.request (medium risk — network egress).
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
-
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -33,7 +32,7 @@ class HttpRequestProcessor(BaseProcessor):
         to: Куда записать ``{status, headers, data}``.
     """
 
-    required_capability: str | None = "rpa.http.request"
+    required_capability: ClassVar[str | None] = "rpa.http.request"
     audit_event: str | None = "rpa.http.request"
 
     def __init__(

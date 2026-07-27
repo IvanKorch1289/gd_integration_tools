@@ -2,17 +2,27 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
+from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.rpa.documents import (
-    PdfReadProcessor,
+    ExcelReadProcessor,
     PdfMergeProcessor,
+    PdfReadProcessor,
     WordReadProcessor,
     WordWriteProcessor,
-    ExcelReadProcessor,
 )
-from src.backend.dsl.engine.exchange import Exchange
+
+
+def _allow(processor: object) -> None:
+    """Обойти fail-closed ``BaseProcessor.auth_check`` для unit-тестов.
+
+    Production gate остаётся без изменений; в тестах подменяем capability-check
+    на no-op, чтобы не авторизовать каждый test case вручную.
+    """
+    processor.auth_check = AsyncMock(return_value=True)  # type: ignore[attr-defined]
 
 
 class TestPdfReadProcessor:
@@ -22,6 +32,7 @@ class TestPdfReadProcessor:
     async def test_process_extracts_text(self) -> None:
         # S164 W1: mock actual read_pdf utility (не _read_pdf instance method).
         processor = PdfReadProcessor()
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = b"%PDF-1.4 fake"
@@ -41,6 +52,7 @@ class TestPdfMergeProcessor:
     async def test_process_merges_pdfs(self) -> None:
         # S164 W1: mock both PdfWriter and PdfReader (pypdf integration).
         processor = PdfMergeProcessor()
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = [b"%PDF-1.4 a", b"%PDF-1.4 b"]
@@ -66,6 +78,7 @@ class TestWordReadProcessor:
     async def test_process_extracts_text(self) -> None:
         # S164 W1: mock python-docx Document парсер.
         processor = WordReadProcessor()
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = b"fake-docx"
@@ -87,6 +100,7 @@ class TestWordWriteProcessor:
     async def test_process_writes_text(self) -> None:
         # S164 W1: mock actual python-docx Document для word write.
         processor = WordWriteProcessor()
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = {"content": "hello"}
@@ -107,6 +121,7 @@ class TestExcelReadProcessor:
     async def test_process_reads_excel(self) -> None:
         # S164 W1: mock actual openpyxl для excel read.
         processor = ExcelReadProcessor()
+        _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()
         exchange.in_message.body = b"fake-xlsx"

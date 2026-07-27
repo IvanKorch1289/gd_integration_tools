@@ -58,33 +58,6 @@ class OptimizePromptProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Запустить optimization."""
-        # Cycle 4b swarm (D418 real): explicit auth_check (this class
-        # does NOT inherit from BaseAIProcessor; extends BaseProcessor
-        # directly so we need a manual capability gate).
-        # Per Analyst #2, the class has no required_capability attribute,
-        # so we skip auth_check if it's not declared. (Tightening the
-        # default-deny is left to follow-up work.)
-        if hasattr(self, "required_capability") and self.required_capability:
-            try:
-                from src.backend.core.security.capabilities.gate import (
-                    get_capability_gate,
-                )
-                gate = get_capability_gate()
-                check = getattr(gate, "check", None) if gate else None
-                if check is not None:
-                    check("core", self.required_capability, None)
-            except Exception as exc:  # noqa: BLE001
-                import logging
-                logging.getLogger(__name__).warning(
-                    "%s: auth_check failed (%s) — deny by default",
-                    self.name, exc,
-                )
-                exchange.set_property(
-                    self._result_property,
-                    {"status": "error", "reason": f"capability denied: {exc}"},
-                )
-                return
-
         try:
             from src.backend.core.config.features import feature_flags
 

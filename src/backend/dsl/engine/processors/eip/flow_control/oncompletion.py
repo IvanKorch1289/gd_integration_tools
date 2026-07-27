@@ -10,9 +10,7 @@ from typing import Any
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
-from src.backend.dsl.engine.processors.base import (
-    BaseProcessor,
-)
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _camel_logger = get_logger("dsl.camel")
 

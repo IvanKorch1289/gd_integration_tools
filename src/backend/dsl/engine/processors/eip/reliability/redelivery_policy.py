@@ -14,10 +14,7 @@ from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import (
-    BaseProcessor,
-    handle_processor_error,
-)
+from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 from src.backend.dsl.engine.processors.eip.reliability._legacy import (
     HEADER_REDELIVERED,
     HEADER_REDELIVERY_COUNT,
