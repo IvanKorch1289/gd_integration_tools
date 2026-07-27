@@ -80,14 +80,17 @@ class VariableScope:
 
     @classmethod
     def global_scope(cls) -> "VariableScope":
+        """Вернуть singleton scope 'global' (process-wide)."""
         return cls(kind="global")
 
     @classmethod
     def for_tenant(cls, tenant_id: str) -> "VariableScope":
+        """Вернуть scope, изолированный по tenant_id."""
         return cls(kind="tenant", identifier=tenant_id)
 
     @classmethod
     def for_route(cls, route_id: str) -> "VariableScope":
+        """Вернуть scope, изолированный по route_id."""
         return cls(kind="route", identifier=route_id)
 
     @classmethod
@@ -133,15 +136,23 @@ class VariableBackend(Protocol):
 
     name: str
 
-    async def get(self, key: str, scope: VariableScope) -> Any | None: ...
+    async def get(self, key: str, scope: VariableScope) -> Any | None:
+        """Получить значение по ``key`` в ``scope``; None если отсутствует."""
+        ...
 
     async def set(
         self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
-    ) -> None: ...
+    ) -> None:
+        """Установить ``value`` по ``key`` в ``scope``; ``ttl`` — опциональный TTL."""
+        ...
 
-    async def delete(self, key: str, scope: VariableScope) -> bool: ...
+    async def delete(self, key: str, scope: VariableScope) -> bool:
+        """Удалить ``key`` из ``scope``; вернуть True если существовал."""
+        ...
 
-    async def list_keys(self, scope: VariableScope) -> list[str]: ...
+    async def list_keys(self, scope: VariableScope) -> list[str]:
+        """Вернуть список ключей в ``scope``."""
+        ...
 
 
 # ---------------------------------------------------------------------------
@@ -162,6 +173,7 @@ class InMemoryVariableBackend:
     _store: dict[tuple[str, str], tuple[Any, float]] = field(default_factory=dict)
 
     async def get(self, key: str, scope: VariableScope) -> Any | None:
+        """Получить значение по ``key`` в ``scope``; None если отсутствует."""
         full_key = (str(scope), key)
         entry = self._store.get(full_key)
         if entry is None:
@@ -176,13 +188,16 @@ class InMemoryVariableBackend:
     async def set(
         self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
+        """Установить ``value`` по ``key`` в ``scope``; ``ttl`` — опциональный TTL."""
         expires_at = (_now() + ttl) if ttl else 0.0
         self._store[(str(scope), key)] = (value, expires_at)
 
     async def delete(self, key: str, scope: VariableScope) -> bool:
+        """Удалить ``key`` из ``scope``; вернуть True если существовал."""
         return self._store.pop((str(scope), key), None) is not None
 
     async def list_keys(self, scope: VariableScope) -> list[str]:
+        """Вернуть список ключей в ``scope``."""
         scope_str = str(scope)
         return [
             key
@@ -249,6 +264,7 @@ class ConsulVariableBackend:
     async def set(
         self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
+        """Установить ``value`` по ``key`` в ``scope`` через Consul KV."""
         path = self._key_path(key, scope)
         from src.backend.core.config.consul_config import ConsulConfigStore
 
@@ -266,6 +282,7 @@ class ConsulVariableBackend:
         self._cache.pop(path, None)
 
     async def delete(self, key: str, scope: VariableScope) -> bool:
+        """Удалить ``key`` из ``scope``; вернуть True если существовал."""
         path = self._key_path(key, scope)
         from src.backend.core.config.consul_config import ConsulConfigStore
 
@@ -282,6 +299,7 @@ class ConsulVariableBackend:
         return self._cache.pop(path, None) is not None
 
     async def list_keys(self, scope: VariableScope) -> list[str]:
+        """Вернуть список ключей в ``scope``."""
         from src.backend.core.config.consul_config import ConsulConfigStore
 
         prefix = f"dsl/vars/{scope}/"
@@ -361,6 +379,7 @@ class PostgresVariableBackend:
     async def set(
         self, key: str, value: Any, scope: VariableScope, *, ttl: float | None = None
     ) -> None:
+        """Установить ``value`` по ``key`` в ``scope`` через Postgres-таблицу."""
         if self.session is None:
             return
         from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -389,6 +408,7 @@ class PostgresVariableBackend:
         await self.session.commit()
 
     async def delete(self, key: str, scope: VariableScope) -> bool:
+        """Удалить ``key`` из ``scope``; вернуть True если существовал."""
         if self.session is None:
             return False
         from sqlalchemy import delete
@@ -406,6 +426,7 @@ class PostgresVariableBackend:
         return result.rowcount > 0
 
     async def list_keys(self, scope: VariableScope) -> list[str]:
+        """Вернуть список ключей в ``scope``."""
         if self.session is None:
             return []
         from sqlalchemy import select
@@ -509,6 +530,7 @@ class DSLVariableStore:
         await self.backends[0].set(key, value, scope_obj, ttl=ttl)
 
     async def delete(self, key: str, scope: VariableScope | str = "global") -> bool:
+        """Удалить ``key`` из ``scope``; вернуть True если существовал."""
         scope_obj = (
             scope if isinstance(scope, VariableScope) else VariableScope.parse(scope)
         )
@@ -519,6 +541,7 @@ class DSLVariableStore:
         return deleted
 
     async def list_keys(self, scope: VariableScope | str = "global") -> list[str]:
+        """Вернуть список ключей в ``scope``."""
         scope_obj = (
             scope if isinstance(scope, VariableScope) else VariableScope.parse(scope)
         )
