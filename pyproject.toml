@@ -115,7 +115,7 @@ dependencies = [
     # SECURITY: transitive dependency constraints (patches Dependabot vulns).
     # Force-pinned to bypass transitive constraints from streamlit/typer/uvicorn.
     "mistune>=3.3.0,<4.0.0",  # XSS+RCE fixed in 3.3.0
-    "gitpython>=3.1.51,<4.0.0",  # 3 GHSA advisories
+    "gitpython>=3.1.57,<4.0.0",  # 3 GHSA advisories
     "langsmith>=0.8.18,<1.0.0",  # GHSA-f4xh-w4cj-qxq8
     "click>=8.3.3,<9.0.0",  # PYSEC-2026-2132 (transitive via streamlit/typer)
     "diskcache>=5.6.3,<6.0.0",  # PYSEC-2026-2447 — no upstream fix; pinning for Dependabot visibility
