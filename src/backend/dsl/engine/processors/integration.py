@@ -32,6 +32,7 @@ class EventPublishProcessor(BaseProcessor):
         self._event_factory = event_factory
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: integration call для EventPublishProcessor."""
         # S202 audit fix: capability gate
         if not await self.auth_check(exchange, action='publish'):
             return
@@ -62,6 +63,7 @@ class MemoryLoadProcessor(BaseProcessor):
         self._session_header = session_id_header
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: integration call для MemoryLoadProcessor."""
         session_id = exchange.in_message.headers.get(self._session_header)
         if not session_id:
             session_id = exchange.meta.correlation_id
@@ -80,6 +82,7 @@ class MemorySaveProcessor(BaseProcessor):
         super().__init__(name)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: integration call для MemorySaveProcessor."""
         session_id = exchange.properties.get("_session_id")
         if not session_id:
             return
@@ -117,6 +120,7 @@ class AwaitReplyProcessor(BaseProcessor):
         self._payload_factory = payload_factory
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: integration call для AwaitReplyProcessor."""
         from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
 
         bus = get_event_bus()
