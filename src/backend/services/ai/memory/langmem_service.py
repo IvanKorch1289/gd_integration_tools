@@ -448,10 +448,10 @@ class LangMemService:
                 "Включите feature flag для consolidation."
             )
         try:
+            from src.backend.core.config.ai_stack import langmem_settings
             from src.backend.services.ai.memory.langmem.consolidation import (
                 ConsolidationEngine,
             )
-            from src.backend.core.config.ai_stack import langmem_settings
 
             engine = ConsolidationEngine(langmem_service=self)
             report = await engine.run(
@@ -481,10 +481,23 @@ class LangMemService:
                 "LangMem disabled (feature_flags.langmem_enabled=False). "
                 "Включите feature flag для stats."
             )
-        episodic_count = sum(len(v) for v in self._store.get("episodic", {}).values())
-        semantic_count = sum(len(v) for v in self._store.get("semantic", {}).values())
+        episodic_count = sum(
+            1
+            for entries in self._store.values()
+            for entry in entries
+            if entry.kind == "episodic"
+        )
+        semantic_count = sum(
+            1
+            for entries in self._store.values()
+            for entry in entries
+            if entry.kind == "semantic"
+        )
         procedural_count = sum(
-            len(v) for v in self._store.get("procedural", {}).values()
+            1
+            for entries in self._store.values()
+            for entry in entries
+            if entry.kind == "procedural"
         )
         return {
             "episodic_count": int(episodic_count),

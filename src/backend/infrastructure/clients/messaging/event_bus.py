@@ -9,15 +9,14 @@ publish() валидирует payload через ``jsonschema``; на fail — 
 from __future__ import annotations
 
 import asyncio
-
 from typing import Any
 
 from pydantic import BaseModel
 
 from src.backend.core.errors import BaseError
 from src.backend.core.logging import get_logger
-from src.backend.core.tenancy.quotas import QuotaTracker
 from src.backend.core.resilience.connector_resilience import resilient
+from src.backend.core.tenancy.quotas import QuotaTracker
 
 __all__ = (
     "EventBus",

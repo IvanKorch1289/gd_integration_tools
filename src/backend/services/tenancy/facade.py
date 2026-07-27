@@ -72,9 +72,7 @@ class TenantFacade:
             return True
 
         try:
-            from src.backend.core.security.capabilities.tenant import (
-                SYSTEM_TENANT_ID,
-            )
+            from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
 
             return ctx.tenant_id == SYSTEM_TENANT_ID
         except Exception:
@@ -115,9 +113,7 @@ class TenantFacade:
             async with facade.with_tenant("tenant_42", principal_id="user_1"):
                 # All operations используют tenant_42
         """
-        from src.backend.core.security.capabilities.tenant import (
-            CapabilityTenant,
-        )
+        from src.backend.core.security.capabilities.tenant import CapabilityTenant
         from src.backend.core.tenancy import set_tenant
 
         prev_ctx = self.current()

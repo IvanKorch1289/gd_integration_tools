@@ -37,12 +37,13 @@ Hot-reload механизм:
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any, cast
 
-from sqlalchemy import select
+from sqlalchemy import CursorResult, select
 
 from src.backend.core.domain.models.cert import CertHistory, CertRecord
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.database.session_manager import main_session_manager
+from src.backend.infrastructure.database.session_manager import get_main_session_manager
 from src.backend.infrastructure.security.cert_store.models import (
     CertEntry,
     _fingerprint,
@@ -58,7 +59,7 @@ class PostgresCertBackend(CertBackend):
     name = "postgres"
 
     async def get(self, service_id: str) -> CertEntry | None:
-        async with main_session_manager.create_session() as session:
+        async with get_main_session_manager().create_session() as session:
             row = (
                 await session.execute(
                     select(CertRecord).where(CertRecord.service_id == service_id)
@@ -77,8 +78,8 @@ class PostgresCertBackend(CertBackend):
     ) -> CertEntry:
         """Сохраняет сертификат (upsert) в PostgreSQL с инкрементом версии."""
         fp = _fingerprint(pem)
-        async with main_session_manager.create_session() as session:
-            async with main_session_manager.transaction(session):
+        async with get_main_session_manager().create_session() as session:
+            async with get_main_session_manager().transaction(session):
                 existing = (
                     await session.execute(
                         select(CertRecord).where(CertRecord.service_id == service_id)
@@ -122,7 +123,7 @@ class PostgresCertBackend(CertBackend):
         )
 
     async def history(self, service_id: str) -> list[CertEntry]:
-        async with main_session_manager.create_session() as session:
+        async with get_main_session_manager().create_session() as session:
             rows = (
                 (
                     await session.execute(
@@ -147,7 +148,7 @@ class PostgresCertBackend(CertBackend):
         ]
 
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
-        async with main_session_manager.create_session() as session:
+        async with get_main_session_manager().create_session() as session:
             rows = (
                 (
                     await session.execute(
@@ -169,3 +170,37 @@ class PostgresCertBackend(CertBackend):
             description=row.description,
             version=row.version,
         )
+
+    async def set(self, service_id: str, pem: str) -> None:
+        """Postgres ``set`` — alias для ``save`` с default expiry (1 год).
+
+        Hot-reload watcher не имеет метаданных → используем sane default.
+        """
+        from datetime import timedelta
+
+        await self.save(service_id, pem, datetime.now(tz=UTC) + timedelta(days=365))
+
+    async def delete(self, service_id: str) -> bool:
+        """Postgres delete — ``DELETE FROM certs`` + ``cert_history``.
+
+        Returns:
+            ``True`` если запись существовала.
+        """
+        from sqlalchemy import delete as sql_delete
+
+        async with get_main_session_manager().create_session() as session:
+            async with get_main_session_manager().transaction(session):
+                result = cast(
+                    CursorResult[Any],
+                    await session.execute(
+                        sql_delete(CertRecord).where(
+                            CertRecord.service_id == service_id
+                        )
+                    ),
+                )
+                # Чистим историю тоже (cascade semantics).
+                await session.execute(
+                    sql_delete(CertHistory).where(CertHistory.service_id == service_id)
+                )
+        rowcount = getattr(result, "rowcount", 0)
+        return isinstance(rowcount, int) and rowcount > 0

@@ -85,3 +85,85 @@ class TestOracleCDCSourceInDSL:
         assert OracleCDCSource is not None
         # SourceRegistry должен иметь метод register_oracle_cdc
         # (проверяем что source имеет нужные capabilities)
+
+
+class TestOracleCDCSourceIdentifierValidation:
+    def test_valid_table_passes(self) -> None:
+        from src.backend.infrastructure.sources.cdc_oracle import (
+            _validate_oracle_table,
+        )
+
+        assert _validate_oracle_table("HR.EMPLOYEES") == "HR.EMPLOYEES"
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            "HR;DROP--",
+            "1HR.TABLE",
+            "HR.EMPLOYEES; --",
+            "schema.table.col",
+            "",
+        ],
+    )
+    def test_invalid_table_rejected(self, bad: str) -> None:
+        from src.backend.infrastructure.sources.cdc_oracle import (
+            _validate_oracle_table,
+        )
+
+        with pytest.raises(ValueError):
+            _validate_oracle_table(bad)
+
+    def test_valid_identifier_passes(self) -> None:
+        from src.backend.infrastructure.sources.cdc_oracle import (
+            _validate_oracle_identifier,
+        )
+
+        assert _validate_oracle_identifier("updated_at") == "updated_at"
+
+    @pytest.mark.parametrize("bad", ["updated_at; --", "1col", "col;DROP", ""])
+    def test_invalid_identifier_rejected(self, bad: str) -> None:
+        from src.backend.infrastructure.sources.cdc_oracle import (
+            _validate_oracle_identifier,
+        )
+
+        with pytest.raises(ValueError):
+            _validate_oracle_identifier(bad)
+
+    def test_sync_fetch_uses_validated_identifiers(self) -> None:
+        """Constructor itself rejects unsafe watermark columns —
+        ``_sync_fetch`` must never be reached for them."""
+        from src.backend.infrastructure.sources.cdc_oracle import (
+            OracleCDCSource,
+        )
+
+        with pytest.raises(ValueError):
+            OracleCDCSource(
+                dsn="oracle://x",
+                schema="HR",
+                tables=("EMPLOYEES",),
+                watermark_column="updated_at; DROP TABLE x; --",
+            )
+
+    def test_schema_validated_at_construction(self) -> None:
+        from src.backend.infrastructure.sources.cdc_oracle import (
+            OracleCDCSource,
+        )
+
+        with pytest.raises(ValueError):
+            OracleCDCSource(
+                dsn="oracle://x",
+                schema="HR; DROP SCHEMA X; --",
+                tables=("EMPLOYEES",),
+            )
+
+    def test_table_name_validated_at_construction(self) -> None:
+        from src.backend.infrastructure.sources.cdc_oracle import (
+            OracleCDCSource,
+        )
+
+        with pytest.raises(ValueError):
+            OracleCDCSource(
+                dsn="oracle://x",
+                schema="HR",
+                tables=("EMPLOYEES; DROP TABLE x; --",),
+            )

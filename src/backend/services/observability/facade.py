@@ -24,11 +24,13 @@ Ponytail: НЕ дублирует существующие модули. Дел�
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import asynccontextmanager, contextmanager
 from functools import lru_cache
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.metrics_registry import metrics_registry
 
 __all__ = ("ObservabilityFacade", "get_observability_facade")
 
@@ -47,11 +49,7 @@ class ObservabilityFacade:
         self._plugin = plugin
 
     async def record_metric(
-        self,
-        name: str,
-        value: float = 1.0,
-        *,
-        tags: dict[str, str] | None = None,
+        self, name: str, value: float = 1.0, *, tags: dict[str, str] | None = None
     ) -> None:
         """Записать metric value.
 
@@ -61,13 +59,12 @@ class ObservabilityFacade:
             tags: Дополнительные теги (key-value).
         """
         try:
-            from src.backend.core.observability.metrics import increment_counter
-
-            increment_counter(
-                name=name,
-                value=value,
-                tags={**(tags or {}), "plugin": self._plugin},
+            counter = metrics_registry.counter(
+                name,
+                f"Observability metric {name}",
+                labels=tuple({**(tags or {}), "plugin": self._plugin}),
             )
+            counter.labels(**{**(tags or {}), "plugin": self._plugin}).inc(value)
         except Exception as exc:
             _logger.debug("observability.record_metric failed: %s", exc)
 
@@ -124,7 +121,9 @@ class ObservabilityFacade:
             return None
 
     @contextmanager
-    def log_event(self, event: str, *, severity: str = "info", **fields: Any):
+    def log_event(
+        self, event: str, *, severity: str = "info", **fields: Any
+    ) -> Iterator[None]:
         """Structured logging context manager.
 
         Args:
@@ -137,16 +136,10 @@ class ObservabilityFacade:
                 log_audit_event_lite,
             )
 
-            with log_audit_event_lite(
-                _logger,
-                severity=severity,
-                event=event,
-                **fields,
-            ):
-                yield
+            log_audit_event_lite(_logger, severity=severity, event=event, **fields)
         except Exception as exc:
             _logger.debug("observability.log_event failed: %s", exc)
-            yield
+        yield
 
 
 @lru_cache(maxsize=1)

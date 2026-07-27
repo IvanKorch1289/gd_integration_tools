@@ -41,9 +41,7 @@ def _ensure_metrics() -> None:
     if _metrics_initialized:
         return
     try:
-        from src.backend.core.utils.metrics_registry import (
-            metrics_registry,
-        )
+        from src.backend.core.utils.metrics_registry import metrics_registry
 
         _metric_hits = metrics_registry.counter(
             "lru_cache_hits_total",

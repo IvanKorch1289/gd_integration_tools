@@ -23,6 +23,7 @@ Ponytail: thin wrapper, не дублирует логику. Делегируе
     if await facade.check_capability(tenant_id, "ds.read", "user:42"):
         await facade.tokenize_pii(body)
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -81,9 +82,7 @@ class SecurityFacade:
             fail-open in-memory fallback (per-pod revocation).
         """
         try:
-            from src.backend.core.auth.jwt_blacklist import (
-                RedisJwtBlacklist,
-            )
+            from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
             from src.backend.infrastructure.clients.storage.redis import (
                 get_redis_client,
             )
@@ -109,10 +108,7 @@ class SecurityFacade:
     # ──────────────────── Capabilities ────────────────────
 
     async def check_capability(
-        self,
-        tenant_id: str,
-        action: str,
-        resource: str,
+        self, tenant_id: str, action: str, resource: str
     ) -> bool:
         """Проверить capability для tenant.
 
@@ -125,9 +121,9 @@ class SecurityFacade:
             True если capability granted, False иначе.
         """
         try:
-            from src.backend.core.security.capabilities import CapabilityGate
+            from src.backend.services.capabilities.facade import get_capability_facade
 
-            return CapabilityGate.check(tenant_id, action, resource)
+            return get_capability_facade().check(tenant_id, action, resource)
         except Exception as exc:
             _logger.debug("check_capability failed: %s", exc)
             return False
@@ -159,7 +155,9 @@ class SecurityFacade:
             verify_signature as _verify,
         )
 
-        return _verify(payload, signature, timestamp, secret, window_seconds=window_seconds)
+        return _verify(
+            payload, signature, timestamp, secret, window_seconds=window_seconds
+        )
 
     # ──────────────────── PII ────────────────────
 
@@ -192,7 +190,9 @@ class SecurityFacade:
         pass it through PIITokenizer.unmask directly).
         """
         self._assert("security.pii.detokenize", "text")
-        _logger.debug("detokenize_pii: use PIITokenizer.unmask(masked_text, token_map) directly")
+        _logger.debug(
+            "detokenize_pii: use PIITokenizer.unmask(masked_text, token_map) directly"
+        )
         return text
 
     async def mask_pii(self, text: str) -> str:
@@ -228,12 +228,11 @@ class SecurityFacade:
         """
         self._assert("security.secret.read", key)
         try:
-            from src.backend.infrastructure.security.vault_secrets import (
-                VaultSecretsBackend,
-            )
+            from src.backend.core.interfaces.secrets import SecretsBackend
+            from src.backend.core.svcs_registry import get_service
 
-            backend = VaultSecretsBackend()
-            value = await backend.get(key)
+            backend = get_service(SecretsBackend)
+            value = await backend.get_secret(key)
             return value if value is not None else default
         except Exception as exc:
             _logger.debug("get_secret %s failed: %s", key, exc)
@@ -252,9 +251,7 @@ class SecurityFacade:
         """
         self._assert("security.cert.read", cert_id)
         try:
-            from src.backend.services.security.cert_store_facade import (
-                CertStore,
-            )
+            from src.backend.services.security.cert_store_facade import CertStore
 
             store = CertStore()
             return await store.get(cert_id)
@@ -300,9 +297,7 @@ class SecurityFacade:
             from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
 
             if isinstance(self._jwt_blacklist, RedisJwtBlacklist):
-                await self._jwt_blacklist._redis.delete(
-                    self._jwt_blacklist._key(jti)
-                )
+                await self._jwt_blacklist._redis.delete(self._jwt_blacklist._key(jti))
             else:
                 await self._jwt_blacklist.unrevoke(jti)
             _logger.info("JWT unblacklisted: jti=%s", jti)

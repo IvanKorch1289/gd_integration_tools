@@ -406,9 +406,7 @@ class HitlService:
         # S178 HITL-1 closeout: cross-instance notification via Redis pub/sub.
         # Best-effort: failure → log + continue (in-memory already updated).
         try:
-            from src.backend.services.workflows.hitl_pubsub import (
-                publish_hitl_resolved,
-            )
+            from src.backend.services.workflows.hitl_pubsub import publish_hitl_resolved
 
             await publish_hitl_resolved(
                 signal_id=resolved.signal_id,

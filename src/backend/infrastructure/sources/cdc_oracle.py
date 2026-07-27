@@ -16,9 +16,11 @@ Pattern (D249, Ponytail): thin wrapper, no abstractions.
 - Не получает DDL (только DML через watermark)
 - Требует oracledb (>= 2.0) с async support
 """
+
 from __future__ import annotations
 
 import asyncio
+import re
 from datetime import datetime
 from typing import Any
 
@@ -28,6 +30,28 @@ from src.backend.infrastructure.clients.base_connector import HealthResult
 _logger = get_logger("infra.cdc.oracle")
 
 __all__ = ("OracleCDCSource",)
+
+# Whitelist: only [A-Za-z_][A-Za-z0-9_.] for ``schema.table`` and column
+# names. Dots allowed only for the schema.table form (validated separately).
+_IDENT_PART_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _validate_oracle_identifier(name: str) -> str:
+    if not _IDENT_PART_RE.fullmatch(name):
+        raise ValueError(
+            f"cdc.oracle: invalid identifier {name!r} (only [A-Za-z0-9_] allowed)"
+        )
+    return name
+
+
+def _validate_oracle_table(name: str) -> str:
+    parts = name.split(".")
+    if len(parts) != 2 or not all(_IDENT_PART_RE.match(p) for p in parts):
+        raise ValueError(
+            f"cdc.oracle: invalid table ref {name!r} "
+            "(expected 'schema.table', [A-Za-z0-9_] only)"
+        )
+    return name
 
 
 class OracleCDCSource:
@@ -52,10 +76,10 @@ class OracleCDCSource:
         watermark_column: str = "updated_at",
     ) -> None:
         self.dsn = dsn
-        self.schema = schema
-        self.tables = tables
+        self.schema = _validate_oracle_identifier(schema)
+        self.tables = tuple(_validate_oracle_identifier(table) for table in tables)
         self.poll_interval_seconds = poll_interval_seconds
-        self.watermark_column = watermark_column
+        self.watermark_column = _validate_oracle_identifier(watermark_column)
 
     async def _fetch_changes_since(
         self, table: str, *, watermark: int | float
@@ -70,35 +94,38 @@ class OracleCDCSource:
             Список dict'ов с новыми/изменёнными строками.
         """
         try:
-            import oracledb  # lazy
+            import oracledb  # type: ignore[import-not-found]  # lazy, optional
         except ImportError as exc:
             raise ImportError(
-                "oracledb не установлен. "
-                "Установите: pip install oracledb>=2.0"
+                "oracledb не установлен. Установите: pip install oracledb>=2.0"
             ) from exc
 
-        loop = asyncio.get_event_loop()
-        rows = await asyncio.to_thread(
-            self._sync_fetch, oracledb, table, watermark
-        )
+        rows = await asyncio.to_thread(self._sync_fetch, oracledb, table, watermark)
         _logger.debug(
             "cdc.oracle.fetch table=%s watermark=%s count=%d",
-            table, watermark, len(rows),
+            table,
+            watermark,
+            len(rows),
         )
         return rows
 
     def _sync_fetch(
-        self,
-        oracledb: Any,
-        table: str,
-        watermark: int | float,
+        self, oracledb: Any, table: str, watermark: int | float
     ) -> list[dict[str, Any]]:
         """Sync часть: oracledb.connect + execute."""
+        # S608 mitigation: validate identifiers BEFORE opening any DB
+        # connection so a malicious value (e.g. ``watermark_column``)
+        # cannot reach ``oracledb.connect()`` — fail-closed at the gate.
+        _validate_oracle_table(table)
+        _validate_oracle_identifier(self.watermark_column)
         conn = oracledb.connect(self.dsn)
         try:
             cursor = conn.cursor()
+            # Identifiers above are whitelisted by ``_validate_oracle_*``
+            # (regex ``[A-Za-z_][A-Za-z0-9_]*``); ``watermark`` value is
+            # bound via DBAPI param style (``cursor.execute(query, ...)``).
             query = (
-                f"SELECT * FROM {table} "
+                f"SELECT * FROM {table} "  # noqa: S608
                 f"WHERE {self.watermark_column} > :watermark "
                 f"ORDER BY {self.watermark_column} ASC"
             )
@@ -136,15 +163,23 @@ class OracleCDCSource:
             changes = await self.poll(last_watermark=last_watermark)
             if changes:
                 # Update watermark до max(updated_at) в batch
-                timestamps = [
-                    ch.get(self.watermark_column) for ch in changes
-                ]
+                timestamps = [ch.get(self.watermark_column) for ch in changes]
                 timestamps = [t for t in timestamps if t is not None]
                 if timestamps:
-                    last_watermark = max(
-                        t.timestamp() if isinstance(t, datetime) else t
-                        for t in timestamps
-                    )
+                    # Normalize each candidate to float so ``max`` sees a
+                    # homogeneous comparable type (DB rows return mixed
+                    # scalars: ``datetime``, ``int`` SCN, ``float`` epoch).
+                    normalized: list[float] = []
+                    for t in timestamps:
+                        if isinstance(t, datetime):
+                            normalized.append(t.timestamp())
+                        elif isinstance(t, (int, float)):
+                            normalized.append(float(t))
+                        else:
+                            # Skip non-numeric to keep watermark monotonic.
+                            continue
+                    if normalized:
+                        last_watermark = max(normalized)
                 yield changes
             await asyncio.sleep(self.poll_interval_seconds)
 

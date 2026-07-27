@@ -19,9 +19,7 @@ from typing import TYPE_CHECKING
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.backend.infrastructure.security.cert_store.store import (
-        CertStore,
-    )
+    from src.backend.infrastructure.security.cert_store.store import CertStore
 
 logger = get_logger("security.cert_store.prometheus")
 

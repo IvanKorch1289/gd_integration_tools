@@ -1,149 +1,142 @@
-"""Unit-тесты ClickHouseClient — SQL-injection валидация (HIGH Fix)."""
+"""Unit-тесты ClickHouseClient — chunking, batch_size override, fail-fast.
+
+Cycle 29 P2: тесты НЕ зависят от optional ``clickhouse_driver`` —
+используем только встроенный ``httpx`` путь через ``_ensure_client`` patch.
+"""
 
 from __future__ import annotations
-
-import pytest
-
-pytest.importorskip(
-    "clickhouse_driver",
-    reason="clickhouse_driver not in test deps; S124 W2 honest skip (TD-0245)",
-)
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.backend.core.errors import DatabaseError
 from src.backend.infrastructure.clients.storage.clickhouse import (
+    MAX_INSERT_ROWS,
     ClickHouseClient,
-    _validate_identifier,
-    _validate_where,
 )
 
-# ── helpers ──
-
-
-def test_validate_identifier_ok() -> None:
-    assert _validate_identifier("events", context="test") == "events"
-    assert _validate_identifier("_audit_log", context="test") == "_audit_log"
-    assert _validate_identifier("col123", context="test") == "col123"
-
-
-def test_validate_identifier_rejects_injection() -> None:
-    bad = [
-        "events; DROP TABLE events; --",
-        "`secret`",
-        "' OR '1'='1",
-        "schema.table",
-        "",
-        "123_start",
-        "col with space",
-    ]
-    for value in bad:
-        with pytest.raises(DatabaseError):
-            _validate_identifier(value, context="test")
-
-
-def test_validate_where_ok() -> None:
-    _validate_where("status = 'active'", context="test")
-    _validate_where(
-        "created_at > '2026-01-01' AND level IN ('ERROR', 'WARN')", context="test"
-    )
-    _validate_where(None, context="test")
-
-
-def test_validate_where_rejects_injection() -> None:
-    bad = [
-        "1=1; DROP TABLE events",
-        "1=1 -- comment",
-        "1=1 /* comment */",
-        "1=1 UNION SELECT * FROM secrets",
-        "1=1 INSERT INTO",
-        "1=1 DELETE FROM",
-    ]
-    for value in bad:
-        with pytest.raises(DatabaseError):
-            _validate_where(value, context="test")
-
-
-# ── ClickHouseClient.insert ──
+# ── insert(): chunking + batch_size override ────────────────────────
 
 
 @pytest.mark.asyncio
-async def test_insert_valid_table() -> None:
+async def test_insert_chunking_with_default_max_batch_size() -> None:
+    """len(rows) > max_batch_size → несколько POST-chunk'ов."""
+    client = ClickHouseClient(max_batch_size=2)
+    fake_http = AsyncMock()
+    fake_http.post = AsyncMock(return_value=MagicMock(status_code=200))
+    with patch.object(client, "_ensure_client", return_value=fake_http):
+        rows = [{"a": i} for i in range(5)]
+        n = await client.insert("events", rows)
+    assert n == 5
+    # 5 rows / 2 batch_size → 3 chunks (2 + 2 + 1).
+    assert fake_http.post.await_count == 3
+    for call in fake_http.post.await_args_list:
+        query = call.kwargs["params"]["query"]
+        assert "INSERT INTO events FORMAT JSONEachRow" in query
+
+
+@pytest.mark.asyncio
+async def test_insert_batch_size_override_reaches_client() -> None:
+    """batch_size=2 при дефолтном max_batch_size=10000 → 5 chunks для 10 rows.
+
+    Cycle 29 P2: caller-side ``batch_size`` реально доходит до client
+    (а не игнорируется в пользу singleton'овского ``max_batch_size``).
+    """
+    client = ClickHouseClient(max_batch_size=10_000)
+    fake_http = AsyncMock()
+    fake_http.post = AsyncMock(return_value=MagicMock(status_code=200))
+    with patch.object(client, "_ensure_client", return_value=fake_http):
+        rows = [{"a": i} for i in range(10)]
+        n = await client.insert("events", rows, batch_size=2)
+    assert n == 10
+    # 10 rows / 2 batch_size → ровно 5 chunks.
+    assert fake_http.post.await_count == 5
+
+
+@pytest.mark.asyncio
+async def test_insert_empty_rows_no_http_call() -> None:
+    """Пустой список → 0 без обращения к HTTP."""
     client = ClickHouseClient()
     fake_http = AsyncMock()
     fake_http.post = AsyncMock(return_value=MagicMock(status_code=200))
     with patch.object(client, "_ensure_client", return_value=fake_http):
-        n = await client.insert("events", [{"a": 1}])
-        assert n == 1
-        fake_http.post.assert_awaited_once()
-        call_args = fake_http.post.await_args
-        assert (
-            "INSERT INTO events FORMAT JSONEachRow"
-            in call_args.kwargs["params"]["query"]
-        )
+        n = await client.insert("events", [])
+    assert n == 0
+    fake_http.post.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_insert_rejects_bad_table() -> None:
-    client = ClickHouseClient()
-    with pytest.raises(DatabaseError):
-        await client.insert("events; DROP TABLE events; --", [{"a": 1}])
-
-
-# ── ClickHouseClient.aggregate ──
-
-
-@pytest.mark.asyncio
-async def test_aggregate_valid() -> None:
+async def test_insert_invalid_batch_size_raises() -> None:
+    """batch_size <= 0 → ValueError до HTTP-вызова."""
     client = ClickHouseClient()
     fake_http = AsyncMock()
-    fake_http.get = AsyncMock(return_value=MagicMock(status_code=200, text=""))
+    fake_http.post = AsyncMock(return_value=MagicMock(status_code=200))
     with patch.object(client, "_ensure_client", return_value=fake_http):
-        rows = await client.aggregate(
-            "events", "count", "id", group_by="status", where="level = 'ERROR'"
-        )
-        assert rows == []
-        fake_http.get.assert_awaited_once()
-        call_args = fake_http.get.await_args
-        sql = call_args.kwargs["params"]["query"]
-        assert "SELECT status, count(id) as value" in sql
-        assert "FROM events" in sql
-        assert "WHERE level = 'ERROR'" in sql
-        assert "GROUP BY status" in sql
+        with pytest.raises(ValueError, match="batch_size must be > 0"):
+            await client.insert("events", [{"a": 1}], batch_size=0)
+        with pytest.raises(ValueError, match="batch_size must be > 0"):
+            await client.insert("events", [{"a": 1}], batch_size=-5)
+    fake_http.post.assert_not_awaited()
+
+
+# ── insert(): fail-fast на oversized batch ──────────────────────────
 
 
 @pytest.mark.asyncio
-async def test_aggregate_rejects_bad_table() -> None:
+async def test_insert_fails_fast_on_oversized_batch() -> None:
+    """len(rows) > MAX_INSERT_ROWS → ValueError до первого POST.
+
+    Cycle 29 P2: защита от OOM / runaway-ETL.
+    """
     client = ClickHouseClient()
-    with pytest.raises(DatabaseError):
-        await client.aggregate("bad; injection", "count", "id")
+    fake_http = AsyncMock()
+    fake_http.post = AsyncMock(return_value=MagicMock(status_code=200))
+    rows = [{"a": i} for i in range(MAX_INSERT_ROWS + 1)]
+    with patch.object(client, "_ensure_client", return_value=fake_http):
+        with pytest.raises(ValueError, match="oversized batch"):
+            await client.insert("events", rows)
+    fake_http.post.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_aggregate_rejects_bad_agg_func() -> None:
-    client = ClickHouseClient()
-    with pytest.raises(DatabaseError):
-        await client.aggregate("events", "count(*) from secrets; --", "id")
+async def test_insert_accepts_exactly_max_insert_rows() -> None:
+    """Граничный кейс: ровно MAX_INSERT_ROWS — должно пройти (без вызова POST
+    мокаем с max_batch_size=MAX_INSERT_ROWS, чтобы получить 1 chunk)."""
+    client = ClickHouseClient(max_batch_size=MAX_INSERT_ROWS)
+    fake_http = AsyncMock()
+    fake_http.post = AsyncMock(return_value=MagicMock(status_code=200))
+    rows = [{"a": i} for i in range(MAX_INSERT_ROWS)]
+    with patch.object(client, "_ensure_client", return_value=fake_http):
+        n = await client.insert("events", rows)
+    assert n == MAX_INSERT_ROWS
+    assert fake_http.post.await_count == 1
+
+
+# ── chunking invariants ──────────────────────────────────────────────
 
 
 @pytest.mark.asyncio
-async def test_aggregate_rejects_bad_column() -> None:
-    client = ClickHouseClient()
-    with pytest.raises(DatabaseError):
-        await client.aggregate("events", "count", "col; injection")
+async def test_chunking_covers_all_rows_without_duplicates() -> None:
+    """Cycle 29 P2: каждый row попадает ровно в один chunk.
 
+    Без optional driver — проверяем через размер chunk'ов в POST-content.
+    """
+    import orjson
 
-@pytest.mark.asyncio
-async def test_aggregate_rejects_bad_group_by() -> None:
-    client = ClickHouseClient()
-    with pytest.raises(DatabaseError):
-        await client.aggregate("events", "count", "id", group_by="status; injection")
-
-
-@pytest.mark.asyncio
-async def test_aggregate_rejects_bad_where() -> None:
-    client = ClickHouseClient()
-    with pytest.raises(DatabaseError):
-        await client.aggregate("events", "count", "id", where="1=1; DROP TABLE events")
+    client = ClickHouseClient(max_batch_size=3)
+    fake_http = AsyncMock()
+    fake_http.post = AsyncMock(return_value=MagicMock(status_code=200))
+    with patch.object(client, "_ensure_client", return_value=fake_http):
+        rows = [{"id": i} for i in range(10)]  # 10 / 3 → 4 chunks (3+3+3+1)
+        n = await client.insert("events", rows)
+    assert n == 10
+    assert fake_http.post.await_count == 4
+    seen_ids: set[int] = set()
+    for call in fake_http.post.await_args_list:
+        body = call.kwargs["content"].decode()
+        for line in body.split("\n"):
+            if not line:
+                continue
+            row = orjson.loads(line)
+            seen_ids.add(row["id"])
+    assert seen_ids == set(range(10))

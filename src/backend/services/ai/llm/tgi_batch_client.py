@@ -69,9 +69,7 @@ class TgiBatchClient:
                 @make_async_retry(max_attempts=3)
                 async def _do_post() -> str:
                     response = await self._client.post(
-                        f"{self._url}/generate",
-                        json=payload,
-                        timeout=self._timeout,
+                        f"{self._url}/generate", json=payload, timeout=self._timeout
                     )
                     if hasattr(response, "raise_for_status"):
                         response.raise_for_status()
@@ -82,7 +80,10 @@ class TgiBatchClient:
                         return str(data.get("generated_text", ""))
                     return ""
 
-                return await _do_post()
+                result = await _do_post()
+                if not isinstance(result, str):
+                    raise TypeError("TGI completion response must be a string")
+                return result
 
     async def batch_completions(
         self,

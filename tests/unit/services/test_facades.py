@@ -14,6 +14,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from src.backend.services.authorization.facade import (
+    AuthorizationFacade,
+    get_authorization_facade,
+)
 from src.backend.services.capabilities.facade import (
     CapabilityFacade,
     get_capability_facade,
@@ -21,10 +25,6 @@ from src.backend.services.capabilities.facade import (
 from src.backend.services.pii.facade import PIIFacade, get_pii_facade
 from src.backend.services.secrets.facade import SecretFacade, get_secret_facade
 from src.backend.services.tenancy.facade import TenantFacade, get_tenant_facade
-from src.backend.services.authorization.facade import (
-    AuthorizationFacade,
-    get_authorization_facade,
-)
 
 
 class TestPIIFacade:
@@ -69,35 +69,35 @@ class TestSecretFacade:
     @pytest.mark.asyncio
     async def test_get_secret_returns_default_on_error(self) -> None:
         """При ошибке возвращается default."""
-        facade = SecretFacade()
-        with patch.object(
-            facade,
-            "_backend",
-            new=AsyncMock(get=AsyncMock(side_effect=RuntimeError("boom"))),
-        ):
-            result = await facade.get_secret("missing.key", default="fallback")
-            assert result == "fallback"
+        backend = MagicMock()
+        backend.get_secret = AsyncMock(side_effect=RuntimeError("boom"))
+        facade = SecretFacade(backend=backend)
+
+        result = await facade.get_secret("missing.key", default="fallback")
+
+        assert result == "fallback"
 
     @pytest.mark.asyncio
     async def test_get_secret_returns_none_when_no_default(self) -> None:
         """При ошибке без default → None."""
-        facade = SecretFacade()
-        with patch.object(
-            facade,
-            "_backend",
-            new=AsyncMock(get=AsyncMock(side_effect=RuntimeError("boom"))),
-        ):
-            result = await facade.get_secret("missing.key")
-            assert result is None
+        backend = MagicMock()
+        backend.get_secret = AsyncMock(side_effect=RuntimeError("boom"))
+        facade = SecretFacade(backend=backend)
+
+        result = await facade.get_secret("missing.key")
+
+        assert result is None
 
     @pytest.mark.asyncio
-    async def test_register_backend(self) -> None:
-        """register_backend добавляет backend."""
-        facade = SecretFacade()
-        mock_backend = MagicMock()
-        facade.register_backend("custom", mock_backend)
-        assert "custom" in facade._backends
-        assert facade._backends["custom"] is mock_backend
+    async def test_set_secret_uses_backend_contract(self) -> None:
+        """set_secret делегирует в canonical async backend contract."""
+        backend = MagicMock()
+        backend.set_secret = AsyncMock()
+        facade = SecretFacade(backend=backend)
+
+        await facade.set_secret("custom.key", "value")
+
+        backend.set_secret.assert_awaited_once_with("custom.key", "value")
 
 
 class TestTenantFacade:
@@ -179,13 +179,18 @@ class TestCapabilityFacade:
             assert result is False
 
     def test_declare_calls_gate(self) -> None:
-        """declare вызывает gate.declare."""
+        """declare вызывает gate.declare с CapabilityRef."""
+        from src.backend.core.security.capabilities.models import CapabilityRef
+
         facade = CapabilityFacade()
         with patch.object(facade.gate, "declare") as mock_declare:
             facade.declare("my_plugin", ["ds.read", "ds.write"])
-            mock_declare.assert_called_once_with(
-                "my_plugin", ["ds.read", "ds.write"]
-            )
+            args, _kwargs = mock_declare.call_args
+            assert args[0] == "my_plugin"
+            assert list(args[1]) == [
+                CapabilityRef(name="ds.read"),
+                CapabilityRef(name="ds.write"),
+            ]
 
     def test_revoke_calls_gate(self) -> None:
         """revoke вызывает gate.revoke."""
@@ -203,24 +208,24 @@ class TestCapabilityFacade:
 
     def test_check_or_raise_propagates_capability_denied(self) -> None:
         """check_or_raise пробрасывает CapabilityDeniedError."""
-        from src.backend.core.security.capabilities import (
-            CapabilityDeniedError,
-        )
+        from src.backend.core.security.capabilities import CapabilityDeniedError
 
+        denied = CapabilityDeniedError(
+            plugin="plugin",
+            capability="capability",
+            requested_scope=None,
+            declared_scope=None,
+        )
         facade = CapabilityFacade()
-        with patch.object(
-            facade.gate,
-            "check",
-            side_effect=CapabilityDeniedError("denied"),
-        ):
-            with pytest.raises(CapabilityDeniedError, match="denied"):
+        with patch.object(facade.gate, "check", side_effect=denied):
+            with pytest.raises(CapabilityDeniedError) as caught:
                 facade.check_or_raise("plugin", "capability")
 
+        assert caught.value is denied
+
     def test_check_or_raise_wraps_unexpected_exception(self) -> None:
-        """check_or_raise оборачивает unexpected exceptions в CapabilityDeniedError."""
-        from src.backend.core.security.capabilities import (
-            CapabilityDeniedError,
-        )
+        """check_or_raise оборачивает unexpected exceptions в fail-closed error."""
+        from src.backend.core.security.capabilities import CapabilityDeniedError
 
         facade = CapabilityFacade()
         with patch.object(
@@ -228,8 +233,11 @@ class TestCapabilityFacade:
             "check",
             side_effect=RuntimeError("boom"),
         ):
-            with pytest.raises(CapabilityDeniedError, match="boom"):
+            with pytest.raises(CapabilityDeniedError) as caught:
                 facade.check_or_raise("plugin", "capability")
+
+        assert isinstance(caught.value.__cause__, RuntimeError)
+        assert str(caught.value.__cause__) == "boom"
 
 
 class TestAuthorizationFacade:

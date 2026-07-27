@@ -81,9 +81,7 @@ class AuthorizationFacade:
     @property
     def auth_facade(self) -> Any:
         if self._auth_facade is None:
-            from src.backend.core.auth.facade import (
-                get_auth_facade,
-            )
+            from src.backend.core.auth.facade import get_auth_facade
 
             self._auth_facade = get_auth_facade()
         return self._auth_facade

@@ -18,6 +18,10 @@ from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,  # S60 W2: cross-import
     CDCSubscription,  # S60 W2: cross-import
 )
+from src.backend.infrastructure.database.database.initializer import DatabaseInitializer
+from src.backend.infrastructure.database.database.registry import (
+    ExternalDatabaseRegistry,
+)
 
 logger = get_logger("infrastructure.clients.cdc")
 
@@ -93,20 +97,21 @@ class _PollingStrategy(_CDCStrategy):
         try:
             from sqlalchemy import text
 
-            from src.backend.infrastructure.database.database import (
-                get_external_db_manager,
+            from src.backend.infrastructure.database.database.accessors import (
+                get_external_db_registry,
             )
         except ImportError:
             logger.error("CDC polling: SQLAlchemy or external DB manager unavailable")
             return
 
         try:
-            db = get_external_db_manager(sub.profile)
+            registry: ExternalDatabaseRegistry = get_external_db_registry()
+            initializer: DatabaseInitializer = registry.get_initializer(sub.profile)
         except (ValueError, KeyError, AttributeError) as exc:
             logger.error("CDC polling: profile '%s' not found: %s", sub.profile, exc)
             return
 
-        engine = db.get_async_engine()
+        engine = initializer.get_async_engine()
 
         while sub.active:
             for table in sub.tables:
@@ -295,20 +300,21 @@ class _LogMinerStrategy(_CDCStrategy):
         try:
             from sqlalchemy import text
 
-            from src.backend.infrastructure.database.database import (
-                get_external_db_manager,
+            from src.backend.infrastructure.database.database.accessors import (
+                get_external_db_registry,
             )
         except ImportError:
             logger.error("CDC LogMiner: SQLAlchemy unavailable")
             return
 
         try:
-            db = get_external_db_manager(sub.profile)
+            registry: ExternalDatabaseRegistry = get_external_db_registry()
+            initializer: DatabaseInitializer = registry.get_initializer(sub.profile)
         except (ValueError, KeyError, AttributeError) as exc:
             logger.error("CDC LogMiner: profile '%s' not found: %s", sub.profile, exc)
             return
 
-        engine = db.get_async_engine()
+        engine = initializer.get_async_engine()
         table_list = ", ".join(f"'{t.upper()}'" for t in sub.tables)
 
         while sub.active:

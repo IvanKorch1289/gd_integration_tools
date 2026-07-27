@@ -80,9 +80,7 @@ class RedisCertTransport:
             yield data
 
     def attach(self, store: Any) -> None:
-        from src.backend.infrastructure.security.cert_store.store import (
-            CertStore,
-        )
+        from src.backend.infrastructure.security.cert_store.store import CertStore
 
         if not isinstance(store, CertStore):
             raise TypeError(

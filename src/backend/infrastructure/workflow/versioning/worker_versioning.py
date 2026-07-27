@@ -12,6 +12,7 @@ BuildID-based pinning: каждый Execution привязан к worker version
 Pattern (Ponytail, D172): тонкая обёртка над temporalio SDK.
 Lazy imports: temporalio SDK ~15-20MB, не подтягиваем до первого использования.
 """
+
 from __future__ import annotations
 
 import re
@@ -22,11 +23,7 @@ from src.backend.core.logging import get_logger
 
 _logger = get_logger("workflow.worker_versioning")
 
-__all__ = (
-    "VersioningPolicy",
-    "WorkerVersioningHelper",
-    "parse_build_id",
-)
+__all__ = ("VersioningPolicy", "WorkerVersioningHelper", "parse_build_id")
 
 
 _SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(-[\w.]+)?$")
@@ -107,17 +104,22 @@ class WorkerVersioningHelper:
     def build_worker_kwargs(self) -> dict[str, Any]:
         """Собрать kwargs для передачи в ``temporalio.worker.Worker()``.
 
+        Note:
+            temporalio ≥1.20 переименовал ``DeploymentConfig`` →
+            ``WorkerDeploymentConfig`` и ``WorkerDeploymentOptions`` →
+            ``WorkerDeploymentConfig`` (унифицированный класс). Параметр
+            Worker: ``deployment_options`` → ``deployment_config``.
+
         Returns:
-            Dict с ключами ``build_id`` и опционально ``deployment_options``.
+            Dict с ключами ``build_id`` и опционально ``deployment_config``.
         """
         kwargs: dict[str, Any] = {"build_id": self.build_id}
         if self.use_versioning:
             # Lazy import — temporalio SDK ~15-20MB
             try:
-                from temporalio.worker import (  # noqa: F401 — VersioningIntent reserved for future use
-                    DeploymentConfig,
-                    VersioningIntent,
-                    WorkerDeploymentOptions,
+                from temporalio.worker import (  # type: ignore[attr-defined]
+                    WorkerDeploymentConfig,
+                    WorkerDeploymentVersion,
                 )
             except ImportError:
                 _logger.warning(
@@ -126,10 +128,9 @@ class WorkerVersioningHelper:
                 )
                 return kwargs
 
-            kwargs["deployment_options"] = WorkerDeploymentOptions(
-                version=DeploymentConfig(
-                    deployment_name=self.deployment_name,
-                    build_id=self.build_id,
+            kwargs["deployment_config"] = WorkerDeploymentConfig(
+                version=WorkerDeploymentVersion(
+                    deployment_name=self.deployment_name, build_id=self.build_id
                 ),
                 use_worker_versioning=True,
             )

@@ -142,11 +142,9 @@ async def _register_agent_security_workflow_hooks() -> None:
     workflow-specific проверки НЕ выполнялись в production.
     """
     try:
+        from src.backend.core.ai.security import get_agent_security_framework
         from src.backend.core.ai.security.workflow_hooks import (
             register_all_workflow_hooks,
-        )
-        from src.backend.core.ai.security import (
-            get_agent_security_framework,
         )
 
         register_all_workflow_hooks(get_agent_security_framework())

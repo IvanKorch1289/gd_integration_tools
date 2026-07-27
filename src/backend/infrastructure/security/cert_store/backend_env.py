@@ -11,8 +11,8 @@ NOT to be confused with .env файлами (запрещены per AGENTS.md).
 """
 from __future__ import annotations
 
-from datetime import datetime
 import os
+from datetime import datetime
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.security.cert_store.backend_base import (

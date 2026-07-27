@@ -37,7 +37,7 @@ Hot-reload механизм:
 
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -95,6 +95,7 @@ class VaultCertBackend(CertBackend):
         if self._vault_url:
             return self._vault_url
         from src.backend.core.config.settings import settings
+
         return getattr(settings, "vault_url", None) or getattr(
             settings.app, "vault_url", None
         )
@@ -111,9 +112,7 @@ class VaultCertBackend(CertBackend):
             client.auth.kubernetes.login(role=self._kubernetes_role)
             return
         if self._role_id and self._secret_id:
-            resp = client.auth.approle.login(
-                role_id=self._role_id, secret_id=self._secret_id
-            )
+            client.auth.approle.login(role_id=self._role_id, secret_id=self._secret_id)
             return
         if self._token:
             client.token = self._token
@@ -125,6 +124,7 @@ class VaultCertBackend(CertBackend):
         if self._client is not None:
             return self._client
         from hvac import Client  # лениво, чтобы тесты без Vault работали
+
         url = self._resolve_url()
         client = Client(url=url)
         self._authenticate(client)
@@ -215,6 +215,36 @@ class VaultCertBackend(CertBackend):
         # versions API — для baseline возвращаем последнюю.
         last = await self.get(service_id)
         return [last] if last else []
+
+    async def set(self, service_id: str, pem: str) -> None:
+        """Vault ``set`` — alias для ``save`` с default expiry (1 год).
+
+        Hot-reload watcher не передаёт expires_at → берём sane default.
+        """
+        from datetime import timedelta
+
+        await self.save(service_id, pem, datetime.now(tz=UTC) + timedelta(days=365))
+
+    async def delete(self, service_id: str) -> bool:
+        """Vault delete — ``delete_latest_secret_version`` (soft-delete).
+
+        Returns:
+            ``True`` если запись существовала (``get`` вернул не None
+            до удаления).
+        """
+        prev = await self.get(service_id)
+        if prev is None:
+            return False
+        client = self._client()
+        try:
+            await asyncio.to_thread(
+                client.secrets.kv.v2.delete_latest_versions,
+                path=f"{self._base}/{service_id}",
+            )
+        except Exception as exc:
+            logger.warning("Vault delete failed for %s: %s", service_id, exc)
+            return False
+        return True
 
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
         # Поиск по всем сертификатам в Vault через list — отдельный flow,

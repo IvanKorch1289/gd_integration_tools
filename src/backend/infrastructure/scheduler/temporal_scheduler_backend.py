@@ -331,21 +331,28 @@ class TemporalSchedulerBackend:
 
     @staticmethod
     def _parse_cron_to_spec(cron_expr: str, tz: str) -> Any:
-        """Парсит 5-field cron в :class:`ScheduleCronSpec`.
+        """Парсит 5-field cron в :class:`ScheduleSpec`.
+
+        Note:
+            temporalio ≥1.27 переименовал ``ScheduleCronSpec`` (per-field kwargs)
+            → ``ScheduleSpec(cron_expressions=[...], time_zone_name=...)``.
+            Возвращаемый объект — :class:`ScheduleSpec` (контрактный тип
+            ``ScheduleSpec``), поле ``cron_expressions`` принимает
+            стандартные 5-field POSIX cron строки.
 
         Args:
             cron_expr: 5-field cron ``"minute hour day month day_of_week"``.
             tz: Cron timezone.
 
         Returns:
-            :class:`ScheduleCronSpec` instance.
+            :class:`ScheduleSpec` instance.
 
         Raises:
             ImportError: temporalio не установлен.
             ValueError: invalid cron expression.
         """
         try:
-            from temporalio.client import ScheduleCronSpec
+            from temporalio.client import ScheduleSpec
         except ImportError as exc:
             raise ImportError(
                 "temporalio не установлен. Установите: "
@@ -358,12 +365,6 @@ class TemporalSchedulerBackend:
                 f"cron_expr должен быть 5-field: minute hour day month day_of_week. "
                 f"Got: {cron_expr!r}"
             )
-        minute, hour, day, month, day_of_week = parts
-        return ScheduleCronSpec(
-            minute=minute,
-            hour=hour,
-            day_of_month=day,
-            month=month,
-            day_of_week=day_of_week,
-            timezone=tz,
-        )
+        # Без дополнительной валидации полей — ``ScheduleSpec`` принимает
+        # cron-строки as-is и валидирует при первом запуске schedule.
+        return ScheduleSpec(cron_expressions=[cron_expr], time_zone_name=tz)

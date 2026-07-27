@@ -71,9 +71,7 @@ async def check_mongodb() -> bool:
     S202 fix: добавлен ``await`` (раньше возвращал coroutine — always-truthy).
     """
     try:
-        from src.backend.infrastructure.clients.storage.mongodb import (
-            MongoDBClient,
-        )
+        from src.backend.infrastructure.clients.storage.mongodb import MongoDBClient
 
         client = MongoDBClient()
         return await client.ping()
@@ -112,10 +110,10 @@ async def check_elasticsearch() -> bool:
     """
     try:
         from src.backend.infrastructure.clients.storage.elasticsearch import (
-            ElasticsearchClient,
+            get_elasticsearch_client,
         )
 
-        client = ElasticsearchClient()
+        client = get_elasticsearch_client()
         return await client.ping()
     except Exception as exc:
         _logger.debug("check_elasticsearch failed: %s", exc)
@@ -175,9 +173,7 @@ async def check_eventbus() -> bool:
     S202 fix: правильный method ``health_check()`` (не ``is_available()``).
     """
     try:
-        from src.backend.infrastructure.clients.messaging.event_bus import (
-            get_event_bus,
-        )
+        from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
 
         bus = get_event_bus()
         result = await bus.health_check()
@@ -219,11 +215,9 @@ async def check_workflow() -> bool:
     backend instance presence + ``is_connected``-like attribute fallback.
     """
     try:
-        from src.backend.infrastructure.workflow.factory import (
-            get_workflow_backend,
-        )
+        from src.backend.infrastructure.workflow.factory import create_workflow_backend
 
-        backend = get_workflow_backend()
+        backend = await create_workflow_backend()
         # Backends не имеют единого is_available — проверяем базовое
         # наличие instance + опциональные атрибуты.
         if backend is None:

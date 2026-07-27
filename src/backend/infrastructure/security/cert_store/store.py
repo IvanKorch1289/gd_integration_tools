@@ -172,6 +172,25 @@ class CertStore:
         await self._notify(service_id)
         return entry
 
+    async def delete(self, service_id: str) -> bool:
+        """Удалить сертификат.
+
+        Используется hot-reload watcher'ом при удалении файла в
+        ``cert_watch_path``. Прокидывает операцию в backend, инвалидирует
+        локальный кэш и уведомляет подписчиков.
+
+        Args:
+            service_id: Service identifier.
+
+        Returns:
+            ``True`` если запись существовала (backend сообщил об удалении).
+        """
+        existed = await self._backend.delete(service_id)
+        if existed:
+            self._cache.pop(service_id, None)
+            await self._notify(service_id)
+        return existed
+
     async def history(self, service_id: str) -> list[CertEntry]:
         """Get certificate history for a service.
 

@@ -5,10 +5,14 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from src.backend.infrastructure.security.cert_store import CertEntry, MemoryCertBackend
+from src.backend.infrastructure.security.cert_store.backend_postgres import (
+    PostgresCertBackend,
+)
 
 # ── MemoryCertBackend: in-process backend ───────────────────────────
 
@@ -101,3 +105,92 @@ def test_cert_entry_construction() -> None:
 
 # Helper: keep asyncio import used
 _ = asyncio
+
+
+# ── PostgresCertBackend: cursor/transaction via session manager (C28 fix) ──
+
+
+@pytest.mark.asyncio
+async def test_postgres_backend_delete_returns_true_when_rowcount() -> None:
+    """PostgresCertBackend.delete: rowcount > 0 → True (cursor cast boundary)."""
+
+    fake_session = AsyncMock()
+    fake_result = MagicMock()
+    fake_result.rowcount = 1
+    fake_session.execute = AsyncMock(return_value=fake_result)
+
+    fake_manager = MagicMock()
+    fake_manager.create_session = MagicMock()
+    fake_manager.create_session.return_value.__aenter__ = AsyncMock(
+        return_value=fake_session
+    )
+    fake_manager.create_session.return_value.__aexit__ = AsyncMock(return_value=None)
+    fake_manager.transaction = MagicMock()
+    fake_manager.transaction.return_value.__aenter__ = AsyncMock(return_value=None)
+    fake_manager.transaction.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    with patch(
+        "src.backend.infrastructure.security.cert_store.backend_postgres.get_main_session_manager",
+        return_value=fake_manager,
+    ):
+        backend = PostgresCertBackend()
+        result = await backend.delete("svc-1")
+        assert result is True
+
+
+@pytest.mark.asyncio
+async def test_postgres_backend_delete_returns_false_when_no_rowcount() -> None:
+    """PostgresCertBackend.delete: rowcount == 0 → False (cursor cast boundary)."""
+
+    fake_session = AsyncMock()
+    fake_result = MagicMock()
+    fake_result.rowcount = 0
+    fake_session.execute = AsyncMock(return_value=fake_result)
+
+    fake_manager = MagicMock()
+    fake_manager.create_session = MagicMock()
+    fake_manager.create_session.return_value.__aenter__ = AsyncMock(
+        return_value=fake_session
+    )
+    fake_manager.create_session.return_value.__aexit__ = AsyncMock(return_value=None)
+    fake_manager.transaction = MagicMock()
+    fake_manager.transaction.return_value.__aenter__ = AsyncMock(return_value=None)
+    fake_manager.transaction.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    with patch(
+        "src.backend.infrastructure.security.cert_store.backend_postgres.get_main_session_manager",
+        return_value=fake_manager,
+    ):
+        backend = PostgresCertBackend()
+        result = await backend.delete("svc-1")
+        assert result is False
+
+
+@pytest.mark.asyncio
+async def test_postgres_backend_set_aliases_save_with_default_expiry() -> None:
+    """PostgresCertBackend.set: thin wrapper around save() с +365d expiry."""
+
+    fake_session = AsyncMock()
+    fake_session.execute = AsyncMock(
+        return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=None))
+    )
+
+    fake_manager = MagicMock()
+    fake_manager.create_session = MagicMock()
+    fake_manager.create_session.return_value.__aenter__ = AsyncMock(
+        return_value=fake_session
+    )
+    fake_manager.create_session.return_value.__aexit__ = AsyncMock(return_value=None)
+    fake_manager.transaction = MagicMock()
+    fake_manager.transaction.return_value.__aenter__ = AsyncMock(return_value=None)
+    fake_manager.transaction.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    with patch(
+        "src.backend.infrastructure.security.cert_store.backend_postgres.get_main_session_manager",
+        return_value=fake_manager,
+    ):
+        backend = PostgresCertBackend()
+        await backend.set("svc-1", "pem")
+        # session.execute called for both INSERT and history row.
+        assert fake_session.execute.call_count >= 1
+        assert fake_session.add.call_count >= 2  # CertRecord + CertHistory

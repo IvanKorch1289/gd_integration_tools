@@ -67,6 +67,7 @@ def make_cert_entry(service_id: str, pem: str) -> CertEntry:
     Production backends (vault, postgres) сохраняют реальные fingerprint + expires_at.
     """
     from datetime import datetime, timezone
+
     from src.backend.infrastructure.security.cert_store.models import _fingerprint
     return CertEntry(
         service_id=service_id,

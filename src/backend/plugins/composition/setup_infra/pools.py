@@ -131,9 +131,7 @@ async def _register_pools_in_unified_manager() -> None:
 
     # S181: SMTP pool registration (was missing from registry).
     try:
-        from src.backend.infrastructure.clients.transport.smtp import (
-            get_smtp_client,
-        )
+        from src.backend.infrastructure.clients.transport.smtp import get_smtp_client
 
         smtp_client = get_smtp_client()
 
@@ -187,9 +185,7 @@ async def _register_pools_in_unified_manager() -> None:
 
     # S181: EventBus pool registration.
     try:
-        from src.backend.infrastructure.clients.messaging.event_bus import (
-            get_event_bus,
-        )
+        from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
 
         event_bus = get_event_bus()
 
@@ -253,9 +249,7 @@ async def _register_pools_in_unified_manager() -> None:
 
     # Browser (Playwright pool)
     try:
-        from src.backend.infrastructure.clients.transport.browser import (
-            BrowserClient,
-        )
+        from src.backend.infrastructure.clients.transport.browser import BrowserClient
 
         async def _ping_browser() -> None:
             # Browser is lazily initialized; check client state
@@ -279,8 +273,8 @@ async def _register_pools_in_unified_manager() -> None:
         )
 
         async def _ping_jupyter() -> None:
-            jh = JupyterHubClient()
-            return None  # Constructor check only
+            # Constructor side effect: validates import + settings.
+            JupyterHubClient()
 
         manager.register(
             "jupyterhub_main",
@@ -293,13 +287,11 @@ async def _register_pools_in_unified_manager() -> None:
 
     # Antivirus
     try:
-        from src.backend.infrastructure.antivirus.service import (
-            AntivirusService,
-        )
+        from src.backend.infrastructure.antivirus.service import AntivirusService
 
         async def _ping_antivirus() -> None:
-            av = AntivirusService()
-            return None  # Constructor check only
+            # Constructor side effect: validates import + settings.
+            AntivirusService()
 
         manager.register(
             "antivirus_main",
@@ -317,8 +309,8 @@ async def _register_pools_in_unified_manager() -> None:
         )
 
         async def _ping_vault() -> None:
-            v = VaultSecretsBackend()
-            return None  # Constructor check only
+            # Constructor side effect: validates import + settings.
+            VaultSecretsBackend()
 
         manager.register(
             "vault_main",
@@ -336,8 +328,8 @@ async def _register_pools_in_unified_manager() -> None:
         )
 
         async def _ping_search() -> None:
-            s = WebSearchService()
-            return None  # Constructor check only
+            # Constructor side effect: validates import + settings.
+            WebSearchService()
 
         manager.register(
             "search_main",

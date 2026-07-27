@@ -10,30 +10,35 @@ HTTPX connection pool между requests.
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Awaitable, Callable
+from typing import Any, Protocol, cast
 
-from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 
-__all__ = ("get_admin_clickhouse_client",)
+__all__ = ("AdminClickHouseClient", "get_admin_clickhouse_client")
 
 _logger = get_logger(__name__)
 
 
-@app_state_singleton
-async def get_admin_clickhouse_client() -> Any:
-    """Singleton factory для ClickHouse admin client.
+class AdminClickHouseClient(Protocol):
+    """Typed subset of clickhouse-connect's dynamic async client."""
 
-    Используется в admin endpoints ``admin_workflow_audit.py`` и
-    ``admin_workflow_cost.py`` вместо inline ``get_async_client()``.
+    def query(self, *args: Any, **kwargs: Any) -> Awaitable[Any]: ...
 
-    Returns:
-        AsyncClient instance (clickhouse_connect).
 
-    Note:
-        При ошибке подключения возвращает None — endpoints должны
-        обрабатывать None gracefully (fallback к in-memory state).
+_admin_client: AdminClickHouseClient | None = None
+
+
+async def get_admin_clickhouse_client() -> AdminClickHouseClient | None:
+    """Return one process-wide async ClickHouse client.
+
+    ``clickhouse_connect`` has no stable exported client type, therefore the
+    runtime object is narrowed to the query-only protocol used by admin pages.
     """
+    global _admin_client
+    if _admin_client is not None:
+        return _admin_client
+
     try:
         from clickhouse_connect import get_async_client
 
@@ -54,7 +59,12 @@ async def get_admin_clickhouse_client() -> Any:
             if hasattr(settings, "clickhouse")
             else "default"
         )
-        return await get_async_client(host=host, port=port, database=database)
+        factory = cast(Callable[..., Awaitable[Any]], get_async_client)
+        _admin_client = cast(
+            AdminClickHouseClient,
+            await factory(host=host, port=port, database=database),
+        )
+        return _admin_client
     except Exception as exc:
         _logger.warning("ClickHouse admin client unavailable: %s", exc)
         return None

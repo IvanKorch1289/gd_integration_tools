@@ -428,30 +428,12 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
     # ── EventBus startup (S133 W4) ──
     await _start_event_bus(app)
 
-    # ── PluginLoader (in-tree + entry_points) ──
+    # ── PluginLoader (configured extensions + entry_points) ──
     try:
-        from pathlib import Path
-
         from src.backend.services.plugins import get_plugin_loader
 
         loader = get_plugin_loader()
-        plugins_dir = Path("plugins")
-        if plugins_dir.is_dir():
-            for entry_raw in plugins_dir.iterdir():
-                if not entry_raw.is_dir():
-                    continue
-                entry = entry_raw  # Path.iterdir() returns Path objects in Python 3.14
-                if (entry / "plugin.yaml").is_file():
-                    try:
-                        await loader.load_from_path(entry)
-                    except Exception as plugin_exc:
-                        _logger.warning(
-                            "In-tree plugin %s skipped: %s", entry.name, plugin_exc
-                        )
-        try:
-            await loader.discover_and_load()
-        except Exception as ep_exc:
-            _logger.warning("entry_points plugin discovery skipped: %s", ep_exc)
+        await loader.discover_and_load()
         app.state.plugin_loader = loader
     except Exception as exc:
         _logger.warning("Plugin loader bootstrap skipped: %s", exc)

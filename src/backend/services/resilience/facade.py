@@ -9,7 +9,8 @@ resilience-API. Раньше были только ``check_rate_limit()`` и ``g
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
+from typing import Any, cast
 
 from src.backend.core.errors import ServiceError
 from src.backend.core.logging import get_logger
@@ -53,9 +54,14 @@ class ResilienceFacade:
         """
         self._assert("resilience.rate_limit", identifier)
         try:
-            from src.backend.core.resilience import RateLimit, get_rate_limiter
+            from src.backend.core.resilience import (
+                RateLimit,
+                RateLimiter,
+                get_rate_limiter,
+            )
 
-            limiter = get_rate_limiter()
+            limiter_factory = cast(Callable[[], RateLimiter], get_rate_limiter)
+            limiter = limiter_factory()
             policy = RateLimit(limit=limit, window_seconds=window_seconds)
             result = await limiter.check(identifier, policy)
             return result.get("allowed", True)

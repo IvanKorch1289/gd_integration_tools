@@ -82,15 +82,20 @@ async def test_start_stop_noop() -> None:
 
 @pytest.mark.asyncio
 async def test_schedule_cron_happy_path() -> None:
-    """schedule_cron happy path: client.create_schedule вызван с правильными args."""
+    """schedule_cron happy path: client.create_schedule вызван с правильными args.
+
+    Note:
+        temporalio ≥1.27 переименовал ``ScheduleCronSpec`` → ``ScheduleSpec``
+        (per-field kwargs → ``cron_expressions=[cron], time_zone_name=tz``).
+    """
     factory = _make_factory_with_client()
     backend = TemporalSchedulerBackend(factory)
 
     # Подменяем temporalio.client (lazy import).
     fake_client_module = MagicMock()
-    fake_spec_cls = MagicMock(return_value=MagicMock(name="ScheduleCronSpec"))
+    fake_spec_cls = MagicMock(return_value=MagicMock(name="ScheduleSpec"))
     fake_action_cls = MagicMock(return_value=MagicMock(name="Action"))
-    fake_client_module.ScheduleCronSpec = fake_spec_cls
+    fake_client_module.ScheduleSpec = fake_spec_cls
     fake_client_module.ScheduleActionStartWorkflow = fake_action_cls
 
     with patch.dict(sys.modules, {"temporalio.client": fake_client_module}):
@@ -104,8 +109,10 @@ async def test_schedule_cron_happy_path() -> None:
     assert result == "my-cron"
     client = factory.get_client.return_value
     client.create_schedule.assert_awaited_once()
-    # Проверяем, что spec был создан через ScheduleCronSpec.
-    fake_spec_cls.assert_called_once()
+    # Проверяем, что spec был создан через ScheduleSpec (new SDK API).
+    fake_spec_cls.assert_called_once_with(
+        cron_expressions=["*/5 * * * *"], time_zone_name="UTC"
+    )
     fake_action_cls.assert_called_once()
 
 
@@ -436,22 +443,23 @@ async def test_list_jobs_handles_list_schedules_failure() -> None:
 
 
 def test_parse_cron_5_fields() -> None:
-    """5-field cron expression: minute hour day month day_of_week."""
+    """5-field cron expression: minute hour day month day_of_week.
+
+    Note:
+        temporalio ≥1.27: ``ScheduleCronSpec(minute=..., ..., timezone=...)``
+        → ``ScheduleSpec(cron_expressions=[cron], time_zone_name=tz)``.
+    """
     fake_spec_cls = MagicMock()
     fake_client_module = MagicMock()
-    fake_client_module.ScheduleCronSpec = fake_spec_cls
+    fake_client_module.ScheduleSpec = fake_spec_cls
 
     with patch.dict(sys.modules, {"temporalio.client": fake_client_module}):
         result = TemporalSchedulerBackend._parse_cron_to_spec("*/5 * * * *", "UTC")
 
     assert result is not None
     fake_spec_cls.assert_called_once_with(
-        minute="*/5",
-        hour="*",
-        day_of_month="*",
-        month="*",
-        day_of_week="*",
-        timezone="UTC",
+        cron_expressions=["*/5 * * * *"],
+        time_zone_name="UTC",
     )
 
 

@@ -112,20 +112,20 @@ def get_cert_backend_registry() -> CertBackendRegistry:
 
 def _register_builtin_backends(reg: CertBackendRegistry) -> None:
     """Регистрация 5 built-in backends (lazy import, D258)."""
-    from src.backend.infrastructure.security.cert_store.backend_vault import (
-        VaultCertBackend,
-    )
-    from src.backend.infrastructure.security.cert_store.backend_postgres import (
-        PostgresCertBackend,
-    )
-    from src.backend.infrastructure.security.cert_store.backend_mongo import (
-        MongoCertBackend,
+    from src.backend.infrastructure.security.cert_store.backend_consul import (
+        ConsulCertBackend,
     )
     from src.backend.infrastructure.security.cert_store.backend_memory import (
         MemoryCertBackend,
     )
-    from src.backend.infrastructure.security.cert_store.backend_consul import (
-        ConsulCertBackend,
+    from src.backend.infrastructure.security.cert_store.backend_mongo import (
+        MongoCertBackend,
+    )
+    from src.backend.infrastructure.security.cert_store.backend_postgres import (
+        PostgresCertBackend,
+    )
+    from src.backend.infrastructure.security.cert_store.backend_vault import (
+        VaultCertBackend,
     )
     reg.register("vault", VaultCertBackend)
     reg.register("postgres", PostgresCertBackend)

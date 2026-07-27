@@ -21,9 +21,10 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
-import orjson
 import pickle
 from typing import Any, Protocol
+
+import orjson
 
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger

@@ -20,9 +20,7 @@ __all__ = (
 )
 
 try:  # pragma: no cover
-    from src.backend.core.utils.metrics_registry import (
-        metrics_registry,
-    )
+    from src.backend.core.utils.metrics_registry import metrics_registry
 
     consumer_pending = metrics_registry.gauge(
         "nats_consumer_pending",

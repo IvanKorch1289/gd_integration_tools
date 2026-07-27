@@ -21,7 +21,6 @@ from src.backend.core.security.connector_auth import require_capability
 
 _logger = logging.getLogger(__name__)
 from src.backend.infrastructure.clients.base_connector import HealthResult
-
 from src.backend.infrastructure.sinks._timeouts import SOAP_SINK_TIMEOUT_S
 
 __all__ = ("SoapSink",)

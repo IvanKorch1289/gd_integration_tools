@@ -30,6 +30,7 @@ from src.backend.infrastructure.clients.external.cdc import (
     CDCClient,
     CDCEvent,
     CDCSubscription,
+    _LogMinerStrategy,
     _PollingStrategy,
 )
 
@@ -468,3 +469,84 @@ def test_cdc_event_to_dict_round_trip_preserves_fields(
     assert d["timestamp"] == ts.isoformat()
     assert d["new"] == new_payload
     assert d["old"] == old_payload
+
+
+# ── CDC strategies: registry-accessor flow (C28 fix) ──
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_polling_strategy_unknown_profile_returns_silently() -> None:
+    """PollingStrategy.run: unknown profile → log + return (no raise)."""
+    strategy = _PollingStrategy()
+
+    sub = CDCSubscription(
+        profile="missing_db",
+        tables=["orders"],
+        timestamp_column="updated_at",
+        strategy="polling",
+    )
+
+    from src.backend.infrastructure.clients.external.cdc import (
+        strategies as strat_module,
+    )
+
+    from src.backend.infrastructure.database.database import (
+        accessors as _accessors_mod,
+    )
+
+    with patch.object(
+        _accessors_mod, "get_external_db_registry", side_effect=KeyError("missing_db")
+    ):
+        # Should not raise — caught by except (ValueError, KeyError, AttributeError).
+        await strategy.run(sub, _noop_dispatch)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_logminer_strategy_uses_registry_accessor() -> None:
+    """LogMinerStrategy.run: registry-accessor (Sprint C28 fix) вместо legacy symbol."""
+    strategy = _LogMinerStrategy()
+
+    sub = CDCSubscription(
+        profile="oracle_1",
+        tables=["orders"],
+        timestamp_column="updated_at",
+        strategy="logminer",
+    )
+
+    # engine.connect() must yield a working connection; we make it return
+    # an empty result so the loop exits via sub.active check.
+    fake_engine = MagicMock()
+    fake_conn = MagicMock()
+    fake_conn.execute = AsyncMock(return_value=MagicMock(fetchall=MagicMock(return_value=[])))
+    fake_conn.__aenter__ = AsyncMock(return_value=fake_conn)
+    fake_conn.__aexit__ = AsyncMock(return_value=None)
+    fake_engine.connect = MagicMock(return_value=fake_conn)
+
+    fake_initializer = MagicMock()
+    fake_initializer.get_async_engine = MagicMock(return_value=fake_engine)
+
+    fake_registry = MagicMock()
+    fake_registry.get_initializer = MagicMock(return_value=fake_initializer)
+
+    from src.backend.infrastructure.clients.external.cdc import (
+        strategies as strat_module,
+    )
+
+    from src.backend.infrastructure.database.database import (
+        accessors as _accessors_mod,
+    )
+
+    with patch.object(
+        _accessors_mod, "get_external_db_registry", return_value=fake_registry
+    ):
+        # Deactivate immediately so loop exits after first iteration.
+        sub.active = False
+        await strategy.run(sub, _noop_dispatch)
+        # engine.connect() must have been called via the registry accessor.
+        assert fake_initializer.get_async_engine.called
+
+
+async def _noop_dispatch(_: CDCSubscription, __: CDCEvent) -> None:
+    return None

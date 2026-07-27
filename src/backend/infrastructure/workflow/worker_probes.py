@@ -32,8 +32,8 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
 from src.backend.core.logging import get_logger
-from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.core.utils.metrics_registry import metrics_registry
+from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = (
     "WorkerProbesServer",

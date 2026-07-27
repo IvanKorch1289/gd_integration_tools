@@ -36,9 +36,10 @@ Production Hardening (Schema Registry V2):
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.core.logging import get_logger
 
@@ -47,7 +48,8 @@ if TYPE_CHECKING:
 
 __all__ = ("SchemaEntry", "SchemaKind", "ServiceSchemaRegistry", "get_schema_registry")
 
-logger = get_logger(__name__)
+_get_logger = cast(Callable[[str], Any], get_logger)
+logger = _get_logger(__name__)
 
 
 class SchemaKind(StrEnum):

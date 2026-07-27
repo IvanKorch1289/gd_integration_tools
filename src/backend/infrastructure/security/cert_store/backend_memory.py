@@ -88,3 +88,14 @@ class MemoryCertBackend(CertBackend):
 
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
         return [e for e in self._data.values() if e.expires_at <= before]
+
+    async def set(self, service_id: str, pem: str) -> None:
+        """In-memory ``set`` — alias для ``save`` с default expiry (1 год)."""
+        from datetime import UTC, timedelta
+
+        await self.save(service_id, pem, datetime.now(tz=UTC) + timedelta(days=365))
+
+    async def delete(self, service_id: str) -> bool:
+        """In-memory delete — pop из dict. Возвращает ``True`` если запись была."""
+        existed = self._data.pop(service_id, None) is not None
+        return existed

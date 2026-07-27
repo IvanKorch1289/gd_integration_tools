@@ -24,9 +24,7 @@ def _ensure() -> None:
     if _initialized:
         return
     try:
-        from src.backend.core.utils.metrics_registry import (
-            metrics_registry,
-        )
+        from src.backend.core.utils.metrics_registry import metrics_registry
 
         _hits = metrics_registry.counter(
             "rag_cache_hits_total", "RAG cache hits per tier", labels=("tier",)

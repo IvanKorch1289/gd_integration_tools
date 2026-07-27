@@ -76,7 +76,14 @@ class DaskBackend:
         with self._lock:
             if self._client is not None:
                 return self._client
-            from dask.distributed import Client, LocalCluster
+            # dask is an optional dep: ``DaskComputeProcessor`` users must
+            # install it explicitly. Narrow import-not-found suppression:
+            # the module is lazy-loaded inside ``ensure_started`` and any
+            # ImportError surfaces to the caller as a clear runtime error.
+            from dask.distributed import (  # type: ignore[import-not-found]
+                Client,
+                LocalCluster,
+            )
 
             if self._scheduler_address:
                 _logger.info(

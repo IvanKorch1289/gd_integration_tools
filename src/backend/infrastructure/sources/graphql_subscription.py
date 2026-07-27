@@ -27,8 +27,8 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.core.security.connector_auth import check_source_capability
+from src.backend.infrastructure.clients.base_connector import HealthResult
 
 if TYPE_CHECKING:
     pass

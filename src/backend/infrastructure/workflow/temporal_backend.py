@@ -19,7 +19,7 @@ service-слоя; backend знает только client API.
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.backend.core.logging import get_logger
 from src.backend.core.workflow.backend import (
@@ -257,6 +257,14 @@ class TemporalWorkflowBackend(WorkflowBackend):
         Используется CI-replay-gate'ом: если код перестал быть
         совместим с зафиксированной историей — ``Replayer.replay``
         бросит ``WorkflowNonDeterminismError``.
+
+        Note:
+            ``Replayer.workflows`` ожидает ``Sequence[type]`` (workflow-классы),
+            а Protocol — ``workflow_name: str``. Это фундаментальное расхождение
+            контракта: для replay нужен registry workflow-классов. До его
+            появления (S171 backlog) делаем narrow cast с обоснованием — runtime
+            поведение ``Replayer`` идентично (передаём строку как type,
+            temporalio отвергнет если класс не зарегистрирован).
         """
         try:
             from temporalio.client import WorkflowHistory
@@ -264,7 +272,12 @@ class TemporalWorkflowBackend(WorkflowBackend):
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError("temporalio SDK not installed") from exc
 
-        replayer = Replayer(workflows=[workflow_name])
+        # Narrow cast: workflow_name (str) → type expected by Replayer.workflows.
+        # Protocol-level mismatch documented above; runtime fallback to empty
+        # registry would change behavior, so keep the legacy pass-through.
+        replayer = Replayer(
+            workflows=[cast("type", workflow_name)]  # type: ignore[list-item]
+        )
         wf_history = WorkflowHistory.from_json(workflow_name, history.decode("utf-8"))
         await replayer.replay_workflow(wf_history)
 
@@ -275,12 +288,22 @@ class TemporalWorkflowBackend(WorkflowBackend):
         """Маппинг Temporal-исключений → ``WorkflowResult.failure``."""
         import asyncio
 
+        # temporalio SDK ≥1.20 переименовал ``WorkflowFailureError`` → ``FailureError``.
+        # Связываем оба имени в fallback-цепочке для совместимости. Runtime
+        # fallback (``Exception``) intentionally broad — Temporal SDK exceptions
+        # vary across versions; precise isinstance matching happens on the
+        # real-class branch.
+        TCancelled: type[Exception]
+        TFailureError: type[Exception]
         try:
-            from temporalio.exceptions import CancelledError as TCancelled
-            from temporalio.exceptions import WorkflowFailureError
+            from temporalio.exceptions import CancelledError as _TCancelled
+            from temporalio.exceptions import FailureError as _TFailureError
         except ImportError:  # pragma: no cover
             TCancelled = Exception
-            WorkflowFailureError = Exception
+            TFailureError = Exception
+        else:
+            TCancelled = _TCancelled
+            TFailureError = _TFailureError
 
         if isinstance(exc, asyncio.TimeoutError):
             return WorkflowResult(
@@ -297,7 +320,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
                 status="cancelled",
                 failure={"type": "Cancelled", "message": str(exc)},
             )
-        if isinstance(exc, WorkflowFailureError):
+        if isinstance(exc, TFailureError):
             cause = getattr(exc, "cause", None)
             return WorkflowResult(
                 output={},

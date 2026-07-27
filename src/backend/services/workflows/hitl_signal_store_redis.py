@@ -20,16 +20,31 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Protocol, cast
+
+from redis.exceptions import WatchError
 
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from redis.asyncio import Redis
+    from src.backend.services.workflows.hitl_service import HitlPendingSignal
 
-    from src.backend.services.workflows.hitl_service import (
-        HitlPendingSignal,
-    )
+
+class _HitlRedisClient(Protocol):
+    """Async Redis surface used by the HITL signal store."""
+
+    async def hset(self, name: str, key: str, value: str) -> int: ...
+
+    async def hget(self, name: str, key: str) -> str | bytes | None: ...
+
+    async def hgetall(self, name: str) -> dict[Any, Any]: ...
+
+    async def publish(self, channel: str, message: str) -> int: ...
+
+    def pipeline(self, *, transaction: bool) -> Any: ...
+
+    def pubsub(self) -> Any: ...
+
 
 __all__ = ("RedisHitlSignalStore",)
 
@@ -58,20 +73,22 @@ class RedisHitlSignalStore:
           фильтром по ``signal_id`` (через payload JSON).
     """
 
-    def __init__(self, redis_client: "Redis | None" = None) -> None:
+    def __init__(self, redis_client: _HitlRedisClient | None = None) -> None:
         self._client = redis_client
         self._owns_client = redis_client is None
 
-    async def _get_client(self) -> "Redis":
+    async def _get_client(self) -> _HitlRedisClient:
         """Lazy resolve redis client (для unit-тестов — inject через ctor)."""
         if self._client is not None:
             return self._client
-        from src.backend.infrastructure.clients.storage.redis import (
-            RedisKind,
-            get_redis_client,
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_redis_client_factory,
         )
 
-        self._client = await get_redis_client().get_client(RedisKind.QUEUE)
+        get_redis_client = get_redis_client_factory()
+        self._client = cast(
+            _HitlRedisClient, await get_redis_client().get_client("queue")
+        )
         return self._client
 
     async def put(self, signal: "HitlPendingSignal") -> None:
@@ -157,19 +174,65 @@ class RedisHitlSignalStore:
         from src.backend.services.workflows.hitl_service import HitlPendingSignal
 
         client = await self._get_client()
-        # Atomic CAS: HGET → check is_resolved → HSET. Через WATCH/MULTI для
-        # race-safety между instance'ами.
+        pipeline_factory = getattr(client, "pipeline", None)
+        if pipeline_factory is None:
+            data = await self._mark_resolved_without_pipeline(
+                client, signal_id, action=action, resolved_by=resolved_by
+            )
+        else:
+            data = await self._mark_resolved_transactional(
+                client, signal_id, action=action, resolved_by=resolved_by
+            )
+        # Cross-instance notify через существующий pub/sub.
+        try:
+            await client.publish(
+                f"hitl:resolved:{data['tenant_id']}",
+                json.dumps({"signal_id": signal_id, "action": action}),
+            )
+        except Exception as exc:
+            _logger.warning("publish on mark_resolved failed: %s", exc)
+        return HitlPendingSignal.from_dict(data)
+
+    async def _mark_resolved_without_pipeline(
+        self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str
+    ) -> dict[str, Any]:
+        """Fallback for lightweight Redis test doubles without transactions."""
+        raw = await client.hget(_HASH_KEY, signal_id)
+        if raw is None:
+            raise KeyError(f"HITL signal {signal_id!r} not found in Redis")
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            raise TypeError("HITL signal payload must be a JSON object")
+        if data.get("resolved_at"):
+            raise ValueError(
+                f"HITL signal {signal_id!r} already resolved by "
+                f"{data.get('resolved_by')!r} as {data.get('resolved_action')!r}"
+            )
+        data["resolved_at"] = datetime.now(UTC).isoformat()
+        data["resolved_action"] = action
+        data["resolved_by"] = resolved_by
+        data["is_resolved"] = True
+        await client.hset(_HASH_KEY, signal_id, json.dumps(data))
+        return data
+
+    async def _mark_resolved_transactional(
+        self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str
+    ) -> dict[str, Any]:
+        """Atomic WATCH/MULTI update for the production Redis client."""
         async with client.pipeline(transaction=True) as pipe:
+            data: dict[str, Any] = {}
             while True:
                 try:
                     await pipe.watch(_HASH_KEY)
                     raw = await pipe.hget(_HASH_KEY, signal_id)
                     if raw is None:
                         await pipe.unwatch()
-                        raise KeyError(
-                            f"HITL signal {signal_id!r} not found in Redis"
-                        )
-                    data = json.loads(raw)
+                        raise KeyError(f"HITL signal {signal_id!r} not found in Redis")
+                    decoded = json.loads(raw)
+                    if not isinstance(decoded, dict):
+                        await pipe.unwatch()
+                        raise TypeError("HITL signal payload must be a JSON object")
+                    data = decoded
                     if data.get("resolved_at"):
                         await pipe.unwatch()
                         raise ValueError(
@@ -183,25 +246,16 @@ class RedisHitlSignalStore:
                     pipe.multi()
                     pipe.hset(_HASH_KEY, signal_id, json.dumps(data))
                     await pipe.execute()
-                    break
+                    return data
                 except asyncio.CancelledError:
                     raise
-                except Exception:
-                    # WATCH conflict → retry.
+                except (KeyError, TypeError, ValueError):
+                    raise
+                except WatchError:
+                    # WATCH conflict → retry the compare-and-set transaction.
                     continue
-        # Cross-instance notify через существующий pub/sub.
-        try:
-            await client.publish(
-                f"hitl:resolved:{data['tenant_id']}",
-                json.dumps({"signal_id": signal_id, "action": action}),
-            )
-        except Exception as exc:
-            _logger.warning("publish on mark_resolved failed: %s", exc)
-        return HitlPendingSignal.from_dict(data)
 
-    async def wait_for(
-        self, signal_id: str, timeout: float | None = None
-    ) -> bool:
+    async def wait_for(self, signal_id: str, timeout: float | None = None) -> bool:
         """Ждать разрешения signal через Redis pub/sub (multi-instance).
 
         Args:
@@ -222,9 +276,7 @@ class RedisHitlSignalStore:
         pubsub = client.pubsub()
         await pubsub.psubscribe("hitl:resolved:*")
         try:
-            deadline = (
-                asyncio.get_event_loop().time() + timeout if timeout else None
-            )
+            deadline = asyncio.get_event_loop().time() + timeout if timeout else None
             while True:
                 remaining = (
                     deadline - asyncio.get_event_loop().time()

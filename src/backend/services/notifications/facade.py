@@ -81,10 +81,10 @@ class NotificationsFacade:
         if self._apprise_service is None:
             try:
                 from src.backend.services.notifications.apprise_service import (
-                    AppriseService,
+                    get_notification_service,
                 )
 
-                self._apprise_service = AppriseService()
+                self._apprise_service = get_notification_service()
             except Exception as exc:
                 log_audit_event_lite(
                     _logger,
@@ -156,14 +156,16 @@ class NotificationsFacade:
         """Отправить через MessagingFacade."""
         try:
             facade = self._get_messaging()
-            return await facade.send(
+            send_metadata = dict(metadata or {})
+            send_metadata.setdefault("priority", priority)
+            message_id = await facade.send(
                 channel=channel,
                 recipient=recipient,
                 subject=subject,
                 body=body,
-                priority=priority,
-                metadata=metadata,
+                metadata=send_metadata,
             )
+            return bool(message_id)
         except Exception as exc:
             log_audit_event_lite(
                 _logger,
@@ -192,14 +194,8 @@ class NotificationsFacade:
             apprise = self._get_apprise()
             if apprise is None:
                 return False
-            return await apprise.notify(
-                channel=channel,
-                recipient=recipient,
-                subject=subject,
-                body=body,
-                priority=priority,
-                metadata=metadata,
-            )
+            await apprise.register_channel(channel, recipient)
+            return await apprise.notify(channel, subject, body)
         except Exception as exc:
             log_audit_event_lite(
                 _logger,

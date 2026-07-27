@@ -28,7 +28,12 @@ async def register_protocol_providers() -> None:
     соответствующая опциональная зависимость не установлена (например, нет
     ollama или langfuse), провайдер просто не регистрируется.
     """
+    # Core LDAP factory gets its implementation only at composition startup.
+    from src.backend.core.di.providers.auth import set_ad_directory_client_provider
     from src.backend.core.providers_registry import register_provider
+    from src.backend.services.auth.ad_directory_client import AdDirectoryClient
+
+    set_ad_directory_client_provider(AdDirectoryClient)
 
     # LLM провайдеры (работают если есть env-переменные с ключами).
     try:

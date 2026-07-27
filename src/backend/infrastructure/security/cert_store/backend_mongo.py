@@ -183,6 +183,23 @@ class MongoCertBackend(CertBackend):
             )
         return result
 
+    async def set(self, service_id: str, pem: str) -> None:
+        """Mongo ``set`` — alias для ``save`` с default expiry (1 год)."""
+        from datetime import timedelta
+
+        await self.save(service_id, pem, datetime.now(tz=UTC) + timedelta(days=365))
+
+    async def delete(self, service_id: str) -> bool:
+        """Mongo delete — ``delete_one`` + history cleanup.
+
+        Returns:
+            ``True`` если запись существовала.
+        """
+        db = self._db()
+        cert_result = await db[self._collection_name].delete_one({"_id": service_id})
+        await db[self._history_collection_name].delete_many({"service_id": service_id})
+        return cert_result.deleted_count > 0
+
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
         coll = self._db()[self._collection_name]
         cursor = coll.find({"expires_at": {"$lte": before}})

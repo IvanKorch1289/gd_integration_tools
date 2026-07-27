@@ -23,7 +23,7 @@ import asyncio
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -222,6 +222,37 @@ class ConsulCertBackend(CertBackend):
             if entry and entry.expires_at <= before:
                 result.append(entry)
         return result
+
+    async def set(self, service_id: str, pem: str) -> None:
+        """Consul ``set`` — alias для ``save`` с default expiry (1 год).
+
+        Note:
+            ``ConsulCertBackend.save`` имеет нестандартную сигнатуру (positional
+            ``fingerprint`` вместо keyword-only). Для ``set`` передаём
+            ``fingerprint=None`` — backend вычислит его из ``pem``.
+        """
+        from datetime import timedelta
+
+        await self.save(
+            service_id, pem, None, datetime.now(tz=UTC) + timedelta(days=365)
+        )
+
+    async def delete(self, service_id: str) -> bool:
+        """Consul delete — ``kv.delete``.
+
+        Returns:
+            ``True`` если ключ существовал.
+        """
+        try:
+            client = self._client_factory()()
+
+            def _delete() -> bool:
+                return client.kv.delete(self._kv_path(service_id))
+
+            return bool(await asyncio.to_thread(_delete))
+        except Exception as exc:
+            logger.warning("Consul delete failed for %s: %s", service_id, exc)
+            return False
 
 
 def _fingerprint(pem: str) -> str:

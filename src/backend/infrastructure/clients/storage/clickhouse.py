@@ -24,7 +24,14 @@ from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_resilience import resilient
 
-__all__ = ("ClickHouseClient", "get_clickhouse_client")
+__all__ = (
+    "ClickHouseClient",
+    "MAX_INSERT_ROWS",
+    "get_clickhouse_client",
+)
+
+# Hard request-level safety cap; chunk size remains configurable separately.
+MAX_INSERT_ROWS = 100_000
 
 logger = get_logger(__name__)
 
@@ -210,18 +217,32 @@ class ClickHouseClient:
             return []
         return [orjson.loads(line) for line in raw.strip().split("\n") if line.strip()]
 
-    async def insert(self, table: str, rows: list[dict[str, Any]]) -> int:
-        """Batch INSERT — разбивает на chunk-и по ``max_batch_size``."""
+    async def insert(
+        self,
+        table: str,
+        rows: list[dict[str, Any]],
+        *,
+        batch_size: int | None = None,
+    ) -> int:
+        """Batch INSERT with a configurable chunk size and hard row cap."""
         import orjson
 
+        if len(rows) > MAX_INSERT_ROWS:
+            raise ValueError(
+                f"oversized batch: {len(rows)} rows exceeds {MAX_INSERT_ROWS}"
+            )
         if not rows:
             return 0
+
+        chunk_size = self._max_batch_size if batch_size is None else batch_size
+        if chunk_size <= 0:
+            raise ValueError("batch_size must be > 0")
 
         client = await self._ensure_client()
         total = 0
 
-        for i in range(0, len(rows), self._max_batch_size):
-            chunk = rows[i : i + self._max_batch_size]
+        for i in range(0, len(rows), chunk_size):
+            chunk = rows[i : i + chunk_size]
             data = "\n".join(
                 orjson.dumps(row, default=str).decode() for row in chunk
             )

@@ -23,10 +23,10 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.metrics_registry import metrics_registry
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.middleware import ProcessorMiddleware
-from src.backend.core.utils.metrics_registry import metrics_registry
 
 __all__ = (
     "PrometheusMetricsMiddleware",

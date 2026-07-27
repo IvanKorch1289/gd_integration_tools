@@ -21,6 +21,7 @@ Capability gate: ``jupyter.hub.run``.
 from __future__ import annotations
 
 import base64
+import binascii
 from dataclasses import asdict
 from typing import Any
 
@@ -64,7 +65,7 @@ class _RunHubNotebookService:
         if notebook_content_b64 is not None:
             try:
                 content = base64.b64decode(notebook_content_b64, validate=True)
-            except (ValueError, base64.binascii.Error) as exc:
+            except (ValueError, binascii.Error) as exc:
                 raise HubRunError(
                     f"notebook_content_b64 is not valid base64: {exc}"
                 ) from exc
@@ -139,7 +140,4 @@ def register_jupyter_hub_actions(registry: Any) -> list[str]:
     return ["jupyter.hub_run"]
 
 
-__all__ = (
-    "get_jupyter_hub_run_service",
-    "register_jupyter_hub_actions",
-)
+__all__ = ("get_jupyter_hub_run_service", "register_jupyter_hub_actions")

@@ -18,8 +18,8 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 from src.backend.infrastructure.clients.base_connector import HealthResult
+from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
 
 __all__ = ("ExpressAdapter",)
 

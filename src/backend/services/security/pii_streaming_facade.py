@@ -6,6 +6,8 @@ not from ``infrastructure.security.pii_streaming`` directly.
 
 from __future__ import annotations
 
+# ruff: noqa: F822
+# lazy __getattr__ exports verified by runtime test
 from typing import Any
 
 __all__ = ("PiiStreamPolicy", "stream_filter")

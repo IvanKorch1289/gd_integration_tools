@@ -185,7 +185,6 @@ class HitlPubSubConsumer:
         pubsub = self._pubsub
         self._task = None
         self._pubsub = None
-        callback = self._on_message
         self._on_message = None
 
         if task is not None and not task.done():

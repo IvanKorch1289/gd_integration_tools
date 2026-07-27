@@ -64,6 +64,19 @@ class CertBackend(ABC):
     ) -> CertEntry: ...
 
     @abstractmethod
+    async def set(self, service_id: str, pem: str) -> None:
+        """Простой setter без метаданных (``save``-эквивалент).
+
+        Используется :class:`FallbackCertBackend` (primary delegation) и
+        :class:`CertFileWatcher` (hot-reload). Контрактно отличается от
+        ``save`` тем, что ``expires_at`` берётся из default-policy бэкенда.
+        """
+
+    @abstractmethod
+    async def delete(self, service_id: str) -> bool:
+        """Удалить сертификат. Возвращает ``True`` если запись существовала."""
+
+    @abstractmethod
     async def history(self, service_id: str) -> list[CertEntry]: ...
 
     @abstractmethod

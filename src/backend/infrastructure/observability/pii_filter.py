@@ -31,14 +31,12 @@ __all__ = ("mask_pii", "redact_for_observability")
 
 # S222: Email/Phone/Card shared via core.security.pii_patterns.
 # S219: SNILS/INN/RU_PASSPORT (single source of truth).
-from src.backend.core.security.pii_patterns import (  # noqa: F401
-    CARD as _CARD,
-    EMAIL as _EMAIL,
-    INN as _INN,
-    PHONE as _PHONE,
-    RU_PASSPORT as _RU_PASSPORT,
-    SNILS as _SNILS,
-)
+from src.backend.core.security.pii_patterns import CARD as _CARD  # noqa: F401
+from src.backend.core.security.pii_patterns import EMAIL as _EMAIL
+from src.backend.core.security.pii_patterns import INN as _INN
+from src.backend.core.security.pii_patterns import PHONE as _PHONE
+from src.backend.core.security.pii_patterns import RU_PASSPORT as _RU_PASSPORT
+from src.backend.core.security.pii_patterns import SNILS as _SNILS
 
 
 def redact_for_observability(value: Any) -> Any:

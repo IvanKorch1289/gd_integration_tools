@@ -44,7 +44,7 @@ class CapabilityFacade:
         if self._gate is None:
             from src.backend.core.security.capabilities import CapabilityGate
 
-            self._gate = CapabilityGate
+            self._gate = CapabilityGate()
         return self._gate
 
     def check(self, plugin: str, capability: str, scope: str | None = None) -> bool:
@@ -75,10 +75,7 @@ class CapabilityFacade:
             return False
 
     async def check_async(
-        self,
-        plugin: str,
-        capability: str,
-        scope: str | None = None,
+        self, plugin: str, capability: str, scope: str | None = None
     ) -> bool:
         """Async capability check (для batch операций)."""
         return self.check(plugin, capability, scope)
@@ -91,18 +88,14 @@ class CapabilityFacade:
         scope: str | None = None,
     ) -> bool:
         """Tenant-aware capability check (returns bool)."""
+        if principal_id is None:
+            return False
         try:
-            from src.backend.core.security.capabilities import (
-                CapabilityGate,
-            )
-
-            return CapabilityGate.check_tenant(
-                capability, tenant_id, principal_id, scope
+            return bool(
+                self.gate.check_tenant(capability, tenant_id, principal_id, scope)
             )
         except Exception as exc:
-            _logger.debug(
-                "tenant capability check failed: %s", exc
-            )
+            _logger.debug("tenant capability check failed: %s", exc)
             return False
 
     def check_subsets(
@@ -125,21 +118,31 @@ class CapabilityFacade:
         """
         try:
             from src.backend.core.security.capabilities import (
+                CapabilityRef,
+                build_default_vocabulary,
                 check_capabilities_subset,
             )
 
-            return check_capabilities_subset(
-                route, route_caps, plugin_caps_by_name, vocab
+            route_name = (
+                route
+                if isinstance(route, str)
+                else str(getattr(route, "route_id", getattr(route, "name", route)))
             )
+            check_capabilities_subset(
+                route=route_name,
+                route_caps=tuple(CapabilityRef(name=name) for name in route_caps),
+                plugin_caps_by_name={
+                    plugin: tuple(CapabilityRef(name=name) for name in capabilities)
+                    for plugin, capabilities in plugin_caps_by_name.items()
+                },
+                vocabulary=vocab or build_default_vocabulary(),
+            )
+            return True
         except Exception as exc:
             _logger.debug("check_subsets failed: %s", exc)
             return False
 
-    def declare(
-        self,
-        plugin: str,
-        capabilities: list[str],
-    ) -> None:
+    def declare(self, plugin: str, capabilities: list[str]) -> None:
         """Declare capabilities для plugin (S183).
 
         Args:
@@ -147,15 +150,13 @@ class CapabilityFacade:
             capabilities: List of capability names to declare.
         """
         try:
-            from src.backend.core.security.capabilities import (
-                CapabilityGate,
-            )
+            from src.backend.core.security.capabilities import CapabilityRef
 
-            CapabilityGate.declare(plugin, capabilities)
+            self.gate.declare(
+                plugin, tuple(CapabilityRef(name=name) for name in capabilities)
+            )
             _logger.info(
-                "capabilities declared: plugin=%s, count=%d",
-                plugin,
-                len(capabilities),
+                "capabilities declared: plugin=%s, count=%d", plugin, len(capabilities)
             )
         except Exception as exc:
             _logger.warning("capability declare failed: %s", exc)
@@ -163,11 +164,7 @@ class CapabilityFacade:
     def revoke(self, plugin: str) -> None:
         """Revoke all capabilities для plugin."""
         try:
-            from src.backend.core.security.capabilities import (
-                CapabilityGate,
-            )
-
-            CapabilityGate.revoke(plugin)
+            self.gate.revoke(plugin)
             _logger.info("capabilities revoked: plugin=%s", plugin)
         except Exception as exc:
             _logger.warning("capability revoke failed: %s", exc)
@@ -175,20 +172,13 @@ class CapabilityFacade:
     def list_allocated_tenant(self, tenant_id: str) -> list[str]:
         """List capabilities для tenant."""
         try:
-            from src.backend.core.security.capabilities import (
-                CapabilityGate,
-            )
-
-            return CapabilityGate.list_allocated_tenant(tenant_id)
+            return [ref.name for ref in self.gate.list_allocated_tenant(tenant_id)]
         except Exception as exc:
             _logger.debug("list_allocated_tenant failed: %s", exc)
             return []
 
     def check_or_raise(
-        self,
-        plugin: str,
-        capability: str,
-        scope: str | None = None,
+        self, plugin: str, capability: str, scope: str | None = None
     ) -> None:
         """Capability check (raise on deny) — заменяет inline gate.check() pattern.
 
@@ -210,20 +200,19 @@ class CapabilityFacade:
         Raises:
             CapabilityDeniedError: если check fails (S-2 fix).
         """
-        from src.backend.core.security.capabilities import (
-            CapabilityGate,
-            CapabilityDeniedError,
-        )
+        from src.backend.core.security.capabilities import CapabilityDeniedError
 
         try:
-            CapabilityGate.check(plugin, capability, scope)
+            self.gate.check(plugin, capability, scope)
         except CapabilityDeniedError:
             raise
         except Exception as exc:
             # Wrap unexpected errors as denied (S184 fail-safe)
             raise CapabilityDeniedError(
-                f"capability check failed: plugin={plugin}, "
-                f"capability={capability}, scope={scope}, error={exc}"
+                plugin=plugin,
+                capability=capability,
+                requested_scope=scope,
+                declared_scope=None,
             ) from exc
 
 

@@ -63,14 +63,13 @@ class AdminService:
             from src.backend.core.security.authorization_gateway import (
                 AuthorizationGateway,
             )
-            # S198 fix: use CapabilityFacade singleton + adapter
-            # вместо direct CapabilityGate() (минуя facade pattern).
-            from src.backend.services.capabilities.facade import (
-                get_capability_facade,
-            )
             from src.backend.services.admin._capability_adapter import (
                 FacadeCapabilityAdapter,
             )
+
+            # S198 fix: use CapabilityFacade singleton + adapter
+            # вместо direct CapabilityGate() (минуя facade pattern).
+            from src.backend.services.capabilities.facade import get_capability_facade
 
             capability_facade = get_capability_facade()
             return AuthorizationGateway(

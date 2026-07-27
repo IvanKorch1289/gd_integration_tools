@@ -14,7 +14,7 @@ Qdrant/Chroma vector stores в :class:`UnifiedPoolManager`.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Awaitable
 
 if TYPE_CHECKING:
     from src.backend.infrastructure.clients.unified_pool_manager import (
@@ -22,37 +22,41 @@ if TYPE_CHECKING:
     )
 
 
-def qdrant_ping_fn() -> bool:
+def _async_ping(backend: str) -> "Awaitable[bool]":
+    """Лёгкий async ping через ``count()`` (canonical Protocol method).
+
+    Note:
+        ``VectorStoreClient`` переименован в ``BaseVectorStore`` + factory
+        ``get_vector_store(backend=...)`` (``is_available()`` отсутствует
+        в новом интерфейсе). ``count()`` — каноничный liveness probe.
+    """
+
+    async def _probe() -> bool:
+        try:
+            from src.backend.infrastructure.clients.storage.vector_store import (
+                get_vector_store,
+            )
+
+            client = get_vector_store(backend=backend)
+            return (await client.count()) >= 0
+        except Exception:
+            return False
+
+    return _probe()
+
+
+def qdrant_ping_fn() -> "Awaitable[bool]":
     """Qdrant liveness check (best-effort)."""
-    try:
-        from src.backend.infrastructure.clients.storage.vector_store import (
-            VectorStoreClient,
-        )
-
-        client = VectorStoreClient(backend="qdrant")
-        return client.is_available()
-    except Exception:
-        return False
+    return _async_ping("qdrant")
 
 
-def chroma_ping_fn() -> bool:
+def chroma_ping_fn() -> "Awaitable[bool]":
     """Chroma liveness check (best-effort)."""
-    try:
-        from src.backend.infrastructure.clients.storage.vector_store import (
-            VectorStoreClient,
-        )
-
-        client = VectorStoreClient(backend="chroma")
-        return client.is_available()
-    except Exception:
-        return False
+    return _async_ping("chroma")
 
 
 def register_vector_pool_if_available(
-    manager: "UnifiedPoolManager",
-    *,
-    name: str = "vector_main",
-    backend: str = "qdrant",
+    manager: "UnifiedPoolManager", *, name: str = "vector_main", backend: str = "qdrant"
 ) -> bool:
     """Регистрирует vector store pool если доступен.
 
@@ -78,8 +82,4 @@ def register_vector_pool_if_available(
         return False
 
 
-__all__ = (
-    "chroma_ping_fn",
-    "qdrant_ping_fn",
-    "register_vector_pool_if_available",
-)
+__all__ = ("chroma_ping_fn", "qdrant_ping_fn", "register_vector_pool_if_available")

@@ -32,8 +32,8 @@ from typing import Any
 
 import structlog
 
-from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.core.utils.metrics_registry import metrics_registry
+from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.secrets.vault_backend import VaultBackend, VaultConfig
 
 __all__ = ("VaultClient", "VaultClientConfig", "get_vault_client")

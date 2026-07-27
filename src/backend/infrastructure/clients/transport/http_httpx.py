@@ -45,11 +45,11 @@ from src.backend.infrastructure.clients.transport.httpx_cache_adapter import (
     is_hishel_available,
 )
 from src.backend.infrastructure.resilience.bulkhead import registry as bulkhead_registry
+from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
 from src.backend.infrastructure.resilience.unified_rate_limiter import (
     RateLimitExceeded,
     ResourceRateLimiter,
 )
-from src.backend.infrastructure.resilience.time_limiter import TimeLimiter
 
 breaker_registry = get_breaker_registry()
 

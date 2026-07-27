@@ -13,6 +13,7 @@ Pattern (Ponytail, D245): тонкий wrapper вокруг ``watchfiles.awatch`
     # ... добавьте/удалите .pem файлы — store обновится автоматически
     await watcher.stop()
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -64,9 +65,7 @@ class CertFileWatcher:
         """cert_id = filename без расширения (для CertStore.set/delete)."""
         return file_path.stem
 
-    async def _on_file_event(
-        self, file_path: Path, event_type: str
-    ) -> None:
+    async def _on_file_event(self, file_path: Path, event_type: str) -> None:
         """Обработать событие файла (add/modify/delete).
 
         S176: sync FS read обёрнут в ``asyncio.to_thread`` чтобы не блокировать
@@ -86,13 +85,11 @@ class CertFileWatcher:
                 pem = await asyncio.to_thread(file_path.read_text, encoding="utf-8")
                 await self.store.set(cert_id, pem=pem)
                 _logger.info(
-                    "cert.hot_reload.%s id=%s size=%d",
-                    event_type, cert_id, len(pem),
+                    "cert.hot_reload.%s id=%s size=%d", event_type, cert_id, len(pem)
                 )
         except Exception as exc:
             _logger.warning(
-                "cert.hot_reload.error id=%s event=%s: %s",
-                cert_id, event_type, exc,
+                "cert.hot_reload.error id=%s event=%s: %s", cert_id, event_type, exc
             )
 
     async def _watch_loop(self) -> None:
@@ -100,14 +97,11 @@ class CertFileWatcher:
         from watchfiles import awatch
 
         _logger.info(
-            "cert.hot_reload.start path=%s extensions=%s",
-            self.path, self.extensions,
+            "cert.hot_reload.start path=%s extensions=%s", self.path, self.extensions
         )
         try:
             async for changes in awatch(
-                self.path,
-                stop_event=self._stop_event,
-                recursive=False,
+                self.path, stop_event=self._stop_event, recursive=False
             ):
                 for change_type, file_path_str in changes:
                     # change_type: 1=added, 2=modified, 3=deleted

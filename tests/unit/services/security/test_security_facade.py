@@ -10,29 +10,37 @@ from src.backend.services.security.facade import SecurityFacade, get_security_fa
 
 
 class TestSecurityFacadeJWTBlacklist:
-    """Тесты JWT blacklist."""
+    """Тесты JWT blacklist.
 
-    def test_blacklist_token(self) -> None:
+    ponytail: production methods async — добавлен ``pytest.mark.asyncio``
+    и ``await`` для blacklist_token/unblacklist_token/clear_blacklist/
+    is_token_blacklisted.
+    """
+
+    @pytest.mark.asyncio
+    async def test_blacklist_token(self) -> None:
         """Blacklist token добавляется в set."""
         facade = SecurityFacade()
-        facade.blacklist_token("jti-123")
-        assert facade.is_token_blacklisted("jti-123") is True
+        await facade.blacklist_token("jti-123")
+        assert await facade.is_token_blacklisted("jti-123") is True
 
-    def test_unblacklist_token(self) -> None:
+    @pytest.mark.asyncio
+    async def test_unblacklist_token(self) -> None:
         """Unblacklist удаляет token."""
         facade = SecurityFacade()
-        facade.blacklist_token("jti-123")
-        facade.unblacklist_token("jti-123")
-        assert facade.is_token_blacklisted("jti-123") is False
+        await facade.blacklist_token("jti-123")
+        await facade.unblacklist_token("jti-123")
+        assert await facade.is_token_blacklisted("jti-123") is False
 
-    def test_clear_blacklist(self) -> None:
+    @pytest.mark.asyncio
+    async def test_clear_blacklist(self) -> None:
         """Clear удаляет все tokens."""
         facade = SecurityFacade()
-        facade.blacklist_token("jti-1")
-        facade.blacklist_token("jti-2")
-        facade.clear_blacklist()
-        assert facade.is_token_blacklisted("jti-1") is False
-        assert facade.is_token_blacklisted("jti-2") is False
+        await facade.blacklist_token("jti-1")
+        await facade.blacklist_token("jti-2")
+        await facade.clear_blacklist()
+        assert await facade.is_token_blacklisted("jti-1") is False
+        assert await facade.is_token_blacklisted("jti-2") is False
 
 
 class TestSecurityFacadeSingleton:

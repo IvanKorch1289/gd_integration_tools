@@ -20,16 +20,28 @@ S168 W14: добавлены импорты WorkflowDeclaration, compute_step_di
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from src.backend.dsl.engine.dry_run import dry_run_route, waterfall_lines  # noqa: F401 — re-exported for frontend
+if TYPE_CHECKING:
+    from src.backend.services.workflows.saga_history import SagaHistoryRecord
+
+from src.backend.dsl.engine.dry_run import (  # noqa: F401 — re-exported for frontend
+    dry_run_route,
+    waterfall_lines,
+)
 from src.backend.dsl.engine.execution_engine import ExecutionEngine
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.tracer import get_tracer
 from src.backend.dsl.registry import route_registry
-from src.backend.dsl.workflow.spec import WorkflowDeclaration  # noqa: F401 — re-exported for frontend
+from src.backend.dsl.workflow.spec import (
+    WorkflowDeclaration,  # noqa: F401 — re-exported for frontend
+)
 from src.backend.dsl.workflow.versioning import get_global_registry  # noqa: F401
-from src.backend.dsl.workflow.visualize import compute_step_diff, to_graphviz, to_mermaid  # noqa: F401
+from src.backend.dsl.workflow.visualize import (  # noqa: F401
+    compute_step_diff,
+    to_graphviz,
+    to_mermaid,
+)
 from src.backend.dsl.workflow.yaml_io import (  # noqa: F401
     load_all_workflows_from_directory,
     load_workflow_from_file,
@@ -67,13 +79,17 @@ def get_ai_cost_snapshot(
     pipeline_filter: str | None = None,
     top_n: int = 50,
 ) -> dict[str, Any]:
-    """S6 fix: snapshot AI cost через :class:`AICostDashboard`."""
+    """S6 fix: snapshot AI cost через :class:`AICostDashboard`.
+
+    Маппинг соответствует :meth:`DashboardSnapshot.to_dict()` —
+    frontend получает готовый ``dict[str, Any]`` (no runtime regression).
+    """
     import asyncio as _asyncio
 
     from src.backend.services.ai.costs import AICostDashboard
 
     dashboard = AICostDashboard()
-    return _asyncio.run(
+    snapshot = _asyncio.run(
         dashboard.snapshot(
             window_hours=window_hours,
             tenant_id=tenant_id,
@@ -82,6 +98,7 @@ def get_ai_cost_snapshot(
             top_n=top_n,
         )
     )
+    return snapshot.to_dict()
 
 
 def get_default_stuck_monitor() -> Any:
@@ -98,7 +115,9 @@ def get_whoosh_index() -> Any:
     return WhooshIndex
 
 
-def get_saga_history(workflow_id: str, *, limit: int = 50) -> list[dict[str, Any]]:
+def get_saga_history(
+    workflow_id: str, *, limit: int = 50
+) -> list[SagaHistoryRecord]:
     """S6 fix: facade для saga history service."""
     import asyncio as _asyncio
 

@@ -91,8 +91,8 @@ async def publish_hitl_resolved(
         # Lazy import + non-blocking publish: 1 second timeout чтобы
         # не задерживать caller. Если Redis недоступен — silently
         # log warning, return 0.
-        client = redis_client()
-        return await client.publish(channel, message_body)
+        client = await redis_client().get_client("queue")
+        return int(await client.publish(channel, message_body))
     except Exception as exc:
         logger.warning(
             "hitl.pubsub.publish_failed: channel=%s error=%s "

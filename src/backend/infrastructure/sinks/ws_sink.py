@@ -22,9 +22,8 @@ from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.resilience.connector_retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
-from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.dsl.codec.json import dumps_str
-
+from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.sinks._timeouts import DEFAULT_SINK_TIMEOUT_S
 
 __all__ = ("WsSink",)
