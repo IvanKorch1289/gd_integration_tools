@@ -44,7 +44,9 @@ def test_from_event_subscribe_with_filter() -> None:
     """filter callable сохраняется для runtime фильтрации."""
     from src.backend.dsl.builders.base import RouteBuilder
 
-    only_completed = lambda e: e.get("status") == "completed"
+    def only_completed(e: object) -> bool:
+        return isinstance(e, dict) and e.get("status") == "completed"
+
     builder = RouteBuilder.from_event_subscribe(
         "test.route",
         "events.orders",
