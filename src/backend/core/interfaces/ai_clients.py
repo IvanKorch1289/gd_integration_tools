@@ -116,6 +116,7 @@ class MongoClientProtocol(Protocol):
     """
 
     def collection(self, name: str) -> Any: ...
+    """Получить конкретный collection по ``name`` (MongoDB-style)."""
 
     async def find(
         self,
@@ -126,12 +127,15 @@ class MongoClientProtocol(Protocol):
         skip: int | None = None,
         sort: list[tuple[str, int]] | None = None,
     ) -> list[dict[str, Any]]: ...
+    """Найти документы matching ``query`` (filter, projection, pagination)."""
 
     async def find_one(
         self, collection: str, query: dict[str, Any]
     ) -> dict[str, Any] | None: ...
+    """Найти один документ matching ``query``; None если не найдено."""
 
     async def insert_one(self, collection: str, document: dict[str, Any]) -> str: ...
+    """Вставить один документ; вернуть сгенерированный _id."""
 
     async def update_one(
         self,
@@ -140,12 +144,15 @@ class MongoClientProtocol(Protocol):
         update: dict[str, Any],
         upsert: bool = False,
     ) -> int: ...
+    """Обновить один документ matching ``query``; ``upsert`` создаёт если не существует."""
 
     async def delete_one(self, collection: str, query: dict[str, Any]) -> int: ...
+    """Удалить один документ matching ``query``; вернуть count удалённых."""
 
     async def count(
         self, collection: str, query: dict[str, Any] | None = None
     ) -> int: ...
+    """Подсчитать документы matching ``query``."""
 
 
 @runtime_checkable
@@ -157,10 +164,12 @@ class RedisStreamClientProtocol(Protocol):
     """
 
     async def add_to_stream(self, stream_name: str, data: dict[str, Any]) -> Any: ...
+    """Append событие в Redis Stream ``stream_name``."""
 
     async def read_stream(
         self, stream_name: str, count: int = 50
     ) -> list[dict[str, Any]]: ...
+    """Прочитать до ``count`` событий из Redis Stream."""
 
 
 @runtime_checkable
