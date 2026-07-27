@@ -247,6 +247,13 @@ class DegradationManager:
         return DegradationMode.FULL
 
     def report(self) -> dict[str, Any]:
+        """Snapshot текущего degradation state для /health endpoint.
+
+        Returns:
+            ``{"mode": "full"|"degraded"|"emergency", "components": {...}}``
+            где ``components[name] = {"available": bool, "last_error": str|None,
+            "error_count": int}``.
+        """
         return {
             "mode": self.mode().value,
             "components": {

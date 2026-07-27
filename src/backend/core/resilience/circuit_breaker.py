@@ -88,9 +88,19 @@ class BreakerLike(Protocol):
     Здесь re-export для единой точки импорта.
     """
 
-    def is_open(self) -> bool: ...
-    def on_success(self) -> None: ...
-    def on_failure(self) -> None: ...
+    def is_open(self) -> bool:
+        """True если breaker в OPEN state (запросы отклоняются без попытки)."""
+        ...
+
+    def on_success(self) -> None:
+        """Зарегистрировать успешный вызов (сбрасывает failure counter)."""
+        ...
+
+    def on_failure(self) -> None:
+        """Зарегистрировать failed вызов (инкрементирует failure counter;
+        может триггерить OPEN transition).
+        """
+        ...
 
 
 # ────────────────── Adapter: per-route sliding-window breaker ──────────────
