@@ -31,6 +31,7 @@ class PoolMonitor:
         self._max_history = 1000
 
     async def start(self) -> None:
+        """Метод start (см. signature)."""
         self._running = True
         self._task = get_task_registry().create_task(
             self._monitor_loop(), name="db-pool-monitor"
@@ -38,6 +39,7 @@ class PoolMonitor:
         logger.info("DB pool monitor started (interval=%ds)", self._interval)
 
     async def stop(self) -> None:
+        """Метод stop (см. signature)."""
         self._running = False
         if self._task and not self._task.done():
             self._task.cancel()

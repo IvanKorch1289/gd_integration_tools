@@ -39,6 +39,7 @@ class ConnectorRotator:
         vault_path: str,
         reload_fn: Callable[..., Awaitable[None]],
     ) -> None:
+        """Метод subscribe (см. signature)."""
         async with self._lock:
             self._subscriptions.setdefault(vault_path, []).append(
                 (connector_name, reload_fn)
@@ -80,6 +81,7 @@ _instance: ConnectorRotator | None = None
 
 
 def get_connector_rotator() -> ConnectorRotator:
+    """Метод get_connector_rotator (см. signature)."""
     global _instance
     if _instance is None:
         _instance = ConnectorRotator()

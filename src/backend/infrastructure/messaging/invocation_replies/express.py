@@ -38,7 +38,9 @@ class ExpressNotifier(Protocol):
 
     async def send(
         self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
-    ) -> None: ...
+    ) -> None:
+        """Метод send (см. signature)."""
+        ...
 
 
 class ExpressReplyChannel(InvocationReplyChannel):
@@ -67,6 +69,7 @@ class ExpressReplyChannel(InvocationReplyChannel):
 
     @property
     def kind(self) -> ReplyChannelKind:
+        """Метод kind (см. signature)."""
         return ReplyChannelKind.EXPRESS
 
     async def send(self, response: InvocationResponse) -> None:
@@ -112,6 +115,7 @@ class ExpressReplyChannel(InvocationReplyChannel):
             )
 
     async def fetch(self, invocation_id: str) -> InvocationResponse | None:
+        """Метод fetch (см. signature)."""
         return None
 
     def _resolve_recipient(self, response: InvocationResponse) -> str | None:

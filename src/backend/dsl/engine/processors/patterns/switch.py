@@ -42,6 +42,7 @@ class SwitchProcessor(BaseProcessor):
         self._default = default or []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         body = exchange.in_message.body
         value = None
         if isinstance(body, dict):

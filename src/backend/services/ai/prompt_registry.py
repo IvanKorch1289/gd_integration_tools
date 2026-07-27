@@ -156,6 +156,7 @@ class PromptRegistry:
         label: str = "production",
         variables: dict[str, Any] | None = None,
     ) -> str:
+        """Метод get_compiled (см. signature)."""
         pv = await self.get(name, version=version, label=label, variables=variables)
         return pv.compiled
 

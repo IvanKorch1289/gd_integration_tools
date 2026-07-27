@@ -12,6 +12,7 @@ class KeyLockManager:
         self.acquire_timeout = acquire_timeout
 
     async def get(self, key: str) -> asyncio.Lock:
+        """Метод get (см. signature)."""
         async with self._guard:
             lock = self._key_locks.get(key)
             if lock is None:
@@ -20,6 +21,7 @@ class KeyLockManager:
             return lock
 
     async def cleanup(self, key: str, lock: asyncio.Lock) -> None:
+        """Метод cleanup (см. signature)."""
         async with self._guard:
             current = self._key_locks.get(key)
             if current is not lock:

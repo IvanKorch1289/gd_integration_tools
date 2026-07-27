@@ -13,12 +13,14 @@ class ConfigClient(BaseAPIClient):
     """Клиент для admin config + trace-logs endpoints."""
 
     def get_config(self) -> dict[str, Any]:
+        """Метод get_config (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/config")
         except Exception:  # noqa: BLE001
             return {}
 
     def get_trace_logs(self, limit: int = 100) -> list[dict[str, Any]]:
+        """Метод get_trace_logs (см. signature)."""
         try:
             return self._request(
                 "GET", "/api/v1/admin/trace-logs", params={"limit": limit}

@@ -57,6 +57,7 @@ class PostgresWatermarkStore:
         self._sm = session_manager
 
     async def load(self, route_id: str, processor_name: str) -> WatermarkState | None:
+        """Метод load (см. signature)."""
         async with self._sm.create_session() as session:
             row = await self._fetch_row(session, route_id, processor_name)
         if row is None:
@@ -71,6 +72,7 @@ class PostgresWatermarkStore:
     async def save(
         self, route_id: str, processor_name: str, state: WatermarkState
     ) -> None:
+        """Метод save (см. signature)."""
         # ``-inf`` не сериализуется в double precision у части драйверов; в
         # этом случае персистить нечего (advance ещё не происходил).
         if state.current == float("-inf"):

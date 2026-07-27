@@ -126,6 +126,7 @@ class OptimizePromptProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "optimize_prompt": {
                 "prompt_name": self._prompt_name,

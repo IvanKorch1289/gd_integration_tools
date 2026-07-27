@@ -46,6 +46,7 @@ class AuthMethodHeaderMiddleware(BaseHTTPMiddleware):
         self._enabled = enabled
 
     async def dispatch(self, request, call_next):
+        """Метод dispatch (см. signature)."""
         response = await call_next(request)
         if not self._enabled:
             # Default off — no information disclosure

@@ -120,6 +120,7 @@ class RedisDegradationStateStore:
     async def persist(
         self, mode: DegradationMode, transition: DegradationTransition
     ) -> None:
+        """Метод persist (см. signature)."""
         import json
         from dataclasses import asdict
 
@@ -128,6 +129,7 @@ class RedisDegradationStateStore:
         await self._redis.ltrim(self.KEY_HISTORY, 0, 99)
 
     async def load_current(self) -> DegradationMode | None:
+        """Метод load_current (см. signature)."""
         from src.backend.core.resilience.degradation import DegradationMode
 
         raw = await self._redis.get(self.KEY_CURRENT)
@@ -139,6 +141,7 @@ class RedisDegradationStateStore:
             return None
 
     async def load_history(self, n: int = 20) -> list[DegradationTransition]:
+        """Метод load_history (см. signature)."""
         import json
 
         from src.backend.core.resilience.degradation import DegradationTransition

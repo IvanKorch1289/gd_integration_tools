@@ -28,6 +28,7 @@ class MCPToolProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="invoke"):
             return
         from fastmcp import Client
@@ -58,6 +59,7 @@ class AgentGraphProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="invoke"):
             return
         from src.backend.services.ai.ai_graph import build_and_run_agent
@@ -109,6 +111,7 @@ class CDCProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         if not self._subscribed:
             from src.backend.infrastructure.clients.external.cdc import get_cdc_client
 

@@ -236,6 +236,7 @@ class PlanExecuteProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "plan_execute": {
                 "max_steps": self._max_steps,

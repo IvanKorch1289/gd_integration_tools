@@ -110,6 +110,7 @@ class InMemoryCacheStore:
         self._lock = threading.Lock()
 
     def get(self, key: str) -> Any | None:
+        """Метод get (см. signature)."""
         import time as _t
 
         with self._lock:
@@ -123,10 +124,12 @@ class InMemoryCacheStore:
             return value
 
     def set(self, key: str, value: Any, ttl_seconds: float) -> None:
+        """Метод set (см. signature)."""
         with self._lock:
             self._cache[key] = (time.time() + ttl_seconds, value)
 
     def clear(self) -> None:
+        """Метод clear (см. signature)."""
         with self._lock:
             self._cache.clear()
 

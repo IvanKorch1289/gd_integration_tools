@@ -29,6 +29,7 @@ class ReindexReport:
     stale_doc_ids: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "namespace": self.namespace,
             "current_fingerprint": self.current_fingerprint,

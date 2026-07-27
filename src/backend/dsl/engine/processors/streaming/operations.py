@@ -59,6 +59,7 @@ class ChannelPurgerProcessor(BaseProcessor):
         self._dry_run = dry_run
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         if self._dry_run:
             logger.warning(
                 "ChannelPurger DRY-RUN для %s (ничего не удалено)", self._channel
@@ -91,6 +92,7 @@ class SamplingProcessor(BaseProcessor):
         self._p = probability
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         # random.random() < p — эквивалентно Bernoulli trial (sampling, не крипто).
         if random.random() >= self._p:  # noqa: S311  # non-cryptographic use
             exchange.properties["_sampled_out"] = True

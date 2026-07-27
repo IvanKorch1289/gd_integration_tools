@@ -23,7 +23,9 @@ class AuditBackend(Protocol):
         tenant_id: str | None,
         route_name: str | None,
         details: dict[str, Any],
-    ) -> None: ...
+    ) -> None:
+        """Метод emit (см. signature)."""
+        ...
 
 
 class LangfuseCallbackBackend(Protocol):
@@ -32,4 +34,6 @@ class LangfuseCallbackBackend(Protocol):
     @property
     def _generation_id(self) -> Any: ...
 
-    def flush(self, generation_id: Any, event: dict[str, Any]) -> None: ...
+    def flush(self, generation_id: Any, event: dict[str, Any]) -> None:
+        """Метод flush (см. signature)."""
+        ...

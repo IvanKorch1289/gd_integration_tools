@@ -91,6 +91,7 @@ class HealthAggregator:
         self._include_registry = enabled
 
     def list_components(self) -> list[str]:
+        """Метод list_components (см. signature)."""
         return sorted(self._checks.keys())
 
     @staticmethod

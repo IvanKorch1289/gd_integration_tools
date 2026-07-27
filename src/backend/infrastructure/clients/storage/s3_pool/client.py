@@ -111,6 +111,7 @@ class S3Client(BaseS3Client):
         )
 
     async def connect(self) -> None:
+        """Метод connect (см. signature)."""
         if self.is_connected:
             return
 
@@ -144,6 +145,7 @@ class S3Client(BaseS3Client):
                 raise
 
     async def close(self) -> None:
+        """Метод close (см. signature)."""
         if self._exit_stack is not None:
             try:
                 await self._exit_stack.aclose()

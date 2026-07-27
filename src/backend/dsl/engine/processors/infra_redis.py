@@ -33,12 +33,14 @@ if TYPE_CHECKING:
     meta={"tier": 1, "category": "infra"},
 )
 class InfraRedisGetProcessor(BaseProcessor):
+    """Метод InfraRedisGetProcessor (см. signature)."""
     def __init__(self, key: str, *, to: str = "body.value") -> None:
         super().__init__(name=f"infra_redis_get:{key}")
         self.key = key
         self.target = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.core.di.providers.infrastructure_facade import (
             get_redis_client_class,
         )

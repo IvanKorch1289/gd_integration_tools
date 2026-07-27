@@ -117,6 +117,7 @@ class TransactionalClientProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Метод process (см. signature)."""
         # 1. Run user action. Если падает — НЕ enqueue.
         try:
             action_result = await self._action(exchange)

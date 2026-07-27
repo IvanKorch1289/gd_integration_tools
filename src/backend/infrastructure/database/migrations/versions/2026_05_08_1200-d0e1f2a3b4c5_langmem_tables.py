@@ -26,6 +26,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     op.create_table(
         "langmem_episodic",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
@@ -66,6 +67,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.drop_index("ix_langmem_procedural_tenant", table_name="langmem_procedural")
     op.drop_table("langmem_procedural")
     op.drop_index("ix_langmem_episodic_tenant", table_name="langmem_episodic")

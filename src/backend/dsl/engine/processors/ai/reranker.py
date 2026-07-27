@@ -196,6 +196,7 @@ class RerankerProcessor(BaseProcessor):
             return None
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {}
         if self._input_property != "vector_results":
             spec["input_property"] = self._input_property

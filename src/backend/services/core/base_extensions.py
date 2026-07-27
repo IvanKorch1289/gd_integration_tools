@@ -194,4 +194,5 @@ class SoftDeleteMixin:
     """
 
     async def soft_delete(self, key: str, value: Any) -> bool:
+        """Метод soft_delete (см. signature)."""
         return await soft_delete(self.repo, key, value)  # type: ignore[attr-defined]

@@ -30,6 +30,7 @@ class CostRow:
     total_cost_usd: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "key": self.key,
             "requests": self.requests,

@@ -32,6 +32,7 @@ class RouteMetrics:
 
     @property
     def error_rate(self) -> float:
+        """Метод error_rate (см. signature)."""
         if self.request_count == 0:
             return 0.0
         return self.error_count / self.request_count

@@ -33,12 +33,14 @@ if TYPE_CHECKING:
     meta={"tier": 1, "category": "infra"},
 )
 class InfraS3GetProcessor(BaseProcessor):
+    """Метод InfraS3GetProcessor (см. signature)."""
     def __init__(self, key: str, *, to: str = "body.content") -> None:
         super().__init__(name=f"infra_s3_get:{key}")
         self.key = key
         self.target = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.core.di.providers.infrastructure_facade import (
             get_object_storage_class,
         )

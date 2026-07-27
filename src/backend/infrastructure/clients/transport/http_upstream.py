@@ -276,6 +276,7 @@ class UpstreamRegistry:
         return client
 
     def get(self, name: str) -> HttpUpstreamClient:
+        """Метод get (см. signature)."""
         try:
             return self._upstreams[name]
         except KeyError:

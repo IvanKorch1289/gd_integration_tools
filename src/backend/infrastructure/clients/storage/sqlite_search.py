@@ -173,6 +173,7 @@ class SqliteFTS5Search:
         return {"aggregations": {"by_field": {"buckets": []}}}
 
     async def delete_document(self, index: str, doc_id: str) -> bool:
+        """Метод delete_document (см. signature)."""
         table = await self._ensure_index(index)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
@@ -185,10 +186,12 @@ class SqliteFTS5Search:
     async def create_index(
         self, index: str, mappings: dict[str, Any] | None = None
     ) -> None:
+        """Метод create_index (см. signature)."""
         del mappings  # FTS5 без маппингов — всё индексируется как текст
         await self._ensure_index(index)
 
     async def ping(self) -> bool:
+        """Метод ping (см. signature)."""
         try:
             async with aiosqlite.connect(self._path) as db:
                 await db.execute("SELECT 1")

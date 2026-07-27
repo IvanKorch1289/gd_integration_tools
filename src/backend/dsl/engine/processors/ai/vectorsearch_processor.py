@@ -27,6 +27,7 @@ class VectorSearchProcessor(BaseProcessor):
         self._output_property = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         body = exchange.in_message.body
         query = body.get(self._query_field, "") if isinstance(body, dict) else str(body)
         if not query:
@@ -41,6 +42,7 @@ class VectorSearchProcessor(BaseProcessor):
         exchange.set_property(self._output_property, results)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {}
         if self._query_field != "question":
             spec["query_field"] = self._query_field

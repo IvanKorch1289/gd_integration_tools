@@ -54,6 +54,7 @@ class LazyProcessorRef:
 
     @property
     def fqn(self) -> str:
+        """Метод fqn (см. signature)."""
         return f"{self.namespace}:{self.name}"
 
 

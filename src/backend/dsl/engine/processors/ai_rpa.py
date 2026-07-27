@@ -281,6 +281,7 @@ class AIRpaProcessor(BaseProcessor):
         exchange.set_property(target, value)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"task": self._task}
         if self._ui_context:
             spec["ui_context"] = self._ui_context

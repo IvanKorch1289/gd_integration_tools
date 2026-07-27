@@ -21,6 +21,7 @@ __all__ = ("DSLLinter", "LintIssue", "dsl_linter")
 
 @dataclass(slots=True)
 class LintIssue:
+    """Метод LintIssue (см. signature)."""
     code: str
     severity: str  # "error" | "warning" | "info"
     message: str
@@ -52,6 +53,7 @@ class DSLLinter:
     """Расширенный lint для DSL pipelines."""
 
     def lint(self, pipeline: Pipeline) -> list[LintIssue]:
+        """Метод lint (см. signature)."""
         issues: list[LintIssue] = []
 
         # E001: пустой pipeline

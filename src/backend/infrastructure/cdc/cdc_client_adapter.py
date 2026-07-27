@@ -37,7 +37,9 @@ class CDCOverflowDLQ(Protocol):
     (downward import из infrastructure.messaging).
     """
 
-    async def send(self, envelope: Any) -> None: ...
+    async def send(self, envelope: Any) -> None:
+        """Метод send (см. signature)."""
+        ...
 
 
 def _to_dlq_envelope(event: CDCEvent, *, profile: str) -> Any:

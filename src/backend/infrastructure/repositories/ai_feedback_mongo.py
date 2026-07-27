@@ -110,6 +110,7 @@ class MongoFeedbackRepository:
     async def list_pending(
         self, *, agent_id: str | None = None, limit: int = 50, offset: int = 0
     ) -> list[AIFeedbackDoc]:
+        """Метод list_pending (см. signature)."""
         query: dict[str, Any] = {"feedback": None}
         if agent_id is not None:
             query["agent_id"] = agent_id
@@ -131,6 +132,7 @@ class MongoFeedbackRepository:
         limit: int = 200,
         offset: int = 0,
     ) -> list[AIFeedbackDoc]:
+        """Метод list_labeled (см. signature)."""
         query: dict[str, Any] = {"feedback": {"$ne": None}}
         if label is not None:
             query["feedback"] = label
@@ -148,6 +150,7 @@ class MongoFeedbackRepository:
         return [_doc_to_model(d) for d in docs]
 
     async def stats(self) -> dict[str, int]:
+        """Метод stats (см. signature)."""
         client = self._client()
         result = {"pending": 0, "positive": 0, "negative": 0, "skip": 0, "indexed": 0}
         result["pending"] = await client.count(_COLLECTION, {"feedback": None})

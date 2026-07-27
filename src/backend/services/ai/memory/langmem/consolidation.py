@@ -34,6 +34,7 @@ class ExtractedFact:
     confidence: float
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {"text": self.text, "confidence": self.confidence}
 
 
@@ -49,6 +50,7 @@ class ConsolidationReport:
     errors: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "processed": self.processed,
             "clusters": self.clusters,

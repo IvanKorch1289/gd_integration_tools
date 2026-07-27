@@ -49,6 +49,7 @@ class ElasticSearchClient:
         return f"{self._index_prefix}{index}"
 
     async def connect(self) -> None:
+        """Метод connect (см. signature)."""
         from elasticsearch import AsyncElasticsearch
 
         kwargs: dict[str, Any] = {
@@ -75,6 +76,7 @@ class ElasticSearchClient:
         )
 
     async def close(self) -> None:
+        """Метод close (см. signature)."""
         if self._client:
             await self._client.close()
             self._client = None

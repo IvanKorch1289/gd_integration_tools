@@ -47,6 +47,7 @@ def _list_models() -> list[dict]:
 
 
 def main() -> None:
+    """Метод main (см. signature)."""
     models = _list_models()
     if not models:
         st.info(

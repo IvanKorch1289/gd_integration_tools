@@ -84,6 +84,7 @@ class PriorityRouter:
     _started: bool = field(init=False, default=False)
 
     async def start(self) -> None:
+        """Метод start (см. signature)."""
         if self._started:
             return
         for i in range(self.tx_profile.max_size):
@@ -107,6 +108,7 @@ class PriorityRouter:
         )
 
     async def stop(self) -> None:
+        """Метод stop (см. signature)."""
         if not self._started:
             return
         # Сигнал завершения — sentinels. Каждому worker по одному.

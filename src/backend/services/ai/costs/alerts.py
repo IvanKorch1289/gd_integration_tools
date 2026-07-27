@@ -34,6 +34,7 @@ class CostAlert:
     samples: int
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "key": self.key,
             "current_cost_usd": round(self.current_cost_usd, 6),

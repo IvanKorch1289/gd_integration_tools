@@ -84,6 +84,7 @@ class ChoiceProcessor(BaseProcessor):
         self._otherwise = otherwise or []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         for branch in self._branches:
             if branch.matches(exchange):
                 await run_sub_processors(branch.processors, exchange, context)

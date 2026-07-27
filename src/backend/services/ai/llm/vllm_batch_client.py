@@ -47,6 +47,7 @@ class VllmBatchClient:
         max_tokens: int = 256,
         temperature: float = 0.0,
     ) -> list[str]:
+        """Метод batch_completions (см. signature)."""
         from vllm import SamplingParams
 
         engine = await self._ensure_engine()
@@ -63,6 +64,7 @@ class VllmBatchClient:
     async def batch_embeddings(
         self, texts: list[str], *, model: str
     ) -> list[list[float]]:
+        """Метод batch_embeddings (см. signature)."""
         # vLLM поддерживает embeddings только в специфичных версиях; в общем
         # случае рекомендуется использовать SentenceTransformers/TGI.
         raise NotImplementedError(

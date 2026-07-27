@@ -39,6 +39,7 @@ class JsonlAuditBackend(AuditBackend):
         self._path.parent.mkdir(parents=True, exist_ok=True)
 
     async def append(self, record: AuditRecord) -> None:
+        """Метод append (см. signature)."""
         line = self._serialize(record)
         async with self._lock:
             await asyncio.to_thread(self._write_line, line)
@@ -46,6 +47,7 @@ class JsonlAuditBackend(AuditBackend):
     async def query(
         self, *, limit: int = 100, filters: dict[str, Any] | None = None
     ) -> list[AuditRecord]:
+        """Метод query (см. signature)."""
         if not self._path.exists():
             return []
         return await asyncio.to_thread(self._tail, limit, filters)

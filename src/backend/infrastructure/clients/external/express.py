@@ -64,6 +64,7 @@ class ExpressClient:
         return self._bot
 
     async def close(self) -> None:
+        """Метод close (см. signature)."""
         if self._bot:
             await self._bot.shutdown()
             self._bot = None

@@ -13,6 +13,7 @@ class DSLRoutesClient(BaseAPIClient):
     """Клиент для admin/dsl-routes endpoints (YAMLStore CRUD)."""
 
     def get_routes(self) -> list[dict[str, Any]]:
+        """Метод get_routes (см. signature)."""
         return self._request("GET", "/api/v1/admin/routes")
 
     def list_dsl_routes(self) -> list[str]:

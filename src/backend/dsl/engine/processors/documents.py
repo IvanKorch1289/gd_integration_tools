@@ -185,6 +185,7 @@ class RenderDocxProcessor(BaseProcessor):
         _set_path(exchange.in_message.body, self.params.output_to, str(output_path))
 
     def to_spec(self) -> dict[str, Any]:
+        """Метод to_spec (см. signature)."""
         return {
             "render_docx": {
                 "template": self.params.template,
@@ -256,6 +257,7 @@ class RenderXlsxProcessor(BaseProcessor):
         _set_path(exchange.in_message.body, self.params.output_to, str(output_path))
 
     def to_spec(self) -> dict[str, Any]:
+        """Метод to_spec (см. signature)."""
         return {
             "render_xlsx": {
                 "template": self.params.template,

@@ -32,6 +32,7 @@ class AuthInterceptor:
     async def intercept_service(
         self, continuation: Any, handler_call_details: Any
     ) -> Any:
+        """Метод intercept_service (см. signature)."""
         from grpc import StatusCode
         from grpc.aio import AbortError
 

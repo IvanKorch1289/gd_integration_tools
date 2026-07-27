@@ -39,6 +39,7 @@ class SemanticMemory:
 
     @property
     def is_configured(self) -> bool:
+        """Метод is_configured (см. signature)."""
         return self._client is not None and self._embedder is not None
 
     async def add(

@@ -74,9 +74,11 @@ class ExposeProxyProcessor(BaseProcessor):
 
     @property
     def spec(self) -> ProxyInboundSpec:
+        """Метод spec (см. signature)."""
         return self._spec
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         # Нормализуем headers согласно политике — последующий forward_to
         # получает уже очищенный набор.
         headers = exchange.in_message.headers or {}

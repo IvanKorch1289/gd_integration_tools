@@ -104,9 +104,11 @@ class ChaosEngineering:
         return cfg
 
     def unregister(self, name: str) -> None:
+        """Метод unregister (см. signature)."""
         self._experiments.pop(name, None)
 
     def get(self, name: str) -> ChaosConfig | None:
+        """Метод get (см. signature)."""
         return self._experiments.get(name)
 
     # ------------------------------------------------------------------

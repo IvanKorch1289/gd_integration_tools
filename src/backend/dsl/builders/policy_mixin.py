@@ -289,6 +289,7 @@ class PolicyMarkerProcessor:
             pass
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {"policy": {"name": self.policy_name, "params": self.params}}
 
 

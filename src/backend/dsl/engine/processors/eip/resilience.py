@@ -70,6 +70,7 @@ class DeadLetterProcessor(BaseProcessor):
             _eip_logger.error("Failed to send to DLQ: %s", dlq_exc)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.dsl.engine.processors.base import run_sub_processors
 
         try:
@@ -96,6 +97,7 @@ class FallbackChainProcessor(BaseProcessor):
         self._processors = processors
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         last_error: str | None = None
 
         for i, proc in enumerate(self._processors):
@@ -252,6 +254,7 @@ class TimeoutProcessor(BaseProcessor):
         self._fallback = fallback_processors or []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.dsl.engine.processors.base import run_sub_processors
 
         try:

@@ -33,6 +33,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     op.add_column(
         "dsl_snapshots",
         sa.Column(
@@ -45,4 +46,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.drop_column("dsl_snapshots", "api_version")

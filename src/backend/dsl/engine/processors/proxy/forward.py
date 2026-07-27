@@ -81,6 +81,7 @@ class ForwardToProcessor(BaseProcessor):
 
     @property
     def spec(self) -> ProxyOutboundSpec:
+        """Метод spec (см. signature)."""
         return self._spec
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:

@@ -15,6 +15,7 @@ __all__ = ("Expectation", "ExpectationResult", "check_expectations")
 
 @dataclass(slots=True)
 class ExpectationResult:
+    """Метод ExpectationResult (см. signature)."""
     passed: bool
     failed_rows: int
     message: str
@@ -22,6 +23,7 @@ class ExpectationResult:
 
 @dataclass(slots=True)
 class Expectation:
+    """Метод Expectation (см. signature)."""
     column: str
     not_null: bool = False
     unique: bool = False

@@ -34,6 +34,7 @@ logger = get_logger(__name__)
 
 @dataclass(slots=True)
 class AuditEvent:
+    """Метод AuditEvent (см. signature)."""
     who: str
     what: str
     entity_type: str
@@ -59,10 +60,12 @@ class AuditEventLog:
         )
 
     async def start(self) -> None:
+        """Метод start (см. signature)."""
         await self._batcher.start()
         logger.info("AuditEventLog started (table=%s)", self._table)
 
     async def stop(self) -> None:
+        """Метод stop (см. signature)."""
         await self._batcher.stop()
         logger.info("AuditEventLog stopped")
 

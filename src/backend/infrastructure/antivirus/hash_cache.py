@@ -40,6 +40,7 @@ class AntivirusHashCache:
         return _PREFIX + hashlib.sha256(payload).hexdigest()
 
     async def get(self, payload: bytes) -> AntivirusScanResult | None:
+        """Метод get (см. signature)."""
         try:
             raw = await self._client.get(self._key(payload))
         except Exception as exc:
@@ -62,6 +63,7 @@ class AntivirusHashCache:
     async def put(
         self, payload: bytes, result: AntivirusScanResult, ttl: int | None = None
     ) -> None:
+        """Метод put (см. signature)."""
         try:
             await self._client.set(
                 self._key(payload),

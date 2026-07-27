@@ -27,6 +27,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     op.create_table(
         "rule_engine_rulesets",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
@@ -66,6 +67,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.drop_index("ix_rule_engine_rulesets_tenant", table_name="rule_engine_rulesets")
     op.drop_index(
         "ix_rule_engine_rulesets_name_enabled", table_name="rule_engine_rulesets"

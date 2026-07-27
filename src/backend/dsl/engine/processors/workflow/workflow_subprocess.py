@@ -84,6 +84,7 @@ class WorkflowSubprocessProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="invoke"):
             return
         # Resolve input from dotted path

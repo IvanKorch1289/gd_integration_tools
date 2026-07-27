@@ -121,6 +121,7 @@ class EmailTriggerProcessor(BaseProcessor):
                     exchange.in_message.set_header(hdr_key, value)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"propagate_metadata": self._propagate_metadata}
         if self._subject_pattern_raw is not None:
             spec["subject_pattern"] = self._subject_pattern_raw

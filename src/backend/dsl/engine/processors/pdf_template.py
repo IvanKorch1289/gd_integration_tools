@@ -204,6 +204,7 @@ class PdfTemplateProcessor(BaseProcessor):
         self._apply_target(exchange, buf.getvalue())
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"template": self._template_source}
         if self._target != "body.pdf_bytes":
             spec["to"] = self._target

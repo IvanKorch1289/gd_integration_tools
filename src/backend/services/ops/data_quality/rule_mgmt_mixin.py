@@ -95,6 +95,7 @@ class RuleManagementMixin(_DataQualityProtocol):
         self._rules.extend(rules)
 
     def list_rules(self) -> list[dict[str, Any]]:
+        """Метод list_rules (см. signature)."""
         return [
             {
                 "name": r.name,

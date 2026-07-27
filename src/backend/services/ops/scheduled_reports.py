@@ -40,6 +40,7 @@ class ReportSchedule:
 
 @dataclass(slots=True)
 class ReportRun:
+    """Метод ReportRun (см. signature)."""
     report_id: str
     timestamp: float = field(default_factory=time.time)
     status: str = "pending"

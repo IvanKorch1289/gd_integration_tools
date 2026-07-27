@@ -129,6 +129,7 @@ class JqProcessor(BaseProcessor):
         self._apply_target(exchange, value)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"expr": self._expr}
         if self._target != "body.jq_result":
             spec["to"] = self._target

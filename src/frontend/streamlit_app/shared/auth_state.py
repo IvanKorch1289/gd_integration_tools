@@ -58,10 +58,12 @@ def get_current_token() -> str | None:
 
 
 def get_current_username() -> str | None:
+    """Метод get_current_username (см. signature)."""
     return st.session_state.get(_SESSION_KEY_USERNAME)
 
 
 def get_current_auth_method() -> str | None:
+    """Метод get_current_auth_method (см. signature)."""
     return st.session_state.get(_SESSION_KEY_METHOD)
 
 

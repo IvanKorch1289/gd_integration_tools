@@ -15,6 +15,7 @@ _API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
 
 def get_api_base_url() -> str:
+    """Метод get_api_base_url (см. signature)."""
     return _API_BASE_URL
 
 

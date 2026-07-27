@@ -151,6 +151,7 @@ class LdapQueryProcessor(BaseProcessor):
             conn.unbind()
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         try:
             from src.backend.core.config.features import feature_flags
 
@@ -173,6 +174,7 @@ class LdapQueryProcessor(BaseProcessor):
             return
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {
             "server": self._server,
             "search_base": self._search_base,

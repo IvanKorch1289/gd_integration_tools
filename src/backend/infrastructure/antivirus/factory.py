@@ -27,12 +27,14 @@ class ChainedAntivirusBackend(AntivirusBackend):
         self._backends = list(backends)
 
     async def is_available(self) -> bool:
+        """Метод is_available (см. signature)."""
         for backend in self._backends:
             if await backend.is_available():
                 return True
         return False
 
     async def scan_bytes(self, payload: bytes) -> AntivirusScanResult:
+        """Метод scan_bytes (см. signature)."""
         last_error: Exception | None = None
         for backend in self._backends:
             try:

@@ -23,11 +23,13 @@ class InMemoryDLQWriter:
         self._seen: set[str] = set()
 
     async def write(self, envelope: DLQEnvelope) -> None:
+        """Метод write (см. signature)."""
         if envelope.dlq_id in self._seen:
             return
         self._seen.add(envelope.dlq_id)
         self.records.append(envelope)
 
     def clear(self) -> None:
+        """Метод clear (см. signature)."""
         self.records.clear()
         self._seen.clear()

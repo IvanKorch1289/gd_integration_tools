@@ -75,6 +75,7 @@ class RedisLock:
             return None
 
     async def acquire(self, *, blocking_timeout: float | None = None) -> bool:
+        """Метод acquire (см. signature)."""
         try:
             raw = await self._client()
         except ImportError:
@@ -98,6 +99,7 @@ class RedisLock:
         return bool(acquired)
 
     async def release(self) -> bool:
+        """Метод release (см. signature)."""
         if self._lock is None:
             return False
         try:
@@ -110,6 +112,7 @@ class RedisLock:
             self._lock = None
 
     async def extend(self, *, additional_seconds: int | None = None) -> bool:
+        """Метод extend (см. signature)."""
         if self._lock is None:
             return False
         try:

@@ -6,6 +6,7 @@ from typing import Any, BinaryIO, TypedDict
 
 
 class FilePart(TypedDict, total=False):
+    """Метод FilePart (см. signature)."""
     content: bytes | bytearray | BinaryIO
     filename: str
     content_type: str

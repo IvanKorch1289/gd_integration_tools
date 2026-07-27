@@ -39,6 +39,7 @@ class DQSeverity(str, Enum):
 
 @dataclass(slots=True)
 class DQViolation:
+    """Метод DQViolation (см. signature)."""
     rule: str
     field: str
     severity: DQSeverity
@@ -48,6 +49,7 @@ class DQViolation:
 
 @dataclass(slots=True)
 class DQCheckResult:
+    """Метод DQCheckResult (см. signature)."""
     violations: list[DQViolation] = dataclass_field(default_factory=list)
     passed: int = 0
     failed: int = 0

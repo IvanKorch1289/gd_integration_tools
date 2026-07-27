@@ -25,6 +25,7 @@ class V0ToV1Migration:
     to_version: str = "v1"
 
     def migrate(self, spec: dict[str, Any]) -> dict[str, Any]:
+        """Метод migrate (см. signature)."""
         result = dict(spec)
         history = list(result.get("_migrated_from", []))
         history.append("v0")

@@ -48,6 +48,7 @@ class PromptGetProcessor(BaseProcessor):
         self.version = version
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.services.ai.prompt_registry import get_prompt_registry
         registry = get_prompt_registry()
         # Ponytail: 1-2 LOC over registry interface

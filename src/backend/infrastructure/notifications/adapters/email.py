@@ -51,6 +51,7 @@ class EmailAdapter:
         )
 
     async def health(self, mode: str = "fast") -> HealthResult:
+        """Метод health (см. signature)."""
         import time
 
         start = time.perf_counter()

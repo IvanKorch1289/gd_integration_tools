@@ -36,6 +36,7 @@ class MessageTranslatorProcessor(BaseProcessor):
         self._to = to_format
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         body = exchange.in_message.body
         converted = self._convert(body)
         exchange.set_out(body=converted, headers=dict(exchange.in_message.headers))
@@ -385,6 +386,7 @@ class NormalizerProcessor(BaseProcessor):
         return body
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         body = exchange.in_message.body
         normalized = self._detect_and_parse(body)
 
@@ -426,6 +428,7 @@ class SortProcessor(BaseProcessor):
         self._reverse = reverse
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         body = exchange.in_message.body
         if not isinstance(body, list):
             return

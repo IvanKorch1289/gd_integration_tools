@@ -21,6 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     op.create_table(
         "outbox_messages",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
@@ -67,6 +68,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.drop_index(
         op.f("ix_outbox_messages_next_attempt_at"), table_name="outbox_messages"
     )

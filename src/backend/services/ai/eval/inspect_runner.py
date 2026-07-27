@@ -65,6 +65,7 @@ class SuiteResult:
     error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return asdict(self)
 
 
@@ -80,6 +81,7 @@ class SuiteSummary:
     failed: int = 0
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "started_at": self.started_at,
             "finished_at": self.finished_at,

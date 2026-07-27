@@ -127,6 +127,7 @@ class CachingDecorator:
         return f"{self.key_prefix}:{pattern}"
 
     async def invalidate(self, *cache_keys: str) -> None:
+        """Метод invalidate (см. signature)."""
         if not cache_keys:
             return
 
@@ -143,6 +144,7 @@ class CachingDecorator:
             await self.disk_cache.delete(*cache_keys)
 
     async def invalidate_pattern(self, pattern: str | None = None) -> None:
+        """Метод invalidate_pattern (см. signature)."""
         match_pattern = self._pattern(pattern)
 
         try:
@@ -263,6 +265,7 @@ class CachingDecorator:
         return wrapper
 
     async def close(self) -> None:
+        """Метод close (см. signature)."""
         if self.disk_cache:
             await self.disk_cache.close()
 

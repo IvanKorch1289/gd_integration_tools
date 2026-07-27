@@ -56,12 +56,14 @@ class IntegrationFacade:
 
     @property
     def sinks(self) -> SinkRegistry:
+        """Метод sinks (см. signature)."""
         if self._sinks is None:
             self._sinks = get_sink_registry()
         return self._sinks
 
     @property
     def sources(self) -> SourceRegistry:
+        """Метод sources (см. signature)."""
         if self._sources is None:
             self._sources = get_source_registry()
         return self._sources

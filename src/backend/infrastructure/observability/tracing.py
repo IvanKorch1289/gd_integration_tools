@@ -43,6 +43,7 @@ class TracingMiddleware(ProcessorMiddleware):
     async def before(
         self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
+        """Метод before (см. signature)."""
         tracer = get_tracer()
         if tracer is None:
             return
@@ -69,6 +70,7 @@ class TracingMiddleware(ProcessorMiddleware):
         error: Exception | None,
         duration_ms: float,
     ) -> None:
+        """Метод after (см. signature)."""
         key = f"{id(exchange)}:{processor_name}"
         span = self._spans.pop(key, None)
         if span is None:

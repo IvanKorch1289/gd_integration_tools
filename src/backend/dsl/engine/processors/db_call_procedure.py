@@ -171,6 +171,7 @@ class DbCallProcedureProcessor(BaseProcessor):
         exchange.set_out(body=payload, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"profile": self._profile, "name": self._sp_name}
         if self._schema != "public":
             spec["schema"] = self._schema

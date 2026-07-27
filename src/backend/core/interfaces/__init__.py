@@ -285,9 +285,11 @@ class PoolMetricsCollector:
                     setattr(self._pools[name], k, v)
 
     def get_all(self) -> list[PoolMetrics]:
+        """Метод get_all (см. signature)."""
         return list(self._pools.values())
 
     def get(self, name: str) -> PoolMetrics | None:
+        """Метод get (см. signature)."""
         return self._pools.get(name)
 
 

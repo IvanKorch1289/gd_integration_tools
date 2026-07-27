@@ -23,7 +23,9 @@ _logger = get_logger(__name__)
 class AdminClickHouseClient(Protocol):
     """Typed subset of clickhouse-connect's dynamic async client."""
 
-    def query(self, *args: Any, **kwargs: Any) -> Awaitable[Any]: ...
+    def query(self, *args: Any, **kwargs: Any) -> Awaitable[Any]:
+        """Метод query (см. signature)."""
+        ...
 
 
 _admin_client: AdminClickHouseClient | None = None

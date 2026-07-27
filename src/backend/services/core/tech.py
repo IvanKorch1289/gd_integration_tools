@@ -132,6 +132,7 @@ class TechService:
             return await health_check.check_rabbitmq()
 
     async def check_all_services(self) -> dict[str, Any]:
+        """Метод check_all_services (см. signature)."""
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_all_services()
 
@@ -149,6 +150,7 @@ class TechService:
         return get_graceful_degradation_registry().snapshot()
 
     async def get_all_custom_tables(self, model_enum: Enum) -> set[str]:
+        """Метод get_all_custom_tables (см. signature)."""
         return {model.value.__tablename__ for model in model_enum}  # type: ignore
 
     async def upload_excel_for_mass_create(

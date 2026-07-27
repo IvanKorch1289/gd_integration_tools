@@ -17,12 +17,14 @@ class MetricsClient(BaseAPIClient):
     """Клиент для health-check + admin metrics endpoints."""
 
     def get_metrics(self) -> dict[str, Any]:
+        """Метод get_metrics (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/metrics")
         except Exception:  # noqa: BLE001
             return {}
 
     def get_health(self) -> dict[str, Any]:
+        """Метод get_health (см. signature)."""
         try:
             return self._request("GET", "/api/v1/health/components")
         except Exception:  # noqa: BLE001

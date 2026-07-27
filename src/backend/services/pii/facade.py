@@ -37,6 +37,7 @@ class PIIFacade:
 
     @property
     def masker(self) -> Any:
+        """Метод masker (см. signature)."""
         if self._masker is None:
             from src.backend.core.security.pii_masker import default_masker
 

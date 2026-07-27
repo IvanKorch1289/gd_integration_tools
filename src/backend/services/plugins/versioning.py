@@ -68,6 +68,7 @@ class InstalledVersion:
     is_active: bool
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {**asdict(self), "path": str(self.path)}
 
 
@@ -82,6 +83,7 @@ class RollbackResult:
     reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return asdict(self)
 
 

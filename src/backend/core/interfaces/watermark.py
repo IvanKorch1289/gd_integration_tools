@@ -25,4 +25,6 @@ class WatermarkEmitter(Protocol):
             использовать fallback (event_time).
     """
 
-    def current_watermark(self) -> float | None: ...
+    def current_watermark(self) -> float | None:
+        """Метод current_watermark (см. signature)."""
+        ...

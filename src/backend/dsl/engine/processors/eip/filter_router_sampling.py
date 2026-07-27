@@ -109,6 +109,7 @@ class ContentBasedRouter(BaseProcessor):
             exchange.stop()
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "type": "content_based_router",
             "routes": len(self._routes),
@@ -188,6 +189,7 @@ class SamplingProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         passed = self._should_pass()
         exchange.set_property("sampling.passed", passed)
         if not passed:
@@ -216,6 +218,7 @@ class SamplingProcessor(BaseProcessor):
             return True
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"type": "sampling"}
         if self._rate is not None:
             spec["rate"] = self._rate

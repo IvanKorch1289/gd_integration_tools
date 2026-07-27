@@ -392,10 +392,12 @@ class SnapshotJob:
 
     @property
     def last_duration_s(self) -> float:
+        """Метод last_duration_s (см. signature)."""
         return self._last_duration_s
 
     @property
     def last_rows(self) -> dict[str, int]:
+        """Метод last_rows (см. signature)."""
         return dict(self._last_rows)
 
     def run_once(self) -> dict[str, int]:

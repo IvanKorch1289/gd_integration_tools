@@ -62,6 +62,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     op.create_table(
         "audit_log_immutable",
         sa.Column(
@@ -116,6 +117,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.drop_index(
         "ix_audit_log_immutable_occurred_at", table_name="audit_log_immutable"
     )

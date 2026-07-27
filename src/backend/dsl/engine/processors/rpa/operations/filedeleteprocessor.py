@@ -47,6 +47,7 @@ class FileDeleteProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="write"):
             return
         path = self.path or exchange.in_message.body.get("path")

@@ -34,12 +34,14 @@ if TYPE_CHECKING:
     meta={"tier": 1, "category": "infra"},
 )
 class FacadeGetHealthProcessor(BaseProcessor):
+    """Метод FacadeGetHealthProcessor (см. signature)."""
     def __init__(self, name: str, *, to: str = "body.health") -> None:
         super().__init__(name=f"facade_get_health:{name}")
         self.component_name = name
         self.target = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.core.di.providers.infrastructure_facade import (
             get_health_check_factory,
         )

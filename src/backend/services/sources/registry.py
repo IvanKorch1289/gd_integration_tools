@@ -85,11 +85,13 @@ class SinkRegistry:
         )
 
     def get(self, sink_id: str) -> Sink:
+        """Метод get (см. signature)."""
         if sink_id not in self._sinks:
             raise KeyError(f"Sink с id={sink_id!r} не зарегистрирован")
         return self._sinks[sink_id]
 
     def all(self) -> tuple[Sink, ...]:
+        """Метод all (см. signature)."""
         return tuple(self._sinks[k] for k in sorted(self._sinks))
 
     def __len__(self) -> int:

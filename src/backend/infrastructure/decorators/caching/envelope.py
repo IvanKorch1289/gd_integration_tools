@@ -143,6 +143,7 @@ class CacheEnvelope:
 
     @classmethod
     def from_payload(cls, payload: Any) -> "CacheEnvelope":
+        """Метод from_payload (см. signature)."""
         if isinstance(payload, dict) and payload.get("__cache_envelope__") is True:
             return cls(
                 value=payload.get("value"),

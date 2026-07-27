@@ -351,6 +351,7 @@ class PoolReconnectMonitor:
         self._stop_event = asyncio.Event()
 
     async def start(self) -> None:
+        """Метод start (см. signature)."""
         if self._task is not None and not self._task.done():
             return
         self._stop_event.clear()
@@ -361,6 +362,7 @@ class PoolReconnectMonitor:
         )
 
     async def stop(self) -> None:
+        """Метод stop (см. signature)."""
         self._stop_event.set()
         if self._task is not None:
             self._task.cancel()

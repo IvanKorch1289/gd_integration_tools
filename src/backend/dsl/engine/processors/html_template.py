@@ -121,6 +121,7 @@ class HtmlTemplateProcessor(BaseProcessor):
         exchange.set_property(self._target, value)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         try:
             from src.backend.core.config.features import feature_flags
 
@@ -148,6 +149,7 @@ class HtmlTemplateProcessor(BaseProcessor):
         self._apply_target(exchange, rendered)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"template": self._template_source}
         if self._target != "body.rendered":
             spec["to"] = self._target

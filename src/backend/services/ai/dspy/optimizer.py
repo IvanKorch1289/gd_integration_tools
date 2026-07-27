@@ -72,6 +72,7 @@ class BaselineDataset:
         )
 
     def split(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Метод split (см. signature)."""
         return self.train, self.eval
 
 
@@ -104,6 +105,7 @@ class CompileReport:
         return self.lift >= float(threshold)
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         data = asdict(self)
         data["lift"] = self.lift
         return data

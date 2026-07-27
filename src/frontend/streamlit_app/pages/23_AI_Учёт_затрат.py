@@ -56,6 +56,7 @@ try:
 except Exception:  # noqa: BLE001
 
     def api_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Метод api_get (см. signature)."""
         import os
 
         import httpx

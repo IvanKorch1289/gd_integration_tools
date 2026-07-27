@@ -68,6 +68,7 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
         self._tasks: set[asyncio.Task[None]] = set()
 
     def quic_event_received(self, event: QuicEvent) -> None:
+        """Метод quic_event_received (см. signature)."""
         if isinstance(event, ProtocolNegotiated) and event.alpn_protocol in H3_ALPN:
             self._http = H3Connection(self._quic, enable_webtransport=True)
         if self._http is not None:

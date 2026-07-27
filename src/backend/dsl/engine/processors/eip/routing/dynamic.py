@@ -36,6 +36,7 @@ class DynamicRouterProcessor(BaseProcessor):
         self._expr = route_expression
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.dsl.commands.registry import route_registry
         from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 

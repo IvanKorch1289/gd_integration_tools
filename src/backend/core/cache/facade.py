@@ -121,6 +121,7 @@ class MemoryCacheFacade(UnifiedCacheFacade):
         ttl_seconds: int | None = None,
         tags: list[str] | None = None,
     ) -> None:
+        """Метод set (см. signature)."""
         import time
 
         ttl = ttl_seconds or self.policy.default_ttl_seconds
@@ -191,6 +192,7 @@ class FallbackCacheFacade(UnifiedCacheFacade):
         ttl_seconds: int | None = None,
         tags: list[str] | None = None,
     ) -> None:
+        """Метод set (см. signature)."""
         try:
             await self.primary.set(key, value, ttl_seconds, tags)
         except CacheError:

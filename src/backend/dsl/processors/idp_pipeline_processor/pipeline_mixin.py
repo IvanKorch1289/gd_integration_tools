@@ -47,6 +47,7 @@ class PipelineMixin(_IDPPipelineProtocol):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         result = self._run_pipeline(exchange)
         # Persist observability snapshot.
         exchange.set_property(self._result_property, self._result_to_dict(result))

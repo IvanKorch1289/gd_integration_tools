@@ -87,11 +87,13 @@ class WebhookSource:
         logger.info("WebhookSource started: id=%s path=%s", self.source_id, self.path)
 
     async def stop(self) -> None:
+        """Метод stop (см. signature)."""
         async with self._lock:
             self._on_event = None
         logger.info("WebhookSource stopped: id=%s", self.source_id)
 
     async def health(self, mode: str = "fast") -> HealthResult:
+        """Метод health (см. signature)."""
         if self._on_event is not None:
             return HealthResult.ok(latency_ms=0.0, mode=mode)
         return HealthResult.failed(error="Not started", mode=mode)

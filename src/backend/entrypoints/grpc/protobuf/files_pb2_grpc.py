@@ -96,6 +96,7 @@ class FileServiceServicer(object):
 
 
 def add_FileServiceServicer_to_server(servicer, server):
+    """Метод add_FileServiceServicer_to_server (см. signature)."""
     rpc_method_handlers = {
             'GetFile': grpc.unary_unary_rpc_method_handler(
                     servicer.GetFile,
@@ -139,6 +140,7 @@ class FileService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод GetFile (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -166,6 +168,7 @@ class FileService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод DeleteFile (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -193,6 +196,7 @@ class FileService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод DownloadFile (см. signature)."""
         return grpc.experimental.unary_stream(
             request,
             target,
@@ -220,6 +224,7 @@ class FileService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод UploadFile (см. signature)."""
         return grpc.experimental.stream_unary(
             request_iterator,
             target,

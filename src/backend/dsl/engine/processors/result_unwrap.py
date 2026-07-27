@@ -149,6 +149,7 @@ class ResultUnwrapProcessor(BaseProcessor):
         self._apply_target(exchange, self._target, value)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {}
         if self._source != "body":
             spec["source"] = self._source

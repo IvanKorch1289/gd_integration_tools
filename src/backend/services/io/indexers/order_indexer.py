@@ -45,6 +45,7 @@ class OrderIndexer:
         self._index = index
 
     async def ensure_index(self) -> None:
+        """Метод ensure_index (см. signature)."""
         try:
             await self._search.ensure_index(self._index, mappings=_ORDERS_MAPPINGS)
         except Exception as exc:
@@ -59,6 +60,7 @@ class OrderIndexer:
             logger.warning("OrderIndexer.index_one failed: %s", exc)
 
     async def delete_one(self, order_id: Any) -> None:
+        """Метод delete_one (см. signature)."""
         try:
             await self._search.delete_document(self._index, str(order_id))
         except Exception as exc:

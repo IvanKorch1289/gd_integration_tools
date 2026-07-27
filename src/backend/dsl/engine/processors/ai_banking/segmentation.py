@@ -117,6 +117,7 @@ class CustomerSegmentationProcessor(_BankingAIProcessor):
 
 
 def to_spec(self) -> dict[str, Any] | None:
+    """Метод to_spec (см. signature)."""
     spec: dict[str, Any] = {}
     if self.model:
         spec["model"] = self.model

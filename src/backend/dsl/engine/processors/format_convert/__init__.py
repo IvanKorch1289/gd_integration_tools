@@ -102,6 +102,7 @@ class FormatConvertProcessor(
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Метод process (см. signature)."""
         # 1. resolve input
         if self.source_value is not None:
             data: Any = self.source_value

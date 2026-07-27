@@ -16,6 +16,7 @@ class RestorePIIProcessor(BaseProcessor):
         super().__init__(name)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         mapping = exchange.properties.get("_pii_mapping")
         if not mapping:
             return

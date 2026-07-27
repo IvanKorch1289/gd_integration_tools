@@ -43,6 +43,7 @@ class DryRunResult:
     total_ms: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "route_id": self.route_id,
             "total_ms": self.total_ms,

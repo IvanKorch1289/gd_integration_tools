@@ -32,6 +32,7 @@ class S3ReadProcessor(BaseProcessor):
         self._key_property = key_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.infrastructure.clients.storage.s3_pool import storage_client
 
         key = self._key

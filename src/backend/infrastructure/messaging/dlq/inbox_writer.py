@@ -29,6 +29,7 @@ class InboxDLQWriter:
         self._table = table_name
 
     async def write(self, envelope: DLQEnvelope) -> None:
+        """Метод write (см. signature)."""
         from sqlalchemy import text
 
         sql = text(

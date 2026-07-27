@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     meta={"tier": 1, "category": "infra"},
 )
 class InfraKafkaProduceProcessor(BaseProcessor):
+    """Метод InfraKafkaProduceProcessor (см. signature)."""
     def __init__(self, topic: str, value: Any, key: str | None = None) -> None:
         super().__init__(name=f"infra_kafka_produce:{topic}")
         self.topic = topic
@@ -42,6 +43,7 @@ class InfraKafkaProduceProcessor(BaseProcessor):
         self.key = key
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.core.di.providers.infrastructure_facade import (
             get_kafka_producer_class,
         )

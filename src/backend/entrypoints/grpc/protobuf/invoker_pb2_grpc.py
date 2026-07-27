@@ -67,6 +67,7 @@ class InvokerServiceServicer(object):
 
 
 def add_InvokerServiceServicer_to_server(servicer, server):
+    """Метод add_InvokerServiceServicer_to_server (см. signature)."""
     rpc_method_handlers = {
             'Invoke': grpc.unary_unary_rpc_method_handler(
                     servicer.Invoke,
@@ -99,6 +100,7 @@ class InvokerService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод Invoke (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,

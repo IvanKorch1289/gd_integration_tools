@@ -77,6 +77,7 @@ class NotebookExportProcessor(BaseProcessor):
         return self._svc
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         path = exchange.get_property("notebook_path") or self._notebook_path
 
         try:
@@ -95,6 +96,7 @@ class NotebookExportProcessor(BaseProcessor):
         exchange.set_property("notebook_export_format", self._fmt)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {
             "user_name": self._user_name,
             "notebook_path": self._notebook_path,

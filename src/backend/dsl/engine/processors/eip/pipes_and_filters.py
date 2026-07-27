@@ -151,6 +151,7 @@ class PipesAndFiltersProcessor(BaseProcessor):
             return {"invocations": self._invocations, "failures": self._failures}
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "type": "pipes_and_filters",
             "steps": len(self._steps),

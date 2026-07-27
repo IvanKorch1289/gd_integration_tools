@@ -132,6 +132,7 @@ class EvaluateRulesProcessor(BaseProcessor):
             _set_path(exchange.in_message.body, "matched_rule", matched.name)
 
     def to_spec(self) -> dict[str, Any]:
+        """Метод to_spec (см. signature)."""
         return {
             "evaluate_rules": {
                 "rules": [r.model_dump() for r in self.params.rules],

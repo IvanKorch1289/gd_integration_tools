@@ -33,12 +33,14 @@ if TYPE_CHECKING:
     meta={"tier": 1, "category": "infra"},
 )
 class InfraClickHouseQueryProcessor(BaseProcessor):
+    """Метод InfraClickHouseQueryProcessor (см. signature)."""
     def __init__(self, sql: str, *, to: str = "body.result") -> None:
         super().__init__(name="infra_clickhouse_query")
         self.sql = sql
         self.target = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.core.di.providers.infrastructure_facade import (
             get_clickhouse_client_class,
         )

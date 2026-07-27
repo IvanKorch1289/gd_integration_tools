@@ -82,6 +82,7 @@ class JupyterHubServer:
         self._raw = raw
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return dict(self._raw)
 
 
@@ -104,6 +105,7 @@ class JupyterHubUser:
         }
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return dict(self._raw)
 
 

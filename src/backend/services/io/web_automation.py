@@ -86,9 +86,11 @@ class WebAutomationService:
         return await self._client.extract_table(url, selector)
 
     async def screenshot(self, url: str) -> bytes:
+        """Метод screenshot (см. signature)."""
         return await self._client.screenshot(url)
 
     async def run_scenario(self, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Метод run_scenario (см. signature)."""
         return await self._client.run_scenario(steps)
 
     async def parse_page(

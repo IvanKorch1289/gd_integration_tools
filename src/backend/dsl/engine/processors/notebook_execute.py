@@ -77,6 +77,7 @@ class NotebookExecuteProcessor(BaseProcessor):
         return self._svc
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         cells = exchange.get_property("notebook_cells")
         if cells is None:
             try:
@@ -105,6 +106,7 @@ class NotebookExecuteProcessor(BaseProcessor):
         exchange.set_property("notebook_outputs", outputs)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {
             "user_name": self._user_name,
             "notebook_path": self._notebook_path,

@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     meta={"tier": 1, "category": "infra"},
 )
 class InfraMongoDBFindProcessor(BaseProcessor):
+    """Метод InfraMongoDBFindProcessor (см. signature)."""
     def __init__(self, collection: str, query: dict[str, Any] | None = None, *, to: str = "body.result") -> None:
         super().__init__(name=f"infra_mongodb_find:{collection}")
         self.collection = collection
@@ -43,6 +44,7 @@ class InfraMongoDBFindProcessor(BaseProcessor):
         self.target = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.core.di.providers.infrastructure_facade import (
             get_mongodb_client_class,
         )

@@ -50,12 +50,14 @@ class RedisWebhookRegistry:
         self._cache_ttl = 60.0
 
     async def add(self, sub: WebhookSubscription) -> WebhookSubscription:
+        """Метод add (см. signature)."""
         await self._store.set(sub.id, asdict(sub))
         await self._invalidation.publish({"action": "add", "id": sub.id})
         self._cache[sub.id] = sub
         return sub
 
     async def remove(self, sub_id: str) -> bool:
+        """Метод remove (см. signature)."""
         removed = await self._store.delete(sub_id)
         if not removed:
             raise KeyError(f"Webhook subscription '{sub_id}' not found")
@@ -64,6 +66,7 @@ class RedisWebhookRegistry:
         return True
 
     async def get(self, sub_id: str) -> WebhookSubscription | None:
+        """Метод get (см. signature)."""
         data = await self._store.get(sub_id)
         if data is None:
             return None

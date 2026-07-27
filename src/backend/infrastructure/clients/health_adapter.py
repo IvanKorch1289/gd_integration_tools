@@ -30,12 +30,15 @@ class HealthAdapter(InfrastructureClient):
         self._target = target
 
     async def start(self) -> None:
+        """Метод start (см. signature)."""
         self._started = True
 
     async def stop(self) -> None:
+        """Метод stop (см. signature)."""
         self._started = False
 
     async def health(self, mode: HealthMode = "fast") -> HealthResult:
+        """Метод health (см. signature)."""
         fn = (
             getattr(self._target, "health", None)
             or getattr(self._target, "healthcheck", None)

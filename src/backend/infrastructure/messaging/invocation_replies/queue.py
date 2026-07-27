@@ -72,9 +72,11 @@ class QueueReplyChannel(InvocationReplyChannel):
 
     @property
     def kind(self) -> ReplyChannelKind:
+        """Метод kind (см. signature)."""
         return ReplyChannelKind.QUEUE
 
     async def send(self, response: InvocationResponse) -> None:
+        """Метод send (см. signature)."""
         meta = response.metadata or {}
         topic = self._resolve_topic(meta)
         if topic is None:
@@ -106,6 +108,7 @@ class QueueReplyChannel(InvocationReplyChannel):
             )
 
     async def fetch(self, invocation_id: str) -> InvocationResponse | None:
+        """Метод fetch (см. signature)."""
         return None
 
     def _resolve_topic(self, meta: dict[str, Any]) -> str | None:

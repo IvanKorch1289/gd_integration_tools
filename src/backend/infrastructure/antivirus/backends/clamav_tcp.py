@@ -38,6 +38,7 @@ class ClamAVTcpBackend(AntivirusBackend):
         self._timeout = timeout
 
     async def is_available(self) -> bool:
+        """Метод is_available (см. signature)."""
         try:
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection(self._host, self._port), timeout=2.0

@@ -98,6 +98,7 @@ class Invoker(InvokeModesMixin, DeferredMixin, TemporalMixin, RunMixin):
         )
 
     async def invoke(self, request: InvocationRequest) -> InvocationResponse:
+        """Метод invoke (см. signature)."""
         match request.mode:
             case InvocationMode.SYNC:
                 return await self._invoke_sync(request)

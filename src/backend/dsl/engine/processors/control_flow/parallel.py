@@ -38,6 +38,7 @@ class PipelineRefProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         result, error = await SubPipelineExecutor.execute_route(

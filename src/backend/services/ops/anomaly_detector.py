@@ -25,6 +25,7 @@ logger = get_logger(__name__)
 
 @dataclass(slots=True)
 class Anomaly:
+    """Метод Anomaly (см. signature)."""
     metric: str
     value: float
     mean: float
@@ -140,6 +141,7 @@ class AnomalyDetector:
         }
 
     def list_metrics(self) -> list[str]:
+        """Метод list_metrics (см. signature)."""
         return list(self._series.keys())
 
 

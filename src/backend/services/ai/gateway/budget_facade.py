@@ -53,6 +53,7 @@ class LiteLLMBudgetFacade:
 
     @property
     def enabled(self) -> bool:
+        """Метод enabled (см. signature)."""
         return self._enabled
 
     async def acompletion(

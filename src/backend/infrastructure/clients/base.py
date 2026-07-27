@@ -133,6 +133,7 @@ class ManagedAsyncClient(ABC, Generic[T]):
 
     @property
     def name(self) -> str:
+        """Метод name (см. signature)."""
         return self._name
 
     async def __aenter__(self) -> ManagedAsyncClient[T]:

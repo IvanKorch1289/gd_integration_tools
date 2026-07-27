@@ -44,6 +44,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     op.create_table(
         "dsl_snapshots",
         sa.Column("id", sa.BigInteger(), primary_key=True, autoincrement=True),
@@ -70,6 +71,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.drop_index("idx_dsl_snapshots_latest", table_name="dsl_snapshots")
     op.drop_index("idx_dsl_snapshots_route", table_name="dsl_snapshots")
     op.drop_table("dsl_snapshots")

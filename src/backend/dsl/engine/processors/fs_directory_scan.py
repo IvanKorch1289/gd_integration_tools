@@ -234,6 +234,7 @@ class DirectoryScanProcessor(BaseProcessor):
         exchange.set_property(self._result_property, entries)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "directory_scan": {
                 "path": self._path,

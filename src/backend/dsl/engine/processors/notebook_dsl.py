@@ -83,6 +83,7 @@ class NotebookDSLProcessor(BaseProcessor):
         return self._svc
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         try:
             svc = self._get_service()
             result = await svc.execute(
@@ -102,6 +103,7 @@ class NotebookDSLProcessor(BaseProcessor):
             exchange.set_property("notebook_export_format", self._output_format)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"notebook_path": self._notebook_path}
         if self._parameters:
             spec["parameters"] = dict(self._parameters)

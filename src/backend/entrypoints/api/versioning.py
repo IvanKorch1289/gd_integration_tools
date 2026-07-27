@@ -75,11 +75,13 @@ class DeprecationMiddleware(BaseHTTPMiddleware):
         self._versions = versions or {}
 
     def register(self, version: APIVersion) -> None:
+        """Метод register (см. signature)."""
         self._versions[version.version] = version
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        """Метод dispatch (см. signature)."""
         response = await call_next(request)
 
         path = request.url.path

@@ -82,6 +82,7 @@ FOR EACH ROW EXECUTE FUNCTION fn_workflow_notify();
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     # --- ENUM types -------------------------------------------------------
     workflow_status = postgresql.ENUM(
         *WORKFLOW_STATUS_VALUES, name="workflow_status", create_type=False
@@ -242,6 +243,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.execute("DROP TRIGGER IF EXISTS trg_workflow_notify ON workflow_events;")
     op.execute("DROP FUNCTION IF EXISTS fn_workflow_notify();")
 

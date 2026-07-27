@@ -111,6 +111,7 @@ class HttpClient(SessionMixin, PrepMixin, RequestMixin, ObservabilityMixin):
         )
 
     async def close(self) -> None:
+        """Метод close (см. signature)."""
         try:
             if self.purger_task:
                 self.purger_task.cancel()

@@ -42,6 +42,7 @@ class ClamAVUnixBackend(AntivirusBackend):
         self._timeout = timeout
 
     async def is_available(self) -> bool:
+        """Метод is_available (см. signature)."""
         if not Path(self._socket_path).exists():
             return False
         try:

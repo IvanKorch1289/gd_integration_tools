@@ -63,6 +63,7 @@ class AntivirusService:
     async def scan_s3_file(
         self, key: str, multipart_field_name: str | None = None
     ) -> dict[str, Any]:
+        """Метод scan_s3_file (см. signature)."""
         file_bytes = await self.s3_service.get_file_bytes(key)
         filename = await self.s3_service.get_original_filename(key) or key
         content_type = await self.s3_service.get_content_type(key)
@@ -83,6 +84,7 @@ class AntivirusService:
         multipart_field_name: str | None = None,
         key: str | None = None,
     ) -> dict[str, Any]:
+        """Метод scan_and_upload_file (см. signature)."""
         scan_result = await self.scan_bytes(
             file_bytes=file_bytes,
             filename=filename,

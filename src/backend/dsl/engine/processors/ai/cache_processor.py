@@ -35,6 +35,7 @@ class CacheProcessor(BaseProcessor):
         self._ttl = ttl_seconds
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         key = f"dsl:cache:{self._key_fn(exchange)}"
         exchange.set_property("_cache_key", key)
         exchange.set_property("_cache_ttl", self._ttl)

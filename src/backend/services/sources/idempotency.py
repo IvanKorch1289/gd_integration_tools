@@ -60,6 +60,7 @@ class MemoryDedupeStore:
         self._lock = asyncio.Lock()
 
     async def is_duplicate(self, namespace: str, event_id: str) -> bool:
+        """Метод is_duplicate (см. signature)."""
         key = f"{namespace}:{event_id}"
         async with self._lock:
             if key in self._cache:
@@ -101,6 +102,7 @@ class RedisDedupeStore:
         self._fail_closed = fail_closed
 
     async def is_duplicate(self, namespace: str, event_id: str) -> bool:
+        """Метод is_duplicate (см. signature)."""
         key = f"{self._prefix}{namespace}:{event_id}"
         try:
             stored = await self._redis.set(key, b"1", nx=True, ex=self._ttl)

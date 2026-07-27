@@ -56,6 +56,7 @@ def lint_file(path: str | Path) -> list[str]:
 
 
 def main() -> int:
+    """Метод main (см. signature)."""
     if len(sys.argv) < 2:
         print("usage: gdi dsl lint <file.yaml>")
         return 2

@@ -193,6 +193,7 @@ class WebhookSignatureProcessor(BaseProcessor):
         exchange.set_property("webhook_signature_status", "ok")
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"secret": self._secret}
         if self._header != "webhook-signature":
             spec["header"] = self._header

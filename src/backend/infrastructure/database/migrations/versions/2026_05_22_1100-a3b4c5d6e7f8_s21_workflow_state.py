@@ -49,6 +49,7 @@ def _uuid_t() -> sa.types.TypeEngine:
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     op.create_table(
         "workflow_state",
         sa.Column("id", _uuid_t(), nullable=False),
@@ -113,6 +114,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     bind = op.get_bind()
     if bind.dialect.name == "postgresql":
         op.execute(

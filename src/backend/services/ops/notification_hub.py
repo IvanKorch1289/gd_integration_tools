@@ -66,6 +66,7 @@ warnings.warn(
 
 
 class Channel(str, Enum):
+    """Метод Channel (см. signature)."""
     EMAIL = "email"
     EXPRESS = "express"
     WEBHOOK = "webhook"

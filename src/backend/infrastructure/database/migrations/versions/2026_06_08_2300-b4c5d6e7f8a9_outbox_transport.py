@@ -25,6 +25,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     # 1. Add column with default='other' для backwards compat.
     # PostgreSQL: NOT NULL + server_default = 'other' in one statement.
     op.add_column(
@@ -58,6 +59,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.drop_index(
         "ix_outbox_messages_status_transport_created", table_name="outbox_messages"
     )

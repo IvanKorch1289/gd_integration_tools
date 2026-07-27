@@ -59,6 +59,7 @@ class Event:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "event_id": self.event_id,
             "aggregate_id": self.aggregate_id,

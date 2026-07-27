@@ -11,11 +11,15 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 @overload
-def cached_data(func: F) -> F: ...
+def cached_data(func: F) -> F:
+    """Метод cached_data (см. signature)."""
+    ...
 
 
 @overload
-def cached_data(func: None = None, *, ttl: int = 300) -> Callable[[F], F]: ...
+def cached_data(func: None = None, *, ttl: int = 300) -> Callable[[F], F]:
+    """Метод cached_data (см. signature)."""
+    ...
 
 
 def cached_data(func: F | None = None, *, ttl: int = 300) -> F | Callable[[F], F]:

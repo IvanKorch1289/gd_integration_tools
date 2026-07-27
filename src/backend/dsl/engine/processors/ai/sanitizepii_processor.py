@@ -16,6 +16,7 @@ class SanitizePIIProcessor(BaseProcessor):
         super().__init__(name)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         body = exchange.in_message.body
         if not isinstance(body, str):
             body = str(body)
@@ -28,4 +29,5 @@ class SanitizePIIProcessor(BaseProcessor):
         exchange.in_message.set_body(result.sanitized_text)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {"sanitize_pii": {}}

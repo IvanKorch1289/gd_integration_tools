@@ -59,6 +59,7 @@ class ReplyToProcessor(BaseProcessor):
         self._correlation_header = correlation_header
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         reply_to = exchange.in_message.headers.get(self._reply_header)
         if not reply_to:
             return  # Нет адреса ответа — не reply-сообщение
@@ -101,6 +102,7 @@ class ExactlyOnceProcessor(BaseProcessor):
         self._namespace = namespace
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         msg_id = exchange.in_message.headers.get(self._id_header)
         if not msg_id:
             exchange.fail(f"Missing {self._id_header} header for exactly-once")
@@ -129,6 +131,7 @@ class DurableSubscriberProcessor(BaseProcessor):
         self._subscribers = subscribers
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         body = exchange.in_message.body
         headers = dict(exchange.in_message.headers)
         results = await asyncio.gather(

@@ -113,6 +113,7 @@ class CorrelationIdProcessor(BaseProcessor):
         self._header = header
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         if self._header in exchange.in_message.headers:
             return
         new_id = str(uuid.uuid4())
@@ -137,6 +138,7 @@ class SchemaRegistryValidator(BaseProcessor):
         self._loader = schema_loader
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         schema = self._cache.get(self._subject)
         if schema is None and self._loader is not None:
             loaded = self._loader(self._subject)

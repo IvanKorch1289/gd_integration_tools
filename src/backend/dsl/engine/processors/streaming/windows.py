@@ -337,6 +337,7 @@ class SessionWindowProcessor(_BaseWindow):
         self._task: asyncio.Task | None = None
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         if await self._is_late_and_handle(exchange):
             return
         async with self._lock:

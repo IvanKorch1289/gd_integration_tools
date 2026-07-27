@@ -229,6 +229,7 @@ class WhooshIndex:
             return hits
 
     def doc_count(self) -> int:
+        """Метод doc_count (см. signature)."""
         if self._ix is None:
             self._ix = self._open_or_create()
         with self._ix.searcher() as searcher:

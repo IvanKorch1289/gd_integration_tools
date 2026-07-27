@@ -164,6 +164,7 @@ class WebDAVSource:
         self._closed = True
 
     async def health(self, mode: str = "fast") -> HealthResult:
+        """Метод health (см. signature)."""
         if not self._closed:
             return HealthResult.ok(latency_ms=0.0, mode=mode)
         return HealthResult.failed(error="Source closed", mode=mode)

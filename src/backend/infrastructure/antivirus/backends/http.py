@@ -27,6 +27,7 @@ class HttpAntivirusBackend(AntivirusBackend):
         self._service = service
 
     async def is_available(self) -> bool:
+        """Метод is_available (см. signature)."""
         check = getattr(self._service, "ping", None)
         if check is None:
             return True  # сервис не объявляет ping — считаем доступным
@@ -36,6 +37,7 @@ class HttpAntivirusBackend(AntivirusBackend):
             return False
 
     async def scan_bytes(self, payload: bytes) -> AntivirusScanResult:
+        """Метод scan_bytes (см. signature)."""
         start = time.monotonic()
         scan_fn = getattr(self._service, "scan_bytes", None) or getattr(
             self._service, "scan_payload", None

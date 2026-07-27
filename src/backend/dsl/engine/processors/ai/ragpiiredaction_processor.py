@@ -41,6 +41,7 @@ class RagPIIRedactionProcessor(BaseProcessor):
         self._output_property = output_property or input_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.core.config.features import feature_flags
 
         if not feature_flags.rag_pii_retrieval_mask:
@@ -54,6 +55,7 @@ class RagPIIRedactionProcessor(BaseProcessor):
         exchange.set_property(self._output_property, masked)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {}
         if self._input_property != "augment_result":
             spec["input_property"] = self._input_property

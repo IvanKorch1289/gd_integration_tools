@@ -24,9 +24,13 @@ class NotificationChannel(Protocol):
 
     async def send(
         self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
-    ) -> None: ...
+    ) -> None:
+        """Метод send (см. signature)."""
+        ...
 
-    async def health(self, mode: str = "fast") -> HealthResult: ...
+    async def health(self, mode: str = "fast") -> HealthResult:
+        """Метод health (см. signature)."""
+        ...
 
 
 __all__ = ("NotificationChannel",)

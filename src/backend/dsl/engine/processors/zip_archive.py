@@ -168,6 +168,7 @@ class ZipArchiveProcessor(BaseProcessor):
         self._apply_target(exchange, result)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"mode": self._mode}
         if self._source != "body":
             spec["source"] = self._source

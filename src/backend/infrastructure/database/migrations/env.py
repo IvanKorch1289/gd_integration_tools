@@ -79,6 +79,7 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
+    """Метод do_run_migrations (см. signature)."""
     context.configure(connection=connection, target_metadata=target_metadata)
 
     with context.begin_transaction():

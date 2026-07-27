@@ -43,6 +43,7 @@ class CredentialSpec:
 
     @property
     def is_vault(self) -> bool:
+        """Метод is_vault (см. signature)."""
         return self.secret_ref.startswith("vault:")
 
 
@@ -114,6 +115,7 @@ _instance: CredentialProvider | None = None
 
 
 def get_credential_provider() -> CredentialProvider:
+    """Метод get_credential_provider (см. signature)."""
     global _instance
     if _instance is None:
         _instance = CredentialProvider()

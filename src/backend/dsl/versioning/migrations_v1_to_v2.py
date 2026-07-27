@@ -20,6 +20,7 @@ class V1ToV2Migration:
     to_version: str = "v2"
 
     def migrate(self, spec: dict[str, Any]) -> dict[str, Any]:
+        """Метод migrate (см. signature)."""
         result = dict(spec)
         history = list(result.get("_migrated_from", []))
         if not history or history[-1] != "v1":

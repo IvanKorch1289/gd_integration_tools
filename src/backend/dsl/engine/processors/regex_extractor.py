@@ -167,6 +167,7 @@ class RegexExtractorProcessor(BaseProcessor):
         self._apply_target(exchange, result)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"pattern": self._pattern_source}
         if self._source != "body":
             spec["source"] = self._source

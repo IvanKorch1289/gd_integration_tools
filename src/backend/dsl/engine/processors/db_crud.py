@@ -339,6 +339,7 @@ class DbCrudProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         # 1. Build SQL
         if self._operation == "INSERT":
             sql, params = build_insert_sql(self._table, self._data)

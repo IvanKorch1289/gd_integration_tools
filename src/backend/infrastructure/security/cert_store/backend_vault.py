@@ -211,6 +211,7 @@ class VaultCertBackend(CertBackend):
         )
 
     async def history(self, service_id: str) -> list[CertEntry]:
+        """Метод history (см. signature)."""
         # Vault KV v2 хранит revisions; полная реализация требует обхода
         # versions API — для baseline возвращаем последнюю.
         last = await self.get(service_id)
@@ -247,6 +248,7 @@ class VaultCertBackend(CertBackend):
         return True
 
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
+        """Метод list_expiring (см. signature)."""
         # Поиск по всем сертификатам в Vault через list — отдельный flow,
         # нужен только для admin-задач. Baseline — пустой результат.
         return []

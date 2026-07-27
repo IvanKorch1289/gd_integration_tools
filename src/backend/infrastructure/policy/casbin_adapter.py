@@ -49,12 +49,14 @@ class CasbinAdapter:
             return False
 
     def add_role(self, user: str, role: str) -> bool:
+        """Метод add_role (см. signature)."""
         enforcer = self._ensure_enforcer()
         if enforcer is None:
             return False
         return bool(enforcer.add_role_for_user(user, role))
 
     def add_policy(self, role: str, resource: str, action: str) -> bool:
+        """Метод add_policy (см. signature)."""
         enforcer = self._ensure_enforcer()
         if enforcer is None:
             return False

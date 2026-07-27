@@ -61,6 +61,7 @@ class PartitionProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "partition": {
                 "field": self._field,
@@ -133,6 +134,7 @@ class FlattenProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {"flatten": {"depth": self._depth}}
 
 
@@ -179,6 +181,7 @@ class UniqueProcessor(BaseProcessor):
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "unique": {
                 "field": self._field,

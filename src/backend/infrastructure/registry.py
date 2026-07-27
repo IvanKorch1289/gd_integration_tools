@@ -84,6 +84,7 @@ class ConnectorRegistry:
 
     @classmethod
     def instance(cls) -> ConnectorRegistry:
+        """Метод instance (см. signature)."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance

@@ -108,10 +108,12 @@ class GetSettingProcessor(BaseProcessor):
         exchange.set_property(self.target, value)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         value = self._read_setting()
         self._apply_target(exchange, value)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"path": self.setting_path}
         if self.target != "body.setting":
             spec["to"] = self.target

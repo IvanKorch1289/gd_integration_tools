@@ -104,6 +104,7 @@ class BatchInsertProcessor(BaseProcessor):
             exchange.set_out(body=items, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "batch_insert": {
                 "table": self._table,
@@ -215,6 +216,7 @@ class BatchUpdateProcessor(BaseProcessor):
         exchange.set_out(body=items, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "batch_update": {
                 "table": self._table,
@@ -277,6 +279,7 @@ class BatchDeleteProcessor(BaseProcessor):
             exchange.set_out(body=ids, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "batch_delete": {
                 "table": self._table,

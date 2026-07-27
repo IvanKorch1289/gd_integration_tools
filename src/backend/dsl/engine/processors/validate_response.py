@@ -118,6 +118,7 @@ class ResponseValidatorProcessor(BaseProcessor):
                 _logger.warning("validate_response (warn): %s", message)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         model = self._resolve_schema()
         if model is None:
             return  # no-op до подстановки реальной модели
@@ -133,6 +134,7 @@ class ResponseValidatorProcessor(BaseProcessor):
         exchange.set_property("_validated_body", validated)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"on_error": self.on_error}
         if isinstance(self.schema, str):
             spec["schema"] = self.schema

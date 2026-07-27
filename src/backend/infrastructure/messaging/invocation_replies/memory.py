@@ -55,9 +55,11 @@ class MemoryReplyChannel(InvocationReplyChannel):
 
     @property
     def kind(self) -> ReplyChannelKind:
+        """Метод kind (см. signature)."""
         return ReplyChannelKind.API
 
     async def send(self, response: InvocationResponse) -> None:
+        """Метод send (см. signature)."""
         async with self._lock:
             self._evict_expired()
             self._store[response.invocation_id] = _Entry(
@@ -68,6 +70,7 @@ class MemoryReplyChannel(InvocationReplyChannel):
                 self._store.popitem(last=False)
 
     async def fetch(self, invocation_id: str) -> InvocationResponse | None:
+        """Метод fetch (см. signature)."""
         async with self._lock:
             entry = self._store.get(invocation_id)
             if entry is None:

@@ -81,6 +81,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         self._lock = asyncio.Lock()  # guard _created в multi-acquire
 
     async def start(self) -> None:
+        """Метод start (см. signature)."""
         if self._started:
             return
         # Pre-warm min_size соединений.
@@ -100,6 +101,7 @@ class ImapConnectionPool(ClientMetricsMixin, InfrastructureClient):
         )
 
     async def stop(self) -> None:
+        """Метод stop (см. signature)."""
         if not self._started:
             return
         # Drain queue; logout каждое соединение.

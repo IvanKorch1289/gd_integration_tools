@@ -36,6 +36,7 @@ class RequestProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.infrastructure.clients.messaging.reply_channel import (
             ReplyChannel,
         )
@@ -54,6 +55,7 @@ class RequestProcessor(BaseProcessor):
         exchange.set_out(body=reply, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "request": {
                 "target_channel": self._target_channel,
@@ -119,6 +121,7 @@ class ReplyProcessor(BaseProcessor):
         exchange.set_out(body=payload, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "reply": {
                 "reply_channel": self._reply_channel,

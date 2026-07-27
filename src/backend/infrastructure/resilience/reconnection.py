@@ -195,6 +195,7 @@ class NoReconnect(ReconnectionStrategy):
     """Одна попытка без retry. Любая ошибка пробрасывается."""
 
     async def run(self, client_name: str, dial: Callable[[], Awaitable[T]]) -> T:
+        """Метод run (см. signature)."""
         try:
             result = await dial()
             reconnect_attempts_total.labels(client=client_name, outcome="success").inc()

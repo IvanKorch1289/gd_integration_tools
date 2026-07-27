@@ -40,6 +40,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     op.create_table(
         "streaming_watermarks",
         sa.Column("route_id", sa.Text(), nullable=False),
@@ -65,4 +66,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.drop_table("streaming_watermarks")

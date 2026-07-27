@@ -93,6 +93,7 @@ class TgiBatchClient:
         max_tokens: int = 256,
         temperature: float = 0.0,
     ) -> list[str]:
+        """Метод batch_completions (см. signature)."""
         if not prompts:
             return []
         # S163 W28: asyncio.TaskGroup (Python 3.11+) вместо asyncio.gather
@@ -126,6 +127,7 @@ class TgiBatchClient:
     async def batch_embeddings(
         self, texts: list[str], *, model: str
     ) -> list[list[float]]:
+        """Метод batch_embeddings (см. signature)."""
         if not texts:
             return []
         tasks = [self._single_embedding(t) for t in texts]

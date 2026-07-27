@@ -35,6 +35,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     # 1. Функция, которая шлёт NOTIFY с id новой строки в payload-е.
     # Channel 'outbox_new' должен совпадать с CHANNEL в
     # src/infrastructure/eventing/outbox_listener.py.
@@ -67,5 +68,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.execute("DROP TRIGGER IF EXISTS trg_outbox_notify ON outbox_messages;")
     op.execute("DROP FUNCTION IF EXISTS fn_outbox_notify();")

@@ -28,7 +28,9 @@ class JwksFetchError(RuntimeError):
 class _HttpFetcher(Protocol):
     """Минимальный контракт HTTP-клиента: get(url) -> dict[str, Any]."""
 
-    async def fetch(self, url: str) -> dict[str, Any]: ...
+    async def fetch(self, url: str) -> dict[str, Any]:
+        """Метод fetch (см. signature)."""
+        ...
 
 
 class HttpJwksFetcher:
@@ -41,6 +43,7 @@ class HttpJwksFetcher:
         self._http = http
 
     async def fetch(self, url: str) -> dict[str, Any]:
+        """Метод fetch (см. signature)."""
         # Lazy-import — модуль ядра не должен зависеть от services/.
         if self._http is None:
             from src.backend.core.net.outbound_http import OutboundHttpClient

@@ -186,6 +186,7 @@ class ReflectionLoopProcessor(BaseProcessor):
         return str(body) if body is not None else ""
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "reflection_loop": {
                 "max_refinements": self._max_refinements,

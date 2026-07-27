@@ -56,7 +56,9 @@ class DSLMigration(Protocol):
     from_version: str
     to_version: str
 
-    def migrate(self, spec: dict[str, Any]) -> dict[str, Any]: ...
+    def migrate(self, spec: dict[str, Any]) -> dict[str, Any]:
+        """Метод migrate (см. signature)."""
+        ...
 
 
 class MigrationRegistry:

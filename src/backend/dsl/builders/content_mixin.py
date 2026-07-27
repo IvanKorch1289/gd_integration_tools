@@ -135,6 +135,7 @@ class MulticastEIPProcessor(BaseProcessor):
         self.sinks, self.parallel = list(sinks), parallel
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         exchange.properties["_multicast_sinks"] = list(self.sinks)
         exchange.properties["_multicast_parallel"] = self.parallel
 
@@ -162,6 +163,7 @@ class RecipientListEIPProcessor(BaseProcessor):
         return list(self._recipients) if self._recipients else []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         exchange.properties["_recipients"] = self._resolve_recipients(exchange)
         exchange.properties["_recipients_parallel"] = self.parallel
 

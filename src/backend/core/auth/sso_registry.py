@@ -133,6 +133,7 @@ class HvacVaultClient:
         return self._client
 
     def read_secret(self, path: str) -> dict[str, Any]:
+        """Метод read_secret (см. signature)."""
         client = self._ensure_client()
         try:
             resp = client.secrets.kv.v2.read_secret_version(path=path)

@@ -25,6 +25,7 @@ class CDCEvent:
     old: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "operation": self.operation,
             "table": self.table,

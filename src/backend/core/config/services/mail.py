@@ -116,6 +116,7 @@ class MailSettings(BaseSettingsWithLoader):
     @field_validator("port")
     @classmethod
     def validate_port(cls, v: int, values: Any) -> int:
+        """Метод validate_port (см. signature)."""
         if v == 465 and not values.data.get("use_tls"):
             raise ValueError("Порт 465 требует включения SSL/TLS")
         return v
@@ -123,6 +124,7 @@ class MailSettings(BaseSettingsWithLoader):
     @field_validator("ca_bundle")
     @classmethod
     def validate_ca_path(cls, v: Path | None) -> Path | None:
+        """Метод validate_ca_path (см. signature)."""
         if v and not v.exists():
             raise ValueError(f"Файл CA bundle не найден: {v}")
         return v

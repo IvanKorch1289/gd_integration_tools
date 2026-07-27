@@ -35,6 +35,7 @@ class PollingConsumerProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.schemas.invocation import ActionCommandSchema
 
         command = ActionCommandSchema(action=self._action, payload=self._payload)

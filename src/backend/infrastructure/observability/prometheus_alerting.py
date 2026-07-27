@@ -72,11 +72,13 @@ class PrometheusAlertManager:
         _logger.info("prometheus_alert.registered name=%s", name)
 
     def unregister_alert(self, name: str) -> None:
+        """Метод unregister_alert (см. signature)."""
         if name in self._alerts:
             del self._alerts[name]
             _logger.info("prometheus_alert.unregistered name=%s", name)
 
     def list_alerts(self) -> list[str]:
+        """Метод list_alerts (см. signature)."""
         return sorted(self._alerts.keys())
 
     def render_rules_yaml(self) -> str:

@@ -32,6 +32,7 @@ class NATSDLQWriter:
 
     @require_capability("dlq.write", action="write")
     async def write(self, envelope: DLQEnvelope) -> None:
+        """Метод write (см. signature)."""
         subject = f"{self._subject_prefix}{envelope.transport}"
         payload = encode_json(envelope.model_dump(mode="json"))
         try:

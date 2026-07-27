@@ -85,7 +85,9 @@ class SlaAlertDispatcher(Protocol):
 
     async def dispatch(
         self, *, breach: SlaBreachRecord, email: str | None, slack: str | None
-    ) -> None: ...
+    ) -> None:
+        """Метод dispatch (см. signature)."""
+        ...
 
 
 class InMemorySlaAlertDispatcher:

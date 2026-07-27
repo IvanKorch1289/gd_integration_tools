@@ -37,6 +37,7 @@ class TimerProcessor(BaseProcessor):
         self._fire_count = 0
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         import time
 
         self._fire_count += 1

@@ -131,6 +131,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
             yield chunk
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         # S202 audit fix: capability gate
         if not await self.auth_check(exchange, action='stream'):
             return
@@ -173,6 +174,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
         exchange.set_property("llm.streamed_text", "".join(accumulated))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {
             "output_mode": self._output_mode,
             "prompt_property": self._prompt_property,

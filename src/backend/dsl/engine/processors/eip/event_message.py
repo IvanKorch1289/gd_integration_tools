@@ -113,6 +113,7 @@ class EventMessageEnvelope:
         self.body = body
 
     def to_headers(self) -> dict[str, str]:
+        """Метод to_headers (см. signature)."""
         h: dict[str, str] = {
             HEADER_EVENT_ID: self.event_id,
             HEADER_EVENT_TYPE: self.event_type,
@@ -265,6 +266,7 @@ class EventMessageProcessor(BaseProcessor):
             return {"enrichments": self._enrich_count, "publishes": self._publish_count}
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "type": "event_message",
             "event_type": self._event_type,

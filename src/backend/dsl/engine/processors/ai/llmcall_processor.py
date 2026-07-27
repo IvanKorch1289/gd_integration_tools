@@ -310,6 +310,7 @@ class LLMCallProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {}
         if self._provider is not None:
             spec["provider"] = self._provider

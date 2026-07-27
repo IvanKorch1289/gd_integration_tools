@@ -138,6 +138,7 @@ class JsonPathProcessor(BaseProcessor):
         self._apply_target(exchange, result)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"expr": self._expr_source}
         if self._target != "body.jsonpath_result":
             spec["to"] = self._target

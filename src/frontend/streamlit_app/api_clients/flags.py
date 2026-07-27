@@ -13,12 +13,14 @@ class FlagsClient(BaseAPIClient):
     """Клиент для feature-flags endpoints (list, toggle, overrides)."""
 
     def get_flags(self) -> list[dict[str, Any]]:
+        """Метод get_flags (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/feature-flags")
         except Exception:  # noqa: BLE001
             return []
 
     def toggle_flag(self, name: str, enabled: bool) -> bool:
+        """Метод toggle_flag (см. signature)."""
         try:
             self._request(
                 "POST",

@@ -246,6 +246,7 @@ class FileWatchProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {
             "result_property": self._result_property,
         }

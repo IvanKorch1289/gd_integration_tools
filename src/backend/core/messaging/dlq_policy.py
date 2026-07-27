@@ -51,9 +51,11 @@ class DLQPolicyRegistry:
         self._policies: dict[str, DLQPolicy] = {}
 
     def register(self, policy: DLQPolicy) -> None:
+        """Метод register (см. signature)."""
         self._policies[policy.class_name] = policy
 
     def get(self, class_name: str) -> DLQPolicy | None:
+        """Метод get (см. signature)."""
         return self._policies.get(class_name)
 
     def get_or_default(self, class_name: str) -> DLQPolicy:
@@ -69,6 +71,7 @@ class DLQPolicyRegistry:
         )
 
     def list_all(self) -> list[DLQPolicy]:
+        """Метод list_all (см. signature)."""
         return list(self._policies.values())
 
     def resolve_for_envelope(self, envelope: _DLQEnvelope) -> DLQPolicy:

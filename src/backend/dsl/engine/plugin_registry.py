@@ -115,6 +115,7 @@ class ProcessorPluginRegistry:
         }
 
     def is_registered(self, name: str) -> bool:
+        """Метод is_registered (см. signature)."""
         return f"{_DEPRECATION_NAMESPACE}:{name}" in self._registry
 
 

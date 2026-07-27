@@ -42,6 +42,7 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
     async def CreateOrder(  # type: ignore[no-untyped-def]
         self, request, context
     ):
+        """Метод CreateOrder (см. signature)."""
         try:
             result = await self._dispatch(
                 "orders.create_skb_order", {"order_id": request.order_id}
@@ -67,6 +68,7 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
     async def GetOrderResult(  # type: ignore[no-untyped-def]
         self, request, context
     ):
+        """Метод GetOrderResult (см. signature)."""
         try:
             result = await self._dispatch(
                 "orders.get_file_and_json", {"order_id": request.order_id}
@@ -92,6 +94,7 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
     async def GetOrder(  # type: ignore[no-untyped-def]
         self, request, context
     ):
+        """Метод GetOrder (см. signature)."""
         try:
             result = await self._dispatch(
                 "orders.get", {"key": "id", "value": request.order_id}
@@ -115,6 +118,7 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
     async def DeleteOrder(  # type: ignore[no-untyped-def]
         self, request, context
     ):
+        """Метод DeleteOrder (см. signature)."""
         try:
             await self._dispatch(
                 "orders.delete", {"key": "id", "value": request.order_id}
@@ -130,16 +134,19 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
     async def CreateSKBOrder(  # type: ignore[no-untyped-def]
         self, request, context
     ):
+        """Метод CreateSKBOrder (см. signature)."""
         return await self.CreateOrder(request, context)
 
     async def GetFileAndJson(  # type: ignore[no-untyped-def]
         self, request, context
     ):
+        """Метод GetFileAndJson (см. signature)."""
         return await self.GetOrderResult(request, context)
 
     async def SendOrderData(  # type: ignore[no-untyped-def]
         self, request, context
     ):
+        """Метод SendOrderData (см. signature)."""
         try:
             result = await self._dispatch(
                 "orders.send_order_data", {"order_id": request.order_id}

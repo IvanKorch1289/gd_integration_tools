@@ -33,12 +33,14 @@ if TYPE_CHECKING:
     meta={"tier": 1, "category": "infra"},
 )
 class InfraDbQueryProcessor(BaseProcessor):
+    """Метод InfraDbQueryProcessor (см. signature)."""
     def __init__(self, sql: str, *, to: str = "body.result") -> None:
         super().__init__(name="infra_db_query")
         self.sql = sql
         self.target = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.core.di.providers.infrastructure_facade import (
             get_main_session_manager_getter,
         )

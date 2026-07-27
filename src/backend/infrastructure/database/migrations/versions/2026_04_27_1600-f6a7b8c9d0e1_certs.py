@@ -43,6 +43,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     op.create_table(
         "certs",
         sa.Column("service_id", sa.Text(), primary_key=True),
@@ -78,6 +79,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.drop_index("idx_cert_history_service", table_name="cert_history")
     op.drop_table("cert_history")
     op.drop_index("idx_certs_expires", table_name="certs")

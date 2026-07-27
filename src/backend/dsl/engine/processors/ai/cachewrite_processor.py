@@ -35,6 +35,7 @@ class CacheWriteProcessor(BaseProcessor):
         self._ttl = ttl_seconds
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         if exchange.properties.get("cached", True):
             return
 

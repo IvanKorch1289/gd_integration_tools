@@ -119,6 +119,7 @@ class UnitConversionProcessor(BaseProcessor):
         exchange.set_property(self._target, value)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         try:
             from src.backend.core.config.features import feature_flags
 
@@ -147,6 +148,7 @@ class UnitConversionProcessor(BaseProcessor):
         self._apply_target(exchange, float(converted.magnitude))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"from_unit": self._from_unit, "to_unit": self._to_unit}
         if self._value is not None:
             spec["value"] = self._value

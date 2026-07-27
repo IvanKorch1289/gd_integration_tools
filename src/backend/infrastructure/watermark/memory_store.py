@@ -27,6 +27,7 @@ class MemoryWatermarkStore:
         self._lock = asyncio.Lock()
 
     async def load(self, route_id: str, processor_name: str) -> WatermarkState | None:
+        """Метод load (см. signature)."""
         async with self._lock:
             stored = self._data.get((route_id, processor_name))
             return replace(stored) if stored is not None else None
@@ -34,5 +35,6 @@ class MemoryWatermarkStore:
     async def save(
         self, route_id: str, processor_name: str, state: WatermarkState
     ) -> None:
+        """Метод save (см. signature)."""
         async with self._lock:
             self._data[(route_id, processor_name)] = replace(state)

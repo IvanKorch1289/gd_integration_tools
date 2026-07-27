@@ -30,6 +30,7 @@ class UsageStats:
 
     @property
     def total_tokens(self) -> int:
+        """Метод total_tokens (см. signature)."""
         return self.prompt_tokens + self.completion_tokens
 
 

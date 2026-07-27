@@ -46,6 +46,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     # 1. Add 3 nullable columns для per-row claim metadata.
     op.add_column(
         "outbox_messages", sa.Column("claimed_by", sa.String(length=256), nullable=True)
@@ -73,6 +74,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     op.drop_index("ix_outbox_messages_claimed_by", table_name="outbox_messages")
     op.drop_index(
         "ix_outbox_messages_status_claimed_until", table_name="outbox_messages"

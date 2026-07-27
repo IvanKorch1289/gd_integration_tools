@@ -43,6 +43,7 @@ class RagIngestProcessor(BaseProcessor):
         self._output_property = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         if self._source_property:
             content = exchange.get_property(self._source_property)
         else:
@@ -62,6 +63,7 @@ class RagIngestProcessor(BaseProcessor):
         exchange.set_property(self._output_property, doc_id)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"collection": self._collection}
         if self._source_property is not None:
             spec["source_property"] = self._source_property

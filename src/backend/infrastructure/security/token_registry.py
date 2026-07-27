@@ -173,6 +173,7 @@ class StaticAESGCMKeyProvider:
         self.current_version = current_version or max(keys)
 
     def get_key(self, version: int) -> bytes | None:
+        """Метод get_key (см. signature)."""
         return self._keys.get(version)
 
 
@@ -191,6 +192,7 @@ class EnvAESGCMKeyProvider:
         self.current_version = current_version
 
     def get_key(self, version: int) -> bytes | None:
+        """Метод get_key (см. signature)."""
         env_name = f"{self._env_prefix}{version}"
         raw = os.environ.get(env_name)
         if raw is None:

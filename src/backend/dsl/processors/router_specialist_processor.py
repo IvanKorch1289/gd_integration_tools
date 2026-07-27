@@ -289,6 +289,7 @@ class RouterSpecialistProcessor(BaseProcessor):
         return str(body) if body is not None else ""
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "router_specialist": {
                 "min_confidence": self._min_confidence,

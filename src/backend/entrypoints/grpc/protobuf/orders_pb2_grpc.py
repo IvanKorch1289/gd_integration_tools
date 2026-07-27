@@ -183,6 +183,7 @@ class OrderService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод CreateOrder (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -210,6 +211,7 @@ class OrderService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод GetOrderResult (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -237,6 +239,7 @@ class OrderService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод GetOrder (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -264,6 +267,7 @@ class OrderService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод DeleteOrder (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -291,6 +295,7 @@ class OrderService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод CreateSKBOrder (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -318,6 +323,7 @@ class OrderService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод GetFileAndJson (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -345,6 +351,7 @@ class OrderService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод SendOrderData (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,

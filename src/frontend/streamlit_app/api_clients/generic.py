@@ -283,4 +283,5 @@ class APIClient(BaseAPIClient):
 
 
 def get_api_client() -> APIClient:
+    """Метод get_api_client (см. signature)."""
     return APIClient()

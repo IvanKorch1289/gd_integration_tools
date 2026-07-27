@@ -142,6 +142,7 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
             exchange.fail(f"desktop_pyautogui({self._action!r}) failed: {exc}")
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"action": self._action}
         if self._x is not None:
             spec["x"] = self._x

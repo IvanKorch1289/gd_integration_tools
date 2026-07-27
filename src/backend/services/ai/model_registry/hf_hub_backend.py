@@ -78,6 +78,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         )
 
     async def list_models(self) -> list[ModelRecord]:
+        """Метод list_models (см. signature)."""
         api = self._ensure_api()
         loop = asyncio.get_running_loop()
         kwargs: dict[str, Any] = {"limit": 100}
@@ -91,6 +92,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
     async def get_model(
         self, name: str, *, version: str | None = None, stage: str | None = None
     ) -> ModelRecord | None:
+        """Метод get_model (см. signature)."""
         api = self._ensure_api()
         loop = asyncio.get_running_loop()
         try:

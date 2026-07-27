@@ -263,6 +263,7 @@ class EventBus:
         await self.publish("events.flags", FlagEvent(name=name, enabled=enabled))
 
     async def publish_route_event(self, route_id: str, action: str) -> None:
+        """Метод publish_route_event (см. signature)."""
         await self.publish(
             "events.routes", RouteEvent(route_id=route_id, action=action)
         )

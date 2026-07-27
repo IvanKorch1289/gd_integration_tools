@@ -45,6 +45,7 @@ class DLQCleanupStats:
 
     @property
     def total_deleted(self) -> int:
+        """Метод total_deleted (см. signature)."""
         return sum(self.deleted_per_class.values())
 
 

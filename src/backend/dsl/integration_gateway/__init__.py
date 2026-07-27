@@ -34,6 +34,7 @@ class MessagingGateway:
     async def invoke(
         self, payload: dict[str, Any], headers: dict[str, str] | None = None
     ) -> Any:
+        """Метод invoke (см. signature)."""
         from src.backend.dsl.service import get_dsl_service
 
         dsl = get_dsl_service()
@@ -70,7 +71,9 @@ class VersionedRoute:
             self.sunset_dates = {}
 
     def resolve(self, version: str) -> str:
+        """Метод resolve (см. signature)."""
         return self.versions[version]
 
     def is_deprecated(self, version: str) -> bool:
+        """Метод is_deprecated (см. signature)."""
         return version in self.deprecated

@@ -127,6 +127,7 @@ class TimeSeriesWriteProcessor(BaseProcessor):
             raise ValueError(f"Invalid table name: {table}")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         import os
 
         backend = self._backend

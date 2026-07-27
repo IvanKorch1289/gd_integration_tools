@@ -103,6 +103,7 @@ class UsersAutoServiceServicer(object):
 
 
 def add_UsersAutoServiceServicer_to_server(servicer, server):
+    """Метод add_UsersAutoServiceServicer_to_server (см. signature)."""
     rpc_method_handlers = {
             'Create': grpc.unary_unary_rpc_method_handler(
                     servicer.Create,
@@ -152,6 +153,7 @@ class UsersAutoService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод Create (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -179,6 +181,7 @@ class UsersAutoService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод CreateMany (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -206,6 +209,7 @@ class UsersAutoService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод Get (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -233,6 +237,7 @@ class UsersAutoService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод List (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,
@@ -260,6 +265,7 @@ class UsersAutoService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
+        """Метод Update (см. signature)."""
         return grpc.experimental.unary_unary(
             request,
             target,

@@ -116,6 +116,7 @@ class ClickHouseBulkWriter:
         self.stats.rows_buffered = self._queue.qsize()
 
     async def add_many(self, rows: list[dict[str, Any]]) -> None:
+        """Метод add_many (см. signature)."""
         for row in rows:
             await self.add(row)
 

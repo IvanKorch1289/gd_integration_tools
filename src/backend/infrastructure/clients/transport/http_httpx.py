@@ -280,6 +280,7 @@ class HttpxClient:
         )
 
     async def close(self) -> None:
+        """Метод close (см. signature)."""
         async with self._lock:
             if self._client is not None and not self._client.is_closed:
                 await self._client.aclose()

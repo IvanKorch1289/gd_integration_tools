@@ -71,6 +71,7 @@ class BatchProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange, context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         rows: Any = (
             exchange.properties.get(self._source_field) or exchange.in_message.body
         )
@@ -141,6 +142,7 @@ class BatchProcessor(BaseProcessor):
             await session.execute(delete(self._model).where(pk_col.in_(ids)))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "batch": {
                 "mode": self._mode,

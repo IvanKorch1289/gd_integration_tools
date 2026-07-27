@@ -38,6 +38,7 @@ def _fetch() -> dict | None:
 
 
 def main() -> None:
+    """Метод main (см. signature)."""
     data = _fetch()
     if not data:
         return

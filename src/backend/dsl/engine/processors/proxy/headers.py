@@ -39,6 +39,7 @@ class HeaderMapPolicy:
     override: dict[str, str] = field(default_factory=dict)
 
     def apply(self, headers: Mapping[str, str]) -> dict[str, str]:
+        """Метод apply (см. signature)."""
         dropped = {k.lower() for k in self.drop}
         result: dict[str, str] = {
             k: v for k, v in headers.items() if k.lower() not in dropped

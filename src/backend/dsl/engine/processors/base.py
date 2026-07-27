@@ -137,7 +137,9 @@ class BaseProcessor(ABC):
     @abstractmethod
     async def process(
         self, exchange: Exchange[Any], context: ExecutionContext
-    ) -> None: ...
+    ) -> None:
+        """Метод process (см. signature)."""
+        ...
 
     def to_spec(self) -> dict[str, Any] | None:
         """Возвращает YAML-spec процессора для round-trip сериализации.
@@ -157,6 +159,7 @@ class CallableProcessor(BaseProcessor):
         self._func = func
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         result = self._func(exchange, context)
         if inspect.isawaitable(result):
             await result

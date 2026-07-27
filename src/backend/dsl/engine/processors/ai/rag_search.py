@@ -50,6 +50,7 @@ class RAGSearchProcessor(BaseProcessor):
         self.namespace = namespace
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         from src.backend.services.ai.hybrid_rag import HybridRAGSearch
         search = HybridRAGSearch()
         docs = await search.search(

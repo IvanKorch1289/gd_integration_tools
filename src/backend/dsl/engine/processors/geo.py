@@ -142,6 +142,7 @@ class GeoProcessor(BaseProcessor):
                 raise ValueError(f"Unsupported mode {self._mode!r}")
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         try:
             from src.backend.core.config.features import feature_flags
 
@@ -163,6 +164,7 @@ class GeoProcessor(BaseProcessor):
         self._apply_target(exchange, result)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"mode": self._mode}
         if self._address:
             spec["address"] = self._address

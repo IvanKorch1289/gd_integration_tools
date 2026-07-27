@@ -11,6 +11,7 @@ class ChatClient(BaseAPIClient):
     """Клиент для AI chat endpoint."""
 
     def chat(self, message: str, session_id: str = "default") -> str:
+        """Метод chat (см. signature)."""
         result = self._request(
             "POST",
             "/api/v1/ai/chat",

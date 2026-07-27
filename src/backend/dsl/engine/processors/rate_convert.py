@@ -159,6 +159,7 @@ class RateConvertProcessor(BaseProcessor):
         return float(rate_value) if rate_value is not None else None
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         try:
             from src.backend.core.config.features import feature_flags
 
@@ -190,6 +191,7 @@ class RateConvertProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"from_currency": self._from, "to_currency": self._to}
         if self._amount is not None:
             spec["amount"] = self._amount

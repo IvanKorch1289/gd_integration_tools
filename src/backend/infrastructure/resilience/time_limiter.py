@@ -54,6 +54,7 @@ class TimeLimiter:
         return max(self.min_timeout, min(self.max_timeout, raw))
 
     def record_sample(self, duration: float) -> None:
+        """Метод record_sample (см. signature)."""
         self._samples.append(duration)
 
     async def run(self, coro):

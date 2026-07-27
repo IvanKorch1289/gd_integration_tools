@@ -35,4 +35,6 @@ class BatchCapable(Protocol):
 
     async def process_batch(
         self, exchange: Exchange[list[Any]], context: ExecutionContext
-    ) -> None: ...
+    ) -> None:
+        """Метод process_batch (см. signature)."""
+        ...

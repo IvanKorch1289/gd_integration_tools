@@ -46,10 +46,14 @@ class RequestReplyTimeoutError(asyncio.TimeoutError):
 class RequestReplyTransport(Protocol):
     """Pluggable transport: EventBus / Redis pub/sub / in-memory."""
 
-    async def publish(self, channel: str, envelope: dict[str, Any]) -> None: ...
+    async def publish(self, channel: str, envelope: dict[str, Any]) -> None:
+        """Метод publish (см. signature)."""
+        ...
     async def subscribe(
         self, channel: str, handler: Callable[[dict[str, Any]], Awaitable[None]]
-    ) -> None: ...
+    ) -> None:
+        """Метод subscribe (см. signature)."""
+        ...
 
 
 class InMemoryTransport:

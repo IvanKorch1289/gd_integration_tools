@@ -55,6 +55,7 @@ class LangGraphAgentProcessor(BaseAIProcessor):
         self.max_iterations = max_iterations
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Метод process (см. signature)."""
         # The canonical BaseProcessor gate is async and fail-closed.
         if not await self.auth_check(exchange, action="execute"):
             return

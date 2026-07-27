@@ -80,6 +80,7 @@ class AuthorizationFacade:
 
     @property
     def auth_facade(self) -> Any:
+        """Метод auth_facade (см. signature)."""
         if self._auth_facade is None:
             from src.backend.core.auth.facade import get_auth_facade
 

@@ -59,6 +59,7 @@ class AIServiceSpec:
     signature_repr: str
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "name": self.name,
             "model": self.model,

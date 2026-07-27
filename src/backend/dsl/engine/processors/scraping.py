@@ -138,6 +138,7 @@ class ScrapeProcessor(BaseProcessor):
         self._output_property = output_property
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {}
         if self._url is not None:
             spec["url"] = self._url
@@ -239,6 +240,7 @@ class PaginateProcessor(BaseProcessor):
         self._output_property = output_property
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {}
         if self._next_selector != "a.next":
             spec["next_selector"] = self._next_selector
@@ -383,6 +385,7 @@ class ApiProxyProcessor(BaseProcessor):
         self._timeout = timeout
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         spec: dict[str, Any] = {"base_url": self._base_url}
         if self._method != "GET":
             spec["method"] = self._method

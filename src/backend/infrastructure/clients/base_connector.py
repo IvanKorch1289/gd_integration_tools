@@ -53,18 +53,21 @@ class HealthResult:
 
     @classmethod
     def ok(cls, *, latency_ms: float, mode: HealthMode, **details: Any) -> HealthResult:
+        """Метод ok (см. signature)."""
         return cls(status="ok", latency_ms=latency_ms, mode=mode, details=dict(details))
 
     @classmethod
     def failed(
         cls, *, error: str, mode: HealthMode, latency_ms: float = 0.0
     ) -> HealthResult:
+        """Метод failed (см. signature)."""
         return cls(status="failed", latency_ms=latency_ms, mode=mode, error=error)
 
     @classmethod
     def degraded(
         cls, *, error: str, mode: HealthMode, latency_ms: float, **details: Any
     ) -> HealthResult:
+        """Метод degraded (см. signature)."""
         return cls(
             status="degraded",
             latency_ms=latency_ms,

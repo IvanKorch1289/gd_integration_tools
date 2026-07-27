@@ -159,6 +159,7 @@ class EventBusPublishProcessor:
         exchange.set_property("_eventbus_published", published)
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "eventbus_publish": {"topic": self.topic, "payload_ref": self.payload_ref}
         }
@@ -232,6 +233,7 @@ class EventBusSubscribeProcessor:
             )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Метод to_spec (см. signature)."""
         return {
             "eventbus_subscribe": {
                 "topic_pattern": self.topic_pattern,

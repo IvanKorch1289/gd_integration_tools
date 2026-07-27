@@ -177,10 +177,12 @@ class DocsIndexer:
 
     @property
     def collection_name(self) -> str:
+        """Метод collection_name (см. signature)."""
         return self._collection_name
 
     @property
     def is_fallback(self) -> bool:
+        """Метод is_fallback (см. signature)."""
         return self._fallback
 
     def set_embedder(self, embed_fn: Any) -> None:

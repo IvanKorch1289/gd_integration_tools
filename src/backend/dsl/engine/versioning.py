@@ -39,6 +39,7 @@ class PipelineSnapshot:
     api_version: str = "v2"
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "route_id": self.route_id,
             "version": self.version,

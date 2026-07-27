@@ -68,6 +68,7 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
     async def process(
         self, exchange: "Exchange[Any]", context: "ExecutionContext"
     ) -> None:
+        """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="read"):
             return
         """Async-safe сканирование директории с фильтрами, cap и timeout.

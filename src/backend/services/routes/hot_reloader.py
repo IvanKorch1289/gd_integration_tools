@@ -95,6 +95,7 @@ class RouteHotReloader:
 
     @property
     def enabled(self) -> bool:
+        """Метод enabled (см. signature)."""
         return self._enabled
 
     async def start(self) -> None:

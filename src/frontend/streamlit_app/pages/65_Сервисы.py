@@ -23,6 +23,7 @@ client = get_api_client()
 
 
 class ServiceStatus(Enum):
+    """Метод ServiceStatus (см. signature)."""
     UP = "up"
     DOWN = "down"
     UNKNOWN = "unknown"
@@ -30,6 +31,7 @@ class ServiceStatus(Enum):
 
 @dataclass
 class ServiceInfo:
+    """Метод ServiceInfo (см. signature)."""
     name: str
     url: str | None
     status: ServiceStatus = ServiceStatus.UNKNOWN

@@ -25,6 +25,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Метод upgrade (см. signature)."""
     bind = op.get_bind()
     if bind.dialect.name == "postgresql":
         op.execute(
@@ -34,6 +35,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Метод downgrade (см. signature)."""
     # PostgreSQL не поддерживает DROP VALUE для enum-типов;
     # downgrade сознательно no-op (значение остаётся допустимым).
     pass

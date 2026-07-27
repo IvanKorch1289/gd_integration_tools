@@ -36,6 +36,7 @@ class RLMSignal:
     reindex_hinted: bool
 
     def to_dict(self) -> dict[str, Any]:
+        """Метод to_dict (см. signature)."""
         return {
             "doc_id": self.doc_id,
             "label": self.label,

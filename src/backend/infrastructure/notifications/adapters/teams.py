@@ -45,6 +45,7 @@ class TeamsAdapter:
     async def send(
         self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
     ) -> None:
+        """Метод send (см. signature)."""
         url = self._webhook_url_provider()
         if not url:
             raise RuntimeError("Teams webhook URL missing")
@@ -68,6 +69,7 @@ class TeamsAdapter:
             )
 
     async def health(self, mode: str = "fast") -> HealthResult:
+        """Метод health (см. signature)."""
         import time
 
         start = time.perf_counter()
