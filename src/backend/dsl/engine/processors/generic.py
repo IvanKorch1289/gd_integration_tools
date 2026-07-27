@@ -105,6 +105,7 @@ class BulkheadProcessor(BaseProcessor):
         return sem
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: BulkheadProcessor processor."""
         sem = self._get_semaphore()
         if not self.wait and sem.locked():
             raise RuntimeError(f"Bulkhead '{self.bulkhead_name}' исчерпан")
@@ -135,6 +136,7 @@ class LineageTrackerProcessor(BaseProcessor):
         self.tag = tag
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: LineageTrackerProcessor processor."""
         lineage: list[dict[str, Any]] = exchange.get_property("_lineage", [])
         lineage.append(
             {
@@ -160,6 +162,7 @@ class SseSourceProcessor(BaseProcessor):
         self.event_types = event_types or []
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: SseSourceProcessor processor."""
         exchange.set_property("sse_url", self.url)
         exchange.set_property("sse_event_types", self.event_types)
         exchange.set_property("dispatch_action", "sse.consume")
@@ -184,6 +187,7 @@ class SchemaValidateProcessor(BaseProcessor):
             self._strict = False
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: SchemaValidateProcessor processor."""
         body = exchange.in_message.body
         if self._strict:
             import jsonschema
@@ -229,6 +233,7 @@ class AbTestRouterProcessor(BaseProcessor):
         )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: AbTestRouterProcessor processor."""
         key = self._key_fn(exchange)
         bucket = (
             int(hashlib.sha1(key.encode(), usedforsecurity=False).hexdigest(), 16) % 100
@@ -258,6 +263,7 @@ class FeatureFlagGuardProcessor(BaseProcessor):
         self._resolver = resolver
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: FeatureFlagGuardProcessor processor."""
         enabled = False
         if self._resolver:
             try:
