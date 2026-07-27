@@ -73,6 +73,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         )
 
     async def list_models(self) -> list[ModelRecord]:
+        """Список всех registered models в MLflow registry."""
         client = self._ensure_client()
         loop = asyncio.get_running_loop()
         models = await loop.run_in_executor(
@@ -88,6 +89,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
     async def get_model(
         self, name: str, *, version: str | None = None, stage: str | None = None
     ) -> ModelRecord | None:
+        """Получить model по ``name`` (+ optional version/stage)."""
         client = self._ensure_client()
         loop = asyncio.get_running_loop()
 
@@ -105,6 +107,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
         return self._mlflow_to_record(versions[0]) if versions else None
 
     async def register_model(self, record: ModelRecord) -> ModelRecord:
+        """Зарегистрировать новую model version в MLflow registry."""
         client = self._ensure_client()
         loop = asyncio.get_running_loop()
 
@@ -139,6 +142,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
     async def transition_stage(
         self, name: str, version: str, new_stage: str
     ) -> ModelRecord:
+        """Перевести model в новый stage (Staging/Production/Archived)."""
         client = self._ensure_client()
         loop = asyncio.get_running_loop()
         mv = await loop.run_in_executor(
