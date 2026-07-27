@@ -541,6 +541,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
         def customize_request_parameters(
             self, model_request_parameters: _ModelRequestParameters
         ) -> _ModelRequestParameters:
+            """Добавить provider-specific параметры в request (override)."""
             return model_request_parameters
 
         def prepare_request(
@@ -548,11 +549,13 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             model_settings: _ModelSettings | None,
             model_request_parameters: _ModelRequestParameters,
         ) -> tuple[_ModelSettings | None, _ModelRequestParameters]:
+            """Подготовить финальные settings + parameters для API call."""
             return (model_settings, model_request_parameters)
 
         def prepare_messages(
             self, messages: list[_ModelMessage]
         ) -> list[_ModelMessage]:
+            """Преобразовать pydantic-ai messages → wire-format."""
             return messages
 
         async def count_tokens(
@@ -561,6 +564,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             model_settings: _ModelSettings | None,
             model_request_parameters: _ModelRequestParameters,
         ) -> _RequestUsage:
+            """Подсчитать токены в messages (для cost-cap / budget tracking)."""
             # Approximate: 1 token per 4 chars
             total = 0
             for msg in messages:
@@ -584,6 +588,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             *,
             instructions: str | None = None,
         ) -> _ModelResponse | None:
+            """Optional context compaction (если модель поддерживает)."""
             return None  # No-op: no compact logic
 
         @property
