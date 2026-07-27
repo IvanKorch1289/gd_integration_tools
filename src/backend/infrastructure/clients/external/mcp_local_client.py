@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any
 
+from src.backend.core.config.security import secure_settings
 from src.backend.core.logging import get_logger
 
-__all__ = ("LocalMCPClient",)
+__all__ = ("LocalMCPClient", "McpSecurityError")
 
 logger = get_logger(__name__)
+
+
+class McpSecurityError(PermissionError):
+    """Raised when MCP stdio command is not in the configured allowlist."""
 
 
 class LocalMCPClient:
@@ -19,7 +25,24 @@ class LocalMCPClient:
         self._transport: Any = None
 
     async def connect_stdio(self, command: list[str]) -> None:
-        """Подключение через stdio (subprocess)."""
+        """Подключение через stdio (subprocess).
+
+        S204 retro-audit C-NEW-7: ``command[0]`` валидируется против
+        ``secure_settings.mcp_stdio_allowed_commands``. Пустой allowlist =
+        deny all (fail-closed). Логируется hash команды, а не args.
+        """
+        if not command or not command[0]:
+            raise McpSecurityError("MCP stdio: empty command")
+        allowed = set(secure_settings.mcp_stdio_allowed_commands)
+        if command[0] not in allowed:
+            logger.warning(
+                "MCP stdio rejected: command not in allowlist (hash=%s)",
+                hashlib.sha256(command[0].encode()).hexdigest()[:16],
+            )
+            raise McpSecurityError(
+                "MCP stdio command not allowed (configure secure.mcp_stdio_allowed_commands)"
+            )
+
         from mcp import ClientSession, StdioServerParameters
         from mcp.client.stdio import stdio_client
 
@@ -29,7 +52,12 @@ class LocalMCPClient:
         self._session = ClientSession(read, write)
         await self._session.__aenter__()
         await self._session.initialize()
-        logger.info("MCP stdio connected: %s", " ".join(command))
+        # Логируем hash команды, не сами args — args могут содержать секреты.
+        logger.info(
+            "MCP stdio connected: command_hash=%s, argc=%d",
+            hashlib.sha256(command[0].encode()).hexdigest()[:16],
+            len(command),
+        )
 
     async def connect_sse(self, url: str) -> None:
         """Подключение через SSE (HTTP, внутренняя сеть)."""

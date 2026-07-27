@@ -70,9 +70,10 @@ class NotebookParameterError(HubRunError):
 class JupyterHubNotEnabledError(HubRunError):
     """feature_flags.jupyter_hub_enabled = False."""
 
-    def __init__(self) -> None:
+    def __init__(self, message: str | None = None) -> None:
         super().__init__(
-            "JupyterHub integration disabled "
+            message
+            or "JupyterHub integration disabled "
             "(feature_flags.jupyter_hub_enabled=False)"
         )
 
@@ -150,7 +151,7 @@ async def run_hub_notebook(
 
         if not bool(getattr(feature_flags, "jupyter_hub_enabled", False)):
             raise JupyterHubNotEnabledError()
-    except (ImportError, AttributeError):
+    except ImportError, AttributeError:
         raise JupyterHubNotEnabledError() from None
 
     # 2. Resolve notebook spec — три источника в порядке приоритета:
@@ -167,7 +168,39 @@ async def run_hub_notebook(
         # Явный путь — без обращения к реестру
         actual_path = notebook_path_override
     elif notebook_content is not None:
-        # Inline notebook (multipart upload, base64 в SOAP/GraphQL).
+        # S204 retro-audit C-NEW-2: inline notebook (multipart upload, base64 в
+        # SOAP/GraphQL) — выполняет произвольный Python в Hub kernel. Требуем
+        # явного admin-opt-in через secure_settings.jupyter_inline_content_enabled.
+        # Default False = deny (fail-closed). Registry-based notebooks остаются
+        # доступны — они проходят ревью при регистрации в NotebookRegistry.
+        from src.backend.core.config.security import secure_settings
+
+        if not secure_settings.jupyter_inline_content_enabled:
+            _logger.warning(
+                "jupyter inline notebook rejected: feature disabled "
+                "(notebook_name=%s, user=%s)",
+                notebook_name,
+                user_name,
+            )
+            raise JupyterHubNotEnabledError(
+                "Inline notebook content disabled (secure.jupyter_inline_content_enabled=False). "
+                "Use registry-based notebook or ask admin to enable."
+            )
+
+        # Audit-event: inline notebook use (даже при enabled — для traceability).
+        try:
+            from src.backend.core.audit.facade import emit_audit_safe
+
+            await emit_audit_safe(
+                action="jupyter.hub.run.inline",
+                resource=notebook_name,
+                principal=user_name,
+                detail={"content_size": len(notebook_content)},
+            )
+        except Exception:
+            # Audit emission — best-effort, не блокируем notebook-run.
+            _logger.debug("audit emit failed for jupyter.hub.run.inline", exc_info=True)
+
         # Сохраняем во временный файл и передаём как path.
         # M7.2: помечаем ``is_temp_file=True`` для post-execute cleanup
         # (раньше temp файл оставался в /tmp → утечка диска).
@@ -209,9 +242,7 @@ async def run_hub_notebook(
             timeout_seconds=timeout,
         )
     except _JupyterExecutionError as exc:
-        _logger.error(
-            "Hub run failed: notebook=%s err=%s", notebook_name, exc
-        )
+        _logger.error("Hub run failed: notebook=%s err=%s", notebook_name, exc)
         raise
     finally:
         # M7.2: best-effort cleanup inline temp файла (защита от /tmp
@@ -228,9 +259,7 @@ async def run_hub_notebook(
                 )
 
     outputs = result.get("outputs", [])
-    cells_executed = sum(
-        1 for o in outputs if isinstance(o, dict) and o.get("outputs")
-    )
+    cells_executed = sum(1 for o in outputs if isinstance(o, dict) and o.get("outputs"))
     errors = _collect_errors(outputs)
 
     duration = time.monotonic() - start
@@ -269,9 +298,7 @@ def _collect_errors(outputs: list[dict[str, Any]]) -> list[str]:
 
 
 async def _save_inline_notebook(
-    notebook_name: str,
-    content: bytes | str,
-    output_path: str | None = None,
+    notebook_name: str, content: bytes | str, output_path: str | None = None
 ) -> str:
     """Сохранить inline notebook (.ipynb) во временный файл и вернуть путь.
 
@@ -313,7 +340,9 @@ async def _save_inline_notebook(
     else:
         # Создаём temp файл в /tmp или $JUPYTER_TMPDIR
         tmpdir = os.environ.get("JUPYTER_TMPDIR", tempfile.gettempdir())
-        safe_name = "".join(c if c.isalnum() or c in "-_." else "_" for c in notebook_name)
+        safe_name = "".join(
+            c if c.isalnum() or c in "-_." else "_" for c in notebook_name
+        )
         if not safe_name.endswith(".ipynb"):
             safe_name = f"{safe_name}.ipynb"
         target = os.path.join(tmpdir, f"hub_inline_{safe_name}")
@@ -340,7 +369,9 @@ def _build_execution_service() -> NotebookExecutionService:
 
         return get_notebook_execution_service_provider()
     except ImportError as exc:
-        raise HubRunError(f"NotebookExecutionService provider not available: {exc}") from exc
+        raise HubRunError(
+            f"NotebookExecutionService provider not available: {exc}"
+        ) from exc
 
 
 __all__ = (

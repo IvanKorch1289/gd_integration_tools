@@ -17,6 +17,7 @@ Wave Sprint 0 (V16, ClickHouse pool hotfix):
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from typing import Any
 
@@ -24,14 +25,20 @@ from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_resilience import resilient
 
-__all__ = (
-    "ClickHouseClient",
-    "MAX_INSERT_ROWS",
-    "get_clickhouse_client",
-)
+__all__ = ("ClickHouseClient", "MAX_INSERT_ROWS", "get_clickhouse_client")
 
 # Hard request-level safety cap; chunk size remains configurable separately.
 MAX_INSERT_ROWS = 100_000
+
+# S204 retro-audit C-NEW-9: SQL-identifier allowlist для ``aggregate()``.
+# Разрешаем только ``[A-Za-z_][A-Za-z0-9_]*`` (опционально с точкой для
+# ``db.table`` / ``table.column``). Любой иной символ → ValueError.
+# Защищает от f-string injection: ранее ``table``/``column``/``agg_func``
+# подставлялись в SQL raw без валидации.
+_IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
+_ALLOWED_AGG = frozenset(
+    {"count", "sum", "avg", "min", "max", "uniq", "uniqExact", "median", "quantile"}
+)
 
 logger = get_logger(__name__)
 
@@ -218,11 +225,7 @@ class ClickHouseClient:
         return [orjson.loads(line) for line in raw.strip().split("\n") if line.strip()]
 
     async def insert(
-        self,
-        table: str,
-        rows: list[dict[str, Any]],
-        *,
-        batch_size: int | None = None,
+        self, table: str, rows: list[dict[str, Any]], *, batch_size: int | None = None
     ) -> int:
         """Batch INSERT with a configurable chunk size and hard row cap."""
         import orjson
@@ -243,9 +246,7 @@ class ClickHouseClient:
 
         for i in range(0, len(rows), chunk_size):
             chunk = rows[i : i + chunk_size]
-            data = "\n".join(
-                orjson.dumps(row, default=str).decode() for row in chunk
-            )
+            data = "\n".join(orjson.dumps(row, default=str).decode() for row in chunk)
             response = await client.post(
                 "/",
                 params={
@@ -269,7 +270,24 @@ class ClickHouseClient:
         group_by: str | None = None,
         where: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Агрегация — count, sum, avg, min, max."""
+        """Агрегация — count, sum, avg, min, max.
+
+        S204 retro-audit C-NEW-9: ``table``/``column``/``group_by`` —
+        SQL-identifiers, валидируются через ``_IDENT_RE``. ``agg_func``
+        выбирается из frozen allowlist. ``where`` передаётся как raw SQL
+        (caller responsibility — для bound params используйте ``query()``).
+        """
+        if not _IDENT_RE.match(table):
+            raise ValueError(f"aggregate: invalid table identifier: {table!r}")
+        if agg_func not in _ALLOWED_AGG:
+            raise ValueError(
+                f"aggregate: agg_func must be one of {sorted(_ALLOWED_AGG)}, got {agg_func!r}"
+            )
+        if not _IDENT_RE.match(column):
+            raise ValueError(f"aggregate: invalid column identifier: {column!r}")
+        if group_by is not None and not _IDENT_RE.match(group_by):
+            raise ValueError(f"aggregate: invalid group_by identifier: {group_by!r}")
+
         parts = [f"SELECT {agg_func}({column}) as value"]
         if group_by:
             parts[0] = f"SELECT {group_by}, {agg_func}({column}) as value"
@@ -315,15 +333,14 @@ class ClickHouseClient:
             client = await self._ensure_client()
             response = await client.get("/ping")
             return response.status_code == 200
-        except (ConnectionError, TimeoutError, OSError):
+        except ConnectionError, TimeoutError, OSError:
             return False
-
-
 
     async def health_check(self, *, mode: str = "fast") -> dict[str, Any]:
         """Health probe для HealthAggregator (Sprint 170 M2 Phase 1)."""
         try:
             import time
+
             start = time.monotonic()
             ping = getattr(self, "ping", None)
             if ping is None:
@@ -336,6 +353,8 @@ class ClickHouseClient:
             }
         except Exception as exc:
             return {"status": "down", "error": str(exc)}
+
+
 def _create_clickhouse_client() -> ClickHouseClient:
     """Lazy-фабрика singleton-клиента из ``ClickHouseSettings``."""
     from src.backend.core.config.clickhouse import clickhouse_settings

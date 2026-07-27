@@ -178,6 +178,34 @@ class SecureSettings(BaseSettingsWithLoader):
         examples=[{"/webhooks/stripe": "whsec_xxx"}],
     )
 
+    # S204 retro-audit C-NEW-7: allowlist для MCP stdio-серверов.
+    # ``LocalMCPClient.connect_stdio`` запускает subprocess по ``command[0]`` —
+    # без allowlist это RCE-поверхность. Список содержит абсолютные пути или
+    # имена в PATH. Пустой список = deny all (безопасный default).
+    mcp_stdio_allowed_commands: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Allowlist исполняемых файлов для LocalMCPClient.connect_stdio. "
+            "Пустой список запрещает любые stdio-MCP-серверы (fail-closed)."
+        ),
+        examples=["/usr/local/bin/mcp-filesystem", "/opt/mcp/servers/git-server"],
+    )
+
+    # S204 retro-audit C-NEW-2: inline notebook-content — RCE-поверхность
+    # (произвольный Python в JupyterHub kernel). Default False = deny;
+    # admin явным образом включает только если доверяет всем callers с
+    # capability ``jupyter.hub.run``. Registry-based notebooks остаются
+    # доступными (они проходят ревью при регистрации).
+    jupyter_inline_content_enabled: bool = Field(
+        default=False,
+        description=(
+            "Разрешить передачу .ipynb содержимого inline "
+            "(notebook_content / notebook_content_b64). Default False — "
+            "только registry-based notebooks. Включать только после "
+            "явной оценки RCE-риска для всех callers."
+        ),
+    )
+
 
 secure_settings = SecureSettings()
 """Глобальные настройки безопасности"""

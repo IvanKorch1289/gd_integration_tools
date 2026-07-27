@@ -14,6 +14,7 @@ PostgreSQL/MySQL/DB2 через ``DatabaseSessionManager``.
 
 from __future__ import annotations
 
+import re
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from typing import Any, cast
@@ -49,10 +50,7 @@ _FORBIDDEN_DDL_STATEMENTS: frozenset[str] = frozenset(
         "truncate",
     }
 )
-_FORBIDDEN_DML_PREFIXES: tuple[str, ...] = (
-    "delete from ",
-    "update ",
-)
+_FORBIDDEN_DML_PREFIXES: tuple[str, ...] = ("delete from ", "update ")
 
 
 def _validate_select_sql(sql: str) -> None:
@@ -90,14 +88,12 @@ def _validate_select_sql(sql: str) -> None:
     # Single-statement guard.
     if ";" in body.rstrip(";"):
         raise SqlValidationError(
-            "query() accepts a single statement only; "
-            "multi-statement SQL is rejected"
+            "query() accepts a single statement only; multi-statement SQL is rejected"
         )
     head = body[:32].lstrip("(\n\t ").lower()
     if not (head.startswith("select") or head.startswith("with")):
         raise SqlValidationError(
-            "query() requires a SELECT or WITH statement; "
-            f"got prefix {head[:16]!r}"
+            f"query() requires a SELECT or WITH statement; got prefix {head[:16]!r}"
         )
 
 
@@ -131,8 +127,7 @@ def _validate_write_sql(sql: str) -> None:
     body_no_trailing = body.rstrip().rstrip(";")
     if ";" in body_no_trailing:
         raise SqlValidationError(
-            "execute() accepts a single statement only; "
-            "multi-statement SQL is rejected"
+            "execute() accepts a single statement only; multi-statement SQL is rejected"
         )
     for forbidden in _FORBIDDEN_DDL_STATEMENTS:
         if forbidden in body_no_trailing:
@@ -141,9 +136,7 @@ def _validate_write_sql(sql: str) -> None:
             )
     for prefix in _FORBIDDEN_DML_PREFIXES:
         if body_no_trailing.startswith(prefix) and " where " not in body_no_trailing:
-            raise SqlValidationError(
-                f"execute() forbids DML without WHERE: {prefix!r}"
-            )
+            raise SqlValidationError(f"execute() forbids DML without WHERE: {prefix!r}")
 
 
 class SqlValidationError(ValueError):
@@ -154,6 +147,13 @@ class SqlValidationError(ValueError):
     capability gate does not cover (mirrors
     :mod:`src.backend.core.ai.security.agent_security` blocklist).
     """
+
+
+# S204 retro-audit C-NEW-8: identifier allowlist для stored-procedure path.
+# ``[A-Za-z_][A-Za-z0-9_]*`` — покрывает PG/MSSQL/Oracle/MySQL/DB2 conventions;
+# для exotic identifiers caller должен использовать ``query()``/``execute()``
+# с raw SQL и capabilities уровня ``db.admin``.
+_PROC_IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
 
 _logger = get_logger("services.io.external_database.facade")
 
@@ -368,12 +368,28 @@ class ExternalDatabaseFacade:
 def _build_procedure_sql(
     name: str, params: dict[str, Any], *, schema: str, dialect: str
 ) -> str:
-    """Строит SQL вызова хранимой процедуры с bind-параметрами ``:name``."""
-    binds = ", ".join(f":{key}" for key in params) if params else ""
+    """Строит SQL вызова хранимой процедуры с bind-параметрами ``:name``.
+
+    S204 retro-audit C-NEW-8: ``schema``/``name`` — SQL-identifiers, не могут
+    быть bind-params, поэтому валидируются regex-allowlist'ом. Bind-key'и
+    (``params`` dict keys) также валидируются как identifiers. Это закрывает
+    injection-поверхность, выявленную в аудите: ранее f-string подставлял
+    ``schema.name`` raw, и ``call_procedure`` пропускал ``_validate_*_sql``.
+    """
+    if not _PROC_IDENT_RE.match(name):
+        raise SqlValidationError(f"invalid procedure name: {name!r}")
+    if not _PROC_IDENT_RE.match(schema):
+        raise SqlValidationError(f"invalid schema identifier: {schema!r}")
+    binds_keys = list(params.keys()) if params else []
+    for key in binds_keys:
+        if not _PROC_IDENT_RE.match(str(key)):
+            raise SqlValidationError(f"invalid bind parameter name: {key!r}")
+
+    binds = ", ".join(f":{key}" for key in binds_keys) if binds_keys else ""
     full_name = f"{schema}.{name}"
     match dialect:
         case "mssql":
-            return f"EXEC {full_name} {binds}"
+            return f"EXEC {full_name} {binds}".rstrip()
         case "oracle":
             return f"BEGIN {full_name}({binds}); END;"
         case _:

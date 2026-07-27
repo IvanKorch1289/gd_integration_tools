@@ -53,8 +53,19 @@ class PolicyMixin:
         """
         try:
             from src.backend.core.config.ai_stack import ai_agent_settings
-        except Exception as _:
-            return None
+        except Exception as exc:
+            # S204 retro-audit C-NEW-17: docstring обещает fail-closed
+            # «Никогда allow-on-error», но раньше здесь возвращался ``None``
+            # (= allow) при ImportError модуля настроек. Это позволяло LLM-call
+            # когда policy-config недоступен. Возвращаем deny-envelope.
+            logger.warning("ai_policy_gate_config_unavailable: %s", exc)
+            return self._policy_gate_deny(
+                principal=str(
+                    tenant_id or (metadata or {}).get("tenant_id") or "anonymous"
+                ),
+                reason="ai.llm.policy.gate.unavailable",
+                detail=f"ai_agent_settings import failed: {type(exc).__name__}: {exc}",
+            )
         if not ai_agent_settings.policy_gate_enabled:
             return None
 

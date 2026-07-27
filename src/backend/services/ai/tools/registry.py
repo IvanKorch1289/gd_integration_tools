@@ -289,20 +289,28 @@ class ToolRegistry:
         methods: builtins.list[str] | None = None,
         prefix: str | None = None,
         policy: dict[str, Any] | None = None,
+        *,
+        explicit_only: bool = True,
     ) -> builtins.list[AgentTool]:
         """Регистрирует публичные методы сервиса как AI-инструменты.
 
-        Принимает класс или экземпляр. Для класса инстанцирует его
-        через фабрику-заглушку, если требуется вызов (``callable``
-        инструмента использует bound-метод экземпляра).
+        S204 retro-audit C-NEW-1 (ToolRegistry auto-expose): раньше вызов с
+        ``methods=None`` автоматически экспонировал ВСЕ публичные методы как
+        AI-tools (любой новый метод становился tool). Теперь default
+        ``explicit_only=True`` требует ``@agent_tool`` decorator на методе.
+        Legacy-режим (auto-expose all) доступен через ``explicit_only=False``
+        и должен использоваться только в защищённых dev-сценариях.
 
         Args:
             service_cls: Класс сервиса либо готовый экземпляр.
-            methods: Список имён методов; ``None`` — все публичные.
+            methods: Список имён методов; ``None`` — все подходящие
+                (decorated при ``explicit_only=True``, иначе все публичные).
             prefix: Префикс ``id`` инструмента; ``None`` —
                 snake_case имени класса.
             policy: Политика доступа (агентам/ролям). Сохраняется
                 в ``metadata.policy``.
+            explicit_only: ``True`` (default) — регистрировать только методы,
+                помеченные ``@agent_tool``. ``False`` — все публичные (legacy).
 
         Returns:
             Список зарегистрированных ``AgentTool``.
@@ -315,11 +323,25 @@ class ToolRegistry:
         instance = service_cls if not inspect.isclass(service_cls) else service_cls()
         cls = instance.__class__
         prefix = prefix or _snake_case(cls.__name__)
-        selected = methods or [
-            name
-            for name, attr in inspect.getmembers(cls)
-            if _is_public_method(name, attr)
-        ]
+        if methods is None:
+            if explicit_only:
+                # Opt-in: только методы с @agent_tool decorator.
+                selected = [
+                    name
+                    for name, attr in inspect.getmembers(cls)
+                    if _is_public_method(name, attr) and hasattr(attr, _AGENT_TOOL_FLAG)
+                ]
+            else:
+                # Legacy: все публичные методы (auto-expose). Использовать
+                # только в защищённых dev-сценариях — любой новый метод
+                # авто-становится AI-tool.
+                selected = [
+                    name
+                    for name, attr in inspect.getmembers(cls)
+                    if _is_public_method(name, attr)
+                ]
+        else:
+            selected = list(methods)
         registered: list[AgentTool] = []
         for method_name in selected:
             raw = getattr(cls, method_name, None)
