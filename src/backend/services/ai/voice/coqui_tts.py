@@ -52,6 +52,7 @@ class TTSResult:
     sample_rate: int = 0
 
     def to_dict(self) -> dict[str, Any]:
+        """Вернуть dict-представление TTS config (для JSON response)."""
         return {
             "output_path": str(self.output_path),
             "language": self.language,
@@ -102,10 +103,12 @@ class CoquiTTSService:
 
     @property
     def model_name(self) -> str:
+        """Вернуть имя Coqui model (tts_models/en/ljspeech/tacotron2-DDC и т.п.)."""
         return self._model_name
 
     @property
     def provider(self) -> str:
+        """Вернуть provider name (для multi-provider routing)."""
         return self._provider
 
     @property
