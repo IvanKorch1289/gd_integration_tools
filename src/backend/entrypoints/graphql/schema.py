@@ -34,10 +34,13 @@ from datetime import datetime
 from typing import Any
 
 import strawberry
+from fastapi import Depends
 from strawberry.fastapi import GraphQLRouter
 from strawberry.scalars import JSON  # noqa: F401  # re-exported below
 from strawberry.types import Info
 
+from src.backend.core.auth import AuthMethod
+from src.backend.core.auth.auth_selector import require_auth
 from src.backend.core.logging import get_logger
 from src.backend.dsl.commands.registry import action_handler_registry
 from src.backend.dsl.engine.tracer import get_tracer
@@ -598,4 +601,13 @@ async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
 
 schema.execute = _execute_with_timeout  # type: ignore[method-assign]
 
-graphql_router = GraphQLRouter(schema, path="/graphql")
+# S204 retro-audit C-NEW-5: GraphQL был смонтирован без auth — mutations
+# ``executeAction``/``dsl_execute`` доступны любому неаутентифицированному
+# клиенту. Добавляем обязательную auth-проверку (API_KEY + JWT + mTLS).
+graphql_router = GraphQLRouter(
+    schema,
+    path="/graphql",
+    dependencies=[
+        Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.MTLS]))
+    ],
+)

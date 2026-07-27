@@ -25,6 +25,7 @@ class DataStoreSetProcessor(BaseProcessor):
         self._value = value
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: store data в backing store."""
         store: dict[str, Any] = exchange.properties.setdefault(_DATA_STORE_KEY, {})
         store[self._key] = self._value
         exchange.set_out(
@@ -32,6 +33,7 @@ class DataStoreSetProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {"data_store_set": {"key": self._key, "value": self._value}}
 
 
@@ -52,6 +54,7 @@ class DataStoreGetProcessor(BaseProcessor):
         self._result_property = result_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: store data в backing store."""
         store: dict[str, Any] = exchange.properties.get(_DATA_STORE_KEY, {})
         result = store.get(self._key, self._default)
         exchange.set_property(self._result_property, result)
@@ -60,6 +63,7 @@ class DataStoreGetProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {
             "data_store_get": {
                 "key": self._key,
@@ -77,6 +81,7 @@ class DataStoreDeleteProcessor(BaseProcessor):
         self._key = key
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: store data в backing store."""
         store: dict[str, Any] = exchange.properties.get(_DATA_STORE_KEY, {})
         store.pop(self._key, None)
         exchange.set_out(
@@ -84,4 +89,5 @@ class DataStoreDeleteProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {"data_store_delete": {"key": self._key}}

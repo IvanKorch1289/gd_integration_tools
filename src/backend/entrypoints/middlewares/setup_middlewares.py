@@ -212,12 +212,11 @@ def build_default_registry() -> MiddlewareRegistry:
         WebSocketRateLimitMiddleware,
     )
 
-    registry.register_builtin(
-        "ws_rate_limit",
-        WebSocketRateLimitMiddleware,
-        order=660,
-    )
+    registry.register_builtin("ws_rate_limit", WebSocketRateLimitMiddleware, order=660)
     # S183: Webhook signature verification (Layer 3, before auth).
+    # V9 hotfix (S204 retro-audit C-NEW-3): пробрасываем secrets из settings —
+    # раньше регистрация без kwargs оставляла self._secrets={}, что позволяло
+    # каждому inbound-webhook проходить без проверки подписи.
     from src.backend.entrypoints.middlewares.webhook_signature import (
         WebhookSignatureMiddleware,
     )
@@ -225,6 +224,7 @@ def build_default_registry() -> MiddlewareRegistry:
     registry.register_builtin(
         "webhook_signature",
         WebhookSignatureMiddleware,
+        {"secrets_by_prefix": settings.secure.webhook_signature_secrets},
         order=680,
     )
     # S183: PII masking in response (Layer 3, after auth).
@@ -233,19 +233,13 @@ def build_default_registry() -> MiddlewareRegistry:
     )
 
     registry.register_builtin(
-        "pii_masking_response",
-        PIIMaskingResponseMiddleware,
-        order=700,
+        "pii_masking_response", PIIMaskingResponseMiddleware, order=700
     )
     # S183: RPA policy deny-by-default (Layer 3, after auth).
     # Per Master Prompt §3.3: обязателен для банковской шины.
     from src.backend.entrypoints.middlewares.rpa_policy import RpaPolicyMiddleware
 
-    registry.register_builtin(
-        "rpa_policy",
-        RpaPolicyMiddleware,
-        order=720,
-    )
+    registry.register_builtin("rpa_policy", RpaPolicyMiddleware, order=720)
     # S184: CSRF protection для cookie-based auth (Layer 3, after auth).
     # Double-Submit Cookie pattern для state-changing methods.
     from src.backend.entrypoints.middlewares.csrf import CSRFMiddleware

@@ -257,7 +257,10 @@ _ADMIN_GUARD_OPERATOR = Depends(
     require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
 )
 
-router = APIRouter(tags=["DSL · Routes Store"])
+# S204 retro-audit C-NEW-6: раньше ``_ADMIN_GUARD_OPERATOR`` определялся,
+# но никогда не прикреплялся к ``APIRouter`` — любой аутентифицированный
+# мог мутировать YAML-роуты. Подключаем guard как router-level dependency.
+router = APIRouter(tags=["DSL · Routes Store"], dependencies=[_ADMIN_GUARD_OPERATOR])
 builder = ActionRouterBuilder(router)
 
 common_tags = ("DSL · Routes Store",)

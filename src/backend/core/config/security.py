@@ -72,8 +72,7 @@ class SecureSettings(BaseSettingsWithLoader):
         le=600,
         description="Допустимое отклонение exp/nbf в секундах.",
     )
-    jwt_blacklist_enabled: bool = Field(
-        default=False,     )
+    jwt_blacklist_enabled: bool = Field(default=False)
 
     # API-безопасность
     api_key: str = Field(
@@ -165,6 +164,18 @@ class SecureSettings(BaseSettingsWithLoader):
         ...,
         description="Временное окно для ограничения запросов (секунды)",
         examples=[60, 300],
+    )
+
+    # V9 (S183 W4): HMAC-секреты для входящих webhooks. Ключ — prefix пути
+    # (например "/webhooks/stripe"), значение — shared secret отправителя.
+    # Пустой dict отключает WebhookSignatureMiddleware в prod (безопасный default).
+    webhook_signature_secrets: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Маппинг prefix пути → HMAC-секрет для WebhookSignatureMiddleware. "
+            "Пустой словарь — middleware не проверяет подпись (только для dev)."
+        ),
+        examples=[{"/webhooks/stripe": "whsec_xxx"}],
     )
 
 

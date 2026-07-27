@@ -232,9 +232,24 @@ def auto_register_strawberry_schema(
         return result
 
     try:
+        from fastapi import Depends
         from strawberry.fastapi import GraphQLRouter
 
-        router = GraphQLRouter(result.schema, path=path)
+        from src.backend.core.auth import AuthMethod
+        from src.backend.core.auth.auth_selector import require_auth
+
+        # S204 retro-audit C-NEW-5: см. schema.py — обе GraphQL-точки
+        # должны требовать auth, иначе executeAction/dsl_execute доступны
+        # любому клиенту.
+        router = GraphQLRouter(
+            result.schema,
+            path=path,
+            dependencies=[
+                Depends(
+                    require_auth([AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.MTLS])
+                )
+            ],
+        )
         app.include_router(router)
         logger.info(
             "Wave 1.4: auto-schema подключена на %s (queries=%d, mutations=%d)",

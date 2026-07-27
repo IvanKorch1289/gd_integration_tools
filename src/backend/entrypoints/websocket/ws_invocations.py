@@ -37,8 +37,10 @@ from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from src.backend.core.config.services.websocket import ws_settings
 from src.backend.core.interfaces.invoker import InvocationMode, InvocationRequest
 from src.backend.core.logging import get_logger
+from src.backend.entrypoints.websocket.ws_handler import _authenticate_handshake
 
 __all__ = ("ws_invocations_router",)
 
@@ -51,11 +53,29 @@ ws_invocations_router = APIRouter(tags=["WebSocket · Invocations"])
 async def websocket_invocations(websocket: WebSocket) -> None:
     """WS-эндпоинт для streaming/async-api вызовов через Invoker.
 
+    S204 retro-audit C-NEW-4: обязательная auth на handshake (как у ``/ws``)
+    — раньше ``await websocket.accept()`` стоял первым, что позволяло
+    любому неаутентифицированному клиенту вызывать ``Invoker.invoke``
+    и ``llm.stream``. Auth выполняется ДО ``accept()``, чтобы отклонить
+    по code 1008 без чтения тела.
+
     DI: ``ReplyChannelRegistry`` и ``Invoker`` берутся из
     ``websocket.app.state`` (composition root в
     :func:`src.plugins.composition.di.register_app_state`).
     """
-    await websocket.accept()
+    # S172 M1.1: опциональная auth (отключается для dev/test).
+    require_auth = getattr(ws_settings, "require_auth", True)
+    if require_auth:
+        try:
+            await websocket.accept()
+        except Exception as exc:
+            logger.debug("WS accept failed pre-auth: %s", exc)
+            return
+        if not await _authenticate_handshake(websocket):
+            return
+    else:
+        await websocket.accept()
+
     registry = websocket.app.state.reply_registry
     invoker = websocket.app.state.invoker
     ws_channel = registry.get("ws")
