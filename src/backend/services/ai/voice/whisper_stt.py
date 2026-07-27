@@ -53,6 +53,7 @@ class STTResult:
     model: str = ""
 
     def to_dict(self) -> dict[str, Any]:
+        """Вернуть dict-представление STT config (для JSON response)."""
         return {
             "text": self.text,
             "language": self.language,
@@ -104,10 +105,12 @@ class WhisperSTTService:
 
     @property
     def model_name(self) -> str:
+        """Вернуть имя модели Whisper (tiny/base/small/medium/large)."""
         return self._model_name
 
     @property
     def provider(self) -> str:
+        """Вернуть provider name (для multi-provider routing)."""
         return self._provider
 
     @property
