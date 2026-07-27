@@ -58,6 +58,7 @@ class MemoryCertBackend(CertBackend):
         self._history: list[CertEntry] = []
 
     async def get(self, service_id: str) -> CertEntry | None:
+        """Получить cert по ``service_id`` (latest version)."""
         return self._data.get(service_id)
 
     async def save(
@@ -69,6 +70,7 @@ class MemoryCertBackend(CertBackend):
         description: str | None = None,
         uploaded_by: str | None = None,
     ) -> CertEntry:
+        """Сохранить cert (PEM + metadata) + track history."""
         prev = self._data.get(service_id)
         version = (prev.version + 1) if prev else 1
         entry = CertEntry(
@@ -84,9 +86,11 @@ class MemoryCertBackend(CertBackend):
         return entry
 
     async def history(self, service_id: str) -> list[CertEntry]:
+        """История versions для ``service_id`` (audit trail)."""
         return [e for e in self._history if e.service_id == service_id]
 
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
+        """Список certs с expiration < ``before``."""
         return [e for e in self._data.values() if e.expires_at <= before]
 
     async def set(self, service_id: str, pem: str) -> None:
