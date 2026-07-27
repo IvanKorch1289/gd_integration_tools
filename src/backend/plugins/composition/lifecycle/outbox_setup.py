@@ -9,7 +9,10 @@ backward compatibility (тест ``test_outbox_dispatcher_cutover.py``).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING, Any, AsyncIterator
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.core.logging import get_logger
 
@@ -19,6 +22,32 @@ if TYPE_CHECKING:
 _logger = get_logger("application.startup")
 
 __all__ = ("register_outbox_dispatcher",)
+
+
+def _get_outbox_dlq_session_factory() -> Any:
+    """FW1 follow-up: factory для DLQ-сессии (отдельная ``dlq_inbox`` table).
+
+    Re-использует ``main_session_manager`` (Postgres primary) — DLQ
+    пишется в ту же БД, но в отдельную таблицу ``dlq_inbox`` (см.
+    миграцию ``z9a8b7c6d5e4_dlq_inbox_table``). Для production
+    изоляции может быть заменена на отдельный DatabaseSessionManager
+    с другой БД (например, ClickHouse или S3-only DLQ).
+
+    Returns:
+        Callable ``() -> AsyncContextManager[AsyncSession]`` — подходит
+        под signature ``InboxDLQWriter(session_factory=...)``.
+    """
+    from src.backend.infrastructure.database.session_manager import (
+        get_main_session_manager,
+    )
+    mgr = get_main_session_manager()
+
+    @asynccontextmanager
+    async def _factory() -> AsyncIterator[AsyncSession]:
+        async with mgr.session() as session:
+            yield session
+
+    return _factory
 
 
 async def register_outbox_dispatcher(app: FastAPI) -> None:
@@ -57,6 +86,17 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
             from src.backend.infrastructure.workflow.outbox_worker import _publish
 
             _worker_id = _os.environ.get("HOSTNAME") or _socket.gethostname()
+
+            # FW1 follow-up: register DLQ session factory in app.state
+            # so ``start_outbox_dispatcher`` (lifecycle.py:135) builds
+            # an InboxDLQWriter-backed DLQ handler that writes to the
+            # dedicated ``dlq_inbox`` table (migration z9a8b7c6d5e4).
+            # Without this, OutboxDispatcher falls back to
+            # ``_BackendDLQHandler`` which writes DLQ events into
+            # ``outbox_messages`` with status=DLQ (mixing pending + DLQ).
+            app.state.outbox_dlq_session_factory = (
+                _get_outbox_dlq_session_factory()
+            )
 
             def _topic_to_transport(topic: str) -> str:
                 """``kafka:orders.created`` → ``kafka`` для OutboxEvent.transport."""
