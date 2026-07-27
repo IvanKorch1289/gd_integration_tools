@@ -30,6 +30,7 @@ class NavigateProcessor(BaseProcessor):
         self._url_property = url_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: NavigateProcessor processor."""
         from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
@@ -52,6 +53,7 @@ class ClickProcessor(BaseProcessor):
         self._selector = selector
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: ClickProcessor processor."""
         from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
@@ -75,6 +77,7 @@ class FillFormProcessor(BaseProcessor):
         self._submit = submit
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: FillFormProcessor processor."""
         from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
@@ -102,6 +105,7 @@ class ExtractProcessor(BaseProcessor):
         self._output = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: ExtractProcessor processor."""
         from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
@@ -127,6 +131,7 @@ class ScreenshotProcessor(BaseProcessor):
         self._output = output_property
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: ScreenshotProcessor processor."""
         from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
@@ -149,6 +154,7 @@ class RunScenarioProcessor(BaseProcessor):
         self._steps = steps
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: RunScenarioProcessor processor."""
         from src.backend.services.io.web_automation import get_web_automation_service
 
         svc = get_web_automation_service()
