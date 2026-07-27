@@ -39,6 +39,7 @@ class EnvInlineCertBackend(CertBackend):
     """
 
     async def get(self, service_id: str) -> CertEntry | None:
+        """Получить cert по ``service_id``; None если не найдено."""
         env_name = _cert_id_to_env(service_id)
         pem = os.environ.get(env_name)
         if not pem:
@@ -46,6 +47,7 @@ class EnvInlineCertBackend(CertBackend):
         return make_cert_entry(service_id=service_id, pem=pem)
 
     async def set(self, service_id: str, pem: str) -> None:
+        """Сохранить cert (PEM) для ``service_id``."""
         _logger.warning(
             "cert.env.set_noop id=%s (ENV vars read-only at runtime; "
             "use vault or file backend for persistence)",
@@ -53,6 +55,7 @@ class EnvInlineCertBackend(CertBackend):
         )
 
     async def delete(self, service_id: str) -> bool:
+        """Удалить cert по ``service_id``; вернуть True если удалён."""
         _logger.warning("cert.env.delete_noop id=%s", service_id)
         return False
 
@@ -67,10 +70,12 @@ class EnvInlineCertBackend(CertBackend):
         return [current] if current else []
 
     async def list_expiring(self, before: datetime) -> list[CertEntry]:
+        """Список сертификатов с expiration < ``before`` (renewal planning)."""
         return []
 
 
     def list_all(self) -> list[str]:
+        """Список всех service_id в backend (для admin)."""
         return sorted(
             k.removeprefix("CERT_INLINE_").lower()
             for k in os.environ
