@@ -10,6 +10,7 @@ import pytest
 
 from src.backend.infrastructure.clients.messaging.event_bus import (
     EventBus,
+    EventBusNotStartedError,
     EventSchemaValidationError,
     FlagEvent,
     OrderEvent,
@@ -100,11 +101,20 @@ class TestEventBusLifecycle:
 @pytest.mark.unit
 class TestEventBusPublish:
     @pytest.mark.asyncio
-    async def test_publish_when_not_started_logs_warning(self, caplog: Any) -> None:
+    async def test_publish_when_not_started_raises(
+        self, caplog: Any
+    ) -> None:
+        # M2 security fix: previously logged warning + dropped event,
+        # silently masking config bugs. Now raises ``EventBusNotStartedError``.
         bus = EventBus()
-        with caplog.at_level("WARNING"):
-            await bus.publish("events.orders", OrderEvent(order_id=1, action="created"))
-        assert "not started" in caplog.text
+        with caplog.at_level("WARNING"), pytest.raises(EventBusNotStartedError) as exc_info:
+            await bus.publish(
+                "events.orders", OrderEvent(order_id=1, action="created")
+            )
+        assert "events.orders" in str(exc_info.value)
+        # Quota check happens before the broker check, so no warning is
+        # emitted in this code path; the caplog context is a no-op here
+        # but kept for parity with the previous contract.
 
     @pytest.mark.asyncio
     async def test_publish_with_broker(self, fake_redis_broker_module: Any) -> None:

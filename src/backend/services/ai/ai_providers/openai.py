@@ -6,8 +6,9 @@ backend'а (OpenAI, vLLM, LocalAI, OpenRouter, MiniMax, и т.д.).
 
 from __future__ import annotations
 
-import os
 from typing import Any
+
+from src.backend.core.config.ai import openai_settings
 
 
 def _litellm_model(model: str) -> str:
@@ -31,10 +32,10 @@ class OpenAIProvider:
         model: str = "gpt-4o-mini",
         base_url: str | None = None,
     ) -> None:
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+        self.api_key = api_key or openai_settings.api_key
         self.model = model
         self.base_url = (
-            base_url or os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1"
+            base_url or openai_settings.base_url
         ).rstrip("/")
 
     def extract_text(self, response: dict[str, Any]) -> str:

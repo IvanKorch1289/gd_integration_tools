@@ -127,11 +127,59 @@ async def test_execute_delegates_and_checks_write_capability() -> None:
         capability_check=lambda plugin, cap, scope: checks.append((plugin, cap, scope)),
     )
 
-    result = await facade.execute("pg_prod", "UPDATE t SET x = 1")
+    # M2: ``UPDATE t SET x = 1`` (no WHERE) is rejected by the
+    # defense-in-depth SQL validation gate. The test exercises the
+    # safe path (with WHERE) and verifies the capability check +
+    # commit side-effect.
+    result = await facade.execute("pg_prod", "UPDATE t SET x = 1 WHERE id = 5")
 
     assert result == 2
     assert checks == [("ext-1", "db.write", "pg_prod")]
     assert session.committed is True
+
+
+@pytest.mark.asyncio
+async def test_execute_rejects_update_without_where() -> None:
+    """M2 defense-in-depth: ``UPDATE`` without ``WHERE`` is forbidden.
+
+    Mirrors ``core/ai/security/agent_security.py`` blocklist.
+    """
+    from src.backend.infrastructure.database.external_database_facade import (
+        SqlValidationError,
+    )
+
+    session = _FakeSession()
+    facade = _make_facade(session)
+    with pytest.raises(SqlValidationError, match="DML without WHERE"):
+        await facade.execute("pg_prod", "UPDATE t SET x = 1")
+
+
+@pytest.mark.asyncio
+async def test_execute_rejects_drop_database() -> None:
+    """M2 defense-in-depth: ``DROP DATABASE`` is forbidden in ``execute()``."""
+    from src.backend.infrastructure.database.external_database_facade import (
+        SqlValidationError,
+    )
+
+    session = _FakeSession()
+    facade = _make_facade(session)
+    with pytest.raises(SqlValidationError, match="DDL"):
+        await facade.execute("pg_prod", "DROP DATABASE prod")
+
+
+@pytest.mark.asyncio
+async def test_execute_rejects_multi_statement_with_comment_bypass() -> None:
+    """M2 defense-in-depth: ``INSERT;--\\nDROP DATABASE prod`` rejected."""
+    from src.backend.infrastructure.database.external_database_facade import (
+        SqlValidationError,
+    )
+
+    session = _FakeSession()
+    facade = _make_facade(session)
+    with pytest.raises(SqlValidationError, match="single statement"):
+        await facade.execute(
+            "pg_prod", "INSERT INTO t VALUES (1);--\nDROP DATABASE prod"
+        )
 
 
 @pytest.mark.asyncio

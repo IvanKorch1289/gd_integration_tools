@@ -2,13 +2,20 @@
 
 ABC ``BaseVectorStore`` вынесен в ``core/interfaces/vector_store.py``
 (Wave 6) — здесь лежат конкретные реализации.
+
+M2 security note: ``ChromaVectorStore`` is gated by profile and emits
+a warning because ``chromadb<=1.5.9`` has a known pre-auth code
+injection CVE (no upstream fix on PyPI as of 2026-07-27). For prod
+RAG prefer ``QdrantVectorStore`` which has no open CVE.
 """
 
 from __future__ import annotations
 
 import asyncio
+import importlib
 from typing import Any
 
+from src.backend.core.config.profile import AppProfileChoices, get_active_profile
 from src.backend.core.interfaces.vector_store import BaseVectorStore
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_resilience import resilient
@@ -263,8 +270,37 @@ class ChromaVectorStore(BaseVectorStore):
         if self._collection is not None:
             return self._collection
 
+        # M2: chromadb<=1.5.9 has a pre-auth code injection CVE
+        # (pyproject.toml comment). Refuse to instantiate in prod/staging
+        # unless the operator has explicitly opted in via env override
+        # ``CHROMADB_ALLOW_CVE=true``. dev_light/dev profiles keep the
+        # legacy behavior with a loud warning.
+        active = get_active_profile()
+        is_prod_like = active in {AppProfileChoices.prod, AppProfileChoices.staging}
+        if is_prod_like:
+            import os
 
-        import chromadb  # type: ignore[import-not-found]
+            allow_cve = os.environ.get("CHROMADB_ALLOW_CVE", "").lower() in {
+                "1",
+                "true",
+                "yes",
+            }
+            if not allow_cve:
+                raise RuntimeError(
+                    "ChromaVectorStore is disabled in profile "
+                    f"{active.value!r} due to chromadb<=1.5.9 CVE "
+                    "(pre-auth code injection). Use QdrantVectorStore "
+                    "or set CHROMADB_ALLOW_CVE=true to override. "
+                    "See pyproject.toml comment for CVE id."
+                )
+        logger.warning(
+            "ChromaVectorStore used in profile %s — known CVE in "
+            "chromadb<=1.5.9 (pre-auth code injection). Prefer "
+            "QdrantVectorStore in production.",
+            active.value,
+        )
+
+        chromadb = importlib.import_module("chromadb")
 
         self._client = await asyncio.to_thread(
             chromadb.HttpClient, host=self._host, port=self._port

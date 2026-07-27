@@ -20,6 +20,7 @@ from src.backend.core.tenancy.quotas import QuotaTracker
 
 __all__ = (
     "EventBus",
+    "EventBusNotStartedError",
     "EventSchemaValidationError",
     "FlagEvent",
     "OrderEvent",
@@ -27,6 +28,16 @@ __all__ = (
     "RouteEvent",
     "get_event_bus",
 )
+
+
+class EventBusNotStartedError(RuntimeError):
+    """Raised when ``publish``/``subscribe`` is called before ``start()``.
+
+    M2 security fix: previously the publish path silently logged a warning
+    and dropped the event when the broker was not initialised, masking
+    configuration bugs in production. Callers that genuinely want
+    fire-and-forget semantics should opt in explicitly.
+    """
 
 logger = get_logger(__name__)
 
@@ -187,8 +198,13 @@ class EventBus:
         self._validate_event(channel, event)
 
         if not self._broker or not self._started:
-            logger.warning("EventBus not started, skipping publish to %s", channel)
-            return
+            # M2: fail loudly instead of silently dropping the event.
+            # Callers must invoke ``start()`` during application lifespan
+            # (see ``plugins/composition/lifespan.py``).
+            raise EventBusNotStartedError(
+                f"EventBus.publish() called before start() for channel "
+                f"{channel!r} (broker={self._broker!r}, started={self._started})"
+            )
 
         try:
             await self._broker.publish(event.model_dump(), channel=channel)
