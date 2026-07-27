@@ -35,6 +35,7 @@ router = APIRouter(prefix="/admin/resilience-profiles", tags=["Admin / Resilienc
 
 
 class RetryPolicyIn(BaseModel):
+    """Retry policy input (max_attempts, base/max delay, exp_base, jitter)."""
     max_attempts: int = Field(3, ge=1, le=10)
     base_delay_ms: int = Field(100, ge=10, le=5000)
     max_delay_ms: int = Field(5000, ge=100, le=60000)
@@ -43,22 +44,26 @@ class RetryPolicyIn(BaseModel):
 
 
 class CircuitBreakerIn(BaseModel):
+    """Circuit breaker input (failure_threshold, recovery_timeout, half_open_max_calls)."""
     failure_threshold: int = Field(5, ge=3, le=50)
     recovery_timeout_s: int = Field(30, ge=10, le=3600)
     half_open_max_calls: int = Field(3, ge=1, le=10)
 
 
 class RateLimitIn(BaseModel):
+    """Rate limit input (rps, burst)."""
     rps: int = Field(100, ge=1, le=10000)
     burst: int = Field(20, ge=1, le=100)
 
 
 class BulkheadIn(BaseModel):
+    """Bulkhead input (high/low watermarks)."""
     high_watermark: int = Field(100, ge=10, le=1000)
     low_watermark: int = Field(50, ge=5, le=500)
 
 
 class ResilienceProfileIn(BaseModel):
+    """Composite resilience profile (retry + cb + ratelimit + bulkhead)."""
     retry: RetryPolicyIn = RetryPolicyIn()
     circuit_breaker: CircuitBreakerIn = CircuitBreakerIn()
     rate_limit: RateLimitIn | None = None
