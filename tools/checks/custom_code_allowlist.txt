@@ -17,3 +17,17 @@ _otel_auto
 
 # DI provider factories
 _provide_
+
+# Cycle 29 P4: calibrated legacy baseline. Full vulture output rows are used
+# intentionally: line shifts re-open a finding for review instead of silently
+# suppressing every future finding with the same variable name.
+src/backend/core/ai/pydantic_ai_client.py:515: unused variable 'run_context'
+src/backend/core/ai/pydantic_ai_client.py:581: unused variable 'instructions'
+src/backend/core/resilience/circuit_breaker.py:31: unused import '_PurgatoryOpenedState'
+src/backend/core/resilience/circuit_breaker.py:32: unused import '_PurgatoryFactory'
+src/backend/dsl/yaml_watcher.py:261: unused variable 'incremental'
+src/backend/entrypoints/dependencies/rate_limit.py:67: unused variable 'blocking'
+src/backend/entrypoints/websocket/ws_manager.py:62: unused variable 'action_pool_size'
+src/backend/infrastructure/sources/telegram_webhook.py:147: unsatisfiable 'if' condition
+src/backend/plugins/composition/lifecycle/signals.py:60: unused variable 'signum'
+src/backend/services/storage/facade.py:85: unused variable 'multipart_threshold_bytes'

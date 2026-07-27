@@ -78,6 +78,7 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	import-swagger import-postman import-wsdl \
 	testkit-smoke new-plugin new-middleware \
 	perf-smoke perf-full perf-gate perf-gate-py perf-baseline chaos chaos-slow docs-vale \
+	arch-ratchet \
 new-adr release-notes
 
 .PHONY: new-middleware

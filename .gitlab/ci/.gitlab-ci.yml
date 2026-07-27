@@ -28,6 +28,17 @@ lint:
     # Ruff F821 gate (undefined names) — blocking
     - uv run ruff check --select F821 src
     
+    # Ruff ERA/RUF gate (whitelist safety surface) — P4
+    - >-
+      uv run ruff check --extend-select ERA001,RUF005
+      src/backend/core/security/module_whitelist.py
+      src/backend/core/ai/skill_registry.py
+      src/backend/dsl/engine/processors/function_call.py
+      tests/unit/core/security/test_module_whitelist.py
+
+    # Vulture dead-code gate; existing allowlist keeps wired modules intact.
+    - uv run python tools/checks/check_custom_code.py --strict
+
     # Ruff format check
     - uv run ruff format --check src tests
     

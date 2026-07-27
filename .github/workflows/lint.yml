@@ -48,6 +48,21 @@ jobs:
         # Блокирующий шаг для предотвращения regressions.
         run: uv run ruff check --select F821 src
 
+      - name: Ruff ERA/RUF gate (whitelist safety surface)
+        # P4: проверяем новые security-модули без расширения baseline
+        # на legacy ERA/RUF findings в остальном репозитории.
+        run: >-
+          uv run ruff check --extend-select ERA001,RUF005
+          src/backend/core/security/module_whitelist.py
+          src/backend/core/ai/skill_registry.py
+          src/backend/dsl/engine/processors/function_call.py
+          tests/unit/core/security/test_module_whitelist.py
+
+      - name: Vulture dead-code gate (whitelist safety surface)
+        # Проверка через существующий wrapper сохраняет allowlist для
+        # decorator-wired и contract-wired модулей; ничего не удаляем.
+        run: uv run python tools/checks/check_custom_code.py --strict
+
       - name: Ruff format check
         run: uv run ruff format --check src tests
 

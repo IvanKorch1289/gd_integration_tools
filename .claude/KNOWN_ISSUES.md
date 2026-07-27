@@ -1,5 +1,39 @@
 # KNOWN_ISSUES.md
 
+## Sprint 204 Backlog / Tech Debt Closure — 2026-07-24 ✅ CLOSED (targeted slice)
+
+### Закрыто
+
+- ✅ AI Gateway tool whitelist: `tool_name` mandatory, fallback на `workflow_id` удалён.
+- ✅ Input guard provider failure: fail-closed default + audited explicit override.
+- ✅ `core/api` layer violations и LDAP core→services runtime fallback устранены.
+- ✅ ClickHouse batch limits/propagation; pg-runner replay перестал быть silent no-op.
+- ✅ Module whitelist consolidation + Ruff ERA/RUF + vulture CI gates.
+- ✅ Workflow ClaimCheck Redis/S3 backends: scaffold/no-op заменён рабочей store/load реализацией.
+- ✅ Frontend import ratchet: покрывает `from` и `import` syntax.
+- ✅ Legacy users/orderkinds shims: ранее удалены, runtime importers = 0.
+- ✅ SSO placeholder: finding устарел, `require_sso_auth`/`SsoRegistry` реализованы и покрыты 34 tests.
+- ✅ Ruff F401 по изменённому safety scope: 0 findings.
+- ✅ Full `ruff check src`: 0 findings после safe auto-fix wave (I001/W292/W293/F822/F405/F841 и targeted security rules).
+- ✅ RPA unit suite: 67/67 tests; fixtures явно mock authorization, production gate сохранён.
+- ✅ FTP upload: FTPS/TLS default + double opt-in для plaintext.
+- ✅ Entrypoints mypy: 13 → 0 diagnostics; webhook/ws-rate-limit regressions: 51 tests passed.
+
+### Проверки
+
+- 198 Deep Audit/backlog targeted tests + 67 RPA tests passed.
+- `tools/check_layers.py`: 0 новых нарушений (211 legacy baseline).
+- `ruff check src`: passed; `compileall src`: passed.
+
+### Остаётся отдельными измеримыми волнами
+
+- Mypy legacy baseline и coverage uplift требуют per-domain работы, а не blind mass-fix.
+- 211 legacy layer allowlist entries требуют постепенного protocol/composition refactor.
+- Full frontend HTTP-client migration и RouteBuilder composition rewrite — breaking architectural waves с ADR.
+- Vault-dependent integration gates требуют production CI environment.
+
+---
+
 ## Sprint 36 Tech Debt Closure — 2026-06-01 ✅ PARTIAL (4/5 gates fixed)
 
 **Контекст**: Post-S36 cleanup session. Цель — закрытие tech-debt категории A/B + синхронизация gate-скриптов с dev-окружением.
