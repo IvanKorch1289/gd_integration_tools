@@ -27,8 +27,8 @@
 
 ### Остаётся отдельными измеримыми волнами
 
-- Mypy legacy baseline и coverage uplift требуют per-domain работы, а не blind mass-fix.
-- 211 legacy layer allowlist entries требуют постепенного protocol/composition refactor.
+- Pre-existing `/openapi.json` 500 в dev mode: Pydantic 2.13 `TypeAdapter` forward ref error на `Annotated[ForwardRef('Request'), FieldInfo(...)]`. Возникает в одном из endpoint signatures с `request: Request`. Не блокирует production runtime; чист через Pydantic 2.x rename или endpoint signature fix.
+- 205 legacy layer allowlist entries требуют постепенного protocol/composition refactor.
 - Full frontend HTTP-client migration и RouteBuilder composition rewrite — breaking architectural waves с ADR.
 - Vault-dependent integration gates требуют production CI environment.
 

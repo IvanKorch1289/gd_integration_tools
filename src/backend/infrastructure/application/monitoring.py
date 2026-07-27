@@ -8,8 +8,9 @@ in-progress requests gauge. Exposes /metrics endpoint.
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from fastapi import Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from src.backend.core.utils.metrics_registry import metrics_registry
@@ -102,7 +103,13 @@ class PrometheusMiddleware:
 
 
 async def metrics_endpoint(scope: Scope, receive: Receive, send: Send) -> None:
-    """ASGI handler for GET /metrics — returns Prometheus text format."""
+    """ASGI-3 handler for GET /metrics — returns Prometheus text format.
+
+    Доступен для Prometheus scrape; FastAPI-совместимая альтернатива
+    ``app_any.routes.append(Route(...))`` (raw ASGI 3) с сигнатурой
+    ``(scope, receive, send)`` — зарегистрирована через ASGI scope,
+    а не как FastAPI route handler.
+    """
     await send(
         {
             "type": "http.response.start",
@@ -111,6 +118,20 @@ async def metrics_endpoint(scope: Scope, receive: Receive, send: Send) -> None:
         }
     )
     await send({"type": "http.response.body", "body": generate_latest()})
+
+
+# FastAPI-compatible variant для правильной обработки middleware стэка.
+# Зарегистрирована через ``app.get("/metrics", ...)`` (см. setup_monitoring)
+# чтобы корректно проходить через error handler, CORS, request_id, audit
+# middleware (которые ожидают Request вместо ASGI scope).
+async def metrics_fastapi_endpoint() -> Response:
+    """FastAPI handler для GET /metrics — returns Prometheus text format.
+
+    Used instead of ASGI-3 ``metrics_endpoint`` to play nicely with
+    FastAPI's middleware stack. Returns ``generate_latest()`` payload
+    with ``CONTENT_TYPE_LATEST`` content-type.
+    """
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 def setup_monitoring(app: ASGIApp) -> None:
@@ -123,11 +144,14 @@ def setup_monitoring(app: ASGIApp) -> None:
     """
     from typing import Any
 
-    from starlette.routing import Route
+    from fastapi import FastAPI
 
     # Add ASGI middleware
     app_any: Any = app
     app_any.add_middleware(PrometheusMiddleware)
 
-    # Mount /metrics route (ASGI-level, not FastAPI route)
-    app_any.routes.append(Route("/metrics", metrics_endpoint, methods=["GET"]))
+    # Mount /metrics route via FastAPI-совместимый handler, чтобы корректно
+    # проходить через middleware стэк (api_key/csrf/audit_log).
+    # ASGI-3 ``metrics_endpoint`` оставлен для backward-compat raw ASGI callers.
+    fastapi_app = cast(FastAPI, app)
+    fastapi_app.get("/metrics", include_in_schema=False)(metrics_fastapi_endpoint)

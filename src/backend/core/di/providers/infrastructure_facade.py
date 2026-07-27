@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import importlib as _importlib
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     # ``_PROVIDERS_REGISTRY`` materializes these names at runtime.  Keep the

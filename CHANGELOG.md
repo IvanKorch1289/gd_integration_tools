@@ -64,17 +64,41 @@
 - ❌ Не добавляли новую зависимость, raw asyncpg pool или вторую реализацию cache/SSH/browser/EIP/CDC.
 - ❌ Не выполняли массовую миграцию 35+ Streamlit страниц; frontend ratchet (test exists) — отдельный cycle.
 - ❌ Не удаляли 292 потенциально decorator-wired модуля; RouteBuilder MRO rewrite — отдельный ADR.
-- ❌ Не создавали git commit/push в этой сессии.
+- ❌ Не делали `git push` (только локальные коммиты); PR/push требует явного подтверждения.
+
+### Commit series (8 атомарных коммитов)
+
+1. `docs(s204): CHANGELOG, KNOWN_ISSUES, CI gates и слойный allowlist` (7 files)
+2. `fix(cycle-30): P0 security + P1 layer/DI hardening` (19 files)
+3. `refactor(dsl): builders/processors/wiring contract cleanup + mypy fit` (130 files)
+4. `refactor(infrastructure,services,plugins): contract waves + mypy fit` (128 files)
+5. `refactor(core,entrypoints): contract waves + WS/SOAP/SSE auth hardening` (111 files)
+6. `feat(frontend,sdk,infra_cli): typing + test fixes` (15 files)
+7. `fix(typing): close residual no-untyped-def after ruff reformat` (4 files)
+8. `fix(qa): metrics endpoint FastAPI-compatible + lifespan task_registry` (4 files)
+
+### QA smoke (uvicorn dev profile, Vault/Consul отключены)
+
+Endpoint | HTTP | Latency | Source
+--------|------|---------|-------
+GET /health        | 200 | 32 ms  | `{"status":"alive","version":"0.1.0"}`
+GET /metrics       | 200 | 7 ms   | Prometheus text format
+GET /docs          | 200 | 5 ms   | Swagger UI
+GET /api/v1/orders/         | 401 | 29 ms | `{"detail":"Authentication required"}`
+GET /api/v1/connectors/     | 401 | 4 ms  | `{"detail":"Authentication required"}`
+GET /api/v1/admin/audit/    | 401 | 4 ms  | `{"detail":"Authentication required"}`
+GET /openapi.json           | 500 | 200 ms| pre-existing Pydantic 2.13 forward ref (см. KNOWN_ISSUES)
 
 ### Stats (S204)
 
-- **381 файлов** изменено/создано (включая safe Ruff/mypy cleanup и regression tests)
-- **~4894 LOC added, ~1841 LOC removed**
+- **419 файлов** изменено/создано (включая safe Ruff/mypy cleanup и regression tests)
+- **~4934 LOC added, ~1849 LOC removed**
 - **447 targeted S204/backlog tests passed** (включая 67 RPA и 51 entrypoint/webhook)
 - **Full mypy `src` без кеша: 0 errors**
 - **Full `ruff check src`: All checks passed**
 - **Layer gate: 0 new violations** (205 legacy baseline, было 211)
 - **Full `compileall src` + Python-2 syntax gate: passed**
+- **8 atomic commits** (без push)
 
 ---
 

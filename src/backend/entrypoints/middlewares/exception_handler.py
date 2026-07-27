@@ -5,6 +5,8 @@
 сквозной трассировки.
 """
 
+from __future__ import annotations
+
 import traceback
 
 from fastapi import Request

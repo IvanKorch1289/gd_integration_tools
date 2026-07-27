@@ -78,9 +78,10 @@ async def lifespan(app: FastAPI):
     from src.backend.plugins.composition.lifecycle.shutdown import run_shutdown
     from src.backend.plugins.composition.lifecycle.startup import run_startup
 
+    task_registry = get_task_registry()
     startup_completed = False
     try:
-        await run_startup(app)
+        await run_startup(app, task_registry)
         startup_completed = True
         app.state.infrastructure_ready = True
         app_logger.info("Приложение успешно запущено")
