@@ -23,58 +23,13 @@ import time
 from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
-from typing import Any, Final, Protocol, runtime_checkable
+from typing import Final, Protocol, runtime_checkable
 
 # ────────────────── Probe purgatory availability (lazy, без side-effects) ────
 
 # Probe without importing the optional package or binding its concrete types;
 # the canonical breaker implementation owns all actual purgatory interactions.
 HAS_PURGATORY: Final = importlib.util.find_spec("purgatory") is not None
-
-
-# ────────────────── Unified spec ────────────────────────────────────────────
-
-
-@dataclass(slots=True, frozen=True)
-class CircuitBreakerSpec:
-    """DEPRECATED shim (FW6) — type alias для :class:`BreakerSpec`.
-
-    Pre-FW6: ``CircuitBreakerSpec`` имел extended-поля (``window_seconds``,
-    ``half_open_max_calls``, ``excluded_exceptions``), которых не было
-    в каноническом :class:`BreakerSpec`.
-
-    Post-FW6: :class:`BreakerSpec` расширен этими полями.
-    ``CircuitBreakerSpec`` сохранён как DEPRECATED backward-compat alias
-    (выдаёт DeprecationWarning при первом import) — экземпляры
-    совместимы 1:1 с ``BreakerSpec`` (передаются в ``SlidingWindowBreaker``
-    и ``ReplicaFailoverBreaker`` без изменений).
-
-    Миграция::
-
-        # было
-        from src.backend.core.resilience.circuit_breaker import CircuitBreakerSpec
-        spec = CircuitBreakerSpec(failure_threshold=3, window_seconds=60)
-
-        # стало
-        from src.backend.core.resilience.breaker import BreakerSpec
-        spec = BreakerSpec(failure_threshold=3, window_seconds=60)
-
-    Удалить в Sprint 37 (после 1-2 спринтов deprecation cycle).
-    """
-
-    def __new__(cls, *args: Any, **kwargs: Any) -> "CircuitBreakerSpec":
-        import warnings
-
-        warnings.warn(
-            "CircuitBreakerSpec is DEPRECATED; use BreakerSpec from "
-            "src.backend.core.resilience.breaker (FW6).",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        from src.backend.core.resilience.breaker import BreakerSpec
-
-        return BreakerSpec(*args, **kwargs)
 
 
 # ────────────────── Minimal contract (для RPA / non-purgatory consumers) ───

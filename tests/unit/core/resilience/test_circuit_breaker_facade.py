@@ -1,34 +1,36 @@
-"""Unit-тесты для Circuit Breaker Facade (S173).
+"""Unit-тесты для Circuit Breaker Facade (S173 + FW6.1).
 
 Тестирует scaffold из :mod:`src.backend.core.resilience.circuit_breaker`:
-- :class:`CircuitBreakerSpec` — единая спецификация
 - :class:`BreakerLike` — minimal contract Protocol
 - :class:`SlidingWindowBreaker` — per-route CB adapter (TODO s172/m2.4)
 - :class:`ReplicaFailoverBreaker` — replica failover CB (working stub)
 - Re-exports из :mod:`src.backend.core.resilience.breaker`
+
+FW6.1: ``CircuitBreakerSpec`` удалён (DEPRECATED shim после FW6).
+Все тесты используют :class:`BreakerSpec` из :mod:`breaker` (canonical).
 """
 
 from __future__ import annotations
 
 import pytest
 
+from src.backend.core.resilience.breaker import BreakerSpec
 from src.backend.core.resilience.circuit_breaker import (
     HAS_PURGATORY,
     BreakerLike,
     BreakerRegistry,
-    CircuitBreakerSpec,
     CircuitOpen,
     ReplicaFailoverBreaker,
     SlidingWindowBreaker,
 )
 
 
-class TestCircuitBreakerSpec:
-    """Тесты единой спецификации CircuitBreakerSpec."""
+class TestBreakerSpec:
+    """Тесты канонической спецификации BreakerSpec (post-FW6.1)."""
 
     def test_default_values(self) -> None:
         """Проверяет значения по умолчанию."""
-        spec = CircuitBreakerSpec()
+        spec = BreakerSpec()
         assert spec.failure_threshold == 5
         assert spec.recovery_timeout == 30.0
         assert spec.window_seconds == 0.0
@@ -37,7 +39,7 @@ class TestCircuitBreakerSpec:
 
     def test_custom_values(self) -> None:
         """Проверяет установку кастомных значений."""
-        spec = CircuitBreakerSpec(
+        spec = BreakerSpec(
             failure_threshold=10,
             recovery_timeout=60.0,
             window_seconds=120.0,
@@ -52,7 +54,7 @@ class TestCircuitBreakerSpec:
 
     def test_frozen(self) -> None:
         """Spec должен быть immutable (frozen dataclass)."""
-        spec = CircuitBreakerSpec()
+        spec = BreakerSpec()
         with pytest.raises((AttributeError, Exception)):
             spec.failure_threshold = 100  # type: ignore[misc]
 
@@ -82,14 +84,14 @@ class TestReplicaFailoverBreaker:
 
     def test_initial_state_closed(self) -> None:
         """Изначально breaker закрыт."""
-        spec = CircuitBreakerSpec(failure_threshold=3)
+        spec = BreakerSpec(failure_threshold=3)
         breaker = ReplicaFailoverBreaker(name="test_replica", spec=spec)
         assert breaker.is_open is False
         assert breaker.state == "closed"
 
     def test_opens_after_threshold_failures(self) -> None:
         """Breaker открывается после failure_threshold failures."""
-        spec = CircuitBreakerSpec(failure_threshold=3)
+        spec = BreakerSpec(failure_threshold=3)
         breaker = ReplicaFailoverBreaker(name="test_replica", spec=spec)
 
         breaker.on_failure()
@@ -101,7 +103,7 @@ class TestReplicaFailoverBreaker:
 
     def test_on_success_resets_counter(self) -> None:
         """on_success() сбрасывает счётчик failures и закрывает breaker."""
-        spec = CircuitBreakerSpec(failure_threshold=3)
+        spec = BreakerSpec(failure_threshold=3)
         breaker = ReplicaFailoverBreaker(name="test_replica", spec=spec)
 
         breaker.on_failure()
@@ -118,7 +120,7 @@ class TestReplicaFailoverBreaker:
 
     def test_zero_threshold_degenerate(self) -> None:
         """При failure_threshold=0 breaker всегда открыт (degenerate)."""
-        spec = CircuitBreakerSpec(failure_threshold=0)
+        spec = BreakerSpec(failure_threshold=0)
         breaker = ReplicaFailoverBreaker(name="test_replica", spec=spec)
         # 0 >= 0 == True — degenerate case
         assert breaker.is_open is True
@@ -127,7 +129,7 @@ class TestReplicaFailoverBreaker:
         """После recovery_timeout breaker переходит в half_open."""
         import time
 
-        spec = CircuitBreakerSpec(failure_threshold=2, recovery_timeout=0.1)
+        spec = BreakerSpec(failure_threshold=2, recovery_timeout=0.1)
         breaker = ReplicaFailoverBreaker(name="test_replica", spec=spec)
 
         breaker.on_failure()
@@ -150,14 +152,14 @@ class TestSlidingWindowBreaker:
 
     def test_initial_state_closed(self) -> None:
         """Изначально breaker закрыт."""
-        spec = CircuitBreakerSpec()
+        spec = BreakerSpec()
         breaker = SlidingWindowBreaker(name="test_route", spec=spec)
         assert breaker.state == "closed"
         assert breaker.is_open is False
 
     def test_opens_after_threshold(self) -> None:
         """Breaker открывается после failure_threshold failures."""
-        spec = CircuitBreakerSpec(failure_threshold=3)
+        spec = BreakerSpec(failure_threshold=3)
         breaker = SlidingWindowBreaker(name="test_route", spec=spec)
 
         # Trigger failures via guard context manager
@@ -186,7 +188,7 @@ class TestSlidingWindowBreaker:
         import asyncio
 
         async def run_test() -> None:
-            spec = CircuitBreakerSpec()
+            spec = BreakerSpec()
             breaker = SlidingWindowBreaker(name="test_route", spec=spec)
             async with breaker.guard():
                 pass  # успешный вызов
@@ -195,12 +197,12 @@ class TestSlidingWindowBreaker:
 
     def test_guard_raises_when_open(self) -> None:
         """guard() бросает CircuitOpen при open state."""
-        from src.backend.core.resilience.circuit_breaker import CircuitOpen
-
         import asyncio
 
+        from src.backend.core.resilience.circuit_breaker import CircuitOpen
+
         async def run_test() -> None:
-            spec = CircuitBreakerSpec(failure_threshold=1)
+            spec = BreakerSpec(failure_threshold=1)
             breaker = SlidingWindowBreaker(name="test_route", spec=spec)
             try:
                 async with breaker.guard():
@@ -220,7 +222,7 @@ class TestSlidingWindowBreaker:
         import asyncio
 
         async def run_test() -> None:
-            spec = CircuitBreakerSpec(failure_threshold=2)
+            spec = BreakerSpec(failure_threshold=2)
             breaker = SlidingWindowBreaker(name="test_route", spec=spec)
 
             # 1 failure
@@ -242,7 +244,7 @@ class TestSlidingWindowBreaker:
         import asyncio
 
         async def run_test() -> None:
-            spec = CircuitBreakerSpec(
+            spec = BreakerSpec(
                 failure_threshold=2, excluded_exceptions=(KeyError,)
             )
             breaker = SlidingWindowBreaker(name="test_route", spec=spec)
