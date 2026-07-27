@@ -70,6 +70,7 @@ class BrowserClientProtocol(Protocol):
     async def fill_form(
         self, url: str, fields: dict[str, str], submit: str | None = None
     ) -> dict[str, Any]: ...
+    """Заполнить ``fields`` и (опц.) submit на ``url``."""
     async def extract_text(self, url: str, selector: str) -> list[str]:
         """Извлечь visible text по ``selector`` (список строк)."""
         ...
@@ -82,6 +83,7 @@ class BrowserClientProtocol(Protocol):
     async def run_scenario(
         self, steps: list[dict[str, Any]]
     ) -> list[dict[str, Any]]: ...
+    """Выполнить сценарий из ``steps`` (list[BrowserStep])."""
 
 
 # ─────────────────────── ClickHouse analytics ───────────────────────
@@ -102,6 +104,7 @@ class ClickHouseClientProtocol(Protocol):
     async def query(
         self, sql: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]: ...
+    """SELECT-запрос с bound params; вернуть list[dict]."""
     async def insert(
         self,
         table: str,
@@ -109,6 +112,7 @@ class ClickHouseClientProtocol(Protocol):
         *,
         batch_size: int | None = None,
     ) -> int: ...
+    """Batch INSERT в ``table``; вернуть count вставленных строк."""
     async def aggregate(
         self,
         table: str,
@@ -117,6 +121,7 @@ class ClickHouseClientProtocol(Protocol):
         group_by: str | None = None,
         where: str | None = None,
     ) -> list[dict[str, Any]]: ...
+    """AGGREGATE-запрос (group_by, where, agg_func, column)."""
     async def ping(self) -> bool:
         """Health check: вернуть True если backend reachable."""
         ...
@@ -140,6 +145,7 @@ class SmtpClientProtocol(Protocol):
         content_type: str = "text/plain",
         **kwargs: Any,
     ) -> Any: ...
+    """Отправить email; content_type='text/plain'|'text/html'."""
     async def test_connection(self) -> bool:
         """Проверить SMTP/IMAP connection state."""
         ...
@@ -164,6 +170,7 @@ class ExpressClientProtocol(Protocol):
     async def send_notification(
         self, group_chat_ids: list[str], text: str
     ) -> dict[str, Any]: ...
+    """Broadcast в group_chat_ids."""
     async def create_chat(
         self,
         name: str,
@@ -171,6 +178,7 @@ class ExpressClientProtocol(Protocol):
         description: str = "",
         chat_type: str = "group_chat",
     ) -> dict[str, Any]: ...
+    """Создать chat (group/direct/channel)."""
 
 
 # ─────────────────────── Redis (key-value) ───────────────────────
@@ -187,6 +195,7 @@ class RedisKeyValueClientProtocol(Protocol):
     async def set(
         self, key: str, value: Any, ex: int | None = None, **kwargs: Any
     ) -> Any: ...
+    """Установить ``key=value`` в KV-store (ex=TTL)."""
     async def get(self, key: str) -> Any:
         """Получить значение по ``key`` из KV-store."""
         ...
@@ -283,7 +292,9 @@ class ConnectorConfigStoreProtocol(Protocol):
         config: dict[str, Any],
         enabled: bool = True,
         user: str | None = None,
-    ) -> Any: ...
+    ) -> Any:
+        """Сохранить ``config`` (enabled/user для audit)."""
+        ...
     async def list_all(self) -> list[Any]:
         """Вернуть список всех config-ов."""
         ...
