@@ -109,6 +109,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
         )
 
     def is_registered(self, action: str) -> bool:
+        """True если ``action`` зарегистрировано в dispatcher."""
         return self._registry.is_registered(action)
 
     # ------------------------------------------------------------------ #
@@ -140,6 +141,7 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
         )
 
     def get_metadata(self, action: str) -> ActionMetadata | None:
+        """Получить metadata для ``action`` (capabilities, version)."""
         return self._registry.get_metadata(action)
 
     def list_actions(self, transport: TransportName | None = None) -> tuple[str, ...]:
@@ -151,9 +153,11 @@ class DefaultActionDispatcher(ActionDispatcher, ActionGatewayDispatcher):
     def list_metadata(
         self, transport: TransportName | None = None
     ) -> tuple[ActionMetadata, ...]:
+        """Список всех metadata (для admin/debug)."""
         return self._registry.list_metadata(transport)
 
     def register_middleware(self, middleware: ActionMiddleware) -> None:
+        """Зарегистрировать middleware (cross-cutting concern)."""
         self._registry.register_middleware(middleware)
 
     # ------------------------------------------------------------------ #
