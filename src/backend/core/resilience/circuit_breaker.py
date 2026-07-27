@@ -24,7 +24,7 @@ from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Final, Protocol, runtime_checkable
+from typing import Any, Final, Protocol, runtime_checkable
 
 # ────────────────── Probe purgatory availability (lazy, без side-effects) ────
 
