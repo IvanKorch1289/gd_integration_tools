@@ -19,7 +19,7 @@ import orjson
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_breaker import with_breaker
-from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.resilience.retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.security.connector_rate_limiter import (
@@ -54,7 +54,8 @@ class NATSJetStreamSink(Sink):
     kind: SinkKind = field(default=SinkKind.NATS_JS, init=False)
 
     @with_breaker("nats_js_sink")
-    @with_retry(max_attempts=5)
+    @with_retry(max_attempts=5,
+        retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("nats.write", action="write")
     async def publish(
         self, subject: str, data: bytes, headers: dict[str, str] | None = None

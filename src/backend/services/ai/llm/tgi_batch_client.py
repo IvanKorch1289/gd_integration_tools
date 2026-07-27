@@ -16,7 +16,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
-from src.backend.infrastructure.resilience.retry import make_async_retry
+from src.backend.core.resilience.retry import make_async_retry
 
 __all__ = ("TgiBatchClient",)
 

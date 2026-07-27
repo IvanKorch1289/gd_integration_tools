@@ -207,7 +207,7 @@ class LLMCallProcessor(BaseProcessor):
             return
 
         # Legacy path (ai_gateway_enforce=False)
-        from src.backend.infrastructure.resilience.retry import make_async_retry
+        from src.backend.core.resilience.retry import make_async_retry
 
         try:
             from src.backend.services.ai.ai_agent import get_ai_agent_service

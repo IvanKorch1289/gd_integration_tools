@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.resilience.retry import with_retry
 
 
 @pytest.mark.unit
@@ -48,9 +48,17 @@ async def test_retry_gives_up_after_max_attempts() -> None:
 
 @pytest.mark.unit
 async def test_retry_does_not_retry_on_unmatched_exception() -> None:
+    """M3: после миграции на canonical, narrow retry_on нужно передавать
+    явно (canonical default = ``(Exception,)``). Тест проверяет, что
+    ``retry_on=(ConnectionError,)`` исключает ``ValueError``.
+    """
     counter = {"n": 0}
 
-    @with_retry(max_attempts=3, initial_backoff=0.01)
+    @with_retry(
+        max_attempts=3,
+        initial_backoff=0.01,
+        retry_on=(ConnectionError,),
+    )
     async def value_error() -> None:
         counter["n"] += 1
         raise ValueError("nope")
@@ -58,7 +66,7 @@ async def test_retry_does_not_retry_on_unmatched_exception() -> None:
     with pytest.raises(ValueError):
         await value_error()
     # Нет retry для non-default exceptions — ValueError не входит в
-    # (ConnectionError, TimeoutError, OSError).
+    # (ConnectionError,).
     assert counter["n"] == 1
 
 

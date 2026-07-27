@@ -117,7 +117,7 @@ class _BankingAIProcessor(BaseProcessor):
             )
             return
 
-        from src.backend.infrastructure.resilience.retry import make_async_retry
+        from src.backend.core.resilience.retry import make_async_retry
 
         client = instructor.from_litellm(litellm.acompletion)
 

@@ -8,7 +8,7 @@ class TestRetryPolicyHelper:
     @pytest.mark.asyncio
     async def test_retry_succeeds_on_second_attempt(self) -> None:
         """Retry succeeds if coro eventually returns."""
-        from src.backend.core.utils.retry_helper import retry_async
+        from src.backend.core.resilience.retry import retry_async
         attempts = {"count": 0}
 
         async def flaky():
@@ -24,7 +24,7 @@ class TestRetryPolicyHelper:
     @pytest.mark.asyncio
     async def test_retry_raises_after_max_attempts(self) -> None:
         """Если все attempts провалились — re-raise последней ошибки."""
-        from src.backend.core.utils.retry_helper import retry_async
+        from src.backend.core.resilience.retry import retry_async
 
         async def always_fail():
             raise ConnectionError("permanent")
@@ -35,7 +35,7 @@ class TestRetryPolicyHelper:
     @pytest.mark.asyncio
     async def test_retry_skips_non_retryable(self) -> None:
         """Non-retryable exceptions — сразу raise, без retry."""
-        from src.backend.core.utils.retry_helper import retry_async
+        from src.backend.core.resilience.retry import retry_async
 
         async def bad():
             raise ValueError("not retryable")
@@ -50,7 +50,7 @@ class TestRetryPolicyHelper:
     @pytest.mark.asyncio
     async def test_retry_with_args_and_kwargs(self) -> None:
         """Args/kwargs передаются в coro."""
-        from src.backend.core.utils.retry_helper import retry_async
+        from src.backend.core.resilience.retry import retry_async
 
         async def with_args(a, b=10):
             return a + b
@@ -61,7 +61,7 @@ class TestRetryPolicyHelper:
     @pytest.mark.asyncio
     async def test_retry_logs_each_attempt(self) -> None:
         """Логирует warning на каждом failed attempt."""
-        from src.backend.core.utils.retry_helper import retry_async
+        from src.backend.core.resilience.retry import retry_async
 
         async def fail_once_then_ok():
             # Use a counter via closure

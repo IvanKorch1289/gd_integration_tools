@@ -230,7 +230,7 @@ class SmtpClient(BaseSmtpClient):
         Raises:
             ConnectionError: Если все попытки соединения исчерпаны.
         """
-        from src.backend.infrastructure.resilience.retry import make_async_retry
+        from src.backend.core.resilience.retry import make_async_retry
 
         @make_async_retry(
             max_attempts=3,

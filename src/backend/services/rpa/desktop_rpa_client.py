@@ -78,7 +78,7 @@ async def _execute_with_protection(
 
 def _get_execute_with_retry() -> Any:
     """Lazy-initialized retry wrapper for _execute_with_protection."""
-    from src.backend.infrastructure.resilience.retry import make_async_retry
+    from src.backend.core.resilience.retry import make_async_retry
 
     return make_async_retry(
         max_attempts=3,

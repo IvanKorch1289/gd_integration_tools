@@ -26,7 +26,7 @@ from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.resilience.connector_breaker import with_breaker
-from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.resilience.retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.security.connector_rate_limiter import (
@@ -56,7 +56,8 @@ class S3Sink(Sink):
     kind: SinkKind = field(default=SinkKind.S3, init=False)
 
     @with_breaker("s3_sink", recovery_seconds=60)
-    @with_retry(max_attempts=5)
+    @with_retry(max_attempts=5,
+        retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("s3.write", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Сериализует ``payload`` и выгружает в S3 через ``storage_client``."""

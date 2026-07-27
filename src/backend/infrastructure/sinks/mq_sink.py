@@ -18,7 +18,7 @@ from typing import Any, Literal
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.resilience.connector_breaker import with_breaker
-from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.resilience.retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.dsl.codec.json import dumps_str
 from src.backend.infrastructure.clients.base_connector import HealthResult
@@ -56,7 +56,8 @@ class MqSink(Sink):
     kind: SinkKind = field(default=SinkKind.MQ, init=False)
 
     @with_breaker("mq_sink", failure_threshold=10)
-    @with_retry(max_attempts=5, initial_backoff=0.5)
+    @with_retry(max_attempts=5, initial_backoff=0.5,
+        retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("mq.write", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """Публикует ``payload`` через FastStream-broker."""

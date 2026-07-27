@@ -34,7 +34,7 @@ logger = get_logger(__name__)
 # S163 W11: retry helper для data-transfer operations (см. ftp.py W8).
 # Module-level decorator (pattern W10).
 try:
-    from src.backend.infrastructure.resilience.retry import make_async_retry
+    from src.backend.core.resilience.retry import make_async_retry
 except ImportError:  # pragma: no cover
     make_async_retry = None  # type: ignore[assignment]
 

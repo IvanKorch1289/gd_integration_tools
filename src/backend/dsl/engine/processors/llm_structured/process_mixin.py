@@ -59,7 +59,7 @@ class ProcessMixin(_LLMStructuredProcessorProtocol):
             )
             return
 
-        from src.backend.infrastructure.resilience.retry import make_async_retry
+        from src.backend.core.resilience.retry import make_async_retry
 
         provider = self._provider_name()
         client = instructor.from_litellm(litellm.acompletion)

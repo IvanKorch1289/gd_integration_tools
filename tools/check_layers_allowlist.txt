@@ -36,7 +36,6 @@ src/backend/core/di/providers/resilience_bridge.py	core	src.backend.infrastructu
 src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.clients.external
 src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.clients.external.search_providers
 src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facade
-src/backend/core/facades.py	core	src.backend.infrastructure.resilience
 src/backend/core/frontend_facade.py	core	src.backend.services.dsl_portal
 src/backend/core/integrations/skb.py	core	src.backend.services.integrations.skb
 src/backend/core/interfaces/batch_capable.py	core	src.backend.dsl.engine.context
@@ -149,7 +148,6 @@ src/backend/infrastructure/workflow/temporal_backend.py	infrastructure	src.backe
 src/backend/infrastructure/workflow/worker.py	infrastructure	src.backend.dsl.commands.setup
 src/backend/infrastructure/workflow/worker.py	infrastructure	src.backend.dsl.routes
 src/backend/services/ai/ai_graph.py	services	src.backend.dsl.commands.registry
-src/backend/services/ai/llm/tgi_batch_client.py	services	src.backend.infrastructure.resilience.retry
 src/backend/services/authorization/facade.py	services	src.backend.infrastructure.clients.storage.redis
 src/backend/services/cache/metrics.py	services	src.backend.infrastructure.cache.metrics_collector
 src/backend/services/cache/metrics.py	services	src.backend.infrastructure.cache.rag.metrics
@@ -194,7 +192,6 @@ src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.act
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.plugin_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors
 src/backend/services/resilience/rate_limiter.py	services	src.backend.infrastructure.resilience.unified_rate_limiter
-src/backend/services/rpa/desktop_rpa_client.py	services	src.backend.infrastructure.resilience.retry
 src/backend/services/scheduler/admin.py	services	src.backend.infrastructure.scheduler.dlq
 src/backend/services/scheduler/admin.py	services	src.backend.infrastructure.scheduler.scheduler_manager
 src/backend/services/schema_registry/populator.py	services	src.backend.dsl.commands.registry

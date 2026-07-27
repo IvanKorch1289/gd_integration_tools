@@ -32,7 +32,7 @@ _SOAP_BREAKER = get_breaker_registry().get_or_create(
 # S163 W10: retry для call(). Pattern из smtp.py:233-241 + ftp.py W8.
 # Retry при httpx/сетевых ошибках + TimeoutError. 3 попытки, exponential backoff.
 try:
-    from src.backend.infrastructure.resilience.retry import make_async_retry
+    from src.backend.core.resilience.retry import make_async_retry
 except ImportError:  # pragma: no cover
     make_async_retry = None  # type: ignore[assignment]
 

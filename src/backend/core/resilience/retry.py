@@ -24,7 +24,7 @@ from __future__ import annotations
 import asyncio
 import functools
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, ParamSpec, TypeVar
 
 from tenacity import (
@@ -69,6 +69,7 @@ class RetryPolicy:
 
     max_attempts: int = consts.DEFAULT_RETRY_MAX_ATTEMPTS
     initial_backoff: float = consts.DEFAULT_RETRY_INITIAL_BACKOFF
+    max_backoff: float = consts.DEFAULT_RETRY_MAX_BACKOFF
     backoff_multiplier: float = consts.DEFAULT_RETRY_BACKOFF_MULTIPLIER
     jitter: float = consts.DEFAULT_RETRY_JITTER
     retry_on: tuple[type[BaseException], ...] = (Exception,)
@@ -81,14 +82,48 @@ Retry = RetryPolicy
 
 def with_retry(
     policy: RetryPolicy | None = None,
+    *,
+    max_attempts: int | None = None,
+    initial_backoff: float | None = None,
+    max_backoff: float | None = None,
+    backoff_multiplier: float | None = None,
+    jitter: float | bool | None = None,
+    retry_on: tuple[type[BaseException], ...] | None = None,
 ) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     """Декоратор для асинхронных функций.
 
     При исчерпании ``RetryBudget`` повтор пропускается, последняя ошибка
     пробрасывается без задержки. ``RetryError`` оборачивает финальное
     исключение через стандартный tenacity.
+
+    M3: дополнительные kwargs (``max_attempts``, ``initial_backoff``,
+    ``max_backoff``, ``backoff_multiplier``, ``jitter``, ``retry_on``)
+    позволяют мигрировать sink'и с ``core.resilience.connector_retry`` без
+    потери семантики (GCP-style jitter + max_backoff cap). Параметр
+    ``jitter`` принимает ``bool`` (``True`` → 0.1s, ``False`` → 0.0s)
+    для обратной совместимости с ``connector_retry``.
     """
-    final_policy = policy or RetryPolicy()
+    overrides: dict[str, Any] = {}
+    if max_attempts is not None:
+        overrides["max_attempts"] = max_attempts
+    if initial_backoff is not None:
+        overrides["initial_backoff"] = initial_backoff
+    if max_backoff is not None:
+        overrides["max_backoff"] = max_backoff
+    if backoff_multiplier is not None:
+        overrides["backoff_multiplier"] = backoff_multiplier
+    if jitter is not None:
+        if isinstance(jitter, bool):
+            overrides["jitter"] = 0.1 if jitter else 0.0
+        else:
+            overrides["jitter"] = jitter
+    if retry_on is not None:
+        overrides["retry_on"] = retry_on
+    final_policy: RetryPolicy = (
+        policy
+        if policy is not None and not overrides
+        else replace(policy or RetryPolicy(), **overrides)
+    )
 
     def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         """Decorator that adds retry logic to async functions.
@@ -115,6 +150,7 @@ def with_retry(
                 stop=stop_after_attempt(final_policy.max_attempts),
                 wait=wait_exponential(
                     multiplier=final_policy.initial_backoff,
+                    max=final_policy.max_backoff,
                     exp_base=final_policy.backoff_multiplier,
                 )
                 + wait_random(0, final_policy.jitter),

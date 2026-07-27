@@ -33,7 +33,7 @@ from typing import Any, ClassVar
 from src.backend.core.config.services.sms import sms_settings
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.resilience.connector_breaker import with_breaker
-from src.backend.core.resilience.connector_retry import with_retry
+from src.backend.core.resilience.retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.security.connector_rate_limiter import (
@@ -85,7 +85,8 @@ class SmsSink(Sink):
         }[self.provider]
 
     @with_breaker("sms_sink")
-    @with_retry(max_attempts=3, initial_backoff=2.0)
+    @with_retry(max_attempts=3, initial_backoff=2.0,
+        retry_on=(ConnectionError, TimeoutError, OSError))
     @require_capability("sms.send", action="write")
     async def send(self, payload: Any) -> SinkResult:
         """S203 W5: отправить SMS через httpx POST.
