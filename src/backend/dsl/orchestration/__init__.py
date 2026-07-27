@@ -41,6 +41,7 @@ class Sensor:
     _task: asyncio.Task[None] | None = None
 
     async def start(self) -> None:
+        """Запустить background-таск (lifecycle)."""
         from src.backend.dsl.service import get_dsl_service
 
         async def _loop() -> None:
@@ -59,6 +60,7 @@ class Sensor:
         )
 
     async def stop(self) -> None:
+        """Остановить background-таск, отменить pending."""
         if self._task:
             self._task.cancel()
             self._task = None
@@ -74,6 +76,7 @@ class Backfill:
     step_days: int = 1
 
     async def run(self, payload_for_day: Callable[[date], dict[str, Any]]) -> list[Any]:
+        """Выполнить workflow step; вернуть output."""
         from src.backend.dsl.service import get_dsl_service
 
         dsl = get_dsl_service()
@@ -98,6 +101,7 @@ class DryRun:
     route_id: str
 
     async def run(self, payload: dict[str, Any]) -> Any:
+        """Выполнить workflow step; вернуть output."""
         from src.backend.dsl.service import get_dsl_service
 
         return await get_dsl_service().dispatch(
@@ -116,6 +120,7 @@ class HumanApproval:
     decided_at: datetime | None = None
 
     async def wait(self, timeout: float | None = None) -> str:
+        """Дождаться reply (block до timeout) — sync wrapper поверх async."""
         if timeout is not None:
             try:
                 await asyncio.wait_for(self.approved.wait(), timeout=timeout)
@@ -127,11 +132,13 @@ class HumanApproval:
         return self.decision
 
     def approve(self) -> None:
+        """Approve HITL checkpoint (admin approval)."""
         self.decision = "approved"
         self.decided_at = datetime.now(UTC)
         self.approved.set()
 
     def reject(self) -> None:
+        """Reject HITL checkpoint (admin denial)."""
         self.decision = "rejected"
         self.decided_at = datetime.now(UTC)
         self.approved.set()
