@@ -67,6 +67,7 @@ class MarshalProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: marshal/unmarshal body (JSON/Avro/Protobuf)."""
         encoded = self._data_format.marshal(exchange.in_message.body)
         exchange.in_message.body = encoded
         exchange.in_message.set_header(
@@ -81,10 +82,12 @@ class MarshalProcessor(BaseProcessor):
         )
 
     def stats(self) -> dict[str, int]:
+        """Вернуть stats: bytes_in/out, errors, count."""
         with self._lock:
             return {"marshals": self._count}
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {
             "type": "marshal",
             "format": self._data_format.name,
@@ -130,6 +133,7 @@ class UnmarshalProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: marshal/unmarshal body (JSON/Avro/Protobuf)."""
         body = exchange.in_message.body
         if strict_content_type_check := self._strict_content_type:
             existing_ct = exchange.in_message.get_header(self._content_type_header)
@@ -151,10 +155,12 @@ class UnmarshalProcessor(BaseProcessor):
         _log.debug("Unmarshal[%s]: decoded", self._data_format.name)
 
     def stats(self) -> dict[str, int]:
+        """Вернуть stats: bytes_in/out, errors, count."""
         with self._lock:
             return {"unmarshals": self._count}
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {
             "type": "unmarshal",
             "format": self._data_format.name,
