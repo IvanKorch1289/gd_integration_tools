@@ -77,43 +77,55 @@ class APIClient(BaseAPIClient):
 
     # ── Metrics (2) ────────────────────────────────────────────────
     def get_metrics(self) -> dict[str, Any]:
+        """``self._metrics.get_metrics(...)`` — passthrough to underlying <metrics>.get_metrics."""
         return self._metrics.get_metrics()
 
     def get_health(self) -> dict[str, Any]:
+        """``self._metrics.get_health(...)`` — passthrough to underlying <metrics>.get_health."""
         return self._metrics.get_health()
 
     # ── Tenants (2) ────────────────────────────────────────────────
     def get_tenants(self) -> dict[str, Any]:
+        """``self._tenants.get_tenants(...)`` — passthrough to underlying <tenants>.get_tenants."""
         return self._tenants.get_tenants()
 
     def get_tenant_detail(self, tenant_id: str) -> dict[str, Any]:
+        """``self._tenants.get_tenant_detail(tenant_id)`` — passthrough to underlying <tenants>.get_tenant_detail."""
         return self._tenants.get_tenant_detail(tenant_id)
 
     # ── Orders (4) ─────────────────────────────────────────────────
     def get_orders(self, page: int = 1, size: int = 50) -> Any:
+        """``self._orders.get_orders(page=page, size=size)`` — passthrough to underlying <orders>.get_orders."""
         return self._orders.get_orders(page=page, size=size)
 
     def create_order(self, data: dict[str, Any]) -> dict[str, Any]:
+        """``self._orders.create_order(data)`` — passthrough to underlying <orders>.create_order."""
         return self._orders.create_order(data)
 
     def update_order(self, order_id: int, data: dict[str, Any]) -> dict[str, Any]:
+        """``self._orders.update_order(order_id, data)`` — passthrough to underlying <orders>.update_order."""
         return self._orders.update_order(order_id, data)
 
     def delete_order(self, order_id: int) -> None:
+        """``self._orders.delete_order(order_id)`` — passthrough to underlying <orders>.delete_order."""
         return self._orders.delete_order(order_id)
 
     # ── Chat (1) ───────────────────────────────────────────────────
     def chat(self, message: str, session_id: str = "default") -> str:
+        """``self._chat.chat(message, session_id)`` — passthrough to underlying <chat>.chat."""
         return self._chat.chat(message, session_id)
 
     # ── Flags (5) ──────────────────────────────────────────────────
     def get_flags(self) -> list[dict[str, Any]]:
+        """``self._flags.get_flags(...)`` — passthrough to underlying <flags>.get_flags."""
         return self._flags.get_flags()
 
     def toggle_flag(self, name: str, enabled: bool) -> bool:
+        """``self._flags.toggle_flag(name, enabled)`` — passthrough to underlying <flags>.toggle_flag."""
         return self._flags.toggle_flag(name, enabled)
 
     def list_overrides(self) -> dict[str, Any]:
+        """``self._flags.list_overrides(...)`` — passthrough to underlying <flags>.list_overrides."""
         return self._flags.list_overrides()
 
     def set_override(
@@ -128,16 +140,20 @@ class APIClient(BaseAPIClient):
 
     # ── Config (2) ─────────────────────────────────────────────────
     def get_config(self) -> dict[str, Any]:
+        """``self._config.get_config(...)`` — passthrough to underlying <config>.get_config."""
         return self._config.get_config()
 
     def get_trace_logs(self, limit: int = 100) -> list[dict[str, Any]]:
+        """``self._config.get_trace_logs(limit)`` — passthrough to underlying <config>.get_trace_logs."""
         return self._config.get_trace_logs(limit)
 
     # ── Workflows (7) ──────────────────────────────────────────────
     def list_workflows(self, **kwargs: Any) -> list[dict[str, Any]]:
+        """``self._workflows.list_workflows(**kwargs)`` — passthrough to underlying <workflows>.list_workflows."""
         return self._workflows.list_workflows(**kwargs)
 
     def get_workflow(self, instance_id: str) -> dict[str, Any] | None:
+        """``self._workflows.get_workflow(instance_id)`` — passthrough to underlying <workflows>.get_workflow."""
         return self._workflows.get_workflow(instance_id)
 
     def get_workflow_events(
@@ -146,12 +162,15 @@ class APIClient(BaseAPIClient):
         return self._workflows.get_workflow_events(instance_id, **kwargs)
 
     def retry_workflow(self, instance_id: str) -> bool:
+        """``self._workflows.retry_workflow(instance_id)`` — passthrough to underlying <workflows>.retry_workflow."""
         return self._workflows.retry_workflow(instance_id)
 
     def cancel_workflow(self, instance_id: str, **kwargs: Any) -> bool:
+        """``self._workflows.cancel_workflow(instance_id, **kwargs)`` — passthrough to underlying <workflows>.cancel_workflow."""
         return self._workflows.cancel_workflow(instance_id, **kwargs)
 
     def resume_workflow(self, instance_id: str) -> bool:
+        """``self._workflows.resume_workflow(instance_id)`` — passthrough to underlying <workflows>.resume_workflow."""
         return self._workflows.resume_workflow(instance_id)
 
     def trigger_workflow(
@@ -161,57 +180,74 @@ class APIClient(BaseAPIClient):
 
     # ── DSL Routes (8) ─────────────────────────────────────────────
     def get_routes(self) -> list[dict[str, Any]]:
+        """``self._dsl_routes.get_routes(...)`` — passthrough to underlying <dsl_routes>.get_routes."""
         return self._dsl_routes.get_routes()
 
     def list_dsl_routes(self) -> list[str]:
+        """``self._dsl_routes.list_dsl_routes(...)`` — passthrough to underlying <dsl_routes>.list_dsl_routes."""
         return self._dsl_routes.list_dsl_routes()
 
     def get_dsl_route(self, route_id: str) -> dict[str, Any] | None:
+        """``self._dsl_routes.get_dsl_route(route_id)`` — passthrough to underlying <dsl_routes>.get_dsl_route."""
         return self._dsl_routes.get_dsl_route(route_id)
 
     def create_dsl_route(self, yaml_str: str) -> dict[str, Any]:
+        """``self._dsl_routes.create_dsl_route(yaml_str)`` — passthrough to underlying <dsl_routes>.create_dsl_route."""
         return self._dsl_routes.create_dsl_route(yaml_str)
 
     def update_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any]:
+        """``self._dsl_routes.update_dsl_route(route_id, yaml_str)`` — passthrough to underlying <dsl_routes>.update_dsl_route."""
         return self._dsl_routes.update_dsl_route(route_id, yaml_str)
 
     def delete_dsl_route(self, route_id: str) -> bool:
+        """``self._dsl_routes.delete_dsl_route(route_id)`` — passthrough to underlying <dsl_routes>.delete_dsl_route."""
         return self._dsl_routes.delete_dsl_route(route_id)
 
     def validate_dsl_route(self, yaml_str: str) -> dict[str, Any]:
+        """``self._dsl_routes.validate_dsl_route(yaml_str)`` — passthrough to underlying <dsl_routes>.validate_dsl_route."""
         return self._dsl_routes.validate_dsl_route(yaml_str)
 
     def diff_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any] | None:
+        """``self._dsl_routes.diff_dsl_route(route_id, yaml_str)`` — passthrough to underlying <dsl_routes>.diff_dsl_route."""
         return self._dsl_routes.diff_dsl_route(route_id, yaml_str)
 
     # ── Feedback (5) ───────────────────────────────────────────────
     def list_feedback_pending(self, **kwargs: Any) -> dict[str, Any]:
+        """``self._feedback.list_feedback_pending(**kwargs)`` — passthrough to underlying <feedback>.list_feedback_pending."""
         return self._feedback.list_feedback_pending(**kwargs)
 
     def list_feedback_labeled(self, **kwargs: Any) -> dict[str, Any]:
+        """``self._feedback.list_feedback_labeled(**kwargs)`` — passthrough to underlying <feedback>.list_feedback_labeled."""
         return self._feedback.list_feedback_labeled(**kwargs)
 
     def get_feedback_stats(self) -> dict[str, int]:
+        """``self._feedback.get_feedback_stats(...)`` — passthrough to underlying <feedback>.get_feedback_stats."""
         return self._feedback.get_feedback_stats()
 
     def label_feedback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        """``self._feedback.label_feedback(*args, **kwargs)`` — passthrough to underlying <feedback>.label_feedback."""
         return self._feedback.label_feedback(*args, **kwargs)
 
     def index_feedback_to_rag(self, *args: Any, **kwargs: Any) -> dict[str, int]:
+        """``self._feedback.index_feedback_to_rag(*args, **kwargs)`` — passthrough to underlying <feedback>.index_feedback_to_rag."""
         return self._feedback.index_feedback_to_rag(*args, **kwargs)
 
     # ── Inventory (2) ──────────────────────────────────────────────
     def get_plugins_inventory(self) -> dict[str, Any]:
+        """``self._inventory.get_plugins_inventory(...)`` — passthrough to underlying <inventory>.get_plugins_inventory."""
         return self._inventory.get_plugins_inventory()
 
     def get_routes_inventory(self) -> dict[str, Any]:
+        """``self._inventory.get_routes_inventory(...)`` — passthrough to underlying <inventory>.get_routes_inventory."""
         return self._inventory.get_routes_inventory()
 
     # ── Capability (6) ─────────────────────────────────────────────
     def get_capability_catalog(self) -> dict[str, Any]:
+        """``self._capability.get_capability_catalog(...)`` — passthrough to underlying <capability>.get_capability_catalog."""
         return self._capability.get_capability_catalog()
 
     def get_processor_catalog(self, query: str = "", **kwargs: Any) -> dict[str, Any]:
+        """``self._capability.get_processor_catalog(query, **kwargs)`` — passthrough to underlying <capability>.get_processor_catalog."""
         return self._capability.get_processor_catalog(query, **kwargs)
 
     def get_audit_events(
@@ -220,19 +256,24 @@ class APIClient(BaseAPIClient):
         return self._capability.get_audit_events(plugin, **kwargs)
 
     def get_dependency_graph(self) -> dict[str, Any]:
+        """``self._capability.get_dependency_graph(...)`` — passthrough to underlying <capability>.get_dependency_graph."""
         return self._capability.get_dependency_graph()
 
     def get_capability_graph(self) -> dict[str, Any]:
+        """``self._capability.get_capability_graph(...)`` — passthrough to underlying <capability>.get_capability_graph."""
         return self._capability.get_capability_graph()
 
     def scaffold_plugin(self, name: str, **kwargs: Any) -> dict[str, Any]:
+        """``self._capability.scaffold_plugin(name, **kwargs)`` — passthrough to underlying <capability>.scaffold_plugin."""
         return self._capability.scaffold_plugin(name, **kwargs)
 
     # ── Logs (2) ───────────────────────────────────────────────────
     def list_step_logs(self, **kwargs: Any) -> list[dict[str, Any]]:
+        """``self._logs.list_step_logs(**kwargs)`` — passthrough to underlying <logs>.list_step_logs."""
         return self._logs.list_step_logs(**kwargs)
 
     def get_step_detail(self, workflow_id: str) -> dict[str, Any]:
+        """``self._logs.get_step_detail(workflow_id)`` — passthrough to underlying <logs>.get_step_detail."""
         return self._logs.get_step_detail(workflow_id)
 
 

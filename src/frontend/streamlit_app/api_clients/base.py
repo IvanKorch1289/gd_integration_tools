@@ -123,18 +123,23 @@ class BaseAPIClient:
         time.sleep(backoff)
 
     def get(self, path: str, **kwargs: Any) -> Any:
+        """HTTP GET к API endpoint ``path`` (с retry/timeout через ``_request``)."""
         return self._request("GET", path, **kwargs)
 
     def post(self, path: str, **kwargs: Any) -> Any:
+        """HTTP POST к API endpoint ``path`` (с retry/timeout через ``_request``)."""
         return self._request("POST", path, **kwargs)
 
     def put(self, path: str, **kwargs: Any) -> Any:
+        """HTTP PUT к API endpoint ``path`` (с retry/timeout через ``_request``)."""
         return self._request("PUT", path, **kwargs)
 
     def patch(self, path: str, **kwargs: Any) -> Any:
+        """HTTP PATCH к API endpoint ``path`` (с retry/timeout через ``_request``)."""
         return self._request("PATCH", path, **kwargs)
 
     def delete(self, path: str, **kwargs: Any) -> Any:
+        """HTTP DELETE к API endpoint ``path`` (с retry/timeout через ``_request``)."""
         return self._request("DELETE", path, **kwargs)
 
     def _request(self, method: str, path: str, **kwargs: Any) -> Any:  # noqa: BLE001
