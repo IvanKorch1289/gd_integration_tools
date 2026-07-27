@@ -168,6 +168,7 @@ class RegexMaskRemediator(Remediator):
         self.mask = mask
 
     def remediate(self, value: Any, params: dict[str, Any]) -> Any:
+        """Remediate value: RegexMaskRemediator data-quality fix."""
         if not isinstance(value, str):
             return value
         pattern = params.get("pattern")
@@ -197,6 +198,7 @@ class EnumFallbackRemediator(Remediator):
         self.fallback = fallback
 
     def remediate(self, value: Any, params: dict[str, Any]) -> Any:
+        """Remediate value: EnumFallbackRemediator data-quality fix."""
         allowed = params.get("allowed", [])
         if not allowed or value in allowed:
             return value
@@ -236,6 +238,7 @@ class TypeCoerceRemediator(Remediator):
     }
 
     def remediate(self, value: Any, params: dict[str, Any]) -> Any:
+        """Remediate value: TypeCoerceRemediator data-quality fix."""
         target = params.get("target_type")
         if not target:
             return value
@@ -275,6 +278,7 @@ class CompositeRemediator(Remediator):
         self.stop_on_fix = stop_on_fix
 
     def remediate(self, value: Any, params: dict[str, Any]) -> Any:
+        """Remediate value: CompositeRemediator data-quality fix."""
         current = value
         for rem in self.remediators:
             before = current
