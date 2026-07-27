@@ -59,14 +59,17 @@ class SimpleRegistry:
         self._lock = threading.Lock()
 
     def register(self, name: str, processor: BaseProcessor) -> None:
+        """Зарегистрировать processor под ``name`` в routing slip registry."""
         with self._lock:
             self._processors[name] = processor
 
     def unregister(self, name: str) -> None:
+        """Удалить processor из registry по ``name``."""
         with self._lock:
             self._processors.pop(name, None)
 
     def get(self, name: str) -> BaseProcessor | None:
+        """Получить processor по ``name``; None если не найдено."""
         with self._lock:
             return self._processors.get(name)
 
@@ -155,6 +158,7 @@ class RoutingSlipProcessor(BaseProcessor):
         _log.debug("RoutingSlip: completed all %d steps", len(steps))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {
             "type": "routing_slip",
             "strict": self._strict,
