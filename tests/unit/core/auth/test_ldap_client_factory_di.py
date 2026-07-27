@@ -195,21 +195,19 @@ class TestLdapClientFactoryRuntimeSymbols:
         path = "src/backend/core/auth/ldap_client_factory.py"
         with open(path) as f:
             content = f.read()
-        # The DI success path must reference AdServerConfig as runtime
-        # (not just TYPE_CHECKING). Check that AdServerConfig is imported
-        # at runtime (not only TYPE_CHECKING block).
-        # Find the function body and verify AdServerConfig is imported.
+        # Cycle 30 P1 fix: DI success path imports AdServerConfig from
+        # core-owned contract (core.auth.ldap_contract) — NOT from
+        # services.auth.ad_directory_client (would be layer violation).
+        # The runtime import is inside a try/except block.
         import re
-        # Find the try/except block where get_ad_client constructs the client
-        # (DI success path is inside the try block)
         match = re.search(
-            r"try:.*?from src\.backend\.services\.auth\.ad_directory_client import \((.*?)\)",
+            r"try:.*?from src\.backend\.core\.auth\.ldap_contract import \((.*?)\)",
             content,
             re.S,
         )
         assert match is not None, (
-            "DI success path must import AdServerConfig from "
-            "services.auth.ad_directory_client (not TYPE_CHECKING only)"
+            "DI success path must import AdServerConfig from core "
+            "contract (core.auth.ldap_contract), not services layer"
         )
         assert "AdServerConfig" in match.group(1), (
             "AdServerConfig must be in the runtime import for DI success path"

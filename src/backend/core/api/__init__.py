@@ -79,12 +79,11 @@ __all__ = [
     "get_mongodb_client_class",
     "get_elasticsearch_client_class",
     "get_clickhouse_client_class",
-    # AIGateway (lazy)
     "AIGateway",
-    # SchedulerManager (lazy)
-    "SchedulerManager",
-    # Workflow builders (lazy — re-exported from dsl.workflow.builder)
-    "WorkflowBuilder",
+    # NOTE: SchedulerManager and WorkflowBuilder are upper-layer symbols.
+    # They live in src.backend.sdk (the permitted composition boundary),
+    # NOT in core.api — importing dsl/infrastructure from core violates
+    # the layer dependency matrix.
 ]
 
 
@@ -95,9 +94,7 @@ def __getattr__(name: str):
     """Lazy module-level attribute access for DI providers + classes."""
     # DI providers
     if name == "get_scheduler_provider":
-        from src.backend.core.di.providers.scheduler import (
-            get_scheduler_provider,
-        )
+        from src.backend.core.di.providers.scheduler import get_scheduler_provider
 
         return get_scheduler_provider
     if name == "get_redis_client_class":
@@ -129,30 +126,16 @@ def __getattr__(name: str):
         from src.backend.core.ai.gateway.gateway import AIGateway
 
         return AIGateway
-    # SchedulerManager
-    if name == "SchedulerManager":
-        from src.backend.infrastructure.scheduler.scheduler_manager import (
-            SchedulerManager,
-        )
-
-        return SchedulerManager
-    # WorkflowBuilder
-    if name == "WorkflowBuilder":
-        from src.backend.dsl.workflow.builder import WorkflowBuilder
-
-        return WorkflowBuilder
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__() -> list[str]:
     """Tab-completion support: include all __all__ + __getattr__ symbols."""
-    return sorted(list(__all__) + [
+    return sorted([*__all__,
         "get_scheduler_provider",
         "get_redis_client_class",
         "get_mongodb_client_class",
         "get_elasticsearch_client_class",
         "get_clickhouse_client_class",
         "AIGateway",
-        "SchedulerManager",
-        "WorkflowBuilder",
     ])

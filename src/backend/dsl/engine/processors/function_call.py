@@ -18,6 +18,7 @@ import importlib
 import os
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.security.module_whitelist import validate_module_whitelist
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
 
@@ -150,26 +151,19 @@ class CallFunctionProcessor(BaseProcessor):
             except Exception:
                 pass
 
-        if not whitelist:
-            if CallFunctionProcessor._is_strict_whitelist():
-                raise PermissionError(
-                    "call_function: empty whitelist in production / strict mode "
-                    f"(module {module_name!r}); declare plugin.toml::"
-                    "call_function_modules или settings.call_function_modules"
-                )
-            return  # dev fallback (K-ARCH-5: только при NOT strict)
-
-        if module_name in whitelist:
-            return
-        for entry in whitelist:
-            if entry.endswith(".*") and module_name.startswith(entry[:-2] + "."):
-                return
-            if entry == module_name:
-                return
-
-        raise PermissionError(
-            f"call_function: module {module_name!r} not in whitelist "
-            f"(call_function_modules)"
+        strict = CallFunctionProcessor._is_strict_whitelist()
+        validate_module_whitelist(
+            module_name,
+            whitelist,
+            context="call_function",
+            denied_suffix=" (call_function_modules)",
+            empty_mode="error" if strict else "allow",
+            empty_error=PermissionError,
+            empty_message=(
+                "call_function: empty whitelist in production / strict mode "
+                f"(module {module_name!r}); declare plugin.toml::"
+                "call_function_modules или settings.call_function_modules"
+            ),
         )
 
     @staticmethod

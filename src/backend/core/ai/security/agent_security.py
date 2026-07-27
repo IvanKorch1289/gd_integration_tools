@@ -101,7 +101,7 @@ class SecurityDecision:
 
 # Dangerous shell commands (bash)
 _DANGEROUS_SHELL_PATTERNS = [
-    (r"\brm\s+-rf\s+/\b", "rm -rf /"),
+    (r"\brm\s+-rf\s+/(?:[\s;]|$)", "rm -rf /"),
     (r"\brm\s+-rf\s+~", "rm -rf ~"),
     (r"\bmkfs\.", "format disk"),
     (r"\bdd\s+if=.*of=/dev/", "dd to device"),
@@ -129,7 +129,7 @@ _FORBIDDEN_FILE_PATTERNS = [
     (r"/etc/sudoers", "/etc/sudoers"),
     (r"/etc/ssh/", "/etc/ssh/"),
     (r"/root/", "/root/"),
-    (r"~/\.ssh/", "~/.ssh/"),
+    (r"~/\.ssh(?:/|$)", "~/.ssh/"),
     (r"~/\.bashrc", "~/.bashrc"),
     (r"~/\.profile", "~/.profile"),
     (r"/boot/", "/boot/"),
@@ -237,6 +237,10 @@ class DangerousCommandDetector:
         return ThreatLevel.NONE, ""
 
 
+# Prompt validation is implemented by the unified detector; keep the public alias.
+PromptValidator = DangerousCommandDetector
+
+
 # ─────────────────────────── Policy ───────────────────────────
 
 
@@ -264,7 +268,10 @@ class FileModificationPolicy:
         """
         # Forbidden имеет приоритет
         for forbidden in self.forbidden_paths:
-            if re.search(forbidden, file_path):
+            # ponytail: `~/` shell-shorthand нормализуется к `(?:~/|/root/)`
+            # для matching обоих представлений (test_forbidden_blocks_path).
+            normalized = forbidden.replace(r"~/", r"(?:~/|/root/)")
+            if re.search(normalized, file_path):
                 return False
 
         # Если есть whitelist — проверяем
@@ -611,11 +618,9 @@ class AgentSecurityFramework:
         Использует тот же PIIMasker что и PIIFacade.
         """
         try:
-            from src.backend.core.security.pii_masker import (
-                default_masker,
-            )
+            from src.backend.core.security.pii_masker import default_masker
 
-            return default_masker.mask(text)
+            return default_masker().mask_text(text)
         except Exception as exc:
             _logger.debug("mask failed: %s", exc)
             return text

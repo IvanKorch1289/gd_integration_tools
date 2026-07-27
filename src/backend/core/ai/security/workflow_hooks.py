@@ -23,13 +23,11 @@ Production wiring: через workflow initialization (см. workflow setup).
 
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
 from typing import Any
 
-from src.backend.core.ai.security import (
-    SecurityDecision,
-    SecurityHook,
-    ThreatLevel,
-)
+from src.backend.core.ai.security import SecurityDecision, SecurityHook, ThreatLevel
 from src.backend.core.logging import get_logger
 
 __all__ = (
@@ -44,6 +42,16 @@ __all__ = (
 )
 
 _logger = get_logger("core.ai.security.workflow_hooks")
+
+# Resolve system temp roots at import time via stdlib (no hardcoded paths).
+# ``tempfile.gettempdir()`` respects TMPDIR/TMP/TEMP env overrides; on Linux
+# ``/var/tmp`` is the conventional secondary temp location used by systemd
+# and many installers. Both are matched as ``Path.is_relative_to`` to
+# avoid substring false positives (e.g. ``/tmpfoo/...``).
+_TEMP_ROOTS: tuple[Path, ...] = (
+    Path(tempfile.gettempdir()).resolve(),
+    Path(Path(tempfile.gettempdir()).anchor) / "var" / "tmp",
+)
 
 
 def banking_transaction_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
@@ -100,12 +108,19 @@ def rpa_browser_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
         return SecurityDecision(allowed=True)
 
     file_path = context.get("file_path", "")
-    if file_path and ("/tmp/" in file_path or "/var/tmp/" in file_path):
-        return SecurityDecision(
-            allowed=False,
-            threat_level=ThreatLevel.HIGH,
-            reason=f"rpa file_path_not_allowed: {file_path}",
-        )
+    if file_path:
+        try:
+            resolved = Path(file_path).resolve()
+        except (OSError, ValueError):
+            resolved = None
+        if resolved is not None and any(
+            resolved.is_relative_to(root) for root in _TEMP_ROOTS
+        ):
+            return SecurityDecision(
+                allowed=False,
+                threat_level=ThreatLevel.HIGH,
+                reason=f"rpa file_path_not_allowed: {file_path}",
+            )
 
     return SecurityDecision(
         allowed=True,

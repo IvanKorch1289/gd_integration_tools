@@ -83,8 +83,6 @@ class TestFacadeRuntime:
             "get_scheduler_provider",
             "get_redis_client_class",
             "AIGateway",
-            "SchedulerManager",
-            "WorkflowBuilder",
         ]:
             obj = getattr(src.backend.core.api, name)
             assert obj is not None, f"Lazy load failed for: {name}"
@@ -98,8 +96,6 @@ class TestFacadeRuntime:
         for name in [
             "get_scheduler_provider",
             "AIGateway",
-            "SchedulerManager",
-            "WorkflowBuilder",
         ]:
             assert name in d, f"{name} missing from dir() — tab completion broken"
 

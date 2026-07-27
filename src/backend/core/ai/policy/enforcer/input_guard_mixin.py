@@ -142,14 +142,35 @@ class InputGuardMixin:
         except GuardrailViolationError:
             raise
         except Exception as exc:
+            # P0 security (cycle 30): fail-closed by default when guard
+            # provider is unavailable (network/timeout/5xx). Only an explicit
+            # ``fail_open=True`` override allows continuation, and every
+            # override is audit-logged for visibility.
             logger.warning("AIPolicyEnforcer: Lakera check failed: %s", exc)
-            if on_block == "fail":
+            if not getattr(ref, "fail_open", False):
                 raise GuardrailViolationError(
                     guard_name=ref.name,
-                    flagged_categories=["lakera_error"],
-                    on_block=on_block,
+                    flagged_categories=["guard_provider_unavailable"],
+                    on_block="fail",
                     content=prompt,
                 ) from exc
+            # Explicit audited override (dev/staging with degraded provider).
+            try:
+                from src.backend.core.audit.facade import emit_audit_safe
+
+                emit_audit_safe(
+                    event_type="ai.guardrail.provider_failure",
+                    payload={
+                        "guard": ref.name,
+                        "provider_error": str(exc),
+                        "fail_open": True,
+                    },
+                    severity="warning",
+                )
+            except Exception:  # pragma: no cover — audit must never block
+                pass
             return GuardResult(
-                guard_name=ref.name, verdict="warned", categories=["lakera_error"]
+                guard_name=ref.name,
+                verdict="warned",
+                categories=["guard_provider_unavailable"],
             )

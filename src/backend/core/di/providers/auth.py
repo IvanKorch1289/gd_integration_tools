@@ -17,7 +17,6 @@ from typing import Any
 
 from src.backend.core.di.module_registry import resolve_module
 
-
 _overrides: dict[str, Any] = {}
 
 
@@ -66,7 +65,7 @@ def get_jwt_backend_provider() -> Any:
     jwks = _build_jwks_cache_or_none()
     algorithms = [secure_settings.algorithm]
     if jwks is not None and "RS256" not in algorithms:
-        algorithms = list(set(algorithms + ["RS256"]))
+        algorithms = list({*algorithms, "RS256"})
     blacklist = _build_jwt_blacklist_or_none()
     backend = JwtBackend(
         algorithms=algorithms,
@@ -167,18 +166,29 @@ __all__ = (
 
 
 def get_ad_directory_client_provider() -> Any:
-    """Возвращает singleton :class:`AdDirectoryClient`.
+    """Вернуть зарегистрированную factory для создания LDAP-клиента.
 
-    Реализация: ``services.auth.ad_directory_client.get_ad_directory_client``.
-    Модуль может отсутствовать в усечённой dev_light-сборке — провайдер
-    бросает ``ImportError``, вызывающий код обязан его обработать.
+    Factory регистрируется composition-слоем (plugins/composition) через
+    ``set_ad_directory_client_provider``. Возвращает callable, принимающий
+    ``config`` и ``connection_factory`` kwargs.
+
+    Raises:
+        RuntimeError: Если composition-слой не зарегистрировал factory.
     """
-    if "ad_directory_client" in _overrides:
-        return _overrides["ad_directory_client"]
-    module = resolve_module("auth.ad_directory_client")
-    return module.get_ad_directory_client()
+    if "ad_directory_client_factory" in _overrides:
+        return _overrides["ad_directory_client_factory"]
+    raise RuntimeError(
+        "LDAP client factory is not registered by the composition layer. "
+        "Call set_ad_directory_client_provider(factory) at startup."
+    )
 
 
-def set_ad_directory_client_provider(instance: Any) -> None:
-    """Override singleton (test-инжекция)."""
-    _overrides["ad_directory_client"] = instance
+def set_ad_directory_client_provider(factory: Any) -> None:
+    """Зарегистрировать/сбросить factory для LDAP-клиента (composition/test).
+
+    ``None`` сбрасывает registration.
+    """
+    if factory is None:
+        _overrides.pop("ad_directory_client_factory", None)
+    else:
+        _overrides["ad_directory_client_factory"] = factory

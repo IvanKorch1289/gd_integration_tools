@@ -23,7 +23,7 @@ def get_scheduler_provider() -> Any:
     """Вернуть singleton SchedulerManager."""
     if "scheduler" in _overrides:
         return _overrides["scheduler"]
-    return resolve_module("infrastructure.scheduler.scheduler_manager").get_default_scheduler()
+    return resolve_module("scheduler.scheduler_manager").get_default_scheduler()
 
 
 def set_scheduler_provider(scheduler: Any) -> None:

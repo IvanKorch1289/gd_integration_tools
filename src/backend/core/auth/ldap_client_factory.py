@@ -30,9 +30,10 @@ from typing import TYPE_CHECKING, Any
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    # Type-only for return annotation in get_ad_client().
-    # Runtime import happens inside get_ad_client via DI provider.
-    from src.backend.services.auth.ad_directory_client import AdDirectoryClient
+    # Use core-owned protocol for type checking (no core→services import).
+    from src.backend.core.auth.ldap_contract import (
+        AdDirectoryClientProtocol as AdDirectoryClient,
+    )
 
 __all__ = ("get_ad_client", "reset_ad_client", "ad_client_cached")
 
@@ -102,50 +103,30 @@ def get_ad_client(
         _logger.debug("get_ad_client: ldap_settings not configured, no client")
         return None
 
-    # Cycle 29 P1-#2 fix: use DI provider instead of direct core→services
-    # import. The provider does the lazy resolution, eliminating the
-    # layer violation. Falls back to direct import only if DI fails.
-    # Cycle 29 retrospective fix: AdServerConfig + AdDirectoryClient
-    # must be importable at runtime (was only TYPE_CHECKING before → NameError).
+    # Cycle 30 P1 fix: use core-owned contract + DI provider only.
+    # No runtime core→services import (layer violation eliminated).
     try:
-        from src.backend.core.di.providers.auth import (
-            get_ad_directory_client_provider,
-        )
-        from src.backend.services.auth.ad_directory_client import (  # noqa: I001
-            AdServerConfig,
+        from src.backend.core.auth.ldap_contract import AdServerConfig
+        from src.backend.core.di.providers.auth import get_ad_directory_client_provider
+
+        config = AdServerConfig(
+            server_uri=settings.server_uri,
+            bind_dn=settings.bind_dn,
+            bind_password=settings.bind_password,
+            search_base=settings.search_base,
+            use_ssl=settings.use_ssl,
+            timeout_seconds=settings.timeout_seconds,
+            user_id_attribute=settings.user_id_attribute,
+            group_attribute=settings.group_attribute,
         )
         client = get_ad_directory_client_provider()(
-            config=AdServerConfig(
-                server_uri=settings.server_uri,
-                bind_dn=settings.bind_dn,
-                bind_password=settings.bind_password,
-                search_base=settings.search_base,
-                use_ssl=settings.use_ssl,
-                timeout_seconds=settings.timeout_seconds,
-                user_id_attribute=settings.user_id_attribute,
-                group_attribute=settings.group_attribute,
-            ),
+            config=config,
             connection_factory=connection_factory,
         )
-    except ImportError:
-        # Ponytail fallback: direct import (only if DI module not registered).
-        from src.backend.services.auth.ad_directory_client import (
-            AdDirectoryClient,
-            AdServerConfig,
-        )
-        client = AdDirectoryClient(
-            config=AdServerConfig(
-                server_uri=settings.server_uri,
-                bind_dn=settings.bind_dn,
-                bind_password=settings.bind_password,
-                search_base=settings.search_base,
-                use_ssl=settings.use_ssl,
-                timeout_seconds=settings.timeout_seconds,
-                user_id_attribute=settings.user_id_attribute,
-                group_attribute=settings.group_attribute,
-            ),
-            connection_factory=connection_factory,
-        )
+    except (ImportError, RuntimeError, KeyError):
+        # dev_light: DI module not registered → no LDAP client.
+        _logger.debug("get_ad_client: DI provider unavailable, skipping")
+        return None
     _ad_client_instance = client
     _logger.info(
         "get_ad_client: instantiated AdDirectoryClient for %s", settings.server_uri

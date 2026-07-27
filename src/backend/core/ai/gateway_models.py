@@ -45,13 +45,10 @@ class AIRequest:
         context: Переменные подстановки в template (Jinja2 / f-string).
         stream: Если ``True`` — стриминг chunks (SSE/WebSocket).
         tool_name: Конкретный tool/action, который агент сейчас вызывает
-            (``"credit.score.calculate"``, ``"db.read.orders"``). Если
-            задан — используется для ``enforce_tool_policy`` вместо
-            ``workflow_id`` (S1 fix). Если ``None`` (default) — fallback
-            на ``workflow_id`` (backward compat с pre-S1 кодом, где
-            workflow-level enforcement был единственным уровнем).
-            Per-tool-dispatch enforcement (S1.b) будет задействовать
-            это поле в ``ai_tool_dispatch.py``.
+            (``"credit.score.calculate"``, ``"db.read.orders"``). **Обязателен**
+            при restricted tool policy (непустой whitelist/blacklist); fail-closed
+            ``ToolPolicyViolationError`` если не передан. Workflow-level
+            enforcement (без tool restriction) использует ``allow_all_tools=True``.
     """
 
     workflow_id: str

@@ -117,6 +117,15 @@ class GuardRef(BaseModel):
     name: str
     config: dict[str, Any] = Field(default_factory=dict)
     on_block: Literal["fail", "warn", "dlq"] = "fail"
+    fail_open: bool = Field(
+        default=False,
+        description=(
+            "P0 fail-closed default: если guard provider недоступен "
+            "(network/timeout/5xx) — input блокируется. Установите "
+            "``True`` для explicit override (dev/staging с degraded "
+            "provider); каждое override логируется через audit."
+        ),
+    )
 
 
 class BackendSpec(BaseModel):

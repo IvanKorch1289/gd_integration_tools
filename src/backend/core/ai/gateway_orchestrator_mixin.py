@@ -110,10 +110,22 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                     f"Set tools.allow_all_tools=True to opt into allow-all behavior."
                 )
             return
-        from src.backend.core.ai.policy.enforcer.tools_policy import enforce_tool_policy
+        from src.backend.core.ai.policy.enforcer.tools_policy import (
+            ToolPolicyViolationError,
+            enforce_tool_policy,
+        )
 
-        enforced_name = request.tool_name or request.workflow_id
-        enforce_tool_policy(enforced_name, tools)
+        # P0 security (cycle 30): tool_name mandatory for restricted policies.
+        # No fallback on workflow_id — that would enforce on the wrong target
+        # and allow bypass of the actual tool being invoked.
+        if not request.tool_name:
+            raise ToolPolicyViolationError(
+                f"AIRequest.tool_name is required when tool policy has "
+                f"non-empty whitelist/blacklist (workflow_id="
+                f"{request.workflow_id!r}). "
+                f"Set request.tool_name to the actual tool being invoked."
+            )
+        enforce_tool_policy(request.tool_name, tools)
 
     async def _enforce_token_budget_pre_call(
         self,
