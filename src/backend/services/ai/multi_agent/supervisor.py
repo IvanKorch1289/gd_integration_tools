@@ -97,6 +97,7 @@ class SupervisorResult:
     error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Вернуть dict-представление supervisor config (для JSON response)."""
         return {
             "supervisor": self.supervisor,
             "prompt": self.prompt,
@@ -153,10 +154,12 @@ class MultiAgentSupervisor:
 
     @property
     def name(self) -> str:
+        """Вернуть имя supervisor (identifier в agent registry)."""
         return self._name
 
     @property
     def agent_names(self) -> tuple[str, ...]:
+        """Вернуть tuple names всех agents под этим supervisor."""
         return tuple(self._agents.keys())
 
     @property
