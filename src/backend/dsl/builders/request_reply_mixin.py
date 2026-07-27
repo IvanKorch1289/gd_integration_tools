@@ -68,9 +68,11 @@ class InMemoryTransport:
 
     @property
     def log(self) -> list[tuple[str, str]]:
+        """Вернуть in-memory log опубликованных envelopes (test-helper)."""
         return list(self._log)
 
     async def publish(self, channel: str, envelope: dict[str, Any]) -> None:
+        """Опубликовать request в ``channel``; вернёт reply_id для ожидания."""
         self._log.append(("publish", channel))
         async with self._lock:
             subs = list(self._subs.get(channel, ()))
@@ -80,6 +82,7 @@ class InMemoryTransport:
     async def subscribe(
         self, channel: str, handler: Callable[[dict[str, Any]], Awaitable[None]]
     ) -> None:
+        """Подписаться на ``channel``, вызывая ``handler(envelope)`` per request."""
         self._log.append(("subscribe", channel))
         async with self._lock:
             self._subs.setdefault(channel, []).append(handler)
@@ -107,10 +110,12 @@ class RequestReplyBackend:
 
     @property
     def pending_count(self) -> int:
+        """Вернуть количество pending reply'ев (backpressure metric)."""
         return len(self._pending)
 
     @property
     def transport(self) -> RequestReplyTransport:
+        """Вернуть underlying RequestReplyTransport instance."""
         return self._transport
 
     async def request(
