@@ -69,6 +69,7 @@ class MQSource:
         self._lock = asyncio.Lock()
 
     async def start(self, on_event: EventCallback) -> None:
+        """Запустить MQ consumer source (subscribe + on_event callback)."""
         async with self._lock:
             if self._broker is not None:
                 raise RuntimeError(f"MQSource(id={self.source_id!r}) уже запущен")
@@ -87,6 +88,7 @@ class MQSource:
         )
 
     async def stop(self) -> None:
+        """Остановить MQ consumer (cancel subscription)."""
         async with self._lock:
             if self._broker is None:
                 return
@@ -97,6 +99,7 @@ class MQSource:
         logger.info("MQSource stopped: id=%s", self.source_id)
 
     async def health(self, mode: str = "fast") -> HealthResult:
+        """Health check (fast=basic, deep=full probe)."""
         if self._broker is not None:
             return HealthResult.ok(latency_ms=0.0, mode=mode)
         return HealthResult.failed(error="Not started", mode=mode)
