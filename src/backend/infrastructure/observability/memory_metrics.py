@@ -36,11 +36,13 @@ class MemoryMetricsBackend(MetricsBackend):
     def inc_counter(
         self, name: str, value: float = 1.0, labels: Labels | None = None
     ) -> None:
+        """Инкрементировать counter ``name`` на ``value`` (по умолчанию 1)."""
         k = _key(name, labels)
         with self._lock:
             self._counters[k] = self._counters.get(k, 0.0) + value
 
     def set_gauge(self, name: str, value: float, labels: Labels | None = None) -> None:
+        """Установить gauge ``name`` = ``value`` (latest value semantics)."""
         k = _key(name, labels)
         with self._lock:
             self._gauges[k] = value
@@ -48,11 +50,13 @@ class MemoryMetricsBackend(MetricsBackend):
     def observe_histogram(
         self, name: str, value: float, labels: Labels | None = None
     ) -> None:
+        """Записать ``value`` в histogram ``name`` (distribution)."""
         k = _key(name, labels)
         with self._lock:
             self._histograms.setdefault(k, deque(maxlen=1000)).append(value)
 
     def snapshot(self) -> dict[str, Any]:
+        """Вернуть dict snapshot всех metric values (для /metrics endpoint)."""
         with self._lock:
             return {
                 "counters": dict(self._counters),
