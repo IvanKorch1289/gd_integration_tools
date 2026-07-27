@@ -143,6 +143,7 @@ class StdlibLogger(LoggerProtocol):
         self._inner.log(level, msg, *args, **kwargs)
 
     def isEnabledFor(self, level: int) -> bool:  # noqa: N802
+        """True if level enabled в stdlib logging config."""
         return self._inner.isEnabledFor(level)
 
     def bind(self, **kwargs: Any) -> "StdlibLogger":

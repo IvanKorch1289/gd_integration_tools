@@ -148,6 +148,7 @@ class StructlogLogger(LoggerProtocol):
         self._inner.log(level, formatted, **merged)
 
     def isEnabledFor(self, level: int) -> bool:  # noqa: N802
+        """True if level enabled в structlog config."""
         return self._inner.isEnabledFor(level)
 
     def bind(self, **kwargs: Any) -> "StructlogLogger":

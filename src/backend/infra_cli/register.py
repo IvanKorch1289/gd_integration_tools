@@ -15,6 +15,7 @@ def register_connector(name: str, target) -> None:
 
 
 def get_aggregator_with_registry():  # Helper for /health endpoint
+    """Singleton ProviderAggregator + PluginRegistry (DI helper)."""
     agg = get_health_aggregator()
     if not getattr(agg, "_include_registry", False):
         agg.include_registry(True)

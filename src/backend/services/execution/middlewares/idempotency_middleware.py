@@ -37,9 +37,11 @@ class IdempotencyStore(Protocol):
     """
 
     async def get(self, key: str) -> ActionResult | None:  # pragma: no cover
+        """Получить cached ActionResult по key (idempotency cache)."""
         ...
 
     async def set(self, key: str, result: ActionResult) -> None:  # pragma: no cover
+        """Сохранить result по key в idempotency cache."""
         ...
 
 
