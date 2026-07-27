@@ -29,6 +29,7 @@ class IntersectProcessor(BaseProcessor):
         self._other = other
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: set operation для IntersectProcessor."""
         body = exchange.in_message.body
         if not isinstance(body, list):
             exchange.set_out(body=body, headers=dict(exchange.in_message.headers))
@@ -41,6 +42,7 @@ class IntersectProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {"intersect": {"other": self._other}}
 
 
@@ -57,6 +59,7 @@ class DiffProcessor(BaseProcessor):
         self._other = other
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: set operation для DiffProcessor."""
         body = exchange.in_message.body
         if not isinstance(body, list):
             exchange.set_out(body=body, headers=dict(exchange.in_message.headers))
@@ -69,4 +72,5 @@ class DiffProcessor(BaseProcessor):
         )
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {"diff": {"other": self._other}}
