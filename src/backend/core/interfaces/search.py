@@ -18,11 +18,15 @@ class SearchClient(Protocol):
 
     async def index_document(
         self, index: str, document: dict[str, Any], doc_id: str | None = None
-    ) -> dict[str, Any]: ...
+    ) -> dict[str, Any]:
+        """Индексировать один document в ``index`` (``doc_id`` auto-generate если None)."""
+        ...
 
     async def bulk_index(
         self, index: str, documents: list[dict[str, Any]], id_field: str | None = None
-    ) -> dict[str, Any]: ...
+    ) -> dict[str, Any]:
+        """Bulk index documents в ``index`` (id из ``id_field``)."""
+        ...
 
     async def search(
         self,
@@ -31,11 +35,15 @@ class SearchClient(Protocol):
         size: int = 10,
         from_: int = 0,
         sort: list[dict[str, Any]] | None = None,
-    ) -> list[dict[str, Any]]: ...
+    ) -> list[dict[str, Any]]:
+        """Full-text search в ``index`` (size, pagination, sort)."""
+        ...
 
     async def aggregate(
         self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None
-    ) -> dict[str, Any]: ...
+    ) -> dict[str, Any]:
+        """Aggregation query (group_by, metrics) в ``index``."""
+        ...
 
     async def aggregate_terms(
         self,
