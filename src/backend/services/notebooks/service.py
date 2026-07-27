@@ -29,6 +29,7 @@ class NotebookService:
         self._repo = repository
 
     async def ensure_indexes(self) -> None:
+        """Создать MongoDB indexes (idempotent)."""
         await self._repo.ensure_indexes()
 
     async def create(
@@ -131,6 +132,7 @@ class NotebookService:
     async def restore_version(
         self, *, notebook_id: str, version: int, user: str
     ) -> Notebook | None:
+        """Восстановить notebook к указанной версии (versioning)."""
         return await self._repo.restore_version(notebook_id, version, user)
 
     async def list_all(
@@ -141,11 +143,13 @@ class NotebookService:
         limit: int = 100,
         offset: int = 0,
     ) -> list[Notebook]:
+        """Список notebooks с фильтром по tag + pagination (include_deleted для soft-delete)."""
         return await self._repo.list_all(
             tag=tag, include_deleted=include_deleted, limit=limit, offset=offset
         )
 
     async def delete(self, notebook_id: str) -> bool:
+        """Удалить notebook (soft-delete по умолчанию)."""
         deleted = await self._repo.soft_delete(notebook_id)
         if deleted:
             _trigger_rag_delete(notebook_id)
