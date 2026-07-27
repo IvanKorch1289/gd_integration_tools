@@ -179,7 +179,9 @@ class Healthcheck(ABC):
     """Любой компонент, поддерживающий health check."""
 
     @abstractmethod
-    async def check_health(self) -> HealthReport: ...
+    async def check_health(self) -> HealthReport:
+        """Вернуть snapshot текущего health-state компонента."""
+        ...
 
 
 # ────────────────── Message Broker ──────────────────
@@ -191,19 +193,29 @@ class MessageBroker(ABC):
     @abstractmethod
     async def publish(
         self, topic: str, message: bytes, headers: dict[str, str] | None = None
-    ) -> None: ...
+    ) -> None:
+        """Опубликовать ``message`` в ``topic`` с опциональными headers."""
+        ...
 
     @abstractmethod
-    async def subscribe(self, topic: str, group: str | None = None) -> Any: ...
+    async def subscribe(self, topic: str, group: str | None = None) -> Any:
+        """Подписаться на ``topic``; ``group`` — consumer group (None = broadcast)."""
+        ...
 
     @abstractmethod
-    async def acknowledge(self, message_id: str) -> None: ...
+    async def acknowledge(self, message_id: str) -> None:
+        """Подтвердить обработку сообщения ``message_id`` (at-least-once)."""
+        ...
 
     @abstractmethod
-    async def connect(self) -> None: ...
+    async def connect(self) -> None:
+        """Установить соединение с broker."""
+        ...
 
     @abstractmethod
-    async def disconnect(self) -> None: ...
+    async def disconnect(self) -> None:
+        """Закрыть соединение с broker (graceful shutdown)."""
+        ...
 
 
 # ────────────────── Lifecycle ──────────────────
@@ -213,10 +225,14 @@ class AsyncLifecycle(ABC):
     """Компонент с async lifecycle (start/stop)."""
 
     @abstractmethod
-    async def start(self) -> None: ...
+    async def start(self) -> None:
+        """Запустить компонент (idempotent)."""
+        ...
 
     @abstractmethod
-    async def stop(self) -> None: ...
+    async def stop(self) -> None:
+        """Остановить компонент (graceful shutdown)."""
+        ...
 
 
 class ManagedResource(AsyncLifecycle, Healthcheck):
@@ -258,9 +274,11 @@ class PoolMetricsCollector:
         self._pools: dict[str, PoolMetrics] = {}
 
     def register(self, name: str, max_size: int = 0) -> None:
+        """Зарегистрировать новый pool по ``name`` с capacity ``max_size`` (0 = unbounded)."""
         self._pools[name] = PoolMetrics(name=name, max_size=max_size)
 
     def update(self, name: str, **kwargs: Any) -> None:
+        """Обновить метрики ``name`` (только атрибуты, существующие в PoolMetrics)."""
         if name in self._pools:
             for k, v in kwargs.items():
                 if hasattr(self._pools[name], k):
@@ -315,6 +333,7 @@ class AsyncBatcher:
         self._running = False
 
     async def add(self, item: Any) -> None:
+        """Добавить item в буфер; триггерит flush при достижении ``batch_size``."""
         async with self._lock:
             self._buffer.append(item)
             if len(self._buffer) >= self._batch_size:
@@ -333,6 +352,7 @@ class AsyncBatcher:
             logger.debug("AsyncBatcher flush_fn raised; batch dropped", exc_info=True)
 
     async def start(self) -> None:
+        """Запустить background flush-задачу (interval-based)."""
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._running = True
@@ -341,6 +361,7 @@ class AsyncBatcher:
         )
 
     async def stop(self) -> None:
+        """Остановить background flush и дождаться последнего батча."""
         self._running = False
         if self._task:
             self._task.cancel()
