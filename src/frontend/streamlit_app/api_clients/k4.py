@@ -33,6 +33,7 @@ class K4APIClient(APIClient):
     """API-клиент с поддержкой страниц 74_Cache_Dashboard / 75_RAG_Ingest_Wizard."""
 
     def get_rag_cache_stats(self) -> dict[str, Any]:
+        """Получить RAG cache stats (hit/miss/TTL по tier)."""
         try:
             return self._request("GET", "/api/v1/admin/rag-cache/stats")
         except Exception as exc:  # noqa: BLE001
@@ -40,6 +41,7 @@ class K4APIClient(APIClient):
             return {}
 
     def flush_rag_cache_tier(self, tier: str | None = None) -> dict[str, Any]:
+        """Flush RAG cache tier (memory / disk / redis)."""
         params: dict[str, Any] = {"tier": tier} if tier else {}
         try:
             return self._request("POST", "/api/v1/admin/rag-cache/flush", params=params)
@@ -48,6 +50,7 @@ class K4APIClient(APIClient):
             return {}
 
     def get_rag_invalidation_events(self, limit: int = 50) -> list[dict[str, Any]]:
+        """Получить последние RAG cache invalidation events."""
         try:
             return self._request(
                 "GET", "/api/v1/admin/rag-cache/events", params={"limit": limit}
@@ -59,6 +62,7 @@ class K4APIClient(APIClient):
             return []
 
     def litellm_gateway_stats(self) -> dict[str, Any]:
+        """Получить litellm-gateway usage stats (tokens, cost)."""
         try:
             return self._request("GET", "/api/v1/admin/litellm-gateway/stats")
         except Exception as exc:  # noqa: BLE001
@@ -66,6 +70,7 @@ class K4APIClient(APIClient):
             return {}
 
     def list_embedding_providers(self) -> list[str]:
+        """Список зарегистрированных embedding providers."""
         try:
             payload = self._request("GET", "/api/v1/admin/embedding-providers")
             if isinstance(payload, list):
@@ -80,6 +85,7 @@ class K4APIClient(APIClient):
     def rag_ingest_start(
         self, *, files: list[Any], collection: str = "default"
     ) -> dict[str, Any]:
+        """Запустить RAG ingestion (async task_id)."""
         try:
             # Index-based fallback для file-like объектов без .name
             # (например, BytesIO wrapper, raw bytes). Sprint 47 W4 fix.
@@ -100,6 +106,7 @@ class K4APIClient(APIClient):
             return {"task_id": None, "error": str(exc)}
 
     def rag_ingest_status(self, task_id: str) -> dict[str, Any]:
+        """Получить статус RAG ingestion task."""
         try:
             return self._request("GET", f"/api/v1/rag/ingest/status/{task_id}")
         except Exception as exc:  # noqa: BLE001
@@ -107,6 +114,7 @@ class K4APIClient(APIClient):
             return {}
 
     def rag_search_preview(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
+        """Preview RAG search (без side effects)."""
         try:
             return self._request(
                 "GET", "/api/v1/rag/search", params={"query": query, "top_k": top_k}
