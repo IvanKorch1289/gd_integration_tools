@@ -65,11 +65,22 @@ class BreakerSpec:
     """Параметры breaker'а: порог отказов и время до half-open.
 
     Дефолты — из ``core.config.constants.consts`` (один источник правды).
+
+    FW6: расширен опциональными полями ``window_seconds`` (sliding-window
+    semantics для per-route CB), ``half_open_max_calls`` (HALF_OPEN probe
+    budget), ``excluded_exceptions`` (tuple exception-классов, НЕ
+    считающихся failures). Эти поля ранее жили в
+    :class:`core.resilience.circuit_breaker.CircuitBreakerSpec` (DEPRECATED
+    shim, удалить в Sprint 37).
     """
 
     name: str = "default"
     failure_threshold: int = consts.DEFAULT_CB_FAILURE_THRESHOLD
     recovery_timeout: float = consts.DEFAULT_CB_RECOVERY_SECONDS
+    # FW6: optional sliding-window + exclusion (default 0 = pure purgatory).
+    window_seconds: float = 0.0
+    half_open_max_calls: int = 1
+    excluded_exceptions: tuple[type[BaseException], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

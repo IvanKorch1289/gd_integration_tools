@@ -38,22 +38,43 @@ HAS_PURGATORY: Final = importlib.util.find_spec("purgatory") is not None
 
 @dataclass(slots=True, frozen=True)
 class CircuitBreakerSpec:
-    """Единая спецификация CB для всех адаптеров.
+    """DEPRECATED shim (FW6) — type alias для :class:`BreakerSpec`.
 
-    Attributes:
-        failure_threshold: Число подряд failures до OPEN (purgatory semantics)
-            или windowed threshold для SlidingWindowBreaker.
-        recovery_timeout: Секунд в OPEN до HALF_OPEN probe.
-        window_seconds: Sliding window для per-route CB (0 = pure purgatory).
-        half_open_max_calls: HALF_OPEN probe budget (default 1 — purgatory native).
-        excluded_exceptions: tuple exception-классов, НЕ считающихся failures.
+    Pre-FW6: ``CircuitBreakerSpec`` имел extended-поля (``window_seconds``,
+    ``half_open_max_calls``, ``excluded_exceptions``), которых не было
+    в каноническом :class:`BreakerSpec`.
+
+    Post-FW6: :class:`BreakerSpec` расширен этими полями.
+    ``CircuitBreakerSpec`` сохранён как DEPRECATED backward-compat alias
+    (выдаёт DeprecationWarning при первом import) — экземпляры
+    совместимы 1:1 с ``BreakerSpec`` (передаются в ``SlidingWindowBreaker``
+    и ``ReplicaFailoverBreaker`` без изменений).
+
+    Миграция::
+
+        # было
+        from src.backend.core.resilience.circuit_breaker import CircuitBreakerSpec
+        spec = CircuitBreakerSpec(failure_threshold=3, window_seconds=60)
+
+        # стало
+        from src.backend.core.resilience.breaker import BreakerSpec
+        spec = BreakerSpec(failure_threshold=3, window_seconds=60)
+
+    Удалить в Sprint 37 (после 1-2 спринтов deprecation cycle).
     """
 
-    failure_threshold: int = 5
-    recovery_timeout: float = 30.0
-    window_seconds: float = 0.0  # 0 → non-sliding (purgatory native)
-    half_open_max_calls: int = 1
-    excluded_exceptions: tuple[type[BaseException], ...] = ()
+    def __new__(cls, *args: Any, **kwargs: Any) -> "CircuitBreakerSpec":
+        import warnings
+
+        warnings.warn(
+            "CircuitBreakerSpec is DEPRECATED; use BreakerSpec from "
+            "src.backend.core.resilience.breaker (FW6).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        from src.backend.core.resilience.breaker import BreakerSpec
+
+        return BreakerSpec(*args, **kwargs)
 
 
 # ────────────────── Minimal contract (для RPA / non-purgatory consumers) ───
