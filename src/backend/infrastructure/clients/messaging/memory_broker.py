@@ -37,9 +37,11 @@ class InMemoryMessageBroker(MessageBroker):
         self._connected = False
 
     async def connect(self) -> None:
+        """Установить in-memory broker state (no-op для memory backend)."""
         self._connected = True
 
     async def disconnect(self) -> None:
+        """Закрыть broker (graceful shutdown)."""
         self._connected = False
         for queues in self._consumers.values():
             for q in queues:
@@ -50,6 +52,7 @@ class InMemoryMessageBroker(MessageBroker):
     async def publish(
         self, topic: str, message: bytes, headers: dict[str, str] | None = None
     ) -> None:
+        """Опубликовать ``message`` в ``topic`` с опц. ``headers``."""
         del headers  # in-memory broker не использует headers
         for q in list(self._consumers.get(topic, ())):
             try:
@@ -61,12 +64,14 @@ class InMemoryMessageBroker(MessageBroker):
     async def subscribe(
         self, topic: str, group: str | None = None
     ) -> AsyncIterator[bytes]:
+        """Подписаться на ``topic``; ``group`` = consumer group (None = broadcast)."""
         del group
         q: asyncio.Queue[bytes] = asyncio.Queue(maxsize=self._max)
         self._consumers[topic].add(q)
         return _drain(q, self._consumers[topic])
 
     async def acknowledge(self, message_id: str) -> None:
+        """Подтвердить обработку ``message_id``."""
         del message_id  # in-memory без durability — ack не нужен
 
 
