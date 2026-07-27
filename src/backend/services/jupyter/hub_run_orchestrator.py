@@ -160,6 +160,7 @@ async def run_hub_notebook(
     actual_path: str
     timeout: float = 300.0
     default_params: dict[str, Any] = {}
+    is_temp_file: bool = False  # M7.2: cleanup inline-notebook temp after exec
 
     if notebook_path_override:
         # Явный путь — без обращения к реестру
@@ -167,11 +168,14 @@ async def run_hub_notebook(
     elif notebook_content is not None:
         # Inline notebook (multipart upload, base64 в SOAP/GraphQL).
         # Сохраняем во временный файл и передаём как path.
+        # M7.2: помечаем ``is_temp_file=True`` для post-execute cleanup
+        # (раньше temp файл оставался в /tmp → утечка диска).
         actual_path = await _save_inline_notebook(
             notebook_name=notebook_name,
             content=notebook_content,
             output_path=output_path,
         )
+        is_temp_file = output_path is None
     else:
         # Резолв через реестр
         reg = registry if registry is not None else get_notebook_registry()
@@ -208,6 +212,19 @@ async def run_hub_notebook(
             "Hub run failed: notebook=%s err=%s", notebook_name, exc
         )
         raise
+    finally:
+        # M7.2: best-effort cleanup inline temp файла (защита от /tmp
+        # leak). Делаем unlink с поглощением OSError (файл уже мог быть
+        # удалён или доступен только-read).
+        if is_temp_file:
+            try:
+                os.unlink(actual_path)
+            except OSError as cleanup_exc:
+                _logger.warning(
+                    "Hub inline temp cleanup failed for %s: %s",
+                    actual_path,
+                    cleanup_exc,
+                )
 
     outputs = result.get("outputs", [])
     cells_executed = sum(

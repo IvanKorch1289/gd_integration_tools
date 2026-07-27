@@ -58,7 +58,7 @@ steps:
       timeout_seconds: ${blueprint.timeout_seconds}
       steps:
         - name: step_1
-          action:
+          forward:
             dispatch_action:
               name: ${blueprint.step_1_action}
               mode: sync
@@ -70,7 +70,7 @@ steps:
               payload: ${properties.step_1_result}
 
         - name: step_2
-          action:
+          forward:
             dispatch_action:
               name: ${blueprint.step_2_action}
               mode: sync
@@ -82,7 +82,7 @@ steps:
               payload: ${properties.step_2_result}
 
         - name: step_3
-          action:
+          forward:
             dispatch_action:
               name: ${blueprint.step_3_action}
               mode: sync
