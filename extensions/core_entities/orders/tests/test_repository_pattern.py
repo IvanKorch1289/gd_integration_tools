@@ -2,7 +2,7 @@
 
 Проверяет:
 - Репозиторий наследует SQLAlchemyRepository
-- Repository доступен через core.facades
+- Repository доступен через core.repositories.base
 - Паттерн изолирован в extensions/
 
 S171 M9 final (T52.4): coverage для repository layer.
