@@ -28,6 +28,7 @@ logger = get_logger(__name__)
 
 
 class DQSeverity(str, Enum):
+    """Severity enum (Pydantic): INFO / WARNING / ERROR / CRITICAL."""
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -51,6 +52,7 @@ class DQCheckResult:
 
     @property
     def is_clean(self) -> bool:
+        """True если нет violations (severity >= ERROR)."""
         return len(self.violations) == 0
 
 
