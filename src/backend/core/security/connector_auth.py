@@ -69,9 +69,9 @@ def require_capability(
     if not capability or not isinstance(capability, str):
         raise ValueError("capability must be non-empty string")
 
-    def decorator(func):
+    def decorator(func: Any) -> Any:
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Lazy import — избежать циклических зависимостей (auth → core).
             try:
                 from src.backend.services.authorization.facade import (

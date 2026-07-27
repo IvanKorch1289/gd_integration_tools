@@ -8,7 +8,7 @@ layer violation: infrastructure/ → entrypoints/.
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
@@ -64,7 +64,7 @@ def get_mqtt_settings() -> MqttSettings:
     return MqttSettings()
 
 
-def __getattr__(name: str):  # type: ignore[misc]
+def __getattr__(name: str) -> Any:  # type: ignore[misc]
     # ponytail: backward-compat for `from ...mqtt import mqtt_settings`
     if name == "mqtt_settings":
         return get_mqtt_settings()

@@ -28,6 +28,8 @@ History:
 
 from __future__ import annotations
 
+from typing import Any
+
 # Re-export from existing single entry point (src/backend/sdk).
 # This facade does NOT replace SDK; it complements it with explicit
 # DI providers + AIGateway + SchedulerManager + workflow builders.
@@ -90,7 +92,7 @@ __all__ = [
 # Lazy imports via __getattr__ (cycle 36 S170 pattern) — avoids
 # circular deps and keeps import time fast for extension authors
 # who only need a few symbols.
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """Lazy module-level attribute access for DI providers + classes."""
     # DI providers
     if name == "get_scheduler_provider":
