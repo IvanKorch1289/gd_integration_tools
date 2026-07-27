@@ -73,7 +73,7 @@ class SlidingWindowBreaker:
     ``entrypoints/middlewares/circuit_breaker.py``.
     """
 
-    def __init__(self, name: str, spec: CircuitBreakerSpec) -> None:
+    def __init__(self, name: str, spec: BreakerSpec) -> None:
         """Инициализация sliding-window breaker.
 
         Args:
@@ -169,7 +169,7 @@ class ReplicaFailoverBreaker:
     в :class:`SmartSessionManager`.
     """
 
-    def __init__(self, name: str, spec: CircuitBreakerSpec) -> None:
+    def __init__(self, name: str, spec: BreakerSpec) -> None:
         """Инициализация replica-failover breaker.
 
         Args:
@@ -242,7 +242,6 @@ __all__ = (
     "BreakerRegistry",
     "BreakerSpec",
     "CircuitBreaker",
-    "CircuitBreakerSpec",
     "CircuitOpen",
     "ReplicaFailoverBreaker",
     "SlidingWindowBreaker",
