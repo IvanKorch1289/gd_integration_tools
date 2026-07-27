@@ -3,6 +3,12 @@
 Позволяет использовать production-ready CDCClient (polling, listen_notify,
 logminer) как ``CDCSource`` для DSL-процессоров и других consumers,
 ожидающих AsyncIterator[CDCEvent].
+
+M5: на overflow (queue FULL после 5s backpressure) — ранее event
+терялся с ERROR-логом. Теперь при наличии ``dlq_writer`` event
+сериализуется в :class:`DLQEnvelope` (reason=``"queue_overflow"``,
+class=``"operational"``) и записывается в DLQ (per ``DLQWriter.send``).
+Без ``dlq_writer`` — fallback к ERROR-логу (поведение pre-M5).
 """
 
 from __future__ import annotations
@@ -10,15 +16,62 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.external.cdc import CDCClient, get_cdc_client
 
-__all__ = ("CDCClientAdapter",)
+__all__ = ("CDCClientAdapter", "CDCOverflowDLQ")
 
 logger = get_logger("cdc.cdc_client_adapter")
+
+
+@runtime_checkable
+class CDCOverflowDLQ(Protocol):
+    """Минимальный контракт для DLQ-writer в CDC-адаптере.
+
+    Реализация: :class:`src.backend.infrastructure.messaging.dlq.inbox_writer.InboxDLQWriter`
+    или любой объект с методом ``send(envelope: DLQEnvelope) -> Awaitable[None]``.
+    Используем Protocol чтобы CDC-слой не зависел от messaging-слоя
+    (downward import из infrastructure.messaging).
+    """
+
+    async def send(self, envelope: Any) -> None: ...
+
+
+def _to_dlq_envelope(event: CDCEvent, *, profile: str) -> Any:
+    """Сериализует CDCEvent в DLQEnvelope для overflow handoff.
+
+    Lazy import :class:`DLQEnvelope` / :class:`DLQReason` чтобы CDC
+    не зависел от messaging-слоя на старте модуля.
+    """
+    from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope, DLQReason
+
+    # CDCEvent не имеет ``topic`` — это составной ключ ``source.table``.
+    # Для DLQ-route_id используем ``"<source>.<table>"`` (конвенция
+    # из core.cdc.source).
+    route_key = f"{event.source}.{event.table}"
+    payload: dict[str, Any] = {
+        "operation": event.operation,
+        "new": event.new,
+        "old": event.old,
+        "metadata": event.metadata,
+    }
+    return DLQEnvelope(
+        transport=f"cdc:{profile}",
+        route_id=route_key,
+        original_payload=payload,
+        error_class="CDCAdapterQueueOverflow",
+        error_message="CDC adapter queue overflow after 5s backpressure",
+        reason=DLQReason.OVERFLOW,
+        metadata={
+            "cursor_value": event.cursor.value,
+            "cursor_backend": event.cursor.backend,
+            "source": event.source,
+            "table": event.table,
+        },
+    )
 
 
 class CDCClientAdapter(CDCSource):
@@ -34,6 +87,7 @@ class CDCClientAdapter(CDCSource):
         timestamp_column: str = "updated_at",
         channel: str | None = None,
         client: CDCClient | None = None,
+        dlq_writer: CDCOverflowDLQ | None = None,
     ) -> None:
         self._profile = profile
         self._strategy = strategy
@@ -45,6 +99,9 @@ class CDCClientAdapter(CDCSource):
         self._queue: asyncio.Queue[CDCEvent] | None = None
         self._sub_id: str | None = None
         self._stopped = False
+        # M5: optional DLQ handoff on overflow. If ``None`` — pre-M5
+        # behavior (ERROR log + drop). See ``_enqueue_or_dlq``.
+        self._dlq_writer = dlq_writer
 
     async def subscribe(
         self, *, tables: list[str], start_cursor: CDCCursor | None = None
@@ -74,11 +131,7 @@ class CDCClientAdapter(CDCSource):
                             self._queue.put(event), timeout=5.0
                         )
                     except asyncio.TimeoutError:
-                        logger.error(
-                            "CDC adapter queue OVERFLOW after backpressure: "
-                            "EVENT DROPPED (consider increasing "
-                            "queue size or adding DLQ)"
-                        )
+                        await self._on_overflow(event)
 
         self._sub_id = await self._client.subscribe(
             profile=self._profile,
@@ -138,6 +191,42 @@ class CDCClientAdapter(CDCSource):
         if self._sub_id is not None:
             await self._client.unsubscribe(self._sub_id)
             self._sub_id = None
+
+    async def _on_overflow(self, event: CDCEvent) -> None:
+        """M5: handle queue overflow with optional DLQ handoff.
+
+        Pre-M5: ERROR log + drop (data loss).
+        Post-M5: serialize ``event`` to :class:`DLQEnvelope` and forward
+        to ``self._dlq_writer.send(envelope)`` if a writer was supplied
+        at construction. If the DLQ write itself fails, the error is
+        logged but never re-raised — the consumer loop must not die on
+        overflow.
+        """
+        if self._dlq_writer is None:
+            logger.error(
+                "CDC adapter queue OVERFLOW after backpressure: "
+                "EVENT DROPPED (no DLQ writer configured; "
+                "consider increasing queue size or adding DLQ)"
+            )
+            return
+        envelope = _to_dlq_envelope(event, profile=self._profile)
+        try:
+            await self._dlq_writer.send(envelope)
+            logger.warning(
+                "CDC adapter queue OVERFLOW: event forwarded to DLQ "
+                "(profile=%s source=%s table=%s)",
+                self._profile,
+                event.source,
+                event.table,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.exception(
+                "CDC DLQ handoff failed for profile=%s source=%s table=%s: %s",
+                self._profile,
+                event.source,
+                event.table,
+                exc,
+            )
 
 
 def _client_event_to_source(event_dict: dict[str, Any]) -> CDCEvent:

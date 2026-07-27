@@ -39,6 +39,9 @@ class DLQReason(StrEnum):
     TIMEOUT = "timeout"
     """Истёк timeout backend-вызова (4XX от proxy / 5XX от upstream)."""
 
+    OVERFLOW = "overflow"
+    """M5: queue overflow после backpressure (CDC/SSE/stream consumers)."""
+
     RETRIES_EXHAUSTED = "retries_exhausted"
     """Превышен max_retries; resilience-policy исчерпана."""
 
