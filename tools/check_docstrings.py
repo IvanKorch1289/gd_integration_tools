@@ -445,6 +445,16 @@ Examples:
         action='store_true',
         help='Also check module-level docstrings (default: OFF, opt-in)',
     )
+    parser.add_argument(
+        '--max-allowed',
+        type=int,
+        default=None,
+        help=(
+            "M10: fail only if total missing > N (ratchet). "
+            "Use to enforce 'no new missing' without blocking the current "
+            "954-missing baseline. Example: --max-allowed 954."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -500,6 +510,8 @@ Examples:
     print(output)
 
     # Exit code 1 if there are issues
+    if args.max_allowed is not None:
+        return 1 if aggregate.total_missing > args.max_allowed else 0
     return 1 if aggregate.total_missing > 0 else 0
 
 

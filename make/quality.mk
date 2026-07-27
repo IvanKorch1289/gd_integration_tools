@@ -75,7 +75,10 @@ vulture-gate: check-env ## Run strict dead code gate (CI-blocking)
 
 check-docstrings: ##@ Quality Check for missing docstrings in public API
 	@$(INFO) "Checking docstring coverage..."
-	@python3 tools/check_docstrings.py $(SOURCE_DIR) $(if $(SUMMARY),--summary,) $(if $(JSON),--json,)
+	@python3 tools/check_docstrings.py $(SOURCE_DIR) $(if $(SUMMARY),--summary,) $(if $(JSON),--json,) $(if $(MAX_ALLOWED),--max-allowed $(MAX_ALLOWED),)
+
+check-docstrings-ratchet: ##@ Quality M10: docstring ratchet (no new missing). Set MAX_ALLOWED to current baseline.
+	@$(WARN) "Run \`make check-docstrings MAX_ALLOWED=<N>\` to enforce. Current baseline: 954 missing in 360 files."
 
 refurb-check: check-env ## Check for modern Python idioms
 	@$(INFO) "Running Refurb to modernize code..."
