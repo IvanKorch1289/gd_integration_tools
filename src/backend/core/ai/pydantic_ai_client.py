@@ -460,18 +460,22 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
 
         @property
         def model_name(self) -> str:
+            """Имя модели в формате 'provider:model_name' (e.g. 'openai:gpt-4o')."""
             return self._model_name
 
         @property
         def provider(self) -> str:
+            """Имя провайдера ('openai', 'anthropic', 'ollama', etc.)."""
             return self._provider
 
         @property
         def base_url(self) -> str | None:
+            """Базовый URL API; None для default провайдера."""
             return None
 
         @property
         def system(self) -> str | None:
+            """System prompt (None = default AIGateway prompt)."""
             return "openai-chat"  # default для chat models
 
         async def request(
@@ -584,18 +588,22 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
 
         @property
         def label(self) -> str:
+            """Diagnostic label для логов (e.g. 'openai/gpt-4o-mini')."""
             return f"{self._provider}:{self._model_name}"
 
         @property
         def model_id(self) -> str:
+            """Уникальный model_id (e.g. 'gpt-4o-mini-2024-07-18')."""
             return f"{self._provider}:{self._model_name}"
 
         @property
         def profile(self) -> _Any:
+            """Auth profile name (e.g. 'default', 'team-a')."""
             return None
 
         @property
         def settings(self) -> _ModelSettings | None:
+            """ModelSettings (temperature, max_tokens, top_p, etc.)."""
             return None
 
         @staticmethod
@@ -633,10 +641,12 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
 
         @property
         def model_name(self) -> str:
+            """Имя модели в формате 'provider:model_name' (e.g. 'openai:gpt-4o')."""
             return self._model_name
 
         @property
         def provider(self) -> str:
+            """Имя провайдера ('openai', 'anthropic', 'ollama', etc.)."""
             return "litellm"
 
         @property
