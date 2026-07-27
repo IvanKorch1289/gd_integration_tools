@@ -50,7 +50,9 @@ class CertBackend(ABC):
     name: str = "base"
 
     @abstractmethod
-    async def get(self, service_id: str) -> CertEntry | None: ...
+    async def get(self, service_id: str) -> CertEntry | None:
+        """Получить cert по ``service_id`` (abstract)."""
+        ...
 
     @abstractmethod
     async def save(
@@ -61,7 +63,9 @@ class CertBackend(ABC):
         *,
         description: str | None = None,
         uploaded_by: str | None = None,
-    ) -> CertEntry: ...
+    ) -> CertEntry:
+        """Сохранить cert + history (abstract)."""
+        ...
 
     @abstractmethod
     async def set(self, service_id: str, pem: str) -> None:
@@ -77,7 +81,11 @@ class CertBackend(ABC):
         """Удалить сертификат. Возвращает ``True`` если запись существовала."""
 
     @abstractmethod
-    async def history(self, service_id: str) -> list[CertEntry]: ...
+    async def history(self, service_id: str) -> list[CertEntry]:
+        """История versions для ``service_id`` (abstract)."""
+        ...
 
     @abstractmethod
-    async def list_expiring(self, before: datetime) -> list[CertEntry]: ...
+    async def list_expiring(self, before: datetime) -> list[CertEntry]:
+        """Список certs с expiration < ``before`` (abstract)."""
+        ...
