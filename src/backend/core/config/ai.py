@@ -32,11 +32,14 @@ __all__ = (
     "PerplexitySettings",
     "ai_providers_settings",
     "ai_workspace_settings",
+    "gigachat_settings",
     "markitdown_settings",
     "minimax_settings",
     "nim_settings",
     "openai_settings",
     "openrouter_settings",
+    "salute_speech_settings",
+    "yandexgpt_settings",
 )
 
 
@@ -377,3 +380,92 @@ markitdown_settings = MarkitdownSettings()
 openrouter_settings = OpenRouterSettings()
 nim_settings = NimSettings()
 openai_settings = OpenAISettings()
+
+
+# ── FW4: Russian LLM providers (YandexGPT, GigaChat, SaluteSpeech) ──
+
+
+class YandexGPTSettings(BaseSettingsWithLoader, LLMModelMixin):
+    """YandexGPT — российский LLM-провайдер (Yandex Cloud).
+
+    Endpoint: ``https://llm.api.cloud.yandex.net/foundationModels/v1/completion``.
+    API: OpenAI-compatible (litellm routing ``openai/``).
+    """
+
+    yaml_group: ClassVar[str] = "yandexgpt"
+    model_config = SettingsConfigDict(env_prefix="YANDEXGPT_", extra="forbid")
+
+    api_key: str = Field(default="", description="Yandex Cloud API-key (или IAM-token).")
+    folder_id: str = Field(
+        default="", description="Yandex Cloud folder_id (required для YandexGPT API)."
+    )
+    base_url: str = Field(
+        default="https://llm.api.cloud.yandex.net/v1",
+        description="YandexGPT API base URL.",
+    )
+    model: str = Field(default="yandexgpt/latest", description="Модель (latest, lite, pro).")
+    use_waf: bool = Field(default=False)
+    max_tokens: int = Field(default=2000, ge=1, le=8000)
+    temperature: float = Field(default=0.6, ge=0.0, le=2.0)
+
+
+class GigaChatSettings(BaseSettingsWithLoader, LLMModelMixin):
+    """GigaChat — российский LLM (Sber).
+
+    Endpoint: ``https://gigachat.devices.sberbank.ru/api/v1/chat/completion``.
+    API: custom (NOT OpenAI-compatible). Использует OAuth2 access_token
+    с scope ``GIGACHAT_API_PERS`` или ``GIGACHAT_API_CORP``.
+    """
+
+    yaml_group: ClassVar[str] = "gigachat"
+    model_config = SettingsConfigDict(env_prefix="GIGACHAT_", extra="forbid")
+
+    credentials: str = Field(
+        default="",
+        description="GigaChat API credentials (OAuth2 client_id:client_secret или API-key).",
+    )
+    scope: Literal["GIGACHAT_API_PERS", "GIGACHAT_API_CORP"] = Field(
+        default="GIGACHAT_API_PERS",
+        description="OAuth2 scope.",
+    )
+    base_url: str = Field(
+        default="https://gigachat.devices.sberbank.ru/api/v1",
+        description="GigaChat API base URL.",
+    )
+    model: str = Field(
+        default="GigaChat:latest", description="Модель (GigaChat:latest, GigaChat-Pro, ...)."
+    )
+    use_waf: bool = Field(default=False)
+    max_tokens: int = Field(default=2000, ge=1, le=8000)
+    temperature: float = Field(default=0.6, ge=0.0, le=2.0)
+
+
+class SaluteSpeechSettings(BaseSettingsWithLoader, LLMModelMixin):
+    """SaluteSpeech — российский LLM (SberDevices).
+
+    Endpoint: ``https://salute.online.sberbank.ru:8000/v1/chat/completion``.
+    API: OpenAI-compatible (litellm routing). Требует OAuth2 access_token.
+    """
+
+    yaml_group: ClassVar[str] = "salute_speech"
+    model_config = SettingsConfigDict(env_prefix="SALUTE_SPEECH_", extra="forbid")
+
+    credentials: str = Field(
+        default="", description="SaluteSpeech API credentials (OAuth2)."
+    )
+    scope: Literal["SALUTE_SPEECH_PERS", "SALUTE_SPEECH_CORP"] = Field(
+        default="SALUTE_SPEECH_PERS", description="OAuth2 scope."
+    )
+    base_url: str = Field(
+        default="https://salute.online.sberbank.ru:8000/v1",
+        description="SaluteSpeech API base URL.",
+    )
+    model: str = Field(default="salute-speech/latest", description="Модель (latest, plus).")
+    use_waf: bool = Field(default=False)
+    max_tokens: int = Field(default=2000, ge=1, le=8000)
+    temperature: float = Field(default=0.6, ge=0.0, le=2.0)
+
+
+yandexgpt_settings = YandexGPTSettings()
+gigachat_settings = GigaChatSettings()
+salute_speech_settings = SaluteSpeechSettings()
