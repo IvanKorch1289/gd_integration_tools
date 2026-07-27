@@ -23,7 +23,9 @@ class BaseVectorStore(ABC):
         documents: list[str],
         ids: list[str],
         metadatas: list[dict[str, Any]] | None = None,
-    ) -> None: ...
+    ) -> None:
+        """Insert or update vectors + documents + metadata в vector store."""
+        ...
 
     @abstractmethod
     async def query(
@@ -31,13 +33,19 @@ class BaseVectorStore(ABC):
         embedding: list[float],
         top_k: int = 5,
         where: dict[str, Any] | None = None,
-    ) -> list[dict[str, Any]]: ...
+    ) -> list[dict[str, Any]]:
+        """Similarity search: top-k vectors matching ``embedding`` (optional ``where`` filter)."""
+        ...
 
     @abstractmethod
-    async def delete(self, ids: list[str]) -> None: ...
+    async def delete(self, ids: list[str]) -> None:
+        """Delete vectors по списку ``ids``."""
+        ...
 
     @abstractmethod
-    async def count(self) -> int: ...
+    async def count(self) -> int:
+        """Общее количество vectors в store."""
+        ...
 
     async def delete_where(self, where: dict[str, Any]) -> int:
         """Удаляет документы по metadata-фильтру, возвращает кол-во удалённых.
