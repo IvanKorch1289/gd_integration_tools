@@ -41,7 +41,9 @@ class EmailNotifier(Protocol):
 
     async def send(
         self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
-    ) -> None: ...
+    ) -> None:
+        """Отправить email (recipient, subject, body, metadata)."""
+        ...
 
 
 class EmailReplyChannel(InvocationReplyChannel):
@@ -76,9 +78,11 @@ class EmailReplyChannel(InvocationReplyChannel):
 
     @property
     def kind(self) -> ReplyChannelKind:
+        """Вернуть channel kind (Email)."""
         return ReplyChannelKind.EMAIL
 
     async def send(self, response: InvocationResponse) -> None:
+        """Отправить email (recipient, subject, body, metadata)."""
         recipient = self._resolve_recipient(response)
         if recipient is None:
             logger.warning(
@@ -114,6 +118,7 @@ class EmailReplyChannel(InvocationReplyChannel):
             )
 
     async def fetch(self, invocation_id: str) -> InvocationResponse | None:
+        """Fetch invocation response по invocation_id (no-op для email)."""
         return None
 
     def _resolve_recipient(self, response: InvocationResponse) -> str | None:
