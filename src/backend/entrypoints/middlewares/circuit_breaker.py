@@ -165,13 +165,14 @@ class CircuitBreakerMiddleware:
 
     def _get_sliding_breaker(self, route: str, policy: BreakerPolicy) -> Any:
         """S173: get or create SlidingWindowBreaker per-route."""
-        from src.backend.core.resilience.circuit_breaker import (
-            CircuitBreakerSpec,
-            SlidingWindowBreaker,
-        )
+        # FW6.1: перешли с CircuitBreakerSpec (DEPRECATED shim) на
+        # канонический BreakerSpec (circuit_breaker.py:64). Поля
+        # идентичны (window_seconds добавлен в FW6).
+        from src.backend.core.resilience.breaker import BreakerSpec
+        from src.backend.core.resilience.circuit_breaker import SlidingWindowBreaker
 
         if route not in self._sliding_breakers:
-            spec = CircuitBreakerSpec(
+            spec = BreakerSpec(
                 failure_threshold=policy.failure_threshold,
                 recovery_timeout=policy.reset_timeout,
                 window_seconds=policy.window_seconds,

@@ -119,14 +119,16 @@ class SmartSessionManager:
         # S173 M2.4: ReplicaFailoverBreaker facade (lazy init)
         self._use_breaker_facade = use_breaker_facade
         if use_breaker_facade:
+            # FW6.1: перешли с CircuitBreakerSpec (DEPRECATED shim) на
+            # канонический BreakerSpec. Поля идентичны для нашего use-case.
+            from src.backend.core.resilience.breaker import BreakerSpec
             from src.backend.core.resilience.circuit_breaker import (
-                CircuitBreakerSpec,
                 ReplicaFailoverBreaker,
             )
 
             self._breaker_facade = ReplicaFailoverBreaker(
                 name="smart_session_replica",
-                spec=CircuitBreakerSpec(
+                spec=BreakerSpec(
                     failure_threshold=failure_threshold,
                     recovery_timeout=cooldown_seconds,
                 ),
