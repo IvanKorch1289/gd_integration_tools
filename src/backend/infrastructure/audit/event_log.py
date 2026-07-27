@@ -1,4 +1,14 @@
-"""Audit Event Log — кто/что/когда → ClickHouse через AsyncBatcher."""
+"""Audit Event Log — кто/что/когда → ClickHouse через AsyncBatcher.
+
+M4 note: secondary ES-индексация через ``log_indexer`` (см. ``flush()``)
+— best-effort fallback. **DO NOT** use both
+:mod:`core.audit.facade.audit_service` (canonical) and this module
+for the same event — you will double-write to ClickHouse. This
+module is the batch/bulk-write path used by
+:mod:`core.audit.facade._base` fan-out helpers and
+:mod:`services.audit.workflow_audit_sink`. Per-event emit goes via
+:func:`core.audit.facade.audit_service.emit` instead.
+"""
 
 from __future__ import annotations
 

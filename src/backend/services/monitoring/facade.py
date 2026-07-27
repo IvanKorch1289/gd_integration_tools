@@ -1,30 +1,42 @@
-"""HealthFacade — capability-checked unified health checks.
+"""HealthFacade — DEPRECATED shim (M4).
 
-Sprint I-1 (S181): закрывает gap из Master Prompt §3.3 — нет единого
-facade для health checks. Существующий :class:`infrastructure.monitoring.health_check.HealthCheck`
-предоставляет только hardcoded 7 проверок (db, redis, s3, graylog, smtp, rabbitmq).
+Sprint I-1 (S181): originally a thin wrapper over the hardcoded
+``infrastructure.monitoring.health_check.HealthCheck`` (7 checks).
+After M4, the canonical entry point is
+:class:`src.backend.infrastructure.application.health_aggregator.HealthAggregator`:
 
-Предоставляет единый API:
-- ``check_all()`` — параллельная проверка всех зарегистрированных компонентов
-- ``check(name)`` — проверка одного компонента по имени
-- ``is_healthy()`` — bool, все ли компоненты healthy
-- ``register_check()`` — регистрация custom healthcheck функции
-- ``get_status()`` — детализированный status (healthy/degraded/unhealthy)
+* K8s liveness/deep probe integration (``mode="fast"|"deep"``)
+* Auto-include of all ``ConnectorRegistry`` clients
+* EventBus transitions (ok ↔ degraded ↔ down)
 
-Ponytail: thin wrapper над существующим HealthCheck. Не дублирует логику,
-делегирует через DI.
+This module is kept for backward compat with
+``tests/unit/services/monitoring/test_health_facade.py`` and emits a
+``DeprecationWarning`` at import time. New callers should import
+:class:`HealthAggregator` directly:
 
-Использование::
+    from src.backend.infrastructure.application.health_aggregator import (
+        HealthAggregator,
+        get_health_aggregator,
+    )
 
-    from src.backend.services.monitoring.facade import get_health_facade
-
-    facade = get_health_facade()
-    if await facade.is_healthy():
-        ...
-    status = await facade.check_all()  # HealthReport dict
+См. ``docs/audit/principal-audit-2026-07-27/REPORT.md`` (M4) для
+обоснования консолидации.
 """
 
 from __future__ import annotations
+
+import warnings
+
+warnings.warn(
+    "services.monitoring.facade.HealthFacade is deprecated; "
+    "use infrastructure.application.health_aggregator.HealthAggregator instead "
+    "(see M4 audit).",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+# Original S181 implementation preserved verbatim below for
+# backward compat with ``tests/unit/services/monitoring/test_health_facade.py``.
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
