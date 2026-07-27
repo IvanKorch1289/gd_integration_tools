@@ -110,18 +110,22 @@ class OutboxStuckMonitor:
 
     @property
     def threshold_seconds(self) -> int:
+        """Вернуть threshold (сек) для stuck processing detection."""
         return self._threshold
 
     @property
     def sample_interval_seconds(self) -> int:
+        """Вернуть interval (сек) между stuck-мониторинг сэмплами."""
         return self._sample_interval
 
     @property
     def last_count(self) -> int:
+        """Вернуть количество stuck events в последнем сэмпле."""
         return self._last_count
 
     @property
     def samples_total(self) -> int:
+        """Вернуть общее количество сэмплов с момента startup."""
         return self._samples_total
 
     async def start(self) -> None:
