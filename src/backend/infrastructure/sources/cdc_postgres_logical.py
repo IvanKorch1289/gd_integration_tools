@@ -76,6 +76,7 @@ class CdcCursorStore:
         await self._execute(PG_CDC_CURSORS_DDL)
 
     async def get_last_lsn(self, slot_name: str) -> str | None:
+        """Получить последний processed LSN для slot (checkpoint)."""
         async with self._open() as session:
             row = await session.fetchrow(
                 "SELECT last_lsn FROM cdc_cursors WHERE slot_name = $1", slot_name
@@ -83,6 +84,7 @@ class CdcCursorStore:
             return row["last_lsn"] if row else None
 
     async def set_last_lsn(self, slot_name: str, lsn: str) -> None:
+        """Сохранить LSN checkpoint (atomic upsert)."""
         async with self._open() as session:
             await session.execute(
                 """
@@ -215,11 +217,13 @@ class CdcPostgresLogicalSource:
         await self._inner.start(_wrapped)
 
     async def stop(self) -> None:
+        """Остановить CDC source (закрыть slot, release resources)."""
         if self._inner is not None:
             await self._inner.stop()
             self._inner = None
 
     async def health(self, mode: str = "fast") -> HealthResult:
+        """Health check (fast=basic, deep=full streaming probe)."""
         if self._inner is None:
             return HealthResult.failed(error="Not started", mode=mode)
         return await self._inner.health(mode=mode)
