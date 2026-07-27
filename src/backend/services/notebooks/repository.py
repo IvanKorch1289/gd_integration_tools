@@ -192,6 +192,7 @@ class InMemoryNotebookRepository:
     async def restore_version(
         self, notebook_id: str, version: int, changed_by: str
     ) -> Notebook | None:
+        """Восстановить notebook к ``version`` (audit ``changed_by``)."""
         async with self._lock:
             doc = self._docs.get(notebook_id)
             if doc is None or doc.is_deleted:
@@ -220,6 +221,7 @@ class InMemoryNotebookRepository:
         limit: int = 100,
         offset: int = 0,
     ) -> list[Notebook]:
+        """Список notebooks (filter by tag + pagination + soft-delete)."""
         async with self._lock:
             docs = list(self._docs.values())
         if not include_deleted:
@@ -230,6 +232,7 @@ class InMemoryNotebookRepository:
         return [d.model_copy(deep=True) for d in docs[offset : offset + limit]]
 
     async def soft_delete(self, notebook_id: str) -> bool:
+        """Soft-delete notebook (revoked deleted=true, не физическое удаление)."""
         async with self._lock:
             doc = self._docs.get(notebook_id)
             if doc is None:
