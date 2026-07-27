@@ -24,6 +24,7 @@ _COLLECTION = "notebooks"
 
 
 def _utc_now() -> datetime:
+    """Метод _utc_now (см. signature)."""
     return datetime.now(UTC)
 
 
@@ -45,9 +46,11 @@ class MongoNotebookRepository:
     """MongoDB-имплементация Protocol ``NotebookRepository``."""
 
     def __init__(self, client_factory: Any | None = None) -> None:
+        """Метод __init__ (см. signature)."""
         self._client_factory = client_factory or get_mongo_client
 
     def _client(self) -> MongoDBClient:
+        """Метод _client (см. signature)."""
         return self._client_factory()
 
     async def ensure_indexes(self) -> None:
@@ -130,6 +133,7 @@ class MongoNotebookRepository:
     async def restore_version(
         self, notebook_id: str, version: int, changed_by: str
     ) -> Notebook | None:
+        """Метод restore_version (см. signature)."""
         existing = await self.get(notebook_id)
         if existing is None or existing.is_deleted:
             return None
@@ -148,6 +152,7 @@ class MongoNotebookRepository:
         limit: int = 100,
         offset: int = 0,
     ) -> list[Notebook]:
+        """Метод list_all (см. signature)."""
         query: dict[str, Any] = {}
         if not include_deleted:
             query["is_deleted"] = {"$ne": True}
@@ -163,6 +168,7 @@ class MongoNotebookRepository:
         return [_doc_to_notebook(d) for d in docs]
 
     async def soft_delete(self, notebook_id: str) -> bool:
+        """Метод soft_delete (см. signature)."""
         modified = await self._client().update_one(
             _COLLECTION,
             query={"_id": notebook_id},

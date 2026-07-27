@@ -31,6 +31,7 @@ class FileCertBackend(CertBackend):
     """
 
     def __init__(self, path: Path) -> None:
+        """Метод __init__ (см. signature)."""
         self.path = path
         self.path.mkdir(parents=True, exist_ok=True)
 
@@ -43,6 +44,7 @@ class FileCertBackend(CertBackend):
         return None
 
     async def get(self, service_id: str) -> CertEntry | None:
+        """Метод get (см. signature)."""
         path = self._resolve_path(service_id)
         if path is None:
             return None
@@ -54,6 +56,7 @@ class FileCertBackend(CertBackend):
             return None
 
     async def set(self, service_id: str, pem: str) -> None:
+        """Метод set (см. signature)."""
         path = self.path / f"{service_id}.pem"
         path.write_text(pem, encoding="utf-8")
         try:
@@ -63,6 +66,7 @@ class FileCertBackend(CertBackend):
         _logger.info("cert.file.set id=%s path=%s", service_id, path)
 
     async def delete(self, service_id: str) -> bool:
+        """Метод delete (см. signature)."""
         path = self._resolve_path(service_id)
         if path is None:
             return False

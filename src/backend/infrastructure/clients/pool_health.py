@@ -234,11 +234,14 @@ class PoolHealthMonitor:
         """
         try:
             await entry.ping_callable()
+            # S204 retro-audit B07: считаем elapsed ДО обновления last_ping_at,
+            # иначе разница всегда 0.0 (старый баг).
+            elapsed = now - entry.last_ping_at
             entry.last_ping_at = now
             logger.debug(
                 "Pool ping OK: %s (elapsed=%.1fs)",
                 entry.name,
-                now - entry.last_ping_at + (now - entry.last_ping_at),
+                elapsed,
             )
         except Exception as exc:
             logger.warning(

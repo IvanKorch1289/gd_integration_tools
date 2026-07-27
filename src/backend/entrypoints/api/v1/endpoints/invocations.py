@@ -20,13 +20,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from src.backend.core.di.dependencies import get_invoker_dep, get_reply_registry
+from src.backend.core.interfaces.invocation_reply import ReplyChannelRegistryProtocol
 from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationStatus,
     Invoker,
 )
-from src.backend.core.interfaces.invocation_reply import ReplyChannelRegistryProtocol
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from src.backend.schemas.invocation_api import (
     InvocationRequestSchema,

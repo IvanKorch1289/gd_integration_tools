@@ -60,6 +60,7 @@ class GrpcSource:
         secure: bool = True,  # Cycle 25 I2: secure by default (was False)
         reconnect_delay_seconds: float = 2.0,
     ) -> None:
+        """Метод __init__ (см. signature)."""
         self.source_id = source_id
         self._target = target
         self._stub_module = stub_module
@@ -74,6 +75,7 @@ class GrpcSource:
         self._stop_event = asyncio.Event()
 
     async def start(self, on_event: EventCallback) -> None:
+        """Метод start (см. signature)."""
         if self._task is not None and not self._task.done():
             raise RuntimeError(f"GrpcSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
@@ -88,16 +90,19 @@ class GrpcSource:
         )
 
     async def stop(self) -> None:
+        """Метод stop (см. signature)."""
         self._stop_event.set()
         await graceful_cancel(self._task, source_id=self.source_id)
         self._task = None
 
     async def health(self, mode: str = "fast") -> HealthResult:
+        """Метод health (см. signature)."""
         if self._task is not None and not self._task.done():
             return HealthResult.ok(latency_ms=0.0, mode=mode)
         return HealthResult.failed(error="Not started", mode=mode)
 
     async def _run(self, on_event: EventCallback) -> None:
+        """Метод _run (см. signature)."""
         import grpc
 
         stub_mod = importlib.import_module(self._stub_module)
