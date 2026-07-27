@@ -46,6 +46,7 @@ class UsageByModel:
     total_cost_usd: float
 
     def to_dict(self) -> dict[str, Any]:
+        """Вернуть dict-представление UsageByModel."""
         return asdict(self)
 
 
@@ -59,6 +60,7 @@ class CostByTenant:
     share: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Вернуть dict-представление CostByTenant."""
         return asdict(self)
 
 
@@ -72,6 +74,7 @@ class TokenRateTrend:
     requests: int
 
     def to_dict(self) -> dict[str, Any]:
+        """Вернуть dict-представление TokenRateTrend (time-series point)."""
         return asdict(self)
 
 
@@ -88,6 +91,7 @@ class DashboardSnapshot:
     filters: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Вернуть dict-представление DashboardSnapshot."""
         return {
             "generated_at": self.generated_at,
             "backend": self.backend,
