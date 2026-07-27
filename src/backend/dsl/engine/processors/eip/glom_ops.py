@@ -116,6 +116,7 @@ class GlomExtractProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: glom Project (extract subset)."""
         body = exchange.in_message.body
         # Coalesce: try paths in order, first match wins.
         coalesce = Coalesce(*self._paths, default=self._default)
@@ -126,6 +127,7 @@ class GlomExtractProcessor(BaseProcessor):
             exchange.set_out(body=value, headers=dict(exchange.in_message.headers))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {
             "type": "glom_extract",
             "paths": [str(p) for p in self._paths],
@@ -206,6 +208,7 @@ class GlomTransformProcessor(BaseProcessor):
         _log.debug("GlomTransform: %d fields", len(new_body))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {
             "type": "glom_transform",
             "spec": {k: str(v) for k, v in self._spec.items()},
@@ -256,6 +259,7 @@ class GlomFlattenProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Обработать exchange: GlomFlattenProcessor glom operation."""
         body = exchange.in_message.body
         if not isinstance(body, dict):
             _log.warning("GlomFlatten: body is not a dict, no-op")
@@ -270,6 +274,7 @@ class GlomFlattenProcessor(BaseProcessor):
         _log.debug("GlomFlatten: %d flat keys", len(flat))
 
     def to_spec(self) -> dict[str, Any] | None:
+        """Вернуть spec (dict) для serialization route в YAML."""
         return {
             "type": "glom_flatten",
             "separator": self._separator,
