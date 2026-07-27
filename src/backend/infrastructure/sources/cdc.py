@@ -68,6 +68,7 @@ class CDCSource:
         self._stop_event = asyncio.Event()
 
     async def start(self, on_event: EventCallback) -> None:
+        """Запустить CDC source (subscribe + on_event callback)."""
         if self._task is not None and not self._task.done():
             raise RuntimeError(f"CDCSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
@@ -82,11 +83,13 @@ class CDCSource:
         )
 
     async def stop(self) -> None:
+        """Остановить CDC source (cancel subscription)."""
         self._stop_event.set()
         await graceful_cancel(self._task, source_id=self.source_id)
         self._task = None
 
     async def health(self, mode: str = "fast") -> HealthResult:
+        """Health check (fast=basic, deep=full probe)."""
         if self._task is not None and not self._task.done():
             return HealthResult.ok(latency_ms=0.0, mode=mode)
         return HealthResult.failed(error="Not started", mode=mode)
