@@ -54,9 +54,11 @@ class InMemoryIdempotencyStore:
         self._cache: dict[str, ActionResult] = {}
 
     async def get(self, key: str) -> ActionResult | None:
+        """In-memory (test/dev): получить cached ActionResult по ``key``."""
         return self._cache.get(key)
 
     async def set(self, key: str, result: ActionResult) -> None:
+        """In-memory (test/dev): сохранить ``result`` по ``key`` для replay (TTL)."""
         self._cache[key] = result
 
 
