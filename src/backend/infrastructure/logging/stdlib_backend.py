@@ -131,18 +131,22 @@ class StdlibLogger(LoggerProtocol):
         self._inner.error(msg, *args, **kwargs)
 
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log exception с traceback (level=ERROR + exc_info)."""
         self._inner.exception(msg, *args, **kwargs)
 
     def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log CRITICAL-level message (highest severity)."""
         self._inner.critical(msg, *args, **kwargs)
 
     def log(self, level: int, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log message at custom ``level`` (int или str-name)."""
         self._inner.log(level, msg, *args, **kwargs)
 
     def isEnabledFor(self, level: int) -> bool:  # noqa: N802
         return self._inner.isEnabledFor(level)
 
     def bind(self, **kwargs: Any) -> "StdlibLogger":
+        """Вернуть новый logger с extra-контекстом (**kwargs в каждый log)."""
         adapter = logging.LoggerAdapter(self._inner, kwargs)
         wrapped = StdlibLogger.__new__(StdlibLogger)
         wrapped._inner = adapter
@@ -162,10 +166,13 @@ class StdlibLoggingBackend(BaseLoggerBackend):
         self._configured = False
 
     def configure(self, **settings: Any) -> None:
+        """Configure root logger: level + format + handler."""
         self._configured = True
 
     def get_logger(self, name: str) -> StdlibLogger:
+        """Получить или создать logger по ``name`` (DI singleton)."""
         return StdlibLogger(logging.getLogger(name))
 
     def shutdown(self) -> None:
+        """Flush + close all handlers (graceful shutdown)."""
         self._configured = False
