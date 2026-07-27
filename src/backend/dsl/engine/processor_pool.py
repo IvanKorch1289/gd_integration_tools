@@ -43,16 +43,19 @@ class PoolMetrics:
 
     @property
     def avg_duration_ms(self) -> float:
+        """Вернуть среднее duration последних N completed (ms)."""
         with self._lock:
             if self.total_completed == 0:
                 return 0.0
             return self.total_durations_ms / self.total_completed
 
     def inc_submitted(self, n: int = 1) -> None:
+        """Инкрементировать counter submitted на ``n`` (default 1)."""
         with self._lock:
             self.total_submitted += n
 
     def inc_completed(self, failed: bool = False, duration_ms: float = 0.0) -> None:
+        """Зарегистрировать completed execution (success или failed) с duration."""
         with self._lock:
             self.total_completed += 1
             if failed:
@@ -60,6 +63,7 @@ class PoolMetrics:
             self.total_durations_ms += duration_ms
 
     def snapshot(self) -> dict[str, float | int]:
+        """Вернуть dict snapshot всех metric values (для /metrics endpoint)."""
         with self._lock:
             return {
                 "total_submitted": self.total_submitted,
