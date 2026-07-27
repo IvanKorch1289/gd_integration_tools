@@ -107,6 +107,7 @@ class InProcessAgentSandbox:
         durable: bool,
         session_id: str | None,
     ) -> AgentSandboxResult:
+        """Run ReAct agent loop (Reasoning + Acting)."""
         from src.backend.services.ai.ai_graph import build_and_run_agent
 
         result = await build_and_run_agent(
@@ -121,6 +122,7 @@ class InProcessAgentSandbox:
         return AgentSandboxResult(success=success, data=result, backend="in_process")
 
     async def shutdown(self) -> None:
+        """Shutdown E2B sandbox (InProcessAgentSandbox)."""
         return None
 
 
@@ -229,6 +231,7 @@ class ProcessPoolAgentSandbox:
             )
 
     async def shutdown(self) -> None:
+        """Shutdown E2B sandbox (ProcessPoolAgentSandbox)."""
         if self._closed:
             return
         self._closed = True
@@ -414,6 +417,7 @@ class E2BAgentSandbox:
             )
 
     async def shutdown(self) -> None:
+        """Shutdown E2B sandbox (E2BAgentSandbox)."""
         self._closed = True
 
 
