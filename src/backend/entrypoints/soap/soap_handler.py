@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """SOAP-сервер: приём и обработка SOAP-запросов через FastAPI.
 
 Принимает XML/SOAP envelope через POST, парсит операцию
@@ -9,7 +11,7 @@ W22 этап B: добавлен ``/soap/invoke`` — единая SOAP-точк
 его в :class:`Invoker` (тот же Gateway, что и REST/WS адаптеры).
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from xml.etree import ElementTree as ET
 
 import orjson
@@ -22,13 +24,11 @@ from src.backend.core.interfaces.invoker import (
     InvocationMode,
     InvocationRequest,
     InvocationStatus,
+    Invoker,
 )
 from src.backend.core.logging import get_logger
 from src.backend.dsl.commands.registry import action_handler_registry
 from src.backend.dsl.service import get_dsl_service
-
-if TYPE_CHECKING:
-    from src.backend.core.interfaces.invoker import Invoker
 
 __all__ = ("soap_router",)
 
@@ -405,7 +405,7 @@ def _build_invoke_response_envelope(
     dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def soap_invoke(
-    request: Request, invoker: "Invoker" = Depends(get_invoker_dep)
+    request: Request, invoker: Invoker = Depends(get_invoker_dep)
 ) -> Response:
     """Единая SOAP-точка входа для всех :class:`InvocationMode` через Invoker."""
     content_type = "text/xml; charset=utf-8"

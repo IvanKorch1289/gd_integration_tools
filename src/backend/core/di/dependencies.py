@@ -21,11 +21,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from fastapi import Request, WebSocket
+
 from src.backend.core.di.app_state import _get_from_app_state, app_state_singleton
 
 if TYPE_CHECKING:
-    from fastapi import Request, WebSocket
-
     from src.backend.core.interfaces.invocation_reply import (
         ReplyChannelRegistryProtocol,
     )

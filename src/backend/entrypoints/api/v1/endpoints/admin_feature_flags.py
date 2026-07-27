@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Admin endpoints для runtime управления feature-flags (Sprint 16 Wave 9, CP-15).
 
 Эндпоинты:
@@ -12,8 +14,6 @@ Multi-replica propagation (carryover B-6 finale): сейчас работает 
 per-process. Подключение Redis pub/sub channel ``feature-flags:toggle``
 для propagation между репликами k8s — отдельный wave.
 """
-
-from __future__ import annotations
 
 from typing import Any
 
