@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Server-Sent Events (SSE) endpoint.
 
 Предоставляет:

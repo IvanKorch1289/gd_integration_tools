@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """DegradationMiddleware (W26.5) — блокирует writes при degraded-инфраструктуре.
 
 Если ``ResilienceCoordinator`` сообщает, что компонент ``db_main``
@@ -19,7 +21,6 @@ Endpoints, которые safe для write в fallback-режиме (напри
 ``DEGRADATION_BYPASS_PREFIXES``.
 """
 
-from __future__ import annotations
 
 from typing import Final
 

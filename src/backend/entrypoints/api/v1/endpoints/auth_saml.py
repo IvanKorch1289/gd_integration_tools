@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """SAML SP-initiated endpoints (Sprint 9 K1 W1).
 
 Эндпоинты:
@@ -12,7 +14,6 @@ Feature-flag: ``feature_flags.saml_sp_initiated_enabled`` (Sprint 9 backbone).
 При выключенном флаге endpoints возвращают 503.
 """
 
-from __future__ import annotations
 
 import urllib.parse
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """V9 HMAC-SHA256 middleware для входящих webhooks (Stripe-style).
 
 Wave [s2/k1-4-webhook-sig]: консолидирует верификацию подписи в одном
@@ -13,7 +15,6 @@ Wave [s2/k1-4-webhook-sig]: консолидирует верификацию п
 Пути вне prefix-allowlist обрабатываются без проверки.
 """
 
-from __future__ import annotations
 
 from collections.abc import Mapping
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Rate limiting dependency для ``POST /auth/login`` (S59 W3).
 
 ADR-0085 Open Item: rate limiting для login endpoint (anti-brute-force).
@@ -26,7 +28,6 @@ ADR-0085 Open Item: rate limiting для login endpoint (anti-brute-force).
         ...
 """
 
-from __future__ import annotations
 
 import asyncio
 from typing import TYPE_CHECKING, Protocol, cast

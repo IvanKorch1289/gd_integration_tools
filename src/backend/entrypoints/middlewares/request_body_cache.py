@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Request body cache middleware — однократное чтение тела запроса.
 
 Назначение:
@@ -23,7 +25,6 @@ Downstream middleware (audit_log, request_log, audit_replay) первым
 Фаза: IL-OBS1 (ADR-032).
 """
 
-from __future__ import annotations
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint

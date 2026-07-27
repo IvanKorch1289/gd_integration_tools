@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """AI streaming endpoint (Wave D.3) — SSE token-level LLM stream.
 
 ``POST /api/v1/ai/llm/stream`` принимает chat-completion messages и стримит
@@ -11,7 +13,6 @@
 * ``event: error`` — при ошибке стрима.
 """
 
-from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator

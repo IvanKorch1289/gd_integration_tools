@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Wave 1.2 (Roadmap V10): авторегистрация REST-роутов для action'ов.
 
 Цель — устранить дублирование между ``ActionHandlerRegistry`` (DSL/контракт
@@ -35,7 +37,6 @@
 роутов (см. Wave 1.2 в ``PLAN.md``).
 """
 
-from __future__ import annotations
 
 import inspect
 from collections.abc import Awaitable, Callable

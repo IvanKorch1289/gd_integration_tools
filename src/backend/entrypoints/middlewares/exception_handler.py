@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Глобальный middleware обработки исключений.
 
 Перехватывает все необработанные исключения и формирует
@@ -5,7 +7,6 @@
 сквозной трассировки.
 """
 
-from __future__ import annotations
 
 import traceback
 

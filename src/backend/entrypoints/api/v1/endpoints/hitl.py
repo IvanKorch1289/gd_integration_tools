@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """HITL REST API endpoints (Sprint 9 K3 W2).
 
 Эндпоинты:
@@ -9,7 +11,6 @@
 Auth: JWT + tenant filtering (X-Tenant-ID); permission ``hitl.resolve``.
 """
 
-from __future__ import annotations
 
 from typing import Any
 

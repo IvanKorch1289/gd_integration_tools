@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """FastAPI OpenTelemetry middleware для auto-tracing HTTP-запросов.
 
 Создаёт span `http.{METHOD} {path}` на каждый входящий HTTP-запрос,
@@ -20,7 +22,6 @@
 Фаза: IL-OBS1 (ADR-032).
 """
 
-from __future__ import annotations
 
 from typing import Any
 

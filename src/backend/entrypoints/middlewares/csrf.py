@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """CSRF Protection Middleware (S184).
 
 Защищает от Cross-Site Request Forgery атак для cookie-based auth.
@@ -17,7 +19,6 @@ References:
 - Master Prompt §3.3 (banking security)
 """
 
-from __future__ import annotations
 
 import hmac
 from collections.abc import Iterable

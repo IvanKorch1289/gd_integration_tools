@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Middleware для Request ID и Correlation ID.
 
 Обеспечивает сквозную трассировку запросов через все

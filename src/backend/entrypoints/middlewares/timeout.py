@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Request timeout middleware с per-route override (S18 W6).
 
 Поведение:

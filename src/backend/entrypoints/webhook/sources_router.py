@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """W23.5 — FastAPI inbound router для зарегистрированных :class:`WebhookSource`.
 
 Связывает HTTP-приём с ``SourceRegistry``: каждый POST на
@@ -13,7 +15,6 @@ Layer policy: entrypoints → core/interfaces (Protocol) + services/sources
 импортируется — взаимодействие через duck typing + runtime-check kind.
 """
 
-from __future__ import annotations
 
 from typing import Any
 

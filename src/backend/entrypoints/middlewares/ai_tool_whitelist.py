@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """AI Tool Whitelist Middleware (S183 — S-3 fix).
 
 ADR-NEW-20 + AGENTS.md: skill whitelist enforcement для AI agent tools.
@@ -17,7 +19,6 @@ ADR-NEW-20 + AGENTS.md: skill whitelist enforcement для AI agent tools.
 Spec: см. Master Prompt §3.3 / Plan S-3 (S174 → S183).
 """
 
-from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING

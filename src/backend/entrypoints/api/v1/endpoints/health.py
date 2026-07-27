@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Kubernetes probes: liveness, readiness, startup, components (W26.2).
 
 Эндпоинты без аутентификации для оркестратора контейнеров.
@@ -18,7 +20,6 @@
   состояние из ``ResilienceCoordinator``.
 """
 
-from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any

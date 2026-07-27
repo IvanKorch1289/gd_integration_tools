@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Audit Replay Middleware — запись request/response пар в Redis stream для replay.
 
 Используется для:
@@ -11,7 +13,6 @@ Storage: Redis stream "audit:requests" с TTL retention.
 Replay UI: Streamlit page (планируется).
 """
 
-from __future__ import annotations
 
 import time
 from typing import Any

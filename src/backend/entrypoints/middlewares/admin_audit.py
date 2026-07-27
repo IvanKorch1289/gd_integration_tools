@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Admin-audit middleware (S13 K1 W2).
 
 Записывает в audit log каждый admin-action (PATCH/PUT/POST/DELETE на
@@ -14,7 +16,6 @@
 (``audit_log.admin``) для compliance-фильтрации и долгого retention.
 """
 
-from __future__ import annotations
 
 import time as _time
 from datetime import UTC, datetime

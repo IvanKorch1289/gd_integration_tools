@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """API Versioning — поддержка v1/v2 с deprecation headers.
 
 Позволяет иметь несколько версий API одновременно:
@@ -11,7 +13,6 @@ Usage:
     router_v2 = VersionedRouter(version="v2")
 """
 
-from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any

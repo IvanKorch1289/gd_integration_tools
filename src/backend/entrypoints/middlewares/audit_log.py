@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Расширенный аудит-лог: WHO / WHAT / WHERE / WHEN.
 
 Записывает в структурированном формате:

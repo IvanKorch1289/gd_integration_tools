@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Express HTTP-роутер: приём команд и callback от BotX.
 
 Endpoints:
@@ -21,7 +23,6 @@ Endpoints:
 ``express.command.default`` (fallback).
 """
 
-from __future__ import annotations
 
 from typing import Any
 

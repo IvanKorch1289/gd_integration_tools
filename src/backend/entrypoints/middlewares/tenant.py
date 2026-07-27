@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Tenant middleware — извлекает tenant_id из запроса и устанавливает в contextvar.
 
 Wave 6.5a: ``set_correlation_context`` резолвится через DI provider
@@ -5,7 +7,6 @@ Wave 6.5a: ``set_correlation_context`` резолвится через DI provid
 снимает entrypoints → infrastructure layer-violation.
 """
 
-from __future__ import annotations
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint

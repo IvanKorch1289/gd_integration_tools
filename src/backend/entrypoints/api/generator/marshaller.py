@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Request kwargs marshalling for action endpoints."""
 
 from collections.abc import Awaitable, Callable, Sequence

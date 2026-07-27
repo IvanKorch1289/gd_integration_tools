@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Глобальный auth-guard middleware (V7 defense-in-depth).
 
 Wave [s2/k1-3-auth-guard]: гарантирует, что **каждый** non-public endpoint
@@ -16,7 +18,6 @@ EXPRESS_JWT). Альтернатива fragile regex-bypass в :class:`APIKeyMid
 импортирует их из :mod:`auth_selector`, чтобы не дублировать логику.
 """
 
-from __future__ import annotations
 
 from collections.abc import Iterable
 from pathlib import PurePosixPath

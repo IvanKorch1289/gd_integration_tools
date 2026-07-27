@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """R1.fin (V11) — admin-эндпоинты ``/api/v1/{plugins,routes}/inventory``.
 
 Возвращают JSON-каталог загруженных V11-плагинов и маршрутов из
@@ -9,7 +11,6 @@ feature-flag (``V11_PLUGIN_LOADER_ENABLED`` /
 См. ADR-042/043/044.
 """
 
-from __future__ import annotations
 
 from typing import Any
 

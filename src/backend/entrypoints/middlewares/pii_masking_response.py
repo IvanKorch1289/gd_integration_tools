@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """PII masking response middleware (S18 W3, S-L8-4).
 
 Глобальный wrapper, применяющий :class:`core.security.pii_masker.PIIMasker`
@@ -30,7 +32,6 @@ legacy, локальные regex), этот middleware использует ед
     )
 """
 
-from __future__ import annotations
 
 import re
 from collections.abc import Iterable

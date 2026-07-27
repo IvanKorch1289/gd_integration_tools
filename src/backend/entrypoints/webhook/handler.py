@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Webhook inbound + outbound handler.
 
 Inbound: приём POST-запросов от внешних систем,

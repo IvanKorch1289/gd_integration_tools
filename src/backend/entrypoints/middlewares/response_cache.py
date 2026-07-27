@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Middleware для HTTP-кэширования GET-ответов.
 
 Добавляет заголовки ETag и Cache-Control к GET-ответам
