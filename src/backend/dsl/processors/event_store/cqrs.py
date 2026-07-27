@@ -68,9 +68,11 @@ class CommandBus:
 
     @property
     def event_store(self) -> EventStore:
+        """Вернуть underlying EventStore (storage backend)."""
         return self._store
 
     def register(self, command_type: str, handler: CommandHandler) -> None:
+        """Зарегистрировать ``handler`` для command/query type."""
         if command_type in self._handlers:
             raise ValueError(
                 f"command {command_type!r} already registered "
@@ -79,6 +81,7 @@ class CommandBus:
         self._handlers[command_type] = handler
 
     async def dispatch(self, command_type: str, payload: dict[str, Any]) -> list[Event]:
+        """Dispatch command/query: найти handler, вызвать async, вернуть events/result."""
         handler = self._handlers.get(command_type)
         if handler is None:
             raise KeyError(
@@ -102,6 +105,7 @@ class QueryBus:
         self._handlers: dict[str, QueryHandler] = {}
 
     def register(self, query_type: str, handler: QueryHandler) -> None:
+        """Зарегистрировать ``handler`` для command/query type."""
         if query_type in self._handlers:
             raise ValueError(
                 f"query {query_type!r} already registered "
@@ -110,6 +114,7 @@ class QueryBus:
         self._handlers[query_type] = handler
 
     async def dispatch(self, query_type: str, params: dict[str, Any]) -> Any:
+        """Dispatch command/query: найти handler, вызвать async, вернуть events/result."""
         handler = self._handlers.get(query_type)
         if handler is None:
             raise KeyError(
