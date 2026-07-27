@@ -312,9 +312,11 @@ class PromptVersionService:
         )
 
     async def list_versions(self, name: str) -> list[PromptVersion]:
+        """Список всех versions для prompt ``name`` (chronological order)."""
         return await self._store.list_versions(name)
 
     async def list_names(self) -> list[str]:
+        """Список всех prompt names в registry."""
         return await self._store.list_names()
 
     async def get_active(self, name: str) -> PromptVersion | None:
@@ -328,6 +330,7 @@ class PromptVersionService:
         return active[0] if active else None
 
     async def set_active(self, name: str, version: int) -> PromptVersion:
+        """Установить active version для prompt ``name``."""
         return await self._store.set_active(name, version)
 
     async def rollback(self, name: str) -> PromptVersion | None:
@@ -357,4 +360,5 @@ class PromptVersionService:
     async def update_metrics(
         self, *, name: str, version: int, metrics: dict[str, float]
     ) -> PromptVersion:
+        """Обновить metrics (latency, tokens) для конкретной version."""
         return await self._store.update_metrics(name, version, metrics)
