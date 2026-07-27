@@ -97,6 +97,11 @@ async def start_outbox_dispatcher(
     assert pending_source is not None
     assert ack is not None
     assert deliverer is not None
+    # FW1: если DLQ-handler не передан явно, пробуем построить
+    # InboxDLQWriter из ``state.outbox_dlq_session_factory`` (DI).
+    # Fallback — default _BackendDLQHandler (пишет в ту же outbox-таблицу).
+    if dlq is None:
+        dlq = _build_default_dlq_handler(state)
     dispatcher = OutboxDispatcher(
         backend=backend,
         pending_source=pending_source,
@@ -112,6 +117,58 @@ async def start_outbox_dispatcher(
     await dispatcher.start()
     setattr(state, _STATE_KEY, dispatcher)
     _logger.info("outbox.lifecycle.started")
+
+
+def _build_default_dlq_handler(state: Any) -> DLQHandler | None:
+    """FW1: построить default DLQ-handler.
+
+    Returns:
+        :class:`InboxDLQWriter`-based handler если ``state.outbox_dlq_session_factory``
+        зарегистрирован (post-FW1 production default) → DLQ-события
+        пишутся в dedicated ``dlq_inbox`` table (см. миграцию
+        ``z9a8b7c6d5e4``).
+
+        ``None`` если factory не зарегистрирована → OutboxDispatcher
+        использует свой default ``_BackendDLQHandler`` (та же outbox
+        таблица, status=DLQ). Pre-FW1 behavior.
+    """
+    session_factory = getattr(state, "outbox_dlq_session_factory", None)
+    if session_factory is None:
+        return None
+    try:
+        from src.backend.infrastructure.messaging.dlq.inbox_writer import InboxDLQWriter
+    except ImportError:
+        return None
+
+    from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
+
+    writer = InboxDLQWriter(session_factory=session_factory)
+
+    class _InboxAdapter:
+        """Адаптер ``InboxDLQWriter`` (метод ``write(envelope)``) → ``DLQHandler.send(event, exc)``."""
+
+        def __init__(self, writer: InboxDLQWriter) -> None:
+            self._writer = writer
+
+        async def send(self, event: Any, reason: BaseException) -> None:
+            # ``event`` — OutboxEvent (dataclass/pydantic). Конвертируем
+            # в DLQEnvelope для записи в dlq_inbox.
+            envelope = DLQEnvelope(
+                transport="outbox",
+                route_id=getattr(event, "topic", "outbox:unknown"),
+                original_payload=getattr(event, "payload", {}),
+                error_class=type(reason).__name__,
+                error_message=str(reason),
+                reason="retries_exhausted",
+                retry_count=getattr(event, "retry_count", 0),
+                metadata={
+                    "outbox_id": getattr(event, "id", None),
+                    "outbox_topic": getattr(event, "topic", None),
+                },
+            )
+            await self._writer.write(envelope)
+
+    return _InboxAdapter(writer)
 
 
 async def stop_outbox_dispatcher(app: Any) -> None:
