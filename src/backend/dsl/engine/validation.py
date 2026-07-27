@@ -27,10 +27,12 @@ class ValidationResult:
 
     @property
     def errors(self) -> list[ValidationIssue]:
+        """Вернуть только errors (severity=ERROR)."""
         return [i for i in self.issues if i.level == "error"]
 
     @property
     def warnings(self) -> list[ValidationIssue]:
+        """Вернуть только warnings (severity=WARNING)."""
         return [i for i in self.issues if i.level == "warning"]
 
 
@@ -45,6 +47,7 @@ class PipelineValidator:
     """
 
     def validate(self, pipeline: Any) -> ValidationResult:
+        """Валидировать pipeline config; вернуть ValidationResult с errors+warnings."""
         issues: list[ValidationIssue] = []
 
         if not pipeline.processors:
