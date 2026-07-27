@@ -101,6 +101,7 @@ class MemoryCacheFacade(UnifiedCacheFacade):
         self._lock = asyncio.Lock()
 
     async def get(self, key: str) -> bytes | None:
+        """Получить значение по ``key``; None если отсутствует или expired."""
         import time
 
         async with self._lock:
@@ -131,11 +132,13 @@ class MemoryCacheFacade(UnifiedCacheFacade):
                     self._tag_index.setdefault(tag, set()).add(key)
 
     async def delete(self, *keys: str) -> None:
+        """Удалить один или несколько ключей (no-op для отсутствующих)."""
         async with self._lock:
             for key in keys:
                 self._cache.pop(key, None)
 
     async def delete_by_tag(self, tag: str) -> int:
+        """Удалить все ключи с тегом; вернуть количество удалённых."""
         async with self._lock:
             keys = self._tag_index.pop(tag, set())
             for key in keys:
@@ -143,10 +146,12 @@ class MemoryCacheFacade(UnifiedCacheFacade):
             return len(keys)
 
     async def exists(self, key: str) -> bool:
+        """True если ключ существует и не expired."""
         async with self._lock:
             return key in self._cache
 
     async def healthcheck(self) -> bool:
+        """True если backend доступен (Redis ping / memory check)."""
         return True  # In-memory always healthy
 
 
@@ -170,6 +175,7 @@ class FallbackCacheFacade(UnifiedCacheFacade):
             return await getattr(self.fallback, op)(*args, **kwargs)
 
     async def get(self, key: str) -> bytes | None:
+        """Получить значение по ``key``; None если отсутствует или expired."""
         try:
             result = await self.primary.get(key)
             if result is not None:
@@ -191,22 +197,26 @@ class FallbackCacheFacade(UnifiedCacheFacade):
             await self.fallback.set(key, value, ttl_seconds, tags)
 
     async def delete(self, *keys: str) -> None:
+        """Удалить один или несколько ключей (no-op для отсутствующих)."""
         try:
             await self.primary.delete(*keys)
         except CacheError:
             await self.fallback.delete(*keys)
 
     async def delete_by_tag(self, tag: str) -> int:
+        """Удалить все ключи с тегом; вернуть количество удалённых."""
         try:
             return await self.primary.delete_by_tag(tag)
         except CacheError:
             return await self.fallback.delete_by_tag(tag)
 
     async def exists(self, key: str) -> bool:
+        """True если ключ существует и не expired."""
         try:
             return await self.primary.exists(key)
         except CacheError:
             return await self.fallback.exists(key)
 
     async def healthcheck(self) -> bool:
+        """True если backend доступен (Redis ping / memory check)."""
         return await self.primary.healthcheck() or await self.fallback.healthcheck()
