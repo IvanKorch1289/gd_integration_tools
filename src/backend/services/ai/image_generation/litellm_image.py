@@ -59,6 +59,7 @@ class ImageResult:
     cost_usd: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
+        """Вернуть dict-представление image config (для JSON response)."""
         return {
             "urls": list(self.urls),
             "b64_json": list(self.b64_json),
@@ -114,10 +115,12 @@ class LiteLLMImageGenerationService:
 
     @property
     def default_model(self) -> str:
+        """Вернуть имя default model (DALL-E 3 / Stable Diffusion 3)."""
         return self._default_model
 
     @property
     def provider(self) -> str:
+        """Вернуть provider name (openai / stability / replicate)."""
         return self._provider
 
     @property
