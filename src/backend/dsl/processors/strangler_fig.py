@@ -81,18 +81,21 @@ class StranglerFigStats:
     rollbacks_triggered: int = 0
 
     def record_route(self, target: RouteTarget) -> None:
+        """Зарегистрировать route-target в feature-flag (для strangle-pattern)."""
         if target == RouteTarget.OLD:
             self.routed_to_old += 1
         else:
             self.routed_to_new += 1
 
     def record_error(self, target: RouteTarget) -> None:
+        """Зарегистрировать error в strangle-татистике."""
         if target == RouteTarget.OLD:
             self.old_errors += 1
         else:
             self.new_errors += 1
 
     def total(self) -> int:
+        """Общее количество зарегистрированных events/routes."""
         return self.routed_to_old + self.routed_to_new
 
     def new_pct(self) -> float:
@@ -120,10 +123,12 @@ class StranglerFigRollback:
 
     @property
     def is_active(self) -> bool:
+        """True если strangler-fig pattern активен (есть routes)."""
         return self._rollback_active
 
     @property
     def reason(self) -> str:
+        """Причина strangle-state (для diagnostic)."""
         return self._reason
 
     def trigger(self, reason: str) -> None:
