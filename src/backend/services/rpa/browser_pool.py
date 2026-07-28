@@ -46,12 +46,13 @@ class PlaywrightBrowserPool:
     """Async pool из N браузерных контекстов patchright/playwright.
 
     Args:
-        size: Количество предсозданных контекстов (default 2).
+        size: Количество предсозданных контекстов. Cycle 40: defaults to
+            ``rpa_settings.browser_pool_size`` if not explicitly provided.
         prefer_patchright: ``True`` — пытаться импортировать patchright
             (anti-detection); ``False`` — сразу playwright.
         browser_kind: ``"chromium"`` / ``"firefox"`` / ``"webkit"``.
         headless: ``True`` для CI / production; ``False`` для локальной
-            отладки.
+            отладки. Cycle 40: defaults to ``rpa_settings.browser_headless``.
         viewport: Размер viewport ``{"width": ..., "height": ...}``;
             ``None`` — default 1280×720.
     """
@@ -59,12 +60,22 @@ class PlaywrightBrowserPool:
     def __init__(
         self,
         *,
-        size: int = 2,
+        size: int | None = None,
         prefer_patchright: bool = True,
         browser_kind: str = "chromium",
-        headless: bool = True,
+        headless: bool | None = None,
         viewport: dict[str, int] | None = None,
     ) -> None:
+        # Cycle 40: wire rpa_settings.browser_pool_size / .browser_headless
+        # (previously dead config fields). Lazy import to avoid circular
+        # dependencies at module-load time.
+        from src.backend.core.config.services.rpa import rpa_settings
+
+        if size is None:
+            size = rpa_settings.browser_pool_size
+        if headless is None:
+            headless = rpa_settings.browser_headless
+
         if size < 1:
             raise ValueError(f"size должен быть >= 1, получено {size}")
         self._size = size
