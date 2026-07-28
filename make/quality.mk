@@ -78,7 +78,7 @@ check-docstrings: ##@ Quality Check for missing docstrings in public API
 	@python3 tools/check_docstrings.py $(SOURCE_DIR) $(if $(SUMMARY),--summary,) $(if $(JSON),--json,) $(if $(MAX_ALLOWED),--max-allowed $(MAX_ALLOWED),)
 
 check-docstrings-ratchet: ##@ Quality M10: docstring ratchet (no new missing). Set MAX_ALLOWED to current baseline.
-	@$(WARN) "Run \`make check-docstrings MAX_ALLOWED=<N>\` to enforce. Current baseline: 954 missing in 360 files."
+	@$(WARN) "Run \`make check-docstrings MAX_ALLOWED=<N>\` to enforce. Current baseline: 0 missing in 0 files (B4: ratchet complete — gate strict at 0)."
 
 refurb-check: check-env ## Check for modern Python idioms
 	@$(INFO) "Running Refurb to modernize code..."
