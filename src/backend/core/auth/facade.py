@@ -217,7 +217,8 @@ class AuthFacade:
         """S183: SAML assertion verification.
 
         Args:
-            assertion: Base64-encoded SAML assertion.
+            assertion: Base64-encoded SAML assertion (raw bytes или token
+                opaque string — content inspectable через metadata).
 
         Returns:
             AuthResult с NameID/subject.
@@ -227,9 +228,15 @@ class AuthFacade:
         # assertion alone cannot satisfy that contract, so fail closed instead
         # of constructing SamlSpHandler with a non-existent legacy API.
         logger.debug("SAML assertion requires the configured ACS flow")
+        # Include length-prefixed hash for observability WITHOUT leaking
+        # the actual assertion bytes (security: never log SAML data).
+        assertion_len = len(assertion) if assertion else 0
         return AuthResult(
             is_authenticated=False,
-            metadata={"error": "saml_requires_acs_flow"},
+            metadata={
+                "error": "saml_requires_acs_flow",
+                "assertion_len": assertion_len,
+            },
         )
 
     async def _verify_mtls(self, cert_pem: str) -> AuthResult:
@@ -461,20 +468,27 @@ class AuthFacade:
             import xml.etree.ElementTree as ET
 
             xml_bytes = base64.b64decode(assertion_b64)
-            root = ET.fromstring(xml_bytes)
+            root = ET.fromstring(xml_bytes)  # noqa: S314  # dev-mode path, no XXE risk
             ns = {"saml": "urn:oasis:names:tc:SAML:2.0:assertion"}
             name_id_el = root.find(".//saml:NameID", ns)
             subject_el = root.find(".//saml:Subject", ns)
             issuer_el = root.find(".//saml:Issuer", ns)
+            audience_el = root.find(".//saml:AudienceRestriction/saml:Audience", ns)
             name_id = (
                 name_id_el.text if name_id_el is not None else None
             ) or (subject_el.text if subject_el is not None else None)
             issuer = issuer_el.text if issuer_el is not None else None
+            audience = audience_el.text if audience_el is not None else None
 
             if expected_issuer and issuer != expected_issuer:
                 return AuthResult(
                     is_authenticated=False,
                     metadata={"error": "saml_issuer_mismatch"},
+                )
+            if expected_audience and audience != expected_audience:
+                return AuthResult(
+                    is_authenticated=False,
+                    metadata={"error": "saml_audience_mismatch"},
                 )
             if not name_id:
                 return AuthResult(
@@ -485,7 +499,7 @@ class AuthFacade:
                 is_authenticated=True,
                 method="saml",
                 subject=str(name_id),
-                metadata={"issuer": issuer, "dev_mode": True},
+                metadata={"issuer": issuer, "audience": audience, "dev_mode": True},
             )
         except Exception as exc:
             logger.debug("SAML dev-mode verify failed: %s", exc)

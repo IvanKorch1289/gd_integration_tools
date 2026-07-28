@@ -1052,6 +1052,9 @@ ignore_names = [
     "saga_id",
     "raw_context",
     "type_hint",
+    # pydantic-ai interface params (required signatures, not used in impl)
+    "run_context",
+    "instructions",
     # AI evaluator placeholders (Protocol-сигнатуры будущих evaluator'ов)
     "hallucination",
     "relevance",
