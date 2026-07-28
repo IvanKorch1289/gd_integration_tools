@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.backend.services.messaging.eventbus_facade import EventBusFacade
+from src.backend.core.messaging.eventbus.facade import EventBusFacade
 
 
 @pytest.mark.integration

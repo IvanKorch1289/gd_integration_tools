@@ -47,15 +47,3 @@ def test_stream_facade_resolves_event_bus_facade() -> None:
 
     assert stream_facade.EventBusFacade is CanonicalEBF
     assert stream_facade.get_event_bus_facade is CanonicalGEBF
-
-
-def test_eventbus_facade_back_compat_via_services() -> None:
-    """Old import path ``services.messaging.eventbus_facade`` still works."""
-    from src.backend.core.messaging.eventbus.facade import (
-        EventBusFacade as CanonicalEBF,
-    )
-    from src.backend.services.messaging.eventbus_facade import (
-        EventBusFacade as ShimEBF,
-    )
-
-    assert ShimEBF is CanonicalEBF  # same class object
