@@ -180,15 +180,15 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 from src.backend.core.audit.facade import emit_audit_safe
 
                 emit_audit_safe(
-                    event_type="ai.budget.tenant_less_invocation",
-                    payload={
+                    event="ai.budget.tenant_less_invocation",
+                    details={
                         "workflow_id": getattr(
                             request, "workflow_id", ""
                         ),
                         "correlation_id": getattr(
                             request, "correlation_id", ""
                         ),
-                        "timestamp": str(__import__("time").time()),
+                        "timestamp": str(time.time()),
                     },
                     severity="info",
                 )

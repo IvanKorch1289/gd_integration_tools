@@ -159,8 +159,8 @@ class InputGuardMixin:
                 from src.backend.core.audit.facade import emit_audit_safe
 
                 emit_audit_safe(
-                    event_type="ai.guardrail.provider_failure",
-                    payload={
+                    event="ai.guardrail.provider_failure",
+                    details={
                         "guard": ref.name,
                         "provider_error": str(exc),
                         "fail_open": True,

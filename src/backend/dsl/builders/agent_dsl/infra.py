@@ -218,8 +218,8 @@ class InfraMixin:
                 from src.backend.core.audit.facade import emit_audit_safe
 
                 emit_audit_safe(
-                    event_type="agent.sandbox.zero_isolation_opted",
-                    payload={"graph_type": graph_type, "model": model},
+                    event="agent.sandbox.zero_isolation_opted",
+                    details={"graph_type": graph_type, "model": model},
                     severity="warning",
                 )
             except Exception:

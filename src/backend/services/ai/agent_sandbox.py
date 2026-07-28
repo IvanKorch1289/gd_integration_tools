@@ -399,8 +399,8 @@ class E2BAgentSandbox:
                         from src.backend.core.audit.facade import emit_audit_safe
 
                         emit_audit_safe(
-                            event_type="e2b.sandbox.kill_failed",
-                            payload={
+                            event="e2b.sandbox.kill_failed",
+                            details={
                                 "error": str(kill_exc),
                                 "session_id": session_id,
                                 "model": model,
