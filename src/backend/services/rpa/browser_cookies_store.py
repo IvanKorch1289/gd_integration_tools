@@ -18,6 +18,12 @@
     список cookies (формат playwright: name/value/domain/path/expires/httpOnly/
     secure/sameSite). TTL 24h.
 
+Security (Cycle 33 RPA1):
+    Cookies **encrypted at rest** via Fernet (AES-128-CBC + HMAC-SHA256).
+    Key derived from env var ``BROWSER_COOKIES_FERNET_KEY`` (44-byte URL-safe
+    base64). If key not set in production: ``RuntimeError`` at construction.
+    In dev_light profile: auto-generates ephemeral key (logs warning).
+
 Feature-flag:
     ``browser_cookies_redis_persist`` (W0) — default-OFF.
 """
@@ -25,6 +31,7 @@ Feature-flag:
 from __future__ import annotations
 
 import json
+import os
 from typing import Any, Protocol
 
 from src.backend.core.logging import get_logger
@@ -48,6 +55,48 @@ class RedisLike(Protocol):
         ...
 
 
+def _load_or_create_fernet_key() -> bytes:
+    """Cycle 33 RPA1: load Fernet key from env or generate for dev.
+
+    Production: requires ``BROWSER_COOKIES_FERNET_KEY`` env var (44-byte
+    URL-safe base64, generate with ``Fernet.generate_key()``).
+    dev_light: auto-generates ephemeral key, logs warning.
+
+    Raises:
+        RuntimeError: non-dev_light + no key configured.
+    """
+    from cryptography.fernet import Fernet
+
+    from src.backend.core.config.profile import AppProfileChoices, get_active_profile
+
+    key = os.environ.get("BROWSER_COOKIES_FERNET_KEY", "")
+    if key:
+        try:
+            return Fernet(key.encode("ascii"))._key  # type: ignore[attr-defined]
+        except Exception as exc:
+            raise RuntimeError(
+                f"BROWSER_COOKIES_FERNET_KEY invalid: {exc}. "
+                "Generate a new key: Fernet.generate_key().decode()"
+            ) from exc
+
+    if get_active_profile() == AppProfileChoices.dev_light:
+        new_key = Fernet.generate_key()
+        _logger.warning(
+            "BrowserCookieStore: BROWSER_COOKIES_FERNET_KEY not set in "
+            "dev_light — auto-generating ephemeral key. DO NOT USE IN PROD. "
+            "Generated key prefix: %s...",
+            new_key[:12].decode("ascii", errors="replace"),
+        )
+        return new_key
+
+    raise RuntimeError(
+        "BROWSER_COOKIES_FERNET_KEY required in non-dev_light profile. "
+        "Generate via: python -c \"from cryptography.fernet import Fernet; "
+        "print(Fernet.generate_key().decode())\". Store in Vault or k8s "
+        "secret and inject as env var."
+    )
+
+
 class BrowserCookieStore:
     """Сохраняет/восстанавливает cookies для browser sessions.
 
@@ -55,6 +104,8 @@ class BrowserCookieStore:
         redis: redis-like async client (с set/get/delete API).
         ttl_seconds: TTL для Redis-ключа (default 86400 = 24h).
         key_prefix: namespace prefix (default "browser:session:").
+        fernet_key: Fernet key bytes (default: load from env).
+            Pass explicitly to override (e.g. for testing).
     """
 
     def __init__(
@@ -63,12 +114,18 @@ class BrowserCookieStore:
         *,
         ttl_seconds: int = 86400,
         key_prefix: str = "browser:session:",
+        fernet_key: bytes | None = None,
     ) -> None:
         if ttl_seconds < 1:
             raise ValueError("ttl_seconds должен быть >= 1")
+        from cryptography.fernet import Fernet
+
         self._redis = redis
         self._ttl = ttl_seconds
         self._prefix = key_prefix
+        # Cycle 33 RPA1: Fernet for at-rest encryption.
+        # Fernet(key) validates key length (44 bytes b64 = 32 bytes raw).
+        self._fernet = Fernet(fernet_key or _load_or_create_fernet_key())
 
     def _make_key(self, tenant_id: str, user_id: str, domain: str) -> str:
         """Строит Redis-ключ для конкретной browser session."""
@@ -87,7 +144,7 @@ class BrowserCookieStore:
         domain: str,
         cookies: list[dict[str, Any]],
     ) -> None:
-        """Сохраняет cookies в Redis с TTL.
+        """Сохраняет cookies в Redis с TTL (Fernet-encrypted at rest).
 
         Args:
             tenant_id: multi-tenant scope.
@@ -98,7 +155,9 @@ class BrowserCookieStore:
         if not cookies:
             return
         key = self._make_key(tenant_id, user_id, domain)
-        payload = json.dumps(cookies, ensure_ascii=False)
+        plaintext = json.dumps(cookies, ensure_ascii=False).encode("utf-8")
+        # Cycle 33 RPA1: Fernet encrypt before persisting.
+        payload = self._fernet.encrypt(plaintext)
         try:
             await self._redis.set(key, payload, ex=self._ttl)
         except Exception as exc:
@@ -107,7 +166,7 @@ class BrowserCookieStore:
     async def restore_cookies(
         self, *, tenant_id: str, user_id: str, domain: str
     ) -> list[dict[str, Any]]:
-        """Возвращает cookies (пустой список если ключ не найден)."""
+        """Возвращает cookies (пустой список если ключ не найден или decrypt fails)."""
         key = self._make_key(tenant_id, user_id, domain)
         try:
             raw = await self._redis.get(key)
@@ -116,12 +175,18 @@ class BrowserCookieStore:
             return []
         if raw is None:
             return []
-        if isinstance(raw, bytes):
-            raw = raw.decode("utf-8")
+        # raw is bytes from Fernet.encrypt output.
+        if isinstance(raw, str):
+            raw = raw.encode("utf-8")
         try:
-            return json.loads(raw)
-        except (TypeError, json.JSONDecodeError):
-            _logger.warning("BrowserCookieStore.restore: malformed JSON key=%s", key)
+            plaintext = self._fernet.decrypt(raw)
+            return json.loads(plaintext)
+        except Exception as exc:
+            _logger.warning(
+                "BrowserCookieStore.restore: decrypt failed (key=%s): %s",
+                key,
+                exc,
+            )
             return []
 
     async def clear(self, *, tenant_id: str, user_id: str, domain: str) -> None:
