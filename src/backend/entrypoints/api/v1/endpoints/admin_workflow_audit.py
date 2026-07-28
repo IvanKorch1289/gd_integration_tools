@@ -103,8 +103,11 @@ async def _get_clickhouse_client() -> _ClickHouseClient:
     S176 fix: было inline ``clickhouse_connect.get_async_client()`` на каждый
     вызов (bypass pool). Теперь singleton через :func:`get_admin_clickhouse_client` —
     переиспользует HTTPX connection pool между requests.
+
+    S45 follow-up: импорт через facade ``services.admin.clickhouse_admin``
+    вместо прямого infrastructure (single-entry per concern).
     """
-    from src.backend.infrastructure.clients.storage.clickhouse_admin_client import (
+    from src.backend.services.admin.clickhouse_admin import (
         get_admin_clickhouse_client,
     )
 

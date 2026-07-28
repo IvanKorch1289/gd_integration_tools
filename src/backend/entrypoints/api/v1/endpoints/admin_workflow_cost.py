@@ -149,7 +149,9 @@ async def get_workflow_cost_history(
 
     try:
         # S176 fix: singleton ClickHouse client через DI (вместо inline get_async_client)
-        from src.backend.infrastructure.clients.storage.clickhouse_admin_client import (
+        # S45 follow-up: импорт через facade ``services.admin.clickhouse_admin``
+        # вместо прямого infrastructure (single-entry per concern).
+        from src.backend.services.admin.clickhouse_admin import (
             get_admin_clickhouse_client,
         )
 

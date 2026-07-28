@@ -66,8 +66,6 @@ src/backend/entrypoints/api/generator/registry.py	entrypoints	src.backend.dsl.co
 src/backend/entrypoints/api/generator/setup.py	entrypoints	src.backend.workflows.workflows_service
 src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py	entrypoints	src.backend.dsl.analysis.parallelism_analyzer
 src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py	entrypoints	src.backend.dsl.route_loader.registry
-src/backend/entrypoints/api/v1/endpoints/admin_workflow_audit.py	entrypoints	src.backend.infrastructure.clients.storage.clickhouse_admin_client
-src/backend/entrypoints/api/v1/endpoints/admin_workflow_cost.py	entrypoints	src.backend.infrastructure.clients.storage.clickhouse_admin_client
 src/backend/entrypoints/api/v1/endpoints/admin_workflow_versioning.py	entrypoints	src.backend.dsl.workflow.versioning
 src/backend/entrypoints/api/v1/endpoints/admin_workflows/helpers.py	entrypoints	src.backend.dsl.commands.registry
 src/backend/entrypoints/api/v1/endpoints/dsl_console.py	entrypoints	src.backend.dsl.engine.dry_run
@@ -131,6 +129,7 @@ src/backend/infrastructure/security/presidio_sanitizer.py	infrastructure	src.bac
 src/backend/infrastructure/workflow/executor/sequential_mixin.py	infrastructure	src.backend.dsl.engine.exchange
 src/backend/infrastructure/workflow/worker.py	infrastructure	src.backend.dsl.commands.setup
 src/backend/infrastructure/workflow/worker.py	infrastructure	src.backend.dsl.routes
+src/backend/services/admin/clickhouse_admin.py	services	src.backend.infrastructure.clients.storage.clickhouse_admin_client
 src/backend/services/ai/ai_graph.py	services	src.backend.dsl.commands.registry
 src/backend/services/authorization/facade.py	services	src.backend.infrastructure.clients.storage.redis
 src/backend/services/cache/metrics.py	services	src.backend.infrastructure.cache.metrics_collector
