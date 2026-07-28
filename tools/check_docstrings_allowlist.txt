@@ -95,7 +95,6 @@ src/backend/core/interfaces/ai_clients.py:144:4 MongoClientProtocol.delete_one
 src/backend/core/interfaces/ai_clients.py:146:4 MongoClientProtocol.count
 src/backend/core/interfaces/ai_clients.py:159:4 RedisStreamClientProtocol.add_to_stream
 src/backend/core/interfaces/ai_clients.py:161:4 RedisStreamClientProtocol.read_stream
-src/backend/core/interfaces/batch_capable.py:36:4 BatchCapable.process_batch
 src/backend/core/interfaces/cache.py:17:4 CacheBackend.get
 src/backend/core/interfaces/cache.py:20:4 CacheBackend.set
 src/backend/core/interfaces/cache.py:23:4 CacheBackend.delete

@@ -4,9 +4,12 @@
 
 * ``Message.data_kind`` default = SINGLE — обратная совместимость;
 * BATCH / STREAM сериализуются и round-trip'ятся через JSON/YAML;
-* процессор с ``BatchCapable`` Protocol проходит ``isinstance``-чек;
-* процессор без ``BatchCapable`` Protocol — нет;
 * Pydantic валидирует значение ``data_kind``.
+
+Note: ``BatchCapable`` Protocol (W14.2 opt-in) был удалён как YAGNI —
+нет ни одного процессора, реализующего ``process_batch``. Оптимизация
+под batch остаётся на ответственности самого процессора (typeguard
+или явная проверка ``exchange.in_message.data_kind``).
 """
 
 # ruff: noqa: S101
@@ -17,11 +20,8 @@ from typing import Any
 
 import pytest
 
-from src.backend.core.interfaces.batch_capable import BatchCapable
 from src.backend.core.types.data_kind import DataKind
-from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange, Message
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.exchange import Message
 
 
 class TestDataKindEnum:
@@ -47,41 +47,6 @@ class TestDataKindEnum:
     def test_invalid_data_kind_raises(self) -> None:
         with pytest.raises(ValueError):
             Message(body=1, data_kind="not-a-kind")  # type: ignore[arg-type]
-
-
-class TestBatchCapableProtocol:
-    """Контракт opt-in Protocol для batch-процессоров."""
-
-    def test_processor_with_process_batch_satisfies_protocol(self) -> None:
-        class BatchOk(BaseProcessor):
-            def __init__(self) -> None:
-                super().__init__(name="batch-ok")
-
-            async def process(
-                self, exchange: Exchange[Any], context: ExecutionContext
-            ) -> None:
-                pass
-
-            async def process_batch(
-                self, exchange: Exchange[list[Any]], context: ExecutionContext
-            ) -> None:
-                # Доказываем существование метода — engine может на него
-                # переключиться при data_kind=BATCH.
-                pass
-
-        assert isinstance(BatchOk(), BatchCapable)
-
-    def test_processor_without_process_batch_not_protocol(self) -> None:
-        class SingleOnly(BaseProcessor):
-            def __init__(self) -> None:
-                super().__init__(name="single-only")
-
-            async def process(
-                self, exchange: Exchange[Any], context: ExecutionContext
-            ) -> None:
-                pass
-
-        assert not isinstance(SingleOnly(), BatchCapable)
 
 
 class TestMessageWatermarkField:

@@ -8,8 +8,9 @@
 
 Поле ``Message.data_kind`` всегда ``SINGLE`` по умолчанию — существующие
 DSL-маршруты не меняют поведение. Процессоры, осознанно работающие
-с batch/stream, читают это поле и реализуют :class:`BatchCapable`
-из ``src.core.interfaces.batch_capable``.
+с batch/stream, читают это поле и оптимизируют свой ``process``
+соответственно (через собственный typeguard или явную проверку
+``exchange.in_message.data_kind``).
 """
 
 from __future__ import annotations
