@@ -11,7 +11,7 @@ from src.backend.core.config.database import DatabaseConnectionSettings
 from src.backend.core.config.external_databases import (
     ExternalDatabaseConnectionSettings,
 )
-from src.backend.infrastructure.logging import get_logger
+from src.backend.core.logging import get_logger
 
 db_logger = get_logger("database")
 

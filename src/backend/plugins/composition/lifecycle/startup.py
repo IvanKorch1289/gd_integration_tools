@@ -333,7 +333,7 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
 
     # ── LogSink router (Wave 2.5) ──
     try:
-        from src.backend.infrastructure.logging import init_log_sinks
+        from src.backend.core.logging import init_log_sinks
 
         init_log_sinks()
     except Exception as log_exc:

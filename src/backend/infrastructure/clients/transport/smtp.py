@@ -54,7 +54,7 @@ class SmtpClient(BaseSmtpClient):
         Raises:
             ValueError: Если настройки недействительны (отсутствуют хост или порт).
         """
-        from src.backend.infrastructure.logging.factory import get_logger
+        from src.backend.core.logging import get_logger
 
         if not all([settings.host, settings.port]):
             raise ValueError("Неверная конфигурация SMTP")

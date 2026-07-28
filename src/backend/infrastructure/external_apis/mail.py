@@ -19,7 +19,7 @@ class MailService:
         Args:
             mail_client (SmtpClient): Клиент для работы с SMTP-сервером.
         """
-        from src.backend.infrastructure.logging.factory import get_logger
+        from src.backend.core.logging import get_logger
 
         self.client = mail_client
         self.logger = get_logger("smtp")

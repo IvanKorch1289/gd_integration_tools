@@ -33,7 +33,7 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
 from src.backend.core.utils.task_registry import get_task_registry
-from src.backend.infrastructure.logging.factory import get_logger
+from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     import asyncpg

@@ -54,7 +54,7 @@ class AntivirusService:
     """
 
     def __init__(self, http_client: HttpClient, s3_service: S3Service):
-        from src.backend.infrastructure.logging.factory import get_logger
+        from src.backend.core.logging import get_logger
 
         self.http_client = http_client
         self.s3_service = s3_service

@@ -14,7 +14,7 @@ from src.backend.infrastructure.database.database.initializer import (
 from src.backend.infrastructure.database.database.registry import (
     ExternalDatabaseRegistry,  # S67 W3: fix NameError (TD-pre-existing)
 )
-from src.backend.infrastructure.logging import get_logger
+from src.backend.core.logging import get_logger
 
 db_logger = get_logger("database")
 

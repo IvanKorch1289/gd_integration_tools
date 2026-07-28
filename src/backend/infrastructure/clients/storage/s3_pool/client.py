@@ -67,7 +67,7 @@ class S3Client(BaseS3Client):
     """Реализация клиента S3 с расширенными функциями."""
 
     def __init__(self, settings: FileStorageSettings):
-        from src.backend.infrastructure.logging.factory import get_logger
+        from src.backend.core.logging import get_logger
 
         self._connect_lock = Lock()
         self._settings = settings

@@ -138,7 +138,7 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     # Wave 2.5: делается после ``ending()`` и финального лога, чтобы
     # зафиксировать в sink-ах все события штатной остановки.
     try:
-        from src.backend.infrastructure.logging import shutdown_log_sinks
+        from src.backend.core.logging import shutdown_log_sinks
 
         await shutdown_log_sinks()
     except Exception as sink_exc:
