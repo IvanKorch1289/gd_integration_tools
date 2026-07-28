@@ -206,3 +206,10 @@ artifacts/ragas/*.json
 /tmp_*.py
 /.tmp_*.py
 /session_*.zip
+
+# MkDocs build output (mkdocs.yml site_dir)
+/site/
+
+# Mimocode tool local state (plans, skills, node_modules, audit reports)
+/.mimocode/
+
