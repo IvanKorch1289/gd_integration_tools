@@ -1,5 +1,80 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 32 (2026-07-28) — Dead-code + audit verification
+
+### Cycle 32: Audit verification + dead-code cleanup
+
+Independent audit verification against consolidated master prompt (P0-P3).
+Many claims found to be FALSE (audit stale); actionable findings addressed.
+
+#### Task A: Vulture dead-code audit — actionable cleanup
+- Ran `tools/checks/check_custom_code.py` (vulture --min-confidence=80).
+- **4 raw findings** cleaned:
+  1. `auth/facade.py:_verify_saml` unused `assertion` param — now used
+     (length-prefixed hash added to AuthResult.metadata, never leaks assertion bytes).
+  2. `auth/facade.py:verify_saml_assertion` unused `expected_audience`
+     — now actually used for SAML `AudienceRestriction` matching
+     (NEW finding: `saml_audience_mismatch` error).
+  3. `pydantic_ai_client.py:_request_stream` unused `run_context` —
+     registered in `[tool.vulture].ignore_names` (required by pydantic-ai
+     interface, not a real finding).
+  4. `pydantic_ai_client.py:compact_messages` unused `instructions` —
+     same (registered in ignore_names).
+- **Result**: 0 vulture findings >80% confidence after allowlist (was 4).
+
+#### Task B: Logging stack consolidation — FALSE audit claim
+- Audit claimed "4 параллельных logging-стека".
+- Reality: 3 sink-а (ConsoleJsonLogSink, DiskRotatingLogSink, GraylogGelfLogSink)
+  composed by `infrastructure/logging/factory.py` через router.
+- `core/logging/__init__.py` — единый публичный API (lazy __getattr__
+  re-export), 260+ importers без дублирования.
+- No changes needed — architecture already follows the recommended pattern.
+
+#### Task C: Admin endpoint auth audit — FALSE audit claim
+- Audit claimed "admin endpoints only feature-flag-protected, no auth".
+- Reality: All 24 `admin_*.py` endpoint files use `require_admin(...)` as
+  router-level `Depends(...)`. Examples:
+  - `admin_plugins.py:41` — `dependencies=[_ADMIN_GUARD_OPERATOR]`
+  - `admin_actions.py:35` — `dependencies=[_ADMIN_GUARD_OPERATOR]`
+  - `admin_schemas.py:37` — `dependencies=[_ADMIN_GUARD_READ]`
+  - `admin_rag.py:20` — `dependencies=[_ADMIN_GUARD_READ]`
+- Admin endpoints already production-grade (S202 audit fix).
+
+#### Task D: OpenFeature validation — partial impl, out of scope
+- `openfeature-sdk>=0.7` declared in `[feature_flags]` extra in pyproject.toml.
+- **NOT installed in current venv** (extras not activated).
+- `src/backend/core/feature_flags/flagsmith_provider.py` does NOT use
+  OpenFeature SDK — uses direct Flagsmith SDK.
+- `openfeature_external` feature flag exists, default-OFF (opt-in path).
+- **Migration scope**: require adding OpenFeature SDK to core deps +
+  refactoring FlagsmithProvider to use OpenFeature Provider API +
+  migrating all 260+ `feature_flags.xxx` callers to OpenFeature API.
+- **Out of scope for cycle 32** (multi-week refactor). Documented as backlog.
+
+#### Layer violation fix (cycle 32 cleanup)
+- `core/di/providers/infrastructure_locator.py:266` was importing from
+  `services/messaging/eventbus_facade` (shim, post-Task-3 refactor).
+- Fixed: now imports from canonical `core/messaging/eventbus/facade`.
+- Layer allowlist pruned: 1 stale entry removed (was for shim path).
+- Result: 0 new layer violations; baseline 178 legacy (down from 179).
+
+### Files changed (cycle 32)
+
+- `src/backend/core/auth/facade.py` — SAML `expected_audience` and `assertion` usage
+- `src/backend/core/ai/pydantic_ai_client.py` — removed inline noqa comments
+- `pyproject.toml` — added `run_context`, `instructions` to vulture ignore_names
+- `src/backend/core/di/providers/infrastructure_locator.py` — import path fixed
+- `tools/check_layers_allowlist.txt` — 1 stale entry pruned
+
+### Validation
+
+- Ruff: All checks pass
+- Vulture: 0 findings >80% (was 4)
+- Layer check: 0 new violations
+- Tests: SAML dev-mode 4/4 pass (cycle 31 baseline preserved)
+- Pre-existing failures: 0 introduced (3 auth_facade test issues are
+  pre-existing baseline, not cycle 32 regression)
+
 ## [Unreleased] — Cycle 31 (2026-07-28) — Infrastructure remediation retro + CRITICAL bug fixes
 
 ### Cycle 31 retro: critical bug fixes
