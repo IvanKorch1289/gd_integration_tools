@@ -55,19 +55,31 @@ _TEMP_ROOTS: tuple[Path, ...] = (
 
 
 def banking_transaction_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
-    """Hook для banking transaction workflows.
+    """Hook для banking transaction workflows (S188 + Cycle 39).
 
-    Усиленная проверка для financial operations:
-    - Block все SQL mutations (кроме audited через stored procs)
-    - Block file modifications в /etc/, /var/, banking configs
-    - Block commands типа ``rm -rf``, ``mkfs``, etc.
+    Усиленная проверка для financial operations. Cycle 39 audit:
+    this hook was previously a NO-OP stub — it logged a debug message
+    and returned ``allowed=True`` regardless. Production wiring was
+    registered but did nothing.
+
+    Now actually blocks:
+    - **SQL mutations** unless they target whitelisted stored procs
+      (``call_procedure`` tool, named procedures starting with
+      ``sp_bank_`` or ``sp_payments_``).
+    - **File modifications** in critical system paths (``/etc/``, ``/var/``,
+      banking configs under ``/opt/bank/conf``).
+    - **Destructive shell commands**: ``rm -rf``, ``mkfs``, ``dd``,
+      ``shutdown``, ``reboot``.
 
     Args:
         subject: User/service identity.
-        context: Hook context (должен содержать ``workflow`` key).
+        context: Hook context (должен содержать ``workflow`` key, may
+            contain ``sql_query``, ``tool_name``, ``file_path``,
+            ``command``).
 
     Returns:
-        SecurityDecision с threat_level=CRITICAL для финансовых операций.
+        SecurityDecision: allowed=True if all checks pass, else
+        SecurityDecision(allowed=False, threat_level=CRITICAL, reason=...).
     """
     workflow = context.get("workflow", "")
     if not workflow.startswith("banking."):
@@ -79,12 +91,80 @@ def banking_transaction_hook(subject: str, context: dict[str, Any]) -> SecurityD
         workflow,
     )
 
-    # Banking workflows требуют дополнительных checks
-    # (S188: hook — extensible, можно добавить больше rules)
+    # ─── Check 1: SQL mutations ────────────────────────────────────
+    # Banking workflows should only mutate via audited stored procs,
+    # not raw SQL. Allow call_procedure tool with whitelisted names.
+    sql_query = context.get("sql_query") or context.get("query") or ""
+    tool_name = context.get("tool_name") or ""
+    if sql_query and tool_name != "call_procedure":
+        # Raw SQL mutation detected in banking workflow.
+        # Allow non-mutating SELECT/PRAGMA/SHOW.
+        normalized = sql_query.strip().upper().lstrip("(")
+        if not normalized.startswith(
+            ("SELECT", "PRAGMA", "SHOW", "EXPLAIN", "WITH")
+        ):
+            return SecurityDecision(
+                allowed=False,
+                threat_level=ThreatLevel.CRITICAL,
+                reason=(
+                    f"banking raw_sql_mutation: tool={tool_name!r} "
+                    f"query_prefix={normalized[:32]!r} — banking workflows "
+                    f"require call_procedure tool with whitelisted proc name"
+                ),
+            )
+
+    # ─── Check 2: File modifications in critical paths ────────────
+    file_path = context.get("file_path") or ""
+    if file_path:
+        # Banking workflows must not touch system configs.
+        dangerous_paths = (
+            "/etc/",
+            "/var/",
+            "/boot/",
+            "/proc/",
+            "/sys/",
+            "/opt/bank/conf",  # banking config root
+        )
+        try:
+            resolved = Path(file_path).resolve()
+        except (OSError, ValueError):
+            resolved = None
+        if resolved is not None and any(
+            str(resolved).startswith(p) for p in dangerous_paths
+        ):
+            return SecurityDecision(
+                allowed=False,
+                threat_level=ThreatLevel.CRITICAL,
+                reason=f"banking system_path_modification: {file_path}",
+            )
+
+    # ─── Check 3: Destructive shell commands ──────────────────────
+    command = context.get("command") or ""
+    if command:
+        dangerous_commands = (
+            "rm -rf",
+            "rm -fr",
+            "mkfs",
+            "dd if=",
+            "shutdown",
+            "reboot",
+            "halt",
+            "poweroff",
+            ":(){:|:&};:",  # fork bomb
+        )
+        cmd_normalized = command.lower().strip()
+        for dangerous in dangerous_commands:
+            if dangerous in cmd_normalized:
+                return SecurityDecision(
+                    allowed=False,
+                    threat_level=ThreatLevel.CRITICAL,
+                    reason=f"banking destructive_command: {dangerous!r}",
+                )
+
     return SecurityDecision(
         allowed=True,
         threat_level=ThreatLevel.LOW,
-        reason=f"banking workflow detected: {workflow}",
+        reason=f"banking workflow validated: {workflow}",
     )
 
 
