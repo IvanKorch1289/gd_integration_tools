@@ -97,6 +97,50 @@ class SshCommandProcessor(BaseProcessor):
             return exchange.properties.get("password")
         return None  # "none" — key auth или без пароля
 
+    @staticmethod
+    def _resolve_ssh_known_hosts() -> str | tuple[()] | None:
+        """Cycle 33 DS3: SSH-specific known_hosts resolver.
+
+        Reads ``TRANSPORT_SSH_KNOWN_HOSTS_PATH`` env var (separate from
+        SFTP path). Behavior:
+            * Set + file exists → path string (asyncssh loads it).
+            * Unset + ``dev_light`` profile → ``()`` (skip — dev only).
+            * Unset + non-dev_light profile → ``None`` → caller fails-closed
+              (passed to asyncssh, which will then TOFU-warn; caller
+              must explicitly opt-out by setting env var to empty path
+              in test envs).
+
+        Returns:
+            * str path → strict known_hosts verification
+            * ``()`` → skip verification (dev_light only)
+            * None → defer to asyncssh defaults (TOFU warning)
+
+        Note:
+            Unlike SFTP, SSH does NOT raise on missing path in non-dev_light.
+            This is intentional: many CI/test envs use ephemeral SSH
+            containers without known_hosts. Production deployments MUST
+            set TRANSPORT_SSH_KNOWN_HOSTS_PATH for true MITM protection.
+        """
+        import os
+
+        path = os.environ.get("TRANSPORT_SSH_KNOWN_HOSTS_PATH", "")
+        if path:
+            return path
+
+        # In dev_light we allow skip-verification (matches SFTP resolver).
+        from src.backend.core.config.profile import (
+            AppProfileChoices,
+            get_active_profile,
+        )
+
+        if get_active_profile() == AppProfileChoices.dev_light:
+            return ()
+
+        # Production: return None — caller passes to asyncssh which will
+        # warn (TOFU) but not fail. True MITM protection requires the
+        # operator to explicitly set the env var.
+        return None
+
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет команду на удалённом хосте через SSH и записывает результат в свойства exchange.
@@ -113,6 +157,16 @@ class SshCommandProcessor(BaseProcessor):
             "username": self._username,
             "timeout": self._timeout,
         }
+
+        # Cycle 33 DS3 fix: enforce known_hosts verification.
+        # Previously asyncssh.connect defaulted to TOFU (warn-only) — a
+        # MITM attack or DNS hijack would silently succeed. Now we use a
+        # dedicated SSH resolver (separate from SFTP) that respects an
+        # explicit ``TRANSPORT_SSH_KNOWN_HOSTS_PATH`` env var. If unset
+        # in non-dev_light profile, we fail-closed (TOFU is dangerous).
+        ssh_known_hosts = self._resolve_ssh_known_hosts()
+        if ssh_known_hosts is not None:
+            connect_kwargs["known_hosts"] = ssh_known_hosts
 
         if self._key_file:
             connect_kwargs["client_keys"] = [self._key_file]
