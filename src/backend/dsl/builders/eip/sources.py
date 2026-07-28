@@ -2,12 +2,19 @@
 from_http / from_s3 / sse_source.
 
 Sprint 60 W4 — split из eip.py (1354 LOC).
+
+Cycle 46: lazy task creation. The 4 sensor-based source methods
+(from_file, from_sql, from_http, from_s3) previously called
+asyncio.create_task() at DSL build time — which fails outside a
+running event loop. Fix: defer task creation to when a loop is
+available. The :class:`FileSensorTaskWrapper` accepts a
+task_factory callback that's invoked lazily.
 """
 
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 
@@ -15,6 +22,63 @@ if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder
 
 __all__ = ("SourcesEIPsMixin",)
+
+
+def _create_or_defer_sensor_task(
+    coro_factory: Callable[[], Any],
+    *,
+    name: str,
+) -> Any:
+    """Cycle 46: create asyncio.Task if event loop is running, else defer.
+
+    Returns either:
+    - The created :class:`asyncio.Task` (if event loop was running)
+    - A lazy-task descriptor (callable returning Task when invoked)
+
+    The lazy-task descriptor is invoked by FileSensorTaskWrapper.start()
+    when called from an async context. This allows DSL to be built in
+    sync contexts (no event loop) without raising RuntimeError.
+
+    Args:
+        coro_factory: Callable returning the coroutine to wrap in a Task.
+            Called once (eagerly or lazily) when the task is started.
+        name: Task name (used for debugging).
+
+    Returns:
+        Either asyncio.Task or a deferred-task descriptor with a
+        ``.start()`` method that creates the actual task on demand.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is not None:
+        # Eager path: create task immediately.
+        return asyncio.create_task(coro_factory(), name=name)
+
+    # Lazy path: return descriptor that defers task creation.
+    class _DeferredTask:
+        """Defers asyncio.Task creation until start() is called from async context."""
+
+        def __init__(self) -> None:
+            self._task: asyncio.Task | None = None
+
+        def start(self) -> asyncio.Task:
+            if self._task is not None:
+                return self._task
+            self._task = asyncio.create_task(coro_factory(), name=name)
+            return self._task
+
+        async def stop(self) -> None:
+            if self._task and not self._task.done():
+                self._task.cancel()
+                try:
+                    await self._task
+                except (asyncio.CancelledError, Exception):
+                    pass
+
+    return _DeferredTask()
 
 
 class SourcesEIPsMixin(EIPMixinBase):
@@ -159,8 +223,15 @@ class SourcesEIPsMixin(EIPMixinBase):
                     )
                 await asyncio.sleep(poll_interval_s)
 
-        task = asyncio.create_task(_runner(), name=f"sensor:file:{path}")
-        get_trigger_registry().register(_FileSensorWrapper(task))
+        task = _create_or_defer_sensor_task(_runner, name=f"sensor:file:{path}")
+        # _DeferredTask has .start() method; eager asyncio.Task does not.
+        if hasattr(task, "start"):
+            get_trigger_registry().register(_FileSensorWrapper(
+                task_factory=lambda: task.start(),
+                name=f"sensor:file:{path}",
+            ))
+        else:
+            get_trigger_registry().register(_FileSensorWrapper(task=task, name=f"sensor:file:{path}"))
         return self  # type: ignore
 
     def from_sql(
@@ -208,8 +279,13 @@ class SourcesEIPsMixin(EIPMixinBase):
                     )
                 await asyncio.sleep(poll_interval_s)
 
-        task = asyncio.create_task(_runner(), name=f"sensor:sql:{id(self)}")
-        get_trigger_registry().register(_FileSensorWrapper(task))
+        task = _create_or_defer_sensor_task(_runner, name=f"sensor:sql:{id(self)}")
+        if hasattr(task, "start"):  # _DeferredTask
+            get_trigger_registry().register(_FileSensorWrapper(
+                task_factory=lambda: task.start(), name=f"sensor:sql:{id(self)}"
+            ))
+        else:
+            get_trigger_registry().register(_FileSensorWrapper(task=task, name=f"sensor:sql:{id(self)}"))
         return self  # type: ignore
 
     def from_http(
@@ -262,8 +338,13 @@ class SourcesEIPsMixin(EIPMixinBase):
                     )
                 await asyncio.sleep(poll_interval_s)
 
-        task = asyncio.create_task(_runner(), name=f"sensor:http:{url}")
-        get_trigger_registry().register(_FileSensorWrapper(task))
+        task = _create_or_defer_sensor_task(_runner, name=f"sensor:http:{url}")
+        if hasattr(task, "start"):  # _DeferredTask
+            get_trigger_registry().register(_FileSensorWrapper(
+                task_factory=lambda: task.start(), name=f"sensor:http:{url}"
+            ))
+        else:
+            get_trigger_registry().register(_FileSensorWrapper(task=task, name=f"sensor:http:{url}"))
         return self  # type: ignore
 
     def from_s3(
@@ -323,8 +404,13 @@ class SourcesEIPsMixin(EIPMixinBase):
                     )
                 await asyncio.sleep(poll_interval_s)
 
-        task = asyncio.create_task(_runner(), name=f"sensor:s3:{bucket}")
-        get_trigger_registry().register(_FileSensorWrapper(task))
+        task = _create_or_defer_sensor_task(_runner, name=f"sensor:s3:{bucket}")
+        if hasattr(task, "start"):  # _DeferredTask
+            get_trigger_registry().register(_FileSensorWrapper(
+                task_factory=lambda: task.start(), name=f"sensor:s3:{bucket}"
+            ))
+        else:
+            get_trigger_registry().register(_FileSensorWrapper(task=task, name=f"sensor:s3:{bucket}"))
         return self  # type: ignore
 
     def sse_source(

@@ -38,16 +38,44 @@ class FileSensorTaskWrapper:
     """Wrapper для background-task-based sensors (file/sql/http/s3).
 
     Имплементирует Trigger Protocol для совместимости с TriggerRegistry.
+
+    Cycle 46: supports lazy task creation. If DSL is built outside an
+    event loop (sync context), pass ``task_factory`` instead of ``task``.
+    The task is then created when :meth:`start` is called from an async
+    context (e.g., during app startup).
     """
 
-    def __init__(self, task: asyncio.Task) -> None:  # type: ignore[type-arg]
-        self.name = f"sensor_task_{id(task)}"
+    def __init__(
+        self,
+        task: asyncio.Task | None = None,
+        *,
+        task_factory: Callable[[], asyncio.Task] | None = None,
+        name: str | None = None,
+    ) -> None:
+        if task is None and task_factory is None:
+            raise ValueError(
+                "FileSensorTaskWrapper: either `task` or `task_factory` required"
+            )
+        self.name = name or f"sensor_task_{id(task) if task else id(object())}"
         self._task = task
+        self._task_factory = task_factory
+
+    @property
+    def task(self) -> asyncio.Task | None:
+        """Returns the underlying task (may be None until :meth:`start` is called)."""
+        return self._task
 
     async def start(self) -> None:
-        """No-op: task уже started в DSL builder."""
-        # Task already started in DSL builder; this is no-op
-        pass
+        """Cycle 46: create task lazily if not already created.
+
+        If task was created at DSL build time (running event loop),
+        this is no-op. Otherwise, create task now using ``task_factory``.
+        Idempotent: factory called only once (subsequent start() are no-op).
+        """
+        if self._task is not None:
+            return  # already running (created at construction or earlier start)
+        if self._task_factory is not None:
+            self._task = self._task_factory()
 
     async def stop(self) -> None:
         """Cancel underlying task и await с swallow CancelledError/Exception."""
