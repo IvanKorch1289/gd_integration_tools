@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.core.interfaces.plugin import BasePlugin
-    from src.backend.services.plugins.manifest_toml import PluginManifest
+    from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 
 import importlib
 
@@ -16,7 +16,7 @@ from src.backend.core.security.capabilities import CapabilityError, CapabilityRe
 from src.backend.services.plugins.loader.discovery import LoadedPlugin
 from src.backend.services.plugins.loader.loading._protocol import _LoadingProtocol
 from src.backend.services.plugins.loader.validation import PluginInventoryConflictError
-from src.backend.services.plugins.manifest_toml import (
+from src.backend.core.plugin_runtime.manifest_toml import (
     PluginManifest,
     PluginManifestError,
     load_plugin_manifest,

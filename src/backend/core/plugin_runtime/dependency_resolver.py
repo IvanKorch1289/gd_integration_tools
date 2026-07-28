@@ -35,7 +35,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from src.backend.services.plugins.manifest_toml import PluginManifest
+    from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 
 __all__ = ("PluginDependencyCycleError", "PluginGraphResolver")
 

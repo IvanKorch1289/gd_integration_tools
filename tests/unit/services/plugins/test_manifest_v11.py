@@ -12,7 +12,7 @@ from src.backend.core.security.capabilities import (
     CAPABILITY_NAME_PATTERN,
     CapabilityRef,
 )
-from src.backend.services.plugins.manifest_toml import (
+from src.backend.core.plugin_runtime.manifest_toml import (
     PluginManifestError,
     PluginManifest,
     PluginProvides,

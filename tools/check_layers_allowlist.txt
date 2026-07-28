@@ -46,10 +46,6 @@ src/backend/core/messaging/stream_facade.py	core	src.backend.infrastructure.clie
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications.gateway
 src/backend/core/observability/log_indexer.py	core	src.backend.services.io.indexers.log_indexer
-src/backend/core/plugin_runtime/compat_checker.py	core	src.backend.services.plugins.manifest_toml
-src/backend/core/plugin_runtime/dependency_resolver.py	core	src.backend.services.plugins.manifest_toml
-src/backend/core/plugin_runtime/manifest.py	core	src.backend.services.plugins.manifest_toml
-src/backend/core/plugin_runtime/sandbox.py	core	src.backend.services.plugins.manifest_toml
 src/backend/core/resilience/rate_limiter.py	core	src.backend.infrastructure.resilience.unified_rate_limiter
 src/backend/core/scaling/bulkhead_scaler.py	core	src.backend.infrastructure.resilience.bulkhead
 src/backend/core/scheduler/__init__.py	core	src.backend.infrastructure.scheduler.cron_validator

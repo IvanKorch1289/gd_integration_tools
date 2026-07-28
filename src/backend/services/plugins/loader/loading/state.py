@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.core.interfaces.plugin import BasePlugin
-    from src.backend.services.plugins.manifest_toml import PluginManifest
+    from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 
 
 from dataclasses import dataclass
@@ -13,7 +13,7 @@ from typing import Any
 
 from src.backend.core.interfaces.plugin import BasePlugin
 from src.backend.core.logging import get_logger
-from src.backend.services.plugins.manifest_toml import PluginManifest
+from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 
 _logger = get_logger("services.plugins.loader")
 

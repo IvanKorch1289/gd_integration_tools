@@ -19,7 +19,7 @@ from src.backend.core.plugin_runtime.sandbox import (
     PluginSandboxError,
 )
 from src.backend.core.security.capabilities import CapabilityRef
-from src.backend.services.plugins.manifest_toml import PluginManifest, PluginSandbox
+from src.backend.core.plugin_runtime.manifest_toml import PluginManifest, PluginSandbox
 
 
 class FakeSandbox:

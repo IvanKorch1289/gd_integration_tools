@@ -23,7 +23,7 @@ from src.backend.core.plugin_runtime.dependency_resolver import (
     PluginDependencyCycleError,
     PluginGraphResolver,
 )
-from src.backend.services.plugins.manifest_toml import PluginManifest
+from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 
 _logger = get_logger("services.plugins.loader")
 

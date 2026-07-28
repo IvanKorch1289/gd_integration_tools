@@ -20,7 +20,7 @@ from src.backend.core.plugin_runtime.compat_checker import (
     PluginConflictError,
     check_compatibility,
 )
-from src.backend.services.plugins.manifest_toml import (
+from src.backend.core.plugin_runtime.manifest_toml import (
     PluginCompatibility,
     PluginManifest,
 )

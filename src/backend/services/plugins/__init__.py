@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from src.backend.services.plugins.decorators import override_method, repository_hook
 from src.backend.services.plugins.loader import PluginLoader, get_plugin_loader
-from src.backend.services.plugins.manifest_toml import (  # S168 W15-17: yaml manifest.py superseded
+from src.backend.core.plugin_runtime.manifest_toml import (  # S168 W15-17: yaml manifest.py superseded
     PluginManifest,
     load_plugin_manifest,  # was load_manifest in old yaml manifest.py
 )

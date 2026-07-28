@@ -12,7 +12,7 @@ from typing import Any, Protocol
 
 from src.backend.core.interfaces.plugin import BasePlugin
 from src.backend.services.plugins.loader.discovery import LoadedPlugin
-from src.backend.services.plugins.manifest_toml import PluginManifest
+from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 
 
 class _LoadingProtocol(Protocol):

@@ -44,7 +44,7 @@ class TestManifestLoading:
         """Minimal TOML must load without errors."""
         # The minimal manifest schema is non-trivial; test the import path
         # only to avoid schema coupling to schema changes.
-        from src.backend.services.plugins import manifest_toml
+        from src.backend.core.plugin_runtime import manifest_toml
 
         assert hasattr(manifest_toml, "load_plugin_manifest")
         assert hasattr(manifest_toml, "PluginManifest")
@@ -52,7 +52,7 @@ class TestManifestLoading:
 
     def test_load_nonexistent_file_raises(self):
         """Loading non-existent file must raise PluginManifestError."""
-        from src.backend.services.plugins.manifest_toml import (
+        from src.backend.core.plugin_runtime.manifest_toml import (
             PluginManifestError,
             load_plugin_manifest,
         )
@@ -69,7 +69,7 @@ class TestManifestLoading:
 
     def test_invalid_toml_raises(self):
         """Malformed TOML must raise PluginManifestError."""
-        from src.backend.services.plugins.manifest_toml import (
+        from src.backend.core.plugin_runtime.manifest_toml import (
             PluginManifestError,
             load_plugin_manifest,
         )

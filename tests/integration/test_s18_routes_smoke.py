@@ -98,7 +98,7 @@ class TestS18ComponentsSmoke:
 
     def test_plugin_trust_tier_field(self) -> None:
         """S18 W12 (ADR-NEW-6): PluginManifest.trust_tier."""
-        from src.backend.services.plugins.manifest_toml import PluginManifest
+        from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 
         # Поле объявлено в model.
         fields = PluginManifest.model_fields

@@ -19,7 +19,7 @@ still import from ``services.plugins.manifest_toml``. Migration
 tracked as backlog (large refactor, no behavior change).
 
 Migration path:
-- ``from src.backend.services.plugins.manifest_toml import load_plugin_manifest``
+- ``from src.backend.core.plugin_runtime.manifest_toml import load_plugin_manifest``
   → ``from src.backend.core.plugin_runtime.manifest import load_plugin_manifest``
 
 Related:

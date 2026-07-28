@@ -41,7 +41,7 @@ from src.backend.core.security.capabilities.vocabulary import (
     build_default_vocabulary,
 )
 from src.backend.services.plugins.loader import PluginLoader
-from src.backend.services.plugins.manifest_toml import (
+from src.backend.core.plugin_runtime.manifest_toml import (
     PluginManifestError,
     PluginManifest,
     PluginTenantDecl,

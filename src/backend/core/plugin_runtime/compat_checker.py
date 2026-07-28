@@ -44,7 +44,7 @@ from packaging.version import InvalidVersion, Version
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from src.backend.services.plugins.manifest_toml import PluginManifest
+    from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 
 __all__ = ("CompatViolation", "PluginConflictError", "check_compatibility")
 

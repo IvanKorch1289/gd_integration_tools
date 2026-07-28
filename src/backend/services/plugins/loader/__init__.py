@@ -37,7 +37,7 @@ from src.backend.services.plugins.loader.loading import LoadingMixin  # S52 W3: 
 from src.backend.services.plugins.loader.validation import (
     ValidationMixin,  # S52 W3: MRO
 )
-from src.backend.services.plugins.manifest_toml import (  # S52 W3: needed for _load_one's compat_violations
+from src.backend.core.plugin_runtime.manifest_toml import (  # S52 W3: needed for _load_one's compat_violations
     PluginManifest,
     PluginManifestError,
     load_plugin_manifest,

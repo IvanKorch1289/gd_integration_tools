@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from src.backend.services.plugins.manifest_toml import PluginManifest
+from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 
 _BASE_FIELDS = {
     "name": "test_plugin",
