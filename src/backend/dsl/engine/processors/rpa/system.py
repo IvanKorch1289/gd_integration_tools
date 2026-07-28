@@ -188,11 +188,28 @@ class TerminalExecProcessor(BaseProcessor):
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="execute"):
             return
-        proc = await asyncio.create_subprocess_shell(
-            self.command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
+        # Bug fix (cycle 33): shell=False contract was ignored —
+        # always called create_subprocess_shell. Now respects
+        # shell parameter via shlex.split + create_subprocess_exec.
+        # See A1 in docs/audit/cycle33_report.md.
+        if self.shell:
+            proc = await asyncio.create_subprocess_shell(
+                self.command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        else:
+            import shlex
+
+            argv = shlex.split(self.command)
+            if not argv:
+                exchange.fail("terminal_exec: empty command")
+                return
+            proc = await asyncio.create_subprocess_exec(
+                *argv,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
         try:
             stdout, stderr = await asyncio.wait_for(
                 proc.communicate(), timeout=self.timeout

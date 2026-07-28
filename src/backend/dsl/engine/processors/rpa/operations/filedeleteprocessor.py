@@ -53,14 +53,28 @@ class FileDeleteProcessor(BaseProcessor):
         path = self.path or exchange.in_message.body.get("path")
         if not path:
             raise ValueError("FileDeleteProcessor: path обязателен")
+        # Bug fix (cycle 33): Path-traversal guard before deletion.
+        # Without this, a caller with capability ``rpa.file.delete`` could
+        # delete arbitrary directories via ``../../etc`` payloads.
+        from src.backend.dsl.engine.processors._path_safety import (
+            PathTraversalError,
+            validate_path,
+        )
+
+        try:
+            safe_path = validate_path(path)
+        except PathTraversalError as exc:
+            exchange.fail(f"path_traversal_blocked: {exc}")
+            return
+
         import shutil
 
         def _do_delete() -> bool:
             try:
-                if os.path.isdir(path) and not os.path.islink(path):
-                    shutil.rmtree(path)
+                if os.path.isdir(safe_path) and not os.path.islink(safe_path):
+                    shutil.rmtree(safe_path)
                 else:
-                    os.remove(path)
+                    os.remove(safe_path)
                 return True
             except FileNotFoundError:
                 if not self.missing_ok:
@@ -68,5 +82,5 @@ class FileDeleteProcessor(BaseProcessor):
                 return False
 
         deleted = await asyncio.to_thread(_do_delete)
-        _rpa_logger.info("file_delete path=%s deleted=%s", path, deleted)
+        _rpa_logger.info("file_delete path=%s deleted=%s", safe_path, deleted)
         self.set_result(exchange, "body.deleted", deleted)
