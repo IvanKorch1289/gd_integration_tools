@@ -1,5 +1,56 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 34 (2026-07-28) — Remaining security/RCE fixes
+
+### Cycle 34: 2 more HIGH-severity fixes from audit backlog
+
+Continuing the cycle 33 deep audit work. Addressed 2 of the 12 backlog
+HIGH-priority findings.
+
+#### DB1: Pickle RCE removed from QueryResultCache default
+- `QueryResultCache.get_default_serializer()` previously fell back to
+  `PickleSerializer` when `orjson` wasn't importable. orjson is a hard
+  dep in pyproject.toml — the fallback was dead code AND a security
+  risk: pickle.loads() on untrusted Redis data = remote code execution
+  if any process can write to the same Redis namespace (admin UI,
+  dev tooling, multi-tenant cache wrapper).
+- Fix: `get_default_serializer()` now returns `OrjsonSerializer`
+  unconditionally. `PickleSerializer` class preserved for explicit
+  opt-in by callers who genuinely need pickle semantics.
+- Tests: 14 → 15. New test verifies orjson is the default. Pre-existing
+  defensive try/except in `get()` still catches malformed bytes.
+
+#### RPA2: FileWatchProcessor pattern filter now applied
+- `FileWatchProcessor` accepted a `pattern` parameter but the watchdog
+  handler added every changed file regardless of the glob. Pattern was
+  documentation-only.
+- Fix: `_ChangeCollector` now stores the pattern and filters at `add()`
+  time using `fnmatch.fnmatch` against the basename. Default `pattern="*"`
+  remains a catch-all (backward-compat for existing tests).
+- Tests: 13/13 file_watch tests pass.
+
+### Cycle 34: Deferred to backlog
+- Cache `delete_by_tag` consolidation (5+ parallel implementations)
+  requires larger refactor; documented for next cycle.
+- Other 11 items from cycle 33 audit remain deferred (Vault token
+  auto-renewal, banking_transaction_hook stub, TokenBudget fail-open,
+  RPACallPolicy migration, SSH/SFTP resolver consolidation, etc.).
+
+### Files changed (cycle 34)
+
+```
+src/backend/infrastructure/database/query_result_cache.py        DB1 (32 lines)
+src/backend/dsl/engine/processors/rpa/operations/filewatchprocessor.py   RPA2 (16 lines)
+
+tests/unit/infrastructure/test_query_result_cache.py            DB1 (1 new test)
+```
+
+### Validation
+
+- 21/21 cycle-34-related tests pass
+- 0 new layer violations
+- Ruff: All cycle-34 files clean
+
 ## [Unreleased] — Cycle 33 (2026-07-28) — Comprehensive audit + security hardening
 
 ### Cycle 33: Deep architectural analysis + 6 HIGH-severity fixes
