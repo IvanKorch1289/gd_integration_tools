@@ -45,7 +45,7 @@ class SourcesEIPsMixin(EIPMixinBase):
 
         trigger = IntervalTrigger(
             name=f"interval_{id(self)}",
-            route_id=getattr(self, "_route_id", "_pending_"),
+            route_id=getattr(self, "route_id", "") or "_pending_route_",
             interval_s=interval_s,
             start_immediately=start_immediately,
             payload=payload,
@@ -83,7 +83,7 @@ class SourcesEIPsMixin(EIPMixinBase):
 
         trigger = CronTrigger(
             name=f"cron_{id(self)}",
-            route_id=getattr(self, "_route_id", "_pending_"),
+            route_id=getattr(self, "route_id", "") or "_pending_route_",
             cron_expr=cron_expr,
             timezone_name=timezone_name,
             payload=payload,
@@ -104,7 +104,7 @@ class SourcesEIPsMixin(EIPMixinBase):
 
         trigger = WebhookTrigger(
             name=f"webhook_{path.replace('/', '_').strip('_') or 'root'}",
-            route_id=getattr(self, "_route_id", "_pending_"),
+            route_id=getattr(self, "route_id", "") or "_pending_route_",
             path=path,
             method=method,
         )
@@ -146,7 +146,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         async def _runner() -> None:
             from src.backend.dsl.service import get_dsl_service
 
-            route_id = getattr(self, "_route_id", "_pending_")
+            route_id = getattr(self, "route_id", "") or "_pending_route_"
             while True:
                 matched = await sensor.watch(
                     trigger=trigger_cfg, input={}, namespace="default"
@@ -195,7 +195,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         async def _runner() -> None:
             from src.backend.dsl.service import get_dsl_service
 
-            route_id = getattr(self, "_route_id", "_pending_")
+            route_id = getattr(self, "route_id", "") or "_pending_route_"
             while True:
                 matched = await sensor.watch(
                     trigger=trigger_cfg, input={}, namespace="default"
@@ -249,7 +249,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         async def _runner() -> None:
             from src.backend.dsl.service import get_dsl_service
 
-            route_id = getattr(self, "_route_id", "_pending_")
+            route_id = getattr(self, "route_id", "") or "_pending_route_"
             while True:
                 matched = await sensor.watch(
                     trigger=trigger_cfg, input={}, namespace="default"
@@ -306,7 +306,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         async def _runner() -> None:
             from src.backend.dsl.service import get_dsl_service
 
-            route_id = getattr(self, "_route_id", "_pending_")
+            route_id = getattr(self, "route_id", "") or "_pending_route_"
             while True:
                 matched = await sensor.watch(
                     trigger=trigger_cfg, input={}, namespace="default"
