@@ -379,13 +379,14 @@ class SkillRegistry:
         """
         # ponytail: simplest implementation — just re-load from all known plugins
         import logging
-        from pathlib import Path
 
         _logger = logging.getLogger(__name__)
         try:
-            # Re-scan extensions directory for plugin.toml files
-            extensions_dir = Path("extensions")
-            if extensions_dir.exists():
+            # Cycle 33 AI1 fix: resolve extensions dir robustly.
+            # Previously hardcoded Path("extensions") — fails in packaged
+            # deployments where cwd != repo root.
+            extensions_dir = self._resolve_extensions_dir()
+            if extensions_dir and extensions_dir.exists():
                 for plugin_dir in extensions_dir.iterdir():
                     if plugin_dir.is_dir():
                         plugin_toml = plugin_dir / "plugin.toml"
@@ -395,6 +396,41 @@ class SkillRegistry:
         except Exception as exc:
             _logger.error("SkillRegistry hot-reload failed: %s", exc)
             raise
+
+    @staticmethod
+    def _resolve_extensions_dir() -> Path | None:
+        """Cycle 33 AI1: robust resolution of the extensions directory.
+
+        Search order:
+        1. ``SKILL_EXTENSIONS_DIR`` env var (explicit override)
+        2. ``Path("extensions")`` relative to cwd (dev mode)
+        3. ``../extensions`` relative to this module's package root
+           (installed/packaged mode where cwd != repo root)
+        4. ``None`` if none found — caller logs and skips hot-reload
+        """
+        import os
+        from pathlib import Path
+
+        explicit = os.environ.get("SKILL_EXTENSIONS_DIR")
+        if explicit:
+            return Path(explicit).resolve()
+
+        cwd_rel = Path("extensions")
+        if cwd_rel.exists():
+            return cwd_rel.resolve()
+
+        # src/backend/core/ai/skill_registry.py → 4 levels up to repo root.
+        try:
+            repo_root = Path(__file__).resolve()
+            for _ in range(4):
+                repo_root = repo_root.parent
+            sibling = repo_root / "extensions"
+            if sibling.exists():
+                return sibling.resolve()
+        except (OSError, ValueError):
+            pass
+
+        return None
 
     def export_to_mcp(self) -> list[Any]:
         """Экспортировать skills с ``"mcp"`` в :attr:`SkillSpec.protocols`.
