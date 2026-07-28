@@ -1,5 +1,39 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 47 (2026-07-28) — Layer 3 boundary fix
+
+### Cycle 47: core→services boundary fix in plugin manifest facade
+
+Layer 3 re-analyzer (cycle 42) flagged that
+`src/backend/core/plugin_runtime/manifest.py` imports from
+`services.plugins.manifest_toml`, violating the V22 layer boundary
+(ADR-0207 documented exception).
+
+#### Fix
+Updated the manifest.py shim to import from the canonical core-layer
+location (`core/plugin_runtime/manifest_toml.py`), which contains
+identical content (verified via diff). This eliminates the
+`core → services` dependency for the extension-facing facade.
+
+#### Out of scope (tracked as backlog)
+- 28 internal callers in `src/backend/services/plugins/loader/*` still
+  import from `services.plugins.manifest_toml`. These are internal
+  service-layer callers; don't affect the extension-facing boundary.
+- Deletion of `src/backend/services/plugins/manifest_toml.py` is blocked
+  until those 28 callers are migrated (separate refactor cycle).
+
+#### Test results
+143 passed in `tests/unit/{core/plugin_runtime,services/plugins}/`.
+7 pre-existing failures unchanged (verified via git stash baseline).
+
+### Files changed (cycle 47)
+
+```
+src/backend/core/plugin_runtime/manifest.py    +16 / -3 LOC (1-line import + docs)
+```
+
+### Layer 3 health: 8.2 → 8.3/10
+
 ## [Unreleased] — Cycle 46 (2026-07-28) — Layer 3 sensor task defer
 
 ### Cycle 46: Deferred task creation for sensor sources
