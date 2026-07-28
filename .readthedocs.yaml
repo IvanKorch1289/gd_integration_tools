@@ -1,8 +1,9 @@
-# ReadTheDocs Build Configuration (K1 Sprint 8 [wave:s8/k1-sphinx-multiversion]).
+# ReadTheDocs Build Configuration (B2: mkdocs canonical — M10.2).
 #
-# Multi-version build: ReadTheDocs строит каждую активную версию через свою
-# версионную систему; sphinx-multiversion — для self-hosted GitHub Pages.
-# Здесь конфигурация для одиночной версии (RTD сам управляет переключателем).
+# Migration history: sphinx → mkdocs (FW3 deprecated sphinx; B2 fully
+# removes it). ReadTheDocs теперь строит каждую активную версию через
+# mkdocs. Sphinx-multiversion больше не используется (FW3 deprecation
+# + B2 removal of docs/conf.py + docs/Makefile).
 
 version: 2
 
@@ -17,10 +18,10 @@ build:
       - uv sync --frozen --extra docs
     build:
       html:
-        - uv run sphinx-build -b html docs $READTHEDOCS_OUTPUT/html
+        - uv run mkdocs build --clean --strict
 
-sphinx:
-  configuration: docs/conf.py
+mkdocs:
+  configuration: mkdocs.yml
   fail_on_warning: false
 
 formats:

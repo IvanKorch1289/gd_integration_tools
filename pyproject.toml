@@ -382,19 +382,18 @@ testkit = [
     # существующего testkit/recorder.py (HAR-style → VCR API).
     "vcrpy>=6.0.0,<7.0.0",
 ]
-# К10 Sprint-2 Wave 5: Sphinx scaffold + Diátaxis structure.
-# sphinx / myst-parser / sphinx-copybutton уже в [dev] dependency-group;
-# этот extra позволяет установить только doc-deps без full dev-стека.
-# pydata-sphinx-theme выбрана вместо furo (уже используется в dev).
+# B2 (M10.2): mkdocs canonical — sphinx/sphinx-multiversion удалены.
+# mkdocs-material + mike для версионирования (master + теги v*).
+# Сборка через ``mkdocs build``, деплой через ``mhausenblas/mkdocs-deploy-gh-pages-action``.
+# mkdocstrings-python для авто-генерации API reference (аналог sphinx-autoapi).
+# Этот extra позволяет установить только doc-deps без full dev-стека.
 docs = [
-    "sphinx>=9.1.0,<10.0.0",
-    "myst-parser>=5.0.0,<6.0.0",
-    "sphinx-copybutton>=0.5,<1",
-    "pydata-sphinx-theme>=0.16.0,<1.0.0",
-    # K1 Sprint 8: multi-version docs build (master + release/* + v* tags).
-    # sphinx-multiversion — стабильная и проверенная утилита; интегрируется
-    # с любым Sphinx-проектом через расширение + 4 smv_* настройки.
-    "sphinx-multiversion>=0.2.4,<1.0.0",
+    "mkdocs>=1.6.0,<2.0.0",
+    "mkdocs-material>=9.5.0,<10.0.0",
+    "mkdocstrings>=0.25.0,<1.0.0",
+    "mkdocstrings-python>=1.10.0,<2.0.0",
+    "mike>=2.0.0,<3.0.0",
+    "pymdown-extensions>=10.7.0,<11.0.0",
 ]
 # K5 Sprint 8 [wave:s8/k5-ru-proofreader]: optional ru-language proofreader.
 # language-tool-python тянет ~500MB JVM + словари; в core не нужен,

@@ -1,12 +1,15 @@
-# Multi-version docs publish to GitHub Pages.
-# Wave: [wave:s8/k1-sphinx-multiversion]. Owner: K1 Security/Docs.
+# Multi-version docs publish to GitHub Pages (B2: mkdocs canonical — M10.2).
+#
+# Migration history: sphinx → mkdocs (FW3 deprecated sphinx; B2 fully
+# removes it). mkdocs-material с mike (gh-deploy) заменяет связку
+# sphinx-multiversion + peaceiris/actions-gh-pages@v3.
 #
 # Триггеры: push в master + любой tag v* (release).
-# Build: uv sync --extra docs + sphinx-multiversion → docs/_build/multi/.
-# Deploy: peaceiris/actions-gh-pages@v3 → ветка gh-pages.
+# Build: uv sync --extra docs + mkdocs build → site/.
+# Deploy: mike (mkdocs plugin) → ветка gh-pages, history через tags.
 #
 # ⚠ В первом релизе требуется одноразовое включение в GitHub repo settings:
-#   Settings → Pages → Source = "Deploy from branch" → "gh-pages" / "/ (root)".
+#   Settings → Pages → Source = "GitHub Actions" (НЕ "Deploy from branch").
 
 name: docs-publish
 
@@ -31,7 +34,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout (полная история — для multi-version по тегам)
+      - name: Checkout (полная история — для mike по тегам)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -48,26 +51,18 @@ jobs:
       - name: Install docs deps
         run: uv sync --frozen --extra docs
 
-      - name: Build multi-version Sphinx
-        run: uv run sphinx-multiversion docs docs/_build/multi
+      - name: Build mkdocs site
+        run: uv run mkdocs build --clean --strict
 
-      - name: Generate root redirect to latest stable
-        run: |
-          mkdir -p docs/_build/multi
-          cat > docs/_build/multi/index.html <<'HTML'
-          <!DOCTYPE html>
-          <meta charset="utf-8">
-          <title>gd_integration_tools — docs</title>
-          <meta http-equiv="refresh" content="0; url=master/index.html">
-          <p>Перенаправление на <a href="master/index.html">master</a>...</p>
-          HTML
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Deploy to GitHub Pages (mike handles versions + alias)
+        uses: mhausenblas/mkdocs-deploy-gh-pages-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/_build/multi
-          publish_branch: gh-pages
-          keep_files: false
-          enable_jekyll: false
-          commit_message: "docs: deploy multi-version build (${{ github.sha }})"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          fail_on_error: true
+          mkdocs_yml: mkdocs.yml
+          mike_version: latest
+          mike_keep_history: true
+          mike_alias: latest
+          mike_push: true
+          mike_git_push_options: --force
