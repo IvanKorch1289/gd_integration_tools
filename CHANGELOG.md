@@ -1,5 +1,50 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 46 (2026-07-28) — Layer 3 sensor task defer
+
+### Cycle 46: Deferred task creation for sensor sources
+
+Layer 3 critic agent (cycle 42) flagged that the 4 sensor-based source
+builders (from_file, from_sql, from_http, from_s3) called
+`asyncio.create_task()` at DSL build time — which raises
+`RuntimeError` when called in a sync context without a running event
+loop (early initialization, config validation, test setup).
+
+#### Fix
+New `_create_or_defer_sensor_task()` helper in
+`src/backend/dsl/builders/eip/sources.py`:
+- Loop is running → eagerly create task (preserves current behavior)
+- No loop → return `_DeferredTask` descriptor that defers task creation
+  until `FileSensorTaskWrapper.start()` is called from an async context
+
+#### FileSensorTaskWrapper extended
+- Constructor accepts `task_factory` (lazy) OR `task` (eager) — at least
+  one required (`ValueError` if both None)
+- `start()` calls `task_factory` if task not yet created (idempotent —
+  factory called only once across multiple `start()` calls)
+- New `.task` property exposes the underlying task for inspection
+- `stop()` safely no-ops if task was never created (sync context)
+
+#### Tests (9 new)
+- Constructor validation (requires task or factory)
+- start() idempotency (factory called only once even on multiple start)
+- stop() with/without task
+- Task property access after lazy creation
+
+#### Test results
+537 passed in `tests/unit/dsl/{builders,orchestration}/` (was 528 — 9 new).
+3 pre-existing failures unchanged (verified via git stash baseline).
+
+### Files changed (cycle 46)
+
+```
+src/backend/dsl/builders/eip/sources.py        +140 / -10 LOC (4 callsite updates + helper)
+src/backend/dsl/orchestration/triggers.py      +14 / -4 LOC (FileSensorTaskWrapper extensions)
+tests/unit/dsl/orchestration/test_file_sensor_task_wrapper.py   NEW (135 LOC, 9 tests)
+```
+
+### Layer 3 health: 8.0 → 8.2/10
+
 ## [Unreleased] — Cycle 45 (2026-07-28) — Layer 3 MRO shadowing fix
 
 ### Cycle 45: Critical Layer 3 production bug — MRO shadowing
