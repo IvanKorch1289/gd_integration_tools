@@ -1,9 +1,10 @@
-"""S95 W1 — DSL CRUD-процессоры: db_insert, db_upsert, db_delete.
+"""S95 W1 — DSL CRUD-процессоры: db_insert, db_update, db_upsert, db_delete.
 
 Safe SQL-builder поверх существующего ``DatabaseQueryProcessor``. Генерирует
 parameterized SQL из dict-входа:
 
 * ``db_insert(table, data)`` → ``INSERT INTO t (cols) VALUES (:p1, :p2)``
+* ``db_update(table, data, where)`` → ``UPDATE t SET c1=:p1 WHERE c2=:p2``
 * ``db_upsert(table, data, conflict_keys)`` → ``INSERT ... ON CONFLICT (...) DO UPDATE``
 * ``db_delete(table, where)`` → ``DELETE FROM t WHERE col = :p1 AND ...``
 
@@ -33,6 +34,7 @@ __all__ = (
     "SUPPORTED_DIALECTS",
     "build_delete_sql",
     "build_insert_sql",
+    "build_update_sql",
     "build_upsert_sql",
     "build_upsert_sql_dialect",
     "build_upsert_sql_merge",
@@ -56,6 +58,7 @@ class CRUDOperation:
     """CRUD operation type."""
 
     INSERT = "INSERT"
+    UPDATE = "UPDATE"
     UPSERT = "UPSERT"
     DELETE = "DELETE"
 
@@ -163,6 +166,46 @@ def build_delete_sql(table: str, where: dict[str, Any]) -> tuple[str, dict[str, 
     conditions = " AND ".join(f"{_quote_identifier(c)} = :{c}" for c in where.keys())
     sql = f"DELETE FROM {table_q} WHERE {conditions}"  # noqa: S608
     return sql, dict(where)
+
+
+def build_update_sql(
+    table: str, data: dict[str, Any], where: dict[str, Any]
+) -> tuple[str, dict[str, Any]]:
+    """Build parameterized UPDATE SQL.
+
+    Args:
+        table: Table name.
+        data: Column → value for SET clause.
+        where: Column → value for WHERE clause (mandatory, prevents UPDATE all).
+
+    Returns:
+        (sql, params) — sql: ``UPDATE "t" SET "c1" = :set_c1 WHERE "w1" = :where_w1``.
+
+    Raises:
+        ValueError: Если data или where пусты, или identifiers содержат unsafe chars.
+    """
+    if not data:
+        raise ValueError("db_update: data cannot be empty")
+    if not where:
+        raise ValueError(
+            "db_update: where cannot be empty (would UPDATE all rows). "
+            "Use db_query with explicit SQL for bulk operations."
+        )
+    for col in list(data.keys()) + list(where.keys()):
+        _quote_identifier(col)
+    table_q = _quote_identifier(table)
+    set_clause = ", ".join(
+        f"{_quote_identifier(c)} = :set_{c}" for c in data.keys()
+    )
+    conditions = " AND ".join(
+        f"{_quote_identifier(c)} = :where_{c}" for c in where.keys()
+    )
+    sql = f"UPDATE {table_q} SET {set_clause} WHERE {conditions}"  # noqa: S608
+    # Merge params with prefixed keys to avoid collisions between SET and WHERE.
+    params: dict[str, Any] = {}
+    params.update({f"set_{k}": v for k, v in data.items()})
+    params.update({f"where_{k}": v for k, v in where.items()})
+    return sql, params
 
 
 def build_upsert_sql_mysql(
@@ -318,9 +361,9 @@ class DbCrudProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"db_{operation.lower()}")
-        if operation not in ("INSERT", "UPSERT", "DELETE"):
+        if operation not in ("INSERT", "UPDATE", "UPSERT", "DELETE"):
             raise ValueError(
-                f"operation must be INSERT|UPSERT|DELETE, got {operation!r}"
+                f"operation must be INSERT|UPDATE|UPSERT|DELETE, got {operation!r}"
             )
         if dialect not in SUPPORTED_DIALECTS:
             raise ValueError(
@@ -343,6 +386,8 @@ class DbCrudProcessor(BaseProcessor):
         # 1. Build SQL
         if self._operation == "INSERT":
             sql, params = build_insert_sql(self._table, self._data)
+        elif self._operation == "UPDATE":
+            sql, params = build_update_sql(self._table, self._data, self._where)
         elif self._operation == "UPSERT":
             sql, params = build_upsert_sql_dialect(
                 self._dialect, self._table, self._data, self._conflict_keys

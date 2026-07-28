@@ -105,6 +105,44 @@ class PersistenceMixin:
             result_property=result_property,
         )
 
+    def db_update(
+        self,
+        table: str,
+        data: dict[str, Any],
+        where: dict[str, Any],
+        *,
+        result_property: str = "db_crud_result",
+    ) -> RouteBuilder:
+        """Safe UPDATE через parameterized SQL.
+
+        Auto-генерирует ``UPDATE "t" SET "c1" = :set_c1 WHERE "w1" = :where_w1``
+        из ``data`` + ``where`` dicts. Идентификаторы (table, columns) проходят
+        whitelist (только [A-Za-z0-9_]); values — bind-params.
+
+        ``where`` НЕ МОЖЕТ быть пустым (защита от accidental UPDATE all).
+
+        Args:
+            table: Table name.
+            data: Column → value mapping для SET clause.
+            where: Column → value mapping для WHERE clause (mandatory).
+            result_property: Куда положить result.
+
+        Example::
+
+            RouteBuilder.from_("orders.ship", source="http:/orders/ship")
+                .db_update("orders", {"status": "shipped"}, {"id": "${body.id}"})
+                .build()
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.db_crud",
+            "DbCrudProcessor",
+            operation="UPDATE",
+            table=table,
+            data=data,
+            where=where,
+            result_property=result_property,
+        )
+
     def db_upsert(
         self,
         table: str,
