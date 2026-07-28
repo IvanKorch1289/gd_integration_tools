@@ -203,3 +203,218 @@ class TestAuthFacadeHelpers:
             side_effect=RuntimeError("boom"),
         ):
             assert facade._is_blacklisted("jti-123") is False
+
+
+class TestAuthFacadeTokenIssuance:
+    """S31 Task 4: JWT issuance + revocation."""
+
+    def test_issue_token_returns_jwt(self) -> None:
+        """issue_token делегирует в jwt_backend.encode и возвращает (token, expires_in)."""
+        facade = AuthFacade()
+        mock_token = "eyJ.encoded.jwt"
+        with patch.object(
+            facade.jwt,
+            "encode",
+            return_value=(mock_token, 3600),
+        ) as mock_encode:
+            token, expires = facade.issue_token(
+                subject="user:1",
+                tenant_id="tenant_a",
+                groups=["g1"],
+                capabilities=["c1"],
+            )
+
+        assert token == mock_token
+        assert expires == 3600
+        # Verify claims merged correctly
+        call_kwargs = mock_encode.call_args.kwargs
+        assert call_kwargs["subject"] == "user:1"
+        assert call_kwargs["expires_in"] == 3600
+        assert call_kwargs["claims"]["tenant_id"] == "tenant_a"
+        assert call_kwargs["claims"]["groups"] == ["g1"]
+        assert call_kwargs["claims"]["capabilities"] == ["c1"]
+        assert call_kwargs["claims"]["auth_method"] == "jwt"
+
+    def test_issue_token_rejects_empty_subject(self) -> None:
+        """issue_token raises ValueError на пустой subject."""
+        facade = AuthFacade()
+        with pytest.raises(ValueError, match="subject must be non-empty"):
+            facade.issue_token(subject="")
+
+    def test_issue_token_wraps_jwt_errors(self) -> None:
+        """issue_token wraps encode errors в RuntimeError."""
+        facade = AuthFacade()
+        with patch.object(
+            facade.jwt,
+            "encode",
+            side_effect=ValueError("missing secret"),
+        ):
+            with pytest.raises(RuntimeError, match="issue_token failed"):
+                facade.issue_token(subject="user:1")
+
+    @pytest.mark.asyncio
+    async def test_revoke_token_success(self) -> None:
+        """revoke_token → SecurityFacade.add_to_blacklist."""
+        facade = AuthFacade()
+        with patch(
+            "src.backend.services.security.facade.get_security_facade"
+        ) as mock_get_facade:
+            mock_sec_facade = MagicMock()
+            mock_sec_facade.add_to_blacklist = MagicMock(
+                return_value=None  # sync — could be sync or async
+            )
+            # Make it return a coroutine to support await
+            async def _awaitable_add(jti: str) -> None:
+                return None
+
+            mock_sec_facade.add_to_blacklist = _awaitable_add
+            mock_get_facade.return_value = mock_sec_facade
+
+            result = await facade.revoke_token("jti-revoke-1")
+            assert result is True
+
+    @pytest.mark.asyncio
+    async def test_revoke_token_rejects_empty_jti(self) -> None:
+        """revoke_token raises ValueError на пустой jti."""
+        facade = AuthFacade()
+        with pytest.raises(ValueError, match="jti must be non-empty"):
+            await facade.revoke_token("")
+
+    @pytest.mark.asyncio
+    async def test_revoke_token_propagates_errors(self) -> None:
+        """revoke_token raises RuntimeError при ошибке SecurityFacade."""
+        facade = AuthFacade()
+        with patch(
+            "src.backend.services.security.facade.get_security_facade",
+            side_effect=RuntimeError("redis down"),
+        ):
+            with pytest.raises(RuntimeError, match="revoke_token failed"):
+                await facade.revoke_token("jti-1")
+
+
+class TestAuthFacadeSAMLDevMode:
+    """S31 Task 4: SAML verification с config gate."""
+
+    @pytest.mark.asyncio
+    async def test_saml_dev_mode_disabled_fails_closed(self) -> None:
+        """Dev-mode flag off → fail-closed (no real ACS)."""
+        facade = AuthFacade()
+        with patch(
+            "src.backend.core.config.features.feature_flags",
+            MagicMock(saml_sp_initiated_enabled=False),
+        ):
+            result = await facade.verify_saml_assertion("some.assertion")
+        assert result.is_authenticated is False
+        assert result.metadata["error"] == "saml_requires_acs_flow"
+
+    @pytest.mark.asyncio
+    async def test_saml_dev_mode_enabled_valid_assertion(self) -> None:
+        """Dev-mode flag on + valid base64 assertion → authenticated."""
+        import base64
+
+        facade = AuthFacade()
+        xml = (
+            '<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">'
+            "<saml:Issuer>https://idp.example.com</saml:Issuer>"
+            "<saml:Subject><saml:NameID>user:ldap1</saml:NameID></saml:Subject>"
+            "</saml:Assertion>"
+        )
+        assertion_b64 = base64.b64encode(xml.encode()).decode()
+
+        with patch(
+            "src.backend.core.config.features.feature_flags",
+            MagicMock(saml_sp_initiated_enabled=True),
+        ):
+            result = await facade.verify_saml_assertion(assertion_b64)
+        assert result.is_authenticated is True
+        assert result.subject == "user:ldap1"
+        assert result.method == "saml"
+        assert result.metadata["issuer"] == "https://idp.example.com"
+
+    @pytest.mark.asyncio
+    async def test_saml_empty_assertion_fails(self) -> None:
+        """Empty assertion → unauthenticated."""
+        facade = AuthFacade()
+        with patch(
+            "src.backend.core.config.features.feature_flags",
+            MagicMock(saml_sp_initiated_enabled=True),
+        ):
+            result = await facade.verify_saml_assertion("")
+        assert result.is_authenticated is False
+        assert result.metadata["error"] == "saml_empty_assertion"
+
+    @pytest.mark.asyncio
+    async def test_saml_issuer_mismatch(self) -> None:
+        """expected_issuer set + actual issuer different → unauthenticated."""
+        import base64
+
+        facade = AuthFacade()
+        xml = (
+            '<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">'
+            "<saml:Issuer>https://wrong.example.com</saml:Issuer>"
+            "<saml:Subject><saml:NameID>user</saml:NameID></saml:Subject>"
+            "</saml:Assertion>"
+        )
+        assertion_b64 = base64.b64encode(xml.encode()).decode()
+
+        with patch(
+            "src.backend.core.config.features.feature_flags",
+            MagicMock(saml_sp_initiated_enabled=True),
+        ):
+            result = await facade.verify_saml_assertion(
+                assertion_b64,
+                expected_issuer="https://idp.example.com",
+            )
+        assert result.is_authenticated is False
+        assert result.metadata["error"] == "saml_issuer_mismatch"
+
+
+class TestAuthFacadeLDAP:
+    """S31 Task 4: LDAP credential verification."""
+
+    @pytest.mark.asyncio
+    async def test_ldap_empty_credentials(self) -> None:
+        """Empty username/password → unauthenticated."""
+        facade = AuthFacade()
+        result = await facade.verify_ldap_credentials("", "")
+        assert result.is_authenticated is False
+        assert result.metadata["error"] == "ldap_empty_credentials"
+
+    @pytest.mark.asyncio
+    async def test_ldap_bind_success(self) -> None:
+        """Successful LDAP bind → authenticated."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        facade = AuthFacade()
+        mock_client = MagicMock()
+        mock_client.bind = AsyncMock(return_value=True)
+        with patch(
+            "src.backend.core.auth.ldap_client_factory.get_ad_client",
+            return_value=mock_client,
+        ):
+            result = await facade.verify_ldap_credentials(
+                "alice",
+                "secret",
+                tenant_id="tenant_a",
+            )
+        assert result.is_authenticated is True
+        assert result.subject == "alice"
+        assert result.tenant_id == "tenant_a"
+        assert result.method == "ldap"
+        mock_client.bind.assert_awaited_once_with("alice", "secret")
+
+    @pytest.mark.asyncio
+    async def test_ldap_bind_failed(self) -> None:
+        """Failed LDAP bind → unauthenticated."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        facade = AuthFacade()
+        mock_client = MagicMock()
+        mock_client.bind = AsyncMock(return_value=False)
+        with patch(
+            "src.backend.core.auth.ldap_client_factory.get_ad_client",
+            return_value=mock_client,
+        ):
+            result = await facade.verify_ldap_credentials("alice", "wrong")
+        assert result.is_authenticated is False
+        assert result.metadata["error"] == "ldap_bind_failed"

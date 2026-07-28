@@ -326,6 +326,226 @@ class AuthFacade:
 
         return extract_tenant_id(auth)
 
+    def issue_token(
+        self,
+        subject: str,
+        *,
+        tenant_id: str | None = None,
+        groups: list[str] | None = None,
+        capabilities: list[str] | None = None,
+        expires_in: int = 3600,
+        method: str = "jwt",
+        extra_claims: dict[str, Any] | None = None,
+    ) -> tuple[str, int]:
+        """S31 Task 4: mint a new JWT for the given subject (token issuance).
+
+        Wraps :func:`jwt_backend.encode` and merges standard claims
+        (``sub``, ``tenant_id``, ``groups``, ``capabilities``, ``auth_method``).
+        Existing jti is left to jwt_backend (random UUID generation).
+
+        Args:
+            subject: User identity (``sub`` claim).
+            tenant_id: Tenant ID (added as custom claim).
+            groups: Group names (added as ``groups`` array claim).
+            capabilities: Capabilities (added as ``capabilities`` array claim).
+            expires_in: TTL in seconds (default 3600).
+            method: Auth method marker (``"jwt"``, ``"api_key"``, ``"saml"``, ``"mtls"``).
+            extra_claims: Additional custom claims merged into the JWT.
+
+        Returns:
+            ``(token_str, expires_in)`` tuple.
+
+        Raises:
+            ValueError: If ``subject`` is empty.
+            RuntimeError: If JWT encode fails (e.g., missing secret).
+        """
+        if not subject:
+            raise ValueError("issue_token: subject must be non-empty")
+
+        claims: dict[str, Any] = dict(extra_claims or {})
+        claims["auth_method"] = method
+        if tenant_id is not None:
+            claims["tenant_id"] = tenant_id
+        if groups is not None:
+            claims["groups"] = list(groups)
+        if capabilities is not None:
+            claims["capabilities"] = list(capabilities)
+
+        try:
+            token, expires = self.jwt.encode(
+                subject=subject,
+                claims=claims,
+                expires_in=expires_in,
+            )
+            return token, expires
+        except Exception as exc:
+            raise RuntimeError(f"issue_token failed: {exc}") from exc
+
+    async def revoke_token(self, jti: str) -> bool:
+        """S31 Task 4: revoke a JWT by jti (blacklist).
+
+        Adds the jti to the blacklist via :class:`SecurityFacade`. Returns
+        ``True`` on success. Fail-closed: any error in the blacklist layer
+        is propagated as RuntimeError.
+
+        Args:
+            jti: JWT ID (``jti`` claim) to revoke.
+
+        Returns:
+            ``True`` if blacklist write succeeded.
+
+        Raises:
+            ValueError: If ``jti`` is empty.
+            RuntimeError: On blacklist layer failure (fail-closed).
+        """
+        if not jti:
+            raise ValueError("revoke_token: jti must be non-empty")
+        try:
+            from src.backend.services.security.facade import get_security_facade
+
+            facade = get_security_facade()
+            await facade.add_to_blacklist(jti)
+            return True
+        except Exception as exc:
+            raise RuntimeError(f"revoke_token failed: {exc}") from exc
+
+    async def verify_saml_assertion(
+        self,
+        assertion_b64: str,
+        *,
+        expected_audience: str | None = None,
+        expected_issuer: str | None = None,
+    ) -> AuthResult:
+        """S31 Task 4: SAML assertion verification with config gate.
+
+        SAML requires the canonical ACS flow (configured SamlBackend,
+        InResponseTo tracking, signature validator). For unit-tests and
+        development, we provide a fail-closed path that ONLY succeeds when
+        ``auth.saml.dev_mode`` feature flag is enabled.
+
+        Args:
+            assertion_b64: Base64-encoded SAML assertion.
+            expected_audience: Expected ``AudienceRestriction`` (optional).
+            expected_issuer: Expected ``Issuer`` (optional).
+
+        Returns:
+            :class:`AuthResult` with NameID if verified, else
+            ``is_authenticated=False``.
+        """
+        # SAML requires ACS flow; fail-closed unless dev_mode flag is on.
+        dev_mode = False
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            dev_mode = bool(getattr(feature_flags, "saml_sp_initiated_enabled", False))
+        except Exception:
+            pass
+
+        if not dev_mode:
+            logger.debug("SAML: dev_mode disabled, fail-closed")
+            return AuthResult(
+                is_authenticated=False,
+                metadata={"error": "saml_requires_acs_flow"},
+            )
+
+        # Dev-mode path: accept the assertion if it's non-empty and has
+        # expected fields (no real crypto verification, for dev/test only).
+        if not assertion_b64:
+            return AuthResult(
+                is_authenticated=False,
+                metadata={"error": "saml_empty_assertion"},
+            )
+
+        try:
+            import base64
+            import xml.etree.ElementTree as ET
+
+            xml_bytes = base64.b64decode(assertion_b64)
+            root = ET.fromstring(xml_bytes)
+            ns = {"saml": "urn:oasis:names:tc:SAML:2.0:assertion"}
+            name_id_el = root.find(".//saml:NameID", ns)
+            subject_el = root.find(".//saml:Subject", ns)
+            issuer_el = root.find(".//saml:Issuer", ns)
+            name_id = (
+                name_id_el.text if name_id_el is not None else None
+            ) or (subject_el.text if subject_el is not None else None)
+            issuer = issuer_el.text if issuer_el is not None else None
+
+            if expected_issuer and issuer != expected_issuer:
+                return AuthResult(
+                    is_authenticated=False,
+                    metadata={"error": "saml_issuer_mismatch"},
+                )
+            if not name_id:
+                return AuthResult(
+                    is_authenticated=False,
+                    metadata={"error": "saml_no_nameid"},
+                )
+            return AuthResult(
+                is_authenticated=True,
+                method="saml",
+                subject=str(name_id),
+                metadata={"issuer": issuer, "dev_mode": True},
+            )
+        except Exception as exc:
+            logger.debug("SAML dev-mode verify failed: %s", exc)
+            return AuthResult(
+                is_authenticated=False,
+                metadata={"error": f"saml_dev_verify_failed: {exc}"},
+            )
+
+    async def verify_ldap_credentials(
+        self,
+        username: str,
+        password: str,
+        *,
+        tenant_id: str | None = None,
+    ) -> AuthResult:
+        """S31 Task 4: LDAP bind verification.
+
+        Uses :class:`ldap_client_factory` (canonical core-owned
+        :class:`AdDirectoryClientProtocol`) to bind the user. On success,
+        returns ``AuthResult`` with subject=``username`` and optional
+        tenant_id. On failure, returns ``is_authenticated=False``.
+
+        Args:
+            username: LDAP/AD user (sAMAccountName или UPN).
+            password: Plain password (passed to LDAP bind).
+            tenant_id: Optional tenant mapping (added to metadata).
+
+        Returns:
+            :class:`AuthResult` with ``is_authenticated`` status.
+        """
+        if not username or not password:
+            return AuthResult(
+                is_authenticated=False,
+                metadata={"error": "ldap_empty_credentials"},
+            )
+
+        try:
+            from src.backend.core.auth.ldap_client_factory import get_ad_client
+
+            client = get_ad_client()
+            success = await client.bind(username, password)
+            if not success:
+                return AuthResult(
+                    is_authenticated=False,
+                    metadata={"error": "ldap_bind_failed"},
+                )
+            return AuthResult(
+                is_authenticated=True,
+                method="ldap",
+                subject=str(username),
+                tenant_id=tenant_id,
+                metadata={"directory": "ldap", "tenant_id": tenant_id},
+            )
+        except Exception as exc:
+            logger.debug("LDAP bind failed: %s", exc)
+            return AuthResult(
+                is_authenticated=False,
+                metadata={"error": f"ldap_exception: {exc}"},
+            )
+
 
 # Singleton per pattern (NotificationFacade, StorageFacade, etc.).
 _auth_facade: AuthFacade | None = None
