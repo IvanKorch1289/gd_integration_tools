@@ -544,7 +544,7 @@ dev = [
     "pygls>=2.0.0",
     # S35 W4: pip-only (uv lock conflict: hypothesis→pydantic-ai>=1.99.0↔llm-guard tiktoken).
     # Property-based tests: pip install hypothesis>=6.0.0
-    "hypothesis>=6.0.0",
+    "hypothesis>=6.163.0",
     # S36 fix: aiosqlite требуется для unit-тестов fallbacks (sqlite_doc_store, sqlite_search).
     # Ранее был только в [project.optional-dependencies] dev-light — недоступен в полном dev.
     "aiosqlite>=0.20.0,<1.0.0",
