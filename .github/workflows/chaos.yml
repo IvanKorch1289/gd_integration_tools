@@ -46,7 +46,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Cache Docker images
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /tmp/.docker-cache
           key: chaos-docker-${{ runner.os }}-toxiproxy-2.9.0

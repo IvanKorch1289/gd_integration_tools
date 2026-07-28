@@ -43,7 +43,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Cache Sphinx doctrees
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: docs/build/.doctrees
           key: docs-${{ runner.os }}-${{ hashFiles('docs/**/*.md', 'src/**/*.py', 'docs/conf.py') }}
