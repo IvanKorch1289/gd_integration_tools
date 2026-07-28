@@ -62,7 +62,7 @@ __all__ = (
 logger = get_logger("dsl.codec")
 
 _TEXT_FORMATS = {"json", "csv", "xml", "yaml", "excel", "pdf"}
-_BINARY_FORMATS = {"avro", "protobuf", "msgpack", "cbor", "parquet"}
+_BINARY_FORMATS = {"avro", "protobuf", "msgpack", "parquet"}
 _BANKING_FORMATS = {"fix", "mt", "mx", "edifact", "iso8583", "hl7"}
 
 
@@ -94,10 +94,6 @@ def decode_as(fmt: str, raw: bytes | str) -> Any:
         return msgpack.unpackb(
             raw if isinstance(raw, (bytes, bytearray)) else raw.encode(), raw=False
         )
-    if fmt == "cbor":
-        import cbor2
-
-        return cbor2.loads(raw if isinstance(raw, (bytes, bytearray)) else raw.encode())
     if fmt in _BANKING_FORMATS:
         return _decode_banking(fmt, raw)
     raise ValueError(f"Unsupported decode format: {fmt}")
@@ -122,10 +118,6 @@ def encode_as(fmt: str, data: Any) -> bytes | str:
         import msgpack
 
         return msgpack.packb(data, use_bin_type=True)
-    if fmt == "cbor":
-        import cbor2
-
-        return cbor2.dumps(data)
     raise ValueError(f"Unsupported encode format: {fmt}")
 
 

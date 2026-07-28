@@ -134,6 +134,10 @@ class RedisBackend(CacheBackend):
             count += 1
         return count
 
+    # Максимальный размер одного pipeline-батча (защита от OOM при
+    # передаче очень больших списков ключей/значений).
+    _MAX_PIPELINE_BATCH: int = 10_000
+
     async def mget_pipelined(self, keys: list[str]) -> list[bytes | None]:
         """Batch-чтение через non-transactional pipeline.
 
@@ -148,9 +152,18 @@ class RedisBackend(CacheBackend):
             Список значений (``None`` для отсутствующих ключей) в том же
             порядке, что и входные ``keys``. Для пустого ``keys``
             возвращает пустой список без обращения к Redis.
+
+        Raises:
+            ValueError: Если ``len(keys) > _MAX_PIPELINE_BATCH`` —
+                caller должен разбить на чанки.
         """
         if not keys:
             return []
+        if len(keys) > self._MAX_PIPELINE_BATCH:
+            raise ValueError(
+                f"mget_pipelined: {len(keys)} keys exceeds batch limit "
+                f"{self._MAX_PIPELINE_BATCH}. Split into smaller chunks."
+            )
         async with self._client.pipeline(transaction=False) as pipe:
             for key in keys:
                 pipe.get(key)
@@ -169,9 +182,18 @@ class RedisBackend(CacheBackend):
             items: словарь ``{key: value}``.
             ttl: единый TTL в секундах для всех элементов; ``None`` —
                 без TTL.
+
+        Raises:
+            ValueError: Если ``len(items) > _MAX_PIPELINE_BATCH`` —
+                caller должен разбить на чанки.
         """
         if not items:
             return
+        if len(items) > self._MAX_PIPELINE_BATCH:
+            raise ValueError(
+                f"mset_pipelined: {len(items)} items exceeds batch limit "
+                f"{self._MAX_PIPELINE_BATCH}. Split into smaller chunks."
+            )
         async with self._client.pipeline(transaction=False) as pipe:
             for key, value in items.items():
                 if ttl is not None:

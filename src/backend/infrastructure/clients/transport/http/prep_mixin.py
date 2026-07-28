@@ -10,7 +10,7 @@ from time import monotonic
 
 import httpx
 
-from src.backend.dsl.codec.json import json_dumps
+from src.backend.core.codec.json import json_dumps
 
 
 class PrepMixin:

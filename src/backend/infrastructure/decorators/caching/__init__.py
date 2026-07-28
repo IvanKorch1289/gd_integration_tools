@@ -16,7 +16,7 @@ from collections.abc import Awaitable, Callable
 from functools import lru_cache
 from typing import Any
 
-from src.backend.dsl.codec.json import json_dumps
+from src.backend.core.codec.json import json_dumps
 from src.backend.infrastructure.decorators.caching.decorator import CachingDecorator
 
 __all__ = (

@@ -1,5 +1,11 @@
 """`PgRunnerWorkflowBackend` — адаптер ADR-031 pg-runner на Protocol.
 
+.. warning::
+    **Non-production-grade fallback.** Этот backend НЕ детектирует
+    non-determinism при replay (метод ``replay()`` — no-op).
+    Для production используйте ``TemporalWorkflowBackend`` (Wave D.2).
+    ``PgRunnerWorkflowBackend`` подходит только для dev/staging/CI.
+
 Wave D.1 / ADR-045 §«PgRunnerWorkflowBackend (legacy fallback)».
 Тонкая обёртка над существующими ``WorkflowInstanceStore`` /
 ``WorkflowEventStore`` + ``DurableWorkflowRunner``: даёт ядру

@@ -20,8 +20,8 @@ policy resolution (step 1.5, S168 W9 P0-1 fix) и после prompt render
 (step 5, S36-W5 P0-1). Обе делали одно и то же — привели к
 единому helper ``_enforce_tool_policy_once()``, который вызывается
 один раз между capability check (step 2) и input sanitizers (step 3).
-Семантика identical: ``enforced_name = request.tool_name or request.workflow_id``,
-``policy.tools.whitelist/blacklist`` — backed by ``tools_policy.enforce_tool_policy``.
+Семантика: ``enforce_tool_policy(request.tool_name, tools)`` — tool_name обязателен
+для restricted policies (cycle 30 P0 fix, S209 fail-closed).
 
 S172 M4 (ARC-007): token budget enforcement integration. Helper
 ``_enforce_token_budget_once()`` резервирует estimated tokens через
@@ -61,7 +61,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
     def _enforce_tool_policy_once(
         self, request: AIRequest, policy: object | None
     ) -> None:
-        """Единая точка enforce tool whitelist/blacklist (S172 M1.3, ARC-003).
+        """Единая точка enforce tool whitelist/blacklist (S172 M1.3, ARC-003, S209 fix).
 
         Раньше проверка :func:`enforce_tool_policy` вызывалась дважды —
         после ``_resolve_policy`` (pre-S1) и после ``_render_prompt``
@@ -74,12 +74,18 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             policy: :class:`AIPolicySpec` или ``None`` (default policy → no-op).
 
         Raises:
-            ToolPolicyViolationError: При blacklist match или whitelist miss.
+            ToolPolicyViolationError: При blacklist match или whitelist miss
+                ИЛИ при пустых whitelist+blacklist без явного opt-in
+                (``allow_all_tools=True``).
 
         Notes:
-            S1 fix semantics сохранены: ``enforced_name = request.tool_name or
-            request.workflow_id``. Если whitelist+blacklist пустые — no-op
-            (backward-compat с pre-S76 policies).
+            S209 fail-closed: если policy.tools определён, но whitelist+blacklist
+            пустые И ``allow_all_tools=False`` (default) — теперь поднимается
+            :exc:`ToolPolicyViolationError` вместо silent no-op.
+
+            P0 security (cycle 30): tool_name mandatory для restricted policies.
+            No fallback на workflow_id — это позволяло бы обойти whitelist
+            реального инструмента.
         """
         if policy is None:
             return
@@ -88,12 +94,33 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             return
         whitelist = getattr(tools, "whitelist", None) or []
         blacklist = getattr(tools, "blacklist", None) or []
+        # S209: пустые whitelist+blacklist → fail-closed default.
         if not whitelist and not blacklist:
-            return
-        from src.backend.core.ai.policy.enforcer.tools_policy import enforce_tool_policy
+            if not getattr(tools, "allow_all_tools", False):
+                from src.backend.core.ai.policy.enforcer.tools_policy import (
+                    ToolPolicyViolationError,
+                )
 
-        enforced_name = request.tool_name or request.workflow_id
-        enforce_tool_policy(enforced_name, tools)
+                raise ToolPolicyViolationError(
+                    f"Tool policy for workflow_id={request.workflow_id!r} has empty "
+                    f"whitelist AND empty blacklist — deny-all by default (S209). "
+                    f"Set tools.allow_all_tools=True to opt into allow-all behavior."
+                )
+            return
+        from src.backend.core.ai.policy.enforcer.tools_policy import (
+            ToolPolicyViolationError,
+            enforce_tool_policy,
+        )
+
+        # P0 security (cycle 30): tool_name mandatory for restricted policies.
+        if not request.tool_name:
+            raise ToolPolicyViolationError(
+                f"AIRequest.tool_name is required when tool policy has "
+                f"non-empty whitelist/blacklist (workflow_id="
+                f"{request.workflow_id!r}). "
+                f"Set request.tool_name to the actual tool being invoked."
+            )
+        enforce_tool_policy(request.tool_name, tools)
 
     async def _enforce_token_budget_pre_call(
         self,

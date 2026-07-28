@@ -96,6 +96,22 @@ class InProcessAgentSandbox:
             DeprecationWarning,
             stacklevel=2,
         )
+        # Audit event для security visibility: даже вне production
+        # констружение zero-isolation sandbox должно быть видимым
+        # в audit-log (ops teams могут alerting на этот event).
+        try:
+            from src.backend.core.audit.facade import emit_audit_safe
+
+            emit_audit_safe(
+                event_type="ai.sandbox.zero_isolation_constructed",
+                payload={
+                    "backend": "in_process",
+                    "warning": "Zero process isolation — DEPRECATED",
+                },
+                severity="warning",
+            )
+        except Exception:  # never fail caller on audit error
+            pass
 
     async def run_react(
         self,

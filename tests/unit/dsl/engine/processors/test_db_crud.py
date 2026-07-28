@@ -1,4 +1,4 @@
-"""Tests для DSL db_insert/db_upsert/db_delete (S95 W1) + execute_dml P3 unified DML."""
+"""Tests для DSL db_insert/db_update/db_upsert/db_delete (S95 W1) + execute_dml P3 unified DML."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from src.backend.dsl.engine.processors.db_crud import (
     DbCrudProcessor,
     build_delete_sql,
     build_insert_sql,
+    build_update_sql,
     build_upsert_sql,
     build_upsert_sql_dialect,
     build_upsert_sql_merge,
@@ -108,6 +109,64 @@ def test_build_delete_sql_rejects_unsafe_identifier() -> None:
         build_delete_sql("users", {"1; DROP TABLE x;--": 1})
 
 
+# ─────────── UPDATE SQL Builder Tests ───────────
+
+
+def test_build_update_sql_basic() -> None:
+    sql, params = build_update_sql("users", {"name": "Alice"}, {"id": 1})
+    assert 'UPDATE "users" SET "name" = :set_name' in sql
+    assert 'WHERE "id" = :where_id' in sql
+    assert params == {"set_name": "Alice", "where_id": 1}
+
+
+def test_build_update_sql_multiple_cols() -> None:
+    sql, params = build_update_sql(
+        "orders", {"status": "shipped", "updated_at": "2026-01-01"}, {"id": 42}
+    )
+    assert 'UPDATE "orders"' in sql
+    assert '"status" = :set_status' in sql
+    assert '"updated_at" = :set_updated_at' in sql
+    assert 'WHERE "id" = :where_id' in sql
+    assert params == {
+        "set_status": "shipped",
+        "set_updated_at": "2026-01-01",
+        "where_id": 42,
+    }
+
+
+def test_build_update_sql_multiple_where_conditions() -> None:
+    sql, _ = build_update_sql(
+        "sessions", {"active": True}, {"user_id": 1, "tenant": "corp"}
+    )
+    assert 'WHERE "user_id" = :where_user_id' in sql
+    assert 'AND "tenant" = :where_tenant' in sql
+
+
+def test_build_update_sql_rejects_empty_data() -> None:
+    with pytest.raises(ValueError, match="data cannot be empty"):
+        build_update_sql("users", {}, {"id": 1})
+
+
+def test_build_update_sql_rejects_empty_where() -> None:
+    with pytest.raises(ValueError, match="where cannot be empty"):
+        build_update_sql("users", {"name": "x"}, {})
+
+
+def test_build_update_sql_rejects_unsafe_identifier() -> None:
+    with pytest.raises(ValueError, match="Invalid SQL identifier"):
+        build_update_sql("users", {"name": "x"}, {"1; DROP TABLE x;--": 1})
+    with pytest.raises(ValueError, match="Invalid SQL identifier"):
+        build_update_sql("users", {"col; DROP": "x"}, {"id": 1})
+
+
+def test_build_update_sql_no_collision_set_where() -> None:
+    """Если один и тот же column в SET и WHERE — params не коллидируют."""
+    sql, params = build_update_sql("users", {"name": "new"}, {"name": "old"})
+    assert ":set_name" in sql
+    assert ":where_name" in sql
+    assert params == {"set_name": "new", "where_name": "old"}
+
+
 # ─────────── DbCrudProcessor Tests ───────────
 
 
@@ -148,6 +207,31 @@ def test_processor_name_auto() -> None:
     assert proc2.name == "db_upsert"
     proc3 = DbCrudProcessor(operation="DELETE", table="t", where={"a": 1})
     assert proc3.name == "db_delete"
+
+
+def test_processor_update_accepted() -> None:
+    """UPDATE operation is now accepted (was missing)."""
+    proc = DbCrudProcessor(
+        operation="UPDATE", table="users", data={"name": "X"}, where={"id": 1}
+    )
+    assert proc._operation == "UPDATE"
+    assert proc._data == {"name": "X"}
+    assert proc._where == {"id": 1}
+    assert proc.name == "db_update"
+
+
+def test_processor_update_rejects_empty_where() -> None:
+    """UPDATE без where — ошибка на SQL build stage (в process())."""
+    from src.backend.dsl.engine.exchange import Exchange, Message
+    import asyncio
+
+    proc = DbCrudProcessor(
+        operation="UPDATE", table="users", data={"name": "X"}, where={}
+    )
+    ex = Exchange(in_message=Message(body={}))
+    asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
+    assert ex.error is not None
+    assert "where cannot be empty" in ex.error
 
 
 # ─────────── DSL Builder Tests ───────────

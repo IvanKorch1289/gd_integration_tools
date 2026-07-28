@@ -1,7 +1,7 @@
 """Mixed-domain feature-flags (T1.3.17 split from core.config.features.__init__).
 
-Извлечено 26 flags (S38 P1.1 W1 T1.3.17):
-- Sprint 5 K4 AI+RAG (9):
+Извлечено 25 flags (S38 P1.1 W1 T1.3.17):
+- Sprint 5 K4 AI+RAG (8):
   - rag_cache_l3_retrieval_invalidation (Sprint 5 K4 W1)
   - multipart_rag_ingest (Sprint 5 K4 W1)
   - multimodal_rag_docling (Sprint 5 K4 W3)
@@ -9,7 +9,6 @@
   - dsl_expose_mcp (Sprint 5 K4 W8)
   - rlm_hierarchical_memory (Sprint 5 K4 W4)
   - unmask_pii_enabled (Sprint 5 K4 W6)
-  - mem0ai_enabled (Sprint 5 K4 W5)
   - langfuse_mcp_prompt (Sprint 5 K4 W8)
 - Sprint 5 K5 Frontend (3):
   - frontend_workflow_logs_page (Sprint 5 K5 W1)
@@ -125,15 +124,6 @@ class InfrastructureFlags(BaseSettings):
         description=(
             "K4 Sprint 5 Wave 6. Owner: K4 AI/RAG. ETA: S5-W6. "
             "Активирует UnmaskPiiProcessor — обратная операция к mask_pii через vault-key."
-        ),
-    )
-
-    mem0ai_enabled: bool = Field(
-        default=True,
-        title="K4 S5 W5: mem0ai memory backend для DSL .memory_*",
-        description=(
-            "K4 Sprint 5 Wave 5. Owner: K4 AI/RAG. ETA: S5-W5. "
-            "Активирует mem0ai backend для DSL .memory_write/.memory_read."
         ),
     )
 

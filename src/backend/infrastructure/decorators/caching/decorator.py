@@ -11,7 +11,7 @@ from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from src.backend.core.config.settings import settings
 from src.backend.core.utils.cache_keys import build_cache_key
-from src.backend.dsl.codec.json import json_dumps, json_loads
+from src.backend.core.codec.json import json_dumps, json_loads
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 from src.backend.infrastructure.clients.storage.redis import (
     get_redis_client as redis_client,

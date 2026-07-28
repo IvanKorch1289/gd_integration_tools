@@ -104,9 +104,11 @@ class ReplyProcessor(BaseProcessor):
             exchange.fail("Missing reply_to or correlation_id for reply")
             return
 
-        from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
+        from src.backend.core.di.providers.infrastructure_facade import (
+            get_event_bus_facade_provider,
+        )
 
-        bus = get_event_bus()
+        bus = get_event_bus_facade_provider()
         broker = getattr(bus, "_broker", None)
         if broker is None:
             exchange.fail("EventBus broker not available")

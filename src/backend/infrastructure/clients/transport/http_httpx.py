@@ -39,7 +39,7 @@ from src.backend.core.resilience.breaker import (
     CircuitOpen,
     get_breaker_registry,
 )
-from src.backend.dsl.codec.json import json_dumps
+from src.backend.core.codec.json import json_dumps
 from src.backend.infrastructure.clients.transport.httpx_cache_adapter import (
     build_cache_transport,
     is_hishel_available,

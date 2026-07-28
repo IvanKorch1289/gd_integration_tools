@@ -26,7 +26,6 @@ class TestInfrastructureFlagsClass:
             "dsl_expose_mcp",
             "rlm_hierarchical_memory",
             "unmask_pii_enabled",
-            "mem0ai_enabled",
             "langfuse_mcp_prompt",
             "frontend_workflow_logs_page",
             "rpa_ocr_enabled",
@@ -50,27 +49,23 @@ class TestInfrastructureFlagsClass:
             assert getattr(flags, f) is True, f"{f} default не False"
 
     def test_infrastructure_env_vars(self) -> None:
-        os.environ["FEATURE_MEM0AI_ENABLED"] = "true"
         os.environ["FEATURE_HTTP3_ENABLED"] = "true"
         try:
             flags = InfrastructureFlags()
-            assert flags.mem0ai_enabled is True
             assert flags.http3_enabled is True
         finally:
-            del os.environ["FEATURE_MEM0AI_ENABLED"]
             del os.environ["FEATURE_HTTP3_ENABLED"]
 
     def test_infrastructure_field_count(self) -> None:
         fields = InfrastructureFlags.model_fields
         names = list(fields.keys())
-        # 26 fields (Sprint 5 K4+K5 + Sprint 8+9+10)
-        assert len(names) == 26
+        # 25 fields (Sprint 5 K4+K5 + Sprint 8+9+10) — mem0ai removed (dead code)
+        assert len(names) == 25
 
 
 class TestInfrastructureFlagsComposition:
     def test_feature_flags_inherits_infrastructure_fields(self) -> None:
         for f in (
-            "mem0ai_enabled",
             "langfuse_mcp_prompt",
             "rule_engine_hot_reload",
             "http3_enabled",

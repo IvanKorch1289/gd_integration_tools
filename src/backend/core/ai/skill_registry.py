@@ -213,12 +213,9 @@ class SkillRegistry:
     ) -> None:
         """S2 fix (V21 + K-ARCH-5): validate module against whitelist.
 
-        Whitelist semantics (same as
-        :meth:`CallFunctionProcessor._validate_module_whitelist`):
-        * ``module_name`` exact match → ok;
-        * ``module_name`` starts with ``prefix.`` and whitelist contains
-          ``prefix.*`` → ok (glob pattern);
-        * otherwise → ``PermissionError``.
+        Делегирует в единую shared utility
+        :func:`core.security.module_whitelist.validate_module_whitelist`
+        (single source of truth, DRY — ранее была inline-копия).
 
         Args:
             module_name: Module из ``SkillSpec.handler`` (``"extensions.credit.fn"``).
@@ -230,21 +227,19 @@ class SkillRegistry:
             ValueError: Whitelist пустой (caller не передал).
             PermissionError: Module не в whitelist.
         """
-        whitelist_set = set(whitelist)
-        if not whitelist_set:
-            raise ValueError(
+        from src.backend.core.security.module_whitelist import validate_module_whitelist
+
+        validate_module_whitelist(
+            module_name,
+            whitelist,
+            context=f"SkillRegistry.invoke(skill_id={skill_id!r})",
+            empty_mode="error",
+            empty_error=ValueError,
+            empty_message=(
                 f"SkillRegistry._validate_module_whitelist: empty whitelist "
                 f"for skill_id={skill_id!r}; caller must provide plugin.toml::"
                 f"call_function_modules or settings.call_function_modules"
-            )
-        if module_name in whitelist_set:
-            return
-        for entry in whitelist_set:
-            if entry.endswith(".*") and module_name.startswith(entry[:-2] + "."):
-                return
-        raise PermissionError(
-            f"SkillRegistry.invoke: module {module_name!r} not in whitelist "
-            f"(skill_id={skill_id!r})"
+            ),
         )
 
     async def invoke(

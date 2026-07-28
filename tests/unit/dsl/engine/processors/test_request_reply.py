@@ -72,12 +72,12 @@ async def test_request_processor_custom_payload() -> None:
 @pytest.mark.asyncio
 async def test_reply_processor_success() -> None:
     with patch(
-        "src.backend.infrastructure.clients.messaging.event_bus.get_event_bus"
-    ) as mock_get_bus:
+        "src.backend.core.di.providers.infrastructure_facade.get_event_bus_facade_provider"
+    ) as mock_get_facade:
         broker = AsyncMock()
         bus = AsyncMock()
         bus._broker = broker
-        mock_get_bus.return_value = bus
+        mock_get_facade.return_value = bus
 
         proc = ReplyProcessor(
             reply_channel="events.replies.abc",
@@ -98,12 +98,12 @@ async def test_reply_processor_success() -> None:
 @pytest.mark.asyncio
 async def test_reply_processor_from_exchange() -> None:
     with patch(
-        "src.backend.infrastructure.clients.messaging.event_bus.get_event_bus"
-    ) as mock_get_bus:
+        "src.backend.core.di.providers.infrastructure_facade.get_event_bus_facade_provider"
+    ) as mock_get_facade:
         broker = AsyncMock()
         bus = AsyncMock()
         bus._broker = broker
-        mock_get_bus.return_value = bus
+        mock_get_facade.return_value = bus
 
         proc = ReplyProcessor()
         exchange = _ex({"answer": 42})
@@ -127,10 +127,11 @@ async def test_reply_processor_missing_meta() -> None:
 @pytest.mark.asyncio
 async def test_reply_processor_no_broker() -> None:
     with patch(
-        "src.backend.infrastructure.clients.messaging.event_bus.get_event_bus"
-    ) as mock_get_bus:
-        mock_get_bus.return_value = AsyncMock()
-        mock_get_bus.return_value._broker = None
+        "src.backend.core.di.providers.infrastructure_facade.get_event_bus_facade_provider"
+    ) as mock_get_facade:
+        bus = AsyncMock()
+        bus._broker = None
+        mock_get_facade.return_value = bus
 
         proc = ReplyProcessor(reply_channel="events.replies.abc", correlation_id="abc")
         exchange = _ex({"answer": 42})
