@@ -1,22 +1,98 @@
-"""Core observability facade: correlation context lazy re-export (ponytail).
+"""Canonical correlation context — pure stdlib (contextvars + structlog).
 
-Entry points must import ``set_correlation_context`` from here, not from
-``infrastructure.observability.correlation`` directly.
+Хранит correlation_id, request_id, tenant_id — доступны
+из любого async-контекста без передачи через аргументами.
+
+R-V15-11: значения зеркалируются в structlog.contextvars.bind_contextvars,
+чтобы попадать в каждое лог-событие без явного logger.bind.
+
+Phase 1a (infra analysis backlog): canonical class moved here.
+Бывший infra-файл стал thin re-export shim для backward-compat.
+Новый код должен импортировать из этого модуля.
 """
 
 from __future__ import annotations
 
-# ruff: noqa: F822  # lazy __getattr__ exports verified by runtime test
-from typing import Any
+import uuid
+from contextvars import ContextVar
 
-__all__ = ("set_correlation_context",)
+import structlog
+
+__all__ = (
+    "correlation_id_var",
+    "get_correlation_id",
+    "get_request_id",
+    "get_tenant_id",
+    "new_correlation_id",
+    "request_id_var",
+    "set_correlation_context",
+    "tenant_id_var",
+)
+
+correlation_id_var: ContextVar[str] = ContextVar("correlation_id", default="")
+request_id_var: ContextVar[str] = ContextVar("request_id", default="")
+tenant_id_var: ContextVar[str] = ContextVar("tenant_id", default="")
 
 
-def __getattr__(name: str) -> Any:
-    if name == "set_correlation_context":
-        from src.backend.infrastructure.observability.correlation import (
-            set_correlation_context,
-        )
+def set_correlation_context(
+    correlation_id: str | None = None,
+    request_id: str | None = None,
+    tenant_id: str | None = None,
+) -> None:
+    """Set correlation context variables for logging.
 
-        return set_correlation_context
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    Args:
+        correlation_id: Optional correlation ID.
+        request_id: Optional request ID.
+        tenant_id: Optional tenant ID.
+    """
+    bind: dict[str, str] = {}
+    if correlation_id:
+        correlation_id_var.set(correlation_id)
+        bind["correlation_id"] = correlation_id
+    if request_id:
+        request_id_var.set(request_id)
+        bind["request_id"] = request_id
+    if tenant_id:
+        tenant_id_var.set(tenant_id)
+        bind["tenant_id"] = tenant_id
+    if bind:
+        structlog.contextvars.bind_contextvars(**bind)
+
+
+def get_correlation_id() -> str:
+    """Get current correlation ID from context.
+
+    Returns:
+        Correlation ID string.
+    """
+    return correlation_id_var.get()
+
+
+def get_request_id() -> str:
+    """Get current request ID from context.
+
+    Returns:
+        Request ID string.
+    """
+    return request_id_var.get()
+
+
+def get_tenant_id() -> str:
+    """Get current tenant ID from context.
+
+    Returns:
+        Tenant ID string.
+    """
+    return tenant_id_var.get()
+
+
+def new_correlation_id() -> str:
+    """Generate and set a new correlation ID.
+
+    Returns:
+        New correlation ID string.
+    """
+    cid = uuid.uuid4().hex[:16]
+    correlation_id_var.set(cid)
+    return cid
