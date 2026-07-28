@@ -31,7 +31,6 @@ AIRAG_FIELD_NAMES = (
     "workflow_visual_diff_enabled",
     "workflow_cron_builder_enabled",
     "workflow_cost_estimation_enabled",
-    "workflow_reactive_triggers_enabled",
     "workflow_template_library_enabled",
     "workflow_template_semantic_search",
     "workflow_saga_viewer_enabled",
@@ -62,7 +61,7 @@ AIRAG_DEFAULT_TRUE = frozenset(
     }
 )
 AIRAG_INT_FIELDS = frozenset({"embedding_v2_traffic"})
-EXPECTED_AIRAG_FIELD_COUNT = 29
+EXPECTED_AIRAG_FIELD_COUNT = 28
 
 
 class TestAIRAGFlagsClass:

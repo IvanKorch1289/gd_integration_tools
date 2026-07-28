@@ -24,7 +24,7 @@
   - workflow_visual_diff_enabled (Sprint 12 K3 W1, default-ON)
   - workflow_cron_builder_enabled (Sprint 12 K3 W2, default-ON)
   - workflow_cost_estimation_enabled (Sprint 12 K3 W3, default-ON)
-  - workflow_reactive_triggers_enabled (Sprint 12 K3 W4)
+  - workflow_reactive_triggers_enabled (REMOVED in Layer 3 Cycle 2)
   - workflow_template_library_enabled (Sprint 12 K3 W5, default-ON)
   - workflow_template_semantic_search (Sprint 12 K3 W5)
   - workflow_saga_viewer_enabled (Sprint 12 K3 W6, default-ON)
@@ -264,16 +264,11 @@ class AIRAGFlags(BaseSettings):
         ),
     )
 
-    workflow_reactive_triggers_enabled: bool = Field(
-        default=True,
-        title="K3 S12 W4: event-driven reactive workflows (EventBus subscribe)",
-        description=(
-            "K3 Sprint 12 Wave 4 (wave:s12/k3-w4-reactive-workflows). "
-            "Owner: K3 DSL/Workflow. ReactiveWorkflowDispatcher + .reactive_on "
-            "builder + debounce 5s + dedup Redis SET NX EX 60. default-OFF до "
-            "staging-smoke."
-        ),
-    )
+    # Layer 3 Cycle 2: workflow_reactive_triggers_enabled flag REMOVED
+    # (после удаления ReactiveWorkflowDispatcher в Cycle 1 — flag больше
+    # ничего не toggles, остался dead config). Если reactive workflows
+    # действительно нужны, реализовать через текущие DSL declarations +
+    # EventBus facade + composition lifecycle, не через standalone service.
 
     workflow_template_library_enabled: bool = Field(
         default=True,
