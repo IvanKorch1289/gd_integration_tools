@@ -1,14 +1,21 @@
 """Profile-based factory для `WorkflowBackend` (Wave D.2 / ADR-045).
 
-Settings.workflow_backend = ``temporal | pg_runner | fake | auto``:
+Settings.workflow_backend = ``temporal | lite_temporal | pg_runner | fake | auto``:
 
 * ``auto`` — выбирается по profile: dev_light → pg_runner; dev/staging/
   prod → temporal (если установлен SDK), иначе fallback pg_runner с
   warning'ом.
 * ``temporal`` — :class:`TemporalWorkflowBackend` (требует extras
   ``workflow``: ``uv sync --extra workflow``).
+* ``lite_temporal`` — :class:`LiteTemporalBackend` (in-process Temporal
+  через ``WorkflowEnvironment.start_local()`` + SQLite; требует extras
+  ``workflow``). Идентичная real-кластеру семантика для dev_light/тестов.
 * ``pg_runner`` — :class:`PgRunnerWorkflowBackend` (без extras).
 * ``fake`` — :class:`FakeWorkflowBackend` (только для тестов).
+
+Note: ``auto`` для ``dev_light`` остаётся на ``pg_runner`` для backward
+compatibility. ``lite_temporal`` — explicit opt-in для тех, кому нужна
+real Temporal semantics в dev_light (e.g. time-skipping в тестах).
 
 Factory сознательно использует lazy-import конкретных impl'ов,
 чтобы import core-модулей не тянул heavy SDK.
@@ -28,7 +35,7 @@ __all__ = ("BackendKind", "create_workflow_backend")
 _logger = get_logger("workflow.factory")
 
 
-BackendKind = Literal["temporal", "pg_runner", "fake", "auto"]
+BackendKind = Literal["temporal", "lite_temporal", "pg_runner", "fake", "auto"]
 
 
 async def create_workflow_backend(
@@ -64,6 +71,26 @@ async def create_workflow_backend(
         )
 
         return PgRunnerWorkflowBackend()
+
+    if resolved == "lite_temporal":
+        try:
+            from src.backend.infrastructure.workflow.lite_temporal_backend import (
+                LiteTemporalBackend,
+            )
+        except ImportError as exc:
+            _logger.warning(
+                "temporalio SDK unavailable (%s); falling back to pg_runner", exc
+            )
+            from src.backend.infrastructure.workflow.pg_runner_backend import (
+                PgRunnerWorkflowBackend,
+            )
+
+            return PgRunnerWorkflowBackend()
+
+        return await LiteTemporalBackend.connect(
+            namespace=temporal_namespace,
+            default_task_queue=temporal_task_queue,
+        )
 
     if resolved == "temporal":
         try:
