@@ -158,7 +158,6 @@ src/backend/core/interfaces/vector_store.py:20:4 BaseVectorStore.upsert
 src/backend/core/interfaces/vector_store.py:29:4 BaseVectorStore.query
 src/backend/core/interfaces/vector_store.py:37:4 BaseVectorStore.delete
 src/backend/core/interfaces/vector_store.py:40:4 BaseVectorStore.count
-src/backend/core/interfaces/watermark.py:28:4 WatermarkEmitter.current_watermark
 src/backend/core/messaging/dlq_policy.py:50:4 DLQPolicyRegistry.register
 src/backend/core/messaging/dlq_policy.py:53:4 DLQPolicyRegistry.get
 src/backend/core/messaging/dlq_policy.py:68:4 DLQPolicyRegistry.list_all
@@ -678,7 +677,6 @@ src/backend/core/interfaces/vector_store.py:20:0 upsert
 src/backend/core/interfaces/vector_store.py:29:0 query
 src/backend/core/interfaces/vector_store.py:37:0 delete
 src/backend/core/interfaces/vector_store.py:40:0 count
-src/backend/core/interfaces/watermark.py:28:0 current_watermark
 src/backend/core/messaging/dlq_policy.py:53:0 register
 src/backend/core/messaging/dlq_policy.py:56:0 get
 src/backend/core/messaging/dlq_policy.py:71:0 list_all
