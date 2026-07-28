@@ -20,7 +20,6 @@
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import pickle
 from typing import Any, Protocol
 
@@ -134,11 +133,28 @@ class OrjsonSerializer:
 
 
 def get_default_serializer() -> _Serializer:
-    """Возвращает лучший доступный сериализатор (orjson → json → pickle)."""
-    if importlib.util.find_spec("orjson") is not None:
-        return OrjsonSerializer()
-    # pickle — универсальный fallback, используем его как default
-    return PickleSerializer()
+    """Cycle 34: returns orjson-only by default.
+
+    Cycle 34 audit (RCE-vector finding): pickle was historically the
+    default fallback, but it carries a remote code execution vector
+    when any process can write to the same Redis namespace (multi-tenant
+    cache wrapper, admin UI, dev tooling). Since ``orjson`` is a hard
+    dependency in pyproject.toml, we no longer fall back to pickle —
+    callers that genuinely need pickle semantics must instantiate
+    ``PickleSerializer()`` explicitly.
+
+    Returns:
+        :class:`OrjsonSerializer` (always, in environments with orjson
+        installed; the project requires it).
+
+    Raises:
+        RuntimeError: if orjson is not importable (should never happen
+        in production — pyproject.toml pins the dep).
+    """
+    # orjson is imported at module top — it's a hard dep. The
+    # local import in the original was a fallback check that's no
+    # longer needed.
+    return OrjsonSerializer()
 
 
 class QueryResultCache:

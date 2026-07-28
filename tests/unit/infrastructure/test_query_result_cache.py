@@ -46,8 +46,22 @@ class TestSerializers:
 
     def test_get_default_serializer(self):
         ser = get_default_serializer()
-        # orjson может быть доступен, иначе pickle
-        assert isinstance(ser, (PickleSerializer, OrjsonSerializer))
+        # Cycle 34 audit: pickle is no longer the default (RCE-vector risk).
+        # orjson is always the default since it's a hard dep.
+        assert isinstance(ser, OrjsonSerializer), (
+            f"Expected OrjsonSerializer, got {type(ser).__name__}. "
+            "Pickle is opt-in only since cycle 34."
+        )
+
+    def test_pickle_serializer_still_available_for_explicit_optin(self):
+        """PickleSerializer remains importable for callers who explicitly
+        need pickle semantics (e.g. cross-process object transport).
+        """
+        ser = PickleSerializer()
+        assert isinstance(ser, PickleSerializer)
+        # Roundtrip works for plain dicts (which pickle handles natively)
+        obj = {"x": 42, "nested": {"y": [1, 2, 3]}}
+        assert ser.loads(ser.dumps(obj)) == obj
 
 
 class TestQueryResultCache:
