@@ -994,6 +994,11 @@ markers = [
     "integration: integration tests",
     "dspy_eval: DSPy optimizer evaluation tests",
     "pre_existing: known-failing tests in Cycle 36 baseline (excluded from new-regression gate, see docs/audit/AUDIT_2026-06-30.md). NOT a target for milestone fixes.",
+    # S204 retro-audit B04: directory-based markers previously unregistered.
+    "smoke: smoke tests (health/routing/sentry/websocket/granian)",
+    "e2e: end-to-end multi-protocol action tests",
+    "perf: performance benchmarks (msgspec, plugin_sandbox)",
+    "property: hypothesis property-based tests",
 ] 
 
 

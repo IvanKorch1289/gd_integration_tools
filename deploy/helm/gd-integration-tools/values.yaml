@@ -128,9 +128,12 @@ migration:
 
 securityContext:
   runAsNonRoot: true
-  runAsUser: 1000
-  runAsGroup: 1000
-  fsGroup: 1000
+  # S204 retro-audit B03: выровнено с Dockerfile (appuser uid 10001).
+  # Раньше тут было 1000 — не совпадало с owner'ом /app/logs, /app/.run,
+  # что вызывало permission-failures при readOnlyRootFilesystem: true.
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
   seccompProfileType: RuntimeDefault
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true

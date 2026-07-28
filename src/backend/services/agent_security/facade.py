@@ -29,11 +29,18 @@ class AgentSecurityFacade:
     - DSL processors (`agent_security_check`)
     - Workflow integration (pre/post hooks)
     - Extension security middleware
+
+    S204 retro-audit B18: ``set_policy_for_workflow`` раньше делегировал в
+    ``framework.set_policy(policy)``, игнорируя ``workflow_id`` → глобальная
+    мутация, policy утекала между workflows. Теперь per-workflow overrides
+    хранятся в ``_workflow_policies`` dict, а validation methods принимают
+    опциональный ``workflow_id`` для резолва per-workflow policy.
     """
 
     def __init__(self) -> None:
         """Инициализация facade."""
         self._framework: AgentSecurityFramework | None = None
+        self._workflow_policies: dict[str, Any] = {}
 
     @property
     def framework(self) -> AgentSecurityFramework:
@@ -42,46 +49,87 @@ class AgentSecurityFacade:
             self._framework = get_agent_security_framework()
         return self._framework
 
-    def set_policy_for_workflow(
-        self,
-        policy: Any,
-        workflow_id: str,
-    ) -> None:
-        """Set workflow-specific policy override.
+    def set_policy_for_workflow(self, policy: Any, workflow_id: str) -> None:
+        """Set workflow-specific policy override (per-workflow isolation).
 
         Args:
             policy: AgentSecurityPolicy instance.
-            workflow_id: Workflow ID для override.
+            workflow_id: Workflow ID для override (ключует override в dict,
+                не мутирует global framework policy).
         """
-        # S187: simple per-workflow override
-        self.framework.set_policy(policy)
+        if not workflow_id:
+            raise ValueError("workflow_id is required for set_policy_for_workflow")
+        self._workflow_policies[workflow_id] = policy
         _logger.info(
-            "agent security policy set for workflow: %s",
+            "agent security policy set for workflow: %s (overrides=%d)",
             workflow_id,
+            len(self._workflow_policies),
         )
 
+    def get_policy_for_workflow(self, workflow_id: str | None) -> Any | None:
+        """Resolve policy: per-workflow override first, then framework default.
+
+        Args:
+            workflow_id: Workflow ID или ``None`` для global default.
+
+        Returns:
+            Workflow-specific policy если задан, иначе ``None`` (caller
+            использует framework default).
+        """
+        if workflow_id and workflow_id in self._workflow_policies:
+            return self._workflow_policies[workflow_id]
+        return None
+
+    def clear_workflow_policy(self, workflow_id: str) -> bool:
+        """Remove workflow-specific override (на cleanup/shutdown).
+
+        Returns:
+            ``True`` если override был, ``False`` иначе.
+        """
+        return self._workflow_policies.pop(workflow_id, None) is not None
+
     def validate_prompt(
-        self,
-        prompt: str,
-        **kwargs: Any,
+        self, prompt: str, *, workflow_id: str | None = None, **kwargs: Any
     ) -> SecurityDecision:
-        """Validate LLM prompt (S187)."""
-        return self.framework.validate_prompt(prompt, context=kwargs)
+        """Validate LLM prompt (S187).
+
+        Args:
+            prompt: Prompt text.
+            workflow_id: Опциональный workflow ID для per-workflow policy.
+        """
+        policy = self.get_policy_for_workflow(workflow_id)
+        ctx = dict(kwargs)
+        if policy is not None:
+            ctx["policy_override"] = policy
+        return self.framework.validate_prompt(prompt, context=ctx)
 
     def validate_command(
-        self,
-        command: str,
-        **kwargs: Any,
+        self, command: str, *, workflow_id: str | None = None, **kwargs: Any
     ) -> SecurityDecision:
-        """Validate shell command (S187)."""
-        return self.framework.validate_command(command, context=kwargs)
+        """Validate shell command (S187).
+
+        Args:
+            command: Shell command text.
+            workflow_id: Опциональный workflow ID для per-workflow policy.
+        """
+        policy = self.get_policy_for_workflow(workflow_id)
+        ctx = dict(kwargs)
+        if policy is not None:
+            ctx["policy_override"] = policy
+        return self.framework.validate_command(command, context=ctx)
 
     def validate_sql(
-        self,
-        query: str,
-        **kwargs: Any,
+        self, query: str, *, workflow_id: str | None = None, **kwargs: Any
     ) -> SecurityDecision:
-        """Validate SQL query (S187)."""
+        """Validate SQL query (S187).
+
+        Args:
+            query: SQL query text.
+            workflow_id: Опциональный workflow ID для per-workflow policy.
+        """
+        policy = self.get_policy_for_workflow(workflow_id)
+        if policy is not None:
+            kwargs["policy_override"] = policy
         return self.framework.validate_sql(query)
 
     def validate_file_modification(
@@ -89,27 +137,40 @@ class AgentSecurityFacade:
         file_path: str,
         *,
         file_size_bytes: int = 0,
+        workflow_id: str | None = None,
         **kwargs: Any,
     ) -> SecurityDecision:
-        """Validate file modification (S187)."""
+        """Validate file modification (S187).
+
+        Args:
+            file_path: Путь к файлу.
+            file_size_bytes: Размер в байтах.
+            workflow_id: Опциональный workflow ID для per-workflow policy.
+        """
+        policy = self.get_policy_for_workflow(workflow_id)
+        ctx = dict(kwargs)
+        if policy is not None:
+            ctx["policy_override"] = policy
         return self.framework.validate_file_modification(
-            file_path, file_size_bytes=file_size_bytes, context=kwargs
+            file_path, file_size_bytes=file_size_bytes, context=ctx
         )
 
     def mask_output(
-        self,
-        output: str,
-        **kwargs: Any,
+        self, output: str, *, workflow_id: str | None = None, **kwargs: Any
     ) -> SecurityDecision:
-        """Mask sensitive data в output (S187)."""
-        return self.framework.mask_output(output, context=kwargs)
+        """Mask sensitive data в output (S187).
 
-    def register_workflow_hook(
-        self,
-        name: str,
-        trigger: str,
-        check_fn: Any,
-    ) -> None:
+        Args:
+            output: Output text.
+            workflow_id: Опциональный workflow ID для per-workflow policy.
+        """
+        policy = self.get_policy_for_workflow(workflow_id)
+        ctx = dict(kwargs)
+        if policy is not None:
+            ctx["policy_override"] = policy
+        return self.framework.mask_output(output, context=ctx)
+
+    def register_workflow_hook(self, name: str, trigger: str, check_fn: Any) -> None:
         """Register workflow-specific hook (S187).
 
         Args:
@@ -117,11 +178,7 @@ class AgentSecurityFacade:
             trigger: ``"pre_tool"`` / ``"post_tool"`` / ``"pre_llm"`` / ``"post_llm"``.
             check_fn: Security check function (subject: str, context: dict) -> SecurityDecision.
         """
-        hook = SecurityHook(
-            name=name,
-            trigger=trigger,
-            check_fn=check_fn,
-        )
+        hook = SecurityHook(name=name, trigger=trigger, check_fn=check_fn)
         self.framework.register_hook(hook)
 
 

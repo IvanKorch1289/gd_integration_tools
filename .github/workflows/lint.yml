@@ -105,3 +105,26 @@ jobs:
         # Запрещено: gateway.invoke, .acompletion, .completion в workflow.
         # Разрешено: workflow.execute_activity, _agent_invoke_activity.
         run: uv run python tools/s86_workflow_sandbox_guard.py
+
+      # S204 retro-audit B02: 4 gate'а присутствовали только в ``make ci``,
+      # но GitHub Actions их не вызывал → PR обходили их. Добавлены явно.
+      - name: WAF coverage gate (strict)
+        # V15 R-V15-5: все :external capabilities идут через OutboundHttpClient.
+        run: uv run python tools/check_waf_coverage.py --strict
+
+      - name: AI Safety gate (workspace + sandbox)
+        # V15 R-V15-4: AI workspace isolation + sandbox + fs.create_new.
+        run: >-
+          uv run python -m pytest -q
+          tests/unit/core/ai
+          tests/unit/infrastructure/ai
+          tests/integration/test_ai_safety_lifecycle.py
+
+      - name: Task registry gate (orphan asyncio.create_task)
+        # R-V15-11: ловит orphan asyncio.create_task / ensure_future
+        # без TaskRegistry-обёртки (leak prevention).
+        run: uv run python tools/checks/check_task_registry.py --root src/backend
+
+      - name: Test collection gate (circular imports / missing modules)
+        # Sanity: pytest --co -q собирает все тесты без ImportError.
+        run: uv run pytest --co -q tests/ 2>&1 | tail -3

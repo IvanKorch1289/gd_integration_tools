@@ -20,7 +20,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.core.interfaces.plugin import ActionRegistryProtocol, BasePlugin, PluginContext
+from src.backend.core.interfaces.plugin import (
+    ActionRegistryProtocol,
+    BasePlugin,
+    PluginContext,
+)
 
 __all__ = ("ExamplePlugin",)
 

@@ -238,11 +238,7 @@ class PoolHealthMonitor:
             # иначе разница всегда 0.0 (старый баг).
             elapsed = now - entry.last_ping_at
             entry.last_ping_at = now
-            logger.debug(
-                "Pool ping OK: %s (elapsed=%.1fs)",
-                entry.name,
-                elapsed,
-            )
+            logger.debug("Pool ping OK: %s (elapsed=%.1fs)", entry.name, elapsed)
         except Exception as exc:
             logger.warning(
                 "Pool ping FAIL: %s — %s (пул помечен, idle-timeout сброшен)",
