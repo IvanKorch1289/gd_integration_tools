@@ -23,7 +23,15 @@ class TestFileDeleteProcessor:
         from src.backend.dsl.engine.processors.rpa.operations.filedeleteprocessor import (
             FileDeleteProcessor,
         )
-        target = tmp_path / "delete_me.txt"
+        # Cycle 33 DS2: FileDeleteProcessor now enforces path-traversal
+        # guard via _path_safety.validate_path. pytest's default tmp_path
+        # is /tmp/pytest-of-user/... which is NOT in allowed prefixes.
+        # Use /tmp/dsl/ prefix or set DSL_ALLOWED_PATHS env var.
+        import os
+        allowed_dir = "/tmp/dsl"
+        os.makedirs(allowed_dir, exist_ok=True)
+        target_path = os.path.join(allowed_dir, "delete_me.txt")
+        target = Path(target_path)
         target.write_text("data")
         p = FileDeleteProcessor(path=str(target))
         p.auth_check = AsyncMock(return_value=True)
