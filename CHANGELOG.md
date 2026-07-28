@@ -1,5 +1,46 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 51 (2026-07-28) — Cache consolidation analysis
+
+### Cycle 51: Cache `delete_by_tag` consolidation — analysis verdict: NO CHANGE
+
+Cycle 51 analyzed the "5+ parallel implementations of `delete_by_tag`"
+finding from the original audit backlog. Result: **no change needed** —
+the implementations represent a correctly-architected Protocol pattern,
+not duplication.
+
+#### Implementations inventoried
+| Class | Location | Strategy |
+|---|---|---|
+| `UnifiedCacheFacade` (ABC) | `core/cache/facade.py:77` | abstract method definition |
+| `MemoryCacheFacade` | `core/cache/facade.py:147` | tag_index dict (in-process) |
+| `FallbackCacheFacade` | `core/cache/facade.py:214` | chain primary → fallback |
+| `RedisCacheFacade` | `core/cache/facade.py:278` | wraps Redis backend (added cycle 31) |
+| `DiskCacheFacade` | `core/cache/facade.py:369` | no-op (documented as Redis-only feature) |
+| `RedisBackend` | `infrastructure/cache/backends/redis.py:102` | Redis SADD/SREM |
+| `CacheInvalidator` | `infrastructure/cache/invalidator.py:54,97` | multi-backend parallel fan-out |
+
+Each implementation has DIFFERENT semantics appropriate for its
+backend type (Redis uses SADD/SMEMBERS, Memory uses dict index,
+Disk returns 0 because tag invalidation is Redis-specific, etc.).
+
+Consolidating them would break the Protocol abstraction that makes
+the cache layer swappable. The existing structure IS the correct
+architecture.
+
+#### Conclusion
+Closed as "no fix needed" — pattern is correct. Backlog item removed.
+
+### Cycle 51: Remaining backlog (after cycle 51)
+
+- RouteBuilder god-class actual refactor (80 MRO classes) —
+  CompositionRouteBuilder migration step 1/4 (multi-week, deferred per
+  cycle 30 P4-#4 plan)
+- `services.io.search` migration → `core.io.search` (recursive boundary)
+- Layer 9 (DevOps) — requires helm-unittest, kubectl tooling
+
+All other items closed (cycles 31-50).
+
 ## [Unreleased] — Cycle 49 (2026-07-28) — Layer 7 (Observability) audit
 
 ### Cycle 49: Layer 7 analysis — no actionable fixes
