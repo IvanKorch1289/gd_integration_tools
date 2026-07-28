@@ -55,10 +55,10 @@ class _JudgeResponse(BaseModel):
     - Лучшие ошибки при структурных поломках (ValidationError caught
       outer try/except → same "error" verdict path, без regression).
 
-    Instructor migration (бывший TODO:91) заблокирован двумя способами
-    (instructor в [ai-2026] extra — не установлен; ai_agent.chat()
-    не экспонирует litellm). Pydantic-native parsing — замена без
-    новых deps и без рефакторинга ai_agent.
+    Note: Instructor-based parsing рассматривался как альтернатива, но
+    отклонён по двум причинам (instructor в [ai-2026] extra — не установлен;
+    ai_agent.chat() не экспонирует litellm). Pydantic-native parsing —
+    замена без новых deps и без рефакторинга ai_agent.
     """
 
     model_config = ConfigDict(extra="ignore")

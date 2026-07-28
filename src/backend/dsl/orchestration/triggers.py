@@ -295,10 +295,11 @@ class WebhookTrigger:
         if self._route_added:
             return
         # Try to find FastAPI app from common locations.
-        # Phase 2 fix: documented graceful cross-layer lookup. The
+        # Documented graceful cross-layer lookup (Phase 2 fix, ADR-???):
         # entrypoints module is optional (dev_light build may omit it),
         # so this fallback is intentional and protected by try/except.
-        # TODO Phase 4: replace with core.di.providers.http.get_app_provider.
+        # When ``core.di.providers.http.get_app_provider()`` lands, replace
+        # this fallback with a typed provider call.
         app = self._app
         if app is None:
             try:
