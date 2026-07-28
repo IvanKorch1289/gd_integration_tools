@@ -1,4 +1,13 @@
-"""Async MongoDB client через motor."""
+"""Async MongoDB client через ``pymongo.AsyncMongoClient`` (S31 Task 7).
+
+S31 Task 7: мигрировано с ``motor.motor_asyncio.AsyncIOMotorClient`` на
+``pymongo.AsyncMongoClient`` (native async, available in PyMongo 4.9+).
+Motor is in maintenance mode per MongoDB official guidance; PyMongo native
+async is the recommended path.
+
+API совместим на ~95% — ``find``, ``insert_one``, ``update_many``, и т.д.
+работают идентично. Различия в инициализации (см. ``start()``).
+"""
 
 from __future__ import annotations
 
@@ -14,11 +23,12 @@ logger = get_logger(__name__)
 
 
 class MongoDBClient:
-    """Асинхронный MongoDB клиент через motor.
+    """Асинхронный MongoDB клиент через ``pymongo.AsyncMongoClient``.
 
     Implements ManagedResource pattern (start/stop + health check).
     S181: добавлен Circuit Breaker + Retry через :func:`resilient` decorator
     для критических операций (find, insert, update, delete).
+    S31 Task 7: мигрировано с motor на pymongo native async.
     """
 
     def __init__(
@@ -41,28 +51,30 @@ class MongoDBClient:
         self._db: Any = None
 
     async def start(self) -> None:
-        """Start the MongoDB client and create connection pool."""
-        from motor.motor_asyncio import AsyncIOMotorClient
+        """Start the MongoDB client and create connection pool.
 
+        Uses :class:`pymongo.AsyncMongoClient` (PyMongo >= 4.9). Previously
+        used ``motor.motor_asyncio.AsyncIOMotorClient`` (deprecated upstream).
+        """
         # S182: TLS configuration
         tls_options: dict[str, Any] | None = None
         if self._tls_enabled:
             tls_options = {"tls": True}
             if self._tls_ca_file:
                 tls_options["tlsCAFile"] = self._tls_ca_file
-        # S189 fix: AsyncIOMotorClient takes URL as positional + kwargs.
-        # Previous code had `dict(self._url, ...)` which crashes because
-        # dict() interprets string as iterable of chars.
         client_kwargs: dict[str, Any] = {
             "maxPoolSize": self._max_pool,
             "minPoolSize": self._min_pool,
         }
         if tls_options:
             client_kwargs.update(tls_options)
-        self._client = AsyncIOMotorClient(self._url, **client_kwargs)
+        # S31 Task 7: native async client (PyMongo 4.9+). No wrapper layer.
+        from pymongo import AsyncMongoClient
+
+        self._client = AsyncMongoClient(self._url, **client_kwargs)
         self._db = self._client[self._database_name]
         await self._client.admin.command("ping")
-        logger.info("MongoDB connected: %s/%s", self._url, self._database_name)
+        logger.info("MongoDB connected (pymongo.AsyncMongoClient): %s/%s", self._url, self._database_name)
 
     async def stop(self) -> None:
         """Stop the MongoDB client and close connections."""
