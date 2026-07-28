@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.core.security.connector_auth import require_capability
 from src.backend.core.serialization.msgspec_hotpath import encode_json
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
@@ -18,6 +19,20 @@ from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 __all__ = ("RabbitDLQWriter",)
 
 logger = get_logger(__name__)
+
+
+def _get_rabbit_dlq_breaker() -> Any:
+    """S204 retro-audit B23: CB singleton для RabbitMQ DLQ writer.
+
+    Зеркарует kafka_writer.py:32-39 — те же failure_threshold=5,
+    recovery_timeout=30s. Без CB брокер-flap вызовет hammering.
+    """
+    return get_breaker_registry().get_or_create(
+        "rabbit_dlq_writer",
+        BreakerSpec(
+            name="rabbit_dlq_writer", failure_threshold=5, recovery_timeout=30.0
+        ),
+    )
 
 
 class RabbitDLQWriter:
@@ -55,16 +70,19 @@ class RabbitDLQWriter:
                 "trace_id": envelope.trace_id or "",
             },
         )
-        try:
-            exchange = (
-                self._channel.default_exchange
-                if not self._exchange_name
-                else await self._channel.get_exchange(self._exchange_name)
-            )
-            await exchange.publish(message, routing_key=routing_key)
-        except Exception as _:
-            logger.exception(
-                "dlq.rabbit.write_failed",
-                extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},
-            )
-            raise
+        # S204 retro-audit B23: wrap publish with Purgatory CB.
+        breaker = _get_rabbit_dlq_breaker()
+        async with breaker.guard():
+            try:
+                exchange = (
+                    self._channel.default_exchange
+                    if not self._exchange_name
+                    else await self._channel.get_exchange(self._exchange_name)
+                )
+                await exchange.publish(message, routing_key=routing_key)
+            except Exception as _:
+                logger.exception(
+                    "dlq.rabbit.write_failed",
+                    extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},
+                )
+                raise

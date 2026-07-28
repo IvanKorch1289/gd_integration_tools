@@ -9,11 +9,26 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 
 __all__ = ("InboxDLQWriter",)
 
 logger = get_logger(__name__)
+
+
+def _get_inbox_dlq_breaker() -> Any:
+    """S204 retro-audit B23: CB singleton для Inbox (Postgres) DLQ writer.
+
+    PG-вставки могут длительно отказывать при connectivity-проблемах;
+    без CB каждое DLQ-событие будет повторно падать на timeout.
+    """
+    return get_breaker_registry().get_or_create(
+        "inbox_dlq_writer",
+        BreakerSpec(
+            name="inbox_dlq_writer", failure_threshold=5, recovery_timeout=30.0
+        ),
+    )
 
 
 class InboxDLQWriter:
@@ -51,13 +66,16 @@ class InboxDLQWriter:
         # SQLAlchemy JSON-сериализация поля metadata + original_payload
         params["metadata"] = params.get("metadata", {})
 
-        try:
-            async with self._session_factory() as session:
-                await session.execute(sql, params)
-                await session.commit()
-        except Exception as _:
-            logger.exception(
-                "dlq.inbox.write_failed",
-                extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},
-            )
-            raise
+        # S204 retro-audit B23: wrap PG-execute with Purgatory CB.
+        breaker = _get_inbox_dlq_breaker()
+        async with breaker.guard():
+            try:
+                async with self._session_factory() as session:
+                    await session.execute(sql, params)
+                    await session.commit()
+            except Exception as _:
+                logger.exception(
+                    "dlq.inbox.write_failed",
+                    extra={"dlq_id": envelope.dlq_id, "transport": envelope.transport},
+                )
+                raise

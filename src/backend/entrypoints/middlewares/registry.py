@@ -26,10 +26,24 @@ ADR-NEW-2 (Sprint 17 K3 W2) вводит реестр, который:
 жёстким списком (за счёт явных ``order`` для built-in).
 
 Pydantic Settings или вычисление chain'а на старте знакомо приложениям
-FastAPI/Starlette; здесь регистрируется отдельный chain — order сохраняет
-LIFO-поведение Starlette (``add_middleware`` оборачивает наружу),
-поэтому ``apply_to_app`` итерируется по spec'ам в порядке возрастания
-``order`` (низкий order → наружный middleware → первая обработка).
+FastAPI/Starlette; здесь регистрируется отдельный chain. Starlette
+использует LIFO-семантику: ``app.add_middleware(cls)`` делает
+``user_middleware.insert(0, cls)`` → последний зарегистрированный
+оказывается **outermost** (вызывается первым при request, последним
+при response).
+
+``apply_to_app`` итерирует specs в порядке возрастания ``order`` и
+вызывает ``add_middleware`` последовательно. С учётом LIFO это значит:
+
+* **Высокий order** (750-999, layer 4 — logging/metrics) → registered
+  last → **outermost** → первая обработка request.
+* **Низкий order** (0-249, layer 1 — early-exit) → registered first →
+  **innermost** → вызывается после всех outer layers.
+
+S204 retro-audit B20: предыдущая версия docstring утверждала обратное
+("низкий order → наружный") — это противоречило фактическому поведению
+Starlette и вводило в заблуждение при добавлении новых middleware.
+Текущая формулировка соответствует эмпирически проверенному поведению.
 """
 
 from __future__ import annotations

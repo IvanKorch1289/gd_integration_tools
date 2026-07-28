@@ -40,14 +40,16 @@ class NetFlags(BaseSettings):
     )
 
     connection_reuse_manager: bool = Field(
-        default=True,
+        default=False,
         title="K2: ConnectionReuseManager (idle ping + auto-recycle по lifetime)",
         description=(
-            "K2 Wave 2. Owner: K2 Resilience. ETA: S3-W2. "
-            "Активирует ConnectionReuseManager: проверку lifetime и idle-ping "
-            "перед возвратом connection из pool. При False acquire() возвращает "
-            "pool-объект без дополнительных проверок (нулевой overhead). "
-            "default-OFF до интеграции в reference pools и staging-smoke."
+            "S204 retro-audit B21: feature-flag для ConnectionReuseManager "
+            "имел default=True при отсутствии самого класса (vaporware). "
+            "default изменён на False (правдивый — не реализовано). Сам "
+            "класс не существует: idle-ping пере-реализован ad-hoc в "
+            "infrastructure/clients/clickhouse.py:175-187 и pool_health.py. "
+            "Поле оставлено для backward-compat config-files; чтобы его "
+            "удалить, нужен ADR + миграция профилей."
         ),
     )
 
