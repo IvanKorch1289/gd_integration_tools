@@ -109,7 +109,12 @@ class ReplyProcessor(BaseProcessor):
         )
 
         bus = get_event_bus_facade_provider()
-        broker = getattr(bus, "_broker", None)
+        # CRIT-2 fix (cycle 31 retro): EventBusFacade stores underlying bus
+        # as ``self._bus``, NOT ``self._broker``. Accessing ``_broker``
+        # returned None and ReplyProcessor failed with "EventBus broker not
+        # available" in production. Navigate through facade → underlying bus.
+        underlying = getattr(bus, "_bus", None)
+        broker = getattr(underlying, "_broker", None) if underlying else None
         if broker is None:
             exchange.fail("EventBus broker not available")
             return

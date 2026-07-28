@@ -1,10 +1,14 @@
 """Cycle 31 audit fact-check fixes: regression tests.
 
 Tests for:
-1. enforced_invoke.py stale duplicate — tool_name mandatory + S209 fail-closed.
-2. InProcessAgentSandbox — audit event on construction.
+1. enforced_invoke.py security sync — tool_name mandatory + S209 fail-closed.
+2. InProcessAgentSandbox — audit event on construction (with CORRECT kwargs).
 3. SkillRegistry._validate_module_whitelist — delegates to shared utility.
-4. Redis mget/mset_pipelined — batch size limit enforcement.
+4. Redis mget/mset_pipelined — batch size limit enforcement (boundary tests).
+
+HIGH-1 retro fix: Tests now import from canonical ``gateway_orchestrator_mixin``
+(the file actually used by ``AIGateway``), not from the orphan
+``gateway/orchestrator/enforced_invoke.py`` which is only re-exported.
 """
 
 from __future__ import annotations
@@ -16,16 +20,17 @@ import pytest
 
 @pytest.mark.unit
 class TestEnforcedInvokeToolPolicy:
-    """Verify the stale duplicate in gateway/orchestrator/enforced_invoke.py
-    matches the security-hardened version (no workflow_id fallback, S209 fail-closed).
+    """Verify tool_policy enforcement — test CANONICAL location used by AIGateway.
+
+    HIGH-1 retro fix (cycle 31): imports from ``gateway_orchestrator_mixin``
+    (production code path) instead of the orphan ``gateway/orchestrator/
+    enforced_invoke.py``. The orphan is only re-exported for back-compat.
     """
 
     def test_tool_name_mandatory_when_restricted(self) -> None:
         """If policy has non-empty whitelist/blacklist, tool_name is required."""
-        from src.backend.core.ai.gateway.orchestrator.enforced_invoke import (
-            EnforcedInvokeMixin,
-        )
         from src.backend.core.ai.gateway_models import AIRequest
+        from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
 
         class _Tools:
             whitelist = ["allowed_tool"]
@@ -48,10 +53,8 @@ class TestEnforcedInvokeToolPolicy:
 
     def test_s209_fail_closed_on_empty_lists(self) -> None:
         """Empty whitelist+blacklist without allow_all_tools → raise (not no-op)."""
-        from src.backend.core.ai.gateway.orchestrator.enforced_invoke import (
-            EnforcedInvokeMixin,
-        )
         from src.backend.core.ai.gateway_models import AIRequest
+        from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
 
         class _Tools:
             whitelist = []
@@ -76,9 +79,7 @@ class TestEnforcedInvokeToolPolicy:
         """Verify the code does NOT contain 'tool_name or workflow_id' pattern."""
         import inspect
 
-        from src.backend.core.ai.gateway.orchestrator.enforced_invoke import (
-            EnforcedInvokeMixin,
-        )
+        from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
 
         source = inspect.getsource(EnforcedInvokeMixin._enforce_tool_policy_once)
         assert "request.tool_name or request.workflow_id" not in source, (
@@ -91,28 +92,30 @@ class TestEnforcedInvokeToolPolicy:
 
 @pytest.mark.unit
 class TestInProcessAgentSandboxAudit:
-    """Verify InProcessAgentSandbox emits audit event on construction."""
+    """Verify InProcessAgentSandbox emits audit event on construction.
+
+    CRIT-1 retro fix: tests must use the CORRECT ``emit_audit_safe`` signature
+    (``event=``, ``details=``, ``severity=``) — NOT the previous broken
+    ``event_type=`` / ``payload=`` kwargs that raised TypeError silently.
+    """
 
     def test_construction_emits_audit_event(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """InProcessAgentSandbox construction should emit audit event."""
         # Ensure NOT in production mode
         monkeypatch.delenv("GD_INTEGRATION_PRODUCTION", raising=False)
 
-        events: list[tuple[str, str]] = []
-
+        # Capture calls to validate CORRECT kwargs (event=, details=)
+        captured: list[dict] = []
+        real_emit = None
         import src.backend.core.audit.facade as facade_mod
-        original = getattr(facade_mod, "emit_audit_safe", None)
+        real_emit = getattr(facade_mod, "emit_audit_safe", None)
 
-        def mock_emit(*args, **kwargs):
-            events.append((kwargs.get("event_type", ""), kwargs.get("severity", "")))
-            # call original if exists, otherwise just record
-            if original:
-                try:
-                    original(*args, **kwargs)
-                except Exception:
-                    pass
+        def spy_emit(*args: object, **kwargs: object) -> None:
+            captured.append(kwargs)
+            if real_emit is not None:
+                real_emit(*args, **kwargs)
 
-        monkeypatch.setattr(facade_mod, "emit_audit_safe", mock_emit)
+        monkeypatch.setattr(facade_mod, "emit_audit_safe", spy_emit)
 
         import warnings
 
@@ -123,10 +126,27 @@ class TestInProcessAgentSandboxAudit:
             sandbox = InProcessAgentSandbox()
 
         assert sandbox is not None
-        # At least one audit event should have been emitted
-        assert any("zero_isolation" in et for et, _ in events), (
-            f"Expected zero_isolation audit event, got: {events}"
+        # At least one audit event should have been emitted with CORRECT signature
+        assert captured, "No audit events captured"
+        zero_isolation_events = [
+            kw for kw in captured
+            if "zero_isolation" in str(kw.get("event", ""))
+        ]
+        assert zero_isolation_events, (
+            f"Expected zero_isolation audit event, got: {captured}"
         )
+        # Verify CORRECT signature (not the old wrong one)
+        for kw in zero_isolation_events:
+            assert "event_type" not in kw, (
+                f"CRIT-1 regression: audit event uses WRONG kwarg 'event_type' "
+                f"instead of 'event': {kw}"
+            )
+            assert "payload" not in kw, (
+                f"CRIT-1 regression: audit event uses WRONG kwarg 'payload' "
+                f"instead of 'details': {kw}"
+            )
+            assert "event" in kw, f"Missing 'event' kwarg: {kw}"
+            assert "details" in kw, f"Missing 'details' kwarg: {kw}"
 
 
 # ─────────── 3. SkillRegistry whitelist delegation ───────────
@@ -175,8 +195,9 @@ class TestSkillRegistryWhitelistDelegation:
         from src.backend.core.ai.skill_registry import SkillRegistry
 
         source = inspect.getsource(SkillRegistry._validate_module_whitelist)
-        assert "validate_module_whitelist" in source, (
-            "SkillRegistry should delegate to shared validate_module_whitelist"
+        # Strict: must call validate_module_whitelist as a function (not just a comment)
+        assert "validate_module_whitelist(" in source, (
+            "SkillRegistry should delegate to shared validate_module_whitelist()"
         )
 
 
@@ -185,7 +206,11 @@ class TestSkillRegistryWhitelistDelegation:
 
 @pytest.mark.unit
 class TestRedisBatchLimits:
-    """Verify Redis mget_pipelined / mset_pipelined enforce batch size limits."""
+    """Verify Redis mget_pipelined / mset_pipelined enforce batch size limits.
+
+    MED-2 retro fix: boundary tests added (just under limit succeeds, just over
+    limit raises). Original tests only verified the constant value.
+    """
 
     def test_mget_rejects_oversized_batch(self) -> None:
         """mget_pipelined should reject >10K keys."""
@@ -212,3 +237,59 @@ class TestRedisBatchLimits:
 
         result = await backend.mget_pipelined([])
         assert result == []
+
+    @pytest.mark.asyncio
+    async def test_mget_at_limit_succeeds(self) -> None:
+        """mget_pipelined at exactly the limit (10K) — should NOT raise.
+
+        Boundary verification: 10000 ≤ limit (passes), 10001 > limit (raises).
+        This prevents off-by-one regressions.
+        """
+        from unittest.mock import AsyncMock, MagicMock
+
+        from src.backend.infrastructure.cache.backends.redis import RedisBackend
+
+        backend = object.__new__(RedisBackend)
+        # Mock pipeline that just returns empty list (we only test that
+        # the batch-size check passes — we don't verify returned values).
+        mock_pipeline = MagicMock()
+        mock_pipeline.execute = AsyncMock(return_value=[])
+        backend._client = MagicMock()
+        backend._client.pipeline.return_value.__enter__.return_value = mock_pipeline
+        backend._client.pipeline.return_value.__exit__.return_value = False
+        backend._MAX_PIPELINE_BATCH = 10_000
+
+        # 10K keys — exactly at the limit (boundary inclusive)
+        keys = [f"key:{i}" for i in range(10_000)]
+        # Should not raise
+        await backend.mget_pipelined(keys)
+
+    @pytest.mark.asyncio
+    async def test_mget_over_limit_raises(self) -> None:
+        """mget_pipelined with >10K keys should raise ValueError."""
+        from unittest.mock import MagicMock
+
+        from src.backend.infrastructure.cache.backends.redis import RedisBackend
+
+        backend = object.__new__(RedisBackend)
+        backend._client = MagicMock()
+        backend._MAX_PIPELINE_BATCH = 10_000
+
+        keys = [f"key:{i}" for i in range(10_001)]  # 1 over limit
+        with pytest.raises(ValueError, match="exceeds batch limit"):
+            await backend.mget_pipelined(keys)
+
+    @pytest.mark.asyncio
+    async def test_mset_over_limit_raises(self) -> None:
+        """mset_pipelined with >10K items should raise ValueError."""
+        from unittest.mock import MagicMock
+
+        from src.backend.infrastructure.cache.backends.redis import RedisBackend
+
+        backend = object.__new__(RedisBackend)
+        backend._client = MagicMock()
+        backend._MAX_PIPELINE_BATCH = 10_000
+
+        items = {f"key:{i}": b"v" for i in range(10_001)}  # 1 over limit
+        with pytest.raises(ValueError, match="exceeds batch limit"):
+            await backend.mset_pipelined(items)

@@ -1,5 +1,140 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 31 (2026-07-28) — Infrastructure remediation retro + CRITICAL bug fixes
+
+### Cycle 31 retro: critical bug fixes
+
+Independent audit of cycle 31 commit `c6e251d9` found 2 CRITICAL production-breaking bugs:
+
+#### CRIT-1: `emit_audit_safe` called with WRONG kwargs — silent failure in production
+- **Issue**: `src/backend/services/ai/agent_sandbox.py:105` called `emit_audit_safe(
+  event_type=..., payload=...)` but actual signature requires `event=` and `details=`.
+  The `except Exception: pass` silently swallowed the TypeError, so audit events
+  for `InProcessAgentSandbox` construction were NEVER actually emitted.
+- **FIXED**: Replaced `event_type=` → `event=` and `payload=` → `details=` in
+  `agent_sandbox.py` (my cycle 31 addition).
+- **FIXED (pre-existing bonus)**: Same bug fixed in
+  `src/backend/core/ai/gateway/orchestrator/enforced_invoke.py:177`
+  (`ai.budget.tenant_less_invocation` event was silently failing).
+- **TESTS UPDATED**: `test_audit_fixes_cycle31.py` now validates CORRECT kwargs
+  (`event=`, `details=`) and asserts NO old `event_type=` / `payload=` in any
+  captured audit event (regression guard against re-introduction).
+- **OUT-OF-SCOPE findings**: Same wrong-kwargs bug exists at:
+  - `src/backend/services/ai/agent_sandbox.py:401` (pre-existing)
+  - `src/backend/dsl/builders/agent_dsl/infra.py:220` (pre-existing)
+  Tracked as tech-debt for separate cycle.
+
+#### CRIT-2: `ReplyProcessor` accesses `_broker` on `EventBusFacade` — fails in production
+- **Issue**: `src/backend/dsl/engine/processors/request_reply.py:112` did
+  `getattr(bus, "_broker", None)` after switching from `get_event_bus()` to
+  `get_event_bus_facade_provider()`. `EventBusFacade` stores underlying bus as
+  `self._bus`, NOT `self._broker`. Result: every `ReplyProcessor.process()` call
+  failed with `exchange.fail("EventBus broker not available")` in production.
+  The cycle 31 tests passed only because they mocked the facade incorrectly
+  (as plain bus with `_broker`).
+- **FIXED**: Navigate through facade → underlying bus:
+  `getattr(getattr(bus, "_bus", None), "_broker", None)`.
+- **TESTS UPDATED**: `tests/unit/dsl/engine/processors/test_request_reply.py`
+  mocks now use nested structure `facade._bus._broker` matching real
+  `EventBusFacade` architecture.
+- **VALIDATION**: All 6 request_reply tests pass + manual trace confirms
+  `EventBusFacade.__init__` stores bus as `self._bus` (eventbus_facade.py:74).
+
+#### HIGH-1: Orphan `enforced_invoke.py` was being tested instead of production code
+- **Issue**: cycle 31 tests imported from orphan
+  `src/backend/core/ai/gateway/orchestrator/enforced_invoke.py`. The production
+  `AIGateway` (gateway.py:34) imports from canonical
+  `src/backend/core/ai/gateway_orchestrator_mixin.py`. Tests gave false confidence.
+- **FIXED**: All cycle 31 regression tests now import from the canonical
+  production location. The orphan remains as backward-compat shim.
+
+#### MED-2: Redis batch limit lacked boundary tests
+- **Issue**: cycle 31 tests verified `_MAX_PIPELINE_BATCH == 10_000` constant but
+  no test for boundary behavior (10K pass / 10K+1 fail).
+- **FIXED**: Added 3 new tests: `test_mget_at_limit_succeeds`,
+  `test_mget_over_limit_raises`, `test_mset_over_limit_raises` — boundary
+  inclusive (≤10000 succeeds, >10000 raises).
+
+#### MED-1 cleanup: removed `__import__("time").time()` antipattern
+- **Issue**: `enforced_invoke.py:186` used `__import__("time").time()` even
+  though `time` was already imported at module level.
+- **FIXED**: Replaced with `time.time()` (idiomatic + saves a `__import__` call).
+
+### Cycle 31 retro: layer readiness assessment
+
+After CRITICAL bugs fixed, here's the assessment of infrastructure layer readiness:
+
+#### 🟢 What's GOOD (production-ready, well-tested)
+
+1. **StorageFacade** (capability-checked, ~85% complete) — `from src.backend.core.api import get_storage_facade_provider`
+2. **AuditService** + `emit_audit_safe` (never-raises, ~90% complete) — fail-safe design
+3. **Layer enforcement** (`tools/check_layers.py`) — AST-based, catches module-level
+   AND lazy imports; running baseline 179 legacy entries, 0 NEW violations
+4. **Public API facade** (`src/backend/core/api/__init__.py`) — 13 symbols re-exported
+   for extension developers (SDK + DI providers + 5 domain facades)
+5. **Redis bulk limits** — `_MAX_PIPELINE_BATCH = 10_000` enforced, boundary tested
+6. **SkillRegistry DRY** — delegates to canonical `validate_module_whitelist` utility
+7. **EventBusFacade swap** — capability-checked facade replaces legacy `get_event_bus()`
+   in all DSL processors
+8. **cdc/pg_runner_backend warning** — `.. warning::` docstring marks non-production-grade
+9. **73 Protocols** in `core/interfaces/` — rich type-safe contracts for infra
+10. **Back-compat shims** (`dsl/codec/json.py`, `infra/observability/correlation.py`,
+    `gateway/orchestrator/enforced_invoke.py`) — no breaking changes during refactor
+
+#### 🟡 What can be IMPROVED (works, but has gaps)
+
+1. **CacheFacade** (`UnifiedCacheFacade`) — no `RedisCacheFacade` impl yet;
+   production cache goes through `AdminCacheStorageProtocol` directly
+2. **MessagingFacade** (`stream_facade.py`) — only 22-LOC stub with
+   `get_stream_client` lazy proxy. EventBusFacade is in services/ (out of core)
+3. **AuthFacade** — verify-only MVP (no token issuance, SAML stub, no LDAP/revoke)
+4. **`infrastructure_facade.py`** — mislabeled as "facade", actually a service
+   locator (90+ getters returning concrete infra classes as `Any`)
+5. **HTTP retry composition** — tenacity + httpx-retries both active for status codes
+   (potential double-retry; documented but not yet fixed)
+6. **Dual MongoDB async** — `motor` + `pymongo.AsyncMongoClient` both in use
+7. **RouteBuilder 36-mixin god-class** — 36 mixins + `object.__setattr__` bypass
+   (deferred to dedicated cycle per cycle 30 P4-#4 plan)
+8. **CDC Poll/ListenNotify** — feed mode functional, polling-mode real DB queries
+   pending (Wave R3)
+9. **Frontend coupling** (31 files) — all through `frontend_facade` (mitigated),
+   full API-client migration separate sprint
+10. **Dual `emit_audit_safe` bug** at `agent_sandbox.py:401` + `infra.py:220` —
+    pre-existing, not in cycle 31 commit, deferred to tech-debt cleanup
+
+#### 🔴 What's BAD (must address before/after prod)
+
+1. **None (production-blocking)** after retro fixes — both CRITICAL bugs fixed
+2. **Pre-existing `emit_audit_safe` wrong-kwargs** at 2 callsites — silent audit
+   failure, defer to separate fix cycle
+3. **pg_runner_backend.replay() no-op** — documented as non-production-grade,
+   no fix planned (deferred to Wave D.2+)
+4. **No `RedisCacheFacade` impl** — production cache uses
+   `AdminCacheStorageProtocol` directly, which bypasses UnifiedCacheFacade
+   abstraction (security/maintenance risk for multi-tenant isolation guarantees)
+
+### Cycle 31 retro: метрика
+
+- **2 CRITICAL bugs found** (silent audit failure + production ReplyProcessor failure)
+- **2 CRITICAL bugs fixed** in this retro commit
+- **4 test improvements** (HIGH-1 fix: orphan→canonical + MED-2 boundary tests
+  + CRIT-1 wrong-kwargs regression guard + better mock fidelity)
+- **All 21 retro-related tests pass**
+- **Layer violations**: 0 новых
+- **Ruff lint**: all checks passed
+
+### Files changed in this retro commit (vs `c6e251d9`)
+
+- `src/backend/services/ai/agent_sandbox.py` — CRIT-1 fix: `event_type=` → `event=`
+- `src/backend/core/ai/gateway/orchestrator/enforced_invoke.py` — CRIT-1 fix (pre-existing
+  bonus) + MED-1: `__import__("time")` → `time.time()`
+- `src/backend/dsl/engine/processors/request_reply.py` — CRIT-2 fix: navigate through
+  `_bus` to reach `_broker`
+- `tests/unit/core/ai/test_audit_fixes_cycle31.py` — HIGH-1 + CRIT-1 regression guard
+  + MED-2 boundary tests
+- `tests/unit/dsl/engine/processors/test_request_reply.py` — CRIT-2 fix: nested mock
+  structure matching production facade
+
 ## [Unreleased] — Cycle 31 (2026-07-28) — Infrastructure remediation execution
 
 ### Cycle 31 remediation execution

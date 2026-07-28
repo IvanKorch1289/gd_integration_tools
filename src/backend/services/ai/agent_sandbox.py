@@ -103,8 +103,8 @@ class InProcessAgentSandbox:
             from src.backend.core.audit.facade import emit_audit_safe
 
             emit_audit_safe(
-                event_type="ai.sandbox.zero_isolation_constructed",
-                payload={
+                event="ai.sandbox.zero_isolation_constructed",
+                details={
                     "backend": "in_process",
                     "warning": "Zero process isolation — DEPRECATED",
                 },

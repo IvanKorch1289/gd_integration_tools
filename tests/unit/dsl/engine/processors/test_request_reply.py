@@ -74,10 +74,15 @@ async def test_reply_processor_success() -> None:
     with patch(
         "src.backend.core.di.providers.infrastructure_facade.get_event_bus_facade_provider"
     ) as mock_get_facade:
+        # CRIT-2 fix (cycle 31 retro): EventBusFacade stores underlying bus
+        # as ``self._bus``, NOT ``self._broker``. The test mocks must mirror
+        # this nested structure to validate the production code path.
         broker = AsyncMock()
-        bus = AsyncMock()
-        bus._broker = broker
-        mock_get_facade.return_value = bus
+        underlying_bus = AsyncMock()
+        underlying_bus._broker = broker
+        facade = AsyncMock()
+        facade._bus = underlying_bus
+        mock_get_facade.return_value = facade
 
         proc = ReplyProcessor(
             reply_channel="events.replies.abc",
@@ -101,9 +106,11 @@ async def test_reply_processor_from_exchange() -> None:
         "src.backend.core.di.providers.infrastructure_facade.get_event_bus_facade_provider"
     ) as mock_get_facade:
         broker = AsyncMock()
-        bus = AsyncMock()
-        bus._broker = broker
-        mock_get_facade.return_value = bus
+        underlying_bus = AsyncMock()
+        underlying_bus._broker = broker
+        facade = AsyncMock()
+        facade._bus = underlying_bus
+        mock_get_facade.return_value = facade
 
         proc = ReplyProcessor()
         exchange = _ex({"answer": 42})
@@ -126,12 +133,15 @@ async def test_reply_processor_missing_meta() -> None:
 
 @pytest.mark.asyncio
 async def test_reply_processor_no_broker() -> None:
+    """Facade возвращается, но underlying bus не имеет _broker — fail-closed."""
     with patch(
         "src.backend.core.di.providers.infrastructure_facade.get_event_bus_facade_provider"
     ) as mock_get_facade:
-        bus = AsyncMock()
-        bus._broker = None
-        mock_get_facade.return_value = bus
+        underlying_bus = AsyncMock()
+        underlying_bus._broker = None
+        facade = AsyncMock()
+        facade._bus = underlying_bus
+        mock_get_facade.return_value = facade
 
         proc = ReplyProcessor(reply_channel="events.replies.abc", correlation_id="abc")
         exchange = _ex({"answer": 42})
