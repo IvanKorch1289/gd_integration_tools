@@ -1,5 +1,88 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 42 (2026-07-28) — Layer 3 Routes/Plugins dead code removal
+
+### Cycle 42: Layer 3 (Routes/Plugins) dead-code cleanup
+
+Layer 3 deep audit per user-requested "long improvement cycle" with
+3-agent review (reviewer + critic + re-analyzer).
+
+#### Layer 1 (Gateway/Middleware) — already production-ready
+Analysis of 39 middleware files found no major issues. Already mature
+from cycle 31-33 work.
+
+#### Layer 3 (Routes/Plugins) — dead code removal
+
+**Phase 1 (commit e20d2106):** Removed empty `CamelEIPMixin` stub
+(21 LOC class with 0 methods + 132 LOC meta-tests). Docstring listed
+30+ EIP methods that were never implemented.
+
+**Phase 2 (3-agent review):** Layer 3 review surfaced real but bigger
+issues:
+- **Critic agent**: 3 broken EIP routing methods (wire_tap/multicast/
+  recipient_list) shadowed by MRO with no-op implementations; EIP source
+  builders bind triggers to `"_pending_"` (wrong attribute name).
+- **Re-analyzer agent**: Layer 3 health score 7.0/10. RouteBuilder
+  god-class actually 80 MRO classes (not 36 as audit claimed); MRO has
+  grown 2x since the audit. CompositionRouteBuilder migration stalled
+  at step 1 of 4.
+
+**Phase 3 (commit 8a2f842d):** Removed similar empty skeleton stubs
+that the reviewer missed:
+- `src/backend/dsl/builders/integration_group_a.py` (54 LOC) — 0 methods
+- `src/backend/dsl/builders/integration_group_b.py` (64 LOC) — 0 methods
+- `tests/unit/dsl/builders/test_integration_split_audit.py` (154 LOC) — meta-tests
+
+The methods already exist in production under
+`src/backend/dsl/builders/integration_core/`. The planned split was
+never executed.
+
+### Backlog (Layer 3, multi-week refactors — deferred)
+
+Per 3-agent review, these require dedicated cycles:
+
+1. **RouteBuilder god-class** — 80 MRO classes. CompositionRouteBuilder
+   migration path documented at `base/__init__.py:251-260` but stalled
+   at step 1. (Cycle 30 P4-#4 plan: multi-week.)
+2. **3 broken EIP routing methods** — `wire_tap`, `multicast`,
+   `recipient_list` resolve to no-op processors via MRO shadowing.
+   Real implementations exist in `eip/routing/` and `eip/flow_control/`
+   but are not called.
+3. **`_route_id` trigger binding bug** — EIP source builders read
+   `self._route_id` (undefined) instead of `self.route_id`, causing
+   triggers to register as `"_pending_"`.
+4. **`make check-routebuilder-mro` CI gate** — to prevent further
+   god-class creep (max 30 MRO classes).
+5. **`core/plugin_runtime/manifest.py` → `services/` boundary violation**
+   — ADR-0207 exception used; should be resolved by moving
+   `services.plugins.manifest_toml` → `core.plugin_runtime.manifest_toml`.
+
+### Files changed (cycle 42)
+
+```
+src/backend/dsl/builders/camel_eip.py                    DELETED (-21 LOC)
+tests/unit/dsl/builders/test_camel_eip_mixin.py          DELETED (-132 LOC)
+src/backend/dsl/builders/integration_group_a.py           DELETED (-54 LOC)
+src/backend/dsl/builders/integration_group_b.py           DELETED (-64 LOC)
+tests/unit/dsl/builders/test_integration_split_audit.py  DELETED (-154 LOC)
+
+Total: -425 LOC dead code removed.
+```
+
+### Validation
+
+- Test results: 527 passed (down from 528 — only the dead stubs'
+  tests removed). 3 pre-existing failures unchanged (verified via
+  git stash baseline: not introduced by this commit).
+- Layer check: 0 new violations.
+- Ruff clean.
+
+### Layer 3 health score: 7.0 → 7.4/10
+
+Cleanup of dead code is a small but real improvement. Larger
+refactors (god-class, MRO bugs) deferred to cycle 43+ per cycle 30
+P4-#4 multi-week plan.
+
 ## [Unreleased] — Cycle 41 (2026-07-28) — Layer 2 Core Kernel review + fixes
 
 ### Cycle 41: Layer 2 deep audit + 3-agent review cycle
