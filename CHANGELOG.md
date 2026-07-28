@@ -1,5 +1,59 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 43 (2026-07-28) — Layer 3 _route_id trigger fix
+
+### Cycle 43: Real Layer 3 fix per critic review
+
+Layer 3 critic agent (cycle 42) flagged a real production bug:
+all 7 EIP source builders were reading `self._route_id` (undefined
+attribute) via `getattr`, causing triggers (timers, cron, webhook,
+file/SQL/HTTP/S3 sources) to register as `"_pending_"` — meaning
+they never routed to their actual route.
+
+#### Root cause
+`RouteBuilder` stores route_id as `self.route_id` (no underscore
+prefix, see `dsl/builders/base/__init__.py:148`:
+`object.__setattr__(self, "route_id", route_id)`). But the EIP source
+builders read `self._route_id` — typo or oversight. `getattr` silently
+returned the fallback `"_pending_"`.
+
+#### Fix
+Changed 7 occurrences in `src/backend/dsl/builders/eip/sources.py`:
+```python
+# Before (buggy):
+route_id=getattr(self, "_route_id", "_pending_")
+
+# After (correct):
+route_id=getattr(self, "route_id", "") or "_pending_route_"
+```
+
+The new fallback `"_pending_route_"` is distinct from the old buggy
+string `"_pending_"` so log searches can identify any code paths that
+don't pass an explicit route_id.
+
+#### Impact
+- `from_interval`, `from_cron`, `from_webhook`: triggers now register
+  with actual route_id (was: "_pending_" → no-op routing).
+- `from_file`, `from_sql`, `from_http`, `from_s3`: source registrations
+  now route to the correct route (was: also "_pending_").
+
+#### Tests
+527 passed, 3 pre-existing failures unchanged. No new tests added
+(fix is a one-line change per source, behavior is straightforward).
+
+### Layer 3 backlog (cycle 43+, multi-week refactors)
+
+Per 3-agent review, these remain:
+1. **3 broken EIP routing methods** (MRO shadowing: wire_tap/multicast/
+   recipient_list resolve to no-op implementations)
+2. **`asyncio.create_task()` called from sync builder methods**
+   (file/SQL/HTTP/S3 sources) — requires running event loop at declaration
+3. **RouteBuilder god-class** (80 MRO classes) — CompositionRouteBuilder
+   migration stalled at step 1/4 (multi-week)
+4. **`make check-routebuilder-mro` CI gate** (max 30 classes)
+5. **`core/plugin_runtime/manifest.py` → `services/` boundary violation**
+   (ADR-0207 exception used; should be resolved)
+
 ## [Unreleased] — Cycle 42 (2026-07-28) — Layer 3 Routes/Plugins dead code removal
 
 ### Cycle 42: Layer 3 (Routes/Plugins) dead-code cleanup
