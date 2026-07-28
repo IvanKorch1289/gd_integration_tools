@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections.abc import Callable
+from cachetools import TTLCache
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -83,7 +84,11 @@ class VaultSecretsBackend(SecretsBackend):
         self._cache_ttl = cache_ttl_s
         self._client_factory = client_factory
         self._client: hvac.Client | None = None
-        self._cache: dict[str, tuple[float, str | None]] = {}
+        # Ponytail (Layer 2 Cycle 2): ручной dict + tuple(now, value) +
+        # time.time() expiry-check → TTLCache(maxsize, ttl).
+        self._cache: TTLCache[str, str | None] = TTLCache(
+            maxsize=10_000, ttl=cache_ttl_s
+        )
         self._lock = asyncio.Lock()
 
     def _build_client(self) -> hvac.Client:
@@ -114,16 +119,14 @@ class VaultSecretsBackend(SecretsBackend):
         * ``"path/to/secret"`` — путь, возвращает значение поля ``value``
           (если есть) либо stringified JSON всего объекта.
         """
-        now = time.time()
-        cached = self._cache.get(key)
-        if cached is not None and now - cached[0] <= self._cache_ttl:
-            return cached[1]
+        if key in self._cache:
+            return self._cache[key]
 
         path, field = self._split_key(key)
 
         async with self._lock:
             value = await asyncio.to_thread(self._read_kv_v2, path, field)
-            self._cache[key] = (now, value)
+            self._cache[key] = value
             return value
 
     def _read_kv_v2(self, path: str, field: str | None) -> str | None:
