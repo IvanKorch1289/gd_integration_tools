@@ -270,3 +270,36 @@ Kimi Code автоматически подхватывает:
 
 Если раздел выше неполон или устарел — **читай `CLAUDE.md`**. Он синхронизирован
 с `PLAN.md` V22 FINAL и является source of truth для проекта.
+
+---
+
+## Текущая фаза (Sprint 171+ / B-series 2026-07-28)
+
+### Аудит (завершён 2026-07-28)
+
+8 параллельных subagent'ов + 3 deep-dive анализа (108 коммитов).
+Полный отчёт: `docs/audit/principal-audit-2026-07-27/`.
+
+### Backlog (B-series) — все задачи закрыты
+
+| ID | Задача | Коммит | Статус |
+|---|---|---|---|
+| B1 | commit pre-existing modifications | `5c5aa64` | ✅ |
+| B2 | mkdocs migration (M10.2) | `7499f0a` | ✅ |
+| B3 | CB consolidation (FW6.1-FW6.3) | (pre-existing) | ✅ |
+| B4 | docstring gate at 0 | `e2b1d133` | ✅ |
+| B5 | admin-react stub removed (99MB) | `6f1df94a` | ✅ |
+| B6 | test fix for pre-existing failure | `b082a7cc` | ✅ |
+| B7 | update AGENTS.md (this section) | (this commit) | ✅ |
+
+### Docstring ratchet (FW7-series)
+
+| Step | Range | Δ | Baseline |
+|---|---|---|---|
+| FW7.1–FW7.79 | 79 per-file steps | -835 | 950 → 115 |
+| FW7.80–FW7.82 | 3 big-batch steps | -107 | 115 → 8 |
+| FW7.83 | final 8 (stub-comment fix) | -8 | 8 → 0 |
+
+**Total: 108 commits, 954 → 0 missing docstrings (-100%)**.
+
+Gate: `make check-docstrings MAX_ALLOWED=0` → exit 0.
