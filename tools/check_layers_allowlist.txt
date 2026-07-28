@@ -23,7 +23,6 @@ src/backend/core/di/providers/dlq_bridge.py	core	src.backend.infrastructure.mess
 src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.application.health_aggregator
 src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.clients.base_connector
 src/backend/core/di/providers/health_bridge.py	core	src.backend.infrastructure.clients.pool_health
-src/backend/core/di/providers/infrastructure_facade.py	core	src.backend.services.messaging.eventbus_facade
 src/backend/core/di/providers/jupyter.py	core	src.backend.services.jupyter.execution_service
 src/backend/core/di/providers/observability_bridge.py	core	src.backend.infrastructure.logging.base
 src/backend/core/di/providers/observability_bridge.py	core	src.backend.infrastructure.observability

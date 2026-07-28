@@ -263,7 +263,8 @@ def get_event_bus_facade_provider() -> Any:
     путь начинает работать. Без capability_check (default) — no-op для
     capability contract, поведение идентично legacy пути.
     """
-    from src.backend.services.messaging.eventbus_facade import get_event_bus_facade
+    # S32 fix: canonical path now in core (Task 3); services/ is shim.
+    from src.backend.core.messaging.eventbus.facade import get_event_bus_facade
 
     return get_event_bus_facade()
 
