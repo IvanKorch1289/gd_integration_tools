@@ -19,7 +19,6 @@ from src.backend.core.workflow.backend import (
     WorkflowResult,
     WorkflowStatus,
 )
-from src.backend.core.workflow.compensation import CompensateWorkflowRequest
 
 
 class TestWorkflowHandle:
@@ -122,14 +121,6 @@ class _FakeBackend:
     async def cancel_workflow(self, *, handle: WorkflowHandle) -> None:
         pass
 
-    async def compensate_workflow(
-        self,
-        *,
-        handle: WorkflowHandle,
-        request: CompensateWorkflowRequest,
-    ) -> None:
-        pass
-
     async def await_completion(
         self, *, handle: WorkflowHandle, timeout: timedelta | None = None
     ) -> WorkflowResult:
@@ -137,6 +128,27 @@ class _FakeBackend:
 
     async def replay(self, *, workflow_name: str, history: bytes) -> None:
         pass
+
+    async def await_external_signal(
+        self,
+        *,
+        handle: WorkflowHandle,
+        signal_name: str,
+        timeout: timedelta | None = None,
+    ) -> dict[str, Any]:
+        return {"timed_out": True}
+
+    async def start_child_workflow(
+        self,
+        *,
+        parent_handle: WorkflowHandle,
+        workflow_name: str,
+        workflow_id: str,
+        input: dict[str, Any],
+        task_queue: str,
+        execution_timeout: timedelta | None = None,
+    ) -> WorkflowHandle:
+        return WorkflowHandle(workflow_id="c", run_id="cr", namespace="n")
 
 
 class TestWorkflowBackendProtocol:

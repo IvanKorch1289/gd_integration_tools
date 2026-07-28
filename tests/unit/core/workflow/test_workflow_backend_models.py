@@ -14,7 +14,6 @@ from src.backend.core.workflow.backend import (
     WorkflowHandle,
     WorkflowResult,
 )
-from src.backend.core.workflow.compensation import CompensateWorkflowRequest
 
 
 class TestWorkflowHandle:
@@ -130,12 +129,24 @@ class TestWorkflowBackendProtocol:
 
             async def replay(self, *, workflow_name: str, history: bytes) -> None: ...
 
-            async def compensate_workflow(
+            async def await_external_signal(
                 self,
                 *,
                 handle: WorkflowHandle,
-                request: CompensateWorkflowRequest,
-            ) -> None: ...
+                signal_name: str,
+                timeout: timedelta | None = None,
+            ) -> dict[str, Any]: ...
+
+            async def start_child_workflow(
+                self,
+                *,
+                parent_handle: WorkflowHandle,
+                workflow_name: str,
+                workflow_id: str,
+                input: dict[str, Any],
+                task_queue: str,
+                execution_timeout: timedelta | None = None,
+            ) -> WorkflowHandle: ...
 
         assert issubclass(FakeBackend, WorkflowBackend)
         assert isinstance(FakeBackend(), WorkflowBackend)

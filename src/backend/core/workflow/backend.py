@@ -114,3 +114,78 @@ class WorkflowBackend(Protocol):
     async def replay(self, *, workflow_name: str, history: bytes) -> None:
         """Прогнать историю через текущий код — для CI versioning gate."""
         ...
+
+    # S210 fix: HITL/subworkflow support (REPORT.md gap #4).
+    # До этого workflow мог обмениваться сигналами с внешним миром
+    # только через ``signal_workflow`` (push), но не мог ждать
+    # внешнего события (pull). Это ограничивало HITL-паттерн
+    # (services/workflows/hitl_pubsub.py) — workflow не мог
+    # приостановиться в ожидании решения оператора.
+    #
+    # ``await_external_signal`` закрывает этот пробел: workflow
+    # объявляет ожидаемый сигнал + timeout, backend блокирует до
+    # прихода сигнала или таймаута. Реализация для Temporal —
+    # через ``workflow.await_signal()`` (native API). Для
+    # LiteTemporal — идентично. Для PgRunner — через LISTEN/NOTIFY
+    # + per-instance wait-queue. Для Fake — простой in-memory dict.
+
+    async def await_external_signal(
+        self,
+        *,
+        handle: WorkflowHandle,
+        signal_name: str,
+        timeout: timedelta | None = None,
+    ) -> dict[str, Any]:
+        """Приостановить workflow до получения внешнего сигнала или таймаута.
+
+        Используется для HITL: workflow шлёт ``HumanTask`` оператору,
+        затем ``await_external_signal`` ждёт решения (approval/reject/cancel).
+        Returns payload сигнала; при таймауте — ``{"timed_out": True}``.
+
+        Args:
+            handle: Дескриптор ожидающего workflow.
+            signal_name: Имя сигнала, которого ждём.
+            timeout: Максимальное время ожидания (None = бесконечно).
+
+        Returns:
+            Payload сигнала (dict). При таймауте: ``{"timed_out": True}``.
+        """
+        ...
+
+    # S210 fix: child workflow support (REPORT.md gap #4).
+    # ``start_child_workflow`` запускает workflow как дочерний по
+    # отношению к parent. Backend обязан прокинуть parent-context
+    # (Temporal: ``parent_workflow_id`` / ``parent_run_id``) чтобы
+    # child наследовал namespace + cancellation cascade.
+    #
+    # Реализация для Temporal: ``Client.start_workflow(..., parent=...)``.
+    # Для LiteTemporal: ``WorkflowEnvironment.start_workflow(..., parent=...)``.
+    # Для PgRunner: parent_workflow_id записывается в workflow_metadata
+    # + cancellation через ``cancel_workflow`` cascade.
+    # Для Fake: parent_workflow_id сохраняется в in-memory dict.
+
+    async def start_child_workflow(
+        self,
+        *,
+        parent_handle: WorkflowHandle,
+        workflow_name: str,
+        workflow_id: str,
+        input: dict[str, Any],
+        task_queue: str,
+        execution_timeout: timedelta | None = None,
+    ) -> WorkflowHandle:
+        """Запустить workflow как дочерний от parent.
+
+        Args:
+            parent_handle: Дескриптор parent workflow.
+            workflow_name: Имя child workflow (из DSL/builder).
+            workflow_id: Уникальный ID child workflow.
+            input: Входные данные.
+            task_queue: Task queue для child worker.
+            execution_timeout: Таймаут выполнения.
+
+        Returns:
+            Дескриптор child workflow. Namespace наследуется от parent.
+            При cancel parent — child тоже отменяется.
+        """
+        ...

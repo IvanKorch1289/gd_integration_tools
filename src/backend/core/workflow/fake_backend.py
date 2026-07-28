@@ -41,6 +41,7 @@ class _Instance(BaseModel):
     signals: list[tuple[str, dict[str, Any]]] = Field(default_factory=list)
     cancelled: bool = False
     result: WorkflowResult | None = None
+    parent_run_id: str | None = None
 
 
 class FakeWorkflowBackend(WorkflowBackend):
@@ -123,6 +124,60 @@ class FakeWorkflowBackend(WorkflowBackend):
     async def replay(self, *, workflow_name: str, history: bytes) -> None:
         """No-op: fake не моделирует replay-семантику."""
         return
+
+    async def await_external_signal(
+        self,
+        *,
+        handle: WorkflowHandle,
+        signal_name: str,
+        timeout: timedelta | None = None,
+    ) -> dict[str, Any]:
+        """Fake: проверить, был ли сигнал доставлен ранее.
+
+        ``signal_workflow`` для fake-инстанса всегда доставляет мгновенно
+        (записывает в ``instance.signals``), поэтому ``await_external_signal``
+        возвращает payload сразу. Если сигнал ещё не был доставлен —
+        ``{"timed_out": True}``.
+        """
+        instance = self._require(handle)
+        for name, payload in reversed(instance.signals):
+            if name == signal_name:
+                return payload
+        return {"timed_out": True}
+
+    async def start_child_workflow(
+        self,
+        *,
+        parent_handle: WorkflowHandle,
+        workflow_name: str,
+        workflow_id: str,
+        input: dict[str, Any],
+        task_queue: str,
+        execution_timeout: timedelta | None = None,
+    ) -> WorkflowHandle:
+        """Fake: зарегистрировать child как новый fake-инстанс.
+
+        Namespace наследуется от parent (multi-tenant consistency).
+        Parent linkage сохраняется в ``_Instance.parent_run_id`` для
+        тестов cancellation cascade.
+        """
+        parent = self._require(parent_handle)
+        run_id = uuid4().hex
+        handle = WorkflowHandle(
+            workflow_id=workflow_id,
+            run_id=run_id,
+            namespace=parent.handle.namespace,
+        )
+        self._instances[run_id] = _Instance(
+            handle=handle,
+            workflow_name=workflow_name,
+            input=input,
+            task_queue=task_queue,
+            execution_timeout=execution_timeout,
+        )
+        # Сохранить parent linkage для cancellation cascade.
+        self._instances[run_id].parent_run_id = parent.handle.run_id  # type: ignore[attr-defined]
+        return handle
 
     # --- helpers для тестов ---------------------------------------------
 
