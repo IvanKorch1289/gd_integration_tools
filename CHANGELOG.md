@@ -1,5 +1,56 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 44 (2026-07-28) — RouteBuilder MRO gate
+
+### Cycle 44: Layer 3 god-class prevention gate
+
+Layer 3 re-analyzer (cycle 42) identified RouteBuilder god-class as
+the highest-impact remaining Layer 3 issue (80 MRO classes, growing).
+This cycle adds a CI gate to PREVENT further creep while the
+CompositionRouteBuilder migration (multi-week) is in progress.
+
+#### New tool: `tools/checks/check_routebuilder_mro.py`
+
+CLI tool that fails CI if RouteBuilder MRO depth exceeds a budget:
+- Default budget: 50 classes
+- `--max N`: custom budget
+- `--info`: print full MRO breakdown
+
+Detects top-level mixin bases (filters out nested `_XxxBase`, `Protocol`,
+`_Stub` classes) for accurate "user-facing architectural surface" count.
+
+#### Current state
+- RouteBuilder MRO: 82 classes (top-level: 78)
+- Default budget: 50
+- Gate status: **FAIL** (intentional — gate enforces budget during
+  CompositionRouteBuilder migration)
+
+#### Tests
+9 tests in `tests/unit/tools/test_check_routebuilder_mro.py`:
+- get_route_builder_mro returns actual MRO (matches `RouteBuilder.__mro__`)
+- check_mro_depth passes within budget, fails over budget
+- filter_top_level_bases skips nested base classes
+- CLI integration: default fails, --max 100 passes, --info prints breakdown
+
+#### Out of scope
+The god-class refactor itself (CompositionRouteBuilder migration,
+stuck at step 1/4) is a multi-week effort tracked in Layer 3 backlog.
+This gate is a PREVENTIVE measure, not a fix.
+
+### Files changed (cycle 44)
+
+```
+tools/checks/check_routebuilder_mro.py         NEW (133 LOC)
+tests/unit/tools/test_check_routebuilder_mro.py  NEW (135 LOC, 9 tests)
+```
+
+### Validation
+
+- 9/9 new tests pass
+- CLI integration works (subprocess tests verify exit codes)
+- Layer check: 0 new violations
+- Ruff clean
+
 ## [Unreleased] — Cycle 43 (2026-07-28) — Layer 3 _route_id trigger fix
 
 ### Cycle 43: Real Layer 3 fix per critic review
