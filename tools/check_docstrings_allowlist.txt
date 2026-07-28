@@ -1113,9 +1113,6 @@ src/backend/infrastructure/observability/prometheus_alerting.py:74:0 unregister_
 src/backend/infrastructure/observability/prometheus_alerting.py:79:0 list_alerts
 src/backend/infrastructure/observability/tracing.py:43:0 before
 src/backend/infrastructure/observability/tracing.py:64:0 after
-src/backend/infrastructure/persistence/degradation_state_store.py:120:0 persist
-src/backend/infrastructure/persistence/degradation_state_store.py:130:0 load_current
-src/backend/infrastructure/persistence/degradation_state_store.py:141:0 load_history
 src/backend/infrastructure/policy/casbin_adapter.py:51:0 add_role
 src/backend/infrastructure/policy/casbin_adapter.py:57:0 add_policy
 src/backend/infrastructure/registry.py:86:0 instance
