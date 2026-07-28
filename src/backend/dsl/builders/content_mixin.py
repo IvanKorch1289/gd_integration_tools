@@ -15,7 +15,6 @@ import atexit
 import json
 import re
 import urllib.request
-from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -29,9 +28,6 @@ if TYPE_CHECKING:
 __all__ = (
     "EIPContentMixin",
     "EnrichEIPProcessor",
-    "MulticastEIPProcessor",
-    "RecipientListEIPProcessor",
-    "WireTapEIPProcessor",
 )
 
 _TAP_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="eip-tap")
@@ -100,72 +96,21 @@ class EnrichEIPProcessor(BaseProcessor):
 
 
 class WireTapEIPProcessor(BaseProcessor):
-    """Wire Tap EIP — record tap, fire-and-forget if async."""
+    """Wire Tap EIP — record tap, fire-and-forget if async.
 
-    side_effect: ClassVar[Any] = "TAP"
-    compensatable: ClassVar[bool] = True
+    Cycle 45: REMOVED from this file. The shadowing implementations
+    (WireTapEIPProcessor, MulticastEIPProcessor, RecipientListEIPProcessor)
+    stored properties without dispatching, shadowing the working
+    implementations in ContentMixin via MRO ordering.
 
-    def __init__(
-        self, *, sink: str, async_: bool = True, name: str | None = None
-    ) -> None:
-        super().__init__(name=name or f"eip.wire_tap({sink})")
-        self.sink, self.async_ = sink, async_
+    The canonical implementations live in:
+    - src/backend/dsl/engine/processors/eip/flow_control/wire_tap.py
+    - src/backend/dsl/engine/processors/eip/routing/multicast.py
+    - src/backend/dsl/engine/processors/eip/routing/recipient_list.py
 
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Записать copy exchange в ``_wire_taps`` (fire-and-forget для async)."""
-        taps = list(exchange.properties.get("_wire_taps") or [])
-        taps.append({"sink": self.sink, "async": self.async_})
-        exchange.properties["_wire_taps"] = taps
-        if self.async_:
-            _TAP_EXECUTOR.submit(lambda: None)
-        else:
-            return  # sink resolved downstream
-
-
-class MulticastEIPProcessor(BaseProcessor):
-    """Multicast EIP — fan-out to a list of sinks."""
-
-    side_effect: ClassVar[Any] = "PUBLISH"
-    compensatable: ClassVar[bool] = False
-
-    def __init__(
-        self, *, sinks: list[str], parallel: bool = True, name: str | None = None
-    ) -> None:
-        super().__init__(name=name or f"eip.multicast({len(sinks)} sinks)")
-        self.sinks, self.parallel = list(sinks), parallel
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Метод process (см. signature)."""
-        exchange.properties["_multicast_sinks"] = list(self.sinks)
-        exchange.properties["_multicast_parallel"] = self.parallel
-
-
-class RecipientListEIPProcessor(BaseProcessor):
-    """Recipient List EIP — static or callable recipient list."""
-
-    side_effect: ClassVar[Any] = "PUBLISH"
-    compensatable: ClassVar[bool] = False
-
-    def __init__(
-        self,
-        *,
-        recipients: list[str] | Callable[[Exchange[Any]], list[str]],
-        parallel: bool = True,
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or "eip.recipient_list")
-        self._recipients, self.parallel = recipients, parallel
-
-    def _resolve_recipients(self, exchange: Exchange[Any]) -> list[str]:
-        if callable(self._recipients):
-            r = self._recipients(exchange)
-            return list(r) if r else []
-        return list(self._recipients) if self._recipients else []
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Метод process (см. signature)."""
-        exchange.properties["_recipients"] = self._resolve_recipients(exchange)
-        exchange.properties["_recipients_parallel"] = self.parallel
+    These are used by the working content.py:wire_tap/multicast/recipient_list
+    methods that take MRO position 10 (after this EIP mixin at 9).
+    """
 
 
 # ─── Mixin ────────────────────────────────────────────────────────────
@@ -198,34 +143,12 @@ class EIPContentMixin:
             )
         )
 
-    def wire_tap(
-        self, sink: str, *, async_: bool = True, name: str | None = None
-    ) -> RouteBuilder:
-        """Wire Tap EIP — copy exchange to ``sink`` (async by default)."""
-        return self._add(  # type: ignore[attr-defined]
-            WireTapEIPProcessor(sink=sink, async_=async_, name=name)
-        )
-
-    def multicast(
-        self, sinks: list[str], *, parallel: bool = True, name: str | None = None
-    ) -> RouteBuilder:
-        """Multicast EIP — fan-out to multiple sinks (parallel by default)."""
-        if not sinks:
-            return self  # type: ignore[return-value]
-        return self._add(  # type: ignore[attr-defined]
-            MulticastEIPProcessor(sinks=sinks, parallel=parallel, name=name)
-        )
-
-    def recipient_list(
-        self,
-        recipients: list[str] | Callable[[Exchange[Any]], list[str]],
-        *,
-        parallel: bool = True,
-        name: str | None = None,
-    ) -> RouteBuilder:
-        """Recipient List EIP — list or callable ``(exchange) -> list``."""
-        return self._add(  # type: ignore[attr-defined]
-            RecipientListEIPProcessor(
-                recipients=recipients, parallel=parallel, name=name
-            )
-        )
+    # NOTE (cycle 45): wire_tap, multicast, recipient_list methods were
+    # REMOVED from this mixin. They shadowed the working implementations
+    # in ContentMixin via MRO ordering (this EIP mixin is at MRO position 9,
+    # ContentMixin at position 10). See content.py for the canonical
+    # implementations that are now resolved.
+    #
+    # The legacy `WireTapEIPProcessor` / `MulticastEIPProcessor` /
+    # `RecipientListEIPProcessor` classes were also removed (they only
+    # stored properties without dispatching — true no-op routing).
