@@ -1,5 +1,52 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 35 (2026-07-28) — Cookie dedup + comprehensive report
+
+### Cycle 35: Performance polish + comprehensive report
+
+Cycle 35 is the final consolidation cycle across cycles 31-35.
+
+#### Performance: Cookie deduplication
+- `BrowserCookieStore.save_cookies` previously wrote to Redis on every
+  call. With NavigateProcessor saving cookies after every page nav
+  (cycle 30 M-1 pattern), this caused 1+ redundant Redis writes per
+  nav event (~1-3ms per write).
+- Fix: read existing ciphertext from Redis, decrypt, compare against
+  new plaintext (order-independent via sort by name). If equal → skip
+  the Redis.set entirely.
+- Edge cases handled:
+  - Existing read fails (Redis down) → write anyway (recovery)
+  - Decrypt fails (key rotated) → write new (recovery)
+- Tests: 13 → 14. New test verifies same cookies (different order) →
+  no write, different cookie values → write.
+
+#### Comprehensive Analysis Report
+- Created `docs/audit/comprehensive_analysis_v1.md` consolidating all
+  findings from cycles 31-35 (5 cycles, 23 commits, 21 HIGH-severity
+  security/architecture fixes applied).
+- Report includes:
+  - Executive summary with metrics table
+  - Per-cycle breakdown of all commits
+  - Backlog items deferred (10 remaining, non-blocking)
+  - Architecture improvements delivered
+  - Library substitutions applied
+  - Risk assessment for production
+  - Recommendations for cycle 36+
+
+### Files changed (cycle 35)
+
+```
+src/backend/services/rpa/browser_cookies_store.py                +cookie dedup
+tests/unit/services/rpa/test_browser_cookies_store.py            +1 regression test
+docs/audit/comprehensive_analysis_v1.md                          NEW (12K report)
+```
+
+### Validation
+
+- 14/14 cookie store tests pass
+- 0 new layer violations
+- Ruff: All cycle-35 files clean
+
 ## [Unreleased] — Cycle 34 (2026-07-28) — Remaining security/RCE fixes
 
 ### Cycle 34: 2 more HIGH-severity fixes from audit backlog
