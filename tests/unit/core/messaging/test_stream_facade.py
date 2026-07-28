@@ -2,6 +2,8 @@
 
 The ``__all__`` symbols are resolved via PEP 562 ``__getattr__``; this test
 pins the public contract guarded by ``# ruff: noqa: F822``.
+
+S31 Task 3: also covers EventBusFacade promotion from services/ to core/.
 """
 
 from __future__ import annotations
@@ -33,3 +35,27 @@ def test_stream_facade_all_contents() -> None:
 
     for name in stream_facade.__all__:
         getattr(stream_facade, name)
+
+
+def test_stream_facade_resolves_event_bus_facade() -> None:
+    """S31 Task 3: ``get_event_bus_facade`` + ``EventBusFacade`` exposed."""
+    from src.backend.core.messaging import stream_facade
+    from src.backend.core.messaging.eventbus.facade import (
+        EventBusFacade as CanonicalEBF,
+        get_event_bus_facade as CanonicalGEBF,
+    )
+
+    assert stream_facade.EventBusFacade is CanonicalEBF
+    assert stream_facade.get_event_bus_facade is CanonicalGEBF
+
+
+def test_eventbus_facade_back_compat_via_services() -> None:
+    """Old import path ``services.messaging.eventbus_facade`` still works."""
+    from src.backend.core.messaging.eventbus.facade import (
+        EventBusFacade as CanonicalEBF,
+    )
+    from src.backend.services.messaging.eventbus_facade import (
+        EventBusFacade as ShimEBF,
+    )
+
+    assert ShimEBF is CanonicalEBF  # same class object

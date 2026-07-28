@@ -44,6 +44,7 @@ src/backend/core/interfaces/sink.py	core	src.backend.infrastructure.clients.base
 src/backend/core/interfaces/source.py	core	src.backend.infrastructure.clients.base_connector
 src/backend/core/io/__init__.py	core	src.backend.services.io.indexers
 src/backend/core/io/indexers.py	core	src.backend.services.io.indexers
+src/backend/core/messaging/eventbus/facade.py	core	src.backend.infrastructure.clients.messaging.event_bus
 src/backend/core/messaging/stream_facade.py	core	src.backend.infrastructure.clients.messaging.stream
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications
 src/backend/core/notifications/__init__.py	core	src.backend.infrastructure.notifications.gateway
@@ -158,7 +159,6 @@ src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoin
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/execution/middlewares/rate_limit_middleware.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/jupyter/hub_actions.py	services	src.backend.dsl.commands.action_registry
-src/backend/services/messaging/eventbus_facade.py	services	src.backend.infrastructure.clients.messaging.event_bus
 src/backend/services/messaging/kafka_facade.py	services	src.backend.infrastructure.messaging.kafka_producer
 src/backend/services/messaging/outbox_monitor.py	services	src.backend.infrastructure.messaging.outbox.stuck_monitor
 src/backend/services/ops/message_replay.py	services	src.backend.dsl.commands.registry

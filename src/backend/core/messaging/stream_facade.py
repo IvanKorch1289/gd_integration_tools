@@ -1,7 +1,9 @@
-"""Core messaging facade: StreamClient lazy re-export (ponytail: thin proxy).
+"""Core messaging facade: StreamClient + EventBusFacade (S31 Task 3).
 
-Entry points must import ``get_stream_client`` from here, not from
-``infrastructure.clients.messaging.stream`` directly.
+Promoted EventBusFacade from ``services/messaging/eventbus_facade.py`` so
+extensions/DSL can access messaging через core, not services.
+
+Entry points must import from this facade, not from infrastructure/* directly.
 """
 
 from __future__ import annotations
@@ -9,7 +11,11 @@ from __future__ import annotations
 # ruff: noqa: F822  # lazy __getattr__ exports verified by runtime test
 from typing import Any
 
-__all__ = ("get_stream_client",)
+__all__ = (
+    "get_stream_client",
+    "get_event_bus_facade",
+    "EventBusFacade",
+)
 
 
 def __getattr__(name: str) -> Any:
@@ -19,4 +25,12 @@ def __getattr__(name: str) -> Any:
         )
 
         return get_stream_client
+    if name == "get_event_bus_facade":
+        from src.backend.core.messaging.eventbus.facade import get_event_bus_facade
+
+        return get_event_bus_facade
+    if name == "EventBusFacade":
+        from src.backend.core.messaging.eventbus.facade import EventBusFacade
+
+        return EventBusFacade
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
