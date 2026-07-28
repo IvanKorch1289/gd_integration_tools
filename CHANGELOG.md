@@ -1,5 +1,56 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 48 (2026-07-28) — Layer 3 manifest migration
+
+### Cycle 48: Complete plugin manifest migration to canonical core location
+
+Cycle 47 fixed the extension-facing facade (`manifest.py`) but left 28
+internal callers in `services/plugins/loader/*` still importing from
+the old `services.plugins.manifest_toml` location — keeping the dead
+file alive and the layer-1→layer-3 boundary violation partially open.
+
+#### Cycle 48: Full migration
+- Updated 31 import sites across 27 files (production + tests) from
+  `services.plugins.manifest_toml` → `core.plugin_runtime.manifest_toml`
+- Removed `src/backend/services/plugins/manifest_toml.py` (file moved
+  to canonical `core/plugin_runtime/manifest_toml.py`)
+- Removed 4 stale allowlist entries that referenced the old file
+
+#### Test results
+155 passed in `tests/unit/{core/plugin_runtime,services/plugins}/`.
+7 pre-existing failures unchanged (verified via git stash baseline).
+
+#### Layer violations
+0 new (down from 4 stale entries after `--prune-allowlist`).
+ALL plugin manifest imports now flow through the canonical core
+location — no `core → services` boundary violations remain.
+
+### Layer 3 health: 8.3 → 8.4/10
+
+### Files changed (cycle 48)
+
+```
+src/backend/services/plugins/manifest_toml.py                       RENAME → core/plugin_runtime/manifest_toml.py
+src/backend/core/plugin_runtime/{compat_checker,dependency_resolver,manifest,sandbox}.py     +1 / -1
+src/backend/services/plugins/__init__.py                                              +1 / -1
+src/backend/services/plugins/loader/{__init__,discovery,validation}.py               +1 / -1
+src/backend/services/plugins/loader/loading/{_protocol,loader_mixin,state}.py        +1 / -1
+src/backend/entrypoints/api/v1/endpoints/{admin_capabilities,admin_plugins}.py        +1 / -1
+src/backend/entrypoints/api/v1/endpoints/admin_plugins/endpoints.py                   +1 / -1
+tests/integration/test_s18_routes_smoke.py                                            +1 / -1
+tests/perf/test_plugin_sandbox_overhead.py                                            +1 / -1
+tests/unit/core/plugin_runtime/{test_compat_checker,test_dependency_resolver,
+    test_sandbox_adapter}.py                                                        +1 / -1
+tests/unit/cycle_28_phase7_manifest.py                                               +1 / -1
+tests/unit/services/plugins/{test_compatibility_matrix,test_example_plugin_extension,
+    test_gap4_declarative_caps,test_manifest_v11,
+    test_plugin_trust_tier,test_sandbox_profile}.py                                  +1 / -1
+tests/unit/tools/{test_check_layers_lazy_imports,test_migrate_plugin_manifest}.py    +1 / -1
+tools/check_layers_allowlist.txt                                                     -4 entries
+
+Total: 30 files changed, 32 insertions(+), 36 deletions(-)
+```
+
 ## [Unreleased] — Cycle 47 (2026-07-28) — Layer 3 boundary fix
 
 ### Cycle 47: core→services boundary fix in plugin manifest facade
