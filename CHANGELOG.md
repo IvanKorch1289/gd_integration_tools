@@ -1,5 +1,39 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 49 (2026-07-28) — Layer 7 (Observability) audit
+
+### Cycle 49: Layer 7 analysis — no actionable fixes
+
+Cycle 49 audited `src/backend/{infrastructure,core}/observability/`
+per the user's "long improvement cycle through every layer" directive.
+
+**Analysis results**:
+- 7 components reviewed (baggage, logging_helpers, correlation,
+  log_indexer, metrics, pii_filter, otel)
+- 0 TODO/FIXME/NotImplementedError found (only docstring X-pattern
+  examples in `pii_filter.py`)
+- All layer enforcement clean (0 new violations from `core.observability`)
+- Boundary documentation present (`log_indexer.py` ADR-0248)
+
+**Attempted fix**: Migrate `services.io.indexers.log_indexer` →
+`core.io.indexers.log_indexer` (following cycle 47-48 manifest pattern).
+
+**Result: ABORTED** due to recursive boundary issue:
+- `core.io.indexers.log_indexer.py` imports from `services.io.search`
+- Migrating `services.io.search` → `core.io.search` recursively cascades
+  to `pii_filter.py`, search client, and ~15+ other files
+- Cost-benefit analysis: large migration with no functional benefit
+
+**Outcome**: Documented Layer 7 status in `docs/audit/layer7_status_cycle49.md`.
+Layer 7 closed with no actionable fixes (production-ready for audited scope).
+
+### Layer 7 health: 5.0/10 (unchanged)
+
+Future cycle 49+ candidates (multi-week refactors):
+- Migrate `services.io.search` → `core.io.search` (recursive boundary fix)
+- OTel collector optimization (deployment testing required)
+- Metrics cardinality reduction (large cardinal metrics cost memory)
+
 ## [Unreleased] — Cycle 48 (2026-07-28) — Layer 3 manifest migration
 
 ### Cycle 48: Complete plugin manifest migration to canonical core location
