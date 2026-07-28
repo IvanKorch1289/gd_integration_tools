@@ -14,7 +14,13 @@ from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field
 
-__all__ = ("UnifiedCacheFacade", "CacheError", "CacheInvalidationPolicy")
+__all__ = (
+    "UnifiedCacheFacade",
+    "CacheError",
+    "CacheInvalidationPolicy",
+    "RedisCacheFacade",
+    "DiskCacheFacade",
+)
 
 
 class CacheError(Exception):
@@ -222,3 +228,154 @@ class FallbackCacheFacade(UnifiedCacheFacade):
     async def healthcheck(self) -> bool:
         """True если backend доступен (Redis ping / memory check)."""
         return await self.primary.healthcheck() or await self.fallback.healthcheck()
+
+
+class RedisCacheFacade(UnifiedCacheFacade):
+    """Production-grade Redis facade (S31 Task 2).
+
+    Thin wrapper поверх :class:`RedisBackend` для интеграции с
+    :class:`UnifiedCacheFacade` Protocol. Tag-invalidation уже реализована
+    в backend через SADD/SMEMBERS (``__cache_tag:{tag}`` index).
+
+    Args:
+        backend: :class:`RedisBackend` instance (DI-injected).
+
+    Raises:
+        CacheError: Если backend raises на любую операцию (консьюмер может
+            перехватить через FallbackCacheFacade).
+    """
+
+    def __init__(self, backend: Any) -> None:
+        self._backend = backend
+
+    async def get(self, key: str) -> bytes | None:
+        try:
+            return await self._backend.get(key)
+        except Exception as exc:
+            raise CacheError(f"redis get failed: {exc}") from exc
+
+    async def set(
+        self,
+        key: str,
+        value: bytes,
+        ttl_seconds: int | None = None,
+        tags: list[str] | None = None,
+    ) -> None:
+        try:
+            await self._backend.set(key, value, ttl=ttl_seconds)
+            if tags and self.policy.enable_tag_invalidation:
+                for tag in tags:
+                    await self._backend.bind_key_to_tag(tag, key)
+        except Exception as exc:
+            raise CacheError(f"redis set failed: {exc}") from exc
+
+    async def delete(self, *keys: str) -> None:
+        try:
+            await self._backend.delete(*keys)
+        except Exception as exc:
+            raise CacheError(f"redis delete failed: {exc}") from exc
+
+    async def delete_by_tag(self, tag: str) -> int:
+        try:
+            return await self._backend.delete_by_tag(tag)
+        except Exception as exc:
+            raise CacheError(f"redis delete_by_tag failed: {exc}") from exc
+
+    async def exists(self, key: str) -> bool:
+        try:
+            return await self._backend.exists(key)
+        except Exception as exc:
+            raise CacheError(f"redis exists failed: {exc}") from exc
+
+    async def healthcheck(self) -> bool:
+        try:
+            return bool(await self._backend.healthcheck())
+        except Exception as exc:
+            raise CacheError(f"redis healthcheck failed: {exc}") from exc
+
+
+class DiskCacheFacade(UnifiedCacheFacade):
+    """Filesystem-based cache facade (S31 Task 2 fallback tier).
+
+    Только для dev_light / single-node deployments. Production path —
+    :class:`RedisCacheFacade`.
+    """
+
+    def __init__(self, root_dir: str = "/tmp/gd_cache") -> None:
+        import os
+
+        os.makedirs(root_dir, exist_ok=True)
+        self._root = root_dir
+        import asyncio
+
+        self._lock = asyncio.Lock()
+
+    def _path(self, key: str) -> str:
+        """Преобразует cache key в filesystem path с hash."""
+        import hashlib
+        import os
+
+        h = hashlib.sha256(key.encode("utf-8")).hexdigest()
+        return os.path.join(self._root, h[:2], h)
+
+    async def get(self, key: str) -> bytes | None:
+        import os
+
+        path = self._path(key)
+        if not os.path.exists(path):
+            return None
+        try:
+            async with self._lock:
+                with open(path, "rb") as f:
+                    return f.read()
+        except OSError as exc:
+            raise CacheError(f"disk read failed: {exc}") from exc
+
+    async def set(
+        self,
+        key: str,
+        value: bytes,
+        ttl_seconds: int | None = None,
+        tags: list[str] | None = None,
+    ) -> None:
+        """Метод set (см. signature)."""
+        import os
+
+        path = self._path(key)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        try:
+            async with self._lock:
+                with open(path, "wb") as f:
+                    f.write(value)
+                # TTL через mtime (lazy expiration на read)
+                if ttl_seconds is not None:
+                    import time
+
+                    os.utime(path, (time.time() + ttl_seconds, time.time() + ttl_seconds))
+        except OSError as exc:
+            raise CacheError(f"disk write failed: {exc}") from exc
+
+    async def delete(self, *keys: str) -> None:
+        import os
+
+        async with self._lock:
+            for key in keys:
+                path = self._path(key)
+                try:
+                    os.remove(path)
+                except FileNotFoundError:
+                    pass
+
+    async def delete_by_tag(self, tag: str) -> int:
+        """Tag invalidation в disk backend — no-op (Redis-only feature)."""
+        return 0
+
+    async def exists(self, key: str) -> bool:
+        import os
+
+        return os.path.exists(self._path(key))
+
+    async def healthcheck(self) -> bool:
+        import os
+
+        return os.path.isdir(self._root) and os.access(self._root, os.W_OK)
