@@ -177,4 +177,3 @@ src/backend/services/security/pii_streaming_facade.py	services	src.backend.infra
 src/backend/services/workflow/__init__.py	services	src.backend.infrastructure.workflow.registry
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
 src/backend/services/workflows/hitl_pubsub.py	services	src.backend.infrastructure.clients.storage.redis
-src/backend/services/workflows/hitl_pubsub_consumer.py	services	src.backend.infrastructure.clients.storage.redis
