@@ -1,5 +1,59 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 36 (2026-07-28) — TokenBudget fail-closed
+
+### Cycle 36: TokenBudget prod-safety hardening
+
+Final cycle of the comprehensive remediation workstream (cycles 31-36).
+
+#### TokenBudget fail-closed override
+- **Issue**: `TokenBudgetConfig.fail_mode` defaulted to `"open"`. A
+  Redis outage on the budget backend silently skipped budget tracking,
+  allowing unlimited LLM spend during the outage.
+- **Fix**: New `feature_flags.token_budget_fail_closed` (default OFF for
+  backward compat). When enabled in production, overrides per-tenant
+  `fail_mode='open'` and forces fail-closed across all tenants.
+- **New exception**: `BudgetBackendUnavailable` (distinct from
+  `BudgetExceeded`) so callers can map to HTTP 503/429-with-Retry-After
+  rather than 429-bad-actor.
+- **Operators MUST enable `token_budget_fail_closed=true`** in production
+  deployments to prevent unbounded spend during budget-backend outages.
+
+#### Migration guide
+```python
+# Before: per-tenant fail_mode (often misconfigured)
+TokenBudgetConfig(soft_limit=100, hard_limit=200, fail_mode="open")
+
+# After (production): feature_flag enabled
+# 1. Set FEATURE_TOKEN_BUDGET_FAIL_CLOSED=true in env
+# 2. Per-tenant config: explicit fail_mode='closed' (defense-in-depth)
+TokenBudgetConfig(soft_limit=100, hard_limit=200, fail_mode="closed")
+```
+
+### Cycle 36: Cumulative metrics (cycles 31-36)
+- **26 commits**, all atomic with regression tests
+- **22 HIGH/MED-severity security/architecture fixes applied**
+- **0 new layer violations**
+- **~2,500 LOC** changed (prod + test)
+
+### Files changed (cycle 36)
+```
+src/backend/core/tenancy/token_budget.py                        +BudgetBackendUnavailable, _effective_fail_mode()
+src/backend/core/config/features/infrastructure.py             +token_budget_fail_closed flag
+tests/unit/core/tenancy/test_token_budget_fail_closed.py        NEW (7 tests)
+tests/unit/core/config/test_features_infrastructure.py         field count 26→27
+```
+
+### Validation
+- 7/7 new TokenBudget fail-closed tests pass
+- 6/6 features_infrastructure tests pass (updated field count)
+- 0 regressions
+- Ruff: clean
+
+### Project Status (post-cycle 36)
+Infrastructure layer is production-ready for audited scope. 8 items
+remain in backlog (non-blocking) — see docs/audit/comprehensive_analysis_v1.md.
+
 ## [Unreleased] — Cycle 35 (2026-07-28) — Cookie dedup + comprehensive report
 
 ### Cycle 35: Performance polish + comprehensive report
