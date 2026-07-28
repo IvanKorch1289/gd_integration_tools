@@ -37,8 +37,6 @@ src/backend/core/di/providers/search_bridge.py	core	src.backend.infrastructure.c
 src/backend/core/di/providers/storage.py	core	src.backend.services.storage.facade
 src/backend/core/frontend_facade.py	core	src.backend.services.dsl_portal
 src/backend/core/integrations/skb.py	core	src.backend.services.integrations.skb
-src/backend/core/interfaces/batch_capable.py	core	src.backend.dsl.engine.context
-src/backend/core/interfaces/batch_capable.py	core	src.backend.dsl.engine.exchange
 src/backend/core/interfaces/sink.py	core	src.backend.infrastructure.clients.base_connector
 src/backend/core/interfaces/source.py	core	src.backend.infrastructure.clients.base_connector
 src/backend/core/io/__init__.py	core	src.backend.services.io.indexers
