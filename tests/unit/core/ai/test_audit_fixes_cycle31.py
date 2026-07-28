@@ -119,6 +119,17 @@ class TestInProcessAgentSandboxAudit:
 
         monkeypatch.setattr(facade_mod, "emit_audit_safe", spy_emit)
 
+        # Cycle 33 AI2: feature_flags.ai_in_process_sandbox_disabled=True
+        # blocks construction by default. For this test, we need to verify
+        # the audit-event emission path, which only fires WHEN construction
+        # succeeds. Override the flag via monkeypatch.
+        from src.backend.core.config.features import feature_flags
+
+        original_flag = feature_flags.ai_in_process_sandbox_disabled
+        monkeypatch.setattr(
+            feature_flags, "ai_in_process_sandbox_disabled", False
+        )
+
         import warnings
 
         from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
@@ -126,6 +137,9 @@ class TestInProcessAgentSandboxAudit:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             sandbox = InProcessAgentSandbox()
+
+        # Restore original flag for any subsequent tests.
+        feature_flags.ai_in_process_sandbox_disabled = original_flag
 
         assert sandbox is not None
         # At least one audit event should have been emitted with CORRECT signature
