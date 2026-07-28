@@ -59,9 +59,10 @@ class TestInfrastructureFlagsClass:
     def test_infrastructure_field_count(self) -> None:
         fields = InfrastructureFlags.model_fields
         names = list(fields.keys())
-        # 26 fields (Sprint 5 K4+K5 + Sprint 8+9+10) — cycle 33 AI2 added
-        # ai_in_process_sandbox_disabled (mem0ai removed in cycle 31).
-        assert len(names) == 26
+        # 27 fields (Sprint 5 K4+K5 + Sprint 8+9+10) — cycle 33 AI2 added
+        # ai_in_process_sandbox_disabled; cycle 36 added
+        # token_budget_fail_closed (mem0ai removed in cycle 31).
+        assert len(names) == 27
 
 
 class TestInfrastructureFlagsComposition:
@@ -72,6 +73,7 @@ class TestInfrastructureFlagsComposition:
             "http3_enabled",
             "hitl_panel_enabled",
             "clickhouse_bulk_writer_enabled",
+            "token_budget_fail_closed",
         ):
             assert hasattr(feature_flags, f), f"feature_flags missing {f}"
 

@@ -23,6 +23,7 @@ from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
+    "BudgetBackendUnavailable",
     "BudgetEnforcementError",
     "BudgetExceeded",
     "BudgetPeriod",
@@ -47,6 +48,31 @@ class BudgetExceeded(Exception):
         self.used = used
         self.hard_limit = hard_limit
         self.period = period
+
+
+class BudgetBackendUnavailable(Exception):
+    """Cycle 36: backend (Redis) unavailable under fail-closed policy.
+
+    Raised by :meth:`TokenBudget.reserve` when:
+    - ``fail_mode='closed'`` in :class:`TokenBudgetConfig`, OR
+    - ``feature_flags.token_budget_fail_closed=True`` (production override).
+
+    Distinct from :class:`BudgetExceeded` (which signals hard_limit
+    breach). Callers should map this to HTTP 503/429-with-Retry-After
+    rather than 429-bad-actor.
+
+    Attributes:
+        backend: Name of the unavailable backend (e.g. "token_budget").
+        tenant_id: Tenant whose budget check failed.
+    """
+
+    def __init__(self, *, backend: str, tenant_id: str) -> None:
+        super().__init__(
+            f"Token budget backend '{backend}' unavailable for tenant="
+            f"{tenant_id} — fail-closed policy blocks request"
+        )
+        self.backend = backend
+        self.tenant_id = tenant_id
 
 
 class BudgetEnforcementError(Exception):
@@ -220,6 +246,11 @@ class TokenBudget:
         configs: per-tenant конфиги (если tenant не найден → fall back на
             ``default_config``).
         default_config: fallback для tenant'ов без явной конфигурации.
+
+    Cycle 36: ``feature_flags.token_budget_fail_closed`` overrides the
+    per-tenant fail_mode in production. Default OFF preserves dev/test
+    behavior. Operators MUST enable this flag in production to prevent
+    unbounded LLM spend when Redis is unavailable.
     """
 
     def __init__(
@@ -232,6 +263,22 @@ class TokenBudget:
         self._backend = backend
         self._configs = configs or {}
         self._default = default_config
+
+    def _effective_fail_mode(self, config: TokenBudgetConfig) -> str:
+        """Cycle 36: feature_flag override for production safety.
+
+        If feature_flags.token_budget_fail_closed=True, returns 'closed'
+        regardless of per-tenant config. Default flag=False preserves
+        current behavior (per-tenant config takes effect).
+        """
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            if getattr(feature_flags, "token_budget_fail_closed", False):
+                return "closed"
+        except Exception:
+            pass
+        return config.fail_mode
 
     def _config_for(self, tenant_id: str) -> TokenBudgetConfig:
         return self._configs.get(tenant_id, self._default)
@@ -252,8 +299,11 @@ class TokenBudget:
 
         Raises:
             BudgetExceeded: если used >= hard_limit.
+            BudgetBackendUnavailable: при Redis-outage + fail_mode='closed'
+                или feature_flags.token_budget_fail_closed=True.
         """
         config = self._config_for(tenant_id)
+        effective_fail_mode = self._effective_fail_mode(config)
         key = self._key(tenant_id, config.period)
         ttl = BudgetPeriod.ttl_seconds(config.period)
         try:
@@ -261,8 +311,16 @@ class TokenBudget:
                 key=key, amount=tokens, ttl_seconds=ttl
             )
         except Exception as _:
-            if config.fail_mode == "closed":
-                raise
+            if effective_fail_mode == "closed":
+                # Cycle 36: raise typed exception so callers can distinguish
+                # from BudgetExceeded (which signals hard_limit breach).
+                from src.backend.core.tenancy.token_budget import (
+                    BudgetBackendUnavailable,
+                )
+
+                raise BudgetBackendUnavailable(
+                    backend="token_budget", tenant_id=tenant_id
+                ) from None
             # fail-open: пропускаем, бюджет не учитывается
             used = 0
         snapshot = BudgetSnapshot(

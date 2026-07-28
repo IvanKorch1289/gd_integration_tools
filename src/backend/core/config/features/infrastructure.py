@@ -151,6 +151,20 @@ class InfrastructureFlags(BaseSettings):
         ),
     )
 
+    # ─── Cycle 36 — Token budget fail-closed safety ─────────────────────
+    token_budget_fail_closed: bool = Field(
+        default=False,
+        title="S36: Force TokenBudget to fail-closed on backend errors",
+        description=(
+            "Cycle 36: when enabled, overrides per-tenant fail_mode='open' "
+            "and forces TokenBudget.reserve() to raise BudgetBackendUnavailable "
+            "on Redis outage instead of silently skipping. Use this in "
+            "production to prevent unbounded LLM spend when budget backend "
+            "is unavailable. Dev/test should keep default OFF to allow "
+            "tests without Redis. Operators MUST enable this flag in prod."
+        ),
+    )
+
     # ─── Sprint 5 — К5 Frontend ───────────────────────────────────────────
     frontend_workflow_logs_page: bool = Field(
         default=True,
