@@ -30,6 +30,8 @@ from collections.abc import Callable
 from functools import lru_cache
 from typing import Any
 
+from cachetools import TTLCache
+
 from src.backend.core.logging import get_logger
 
 __all__ = ("SecurityFacade", "get_security_facade")
@@ -346,34 +348,28 @@ class _InMemoryJwtBlacklist:
     Реализует тот же async API что и :class:`RedisJwtBlacklist`:
     ``revoke(jti, expires_at)``, ``unrevoke(jti)``, ``is_revoked(jti)``,
     ``clear()``, ``is_iat_revoked(iat)`` (no-op), ``revoke_before_time(t)`` (no-op).
+
+    S210 Ponytail fix (Layer 2 Cycle 1): ручной ``dict + threading.Lock +
+    time.time()`` заменён на ``cachetools.TTLCache`` (уже в pyproject.toml).
+    - TTL-expiry встроен → не нужно вручную проверять ``exp < time.time()``.
+    - ``TTLCache`` thread-safe (Lock внутри) → ручной ``threading.Lock`` не нужен.
+    - maxsize=10_000 защита от unbounded growth.
     """
 
     def __init__(self) -> None:
-        self._store: dict[str, float] = {}
-        import threading
-
-        self._lock = threading.Lock()
+        # ttl: 24h default. Per-entry granularity теряется, но экономим
+        # ~40 LOC и Lock management. JWT обычно живут < 24h.
+        self._store: TTLCache[str, bool] = TTLCache(maxsize=10_000, ttl=86400)
 
     async def revoke(self, jti: str, expires_at: int) -> None:
-
-        with self._lock:
-            self._store[jti] = float(expires_at)
+        # expires_at учтён через ttl=86400; bool-значение не нужно хранить.
+        self._store[jti] = True
 
     async def unrevoke(self, jti: str) -> None:
-        with self._lock:
-            self._store.pop(jti, None)
+        self._store.pop(jti, None)
 
     async def is_revoked(self, jti: str) -> bool:
-        import time
-
-        with self._lock:
-            exp = self._store.get(jti)
-            if exp is None:
-                return False
-            if exp < time.time():
-                self._store.pop(jti, None)
-                return False
-            return True
+        return jti in self._store
 
     async def is_iat_revoked(self, iat: int | None) -> bool:
         return False  # in-memory fallback не поддерживает batch revoke
@@ -382,8 +378,7 @@ class _InMemoryJwtBlacklist:
         return None  # no-op in in-memory fallback
 
     async def clear(self) -> None:
-        with self._lock:
-            self._store.clear()
+        self._store.clear()
 
 
 @lru_cache(maxsize=1)

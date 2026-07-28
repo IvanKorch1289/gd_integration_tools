@@ -36,7 +36,6 @@ class TenantFacade:
 
     def __init__(self) -> None:
         """Инициализация facade."""
-        self._cache: dict[str, Any] = {}
 
     def current(self) -> Any:
         """Получить текущий TenantContext.
