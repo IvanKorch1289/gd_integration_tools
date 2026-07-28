@@ -117,7 +117,15 @@ class VariableScope:
 
 
 class VariableNotFoundError(KeyError):
-    """Бросается при отсутствии переменной во всех backends."""
+    """Reserved exception class for missing variables across all backends.
+
+    Currently NOT raised by the implementation (which returns ``None`` for
+    missing keys). Kept exported as part of public API for callers that
+    want strict-missing semantics (e.g. ``if store.get(k) is None: raise VariableNotFoundError(k)``).
+
+    Subclass of ``KeyError`` so existing ``except KeyError`` handlers
+    continue to work transparently.
+    """
 
 
 # ---------------------------------------------------------------------------

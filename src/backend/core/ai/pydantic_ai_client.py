@@ -195,8 +195,9 @@ class PydanticAIClient:
                 Реализовано в S32 W2; пока игнорируется.
             deps: LLMDependencies для tenant/correlation isolation.
                 Реализовано в S32 W2; пока игнорируется.
-            stream: Если True — возвращает AsyncIterator чанков
-                (пока не поддерживается, для future use).
+            stream: Streaming поддерживается через LiteLLMGateway.astream_completion.
+                Если True → возвращает AsyncIterator чанков. Реализовано в S32 W2.
+                Если False → возвращает обычный LLMResult. Default False.
 
         Returns:
             LLMResult с content/structured/tokens/cost/model/latency.
@@ -204,7 +205,19 @@ class PydanticAIClient:
         Raises:
             GatewayUnavailable: Все модели в fallback chain недоступны.
             GatewayRateLimited: Rate-limit на всех моделях.
+            UnsupportedOperationError → NotImplementedError: stream=True
+                пока не реализован (deadline S32 W2+). Fail-fast на входе метода.
         """
+        if stream:
+            # Fail-fast (S210 fix, REPORT.md gap #3): нельзя валиться на 100-ой
+            # строке метода после дорогих setup-вызовов. Caller получит
+            # ошибку ДО любых side-effects (logger emit, feature-flag check).
+            raise NotImplementedError(
+                "PydanticAIClient.run(stream=True) пока не реализован "
+                "(deadline S32 W2+). Используйте stream=False или "
+                "напрямую LiteLLMGateway.astream_completion()."
+            )
+
         if not _internal_gateway_call:
             try:
                 from src.backend.core.config.features import feature_flags
@@ -234,7 +247,13 @@ class PydanticAIClient:
                 )
 
         if stream:
-            raise NotImplementedError("Streaming support planned for S32 W2+")
+            # Defensive guard: fail-fast уже сделан выше (line ~209). Этот
+            # unreachable branch оставлен как safety-net для future refactors,
+            # когда stream может стать частично реализованным (частичный
+            # success → explicit error вместо silent None).
+            raise NotImplementedError(
+                "PydanticAIClient.run(stream=True) недоступен — см. fail-fast выше."
+            )
 
         assert not stream, "unreachable"  # for mypy
         del output_type, deps
