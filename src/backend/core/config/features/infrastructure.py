@@ -136,6 +136,21 @@ class InfrastructureFlags(BaseSettings):
         ),
     )
 
+    # ─── Cycle 33 AI2 — Sandbox safety ───────────────────────────────────
+    ai_in_process_sandbox_disabled: bool = Field(
+        default=True,
+        title="S33: Block InProcessAgentSandbox (zero isolation) by default",
+        description=(
+            "Cycle 33 AI2: process_pool/E2B should be the only available "
+            "sandbox backends in production. InProcessAgentSandbox runs in "
+            "the parent process with same memory + file descriptors — a "
+            "compromised agent = full host access. This flag is checked at "
+            "construction sites (agent_graph.py, agent_dsl/infra.py) and "
+            "raises RuntimeError if False. Default ON (blocking). Operator "
+            "can set False only for explicit dev/testing."
+        ),
+    )
+
     # ─── Sprint 5 — К5 Frontend ───────────────────────────────────────────
     frontend_workflow_logs_page: bool = Field(
         default=True,

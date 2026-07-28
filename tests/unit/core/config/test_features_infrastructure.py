@@ -59,8 +59,9 @@ class TestInfrastructureFlagsClass:
     def test_infrastructure_field_count(self) -> None:
         fields = InfrastructureFlags.model_fields
         names = list(fields.keys())
-        # 25 fields (Sprint 5 K4+K5 + Sprint 8+9+10) — mem0ai removed (dead code)
-        assert len(names) == 25
+        # 26 fields (Sprint 5 K4+K5 + Sprint 8+9+10) — cycle 33 AI2 added
+        # ai_in_process_sandbox_disabled (mem0ai removed in cycle 31).
+        assert len(names) == 26
 
 
 class TestInfrastructureFlagsComposition:

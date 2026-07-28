@@ -81,11 +81,35 @@ class InProcessAgentSandbox:
         # Hard gate (defense-in-depth): in-process НИКОГДА не должен
         # работать в production. Если feature-flag bypass завершён —
         # явный fail-loud. Per D65 / D270 rationale.
+        # Cycle 33 AI2: also check feature_flags.ai_in_process_sandbox_disabled
+        # (default ON). Operator must explicitly opt-out via feature flag
+        # — environment variable GD_INTEGRATION_PRODUCTION alone was
+        # bypassable in misconfigured deployments.
         if _IN_PROCESS_PROD_BLOCKED:
             raise RuntimeError(
                 "InProcessAgentSandbox forbidden in production "
                 "(GD_INTEGRATION_PRODUCTION=1). Use ProcessPool or E2B backend. "
                 "See ARC-008 / docs/security/sandbox_backends.md."
+            )
+        try:
+            from src.backend.core.config.features import feature_flags
+
+            if getattr(
+                feature_flags,
+                "ai_in_process_sandbox_disabled",
+                True,  # default: BLOCKED if feature_flags module unavailable
+            ):
+                raise RuntimeError(
+                    "InProcessAgentSandbox blocked by feature_flags."
+                    "ai_in_process_sandbox_disabled=True (default). "
+                    "Use ProcessPoolAgentSandbox or E2BAgentSandbox. "
+                    "To override (DEV ONLY): set FEATURE_AI_IN_PROCESS_SANDBOX_DISABLED=false."
+                )
+        except ImportError:
+            # If feature_flags module unavailable → fail-closed
+            raise RuntimeError(
+                "InProcessAgentSandbox: feature_flags module unavailable, "
+                "defaulting to BLOCKED for safety. Use ProcessPoolAgentSandbox."
             )
         warnings.warn(
             "InProcessAgentSandbox is DEPRECATED since Sprint 172 (ARC-008). "
