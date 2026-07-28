@@ -1,5 +1,62 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 45 (2026-07-28) — Layer 3 MRO shadowing fix
+
+### Cycle 45: Critical Layer 3 production bug — MRO shadowing
+
+Layer 3 critic agent (cycle 42) flagged the highest-impact Layer 3
+issue: `EIPContentMixin` shadowed the working implementations in
+`ContentMixin` via MRO ordering (position 9 vs position 10). The
+shadowed versions stored properties without dispatching — true
+no-op routing that consumed CPU for nothing.
+
+#### Affected methods (now use working ContentMixin implementations)
+- `RouteBuilder.wire_tap(tap_processors=[...])` — was: stored `_wire_taps`
+  property, no real side-channel dispatch. Now: real `WireTapProcessor`
+- `RouteBuilder.multicast(branches=[[...], [...]])` — was: stored
+  `_multicast_sinks` property. Now: real `MulticastProcessor` fan-out
+- `RouteBuilder.recipient_list(recipients_expression=lambda exch: [...])`
+  — was: stored `_recipients` property. Now: real `RecipientListProcessor`
+  dynamic routing
+
+#### Removed dead code
+- `src/backend/dsl/builders/content_mixin.py`: removed 3 broken methods
+  (`wire_tap`, `multicast`, `recipient_list`) + 3 broken processor classes
+  (`WireTapEIPProcessor`, `MulticastEIPProcessor`, `RecipientListEIPProcessor`).
+- The `content_enrich` method (renamed from `enrich` to avoid MRO conflict
+  with `EIPMixin.enrich(action=...)`) remains — it's a distinct EIP pattern
+  with different semantics from action-based enrichment.
+
+#### Signature changes (BREAKING for shadowed calls)
+| Before (broken) | After (working) |
+|---|---|
+| `wire_tap("sink_name", async_=True)` | `wire_tap(tap_processors=[proc])` |
+| `multicast(["sink_a", "sink_b"], parallel=True)` | `multicast(branches=[[proc1], [proc2]])` |
+| `recipient_list(["recip_a"], parallel=True)` | `recipient_list(recipients_expression=lambda exch: [...])` |
+
+The old signatures only existed to add no-op processors to the
+processor list — the change to real signatures unlocks actual
+routing.
+
+#### Tests rewritten
+- Removed 13 broken tests that asserted no-op behavior (storing
+  properties without dispatching).
+- Added 5 MRO regression tests (verify wire_tap/multicast/recipient_list
+  resolve to `WireTapProcessor` / `MulticastProcessor` / `RecipientListProcessor`,
+  not the removed `*EIPProcessor` classes).
+- Kept 4 content_enrich tests + 1 placeholder edge case test.
+
+#### Test results
+8/8 new tests pass. 508 passed in `tests/unit/dsl/builders/`, 3
+pre-existing failures unchanged (verified via git stash baseline).
+
+### Files changed (cycle 45)
+
+```
+src/backend/dsl/builders/content_mixin.py         -246 LOC (broken methods/processors)
+tests/unit/dsl/builders/test_content_mixin.py       +145 / -270 LOC (rewrite)
+```
+
 ## [Unreleased] — Cycle 44 (2026-07-28) — RouteBuilder MRO gate
 
 ### Cycle 44: Layer 3 god-class prevention gate
