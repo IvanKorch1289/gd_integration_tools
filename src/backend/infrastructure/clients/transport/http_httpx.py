@@ -79,9 +79,9 @@ def is_httpx_retries_available() -> bool:
 
 def build_unified_transport(
     *,
-    max_retries: int = 5,
+    max_retries: int = 3,
     backoff_factor: float = 0.5,
-    retry_status_codes: tuple[int, ...] = (429, 502, 503, 504),
+    retry_status_codes: tuple[int, ...] = (),
     enable_cache: bool = True,
     cache_dir: str | None = None,
 ) -> httpx.AsyncBaseTransport:
@@ -91,10 +91,22 @@ def build_unified_transport(
     опциональных пакетов (``httpx-retries`` / ``hishel``) gracefully fallback
     на следующий доступный слой.
 
+    **S31 Task 6 — Retry de-stack.**
+    ``retry_status_codes`` defaults to ``()`` (empty tuple). httpx-retries now
+    handles **only transport-level errors** (connection reset, DNS failures).
+    HTTP status code retries (429/502/503/504) are handled by application-level
+    ``tenacity`` decorators via :mod:`core.resilience.retry` — keeping retry
+    logic in one place to avoid stacked backoffs (was up to 5×5=25 attempts).
+
     Args:
-        max_retries: Максимум попыток retry на сетевые ошибки.
+        max_retries: Максимум попыток retry на transport errors (connection
+            reset, DNS failures). Default 3 (reduced from 5 in S31 Task 6).
         backoff_factor: Множитель экспоненциального backoff.
-        retry_status_codes: HTTP-статусы, на которые делается retry.
+        retry_status_codes: **DEPRECATED for status codes** — kept for backward
+            compatibility but defaults to empty. Pass non-empty tuple ONLY if
+            you explicitly want status-based retry at transport layer (rare).
+            For application-level status retry, use ``tenacity`` decorator from
+            :mod:`core.resilience.retry`.
         enable_cache: Включить Hishel cache transport (RFC 7234).
         cache_dir: Путь к директории cache (если ``None`` — system temp).
 
@@ -117,7 +129,7 @@ def build_unified_transport(
                 status_forcelist=list(retry_status_codes),
             )
             base = RetryTransport(transport=base, retry=retry_obj)
-            logger.debug("httpx_retries RetryTransport активирован")
+            logger.debug("httpx_retries RetryTransport активирован (transport-level only)")
         except Exception as exc:
             logger.warning("httpx_retries init failed: %s", exc)
 
