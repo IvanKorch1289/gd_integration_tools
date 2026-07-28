@@ -6,6 +6,7 @@ Async wrapper: запускает Observer в thread, ждёт timeout.
 from __future__ import annotations
 
 import asyncio
+import fnmatch
 import threading
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -20,13 +21,25 @@ _rpa_logger = get_logger("dsl.rpa")
 
 
 class _ChangeCollector:
-    """Собирает file changes через watchdog Observer."""
+    """Собирает file changes через watchdog Observer.
 
-    def __init__(self) -> None:
+    Cycle 34 audit (DS3): pattern was declared but never applied —
+    handler added every changed file regardless of configured glob.
+    Filter now applied at add() time via :func:`fnmatch.fnmatch`.
+    """
+
+    def __init__(self, pattern: str) -> None:
         self.changes: list[str] = []
+        self._pattern = pattern
         self._lock = threading.Lock()
 
     def add(self, path: str) -> None:
+        # Cycle 34: apply pattern filter to basename.
+        import os
+
+        basename = os.path.basename(path)
+        if not fnmatch.fnmatch(basename, self._pattern):
+            return
         with self._lock:
             self.changes.append(path)
 
@@ -74,7 +87,7 @@ class FileWatchProcessor(BaseProcessor):
                 "watchdog required: uv add watchdog"
             ) from exc
 
-        collector = _ChangeCollector()
+        collector = _ChangeCollector(self.pattern)
 
         class _Handler(FileSystemEventHandler):
             def on_created(self, event):  # type: ignore[override]
