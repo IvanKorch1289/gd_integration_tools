@@ -409,7 +409,81 @@ class VaultClient:
                 "VAULT_ROLE_ID + VAULT_SECRET_ID"
             )
 
+        # Cycle 38: schedule token renewal if TTL is short.
+        # AppRole tokens typically have 32-day max TTL. Without auto-renewal,
+        # the system silently fails after expiry (32 days for AppRole).
+        await self._maybe_renew_token(client)
+
         return client
+
+    async def _maybe_renew_token(
+        self, client: Any, *, threshold_seconds: int = 86400 * 7
+    ) -> None:
+        """Cycle 38: auto-renew Vault token if TTL below threshold.
+
+        Threshold default: 7 days. If token has less than 7 days of life
+        remaining, call ``auth.token.renew_self()`` to extend it.
+
+        This runs on every _get_client() call — overhead is one HTTP
+        lookup_self() request, but only when the token is already cached
+        (auth already done). When token is freshly authenticated, we skip
+        the renewal since the new token already has maximum TTL.
+
+        Args:
+            client: Authenticated hvac.Client.
+            threshold_seconds: Renew if remaining TTL below this value
+                (default 7 days = 604,800s).
+        """
+        try:
+            # lookup_self() is sync hvac — run in executor.
+            loop = asyncio.get_running_loop()
+            token_info = await loop.run_in_executor(
+                None, lambda: client.auth.token.lookup_self()
+            )
+            # hvac returns dict with 'data' key containing TTL.
+            data = token_info.get("data", {}) if isinstance(token_info, dict) else {}
+            ttl = int(data.get("ttl", 0))
+            renewable = bool(data.get("renewable", False))
+            if ttl <= 0:
+                # No TTL info available — token may be root or non-expiring.
+                # Skip silently; downstream operations will surface real errors.
+                logger.debug(
+                    "vault_client.token_renew_skipped", reason="no_ttl_info"
+                )
+                return
+            if ttl < threshold_seconds and renewable:
+                await loop.run_in_executor(
+                    None, lambda: client.auth.token.renew_self()
+                )
+                logger.info(
+                    "vault_client.token_renewed",
+                    ttl_was=ttl,
+                    threshold=threshold_seconds,
+                )
+                try:
+                    from src.backend.core.audit.facade import emit_audit_safe
+
+                    emit_audit_safe(
+                        event="vault.token.renewed",
+                        details={
+                            "ttl_was_seconds": ttl,
+                            "threshold_seconds": threshold_seconds,
+                        },
+                        severity="info",
+                    )
+                except Exception:
+                    pass  # audit is best-effort
+            else:
+                logger.debug(
+                    "vault_client.token_renew_skipped",
+                    ttl=ttl,
+                    threshold=threshold_seconds,
+                    renewable=renewable,
+                )
+        except Exception as exc:
+            # Renewal is best-effort. Don't fail the auth flow if lookup
+            # fails — the token may already be valid for many hours.
+            logger.warning("vault_client.token_renew_check_failed", error=str(exc))
 
     async def _rotation_loop(self) -> None:
         """Background loop: tick, sleep, repeat until stopped."""
