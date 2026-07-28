@@ -1,5 +1,48 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 37 (2026-07-28) — Cleanup dead code
+
+### Cycle 37: LOW-priority backlog cleanup
+
+Final cleanup cycle before consolidating the workstream.
+
+1. **OCRUnavailableError dead code removed** (`services/rpa/ocr_processor.py`):
+   - Exception class was defined but never raised anywhere
+   - Docstring claimed usage by `OCRProcessor.strict_or_raise` — that
+     method doesn't exist
+   - No tests referenced it (0 callers)
+   - Removed from `__all__` and class definition (10 LOC cleanup)
+
+2. **`tenant_filter.py` DeprecationWarning is now one-shot**:
+   - Previously: `warnings.warn()` fires on every import — every test
+     that imports the module (transitively or directly) emits warning,
+     polluting pytest output
+   - Fix: module-level flag + `_warn_deprecation_once()` guard
+   - First import emits `DeprecationWarning` once; subsequent silent
+
+### Cycle 37: Final metrics (cycles 31-37)
+- **29 commits**, all atomic with regression tests
+- **23 fixes applied** (22 HIGH/MED + 1 perf)
+- **2 dead-code cleanups** (OCRUnavailableError + tenant_filter warning)
+- **0 new layer violations**
+- **~2,550 LOC** changed (prod + test)
+
+### Files changed (cycle 37)
+```
+src/backend/services/rpa/ocr_processor.py               -OCRUnavailableError (-10 LOC)
+src/backend/infrastructure/database/tenant_filter.py    +one-shot DeprecationWarning
+```
+
+### Validation
+- 10/10 OCR tests pass (1 pre-existing skip unchanged)
+- Ruff: clean
+- Layer check: 0 violations
+
+### Project Status (post-cycle 37)
+Infrastructure layer is production-ready for audited scope.
+6 items remain in backlog (non-blocking) — see
+`docs/audit/comprehensive_analysis_v1.md`.
+
 ## [Unreleased] — Cycle 36 (2026-07-28) — TokenBudget fail-closed
 
 ### Cycle 36: TokenBudget prod-safety hardening
