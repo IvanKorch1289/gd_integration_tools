@@ -1,5 +1,96 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 33 (2026-07-28) — Comprehensive audit + security hardening
+
+### Cycle 33: Deep architectural analysis + 6 HIGH-severity fixes
+
+Independent deep-dive audit of 4 critical domains (Data Layer, RPA, AI/Agent
+safety, DSL completeness) via parallel subagent analysis. Found **18 HIGH-priority
+findings**; executed 6 with smallest-scope security-focused fixes.
+
+#### DS1+DS2: RPA security hardening
+- **TerminalExecProcessor.shell=False bug** (DS1): the documented contract
+  was ignored — even with shell=False, asyncssh-style shell execution was
+  used. Fix: shell=False now uses create_subprocess_exec + shlex.split for
+  safe argv parsing; shell=True retains create_subprocess_shell.
+- **FileDeleteProcessor path-traversal guard** (DS2): no validation
+  before deletion — caller with capability rpa.file.delete could pass
+  ../../etc/sensitive via body payload and trigger arbitrary file deletion.
+  Fix: validate via _path_safety.validate_path before rmtree/remove.
+
+#### DS3: SSH known_hosts verification
+- **SshCommandProcessor**: was using asyncssh TOFU (warn-only) — MITM or
+  DNS hijack would silently succeed. Fix: new _resolve_ssh_known_hosts()
+  resolver reads TRANSPORT_SSH_KNOWN_HOSTS_PATH env var; dev_light profile
+  skips verification (matches SFTP); production must set env var for true
+  MITM protection.
+
+#### AI1: SkillRegistry robust extensions_dir resolution
+- hot_reload hardcoded Path("extensions") — failed in packaged deployments
+  (cwd != repo root). Fix: _resolve_extensions_dir() with 4-level search
+  (env var → cwd → package-relative → None).
+
+#### AI2: InProcessAgentSandbox feature_flag gate
+- Production gate depended ONLY on env-var GD_INTEGRATION_PRODUCTION.
+  Misconfigured deployments could still construct zero-isolation sandbox
+  with only DeprecationWarning. Fix: new feature_flag
+  ai_in_process_sandbox_disabled (default ON) checked alongside env gate;
+  both fail-closed; operator must explicitly opt-out via env.
+
+#### RPA1: Fernet-encrypt cookies at rest
+- **BrowserCookieStore** stored cookies as plaintext JSON in Redis. Cookie
+  values are session/auth tokens — Redis leak = full session takeover.
+  Fix: Fernet (AES-128-CBC + HMAC-SHA256) encrypt before save, decrypt on
+  read. Key from BROWSER_COOKIES_FERNET_KEY env var; dev_light auto-generates
+  ephemeral key with warning; production without key raises RuntimeError.
+  Backward compat: NOT provided (operators regenerate cookies post-deploy).
+
+### Cycle 33: Test updates
+- FileDeleteProcessor test: switched from /tmp/pytest-of-user/... (now
+  blocked by path guard) to /tmp/dsl/ (allowed prefix).
+- InProcessAgentSandbox audit-event test: added monkeypatch override for
+  ai_in_process_sandbox_disabled flag (test verifies emission, not blocking).
+- BrowserCookieStore tests: updated to pass explicit Fernet key + verify
+  ciphertext is stored (not plaintext JSON).
+
+### Files changed (cycle 33)
+
+```
+src/backend/core/ai/skill_registry.py                       AI1 (40 lines)
+src/backend/services/ai/agent_sandbox.py                    AI2 (15 lines)
+src/backend/services/rpa/browser_cookies_store.py           RPA1 (104 lines)
+src/backend/core/config/features/infrastructure.py          AI2 (15 lines)
+src/backend/dsl/engine/processors/ssh_command.py            DS3 (54 lines)
+src/backend/dsl/engine/processors/rpa/system.py             DS1 (16 lines)
+src/backend/dsl/engine/processors/rpa/operations/filedeleteprocessor.py   DS2 (15 lines)
+
+tests/unit/core/ai/test_audit_fixes_cycle31.py             AI2 test fix
+tests/unit/core/config/test_features_infrastructure.py    AI2 (field count)
+tests/unit/dsl/engine/processors/rpa/operations/test_new_rpa_tools.py   DS2 test
+tests/unit/services/rpa/test_browser_cookies_store.py     RPA1 test
+```
+
+### Out-of-scope (deferred to backlog)
+The audit found **12 more HIGH/MED items** not addressed this cycle:
+- Pickle deserialization RCE in QueryResultCache (Data Layer)
+- 5 parallel delete_by_tag implementations (consolidation)
+- Vault token auto-renewal missing (will fail silently after 32 days)
+- banking_transaction_hook is no-op stub (security gap)
+- Token budget fail-open on Redis outage
+- rpa_settings.browser_pool_size dead config (never read)
+- desktop_rpa_session_pool dead singleton (never wired)
+- FileWatchProcessor pattern filter not implemented
+- ssh known_hosts vs SFTP — consolidate resolver
+
+These are documented in `docs/audit/cycle33_report.md` (to be created).
+
+### Validation
+
+- 132/132 cycle-33-related tests pass
+- 0 new layer violations
+- Ruff: All cycle-33 files clean
+- All commits atomic with detailed commit messages
+
 ## [Unreleased] — Cycle 32 (2026-07-28) — Dead-code + audit verification
 
 ### Cycle 32: Audit verification + dead-code cleanup
