@@ -29,20 +29,10 @@ from src.backend.core.logging import get_logger
 __all__ = (
     "NoOpOCRProcessor",
     "OCRProcessor",
-    "OCRUnavailableError",
     "PytesseractOCRProcessor",
 )
 
 _logger = get_logger("services.rpa.ocr_processor")
-
-
-class OCRUnavailableError(RuntimeError):
-    """Бросается при попытке вызвать OCR без установленного backend'а.
-
-    Используется, когда пользователь требует strict-mode (через
-    :meth:`OCRProcessor.strict_or_raise`), а ни pytesseract, ни Tesseract
-    не найдены.
-    """
 
 
 @runtime_checkable

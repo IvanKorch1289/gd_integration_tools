@@ -32,9 +32,24 @@ __all__ = (
     "get_tenant_id",
 )
 
-warnings.warn(
-    "src.backend.infrastructure.database.tenant_filter is deprecated; "
-    "use src.backend.core.tenancy.sqlalchemy_filter (S107 W1, TD-002).",
-    DeprecationWarning,
-    stacklevel=2,
-)
+# Cycle 37: emit DeprecationWarning ONCE per process instead of on every
+# import. Without one-shot, every test that imports tenant_filter (even
+# transitively via SqlAlchemy session) emits the warning, polluting logs.
+# Use module-level flag + warning_once pattern.
+_deprecation_warned: bool = False
+
+
+def _warn_deprecation_once() -> None:
+    global _deprecation_warned
+    if _deprecation_warned:
+        return
+    _deprecation_warned = True
+    warnings.warn(
+        "src.backend.infrastructure.database.tenant_filter is deprecated; "
+        "use src.backend.core.tenancy.sqlalchemy_filter (S107 W1, TD-002).",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+
+_warn_deprecation_once()
