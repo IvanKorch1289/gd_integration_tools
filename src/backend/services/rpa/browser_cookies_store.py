@@ -155,11 +155,29 @@ class BrowserCookieStore:
         if not cookies:
             return
         key = self._make_key(tenant_id, user_id, domain)
-        plaintext = json.dumps(cookies, ensure_ascii=False).encode("utf-8")
-        # Cycle 33 RPA1: Fernet encrypt before persisting.
-        payload = self._fernet.encrypt(plaintext)
+        # Cycle 35: deduplicate — only write if cookies actually changed
+        # since last save. Avoids redundant Redis writes on every nav
+        # event when browser context didn't accumulate new cookies.
+        new_payload = json.dumps(
+            sorted(cookies, key=lambda c: c.get("name", "")),
+            ensure_ascii=False,
+            default=str,
+        ).encode("utf-8")
+        new_ciphertext = self._fernet.encrypt(new_payload)
         try:
-            await self._redis.set(key, payload, ex=self._ttl)
+            existing_raw = await self._redis.get(key)
+        except Exception:
+            existing_raw = None  # proceed with write if read fails
+        if existing_raw is not None:
+            try:
+                existing_plain = self._fernet.decrypt(existing_raw)
+            except Exception:
+                existing_plain = None  # corrupted → write new
+            if existing_plain == new_payload:
+                # No-op: cookies unchanged since last save.
+                return
+        try:
+            await self._redis.set(key, new_ciphertext, ex=self._ttl)
         except Exception as exc:
             _logger.warning("BrowserCookieStore.save_cookies failed: %s", exc)
 

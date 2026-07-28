@@ -153,3 +153,45 @@ class TestSaveAndRestore:
         with caplog.at_level("WARNING"):
             await store.clear(tenant_id="t1", user_id="u1", domain="d1")
         assert "failed" in caplog.text
+
+    async def test_dedup_skips_redis_set_when_unchanged(self) -> None:
+        """Cycle 35: when cookies unchanged from last save, skip Redis.set.
+
+        Saves one Redis write per navigation event in browser_pool.
+        Critical for high-traffic RPA scenarios (e.g. scraping many pages).
+        """
+        redis = AsyncMock()
+        fernet = Fernet(_TEST_FERNET_KEY)
+        stored: dict[str, bytes] = {}
+
+        async def _set(key: str, value: bytes, ex: int | None = None) -> None:
+            stored[key] = value
+
+        async def _get(key: str) -> bytes | None:
+            return stored.get(key)
+
+        redis.set = AsyncMock(side_effect=_set)
+        redis.get = AsyncMock(side_effect=_get)
+
+        store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
+        cookies = [
+            {"name": "sid", "value": "abc"},
+            {"name": "csrf", "value": "xyz"},
+        ]
+
+        # First save: stores
+        await store.save_cookies(tenant_id="t1", user_id="u1", domain="d1", cookies=cookies)
+        assert len(stored) == 1
+        first_write_count = redis.set.await_count
+
+        # Same cookies, different order — dedup should still skip
+        await store.save_cookies(
+            tenant_id="t1", user_id="u1", domain="d1",
+            cookies=list(reversed(cookies)),
+        )
+        assert redis.set.await_count == first_write_count  # NO new write
+
+        # Different cookie values — should write
+        cookies[0]["value"] = "def"
+        await store.save_cookies(tenant_id="t1", user_id="u1", domain="d1", cookies=cookies)
+        assert redis.set.await_count == first_write_count + 1
