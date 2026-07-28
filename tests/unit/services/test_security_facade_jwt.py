@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import pytest
 
 from src.backend.services.security.facade import SecurityFacade
 
@@ -98,3 +99,47 @@ class TestJWTBlacklistFallback:
         # But the actual blacklist within each instance is consistent
         f1.blacklist_token("test-jti")
         assert f1.is_token_blacklisted("test-jti") is True
+
+
+class TestInMemoryJwtBlacklistTTLCache:
+    """S210 Cycle 1 regression: TTLCache + Lock correctness."""
+
+    @pytest.mark.asyncio
+    async def test_revoke_unrevoke_is_revoked(self) -> None:
+        from src.backend.services.security.facade import _InMemoryJwtBlacklist
+
+        bl = _InMemoryJwtBlacklist()
+        await bl.revoke("jti_x", expires_at=9999999999)
+        assert await bl.is_revoked("jti_x") is True
+        await bl.unrevoke("jti_x")
+        assert await bl.is_revoked("jti_x") is False
+
+    def test_concurrent_access_is_thread_safe(self) -> None:
+        """TTLCache не thread-safe; ensure Lock wrapping prevents races."""
+        import asyncio
+        import threading
+
+        from src.backend.services.security.facade import _InMemoryJwtBlacklist
+
+        bl = _InMemoryJwtBlacklist()
+        errors: list[Exception] = []
+
+        def worker(thread_id: int) -> None:
+            try:
+                for i in range(100):
+                    jti = f"jti_{thread_id}_{i}"
+                    loop = asyncio.new_event_loop()
+                    loop.run_until_complete(bl.revoke(jti, 9999999999))
+                    loop.run_until_complete(bl.is_revoked(jti))
+                    loop.run_until_complete(bl.unrevoke(jti))
+                    loop.close()
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(4)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == [], f"Concurrent access errors: {errors}"
