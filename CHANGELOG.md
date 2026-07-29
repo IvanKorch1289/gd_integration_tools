@@ -1,5 +1,32 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 77 (2026-07-28) — Layer 1+3 (MCP + Agent DSL)
+
+### Cycle 77: drop stdlib bypass in 3 files (MCP + Agent DSL)
+
+Layer 1+3 аудит нашёл 3 оставшихся inline ``logging.getLogger(__name__)``
+bypass'a (все три файла уже имели module-level canonical logger).
+
+| File | Inline calls | Module-level logger |
+|---|---|---|
+| `dsl/engine/processors/agent_dsl/agent_security_check.py` | 1 | `_logger = get_logger("dsl.agent_security_check")` (line 48) |
+| `dsl/engine/processors/agent_dsl/agent_graph.py` | 2 | `_logger = get_logger(__name__)` (line 76) |
+| `entrypoints/mcp/mcp_server/helpers.py` | 1 | `logger = get_logger(__name__)` (line 23) |
+
+#### Fix
+- Все 4 inline ``logging.getLogger(__name__)`` → module-level logger.
+- Inline ``import logging`` удалён в этих областях.
+
+#### Validation
+- `ruff check`: clean (3 файла).
+- Импорты ok для всех модулей.
+
+Это завершает Cycle 67+74, 76, 77 (canonical-logger миграция):
+**ВСЕ production paths** в ``src/backend/`` теперь используют
+``src.backend.core.logging.get_logger``. Остаётся только
+``src/backend/infrastructure/logging/*`` (legitimate stdlib — это
+сам facade).
+
 ## [Unreleased] — Cycle 76 (2026-07-28) — Layer 1 (Entrypoints)
 
 ### Cycle 76 L1: data_masking + dsl_console — canonical logger migration

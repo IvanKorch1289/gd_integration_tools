@@ -150,8 +150,8 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
     except Exception as exc:
         # Cycle 20 P0-3: fail-CLOSED. Settings import error means we cannot
         # verify policy — deny by default rather than grant.
-        import logging
-        logging.getLogger(__name__).warning(
+        # Cycle 77 L1: use module-level canonical logger.
+        logger.warning(
             "MCP authz fail-CLOSED: cannot import mcp_settings (%s)", exc
         )
         return f"mcp_settings unavailable: {type(exc).__name__}"

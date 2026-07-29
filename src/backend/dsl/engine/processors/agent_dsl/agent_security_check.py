@@ -118,8 +118,8 @@ class AgentSecurityCheckProcessor(BaseProcessor):
         # is delegated to AgentSecurity facade; this is just a defensive
         # cap at the DSL boundary.
         if self._value and len(self._value) > 100_000:  # 100KB
-            import logging
-            logging.getLogger(__name__).warning(
+            # Cycle 77 L3: use module-level canonical logger.
+            _logger.warning(
                 "%s: value truncated from %d to 100000 chars (S227 cycle 4 hardening)",
                 self.name, len(self._value),
             )

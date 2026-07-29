@@ -366,8 +366,8 @@ class AgentGraphProcessor(BaseAIProcessor):
             else:
                 prompt = str(body or "")
         if len(prompt) > self._MAX_PROMPT_LEN:
-            import logging
-            logging.getLogger(__name__).warning(
+            # Cycle 77 L3: use module-level canonical logger.
+            _logger.warning(
                 "%s: prompt truncated from %d to %d chars (S227 cycle 4 hardening)",
                 self.name, len(prompt), self._MAX_PROMPT_LEN,
             )
@@ -388,8 +388,8 @@ class AgentGraphProcessor(BaseAIProcessor):
             if user_input:
                 prompt = f"{prompt}\n\nContext: {user_input}"
         if len(prompt) > self._MAX_PROMPT_LEN:
-            import logging
-            logging.getLogger(__name__).warning(
+            # Cycle 77 L3: use module-level canonical logger.
+            _logger.warning(
                 "%s: composed prompt truncated from %d to %d chars (S227 cycle 4 hardening)",
                 self.name, len(prompt), self._MAX_PROMPT_LEN,
             )
