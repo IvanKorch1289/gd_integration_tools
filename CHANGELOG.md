@@ -1,5 +1,25 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 87 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 87 L10: test_features_net — stale default assertion
+
+Layer 10 (Test Coverage) аудит: ``test_net_flags_instantiates``
+ожидал ``flags.connection_reuse_manager is True``, но production
+default — ``False`` (изменён в S204 retro-audit B21: был
+``vaporware default=True`` при отсутствии самого класса).
+
+Тестовый комментарий ссылался на устаревший ``S171 M9 sync``.
+
+#### Fix
+- ``assert flags.connection_reuse_manager is True`` →
+  ``assert flags.connection_reuse_manager is False`` (default).
+- Обновлён комментарий (ссылка на S204 B21 retro-audit).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/core/config/test_features_net.py`: 6/6 pass.
+
 ## [Unreleased] — Cycle 86 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 86 L10: test_claim_pending stub — collection error fix

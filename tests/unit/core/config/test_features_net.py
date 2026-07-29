@@ -14,9 +14,12 @@ class TestNetFlagsClass:
 
     def test_net_flags_instantiates(self) -> None:
         flags = NetFlags()
-        assert flags.metering_per_host is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
-        assert flags.connection_reuse_manager is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
-        assert flags.waf_outbound_via_facade is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
+        assert flags.metering_per_host is True  # default=True per code (S171 M9 sync)
+        # Cycle 87 L10: connection_reuse_manager flipped to default=False
+        # in S204 retro-audit B21 (was vaporware default=True when class
+        # itself was missing). Test updated to match production default.
+        assert flags.connection_reuse_manager is False  # default=False (S204 B21 retro)
+        assert flags.waf_outbound_via_facade is True  # default=True per code (S171 M9 sync)
 
     def test_net_env_vars(self) -> None:
         os.environ["FEATURE_METERING_PER_HOST"] = "true"
