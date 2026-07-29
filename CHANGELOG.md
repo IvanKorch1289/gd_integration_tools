@@ -1,5 +1,38 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 53 (2026-07-28) — SSH/SFTP resolver analysis
+
+### Cycle 53: SSH/SFTP known_hosts resolver consolidation — analysis verdict: NO CHANGE
+
+Cycle 53 audited the "SSH/SFTP resolver consolidation" finding from the
+original 10-item backlog. Result: **no change needed** — the two
+resolvers implement intentionally different security policies, not
+duplication.
+
+#### Implementations inventoried
+
+| Function | Location | Strategy | Failure mode in prod |
+|---|---|---|---|
+| `_resolve_known_hosts()` (SFTP) | `infrastructure/clients/transport/sftp.py:54` | Reads `settings.transport.sftp_known_hosts_path` | **Raises `ValueError`** — strict mode |
+| `SshCommandProcessor._resolve_ssh_known_hosts()` (SSH) | `dsl/engine/processors/ssh_command.py:101` | Reads `TRANSPORT_SSH_KNOWN_HOSTS_PATH` env var | **Returns `None`** (asyncssh TOFU warning) |
+
+#### Conclusion
+The two resolvers encode **different threat models** by design:
+
+1. **SFTP** transfers files — a MITM would corrupt data, hence strict-mode
+   (fail-closed) in production. `sftp_known_hosts_path` is mandatory.
+2. **SSH** runs commands — operators routinely use ephemeral CI containers
+   without pinned host keys. Forcing strict-mode would break CI/CD.
+   The SSH resolver documents this trade-off and returns `None` (defer
+   to asyncssh TOFU warning).
+
+Consolidating them would either:
+- Force SSH strict-mode → break CI/CD workflows (regression), OR
+- Weaken SFTP to TOFU → silent MITM vulnerability (regression).
+
+Pattern: same as Cycle 51 `delete_by_tag` — different backends with
+different security contracts. Not duplication. Backlog item removed.
+
 ## [Unreleased] — Cycle 51 (2026-07-28) — Cache consolidation analysis
 
 ### Cycle 51: Cache `delete_by_tag` consolidation — analysis verdict: NO CHANGE
