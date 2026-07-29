@@ -40,7 +40,7 @@ def test_workflow_replay_page_importable() -> None:
         / "frontend"
         / "streamlit_app"
         / "pages"
-        / "17_Workflow_Replay.py"
+        / "17_Replay_Воркфлоу.py"  # Cycle 105: Russian filename (Cyrillic)
     )
     assert page_path.exists(), f"Страница не найдена: {page_path}"
     spec = importlib.util.spec_from_file_location("_replay_page_check", page_path)

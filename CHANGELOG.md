@@ -1,5 +1,23 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 105 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 105 L10: test_admin_workflows — Cyrillic filename
+
+Layer 10 (Test Coverage) аудит: ``test_workflow_replay_page_importable``
+искал файл ``17_Workflow_Replay.py``, но реальный файл —
+``17_Replay_Воркфлоу.py`` (Cyrillic filename, S195+ convention).
+
+Тест падал с: ``AssertionError: Страница не найдена: ...17_Workflow_Replay.py``.
+
+#### Fix
+- Hardcoded ``"17_Workflow_Replay.py"`` → ``"17_Replay_Воркфлоу.py"``
+  + комментарий со ссылкой на Cyrillic filename convention.
+
+#### Validation
+- `tests/unit/entrypoints/api/v1/test_admin_workflows.py`: 4/4 pass
+  (was 3/4).
+
 ## [Unreleased] — Cycle 104 (2026-07-28) — Layer 8 (Security)
 
 ### Cycle 104 L8: CapabilityDeniedError kwargs in integrations/facade
