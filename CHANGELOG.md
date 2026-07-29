@@ -1,5 +1,26 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 106 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 106 L10: test_admin_model_registry — auth middleware
+
+Layer 10 (Test Coverage) аудит: 2 теста в ``test_admin_model_registry.py``
+получали 403 (Forbidden) вместо 200/404 — production endpoint
+``require_admin(OPERATOR, READ_ONLY, SUPER_ADMIN)`` reject'ил
+unauthenticated requests.
+
+Sibling pattern (``test_admin_scheduler_dlq.py``) уже использует
+``@app.middleware("http")`` для inject AuthContext.
+
+#### Fix
+- ``_make_app()``: добавлен HTTP middleware, инжектирующий
+  ``request.state.auth_context = AuthContext(..., metadata=
+  {"admin_roles": ["super_admin"]})`` — bypass'ит require_admin.
+
+#### Validation
+- `tests/unit/entrypoints/api/v1/endpoints/test_admin_model_registry.py`:
+  12/12 pass (was 10/12).
+
 ## [Unreleased] — Cycle 105 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 105 L10: test_admin_workflows — Cyrillic filename

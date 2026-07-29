@@ -14,6 +14,21 @@ from src.backend.entrypoints.api.v1.endpoints import admin_model_registry as mod
 def _make_app() -> FastAPI:
     app = FastAPI()
     app.include_router(mod.router, prefix="/api/v1")
+
+    # Cycle 106: auth middleware to inject super_admin role —
+    # otherwise require_admin() returns 403 before tests can mock
+    # the registry.
+    @app.middleware("http")
+    async def _add_auth_context(request, call_next):
+        from src.backend.core.auth import AuthContext, AuthMethod
+
+        request.state.auth_context = AuthContext(
+            method=AuthMethod.NONE,
+            principal="test",
+            metadata={"admin_roles": ["super_admin"]},
+        )
+        return await call_next(request)
+
     return app
 
 
