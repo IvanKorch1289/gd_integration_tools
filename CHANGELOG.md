@@ -1,5 +1,32 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 78 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 78 L10: test_security_headers.py — wrong API, rewrite for pure ASGI
+
+Layer 10 (Test Coverage) аудит: ``test_security_headers.py``
+(7 tests, 6 failed) использовал ``mw.dispatch(request, call_next)`` —
+это **BaseHTTPMiddleware** API. Но ``SecurityHeadersMiddleware``
+является **pure ASGI** (``__call__(scope, receive, send)``),
+как явно указано в его docstring: "переписан с BaseHTTPMiddleware на
+pure ASGI для устранения race condition и overhead".
+
+Результат: ``AttributeError: 'SecurityHeadersMiddleware' object has
+no attribute 'dispatch'`` на каждом тесте.
+
+#### Fix
+- Полное переписывание тестов: вместо ``mw.dispatch(request, call_next)``
+  используется ``await mw(scope, receive, send)`` (ASGI triple).
+- Helper ``_captured_headers(send)`` извлекает headers из
+  ``http.response.start`` message.
+- Тест ``test_non_http_scope_passthrough`` уже был корректен (использующий
+  ASGI API) — оставлен без изменений.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/entrypoints/middlewares/test_security_headers.py`:
+  **7/7 pass** (раньше 1/7).
+
 ## [Unreleased] — Cycle 77 (2026-07-28) — Layer 1+3 (MCP + Agent DSL)
 
 ### Cycle 77: drop stdlib bypass in 3 files (MCP + Agent DSL)
