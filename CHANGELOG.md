@@ -1,5 +1,26 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 102 (2026-07-28) — Layer 4 (AI/Guardrails)
+
+### Cycle 102 L4: Remove dead test_llm_guard_client.py
+
+Layer 4 (AI/Guardrails) аудит: 11 test failures в
+``test_llm_guard_client.py`` все с одним root cause —
+``ModuleNotFoundError: No module named
+'src.backend.core.ai.guardrails.llm_guard_client'``.
+
+Production модуль был удалён 2026-07-16 после архивации upstream
+библиотек (LLM Guard, Rebuff — оба archived by maintainers).
+См. ``src/backend/services/ai/guardrails/__init__.py`` (note).
+
+#### Fix
+- Удалён ``tests/unit/services/ai/guardrails/test_llm_guard_client.py``
+  (194 LOC мёртвого test-кода). Per Ponytail/YAGNI.
+
+#### Validation
+- `tests/unit/services/ai/guardrails/`: 0 failures (3 pre-existing
+  skips на другом файле — unrelated).
+
 ## [Unreleased] — Cycle 101 (2026-07-28) — Layer 4 (Infrastructure)
 
 ### Cycle 101 L4: httpx_unified_transport + stuck_monitor_enabled flags
