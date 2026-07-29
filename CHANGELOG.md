@@ -1,5 +1,23 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 109 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 109 L10: 2 more admin test files — auth middleware
+
+Layer 10 (Test Coverage) аудит (продолжение Cycles 106-108):
+``test_admin_plugins_versioning.py`` (9 fail) и
+``test_admin_capabilities_graph.py`` (2 fail) — оба получали
+403 (Forbidden) от production ``require_admin()``.
+
+#### Fix
+- Оба файла: ``_build_app()`` дополнен HTTP middleware,
+  инжектирующим ``request.state.auth_context = AuthContext(...,
+  metadata={"admin_roles": ["super_admin"]})`` (sibling pattern).
+
+#### Validation
+- `test_admin_plugins_versioning.py`: 7/7 pass (was 0/7).
+- `test_admin_capabilities_graph.py`: 2/2 pass (was 0/2).
+
 ## [Unreleased] — Cycle 108 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 108 L10: test_admin_cron — auth middleware

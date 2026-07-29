@@ -21,6 +21,20 @@ def _build_app() -> FastAPI:
 
     app = FastAPI()
     app.include_router(router, prefix="/api/v1/admin")
+
+    # Cycle 109: auth middleware to bypass require_admin() (same
+    # pattern as test_admin_* siblings).
+    @app.middleware("http")
+    async def _add_auth_context(request, call_next):
+        from src.backend.core.auth import AuthContext, AuthMethod
+
+        request.state.auth_context = AuthContext(
+            method=AuthMethod.NONE,
+            principal="test",
+            metadata={"admin_roles": ["super_admin"]},
+        )
+        return await call_next(request)
+
     return app
 
 
