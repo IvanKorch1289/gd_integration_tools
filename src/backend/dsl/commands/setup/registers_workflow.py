@@ -206,13 +206,17 @@ def _register_message_replay() -> None:
 
 
 def _register_webhook_relay() -> None:
-    # Phase 2 fix: try/except graceful fallback (was: hard import, layer violation).
-    # ``webhook_relay`` lives in entrypoints; we wrap in try/except so the
-    # rest of DSL setup works even when entrypoints is absent (dev_light).
+    # Layer 11 Cycle 3 fix: get_webhook_relay переехал из
+    # \`entrypoints/webhook/transformer\` в
+    # \`services/integrations/webhook_relay\` для соблюдения layer
+    # invariants (dsl → services — allowed, dsl → entrypoints — нет).
+    # backward-compat shim в entrypoints оставлен для extensions/tests.
     try:
-        from src.backend.entrypoints.webhook.transformer import get_webhook_relay
+        from src.backend.services.integrations.webhook_relay import (
+            get_webhook_relay,
+        )
     except ImportError:
-        return  # entrypoints module unavailable; skip registration
+        return  # services module unavailable; skip registration
 
     action_handler_registry.register_many(
         [
