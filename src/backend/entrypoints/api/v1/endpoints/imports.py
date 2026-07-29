@@ -58,6 +58,29 @@ class BulkObjectsResponse(BaseModel):
     )
 
 
+class ImportSummaryResponse(BaseModel):
+    """Результат /import/openapi и /import/postman (идентичный shape).
+
+    Layer 4 Cycle 5: общий response_model для OpenAPI/Postman импортов.
+    Раньше возвращали raw dict → нет OpenAPI schema для typed contract.
+    """
+
+    route_id: str = Field(description="Идентификатор импортированного роута.")
+    steps_imported: int = Field(description="Количество импортированных шагов.")
+    processors_count: int = Field(description="Количество processor'ов в роуте.")
+
+
+class ProcessSchemaDryRunResponse(BaseModel):
+    """Результат /import/process-schema при dry_run=true."""
+
+    parsed: int = Field(description="Количество распарсенных строк.")
+    sample: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Первые 3 строки для preview.",
+    )
+    dry_run: bool = Field(description="Всегда True для этого response.")
+
+
 # ──────────────────── OpenAPI ────────────────────
 
 
@@ -116,6 +139,7 @@ router.add_api_route(
         "Загружает OpenAPI 3.x spec (JSON) и генерирует DSL-роуты для каждой операции."
     ),
     name="import_openapi",
+    response_model=ImportSummaryResponse,
 )
 
 
@@ -173,6 +197,7 @@ router.add_api_route(
     summary="Импорт Postman-коллекции",
     description=("Загружает Postman Collection v2.1 (JSON) и генерирует DSL-роуты."),
     name="import_postman",
+    response_model=ImportSummaryResponse,
 )
 
 
