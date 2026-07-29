@@ -1,5 +1,18 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 56 (2026-07-28) — Cleanup audit
+
+### Cycle 56: Low-effort cleanup items — analysis verdict: ALREADY DONE
+
+Cycle 56 audited two LOW backlog items from cycles 31-39.
+
+| Item | Original concern | Current state | Action |
+|---|---|---|---|
+| `OCRUnavailableError` unused dead code | Class never referenced | Symbol absent from `src/` + `tests/` (grep verified) | None — already removed |
+| `tenant_filter.py` DeprecationWarning noise | Warning on every import | Cycle 37 fix at `tenant_filter.py:48` — one-shot per process | None — already fixed |
+
+Both items closed as no-op. Backlog fully cleared for the LOW tier.
+
 ## [Unreleased] — Cycle 55 (2026-07-28) — Dead singletons audit
 
 ### Cycle 55: Dead singletons wiring — analysis verdict: ALREADY DONE
