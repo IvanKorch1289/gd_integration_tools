@@ -32,7 +32,7 @@ from typing import Any
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.metrics_registry import metrics_registry
 
-__all__ = ("ObservabilityFacade", "get_observability_facade", "record_consumer_info")
+__all__ = ("ObservabilityFacade", "get_observability_facade")
 
 _logger = get_logger("services.observability.facade")
 
@@ -146,21 +146,3 @@ class ObservabilityFacade:
 def get_observability_facade() -> ObservabilityFacade:
     """Lazy singleton глобального :class:`ObservabilityFacade`."""
     return ObservabilityFacade()
-
-
-def record_consumer_info(info: dict[str, Any]) -> None:
-    r"""Layer 11 Безопасность fix: facade для NATS consumer metrics.
-
-    Раньше entrypoints/api/v1/endpoints/admin_nats.py использовал
-    ``importlib.import_module("src.backend.infrastructure.observability.nats_metrics")``
-    чтобы обойти layer linter (entrypoints → infrastructure direct
-    dependency). Это нарушало architecture invariants.
-
-    Здесь — facade (services/observability/facade.py → infrastructure),
-    которая ре-экспортирует ``record_consumer_info`` для entrypoints.
-    """
-    from src.backend.infrastructure.observability.nats_metrics import (
-        record_consumer_info as _record,
-    )
-
-    _record(info)

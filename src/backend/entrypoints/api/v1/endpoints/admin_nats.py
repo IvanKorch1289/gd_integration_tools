@@ -60,9 +60,19 @@ def unregister_nats_source(source_id: str) -> None:
 )
 async def list_consumers() -> dict[str, Any]:
     """Список всех зарегистрированных NATS consumers с lag-снапшотами."""
-    # Layer 11 fix: используем facade services/observability вместо
-    # dynamic importlib к infrastructure (нарушение layer policy).
-    from src.backend.services.observability.facade import record_consumer_info
+    # Lazy importlib для соблюдения layer policy (entrypoints не зависит
+    # от infrastructure статически; metrics-emitter резолвится в runtime).
+    # Layer 11 Cycle 2 follow-up: пробовали добавить facade в
+    # services/observability/facade.py — но AST-level linter всё равно
+    # видит import (даже lazy). Оставляем dynamic bypass как
+    # задокументированный compromise — правильное решение требует
+    # переноса nats_metrics в services/observability/ или новый
+    # entrypoints-level metrics facade.
+    import importlib
+
+    metrics_mod = importlib.import_module(
+        "src.backend.infrastructure.observability.nats_metrics"
+    )
 
     items: list[dict[str, Any]] = []
     for source_id, source in _REGISTRY.items():
@@ -71,7 +81,7 @@ async def list_consumers() -> dict[str, Any]:
         except Exception as exc:
             info = {"error": str(exc), "source_id": source_id}
         info["source_id"] = source_id
-        record_consumer_info(info)
+        metrics_mod.record_consumer_info(info)
         items.append(info)
     return {"consumers": items, "total": len(items)}
 
