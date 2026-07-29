@@ -1,5 +1,23 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 114 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 114 L10: blocked_routes — re-apply HTTPException raise
+
+Layer 10 (Test Coverage) аудит: ``test_middlewares_small.py::
+test_blocked_routes_blocked/glob_pattern`` падали с ``TypeError``
+после Cycle 80. Причина: production ``blocked_routes.py:35`` изменился
+с ``return JSONResponse(403)`` (на котором был основан Cycle 80 fix)
+на ``raise HTTPException(403)`` (в более позднем рефакторе).
+
+#### Fix
+- Возврат к ``pytest.raises(HTTPException)`` pattern (как было до
+  Cycle 80). Production теперь raise'ит → test должен ожидать raise.
+
+#### Validation
+- `tests/unit/entrypoints/middlewares/test_middlewares_small.py`:
+  10/10 pass (was 8/10).
+
 ## [Unreleased] — Cycle 113 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 113 L10: test_s94_w2_codemod — stale import path

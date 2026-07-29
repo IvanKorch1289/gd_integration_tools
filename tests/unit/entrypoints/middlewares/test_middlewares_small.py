@@ -62,17 +62,20 @@ async def test_auth_method_header_no_auth() -> None:
 
 @pytest.mark.asyncio
 async def test_blocked_routes_blocked() -> None:
-    # Cycle 80 L10 fix: middleware returns JSONResponse(403), does NOT
-    # raise HTTPException. Previous test asserted raise HTTPException
-    # which never happened.
+    # Cycle 114: production blocked_routes.py:35 now ``raise HTTPException(...)``
+    # (was ``return JSONResponse(403)`` in S176, raised HTTPException from
+    # subsequent refactor). Revert Cycle 80 fix to expect raise.
+    from fastapi import HTTPException
+
     app = AsyncMock()
     mw = BlockedRoutesMiddleware(app)
     request = MagicMock()
     request.url.path = "/blocked"
     blocked_routes.add("/blocked")
     call_next = AsyncMock()
-    response = await mw.dispatch(request, call_next)
-    assert response.status_code == 403
+    with pytest.raises(HTTPException) as exc_info:
+        await mw.dispatch(request, call_next)
+    assert exc_info.value.status_code == 403
     blocked_routes.discard("/blocked")
 
 
@@ -90,6 +93,8 @@ async def test_blocked_routes_allowed() -> None:
 
 @pytest.mark.asyncio
 async def test_blocked_routes_glob_pattern() -> None:
+    from fastapi import HTTPException
+
     app = AsyncMock()
     mw = BlockedRoutesMiddleware(app)
     request = MagicMock()
@@ -97,9 +102,10 @@ async def test_blocked_routes_glob_pattern() -> None:
     blocked_routes.add("/api/v1/admin/*")
     call_next = AsyncMock()
     try:
-        # Cycle 80 L10 fix: middleware returns JSONResponse(403), not raise.
-        response = await mw.dispatch(request, call_next)
-        assert response.status_code == 403
+        # Cycle 114: production raises HTTPException.
+        with pytest.raises(HTTPException) as exc_info:
+            await mw.dispatch(request, call_next)
+        assert exc_info.value.status_code == 403
     finally:
         blocked_routes.discard("/api/v1/admin/*")
 
