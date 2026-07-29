@@ -1,5 +1,23 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 107 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 107 L10: test_admin_ip_restriction — auth middleware
+
+Layer 10 (Test Coverage) аудит: ``test_admin_ip_restriction.py``
+5 тестов получали 403 (Forbidden) — production ``require_admin()``
+reject'ил unauthenticated requests. Тот же pattern, что
+Cycle 106 в ``test_admin_model_registry.py``.
+
+#### Fix
+- ``client`` fixture: добавлен HTTP middleware, инжектирующий
+  ``request.state.auth_context = AuthContext(..., metadata=
+  {"admin_roles": ["super_admin"]})``.
+
+#### Validation
+- `tests/unit/entrypoints/api/v1/endpoints/test_admin_ip_restriction.py`:
+  5/5 pass (was 0/5).
+
 ## [Unreleased] — Cycle 106 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 106 L10: test_admin_model_registry — auth middleware

@@ -22,8 +22,23 @@ def reset_store():
 
 @pytest.fixture
 def client():
+    # Cycle 107: inject super_admin role via HTTP middleware to bypass
+    # require_admin() (same pattern as test_admin_scheduler_dlq.py,
+    # test_admin_model_registry.py).
     app = FastAPI()
     app.include_router(router, prefix="/admin")
+
+    @app.middleware("http")
+    async def _add_auth_context(request, call_next):
+        from src.backend.core.auth import AuthContext, AuthMethod
+
+        request.state.auth_context = AuthContext(
+            method=AuthMethod.NONE,
+            principal="test",
+            metadata={"admin_roles": ["super_admin"]},
+        )
+        return await call_next(request)
+
     return TestClient(app)
 
 
