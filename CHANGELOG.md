@@ -1,5 +1,30 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 85 (2026-07-28) — Layer 2 (Core Kernel)
+
+### Cycle 85 L2: observability_bridge — real bug DEFAULT_LABELS AttributeError
+
+Layer 2 (Core Kernel) bugfix: ``get_default_labels_attr("DEFAULT_LABELS")``
+падал с ``AttributeError: 'MetricsRegistry' object has no attribute
+'DEFAULT_LABELS'`` — потому что ``metrics_registry`` is the **singleton
+instance** (re-exported via ``__all__``), not the module.
+
+Это блокировало импорт ``core.observability.metrics`` (который вызывает
+``_get_default_labels("DEFAULT_LABELS")`` на module-level), а значит
+блокировало SLA alerting + ``test_sla_prometheus_export.py`` (3 теста).
+
+#### Fix
+- ``get_default_labels_attr`` теперь использует ``importlib.import_module``
+  для получения **module object** (не singleton instance).
+- Direct ``from src.backend.core.utils import metrics_registry``
+  резолвится в instance — что и есть root cause оригинального бага.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/services/workflows/test_sla_prometheus_export.py`: 3/3 pass.
+- `tests/unit/services/workflows/` + `tests/unit/core/di/`: 252/252 pass,
+  1 pre-existing skip.
+
 ## [Unreleased] — Cycle 84 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 84 L10: api_key_dedup + rpa_policy test fixes

@@ -154,10 +154,18 @@ def get_default_labels_attr(name: str) -> Any:
     Cycle 29 P1-#4 retrospective fix: was importing from
     ``infrastructure.observability`` (removed in cycle 29 commit f02f1f34).
     Now imports from canonical core source.
-    """
-    from src.backend.core.utils import metrics_registry
 
-    return getattr(metrics_registry, name)
+    Cycle 85 L2 fix: ``from src.backend.core.utils import metrics_registry``
+    resolves to the **singleton instance** (because ``__all__`` re-exports
+    ``metrics_registry`` the instance alongside ``DEFAULT_LABELS`` and
+    ``MetricsRegistry`` the class). Need to use ``importlib`` to get the
+    actual module object so ``DEFAULT_LABELS`` (module-level constant)
+    can be retrieved.
+    """
+    import importlib
+
+    module = importlib.import_module("src.backend.core.utils.metrics_registry")
+    return getattr(module, name)
 
 
 def get_metrics_registry_factory() -> Any:
