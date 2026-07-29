@@ -1,5 +1,28 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 100 (2026-07-28) — Layer 4 (Experimental)
+
+### Cycle 100 L4: workflow_exchange_wrapping flag — silent fallback
+
+Layer 4 (Experimental) production bug: ``feature_flags.
+workflow_exchange_wrapping`` НЕ был объявлен в ExperimentalFlags
+(или любом mixin). Production читал через ``getattr(feature_flags,
+"workflow_exchange_wrapping", True)`` — silent fallback всегда
+возвращал ``True``, но флаг не существовал для admin override.
+
+Docstring говорил "default OFF — backward compat dict→dict", но код
+возвращал ``True`` — docs/code mismatch.
+
+#### Fix
+- ``ExperimentalFlags`` (experimental.py): добавлено поле
+  ``workflow_exchange_wrapping: bool = Field(default=True, ...)``.
+- Comment в production: "(production reads через getattr(..., True) —
+  теперь match)".
+
+#### Validation
+- `ruff check`: clean.
+- Workflow test suite: 42/43 pass (1 pre-existing failure unrelated).
+
 ## [Unreleased] — Cycle 99 (2026-07-28) — Layer 4 (AI) + L10
 
 ### Cycle 99: Add missing `jupyter_hub_enabled` feature flag

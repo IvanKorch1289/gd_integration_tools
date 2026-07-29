@@ -109,5 +109,16 @@ class ExperimentalFlags(BaseSettings):
         ),
     )
 
+    workflow_exchange_wrapping: bool = Field(
+        default=True,
+        title="B1-phase-2: опциональный Exchange wrapping в workflow executor",
+        description=(
+            "S176+ default True — все процессоры мигрированы на Exchange API. "
+            "Если False — fallback к dict→dict (legacy processors). "
+            "Production читает через getattr(..., True) — теперь match. "
+            "B1-phase-2 closure."
+        ),
+    )
+
 
 __all__ = ("ExperimentalFlags",)
