@@ -63,8 +63,8 @@ class LangGraphAgentProcessor(BaseAIProcessor):
         # Cycle 4c swarm (AI-5 hardening): cap query length to prevent
         # prompt-injection abuse via oversized query.
         if self.query and len(self.query) > 4000:
-            import logging
-            logging.getLogger(__name__).warning(
+            # Cycle 75: use module-level canonical logger.
+            _logger.warning(
                 "%s: query truncated from %d to 4000 chars (S227 cycle 4)",
                 self.name, len(self.query),
             )

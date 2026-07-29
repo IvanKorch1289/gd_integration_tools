@@ -1,5 +1,28 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 75 (2026-07-28) — Layer 3 (DSL/Processors)
+
+### Cycle 75 L3: drop stdlib bypass in 3 DSL processors
+
+Layer 3 (DSL/Processors) аудит нашёл 3 processor'а с inline
+``logging.getLogger(__name__)`` bypass'ом:
+
+| File | Pattern | Module-level альтернатива |
+|---|---|---|
+| `guardrails_processor.py:154` | local `import logging` + stdlib call | `logger = get_logger(__name__)` (line 12) |
+| `agent_dsl/langgraph_agent.py:67` | local `import logging` + stdlib call | `_logger = get_logger(__name__)` (line 20) |
+| `saga_lra.py:174` | local `import logging` + stdlib call | `_lra_logger = get_logger("dsl.saga_lra")` (line 23) |
+
+#### Fix
+- Все 3 inline ``logging.getLogger(__name__)`` заменены на
+  module-level ``_logger.*`` / ``logger.*`` / ``_lra_logger.*``.
+- Inline ``import logging`` удалён (больше не нужен в этих областях).
+
+#### Validation
+- `ruff check`: clean.
+- Pre-existing test failures в `test_llm_guard_client.py` (11) —
+  verified unrelated (git stash comparison до/после).
+
 ## [Unreleased] — Cycle 74 (2026-07-28) — Layer 3+4 (DSL/AI)
 
 ### Cycle 74: drop stdlib logging bypass in 2 files

@@ -149,9 +149,8 @@ class GuardrailsProcessor(BaseProcessor):
                     # Cycle 10 swarm (AI-5 hardening): log warning so
                     # silent NeMo-unavailable is visible. Per Analyst #5,
                     # previous silent return was a fail-open risk.
-                    import logging
-
-                    logging.getLogger(__name__).warning(
+                    # Cycle 75: use module-level canonical logger.
+                    logger.warning(
                         "%s: NeMo guardrails runtime unavailable (GPU/FF); "
                         "skipping NeMo check (S227 cycle 10 hardening)",
                         self.name,

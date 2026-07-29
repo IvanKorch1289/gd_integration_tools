@@ -170,8 +170,8 @@ class SagaLRAProcessor(BaseProcessor):
         # in-memory (no persistent resume) which will surface the error.
         terminal_states = {"compensating", "rolled_back", "compensation_failed"}
         if state_record.state in terminal_states:
-            import logging
-            logging.getLogger(__name__).warning(
+            # Cycle 75: use module-level canonical logger.
+            _lra_logger.warning(
                 "SagaLRA persistent resume skipped: previous state=%r "
                 "(terminal/compensation state). Forwarding to in-memory "
                 "execution which will not repeat forward steps.",
