@@ -122,6 +122,15 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_plugins import (
         router as admin_plugins_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_actions import (
+        router as admin_actions_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_certs import (
+        router as admin_certs_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_feedback import (
+        router as admin_feedback_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.rag import router as rag_router
     from src.backend.entrypoints.api.v1.endpoints.rag_cache_admin import (
         router as rag_cache_admin_router,
@@ -276,6 +285,17 @@ def get_v1_routers() -> APIRouter:
     # в admin_plugins/ package. Регистрируем явно.
     api_router_v1.include_router(
         admin_plugins_router, prefix="/admin/plugins", tags=["Admin · Plugins"]
+    )
+    # Layer 5 Cycle 2 fix: ещё 3 admin routers (actions/certs/feedback)
+    # были unmounted (endpoints возвращали 404 в проде). Регистрируем.
+    api_router_v1.include_router(
+        admin_actions_router, tags=["Admin · Actions"]
+    )
+    api_router_v1.include_router(
+        admin_certs_router, tags=["Admin · Certificates"]
+    )
+    api_router_v1.include_router(
+        admin_feedback_router, tags=["Admin · Feedback"]
     )
     # Sprint 9 K1 W1: SAML SP-initiated SSO endpoints.
     api_router_v1.include_router(
