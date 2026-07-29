@@ -21,8 +21,6 @@ Use case (per S172 audit-trail lessons):
 Pattern: S173 M8.2 = non-breaking observability pass. Services могут
 постепенно переходить на новые helpers (per S113 W1 incremental
 adoption pattern).
-
-Cumulative: a3bb7acc → ... → 6a41824b (M8.1) → M8.2.
 """
 
 from __future__ import annotations
@@ -101,7 +99,7 @@ def log_audit_event_lite(
 
     Args:
         logger: target logger.
-        severity: ``\"info\"`` / ``\"warning\"`` / ``\"error\"``.
+        severity: ``info`` / ``warning`` / ``error`` / ``debug``.
         event: audit event type (например ``cache.invalidate``).
         message: optional message (default = event name).
         correlation_id: optional correlation ID.
@@ -110,6 +108,7 @@ def log_audit_event_lite(
         **fields: structured fields.
 
     Behavior:
+        * ``debug`` → ``logger.debug(...)``
         * ``info`` → ``logger.info(...)``
         * ``warning`` → ``logger.warning(...)``
         * ``error`` → ``logger.error(...)``

@@ -1,5 +1,36 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 66 (2026-07-28) — Layer 7 (Observability)
+
+### Cycle 66 L7: logging_helpers docstring cleanup
+
+Layer 7 (Observability) audit выявил 2 docstring неточности в
+``core/observability/logging_helpers.py``.
+
+#### Issue 1 — Escaped quotes artifact
+``log_audit_event_lite`` severity docstring имел артефакт от reST:
+```python
+severity: ``\"info\"`` / ``\"warning\"`` / ``\"error\"``.
+```
+В reST это рендерилось как буквальные backslash + кавычки. Заменено
+на чистый ``info`` / ``warning`` / ``error`` / ``debug``.
+
+#### Issue 2 — ``debug`` severity в коде, но не в docstring
+``_SEVERITY_TO_LEVEL`` dict (line 139) включает ``"debug"`` →
+``logging.DEBUG``, но docstring ``Behavior`` секция перечисляла только
+info/warning/error/other. Добавлен ``debug`` в docstring + обновлена
+``severity:`` строка.
+
+#### Issue 3 (bonus) — Commit-hash archaeology
+Module docstring содержал ``Cumulative: a3bb7acc → ... → 6a41824b
+(M8.1) → M8.2.`` — internal commit trail, бесполезен для новых
+разработчиков. Удалён (per Ponytail "drop cycle/process tags from
+comments" pattern, см. Cycle 58 L5 cleanup).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/core/observability/test_logging_helpers.py`: 13/13 pass.
+
 ## [Unreleased] — Cycle 65 (2026-07-28) — Layer 4 (Services/HITL)
 
 ### Cycle 65 L4: HitlHistoryService DRY refactor (SSoT + helper)
