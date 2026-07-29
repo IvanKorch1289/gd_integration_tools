@@ -116,6 +116,24 @@ async def compile_activity_step(decl: ActivityDeclaration, ctx: dict[str, Any]) 
     Returns:
         Результат выполнения activity (Any).
     """
+    # Layer 6 Workflow Cycle 1 fix: BPMN gateway markers (XOR/AND/OR)
+    # приходят как ActivityDeclaration с args["gateway"] = GatewaySpec.
+    # Раньше это тихо исполнялось как no-op activity (workflow шёл дальше
+    # без branch resolution). Теперь — явная ошибка на старте workflow.
+    # Проверяем ДО temporalio import — fail-fast без внешних зависимостей.
+    if decl.args and "gateway" in decl.args:
+        from src.backend.dsl.workflow.gateways import GatewaySpec
+
+        gw = decl.args["gateway"]
+        if isinstance(gw, GatewaySpec):
+            raise NotImplementedError(
+                f"Gateway (kind={gw.kind!r}) не скомпилирован в runtime — "
+                f"BPMN gateway nodes (XOR/AND/OR) требуют отдельного "
+                f"compile_gateway_step в step_compilers.py. "
+                f"Workflow: name={decl.name!r}. Используйте ActivityDeclaration "
+                f"с прямым условием либо дождитесь Wave C (spec.py extension)."
+            )
+
     from temporalio import workflow
 
     timeout_s = decl.timeout_s or ctx["_default_timeout_s"]
