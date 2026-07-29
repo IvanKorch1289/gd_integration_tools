@@ -4,7 +4,6 @@ still authenticates correctly via the underlying manager."""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 import pytest
 

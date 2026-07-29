@@ -487,9 +487,6 @@ async def test_polling_strategy_unknown_profile_returns_silently() -> None:
         strategy="polling",
     )
 
-    from src.backend.infrastructure.clients.external.cdc import (
-        strategies as strat_module,
-    )
 
     from src.backend.infrastructure.database.database import (
         accessors as _accessors_mod,
@@ -530,9 +527,6 @@ async def test_logminer_strategy_uses_registry_accessor() -> None:
     fake_registry = MagicMock()
     fake_registry.get_initializer = MagicMock(return_value=fake_initializer)
 
-    from src.backend.infrastructure.clients.external.cdc import (
-        strategies as strat_module,
-    )
 
     from src.backend.infrastructure.database.database import (
         accessors as _accessors_mod,

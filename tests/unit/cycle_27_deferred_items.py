@@ -13,7 +13,6 @@ uses Temporal). Tests via AST inspection + behavior simulation.
 
 from __future__ import annotations
 
-import ast
 import os
 import re
 

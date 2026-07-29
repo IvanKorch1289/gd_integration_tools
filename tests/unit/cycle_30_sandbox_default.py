@@ -12,8 +12,6 @@ False to True (line 117). Builder already had True (infra.py:141).
 
 from __future__ import annotations
 
-import ast
-import os
 
 
 class TestProcessPoolDefault:

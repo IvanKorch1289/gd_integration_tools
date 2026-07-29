@@ -1,5 +1,33 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 103 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 103 L10: F401 unused imports cleanup (13 test files)
+
+Layer 10 (Test Coverage) аудит: ``ruff check tests/ --select F401`` —
+18 unused imports в 13 test files:
+
+| File | Unused |
+|---|---|
+| test_banking_transaction_hook.py | `pytest`, `SecurityDecision` |
+| test_workflow_hooks_temp_paths.py | `pytest` |
+| test_di_providers_ai_unused_exc.py | `pytest` |
+| test_api_key_verify_no_unused_key_id.py | `typing.Any` |
+| test_facade.py | `typing.Any` |
+| test_metrics_registry_dedup.py | `re` |
+| cycle_27/30/31 scripts | `ast`/`os`/`typing.Any` |
+| test_content_mixin.py | `EIPContentMixin`, `EnrichEIPProcessor` |
+| test_transformation_eip_mixin.py | `typing.Any` |
+| test_cdc.py | `cdc.strategies` (×2) |
+| test_check_routebuilder_mro.py | `pytest` |
+
+#### Fix
+- Удалены все 18 unused imports через ``ruff --fix``.
+
+#### Validation
+- `ruff check tests/`: 244 errors (было 257, −13 F401).
+- Smoke tests pass: 25/25 для затронутых файлов.
+
 ## [Unreleased] — Cycle 102 (2026-07-28) — Layer 4 (AI/Guardrails)
 
 ### Cycle 102 L4: Remove dead test_llm_guard_client.py

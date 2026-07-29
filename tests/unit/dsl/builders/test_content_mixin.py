@@ -30,10 +30,6 @@ from src.backend.dsl.builders.content import (
     RecipientListProcessor,
     WireTapProcessor,
 )
-from src.backend.dsl.builders.content_mixin import (
-    EIPContentMixin,
-    EnrichEIPProcessor,
-)
 from src.backend.dsl.engine.exchange import Exchange, Message
 
 

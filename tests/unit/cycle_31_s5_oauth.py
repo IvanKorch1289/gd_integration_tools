@@ -10,7 +10,6 @@ This test verifies that JWT validation supports refresh semantics
 from __future__ import annotations
 
 import time
-from typing import Any
 
 
 class TestRefreshTokenRotation:
@@ -52,7 +51,6 @@ class TestRefreshTokenRotation:
 
     def test_rotation_pattern_in_jwt_backend(self):
         """jwt_backend.py must reference iat or rotation in source code."""
-        import os
         path = "src/backend/core/auth/jwt_backend.py"
         with open(path) as f:
             content = f.read()

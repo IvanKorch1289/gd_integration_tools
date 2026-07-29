@@ -9,7 +9,6 @@ infrastructure/observability, оставь только core/utils/metrics_regis
 from __future__ import annotations
 
 import os
-import re
 
 
 class TestMetricsRegistrySingleSource:

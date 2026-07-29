@@ -14,7 +14,6 @@ import subprocess
 import sys
 from typing import Protocol
 
-import pytest
 
 
 class TestCheckMroDepth:
