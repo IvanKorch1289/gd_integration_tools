@@ -60,13 +60,9 @@ def unregister_nats_source(source_id: str) -> None:
 )
 async def list_consumers() -> dict[str, Any]:
     """Список всех зарегистрированных NATS consumers с lag-снапшотами."""
-    # Lazy importlib для соблюдения layer policy (entrypoints не зависит
-    # от infrastructure статически; metrics-emitter резолвится в runtime).
-    import importlib
-
-    metrics_mod = importlib.import_module(
-        "src.backend.infrastructure.observability.nats_metrics"
-    )
+    # Layer 11 fix: используем facade services/observability вместо
+    # dynamic importlib к infrastructure (нарушение layer policy).
+    from src.backend.services.observability.facade import record_consumer_info
 
     items: list[dict[str, Any]] = []
     for source_id, source in _REGISTRY.items():
@@ -75,7 +71,7 @@ async def list_consumers() -> dict[str, Any]:
         except Exception as exc:
             info = {"error": str(exc), "source_id": source_id}
         info["source_id"] = source_id
-        metrics_mod.record_consumer_info(info)
+        record_consumer_info(info)
         items.append(info)
     return {"consumers": items, "total": len(items)}
 
