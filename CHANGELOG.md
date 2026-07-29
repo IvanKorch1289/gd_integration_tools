@@ -1,5 +1,32 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 63 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 63 L10: Remove 3 orphan test files (stale dead tests)
+
+Layer 10 (Test Coverage) аудит collection errors выявил 3 test-файла,
+ссылающихся на удалённый source code:
+
+| File | LOC | Dead since |
+|---|---|---|
+| `tests/unit/core/test_integration_split_audit.py` | 91 | L3 cycle `8a2f842d` removed `integration_group_a/b.py` |
+| `tests/unit/tools/test_check_v11_artefacts.py` | 66 | Cycle 48 `6d0a46db` migrated `services.plugins.manifest_toml` → `core.plugin_runtime.manifest_toml` |
+| `tests/unit/tools/test_export_v11_artefacts.py` | 79 | Same migration as above |
+
+Verification:
+- `pytest tests/ --collect-only` до fix: 9 collection errors (3 из них
+  разрешены этим cycle, 6 остаются — polars/tiktoken/click version drift,
+  требуют отдельного fix или pip install).
+- Все 3 удалённых файла импортировали несуществующие модули.
+
+Per Ponytail/YAGNI: мёртвые тесты удалены (236 LOC purged). Тестовый
+suite стал чище на 3 collection errors.
+
+#### Not addressed (separate concerns, deferring)
+- 2 missing optional deps (`polars`, `tiktoken`) — fix через `uv sync --extra <name>`.
+- 2 Click version drift (`CliRunner.mix_stderr` removed) — version pinning либо
+  test rewrite под новый Click API.
+
 ## [Unreleased] — Cycle 62 (2026-07-28) — Layer 9 (DevOps)
 
 ### Cycle 62 L9: Remove dead `changelog_autogen.py`

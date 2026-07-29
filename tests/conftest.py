@@ -49,6 +49,33 @@ def pytest_configure(config: pytest.Config) -> None:
         os.environ.setdefault(key, value)
 
 
+# L10: маркеры принадлежности к комплекту (suite), коррелирующие с директорией.
+# Только их наличие блокирует авто-маркировку, чтобы побочные маркеры
+# (parametrize, usefixtures, xfail, slow, ...) не мешали выводить категорию.
+_SUITE_MARKERS = frozenset({"unit", "integration"})
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """L10: авто-маркировка тестов по директории.
+
+    Без этого хука ``pytest -m unit`` молча пропускает каждый unit-тест без
+    явного ``@pytest.mark.unit`` (1192 из 1273 файлов под ``tests/unit/``).
+    Категория выводится из пути item, но только если на нём ещё нет явного
+    маркера комплекта (``unit``/``integration``) — значит явные маркеры всегда
+    приоритетнее, а побочные маркеры (``parametrize``, ``usefixtures``,
+    ``xfail``, ``slow`` ...) не блокируют авто-маркировку.
+    """
+    for item in items:
+        existing = {m.name for m in item.iter_markers()}
+        if existing & _SUITE_MARKERS:
+            continue
+        fspath = str(item.fspath).replace("\\", "/")
+        if "/tests/unit/" in fspath:
+            item.add_marker(pytest.mark.unit)
+        elif "/tests/integration/" in fspath:
+            item.add_marker(pytest.mark.integration)
+
+
 @pytest.fixture
 def test_db():
     """Заглушка фикстуры тестовой БД.

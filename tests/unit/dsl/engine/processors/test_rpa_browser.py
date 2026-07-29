@@ -240,3 +240,77 @@ async def test_browser_launch_no_pool_fails() -> None:
 
     assert ex.status == ExchangeStatus.failed
     assert "PlaywrightBrowserPool" in (ex.error or "")
+
+
+@pytest.mark.asyncio
+async def test_browser_launch_releases_context_via_finalizer() -> None:
+    """FIX-C1: semaphore/context освобождается в конце route через finalizer.
+
+    Без finalizer poll_size запусков исчерпали бы semaphore → deadlock.
+    """
+
+    page = AsyncMock()
+    pooled_ctx = AsyncMock()
+    pooled_ctx.new_page.return_value = page
+
+    released = {"count": 0}
+
+    class _FakePool:
+        def acquire(self):  # noqa: ANN001
+            class _CM:
+                async def __aenter__(self_inner):
+                    return pooled_ctx
+
+                async def __aexit__(self_inner, *args):
+                    released["count"] += 1
+
+            return _CM()
+
+    fake_context = MagicMock()
+    fake_context.browser_pool = _FakePool()
+
+    proc = BrowserLaunchProcessor(url="https://example.com/")
+    ex = _empty_exchange()
+    await proc.process(ex, context=fake_context)
+
+    # Контекст удерживается во время route — ещё не освобождён.
+    assert released["count"] == 0
+    assert ex.properties["rpa.page"] is page
+
+    # execution engine вызывает run_finalizers после прогона processors.
+    await ex.run_finalizers()
+    assert released["count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_browser_launch_finalizer_releases_on_goto_failure() -> None:
+    """Даже при ошибке page.goto finalizer освобождает контекст."""
+
+    page = AsyncMock()
+    page.goto.side_effect = RuntimeError("net err")
+    pooled_ctx = AsyncMock()
+    pooled_ctx.new_page.return_value = page
+
+    released = {"count": 0}
+
+    class _FakePool:
+        def acquire(self):  # noqa: ANN001
+            class _CM:
+                async def __aenter__(self_inner):
+                    return pooled_ctx
+
+                async def __aexit__(self_inner, *args):
+                    released["count"] += 1
+
+            return _CM()
+
+    fake_context = MagicMock()
+    fake_context.browser_pool = _FakePool()
+
+    proc = BrowserLaunchProcessor(url="https://example.com/")
+    ex = _empty_exchange()
+    await proc.process(ex, context=fake_context)
+
+    assert ex.status == ExchangeStatus.failed
+    await ex.run_finalizers()
+    assert released["count"] == 1
