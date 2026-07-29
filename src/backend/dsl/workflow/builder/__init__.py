@@ -8,6 +8,10 @@
 - ``ai_mixin.py`` (1): invoke_agent (BIG 66 LOC)
 - ``lifecycle_mixin.py`` (6): reflect, checkpoint, guardrail, pause, resume, escalate
 
+Note: gateway_mixin удалён в Cycle 3 (XOR/AND/OR — silent no-op → fail-fast
+в compile, см. commit 3543fa49 + df1d7f24). 20 methods decomposed в
+5 mixin files.
+
 Core (4) остается в __init__.py: __init__, description, default_timeout, default_retry.
 SagaBuilder (4 methods) preserved as separate class.
 
@@ -34,7 +38,6 @@ if TYPE_CHECKING:
     pass
 
 from src.backend.dsl.workflow.builder.ai_mixin import AiAgentMixin  # S58 W4: MRO
-from src.backend.dsl.workflow.builder.gateway_mixin import GatewayMixin  # S58 W4: MRO
 from src.backend.dsl.workflow.builder.lifecycle_mixin import (
     LifecycleMixin,  # S58 W4: MRO
 )
@@ -46,9 +49,14 @@ __all__ = ("WorkflowBuilder", "SagaBuilder")
 
 
 class WorkflowBuilder(
-    SlaMixin, WorkflowMixin, WaitMixin, GatewayMixin, AiAgentMixin, LifecycleMixin
+    SlaMixin, WorkflowMixin, WaitMixin, AiAgentMixin, LifecycleMixin
 ):
-    """Workflow DSL builder (6 mixins = 17 methods + 4 core)."""
+    """Workflow DSL builder (5 mixins = 14 methods + 4 core).
+
+    Cycle 3: GatewayMixin удалён (3 метода). gateway_xor/and/or в WorkflowBuilder
+    теперь AttributeError — fail-fast вместо silent no-op. Реализация требует
+    Wave C (compile_gateway_step).
+    """
 
     __slots__ = (
         "_name",
