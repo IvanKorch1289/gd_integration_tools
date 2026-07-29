@@ -1,5 +1,35 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 98 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 98 L10: test_fallback — wrong method name + return type
+
+Layer 10 (Test Coverage) аудит: 2 теста использовали wrong API для
+``FallbackObjectStorage.health()``.
+
+#### Bug 1
+Тесты вызывали ``fb.healthcheck()`` — но production method —
+``health()``. AttributeError.
+
+#### Bug 2
+Assertions ожидали ``result is True`` — но production возвращает
+``HealthResult`` (status/latency/mode). И ``HealthResult.ok(...)``
+требует ``mode=`` kwarg (Literal, не enum).
+
+#### Bug 3 (subtle)
+``test_healthcheck_primary_fail_secondary_ok`` ожидал ``status == "ok"``
+для degraded scenario — но production возвращает ``"degraded"``
+(primary fails, secondary succeeds → system operational via fallback).
+
+#### Fix
+- ``healthcheck`` → ``health``.
+- AsyncMock возвращает ``HealthResult.ok/failed`` с правильным ``mode="fast"``.
+- Assertions: ``is True`` → ``result.status == "ok"`` / ``== "degraded"``.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/infrastructure/storage/test_fallback.py`: 17/17 pass (was 15/17).
+
 ## [Unreleased] — Cycle 97 (2026-07-28) — Layer 3 (DSL)
 
 ### Cycle 97 L3: InfraOp.process — observability для stub execution

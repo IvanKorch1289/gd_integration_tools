@@ -85,9 +85,25 @@ def _make_storage(
     _configure(presigned_mock, presigned_return, presigned_raises)
     s.presigned_url = presigned_mock
 
-    healthcheck_mock = AsyncMock()
-    _configure(healthcheck_mock, healthcheck_return, healthcheck_raises)
-    s.healthcheck = healthcheck_mock
+    # Cycle 98 L10: production method is ``health`` (not ``healthcheck``).
+    # Production returns ``HealthResult`` (mode is Literal, not enum).
+    from src.backend.infrastructure.clients.base_connector import HealthResult
+
+    if healthcheck_raises is not None:
+        health_mock = AsyncMock(side_effect=healthcheck_raises)
+    elif healthcheck_return is True:
+        health_mock = AsyncMock(
+            return_value=HealthResult.ok(latency_ms=0.0, mode="fast")
+        )
+    else:
+        health_mock = AsyncMock(
+            return_value=HealthResult.failed(
+                error="primary failed",
+                latency_ms=0.0,
+                mode="fast",
+            )
+        )
+    s.health = health_mock
     return s
 
 
@@ -283,10 +299,13 @@ def test_supports_presigned_delegates_to_primary() -> None:
 
 @pytest.mark.asyncio
 async def test_healthcheck_primary_ok() -> None:
+    # Cycle 98 L10: production has ``health`` (not ``healthcheck``),
+    # returns ``HealthResult`` (not bool).
     primary = _make_storage(healthcheck_return=True)
     secondary = _make_storage(healthcheck_return=False)
     fb = FallbackObjectStorage(primary, secondary)
-    assert await fb.healthcheck() is True
+    result = await fb.health()
+    assert result.status == "ok"
 
 
 @pytest.mark.asyncio
@@ -294,7 +313,11 @@ async def test_healthcheck_primary_fail_secondary_ok() -> None:
     primary = _make_storage(healthcheck_raises=ConnectionError("S3"))
     secondary = _make_storage(healthcheck_return=True)
     fb = FallbackObjectStorage(primary, secondary)
-    assert await fb.healthcheck() is True
+    # Cycle 98 L10: production method is ``health``, returns HealthResult.
+    # When primary fails but secondary succeeds, status is "degraded"
+    # (not "ok") — system is operational via fallback.
+    result = await fb.health()
+    assert result.status == "degraded"
 
 
 # === METRICS / COUNT ===
