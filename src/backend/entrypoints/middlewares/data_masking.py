@@ -14,7 +14,10 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
+from src.backend.core.logging import get_logger
 from src.backend.core.utils.async_helpers import AsyncChunkIterator
+
+_logger = get_logger(__name__)
 
 __all__ = ("DataMaskingMiddleware",)
 
@@ -69,8 +72,8 @@ class DataMaskingMiddleware(BaseHTTPMiddleware):
             # ponytail: fail-closed на PII. Возвращаем тело как {"error": "masking_failed"}
             # вместо unmasked body — иначе при сбое маскировки утекает PII.
             # Это безопаснее, чем fail-open (ранее: return unmasked body).
-            import logging
-            logging.getLogger(__name__).exception(
+            # Cycle 76 L1: use module-level canonical logger.
+            _logger.exception(
                 "data_masking failed; returning masked error response instead of unmasked body: %s",
                 exc,
             )

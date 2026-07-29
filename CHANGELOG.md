@@ -1,5 +1,22 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 76 (2026-07-28) — Layer 1 (Entrypoints)
+
+### Cycle 76 L1: data_masking + dsl_console — canonical logger migration
+
+Layer 1 (Entrypoints) аудит нашёл 2 файла с inline
+``logging.getLogger(__name__)`` bypass'ом при отсутствии module-level
+canonical logger:
+
+| File | Inline calls | Fix |
+|---|---|---|
+| `entrypoints/middlewares/data_masking.py` | 1 (exception path) | Added `_logger = get_logger(__name__)`, replaced inline call |
+| `entrypoints/api/v1/endpoints/dsl_console.py` | 3 (inline/dry_run/execute_registered_route paths) | Added `_logger`, replaced 3 inline calls |
+
+#### Validation
+- `ruff check`: clean (оба файла).
+- Imports ok для обоих модулей.
+
 ## [Unreleased] — Cycle 75 (2026-07-28) — Layer 3 (DSL/Processors)
 
 ### Cycle 75 L3: drop stdlib bypass in 3 DSL processors

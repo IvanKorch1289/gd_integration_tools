@@ -13,10 +13,13 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
+
+_logger = get_logger(__name__)
 
 __all__ = ("router",)
 
@@ -210,8 +213,8 @@ class _DSLConsoleFacade:
             # S232/S202 audit fix (Cycle 3 swarm): do not leak raw exception
             # string to public client. Log full trace server-side, return
             # generic message with exception class only.
-            import logging
-            logging.getLogger(__name__).exception(
+            # Cycle 76 L1: use module-level canonical logger.
+            _logger.exception(
                 "DSL console inline execute failed: route_id=%s", route_id
             )
             return InlineDSLResponse(
@@ -254,8 +257,8 @@ class _DSLConsoleFacade:
             )
         except Exception as exc:
             # Cycle 3 swarm: do not leak raw exception string to public client.
-            import logging
-            logging.getLogger(__name__).exception(
+            # Cycle 76 L1: use module-level canonical logger.
+            _logger.exception(
                 "DSL console execute_registered_route failed: route_id=%s", route_id
             )
             return ExecuteRegisteredResponse(
@@ -279,8 +282,8 @@ class _DSLConsoleFacade:
             )
         except Exception as exc:
             # Cycle 3 swarm: do not leak raw exception string to public client.
-            import logging
-            logging.getLogger(__name__).exception("DSL console dry_run failed")
+            # Cycle 76 L1: use module-level canonical logger.
+            _logger.exception("DSL console dry_run failed")
             return DryRunResponse(
                 error=f"{type(exc).__name__}: internal error (see server logs)"
             )
