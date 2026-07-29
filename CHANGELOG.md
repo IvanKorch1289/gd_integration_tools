@@ -1,5 +1,26 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 79 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 79 L10: test_middlewares_small.py::test_security_headers — wrong API
+
+Layer 10 (Test Coverage) аудит: ``test_middlewares_small.py`` содержит
+тест ``test_security_headers`` с той же проблемой что Cycle 78 — использовал
+``mw.dispatch(request, call_next)`` (BaseHTTPMiddleware API), но
+``SecurityHeadersMiddleware`` — pure ASGI.
+
+#### Fix
+- Тест переписан под ASGI triple: ``await mw(scope, receive, send)``.
+- Headers извлекаются из ``http.response.start`` message.
+- 3 assertions сохранены (x-frame-options, x-content-type-options,
+  strict-transport-security).
+
+#### Validation
+- `ruff check`: clean.
+- 251/260 pass в middleware suite (было 250, +1 фикс от Cycle 78).
+- Оставшиеся 9 failures — другие тесты в файле (test_blocked_routes_*,
+  test_rpa_policy), не связаны с моим change.
+
 ## [Unreleased] — Cycle 78 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 78 L10: test_security_headers.py — wrong API, rewrite for pure ASGI

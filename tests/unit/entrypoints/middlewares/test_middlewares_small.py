@@ -157,12 +157,22 @@ async def test_request_id_preserves_existing() -> None:
 
 @pytest.mark.asyncio
 async def test_security_headers() -> None:
+    # Cycle 79 L10: middleware is pure ASGI (not BaseHTTPMiddleware),
+    # call via __call__(scope, receive, send) and inspect http.response.start.
     app = AsyncMock()
+
+    async def downstream(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    app.side_effect = downstream
     mw = SecurityHeadersMiddleware(app)
-    request = MagicMock()
-    response = Response(content=b"ok")
-    call_next = AsyncMock(return_value=response)
-    result = await mw.dispatch(request, call_next)
-    assert result.headers["X-Frame-Options"] == "DENY"
-    assert result.headers["X-Content-Type-Options"] == "nosniff"
-    assert "Strict-Transport-Security" in result.headers
+    send = AsyncMock()
+    await mw({"type": "http", "method": "GET", "path": "/", "headers": []}, AsyncMock(), send)
+    captured = next(
+        c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.start"
+    )
+    headers = dict(captured.get("headers", []))
+    assert headers[b"x-frame-options"] == b"DENY"
+    assert headers[b"x-content-type-options"] == b"nosniff"
+    assert b"strict-transport-security" in headers
