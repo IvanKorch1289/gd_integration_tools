@@ -1,5 +1,33 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 74 (2026-07-28) — Layer 3+4 (DSL/AI)
+
+### Cycle 74: drop stdlib logging bypass in 2 files
+
+Layer 3/4 аудит нашёл 2 оставшихся inline ``logging.getLogger(__name__)``
+bypass'a в кодовой базе (за исключением ``src/backend/infrastructure/logging/``
+— это сам logging facade, stdlib там legitimate).
+
+#### Files
+1. ``src/backend/services/ai/workflow_activities.py:134`` — внутри
+   ``acost_estimate`` activity, локальный ``import logging`` +
+   ``logging.getLogger(__name__).debug(...)`` хотя module-level
+   ``_logger = get_logger("services.ai.workflow_activities")`` уже
+   есть (line 42).
+
+2. ``src/backend/dsl/engine/processors/ai/banking_processors/base.py:103``
+   — внутри ``_BankingAIProcessor``, аналогичный bypass — локальный
+   ``import logging`` + ``logging.getLogger(__name__).warning(...)``
+   при существующем module-level ``_logger``.
+
+#### Fix
+- Оба локальных ``import logging`` + ``logging.getLogger(__name__).*``
+  заменены на ``_logger.*`` (module-level canonical facade).
+
+#### Validation
+- `ruff check`: clean (оба файла).
+- Imports ok для обоих модулей.
+
 ## [Unreleased] — Cycle 73 (2026-07-28) — Layer 6 (Workflows)
 
 ### Cycle 73 L6: hitl_service.py — module-level canonical logger

@@ -100,8 +100,9 @@ class _BankingAIProcessor(BaseProcessor):
         # AIGateway migration deferred (would require ResultSchema →
         # AIRequest adapter); this is minimal defense-in-depth.
         if len(prompt) > 8000:
-            import logging
-            logging.getLogger(__name__).warning(
+            # Cycle 74 L3: use module-level _logger (canonical facade) instead
+            # of local stdlib bypass.
+            _logger.warning(
                 "%s: prompt truncated from %d to 8000 chars (S227 cycle 4)",
                 self.name, len(prompt),
             )

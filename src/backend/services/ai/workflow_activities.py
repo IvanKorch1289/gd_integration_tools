@@ -130,8 +130,9 @@ async def _execute_llm_call(
     effective_max_tokens = input_.max_tokens
     if effective_max_tokens is None or effective_max_tokens <= 0:
         effective_max_tokens = 4096
-        import logging
-        logging.getLogger(__name__).debug(
+        # Cycle 74 L4: use module-level _logger (canonical facade) instead
+        # of local stdlib bypass.
+        _logger.debug(
             "workflow_activities: max_tokens not set, defaulting to 4096 (S227 cycle 4)"
         )
 
