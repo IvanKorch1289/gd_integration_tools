@@ -35,7 +35,8 @@ class OfficeExtractProcessor:
                     return "docx"
                 if "xl/workbook.xml" in names:
                     return "xlsx"
-        except (zipfile.BadZipFile, Exception):
+        except zipfile.BadZipFile:
+            # Не ZIP или повреждённый архив → не office format.
             pass
         return "unknown"
 
