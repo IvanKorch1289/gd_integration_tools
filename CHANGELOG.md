@@ -1,5 +1,20 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 110 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 110 L10: test_rag_cache_admin — auth middleware
+
+Layer 10 (Test Coverage) аудит (продолжение): ``test_rag_cache_admin.py``
+5 тестов получали 403 — production ``require_admin()``.
+
+#### Fix
+- ``_make_app()`` дополнен HTTP middleware, инжектирующим
+  ``request.state.auth_context = AuthContext(..., metadata=
+  {"admin_roles": ["super_admin"]})``.
+
+#### Validation
+- `tests/unit/api/test_rag_cache_admin.py`: 5/5 pass (was 0/5).
+
 ## [Unreleased] — Cycle 109 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 109 L10: 2 more admin test files — auth middleware
