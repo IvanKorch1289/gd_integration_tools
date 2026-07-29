@@ -70,3 +70,41 @@ async def test_invalidate(monkeypatch: pytest.MonkeyPatch) -> None:
     provider.invalidate("c2")
     c2 = await provider.get("c2")
     assert c2.value == {"value": "v1"}
+
+
+# ── Cycle 59 L8 regression tests ─────────────────────────────────────────
+
+
+@pytest.mark.unit
+async def test_get_unknown_spec_raises_keyerror() -> None:
+    """Cycle 59 fix: cache-hit path no longer crashes with KeyError on
+    unknown spec; raises clear KeyError listing available specs."""
+    provider = CredentialProvider()
+    with pytest.raises(KeyError, match="not registered"):
+        await provider.get("nonexistent")
+
+
+@pytest.mark.unit
+async def test_resolve_unsupported_ref_format_raises_value_error() -> None:
+    """Cycle 59 fix: unknown secret_ref format now raises ValueError
+    (was silently returning {} → connectors connected with no auth)."""
+    provider = CredentialProvider()
+    provider.register_spec(
+        CredentialSpec(name="bad", secret_ref="file:/etc/passwd")
+    )
+    with pytest.raises(ValueError, match="unsupported secret_ref format"):
+        await provider.get("bad")
+
+
+@pytest.mark.unit
+async def test_resolve_missing_env_var_raises_keyerror(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Cycle 59 fix: missing env var raises KeyError (was returning '')."""
+    monkeypatch.delenv("DEFINITELY_NOT_SET", raising=False)
+    provider = CredentialProvider()
+    provider.register_spec(
+        CredentialSpec(name="missing", secret_ref="env:DEFINITELY_NOT_SET")
+    )
+    with pytest.raises(KeyError, match="DEFINITELY_NOT_SET"):
+        await provider.get("missing")

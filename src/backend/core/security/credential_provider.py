@@ -71,11 +71,17 @@ class CredentialProvider:
 
     async def get(self, name: str) -> ResolvedCredential:
         """Получить credentials с caching + audit."""
+        spec = self._specs.get(name)
+        if spec is None:
+            raise KeyError(
+                f"Credential spec {name!r} not registered; "
+                f"available: {sorted(self._specs)}"
+            )
+
         cached = self._cache.get(name)
-        if cached and (time.time() - cached.resolved_at) < self._specs[name].ttl_seconds:
+        if cached and (time.time() - cached.resolved_at) < spec.ttl_seconds:
             return cached
 
-        spec = self._specs[name]
         # Real implementation: read from vault_backend или env
         value = await self._resolve(spec)
         cred = ResolvedCredential(name=name, value=value)
@@ -91,20 +97,45 @@ class CredentialProvider:
         return cred
 
     async def _resolve(self, spec: CredentialSpec) -> dict[str, Any]:
-        """Реальное разрешение credentials из vault/env."""
+        """Реальное разрешение credentials из vault/env с fail-closed."""
         if spec.is_vault:
             from src.backend.core.interfaces.secrets import SecretsBackend
             from src.backend.core.svcs_registry import get_service
 
             vault_path = spec.secret_ref.removeprefix("vault:")
+            if not vault_path:
+                raise ValueError(
+                    f"Credential spec {spec.name!r}: empty vault path "
+                    f"after 'vault:' prefix"
+                )
             value = await get_service(SecretsBackend).get_secret(vault_path)
-            return {"value": value or ""}
+            if value is None:
+                raise KeyError(
+                    f"Vault returned None for {spec.name!r} "
+                    f"(path={vault_path!r}); refusing to resolve empty credential"
+                )
+            return {"value": value}
         if spec.secret_ref.startswith("env:"):
             import os
 
             env_key = spec.secret_ref.removeprefix("env:")
-            return {"value": os.environ.get(env_key, "")}
-        return {}
+            if not env_key:
+                raise ValueError(
+                    f"Credential spec {spec.name!r}: empty env var name "
+                    f"after 'env:' prefix"
+                )
+            value = os.environ.get(env_key)
+            if value is None:
+                raise KeyError(
+                    f"Environment variable {env_key!r} not set "
+                    f"(required by credential spec {spec.name!r})"
+                )
+            return {"value": value}
+        # Неизвестный формат ref — fail-loud, не silent return {}.
+        raise ValueError(
+            f"Credential spec {spec.name!r}: unsupported secret_ref format "
+            f"{spec.secret_ref!r}; expected 'vault:<path>' or 'env:<KEY>'"
+        )
 
     def invalidate(self, name: str) -> None:
         """Сбросить кэш (для rotation hooks)."""

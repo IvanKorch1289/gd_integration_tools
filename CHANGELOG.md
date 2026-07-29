@@ -1,5 +1,53 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 59 (2026-07-28) — Layer 8 (Security)
+
+### Cycle 59 L8: CredentialProvider fail-closed (2 real bugs)
+
+Анализ слоя L8 (Security) выявил 2 бага в `core/security/credential_provider.py` —
+fail-open / silent fallback поведение, опасное в credentials-домене.
+
+#### Bug 1 (CRITICAL) — KeyError на cache hit без spec
+Оригинальный `get()` обращался к `self._specs[name]` для TTL **до** проверки
+наличия spec — даже на cache-hit. Если spec удалён, но cache ещё жив —
+каждый lookup падал с KeyError.
+
+**Fix**: `spec = self._specs.get(name)` сначала; KeyError с понятным
+message если spec отсутствует.
+
+#### Bug 2 (HIGH) — Silent `{}` fallback для unknown ref format
+`_resolve()` возвращал `{}` для unknown `secret_ref` форматов — коннекторы
+получали пустые credentials и подключались без auth.
+
+**Fix**: `ValueError` с перечислением поддерживаемых форматов.
+
+#### Bonus fixes (consensus from 3-agent review)
+- `os.environ.get(env_key, "")` → `KeyError` при отсутствии env var (а не `""`)
+- `value or ""` в vault branch → `KeyError` при None из Vault (а не `""`)
+- 3 regression tests (KeyError on unknown spec, ValueError on bad ref,
+  KeyError on missing env var)
+
+#### 3-agent review
+| Reviewer | Verdict | Findings |
+|---|---|---|
+| Architect | REQUEST_CHANGES | fail-closed for missing creds, race-safe invalidate, audit-emit, tests |
+| Critic | APPROVE (7/10) | surgical, good DX, minor docstring stubs |
+| Analyst | REQUEST_CHANGES | HIGH: audit-emit claim broken, thread-safety claim broken, env fallback, tests |
+
+#### Larger concerns deferred (consensus)
+- **Audit-emit implementation** (HIGH, ~20 LOC): модуль обещает audit, но
+  emit'ит только `_logger.info`. Требует отдельного audit facade helper.
+- **Thread-safety / asyncio.Lock** (HIGH): docstring врёт, race conditions
+  между concurrent `get()` и `invalidate()`.
+- **Singleton pattern unification** (L8-wide): `ip_restriction_store.py`
+  и другие security singletons используют `global _instance`.
+- **`time.time()` → `time.monotonic()`** для TTL (LOW).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/core/security/test_credential_provider.py`: 8/8 pass
+  (5 original + 3 new regression tests).
+
 ## [Unreleased] — Cycle 58 (2026-07-28) — Layer 5 (DSL/service)
 
 ### Cycle 58 L5: Service DSL singleton pattern + CRUD consolidation
