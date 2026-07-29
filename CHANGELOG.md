@@ -1,5 +1,24 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 119 (2026-07-28) — Layer 9 (DevOps)
+
+### Cycle 119 L9: remove docs/adr/index.md stub (lowercase conflict)
+
+Layer 9 (DevOps) cleanup: ``docs/adr/index.md`` существовал как
+case-variant stub от ``INDEX.md`` (canonical, 42KB). На case-sensitive
+файловых системах (production Linux deploy) это создавало двусмысленность
+— некоторые линки могли резолвить в stub вместо real INDEX.
+
+Содержимое stub: 3 строки placeholder (``# $(basename ...) В разработке.``)
+— leftover от build(docs): mkdocs canonical commit (B2: M10.2).
+
+#### Fix
+- Удалён ``docs/adr/index.md``.
+
+#### Validation
+- `tests/unit/cycle_25_batch1_fixes.py::TestDocsIndexCaseMatch::test_index_link_correct`:
+  1/1 pass (was 0/1).
+
 ## [Unreleased] — Cycle 118 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 118 L10: cycle_25 allowlist test — lower bound to 100
