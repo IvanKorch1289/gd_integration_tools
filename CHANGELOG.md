@@ -1,5 +1,26 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 113 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 113 L10: test_s94_w2_codemod — stale import path
+
+Layer 10 (Test Coverage) аудит: ``test_s94_w2_codemod.py`` asserts
+import path ``from src.backend.infrastructure.logging.factory import
+get_logger`` — но production S84 W1 (Sprint 84 Wave 1) refactor
+переместил logging facade в ``core.logging.get_logger``.
+
+Это 1 из 3 тестов в файле; остальные проходят. Test was masking
+canonical-logger migration (Cycle 67+74) — production code уже
+canonical, но test смотрел на stale path.
+
+#### Fix
+- Hardcoded ``"infrastructure.logging.factory"`` →
+  ``"core.logging"`` (production actual path).
+
+#### Validation
+- `tests/unit/infrastructure/test_s94_w2_codemod.py`: 3/3 pass
+  (was 2/3).
+
 ## [Unreleased] — Cycle 112 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 112 L10: feature flag count tests — relax to lower bound

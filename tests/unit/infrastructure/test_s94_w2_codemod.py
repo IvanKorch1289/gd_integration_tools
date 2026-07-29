@@ -42,7 +42,8 @@ def test_http_httpx_keeps_stdlib_for_DEBUG_constant() -> None:
     ).read_text()
     assert "import logging" in src
     assert "logging.DEBUG" in src
-    # Уже factory.get_logger
-    assert "from src.backend.infrastructure.logging.factory import get_logger" in src
+    # Cycle 113: factory path migrated to core.logging.get_logger
+    # в S84 W1 — fix stale test path. Production imports from core.
+    assert "from src.backend.core.logging import get_logger" in src
     # НЕТ logging.getLogger
     assert "logging.getLogger" not in src
