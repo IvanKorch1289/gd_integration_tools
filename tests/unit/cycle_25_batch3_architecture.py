@@ -29,14 +29,19 @@ class TestLayerCheckAllowlist:
         )
 
     def test_allowlist_has_recent_entries(self):
-        """Allowlist should have 200+ entries documenting legacy debt."""
+        """Allowlist should have 100+ entries documenting legacy debt.
+
+        Cycle 118 L10: was 200+ but allowlist shrank to 169 after
+        S171+ cleanup waves. Lower bound to 100 (still meaningful —
+        catches catastrophic shrink, but allows gradual cleanup).
+        """
         path = "tools/check_layers_allowlist.txt"
         if not os.path.exists(path):
             return
         with open(path) as f:
             lines = [l for l in f if l.strip() and not l.startswith("#")]
-        assert len(lines) >= 200, (
-            f"Allowlist should have 200+ entries, got {len(lines)}"
+        assert len(lines) >= 100, (
+            f"Allowlist should have 100+ entries, got {len(lines)}"
         )
 
     def test_allowlist_format(self):

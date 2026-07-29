@@ -1,5 +1,22 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 118 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 118 L10: cycle_25 allowlist test — lower bound to 100
+
+Layer 10 (Test Coverage) аудит: ``cycle_25_batch3_architecture.py::
+test_allowlist_has_recent_entries`` утверждал ``>= 200`` entries в
+``tools/check_layers_allowlist.txt``, но реальный файл имеет 169
+(был 200+ до cleanup волн S171+, потом уменьшился).
+
+#### Fix
+- ``>= 200`` → ``>= 100`` (всё ещё meaningful — ловит catastrophic
+  shrink, но позволяет gradual cleanup).
+
+#### Validation
+- `tests/unit/cycle_25_batch3_architecture.py`:
+  ``test_allowlist_has_recent_entries`` 1/1 pass (was 0/1).
+
 ## [Unreleased] — Cycle 117 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 117 L10: cycle_26 test broken by Cycle 115 — fix
