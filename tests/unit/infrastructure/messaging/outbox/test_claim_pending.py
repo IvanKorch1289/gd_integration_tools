@@ -23,7 +23,9 @@ import pytest
 # lazy-accessor chain в project ломает collection (см. S64 W1 review).
 # Достаточно MagicMock, потому что test-ы ниже monkeypatch-ат его явно.
 class _StubSessionManager:
-    def transaction(self) -> "MagicMock":
+    def transaction(self, _session: object = None) -> "MagicMock":
+        # Cycle 86 L10: production ``DatabaseSessionManager.transaction(session)``
+        # accepts the session arg — stub must match.
         m = MagicMock()
         m.__aenter__ = AsyncMock(return_value=MagicMock())
         m.__aexit__ = AsyncMock(return_value=None)
@@ -41,6 +43,12 @@ import types
 
 _stub_sm = types.ModuleType("src.backend.infrastructure.database.session_manager")
 _stub_sm.main_session_manager = _StubSessionManager()  # type: ignore[attr-defined]
+# Cycle 86 L10: production session_manager module exports both
+# ``main_session_manager`` (singleton) and ``get_main_session_manager``
+# (factory function). Stub must mirror both — otherwise callers using
+# the factory get AttributeError on import. Lambda accepts *args/**kwargs
+# to mirror any call shape.
+_stub_sm.get_main_session_manager = lambda *_a, **_kw: _StubSessionManager()  # type: ignore[attr-defined]
 sys.modules["src.backend.infrastructure.database.session_manager"] = _stub_sm
 
 # Импорт outbox-модели тоже требует session_manager (для Base.metadata),

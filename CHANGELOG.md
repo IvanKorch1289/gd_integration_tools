@@ -1,5 +1,32 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 86 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 86 L10: test_claim_pending stub — collection error fix
+
+Layer 10 (Test Coverage) аудит: ``tests/unit/infrastructure/messaging/outbox/test_claim_pending.py``
+падал на collection с ``AttributeError: module 'session_manager' has no
+attribute 'get_main_session_manager'``.
+
+Stub модуля ``session_manager`` в test-файле экспортировал только
+``main_session_manager``, но production модуль экспортирует оба через
+``__all__`` (``get_main_session_manager`` + ``main_session_manager``).
+
+#### Fix
+- Stub дополнен: ``_stub_sm.get_main_session_manager = lambda *_a, **_kw: _StubSessionManager()``.
+- Stub ``_StubSessionManager.transaction(_session=None)`` — production
+  ``DatabaseSessionManager.transaction(session)`` принимает session.
+
+#### Validation
+- `ruff check`: clean.
+- Раньше: collection error (0 ran). Теперь: 3/6 pass.
+
+#### Deferred
+- Оставшиеся 3 теста имеют pre-existing test design bug: lambdas
+  ``lambda: fake_txn`` в ``monkeypatch.setattr`` игнорируют session arg,
+  который production передаёт. Требует реструктуризации теста (mock
+  create_session() + transaction() оба, не только transaction).
+
 ## [Unreleased] — Cycle 85 (2026-07-28) — Layer 2 (Core Kernel)
 
 ### Cycle 85 L2: observability_bridge — real bug DEFAULT_LABELS AttributeError
