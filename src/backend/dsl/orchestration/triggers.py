@@ -141,7 +141,18 @@ class IntervalTrigger:
         self._stop = asyncio.Event()
 
     async def start(self) -> None:
-        """Запускает background loop: dispatch payload с interval_s, опционально immediate."""
+        """Запускает background loop: dispatch payload с interval_s, опционально immediate.
+
+        Layer 9 RPA Cycle 2 fix: idempotent guard — если start() вызван
+        повторно без stop(), возвращаемся без создания нового task
+        (предотвращает утечку asyncio.Task).
+        """
+        if self._task and not self._task.done():
+            _log.debug(
+                "IntervalTrigger: %s already running, skipping duplicate start",
+                self.name,
+            )
+            return
 
         async def _loop() -> None:
             if self._start_immediately:
@@ -234,7 +245,17 @@ class CronTrigger:
         self._stop = asyncio.Event()
 
     async def start(self) -> None:
-        """Запускает background loop: вычисляет next_fire_time, sleep до tick."""
+        """Запускает background loop: вычисляет next_fire_time, sleep до tick.
+
+        Layer 9 RPA Cycle 2 fix: idempotent guard (см. IntervalTrigger.start).
+        """
+        if self._task and not self._task.done():
+            _log.debug(
+                "CronTrigger: %s already running, skipping duplicate start",
+                self.name,
+            )
+            return
+
         import datetime as _dt
 
         async def _loop() -> None:
