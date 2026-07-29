@@ -69,8 +69,14 @@ class FakeWebSocket:
     async def send_json(self, data: dict[str, Any]) -> None:
         self.sent.append(data)
 
-    async def close(self) -> None:
+    async def close(self, code: int = 1000, reason: str | None = None) -> None:
+        # Cycle 111: production ws_handler.py:126 calls
+        # ``await websocket.close(code=1008, reason="auth_required")``
+        # (Starlette WebSocket API). FakeWebSocket previously took
+        # no args → TypeError on auth-rejection path.
         self.closed = True
+        self.close_code = code
+        self.close_reason = reason
 
 
 def _registry_with_ws() -> tuple[ReplyChannelRegistry, WsReplyChannel]:

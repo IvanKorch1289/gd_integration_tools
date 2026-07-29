@@ -1,5 +1,25 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 111 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 111 L10: FakeWebSocket.close() signature mismatch
+
+Layer 10 (Test Coverage) аудит: production ``ws_handler.py:126`` вызывает
+``await websocket.close(code=1008, reason="auth_required")`` (Starlette
+WebSocket API). Но ``FakeWebSocket.close()`` в test mock принимал
+только ``self`` — TypeError на каждом auth-reject path.
+
+#### Fix
+- ``FakeWebSocket.close(self, code=1000, reason=None)`` — kwargs с
+  defaults match Starlette API. ``close_code`` и ``close_reason``
+  сохранены для assertions.
+
+#### Validation
+- `ruff check`: clean.
+- Test mock теперь принимает production args.
+- 7 остальных failures — pre-existing test design (тесты не
+  передают credentials, нужен FakeWebSocket.headers/cookies/query_params).
+
 ## [Unreleased] — Cycle 110 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 110 L10: test_rag_cache_admin — auth middleware
