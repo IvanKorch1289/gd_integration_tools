@@ -1,5 +1,36 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 96 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 96 L10: test_eventbus_facade_wiring — 2 bugs in 1 file
+
+Layer 10 (Test Coverage) аудит: 2 теста имели связанные баги.
+
+#### Bug 1 (test_handles_import_error)
+Мок `__import__` блокировал import ТОЛЬКО когда ``name.endswith(
+"get_event_bus_facade_provider")``. Но Python ``__import__`` вызывается
+с MODULE name (например ``"src.backend.core.di.providers.
+infrastructure_facade"``), а не с function name. Mock не
+интерсептил → реальный import проходил → function возвращал
+EventBusFacade вместо None.
+
+Fix: проверка ``"infrastructure_facade" in name`` вместо
+``name.endswith("get_event_bus_facade_provider")``.
+
+#### Bug 2 (test_returns_none_when_no_di_provider)
+``monkeypatch.setattr(mod, "_resolve_event_bus_facade", lambda: None)``
+патчит module attribute, но test файл уже захватил local reference
+через ``from ... import _resolve_event_bus_facade`` (line 30) →
+патч не виден.
+
+Fix: string-path patching (``"src.backend.dsl.builders.eventbus_mixin.
+_resolve_event_bus_facade"``) — аналогично sibling test
+``test_publishes_via_facade_when_available``.
+
+#### Validation
+- `ruff check`: clean.
+- 9/9 test_eventbus_facade_wiring tests pass (было 7/9).
+
 ## [Unreleased] — Cycle 95 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 95 L10: test_versioning — off-by-one create_session count

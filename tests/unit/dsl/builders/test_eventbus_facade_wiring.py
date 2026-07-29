@@ -55,15 +55,19 @@ class _StubExchange:
 class TestResolveEventBusFacade:
     def test_returns_none_when_no_di_provider(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Без DI-provider — fallback к None (dev_light / unit-tests)."""
-        import src.backend.dsl.builders.eventbus_mixin as mod
-
+        # Cycle 96 L10: use string-path patch (matches sibling test
+        # test_publishes_via_facade_when_available pattern). Direct
+        # `monkeypatch.setattr(mod, "_resolve_event_bus_facade", ...)`
+        # patches the module attribute but NOT the local reference in
+        # this test file (which was captured at import time).
         monkeypatch.setattr(
-            mod,
-            "_resolve_event_bus_facade",
+            "src.backend.dsl.builders.eventbus_mixin._resolve_event_bus_facade",
             lambda: None,
-            raising=False,
         )
-        assert _resolve_event_bus_facade() is None
+        # Re-import to capture the patched reference.
+        from src.backend.dsl.builders import eventbus_mixin
+
+        assert eventbus_mixin._resolve_event_bus_facade() is None
 
     def test_handles_import_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Если DI provider падает на import — return None, не raise."""
@@ -72,8 +76,11 @@ class TestResolveEventBusFacade:
         original_import = builtins.__import__
 
         def _raising_import(name: str, *args: object, **kwargs: object) -> object:
-            if name.endswith("get_event_bus_facade_provider"):
-                raise ImportError("provider not found")
+            # Cycle 96 L10: ``__import__`` is called with MODULE name, not
+            # attribute name. ``from X import Y`` triggers __import__('X').
+            # Match on the provider MODULE path, not the function name.
+            if "infrastructure_facade" in name:
+                raise ImportError("provider module not found")
             return original_import(name, *args, **kwargs)
 
         monkeypatch.setattr(builtins, "__import__", _raising_import)
