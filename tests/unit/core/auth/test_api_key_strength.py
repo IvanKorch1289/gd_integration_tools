@@ -38,13 +38,13 @@ class TestValidateStrengthPublicAPI:
 
     def test_strong_secret_accepted(self) -> None:
         """A reasonably long, diverse secret passes validation."""
-        # 40 chars, all-unique, all-different-categories (upper/lower/digit).
-        result = APIKeyAuth.validate_strength(
-            "aB3dE5fG7hJ9kL1mN3pQ5rS7tV9wX1yZ3aB5cD7eF9"
-        )
+        # 42 chars (test literal — was off-by-2 in comment), all-unique,
+        # all-different-categories (upper/lower/digit).
+        secret = "aB3dE5fG7hJ9kL1mN3pQ5rS7tV9wX1yZ3aB5cD7eF9"
+        result = APIKeyAuth.validate_strength(secret)
         assert result.is_acceptable is True
         assert result.issues == ()
-        assert result.length == 40
+        assert result.length == len(secret)  # Cycle 93 L10: was off-by-2 hardcoded
 
     def test_empty_rejected(self) -> None:
         result = APIKeyAuth.validate_strength("")

@@ -1,5 +1,21 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 93 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 93 L10: test_api_key_strength — off-by-2 hardcoded length
+
+Layer 10 (Test Coverage) аудит: ``test_strong_secret_accepted``
+проверял ``result.length == 40``, но literal имел 42 chars
+(comment "40 chars" был неправильный — off-by-2).
+
+#### Fix
+- Hardcoded ``40`` → ``len(secret)`` (literal binding).
+- Comment обновлён: "42 chars".
+
+#### Validation
+- `ruff check`: clean.
+- 18/18 test_api_key_strength tests pass.
+
 ## [Unreleased] — Cycle 92 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 92 L10: test_auth_facade_saml_contract — exact dict too strict
