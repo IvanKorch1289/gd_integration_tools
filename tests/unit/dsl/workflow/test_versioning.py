@@ -92,9 +92,13 @@ class TestWorkflowVersionRegistry:
 
     def test_all_workflow_ids(self) -> None:
         reg = WorkflowVersionRegistry()
+        # Cycle 125: use same major (1.x.x) for "a" second registration —
+        # production strict-mode rejects different majors (v1.0.0 vs v2.0.0
+        # raises ValueError). Test purpose: verify unique workflow IDs
+        # returned by all_workflow_ids().
         reg.register(WorkflowVersion("a", 1, 0, 0))
         reg.register(WorkflowVersion("b", 1, 0, 0))
-        reg.register(WorkflowVersion("a", 2, 0, 0))
+        reg.register(WorkflowVersion("a", 1, 5, 0))  # minor bump, same major
         assert reg.all_workflow_ids() == ["a", "b"]
 
 

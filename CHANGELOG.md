@@ -1,5 +1,24 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 125 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 125 L10: workflow version test — major bump conflict
+
+Layer 10 (Test Coverage) аудит: ``test_all_workflow_ids`` в
+``test_versioning.py`` регистрировал ``WorkflowVersion("a", 1, 0, 0)``
+затем ``WorkflowVersion("a", 2, 0, 0)`` — production strict-mode
+reject'ит different major versions с ``ValueError``.
+
+Тест проверял list of IDs (не major-conflict logic — это covered
+в другом тесте).
+
+#### Fix
+- ``(1, 0, 0)`` → ``(1, 5, 0)`` для второй регистрации "a" (minor
+  bump, same major — не conflict).
+
+#### Validation
+- `tests/unit/dsl/workflow/test_versioning.py`: 11/11 pass (was 10/11).
+
 ## [Unreleased] — Cycle 124 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 124 L10: test_translate_csv_to_dict — string vs int assertion
