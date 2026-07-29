@@ -1,16 +1,21 @@
+import inspect
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.data_kind import DataKind
 from src.backend.dsl.adapters.types import ProtocolType
 
 __all__ = ("Exchange", "ExchangeMeta", "ExchangeStatus", "Message")
 
 T = TypeVar("T")
+
+_logger = get_logger(__name__)
 
 
 class ExchangeStatus(StrEnum):
@@ -180,6 +185,39 @@ class Exchange[T](BaseModel):
         """Проверяет, была ли остановлена обработка."""
         return self.properties.get("_stopped", False)
 
+    def add_finalizer(self, fn: Callable[[], Awaitable[None] | None]) -> None:
+        """Регистрирует cleanup-колбэк для выполнения в конце route.
+
+        Finalizers (async или sync) выполняются best-effort через
+        :meth:`run_finalizers` — обычно execution engine после прогона всех
+        processors. Используется для освобождения ресурсов (напр. browser
+        context из :class:`~src.backend.services.rpa.browser_pool.PlaywrightBrowserPool`),
+        которые переживают один processor.
+
+        Args:
+            fn: Колбэк без аргументов. Может быть coroutine-function; если
+                возвращает awaitable — он ожидается.
+        """
+        self.properties.setdefault("_finalizers", []).append(fn)
+
+    async def run_finalizers(self) -> None:
+        """Выполняет все зарегистрированные finalizers в обратном порядке (LIFO).
+
+        Каждый finalizer изолирован: исключение в одном не блокирует остальные.
+        Хранилище ``properties['_finalizers']`` очищается после выполнения
+        (idempotent — повторный вызов no-op).
+        """
+        finalizers: list[Callable[[], Awaitable[None] | None]] = (
+            self.properties.pop("_finalizers", [])
+        )
+        for fn in reversed(finalizers):
+            try:
+                result = fn()
+                if inspect.isawaitable(result):
+                    await result
+            except Exception as exc:  # noqa: BLE001 — best-effort cleanup
+                _logger.debug("finalizer %r failed: %s", fn, exc)
+
     def set_error(self, reason: str) -> None:
         """Устанавливает ошибку без изменения статуса."""
         self.error = reason
@@ -190,6 +228,10 @@ class Exchange[T](BaseModel):
         Копирует in_message (с опциональной заменой body),
         headers, properties и metadata. Новый exchange начинает
         со статуса processing.
+
+        ``_finalizers`` НЕ копируются: родитель владеет ресурсом и
+        освобождает его своим finalizer (напр. browser context); клон,
+        читающий ``properties['rpa.page']``, не должен дублировать cleanup.
         """
         cloned = Exchange(
             in_message=Message(
@@ -199,6 +241,8 @@ class Exchange[T](BaseModel):
         )
         cloned.meta.route_id = self.meta.route_id
         cloned.meta.correlation_id = self.meta.correlation_id
-        cloned.properties = dict(self.properties)
+        cloned.properties = {
+            k: v for k, v in self.properties.items() if k != "_finalizers"
+        }
         cloned.status = ExchangeStatus.processing
         return cloned

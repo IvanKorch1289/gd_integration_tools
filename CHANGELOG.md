@@ -1,5 +1,34 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 67 (2026-07-28) — Layer 3 (DSL)
+
+### Cycle 67 L3: exchange.py → canonical get_logger facade
+
+Layer 3 (DSL) аудит выявил inconsistency: ``src/backend/dsl/engine/exchange.py``
+использовал ``logging.getLogger(__name__)`` напрямую, в обход canonical
+``src.backend.core.logging.get_logger`` facade.
+
+#### Зачем
+``core.logging.get_logger`` — единая точка входа для всей кодовой базы
+(S84 W1). Реализация: lazy __getattr__ → resolve из
+``infrastructure.logging.factory``. Прямой ``logging.getLogger``
+**bypasses**:
+- structlog integration (event_type, severity, loglevel mapping)
+- correlation_id auto-injection (через structlog processors)
+- DI testability (logger factory инжектится в DI providers)
+
+#### Fix
+- ``import logging`` удалён (не используется).
+- ``from src.backend.core.logging import get_logger`` добавлен.
+- ``_logger = logging.getLogger(__name__)`` → ``_logger = get_logger(__name__)``.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/dsl/engine/test_exchange_snapshot.py` +
+  `test_exchange_finalizers.py`: 22/22 pass.
+- 5 pre-existing failures в processor tests — verified unrelated
+  (git stash сравнение до/после).
+
 ## [Unreleased] — Cycle 66 (2026-07-28) — Layer 7 (Observability)
 
 ### Cycle 66 L7: logging_helpers docstring cleanup
