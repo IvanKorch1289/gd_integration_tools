@@ -1,5 +1,23 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 81 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 81 L10: AuthMethodHeaderMiddleware test — missing enabled=True
+
+Layer 10 (Test Coverage) аудит: ``test_auth_method_header_with_method``
+создавал ``AuthMethodHeaderMiddleware(app)`` без ``enabled=True``.
+Middleware default ``enabled=False`` (S191 security fix — no
+information disclosure).
+
+Результат: ``KeyError: 'X-Auth-Method'`` (header никогда не ставится).
+
+#### Fix
+- ``AuthMethodHeaderMiddleware(app)`` → ``AuthMethodHeaderMiddleware(app, enabled=True)``.
+
+#### Validation
+- `ruff check`: clean.
+- Test passes.
+
 ## [Unreleased] — Cycle 80 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 80 L10: blocked_routes tests — wrong exception assertion

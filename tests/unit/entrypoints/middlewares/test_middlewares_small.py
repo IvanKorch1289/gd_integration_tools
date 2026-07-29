@@ -31,8 +31,10 @@ from src.backend.entrypoints.middlewares.security_headers import (
 
 @pytest.mark.asyncio
 async def test_auth_method_header_with_method() -> None:
+    # Cycle 81 L10: middleware defaults to enabled=False (S191 security
+    # fix — no information disclosure). Pass enabled=True to emit header.
     app = AsyncMock()
-    mw = AuthMethodHeaderMiddleware(app)
+    mw = AuthMethodHeaderMiddleware(app, enabled=True)
     request = MagicMock()
     request.state.auth = MagicMock()
     request.state.auth.method = MagicMock()
