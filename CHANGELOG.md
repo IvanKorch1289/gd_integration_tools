@@ -1,5 +1,22 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 127 (2026-07-28) — Layer 9 (DevOps)
+
+### Cycle 127 L9: skip polars-dependent test in unit env
+
+Layer 9 (DevOps) test fix: ``test_upload_excel_for_mass_create`` в
+``test_tech.py`` имел hard dep на ``polars`` (которого нет в
+``pyproject.toml`` deps — fail с ``ModuleNotFoundError``).
+
+#### Fix
+- ``@pytest.mark.skipif`` с ``importlib.util.find_spec("polars")``
+  → test skip'ается в unit-suite (где polars не установлен) но
+  запускается в integration env (где polars есть).
+
+#### Validation
+- `tests/unit/services/core/test_tech.py`: 12/12 pass + 1 skip
+  (было 12/13 — 1 fail).
+
 ## [Unreleased] — Cycle 126 (2026-07-28) — Layer 9 (Infrastructure)
 
 ### Cycle 126 L9: skip psutil-dependent test when psutil not installed
