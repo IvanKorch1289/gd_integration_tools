@@ -40,7 +40,6 @@ async def test_api_key_middleware_skips_when_auth_already_set() -> None:
 @pytest.mark.asyncio
 async def test_api_key_middleware_validates_when_no_auth() -> None:
     """state.auth не установлен → проверяется X-API-Key как раньше."""
-    from fastapi import HTTPException
 
     from src.backend.entrypoints.middlewares.api_key import APIKeyMiddleware
 
@@ -54,7 +53,7 @@ async def test_api_key_middleware_validates_when_no_auth() -> None:
     )
     call_next = AsyncMock()
 
-    with pytest.raises(HTTPException) as excinfo:
-        await middleware.dispatch(request, call_next)
-    assert excinfo.value.status_code == 401
+    # Cycle 84 L10: middleware returns JSONResponse(401), not raise.
+    response = await middleware.dispatch(request, call_next)
+    assert response.status_code == 401
     call_next.assert_not_called()

@@ -1,5 +1,28 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 84 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 84 L10: api_key_dedup + rpa_policy test fixes
+
+Layer 10 (Test Coverage) аудит: 2 теста имели неправильные ожидания.
+
+#### Fix 1: test_api_key_dedup
+``test_api_key_middleware_validates_when_no_auth`` ожидал
+``HTTPException`` raise, но ``APIKeyMiddleware`` возвращает
+``JSONResponse(status_code=401)`` напрямую.
+
+#### Fix 2: test_rpa_policy
+``test_allows_rpa_path_with_role`` устанавливал
+``request.headers["x-roles"] = "user,rpa.admin"``, но middleware читает
+roles из ``request.state.auth.roles`` (trusted auth context), а не
+из клиентского header (security boundary: client-supplied role =
+untrusted).
+
+#### Validation
+- `ruff check`: clean (оба файла, unused imports удалены).
+- `test_api_key_dedup`: 2/2 pass.
+- `test_rpa_policy`: 4/4 pass.
+
 ## [Unreleased] — Cycle 83 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 83 L10: admin_ip tests — wrong exception type

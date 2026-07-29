@@ -6,6 +6,7 @@ Deny-by-default policy для /api/v1/rpa/* endpoints:
 - Optional IP allowlist
 """
 from __future__ import annotations
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -50,8 +51,11 @@ class TestRpaPolicyMiddleware:
 
         request = MagicMock()
         request.url.path = "/api/v1/rpa/shell/exec"
-        request.headers = {"x-roles": "user,rpa.admin"}
-        request.state = MagicMock()
+        request.headers = {}
+        # Cycle 84 L10 fix: middleware reads roles from auth context
+        # (request.state.auth.roles), not from X-Roles header (which
+        # is client-supplied and untrusted).
+        request.state.auth = MagicMock(roles={"user", "rpa.admin"})
         request.client = MagicMock()
         request.client.host = "127.0.0.1"
         request.method = "POST"
