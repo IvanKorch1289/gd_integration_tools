@@ -1,5 +1,36 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 72 (2026-07-28) — Layer 2 (Core Kernel)
+
+### Cycle 72 L2: config_loader.py — hoist lazy get_logger imports
+
+Layer 2 (Core Kernel) аудит: ``src/backend/core/config/config_loader.py``
+имел 2 lazy imports ``from src.backend.core.logging import get_logger``
+внутри методов (``_handle_error``, ``_log_vault_unreachable``) с
+последующим ``get_logger(__name__).error/warning(...)``.
+
+#### Почему hoist
+- Комментарий в коде (``S98 W4``) утверждал "lazy import через
+  core.logging → safe fallback от stdlib". На самом деле
+  ``core.logging.get_logger`` уже импортируется в ``core/__init__``
+  через lazy ``__getattr__`` → реальная circular-import risk
+  отсутствует (verified: ``from src.backend.core.config.config_loader
+  import BaseSettingsWithLoader`` проходит).
+- Per-call ``get_logger(__name__)`` создаёт объект каждый раз
+  (даже если возвращает cached singleton — лишний dict lookup).
+- DRY: модуль уже имеет module-level imports для других core модулей.
+
+#### Fix
+- ``from src.backend.core.logging import get_logger`` поднят на
+  module-level (line 16).
+- ``_logger = get_logger(__name__)`` module-level singleton.
+- 2 inline lazy imports + per-call ``get_logger(__name__)`` →
+  ``_logger.error/warning(...)``.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/core/config/test_config_loader_logging.py`: 1/1 pass.
+
 ## [Unreleased] — Cycle 71 (2026-07-28) — Layer 6 (Workflows)
 
 ### Cycle 71 L6: hitl_pubsub.py → canonical get_logger + drop commit archaeology

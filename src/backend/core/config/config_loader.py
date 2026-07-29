@@ -13,8 +13,11 @@ from pydantic_settings import (
 
 from src.backend.core.config.constants import consts
 from src.backend.core.config.profile import get_active_profile
+from src.backend.core.logging import get_logger
 
 __all__ = ("BaseSettingsWithLoader",)
+
+_logger = get_logger(__name__)
 
 
 def _resolve_repo_root() -> Path:
@@ -129,12 +132,8 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
 
     def _handle_error(self, error: Exception) -> None:
         """Handle errors during data loading."""
-        # S98 W4: lazy import через core.logging (не stdlib logging).
-        # Error handler часто вызывается при проблемах с config chain,
-        # stdlib logging не зависит от core.logging → safe fallback.
-        from src.backend.core.logging import get_logger
-
-        get_logger(__name__).error("Ошибка в %s: %s", self.__class__.__name__, error)
+        # Cycle 72 L2: lazy import hoisted to module-level (no circular import).
+        _logger.error("Ошибка в %s: %s", self.__class__.__name__, error)
 
 
 class YamlConfigSettingsLoader(FilteredSettingsSource):
@@ -245,10 +244,8 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
     @staticmethod
     def _log_vault_unreachable(detail: str) -> None:
         """Один warning на процесс при недоступности Vault."""
-        # S98 W4: lazy import через core.logging.
-        from src.backend.core.logging import get_logger
-
-        get_logger(__name__).warning(
+        # Cycle 72 L2: lazy import hoisted to module-level.
+        _logger.warning(
             "Vault недоступен (%s) — secrets-источник пропущен. "
             "Установите vault.enabled=false или поднимите Vault, "
             "чтобы убрать это сообщение.",
