@@ -10,11 +10,12 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.dsl.service_dsl import _CRUD_METHODS
 
 
 def _register_crud_actions(prefix: str, service_getter: Callable) -> None:
     """Регистрирует стандартные CRUD-actions для сервиса на базе BaseService."""
-    for method in ("add", "get", "update", "delete"):
+    for method in _CRUD_METHODS:
         action_handler_registry.register(
             action=f"{prefix}.{method}",
             service_getter=service_getter,

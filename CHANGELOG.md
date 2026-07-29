@@ -1,5 +1,39 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 58 (2026-07-28) — Layer 5 (DSL/service)
+
+### Cycle 58 L5: Service DSL singleton pattern + CRUD consolidation
+
+Анализ слоя L5 (DSL/service) выявил 3 разных паттерна singleton в
+одном пакете (`global _registry`, `@lru_cache(maxsize=1)`, mutable-list
+hack) + дублирование inline-tuple CRUD-методов в двух местах.
+
+#### Изменения
+- `src/backend/dsl/service_dsl.py`:
+  - Singleton getter: `[_instance[0]]` mutable-list hack → `@functools.cache`
+    (явная мемоизация + lazy-init).
+  - Inline CRUD tuple → `_CRUD_METHODS` (private; используется в 2 местах).
+  - Убран лишний indirection `_build_instance`/`getter` → один `getter`.
+  - Docstring обновлён: предупреждение про cache semantics на ошибке.
+- `src/backend/dsl/commands/setup/helpers.py`:
+  - Inline CRUD tuple → импорт `_CRUD_METHODS` из `service_dsl`.
+
+#### 3-agent review (REQUEST_CHANGES → quick wins applied)
+
+| Reviewer | Verdict | Quick wins |
+|---|---|---|
+| Architect | REQUEST_CHANGES | annotations, document semantics |
+| Critic | REQUEST_CHANGES (7/10) | dedup at line 132, collapse indirection, drop cycle tag |
+| Analyst | REQUEST_CHANGES | dedup at helpers.py:17, document concurrency |
+
+Consensus: 6 quick wins applied; 4 larger concerns deferred to
+отдельные cycles (singleton unification package-wide, inherited methods
+discovery, action registry dedup policy, ServiceMeta.protocols mutability).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/dsl/test_service_dsl.py`: 8/8 pass.
+
 ## [Unreleased] — Cycle 57 (2026-07-28) — aioboto3 pool scoping
 
 ### Cycle 57: aioboto3 → S3Client pool — scope re-assessment: DEFERRED

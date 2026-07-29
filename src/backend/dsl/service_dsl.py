@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import contextlib
+import functools
 import importlib
 import inspect
 import pkgutil
@@ -22,6 +23,10 @@ from typing import Any
 from pydantic import BaseModel
 
 from src.backend.core.logging import get_logger
+
+# Canonical CRUD method names (used by @service_dsl(crud=True) для auto-binding).
+# Tuple для immutability — single source of truth для service_dsl и commands/setup/helpers.
+_CRUD_METHODS: tuple[str, ...] = ("add", "get", "update", "delete")
 
 __all__ = (
     "ServiceDSLRegistry",
@@ -77,7 +82,7 @@ class ServiceDSLRegistry:
 
         for meta in self._services.values():
             if meta.crud:
-                for method in ("add", "get", "update", "delete"):
+                for method in _CRUD_METHODS:
                     if hasattr(meta.service_cls, method):
                         action_handler_registry.register(
                             action=f"{meta.name}.{method}",
@@ -123,19 +128,20 @@ def service_dsl(
                 for m in dir(cls)
                 if not m.startswith("_")
                 and callable(getattr(cls, m, None))
-                and m not in ("add", "get", "update", "delete")
+                and m not in _CRUD_METHODS
             ]
 
         original_init = cls.__init__  # type: ignore[misc]
 
-        _instance = [None]
-
-        def getter():
-            if _instance[0] is None:
-                _instance[0] = cls.__new__(cls)
-                with contextlib.suppress(TypeError):
-                    original_init(_instance[0])
-            return _instance[0]
+        # functools.cache даёт lazy-init с мемоизацией: один экземпляр на процесс,
+        # первая инициализация — отложенная. NB: при ошибке __init__ следующий
+        # вызов повторит попытку (cache не хранит negative-result).
+        @functools.cache
+        def getter() -> Any:
+            instance = cls.__new__(cls)
+            with contextlib.suppress(TypeError):
+                original_init(instance)
+            return instance
 
         meta = ServiceMeta(
             name=name,
