@@ -378,9 +378,6 @@ class SkillRegistry:
         изменении ``extensions/*/plugin.toml``.
         """
         # ponytail: simplest implementation — just re-load from all known plugins
-        import logging
-
-        _logger = logging.getLogger(__name__)
         try:
             # Cycle 33 AI1 fix: resolve extensions dir robustly.
             # Previously hardcoded Path("extensions") — fails in packaged
@@ -392,9 +389,9 @@ class SkillRegistry:
                         plugin_toml = plugin_dir / "plugin.toml"
                         if plugin_toml.exists():
                             self.from_toml_manifest(plugin_toml)
-            _logger.info("SkillRegistry hot-reload: %d skills total", len(self._skills))
+            logger.info("SkillRegistry hot-reload: %d skills total", len(self._skills))
         except Exception as exc:
-            _logger.error("SkillRegistry hot-reload failed: %s", exc)
+            logger.error("SkillRegistry hot-reload failed: %s", exc)
             raise
 
     @staticmethod

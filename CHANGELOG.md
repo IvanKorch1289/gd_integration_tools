@@ -1,5 +1,31 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 68 (2026-07-28) — Layer 4 (AI/Core)
+
+### Cycle 68 L4: skill_registry.py — drop redundant logger creation
+
+Layer 4 (AI/Core) аудит: ``src/backend/core/ai/skill_registry.py``
+имел module-level ``logger = get_logger(__name__)`` (line 56, через
+canonical facade) И local ``_logger = logging.getLogger(__name__)``
+внутри метода ``_hot_reload`` (line 383) — оба ссылаются на тот же
+logger объект, но local creation — redundant shadowing через stdlib.
+
+#### Fix
+- Удалён ``import logging`` + ``_logger = logging.getLogger(__name__)``
+  внутри ``_hot_reload`` метода (lines 381-383).
+- 2 usages ``_logger.info(...)`` / ``_logger.error(...)`` → ``logger.*``
+  (используется module-level singleton).
+
+#### Impact
+- -3 LOC, единый logger на модуль, нет двусмысленности naming
+  (``logger`` vs ``_logger``).
+- structlog integration теперь applied к hot-reload events (раньше
+  stdlib bypass для 2 вызовов).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/core/ai/test_skill_registry*`: 34/34 pass (1 unrelated skip).
+
 ## [Unreleased] — Cycle 67 (2026-07-28) — Layer 3 (DSL)
 
 ### Cycle 67 L3: exchange.py → canonical get_logger facade
