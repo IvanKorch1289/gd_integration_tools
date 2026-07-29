@@ -48,7 +48,11 @@ PLAN V18.1 [wave:s4/k3-bpmn-import].
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
+# Layer 7 DSL Cycle 2 fix: заменяем plain xml.etree.ElementTree на
+# defusedxml.ElementTree (drop-in replacement) для XXE-protection.
+# defusedxml уже transitive dep (uv.lock). Устраняет security gap
+# (докстринг ранее обещал defusedxml, но реально использовался stdlib).
+import defusedxml.ElementTree as ET
 from graphlib import CycleError, TopologicalSorter
 from typing import Any, Final
 
@@ -126,7 +130,7 @@ def import_bpmn(
         _ensure_feature_enabled()
 
     try:
-        root = ET.fromstring(xml_text)  # noqa: S314  # internal controlled XML parsing
+        root = ET.fromstring(xml_text)  # safe XXE-protected via defusedxml
     except ET.ParseError as exc:
         raise BpmnImportError(f"Невалидный BPMN XML: {exc}") from exc
 
