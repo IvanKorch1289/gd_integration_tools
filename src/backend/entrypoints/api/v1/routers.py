@@ -131,6 +131,27 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_feedback import (
         router as admin_feedback_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.processors_catalog import (
+        router as processors_catalog_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.asyncapi import (
+        router as asyncapi_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_rag import (
+        router as admin_rag_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_parallelism import (
+        router as admin_parallelism_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_resilience_profile import (
+        router as admin_resilience_profile_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_scheduler_dlq import (
+        router as admin_scheduler_dlq_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_model_registry import (
+        router as admin_model_registry_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.rag import router as rag_router
     from src.backend.entrypoints.api.v1.endpoints.rag_cache_admin import (
         router as rag_cache_admin_router,
@@ -296,6 +317,36 @@ def get_v1_routers() -> APIRouter:
     )
     api_router_v1.include_router(
         admin_feedback_router, tags=["Admin · Feedback"]
+    )
+    # Layer 5 Cycle 3 fix: processors_catalog router (DSL introspection API)
+    # был unmounted (4 endpoints возвращали 404 в проде). Использует
+    # декларативный ActionRouterBuilder (W26.5) — auto-discovery через __all__.
+    api_router_v1.include_router(
+        processors_catalog_router, tags=["DSL Catalog"]
+    )
+    # Layer 5 Cycle 3 fix: asyncapi router (AsyncAPI 3.0 spec для
+    # FastStream-источников) был unmounted. Streamlit pages 65 +
+    # registry_tab ссылаются на /asyncapi (404 в проде).
+    api_router_v1.include_router(
+        asyncapi_router, tags=["AsyncAPI"]
+    )
+    # Layer 5 Cycle 3 fix: 5 remaining unmounted admin routers. Каждый
+    # имеет dedicated test + admin_role guard. Endpoints возвращали 404 в
+    # проде — закрываем gap.
+    api_router_v1.include_router(
+        admin_rag_router, tags=["Admin · RAG"]
+    )
+    api_router_v1.include_router(
+        admin_parallelism_router, tags=["Admin · Parallelism"]
+    )
+    api_router_v1.include_router(
+        admin_resilience_profile_router, tags=["Admin · Resilience"]
+    )
+    api_router_v1.include_router(
+        admin_scheduler_dlq_router, tags=["Admin · Scheduler DLQ"]
+    )
+    api_router_v1.include_router(
+        admin_model_registry_router, tags=["Admin · Model Registry"]
     )
     # Sprint 9 K1 W1: SAML SP-initiated SSO endpoints.
     api_router_v1.include_router(
