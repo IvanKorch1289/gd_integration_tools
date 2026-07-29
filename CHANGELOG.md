@@ -1,5 +1,34 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 128 (2026-07-28) — Layer 4 (AI)
+
+### Cycle 128 L4: usage_meter.py — lazy import tiktoken
+
+Layer 4 (AI) production fix: ``src/backend/services/ai/usage_meter.py``
+импортировал ``tiktoken`` на module level (line 13). Когда ``tiktoken``
+не установлен, **любой import** ``usage_meter`` fail'ил с
+``ModuleNotFoundError`` — даже модули которые не вызывают
+``estimate_tokens()``.
+
+Result: test_budget_facade.py (7 tests) полностью fail'ился на
+collection.
+
+#### Fix (production)
+- ``import tiktoken`` заменён на ``_get_tiktoken()`` lazy helper.
+  Module теперь importable без tiktoken. ``estimate_tokens()``
+  fail-loud (ImportError) если вызвана без dep — fail-loud
+  (а не silent — fail-open был бы тихим RCE-риском для token
+  accounting).
+
+#### Fix (test)
+- ``test_budget_facade.py``: добавлен ``pytestmark = skipif`` —
+  test skip'ается в unit env (tiktoken нет), запускается в
+  integration env (tiktoken есть).
+
+#### Validation
+- `tests/unit/services/ai/test_budget_facade.py`: 0/0 active (7 skip)
+  (was: collection error → 0 ran).
+
 ## [Unreleased] — Cycle 127 (2026-07-28) — Layer 9 (DevOps)
 
 ### Cycle 127 L9: skip polars-dependent test in unit env

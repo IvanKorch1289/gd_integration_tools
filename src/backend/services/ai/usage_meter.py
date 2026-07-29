@@ -10,9 +10,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-import tiktoken
-
 __all__ = ("UsageStats", "estimate_tokens", "extract_usage")
+
+# Cycle 128: lazy import — tiktoken not in pyproject deps (optional,
+# install via ``uv sync --extra tokencount``). Module is importable
+# without tiktoken; ``estimate_tokens`` raises ImportError if called
+# without the dep (fail-loud, not fail-silent).
+
+
+def _get_tiktoken():  # type: ignore[no-untyped-def]
+    """Lazy import — defer optional dep until first call."""
+    import tiktoken  # noqa: PLC0415
+    return tiktoken
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,9 +87,15 @@ def estimate_tokens(
         factor: множитель для запаса (default 1.3).
     """
     try:
-        encoding = tiktoken.encoding_for_model(model)
-    except KeyError:
-        encoding = tiktoken.get_encoding("cl100k_base")
+        tiktoken = _get_tiktoken()
+        try:
+            encoding = tiktoken.encoding_for_model(model)
+        except KeyError:
+            encoding = tiktoken.get_encoding("cl100k_base")
+    except ImportError:
+        # tiktoken not installed — fail loud (estimate_tokens called
+        # without optional dep installed).
+        raise
 
     total_tokens = 0
     for message in messages:

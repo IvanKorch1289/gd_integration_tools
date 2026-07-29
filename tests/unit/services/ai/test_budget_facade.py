@@ -6,6 +6,14 @@ from typing import Any
 
 import pytest
 
+# Cycle 128: tests call estimate_tokens() which requires tiktoken
+# (lazy import in production usage_meter.py). When tiktoken not
+# installed, fail-loud ImportError — skip entire file in unit env.
+pytestmark = pytest.mark.skipif(
+    not __import__("importlib").util.find_spec("tiktoken"),
+    reason="tiktoken not installed (defer to integration env)",
+)
+
 from src.backend.core.tenancy.token_budget import (
     BudgetPeriod,
     InMemoryTokenBudgetBackend,
