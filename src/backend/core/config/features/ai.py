@@ -101,6 +101,17 @@ class AIFlags(BaseSettings):
         ),
     )
 
+    jupyter_hub_enabled: bool = Field(
+        default=False,
+        title="Jupyter Hub: notifier/action endpoints для HubActionService",
+        description=(
+            "K4 AI. Owner: JupyterHub. S172 W11 closure. "
+            "Активирует HubRunNotebookAction + HubListNotebooks. "
+            "production reads via getattr(flags, 'jupyter_hub_enabled', False) "
+            "(safe fallback если flag отсутствует — but explicit declaration "
+            "is canonical per S172 P1)."
+        ),
+    )
     ai_workspace_ttl_cleanup: bool = Field(
         default=True,
         title="AI: TTL cleanup для ${AI_WORKSPACE}/<tenant>/<session>/",

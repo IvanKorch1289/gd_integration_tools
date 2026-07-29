@@ -35,8 +35,22 @@ from src.backend.services.jupyter.notebook_registry import (
 
 @pytest.fixture(autouse=True)
 def _enable_flag(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Enable jupyter_hub_enabled flag for most tests."""
-    monkeypatch.setattr(feature_flags, "jupyter_hub_enabled", True)
+    """Enable jupyter_hub_enabled flag for most tests.
+
+    Cycle 99 L4: feature_flags doesn't have ``jupyter_hub_enabled``
+    attribute — production reads via ``getattr(flags, ...)`` fallback.
+    Use ``raising=False`` so monkeypatch accepts the new attr.
+
+    Also enable ``secure_settings.jupyter_inline_content_enabled`` for
+    tests that exercise inline notebook content (otherwise
+    JupyterHubNotEnabledError is raised on inline_content path).
+    """
+    monkeypatch.setattr(feature_flags, "jupyter_hub_enabled", True, raising=False)
+    from src.backend.core.config.security import secure_settings
+
+    monkeypatch.setattr(
+        secure_settings, "jupyter_inline_content_enabled", True, raising=False
+    )
 
 
 @pytest.fixture

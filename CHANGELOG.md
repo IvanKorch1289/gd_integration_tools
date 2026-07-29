@@ -1,5 +1,34 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 99 (2026-07-28) — Layer 4 (AI) + L10
+
+### Cycle 99: Add missing `jupyter_hub_enabled` feature flag
+
+Layer 4 (AI) production bug + Layer 10 test fix:
+
+#### Bug
+``feature_flags.jupyter_hub_enabled`` НЕ существовал в ``AIFlags`` (или
+любом FeatureFlags mixin). Production читал через
+``getattr(feature_flags, "jupyter_hub_enabled", False)`` — silent
+fallback всегда возвращал ``False``.
+
+Тесты ``test_hub_run_orchestrator.py`` пытались ``monkeypatch.setattr(
+feature_flags, "jupyter_hub_enabled", True)`` → ``ValueError: FeatureFlags
+object has no field "jupyter_hub_enabled"`` (pydantic ``extra != 'allow'``).
+
+#### Fix
+- ``AIFlags`` (src/backend/core/config/features/ai.py): добавлено поле
+  ``jupyter_hub_enabled: bool = Field(default=False, ...)``.
+- ``test_hub_run_orchestrator.py::_enable_flag``: добавлен
+  ``monkeypatch.setattr(feature_flags, ..., raising=False)`` для
+  обеих flag'ов (``jupyter_hub_enabled`` + ``jupyter_inline_content_enabled``).
+- ``jupyter_inline_content_enabled`` также добавляется в autouse
+  fixture (production guard fail-closed если False).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/services/jupyter/`: 55/55 pass (was 29/55).
+
 ## [Unreleased] — Cycle 98 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 98 L10: test_fallback — wrong method name + return type
