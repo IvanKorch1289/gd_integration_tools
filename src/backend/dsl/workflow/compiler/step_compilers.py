@@ -121,13 +121,22 @@ async def compile_activity_step(decl: ActivityDeclaration, ctx: dict[str, Any]) 
     # Раньше это тихо исполнялось как no-op activity (workflow шёл дальше
     # без branch resolution). Теперь — явная ошибка на старте workflow.
     # Проверяем ДО temporalio import — fail-fast без внешних зависимостей.
+    #
+    # Cycle 1 review fix: bpmn_importer сериализует GatewaySpec → dict
+    # (через to_dict), поэтому isinstance(gw, GatewaySpec) не ловит
+    # dict-вариант. Проверяем оба типа: live GatewaySpec instance + dict
+    # с ключом "kind" (форма bpmn_importer._gateway_spec_to_dict).
     if decl.args and "gateway" in decl.args:
-        from src.backend.dsl.workflow.gateways import GatewaySpec
-
         gw = decl.args["gateway"]
-        if isinstance(gw, GatewaySpec):
+        # Path 1: live GatewaySpec instance.
+        gw_kind: str | None = getattr(gw, "kind", None)
+        # Path 2: dict (serialized form from bpmn_importer).
+        if gw_kind is None and isinstance(gw, dict):
+            gw_kind_raw = gw.get("kind")
+            gw_kind = gw_kind_raw if isinstance(gw_kind_raw, str) else None
+        if gw_kind in ("xor", "and", "or"):
             raise NotImplementedError(
-                f"Gateway (kind={gw.kind!r}) не скомпилирован в runtime — "
+                f"Gateway (kind={gw_kind!r}) не скомпилирован в runtime — "
                 f"BPMN gateway nodes (XOR/AND/OR) требуют отдельного "
                 f"compile_gateway_step в step_compilers.py. "
                 f"Workflow: name={decl.name!r}. Используйте ActivityDeclaration "
