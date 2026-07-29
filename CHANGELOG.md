@@ -1,5 +1,34 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 88 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 88 L10: test_auth_facade — async + fail-closed semantics
+
+Layer 10 (Test Coverage) аудит: 2 бага в одном тесте:
+
+#### Bug 1: missing await
+``test_is_blacklisted_returns_false_on_exception`` вызывал
+``facade._is_blacklisted("jti-123")`` без await — метод async.
+Корутина never awaited + RuntimeWarning, assertion на coroutine object.
+
+#### Bug 2: wrong fail-mode expectation
+Тест ожидал ``result is False`` (fail-open: Redis down → not revoked).
+Production ``facade._is_blacklisted`` явно возвращает ``True``
+(fail-closed: Redis down → treat as revoked, см. line 305
+"fail-closed — security > availability").
+
+**Безопасность**: fail-open на blacklist check = security bug
+(позволяет revoked-токенам проходить при Redis outage).
+
+#### Fix
+- ``facade._is_blacklisted("jti-123")`` → ``asyncio.run(facade._is_blacklisted(...))``.
+- Assertion: ``is False`` → ``is True`` (fail-closed match).
+- Добавлен комментарий со ссылкой на production fail-closed.
+
+#### Validation
+- `ruff check`: clean.
+- 1/1 test passes.
+
 ## [Unreleased] — Cycle 87 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 87 L10: test_features_net — stale default assertion

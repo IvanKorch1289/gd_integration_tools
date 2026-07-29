@@ -202,7 +202,14 @@ class TestAuthFacadeHelpers:
             "src.backend.services.security.facade.get_security_facade",
             side_effect=RuntimeError("boom"),
         ):
-            assert facade._is_blacklisted("jti-123") is False
+            # Cycle 88 L10: _is_blacklisted is async — was never awaited.
+            # Production is FAIL-CLOSED on Redis failure (treats token as
+            # revoked). Test updated to match production semantics — the
+            # old assertion was fail-OPEN which would be a security bug.
+            import asyncio
+
+            result = asyncio.run(facade._is_blacklisted("jti-123"))
+            assert result is True  # fail-closed: Redis down → assume revoked
 
 
 class TestAuthFacadeTokenIssuance:
