@@ -127,10 +127,16 @@ class IntegrationFacade:
             capability,
             context={"tenant_id": tenant_id, "principal": principal},
         ):
+            # Cycle 104 L8: CapabilityDeniedError signature is
+            # (plugin, capability, requested_scope, declared_scope,
+            # tenant, principal). Per Cycle 61 fix in
+            # activity_capability_guard.py.
             raise CapabilityDeniedError(
+                plugin=sink_id,
                 capability=capability,
-                resource=sink_id,
-                subject=principal or "unknown",
+                requested_scope=None,
+                declared_scope=None,
+                principal=principal or "unknown",
             )
 
         _logger.info(

@@ -1,5 +1,31 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 104 (2026-07-28) — Layer 8 (Security)
+
+### Cycle 104 L8: CapabilityDeniedError kwargs in integrations/facade
+
+Layer 8 (Security) bugfix: ``src/backend/services/integrations/facade.py``
+использовал wrong kwargs при вызове ``CapabilityDeniedError``:
+``capability=``, ``resource=``, ``subject=`` — но сигнатура требует
+``plugin=, capability=, requested_scope=, declared_scope=, tenant=,
+principal=``.
+
+Этот же bug был уже исправлен в ``activity_capability_guard.py``
+(Cycle 61), но mirror-копия в integrations/facade осталась.
+
+Результат: ``TypeError: CapabilityDeniedError.__init__() got an
+unexpected keyword argument 'resource'`` при попытке send в
+unauthorized sink.
+
+#### Fix
+- Production: заменены wrong kwargs на правильные:
+  ``plugin=sink_id, capability=capability, requested_scope=None,
+  declared_scope=None, principal=principal or "unknown"``.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/services/integrations/`: 21/21 pass (was 20/21).
+
 ## [Unreleased] — Cycle 103 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 103 L10: F401 unused imports cleanup (13 test files)
