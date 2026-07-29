@@ -368,8 +368,10 @@ async def test_translate_csv_to_dict() -> None:
     proc = MessageTranslatorProcessor(from_format="csv", to_format="dict")
     e = _ex(body="a,b\n1,2\n")
     await proc.process(e, AsyncMock())
-    # polars/csv reader may return ints instead of strings
-    assert e.out_message.body == [{"a": 1, "b": 2}]
+    # Cycle 124: production CSV reader returns strings (text-type fields
+    # by default). Was: assert == [{"a": 1, "b": 2}] — failed because
+    # actual was [{"a": "1", "b": "2"}]. Test bug, not production bug.
+    assert e.out_message.body == [{"a": "1", "b": "2"}]
 
 
 @pytest.mark.asyncio

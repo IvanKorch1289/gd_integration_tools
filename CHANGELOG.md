@@ -1,5 +1,21 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 124 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 124 L10: test_translate_csv_to_dict — string vs int assertion
+
+Layer 10 (Test Coverage) аудит: ``test_translate_csv_to_dict``
+утверждал ``body == [{"a": 1, "b": 2}]`` (int), но production
+``MessageTranslatorProcessor`` использует CSV reader,
+который возвращает strings: actual = ``[{"a": "1", "b": "2"}]``.
+
+#### Fix
+- ``{"a": 1, "b": 2}`` → ``{"a": "1", "b": "2}`` (string types).
+
+#### Validation
+- `tests/unit/dsl/engine/processors/eip/test_transformation.py`:
+  34/34 pass (was 33/34).
+
 ## [Unreleased] — Cycle 123 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 123 L10: searxng_provider tests — waf_outbound_via_facade mock
