@@ -1,5 +1,22 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 126 (2026-07-28) — Layer 9 (Infrastructure)
+
+### Cycle 126 L9: skip psutil-dependent test when psutil not installed
+
+Layer 9 (Infrastructure) test fix: ``test_shutdown_does_not_leak_fds`` в
+``test_s60_w1_structlog_e2e.py`` имел hard dep на ``psutil`` (которого
+нет в ``pyproject.toml`` deps — fail с ``ModuleNotFoundError``).
+
+#### Fix
+- ``@pytest.mark.skipif`` с проверкой ``importlib.util.find_spec("psutil")``
+  → test skip'ается в unit-suite (где psutil не установлен) но
+  запускается в integration env (где psutil есть).
+
+#### Validation
+- `tests/unit/infrastructure/logging/test_s60_w1_structlog_e2e.py`:
+  5/5 pass + 1 skip (было 5/6 — 1 fail).
+
 ## [Unreleased] — Cycle 125 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 125 L10: workflow version test — major bump conflict

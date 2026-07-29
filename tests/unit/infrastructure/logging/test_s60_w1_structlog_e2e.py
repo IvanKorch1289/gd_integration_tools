@@ -223,6 +223,11 @@ async def test_compat_shim_with_positional_args_in_gelf(
 # ---------------------------------------------------------------------- e2e: shutdown clears FDs
 
 
+@pytest.mark.skipif(
+    # Cycle 126: psutil not in pyproject deps; defer to integration env.
+    not __import__("importlib").util.find_spec("psutil"),
+    reason="psutil not installed (defer to integration env)",
+)
 def test_shutdown_does_not_leak_fds(mock_graylog: _MockGraylogServer) -> None:
     """После backend.shutdown() сокеты закрыты → FD не растут."""
     import psutil
