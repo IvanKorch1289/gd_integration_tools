@@ -8,20 +8,20 @@ Lazy-импорт. WSDL загружается лениво при первом 
 from __future__ import annotations
 
 import asyncio
-import logging
 import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
+from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.resilience.retry import with_retry
 from src.backend.core.security.connector_auth import require_capability
-
-_logger = logging.getLogger(__name__)
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.sinks._timeouts import SOAP_SINK_TIMEOUT_S
+
+_logger = get_logger(__name__)
 
 __all__ = ("SoapSink",)
 

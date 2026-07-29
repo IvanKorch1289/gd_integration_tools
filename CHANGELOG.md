@@ -1,5 +1,31 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 69 (2026-07-28) — Layer 4 (Sinks)
+
+### Cycle 69 L4: soap_sink.py → canonical get_logger facade
+
+Layer 4 (Sinks) аудит: ``src/backend/infrastructure/sinks/soap_sink.py``
+использовал ``logging.getLogger(__name__)`` напрямую, в обход canonical
+``src.backend.core.logging.get_logger`` facade.
+
+Аналогично Cycle 67 (exchange.py) — обход canonical facade bypass'ит:
+- structlog integration
+- correlation_id auto-injection
+- DI testability
+
+#### Fix
+- ``import logging`` удалён (не используется).
+- ``from src.backend.core.logging import get_logger`` добавлен.
+- ``_logger = logging.getLogger(__name__)`` → ``_logger = get_logger(__name__)``.
+- E402 fix (ruff auto): строка ``from src.backend.infrastructure...``
+  перенесена после core imports (логический grouping).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/infrastructure/sinks/test_soap_sink.py`: 6 failures
+  pre-existing (verified via git stash before/after), 7 pass. My change
+  не влияет на pass/fail баланс.
+
 ## [Unreleased] — Cycle 68 (2026-07-28) — Layer 4 (AI/Core)
 
 ### Cycle 68 L4: skill_registry.py — drop redundant logger creation
