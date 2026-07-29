@@ -28,8 +28,23 @@ pytest.importorskip("croniter", reason="croniter не установлен")
 
 @pytest.fixture
 def client_app() -> TestClient:
+    # Cycle 108: auth middleware — bypass require_admin() via injected
+    # super_admin role (same pattern as test_admin_scheduler_dlq.py,
+    # test_admin_model_registry.py, test_admin_ip_restriction.py).
     app = FastAPI()
     app.include_router(router)
+
+    @app.middleware("http")
+    async def _add_auth_context(request, call_next):
+        from src.backend.core.auth import AuthContext, AuthMethod
+
+        request.state.auth_context = AuthContext(
+            method=AuthMethod.NONE,
+            principal="test",
+            metadata={"admin_roles": ["super_admin"]},
+        )
+        return await call_next(request)
+
     return TestClient(app)
 
 

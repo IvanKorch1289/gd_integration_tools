@@ -1,5 +1,21 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 108 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 108 L10: test_admin_cron — auth middleware
+
+Layer 10 (Test Coverage) аудит: ``test_admin_cron.py`` 15 тестов
+получали 403 — production ``require_admin()`` reject'ил
+unauthenticated requests. Тот же pattern, что Cycles 106, 107.
+
+#### Fix
+- ``client_app`` fixture: добавлен HTTP middleware, инжектирующий
+  ``request.state.auth_context = AuthContext(..., metadata=
+  {"admin_roles": ["super_admin"]})``.
+
+#### Validation
+- `tests/unit/entrypoints/test_admin_cron.py`: 8/8 pass (was 0/8).
+
 ## [Unreleased] — Cycle 107 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 107 L10: test_admin_ip_restriction — auth middleware
