@@ -216,11 +216,15 @@ def capability_guarded_activity(capabilities: tuple[str, ...]) -> Callable[[F], 
                     "deny (fail-closed)",
                     fn.__name__,
                 )
+                # Cycle 61 L10 fix: kwarg names aligned with CapabilityDeniedError
+                # signature (plugin, requested_scope, declared_scope). Prior
+                # call used plugin_name/scope/reason → TypeError masked the
+                # deny intent and likely propagated as a generic exception.
                 raise CapabilityDeniedError(
-                    plugin_name=fn.__name__,
+                    plugin=fn.__name__,
                     capability="<missing-context>",
-                    scope="<unset>",
-                    reason="capability context not initialized",
+                    requested_scope="<unset>",
+                    declared_scope=None,
                 )
 
             for capability in capabilities:

@@ -73,7 +73,7 @@ class TestCapabilityVocabulary:
             "llm.invoke",
         ):
             assert v.has(name), f"missing {name}"
-        assert len(v.all()) == 44  # S153 W4c: 1 new capability added (44)
+        assert len(v.all()) == 49  # Cycle 61 L10: 5 capabilities added since S153 W4c (44 → 49)
 
     def test_fs_create_new_registered(self) -> None:
         """V15 R-V15-4: capability fs.create_new обязательна для AIFsFacade."""

@@ -120,19 +120,27 @@ def test_disabled_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(my_activity()) == 99
 
 
-def test_no_context_failopen(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Без активного контекста (legacy) — fail-open, activity выполняется."""
+def test_no_context_failclosed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Cycle 61 L10 fix: без активного контекста — fail-CLOSED (V22 R-V15-1).
+
+    Legacy fail-open был отключён в V22 R-V15-1 (см. комментарий в
+    ``activity_capability_guard.py:212``). Тест переименован + переписан:
+    ожидает ``CapabilityDeniedError`` (раньше — TypeError из-за
+    неправильных kwargs в вызове ``CapabilityDeniedError.__init__``).
+    """
+    from src.backend.core.security.capabilities.errors import CapabilityDeniedError
+
     monkeypatch.setattr(
         "src.backend.core.config.features.feature_flags.activity_capability_gate_enabled",
         True,
     )
-    # set_active_capability_context(None) уже в fixture.
 
     @capability_guarded_activity(("db.read",))
     async def my_activity() -> str:
         return "ok"
 
-    assert asyncio.run(my_activity()) == "ok"
+    with pytest.raises(CapabilityDeniedError, match="missing-context"):
+        asyncio.run(my_activity())
 
 
 def test_empty_capabilities_returns_identity() -> None:

@@ -1,5 +1,41 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 61 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 61 L10: Stale test fixes + real fail-closed bug
+
+Layer 10 (Test Coverage) аудит выявил 2 pre-existing test failures с
+HIGH-impact на production security.
+
+#### Bug 1 (HIGH) — Fail-closed path masked by TypeError
+``activity_capability_guard.py:219`` (no-context branch) вызывал
+``CapabilityDeniedError`` с НЕПРАВИЛЬНЫМИ kwargs (``plugin_name=``,
+``scope=``, ``reason=``), хотя реальная сигнатура — ``plugin=``,
+``requested_scope=``, ``declared_scope=``. Результат: ``TypeError``
+на каждом отсутствии контекста, маскировал deny intent и propagate'ился
+как generic exception.
+
+**Impact**: fail-closed semantic V22 R-V15-1 был сломан в TypeError,
+а не в CapabilityDeniedError. Это нарушало аудит-trail и observability.
+
+**Fix**: kwarg names приведены к сигнатуре ``CapabilityDeniedError.__init__()``.
+
+#### Bug 2 (LOW) — Stale vocabulary count
+``test_vocabulary.py::test_default_catalog_full`` утверждал
+``len(v.all()) == 44`` (S153 W4c), но catalog вырос до 49.
+Тест обновлён + комментарий с датой изменения.
+
+#### Test fix
+``test_activity_capability_guard.py::test_no_context_failopen`` —
+переименован в ``test_no_context_failclosed`` и переписан под
+V22 R-V15-1 semantics (ожидает ``CapabilityDeniedError``, а не
+возврат ``"ok"``).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/core/security/`: 247/247 pass (2 pre-existing skips
+  для нереализованных модулей).
+
 ## [Unreleased] — Cycle 60 (2026-07-28) — Layer 8 (Security) audit-emit
 
 ### Cycle 60 L8: CredentialProvider audit-emit (HIGH gap from Cycle 59)
