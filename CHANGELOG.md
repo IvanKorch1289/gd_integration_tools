@@ -1,5 +1,43 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 60 (2026-07-28) — Layer 8 (Security) audit-emit
+
+### Cycle 60 L8: CredentialProvider audit-emit (HIGH gap from Cycle 59)
+
+Cycle 59 review выявил HIGH gap: ``CredentialProvider`` обещал в docstring
+"Audit-emit события при каждом обращении", но реально emit'ил только
+``_logger.info``. Это нарушение compliance-трейла (SOC2/PCI) в
+credentials-домене.
+
+#### Реализация
+- ``core/audit/facade/secrets.py``: добавлена ``emit_secret_access`` —
+  typed Pydantic helper, mirrors ``emit_secret_rotation``. Async signature
+  (``await emit_audit(...)``). Содержимое секрета НИКОГДА не включается
+  в payload — только метаданные: имя, ref, actor, cache_status, outcome.
+- ``core/audit/facade/__init__.py``: re-export ``emit_secret_access``.
+- ``core/security/credential_provider.py::get()``: ``await emit_secret_access(...)``
+  на трёх путях:
+  1. Spec not registered → outcome=failure, error_class=KeyError
+  2. Cache hit → outcome=success, cache_status=hit
+  3. Cache miss → outcome=success, cache_status=miss + resolution_id
+  4. _resolve() raises → outcome=failure, error_class=<ExceptionType>
+
+Audit-emit обёрнут в try/except (per ``AuditService.emit`` contract:
+"audit не должен ломать бизнес-логику").
+
+#### Тесты
+3 новых regression tests (test_get_emits_audit_on_cache_miss_and_hit,
+test_get_emits_failure_audit_on_unknown_spec,
+test_get_emits_failure_audit_on_missing_env) — патчат
+``AuditService.emit`` через monkeypatch (без ClickHouse dependency).
+11/11 tests pass total.
+
+#### Deferred (consensus от 3-agent reviews)
+- Thread-safety / ``asyncio.Lock`` (HIGH: race conditions)
+- Singleton pattern unification L8-wide (`global _instance` legacy)
+- ``time.time()`` → ``time.monotonic()`` для TTL
+- Audit-emit claim "Автоматически подписывается на rotation" — drop или wire
+
 ## [Unreleased] — Cycle 59 (2026-07-28) — Layer 8 (Security)
 
 ### Cycle 59 L8: CredentialProvider fail-closed (2 real bugs)

@@ -108,3 +108,102 @@ async def test_resolve_missing_env_var_raises_keyerror(
     )
     with pytest.raises(KeyError, match="DEFINITELY_NOT_SET"):
         await provider.get("missing")
+
+
+# ── Cycle 60 L8: audit-emit regression tests ──────────────────────────────
+
+
+@pytest.mark.unit
+async def test_get_emits_audit_on_cache_miss_and_hit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Cycle 60 L8: emit_secret_access fires on cache miss + cache hit."""
+    from src.backend.core.audit.facade import audit_service
+
+    captured: list[dict[str, object]] = []
+
+    async def fake_emit(self: object, **kwargs: object) -> None:
+        captured.append(kwargs)
+
+    monkeypatch.setattr(audit_service.AuditService, "emit", fake_emit)
+
+    monkeypatch.setenv("AUDIT_TEST_KEY", "secret-value")
+    provider = CredentialProvider()
+    provider.register_spec(
+        CredentialSpec(
+            name="audited",
+            secret_ref="env:AUDIT_TEST_KEY",
+            ttl_seconds=60,
+        )
+    )
+
+    await provider.get("audited", actor="test-user")
+    await provider.get("audited", actor="test-user")
+
+    secret_events = [e for e in captured if e.get("event") == "secret.access"]
+    miss_events = [
+        e for e in secret_events if e.get("details", {}).get("cache_status") == "miss"
+    ]
+    hit_events = [
+        e for e in secret_events if e.get("details", {}).get("cache_status") == "hit"
+    ]
+    assert len(miss_events) == 1
+    assert miss_events[0]["outcome"] == "success"
+    assert miss_events[0]["actor"] == "test-user"
+    assert "resolution_id" in miss_events[0]["details"]
+    assert len(hit_events) == 1
+    assert hit_events[0]["outcome"] == "success"
+    assert hit_events[0]["actor"] == "test-user"
+
+
+@pytest.mark.unit
+async def test_get_emits_failure_audit_on_unknown_spec(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Cycle 60 L8: emit_secret_access fires with outcome=failure on unknown spec."""
+    from src.backend.core.audit.facade import audit_service
+
+    captured: list[dict[str, object]] = []
+
+    async def fake_emit(self: object, **kwargs: object) -> None:
+        captured.append(kwargs)
+
+    monkeypatch.setattr(audit_service.AuditService, "emit", fake_emit)
+
+    provider = CredentialProvider()
+    with pytest.raises(KeyError, match="not registered"):
+        await provider.get("nonexistent", actor="test-user")
+
+    secret_events = [e for e in captured if e.get("event") == "secret.access"]
+    assert len(secret_events) == 1
+    assert secret_events[0]["outcome"] == "failure"
+    assert secret_events[0]["details"]["error_class"] == "KeyError"
+    assert secret_events[0]["actor"] == "test-user"
+
+
+@pytest.mark.unit
+async def test_get_emits_failure_audit_on_missing_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Cycle 60 L8: emit_secret_access fires with outcome=failure on missing env var."""
+    from src.backend.core.audit.facade import audit_service
+
+    captured: list[dict[str, object]] = []
+
+    async def fake_emit(self: object, **kwargs: object) -> None:
+        captured.append(kwargs)
+
+    monkeypatch.setattr(audit_service.AuditService, "emit", fake_emit)
+
+    monkeypatch.delenv("DEFINITELY_NOT_SET_2", raising=False)
+    provider = CredentialProvider()
+    provider.register_spec(
+        CredentialSpec(name="m2", secret_ref="env:DEFINITELY_NOT_SET_2")
+    )
+    with pytest.raises(KeyError, match="DEFINITELY_NOT_SET_2"):
+        await provider.get("m2", actor="test-user")
+
+    secret_events = [e for e in captured if e.get("event") == "secret.access"]
+    assert len(secret_events) == 1
+    assert secret_events[0]["outcome"] == "failure"
+    assert secret_events[0]["details"]["error_class"] == "KeyError"

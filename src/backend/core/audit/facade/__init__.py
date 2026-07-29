@@ -12,7 +12,8 @@ Per-domain modules (S106 W2 Path A → S107 W3 split):
 * ``authorization`` — ``emit_authorization_decision`` (auth gateway);
 * ``waf`` — ``emit_waf_evaluation`` (WAF outbound);
 * ``capability`` — ``emit_capability_check`` (capability gate);
-* ``secrets`` — ``emit_secret_rotation`` (Vault rotation);
+* ``secrets`` — ``emit_secret_rotation`` (Vault rotation) +
+  ``emit_secret_access`` (CredentialProvider access, Cycle 60 L8);
 * ``ai`` — ``emit_ai_workspace`` (AI workspace manager);
 * ``banking`` — ``emit_banking_audit`` (AI banking processors).
 
@@ -34,7 +35,7 @@ from src.backend.core.audit.facade.audit_service import (  # noqa: F401
 from src.backend.core.audit.facade.authorization import emit_authorization_decision
 from src.backend.core.audit.facade.banking import emit_banking_audit
 from src.backend.core.audit.facade.capability import emit_capability_check
-from src.backend.core.audit.facade.secrets import emit_secret_rotation
+from src.backend.core.audit.facade.secrets import emit_secret_access, emit_secret_rotation
 from src.backend.core.audit.facade.waf import emit_waf_evaluation
 
 __all__ = (
@@ -46,6 +47,7 @@ __all__ = (
     "emit_waf_evaluation",
     "emit_capability_check",
     "emit_secret_rotation",
+    "emit_secret_access",
     "emit_ai_workspace",
     "emit_audit_safe",
     "emit_banking_audit",

@@ -69,10 +69,35 @@ class CredentialProvider:
         """Регистрирует spec для credentials коннектора."""
         self._specs[spec.name] = spec
 
-    async def get(self, name: str) -> ResolvedCredential:
-        """Получить credentials с caching + audit."""
+    async def get(self, name: str, *, actor: str = "system") -> ResolvedCredential:
+        """Получить credentials с caching + audit-emit.
+
+        Cycle 60 L8: docstring claim "Audit-emit события при каждом обращении"
+        теперь выполнен — emit'им ``secret.access`` audit event на cache hit,
+        cache miss и failure. Содержимое секрета НИКОГДА не включается в
+        payload (только метаданные: имя, ref, actor, cache_status).
+
+        Args:
+            name: Имя credential spec.
+            actor: Кто запросил (principal / system). Передаётся в audit
+                payload для трассировки доступа.
+
+        Raises:
+            KeyError: spec не зарегистрирован или env var отсутствует.
+            ValueError: неподдерживаемый формат ``secret_ref``.
+        """
+        from src.backend.core.audit.facade.secrets import emit_secret_access
+
         spec = self._specs.get(name)
         if spec is None:
+            await emit_secret_access(
+                credential_name=name,
+                secret_ref=name,  # нет spec — отдаём имя как resource
+                actor=actor,
+                outcome="failure",
+                cache_status="miss",
+                error_class="KeyError",
+            )
             raise KeyError(
                 f"Credential spec {name!r} not registered; "
                 f"available: {sorted(self._specs)}"
@@ -80,10 +105,30 @@ class CredentialProvider:
 
         cached = self._cache.get(name)
         if cached and (time.time() - cached.resolved_at) < spec.ttl_seconds:
+            await emit_secret_access(
+                credential_name=name,
+                secret_ref=spec.secret_ref,
+                actor=actor,
+                outcome="success",
+                cache_status="hit",
+                resolution_id=cached.resolution_id,
+            )
             return cached
 
         # Real implementation: read from vault_backend или env
-        value = await self._resolve(spec)
+        try:
+            value = await self._resolve(spec)
+        except (KeyError, ValueError) as exc:
+            await emit_secret_access(
+                credential_name=name,
+                secret_ref=spec.secret_ref,
+                actor=actor,
+                outcome="failure",
+                cache_status="miss",
+                error_class=type(exc).__name__,
+            )
+            raise
+
         cred = ResolvedCredential(name=name, value=value)
         self._cache[name] = cred
         self._logger.info(
@@ -93,6 +138,14 @@ class CredentialProvider:
                 "scope": spec.scope,
                 "resolution_id": cred.resolution_id,
             },
+        )
+        await emit_secret_access(
+            credential_name=name,
+            secret_ref=spec.secret_ref,
+            actor=actor,
+            outcome="success",
+            cache_status="miss",
+            resolution_id=cred.resolution_id,
         )
         return cred
 
