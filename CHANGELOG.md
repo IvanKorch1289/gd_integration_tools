@@ -1,5 +1,35 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 54 (2026-07-28) — RPACallPolicy migration
+
+### Cycle 54: DesktopRpaClient → RPACallPolicy (B-02 single entry)
+
+Migrated `services/rpa/desktop_rpa_client.py` from direct
+`make_async_retry` (generic tenacity wrapper) to `RPACallPolicy`
+(canonical RPA resilience entry per ADR-NEW-13). When feature-flag
+`rpa_resilience_wrapper_enabled` is ON AND the policy singleton has
+been set by lifespan, `RPACallPolicy.call()` wraps the HTTP execution
+— providing retry + circuit breaker + DLQ uniformly.
+
+Behaviour preservation:
+- Default-OFF flag → unchanged historical tenacity path (no double-retry).
+- Lifespan not yet initialized → fallback to tenacity (no regression
+  in tests / cold-start).
+- `httpx.HTTPError` → `DesktopRpaError` mapping preserved.
+
+#### Scope clarification
+- `desktop_rpa_client.py` — migrated (this commit).
+- `browser_pool.py` — NO migration needed: `acquire()` is local
+  resource management (Semaphore + Lock), not transport retry.
+  Backlog item updated.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/services/rpa/test_desktop_rpa_client.py`: 8/8 pass.
+- `tests/unit/dsl/engine/processors/test_desktop_rpa.py`: 5 failures
+  pre-existing (verified via `git stash`), unrelated to this change
+  (mock client bypasses the modified path).
+
 ## [Unreleased] — Cycle 53 (2026-07-28) — SSH/SFTP resolver analysis
 
 ### Cycle 53: SSH/SFTP known_hosts resolver consolidation — analysis verdict: NO CHANGE

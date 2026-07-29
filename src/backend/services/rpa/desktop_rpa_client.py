@@ -134,17 +134,41 @@ class DesktopRpaClient:
             headers["X-API-Key"] = self._api_key
 
         # S164 W2: wrapped CB + retry.
+        # Cycle 54: when ``rpa_resilience_wrapper_enabled`` is ON, defer to
+        # RPACallPolicy (B-02 single entry, ADR-NEW-13). Otherwise keep the
+        # historical tenacity path to avoid double-retry.
         try:
-            global _execute_with_retry
-            if _execute_with_retry is None:
-                _execute_with_retry = _get_execute_with_retry()
-            response = await _execute_with_retry(
-                url,
-                params=params,
-                headers=headers,
-                timeout=self._timeout,
-                plugin="services/rpa/desktop_rpa",
-            )
+            from src.backend.core.config.features import feature_flags
+
+            policy = None
+            if feature_flags.rpa_resilience_wrapper_enabled:
+                # Lazy import — DLQ/feature_flag infra only needed when ON.
+                from src.backend.core.resilience.rpa_policy import get_rpa_policy
+
+                policy = get_rpa_policy()
+
+            if policy is not None:
+                response = await policy.call(
+                    lambda: _execute_with_protection(
+                        url,
+                        params=params,
+                        headers=headers,
+                        timeout=self._timeout,
+                        plugin="services/rpa/desktop_rpa",
+                    ),
+                    transport="desktop_rpa",
+                )
+            else:
+                global _execute_with_retry
+                if _execute_with_retry is None:
+                    _execute_with_retry = _get_execute_with_retry()
+                response = await _execute_with_retry(
+                    url,
+                    params=params,
+                    headers=headers,
+                    timeout=self._timeout,
+                    plugin="services/rpa/desktop_rpa",
+                )
         except httpx.HTTPError as exc:
             raise DesktopRpaError(f"transport error к {url}: {exc}") from exc
 
