@@ -68,9 +68,15 @@ class TestRequireAdmin:
     @pytest.mark.asyncio
     async def test_has_role(self) -> None:
         dep = require_admin((AdminRole.OPERATOR,))
+        # Cycle 90 L10: production reads request.state.auth FIRST, then
+        # auth_context. MagicMock auto-creates attributes → getattr returns
+        # MagicMock, not None, breaking fallback chain. Use SimpleNamespace.
+        from types import SimpleNamespace
         request = MagicMock()
-        request.state.auth_context = AuthContext(
-            AuthMethod.JWT, "u1", {"admin_roles": ["operator"]}
+        request.state = SimpleNamespace(
+            auth_context=AuthContext(
+                AuthMethod.JWT, "u1", {"admin_roles": ["operator"]}
+            )
         )
         ctx = await dep(request)
         assert ctx.principal == "u1"
@@ -78,9 +84,12 @@ class TestRequireAdmin:
     @pytest.mark.asyncio
     async def test_super_admin_implicit(self) -> None:
         dep = require_admin((AdminRole.OPERATOR,))
+        from types import SimpleNamespace
         request = MagicMock()
-        request.state.auth_context = AuthContext(
-            AuthMethod.JWT, "u1", {"admin_roles": ["super_admin"]}
+        request.state = SimpleNamespace(
+            auth_context=AuthContext(
+                AuthMethod.JWT, "u1", {"admin_roles": ["super_admin"]}
+            )
         )
         ctx = await dep(request)
         assert ctx is not None

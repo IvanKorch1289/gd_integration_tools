@@ -1,5 +1,29 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 90 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 90 L10: test_admin_roles — MagicMock attribute fallback issue
+
+Layer 10 (Test Coverage) аудит: ``TestRequireAdmin::test_has_role``
+и ``test_super_admin_implicit`` устанавливали
+``request.state.auth_context`` через MagicMock. Но MagicMock
+auto-создаёт attributes: ``request.state.auth`` тоже возвращал
+MagicMock, а не None → production fallback chain (``auth`` →
+``auth_context``) никогда не доходил до ``auth_context``.
+
+Результат: ``AdminAuthorizationError('actual': [])``.
+
+#### Fix
+- ``request.state = MagicMock()`` с ``request.state.auth_context = ...``
+  → ``request.state = SimpleNamespace(auth_context=...)``.
+  ``SimpleNamespace`` не auto-создаёт attributes, поэтому
+  ``getattr(request.state, 'auth', None)`` = None → fallback chain
+  доходит до ``auth_context``.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/core/auth/test_admin_roles.py`: 12/12 pass (было 10/12).
+
 ## [Unreleased] — Cycle 89 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 89 L10: test_auth_facade — mock AsyncMock + asyncio.run
