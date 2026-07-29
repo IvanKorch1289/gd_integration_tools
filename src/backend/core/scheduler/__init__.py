@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
     get_scheduler_manager_class as _get_sm_cls,
 )
-from src.backend.core.di.providers.infrastructure_facade import (
+from src.backend.core.di.providers.infrastructure_locator import (
     get_scheduler_manager_factory as _get_sm_fn,
 )
 

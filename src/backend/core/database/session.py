@@ -18,10 +18,10 @@ Related:
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
     get_main_session_manager_factory as _get_main_session_mgr,
 )
-from src.backend.core.di.providers.infrastructure_facade import (
+from src.backend.core.di.providers.infrastructure_locator import (
     get_main_session_manager_getter as _get_main_session_mgr_getter,
 )
 

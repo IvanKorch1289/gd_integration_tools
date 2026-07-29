@@ -21,13 +21,13 @@ from __future__ import annotations
 
 # Re-exports (capability-checked: extensions имеют право на эти классы,
 # но не на private helpers из infrastructure.repositories.base.*).
-from src.backend.core.di.providers.infrastructure_facade import (  # noqa: F401
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
     get_abstract_repository_class as _get_ar_cls,
 )
-from src.backend.core.di.providers.infrastructure_facade import (
+from src.backend.core.di.providers.infrastructure_locator import (
     get_repository_for_model_factory as _get_rfm_fn,
 )
-from src.backend.core.di.providers.infrastructure_facade import (
+from src.backend.core.di.providers.infrastructure_locator import (
     get_sqlalchemy_repository_class as _get_sr_cls,
 )
 

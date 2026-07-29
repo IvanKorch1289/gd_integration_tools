@@ -38,7 +38,7 @@ class EventPublishProcessor(BaseProcessor):
             return
         from pydantic import BaseModel
 
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_event_bus_facade_provider,
         )
 
@@ -123,7 +123,7 @@ class AwaitReplyProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange: integration call для AwaitReplyProcessor."""
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_event_bus_facade_provider,
         )
 

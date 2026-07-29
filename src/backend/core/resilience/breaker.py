@@ -246,7 +246,7 @@ class BreakerRegistry:
                 # Import внутри функции — AST walker видит модуль,
                 # но это bridge pattern (protocol→impl в runtime).
                 try:
-                    from src.backend.core.di.providers.infrastructure_facade import (
+                    from src.backend.core.di.providers.infrastructure_locator import (
                         get_client_metrics_module as _get_cm_mod_fn,
                     )
                     client_metrics = _get_cm_mod_fn()

@@ -44,7 +44,7 @@ class InfraKafkaProduceProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_kafka_producer_class,
         )
         producer = get_kafka_producer_class()(context)

@@ -42,7 +42,7 @@ class FacadeGetHealthProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_health_check_factory,
         )
         health_fn = get_health_check_factory()(self.component_name)

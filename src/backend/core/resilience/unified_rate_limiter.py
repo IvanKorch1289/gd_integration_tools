@@ -73,7 +73,7 @@ class UnifiedRateLimiter:
             RateLimitResult с информацией о результате.
         """
         try:
-            from src.backend.core.di.providers.infrastructure_facade import (
+            from src.backend.core.di.providers.infrastructure_locator import (
                 get_rate_limit_class,
                 get_rate_limiter_factory,
             )
@@ -109,7 +109,7 @@ class UnifiedRateLimiter:
             return self._backend_cache["backend"]
 
         try:
-            from src.backend.core.di.providers.infrastructure_facade import (
+            from src.backend.core.di.providers.infrastructure_locator import (
                 get_redis_rate_limiter_class,
             )
 

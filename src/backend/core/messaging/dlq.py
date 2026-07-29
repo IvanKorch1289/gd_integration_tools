@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 def __getattr__(name: str) -> Any:
     if not TYPE_CHECKING:
         if name in ("DLQEnvelope", "DLQReason", "DLQWriter"):
-            from src.backend.core.di.providers.infrastructure_facade import (
+            from src.backend.core.di.providers.infrastructure_locator import (
                 get_dlq_base_module as _get_dlq_base_fn,
             )
 

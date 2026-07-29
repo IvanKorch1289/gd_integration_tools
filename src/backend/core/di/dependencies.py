@@ -120,7 +120,7 @@ def get_resilience_profile_store() -> Any:
     """
     store = _get_from_app_state("resilience_profile_store")
     if store is None:
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_in_memory_resilience_profile_store_class as _get_imrps_cls,
         )
         InMemoryResilienceProfileStore = _get_imrps_cls()

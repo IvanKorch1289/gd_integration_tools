@@ -1,5 +1,26 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 115 (2026-07-28) — Layer 4 (DI/Providers)
+
+### Cycle 115 L4: bulk infrastructure_facade → infrastructure_locator migration
+
+Layer 4 (DI/Providers) cleanup: 42 production файлов импортировали
+из deprecated ``infrastructure_facade`` модуля (renamed в ``infrastructure_locator``
+per S31 Task 5). Модуль остался как proxy с ``__getattr__``-based re-export,
+но 48 F822/F401 linter errors + DeprecationWarning per import.
+
+#### Fix (sed bulk)
+- 42 файла: ``from src.backend.core.di.providers.infrastructure_facade``
+  → ``from src.backend.core.di.providers.infrastructure_locator``.
+- ``infrastructure_facade.py``: удалён ``__all__`` (F822 false positives
+  от names которые не существуют в shim — proxy делает ``__getattr__``
+  на лету).
+
+#### Validation
+- `ruff check src/backend/`: 36 F401 errors (was 48 with F822 — no
+  regression, all 36 are pre-existing F401).
+- `tests/unit/services/workflows/`: 71/71 pass.
+
 ## [Unreleased] — Cycle 114 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 114 L10: blocked_routes — re-apply HTTPException raise

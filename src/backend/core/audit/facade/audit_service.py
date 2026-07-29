@@ -159,7 +159,7 @@ class AuditService:
 def _get_correlation_id_safe() -> str | None:
     """Возвращает correlation_id из contextvar или ``None`` при отсутствии."""
     try:
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_correlation_id as _get_cid,
         )
         get_correlation_id = _get_cid

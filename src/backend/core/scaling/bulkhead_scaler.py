@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 def __getattr__(name: str) -> Any:
     if not TYPE_CHECKING:
         if name in ("Bulkhead", "BulkheadRegistry"):
-            from src.backend.core.di.providers.infrastructure_facade import (
+            from src.backend.core.di.providers.infrastructure_locator import (
                 get_bulkhead_attr as _get_bh_attr,
             )
 

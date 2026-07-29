@@ -44,17 +44,9 @@ def __dir__() -> list[str]:  # type: ignore[no-untyped-def]
 
     return sorted(dir(infrastructure_locator))
 
-__all__ = (  # noqa: F401
-    "get_redis_client_class",
-    "get_mongodb_client_class",
-    "get_clickhouse_client_class",
-    "get_elasticsearch_client_class",
-    "get_kafka_producer_class",
-    "get_external_db_registry",
-    "get_scheduler_manager_factory",
-    "get_workflow_spec_class",
-    "get_e2b_sandbox_class",
-    "get_prompt_cache_middleware",
-    "get_event_bus_facade_provider",
-    "get_dsl_variables_attr",
-)
+
+# Cycle 115: __all__ intentionally omitted — this module proxies all
+# names via __getattr__ above, so static linters cannot resolve the
+# symbols (F822 false positives). After Cycle 115 migration, no
+# production code imports from infrastructure_facade directly anymore,
+# so __all__ serves no purpose.

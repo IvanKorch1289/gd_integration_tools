@@ -90,7 +90,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
         )
 
     if backend == "poll":
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_poll_cdc_backend_class as _get_pcb_cls,
         )
         PollCDCBackend = _get_pcb_cls()
@@ -103,7 +103,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
             feed=kwargs.get("feed"),
         )
     if backend == "listen_notify":
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_listen_notify_cdc_backend_class as _get_lncb_cls,
         )
         ListenNotifyCDCBackend = _get_lncb_cls()
@@ -113,7 +113,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
             channel=kwargs.get("channel", "cdc_events"),
         )
     if backend == "debezium":
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_debezium_events_cdc_backend_class as _get_decb_cls,
         )
         DebeziumEventsCDCBackend = _get_decb_cls()
@@ -126,7 +126,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
         )
     if backend == "adapter":
         # Legacy: wraps CDCClient в CDCSource Protocol.
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_cdc_client_adapter_class as _get_cdc_ca_cls,
         )
         CDCClientAdapter = _get_cdc_ca_cls()

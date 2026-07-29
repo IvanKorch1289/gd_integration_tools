@@ -67,7 +67,7 @@ class InfraLogWriteProcessor(BaseProcessor):
             базовым ``BaseProcessor.process`` API, но не используются —
             процессор stateless и не модифицирует exchange.
         """
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_logger_factory as _get_logger_factory_fn,
         )
         logger = _get_logger_factory_fn()("dsl.infra_log")

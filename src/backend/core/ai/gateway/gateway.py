@@ -205,7 +205,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
         """S166 W2: attach CodeSandbox implementation (Rule 10).
 
         Usage:
-            from src.backend.core.di.providers.infrastructure_facade import (
+            from src.backend.core.di.providers.infrastructure_locator import (
                 get_e2b_sandbox_class as _get_e2b_sandbox_cls,
             )
             E2BSandbox = _get_e2b_sandbox_cls()

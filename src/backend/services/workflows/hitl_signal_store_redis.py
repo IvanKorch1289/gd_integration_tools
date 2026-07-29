@@ -81,7 +81,7 @@ class RedisHitlSignalStore:
         """Lazy resolve redis client (для unit-тестов — inject через ctor)."""
         if self._client is not None:
             return self._client
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_redis_client_factory,
         )
 

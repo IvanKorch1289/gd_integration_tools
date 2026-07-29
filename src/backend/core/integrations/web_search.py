@@ -14,22 +14,22 @@ S44 W1 sprint goal: закрыть 2 extensions violations (Q1 sprint 43 audit c
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_facade import (  # noqa: E402,F401
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: E402,F401
     get_base_search_provider_class as _get_bsp_cls,
 )
-from src.backend.core.di.providers.infrastructure_facade import (
+from src.backend.core.di.providers.infrastructure_locator import (
     get_perplexity_provider_class as _get_pp_cls,
 )
-from src.backend.core.di.providers.infrastructure_facade import (
+from src.backend.core.di.providers.infrastructure_locator import (
     get_searxng_provider_class as _get_sxp_cls,
 )
-from src.backend.core.di.providers.infrastructure_facade import (
+from src.backend.core.di.providers.infrastructure_locator import (
     get_tavily_provider_class as _get_tp_cls,
 )
-from src.backend.core.di.providers.infrastructure_facade import (
+from src.backend.core.di.providers.infrastructure_locator import (
     get_web_search_service_class as _get_wss_cls,
 )
-from src.backend.core.di.providers.infrastructure_facade import (
+from src.backend.core.di.providers.infrastructure_locator import (
     get_web_search_service_factory as _get_wss_fn,
 )
 

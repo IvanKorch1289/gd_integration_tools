@@ -67,7 +67,7 @@ class QuotaTracker:
         # effect. Was 'from ... import get_redis_client as redis_client'
         # which used local binding and ignored patches.
         # Per pattern #11 (S157 W2 fix).
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_redis_client_factory as _get_redis_factory_fn,
         )
         try:

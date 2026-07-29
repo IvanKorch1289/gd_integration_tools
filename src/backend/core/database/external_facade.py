@@ -177,7 +177,7 @@ class ExternalDBFacade:
         if self._registry_getter is not None:
             return self._registry_getter()
         # Default: lazy singleton реестра внешних БД (Wave 6.1).
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_external_db_registry as _get_ext_db_reg,
         )
 

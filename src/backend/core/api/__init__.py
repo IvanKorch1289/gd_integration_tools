@@ -108,25 +108,25 @@ def __getattr__(name: str) -> Any:
 
         return get_scheduler_provider
     if name == "get_redis_client_class":
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_redis_client_class,
         )
 
         return get_redis_client_class
     if name == "get_mongodb_client_class":
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_mongodb_client_class,
         )
 
         return get_mongodb_client_class
     if name == "get_elasticsearch_client_class":
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_elasticsearch_client_class,
         )
 
         return get_elasticsearch_client_class
     if name == "get_clickhouse_client_class":
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_clickhouse_client_class,
         )
 

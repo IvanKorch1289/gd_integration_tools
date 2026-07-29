@@ -236,7 +236,7 @@ class OutboundHttpClient:
             from src.backend.core.interfaces.observability import CorrelationIdProvider
 
             def _get_cid() -> str | None:
-                from src.backend.core.di.providers.infrastructure_facade import (
+                from src.backend.core.di.providers.infrastructure_locator import (
                     get_correlation_module as _get_corr_mod_fn,
                 )
                 _correlation = _get_corr_mod_fn()

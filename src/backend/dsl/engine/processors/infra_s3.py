@@ -41,7 +41,7 @@ class InfraS3GetProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
-        from src.backend.core.di.providers.infrastructure_facade import (
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_object_storage_class,
         )
         storage = get_object_storage_class()(context)

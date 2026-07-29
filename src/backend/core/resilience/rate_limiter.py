@@ -45,7 +45,7 @@ def __getattr__(name: str) -> Any:
             "RedisRateLimiter",
             "get_rate_limiter",
         ):
-            from src.backend.core.di.providers.infrastructure_facade import (
+            from src.backend.core.di.providers.infrastructure_locator import (
                 get_unified_rate_limiter_attr as _get_rl_attr,
             )
 

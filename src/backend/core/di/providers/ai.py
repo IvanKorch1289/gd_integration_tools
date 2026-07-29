@@ -108,10 +108,10 @@ def _resolve_pii_token_registry() -> Any:
     Для production AES-GCM ключ читается из env ``PII_AES_KEY_V{version}``
     (base64 → 32 raw bytes). Vault-источник — carry-over в S25 closure.
     """
-    from src.backend.core.di.providers.infrastructure_facade import (
+    from src.backend.core.di.providers.infrastructure_locator import (
         get_env_aesgcm_key_provider_class as _get_eakp_cls,
     )
-    from src.backend.core.di.providers.infrastructure_facade import (
+    from src.backend.core.di.providers.infrastructure_locator import (
         get_redis_token_registry_class as _get_rtr_cls,
     )
     EnvAESGCMKeyProvider = _get_eakp_cls()
