@@ -1,5 +1,29 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 101 (2026-07-28) — Layer 4 (Infrastructure)
+
+### Cycle 101 L4: httpx_unified_transport + stuck_monitor_enabled flags
+
+Layer 4 (Infrastructure) production bug audit (continued from
+Cycle 99-100). Grep of all ``getattr(feature_flags, ...)`` references
+revealed 2 more flags that production reads but were never declared
+in any FeatureFlags mixin.
+
+#### Flags
+1. ``httpx_unified_transport`` — production ``http_httpx.py:210``
+   reads it (default-OFF → legacy aiohttp transport).
+2. ``stuck_monitor_enabled`` — production ``stuck_monitor.py:78`` +
+   ``startup.py:455` read it (default-OFF → no outbox deadlock detection).
+
+#### Fix
+- ``InfrastructureFlags`` (infrastructure.py): добавлены оба flag'а
+  с default-False (backward compat с silent-fallback поведением).
+- Description указывает на production callsite.
+
+#### Validation
+- `ruff check`: clean.
+- No tests broken.
+
 ## [Unreleased] — Cycle 100 (2026-07-28) — Layer 4 (Experimental)
 
 ### Cycle 100 L4: workflow_exchange_wrapping flag — silent fallback

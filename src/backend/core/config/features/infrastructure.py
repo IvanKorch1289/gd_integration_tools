@@ -372,5 +372,25 @@ class InfrastructureFlags(BaseSettings):
         ),
     )
 
+    # ─── Cycle 101 L4: missing flags referenced in production ────────
+    httpx_unified_transport: bool = Field(
+        default=False,
+        title="K-Infrastructure: единый httpx transport (outbound HTTP)",
+        description=(
+            "Cycle 101 L4: production http_httpx.py читает "
+            "``httpx_unified_transport`` (default-OFF — legacy aiohttp transport). "
+            "Default False — backward compat с существующими httpx-клиентами."
+        ),
+    )
+    stuck_monitor_enabled: bool = Field(
+        default=False,
+        title="K-Infrastructure: outbox-stuck monitor (worker deadlock detection)",
+        description=(
+            "Cycle 101 L4: production stuck_monitor.py + startup.py читают "
+            "``stuck_monitor_enabled`` (default-OFF). Deadlock-detection для "
+            "outbox workers — алертит если worker не отвечает N секунд."
+        ),
+    )
+
 
 __all__ = ("InfrastructureFlags",)
