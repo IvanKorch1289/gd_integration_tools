@@ -51,6 +51,12 @@ from .activity_bridge import (  # noqa: I001 — intentional relative
     LANGGRAPH_CHECKPOINT_PUT_ACTIVITY,
 )
 
+# Layer 6 Workflow Cycle 2 fix: именованные константы для magic
+# timeout-чисел (Ponytail D-rule: no magic numbers).
+# LangGraph checkpoint I/O activities — обычно быстрые DB calls,
+# 10s достаточно для типичной нагрузки.
+LANGGRAPH_CHECKPOINT_TIMEOUT_S: int = 10
+
 __all__ = (
     "StepCompiler",
     "compile_activity_step",
@@ -457,7 +463,7 @@ async def compile_agent_invoke_step(
         prior = await workflow.execute_activity(
             LANGGRAPH_CHECKPOINT_GET_ACTIVITY,
             thread_id,
-            start_to_close_timeout=timedelta(seconds=10),
+            start_to_close_timeout=timedelta(seconds=LANGGRAPH_CHECKPOINT_TIMEOUT_S),
         )
         if prior is not None:
             _logger.debug(
@@ -484,7 +490,7 @@ async def compile_agent_invoke_step(
         await workflow.execute_activity(
             LANGGRAPH_CHECKPOINT_PUT_ACTIVITY,
             state_to_persist,
-            start_to_close_timeout=timedelta(seconds=10),
+            start_to_close_timeout=timedelta(seconds=LANGGRAPH_CHECKPOINT_TIMEOUT_S),
         )
     else:
         result = await workflow.execute_activity(
