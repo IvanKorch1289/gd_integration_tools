@@ -1,5 +1,22 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 80 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 80 L10: blocked_routes tests — wrong exception assertion
+
+Layer 10 (Test Coverage) аудит: ``test_blocked_routes_blocked`` и
+``test_blocked_routes_glob_pattern`` ожидали ``HTTPException`` raise,
+но ``BlockedRoutesMiddleware`` возвращает ``JSONResponse(status_code=403)``
+напрямую (не raise).
+
+#### Fix
+- 2 теста: ``pytest.raises(HTTPException)`` → ``response.status_code == 403``.
+- ``HTTPException` import удалён (больше не используется).
+
+#### Validation
+- `ruff check`: clean.
+- `test_blocked_routes_blocked` + `test_blocked_routes_glob_pattern`: 2/2 pass.
+
 ## [Unreleased] — Cycle 79 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 79 L10: test_middlewares_small.py::test_security_headers — wrong API
