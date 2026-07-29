@@ -119,6 +119,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.plugin_inventory import (
         routes_router as v11_routes_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_plugins import (
+        router as admin_plugins_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.rag import router as rag_router
     from src.backend.entrypoints.api.v1.endpoints.rag_cache_admin import (
         router as rag_cache_admin_router,
@@ -267,6 +270,12 @@ def get_v1_routers() -> APIRouter:
     )
     api_router_v1.include_router(
         v11_routes_router, prefix="/routes", tags=["V11 · Routes"]
+    )
+    # Layer 5 Entrypoints Cycle 1 fix: admin_plugins router был orphan
+    # (8 endpoints возвращали 404 в проде). S62 W1 decomp — router перенесён
+    # в admin_plugins/ package. Регистрируем явно.
+    api_router_v1.include_router(
+        admin_plugins_router, prefix="/admin/plugins", tags=["Admin · Plugins"]
     )
     # Sprint 9 K1 W1: SAML SP-initiated SSO endpoints.
     api_router_v1.include_router(
