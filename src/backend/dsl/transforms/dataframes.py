@@ -8,7 +8,12 @@
 
 from typing import Any
 
-import polars as pl
+# polars — optional dep (Ponytail YAGNI). Runtime fallback на None;
+# обращение к pl.X даёт понятную ошибку install.
+try:
+    import polars as pl
+except ImportError:
+    pl = None  # type: ignore[assignment]
 
 __all__ = ("read_csv", "read_excel", "write_parquet")
 

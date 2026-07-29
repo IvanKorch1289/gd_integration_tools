@@ -17,11 +17,16 @@ import io
 from collections.abc import Iterable
 from typing import Any
 
-import polars as pl
+# polars — optional dep (Ponytail YAGNI). Runtime fallback на None
+# если polars отсутствует; обращение к pl.X даёт понятную ошибку.
+try:
+    import polars as pl
+except ImportError:
+    pl = None  # type: ignore[assignment]
 
 from src.backend.core.logging import get_logger
 
-__all__ = (
+__all__ = (  # noqa: F822
     "DataFrame",
     "from_records",
     "read_csv",
@@ -33,7 +38,7 @@ __all__ = (
 
 logger = get_logger("services.dataframe")
 
-DataFrame = pl.DataFrame
+DataFrame = pl.DataFrame if pl is not None else Any
 
 
 def from_records(records: Iterable[dict[str, Any]]) -> pl.DataFrame:

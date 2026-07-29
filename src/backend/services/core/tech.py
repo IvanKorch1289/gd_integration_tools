@@ -2,7 +2,14 @@ from enum import Enum
 from io import BytesIO
 from typing import Any
 
-import polars as pl
+# polars — optional dep (Ponytail YAGNI). Module импортируется даже
+# без polars; реальное обращение к pl.read_excel в import_excel_data()
+# даёт понятную ошибку с инструкцией install.
+try:
+    import polars as pl  # type: ignore[import-not-found]
+except ImportError:
+    pl = None  # type: ignore[assignment]
+
 from fastapi.responses import HTMLResponse
 
 from src.backend.core.config.settings import settings
@@ -167,6 +174,11 @@ class TechService:
         )
 
         results: list = []
+        if pl is None:
+            raise RuntimeError(
+                "polars required for Excel-импорт. "
+                "Install: uv pip install polars"
+            )
         df = pl.read_excel(BytesIO(file_bytes))
 
         for row in df.iter_rows(named=True):
