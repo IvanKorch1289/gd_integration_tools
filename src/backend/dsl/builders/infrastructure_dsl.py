@@ -98,11 +98,19 @@ class _InfraOp(BaseProcessor):
         Каждый subclass переопределяет ``_execute()`` для конкретной операции.
         Fallback — логирование intent (для backward-compat).
         """
+        # Cycle 97 L3: emit intent log on EVERY stub execution (не только
+        # на exception). Default _execute не raise'ит — без этого лога
+        # observability пустая. Audit-trail важнее для audit-секции.
+        _stub_logger.warning(
+            "InfraOp stub executed: op=%s, params=%s",
+            self.op_name,
+            list(self.params.keys()),
+        )
         try:
             await self._execute(exchange, context)
         except Exception as exc:
             _stub_logger.warning(
-                "InfraOp stub executed: op=%s, params=%s (error=%s)",
+                "InfraOp stub failed: op=%s, params=%s (error=%s)",
                 self.op_name,
                 list(self.params.keys()),
                 exc,

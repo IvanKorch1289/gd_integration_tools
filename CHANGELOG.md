@@ -1,5 +1,25 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 97 (2026-07-28) — Layer 3 (DSL)
+
+### Cycle 97 L3: InfraOp.process — observability для stub execution
+
+Layer 3 (DSL) аудит: ``_InfraOp.process`` логировал только на exception
+(``except Exception as exc → _stub_logger.warning``). Но default
+``_execute`` (line 112) НЕ raise'ит — observability для happy-path stub
+execution была нулевая.
+
+Тест ``test_sftp_get_emits_warning_on_execute`` ожидал warning на
+every execute (audit-trail intent). Production не давал — test fail.
+
+#### Fix (production code)
+- Emit intent log ПЕРЕД ``_execute()``: ``"InfraOp stub executed: op=..., params=..."``.
+- Existing exception log сохранён (теперь с другим message: ``"stub failed"``).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/dsl/builders/test_infrastructure_dsl.py`: 21/21 pass (was 20/21).
+
 ## [Unreleased] — Cycle 96 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 96 L10: test_eventbus_facade_wiring — 2 bugs in 1 file
