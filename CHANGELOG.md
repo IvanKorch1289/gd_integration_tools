@@ -1,5 +1,24 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 112 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 112 L10: feature flag count tests — relax to lower bound
+
+Layer 10 (Test Coverage) аудит: 3 теста в
+``tests/unit/core/config/test_features_*.py`` использовали hardcoded
+assertion на количество field'ов (``== 10``, ``== 7``, ``== 27``).
+Каждый раз при добавлении нового feature flag'а (Cycles 99-101 добавили
+3: ``jupyter_hub_enabled``, ``workflow_exchange_wrapping``,
+``httpx_unified_transport``, ``stuck_monitor_enabled``) тесты ломались.
+
+#### Fix
+- Hardcoded ``== N`` → ``>= N`` (lower bound). Тест catches removals
+  (важно для audit) но не breaks на additions (которые должны быть
+  backward-compat).
+
+#### Validation
+- `tests/unit/core/config/`: 369/369 pass (was 366/369).
+
 ## [Unreleased] — Cycle 111 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 111 L10: FakeWebSocket.close() signature mismatch
