@@ -22,6 +22,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel, Field
 
 from src.backend.core.logging import get_logger
 
@@ -30,6 +31,31 @@ __all__ = ("router",)
 logger = get_logger("imports")
 
 router = APIRouter()
+
+
+# ──────────────────── Response models ────────────────────
+#
+# Layer 4 Cycle 4: bounded response_model для /bulk-objects. Остальные
+# endpoints оставлены как dict (multipart/form-data + dynamic shapes).
+
+
+class BulkObjectsFailureItem(BaseModel):
+    """Одна неудавшаяся строка bulk import."""
+
+    row: int = Field(description="0-based индекс строки в исходном файле.")
+    error: str = Field(description="Сообщение об ошибке.")
+
+
+class BulkObjectsResponse(BaseModel):
+    """Результат /import/bulk-objects."""
+
+    total_rows: int = Field(description="Всего строк обработано.")
+    succeeded: int = Field(description="Успешно зарегистрировано.")
+    failed: int = Field(description="С ошибками.")
+    failures: list[BulkObjectsFailureItem] = Field(
+        default_factory=list,
+        description="Первые 20 failures (truncated).",
+    )
 
 
 # ──────────────────── OpenAPI ────────────────────
@@ -296,4 +322,5 @@ router.add_api_route(
         "указанный DSL-роут."
     ),
     name="import_bulk_objects",
+    response_model=BulkObjectsResponse,
 )
