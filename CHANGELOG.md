@@ -1,5 +1,24 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 95 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 95 L10: test_versioning — off-by-one create_session count
+
+Layer 10 (Test Coverage) аудит: ``test_snapshot_creates_version_1``
+assertил ``mock_mgr.create_session.assert_called_once()``, но
+production вызывает ``create_session()`` 2 раза:
+1. ``_next_version()`` (line 67) — для расчёта next version number
+2. ``snapshot()`` (line 96) — для записи в БД
+
+Тест был off-by-one — Cycle 33 vintage.
+
+#### Fix
+- ``assert_called_once()`` → ``assert mock_mgr.create_session.call_count == 2``.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/dsl/engine/test_versioning.py`: 17/17 pass.
+
 ## [Unreleased] — Cycle 94 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 94 L10: test_auth_facade — duplicate exact dict equality

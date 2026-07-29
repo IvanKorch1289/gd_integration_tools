@@ -185,7 +185,10 @@ class TestSnapshot:
         assert snap.api_version == "v2"
         # session.add должен быть вызван с экземпляром DslSnapshot
         assert mock_session.add.call_count == 1
-        mock_mgr.create_session.assert_called_once()
+        # Cycle 95 L10: production calls create_session TWICE
+        # (_next_version line 67 + snapshot line 96), not once. Test
+        # assertion was off-by-one (Cycle 33 vintage).
+        assert mock_mgr.create_session.call_count == 2
         added = mock_session.add.call_args[0][0]
         assert added.route_id == "r1"
         assert added.version == 1
