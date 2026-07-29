@@ -105,7 +105,10 @@ class TestAuthFacadeSAML:
         result = await facade.verify_request("raw-assertion", method="saml")
 
         assert result.is_authenticated is False
-        assert result.metadata == {"error": "saml_requires_acs_flow"}
+        # Cycle 94 L10: subset check (same fix as Cycle 92) — production
+        # metadata includes assertion_len debug info.
+        assert result.metadata["error"] == "saml_requires_acs_flow"
+        assert "assertion_len" in result.metadata
 
 
 class TestAuthFacadePermissions:

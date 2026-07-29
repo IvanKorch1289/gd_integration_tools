@@ -1,5 +1,20 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 94 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 94 L10: test_auth_facade — duplicate exact dict equality
+
+Layer 10 (Test Coverage) аудит: ``test_auth_facade.py::TestAuthFacadeSAML::test_raw_assertion_fails_closed``
+имел тот же bug что Cycle 92 (тест в ``test_auth_facade_saml_contract.py``):
+exact dict equality не учитывал production ``assertion_len`` debug field.
+
+#### Fix
+- Exact dict equality → subset check (assertion_len presence).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/core/auth/`: 269/269 pass (0 failures, was 1).
+
 ## [Unreleased] — Cycle 93 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 93 L10: test_api_key_strength — off-by-2 hardcoded length
