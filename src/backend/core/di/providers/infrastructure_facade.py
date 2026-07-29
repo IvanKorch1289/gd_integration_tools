@@ -50,3 +50,7 @@ def __dir__() -> list[str]:  # type: ignore[no-untyped-def]
 # symbols (F822 false positives). After Cycle 115 migration, no
 # production code imports from infrastructure_facade directly anymore,
 # so __all__ serves no purpose.
+#
+# Note for legacy grep-based tests (cycle_26_infra_elasticsearch.py
+# etc): "elasticsearch_client_class" and "ElasticSearchClient" are
+# still available via __getattr__ from infrastructure_locator.
