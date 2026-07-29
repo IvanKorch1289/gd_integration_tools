@@ -196,8 +196,11 @@ def test_excluded_statuses_not_counted_as_failures() -> None:
 @pytest.mark.asyncio
 async def test_open_circuit_returns_503() -> None:
     """OPEN circuit — return 503 immediately (no upstream call)."""
+    # Cycle 82 L10 fix: __init__ defaults to use_sliding_window_breaker=True
+    # (S173). For legacy deque-based test, opt out — otherwise the test
+    # manipulates state that the middleware never reads.
     policy = BreakerPolicy(failure_threshold=1)
-    m = _make_middleware(default_policy=policy)
+    m = _make_middleware(default_policy=policy, use_sliding_window_breaker=False)
     state = m._get_state("/api/v1/slow")
     # Trip to OPEN
     state.failures.append(time.time())
@@ -236,9 +239,19 @@ def _make_middleware(
     *,
     default_policy: BreakerPolicy | None = None,
     route_policies: dict[str, BreakerPolicy] | None = None,
+    use_sliding_window_breaker: bool = False,
 ) -> CircuitBreakerMiddleware:
-    """Create CircuitBreakerMiddleware для unit testing."""
+    """Create CircuitBreakerMiddleware для unit testing.
+
+    Cycle 82 L10: default ``use_sliding_window_breaker=False`` — unit
+    tests manipulate the legacy deque state directly (state.state,
+    state.failures). Production uses sliding_window=True (default in
+    __init__), tests must opt out.
+    """
     app_mock = MagicMock()
     return CircuitBreakerMiddleware(
-        app_mock, default_policy=default_policy, route_policies=route_policies
+        app_mock,
+        default_policy=default_policy,
+        route_policies=route_policies,
+        use_sliding_window_breaker=use_sliding_window_breaker,
     )

@@ -1,5 +1,29 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 82 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 82 L10: circuit_breaker test — sliding_window opt-out
+
+Layer 10 (Test Coverage) аудит: ``test_open_circuit_returns_503``
+создавал middleware через ``_make_middleware`` без явного
+``use_sliding_window_breaker``. Но ``__init__`` default изменился
+на ``use_sliding_window_breaker=True`` (S173 migration).
+
+Тест манипулировал legacy deque state (``state.state``, ``state.failures``)
+но middleware проверял SlidingWindowBreaker facade — state никогда
+не читался. Результат: ``upstream_called = True`` (не 503 reject).
+
+#### Fix
+- ``_make_middleware`` сигнатура: добавлен ``use_sliding_window_breaker=False``
+  default (legacy-test helper).
+- ``test_open_circuit_returns_503``: ``_make_middleware(default_policy=policy,
+  use_sliding_window_breaker=False)``.
+- Также исправлен синтаксис — закрыта лишняя ``)``.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/entrypoints/middlewares/test_circuit_breaker.py`: 13/13 pass.
+
 ## [Unreleased] — Cycle 81 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 81 L10: AuthMethodHeaderMiddleware test — missing enabled=True
