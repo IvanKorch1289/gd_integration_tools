@@ -24,7 +24,6 @@ Sprint 178 (HITL-1 ARC-010 closeout): :meth:`HitlService.resolve`
 from __future__ import annotations
 
 import asyncio
-import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
@@ -38,6 +37,11 @@ __all__ = (
     "HitlSignalStore",
     "InMemoryHitlSignalStore",
 )
+
+
+# Cycle 73 L6: module-level canonical logger (was: inline
+# logging.getLogger(...)/get_logger(...) scattered).
+_logger = get_logger("services.workflows.hitl")
 
 
 class HitlAction:
@@ -418,7 +422,7 @@ class HitlService:
             )
         except Exception as exc:
             # Ponytail: in-memory waiter works; pub/sub failure → log only.
-            logging.getLogger("services.workflows.hitl").warning(
+            _logger.warning(
                 "hitl.pubsub.publish_failed signal_id=%s: %s "
                 "(in-memory waiter continues, see hitl_pubsub_consumer "
                 "for cross-instance consumer)",
@@ -476,7 +480,7 @@ class HitlService:
         except (ImportError, AttributeError, RuntimeError) as exc:
             # Audit-sink best-effort: не должен ломать HITL-resolve.
             # Раньше было except Exception: pass — скрывало баги (V22 K-OP-1).
-            get_logger("workflow.hitl").warning(
+            _logger.warning(
                 "audit sink emit failed for signal_id=%s: %s", signal_id, exc
             )
 

@@ -1,5 +1,26 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 73 (2026-07-28) — Layer 6 (Workflows)
+
+### Cycle 73 L6: hitl_service.py — module-level canonical logger
+
+Layer 6 (Workflows) аудит: ``src/backend/services/workflows/hitl_service.py``
+имел два inconsistent inline logger вызова:
+- Line 421: ``logging.getLogger("services.workflows.hitl").warning(...)`` — stdlib bypass.
+- Line 484: ``get_logger("workflow.hitl").warning(...)`` — canonical, но per-call lookup.
+
+Файл уже импортирует ``get_logger`` (line 32) — модуль-level singleton
+отсутствовал.
+
+#### Fix
+- Module-level: ``_logger = get_logger("services.workflows.hitl")``.
+- 2 inline logger calls → ``_logger.warning(...)``.
+- ``import logging`` удалён (больше не используется после fix).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/services/workflows/test_hitl_service.py`: 8/8 pass.
+
 ## [Unreleased] — Cycle 72 (2026-07-28) — Layer 2 (Core Kernel)
 
 ### Cycle 72 L2: config_loader.py — hoist lazy get_logger imports
