@@ -21,26 +21,29 @@ class TestInsertManyBatch:
     """Тесты insert_many batch."""
 
     @pytest.mark.asyncio
-    async def test_insert_many_empty_list(self) -> None:
+    async def test_insert_many_empty_list(self, monkeypatch) -> None:
         """Пустой список → пустой результат без вызова DB."""
         client = MongoDBClient()
-        client.db = MagicMock()
 
         result = await client.insert_many("test", [])
 
+        # Cycle 122: production early-returns on empty list (no db access).
+        # Was: client.db.__getitem__.assert_not_called() — relied on
+        # monkeypatched client.db, which is no longer needed (production
+        # never accesses db on empty path).
         assert result == []
-        client.db.__getitem__.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_insert_many_small_batch(self) -> None:
+    async def test_insert_many_small_batch(self, monkeypatch) -> None:
         """Маленький batch (< batch_size) → один вызов insert_many."""
         client = MongoDBClient()
         mock_collection = MagicMock()
         mock_result = MagicMock()
         mock_result.inserted_ids = ["id1", "id2", "id3"]
         mock_collection.insert_many = AsyncMock(return_value=mock_result)
-        client.db = MagicMock()
-        client.db.__getitem__.return_value = mock_collection
+        mock_db = MagicMock()
+        mock_db.__getitem__.return_value = mock_collection
+        monkeypatch.setattr(MongoDBClient, "db", property(lambda self: mock_db))
 
         docs = [{"a": 1}, {"a": 2}, {"a": 3}]
         result = await client.insert_many("test", docs, batch_size=100)
@@ -49,7 +52,7 @@ class TestInsertManyBatch:
         assert mock_collection.insert_many.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_insert_many_chunked(self) -> None:
+    async def test_insert_many_chunked(self, monkeypatch) -> None:
         """Большой batch (> batch_size) → chunked insert."""
         client = MongoDBClient()
         mock_collection = MagicMock()
@@ -66,8 +69,9 @@ class TestInsertManyBatch:
                 make_result(["id3", "id4"]),
             ]
         )
-        client.db = MagicMock()
-        client.db.__getitem__.return_value = mock_collection
+        mock_db = MagicMock()
+        mock_db.__getitem__.return_value = mock_collection
+        monkeypatch.setattr(MongoDBClient, "db", property(lambda self: mock_db))
 
         # 4 docs, batch_size=2 → 2 chunks
         docs = [{"a": 1}, {"a": 2}, {"a": 3}, {"a": 4}]
@@ -77,15 +81,16 @@ class TestInsertManyBatch:
         assert mock_collection.insert_many.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_insert_many_exact_batch_size(self) -> None:
+    async def test_insert_many_exact_batch_size(self, monkeypatch) -> None:
         """Точно batch_size → один вызов (не chunked)."""
         client = MongoDBClient()
         mock_collection = MagicMock()
         mock_collection.insert_many = AsyncMock(
             return_value=MagicMock(inserted_ids=["id1", "id2"])
         )
-        client.db = MagicMock()
-        client.db.__getitem__.return_value = mock_collection
+        mock_db = MagicMock()
+        mock_db.__getitem__.return_value = mock_collection
+        monkeypatch.setattr(MongoDBClient, "db", property(lambda self: mock_db))
 
         docs = [{"a": 1}, {"a": 2}]
         result = await client.insert_many("test", docs, batch_size=2)
@@ -98,15 +103,16 @@ class TestUpdateMany:
     """Тесты update_many."""
 
     @pytest.mark.asyncio
-    async def test_update_many_success(self) -> None:
+    async def test_update_many_success(self, monkeypatch) -> None:
         """Successful update_many returns count."""
         client = MongoDBClient()
         mock_collection = MagicMock()
         mock_collection.update_many = AsyncMock(
             return_value=MagicMock(modified_count=5)
         )
-        client.db = MagicMock()
-        client.db.__getitem__.return_value = mock_collection
+        mock_db = MagicMock()
+        mock_db.__getitem__.return_value = mock_collection
+        monkeypatch.setattr(MongoDBClient, "db", property(lambda self: mock_db))
 
         result = await client.update_many(
             "test", {"status": "old"}, {"$set": {"status": "new"}}
@@ -122,15 +128,16 @@ class TestDeleteMany:
     """Тесты delete_many."""
 
     @pytest.mark.asyncio
-    async def test_delete_many_success(self) -> None:
+    async def test_delete_many_success(self, monkeypatch) -> None:
         """Successful delete_many returns count."""
         client = MongoDBClient()
         mock_collection = MagicMock()
         mock_collection.delete_many = AsyncMock(
             return_value=MagicMock(deleted_count=3)
         )
-        client.db = MagicMock()
-        client.db.__getitem__.return_value = mock_collection
+        mock_db = MagicMock()
+        mock_db.__getitem__.return_value = mock_collection
+        monkeypatch.setattr(MongoDBClient, "db", property(lambda self: mock_db))
 
         result = await client.delete_many("test", {"status": "deleted"})
 

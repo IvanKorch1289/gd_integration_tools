@@ -1,5 +1,28 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 122 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 122 L10: mongodb_batch tests — @property db setter issue
+
+Layer 10 (Test Coverage) аудит: ``test_mongodb_batch.py`` 6 тестов
+устанавливали ``client.db = MagicMock()`` — но ``db`` is ``@property``
+without setter (production `MongoDBClient.db` returns connection).
+Атрибут assignment → ``AttributeError: property has no setter``.
+
+#### Fix
+- Все 5 affected test methods:
+  - Добавлен ``monkeypatch`` fixture parameter.
+  - ``client.db = MagicMock()`` → ``monkeypatch.setattr(MongoDBClient,
+    "db", property(lambda self: mock_db))`` (overrides class-level
+    property).
+- ``test_insert_many_empty_list``: удалена ``assert_not_called()`` —
+  production early-returns на empty list (без db access), assertion
+  no longer needed.
+
+#### Validation
+- `tests/unit/infrastructure/clients/test_mongodb_batch.py`: 6/6 pass
+  (was 0/6).
+
 ## [Unreleased] — Cycle 119 (2026-07-28) — Layer 9 (DevOps)
 
 ### Cycle 119 L9: remove docs/adr/index.md stub (lowercase conflict)
