@@ -1,5 +1,26 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 70 (2026-07-28) — Layer 1 (Middleware)
+
+### Cycle 70 L1: CSRF middleware — add audit logging on failures
+
+Layer 1 (Middleware) аудит: ``CSRFMiddleware`` deny'ил CSRF token
+missing/mismatch с 403 JSONResponse, но **НЕ логировал** события.
+Для banking-grade middleware это security gap — CSRF attempts не
+видны в audit-trail, невозможно обнаружить brute-force или CSRF
+replay атаки.
+
+#### Fix
+- ``get_logger(__name__)`` добавлен (canonical facade).
+- 2 события теперь emit'ятся через ``_logger.warning``:
+  - ``csrf_token_missing``: cookie или header отсутствует.
+  - ``csrf_token_mismatch``: hmac.compare_digest вернул False.
+- Payload: ``path`` + ``method`` (не включаем IP/cookie для PII-safety).
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/entrypoints/middlewares/test_csrf.py`: 13/13 pass.
+
 ## [Unreleased] — Cycle 69 (2026-07-28) — Layer 4 (Sinks)
 
 ### Cycle 69 L4: soap_sink.py → canonical get_logger facade

@@ -29,7 +29,11 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp
 
+from src.backend.core.logging import get_logger
+
 __all__ = ("CSRFMiddleware",)
+
+_logger = get_logger(__name__)
 
 
 class CSRFMiddleware(BaseHTTPMiddleware):
@@ -132,6 +136,12 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
         # Header token required + must match cookie
         if not cookie_token or not header_token:
+            # Cycle 70 L1: structured audit log на CSRF failure (banking-grade).
+            _logger.warning(
+                "csrf_token_missing path=%s method=%s",
+                request.url.path,
+                request.method,
+            )
             return JSONResponse(
                 {
                     "error": "csrf_token_missing",
@@ -141,6 +151,12 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             )
 
         if not hmac.compare_digest(cookie_token, header_token):
+            # Cycle 70 L1: structured audit log на CSRF mismatch (banking-grade).
+            _logger.warning(
+                "csrf_token_mismatch path=%s method=%s",
+                request.url.path,
+                request.method,
+            )
             return JSONResponse(
                 {
                     "error": "csrf_token_mismatch",
