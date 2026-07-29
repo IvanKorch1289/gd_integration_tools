@@ -1,5 +1,24 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 62 (2026-07-28) — Layer 9 (DevOps)
+
+### Cycle 62 L9: Remove dead `changelog_autogen.py`
+
+Layer 9 (DevOps) аудит выявил мёртвый tooling:
+``tools/changelog_autogen.py`` искал git-теги формата ``[wave:sXX/...]``,
+которые в проекте НЕ используются (принят Conventional Commits
+``feat(scope):``/``fix(scope):``/etc.).
+
+Verification:
+- ``grep -E '^\[wave:' CHANGELOG.md`` → 0 совпадений.
+- ``grep changelog_autogen Makefile`` → 0 ссылок.
+- ``tools/`` directory listing → 0 callers.
+
+Per Ponytail/YAGNI: мёртвый код удалён. Если в будущем
+потребуется автогенерация release notes — будет проще написать
+новый tool с нуля на базе ``git log --grep=^feat`` чем чинить
+155 LOC устаревшего парсера.
+
 ## [Unreleased] — Cycle 61 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 61 L10: Stale test fixes + real fail-closed bug
