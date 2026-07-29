@@ -18,7 +18,6 @@ Wave 1.2 (S3): убирает stub ``NotImplementedError`` в
 from __future__ import annotations
 
 import asyncio
-import time
 from collections.abc import Callable
 from cachetools import TTLCache
 from dataclasses import dataclass

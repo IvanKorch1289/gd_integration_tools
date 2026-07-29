@@ -1,5 +1,21 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 116 (2026-07-28) — Layer 9 (Infrastructure)
+
+### Cycle 116 L9: vault_secrets.py — remove unused `time` import
+
+Layer 9 (Infrastructure) cleanup: ``src/backend/infrastructure/security/
+vault_secrets.py:21`` импортировал ``time`` но не использовал
+(видимо legacy from older API). F401 linter warning.
+
+#### Fix
+- Удалён ``import time``.
+
+#### Validation
+- `ruff check src/backend/`: 0 F401 errors.
+- `tests/unit/infrastructure/security/`: 101/102 pass
+  (1 pre-existing test isolation issue, unrelated).
+
 ## [Unreleased] — Cycle 115 (2026-07-28) — Layer 4 (DI/Providers)
 
 ### Cycle 115 L4: bulk infrastructure_facade → infrastructure_locator migration
