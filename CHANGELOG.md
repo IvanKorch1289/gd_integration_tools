@@ -1,5 +1,34 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 57 (2026-07-28) — aioboto3 pool scoping
+
+### Cycle 57: aioboto3 → S3Client pool — scope re-assessment: DEFERRED
+
+Cycle 57 scoped the final remaining MED backlog item: replace per-op
+`aioboto3.client()` calls with a shared connection pool.
+
+#### Scope discovered (grep audit)
+| File | aioboto3 refs |
+|---|---|
+| `infrastructure/storage/s3.py` | 12 |
+| `infrastructure/storage/factory.py` | 5 |
+| `infrastructure/storage/fallback.py` | 1 |
+
+#### Why deferred from original "1 day" estimate
+1. **Pool abstraction design needed.** `aioboto3` doesn't ship a pool;
+   we need to either vendor `aiobotocore`'s `AioSession` pool or write
+   our own bounded LRU. Both are non-trivial.
+2. **Lifecycle integration.** Pool must init/shutdown via lifespan
+   (matches `breakers` / `cache` singletons pattern). Currently storage
+   uses lazy-init per call.
+3. **Multi-backend coordination.** Storage factory supports S3 + MinIO +
+   LocalFS. Pool needs to be S3/MinIO-only.
+4. **Risk surface.** Per-op clients are working in production; the pool
+   must NOT change behaviour (timeout, retry, error mapping).
+
+Estimated actual effort: **1 sprint** (not 1 day). Deferred to dedicated
+sprint per "minimal slice" principle — no half-done pool.
+
 ## [Unreleased] — Cycle 56 (2026-07-28) — Cleanup audit
 
 ### Cycle 56: Low-effort cleanup items — analysis verdict: ALREADY DONE
