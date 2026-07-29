@@ -43,6 +43,18 @@ class HitlHistoryService:
     def __init__(self, clickhouse_client_factory: Any | None = None) -> None:
         self._factory = clickhouse_client_factory
 
+    def _log_ch_failure(self, event: str, exc: BaseException) -> None:
+        """Cycle 65 L4: DRY — общий helper для ClickHouse failure logging
+        (S176 M11.1 structured log pattern)."""
+        log_audit_event_lite(
+            _logger,
+            severity="warning",
+            event=event,
+            message=f"CH failure ({event}): {exc}",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
+
     async def _get_client(self) -> Any:
         if self._factory is not None:
             return await self._factory()
@@ -89,21 +101,13 @@ class HitlHistoryService:
         try:
             client = await self._get_client()
         except Exception as exc:
-            # S176 M11.1: structured log (audit-event-type field).
-            log_audit_event_lite(
-                _logger,
-                severity="warning",
-                event="hitl_history.clickhouse_unavailable",
-                message=f"CH unavailable: {exc}",
-                error=str(exc),
-                error_type=type(exc).__name__,
-            )
+            self._log_ch_failure("hitl_history.clickhouse_unavailable", exc)
             return []
 
         conditions = [
             "created_at >= %(from_dt)s",
             "created_at <= %(to_dt)s",
-            "event_type IN ('hitl.approved', 'hitl.rejected', 'hitl.requested_info')",
+            f"event_type IN ({', '.join(repr(e) for e in sorted(_HITL_EVENT_TYPES))})",
         ]
         params: dict[str, Any] = {"from_dt": from_dt, "to_dt": to_dt, "limit": limit}
         if tenant_id:
@@ -131,15 +135,7 @@ class HitlHistoryService:
         try:
             result = await client.query(sql, parameters=params)
         except Exception as exc:
-            # S176 M11.1: structured log (audit-event-type field).
-            log_audit_event_lite(
-                _logger,
-                severity="warning",
-                event="hitl_history.clickhouse_query_failed",
-                message=f"CH query failed: {exc}",
-                error=str(exc),
-                error_type=type(exc).__name__,
-            )
+            self._log_ch_failure("hitl_history.clickhouse_query_failed", exc)
             return []
 
         records: list[HitlHistoryRecord] = []

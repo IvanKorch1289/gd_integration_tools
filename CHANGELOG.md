@@ -1,5 +1,33 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 65 (2026-07-28) — Layer 4 (Services/HITL)
+
+### Cycle 65 L4: HitlHistoryService DRY refactor (SSoT + helper)
+
+Layer 4 (Services/HITL) аудит выявил 2 DRY-нарушения в
+``services/workflows/hitl_history.py``.
+
+#### Issue 1 — SSoT violation для HITL event types
+Модуль-константа ``_HITL_EVENT_TYPES`` (frozenset, line 22) определяет
+3 типа событий: ``hitl.approved``, ``hitl.rejected``, ``hitl.requested_info``.
+Но в SQL-запросе (line 106) эти же 3 типа были hardcoded inline —
+``"event_type IN ('hitl.approved', 'hitl.rejected', 'hitl.requested_info')"``.
+
+**Fix**: SQL строит IN-list из ``sorted(_HITL_EVENT_TYPES)`` через
+``repr()``. Добавление нового типа в frozenset автоматически
+попадает в SQL.
+
+#### Issue 2 — Дублирование log_audit_event_lite (2 calls)
+Два почти идентичных 8-строчных вызова (CH unavailable + CH query failed)
+с одинаковой структурой kwargs.
+
+**Fix**: извлечён helper ``_log_ch_failure(event, exc)`` — DRY
+и единый source для S176 M11.1 structured log pattern.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/services/workflows/test_hitl_history.py`: 6/6 pass.
+
 ## [Unreleased] — Cycle 64 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 64 L10: Click 8.3 `mix_stderr` kwarg removed — fix 2 tests
