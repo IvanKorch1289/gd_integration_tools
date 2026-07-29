@@ -147,7 +147,6 @@ src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workf
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.visualize
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.yaml_io
 src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_loader.loaders
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.entrypoints.middlewares.audit_replay
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/execution/middlewares/rate_limit_middleware.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/jupyter/hub_actions.py	services	src.backend.dsl.commands.action_registry

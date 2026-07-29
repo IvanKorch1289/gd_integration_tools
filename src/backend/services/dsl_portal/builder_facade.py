@@ -193,10 +193,13 @@ def execute_route(route_id: str, body: Any) -> dict[str, Any]:
 
 
 def list_audit_records(*, count: int = 50) -> list[dict[str, Any]]:
-    """Sync-фасад над audit_replay middleware list_audit_records."""
-    from src.backend.entrypoints.middlewares.audit_replay import (
-        list_audit_records as _list,
-    )
+    """Sync-фасад над audit-replay query.
+
+    Layer 11 Безопасность Cycle 2 fix: helper перенесён из
+    middleware-слоя в services/audit для соблюдения layer invariants
+    (services → entrypoints был reverse-layer violation).
+    """
+    from src.backend.services.audit.replay_query import list_audit_records as _list
 
     return asyncio.run(_list(count=count))
 
