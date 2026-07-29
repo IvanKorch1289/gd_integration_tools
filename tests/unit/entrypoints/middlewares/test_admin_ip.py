@@ -5,7 +5,6 @@ from __future__ import annotations
 from unittest.mock import AsyncMock
 
 import pytest
-from fastapi import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
 
@@ -82,10 +81,9 @@ class TestIPRestrictionMiddleware:
         request = self._request("/admin/users", "10.0.0.1")
         call_next = AsyncMock()
 
-        with pytest.raises(HTTPException) as exc_info:
-            await middleware.dispatch(request, call_next)
-
-        assert exc_info.value.status_code == 403
+        # Cycle 83 L10: middleware returns JSONResponse(403), not raise.
+        response = await middleware.dispatch(request, call_next)
+        assert response.status_code == 403
         call_next.assert_not_awaited()
 
     @pytest.mark.asyncio
@@ -137,10 +135,9 @@ class TestIPRestrictionMiddleware:
         request = self._request("/admin/special", "10.0.0.1")
         call_next = AsyncMock()
 
-        with pytest.raises(HTTPException) as exc_info:
-            await middleware.dispatch(request, call_next)
-
-        assert exc_info.value.status_code == 403
+        # Cycle 83 L10: middleware returns JSONResponse(403), not raise.
+        response = await middleware.dispatch(request, call_next)
+        assert response.status_code == 403
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -152,7 +149,6 @@ class TestIPRestrictionMiddleware:
         request = self._request("/admin/users", "not-an-ip")
         call_next = AsyncMock()
 
-        with pytest.raises(HTTPException) as exc_info:
-            await middleware.dispatch(request, call_next)
-
-        assert exc_info.value.status_code == 403
+        # Cycle 83 L10: middleware returns JSONResponse(403), not raise.
+        response = await middleware.dispatch(request, call_next)
+        assert response.status_code == 403

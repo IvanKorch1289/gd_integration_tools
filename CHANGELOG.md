@@ -1,5 +1,22 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 83 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 83 L10: admin_ip tests — wrong exception type
+
+Layer 10 (Test Coverage) аудит: 3 теста в ``test_admin_ip.py``
+ожидали ``HTTPException`` raise, но ``IPRestrictionMiddleware``
+возвращает ``JSONResponse(status_code=403)`` напрямую.
+
+#### Fix
+- 3 ``pytest.raises(HTTPException)`` → ``response = await mw.dispatch(...);
+  assert response.status_code == 403``.
+- Удалён неиспользуемый ``from fastapi import HTTPException`` import.
+
+#### Validation
+- `ruff check`: clean.
+- `tests/unit/entrypoints/middlewares/test_admin_ip.py`: 7/7 pass (было 4/7).
+
 ## [Unreleased] — Cycle 82 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 82 L10: circuit_breaker test — sliding_window opt-out
