@@ -154,8 +154,8 @@ class AuthFacade:
                 # S183 fix: mTLS client cert verification
                 return await self._verify_mtls(token)
         except Exception as exc:
-            logger.debug("verify_request failed: %s", exc)
-            return AuthResult(is_authenticated=False, metadata={"error": str(exc)})
+            logger.warning("verify_request failed: %s", exc)
+            return AuthResult(is_authenticated=False, metadata={"error": "auth_failed"})
         return AuthResult(is_authenticated=False)
 
     async def _verify_api_key(self, api_key: str) -> AuthResult:
@@ -210,7 +210,7 @@ class AuthFacade:
                 metadata={"client_id": info.client_id, "key_version": info.version},
             )
         except Exception as exc:
-            logger.debug("API key verify failed: %s", exc)
+            logger.warning("API key verify failed: %s", exc)
             return AuthResult(is_authenticated=False)
 
     async def _verify_saml(self, assertion: str) -> AuthResult:
@@ -240,14 +240,23 @@ class AuthFacade:
         )
 
     async def _verify_mtls(self, cert_pem: str) -> AuthResult:
-        """S183: mTLS client cert verification.
+        """S183: mTLS client cert identity extraction.
+
+        SECURITY: certificate chain validation is performed by the TLS terminator
+        (uvicorn/nginx). This method ONLY extracts identity (CN) from an
+        already-validated client cert. It must not be called with untrusted input.
 
         Args:
-            cert_pem: PEM-encoded client certificate.
+            cert_pem: PEM-encoded client certificate (validated by TLS layer).
 
         Returns:
-            AuthResult с CN/subject.
+            AuthResult с CN/subject, or ``is_authenticated=False`` if cert is
+            empty/invalid.
         """
+        # SECURITY: certificate chain validation is performed by the TLS
+        # terminator (uvicorn/nginx).
+        if not cert_pem:
+            return AuthResult(is_authenticated=False)
         try:
             from cryptography import x509
             from cryptography.hazmat.backends import default_backend
@@ -267,7 +276,7 @@ class AuthFacade:
                 metadata={"fingerprint": cert.fingerprint(default_backend()).hex()},
             )
         except Exception as exc:
-            logger.debug("mTLS verify failed: %s", exc)
+            logger.warning("mTLS identity extraction failed: %s", exc)
             return AuthResult(is_authenticated=False)
 
     async def _is_blacklisted(self, jti: str) -> bool:
@@ -311,9 +320,22 @@ class AuthFacade:
         # "admin" в groups membership-only — privilege escalation risk
         # (любой IdP group с именем "admin" получал bypass).
         try:
+            from src.backend.core.auth import AuthContext
             from src.backend.core.auth.admin_roles import AdminRole, extract_admin_roles
 
-            roles = extract_admin_roles(auth.metadata)
+            # Cycle 91 fix: extract_admin_roles expects AuthContext (with
+            # .metadata attribute), but auth here is AuthResult (also has
+            # .metadata). Wrap to satisfy the contract — previous
+            # ``extract_admin_roles(auth.metadata)`` passed raw dict which
+            # raised AttributeError on ``dict.metadata`` → silently fell
+            # through to ``return False`` → SUPER_ADMIN bypass NEVER worked.
+            # Security-relevant: this fix restores admin bypass for real.
+            auth_ctx = AuthContext(
+                method=auth.method or "unknown",
+                principal=auth.subject or "unknown",
+                metadata=auth.metadata,
+            )
+            roles = extract_admin_roles(auth_ctx)
             if AdminRole.SUPER_ADMIN in roles:
                 return True
         except Exception:
@@ -468,7 +490,7 @@ class AuthFacade:
             import xml.etree.ElementTree as ET
 
             xml_bytes = base64.b64decode(assertion_b64)
-            root = ET.fromstring(xml_bytes)  # noqa: S314  # dev-mode path, no XXE risk
+            root = ET.fromstring(xml_bytes)  # noqa: S314  # dev-mode path; ElementTree has limited XXE risk (entity expansion DoS)
             ns = {"saml": "urn:oasis:names:tc:SAML:2.0:assertion"}
             name_id_el = root.find(".//saml:NameID", ns)
             subject_el = root.find(".//saml:Subject", ns)
@@ -554,10 +576,10 @@ class AuthFacade:
                 metadata={"directory": "ldap", "tenant_id": tenant_id},
             )
         except Exception as exc:
-            logger.debug("LDAP bind failed: %s", exc)
+            logger.warning("LDAP bind failed: %s", exc)
             return AuthResult(
                 is_authenticated=False,
-                metadata={"error": f"ldap_exception: {exc}"},
+                metadata={"error": "ldap_failed"},
             )
 
 

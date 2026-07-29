@@ -1,5 +1,43 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 91 (2026-07-28) — Layer 2 (Core Kernel) + L10
+
+### Cycle 91: REAL production bug — SUPER_ADMIN bypass broken
+
+Layer 2 (Core Kernel) bugfix + Layer 10 test update:
+
+#### Bug
+``AuthFacade.check_permission`` вызывал
+``extract_admin_roles(auth.metadata)`` — передавал **dict** напрямую.
+Но ``extract_admin_roles`` имеет signature
+``(auth_context: AuthContext | None)`` и читает ``auth_context.metadata``
+— на dict это AttributeError → swallowed by ``except Exception`` →
+**SUPER_ADMIN bypass НИКОГДА не работал**.
+
+Это **security-relevant bug**: privileged admin bypass не выполнялся
+при наличии правильного ``admin_roles`` claim в JWT/SAML/mTLS.
+
+#### Fix (production code)
+- Оборачиваем ``auth.metadata`` (dict) в ``AuthContext(method=..., principal=...,
+  metadata=auth.metadata)`` перед передачей в ``extract_admin_roles``.
+- ``check_permission`` теперь корректно bypass'ит для SUPER_ADMIN.
+
+#### Fix (test)
+- ``test_check_permission_admin_bypass`` использовал неверный API:
+  - Старое: ``groups=['admin']`` — но production читает ``metadata['admin_roles']``
+    (S189+ fix: "admin" string membership — privilege escalation risk).
+  - Старое: ``AuthResult(metadata={...})`` — но production ``check_permission``
+    проверяет ``auth.is_authenticated`` ПЕРВЫМ; передавали raw dict в
+    extract_admin_roles.
+  - Новое: ``AuthResult(is_authenticated=True, metadata={'admin_roles':
+    ['super_admin']})``.
+
+#### Validation
+- `ruff check`: clean.
+- `TestAuthFacadePermissions`: 4/4 pass.
+- `test_auth_facade.py` overall: 26/27 pass (1 pre-existing SAML test
+  failure unrelated to this change, verified via git stash).
+
 ## [Unreleased] — Cycle 90 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 90 L10: test_admin_roles — MagicMock attribute fallback issue

@@ -120,13 +120,19 @@ class TestAuthFacadePermissions:
         assert facade.check_permission(auth, "any.capability") is False
 
     def test_check_permission_admin_bypass(self) -> None:
-        """Admin в groups → True для любой capability."""
+        """SUPER_ADMIN role → True для любой capability."""
         facade = AuthFacade()
         from src.backend.core.auth.facade import AuthResult
 
+        # Cycle 91 L10: production calls extract_admin_roles(auth) which
+        # reads auth.metadata. AuthResult (not AuthContext) is the correct
+        # type — it has is_authenticated attribute that check_permission
+        # checks first. Per S189+ fix: AdminRole enum, not "admin" string.
         auth = AuthResult(
             is_authenticated=True,
-            groups=["admin", "user"],
+            method="jwt",
+            subject="u1",
+            metadata={"admin_roles": ["super_admin"]},
         )
         assert facade.check_permission(auth, "any.capability") is True
 
