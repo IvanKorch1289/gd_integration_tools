@@ -15,18 +15,16 @@ Scope (honest, per M6 precedent):
 Public API:
     * :func:`publish_hitl_resolved` — async publish event в Redis.
     * :class:`HitlPubSubChannel` — канал-aware publisher (lazy-init).
-
-Cumulative: a3bb7acc → ... → fcfb1e89 (M7.1) → 9c51842f (M7.2) →
-da6b1ac5 (M7.3) → M7.4.
 """
 
 from __future__ import annotations
 
 import json
-import logging
 from typing import Any
 
-logger = logging.getLogger("services.workflows.hitl_pubsub")
+from src.backend.core.logging import get_logger
+
+logger = get_logger("services.workflows.hitl_pubsub")
 
 # S172 M7.4: pub/sub channel name pattern.
 HITL_CHANNEL_PREFIX = "hitl:resolved"

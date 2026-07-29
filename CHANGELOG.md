@@ -1,5 +1,32 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 71 (2026-07-28) — Layer 6 (Workflows)
+
+### Cycle 71 L6: hitl_pubsub.py → canonical get_logger + drop commit archaeology
+
+Layer 6 (Workflows) аудит выявил 2 issues в
+``src/backend/services/workflows/hitl_pubsub.py``.
+
+#### Issue 1 — Stdlib logging bypass
+Использовал ``logging.getLogger("services.workflows.hitl_pubsub")``
+вместо canonical ``src.backend.core.logging.get_logger``.
+Bypass'ит structlog integration + correlation_id auto-injection.
+
+**Fix**: ``import logging`` удалён; ``from src.backend.core.logging import get_logger`` добавлен.
+
+#### Issue 2 — Commit-hash archaeology
+Module docstring содержал ``Cumulative: a3bb7acc → ... → fcfb1e89
+(M7.1) → 9c51842f (M7.2) → da6b1ac5 (M7.3) → M7.4.`` — internal
+commit trail, бесполезен для новых разработчиков.
+
+**Fix**: убрана эта строка (per Ponytail "drop cycle/process tags
+from comments" pattern, см. Cycle 66 L7 cleanup).
+
+#### Validation
+- `ruff check`: clean.
+- Module import + basic usage: ok.
+- No dedicated test файл для hitl_pubsub (publisher-side only).
+
 ## [Unreleased] — Cycle 70 (2026-07-28) — Layer 1 (Middleware)
 
 ### Cycle 70 L1: CSRF middleware — add audit logging on failures
