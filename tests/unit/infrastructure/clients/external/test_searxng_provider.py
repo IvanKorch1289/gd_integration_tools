@@ -17,6 +17,21 @@ from src.backend.infrastructure.clients.external.search_providers import (
 )
 
 
+# Cycle 123: production uses ``make_http_client`` from
+# ``src.backend.core.net.migration_helper``, which checks feature flag
+# ``waf_outbound_via_facade`` (default True). When True, returns
+# ``OutboundHttpClient`` — NOT ``httpx.AsyncClient``. The patch
+# ``httpx.AsyncClient`` is therefore dead. Disable the feature
+# flag for tests so production falls back to ``httpx.AsyncClient``
+# (which the test mocks).
+@pytest.fixture(autouse=True)
+def _disable_waf_outbound(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Force ``make_http_client`` to return ``httpx.AsyncClient``."""
+    from src.backend.core.net import migration_helper
+
+    monkeypatch.setattr(migration_helper, "_flag_enabled", lambda: False)
+
+
 @pytest.mark.asyncio
 async def test_searxng_provider_search_returns_results() -> None:
     """SearXNGProvider возвращает результаты в стандартизированном формате."""

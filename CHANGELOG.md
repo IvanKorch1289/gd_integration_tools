@@ -1,5 +1,29 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 123 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 123 L10: searxng_provider tests — waf_outbound_via_facade mock
+
+Layer 10 (Test Coverage) аудит: 3 теста в ``test_searxng_provider.py``
+падали с ``AttributeError: 'coroutine' object has no attribute 'get'``.
+
+Root cause: production ``search_providers.py`` использует
+``make_http_client`` из ``core.net.migration_helper``, который
+проверяет feature flag ``waf_outbound_via_facade`` (default True).
+Когда True, returns ``OutboundHttpClient`` (НЕ ``httpx.AsyncClient``).
+
+Тесты patch'или ``httpx.AsyncClient`` — patch был dead code.
+
+#### Fix
+- Добавлен autouse fixture ``_disable_waf_outbound``: patch
+  ``migration_helper._flag_enabled = lambda: False`` → forces
+  ``make_http_client`` to return legacy ``httpx.AsyncClient`` (which
+  tests mock).
+
+#### Validation
+- `tests/unit/infrastructure/clients/external/test_searxng_provider.py`:
+  7/7 pass (was 4/7).
+
 ## [Unreleased] — Cycle 122 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 122 L10: mongodb_batch tests — @property db setter issue
