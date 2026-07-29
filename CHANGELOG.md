@@ -1,5 +1,25 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 89 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 89 L10: test_auth_facade — mock AsyncMock + asyncio.run
+
+Layer 10 (Test Coverage) аудит: ``test_is_blacklisted_uses_security_facade``
+имел 3 проблемы:
+1. Mock setup: ``mock_facade.is_token_blacklisted.return_value = True`` —
+   MagicMock attribute, но production вызывает ``await ... is_token_blacklisted(jti)``.
+2. Тест вызывал ``facade._is_blacklisted(...)`` без await.
+3. ``AsyncMock`` не импортирован (NameError при моём первом fix).
+
+#### Fix
+- ``from unittest.mock import MagicMock, patch`` → ``+ AsyncMock``.
+- ``is_token_blacklisted.return_value = True`` → ``is_token_blacklisted = AsyncMock(return_value=True)``.
+- Вызов обёрнут в ``asyncio.run(...)``.
+
+#### Validation
+- `ruff check`: clean.
+- 1/1 test passes.
+
 ## [Unreleased] — Cycle 88 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 88 L10: test_auth_facade — async + fail-closed semantics

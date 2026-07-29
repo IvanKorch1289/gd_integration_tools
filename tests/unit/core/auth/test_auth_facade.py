@@ -10,7 +10,7 @@ Coverage:
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -188,10 +188,14 @@ class TestAuthFacadeHelpers:
             "src.backend.services.security.facade.get_security_facade"
         ) as mock_get_facade:
             mock_facade = MagicMock()
-            mock_facade.is_token_blacklisted.return_value = True
+            mock_facade.is_token_blacklisted = AsyncMock(return_value=True)
             mock_get_facade.return_value = mock_facade
 
-            assert facade._is_blacklisted("jti-123") is True
+            # Cycle 89 L10: await the async call.
+            import asyncio
+
+            result = asyncio.run(facade._is_blacklisted("jti-123"))
+            assert result is True
             mock_facade.is_token_blacklisted.assert_called_once_with("jti-123")
 
     def test_is_blacklisted_returns_false_on_exception(self) -> None:
