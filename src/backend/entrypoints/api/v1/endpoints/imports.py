@@ -253,6 +253,7 @@ router.add_api_route(
     summary="Импорт схемы процесса",
     description="JSON-схема бизнес-процесса (шаги + связи) → DSL-pipeline.",
     name="import_process_schema",
+    response_model=ImportSummaryResponse,
 )
 
 
