@@ -1,5 +1,24 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 55 (2026-07-28) — Dead singletons audit
+
+### Cycle 55: Dead singletons wiring — analysis verdict: ALREADY DONE
+
+Cycle 55 audited the "Dead singletons: rpa_settings.browser_pool_size,
+desktop_rpa_session_pool" backlog item from cycles 31-39. Result:
+**no change needed** — both singletons are already wired.
+
+#### Status of each singleton
+
+| Setting | Location | Wired in | Notes |
+|---|---|---|---|
+| `rpa_settings.browser_pool_size` | `core/config/services/rpa.py:71` | Cycle 40 (`browser_pool.py:74`) | Lazy-import defaults, preserves explicit overrides |
+| `rpa_settings.browser_headless` | `core/config/services/rpa.py` | Cycle 40 (`browser_pool.py:77`) | Same lazy pattern |
+| `desktop_rpa_session_pool_enabled` | `core/config/features/sprints_18_21.py:272` | Sprint 21 K3 W6 | Feature-flag enables `desktop_session_pool.py` integration |
+
+#### Conclusion
+Backlog item closed — already resolved in earlier cycles. No action.
+
 ## [Unreleased] — Cycle 54 (2026-07-28) — RPACallPolicy migration
 
 ### Cycle 54: DesktopRpaClient → RPACallPolicy (B-02 single entry)
