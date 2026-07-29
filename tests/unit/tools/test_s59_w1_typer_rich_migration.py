@@ -21,7 +21,7 @@ from typer.testing import CliRunner
 
 # === Shared fixtures ===
 
-runner = CliRunner(mix_stderr=True)
+runner = CliRunner()  # Click 8.3+: mix_stderr kwarg removed
 
 # Cycle 33: CHECKER_PATH для subprocess-based tests (typer→argparse миграция).
 CHECKER_PATH = (

@@ -21,24 +21,32 @@ from tools.check_layer_imports import (
     scan_directory,
 )
 
-runner = CliRunner(mix_stderr=True)
+runner = CliRunner()  # Click 8.3+: mix_stderr kwarg removed
 
 
 # === Exit codes (via CliRunner) ===
+
+
+def _combined(result: object) -> str:
+    """Click 8.3+: объединяет stdout+stderr (mix_stderr kwarg removed)."""
+    return getattr(result, "output", "") or (
+        getattr(result, "stdout", "") + getattr(result, "stderr", "")
+    )
 
 
 def test_help_exits_zero() -> None:
     """--help → typer convention: exit 0."""
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    assert "check_layer_imports" in result.stdout
+    assert "check_layer_imports" in _combined(result)
 
 
 def test_nonexistent_dir_exits_two() -> None:
     """Несуществующая директория → exit 2."""
     result = runner.invoke(app, ["/this/does/not/exist/xyz123"])
     assert result.exit_code == 2
-    assert "not found" in result.stdout.lower() or "ERROR" in result.stdout
+    out = _combined(result)
+    assert "not found" in out.lower() or "ERROR" in out
 
 
 def test_file_instead_of_dir_exits_two(tmp_path: Path) -> None:
@@ -47,16 +55,17 @@ def test_file_instead_of_dir_exits_two(tmp_path: Path) -> None:
     f.write_text("# placeholder\n")
     result = runner.invoke(app, [str(f)])
     assert result.exit_code == 2
-    assert "not a directory" in result.stdout.lower() or "ERROR" in result.stdout
+    out = _combined(result)
+    assert "not a directory" in out.lower() or "ERROR" in out
 
 
 def test_clean_dir_exits_zero(tmp_path: Path) -> None:
     """Чистая директория (нет .py с запрещёнными импортами) → exit 0."""
-    # Создаём .py файл, который импортирует только core (разрешено)
     (tmp_path / "good.py").write_text("from src.backend.core import foo  # noqa\n")
     result = runner.invoke(app, [str(tmp_path), "--plain"])
     assert result.exit_code == 0
-    assert "OK" in result.stdout or "clean" in result.stdout
+    out = _combined(result)
+    assert "OK" in out or "clean" in out
 
 
 def test_dir_with_violation_exits_one(tmp_path: Path) -> None:
@@ -66,7 +75,7 @@ def test_dir_with_violation_exits_one(tmp_path: Path) -> None:
     )
     result = runner.invoke(app, [str(tmp_path), "--plain"])
     assert result.exit_code == 1
-    assert "ERROR" in result.stdout
+    assert "ERROR" in _combined(result)
 
 
 # === scan_directory (direct API, для white-box coverage) ===

@@ -1,5 +1,32 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 64 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 64 L10: Click 8.3 `mix_stderr` kwarg removed — fix 2 tests
+
+Layer 10 (Test Coverage) аудит collection errors (Cycle 63 убрал 3 orphan
+test files, оставались 6). Из них 2 относились к Click version drift.
+
+#### Background
+Click 8.3.0 (текущая) удалил параметр ``CliRunner(mix_stderr=True)`` —
+теперь stdout и stderr раздельны по умолчанию.
+
+#### Изменения
+- ``tests/unit/tools/test_check_layer_imports.py``:
+  - ``CliRunner(mix_stderr=True)`` → ``CliRunner()``
+  - Добавлен helper ``_combined(result)`` который возвращает
+    ``result.output`` или объединение ``stdout + stderr``.
+  - 5 assertions обновлены: ``result.stdout`` → ``_combined(result)``.
+- ``tests/unit/tools/test_s59_w1_typer_rich_migration.py``:
+  - Только ``CliRunner(mix_stderr=True)`` → ``CliRunner()`` (stderr checks
+    уже проверяли stdout-only output).
+
+#### Validation
+- 33/33 tests pass в двух файлах (14 + 19).
+- Pre-existing failures в других files (test_check_python3_syntax,
+  test_fix_except_bug, test_supply_chain_scaffold) — unrelated к этому
+  change.
+
 ## [Unreleased] — Cycle 63 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 63 L10: Remove 3 orphan test files (stale dead tests)
