@@ -42,6 +42,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
     """
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         self.logger = grpc_logger
         self.logger.info("InvokerGRPCServicer инициализирован")
 

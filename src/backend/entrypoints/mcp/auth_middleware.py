@@ -29,6 +29,9 @@ class _DummyHeadersRequest:
     """Минимальный shim под :func:`_verify_jwt` (ожидает ``request.headers``)."""
 
     def __init__(self, headers: dict[str, str]) -> None:
+        """Инициализирует middleware.
+
+:param headers: значение headers."""
         self.headers = headers
 
 
@@ -72,6 +75,9 @@ class McpAuthMiddleware:
     """ASGI middleware: 401 unless API_KEY/JWT прошли."""
 
     def __init__(self, app: Callable[..., Awaitable[None]]) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         self._app = app
 
     async def __call__(

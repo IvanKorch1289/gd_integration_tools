@@ -42,6 +42,9 @@ class AuditReplayMiddleware(BaseHTTPMiddleware):
     def __init__(
         self, app: Any, *, skip_paths: set[str] | None = None, sample_rate: float = 1.0
     ) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         super().__init__(app)
         self._skip_paths = skip_paths or {"/health", "/metrics", "/readyz", "/livez"}
         self._sample_rate = max(0.0, min(1.0, sample_rate))

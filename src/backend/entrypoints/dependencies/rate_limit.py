@@ -56,6 +56,7 @@ class RedisLimiterAdapter:
     """
 
     def __init__(self, *, rate_limit: int, window_seconds: int) -> None:
+        """Инициализирует middleware."""
         self._limiter = get_rate_limiter()
         self._rate_limit = rate_limit
         self._window_seconds = window_seconds

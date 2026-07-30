@@ -249,6 +249,7 @@ class RedisCacheFacade(UnifiedCacheFacade):
         self._backend = backend
 
     async def get(self, key: str) -> bytes | None:
+        """Получить значение из Redis по ключу."""
         try:
             return await self._backend.get(key)
         except Exception as exc:
@@ -261,6 +262,7 @@ class RedisCacheFacade(UnifiedCacheFacade):
         ttl_seconds: int | None = None,
         tags: list[str] | None = None,
     ) -> None:
+        """Записать значение в Redis с TTL + опциональной tag-инвалидацией."""
         try:
             await self._backend.set(key, value, ttl=ttl_seconds)
             if tags and self.policy.enable_tag_invalidation:
@@ -270,24 +272,28 @@ class RedisCacheFacade(UnifiedCacheFacade):
             raise CacheError(f"redis set failed: {exc}") from exc
 
     async def delete(self, *keys: str) -> None:
+        """Удалить ключи из Redis."""
         try:
             await self._backend.delete(*keys)
         except Exception as exc:
             raise CacheError(f"redis delete failed: {exc}") from exc
 
     async def delete_by_tag(self, tag: str) -> int:
+        """Удалить все ключи с данным tag (через tag-binding)."""
         try:
             return await self._backend.delete_by_tag(tag)
         except Exception as exc:
             raise CacheError(f"redis delete_by_tag failed: {exc}") from exc
 
     async def exists(self, key: str) -> bool:
+        """Проверить наличие ключа в Redis."""
         try:
             return await self._backend.exists(key)
         except Exception as exc:
             raise CacheError(f"redis exists failed: {exc}") from exc
 
     async def healthcheck(self) -> bool:
+        """Healthcheck Redis-соединения."""
         try:
             return bool(await self._backend.healthcheck())
         except Exception as exc:
@@ -319,6 +325,7 @@ class DiskCacheFacade(UnifiedCacheFacade):
         return os.path.join(self._root, h[:2], h)
 
     async def get(self, key: str) -> bytes | None:
+        """Прочитать значение key из filesystem cache."""
         import os
 
         path = self._path(key)
@@ -338,7 +345,7 @@ class DiskCacheFacade(UnifiedCacheFacade):
         ttl_seconds: int | None = None,
         tags: list[str] | None = None,
     ) -> None:
-        """Метод set (см. signature)."""
+        """Записать значение в filesystem cache с TTL через mtime."""
         import os
 
         path = self._path(key)
@@ -356,6 +363,7 @@ class DiskCacheFacade(UnifiedCacheFacade):
             raise CacheError(f"disk write failed: {exc}") from exc
 
     async def delete(self, *keys: str) -> None:
+        """Удалить ключи из filesystem cache."""
         import os
 
         async with self._lock:
@@ -371,11 +379,13 @@ class DiskCacheFacade(UnifiedCacheFacade):
         return 0
 
     async def exists(self, key: str) -> bool:
+        """Проверить наличие ключа в filesystem cache."""
         import os
 
         return os.path.exists(self._path(key))
 
     async def healthcheck(self) -> bool:
+        """Healthcheck — проверка, что root directory writable."""
         import os
 
         return os.path.isdir(self._root) and os.access(self._root, os.W_OK)

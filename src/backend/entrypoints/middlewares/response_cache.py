@@ -28,6 +28,10 @@ class ResponseCacheMiddleware(BaseHTTPMiddleware):
     """HTTP-кэширование GET-ответов через ETag."""
 
     def __init__(self, app: ASGIApp, max_age: int = 60) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app.
+:param max_age: значение max_age."""
         super().__init__(app)
         self._max_age = max_age
 

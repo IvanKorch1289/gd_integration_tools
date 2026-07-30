@@ -55,6 +55,9 @@ class RpaPolicyMiddleware(BaseHTTPMiddleware):
         rpa_path_prefix: str = "/api/v1/rpa",
         required_role: str = "rpa.admin",
     ) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         super().__init__(app)
         self.rpa_path_prefix = rpa_path_prefix
         self.required_role = required_role

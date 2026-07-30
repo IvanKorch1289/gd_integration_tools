@@ -34,6 +34,9 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
     """Расширенный аудит-лог HTTP-запросов."""
 
     def __init__(self, app: ASGIApp) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         # Wave 6.5a: app_logger — через DI provider (lazy resolve в __init__,
         # т.к. logger глобальный singleton, доступен сразу при импорте).
         from src.backend.core.di.providers import get_app_logger_provider

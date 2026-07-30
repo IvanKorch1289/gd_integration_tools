@@ -67,19 +67,24 @@ class OsintAgentPlugin(BasePlugin):
     version: str = "0.1.0"
 
     async def on_load(self, ctx: PluginContext) -> None:
+        """Lifecycle hook: вызывается при загрузке плагина."""
         logger.info("osint_agent v%s loaded", self.version)
 
     async def on_register_actions(self, registry: ActionRegistryProtocol) -> None:
+        """Регистрирует action `osint_agent.report` → run_osint handler."""
         registry.register("osint_agent.report", _make_handler(run_osint))
         logger.info("osint_agent: 1 action registered (osint_agent.report)")
 
     async def on_register_repositories(
         self, registry: RepositoryRegistryProtocol
     ) -> None:
+        """Плагин не использует repositories — no-op."""
         pass
 
     async def on_register_processors(self, registry: ProcessorRegistryProtocol) -> None:
+        """Плагин не регистрирует DSL processors — no-op."""
         pass
 
     async def on_shutdown(self) -> None:
+        """Lifecycle hook: cleanup при выгрузке плагина."""
         logger.info("osint_agent v%s shutdown", self.version)

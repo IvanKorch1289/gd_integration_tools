@@ -207,6 +207,7 @@ class _RAGFacade:
         namespace: str = "default",
         metadata: dict[str, Any] | None = None,
     ) -> IngestResponse:
+        """Ingest документа в RAG-хранилище с заданным namespace."""
         _check_enabled()
         doc_id = await get_rag_service().ingest(
             content=content, metadata=metadata, namespace=namespace
@@ -216,6 +217,7 @@ class _RAGFacade:
     async def search(
         self, *, query: str, top_k: int = 5, namespace: str | None = None
     ) -> SearchResponse:
+        """Поиск релевантных chunks по запросу в указанном namespace."""
         _check_enabled()
         hits = await get_rag_service().search(
             query=query, top_k=top_k, namespace=namespace
@@ -230,6 +232,7 @@ class _RAGFacade:
         top_k: int = 5,
         namespace: str | None = None,
     ) -> AugmentResponse:
+        """Augment prompt контекстом из RAG с citations для LLM."""
         _check_enabled()
         result = await get_rag_service().augment_prompt_with_citations(
             query=query, system_prompt=system_prompt, top_k=top_k, namespace=namespace
@@ -249,11 +252,13 @@ class _RAGFacade:
         )
 
     async def delete(self, *, doc_id: str) -> DeleteResponse:
+        """Удалить документ из RAG-хранилища по doc_id."""
         _check_enabled()
         ok = await get_rag_service().delete(doc_id)
         return DeleteResponse(deleted=ok)
 
     async def stats(self, *, collection: str | None = None) -> StatsResponse:
+        """Получить статистику RAG (количество документов, backend, provider)."""
         if not rag_settings.enabled:
             return StatsResponse(
                 enabled=False,

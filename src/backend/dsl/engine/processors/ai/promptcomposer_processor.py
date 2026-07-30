@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Композиция промпта: шаблон + контекст + few-shot examples."""
 
 from __future__ import annotations
 

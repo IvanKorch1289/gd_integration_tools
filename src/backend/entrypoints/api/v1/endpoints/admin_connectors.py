@@ -57,6 +57,7 @@ class _AdminConnectorsFacade:
     """
 
     async def list_connectors(self) -> dict[str, Any]:
+        """Список всех зарегистрированных коннекторов с health-status."""
         # Wave 6.5a: registry резолвится через core.di.providers (lazy).
         try:
             from src.backend.core.di.providers import get_connector_registry_provider
@@ -91,6 +92,7 @@ class _AdminConnectorsFacade:
         return {"total": len(connectors), "connectors": connectors}
 
     async def reload_connector(self, *, name: str) -> dict[str, Any]:
+        """Hot-reload коннектора: переподключение к upstream + health-check."""
         # Wave 6.5a: registry + error class — через DI providers.
         try:
             from src.backend.core.di.providers import (
@@ -135,6 +137,7 @@ class _AdminConnectorsFacade:
         }
 
     async def get_config(self, *, name: str) -> dict[str, Any]:
+        """Получить сохранённый конфиг коннектора по имени."""
         store = _resolve_config_store_or_503()
         entry = await store.get(name)
         if entry is None:
@@ -149,6 +152,7 @@ class _AdminConnectorsFacade:
         enabled: bool = True,
         user: str | None = None,
     ) -> dict[str, Any]:
+        """Сохранить конфиг коннектора + trigger hot-reload."""
         store = _resolve_config_store_or_503()
         entry = await store.save(name, config, enabled=enabled, user=user)
 
@@ -178,6 +182,7 @@ class _AdminConnectorsFacade:
         return {"saved": entry.model_dump(mode="json"), "reload": reload_status}
 
     async def delete_config(self, *, name: str) -> dict[str, bool]:
+        """Удалить сохранённый конфиг коннектора."""
         store = _resolve_config_store_or_503()
         deleted = await store.delete(name)
         return {"deleted": deleted}

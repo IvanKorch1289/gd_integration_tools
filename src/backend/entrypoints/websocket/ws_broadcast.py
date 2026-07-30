@@ -38,6 +38,7 @@ class WSBroadcast:
     """
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         redis_pubsub_cls = get_redis_pubsub_factory_provider()
         self._pubsub = redis_pubsub_cls(_BROADCAST_CHANNEL)
         self._listener_task: asyncio.Task | None = None

@@ -29,6 +29,7 @@ class BaseGRPCServicer:
     """Базовый класс для gRPC servicer с dispatch через ActionHandlerRegistry."""
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         self.logger = grpc_logger
 
     async def _dispatch(

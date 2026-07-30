@@ -172,6 +172,7 @@ class _SearchFacade:
         limit: int = 20,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
+        """Полнотекстовый поиск по audit_logs с фильтрами по entity/tenant/date."""
         query = _build_text_query(
             q,
             fields=["who", "what", "entity_id", "action"],
@@ -192,6 +193,7 @@ class _SearchFacade:
         limit: int = 20,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
+        """Поиск orders с фильтрами по status и date range."""
         query = _build_text_query(
             q,
             fields=["pledge_gd_id", "order_kind_id"],
@@ -210,6 +212,7 @@ class _SearchFacade:
         limit: int = 20,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
+        """Полнотекстовый поиск по notebooks с фильтром по tag."""
         query = _build_text_query(q, fields=["title", "content"], filters={"tags": tag})
         return await _safe_search(
             "notebooks",
@@ -222,6 +225,7 @@ class _SearchFacade:
     async def aggregate(
         self, *, index: str, field: str, q: str | None = None, size: int = 10
     ) -> dict[str, Any]:
+        """Агрегация (terms) по полю index через SearchService."""
         try:
             service = get_search_service()
             aggs = {"by_field": {"terms": {"field": field, "size": size}}}

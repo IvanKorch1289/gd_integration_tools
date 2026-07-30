@@ -129,6 +129,7 @@ class _DSLConsoleFacade:
     _RATE_WINDOW_S = 60.0
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         import time
         self._tokens = float(self._RATE_LIMIT)
         self._last_refill = time.monotonic()

@@ -38,6 +38,7 @@ class ConnectionManager:
     """
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         self._connections: dict[str, WebSocket] = {}
         self._groups: dict[str, set[str]] = {}
         # S163 W25-A: action_id → set of client_ids (для per-route pool).

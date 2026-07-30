@@ -22,6 +22,9 @@ class WebSocketRateLimitMiddleware:
     """Limit WebSocket connections by tenant, user, or client IP."""
 
     def __init__(self, app: Any, *, enabled: bool = True) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         self._app = app
         self._enabled = enabled
         self._limiter = get_rate_limiter()

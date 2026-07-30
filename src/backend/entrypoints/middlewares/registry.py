@@ -103,6 +103,7 @@ class MiddlewareRegistry:
     """
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         self._specs: dict[str, MiddlewareSpec] = {}
         self._lock = Lock()
 

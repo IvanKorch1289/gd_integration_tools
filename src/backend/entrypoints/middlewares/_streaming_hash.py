@@ -32,6 +32,7 @@ class StreamingBodyHasher:
     __slots__ = ("_hasher",)
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         self._hasher = hashlib.sha256()
 
     def update(self, chunk: bytes) -> None:

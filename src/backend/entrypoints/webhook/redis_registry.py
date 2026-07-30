@@ -41,6 +41,7 @@ class RedisWebhookRegistry:
     """
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         redis_hash_cls = get_redis_hash_factory_provider()
         redis_pubsub_cls = get_redis_pubsub_factory_provider()
         self._store = redis_hash_cls("webhook:subs")

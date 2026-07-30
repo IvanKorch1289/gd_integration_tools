@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Парсинг структурированного вывода LLM (JSON schema, function calling)."""
 
 from __future__ import annotations
 

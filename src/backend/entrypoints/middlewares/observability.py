@@ -151,6 +151,10 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(self, app: "ASGIApp", config: ObservabilityConfig | None = None) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app.
+:param config: значение config."""
         super().__init__(app)
         self.config = config or ObservabilityConfig()
 

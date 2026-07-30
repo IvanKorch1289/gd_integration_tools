@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Применение guardrails (input/output фильтры) для LLM-вызовов."""
 
 from __future__ import annotations
 

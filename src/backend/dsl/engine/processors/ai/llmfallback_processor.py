@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Fallback-стратегия для LLM-вызовов: основная/резервная модель."""
 
 from __future__ import annotations
 

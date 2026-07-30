@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Контроль token-бюджета: подсчёт и ограничение в LLM-вызовах."""
 
 from __future__ import annotations
 

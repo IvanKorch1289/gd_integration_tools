@@ -70,6 +70,9 @@ class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
     def __init__(
         self, app: ASGIApp, *, path_patterns: Iterable[str] | None = None
     ) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         super().__init__(app)
         self._path_patterns: tuple[re.Pattern[str], ...] = tuple(
             re.compile(p) for p in (path_patterns or ())

@@ -81,6 +81,9 @@ class DegradationMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(self, app: ASGIApp, *, retry_after: int = 30) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         super().__init__(app)
         self._retry_after = retry_after
 

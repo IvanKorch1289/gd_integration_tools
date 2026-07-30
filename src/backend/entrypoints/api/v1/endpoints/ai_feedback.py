@@ -136,6 +136,7 @@ class _AIFeedbackFacade:
     async def list_pending(
         self, *, agent_id: str | None, limit: int, offset: int
     ) -> list[Any]:
+        """Список pending feedback-записей (без label) для review."""
         return await get_ai_feedback_service().list_pending(
             agent_id=agent_id, limit=limit, offset=offset
         )
@@ -149,6 +150,7 @@ class _AIFeedbackFacade:
         limit: int,
         offset: int,
     ) -> list[Any]:
+        """Список labeled feedback с фильтрами по label/agent/RAG-индексации."""
         return await get_ai_feedback_service().list_labeled(
             label=label,
             agent_id=agent_id,
@@ -158,9 +160,11 @@ class _AIFeedbackFacade:
         )
 
     async def stats(self) -> dict[str, int]:
+        """Статистика feedback: total/positive/negative/pending."""
         return await get_ai_feedback_service().stats()
 
     async def get(self, *, doc_id: str) -> Any | None:
+        """Получить feedback-запись по doc_id."""
         return await get_ai_feedback_service().get(doc_id)
 
     async def label(
@@ -171,6 +175,7 @@ class _AIFeedbackFacade:
         comment: str | None = None,
         operator_id: str | None = None,
     ) -> Any:
+        """Установить/изменить label feedback (positive/negative/skip)."""
         try:
             return await get_ai_feedback_service().set_feedback(
                 doc_id=doc_id, label=label, comment=comment, operator_id=operator_id
@@ -181,6 +186,7 @@ class _AIFeedbackFacade:
     async def index_batch(
         self, *, agent_id: str | None = None, limit: int = 100
     ) -> Any:
+        """Batch-index positive feedback в RAG для few-shot retrieval."""
         return await get_feedback_indexer().index_batch(agent_id=agent_id, limit=limit)
 
 

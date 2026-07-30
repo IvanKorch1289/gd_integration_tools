@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Vector search по эмбеддингам с фильтрами по метаданным."""
 
 from __future__ import annotations
 

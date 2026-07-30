@@ -4,12 +4,14 @@ from __future__ import annotations
 
 
 def test_repository_inherits_sqlalchemy_base() -> None:
+    """Test: repository inherits sqlalchemy base."""
     from src.backend.core.repositories.base import SQLAlchemyRepository
     from extensions.core_entities.files.repositories.files import FileRepository
     assert issubclass(FileRepository, SQLAlchemyRepository)
 
 
 def test_repository_class_instantiable() -> None:
+    """Test: repository class instantiable."""
     from extensions.core_entities.files.repositories.files import FileRepository
     from extensions.core_entities.files.domain.models import File, OrderFile
     repo = FileRepository(model=File, load_joined_models=False, link_model=OrderFile)
@@ -26,6 +28,7 @@ def test_repository_has_add_link() -> None:
 
 
 def test_repository_respects_facade_boundary() -> None:
+    """Test: repository respects facade boundary."""
     import extensions.core_entities.files.repositories.files as mod
     import inspect
     src = inspect.getsource(mod)

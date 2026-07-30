@@ -51,6 +51,9 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
     def __init__(
         self, app: ASGIApp, *, route_timeouts: Mapping[str, float] | None = None
     ) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         super().__init__(app)
         # Сортируем по убыванию длины для longest-prefix-match.
         # Frozen tuple избегает мутаций после lifespan-bootstrap.

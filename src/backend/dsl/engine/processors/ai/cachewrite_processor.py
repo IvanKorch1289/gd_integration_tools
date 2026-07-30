@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Запись результатов в Redis-кеш с TTL-инвалидацией."""
 
 from __future__ import annotations
 

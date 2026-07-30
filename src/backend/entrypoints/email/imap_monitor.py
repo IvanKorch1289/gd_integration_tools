@@ -81,6 +81,9 @@ class ImapMonitor:
     """
 
     def __init__(self, config: ImapConfig) -> None:
+        """Инициализирует middleware.
+
+:param config: значение config."""
         self.config = config
         self._task: asyncio.Task[None] | None = None
         self._running = False

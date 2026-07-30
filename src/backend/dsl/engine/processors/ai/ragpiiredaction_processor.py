@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: PII-редеакция в RAG-результатах перед возвратом клиенту."""
 
 from __future__ import annotations
 

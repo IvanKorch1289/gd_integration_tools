@@ -18,24 +18,31 @@ class TestValidateInn:
     """Tests for INN validation."""
 
     def test_valid_10_digit_inn(self) -> None:
+        """Test: valid 10 digit inn."""
         assert validate_inn("7707083893") is True
 
     def test_valid_12_digit_inn(self) -> None:
+        """Test: valid 12 digit inn."""
         assert validate_inn("770708389307") is True
 
     def test_invalid_inn_wrong_checksum(self) -> None:
+        """Test: invalid inn wrong checksum."""
         assert validate_inn("7707083890") is False
 
     def test_invalid_inn_letters(self) -> None:
+        """Test: invalid inn letters."""
         assert validate_inn("abc") is False
 
     def test_invalid_inn_wrong_length(self) -> None:
+        """Test: invalid inn wrong length."""
         assert validate_inn("12345") is False
 
     def test_empty_inn(self) -> None:
+        """Test: empty inn."""
         assert validate_inn("") is False
 
     def test_none_inn(self) -> None:
+        """Test: none inn."""
         assert validate_inn(None) is False  # type: ignore[arg-type]
 
 
@@ -43,6 +50,7 @@ class TestBuildSearchQueries:
     """Tests for search query generation."""
 
     def test_basic_queries(self) -> None:
+        """Test: basic queries."""
         queries = _build_search_queries("7707083893", "ООО Ромашка")
         assert "7707083893" in queries["general"]
         assert "ООО Ромашка" in queries["general"]
@@ -50,6 +58,7 @@ class TestBuildSearchQueries:
         assert "жалобы" in queries["negative"]
 
     def test_empty_company_name(self) -> None:
+        """Test: empty company name."""
         queries = _build_search_queries("7707083893", "")
         assert "7707083893" in queries["general"]
 
@@ -58,16 +67,20 @@ class TestFormatResults:
     """Tests for search results formatting."""
 
     def test_none_results(self) -> None:
+        """Test: none results."""
         assert _format_results(None) == "Данные не найдены"
 
     def test_empty_list(self) -> None:
+        """Test: empty list."""
         assert _format_results([]) == "Данные не найдены"
 
     def test_dict_with_content(self) -> None:
+        """Test: dict with content."""
         results = {"content": "Test content"}
         assert _format_results(results) == "Test content"
 
     def test_list_of_dicts(self) -> None:
+        """Test: list of dicts."""
         results = [{"content": "Result 1"}, {"content": "Result 2"}]
         formatted = _format_results(results)
         assert "Result 1" in formatted
@@ -78,6 +91,7 @@ class TestParseReportSections:
     """Tests for report section parsing."""
 
     def test_parse_full_report(self) -> None:
+        """Test: parse full report."""
         raw = """\
 ═══════════════════════════════════════════════
 ОТЧЁТ OSINT: Тест Компания
@@ -117,11 +131,13 @@ class TestValidateReport:
     """Tests for report validation."""
 
     def test_truncates_long_report(self) -> None:
+        """Test: truncates long report."""
         long_text = "x" * 5000
         result = validate_report(long_text)
         assert len(result["raw_text"]) <= 3000
 
     def test_short_report_passes(self) -> None:
+        """Test: short report passes."""
         short_text = "Short report"
         result = validate_report(short_text)
         assert result["raw_text"] == short_text
@@ -131,6 +147,7 @@ class TestComposePrompt:
     """Tests for prompt composition."""
 
     def test_prompt_contains_inn(self) -> None:
+        """Test: prompt contains inn."""
         prompt = compose_prompt(
             inn="7707083893",
             company_name="Тест",

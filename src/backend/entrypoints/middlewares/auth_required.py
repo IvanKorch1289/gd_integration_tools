@@ -86,6 +86,9 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
         public_prefixes: Iterable[str] = DEFAULT_PUBLIC_PATH_PREFIXES,
         accepted_methods: Iterable[AuthMethod] | None = None,
     ) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         super().__init__(app)
         self.public_prefixes = tuple(public_prefixes)
         self._accepted_methods = (

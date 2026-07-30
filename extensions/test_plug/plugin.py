@@ -15,4 +15,5 @@ class TestPlugPlugin(BasePlugin):
     version: str = "0.1.0"
 
     def healthcheck(self) -> bool:
+        """Базовый healthcheck — всегда True (минимальный плагин)."""
         return True

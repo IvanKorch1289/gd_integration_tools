@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Прямой LLM-вызов через AI Gateway с cost-tracking и retry-логикой."""
 
 from __future__ import annotations
 

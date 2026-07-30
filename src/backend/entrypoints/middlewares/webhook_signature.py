@@ -54,6 +54,9 @@ class WebhookSignatureMiddleware(BaseHTTPMiddleware):
         timestamp_header: str = "X-Webhook-Timestamp",
         timestamp_window: int = DEFAULT_TIMESTAMP_WINDOW,
     ) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         super().__init__(app)
         self._prefixes = tuple(path_prefixes)
         self._secrets = dict(secrets_by_prefix or {})

@@ -42,6 +42,9 @@ class DataMaskingMiddleware(BaseHTTPMiddleware):
     """Маскирует PII в JSON-ответах."""
 
     def __init__(self, app: ASGIApp) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         super().__init__(app)
 
     async def dispatch(

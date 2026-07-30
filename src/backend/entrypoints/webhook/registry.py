@@ -38,6 +38,7 @@ class WebhookRegistry:
     """Реестр webhook-подписок (in-memory)."""
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         self._subscriptions: dict[str, WebhookSubscription] = {}
 
     def add(self, sub: WebhookSubscription) -> WebhookSubscription:

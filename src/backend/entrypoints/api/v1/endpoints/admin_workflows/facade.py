@@ -73,6 +73,7 @@ class _AdminWorkflowsFacade:
         tenant_id: str | None = None,
         limit: int = 50,
     ) -> list[WorkflowInstanceSchemaOut]:
+        """Список workflow instances с фильтрами по status/name/tenant."""
         rows = await _list_instances_filtered(
             status_filter=status_filter,
             workflow_name=workflow_name,
@@ -84,6 +85,7 @@ class _AdminWorkflowsFacade:
     async def get_workflow(
         self, *, instance_id: UUID
     ) -> WorkflowInstanceDetailSchemaOut:
+        """Получить детальную информацию о workflow instance + events."""
         row = await _instance_store().get(instance_id)
         if row is None:
             raise HTTPException(
@@ -113,6 +115,7 @@ class _AdminWorkflowsFacade:
     async def get_events(
         self, *, instance_id: UUID, after_seq: int = 0, limit: int = 100
     ) -> list[WorkflowEventSchemaOut]:
+        """События workflow instance с пагинацией по seq."""
         row = await _instance_store().get(instance_id)
         if row is None:
             raise HTTPException(
@@ -209,6 +212,7 @@ class _AdminWorkflowsFacade:
         }
 
     async def resume_workflow(self, *, instance_id: UUID) -> dict[str, Any]:
+        """Возобновить paused workflow instance."""
         store = _instance_store()
         row = await store.get(instance_id)
         if row is None:

@@ -4,12 +4,14 @@ from __future__ import annotations
 
 
 def test_repository_inherits_sqlalchemy_base() -> None:
+    """Test: repository inherits sqlalchemy base."""
     from src.backend.core.repositories.base import SQLAlchemyRepository
     from extensions.core_entities.users.repositories.users import UserRepository
     assert issubclass(UserRepository, SQLAlchemyRepository)
 
 
 def test_repository_class_instantiable() -> None:
+    """Test: repository class instantiable."""
     from extensions.core_entities.users.repositories.users import UserRepository
     from extensions.core_entities.users.domain.models import User
     repo = UserRepository(model=User)
@@ -17,6 +19,7 @@ def test_repository_class_instantiable() -> None:
 
 
 def test_repository_load_joined_models_default_false() -> None:
+    """Test: repository load joined models default false."""
     from extensions.core_entities.users.repositories.users import UserRepository
     from extensions.core_entities.users.domain.models import User
     repo = UserRepository(model=User)
@@ -32,6 +35,7 @@ def test_repository_has_get_by_username() -> None:
 
 
 def test_repository_respects_facade_boundary() -> None:
+    """Test: repository respects facade boundary."""
     import extensions.core_entities.users.repositories.users as mod
     import inspect
     src = inspect.getsource(mod)

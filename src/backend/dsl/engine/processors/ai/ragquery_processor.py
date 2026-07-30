@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Structured RAG query с freshness-фильтрацией и strategy-выбором."""
 
 from __future__ import annotations
 

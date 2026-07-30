@@ -58,6 +58,12 @@ class AutoSchemaResult:
         mutation_count: int,
         skipped: list[tuple[str, str]] | None = None,
     ) -> None:
+        """Инициализирует middleware.
+
+:param schema: значение schema.
+:param query_count: значение query_count.
+:param mutation_count: значение mutation_count.
+:param skipped: значение skipped."""
         self.schema = schema
         self.query_count = query_count
         self.mutation_count = mutation_count

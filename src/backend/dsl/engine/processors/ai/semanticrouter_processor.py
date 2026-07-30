@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Семантическая маршрутизация запросов на основе intent-эмбеддингов."""
 
 from __future__ import annotations
 

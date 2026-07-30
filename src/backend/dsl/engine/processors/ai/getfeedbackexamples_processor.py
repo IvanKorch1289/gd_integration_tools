@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Получение few-shot примеров из feedback-хранилища для LLM-промптов."""
 
 from __future__ import annotations
 

@@ -61,6 +61,7 @@ class WatcherManager:
     """
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         self._watchers: dict[str, WatcherSpec] = {}
         self._tasks: dict[str, asyncio.Task[None]] = {}
         self._stop_events: dict[str, asyncio.Event] = {}

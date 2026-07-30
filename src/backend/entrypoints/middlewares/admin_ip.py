@@ -22,6 +22,9 @@ class IPRestrictionMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(self, app: ASGIApp):
+        """Инициализирует middleware.
+
+:param app: значение app."""
         from re import compile
 
         from src.backend.dsl.codec.converters import convert_pattern

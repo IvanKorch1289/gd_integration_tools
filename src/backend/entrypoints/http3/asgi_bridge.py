@@ -43,6 +43,7 @@ class HttpStreamHandler:
         send_headers: Callable[[int, list[tuple[bytes, bytes]]], None],
         send_data: Callable[[bytes, bool], None],
     ) -> None:
+        """Инициализирует middleware."""
         self.stream_id = stream_id
         self.scope = scope
         self._send_headers = send_headers

@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Санитизация PII в LLM-входных данных (маскирование чувствительных данных)."""
 
 from __future__ import annotations
 

@@ -126,6 +126,9 @@ class MCPGateway:
     """
 
     def __init__(self, auth: Any | None = None) -> None:
+        """Инициализирует middleware.
+
+:param auth: значение auth."""
         self._auth = auth
         self._namespaces_registered: list[str] = []
 

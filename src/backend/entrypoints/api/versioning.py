@@ -52,6 +52,9 @@ class VersionedRouter(APIRouter):
         prefix: str | None = None,
         **kwargs: Any,
     ) -> None:
+        """Инициализирует middleware.
+
+:param version: значение version."""
         self.api_version = APIVersion(
             version=version,
             deprecated=deprecated,
@@ -71,6 +74,10 @@ class DeprecationMiddleware(BaseHTTPMiddleware):
     def __init__(
         self, app: ASGIApp, versions: dict[str, APIVersion] | None = None
     ) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app.
+:param versions: значение versions."""
         super().__init__(app)
         self._versions = versions or {}
 

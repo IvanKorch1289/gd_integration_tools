@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Восстановление PII-токенов в RAG/LLM-результатах после маскирования."""
 
 from __future__ import annotations
 

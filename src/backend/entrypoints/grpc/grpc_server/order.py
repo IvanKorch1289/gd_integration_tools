@@ -36,6 +36,7 @@ class OrderGRPCServicer(BaseGRPCServicer, OrderServiceServicer):
     """gRPC servicer для Orders."""
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         super().__init__()
         self.logger.info("OrderGRPCServicer инициализирован")
 

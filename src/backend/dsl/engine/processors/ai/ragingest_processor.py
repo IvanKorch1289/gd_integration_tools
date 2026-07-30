@@ -1,4 +1,4 @@
-"""Auto-generated from ai_processors.py — single processor files."""
+"""DSL процессор: Ingest документов в RAG-хранилище (chunking + embedding + index)."""
 
 from __future__ import annotations
 

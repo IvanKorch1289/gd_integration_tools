@@ -56,6 +56,7 @@ class EventBus:
     """
 
     def __init__(self) -> None:
+        """Инициализирует middleware."""
         self._subscribers: list[asyncio.Queue[dict[str, Any]]] = []
 
     def subscribe(self) -> asyncio.Queue[dict[str, Any]]:

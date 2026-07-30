@@ -29,6 +29,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(self, app: ASGIApp, default_tenant: str = "default") -> None:
+        """Инициализирует middleware.
+
+:param app: значение app.
+:param default_tenant: значение default_tenant."""
         super().__init__(app)
         self._default = default_tenant
 

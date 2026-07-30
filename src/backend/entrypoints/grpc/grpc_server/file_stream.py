@@ -80,6 +80,9 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
         # Storage backend dependency — late binding для тестируемости.
         get_storage: Callable[[], Any] | None = None,
     ) -> None:
+        """Инициализирует middleware.
+
+:param config: значение config."""
         super().__init__()
         self._config = config or FileStreamConfig()
         self._get_storage = get_storage

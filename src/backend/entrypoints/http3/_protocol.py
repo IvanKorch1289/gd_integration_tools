@@ -60,6 +60,7 @@ class AsgiHttp3Protocol(QuicConnectionProtocol):
         server_config: Http3ServerConfig,
         **kwargs: Any,
     ) -> None:
+        """Инициализирует middleware."""
         super().__init__(*args, **kwargs)
         self._asgi_app = asgi_app
         self._server_config = server_config

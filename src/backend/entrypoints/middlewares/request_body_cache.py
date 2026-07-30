@@ -60,6 +60,9 @@ class RequestBodyCacheMiddleware(BaseHTTPMiddleware):
     def __init__(
         self, app: ASGIApp, *, max_body_size: int = _DEFAULT_MAX_BODY_SIZE
     ) -> None:
+        """Инициализирует middleware.
+
+:param app: значение app."""
         super().__init__(app)
         self.max_body_size = max(0, int(max_body_size))
 

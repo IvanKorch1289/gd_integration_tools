@@ -133,6 +133,7 @@ class LangMemService:
         steps: dict[str, Any] | None = None,
         tenant: str | None = None,
     ) -> int:
+        """Добавить procedural-memory (последовательность шагов) для агента."""
         self._ensure_enabled()
         from src.backend.services.ai.langmem_models import LangMemProcedural
 

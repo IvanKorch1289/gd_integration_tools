@@ -72,6 +72,10 @@ class LoginRateLimitExceeded(HTTPException):
     """429 + Retry-After. Internal use only (subclass of HTTPException)."""
 
     def __init__(self, retry_after: int, identifier: str) -> None:
+        """Инициализирует middleware.
+
+:param retry_after: значение retry_after.
+:param identifier: значение identifier."""
         super().__init__(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=f"Too many login attempts. Retry after {retry_after}s.",
