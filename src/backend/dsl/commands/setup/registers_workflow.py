@@ -207,8 +207,8 @@ def _register_message_replay() -> None:
 
 def _register_webhook_relay() -> None:
     # Layer 11 Cycle 3 fix: get_webhook_relay переехал из
-    # \`entrypoints/webhook/transformer\` в
-    # \`services/integrations/webhook_relay\` для соблюдения layer
+    # `entrypoints/webhook/transformer` в
+    # `services/integrations/webhook_relay` для соблюдения layer
     # invariants (dsl → services — allowed, dsl → entrypoints — нет).
     # backward-compat shim в entrypoints оставлен для extensions/tests.
     try:

@@ -1,8 +1,8 @@
 """Helpers для разбора litellm-ответов.
 
 Layer 8 Агенты Cycle 1: единая утилита вместо дубликата в
-\`gateway_pipeline_mixin.llm_mixin._extract_completion\` и
-\`pydantic_ai_client._extract_completion\`.
+`gateway_pipeline_mixin.llm_mixin._extract_completion` и
+`pydantic_ai_client._extract_completion`.
 """
 
 from __future__ import annotations
