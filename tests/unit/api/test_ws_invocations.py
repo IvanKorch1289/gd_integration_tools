@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from fastapi import WebSocketDisconnect
 
 from src.backend.core.interfaces.invocation_reply import ReplyChannelKind
@@ -47,13 +48,25 @@ class FakeWebSocket:
     """Минимальный stub под Starlette WebSocket для unit-тестов."""
 
     def __init__(
-        self, incoming: list[Any], *, invoker: Any, registry: ReplyChannelRegistry
+        self,
+        incoming: list[Any],
+        *,
+        invoker: Any,
+        registry: ReplyChannelRegistry,
+        cookies: dict[str, str] | None = None,
+        query_params: dict[str, str] | None = None,
     ) -> None:
         self._incoming = list(incoming)
         self.sent: list[dict[str, Any]] = []
         self.accepted = False
         self.closed = False
         self.app = _FakeApp(reply_registry=registry, invoker=invoker)
+        # Auth bypass: FakeWebSocket может выдавать себя за аутентифицированного
+        # через cookie ``auth_token=<anything>`` или query-param ``token``.
+        self.cookies = cookies or {"auth_session": "test-token"}
+        self.query_params = query_params or {}
+        self.headers: dict[str, str] = {}
+        self.state = MagicMock()
 
     async def accept(self) -> None:
         self.accepted = True
@@ -84,6 +97,34 @@ def _registry_with_ws() -> tuple[ReplyChannelRegistry, WsReplyChannel]:
     ws_channel = WsReplyChannel()
     registry.register(ws_channel)
     return registry, ws_channel
+
+
+@pytest.fixture(autouse=True)
+def _bypass_ws_auth(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Bypass API key validation в WS-handler для unit-тестов.
+
+    Реальная auth-цепочка требует APIKeyManager.validate(token) — в unit-тестах
+    не загружаем extensions/services. Подменяем authenticator.authenticate_via_facade.
+    """
+    from src.backend.entrypoints.websocket import ws_auth
+
+    fake_session = MagicMock()
+    fake_session.client_id = "test-client"
+    fake_session.is_admin = False
+    fake_session.allowed_groups = []
+    fake_session.principal = "test-user"
+    fake_session.api_key_hash = "test-hash"
+    fake_session.auth_source = "cookie"
+
+    async def _fake_authenticate_via_facade(self: Any, credential: Any) -> Any:
+        del self, credential
+        return fake_session
+
+    monkeypatch.setattr(
+        ws_auth.WSAuthenticator,
+        "authenticate_via_facade",
+        _fake_authenticate_via_facade,
+    )
 
 
 def _make_invoker(response: InvocationResponse | None = None) -> MagicMock:
