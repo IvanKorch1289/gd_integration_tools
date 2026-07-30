@@ -1,5 +1,33 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 133 (2026-07-28) — Layer 3 (DSL)
+
+### Cycle 133 L3: ActionHandlerRegistry — atomic re-registration conflict check
+
+Layer 3 (DSL) production feature: ``register_with_metadata`` (action_registry.py:132)
+не имел conflict detection — позволял перезаписывать
+``input_model`` без проверки совместимости.
+
+Результат: `test_conflict_does_not_mutate_registry` (W1 guard) проверял
+atomic semantics — production fail'ил (no atomicity).
+
+#### Fix (production)
+Добавлен 3-way conflict check BEFORE any mutation:
+1. New ``handler.payload_model`` ≠ new ``metadata.input_model``
+   (intra-call consistency).
+2. Existing ``handler.payload_model`` ≠ new ``metadata.input_model``
+   (re-registration w/ different schemas).
+3. Existing ``metadata.input_model`` ≠ new ``metadata.input_model``
+   (metadata-only re-registration).
+
+Все три → raise ``ValueError("Atomic re-registration conflict: ...")``
+BEFORE any state mutation. ``test_conflict_does_not_mutate_registry``
+проходит (state intact on raise).
+
+#### Validation
+- `tests/unit/dsl/test_action_registry.py`: 17/17 pass
+  (was 14/17 — 3 TestAtomicConflictReregistration tests fail).
+
 ## [Unreleased] — Cycle 132 (2026-07-28) — Layer 3 (DSL)
 
 ### Cycle 132 L3: ActionHandlerRegistry.dispatch — validate empty payload

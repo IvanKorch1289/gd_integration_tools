@@ -167,6 +167,58 @@ class ActionHandlerRegistry:
                 f"metadata.action={metadata.action!r} != action={action!r}"
             )
 
+        # Cycle 133: atomic re-registration conflict check (BEFORE any
+        # mutation — ensures ``test_conflict_does_not_mutate_registry``
+        # passes with state intact on raise).
+        #
+        # Three conflict paths:
+        # 1. New handler.payload_model != new metadata.input_model
+        #    (intra-call consistency — see test_conflicting_handler_*).
+        # 2. Existing handler.payload_model != new metadata.input_model
+        #    (re-registration with different schemas).
+        # 3. Existing metadata.input_model != new metadata.input_model
+        #    (metadata-only re-registration).
+        if metadata.input_model is not None:
+            new_handler_payload_model = (
+                handler.payload_model
+                if isinstance(handler, ActionHandlerSpec)
+                else None
+            )
+            if (
+                new_handler_payload_model is not None
+                and new_handler_payload_model is not metadata.input_model
+            ):
+                raise ValueError(
+                    "Atomic re-registration conflict: "
+                    f"new handler.payload_model={new_handler_payload_model!r} "
+                    f"!= new metadata.input_model={metadata.input_model!r} "
+                    f"for action={action!r}"
+                )
+            existing_handler = self._handlers.get(action)
+            if (
+                existing_handler is not None
+                and existing_handler.payload_model is not None
+                and existing_handler.payload_model is not metadata.input_model
+            ):
+                raise ValueError(
+                    "Atomic re-registration conflict: "
+                    f"existing handler.payload_model={existing_handler.payload_model!r} "
+                    f"!= metadata.input_model={metadata.input_model!r} "
+                    f"for action={action!r}"
+                )
+            existing_metadata = self._metadata.get(action)
+            if (
+                existing_metadata is not None
+                and existing_metadata.input_model is not None
+                and existing_metadata.input_model is not metadata.input_model
+            ):
+                raise ValueError(
+                    "Atomic re-registration conflict: "
+                    f"existing metadata.input_model={existing_metadata.input_model!r} "
+                    f"!= new metadata.input_model={metadata.input_model!r} "
+                    f"for action={action!r}"
+                )
+
         if isinstance(handler, ActionHandlerSpec):
             self._handlers[action] = handler
         elif handler is not None and not isinstance(handler, ActionHandlerSpec):
