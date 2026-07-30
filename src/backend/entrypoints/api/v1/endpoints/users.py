@@ -1,3 +1,15 @@
+"""Users CRUD endpoints — auto-generated via ``make_crud_router``.
+
+Routes registered:
+* ``GET /api/v1/users`` — список (фильтрация через ``UserFilter``);
+* ``GET /api/v1/users/{object_id}`` — детальная карточка;
+* ``POST /api/v1/users`` — создание (``UserSchemaIn``);
+* ``PUT /api/v1/users/{object_id}`` — обновление;
+* ``DELETE /api/v1/users/{object_id}`` — удаление.
+
+Auth: ``X-API-Key`` (см. ``common_dependencies``).
+"""
+
 from fastapi import APIRouter, Depends
 
 from extensions.core_entities.users.schemas.filter import UserFilter

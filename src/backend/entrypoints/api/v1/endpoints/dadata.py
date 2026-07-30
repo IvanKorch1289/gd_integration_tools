@@ -1,3 +1,12 @@
+"""DaData endpoints — проксирование запросов к DaData.ru API.
+
+Routes registered:
+* ``GET /api/v1/dadata/suggest`` — autocomplete по адресу/ФИО/email;
+* ``GET /api/v1/dadata/find_by_id`` — поиск по ИНН/ОГРН.
+
+Используется :mod:`extensions.dadata.services.dadata` для обращения к API.
+"""
+
 from fastapi import APIRouter, Depends
 
 from extensions.dadata.schemas.route import DadataGeolocateQuerySchema  # S168 W17 P2-10

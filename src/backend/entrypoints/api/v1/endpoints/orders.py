@@ -1,3 +1,15 @@
+"""Orders CRUD endpoints — заказы клиентов.
+
+Routes registered:
+* ``GET /api/v1/orders`` — список заказов;
+* ``GET /api/v1/orders/{object_id}`` — карточка заказа;
+* ``POST /api/v1/orders`` — создание заказа (credit scoring flow);
+* ``PUT /api/v1/orders/{object_id}`` — обновление статуса/суммы;
+* ``DELETE /api/v1/orders/{object_id}`` — удаление.
+
+Используется :class:`OrderService` из extensions/core_entities.
+"""
+
 from fastapi import APIRouter, Depends, status
 
 from extensions.core_entities.orders.schemas.filter import OrderFilter

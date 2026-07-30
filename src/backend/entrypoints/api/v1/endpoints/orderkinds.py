@@ -1,3 +1,15 @@
+"""OrderKinds CRUD endpoints — справочник типов заказов.
+
+Routes registered:
+* ``GET /api/v1/orderkinds`` — список типов;
+* ``GET /api/v1/orderkinds/{object_id}`` — карточка типа;
+* ``POST /api/v1/orderkinds`` — создание;
+* ``PUT /api/v1/orderkinds/{object_id}`` — обновление;
+* ``DELETE /api/v1/orderkinds/{object_id}`` — удаление.
+
+Используется :class:`OrderKindService` из extensions/core_entities.
+"""
+
 from fastapi import APIRouter, Depends, status
 
 from extensions.core_entities.orderkinds.schemas.filter import OrderKindFilter
