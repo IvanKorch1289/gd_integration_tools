@@ -31,6 +31,8 @@ def _mock_extension_modules(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         "extensions.core_entities.orders",
         "extensions.core_entities.orders.services",
         "extensions.core_entities.orders.services.orders",
+        "extensions.core_entities.orders.schemas",
+        "extensions.core_entities.orders.schemas.route",
         "src.backend.workflows",
         "src.backend.workflows.workflows_service",
     ]
@@ -53,6 +55,15 @@ def _mock_extension_modules(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     mods["extensions.core_entities.orders"].services = mods[
         "extensions.core_entities.orders.services"
     ]
+    mods["extensions.core_entities.orders"].schemas = mods[
+        "extensions.core_entities.orders.schemas"
+    ]
+    mods["extensions.core_entities.orders.schemas"].route = mods[
+        "extensions.core_entities.orders.schemas.route"
+    ]
+    mods[
+        "extensions.core_entities.orders.schemas.route"
+    ].OrderIdPathSchema = MagicMock()
 
     # Сервис-геттеры — достаточно быть вызываемыми MagicMock.
     mods[

@@ -4,6 +4,7 @@ import re
 
 from fastapi import HTTPException, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.responses import JSONResponse
 from starlette.types import ASGIApp
 
 from src.backend.core.config.settings import settings
@@ -67,13 +68,19 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         # Проверяем наличие API-ключа
         if (api_key := request.headers.get("X-API-Key")) is None:
-            raise HTTPException(status_code=401, detail="Требуется API-ключ")
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Требуется API-ключ"},
+            )
 
         # Валидируем API-ключ
         import secrets as _secrets
 
         if not _secrets.compare_digest(api_key, settings.secure.api_key):
-            raise HTTPException(status_code=401, detail="Неверный API-ключ")
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Неверный API-ключ"},
+            )
 
         # Передаем запрос дальше по цепочке middleware
         return await call_next(request)

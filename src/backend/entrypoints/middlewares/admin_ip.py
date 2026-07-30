@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import re
 
-from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 from starlette.types import ASGIApp
 
 from src.backend.core.config.settings import settings
@@ -44,22 +45,17 @@ class IPRestrictionMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         """Process admin IP restriction.
 
-        Args:
-            request: HTTP request.
-            call_next: Next middleware/endpoint.
-
         Returns:
-            HTTP response.
-
-        Raises:
-            HTTPException: If IP not allowed.
+            :class:`JSONResponse` со ``status_code=403`` если IP не разрешён,
+            иначе результат ``call_next``.
         """
         path = request.url.path
         client_ip = request.client.host if request.client else None
 
         if not self._store.is_allowed(path, client_ip):
-            raise HTTPException(
-                status_code=403, detail="Доступ запрещен для вашего IP-адреса"
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "Доступ запрещен для вашего IP-адреса"},
             )
 
         return await call_next(request)
