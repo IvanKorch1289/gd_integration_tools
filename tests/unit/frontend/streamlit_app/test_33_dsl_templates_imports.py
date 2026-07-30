@@ -3,7 +3,7 @@
 
 S173 STATUS: файл ``pages/33_DSL_Templates.py`` (англ.) НЕ существует —
 был переименован в ``33_DSL_Шаблоны.py``. Тесты адаптированы под
-новое имя и ``src.backend.services.dsl_portal`` facade pattern
+новое имя и ``src.backend.core.frontend_facade`` facade pattern
 (builder_facade re-exports пофикшены в S173).
 """
 
@@ -53,7 +53,7 @@ def test_dsl_imports_top_level() -> None:
     До S70 W2: 2 lazy dsl imports ВНУТРИ ``_render_workflow_templates``.
     После: top-level imports only (через dsl_portal facade).
 
-    S173: импорт идёт через ``src.backend.services.dsl_portal``
+    S173: импорт идёт через ``src.backend.core.frontend_facade``
     facade (1 import вместо 2), но семантически — те же символы
     top-level, а не lazy.
     """
@@ -64,13 +64,13 @@ def test_dsl_imports_top_level() -> None:
 
     # S173: facade consolidated
     assert (
-        "from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid"
+        "from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid"
         in top_section
     )
 
     # Проверяем, что dsl импорт идёт ДО frontend imports (sectioned)
     dsl_idx = top_section.find(
-        "from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid"
+        "from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid"
     )
     frontend_idx = top_section.find(
         "from src.frontend.streamlit_app.api_clients import get_api_client"
@@ -153,7 +153,7 @@ def test_optional_loading_works() -> None:
 def test_graceful_degradation_when_dsl_unavailable() -> None:
     """Mermaid rendering path обёрнут в try/except (runtime errors handled).
 
-    S173: file использует ``src.backend.services.dsl_portal`` facade —
+    S173: file использует ``src.backend.core.frontend_facade`` facade —
     прямые импорты из ``src.backend.dsl`` консолидированы. Runtime failures
     в Mermaid rendering обрабатываются локально (line 122-128):
     try/except вокруг ``WorkflowDeclaration.model_validate`` + ``to_mermaid``.
@@ -202,7 +202,7 @@ def test_top_level_imports_section_structure() -> None:
     """Top-level imports: streamlit, dsl_portal facade, frontend.
 
     S173: ``WorkflowDeclaration`` и ``to_mermaid`` консолидированы через
-    ``src.backend.services.dsl_portal`` facade (1 import вместо 2).
+    ``src.backend.core.frontend_facade`` facade (1 import вместо 2).
     Ожидаемая структура: 5 imports.
     1. from __future__ import annotations
     2. import streamlit as st
@@ -222,16 +222,16 @@ def test_top_level_imports_section_structure() -> None:
         for line in imports_section.split("\n")
         if line.strip().startswith(("import ", "from "))
     ]
-    assert len(import_lines) == 5, (
-        f"Expected 5 top-level imports (S173 dsl_portal facade), "
+    assert len(import_lines) == 6, (
+        f"Expected 6 top-level imports (S180 — frontend_facade move), "
         f"got {len(import_lines)}: {import_lines}"
     )
 
     joined = "\n".join(import_lines)
     assert "from __future__ import annotations" in joined
     assert "import streamlit as st" in joined
-    # S173: facade consolidated
-    assert "from src.backend.services.dsl_portal import WorkflowDeclaration, to_mermaid" in joined
+    # S180: facade consolidated to core.frontend_facade
+    assert "from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid" in joined
     assert "from src.frontend.streamlit_app.api_clients import get_api_client" in joined
     assert (
         "from src.frontend.streamlit_app.shared.components import" in joined
@@ -257,14 +257,14 @@ def test_top_level_imports_section_structure() -> None:
 def test_no_duplicate_dsl_imports() -> None:
     """No duplicate dsl module imports в module.
 
-    S173: импорты идут через ``src.backend.services.dsl_portal`` facade,
+    S173: импорты идут через ``src.backend.core.frontend_facade`` facade,
     прямых импортов из ``src.backend.dsl`` больше нет (0).
     """
     source = _read_source()
     dsl_count = source.count("from src.backend.dsl")
     assert dsl_count == 0, (
         f"Found {dsl_count} `from src.backend.dsl` imports, expected 0 "
-        f"(S173: все через src.backend.services.dsl_portal facade)"
+        f"(S173: все через src.backend.core.frontend_facade facade)"
     )
 
 
@@ -274,10 +274,10 @@ def test_no_duplicate_dsl_imports() -> None:
 def test_dsl_names_callable() -> None:
     """Top-level dsl names (WorkflowDeclaration, to_mermaid) are accessible.
 
-    S173: импорт через ``src.backend.services.dsl_portal`` facade.
+    S173: импорт через ``src.backend.core.frontend_facade`` facade.
     """
-    from src.backend.services.dsl_portal import WorkflowDeclaration
-    from src.backend.services.dsl_portal import to_mermaid
+    from src.backend.core.frontend_facade import WorkflowDeclaration
+    from src.backend.core.frontend_facade import to_mermaid
 
     assert WorkflowDeclaration is not None
     assert callable(to_mermaid)
@@ -342,11 +342,11 @@ def test_top_level_dsl_imports_resolve() -> None:
     Это verify, что dsl модули не сломаны (если они сломаны — page
     fail на load, но это НЕ graceful degradation, а hard fail).
 
-    S173: импорт через ``src.backend.services.dsl_portal`` facade.
+    S173: импорт через ``src.backend.core.frontend_facade`` facade.
     """
     # Re-import через ту же форму, что и page
-    from src.backend.services.dsl_portal import WorkflowDeclaration as WD
-    from src.backend.services.dsl_portal import to_mermaid as TM
+    from src.backend.core.frontend_facade import WorkflowDeclaration as WD
+    from src.backend.core.frontend_facade import to_mermaid as TM
 
     assert WD is not None
     assert callable(TM)

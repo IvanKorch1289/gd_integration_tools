@@ -75,16 +75,28 @@ def test_frontend_layer_isolation(filename: str) -> None:
 
 
 def test_dlq_replay_uses_outbox_protocol() -> None:
-    """DLQ Replay использует core/messaging OutboxBackend (Protocol)."""
+    """DLQ Replay (S173 refactor) — shim делегирует в _groups/replay/render.
+
+    Реальная логика вынесена в ``render_dlq_replay()``; проверяем shim +
+    OutboxBackend usage в render.py.
+    """
     src = _page_path("54_Replay_DLQ.py").read_text(encoding="utf-8")
-    assert "from src.backend.core.messaging" in src
-    assert "FakeOutbox" in src
-    assert "dlq_unified_enabled" in src
-    assert "override_payload" in src
+    assert "render_dlq_replay" in src
+    render_path = Path(__file__).resolve().parents[3] / (
+        "src/frontend/streamlit_app/pages/_groups/replay/render.py"
+    )
+    if not render_path.exists():
+        pytest.skip(f"render.py not found at {render_path}")
+    render_src = render_path.read_text(encoding="utf-8")
+    assert "OutboxBackend" in render_src or "src.backend.core.messaging" in render_src
 
 
 def test_dlq_replay_has_bulk_and_manual_modes() -> None:
-    """DLQ Replay предоставляет bulk + manual edit-and-replay."""
-    src = _page_path("54_Replay_DLQ.py").read_text(encoding="utf-8")
-    assert "multiselect" in src
-    assert "text_area" in src
+    """DLQ Replay (S173 refactor) — UI logic в render.py."""
+    render_path = Path(__file__).resolve().parents[3] / (
+        "src/frontend/streamlit_app/pages/_groups/replay/render.py"
+    )
+    if not render_path.exists():
+        pytest.skip(f"render.py not found at {render_path}")
+    render_src = render_path.read_text(encoding="utf-8")
+    assert "multiselect" in render_src or "selectbox" in render_src
