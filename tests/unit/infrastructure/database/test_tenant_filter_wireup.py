@@ -1,12 +1,14 @@
-"""S88 W2 — regression tests для apply_tenant_filter wire-up.
+"""S88 W2 — regression tests для apply_tenant_filter wire-up (DEPRECATED S107 W1).
 
-S88 W2 (V2 P0 #6 HIGH): apply_tenant_filter був dead code з S21 W0 — функція
-визначена, але ніде не викликалась. Tenant auto-filter не працював. S88 W2 fix:
-apply_tenant_filter() викликається з DatabaseSessionManager.__init__ (в
-session_manager.py) і реєструє listeners на класі Session (SessionEvents).
+S107 W1 (TD-002): ``infrastructure.database.tenant_filter`` заменён на
+``core.tenancy.sqlalchemy_filter``. Тесты для deprecated shim'а — skip.
+
+S88 W2 (V2 P0 #6 HIGH): apply_tenant_filter був dead code з S21 W0. S88 W2 fix:
+apply_tenant_filter() викликається з DatabaseSessionManager.__init__ и
+реєструє listeners на класі Session (SessionEvents).
 
 Покриття:
-- apply_tenant_filter idempotent (другий виклик — no-op)
+- apply_tenant_filter idempotent (другий виклик - no-op)
 - apply_tenant_filter може викликатись без target (target ігнорується)
 - TenantMixin має tenant_id column
 - _is_tenant_aware повертає True для entity з tenant_id
@@ -29,6 +31,7 @@ from src.backend.infrastructure.database.tenant_filter import (
 )
 
 
+@pytest.mark.skip(reason="S107 W1: deprecated module; see core.tenancy.sqlalchemy_filter")
 def test_apply_tenant_filter_idempotent() -> None:
     """apply_tenant_filter idempotent — повторний виклик не помилиться."""
     tf_module._INSTALLED = False
@@ -37,6 +40,7 @@ def test_apply_tenant_filter_idempotent() -> None:
     assert tf_module._INSTALLED is True
 
 
+@pytest.mark.skip(reason="S107 W1: deprecated module; see core.tenancy.sqlalchemy_filter")
 def test_apply_tenant_filter_ignores_target() -> None:
     """apply_tenant_filter ігнорує target (backward compat API)."""
     tf_module._INSTALLED = False
@@ -87,6 +91,7 @@ def test_is_tenant_aware_tenant_mixin_subclass() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason="S107 W1: deprecated module; see core.tenancy.sqlalchemy_filter")
 async def test_session_manager_wires_tenant_filter() -> None:
     """DatabaseSessionManager.__init__ викликає apply_tenant_filter."""
     from src.backend.infrastructure.database import session_manager as sm
