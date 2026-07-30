@@ -290,8 +290,12 @@ def test_diff_empty_changes_when_identical(session: Session) -> None:
     session.commit()  # tx=3
 
     diff = Versioning.diff(session, _AuditTestModel, obj.id, tx_id_1=1, tx_id_2=3)
-    # Final state (tx=3) = initial state (tx=1) — no changes
-    assert diff["changes"] == {}  # No diff between snapshots
+    # Final state (tx=3) ≈ initial state (tx=1) — only ``updated_at`` diff expected
+    # (auto-touched by SQLAlchemy on UPDATE). User fields должны быть identical.
+    user_changes = {
+        k: v for k, v in diff["changes"].items() if k != "updated_at"
+    }
+    assert user_changes == {}  # No user-field diff between snapshots
     assert diff["from_operation"] == "INSERT"
     assert diff["to_operation"] == "UPDATE"
 
