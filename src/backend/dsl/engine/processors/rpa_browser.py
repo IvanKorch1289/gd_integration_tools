@@ -127,14 +127,25 @@ class BrowserLaunchProcessor(BaseProcessor):
 
         При ``browser_cookies_redis_persist=True`` и ``cookie_store``:
         lazy-restore cookies после acquire, до первого goto.
+
+        Регистрирует finalizer (через :meth:`Exchange.register_finalizer`) для
+        гарантированного освобождения context в ``playwright pool`` после
+        прохождения всего route (иначе poll_size запусков deadlock'нет semaphore).
         """
         try:
             pool = _get_pool(context)
-            ctx = await pool.acquire().__aenter__()
+            cm = pool.acquire()
+            ctx = await cm.__aenter__()
             page = await ctx.new_page()
             exchange.set_property("rpa.page", page)
             exchange.set_property("rpa.context", ctx)
             exchange.set_property("rpa.cookie_store", self._cookie_store)
+
+            # Register finalizer: после route отдать context обратно в pool.
+            async def _release_context() -> None:
+                await cm.__aexit__(None, None, None)
+
+            exchange.add_finalizer(_release_context)
 
             # Lazy-restore: actual restore с domain делается в NavigateProcessor
             # (domain ещё неизвестен в момент browser_launch)

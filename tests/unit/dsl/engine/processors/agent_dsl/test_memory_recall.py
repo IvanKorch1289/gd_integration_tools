@@ -13,16 +13,29 @@ from src.backend.dsl.engine.processors.agent_dsl.memory_recall import (
 )
 
 
+class _Fact:
+    def __init__(self, content: str, confidence: float = 1.0) -> None:
+        self.content = content
+        self.confidence = confidence
+
+
 class _FakeMemoryBackend:
     def __init__(self, records: list[dict[str, Any]] | None = None) -> None:
         self.records = records or []
-        self.calls: list[tuple[str, str, int]] = []
+        self.calls: list[dict[str, Any]] = []
 
-    async def recall(
-        self, namespace: str, query: str, *, k: int = 5
-    ) -> list[dict[str, Any]]:
-        self.calls.append((namespace, query, k))
-        return self.records[:k]
+    async def recall_semantic(
+        self,
+        *,
+        tenant_id: str,
+        query: str,
+        top_k: int = 5,
+    ) -> list[Any]:
+        self.calls.append({"tenant_id": tenant_id, "query": query, "top_k": top_k})
+        return [
+            _Fact(content=str(r.get("value", r)), confidence=1.0)
+            for r in self.records[:top_k]
+        ]
 
 
 @pytest.fixture
@@ -75,7 +88,11 @@ async def test_happy_path_writes_records(
 
     result = ex.get_property("memory_recall")
     assert len(result) == 2
-    assert backend.calls[0] == ("acme:chat", "user question", 2)
+    assert backend.calls[0] == {
+        "tenant_id": "acme:chat",
+        "query": "user question",
+        "top_k": 2,
+    }
 
 
 @pytest.mark.asyncio
@@ -98,7 +115,7 @@ async def test_dynamic_query_from_body(
     )
     await proc.process(ex, context)
 
-    assert backend.calls[0][1] == "dynamic query here"
+    assert backend.calls[0]["query"] == "dynamic query here"
 
 
 @pytest.mark.asyncio
@@ -118,7 +135,7 @@ async def test_tenant_id_placeholder(
     proc = MemoryRecallProcessor(namespace="${tenant_id}:credit_chat", query="q")
     await proc.process(ex, context)
 
-    assert backend.calls[0][0] == "acme_corp:credit_chat"
+    assert backend.calls[0]["tenant_id"] == "acme_corp:credit_chat"
 
 
 @pytest.mark.asyncio

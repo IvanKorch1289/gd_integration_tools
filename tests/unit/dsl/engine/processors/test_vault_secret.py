@@ -26,6 +26,12 @@ from src.backend.dsl.engine.processors.vault_secret import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _bypass_auth() -> None:
+    """VaultSecretProcessor требует capability=secret.read — bypass в unit-тестах."""
+    VaultSecretProcessor.auth_check = AsyncMock(return_value=True)  # type: ignore[method-assign]
+
+
 def _exchange_with() -> Exchange[Any]:
     return Exchange(in_message=Message(body=b"", headers={}))
 

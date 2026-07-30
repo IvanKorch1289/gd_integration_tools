@@ -13,6 +13,14 @@ from src.backend.dsl.engine.processors.streaming_llm import TokenStreamLLMProces
 from src.backend.dsl.engine.processors.streaming_llm_publishers import SSEPublisher
 
 
+@pytest.fixture(autouse=True)
+def _bypass_auth() -> None:
+    """TokenStreamLLMProcessor требует capability=llm.stream — bypass в unit-тестах."""
+    TokenStreamLLMProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
+        return_value=True
+    )
+
+
 class _FakeStream:
     def __init__(self, chunks: list[dict[str, Any]]) -> None:
         self._chunks = chunks

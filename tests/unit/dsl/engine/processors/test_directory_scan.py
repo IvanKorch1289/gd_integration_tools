@@ -19,6 +19,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../.."))
 
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.fs_directory_scan import DirectoryScanProcessor
+from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
+    FilteredDirectoryScanProcessor,
+)
+
+
+@pytest.fixture(autouse=True)
+def _bypass_auth() -> None:
+    """FilteredDirectoryScanProcessor требует capability=rpa.directory.scan — bypass."""
+    FilteredDirectoryScanProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
+        return_value=True
+    )
 
 
 def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any]:

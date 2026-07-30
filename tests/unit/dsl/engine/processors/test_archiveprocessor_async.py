@@ -35,6 +35,17 @@ def _make_exchange(body: Any = None) -> Exchange[Any]:
     return Exchange(in_message=Message(body=body, headers={}))
 
 
+@pytest.fixture(autouse=True)
+def _bypass_auth_check(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ArchiveProcessor имеет required_capability=rpa.archive.execute; в unit-тестах
+    capability-facade stub возвращает denied. Подменяем auth_check на no-op."""
+    monkeypatch.setattr(
+        "src.backend.dsl.engine.processors.rpa.operations.archiveprocessor."
+        "ArchiveProcessor.auth_check",
+        AsyncMock(return_value=True),
+    )
+
+
 def _make_zip_bytes(items: list[tuple[str, bytes]]) -> bytes:
     """Собрать валидный ZIP из списка (name, data)."""
     buf = io.BytesIO()

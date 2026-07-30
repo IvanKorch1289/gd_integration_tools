@@ -36,7 +36,7 @@ class TestInfraClickHouseQueryProcessor:
         client.query = AsyncMock(return_value=[{"count": 42}])
         ch_class = MagicMock(return_value=client)
         with patch(
-            "src.backend.core.di.providers.infrastructure_facade.get_clickhouse_client_class",
+            "src.backend.core.di.providers.infrastructure_locator.get_clickhouse_client_class",
             return_value=ch_class,
         ):
             await p.process(ex, ctx)
@@ -71,7 +71,7 @@ class TestInfraMongoDBFindProcessor:
         client.__getitem__ = MagicMock(return_value=coll)
         mongo_class = MagicMock(return_value=client)
         with patch(
-            "src.backend.core.di.providers.infrastructure_facade.get_mongodb_client_class",
+            "src.backend.core.di.providers.infrastructure_locator.get_mongodb_client_class",
             return_value=mongo_class,
         ):
             await p.process(ex, ctx)
@@ -100,7 +100,7 @@ class TestInfraKafkaProduceProcessor:
         producer.send_and_wait = AsyncMock()
         producer_class = MagicMock(return_value=producer)
         with patch(
-            "src.backend.core.di.providers.infrastructure_facade.get_kafka_producer_class",
+            "src.backend.core.di.providers.infrastructure_locator.get_kafka_producer_class",
             return_value=producer_class,
         ):
             await p.process(ex, ctx)

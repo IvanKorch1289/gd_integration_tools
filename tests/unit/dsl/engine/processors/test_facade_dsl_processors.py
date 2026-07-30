@@ -33,7 +33,7 @@ class TestFacadeGetHealthProcessor:
         # Mock the facade provider
         health_fn = AsyncMock(return_value={"status": "ok", "latency_ms": 1.0, "error": None})
         with patch(
-            "src.backend.core.di.providers.infrastructure_facade.get_health_check_factory",
+            "src.backend.core.di.providers.infrastructure_locator.get_health_check_factory",
             return_value=MagicMock(return_value=health_fn),
         ):
             await p.process(ex, ctx)
@@ -83,7 +83,7 @@ class TestInfraS3GetProcessor:
         storage_instance.get = AsyncMock(return_value=b'{"data": 1}')
         storage_class = MagicMock(return_value=storage_instance)
         with patch(
-            "src.backend.core.di.providers.infrastructure_facade.get_object_storage_class",
+            "src.backend.core.di.providers.infrastructure_locator.get_object_storage_class",
             return_value=storage_class,
         ):
             await p.process(ex, ctx)
@@ -112,7 +112,7 @@ class TestInfraRedisGetProcessor:
         client_instance.get = AsyncMock(return_value="42")
         client_class = MagicMock(return_value=client_instance)
         with patch(
-            "src.backend.core.di.providers.infrastructure_facade.get_redis_client_class",
+            "src.backend.core.di.providers.infrastructure_locator.get_redis_client_class",
             return_value=client_class,
         ):
             await p.process(ex, ctx)
@@ -172,7 +172,7 @@ class TestInfraDbQueryProcessor:
         sm.session.return_value.__aexit__ = AsyncMock(return_value=None)
         get_sm = MagicMock(return_value=sm)
         with patch(
-            "src.backend.core.di.providers.infrastructure_facade.get_main_session_manager_getter",
+            "src.backend.core.di.providers.infrastructure_locator.get_main_session_manager_getter",
             return_value=get_sm,
         ):
             await p.process(ex, ctx)
@@ -194,7 +194,7 @@ class TestDSLProcessorErrorPropagation:
         storage_instance.get = AsyncMock(side_effect=ConnectionError("S3 down"))
         storage_class = MagicMock(return_value=storage_instance)
         with patch(
-            "src.backend.core.di.providers.infrastructure_facade.get_object_storage_class",
+            "src.backend.core.di.providers.infrastructure_locator.get_object_storage_class",
             return_value=storage_class,
         ):
             with pytest.raises(ConnectionError):
@@ -211,7 +211,7 @@ class TestDSLProcessorErrorPropagation:
         client_instance.get = AsyncMock(side_effect=ConnectionError("Redis down"))
         client_class = MagicMock(return_value=client_instance)
         with patch(
-            "src.backend.core.di.providers.infrastructure_facade.get_redis_client_class",
+            "src.backend.core.di.providers.infrastructure_locator.get_redis_client_class",
             return_value=client_class,
         ):
             with pytest.raises(ConnectionError):

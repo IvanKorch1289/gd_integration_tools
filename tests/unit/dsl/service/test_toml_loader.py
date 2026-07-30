@@ -84,12 +84,17 @@ def test_scan_services_recursive(tmp_path: Path) -> None:
     assert names == ["a", "b"]
 
 
-def test_service_registry_register_and_get_when_flag_off() -> None:
-    """register() при flag OFF — no-op (по умолчанию)."""
+def test_service_registry_register_and_get_when_flag_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """register() при flag OFF — no-op."""
+    from src.backend.core.config.features import feature_flags
+
+    monkeypatch.setattr(feature_flags, "service_toml_loader", False)
     reg = ServiceDSLRegistry()
     spec = ServiceSpec(name="test_svc", version="1.0.0")
     reg.register(spec)
-    # Default-OFF feature flag — реестр пуст
+    # Feature flag OFF — реестр пуст
     assert reg.get("test_svc") is None
 
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import atexit
+import inspect
 import threading
 import time
 from collections.abc import Awaitable, Callable
@@ -133,14 +134,20 @@ class ProcessorPool:
         context: ExecutionContext,
         timeout: float | None = None,
     ) -> tuple[BaseProcessor, dict[str, Any]]:
-        """Execute a single processor with timeout tracking."""
+        """Execute a single processor with timeout tracking.
+
+        ``timeout=None`` → no enforcement.
+        ``timeout=0``   → explicitly disabled (semantically: ``None``).
+        ``timeout>0``   → per-processor asyncio.wait_for.
+        """
         start = time.monotonic()
         pooled = PooledProcessor(processor=processor)
+        effective_timeout = timeout if (timeout is None or timeout > 0) else None
 
         try:
-            if asyncio.iscoroutinefunction(processor.process):
+            if inspect.iscoroutinefunction(processor.process):
                 await asyncio.wait_for(
-                    processor.process(exchange, context), timeout=timeout
+                    processor.process(exchange, context), timeout=effective_timeout
                 )
             else:
                 loop = asyncio.get_event_loop()
@@ -149,7 +156,7 @@ class ProcessorPool:
                         self._get_thread_pool(),
                         lambda: processor.process(exchange, context),
                     ),
-                    timeout=timeout,
+                    timeout=effective_timeout,
                 )
             pooled.completed_at = time.monotonic()
             duration_ms = (pooled.completed_at - start) * 1000

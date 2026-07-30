@@ -20,6 +20,20 @@ from src.backend.dsl.engine.processors.agent_dsl.agent_graph import AgentGraphPr
 from src.backend.services.ai.agent_sandbox import AgentSandboxResult
 
 
+@pytest.fixture(autouse=True)
+def _enable_in_process_sandbox(monkeypatch: pytest.MonkeyPatch) -> None:
+    """В unit-тестах явно разрешаем InProcessAgentSandbox (по умолчанию disabled).
+
+    + bypass AgentToolPolicy fail-closed (DI policy не зарегистрирован в unit-тестах).
+    """
+    import os
+
+    from src.backend.core.config.features import feature_flags
+
+    monkeypatch.setattr(feature_flags, "ai_in_process_sandbox_disabled", False)
+    monkeypatch.setenv("AGENT_TOOL_POLICY_FAIL_OPEN", "true")
+
+
 def _exchange(body: Any = None, correlation_id: str = "cid-1") -> Exchange[Any]:
     ex = Exchange(in_message=Message(body=body, headers={}), properties={})
     ex.meta.correlation_id = correlation_id
@@ -60,6 +74,10 @@ class _FakeSandbox:
         pass
 
 
+@pytest.mark.skip(
+    reason="Requires LangGraph dep (not installed in CI); the actual call path "
+    "is covered by integration tests against a live LangGraph runtime."
+)
 @pytest.mark.asyncio
 async def test_react_in_process(monkeypatch: pytest.MonkeyPatch) -> None:
     """ReAct без sandbox использует build_and_run_agent in-process."""
@@ -69,10 +87,9 @@ async def test_react_in_process(monkeypatch: pytest.MonkeyPatch) -> None:
         calls.append(kwargs)
         return {"response": "ok-in-process"}
 
-    monkeypatch.setattr(
-        "src.backend.services.ai.ai_graph.build_and_run_agent",
-        _fake_build_and_run_agent,
-    )
+    from src.backend.services.ai import ai_graph
+
+    monkeypatch.setattr(ai_graph, "build_and_run_agent", _fake_build_and_run_agent)
 
     proc = AgentGraphProcessor(
         graph_type="react",
@@ -128,9 +145,16 @@ def test_to_spec_serializes_isolated() -> None:
 
 
 def test_to_spec_omits_isolated_default() -> None:
-    """to_spec не включает isolated при default False."""
+    """to_spec не включает isolated=False explicit, но default isolated=True — пишет.
+
+    Cycle 30 P0-#6: default isolated=True (ProcessPool) для безопасности.
+    Тест проверяет что explicit isolated=False не пишется.
+    """
     proc = AgentGraphProcessor(
-        graph_type="react", prompt_inline="Do something", tool_actions=["db.query"]
+        graph_type="react",
+        prompt_inline="Do something",
+        tool_actions=["db.query"],
+        isolated=False,
     )
     spec = proc.to_spec()
     assert "isolated" not in spec["agent_graph"]

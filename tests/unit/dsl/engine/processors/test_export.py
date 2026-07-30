@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.export import ExportProcessor
+
+
+@pytest.fixture(autouse=True)
+def _bypass_auth() -> None:
+    """ExportProcessor требует capability=data.export — bypass в unit-тестах."""
+    ExportProcessor.auth_check = AsyncMock(return_value=True)  # type: ignore[method-assign]
 
 
 def _make_exchange(body: Any = None) -> Exchange[Any]:

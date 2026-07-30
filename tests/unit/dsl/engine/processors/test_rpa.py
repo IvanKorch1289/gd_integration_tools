@@ -13,6 +13,15 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.rpa import ArchiveProcessor, PdfReadProcessor
 
 
+@pytest.fixture(autouse=True)
+def _bypass_auth() -> None:
+    """ArchiveProcessor + PdfReadProcessor требуют capability — bypass в unit-тестах."""
+    from unittest.mock import AsyncMock
+
+    ArchiveProcessor.auth_check = AsyncMock(return_value=True)  # type: ignore[method-assign]
+    PdfReadProcessor.auth_check = AsyncMock(return_value=True)  # type: ignore[method-assign]
+
+
 @pytest.mark.asyncio
 async def test_archive_processor_creates_valid_zip() -> None:
     """ArchiveProcessor создаёт валидный ZIP из списка файлов."""

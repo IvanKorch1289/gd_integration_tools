@@ -1,8 +1,16 @@
 """TDD: WafCheckProcessor — DSL обёртка над core/net/waf."""
 from __future__ import annotations
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _bypass_auth() -> None:
+    """WafCheckProcessor требует capability=security.waf.check — bypass."""
+    from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
+
+    WafCheckProcessor.auth_check = AsyncMock(return_value=True)  # type: ignore[method-assign]
 
 
 class TestWafCheckProcessor:

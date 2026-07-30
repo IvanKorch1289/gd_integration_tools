@@ -109,14 +109,33 @@ class ExecutionEngine:
         return MiddlewareChain(result)
 
     def _cached_validate(self, pipeline: Pipeline) -> Any:
-        """Validate pipeline with LRU-style cache by route_id."""
-        key = pipeline.route_id
+        """Validate pipeline with LRU-style cache by ``(route_id, processors)``.
+
+        Cache key = ``(route_id, tuple(proc.name for proc in pipeline.processors))``
+        — adding/removing процессора инвалидирует запись для конкретного route.
+        """
+        proc_sig = tuple(p.name for p in pipeline.processors)
+        key = (pipeline.route_id, proc_sig)
         cached = self._validation_cache.get(key)
         if cached is not None:
             return cached
         result = pipeline_validator.validate(pipeline)
         self._validation_cache[key] = result
         return result
+
+    def invalidate_validation_cache(self, route_id: str | None = None) -> None:
+        """Сбросить cache валидации.
+
+        Args:
+            route_id: если задан — сбрасывает записи только этого route;
+                иначе (``None``) — сбрасывает весь cache.
+        """
+        if route_id is None:
+            self._validation_cache.clear()
+            return
+        drop_keys = [k for k in self._validation_cache if k[0] == route_id]
+        for k in drop_keys:
+            self._validation_cache.pop(k, None)
 
     @property
     def pool(self) -> ProcessorPool:
@@ -323,6 +342,7 @@ class ExecutionEngine:
         headers: dict[str, Any] | None = None,
         context: ExecutionContext | None = None,
         pipeline: Pipeline | None = None,
+        timeout: float | None = None,
     ) -> Exchange[Any]:
         """Execute multiple processors in parallel using the processor pool.
 
@@ -333,6 +353,8 @@ class ExecutionEngine:
             headers: Request headers.
             context: Optional execution context.
             pipeline: Optional pipeline for feature-flag and tenant checks.
+            timeout: Optional per-processor timeout in seconds (``None``
+                → no enforcement, ``0`` → explicitly disabled).
 
         Returns:
             Exchange with results from all processors.
@@ -347,7 +369,7 @@ class ExecutionEngine:
         runtime_context = context or ExecutionContext()
 
         trace_log = await self._pool.execute_parallel(
-            processors, current_exchange, runtime_context
+            processors, current_exchange, runtime_context, timeout=timeout
         )
 
         current_exchange.set_property("_trace", trace_log)

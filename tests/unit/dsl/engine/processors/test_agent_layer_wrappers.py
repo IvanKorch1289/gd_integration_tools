@@ -11,6 +11,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _bypass_auth() -> None:
+    """LangGraphAgentProcessor требует capability=agent.run — bypass в unit-тестах."""
+    from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
+        LangGraphAgentProcessor,
+    )
+
+    LangGraphAgentProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
+        return_value=True
+    )
+
+
 class TestLangGraphAgentDSL:
     @pytest.mark.asyncio
     async def test_processor_instantiates_with_query(self) -> None:

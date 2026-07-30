@@ -8,6 +8,24 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _bypass_auth() -> None:
+    """WorkflowSubprocess/Convert требуют capability — bypass в unit-тестах."""
+    from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
+        WorkflowSubprocessProcessor,
+    )
+    from src.backend.dsl.engine.processors.workflow.workflow_convert import (
+        WorkflowConvertProcessor,
+    )
+
+    WorkflowSubprocessProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
+        return_value=True
+    )
+    WorkflowConvertProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
+        return_value=True
+    )
+
+
 class TestWorkflowSubprocessProcessor:
     def test_instantiates(self) -> None:
         from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (

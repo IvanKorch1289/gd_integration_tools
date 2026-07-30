@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import time
 from collections.abc import Awaitable, Callable
 from functools import wraps
@@ -204,7 +205,7 @@ class CachingDecorator:
     def __call__(
         self, func: Callable[..., Awaitable[Any]]
     ) -> Callable[..., Awaitable[Any]]:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise TypeError("CachingDecorator поддерживает только async")
 
         @wraps(func)

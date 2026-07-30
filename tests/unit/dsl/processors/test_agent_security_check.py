@@ -218,11 +218,10 @@ class TestAgentSecurityCheckProcessor:
         exchange = MagicMock(spec=Exchange)
         context = MagicMock()
 
-        with patch.object(
-            proc,
-            "_call_validate",
+        # Patch facade.validate_prompt (реальный code path) на raise.
+        with patch(
+            "src.backend.services.agent_security.facade.get_agent_security_facade",
             side_effect=RuntimeError("validation error"),
-            create=True,
         ):
             await proc.process(exchange, context)
 

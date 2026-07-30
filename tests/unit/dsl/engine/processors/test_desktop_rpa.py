@@ -17,6 +17,12 @@ from src.backend.dsl.engine.processors.desktop_rpa import DesktopRpaProcessor
 from src.backend.services.rpa.desktop_rpa_client import DesktopRpaError
 
 
+@pytest.fixture(autouse=True)
+def _bypass_auth() -> None:
+    """DesktopRpaProcessor требует capability=rpa.desktop.automate — bypass."""
+    DesktopRpaProcessor.auth_check = AsyncMock(return_value=True)  # type: ignore[method-assign]
+
+
 def _exchange() -> Exchange[Any]:
     return Exchange(in_message=Message(body={}, headers={}))
 

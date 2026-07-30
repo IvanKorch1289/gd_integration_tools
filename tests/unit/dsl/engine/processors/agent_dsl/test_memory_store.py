@@ -15,12 +15,18 @@ from src.backend.dsl.engine.processors.agent_dsl.memory_store import (
 
 class _FakeMemoryBackend:
     def __init__(self) -> None:
-        self.calls: list[tuple[str, str, Any, int | None]] = []
+        self.calls: list[dict[str, Any]] = []
 
-    async def store(
-        self, namespace: str, key: str, value: Any, *, ttl_s: int | None = None
+    async def save_fact(
+        self,
+        *,
+        tenant_id: str,
+        content: str,
+        tags: tuple[str, ...] = (),
     ) -> None:
-        self.calls.append((namespace, key, value, ttl_s))
+        self.calls.append(
+            {"tenant_id": tenant_id, "content": content, "tags": tags}
+        )
 
 
 @pytest.fixture
@@ -61,11 +67,11 @@ async def test_happy_path_static_key(
     await proc.process(ex, context)
 
     assert len(backend.calls) == 1
-    ns, key, value, ttl = backend.calls[0]
-    assert ns == "acme:chat"
-    assert key == "static_key"
-    assert value == {"content": "stored value"}
-    assert ttl == 3600
+    call = backend.calls[0]
+    assert call["tenant_id"] == "acme:chat"
+    assert call["content"] == "{'content': 'stored value'}"
+    # user_key tag = static_key
+    assert call["tags"] == ("user_key", "static_key")
 
 
 @pytest.mark.asyncio
@@ -88,7 +94,7 @@ async def test_dynamic_key_from_meta(
     )
     await proc.process(ex, context)
 
-    assert backend.calls[0][1] == "req-xyz-123"
+    assert backend.calls[0]["tags"][1] == "req-xyz-123"
 
 
 @pytest.mark.asyncio
@@ -108,7 +114,7 @@ async def test_dynamic_key_from_body(
     proc = MemoryStoreProcessor(namespace="acme:chat", key_property="body.user_id")
     await proc.process(ex, context)
 
-    assert backend.calls[0][1] == "user_42"
+    assert backend.calls[0]["tags"][1] == "user_42"
 
 
 @pytest.mark.asyncio
@@ -127,7 +133,7 @@ async def test_custom_value_property(
     proc = MemoryStoreProcessor(namespace="ns", key="k", value_property="body.foo")
     await proc.process(ex, context)
 
-    assert backend.calls[0][2] == "bar"
+    assert backend.calls[0]["content"] == "bar"
 
 
 @pytest.mark.asyncio
@@ -148,7 +154,7 @@ async def test_tenant_id_placeholder(
     proc = MemoryStoreProcessor(namespace="${tenant_id}:chat", key="k")
     await proc.process(ex, context)
 
-    assert backend.calls[0][0] == "tenantX:chat"
+    assert backend.calls[0]["tenant_id"] == "tenantX:chat"
 
 
 @pytest.mark.asyncio

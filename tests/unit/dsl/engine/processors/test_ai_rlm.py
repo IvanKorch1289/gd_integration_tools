@@ -6,7 +6,7 @@ Wave [wave:rlm-toolkit]
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -158,12 +158,22 @@ async def test_process_direct_mode_small_context() -> None:
 
 
 @pytest.mark.asyncio
-async def test_process_rlm_mode_large_context() -> None:
+async def test_process_rlm_mode_large_context(monkeypatch: pytest.MonkeyPatch) -> None:
     proc = AIRLMProcessor(config=RLMConfig(context_threshold=10))  # Very low threshold
     # Create a large context that exceeds threshold
     large_context = "word " * 100  # ~500 tokens
     exc = _make_exchange({"context": large_context, "query": "summarize?"})
     ctx = MagicMock()
+
+    # Mock LiteLLMGateway чтобы RLM loop выполнил хотя бы 1 iteration.
+    fake_gateway = MagicMock()
+    fake_gateway.acompletion = AsyncMock(
+        return_value={"choices": [{"message": {"content": '{"relevant": true, "reasoning": "yes"}'}}]}
+    )
+    monkeypatch.setattr(
+        "src.backend.services.ai.gateway.client.get_litellm_gateway",
+        lambda: fake_gateway,
+    )
 
     await proc.process(exc, ctx)
 

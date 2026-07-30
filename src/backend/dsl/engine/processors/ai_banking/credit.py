@@ -156,13 +156,12 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
         """
         return await self._check_capability_via_facade(exchange)
 
-
-def to_spec(self) -> dict[str, Any] | None:
-    """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
-    spec: dict[str, Any] = {}
-    if self.product != "retail":
-        spec["product"] = self.product
-    return {"credit_scoring_rag": spec}
+    def to_spec(self) -> dict[str, Any] | None:
+        """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
+        spec: dict[str, Any] = {}
+        if self.product != "retail":
+            spec["product"] = self.product
+        return {"credit_scoring_rag": spec}
 
 
 class CustomerChatbotProcessor(BaseProcessor):

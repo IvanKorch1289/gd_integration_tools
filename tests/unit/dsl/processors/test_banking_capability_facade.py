@@ -120,14 +120,13 @@ class TestIdentityMigration:
 
     @pytest.mark.asyncio
     async def test_identity_check_capability_uses_facade(self) -> None:
-        """IdentityProcessor._check_capability использует facade."""
+        """KycAmlVerifyProcessor._check_capability использует facade."""
         from src.backend.dsl.engine.processors.ai_banking.identity import (
-            IdentityProcessor,
+            KycAmlVerifyProcessor,
         )
 
-        processor = IdentityProcessor(
+        processor = KycAmlVerifyProcessor(
             jurisdiction="RU",
-            capability="ai.banking.kyc_aml",
         )
         exchange = MagicMock()
 

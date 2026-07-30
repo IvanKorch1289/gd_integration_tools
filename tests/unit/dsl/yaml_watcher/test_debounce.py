@@ -66,7 +66,7 @@ async def test_one_batch_one_reload(tmp_path: Path, monkeypatch) -> None:
         reload_calls.append(1)
         return {"loaded": 0, "errors": []}
 
-    monkeypatch.setattr(watcher, "_sync_reload_all", fake_sync_reload_all)
+    monkeypatch.setattr(watcher, "_sync_reload_incremental", lambda changes: fake_sync_reload_all())
     monkeypatch.setattr(
         yaml_watcher_mod, "awatch", _fake_awatch([{(1, str(tmp_path / "r.yaml"))}])
     )
@@ -99,7 +99,7 @@ async def test_two_batches_two_reloads(tmp_path: Path, monkeypatch) -> None:
         reload_calls.append(1)
         return {"loaded": 0, "errors": []}
 
-    monkeypatch.setattr(watcher, "_sync_reload_all", fake_sync_reload_all)
+    monkeypatch.setattr(watcher, "_sync_reload_incremental", lambda changes: fake_sync_reload_all())
     monkeypatch.setattr(
         yaml_watcher_mod,
         "awatch",
@@ -136,7 +136,7 @@ async def test_non_yaml_change_is_ignored(tmp_path: Path, monkeypatch) -> None:
         reload_calls.append(1)
         return {"loaded": 0, "errors": []}
 
-    monkeypatch.setattr(watcher, "_sync_reload_all", fake_sync_reload_all)
+    monkeypatch.setattr(watcher, "_sync_reload_incremental", lambda changes: fake_sync_reload_all())
     monkeypatch.setattr(
         yaml_watcher_mod, "awatch", _fake_awatch([{(1, str(tmp_path / "noise.txt"))}])
     )
