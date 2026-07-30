@@ -73,6 +73,7 @@ class ActionHandlerRegistry:
     """
 
     def __init__(self) -> None:
+        """Инициализирует процессор."""
         self._handlers: dict[str, ActionHandlerSpec] = {}
         self._metadata: dict[str, ActionMetadata] = {}
         self._middleware: list[ActionMiddleware] = []
@@ -247,7 +248,11 @@ class ActionHandlerRegistry:
         service = spec.service_getter()
         method = getattr(service, spec.service_method)
 
-        if spec.payload_model is not None and command.payload:
+        if spec.payload_model is not None:
+            # Cycle 132: validate even on empty payload (previously
+            # ``and command.payload`` skipped validation on falsy
+            # dict, which masked required-field violations on
+            # empty commands).
             validated = spec.payload_model.model_validate(command.payload)
             kwargs = {
                 field_name: getattr(validated, field_name)

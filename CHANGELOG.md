@@ -1,5 +1,26 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 132 (2026-07-28) — Layer 3 (DSL)
+
+### Cycle 132 L3: ActionHandlerRegistry.dispatch — validate empty payload
+
+Layer 3 (DSL) production bugfix: ``src/backend/dsl/commands/action_registry.py:251``
+имел ``if spec.payload_model is not None and command.payload:`` — validation
+пропускалась на пустом dict (falsy check).
+
+Результат: required-поля НЕ валидировались на empty command — тихая
+пропуск validation error.
+
+#### Fix (production)
+- Убран ``and command.payload`` check. Validation теперь always
+  запускается на registered ``payload_model`` — пустые dict
+  проходят через Pydantic и fail-loud (ValidationError) если
+  required fields missing.
+
+#### Validation
+- `tests/unit/dsl/test_action_registry.py::TestDispatchEmptyPayloadValidation`:
+  6/6 pass (was 5/6 — 1 fail).
+
 ## [Unreleased] — Cycle 130 (2026-07-28) — Layer 10 (Test Coverage)
 
 ### Cycle 130 L10: test_check_rate_limit_returns_disallowed_flag — patch via core.resilience
