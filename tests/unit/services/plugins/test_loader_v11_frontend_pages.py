@@ -44,7 +44,13 @@ class _FakeProcessors:
         return None
 
 
-def _write_plugin(extensions_dir: Path, *, name: str, with_pages: bool = True) -> Path:
+def _write_plugin(
+    extensions_dir: Path,
+    *,
+    name: str,
+    with_pages: bool = True,
+    manifest_extra: str = "",
+) -> Path:
     plugin_dir = extensions_dir / name
     plugin_dir.mkdir()
     (plugin_dir / "__init__.py").write_text("", encoding="utf-8")
@@ -67,6 +73,7 @@ def _write_plugin(extensions_dir: Path, *, name: str, with_pages: bool = True) -
             version = "1.0.0"
             requires_core = ">=0.2,<0.3"
             entry_class = "{name}.plugin.Plugin"
+            {manifest_extra}
             """
         ).lstrip(),
         encoding="utf-8",
