@@ -48,13 +48,15 @@ async def test_check_rate_limit_returns_disallowed_flag() -> None:
     fake_limiter = MagicMock()
     fake_limiter.check = AsyncMock(return_value={"allowed": False})
 
-    def _factory() -> Any:
+    def _factory(**_kwargs: Any) -> Any:
         return fake_limiter
 
-    with patch(
-        "src.backend.core.di.providers.infrastructure_facade.get_unified_rate_limiter_attr",
-        return_value=_factory,
-    ):
+    # Cycle 130: production imports ``get_rate_limiter`` from
+    # ``src.backend.core.resilience`` (a __getattr__ delegating to
+    # infrastructure_locator). Patch the local import (cycle 130).
+    from src.backend.core import resilience as _core_resilience
+
+    with patch.object(_core_resilience, "get_rate_limiter", _factory):
         facade = ResilienceFacade()
         result = await facade.check_rate_limit("client-1", limit=10, window_seconds=1.0)
         assert result is False

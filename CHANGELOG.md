@@ -1,5 +1,27 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 130 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 130 L10: test_check_rate_limit_returns_disallowed_flag — patch via core.resilience
+
+Layer 10 (Test Coverage) аудит: ``test_check_rate_limit_returns_disallowed_flag``
+падал с ``assert True is False`` после ``test_check_rate_limit_returns_allowed_flag``
+(test isolation issue). Причина: production
+``resilience/facade.py:57-61`` lazy-import'ит ``get_rate_limiter``
+from ``src.backend.core.resilience`` (а не directly from
+infrastructure_locator). Test patching infrastructure_locator was
+dead — production уже resolved local reference.
+
+#### Fix
+- Patch ``core.resilience.get_rate_limiter`` (lazy import source)
+  вместо ``infrastructure_locator.get_unified_rate_limiter_attr``
+  (косвенный dependency).
+- ``_factory(**_kwargs)`` — accept args для всех kwargs (limit,
+  window_seconds) that production passes.
+
+#### Validation
+- `tests/unit/services/resilience/test_facade.py`: 8/8 pass (was 7/8).
+
 ## [Unreleased] — Cycle 128 (2026-07-28) — Layer 4 (AI)
 
 ### Cycle 128 L4: usage_meter.py — lazy import tiktoken
