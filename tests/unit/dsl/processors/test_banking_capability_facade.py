@@ -19,6 +19,11 @@ class _TestProcessor(_BankingAIProcessor):
 
     capability: str = "ai.banking.test"
 
+    # Cycle 134: stub for abstract process() from BaseProcessor.
+    # Tests don't exercise process() — only the helper methods.
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        pass  # pragma: no cover
+
 
 class TestCheckCapabilityViaFacade:
     """Тесты _check_capability_via_facade helper."""
@@ -52,7 +57,12 @@ class TestCheckCapabilityViaFacade:
         ) as mock_get:
             mock_facade = MagicMock()
             mock_facade.check_or_raise.side_effect = (
-                CapabilityDeniedError("denied")
+                CapabilityDeniedError(
+                    plugin="test",
+                    capability="ai.banking.test",
+                    requested_scope=None,
+                    declared_scope=None,
+                )
             )
             mock_get.return_value = mock_facade
 
@@ -98,7 +108,10 @@ class TestCheckCapabilityViaFacade:
 
         # Verify plugin attribution includes class name
         call_kwargs = mock_facade.check_or_raise.call_args
-        assert "ai.banking._TestProcessor" in call_kwargs.kwargs["plugin"]
+        # Cycle 134: production hardcodes full module path
+        # "dsl.engine.processors.ai_banking.{class_name}" (S190 refactor
+        # moved base.py there from ai_banking/ subpackage). Test updated.
+        assert "dsl.engine.processors.ai_banking._TestProcessor" in call_kwargs.kwargs["plugin"]
         assert call_kwargs.kwargs["capability"] == "ai.banking.test"
 
 

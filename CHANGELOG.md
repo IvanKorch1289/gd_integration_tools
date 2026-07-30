@@ -1,5 +1,34 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — Cycle 134 (2026-07-28) — Layer 10 (Test Coverage)
+
+### Cycle 134 L10: test_banking_capability_facade — multiple fixes
+
+Layer 10 (Test Coverage) аудит: ``test_banking_capability_facade.py``
+5 тестов падали с разными ошибками:
+
+1. ``_TestProcessor`` не имплементировал abstract ``process()``
+   from ``BaseProcessor`` — ``TypeError: Can't instantiate abstract``.
+2. Hardcoded ``"ai.banking._TestProcessor"`` — production теперь
+   возвращает full path ``"dsl.engine.processors.ai_banking._TestProcessor"``
+   после S190 refactor.
+3. ``CapabilityDeniedError("denied")`` — wrong signature (real
+   signature: ``plugin, capability, requested_scope, declared_scope,
+   tenant, principal``).
+
+#### Fixes
+- ``_TestProcessor``: stub ``async def process(...)`` (tests don't
+  exercise process()).
+- Plugin string assertion: hardcoded full path.
+- ``CapabilityDeniedError(...)`` instantiation: 5-arg signature.
+
+#### Validation
+- `tests/unit/dsl/processors/test_banking_capability_facade.py`:
+  4/5 pass (was 2/5 — fixed 2 tests). 1 остался fail
+  (TestIdentityMigration::test_identity_check_capability_uses_facade —
+  ``IdentityProcessor`` class doesn't exist в production, pre-existing
+  test bug, out of scope).
+
 ## [Unreleased] — Cycle 133 (2026-07-28) — Layer 3 (DSL)
 
 ### Cycle 133 L3: ActionHandlerRegistry — atomic re-registration conflict check
