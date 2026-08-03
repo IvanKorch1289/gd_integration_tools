@@ -265,6 +265,26 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
                 if owner_name == plugin_name:
                     kind_map.pop(owner_key, None)
 
+        # Cycle 33 S176: emit audit event для security observability.
+        # hot_swap часто вызывается из admin-endpoint'а — операторам
+        # нужно видеть, какие плагины были выгружены и в каком
+        # контексте (per-plugin shutdown vs full unload).
+        try:
+            from src.backend.core.audit.facade import emit_audit_safe
+
+            emit_audit_safe(
+                event="plugin.unload",
+                action="shutdown_one",
+                outcome="success",
+                details={
+                    "plugin_name": plugin_name,
+                    "old_status": entry.status,
+                    "old_version": entry.version,
+                },
+            )
+        except Exception:  # pragma: no cover — audit must never block
+            pass
+
         _logger.info("Plugin unloaded (per-plugin): %s", plugin_name)
         return True
 

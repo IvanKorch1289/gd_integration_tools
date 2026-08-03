@@ -424,6 +424,96 @@ class TestPluginLoaderShutdownOne:
             getattr(e, "name", None) != "alpha_revoke" for e in loader.loaded
         )
 
+    async def test_shutdown_one_emits_audit_event(
+        self, isolated_extensions_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Cycle 33 S176: shutdown_one эмитит audit-event для security observability.
+
+        Регрессионный тест: hot_swap часто вызывается из admin-endpoint'а
+        (с auth), но сама операция выгрузки плагина — security-relevant.
+        Audit-event ``plugin.unload`` фиксирует кто/что/когда, чтобы
+        SOC-команды могли alerting на подозрительные серии unload.
+        """
+        body = textwrap.dedent(
+            """
+            from src.backend.core.interfaces.plugin import BasePlugin
+
+            class Plugin(BasePlugin):
+                name = "alpha_audit"
+                version = "1.2.3"
+            """
+        )
+        _write_extension(
+            isolated_extensions_dir, name="alpha_audit", plugin_module_body=body
+        )
+
+        # Patch emit_audit_safe для захвата вызовов.
+        captured: list[dict[str, object]] = []
+
+        def _fake_emit_audit_safe(**kwargs: object) -> None:
+            captured.append(kwargs)
+
+        monkeypatch.setattr(
+            "src.backend.core.audit.facade.emit_audit_safe",
+            _fake_emit_audit_safe,
+        )
+
+        loader, *_ = _build_loader(isolated_extensions_dir)
+        await loader.discover_and_load()
+        await loader.shutdown_one("alpha_audit")
+
+        # Audit-event должен быть эмитирован ровно один раз.
+        plugin_unload_events = [
+            c for c in captured
+            if c.get("event") == "plugin.unload"
+            and c.get("action") == "shutdown_one"
+        ]
+        assert len(plugin_unload_events) == 1
+        details = plugin_unload_events[0].get("details", {})
+        assert isinstance(details, dict)
+        assert details.get("plugin_name") == "alpha_audit"
+        assert details.get("old_status") == "loaded"
+        # _write_extension hardcodes version "1.0.0"; мы только проверяем
+        # что поле пробрасывается, не конкретное значение.
+        assert details.get("old_version") == "1.0.0"
+
+    async def test_shutdown_one_audit_failure_does_not_break(
+        self, isolated_extensions_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """shutdown_one не падает если audit-emit упал (defense-in-depth)."""
+        body = textwrap.dedent(
+            """
+            from src.backend.core.interfaces.plugin import BasePlugin
+
+            class Plugin(BasePlugin):
+                name = "alpha_audit_fail"
+                version = "1.0.0"
+            """
+        )
+        _write_extension(
+            isolated_extensions_dir, name="alpha_audit_fail", plugin_module_body=body
+        )
+
+        def _broken_emit_audit_safe(**kwargs: object) -> None:
+            raise RuntimeError("audit down")
+
+        monkeypatch.setattr(
+            "src.backend.core.audit.facade.emit_audit_safe",
+            _broken_emit_audit_safe,
+        )
+
+        loader, *_ = _build_loader(isolated_extensions_dir)
+        await loader.discover_and_load()
+
+        # Audit-ошибка НЕ должна ломать сам shutdown (emit_audit_safe
+        # already ловит, но defense-in-depth — на случай если кто-то
+        # заменит на emit_audit без _safe).
+        result = await loader.shutdown_one("alpha_audit_fail")
+        assert result is True
+        assert all(
+            getattr(e, "name", None) != "alpha_audit_fail" for e in loader.loaded
+        )
+
 
 class TestProtocolMatching:
     """Регистры должны соответствовать Protocol'ам из core.interfaces.plugin."""
