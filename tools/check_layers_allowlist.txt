@@ -3,9 +3,6 @@
 # Цель — постепенно сокращать.
 # S110 W2: --update-allowlist MERGES (was REPLACE).
 # S112 W1: --prune-allowlist removes stale entries (complement to MERGE).
-extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.dsl.workflow.builder
-extensions/core_entities/orders/workflows/orders_dsl.py	extensions	src.backend.dsl.workflow.spec
-extensions/osint_agent/functions/osint_workflow.py	extensions	src.backend.dsl.helpers.banking
 src/backend/core/ai/gateway_pipeline_mixin/input_mixin.py	core	src.backend.services.ai.pii.presidio_analyzer
 src/backend/core/ai/gateway_pipeline_mixin/llm_mixin.py	core	src.backend.services.ai.prompt_registry
 src/backend/core/ai/gateway_pipeline_mixin/output_mixin.py	core	src.backend.services.ai.gateway
