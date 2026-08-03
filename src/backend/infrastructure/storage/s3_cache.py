@@ -33,6 +33,10 @@ __all__ = ("CacheClientProtocol", "S3CacheAdapter", "S3ClientProtocol")
 
 logger = get_logger("storage.s3_cache")
 
+# Cycle 35 B-03 storage: ключи изолируются по tenant context.
+# Аналогично cache layer (cycle 34) — wrapper-уровень B-03.
+DEFAULT_UNSCOPED_PREFIX = "tenant:_unscoped_:"
+
 
 class S3ClientProtocol(Protocol):
     """
@@ -169,9 +173,33 @@ class S3CacheAdapter:
         else:
             self.ttl_seconds = ttl_seconds
 
+    def _tenant_prefix(self) -> str:
+        """Возвращает tenant prefix для cache keys (B-03 storage fix).
+
+        Cycle 35: при ``feature_flags.tenant_cache_prefix_enabled=True``
+        ключи получают ``tenant:{id}:`` префикс. Без tenant context —
+        ``tenant:_unscoped_``:`` (изолированный namespace, не смешивается
+        с tenant-scoped keys). При flag=False — пустая строка (no-op).
+        """
+        from src.backend.core.config.features import feature_flags
+        from src.backend.core.tenancy import current_tenant
+
+        if not getattr(feature_flags, "tenant_cache_prefix_enabled", True):
+            return ""
+        tenant = current_tenant()
+        if tenant is None or not getattr(tenant, "tenant_id", None):
+            return DEFAULT_UNSCOPED_PREFIX
+        return f"tenant:{tenant.tenant_id}:"
+
     def _cache_key(self, key: str) -> str:
-        """Возвращает полный ключ Redis с префиксом."""
-        return f"{self.key_prefix}{key}"
+        """Возвращает полный ключ Redis с tenant + service префиксом.
+
+        Cycle 35 B-03 storage: ключ формата
+        ``[tenant:{id}:]{key_prefix}{key}`` при flag=True.
+        Без tenant context — ``[tenant:_unscoped_:]{key_prefix}{key}``.
+        При flag=False — просто ``{key_prefix}{key}`` (backward-compat).
+        """
+        return f"{self._tenant_prefix()}{self.key_prefix}{key}"
 
     async def get(self, key: str) -> bytes | None:
         """
