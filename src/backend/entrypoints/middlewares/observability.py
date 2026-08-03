@@ -35,11 +35,15 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     from fastapi import Request, Response
     from starlette.types import ASGIApp
 
 __all__ = ("ObservabilityConfig", "ObservabilityMiddleware")
+
+_logger = get_logger("middlewares.observability")
 
 
 class _PrometheusMetrics(Protocol):
@@ -186,24 +190,36 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             "correlation_id": getattr(request.state, "correlation_id", None),
         }
 
-        # Каждый emit независимо wrapped — сбой одного канала
-        # не блокирует остальные и не ломает response.
+        # Каждый emit независимо wrapped через _safe_emit helper —
+        # сбой одного канала не блокирует остальные и не ломает response.
         if self.config.otel_enabled:
-            try:
-                _emit_otel(event, self.config.service_name)
-            except Exception:  # noqa: BLE001
-                # Логируем но НЕ пробрасываем — request уже обработан,
-                # observability-failure не должен превращаться в 5xx.
-                pass
+            self._safe_emit("otel", _emit_otel, event, self.config.service_name)
         if self.config.prometheus_enabled:
-            try:
-                _emit_prometheus(event)
-            except Exception:  # noqa: BLE001
-                pass
+            self._safe_emit("prometheus", _emit_prometheus, event)
         if self.config.audit_enabled:
-            try:
-                _emit_audit(event)
-            except Exception:  # noqa: BLE001
-                pass
+            self._safe_emit("audit", _emit_audit, event)
 
         return response
+
+    def _safe_emit(
+        self,
+        channel: str,
+        emit_fn: Callable[..., Any],
+        event: dict[str, Any],
+        *args: Any,
+    ) -> None:
+        """Вызывает ``emit_fn`` с defense-in-depth: failure → log, не raise.
+
+        Cycle 33 L1 cycle 2: extracted из 3 одинаковых try/except блоков
+        в dispatch. Каждый observability-канал получает независимый
+        failure isolation — ClickHouse outage не должен ломать OTel
+        и наоборот.
+        """
+        try:
+            emit_fn(event, *args)
+        except Exception as exc:  # noqa: BLE001
+            _logger.warning(
+                "ObservabilityMiddleware: %s emit failed (degraded mode): %s",
+                channel,
+                exc,
+            )
