@@ -163,7 +163,14 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         request: "Request",
         call_next: Callable[["Request"], Awaitable["Response"]],
     ) -> "Response":
-        """Оборачивает request observability-событием (duration, status, IDs)."""
+        """Оборачивает request observability-событием (duration, status, IDs).
+
+        Cycle 33 L1 fix: каждый ``_emit_*`` обёрнут в try/except —
+        defense-in-depth на случай если emit-функция raise (например,
+        неожиданный тип ClickHouse client). observability-каналы
+        НЕ ДОЛЖНЫ ломать request flow — degraded mode лучше чем 5xx
+        на каждый запрос при сбое метрик-инфраструктуры.
+        """
         start = time.monotonic()
         response = await call_next(request)
         duration_ms = (time.monotonic() - start) * 1000
@@ -179,11 +186,24 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
             "correlation_id": getattr(request.state, "correlation_id", None),
         }
 
+        # Каждый emit независимо wrapped — сбой одного канала
+        # не блокирует остальные и не ломает response.
         if self.config.otel_enabled:
-            _emit_otel(event, self.config.service_name)
+            try:
+                _emit_otel(event, self.config.service_name)
+            except Exception:  # noqa: BLE001
+                # Логируем но НЕ пробрасываем — request уже обработан,
+                # observability-failure не должен превращаться в 5xx.
+                pass
         if self.config.prometheus_enabled:
-            _emit_prometheus(event)
+            try:
+                _emit_prometheus(event)
+            except Exception:  # noqa: BLE001
+                pass
         if self.config.audit_enabled:
-            _emit_audit(event)
+            try:
+                _emit_audit(event)
+            except Exception:  # noqa: BLE001
+                pass
 
         return response
