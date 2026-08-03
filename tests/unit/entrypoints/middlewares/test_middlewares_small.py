@@ -80,52 +80,103 @@ async def test_auth_method_header_no_auth() -> None:
 
 @pytest.mark.asyncio
 async def test_blocked_routes_blocked() -> None:
-    # Cycle 114: production blocked_routes.py:35 now ``raise HTTPException(...)``
-    # (was ``return JSONResponse(403)`` in S176, raised HTTPException from
-    # subsequent refactor). Revert Cycle 80 fix to expect raise.
-    from fastapi import HTTPException
+    # Cycle 39: pure ASGI — 403 отправляется напрямую через send,
+    # НЕ raise (в pure ASGI exceptions не обрабатываются автоматически).
+    from src.backend.core.state.runtime import blocked_routes
+
+    async def downstream(scope, receive, send):
+        raise AssertionError("downstream должен быть skipped для blocked path")
 
     app = AsyncMock()
+    app.side_effect = downstream
     mw = BlockedRoutesMiddleware(app)
-    request = MagicMock()
-    request.url.path = "/blocked"
+
     blocked_routes.add("/blocked")
-    call_next = AsyncMock()
-    with pytest.raises(HTTPException) as exc_info:
-        await mw.dispatch(request, call_next)
-    assert exc_info.value.status_code == 403
-    blocked_routes.discard("/blocked")
+    try:
+        send = AsyncMock()
+        await mw(
+            {"type": "http", "method": "GET", "path": "/blocked", "headers": []},
+            AsyncMock(),
+            send,
+        )
+
+        start_msg = next(
+            c.args[0] for c in send.await_args_list
+            if c.args[0]["type"] == "http.response.start"
+        )
+        assert start_msg["status"] == 403
+        body_msg = next(
+            c.args[0] for c in send.await_args_list
+            if c.args[0]["type"] == "http.response.body"
+        )
+        import json
+
+        body = json.loads(body_msg["body"].decode("utf-8"))
+        assert "detail" in body
+    finally:
+        blocked_routes.discard("/blocked")
 
 
 @pytest.mark.asyncio
 async def test_blocked_routes_allowed() -> None:
+    # Cycle 39: pure ASGI — allowed path пробрасывается downstream.
+    async def downstream(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
     app = AsyncMock()
+    app.side_effect = downstream
     mw = BlockedRoutesMiddleware(app)
-    request = MagicMock()
-    request.url.path = "/allowed"
-    response = Response(content=b"ok")
-    call_next = AsyncMock(return_value=response)
-    result = await mw.dispatch(request, call_next)
-    assert result is response
+    send = AsyncMock()
+    await mw(
+        {"type": "http", "method": "GET", "path": "/allowed", "headers": []},
+        AsyncMock(),
+        send,
+    )
+
+    start_msg = next(
+        c.args[0] for c in send.await_args_list
+        if c.args[0]["type"] == "http.response.start"
+    )
+    assert start_msg["status"] == 200
 
 
 @pytest.mark.asyncio
 async def test_blocked_routes_glob_pattern() -> None:
-    from fastapi import HTTPException
+    # Cycle 39: pure ASGI — glob matching с ``*``.
+    from src.backend.core.state.runtime import blocked_routes
+
+    async def downstream(scope, receive, send):
+        raise AssertionError("downstream должен быть skipped для glob-matched path")
 
     app = AsyncMock()
+    app.side_effect = downstream
     mw = BlockedRoutesMiddleware(app)
-    request = MagicMock()
-    request.url.path = "/api/v1/admin/users"
+
     blocked_routes.add("/api/v1/admin/*")
-    call_next = AsyncMock()
     try:
-        # Cycle 114: production raises HTTPException.
-        with pytest.raises(HTTPException) as exc_info:
-            await mw.dispatch(request, call_next)
-        assert exc_info.value.status_code == 403
+        send = AsyncMock()
+        await mw(
+            {
+                "type": "http",
+                "method": "GET",
+                "path": "/api/v1/admin/users",
+                "headers": [],
+            },
+            AsyncMock(),
+            send,
+        )
+
+        start_msg = next(
+            c.args[0] for c in send.await_args_list
+            if c.args[0]["type"] == "http.response.start"
+        )
+        assert start_msg["status"] == 403
     finally:
         blocked_routes.discard("/api/v1/admin/*")
+
+
+# ─── Test block (cycle 39): was below, now removed (stale duplicate)
 
 
 # ─── CorrelationIdMiddleware re-export ──────────────────────────────────────
