@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-"""CSRF Protection Middleware (S184).
+"""CSRF Protection Middleware (S184, cycle 57 pure ASGI).
 
 Защищает от Cross-Site Request Forgery атак для cookie-based auth.
 Критично для банковской шины где используются cookies (Express sessions).
@@ -13,22 +11,25 @@ from __future__ import annotations
 3. API key auth (Bearer/ApiKey headers) — exempt (не использует cookies)
 4. JWT auth (Authorization: Bearer) — exempt
 
-References:
-- OWASP CSRF Prevention Cheat Sheet
-- RFC 7231/7234 (SameSite cookies)
-- Master Prompt §3.3 (banking security)
+Cycle 57: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
+архитектурной консистентности с cycle 33-56 (L1 middlewares).
+
+Cycle 57 design: CSRF check в ``__call__`` (no-raise pattern,
+cycle 39). На safe methods auto-issue CSRF cookie через
+send-wrapper. На state-changing проверяется cookie vs header token.
 """
 
+from __future__ import annotations
 
 import hmac
+import json
+import secrets
 from collections.abc import Iterable
 from typing import Any
 
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Receive, Scope, Send
 
+from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
 
 __all__ = ("CSRFMiddleware",)
@@ -36,8 +37,8 @@ __all__ = ("CSRFMiddleware",)
 _logger = get_logger(__name__)
 
 
-class CSRFMiddleware(BaseHTTPMiddleware):
-    """CSRF protection для cookie-based auth (S184).
+class CSRFMiddleware:
+    """Pure ASGI CSRF protection для cookie-based auth (S184, cycle 57).
 
     Использует Double-Submit Cookie pattern:
     - Server sets ``csrf_token`` cookie при первом запросе
@@ -65,126 +66,215 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         header_name: str = "X-CSRF-Token",
         body_field: str = "csrf_token",
     ) -> None:
-        """Инициализация CSRF middleware.
+        """Инициализирует CSRF middleware.
 
         Args:
             app: ASGI-приложение.
-            enabled: Включить/выключить (для тестов).
+            enabled: Включить/выключить.
             safe_paths: Path prefixes exempt от CSRF check.
-            cookie_name: Имя cookie для CSRF token.
-            header_name: Имя header для CSRF token.
-            body_field: Имя field в body для CSRF token.
+            cookie_name: Имя cookie.
+            header_name: Имя header.
+            body_field: Имя field в body.
         """
-        super().__init__(app)
+        self.app = app
         self._enabled = enabled
         self._safe_paths = tuple(safe_paths)
         self._cookie_name = cookie_name
-        self._header_name = header_name.lower()
+        self._header_name_lower = header_name.lower()
         self._body_field = body_field
 
-    async def dispatch(self, request: Request, call_next: Any) -> Response:
-        """Process request с CSRF check для state-changing methods.
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Обрабатывает request с CSRF check (cycle 57 pure ASGI)."""
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-        S192 fix: auto-issue CSRF cookie на safe methods (GET) если cookie
-        отсутствует — prevents lockout где client получает 403 без cookie.
-        Synchronizer Token Pattern (OWASP recommended).
-        """
         if not self._enabled:
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
-        # Safe methods bypass + auto-issue CSRF cookie
-        if request.method in self.SAFE_METHODS:
-            response = await call_next(request)
-            # S192: auto-issue CSRF token cookie если нет
-            if self._cookie_name not in request.cookies:
-                import secrets
+        method = scope.get("method", "")
 
-                token = secrets.token_urlsafe(32)
-                # S202 audit fix: ``secure`` от deployment setting, не от
-                # request scheme (за TLS proxy ``request.url.scheme == http``
-                # → cookie без Secure → MITM downgrade risk).
-                from src.backend.core.config.settings import settings
+        # Safe methods bypass + auto-issue CSRF cookie.
+        if method in self.SAFE_METHODS:
+            await self._process_safe(scope, receive, send)
+            return
 
-                cookie_secure = getattr(
-                    getattr(settings, "secure", None), "cookie_secure", True
-                )
-                response.set_cookie(
-                    self._cookie_name,
-                    token,
-                    httponly=False,  # readable by JS для header echo
-                    secure=cookie_secure,
-                    samesite="lax",
-                    max_age=3600,
-                )
-            return response
+        # Non-state-changing methods bypass.
+        if method not in self.STATE_CHANGING_METHODS:
+            await self.app(scope, receive, send)
+            return
 
-        # State-changing methods только
-        if request.method not in self.STATE_CHANGING_METHODS:
-            return await call_next(request)
+        # Safe paths bypass (e.g., webhooks).
+        path = scope.get("path", "")
+        if any(path.startswith(p) for p in self._safe_paths):
+            await self.app(scope, receive, send)
+            return
 
-        # Safe paths bypass (e.g., webhooks)
-        if any(request.url.path.startswith(p) for p in self._safe_paths):
-            return await call_next(request)
+        # API key / JWT auth exempt.
+        if self._is_token_auth(scope):
+            await self.app(scope, receive, send)
+            return
 
-        # API key / JWT auth exempt
-        if self._is_token_auth(request):
-            return await call_next(request)
+        # CSRF check.
+        cookie_token = self._get_cookie(scope, self._cookie_name)
+        header_token = _get_header_value(scope, self._header_name_lower.encode("latin-1"))
 
-        # CSRF check
-        cookie_token = request.cookies.get(self._cookie_name)
-        header_token = request.headers.get(self._header_name)
-
-        # Header token required + must match cookie
+        # Header token required + must match cookie.
         if not cookie_token or not header_token:
-            # Cycle 70 L1: structured audit log на CSRF failure (banking-grade).
             _logger.warning(
                 "csrf_token_missing path=%s method=%s",
-                request.url.path,
-                request.method,
+                path,
+                method,
             )
-            return JSONResponse(
-                {
-                    "error": "csrf_token_missing",
-                    "detail": f"CSRF token required in cookie and {self._header_name} header",
-                },
-                status_code=403,
+            await self._send_403(
+                send,
+                error="csrf_token_missing",
+                detail=f"CSRF token required in cookie and {self._header_name_lower} header",
             )
+            return
 
         if not hmac.compare_digest(cookie_token, header_token):
-            # Cycle 70 L1: structured audit log на CSRF mismatch (banking-grade).
             _logger.warning(
                 "csrf_token_mismatch path=%s method=%s",
-                request.url.path,
-                request.method,
+                path,
+                method,
             )
-            return JSONResponse(
-                {
-                    "error": "csrf_token_mismatch",
-                    "detail": "CSRF token mismatch between cookie and header",
-                },
-                status_code=403,
+            await self._send_403(
+                send,
+                error="csrf_token_mismatch",
+                detail="CSRF token mismatch between cookie and header",
             )
+            return
 
-        return await call_next(request)
+        # CSRF check passed → пробрасываем downstream.
+        await self.app(scope, receive, send)
 
-    def _is_token_auth(self, request: Request) -> bool:
+    async def _process_safe(
+        self, scope: Scope, receive: Receive, send: Send
+    ) -> None:
+        """Обработка safe method (cycle 57 helper)."""
+        # Cycle 57 critical: collect body chunks через send-wrapper
+        # (для правильного downstream body). При auto-issue CSRF cookie
+        # добавляем Set-Cookie в response headers через send-wrapper.
+        cookie_already_present = self._has_cookie(scope, self._cookie_name)
+        response_started: dict[str, bool] = {"started": False}
+        response_headers: list[tuple[bytes, bytes]] = []
+        response_status: dict[str, int] = {"status": 200}
+
+        async def send_wrapper(message) -> None:
+            if message["type"] == "http.response.start":
+                response_status["status"] = message.get("status", 200)
+                headers = list(message.get("headers", []))
+                # Auto-issue CSRF cookie (S192) если нет.
+                if not cookie_already_present:
+                    token = secrets.token_urlsafe(32)
+                    # S202 audit fix: secure от deployment setting.
+                    cookie_secure = getattr(
+                        getattr(settings, "secure", None), "cookie_secure", True
+                    )
+                    headers.append(
+                        (
+                            b"set-cookie",
+                            (
+                                f"{self._cookie_name}={token}; "
+                                f"Max-Age=3600; Path=/; "
+                                f"SameSite=lax"
+                                + ("; Secure" if cookie_secure else "")
+                            ).encode("latin-1"),
+                        )
+                    )
+                response_headers.clear()
+                response_headers.extend(headers)
+                response_started["started"] = True
+                # Suppress original — отправим свой с cookie.
+                await send(
+                    {
+                        "type": "http.response.start",
+                        "status": response_status["status"],
+                        "headers": headers,
+                    }
+                )
+            elif message["type"] == "http.response.body":
+                # Пропускаем body (cycle 57: только headers модифицируются).
+                await send(message)
+            else:
+                await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+    @staticmethod
+    def _is_token_auth(scope: Scope) -> bool:
         """Check — request uses token-based auth (not cookie).
 
         S194 fix: case-insensitive prefix check (RFC 7235 allows lowercase).
+        """
+        for header_name, header_value in scope.get("headers", []):
+            try:
+                value = header_value.decode("latin-1")
+            except UnicodeDecodeError:
+                continue
+            if header_name == b"authorization":
+                lowered = value.lower()
+                if lowered.startswith(("bearer ", "apikey ", "token ")):
+                    return True
+            if header_name == b"x-api-key":
+                return True
+        return False
+
+    @staticmethod
+    def _get_cookie(scope: Scope, name: str) -> str:
+        """Извлекает cookie value из ASGI scope (cycle 47 helper).
+
+        Args:
+            scope: ASGI scope.
+            name: Имя cookie.
 
         Returns:
-            True если использует API key / JWT (exempt от CSRF).
+            Cookie value или пустая строка.
         """
-        # Authorization header (case-insensitive Bearer / ApiKey / Token)
-        auth_lower = request.headers.get("Authorization", "").lower()
-        if auth_lower.startswith(("bearer ", "apikey ", "token ")):
-            return True
+        for header_name, header_value in scope.get("headers", []):
+            if header_name == b"cookie":
+                try:
+                    cookies_str = header_value.decode("latin-1")
+                except UnicodeDecodeError:
+                    continue
+                for cookie in cookies_str.split(";"):
+                    cookie = cookie.strip()
+                    if "=" in cookie:
+                        k, v = cookie.split("=", 1)
+                        if k.strip() == name:
+                            return v.strip()
+        return ""
 
-        # X-API-Key header (case-insensitive)
-        if any(
-            h.lower() == "x-api-key"
-            for h in request.headers.keys()
-        ):
-            return True
+    @staticmethod
+    def _has_cookie(scope: Scope, name: str) -> bool:
+        """True если cookie присутствует в scope."""
+        return bool(CSRFMiddleware._get_cookie(scope, name))
 
-        return False
+    @staticmethod
+    async def _send_403(send: Send, *, error: str, detail: str) -> None:
+        """Отправляет 403 JSON response через send (no-raise, cycle 39)."""
+        body_bytes = json.dumps({"error": error, "detail": detail}).encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 403,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body_bytes)).encode("latin-1")),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body_bytes})
+
+
+def _get_header_value(scope: Scope, name: bytes) -> str:
+    """Извлекает header из ASGI scope по lowercase bytes-имени."""
+    for header_name, header_value in scope.get("headers", []):
+        if header_name == name:
+            try:
+                return header_value.decode("latin-1")
+            except UnicodeDecodeError:
+                return ""
+    return ""
