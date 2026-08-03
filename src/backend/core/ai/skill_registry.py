@@ -46,6 +46,7 @@ loader'а + auto-export — Wave S26 W5.
 from __future__ import annotations
 
 import importlib
+import inspect
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, Literal
 
