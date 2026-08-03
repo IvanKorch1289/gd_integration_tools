@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-"""DegradationMiddleware (W26.5) — блокирует writes при degraded-инфраструктуре.
+"""DegradationMiddleware (W26.5) — блокирует writes при degraded-инфраструктуре (cycle 42 pure ASGI).
 
 Если ``ResilienceCoordinator`` сообщает, что компонент ``db_main``
 переключён на ``sqlite_ro`` (или другой read-only fallback), все
@@ -12,22 +10,19 @@ Service Unavailable** с заголовком ``Retry-After: <seconds>``.
     * write-методы проверяют degradation_mode компонента ``db_main``;
     * 503 содержит JSON-payload ``{status: 'degraded', reason: ..., retry_after: ...}``.
 
-Это страховка от потери данных: SQLite-RO snapshot не принимает writes
-нативно (SQLite raises OperationalError), но без middleware ошибка
-поднялась бы наверх с 5xx без явного указания причины.
+Cycle 42: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
+архитектурной консистентности с cycle 33-41 (L1 middlewares).
 
-Endpoints, которые safe для write в fallback-режиме (например, audit-
-эмиссия в ClickHouse-fallback chain), исключаются через path-pattern
-``DEGRADATION_BYPASS_PREFIXES``.
+Cycle 42 critical: как и cycle 39-41, pure ASGI не может raise
+для response. 503 отправляется через send напрямую.
 """
 
+from __future__ import annotations
 
+import json
 from typing import Final
 
-from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
 
@@ -49,7 +44,6 @@ DEGRADATION_BYPASS_PREFIXES: Final[tuple[str, ...]] = (
     "/api/v1/audit",  # audit-events — обязаны проходить даже при degraded
 )
 
-
 _ESSENTIAL_PATH_PREFIXES: Final[tuple[str, ...]] = (
     "/health",
     "/liveness",
@@ -68,101 +62,133 @@ _MAINTENANCE_PATH_PREFIXES: Final[tuple[str, ...]] = (
 )
 
 
-class DegradationMiddleware(BaseHTTPMiddleware):
-    """Блокирует операции согласно :class:`DegradationMode` (S13 K2 W4).
+def _build_503_json(
+    reason: str, retry_after: int, header: str
+) -> tuple[bytes, list[tuple[bytes, bytes]]]:
+    """Создаёт 503 JSON body + headers (cycle 42 helper).
 
-    Уровни:
+    Pure ASGI: возвращает bytes + headers для отправки через send.
+    """
+    body = json.dumps(
+        {
+            "status": "degraded",
+            "reason": reason,
+            "retry_after_seconds": retry_after,
+        }
+    ).encode("utf-8")
+    headers: list[tuple[bytes, bytes]] = [
+        (b"content-type", b"application/json"),
+        (b"content-length", str(len(body)).encode("latin-1")),
+        (b"retry-after", str(retry_after).encode("latin-1")),
+        (b"x-degradation-mode", header.encode("latin-1")),
+    ]
+    return body, headers
 
-    * ``FULL`` — всё разрешено.
-    * ``DEGRADED``/``READ_ONLY`` — блок POST/PATCH/DELETE на ``/api/v1/*``.
-    * ``CACHE_ONLY`` — то же + force ``cache_first=true`` header в downstream.
-    * ``EMERGENCY``/``ESSENTIAL_ONLY`` — только tech/health/metrics endpoints.
-    * ``MAINTENANCE`` — только liveness + degradation switch.
+
+class DegradationMiddleware:
+    """Pure ASGI middleware: блокирует writes в degraded-режиме (S13 K2 W4).
+
+    Cycle 42 design:
+    - Mode check в __call__ (читает scope['path'] и scope['method']).
+    - Restrictive mode → отправляет 503 через send (no-raise, cycle 39).
+    - Allowed path → оборачивает send чтобы инжектить X-Degradation-Mode
+      header в response (CACHE_ONLY mode).
+
+    Public API сохранён: ``DegradationMiddleware(app, retry_after=30)``.
     """
 
     def __init__(self, app: ASGIApp, *, retry_after: int = 30) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
-        super().__init__(app)
+        Args:
+            app: ASGI-приложение.
+            retry_after: TTL для Retry-After header (в секундах).
+        """
+        self.app = app
         self._retry_after = retry_after
 
-    async def dispatch(self, request: Request, call_next):
-        """Process degradation mode checks.
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Точка входа ASGI-протокола.
 
-        Args:
-            request: HTTP request.
-            call_next: Next middleware/endpoint.
-
-        Returns:
-            HTTP response.
+        Non-HTTP scope пробрасывается downstream без degradation check.
         """
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        # Lazy import — degradation_manager может быть тяжёлым
+        # (DI dependencies), не грузим при импорте модуля.
         from src.backend.core.resilience.degradation import (
             DegradationMode,
             degradation_manager,
             mode_at_least,
         )
 
-        path = request.url.path
-        method = request.method
+        path = scope.get("path", "")
+        method = scope.get("method", "")
         mode = degradation_manager.current_mode
 
         # MAINTENANCE: всё кроме liveness + degradation switch.
         if mode_at_least(mode, DegradationMode.MAINTENANCE):
             if not any(path.startswith(p) for p in _MAINTENANCE_PATH_PREFIXES):
-                return self._build_503(
-                    f"system in {mode.value} mode", header="maintenance"
+                await self._send_503(
+                    send,
+                    reason=f"system in {mode.value} mode",
+                    header="maintenance",
                 )
+                return
 
         # ESSENTIAL_ONLY/EMERGENCY: всё кроме health/tech/metrics.
         if mode_at_least(mode, DegradationMode.ESSENTIAL_ONLY):
             if not any(path.startswith(p) for p in _ESSENTIAL_PATH_PREFIXES):
-                return self._build_503(
-                    f"only essential endpoints available ({mode.value})",
+                await self._send_503(
+                    send,
+                    reason=f"only essential endpoints available ({mode.value})",
                     header="essential-only",
                 )
+                return
 
-        # CACHE_ONLY: writes блокируем, GET force cache_first.
+        # CACHE_ONLY: блок writes (проверяется ПЕРВЫМ — CACHE_ONLY > READ_ONLY
+        # в mode_at_least, поэтому CACHE_ONLY ловит и READ_ONLY, но
+        # возвращает более специфичный header).
         if mode_at_least(mode, DegradationMode.CACHE_ONLY):
             if method in _WRITE_METHODS and not self._is_bypassed(path):
-                return self._build_503(
-                    f"writes blocked: {mode.value}", header="cache-only-no-writes"
+                await self._send_503(
+                    send,
+                    reason=f"writes blocked: {mode.value}",
+                    header="cache-only-no-writes",
                 )
+                return
 
-        # READ_ONLY/DEGRADED: блок writes.
+        # READ_ONLY: блок writes.
         if mode_at_least(mode, DegradationMode.READ_ONLY):
             if method in _WRITE_METHODS and not self._is_bypassed(path):
-                return self._build_503(
-                    f"writes blocked: system in {mode.value} mode", header="read-only"
+                await self._send_503(
+                    send,
+                    reason=f"writes blocked: system in {mode.value} mode",
+                    header="read-only",
                 )
+                return
 
         # Legacy: db_main fallback → блок writes.
         if method in _WRITE_METHODS and not self._is_bypassed(path):
             blocked = self._check_blocked_components()
             if blocked:
-                return self._build_503(
-                    f"write blocked: components in fallback mode — {', '.join(blocked)}",
+                await self._send_503(
+                    send,
+                    reason=f"write blocked: components in fallback mode — {', '.join(blocked)}",
                     header="write-blocked",
                 )
+                return
 
-        response = await call_next(request)
+        # Allowed → пробрасываем downstream.
+        # Если mode CACHE_ONLY+ → инжектим X-Degradation-Mode header
+        # через send-wrapper (чтобы downstream видел cache_first=true).
         if mode_at_least(mode, DegradationMode.CACHE_ONLY):
-            response.headers["X-Degradation-Mode"] = mode.value
-        return response
-
-    def _build_503(self, reason: str, *, header: str) -> JSONResponse:
-        return JSONResponse(
-            status_code=503,
-            content={
-                "status": "degraded",
-                "reason": reason,
-                "retry_after_seconds": self._retry_after,
-            },
-            headers={
-                "Retry-After": str(self._retry_after),
-                "X-Degradation-Mode": header,
-            },
-        )
+            send_wrapper = self._make_mode_header_wrapper(send, mode.value)
+            await self.app(scope, receive, send_wrapper)
+        else:
+            await self.app(scope, receive, send)
 
     @staticmethod
     def _is_bypassed(path: str) -> bool:
@@ -170,20 +196,14 @@ class DegradationMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     def _check_blocked_components() -> list[str]:
-        """Возвращает список компонентов, которые блокируют writes.
-
-        Сейчас блокирует только ``db_main`` в fallback (sqlite_ro). Для
-        других компонентов write-fallback допустим (cache-write, audit-
-        write и т.п.).
-        """
-        # Wave 6.5a: ResilienceCoordinator — через DI provider.
+        """Возвращает список компонентов, которые блокируют writes."""
         try:
             from src.backend.core.di.providers import (
                 get_resilience_coordinator_provider,
             )
 
             statuses = get_resilience_coordinator_provider().status()
-        except Exception as _:
+        except Exception:
             return []
         blocked: list[str] = []
         db = statuses.get("db_main")
@@ -194,3 +214,44 @@ class DegradationMiddleware(BaseHTTPMiddleware):
         ):
             blocked.append("db_main")
         return blocked
+
+    async def _send_503(
+        self, send: Send, *, reason: str, header: str
+    ) -> None:
+        """503 sender (instance method, использует self._retry_after).
+
+        Cycle 42: instance method (не static) — нужен self._retry_after.
+        Pure ASGI: 503 отправляется через send явно (no-raise, cycle 39).
+        """
+        body, headers = _build_503_json(reason, self._retry_after, header)
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 503,
+                "headers": headers,
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
+
+    @staticmethod
+    def _make_mode_header_wrapper(send: Send, mode_value: str) -> Send:
+        """Создаёт send-wrapper который инжектит X-Degradation-Mode header.
+
+        Cycle 42 pattern: send-wrapper для добавления response header
+        (как cycle 36 RequestID, cycle 37 AuthMethodHeader).
+        """
+
+        async def send_wrapper(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                existing: list[tuple[bytes, bytes]] = list(message.get("headers", []))
+                existing = [
+                    (k, v) for k, v in existing
+                    if k.lower() != b"x-degradation-mode"
+                ]
+                existing.append(
+                    (b"x-degradation-mode", mode_value.encode("latin-1"))
+                )
+                message["headers"] = existing
+            await send(message)
+
+        return send_wrapper
