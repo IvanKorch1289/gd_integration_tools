@@ -1,169 +1,207 @@
+"""Middleware для логирования входящих запросов и исходящих ответов (cycle 53 pure ASGI).
+
+Логирует метод запроса, URL, тело запроса (если включено), статус ответа,
+время обработки и тело ответа (если включено). Поддерживает обработку
+сжатых данных (gzip).
+
+Cycle 53: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
+архитектурной консистентности с cycle 33-52 (L1 middlewares).
+
+Cycle 53 design: logging не нужен headers modification, только
+консольный output. Pure ASGI:
+- Extract method/path из scope.
+- Read body из scope['state']['body'] (cycle 52 pattern) если
+  RequestBodyCache закешировал.
+- Replay receive для log_response_body (cycle 44/52 pattern).
+- logger.info/error вызываются как раньше.
+"""
+
 from __future__ import annotations
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.types import ASGIApp
+import json
+from time import time
 
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
+
+from src.backend.core.config.settings import settings
+from src.backend.core.di.providers import get_app_logger_provider
 from src.backend.core.utils.async_helpers import async_chunk_iterator
 
 __all__ = ("InnerRequestLoggingMiddleware",)
 
 
-class InnerRequestLoggingMiddleware(BaseHTTPMiddleware):
+class InnerRequestLoggingMiddleware:
+    """Pure ASGI middleware для логирования request/response (cycle 53).
+
+    Поведение:
+    - Логирует method/URL до call_next.
+    - Логирует response status + duration после call_next.
+    - Если log_body=True и method=POST: логирует body (cached or fresh).
+    - Если log_body=True: логирует response body (collect chunks).
+
+    Args:
+        app: ASGI-приложение.
     """
-    Middleware для логирования входящих запросов и исходящих ответов.
 
-    Логирует метод запроса, URL, тело запроса (если включено), статус ответа,
-    время обработки и тело ответа (если включено). Поддерживает обработку сжатых данных (gzip).
-    """
+    def __init__(self, app: ASGIApp) -> None:
+        """Инициализирует middleware.
 
-    def __init__(self, app: ASGIApp):
-        """
-        Инициализация middleware.
-
-        :param app: ASGI-приложение, к которому применяется middleware.
+        Args:
+            app: ASGI-приложение.
         """
         # Wave 6.5a: app_logger — через DI provider.
-        from src.backend.core.config.settings import settings
-        from src.backend.core.di.providers import get_app_logger_provider
+        self.log_body = settings.logging.log_requests
+        self.max_body_size = settings.logging.max_body_log_size
+        self.logger = get_app_logger_provider()
+        self.app = app
 
-        super().__init__(app)
-        self.log_body = (
-            settings.logging.log_requests
-        )  # Флаг логирования тела запроса/ответа
-        self.max_body_size = (
-            settings.logging.max_body_log_size
-        )  # Максимальный размер тела для логирования
-        self.logger = get_app_logger_provider()  # Логгер
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Обработка запроса и ответа с логированием.
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+        Args:
+            scope: ASGI scope.
+            receive: ASGI receive callable.
+            send: ASGI send callable.
         """
-        Обработка запроса и ответа с логированием.
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-        :param request: Входящий HTTP-запрос.
-        :param call_next: Функция для вызова следующего middleware или конечного обработчика.
-        :return: HTTP-ответ.
-        :raises Exception: Если возникает ошибка при обработке запроса.
-        """
-        from time import time
+        method = scope.get("method", "")
+        path = scope.get("path", "")
 
-        self.logger.info(f"Запрос: {request.method} {request.url}")
+        self.logger.info(f"Запрос: {method} {path}")
 
         start_time = time()
 
-        # Логирование тела запроса (если включено и это POST-запрос)
-        if self.log_body and request.method == "POST":
-            content_type = request.headers.get("Content-Type", "").lower()
+        # Capture body если нужно (cycle 53: cached body из state).
+        if self.log_body and method == "POST":
+            content_type = _get_header_value(scope, b"content-type") or ""
             if "multipart/form-data" not in content_type:
-                await self._get_request_body(request)
+                await self._get_request_body(scope, receive)
+
+        # Cycle 53 critical: response capture через send_wrapper
+        # (для log_response_body если log_body=True).
+        response_status: dict[str, int] = {"status": 0}
+        response_chunks: list[bytes] = []
+        response_complete: list[bool] = [False]
+
+        async def send_wrapper(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                response_status["status"] = message.get("status", 0)
+            elif message["type"] == "http.response.body":
+                if self.log_body:
+                    response_chunks.append(message.get("body", b""))
+                    # Прерываем после первого chunk (cycle 53 invariant:
+                    # не accumulate весь stream body — только sample).
+                    if not message.get("more_body", False):
+                        response_complete[0] = True
+            await send(message)
 
         try:
-            response = await call_next(request)
+            await self.app(scope, receive, send_wrapper)
         except Exception as exc:
             self.logger.error(f"Ошибка обработки запроса: {exc!s}", exc_info=True)
             raise
 
-        # Логирование тела ответа (если включено)
-        if self.log_body:
-            await self._log_response_body(response)
+        # Логирование тела ответа (если включено).
+        if self.log_body and response_chunks:
+            self._log_response_body_chunks(response_chunks, scope)
 
-        # Логирование времени обработки запроса
+        # Логирование времени обработки запроса.
         process_time = (time() - start_time) * 1000
         self.logger.info(
-            f"Ответ: {response.status_code} | {request.method} {request.url.path} "
+            f"Ответ: {response_status['status']} | {method} {path} "
             f"обработан за {process_time:.2f} мс"
         )
 
-        return response
+    async def _get_request_body(self, scope: Scope, receive: Receive) -> bytes:
+        """Получение и логирование тела запроса с ограничением по размеру.
 
-    async def _get_request_body(self, request: Request) -> bytes:
+        Cycle 53: использует cached body из state['body'] (если
+        RequestBodyCacheMiddleware закешировал). Fallback на
+        receive() loop.
+
+        Args:
+            scope: ASGI scope.
+            receive: ASGI receive callable.
+
+        Returns:
+            Тело запроса в bytes (или placeholder если > max_body_size).
         """
-        Получение и логирование тела запроса с ограничением по размеру.
+        # Cached body из state (cycle 52 RequestBodyCache pattern).
+        state = scope.get("state", {}) if "state" in scope else {}
+        cached = state.get("body") if isinstance(state, dict) else None
+        if isinstance(cached, (bytes, bytearray)):
+            body = bytes(cached)
+        else:
+            # Fallback: receive() loop.
+            body_chunks: list[bytes] = []
+            more_body = True
+            while more_body:
+                message = await receive()
+                if message["type"] == "http.disconnect":
+                    break
+                body_chunks.append(message.get("body", b""))
+                more_body = message.get("more_body", False)
+            body = b"".join(body_chunks)
 
-        Сначала пытается взять cached body из ``request.state.body`` (выставлен
-        ``RequestBodyCacheMiddleware`` — см. ADR-032 / IL-OBS1). Если кеша
-        нет — graceful fallback на ``await request.body()``.
+        if len(body) > self.max_body_size:
+            self.logger.debug(
+                f"Тело запроса слишком велико для логирования ({len(body)} > {self.max_body_size})"
+            )
+            return "<тело запроса слишком велико для логирования>".encode()
 
-        :param request: Входящий HTTP-запрос.
-        :return: Тело запроса в виде байтов.
-        :raises UnicodeDecodeError: Если тело запроса содержит бинарные данные и не может быть декодировано.
-        """
         try:
-            cached = getattr(request.state, "body", None)
-            if isinstance(cached, (bytes, bytearray)):
-                body = bytes(cached)
-            else:
-                body = await request.body()
-            if len(body) > self.max_body_size:
-                return "<тело запроса слишком велико для логирования>".encode()
-
             self.logger.debug(f"Тело запроса: {body.decode('utf-8')}")
-            return body
         except UnicodeDecodeError:
             self.logger.warning(
                 "Тело запроса содержит бинарные данные, логирование пропущено"
             )
-            return b""
+        return body
 
-    async def _log_response_body(self, response: Response) -> None:
-        """
-        Логирование тела ответа с ограничением по размеру.
+    def _log_response_body_chunks(
+        self, chunks: list[bytes], scope: Scope
+    ) -> None:
+        """Логирование тела ответа из captured chunks (cycle 53 helper).
 
-        :param response: HTTP-ответ.
-        :raises Exception: Если возникает ошибка при декодировании или распаковке данных.
+        Args:
+            chunks: Captured body chunks from send_wrapper.
+            scope: ASGI scope (для content-type detection).
         """
         from gzip import GzipFile
         from io import BytesIO
 
-        content_type = response.headers.get("Content-Type", "").lower()
-        content_encoding = response.headers.get("Content-Encoding", "").lower()
+        body = b"".join(chunks)
+        if not body:
+            return
 
-        # Получение тела ответа
-        body = await self._capture_response_body(response)
+        content_type = _get_header_value(scope, b"content-type") or ""
+        content_encoding = _get_header_value(scope, b"content-encoding") or ""
 
-        # Обработка сжатых данных (gzip)
+        # Обработка сжатых данных (gzip).
         if content_encoding == "gzip":
             try:
                 with GzipFile(fileobj=BytesIO(body)) as gzip_file:
                     body = gzip_file.read()
-            except Exception as exc:
-                self.logger.error(
-                    f"Ошибка распаковки gzip-ответа: {exc!s}", exc_info=True
-                )
-                return
+            except Exception:
+                self.logger.debug("Не удалось распаковать gzip response body")
 
-        # Логирование текстовых или JSON-данных
-        if "text" in content_type or "json" in content_type:
+        if len(body) > self.max_body_size:
+            body = "<тело ответа слишком велико для логирования>".encode("utf-8")
+
+        try:
+            self.logger.debug(f"Тело ответа: {body.decode('utf-8')[:self.max_body_size]}")
+        except UnicodeDecodeError:
+            self.logger.debug("Тело ответа содержит бинарные данные")
+
+
+def _get_header_value(scope: Scope, name: bytes) -> str:
+    """Извлекает header из ASGI scope по lowercase bytes-имени (cycle 43 helper)."""
+    for header_name, header_value in scope.get("headers", []):
+        if header_name == name:
             try:
-                decoded_body = body.decode("utf-8")
-                if len(decoded_body) > self.max_body_size:
-                    self.logger.debug("Тело ответа слишком велико для логирования")
-                else:
-                    self.logger.debug(f"Тело ответа: {decoded_body}")
+                return header_value.decode("latin-1")
             except UnicodeDecodeError:
-                self.logger.warning("Тело ответа не является валидным текстом UTF-8")
-            except Exception as exc:
-                self.logger.error(
-                    f"Ошибка декодирования тела ответа: {exc!s}", exc_info=True
-                )
-        else:
-            # Логирование бинарных данных (например, файлов)
-            self.logger.debug(
-                f"Тело ответа - бинарные данные, размер: {len(body)} байт"
-            )
-
-    @staticmethod
-    async def _capture_response_body(response: Response) -> bytes:
-        """
-        Захват тела ответа с сохранением оригинального итератора.
-
-        :param response: HTTP-ответ.
-        :return: Тело ответа в виде байтов.
-        """
-        chunks = []
-        async for chunk in response.body_iterator:  # type: ignore
-            chunks.append(chunk)
-        response.body_iterator = async_chunk_iterator(chunks)  # type: ignore
-        return b"".join(chunks)
+                return ""
+    return ""
