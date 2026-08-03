@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from src.backend.core.config.features import feature_flags
 from src.backend.core.config.services.cache import CacheSettings, cache_settings
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger
@@ -21,6 +22,7 @@ from src.backend.infrastructure.cache.backends.keydb import KeyDBBackend
 from src.backend.infrastructure.cache.backends.memcached import MemcachedBackend
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 from src.backend.infrastructure.cache.backends.redis import RedisBackend
+from src.backend.infrastructure.cache.tenant_wrapper import TenantCacheBackend
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
@@ -46,6 +48,21 @@ def _redis_client() -> Redis:
 def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
     """Возвращает CacheBackend в соответствии с :class:`CacheSettings`.
 
+    Cycle 34 B-03 fix: возвращённый backend обёрнут в
+    :class:`TenantCacheBackend <src.backend.infrastructure.cache.tenant_wrapper.TenantCacheBackend>`
+    для автоматического tenant-namespacing всех cache-keys. Это закрывает
+    cache poisoning (S21 K1 W2, B-03) — defense-in-depth поверх PG RLS.
+
+    Поведение wrapper'а контролируется ``feature_flags.tenant_cache_prefix_enabled``:
+    - True (default): ключи получают префикс ``tenant:{id}:`` (или
+      ``tenant:_unscoped_:`` если tenant context отсутствует).
+    - False: wrapper no-op (прямая делегация в underlying backend).
+
+    При feature_flag=False возвращённый объект — :class:`TenantCacheBackend`,
+    но его поведение идентично unwrapped backend'у (нет prefix). Это
+    гарантирует backward-compat для тестов, явно отключающих feature
+    flag (autouse fixture в test_factory.py).
+
     Args:
         settings: Опциональный override; по умолчанию — ``cache_settings``.
 
@@ -54,13 +71,14 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
             зависимости ``aiomcache``.
     """
     cfg = settings or cache_settings
+    backend: CacheBackend
     match cfg.backend:
         case "memory":
-            return MemoryBackend(maxsize=cfg.l1_maxsize)
+            backend = MemoryBackend(maxsize=cfg.l1_maxsize)
         case "redis":
-            return RedisBackend(client=_redis_client())
+            backend = RedisBackend(client=_redis_client())
         case "keydb":
-            return KeyDBBackend(
+            backend = KeyDBBackend(
                 client=_redis_client(), active_replica=cfg.keydb_active_replica
             )
         case "memcached":
@@ -71,4 +89,17 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
                     "Memcached-бэкенд требует пакет 'aiomcache'. "
                     "Добавьте его в pyproject.toml и переинициализируйте."
                 ) from exc
-            return MemcachedBackend()
+            backend = MemcachedBackend()
+        case _:
+            raise ValueError(f"Unknown cache backend: {cfg.backend!r}")
+
+    # B-03 fix: оборачиваем в TenantCacheBackend для tenant-namespacing.
+    # Сам wrapper проверяет feature_flag внутри _prefix() — при
+    # flag=False ведёт себя как no-op (без prefix).
+    logger.debug(
+        "create_cache_backend: wrapped %s in TenantCacheBackend "
+        "(tenant_cache_prefix_enabled=%s)",
+        type(backend).__name__,
+        feature_flags.tenant_cache_prefix_enabled,
+    )
+    return TenantCacheBackend(backend)
