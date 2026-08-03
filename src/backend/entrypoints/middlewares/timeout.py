@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-"""Request timeout middleware с per-route override (S18 W6).
+"""Request timeout middleware с per-route override (S18 W6, cycle 50 pure ASGI).
 
 Поведение:
     * При ``per_route_timeout_enabled=False`` (default) — global timeout
@@ -13,16 +11,23 @@ from __future__ import annotations
     Из :class:`RouteManifest.timeout` (``[timeout].total``) либо из
     DSL ``.policy.timeout(total=...)``. Wiring (RouteLoader →
     TimeoutMiddleware) — отдельная wave; сейчас registry опционален.
+
+Cycle 50: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
+архитектурной консистентности с cycle 33-49 (L1 middlewares).
+
+Cycle 50 design: timeout через ``asyncio.wait_for(call_next(...), timeout=...)``.
+В BaseHTTPMiddleware версии тот же pattern (wait_for на dispatch).
+Pure ASGI: тот же pattern в ``__call__`` (timeout обёрнут вокруг
+``await self.app(scope, receive, send)``).
 """
 
-import builtins
+from __future__ import annotations
+
+import json
 from asyncio import wait_for
 from collections.abc import Mapping
 
-from fastapi import Request, Response
-from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import get_app_logger_provider
@@ -30,8 +35,8 @@ from src.backend.core.di.providers import get_app_logger_provider
 __all__ = ("TimeoutMiddleware",)
 
 
-class TimeoutMiddleware(BaseHTTPMiddleware):
-    """Middleware для ограничения времени обработки запросов (S18 W6 extended).
+class TimeoutMiddleware:
+    """Pure ASGI middleware для ограничения времени обработки запросов (S18 W6).
 
     Args:
         app: ASGI приложение.
@@ -44,8 +49,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
     Notes:
         Feature-flag ``per_route_timeout_enabled`` (default-OFF) гейтит
         registry lookup. При OFF behaviour идентичен legacy S0+
-        (single global timeout). Это обеспечивает безопасное
-        развёртывание без риска регрессий.
+        (single global timeout).
     """
 
     def __init__(
@@ -53,8 +57,11 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
-        super().__init__(app)
+        Args:
+            app: ASGI-приложение.
+            route_timeouts: Опциональный registry per-route timeouts.
+        """
+        self.app = app
         # Сортируем по убыванию длины для longest-prefix-match.
         # Frozen tuple избегает мутаций после lifespan-bootstrap.
         items = tuple((p, float(t)) for p, t in (route_timeouts or {}).items())
@@ -62,30 +69,34 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
             sorted(items, key=lambda kv: len(kv[0]), reverse=True)
         )
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Обрабатывает запрос с per-route или global timeout.
 
         Args:
-            request: Входящий HTTP-запрос.
-            call_next: Следующий middleware/обработчик.
-
-        Returns:
-            ``Response`` от downstream или ``JSONResponse(408)`` при тайм-ауте.
+            scope: ASGI scope.
+            receive: ASGI receive callable.
+            send: ASGI send callable.
         """
-        timeout_seconds = self._resolve_timeout(request.url.path)
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        timeout_seconds = self._resolve_timeout(path)
+
         try:
-            return await wait_for(call_next(request), timeout=timeout_seconds)
-        except builtins.TimeoutError:
+            # Cycle 50 critical: wait_for обёрнут вокруг downstream.
+            # Если downstream не отвечает в timeout — asyncio.TimeoutError.
+            await wait_for(
+                self.app(scope, receive, send), timeout=timeout_seconds
+            )
+        except TimeoutError:
             get_app_logger_provider().warning(
                 "Превышено время обработки запроса: %s (timeout=%.2fs)",
-                request.url,
+                scope.get("path", ""),
                 timeout_seconds,
             )
-            return JSONResponse(
-                {"detail": "Превышено время обработки запроса"}, status_code=408
-            )
+            await self._send_408(send)
 
     # ----------------------------------------------------------------- helpers
 
@@ -106,5 +117,23 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "per_route_timeout_enabled", False))
-        except Exception as _:
+        except Exception:
             return False
+
+    @staticmethod
+    async def _send_408(send: Send) -> None:
+        """Отправляет 408 JSON response через send (cycle 39 no-raise pattern)."""
+        body = json.dumps(
+            {"detail": "Превышено время обработки запроса"}
+        ).encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 408,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode("latin-1")),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
