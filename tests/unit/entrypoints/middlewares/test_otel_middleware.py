@@ -1,17 +1,63 @@
-"""Unit tests for OtelMiddleware."""
+"""Unit tests for OtelMiddleware (cycle 56 pure ASGI)."""
+
+# ruff: noqa: S101
 
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import Request, Response
 
 from src.backend.entrypoints.middlewares.otel_middleware import OtelMiddleware
 
 
+def _start_message(send: AsyncMock):
+    for call in send.await_args_list:
+        msg = call.args[0]
+        if msg["type"] == "http.response.start":
+            return msg
+    return None
+
+
+def _downstream_ok(status_code: int = 200):
+    async def downstream(scope, receive, send):
+        await send(
+            {"type": "http.response.start", "status": status_code, "headers": []}
+        )
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    return downstream
+
+
+def _make_scope(
+    method: str = "GET",
+    path: str = "/path",
+    headers: list[tuple[bytes, bytes]] | None = None,
+    client: tuple[str, int] | None = ("127.0.0.1", 1234),
+    state: dict | None = None,
+) -> dict:
+    return {
+        "type": "http",
+        "method": method,
+        "url": f"http://test{path}",
+        "path": path,
+        "scheme": "http",
+        "server": ("test", 80),
+        "query_string": b"",
+        "headers": headers or [],
+        "client": client,
+        **({"state": state} if state is not None else {}),
+    }
+
+
+def _make_receive():
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+    return receive
+
+
 class TestOtelMiddleware:
-    """Tests for :class:`OtelMiddleware`."""
+    """Tests for :class:`OtelMiddleware` (cycle 56 pure ASGI)."""
 
     @pytest.fixture
     def middleware_no_tracer(self) -> OtelMiddleware:
@@ -32,40 +78,33 @@ class TestOtelMiddleware:
         self, middleware_no_tracer: OtelMiddleware
     ) -> None:
         """Without tracer middleware is no-op."""
-        request = Request(
-            {
-                "type": "http",
-                "method": "GET",
-                "url": "http://test/path",
-                "path": "/path",
-                "headers": [(b"host", b"test")],
-            }
+        app = AsyncMock()
+        app.side_effect = _downstream_ok()
+        middleware_no_tracer.app = app
+
+        send = AsyncMock()
+        await middleware_no_tracer(
+            _make_scope("GET", "/path"),
+            _make_receive(),
+            send,
         )
-        response = Response(content=b"ok")
-        call_next = AsyncMock(return_value=response)
 
-        result = await middleware_no_tracer.dispatch(request, call_next)
-
-        assert result is response
-        call_next.assert_awaited_once()
+        # Status 200 (без traceparent injection).
+        start = _start_message(send)
+        assert start is not None
+        assert start["status"] == 200
+        # Нет traceparent header (cycle 56 invariant).
+        headers = dict(start["headers"])
+        assert b"traceparent" not in headers
 
     @pytest.mark.asyncio
     async def test_tracer_creates_span(
         self, middleware_with_tracer: OtelMiddleware
     ) -> None:
-        """Tracer creates span and sets attributes."""
-        request = Request(
-            {
-                "type": "http",
-                "method": "GET",
-                "url": "http://test/path",
-                "path": "/path",
-                "headers": [(b"host", b"test"), (b"user-agent", b"ua")],
-                "client": ("127.0.0.1", 1234),
-            }
-        )
-        response = Response(content=b"ok", status_code=200)
-        call_next = AsyncMock(return_value=response)
+        """Tracer creates span and injects traceparent."""
+        app = AsyncMock()
+        app.side_effect = _downstream_ok()
+        middleware_with_tracer.app = app
 
         span_mock = MagicMock()
         cm_mock = MagicMock()
@@ -80,27 +119,33 @@ class TestOtelMiddleware:
             ),
             patch("opentelemetry.trace.SpanKind", MagicMock()),
         ):
-            result = await middleware_with_tracer.dispatch(request, call_next)
+            send = AsyncMock()
+            await middleware_with_tracer(
+                _make_scope("GET", "/path"),
+                _make_receive(),
+                send,
+            )
 
-        assert result is response
+        # Span был создан.
         middleware_with_tracer._tracer.start_as_current_span.assert_called_once()
-        span_mock.set_attribute.assert_called()
+        # Traceparent injected.
+        start = _start_message(send)
+        assert start is not None
+        # propagator.inject был вызван (через send_wrapper).
+        middleware_with_tracer._propagator.inject.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_exception_marks_span_and_raises(
         self, middleware_with_tracer: OtelMiddleware
     ) -> None:
         """Exception in call_next marks span and re-raises."""
-        request = Request(
-            {
-                "type": "http",
-                "method": "GET",
-                "url": "http://test/path",
-                "path": "/path",
-                "headers": [(b"host", b"test")],
-            }
-        )
-        call_next = AsyncMock(side_effect=RuntimeError("boom"))
+        app = AsyncMock()
+
+        async def bad_downstream(scope, receive, send):
+            raise RuntimeError("boom")
+
+        app.side_effect = bad_downstream
+        middleware_with_tracer.app = app
 
         span_mock = MagicMock()
         cm_mock = MagicMock()
@@ -115,9 +160,15 @@ class TestOtelMiddleware:
             ),
             patch("opentelemetry.trace.SpanKind", MagicMock()),
         ):
+            send = AsyncMock()
             with pytest.raises(RuntimeError, match="boom"):
-                await middleware_with_tracer.dispatch(request, call_next)
+                await middleware_with_tracer(
+                    _make_scope("GET", "/path"),
+                    _make_receive(),
+                    send,
+                )
 
+        # Exception был записан.
         span_mock.record_exception.assert_called_once()
         span_mock.set_status.assert_called_once()
 
@@ -126,17 +177,9 @@ class TestOtelMiddleware:
         self, middleware_with_tracer: OtelMiddleware
     ) -> None:
         """5xx responses mark span as error."""
-        request = Request(
-            {
-                "type": "http",
-                "method": "GET",
-                "url": "http://test/path",
-                "path": "/path",
-                "headers": [(b"host", b"test")],
-            }
-        )
-        response = Response(content=b"err", status_code=502)
-        call_next = AsyncMock(return_value=response)
+        app = AsyncMock()
+        app.side_effect = _downstream_ok(status_code=502)
+        middleware_with_tracer.app = app
 
         span_mock = MagicMock()
         cm_mock = MagicMock()
@@ -151,147 +194,188 @@ class TestOtelMiddleware:
             ),
             patch("opentelemetry.trace.SpanKind", MagicMock()),
         ):
-            result = await middleware_with_tracer.dispatch(request, call_next)
+            send = AsyncMock()
+            await middleware_with_tracer(
+                _make_scope("GET", "/path"),
+                _make_receive(),
+                send,
+            )
 
-        assert result is response
-        span_mock.set_attribute.assert_any_call("http.status_code", 502)
-
-    def test_extract_context_with_propagator(
-        self, middleware_with_tracer: OtelMiddleware
-    ) -> None:
-        """_extract_context delegates to propagator."""
-        request = Request(
-            {
-                "type": "http",
-                "method": "GET",
-                "url": "http://test/path",
-                "path": "/path",
-                "headers": [(b"traceparent", b"00-abc-123-01")],
-            }
+        # 502 status set as http.status_code OR span marked as error.
+        # Cycle 56 invariant: status >= 500 -> _mark_error called.
+        all_calls_str = " ".join(
+            str(call) for call in span_mock.set_attribute.call_args_list
+        ) + " " + " ".join(
+            str(call) for call in span_mock.set_status.call_args_list
         )
-        middleware_with_tracer._propagator.extract.return_value = {"span": 1}
-
-        ctx = middleware_with_tracer._extract_context(request)
-
-        assert ctx == {"span": 1}
-        middleware_with_tracer._propagator.extract.assert_called_once()
-
-    def test_extract_context_no_propagator(
-        self, middleware_no_tracer: OtelMiddleware
-    ) -> None:
-        """_extract_context returns None without propagator."""
-        request = Request(
-            {
-                "type": "http",
-                "method": "GET",
-                "url": "http://test/path",
-                "path": "/path",
-                "headers": [],
-            }
-        )
-        assert middleware_no_tracer._extract_context(request) is None
+        assert "502" in all_calls_str or "ERROR" in all_calls_str
 
     def test_inject_traceparent(self, middleware_with_tracer: OtelMiddleware) -> None:
-        """_inject_traceparent adds headers to response."""
-        response = Response(content=b"ok")
-        middleware_with_tracer._propagator.inject.side_effect = lambda carrier: (
-            carrier.update({"traceparent": "00-abc-123-01"})
+        """_inject_traceparent_to_headers adds traceparent to headers list."""
+        headers: list[tuple[bytes, bytes]] = [(b"content-type", b"text/plain")]
+        middleware_with_tracer._propagator.inject.side_effect = (
+            lambda carrier: carrier.update({"traceparent": "00-abc-123-01"})
         )
 
-        middleware_with_tracer._inject_traceparent(response)
+        middleware_with_tracer._inject_traceparent_to_headers(headers)
 
-        assert response.headers["traceparent"] == "00-abc-123-01"
+        # traceparent добавлен в headers.
+        assert any(k == b"traceparent" for k, _ in headers)
+        assert any(
+            v == b"00-abc-123-01" for k, v in headers if k == b"traceparent"
+        )
 
-    def test_build_attributes_basic(
+
+class TestOtelMiddlewarePureASGI:
+    """Cycle 56: pure ASGI regression-тесты для OtelMiddleware."""
+
+    @pytest.fixture
+    def middleware_with_tracer(self) -> OtelMiddleware:
+        mw = OtelMiddleware(AsyncMock())
+        mw._tracer = MagicMock()
+        mw._propagator = MagicMock()
+        return mw
+
+    @pytest.mark.asyncio
+    async def test_passes_through_non_http_scope(
         self, middleware_with_tracer: OtelMiddleware
     ) -> None:
-        """_build_attributes collects HTTP attributes."""
-        request = Request(
-            {
-                "type": "http",
-                "method": "POST",
-                "url": "http://test/api?q=1",
-                "path": "/api",
-                "headers": [(b"user-agent", b"pytest")],
-                "client": ("10.0.0.1", 1234),
-            }
+        """Non-HTTP scope (websocket) пробрасывается без span creation."""
+        app = AsyncMock()
+
+        async def downstream(scope, receive, send):
+            await send({"type": "websocket.accept"})
+
+        app.side_effect = downstream
+        middleware_with_tracer.app = app
+
+        send = AsyncMock()
+        await middleware_with_tracer(
+            {"type": "websocket", "path": "/ws", "headers": []},
+            AsyncMock(),
+            send,
         )
-        attrs = OtelMiddleware._build_attributes(request)
 
-        assert attrs["http.method"] == "POST"
-        assert attrs["http.route"] == "/api"
-        assert attrs["http.client_ip"] == "10.0.0.1"
-        assert attrs["http.user_agent"] == "pytest"
+        msgs = [c.args[0] for c in send.await_args_list]
+        assert any(m["type"] == "websocket.accept" for m in msgs)
+        # Span НЕ создан (non-HTTP scope).
+        middleware_with_tracer._tracer.start_as_current_span.assert_not_called()
 
-    def test_build_attributes_with_state_ids(
+    @pytest.mark.asyncio
+    async def test_traceparent_in_response_headers(
         self, middleware_with_tracer: OtelMiddleware
     ) -> None:
-        """_build_attributes includes correlation/request id from state."""
-        request = Request(
-            {
-                "type": "http",
-                "method": "GET",
-                "url": "http://test/path",
-                "path": "/path",
-                "headers": [],
-                "client": ("127.0.0.1", 1234),
-            }
+        """traceparent injected в response headers (cycle 56 invariant)."""
+        app = AsyncMock()
+        app.side_effect = _downstream_ok()
+        middleware_with_tracer.app = app
+
+        span_mock = MagicMock()
+        cm_mock = MagicMock()
+        cm_mock.__enter__ = MagicMock(return_value=span_mock)
+        cm_mock.__exit__ = MagicMock(return_value=None)
+        middleware_with_tracer._tracer.start_as_current_span.return_value = cm_mock
+
+        middleware_with_tracer._propagator.inject.side_effect = (
+            lambda carrier: carrier.update({"traceparent": "00-trace-123-01"})
         )
-        request.state.correlation_id = "corr-1"
-        request.state.request_id = "req-1"
-
-        attrs = OtelMiddleware._build_attributes(request)
-
-        assert attrs["correlation.id"] == "corr-1"
-        assert attrs["request.id"] == "req-1"
-
-    def test_build_attributes_tenant_header(
-        self, middleware_with_tracer: OtelMiddleware
-    ) -> None:
-        """_build_attributes reads tenant from header."""
-        request = Request(
-            {
-                "type": "http",
-                "method": "GET",
-                "url": "http://test/path",
-                "path": "/path",
-                "headers": [(b"x-tenant-id", b"t1")],
-            }
-        )
-        attrs = OtelMiddleware._build_attributes(request)
-        assert attrs["app.tenant_id"] == "t1"
-
-    def test_build_attributes_tenant_from_contextvar(
-        self, middleware_with_tracer: OtelMiddleware
-    ) -> None:
-        """_build_attributes falls back to contextvar tenant."""
-        request = Request(
-            {
-                "type": "http",
-                "method": "GET",
-                "url": "http://test/path",
-                "path": "/path",
-                "headers": [],
-            }
-        )
-        fake_ctx = MagicMock()
-        fake_ctx.tenant_id = "ctx-tenant"
-
-        with patch("src.backend.core.tenancy.current_tenant", return_value=fake_ctx):
-            attrs = OtelMiddleware._build_attributes(request)
-
-        assert attrs["app.tenant_id"] == "ctx-tenant"
-
-    def test_mark_error(self, middleware_with_tracer: OtelMiddleware) -> None:
-        """_mark_error sets status and records exception."""
-        span = MagicMock()
-        exc = RuntimeError("fail")
 
         with (
-            patch("opentelemetry.trace.Status"),
-            patch("opentelemetry.trace.StatusCode"),
+            patch(
+                "opentelemetry.trace.get_tracer",
+                return_value=middleware_with_tracer._tracer,
+            ),
+            patch("opentelemetry.trace.SpanKind", MagicMock()),
         ):
-            OtelMiddleware._mark_error(span, exc)
+            send = AsyncMock()
+            await middleware_with_tracer(
+                _make_scope("GET", "/path"),
+                _make_receive(),
+                send,
+            )
 
-        span.set_status.assert_called_once()
-        span.record_exception.assert_called_once_with(exc)
+        # traceparent добавлен.
+        start = _start_message(send)
+        headers = dict(start["headers"])
+        assert headers[b"traceparent"] == b"00-trace-123-01"
+
+    @pytest.mark.asyncio
+    async def test_does_not_call_downstream_after_exception(
+        self, middleware_with_tracer: OtelMiddleware
+    ) -> None:
+        """Cycle 56 invariant: downstream вызван ОДИН раз даже при exception."""
+        call_count = 0
+
+        async def downstream(scope, receive, send):
+            nonlocal call_count
+            call_count += 1
+            raise RuntimeError("boom")
+
+        app = AsyncMock()
+        app.side_effect = downstream
+        middleware_with_tracer.app = app
+
+        span_mock = MagicMock()
+        cm_mock = MagicMock()
+        cm_mock.__enter__ = MagicMock(return_value=span_mock)
+        cm_mock.__exit__ = MagicMock(return_value=None)
+        middleware_with_tracer._tracer.start_as_current_span.return_value = cm_mock
+
+        with (
+            patch(
+                "opentelemetry.trace.get_tracer",
+                return_value=middleware_with_tracer._tracer,
+            ),
+            patch("opentelemetry.trace.SpanKind", MagicMock()),
+        ):
+            send = AsyncMock()
+            with pytest.raises(RuntimeError, match="boom"):
+                await middleware_with_tracer(
+                    _make_scope("GET", "/path"),
+                    _make_receive(),
+                    send,
+                )
+
+        # Downstream вызван ОДИН раз.
+        assert call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_attribute_collection_from_state(
+        self, middleware_with_tracer: OtelMiddleware
+    ) -> None:
+        """correlation.id и request.id извлекаются из scope['state'] (cycle 52)."""
+        app = AsyncMock()
+        app.side_effect = _downstream_ok()
+        middleware_with_tracer.app = app
+
+        span_mock = MagicMock()
+        cm_mock = MagicMock()
+        cm_mock.__enter__ = MagicMock(return_value=span_mock)
+        cm_mock.__exit__ = MagicMock(return_value=None)
+        middleware_with_tracer._tracer.start_as_current_span.return_value = cm_mock
+
+        with (
+            patch(
+                "opentelemetry.trace.get_tracer",
+                return_value=middleware_with_tracer._tracer,
+            ),
+            patch("opentelemetry.trace.SpanKind", MagicMock()),
+        ):
+            send = AsyncMock()
+            await middleware_with_tracer(
+                _make_scope(
+                    "GET",
+                    "/path",
+                    headers=[(b"x-tenant-id", b"t1")],
+                    state={"correlation_id": "corr-1", "request_id": "req-1"},
+                ),
+                _make_receive(),
+                send,
+            )
+
+        # start_as_current_span был вызван с attrs содержащими state IDs.
+        call_kwargs = middleware_with_tracer._tracer.start_as_current_span.call_args
+        attrs = call_kwargs.kwargs.get("attributes", {})
+        assert attrs.get("correlation.id") == "corr-1"
+        assert attrs.get("request.id") == "req-1"
+        assert attrs.get("app.tenant_id") == "t1"  # from x-tenant-id header

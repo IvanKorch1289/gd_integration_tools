@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-"""FastAPI OpenTelemetry middleware для auto-tracing HTTP-запросов.
+"""FastAPI OpenTelemetry middleware для auto-tracing HTTP-запросов (cycle 56 pure ASGI).
 
 Создаёт span `http.{METHOD} {path}` на каждый входящий HTTP-запрос,
 насыщает его стандартными HTTP- и app-атрибутами и распространяет
@@ -10,7 +8,7 @@ from __future__ import annotations
     * http.method / http.url / http.route / http.status_code
     * http.user_agent / http.client_ip
     * app.tenant_id (из `X-Tenant-ID` или `current_tenant()`)
-    * correlation.id / request.id (из `request.state`)
+    * correlation.id / request.id (из `state['correlation_id']`)
     * app.route_id — если известен из DSL match
 
 Интеграция с распределённой трассировкой:
@@ -19,15 +17,21 @@ from __future__ import annotations
       чтобы downstream hops (webhook consumers, SSE clients) видели
       единый trace.
 
-Фаза: IL-OBS1 (ADR-032).
+Cycle 56: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
+архитектурной консистентности с cycle 33-55 (L1 middlewares).
+
+Cycle 56 design: OTEL tracing wrap через ``start_as_current_span``
+context manager. Span создаётся при start, response при finish. В
+pure ASGI — НЕ try/finally с response.return (нельзя в pure ASGI),
+а через send-wrapper, который injects traceparent в
+http.response.start headers.
 """
 
+from __future__ import annotations
 
 from typing import Any
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
 
@@ -36,27 +40,20 @@ __all__ = ("OtelMiddleware",)
 logger = get_logger("infra.otel.middleware")
 
 
-class OtelMiddleware(BaseHTTPMiddleware):
-    """FastAPI middleware для auto-tracing HTTP-запросов через OpenTelemetry.
+class OtelMiddleware:
+    """Pure ASGI middleware: auto-tracing HTTP-запросов через OpenTelemetry (cycle 56).
 
-    Создаёт корневой span на каждый HTTP-запрос; если во входящих заголовках
-    присутствует `traceparent`, присоединяется к существующему trace. Атрибуты
-    span охватывают HTTP-слой и приложенческий контекст (tenant, correlation,
-    route_id). В response injecting-ся actual `traceparent` — это делает
-    дальнейшие hop-ы частью того же trace.
-
-    Полностью отказоустойчиво: если OpenTelemetry SDK не установлен или не
-    сконфигурирован (`OTEL_EXPORTER_OTLP_ENDPOINT` не задан) — middleware
-    работает как no-op, не ломая pipeline.
+    Args:
+        app: ASGI-приложение.
     """
 
     def __init__(self, app: ASGIApp) -> None:
         """Инициализирует middleware и пытается загрузить OTEL-зависимости.
 
         Args:
-            app: ASGI-приложение, к которому применяется middleware.
+            app: ASGI-приложение.
         """
-        super().__init__(app)
+        self.app = app
         self._tracer = self._load_tracer()
         self._propagator = self._load_propagator()
 
@@ -86,83 +83,124 @@ class OtelMiddleware(BaseHTTPMiddleware):
         except ImportError:
             return None
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Оборачивает обработку запроса в OTEL span.
 
         Args:
-            request: Входящий HTTP-запрос.
-            call_next: Следующий middleware/обработчик.
-
-        Returns:
-            HTTP-ответ с заголовком `traceparent` (если tracing активен).
+            scope: ASGI scope.
+            receive: ASGI receive callable.
+            send: ASGI send callable.
         """
-        if self._tracer is None:
-            return await call_next(request)
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-        ctx = self._extract_context(request)
-        span_name = f"http.{request.method.lower()} {request.url.path}"
-        attributes = self._build_attributes(request)
+        if self._tracer is None:
+            # No tracer → no-op pass-through.
+            await self.app(scope, receive, send)
+            return
+
+        ctx = self._extract_context(scope)
+        method = scope.get("method", "GET").lower()
+        path = scope.get("path", "")
+        span_name = f"http.{method} {path}"
+        attributes = self._build_attributes(scope)
 
         try:
-            from opentelemetry import trace  # availability probe  # noqa: F401
             from opentelemetry.trace import SpanKind
         except ImportError:
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
         span_cm = self._tracer.start_as_current_span(
             span_name, context=ctx, kind=SpanKind.SERVER, attributes=attributes
         )
 
+        # Cycle 56 critical: inject traceparent в response headers
+        # через send-wrapper (аналог cycle 36-55 pattern).
+        # suppress original start message — мы отправляем свой с
+        # traceparent. Original body пропускаем.
+        # Use object attribute (cycle 56: captured status через setattr
+        # на middleware instance — simpler than closure).
+        self._cycle56_status: int = 0
+        response_body_chunks: list[bytes] = []
+
+        async def send_wrapper(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                self._cycle56_status = message.get("status", 200)
+                # Get original headers + inject traceparent.
+                new_headers = list(message.get("headers", []))
+                self._inject_traceparent_to_headers(new_headers)
+                # Suppress original — отправим свой с traceparent.
+                await send(
+                    {
+                        "type": "http.response.start",
+                        "status": self._cycle56_status,
+                        "headers": new_headers,
+                    }
+                )
+            elif message["type"] == "http.response.body":
+                # Body пропускаем unchanged (не suppress, т.к. body не
+                # модифицируется — только headers injection).
+                response_body_chunks.append(message.get("body", b""))
+                await send(message)
+            else:
+                await send(message)
+
         try:
             with span_cm as span:
-                response = await self._process(request, call_next, span)
-                self._inject_traceparent(response)
-                return response
-        except Exception as _:
-            # Ошибка уже размечена в _process — пробрасываем
+                await self._process(scope, receive, send_wrapper, span)
+        except Exception:
+            # Ошибка уже размечена в _process — пробрасываем.
             raise
 
     async def _process(
-        self, request: Request, call_next: RequestResponseEndpoint, span: Any
-    ) -> Response:
-        """Выполняет call_next, помечая span при ошибке."""
+        self, scope: Scope, receive: Receive, send: Send, span: Any
+    ) -> None:
+        """Выполняет call_next, помечая span при ошибке (cycle 56 helper)."""
         try:
-            response = await call_next(request)
+            await self.app(scope, receive, send)
         except Exception as exc:
             self._mark_error(span, exc)
             raise
         else:
+            # Get status from send_wrapper (cycle 56: stored on
+            # self._cycle56_status).
             try:
-                span.set_attribute("http.status_code", response.status_code)
-                if response.status_code >= 500:
-                    self._mark_error(span, RuntimeError(f"HTTP {response.status_code}"))
+                response_status = getattr(self, "_cycle56_status", 200)
+                span.set_attribute("http.status_code", response_status)
+                if response_status >= 500:
+                    self._mark_error(span, RuntimeError(f"HTTP {response_status}"))
             except (AttributeError, TypeError):
                 pass
 
-            # Post-response context: route_id/tenant могут быть выставлены
-            # downstream middleware / endpoint handler-ом → добираем после.
-            route_id = getattr(request.state, "route_id", None)
+            # Post-response context: route_id может быть выставлен downstream.
+            state = scope.get("state", {}) if "state" in scope else {}
+            route_id = state.get("route_id") if isinstance(state, dict) else None
             if route_id:
                 try:
                     span.set_attribute("app.route_id", str(route_id))
                 except (AttributeError, TypeError):
                     pass
-            return response
 
-    def _extract_context(self, request: Request) -> Any:
-        """Извлекает W3C trace-context из входящих заголовков (если есть)."""
+    def _extract_context(self, scope: Scope) -> Any:
+        """Извлекает W3C trace-context из входящих заголовков (cycle 56 helper)."""
         if self._propagator is None:
             return None
         try:
-            carrier = {k.lower(): v for k, v in request.headers.items()}
+            # Build carrier from ASGI scope headers (lowercase keys).
+            carrier = {
+                h[0].decode("latin-1"): h[1].decode("latin-1")
+                for h in scope.get("headers", [])
+            }
             return self._propagator.extract(carrier=carrier)
         except Exception:  # pragma: no cover
             return None
 
-    def _inject_traceparent(self, response: Response) -> None:
-        """Прокидывает актуальный `traceparent` в response headers."""
+    def _inject_traceparent_to_headers(
+        self, headers: list[tuple[bytes, bytes]]
+    ) -> None:
+        """Cycle 56: injects traceparent в список headers (in-place)."""
         if self._propagator is None:
             return
         carrier: dict[str, str] = {}
@@ -171,16 +209,44 @@ class OtelMiddleware(BaseHTTPMiddleware):
         except Exception:  # pragma: no cover
             return
         for key, value in carrier.items():
-            response.headers[key] = value
+            headers.append((key.encode("latin-1"), value.encode("latin-1")))
 
     @staticmethod
-    def _build_attributes(request: Request) -> dict[str, Any]:
-        """Формирует стартовый набор OTEL-атрибутов HTTP-span-а."""
-        client_ip = request.client.host if request.client else ""
-        user_agent = request.headers.get("user-agent", "")[:200]
+    def _build_attributes(scope: Scope) -> dict[str, Any]:
+        """Формирует стартовый набор OTEL-атрибутов HTTP-span-а (cycle 56)."""
+        # Извлекаем headers из scope.
+        headers_dict: dict[str, str] = {}
+        for header_name, header_value in scope.get("headers", []):
+            try:
+                headers_dict[header_name.decode("latin-1").lower()] = (
+                    header_value.decode("latin-1")
+                )
+            except UnicodeDecodeError:
+                continue
+
+        method = scope.get("method", "")
+        path = scope.get("path", "")
+        full_url = scope.get("scheme", "http") + "://" + str(
+            scope.get("server", ("", ""))
+        ) + path
+        # Reconstruct full URL from scheme + server + path + query.
+        scheme = scope.get("scheme", "http")
+        server = scope.get("server", ("", ""))
+        query = scope.get("query_string", b"")
+        host_header = headers_dict.get("host", "")
+        if host_header:
+            full_url = f"{scheme}://{host_header}{path}"
+        else:
+            full_url = f"{scheme}://{server[0]}{path}"
+        if query:
+            full_url += f"?{query.decode('latin-1', errors='replace')}"
+
+        client = scope.get("client")
+        client_ip = client[0] if client else ""
+        user_agent = headers_dict.get("user-agent", "")[:200]
 
         # Tenant: сначала header, потом ContextVar.
-        tenant_id = request.headers.get("x-tenant-id", "")
+        tenant_id = headers_dict.get("x-tenant-id", "")
         if not tenant_id:
             try:
                 from src.backend.core.tenancy import current_tenant
@@ -188,41 +254,46 @@ class OtelMiddleware(BaseHTTPMiddleware):
                 ctx = current_tenant()
                 if ctx is not None:
                     tenant_id = getattr(ctx, "tenant_id", "") or ""
-            except Exception as _:
+            except Exception:
                 tenant_id = ""
 
+        # Correlation/request id из state (cycle 52 pattern).
+        state = scope.get("state", {}) if "state" in scope else {}
+        correlation_id = (
+            state.get("correlation_id", "")
+            if isinstance(state, dict)
+            else ""
+        )
+        request_id = (
+            state.get("request_id", "")
+            if isinstance(state, dict)
+            else ""
+        )
+
         attrs: dict[str, Any] = {
-            "http.method": request.method,
-            "http.url": str(request.url),
-            "http.route": request.url.path,
+            "http.method": method,
+            "http.url": full_url,
+            "http.route": path,
             "http.client_ip": client_ip,
             "http.user_agent": user_agent,
+            "app.tenant_id": tenant_id,
+            "correlation.id": correlation_id,
+            "request.id": request_id,
         }
-
-        correlation_id = getattr(request.state, "correlation_id", None)
-        request_id = getattr(request.state, "request_id", None)
-        if correlation_id:
-            attrs["correlation.id"] = str(correlation_id)
-        if request_id:
-            attrs["request.id"] = str(request_id)
-        if tenant_id:
-            attrs["app.tenant_id"] = str(tenant_id)
-
         return attrs
 
     @staticmethod
     def _mark_error(span: Any, exc: BaseException) -> None:
-        """Помечает span как ошибочный, учитывая несовместимость SDK версий."""
+        """Cycle 56: помечает span как error + records exception."""
         try:
             from opentelemetry.trace import Status, StatusCode
 
-            span.set_status(Status(StatusCode.ERROR, str(exc)[:200]))
+            span.set_status(Status(StatusCode.ERROR, str(exc)))
+        except ImportError:
+            pass
         except Exception:  # pragma: no cover
-            try:
-                span.set_attribute("error", True)
-            except (AttributeError, TypeError):
-                pass
+            pass
         try:
             span.record_exception(exc)
-        except (AttributeError, TypeError):
+        except Exception:  # pragma: no cover
             pass
