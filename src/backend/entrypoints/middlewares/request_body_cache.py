@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-"""Request body cache middleware — однократное чтение тела запроса.
+"""Request body cache middleware — однократное чтение тела запроса (cycle 52 pure ASGI).
 
 Назначение:
     FastAPI/Starlette кешируют тело запроса внутри `Request._body` при
@@ -10,29 +8,30 @@ from __future__ import annotations
     `AuditReplayMiddleware`, `AuditLogMiddleware`) это даёт видимый overhead.
 
 Решение:
-    1. На входе один раз читаем `await request.body()` (bounded
+    1. На входе один раз читаем body через receive() chunks (bounded
        `max_body_size`, по умолчанию 10 МБ).
-    2. Кладём bytes в `request.state.body`.
-    3. Переопределяем `request._receive` замыканием, которое отдаёт
-       cached body как single `http.request` message — прозрачно для
-       всех downstream, которые продолжат вызывать `request.body()`
-       / `request.json()` / `request.form()`.
+    2. Кладём bytes в ``scope['state']['body']`` (cycle 52: pure ASGI
+       compatible — downstream читает через ``state.get('body')``).
+    3. Replay receive closure возвращает cached body как single
+       ``http.request`` message — прозрачно для всех downstream, которые
+       продолжат вызывать receive().
 
 Downstream middleware (audit_log, request_log, audit_replay) первым
-делом проверяют `request.state.body` и только на graceful-fallback
-вызывают `await request.body()`.
+делом проверяют ``state.get('body')`` и только на graceful-fallback
+вызывают receive().
 
 Фаза: IL-OBS1 (ADR-032).
 """
 
+from __future__ import annotations
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.types import ASGIApp, Message
+from typing import Any
+
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("RequestBodyCacheMiddleware",)
+__all__ = ("RequestBodyCacheMiddleware", "cached_body")
 
 logger = get_logger("infra.middleware.body_cache")
 
@@ -40,17 +39,35 @@ _DEFAULT_MAX_BODY_SIZE = 10 * 1024 * 1024  # 10 МБ safety limit
 _BODYLESS_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "DELETE", "TRACE"})
 
 
-class RequestBodyCacheMiddleware(BaseHTTPMiddleware):
-    """Кеширует тело запроса в `request.state.body` ровно один раз.
+def cached_body(scope: Scope) -> bytes | None:
+    """Извлекает cached body из ASGI scope state (cycle 52 helper).
+
+    Args:
+        scope: ASGI scope.
+
+    Returns:
+        Cached body bytes или None если не закэшировано.
+    """
+    state = scope.get("state", {}) if "state" in scope else {}
+    if not isinstance(state, dict):
+        return None
+    body = state.get("body")
+    if isinstance(body, (bytes, bytearray)):
+        return bytes(body)
+    return None
+
+
+class RequestBodyCacheMiddleware:
+    """Кеширует тело запроса в scope['state']['body'] ровно один раз (cycle 52).
 
     Поведение:
         * Для методов без тела (`GET`, `HEAD`, `OPTIONS`, `DELETE`, `TRACE`) —
           no-op.
         * Для тел размером `> max_body_size` — кеш не сохраняется,
-          downstream читают поток напрямую (контракт FastAPI сохраняется).
-        * Для остальных — читаем body, выставляем `request.state.body`,
-          переопределяем `_receive` замыканием, возвращающим cached
-          body как `http.request` message с `more_body=False`.
+          downstream читают поток напрямую.
+        * Для остальных — читаем body, выставляем в state['body'],
+          переопределяем receive замыканием, возвращающим cached body
+          как `http.request` message с `more_body=False`.
 
     Args:
         app: ASGI-приложение.
@@ -62,113 +79,123 @@ class RequestBodyCacheMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
-        super().__init__(app)
+        Args:
+            app: ASGI-приложение.
+            max_body_size: Максимальный размер тела для кеширования.
+        """
+        self.app = app
         self.max_body_size = max(0, int(max_body_size))
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Кеширует body (если применимо) и передаёт управление дальше.
 
         Args:
-            request: Входящий HTTP-запрос.
-            call_next: Следующий middleware/обработчик.
-
-        Returns:
-            HTTP-ответ без изменений.
+            scope: ASGI scope.
+            receive: ASGI receive callable.
+            send: ASGI send callable.
         """
-        if request.method in _BODYLESS_METHODS:
-            return await call_next(request)
+        if scope["type"] != "http":
+            # Non-HTTP scope (websocket/lifespan) — no body caching.
+            await self.app(scope, receive, send)
+            return
+
+        method = scope.get("method", "")
+
+        # Bodyless methods skip caching.
+        if method in _BODYLESS_METHODS:
+            await self.app(scope, receive, send)
+            return
 
         # Пропускаем streaming/large uploads — не буферизуем.
-        content_length = self._parse_content_length(request)
+        content_length = self._parse_content_length(scope)
         if content_length is not None and content_length > self.max_body_size:
             logger.debug(
                 "body_cache: skip body caching (content-length=%d > max=%d)",
                 content_length,
                 self.max_body_size,
             )
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
+        # Читаем body chunks (cycle 52: pure ASGI receive() loop).
         try:
-            body = await request.body()
+            body = await self._read_body(receive)
         except Exception as exc:
             logger.debug("body_cache: failed to read body: %s", exc)
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
         if len(body) > self.max_body_size:
             # Тело уже прочитано, но превышает лимит — НЕ кешируем,
             # однако вернуть поток уже не сможем. Переопределяем receive,
-            # чтобы endpoint-handler не повис на `request.body()`.
+            # чтобы endpoint-handler не повис на receive().
             logger.warning(
                 "body_cache: body too large (%d > %d); caching disabled",
                 len(body),
                 self.max_body_size,
             )
-            self._install_replay_receive(request, body)
-            return await call_next(request)
+            self._install_replay_receive(scope, receive, body)
+            await self.app(scope, receive, send)
+            return
 
         # Нормальный путь: кеш + replay receive для downstream.
-        request.state.body = body
-        self._install_replay_receive(request, body)
+        if "state" not in scope:
+            scope["state"] = {}
+        scope["state"]["body"] = body
+        self._install_replay_receive(scope, receive, body)
 
-        return await call_next(request)
-
-    @staticmethod
-    def _parse_content_length(request: Request) -> int | None:
-        """Парсит `Content-Length` заголовок; None если отсутствует/некорректен."""
-        raw = request.headers.get("content-length")
-        if raw is None:
-            return None
-        try:
-            return int(raw)
-        except (TypeError, ValueError):
-            return None
+        await self.app(scope, receive, send)
 
     @staticmethod
-    def _install_replay_receive(request: Request, body: bytes) -> None:
-        """Переопределяет `request._receive` так, чтобы он отдавал cached body.
+    async def _read_body(receive: Receive) -> bytes:
+        """Читает body chunks через receive() (cycle 52 helper)."""
+        body_chunks: list[bytes] = []
+        more_body = True
+        while more_body:
+            message = await receive()
+            if message["type"] == "http.disconnect":
+                break
+            body_chunks.append(message.get("body", b""))
+            more_body = message.get("more_body", False)
+        return b"".join(body_chunks)
 
-        Первый вызов `receive()` вернёт `http.request` message с полным
-        cached body и `more_body=False`. Последующие вызовы отдают
-        `http.disconnect` (стандартный ASGI protocol).
+    @staticmethod
+    def _parse_content_length(scope: Scope) -> int | None:
+        """Парсит `Content-Length` заголовок из ASGI scope.
+
+        Returns:
+            int или None если отсутствует/некорректен.
+        """
+        for header_name, header_value in scope.get("headers", []):
+            if header_name == b"content-length":
+                try:
+                    return int(header_value.decode("latin-1"))
+                except (TypeError, ValueError):
+                    return None
+        return None
+
+    @staticmethod
+    def _install_replay_receive(
+        scope: Scope, original_receive: Receive, body: bytes
+    ) -> None:
+        """Устанавливает replay receive в scope для downstream (cycle 52).
+
+        First receive() returns http.request with cached body,
+        subsequent return http.disconnect (ASGI protocol).
         """
         delivered = {"done": False}
 
-        async def _replay_receive() -> Message:
+        async def replay_receive() -> Message:
             if not delivered["done"]:
                 delivered["done"] = True
-                return {"type": "http.request", "body": body, "more_body": False}
+                return {
+                    "type": "http.request",
+                    "body": body,
+                    "more_body": False,
+                }
             return {"type": "http.disconnect"}
 
-        # Starlette Request стор `_receive` как атрибут; переопределяем.
-        try:
-            request._receive = _replay_receive
-        except Exception:  # pragma: no cover
-            # Fallback: Starlette API изменился — ничего страшного, просто
-            # downstream вторично прочитают тело.
-            logger.debug("body_cache: cannot override request._receive")
-
-
-def cached_body(request: Request) -> bytes | None:
-    """Хелпер для downstream middleware: возвращает cached body или None.
-
-    Использование::
-
-        from src.backend.entrypoints.middlewares.request_body_cache import cached_body
-
-        body = cached_body(request)
-        if body is None:
-            body = await request.body()
-
-    Args:
-        request: FastAPI Request.
-
-    Returns:
-        Cached body bytes или None, если кеша нет.
-    """
-    body = getattr(request.state, "body", None)
-    if isinstance(body, (bytes, bytearray)):
-        return bytes(body)
-    return None
+        # Сохраняем original_receive в scope для downstream, которые
+        # могут захотеть read body снова (cycle 45/46 pattern).
+        scope["receive"] = original_receive
+        scope["replay_receive"] = replay_receive
