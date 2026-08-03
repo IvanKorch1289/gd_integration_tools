@@ -1,4 +1,4 @@
-"""S88 W4 — public/system endpoints exemption перевірка.
+"""S88 W4 — public/system endpoints exemption перевірка (cycle 38: pure ASGI).
 
 S88 W4 (V2 P0 #6): public/system endpoints мають працювати БЕЗ tenant context.
 Перевіряємо що:
@@ -6,24 +6,23 @@ S88 W4 (V2 P0 #6): public/system endpoints мають працювати БЕЗ 
 2. system_mcp namespace — НЕ потребує tenant
 3. TenantMiddleware default-tenant fallback ("default") — працює
 
-Підхід: real Starlette Request + ASGI test transport.
+Підхід: pure ASGI scope + send-wrapper.
 """
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from starlette.requests import Request
 
 from src.backend.entrypoints.middlewares.tenant import TenantMiddleware
 
 
-def _make_request(headers: dict[str, str] | None = None) -> Request:
-    """Створити реальний Starlette Request з headers."""
+def _make_scope(headers: dict[str, str] | None = None) -> dict:
+    """Створити ASGI scope з headers."""
     headers = headers or {}
     raw_headers = [(k.lower().encode(), v.encode()) for k, v in headers.items()]
-    scope = {
+    return {
         "type": "http",
         "method": "GET",
         "path": "/",
@@ -33,69 +32,97 @@ def _make_request(headers: dict[str, str] | None = None) -> Request:
         "server": ("testserver", 80),
         "scheme": "http",
     }
-    return Request(scope)
+
+
+def _start_headers(send_mock: AsyncMock) -> dict[bytes, bytes]:
+    """Извлекает headers из http.response.start."""
+    for call in send_mock.await_args_list:
+        msg = call.args[0]
+        if msg["type"] == "http.response.start":
+            return dict(msg.get("headers", []))
+    return {}
 
 
 @pytest.mark.asyncio
 async def test_tenant_middleware_default_when_no_header() -> None:
-    """Без X-Tenant-ID header → middleware встановлює 'default'."""
-    middleware = TenantMiddleware(app=AsyncMock(), default_tenant="default")
+    """Без X-Tenant-ID header → middleware использует 'default'."""
+    async def downstream(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
 
-    request = _make_request()  # No headers
+    app = AsyncMock()
+    app.side_effect = downstream
+    middleware = TenantMiddleware(app=app, default_tenant="default")
 
-    call_next = AsyncMock()
-    mock_response = AsyncMock()
-    mock_response.headers = {}
-    call_next.return_value = mock_response
+    with patch(
+        "src.backend.entrypoints.middlewares.tenant.get_correlation_context_setter_provider",
+        return_value=MagicMock(),
+    ):
+        send = AsyncMock()
+        await middleware(_make_scope(), AsyncMock(), send)
 
-    response = await middleware.dispatch(request, call_next)
-
-    assert request.state.tenant_id == "default"
-    assert response.headers.get("X-Tenant-ID") == "default"
-    call_next.assert_called_once()
+    headers = _start_headers(send)
+    assert headers.get(b"x-tenant-id") == b"default"
 
 
 @pytest.mark.asyncio
 async def test_tenant_middleware_uses_header() -> None:
-    """З X-Tenant-ID header → middleware встановлює значення з header."""
-    middleware = TenantMiddleware(app=AsyncMock(), default_tenant="default")
+    """С X-Tenant-ID header → middleware использует значение из header."""
+    async def downstream(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
 
-    request = _make_request({"X-Tenant-ID": "acme-corp"})
+    app = AsyncMock()
+    app.side_effect = downstream
+    middleware = TenantMiddleware(app=app, default_tenant="default")
 
-    call_next = AsyncMock()
-    mock_response = AsyncMock()
-    mock_response.headers = {}
-    call_next.return_value = mock_response
+    with patch(
+        "src.backend.entrypoints.middlewares.tenant.get_correlation_context_setter_provider",
+        return_value=MagicMock(),
+    ):
+        send = AsyncMock()
+        await middleware(
+            _make_scope({"X-Tenant-ID": "acme-corp"}), AsyncMock(), send
+        )
 
-    response = await middleware.dispatch(request, call_next)
-
-    assert request.state.tenant_id == "acme-corp"
-    assert response.headers.get("X-Tenant-ID") == "acme-corp"
+    headers = _start_headers(send)
+    assert headers.get(b"x-tenant-id") == b"acme-corp"
 
 
 @pytest.mark.asyncio
 async def test_tenant_middleware_uses_state() -> None:
-    """Без header але з request.state.tenant_id → middleware використовує state."""
-    middleware = TenantMiddleware(app=AsyncMock(), default_tenant="default")
+    """Без header, но с request.state.tenant_id → middleware использует state.
 
-    request = _make_request()  # No headers, but state set below
+    Cycle 38: inner auth middleware (downstream) устанавливает
+    state['tenant_id'] ПЕРЕД нашим send-wrapper, поэтому resolution
+    в send-wrapper видит актуальное значение.
+    """
+    async def downstream(scope, receive, send):
+        # Имитирует JWT auth middleware (должен быть INNER относительно tenant).
+        scope.setdefault("state", {})["tenant_id"] = "from-jwt"
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
 
-    # Pre-populate state.tenant_id (mimicking JWT auth middleware)
-    request.state.tenant_id = "from-jwt"
+    app = AsyncMock()
+    app.side_effect = downstream
+    middleware = TenantMiddleware(app=app, default_tenant="default")
 
-    call_next = AsyncMock()
-    mock_response = AsyncMock()
-    mock_response.headers = {}
-    call_next.return_value = mock_response
+    with patch(
+        "src.backend.entrypoints.middlewares.tenant.get_correlation_context_setter_provider",
+        return_value=MagicMock(),
+    ):
+        send = AsyncMock()
+        await middleware(_make_scope(), AsyncMock(), send)
 
-    response = await middleware.dispatch(request, call_next)
-
-    assert request.state.tenant_id == "from-jwt"
-    assert response.headers.get("X-Tenant-ID") == "from-jwt"
+    headers = _start_headers(send)
+    assert headers.get(b"x-tenant-id") == b"from-jwt"
 
 
 def test_tenant_middleware_does_not_break_on_init() -> None:
-    """TenantMiddleware __init__ не ламається без app."""
+    """TenantMiddleware __init__ не ломается без app.
+
+    Cycle 38: middleware больше не имеет .dispatch (pure ASGI)."""
     middleware = TenantMiddleware(app=AsyncMock(), default_tenant="default")
     assert middleware._default == "default"
-    assert callable(middleware.dispatch)
+    # Pure ASGI: __call__ — точка входа (а не .dispatch).
+    assert callable(middleware.__call__)
