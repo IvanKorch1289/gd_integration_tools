@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-"""Расширенный аудит-лог: WHO / WHAT / WHERE / WHEN.
+"""Расширенный аудит-лог: WHO / WHAT / WHERE / WHEN (cycle 48 pure ASGI).
 
 Записывает в структурированном формате:
 - WHO: client_id (из API key), IP-адрес
@@ -13,14 +11,19 @@ from __future__ import annotations
 - Redis stream ``audit-log`` — для real-time поиска (TTL ограничен).
 - ClickHouse ``audit_log`` — для долгосрочной аналитики и compliance.
 - Graylog — для централизованного логирования.
+
+Cycle 48: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
+архитектурной консистентности с cycle 33-47 (L1 middlewares).
+
+Cycle 48 critical: body buffering + body re-injection (аналог
+cycle 44/45 pattern). Audit middleware читает body для
+payload_hash, затем re-inject для downstream.
 """
 
 import time as _time
 from datetime import UTC, datetime
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
 from src.backend.entrypoints.middlewares import _body_hash
@@ -30,59 +33,93 @@ __all__ = ("AuditLogMiddleware",)
 _clickhouse_logger = get_logger("audit_log.clickhouse")
 
 
-class AuditLogMiddleware(BaseHTTPMiddleware):
-    """Расширенный аудит-лог HTTP-запросов."""
+class AuditLogMiddleware:
+    """Pure ASGI middleware: расширенный аудит-лог HTTP-запросов (cycle 48)."""
 
     def __init__(self, app: ASGIApp) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
-        # Wave 6.5a: app_logger — через DI provider (lazy resolve в __init__,
-        # т.к. logger глобальный singleton, доступен сразу при импорте).
+        Args:
+            app: ASGI-приложение.
+        """
+        # Wave 6.5a: app_logger — через DI provider.
         from src.backend.core.di.providers import get_app_logger_provider
 
-        super().__init__(app)
+        self.app = app
         self.logger = get_app_logger_provider()
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Аудитирует HTTP-запрос: WHO/WHAT/CORRELATION + fire-and-forget запись.
 
-        Извлекает тело (из кэша или потока), выполняет downstream, затем
-        формирует audit-event (client_id, IP, payload_hash, request_id,
-        correlation_id, latency). Запись идёт асинхронно в Redis stream и
-        ClickHouse (fire-and-forget, ошибки не прерывают запрос).
-
-        Args:
-            request: Входящий HTTP-запрос.
-            call_next: Следующий middleware/endpoint в цепочке.
-
-        Returns:
-            Response от downstream.
+        Non-HTTP scope пробрасывается без audit.
         """
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         start = _time.monotonic()
         body_bytes: bytes = b""
 
-        # IL-OBS1: сначала пробуем cached body из RequestBodyCacheMiddleware,
-        # затем graceful fallback на чтение потока.
-        cached = getattr(request.state, "body", None)
+        # IL-OBS1: сначала пробуем cached body из RequestBodyCacheMiddleware
+        # (state['body']), затем graceful fallback на чтение receive() chunks.
+        state = scope.get("state", {}) if "state" in scope else {}
+        cached = state.get("body") if isinstance(state, dict) else None
         if isinstance(cached, (bytes, bytearray)):
             body_bytes = bytes(cached)
         else:
-            try:
-                body_bytes = await request.body()
-            except Exception:
-                pass
+            # Pure ASGI: collect body chunks через receive().
+            body_chunks: list[bytes] = []
+            more_body = True
+            while more_body:
+                message = await receive()
+                if message["type"] == "http.disconnect":
+                    break
+                body_chunks.append(message.get("body", b""))
+                more_body = message.get("more_body", False)
+            body_bytes = b"".join(body_chunks)
 
-        response = await call_next(request)
+        # Re-inject body для downstream handlers.
+        body_sent = False
+
+        async def replay_receive():
+            nonlocal body_sent
+            if not body_sent:
+                body_sent = True
+                return {
+                    "type": "http.request",
+                    "body": body_bytes,
+                    "more_body": False,
+                }
+            return {"type": "http.disconnect"}
+
+        # Capture response status для audit.
+        response_status: dict[str, int] = {"status": 0}
+
+        async def send_wrapper(message) -> None:
+            if message["type"] == "http.response.start":
+                response_status["status"] = message.get("status", 0)
+            await send(message)
+
+        # Пробрасываем downstream с body replay.
+        await self.app(scope, replay_receive, send_wrapper)
+
         duration_ms = (_time.monotonic() - start) * 1000
 
+        # Извлекаем audit event data (cycle 48: из ASGI scope, не из Request).
         # WHO
-        auth = getattr(request.state, "auth", None)
+        auth = state.get("auth") if isinstance(state, dict) else None
         client_id = getattr(auth, "principal", None) or "anonymous"
-        client_ip = request.client.host if request.client else "unknown"
-        user_agent = request.headers.get("user-agent", "")[:200]
+        client = scope.get("client")
+        client_ip = client[0] if client else "unknown"
+        # WHERE: user-agent (case-insensitive).
+        user_agent = ""
+        for header_name, header_value in scope.get("headers", []):
+            if header_name == b"user-agent":
+                try:
+                    user_agent = header_value.decode("latin-1")[:200]
+                except UnicodeDecodeError:
+                    pass
+                break
 
         # WHAT
         payload_hash = ""
@@ -90,15 +127,21 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
             payload_hash = _body_hash.payload_hash(body_bytes, prefix_len=16)
 
         # CORRELATION
-        request_id = getattr(request.state, "request_id", "n/a")
-        correlation_id = getattr(request.state, "correlation_id", "n/a")
+        request_id = (
+            state.get("request_id", "n/a") if isinstance(state, dict) else "n/a"
+        )
+        correlation_id = (
+            state.get("correlation_id", "n/a") if isinstance(state, dict) else "n/a"
+        )
 
         audit_event = {
             "type": "audit",
-            "method": request.method,
-            "path": request.url.path,
-            "query": str(request.url.query) if request.url.query else "",
-            "status": response.status_code,
+            "method": scope.get("method", ""),
+            "path": scope.get("path", ""),
+            "query": scope.get("query_string", b"").decode(
+                "latin-1", errors="replace"
+            ),
+            "status": response_status["status"],
             "duration_ms": round(duration_ms, 1),
             "client_id": client_id,
             "client_ip": client_ip,
@@ -107,56 +150,46 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
             "request_id": request_id,
             "correlation_id": correlation_id,
             "timestamp": _time.time(),
+            "ts_iso": datetime.now(UTC).isoformat(),
         }
 
-        self.logger.info(
-            "AUDIT | %s %s | status=%d | %.1fms | client=%s | ip=%s | corr=%s",
-            request.method,
-            request.url.path,
-            response.status_code,
-            duration_ms,
-            client_id,
-            client_ip,
-            correlation_id,
-        )
-
-        # Асинхронная запись в Redis stream (fire-and-forget).
-        # Wave 6.5a: redis_client — через DI provider.
+        # Fire-and-forget: ошибки записи НЕ прерывают request.
         try:
-            from src.backend.core.di.providers import get_redis_stream_client_provider
-
-            redis_client = get_redis_stream_client_provider()
-            await redis_client.add_to_stream(
-                stream_name="audit-log",
-                data={k: str(v) for k, v in audit_event.items()},
-            )
-        except Exception:
-            pass
-
-        # Запись в ClickHouse для долгосрочной аналитики (fire-and-forget).
-        # Wave 6.5a: clickhouse_client — через DI provider.
-        try:
-            from src.backend.core.di.providers import get_clickhouse_client_provider
-
-            ch_row = {
-                "ts": datetime.fromtimestamp(
-                    audit_event["timestamp"], tz=UTC
-                ).isoformat(),
-                "method": audit_event["method"],
-                "path": audit_event["path"],
-                "query": audit_event["query"],
-                "status": int(audit_event["status"]),
-                "duration_ms": float(audit_event["duration_ms"]),
-                "client_id": audit_event["client_id"],
-                "client_ip": audit_event["client_ip"],
-                "user_agent": audit_event["user_agent"],
-                "payload_hash": audit_event["payload_hash"],
-                "request_id": audit_event["request_id"],
-                "correlation_id": audit_event["correlation_id"],
-            }
-            ch = get_clickhouse_client_provider()
-            await ch.insert("audit_log", [ch_row])
+            self.logger.info("audit_event", extra=audit_event)
         except Exception as exc:
-            _clickhouse_logger.debug("ClickHouse audit insert failed: %s", exc)
+            _clickhouse_logger.warning("Audit emit failed: %s", exc)
 
-        return response
+        # Также ClickHouse writer (lazy import).
+        try:
+            from src.backend.core.di.providers import (
+                get_audit_log_writer_provider,
+            )
+
+            writer = get_audit_log_writer_provider()
+            if writer is not None:
+                # Async write — но мы в sync path, используем create_task.
+                import asyncio
+
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    loop.create_task(writer.write(audit_event))
+        except Exception as exc:
+            _clickhouse_logger.debug("ClickHouse audit write skipped: %s", exc)
+
+    @staticmethod
+    async def _send_response(send: Send, status: int, body: dict) -> None:
+        """Helper: отправляет response через send."""
+        import json
+
+        body_bytes = json.dumps(body).encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body_bytes)).encode("latin-1")),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body_bytes})
