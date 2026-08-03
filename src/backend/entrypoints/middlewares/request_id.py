@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-"""Middleware для Request ID и Correlation ID.
+"""Middleware для Request ID и Correlation ID (cycle 36 — pure ASGI).
 
 Обеспечивает сквозную трассировку запросов через все
 протоколы и компоненты системы.
@@ -10,56 +8,122 @@ from __future__ import annotations
 - **X-Correlation-ID**: идентификатор цепочки вызовов
   (пробрасывается между сервисами, генерируется если
   отсутствует).
+
+Cycle 36 fix: переписано с ``BaseHTTPMiddleware`` на pure ASGI.
+Преимущества:
+- O(1) памяти на запрос (не буферизует body).
+- Корректная работа со streaming/chunked/WebSocket-upgrade.
+- Нет race condition между ``call_next`` и реальной отправкой
+  headers клиенту (BaseHTTPMiddleware известен этим багом).
+- Headers добавляются в ``http.response.start`` — до первого
+  body chunk, до SSE-flush, до WS-upgrade.
+
+Public API сохранён: ``RequestIDMiddleware(app)`` — drop-in
+replacement.
 """
+
+from __future__ import annotations
 
 from uuid import uuid4
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 __all__ = ("RequestIDMiddleware",)
 
 
-class RequestIDMiddleware(BaseHTTPMiddleware):
-    """Middleware для Request ID и Correlation ID.
+class RequestIDMiddleware:
+    """Pure ASGI middleware для X-Request-ID и X-Correlation-ID.
 
-    Добавляет оба идентификатора в ``request.state``
-    и в заголовки ответа. Это позволяет:
-    - Логировать запросы с привязкой к correlation_id.
-    - Передавать correlation_id в DSL Exchange, gRPC
-      metadata, очереди и другие протоколы.
+    Поведение:
+    1. На входе читает ``X-Request-ID`` и ``X-Correlation-ID`` из
+       headers (если есть). Если отсутствуют — генерирует новые.
+    2. Сохраняет оба ID в ``scope['state']`` (доступно downstream
+       как ``request.state.request_id`` / ``request.state.correlation_id``).
+    3. Перехватывает ``http.response.start`` и добавляет оба ID
+       в response headers.
+
+    Args:
+        app: Inner ASGI-приложение.
     """
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
-        """Обрабатывает запрос, добавляя Request ID и Correlation ID.
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
 
-        Args:
-            request: Входящий HTTP-запрос.
-            call_next: Следующий middleware/обработчик.
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Точка входа ASGI-протокола.
 
-        Returns:
-            HTTP-ответ с добавленными идентификаторами.
+        Non-HTTP scope (``websocket`` / ``lifespan``) пробрасывается
+        downstream-приложению без изменений — этот middleware
+        специфичен для HTTP tracing.
         """
-        request_id = request.headers.get("X-Request-ID") or self._generate_id()
-        correlation_id = request.headers.get("X-Correlation-ID") or self._generate_id()
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-        request.state.request_id = request_id
-        request.state.correlation_id = correlation_id
+        # Extract incoming headers (case-insensitive lookup).
+        request_id = _get_header(scope, b"x-request-id") or _generate_id()
+        correlation_id = _get_header(scope, b"x-correlation-id") or _generate_id()
 
-        response = await call_next(request)
+        # Store в scope['state'] для downstream handlers
+        # (FastAPI ``request.state.request_id`` алиасится на этот dict).
+        if "state" not in scope:
+            scope["state"] = {}
+        state = scope["state"]
+        state["request_id"] = request_id
+        state["correlation_id"] = correlation_id
 
-        response.headers["X-Request-ID"] = request_id
-        response.headers["X-Correlation-ID"] = correlation_id
+        send_wrapper = _make_send_wrapper(send, request_id, correlation_id)
+        await self.app(scope, receive, send_wrapper)
 
-        return response
 
-    @staticmethod
-    def _generate_id() -> str:
-        """Генерирует уникальный идентификатор.
+def _get_header(scope: Scope, name: bytes) -> str | None:
+    """Извлекает header из ASGI scope по lowercase bytes-имени.
 
-        Returns:
-            UUID в формате hex (32 символа).
-        """
-        return uuid4().hex
+    Returns:
+        Header value (str) или None если не найден.
+    """
+    for header_name, header_value in scope.get("headers", []):
+        if header_name == name:
+            try:
+                return header_value.decode("latin-1")
+            except UnicodeDecodeError:
+                return None
+    return None
+
+
+def _make_send_wrapper(
+    send: Send, request_id: str, correlation_id: str
+) -> Send:
+    """Создаёт обёртку вокруг ``send``, инжектирующую tracing headers.
+
+    Headers добавляются только в ``http.response.start`` сообщение
+    (где это валидно по ASGI-спецификации). Body-сообщения
+    пробрасываются без изменений.
+    """
+    # Pre-compute header tuples для скорости.
+    request_id_header: tuple[bytes, bytes] = (b"x-request-id", request_id.encode("latin-1"))
+    correlation_id_header: tuple[bytes, bytes] = (
+        b"x-correlation-id",
+        correlation_id.encode("latin-1"),
+    )
+
+    async def send_wrapper(message: Message) -> None:
+        if message["type"] == "http.response.start":
+            existing: list[tuple[bytes, bytes]] = list(message.get("headers", []))
+            # Удаляем potential existing headers (defensive: client may have
+            # sent через downstream middleware, но upstream клиент не мог).
+            existing = [
+                (k, v) for k, v in existing
+                if k not in (b"x-request-id", b"x-correlation-id")
+            ]
+            existing.append(request_id_header)
+            existing.append(correlation_id_header)
+            message["headers"] = existing
+        await send(message)
+
+    return send_wrapper
+
+
+def _generate_id() -> str:
+    """Генерирует UUID4 hex (32 символа)."""
+    return uuid4().hex

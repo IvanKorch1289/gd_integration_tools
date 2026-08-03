@@ -126,39 +126,65 @@ def test_correlation_middleware_importable() -> None:
 
 @pytest.mark.asyncio
 async def test_request_id_generates_ids() -> None:
+    # Cycle 36: RequestIDMiddleware — pure ASGI (не BaseHTTPMiddleware).
+    # Call via __call__(scope, receive, send) and inspect http.response.start.
     app = AsyncMock()
+
+    async def downstream(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    app.side_effect = downstream
     mw = RequestIDMiddleware(app)
-    request = Request(
-        {"type": "http", "method": "GET", "url": "http://test/", "headers": []}
+    send = AsyncMock()
+    await mw(
+        {"type": "http", "method": "GET", "path": "/", "headers": []},
+        AsyncMock(),
+        send,
     )
-    response = Response(content=b"ok")
-    call_next = AsyncMock(return_value=response)
-    result = await mw.dispatch(request, call_next)
-    assert "X-Request-ID" in result.headers
-    assert "X-Correlation-ID" in result.headers
-    assert len(result.headers["X-Request-ID"]) == 32
+
+    # Find http.response.start message.
+    start_msg = next(
+        c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.start"
+    )
+    headers = dict(start_msg["headers"])
+    assert b"x-request-id" in headers
+    assert b"x-correlation-id" in headers
+    assert len(headers[b"x-request-id"]) == 32  # uuid4 hex
 
 
 @pytest.mark.asyncio
 async def test_request_id_preserves_existing() -> None:
+    # Cycle 36: incoming X-Request-ID / X-Correlation-ID пробрасываются.
     app = AsyncMock()
+
+    async def downstream(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    app.side_effect = downstream
     mw = RequestIDMiddleware(app)
-    request = Request(
+    send = AsyncMock()
+    await mw(
         {
             "type": "http",
             "method": "GET",
-            "url": "http://test/",
+            "path": "/",
             "headers": [
                 (b"x-request-id", b"req-123"),
                 (b"x-correlation-id", b"corr-456"),
             ],
-        }
+        },
+        AsyncMock(),
+        send,
     )
-    response = Response(content=b"ok")
-    call_next = AsyncMock(return_value=response)
-    result = await mw.dispatch(request, call_next)
-    assert result.headers["X-Request-ID"] == "req-123"
-    assert result.headers["X-Correlation-ID"] == "corr-456"
+
+    start_msg = next(
+        c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.start"
+    )
+    headers = dict(start_msg["headers"])
+    assert headers[b"x-request-id"] == b"req-123"
+    assert headers[b"x-correlation-id"] == b"corr-456"
 
 
 # ─── SecurityHeadersMiddleware ──────────────────────────────────────────────
