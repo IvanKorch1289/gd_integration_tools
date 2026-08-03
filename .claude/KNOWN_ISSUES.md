@@ -1,5 +1,74 @@
 # KNOWN_ISSUES.md
 
+## Sprint 176 Cycle 33 — Targeted P0/P1 closures (verified by code, 2026-08-04)
+
+> Методологическая заметка: предыдущие записи о «закрытии» ряда P0 (sandbox,
+> auth, salt, symlink, yaml.load) оказались ложными — код уже содержал
+> фикс, но журнал продолжал переносить устаревшие формулировки. Сейчас
+> каждое закрытие сверялось с актуальным кодом + добавлены регрессионные
+> тесты, которые провалятся при повторном «фиктивном закрытии».
+
+### ✅ Закрыто с верификацией кода
+
+- ✅ **B-02 (CDC)**: `infrastructure/clients/external/cdc/client.py::_dispatch_change`
+  больше не теряет события при callback/dispatch-исключении. Добавлен
+  `dlq_writer` в `CDCClient.__init__` + `set_dlq_writer()` setter для
+  composition root. Helper `_send_to_dlq` сериализует event в
+  `DLQEnvelope(reason=UNEXPECTED, stage=callback|dispatch)` и пишет
+  через `dlq_writer.write(envelope)`. Без writer — legacy log+drop.
+  DLQ-ошибка НЕ пробрасывается (consumer-loop не должен падать).
+  **Регрессионные тесты:** 5 новых (DLQ handoff / no-writer legacy /
+  set_dlq_writer post-init / DLQ-failure isolation / existing
+  callback-error test). Итого 6 dispatch_change-тестов, 27 в файле.
+
+- ✅ **B-04 (hot_swap)**: `core/plugin_runtime/hot_swap.py` теперь
+  использует `loader.shutdown_one(target)` вместо `shutdown_all()`.
+  `PluginLoader.shutdown_one(plugin_name)` добавлен в
+  `services/plugins/loader/__init__.py` — per-plugin shutdown с
+  cleanup of `_owners` mapping. Legacy-loader (без `shutdown_one`)
+  получает WARNING + fallback на `shutdown_all`. Причины ошибок
+  различаются: `shutdown_one_failed` vs `shutdown_all_failed`.
+  **Регрессионные тесты:** 5 новых в `test_hot_swap.py` (uses
+  shutdown_one / doesn't disturb unrelated / specific reason /
+  legacy fallback / legacy reason) + 3 в `test_loader_v11.py`
+  (removes target only / returns False for unknown / revokes
+  capability). Итого 14 hot_swap + 3 shutdown_one тестов.
+
+- ✅ **B-07 (SecurityHeaders)**: `entrypoints/middlewares/security_headers.py`
+  переписан на pure ASGI — класс `SecurityHeadersMiddleware` теперь
+  реализует `__call__(scope, receive, send)` напрямую, перехватывая
+  `http.response.start` через `send`-обёртку и инжектируя заголовки
+  в момент публикации стартовой строки downstream-приложением.
+  Преимущества над BaseHTTPMiddleware: O(1) памяти на запрос (не
+  буферизует body), корректная работа со streaming/chunked и
+  WebSocket-upgrade, отсутствие race между `call_next` и реальной
+  отправкой.
+  **Регрессионные тесты:** 2 новых (preserves streaming body chunks /
+  doesn't buffer headers until body complete). Итого 9/9 тестов.
+
+### Чего этот коммит НЕ закрывает (для прозрачности)
+
+- **B-02 (RPA browser_pool / file_watcher / webhook_scheduler)**: CDC
+  часть закрыта; остальные 3 файла из исходного B-02 ещё не
+  проверены построчно на аналогичную проблему. Требуется отдельный
+  проход.
+- **Pre-existing /openapi.json 500 в dev mode**: остаётся открытым
+  (Pydantic 2.13 forward-ref error, не блокирует production).
+
+### Проверки
+
+- 68/68 tests passed в затронутых модулях
+  (`test_hot_swap`, `test_security_headers`, `test_cdc`, `test_loader_v11`).
+- 455/455 passed + 8 skipped (unrelated) в смежных тестах
+  (entrypoints/middlewares/, core/plugin_runtime/,
+  infrastructure/clients/external/, services/plugins/).
+- `tools/check_layers.py`: 0 новых нарушений (172 legacy baseline).
+- `tools/check_docstrings.py`: 0 missing docstrings в 2265 файлах.
+- `ruff check` на изменённых файлах: 0 findings (1 pre-existing I001
+  в `services/plugins/loader/__init__.py` — не относится к коммиту).
+
+---
+
 ## Sprint 204 Backlog / Tech Debt Closure — 2026-07-24 ✅ CLOSED (targeted slice)
 
 ### Закрыто
