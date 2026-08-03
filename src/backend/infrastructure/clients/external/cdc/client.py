@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
@@ -26,6 +26,9 @@ from src.backend.infrastructure.clients.external.cdc.strategies import (
     _LogMinerStrategy,  # S60 W2: cross-import
     _PollingStrategy,  # S60 W2: cross-import
 )
+
+if TYPE_CHECKING:
+    from src.backend.infrastructure.messaging.dlq_base import DLQWriter
 
 logger = get_logger("infrastructure.clients.cdc")
 
@@ -54,9 +57,24 @@ class CDCClient:
         "kafka": _KafkaDebeziumStrategy,  # S166 W1: re-added в S167 W1.1
     }
 
-    def __init__(self) -> None:
+    def __init__(self, *, dlq_writer: DLQWriter | None = None) -> None:
         self._subscriptions: dict[str, CDCSubscription] = {}
         self._tasks: dict[str, asyncio.Task] = {}
+        # B-02 fix (S176 cycle 33): DLQ handoff on callback/dispatch failure.
+        # When set, exceptions in ``_dispatch_change`` no longer silently
+        # drop the event — they are serialized as ``DLQEnvelope`` and written
+        # via ``dlq_writer.write(envelope)``. Composition root wires the
+        # writer via :meth:`set_dlq_writer` (singleton-friendly).
+        self._dlq_writer: DLQWriter | None = dlq_writer
+
+    def set_dlq_writer(self, writer: DLQWriter | None) -> None:
+        """Установить/сбросить DLQ-writer (для composition root wiring).
+
+        B-02 fix (S176 cycle 33): singleton-инстанс, полученный через
+        :func:`get_cdc_client`, не имеет доступа к ``__init__``-аргументам;
+        этот метод позволяет wiring-слою установить writer пост-фактум.
+        """
+        self._dlq_writer = writer
 
     async def subscribe(
         self,
@@ -162,7 +180,16 @@ class CDCClient:
         ]
 
     async def _dispatch_change(self, sub: CDCSubscription, event: CDCEvent) -> None:
-        """Обрабатывает обнаруженное изменение."""
+        """Обрабатывает обнаруженное изменение.
+
+        B-02 fix (S176 cycle 33): на исключение в callback или
+        ``action_handler_registry.dispatch()`` событие сериализуется в
+        :class:`DLQEnvelope` (reason=``UNEXPECTED``) и отправляется в
+        ``dlq_writer`` если он сконфигурирован. Без writer — fallback
+        к ERROR-логу (поведение pre-fix). Исключения никогда не
+        пробрасываются, чтобы consumer-loop не падал на одном
+        poison-message.
+        """
         event_dict = event.to_dict()
 
         if sub.callback:
@@ -170,6 +197,9 @@ class CDCClient:
                 await sub.callback(event_dict)
             except Exception as exc:
                 logger.error("CDC callback error [%s]: %s", sub.id, exc)
+                await self._send_to_dlq(
+                    sub, event_dict, exc, stage="callback"
+                )
 
         if sub.target_action:
             from src.backend.dsl.commands.registry import action_handler_registry
@@ -186,6 +216,75 @@ class CDCClient:
                 logger.error(
                     "CDC dispatch error [%s -> %s]: %s", sub.id, sub.target_action, exc
                 )
+                await self._send_to_dlq(
+                    sub, event_dict, exc, stage="dispatch"
+                )
+
+    async def _send_to_dlq(
+        self,
+        sub: CDCSubscription,
+        event_dict: dict[str, Any],
+        exc: BaseException,
+        *,
+        stage: str,
+    ) -> None:
+        """Отправить failed event в DLQ (B-02 fix).
+
+        Lazy import :class:`DLQEnvelope` / :class:`DLQReason` чтобы
+        не создавать циклическую зависимость с messaging-слоем на
+        import-time. Если DLQ сам упал — событие логируется с
+        ``exc_info`` и не пробрасывается (consumer-loop не должен
+        падать из-за сбоя нижестоящей системы).
+        """
+        if self._dlq_writer is None:
+            # No DLQ wired — pre-fix behavior (log + drop). Operators
+            # should configure ``set_dlq_writer`` in production; в
+            # тестах-одиночках можно явно передать writer в ``__init__``.
+            return
+
+        try:
+            from src.backend.infrastructure.messaging.dlq_base import (
+                DLQEnvelope,
+                DLQReason,
+            )
+
+            envelope = DLQEnvelope(
+                transport=f"cdc:{sub.profile}",
+                route_id=f"{sub.profile}.{event_dict.get('table', '?')}",
+                original_payload=event_dict,
+                error_class=type(exc).__name__,
+                error_message=f"{stage} failed: {exc}",
+                reason=DLQReason.UNEXPECTED,
+                metadata={
+                    "stage": stage,
+                    "subscription_id": sub.id,
+                    "profile": sub.profile,
+                    "strategy": sub.strategy,
+                    "table": event_dict.get("table"),
+                    "operation": event_dict.get("operation"),
+                },
+            )
+        except Exception as build_exc:  # noqa: BLE001
+            # Envelope build failed (should not happen, but defensive):
+            # log + drop, never propagate.
+            logger.exception(
+                "CDC DLQ envelope build failed [%s stage=%s]: %s",
+                sub.id, stage, build_exc,
+            )
+            return
+
+        try:
+            await self._dlq_writer.write(envelope)
+            logger.warning(
+                "CDC event forwarded to DLQ after %s failure "
+                "[subscription=%s table=%s]",
+                stage, sub.id, event_dict.get("table"),
+            )
+        except Exception as dlq_exc:  # noqa: BLE001
+            logger.exception(
+                "CDC DLQ handoff failed [%s stage=%s]: %s — EVENT WILL BE LOST",
+                sub.id, stage, dlq_exc,
+            )
 
     async def shutdown(self) -> None:
         """Останавливает все подписки."""

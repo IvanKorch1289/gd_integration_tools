@@ -335,7 +335,13 @@ async def test_cdc_dispatch_change_invokes_callback_with_event_dict() -> None:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_cdc_dispatch_change_handles_callback_error() -> None:
-    """Callback raising must be logged but not propagated."""
+    """Callback raising must be logged but not propagated.
+
+    Pre-fix (B-02 / S176 cycle 33): event was dropped silently.
+    Post-fix: if ``dlq_writer`` is configured, the failed event is
+    forwarded as :class:`DLQEnvelope`. Without a writer, the legacy
+    log+drop behavior is preserved.
+    """
     client = CDCClient()
 
     async def bad_cb(_d: dict[str, object]) -> None:
@@ -351,6 +357,147 @@ async def test_cdc_dispatch_change_handles_callback_error() -> None:
         profile="default",
     )
     # Should NOT raise — internal logger.error swallows callback errors
+    await client._dispatch_change(sub, event)
+
+
+# ── CDCClient._dispatch_change: B-02 DLQ handoff (S176 cycle 33) ──
+
+
+class _FakeDLQWriter:
+    """Минимальная реализация :class:`DLQWriter` Protocol для unit-тестов.
+
+    Собирает все envelope'ы, отправленные в :meth:`write`, чтобы тесты
+    могли проверить payload, reason, metadata и error_class.
+    """
+
+    def __init__(self) -> None:
+        self.envelopes: list[Any] = []
+        self.write_calls: int = 0
+        self.raise_on_write: BaseException | None = None
+
+    async def write(self, envelope: Any) -> None:
+        self.write_calls += 1
+        if self.raise_on_write is not None:
+            raise self.raise_on_write
+        self.envelopes.append(envelope)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_cdc_dispatch_change_forwards_failed_event_to_dlq() -> None:
+    """B-02: callback exception → DLQEnvelope через dlq_writer.write().
+
+    Регрессионный тест для P0-#2 из DEEP_AUDIT_REPORT.md (22.06.2026):
+    без DLQ callback-ошибка роняла событие безвозвратно. Сейчас —
+    событие уходит в DLQ с reason=UNEXPECTED, error_class=RuntimeError,
+    metadata со stage/subscription_id/table.
+    """
+    dlq = _FakeDLQWriter()
+    client = CDCClient(dlq_writer=dlq)
+
+    async def bad_cb(_d: dict[str, object]) -> None:
+        raise RuntimeError("callback boom")
+
+    sub = CDCSubscription(
+        profile="default", tables=["orders"], strategy="polling", callback=bad_cb
+    )
+    event = CDCEvent(
+        operation="INSERT",
+        table="orders",
+        timestamp="2026-06-05T00:00:00Z",
+        profile="default",
+        new={"id": 42},
+    )
+
+    await client._dispatch_change(sub, event)
+
+    assert dlq.write_calls == 1
+    envelope = dlq.envelopes[0]
+    assert envelope.transport == "cdc:default"
+    assert envelope.route_id == "default.orders"
+    assert envelope.error_class == "RuntimeError"
+    assert "callback boom" in envelope.error_message
+    assert "callback" in envelope.error_message
+    assert envelope.original_payload == event.to_dict()
+    assert envelope.metadata["stage"] == "callback"
+    assert envelope.metadata["subscription_id"] == sub.id
+    assert envelope.metadata["table"] == "orders"
+    assert envelope.metadata["operation"] == "INSERT"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_cdc_dispatch_change_no_dlq_legacy_silent_drop() -> None:
+    """B-02: без dlq_writer — legacy-поведение (log + drop), не raise.
+
+    Pre-fix поведение сохранено для backward-compat: запуск без
+    сконфигурированного writer роняет событие только в ERROR-лог.
+    """
+    client = CDCClient()  # no dlq_writer
+
+    async def bad_cb(_d: dict[str, object]) -> None:
+        raise RuntimeError("callback boom")
+
+    sub = CDCSubscription(
+        profile="default", tables=["orders"], strategy="polling", callback=bad_cb
+    )
+    event = CDCEvent(
+        operation="INSERT",
+        table="orders",
+        timestamp="2026-06-05T00:00:00Z",
+        profile="default",
+    )
+
+    # Must not raise; must not crash.
+    await client._dispatch_change(sub, event)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_cdc_set_dlq_writer_changes_writer_post_init() -> None:
+    """Composition root может привязать writer к singleton-у после init.
+
+    B-02: ``get_cdc_client()`` возвращает singleton, поэтому writer
+    нельзя передать в __init__; set_dlq_writer — post-init wiring.
+    """
+    client = CDCClient()
+    assert client._dlq_writer is None  # type: ignore[attr-defined]
+
+    dlq = _FakeDLQWriter()
+    client.set_dlq_writer(dlq)
+    assert client._dlq_writer is dlq  # type: ignore[attr-defined]
+
+    client.set_dlq_writer(None)
+    assert client._dlq_writer is None  # type: ignore[attr-defined]
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_cdc_dispatch_change_dlq_write_failure_does_not_propagate() -> None:
+    """B-02: если сам DLQ-writer упал — consumer-loop не должен падать.
+
+    ``_send_to_dlq`` логирует DLQ-ошибку и не пробрасывает её,
+    иначе poison-message в DLQ-инфраструктуре уронил бы весь
+    CDC strategy task.
+    """
+    dlq = _FakeDLQWriter()
+    dlq.raise_on_write = RuntimeError("DLQ down")
+    client = CDCClient(dlq_writer=dlq)
+
+    async def bad_cb(_d: dict[str, object]) -> None:
+        raise RuntimeError("callback boom")
+
+    sub = CDCSubscription(
+        profile="default", tables=["orders"], strategy="polling", callback=bad_cb
+    )
+    event = CDCEvent(
+        operation="INSERT",
+        table="orders",
+        timestamp="2026-06-05T00:00:00Z",
+        profile="default",
+    )
+
+    # Must not raise even though both callback and DLQ failed.
     await client._dispatch_change(sub, event)
 
 
