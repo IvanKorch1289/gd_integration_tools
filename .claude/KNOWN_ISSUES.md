@@ -709,12 +709,24 @@ S21_TEST_PG_DSN=postgresql+asyncpg://... pytest tests/security/test_rls_isolatio
 событие ТЕРЯЕТСЯ. Resilience infrastructure ЕСТЬ, но не применяется.
 **Статус:** Открыта | В работе: `s21/k2-w1-rpa-resilience-wrapper`
 
-#### 🔴 B-03 [L6] Tenant cache isolation — TenantNamespacedCache не интегрирован
-**Файлы:** `src/backend/infrastructure/cache/redis_cluster.py` (а НЕ `redis_cluster_adapter.py`),
-`src/backend/infrastructure/storage/s3_cache.py` (а НЕ `s3_cache_adapter.py`)
-**Инфраструктура:** `src/backend/core/tenancy/cache.py::TenantNamespacedCache` (96 строк) — УЖЕ СУЩЕСТВУЕТ.
-**Проблема:** Кеш-адаптеры НЕ используют TenantNamespacedCache. Redis keys без tenant prefix.
-**Статус:** Открыта | В работе: `s21/k1-w2-tenant-cache-wrapper`
+#### ✅ B-03 [L6] Tenant cache isolation — закрыто (cycle 34, 2026-08-04)
+**Файлы:** `src/backend/infrastructure/cache/factory.py`,
+`src/backend/infrastructure/cache/tenant_wrapper.py`
+**Инфраструктура:** `src.backend.infrastructure.cache.tenant_wrapper.TenantCacheBackend`
+(Sprint 21 K1 W2) — был реализован как class, но НЕ подключён в factory.
+
+**Cycle 34 fix (commit 8a1e0d24):** `create_cache_backend` теперь оборачивает
+возвращённый backend в `TenantCacheBackend`. Сам wrapper проверяет
+`feature_flags.tenant_cache_prefix_enabled`:
+- True (default prod) → keys получают `tenant:{id}:` префикс
+- False (test override / opt-out) → wrapper no-op (прямая делегация)
+
+Регрессионные тесты (5 новых + 5 existing обновлены) в
+`tests/unit/infrastructure/cache/test_factory.py`. 18/18 factory +
+50/50 cache tests pass.
+
+**Что осталось:** storage layer (s3_cache.py) пока без tenant prefix —
+out of scope cycle 34 (требует отдельного wire в storage factory).
 
 #### 🔴 B-04 [L2] Hot-swap одного плагина делает shutdown_all()
 **Файл:** `src/backend/core/plugin_runtime/hot_swap.py:213`
