@@ -1,5 +1,60 @@
 # KNOWN_ISSUES.md
 
+## Audit Verification Cycle 33 — 2026-08-04 (drift report)
+
+> Методологическая заметка: значительная часть находок из внешнего
+> аудит-отчёта (DEEP_AUDIT_REPORT.md + сводный обзор) — **устарела**:
+> соответствующие фиксы уже в коде. Этот раздел фиксирует, какие
+> пункты уже закрыты в текущей версии, чтобы будущие агенты не
+> повторяли verification зря и не «закрывали» уже закрытые находки.
+
+### ✅ Уже устранены в коде (verified, НЕ требуют работы)
+
+| ID | Находка аудита | Текущее состояние кода | Где проверено |
+|---|---|---|---|
+| P0-1 | InProcessAgentSandbox — нулевая изоляция по умолчанию | default = `process_pool`; `InProcessAgentSandbox.__init__` raises RuntimeError при `GD_INTEGRATION_PRODUCTION=1` ИЛИ `feature_flags.ai_in_process_sandbox_disabled=True` (default ON); `DeprecationWarning` + audit-event | `services/ai/agent_sandbox.py:62-138` |
+| P0-2 | Tool whitelist проверяет workflow_id вместо реального tool | Mandatory `request.tool_name`; `enforce_tool_policy(request.tool_name, tools)`; пустые whitelist+blacklist → fail-closed `ToolPolicyViolationError` (S209) | `core/ai/gateway_orchestrator_mixin.py:118-128` |
+| P0-3 | Module whitelist skip «for MVP» | Fail-closed через `feature_flags.call_function_whitelist_strict` (default ON); без whitelist → `PermissionError` | `core/ai/skill_registry.py:303-317` |
+| P0-4 | Guard failures return 'passed' silently | Fail-closed: provider-unavailable → `GuardrailViolationError`; explicit `fail_open=True` override с audit-event | `core/ai/policy/enforcer/input_guard_mixin.py:144-156` |
+| P0-5 | Admin endpoints без auth | Все через `Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))` | `entrypoints/api/v1/endpoints/admin_plugins.py:37-38` |
+| P0-6 | `yaml.load` без `safe_load` | grep по `src/` → 0 вхождений; только `yaml.safe_load` / `yaml.YAML(typ="safe")` | (grep) |
+| P0-7 | Symlink race в fs_facade | `realpath` ДО и ПОСЛЕ конкатенации; комментарий `DEEP_AUDIT P0-#9 fix (cycle 29)` | `core/ai/fs_facade.py:143-148` |
+| P0-8 | API-ключи SHA-256 без соли | Argon2id с per-key salt (PHC format); migration script `tools/migrations/migrate_api_keys_to_argon2.py` | `core/auth/api_key_backend.py:4-43` |
+| P1-2 | 35+ frontend→backend прямых импортов | 0 прямых импортов; все 39 frontend-импортов через `core.frontend_facade` | (grep `from src.backend` в `frontend/streamlit_app/`) |
+| P2-1 | Дубликат `MetricsRegistry` | Только один класс существует (в `core/utils/metrics_registry.py:55`) | (grep `class MetricsRegistry`) |
+| P2-4 | CDC Debezium — scaffold | 369-LOC real implementation на `aiokafka`, `S168 W14 P0-1` cycle | `infrastructure/cdc/debezium_events_backend.py` |
+| P3-1 (part) | OpenFeature external provider — no-op | `flagsmith_provider.py` + `tenant_feature_flag_scope.py` есть; external OpenFeature — placeholder для S42 (зафиксировано) | `core/feature_flags/service.py:7` |
+| P4-2 | `file_watch.py` blocking `os.walk` | Обёрнут в `asyncio.to_thread` (S178 #2) | `dsl/engine/processors/file_watch.py:6-7, 149-150, 181, 200, 208` |
+
+### ⚠️ Реальные, но БОЛЬШИЕ рефакторы (вне scope одного цикла)
+
+| ID | Находка | Масштаб |
+|---|---|---|
+| P3-5 | APScheduler + Temporal Schedules параллельно | ~12-15 файлов (`outbox_worker.py`, `dlq.py`, `temporal_scheduler_backend.py`, `scheduler_manager.py`); миграция требует design-решения (per-job migration vs feature-flag) |
+| P3-6 (part) | `infrastructure/external_apis/logging_service.py` помечена deprecated, но DI-referenced в `core/di/module_registry.py:146` + `core/di/providers/workflow.py:237,266,279` | Удаление требует рефакторинга DI-provider'ов; текущая роль — backward-compat shim |
+| P1 (god-class) | `RouteBuilder` 10+ mixin MRO, 325 рёбер в графе | Декомпозиция — отдельный спринт; ADR-0249 |
+| Layer violations | 172 legacy baseline entries | Allowlist-based cleanup; долг зафиксирован в ADR-0249 |
+
+### Что реально сделано в этом цикле (cycle 33)
+
+**Verified by code + regression tests** (atomic commits):
+- `32f562fd` B-02: CDC event loss → DLQ handoff
+- `542a4405` B-07: SecurityHeadersMiddleware → pure ASGI
+- `089d582c` B-04: hot_swap → per-plugin shutdown, PluginLoader.shutdown_one
+- `ece035dd` feat: shutdown_one эмитит plugin.unload audit event
+
+**Coverage:** 68/68 в затронутых модулях; 455/455 + 8 skipped в смежных; 0 ruff findings; 0 missing docstrings.
+
+### Главный урок cycle 33
+
+> **Аудит-отчёты устаревают за 1-2 спринта.** Находки, помеченные «OPEN»
+> в DEEP_AUDIT_REPORT.md от 22.06.2026, к 04.08.2026 уже устранены
+> в коде — но журнал продолжал переносить старые формулировки.
+> Перед планированием работы над любым P0/P1 — **грепнуть актуальный
+> код**, не доверять только записям журнала.
+
+---
+
 ## Sprint 176 Cycle 33 — Targeted P0/P1 closures (verified by code, 2026-08-04)
 
 > Методологическая заметка: предыдущие записи о «закрытии» ряда P0 (sandbox,
