@@ -1,21 +1,33 @@
-from __future__ import annotations
-
-"""Middleware для маскировки персональных данных (PII) в ответах.
+"""Middleware для маскировки персональных данных (PII) в ответах (cycle 58 pure ASGI, ФИНАЛЬНАЯ L1).
 
 Маскирует email, телефон, пароль и другие чувствительные поля
 в JSON-ответах перед отправкой клиенту. Применяется только
 к ответам с Content-Type: application/json.
+
+Cycle 58: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
+архитектурной консистентности с cycle 33-57 (L1 middlewares).
+ЭТО ФИНАЛЬНАЯ большая L1 миграция (после cycle 57 CSRF).
+
+Cycle 58 design: response body modification через suppress+resend
+pattern (аналог cycle 54 PIIMaskingResponse, но с body modification).
+Middleware:
+1. Collect body chunks через send-wrapper.
+2. Apply mask to body (replace sensitive keys with ***, mask email/phone).
+3. Suppress original start + body.
+4. Send new start (с updated content-length) + new body.
+
+В BaseHTTPMiddleware версии middleware использовал
+``response.body_iterator = AsyncChunkIterator([masked])`` (магический
+Starlette API). В pure ASGI нет body_iterator — нужно
+suppress+resend (аналог cycle 54 PII).
 """
 
 import re
 from typing import Any
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
-from src.backend.core.utils.async_helpers import AsyncChunkIterator
 
 _logger = get_logger(__name__)
 
@@ -38,76 +50,117 @@ _SENSITIVE_KEYS = frozenset(
 )
 
 
-class DataMaskingMiddleware(BaseHTTPMiddleware):
-    """Маскирует PII в JSON-ответах."""
+class DataMaskingMiddleware:
+    """Pure ASGI middleware: маскирует PII в JSON-ответах (cycle 58)."""
 
     def __init__(self, app: ASGIApp) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
-        super().__init__(app)
+        Args:
+            app: ASGI-приложение.
+        """
+        self.app = app
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Process data masking for response bodies.
 
         Args:
-            request: HTTP request.
-            call_next: Next middleware/endpoint.
-
-        Returns:
-            HTTP response with masked PII.
+            scope: ASGI scope.
+            receive: ASGI receive callable.
+            send: ASGI send callable.
         """
-        response = await call_next(request)
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-        content_type = response.headers.get("content-type", "")
-        if "application/json" not in content_type:
-            return response
+        # Collect body chunks через send-wrapper.
+        # Cycle 58 critical: pure ASGI send-wrapper pattern для body modification.
+        body_chunks: list[bytes] = []
+        content_type: dict[str, str] = {"value": ""}
+        response_status: dict[str, int] = {"status": 0}
+        original_headers: list[tuple[bytes, bytes]] = []
 
-        body = await self._capture_body(response)
+        async def send_wrapper(message) -> None:
+            if message["type"] == "http.response.start":
+                response_status["status"] = message.get("status", 200)
+                # Capture content-type + headers.
+                for k, v in message.get("headers", []):
+                    original_headers.append((k, v))
+                    if k.lower() == b"content-type":
+                        content_type["value"] = v.decode(
+                            "latin-1", errors="replace"
+                        )
+                # Suppress original — отправим свой с masked body
+                # (cycle 58 invariant: suppress всегда для content-length update).
+            elif message["type"] == "http.response.body":
+                if "application/json" in content_type["value"]:
+                    # JSON: collect body для masking.
+                    body_chunks.append(message.get("body", b""))
+                else:
+                    # Non-JSON: pass through unchanged (no-need to mask).
+                    await send(message)
+            else:
+                await send(message)
 
+        # Пробрасываем downstream (collect body через send_wrapper).
+        await self.app(scope, receive, send_wrapper)
+
+        # Skip non-JSON content type (уже пробрасывали в send_wrapper).
+        if "application/json" not in content_type["value"]:
+            return
+
+        body = b"".join(body_chunks)
+        if not body:
+            return
+
+        # Apply mask.
         try:
             masked = self._mask_bytes(body)
-            response.headers["content-length"] = str(len(masked))
-            response.body_iterator = AsyncChunkIterator([masked])  # type: ignore
         except Exception as exc:
-            # ponytail: fail-closed на PII. Возвращаем тело как {"error": "masking_failed"}
-            # вместо unmasked body — иначе при сбое маскировки утекает PII.
-            # Это безопаснее, чем fail-open (ранее: return unmasked body).
-            # Cycle 76 L1: use module-level canonical logger.
+            # ponytail: fail-closed на PII (cycle 78 L1 invariant).
+            # При ошибке маскировки возвращаем masked error response
+            # вместо unmasked body (security > availability).
             _logger.exception(
                 "data_masking failed; returning masked error response instead of unmasked body: %s",
                 exc,
             )
-            fallback = self._mask_bytes_fallback(body)
-            response.headers["content-length"] = str(len(fallback))
-            response.body_iterator = AsyncChunkIterator([fallback])  # type: ignore
+            masked = self._mask_bytes_fallback()
 
-        return response
+        # Cycle 58: send new response с masked body + updated headers.
+        new_headers: list[tuple[bytes, bytes]] = []
+        for k, v in original_headers:
+            if k.lower() == b"content-length":
+                # Skip — добавим с новым значением.
+                continue
+            new_headers.append((k, v))
+        new_headers.append((b"content-length", str(len(masked)).encode("latin-1")))
+
+        await send(
+            {
+                "type": "http.response.start",
+                "status": response_status["status"],
+                "headers": new_headers,
+            }
+        )
+        await send({"type": "http.response.body", "body": masked})
 
     def _mask_bytes(self, raw: bytes) -> bytes:
         """Маскирует PII в JSON-байтах."""
         import orjson
 
         text = raw.decode("utf-8")
-        try:
-            data = orjson.loads(text)
-            masked = self._mask_value(data)
-            return orjson.dumps(masked)
-        except (orjson.JSONDecodeError, UnicodeDecodeError):
-            return raw
+        data = orjson.loads(text)
+        masked = self._mask_value(data)
+        return orjson.dumps(masked)
 
-    def _mask_bytes_fallback(self, raw: bytes) -> bytes:
-        """Fail-closed fallback: при ошибке маскировки заменяем весь body на error marker.
-
-        Это безопаснее чем возвращать unmasked body (предыдущее fail-open поведение).
-        Если клиент получит {"error": "response_masking_failed"} вместо PII — это
-        приемлемый trade-off для security middleware.
-        """
+    def _mask_bytes_fallback(self) -> bytes:
+        """Fail-closed fallback: при ошибке маскировки заменяем весь body на error marker."""
         import orjson
 
-        error_body = {"error": "response_masking_failed", "detail": "PII masking failed; original response withheld for safety"}
+        error_body = {
+            "error": "response_masking_failed",
+            "detail": "PII masking failed; original response withheld for safety",
+        }
         return orjson.dumps(error_body)
 
     def _mask_value(self, obj: Any) -> Any:
@@ -138,11 +191,4 @@ class DataMaskingMiddleware(BaseHTTPMiddleware):
         digits = re.sub(r"\D", "", match.group(0))
         if len(digits) <= 4:
             return match.group(0)
-        return digits[:2] + "*" * (len(digits) - 4) + digits[-2:]
-
-    @staticmethod
-    async def _capture_body(response: Response) -> bytes:
-        chunks = []
-        async for chunk in response.body_iterator:  # type: ignore
-            chunks.append(chunk)
-        return b"".join(chunks)
+        return f"+***{digits[-4:]}"
