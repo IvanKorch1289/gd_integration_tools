@@ -1,70 +1,56 @@
-from __future__ import annotations
-
-"""PII masking response middleware (S18 W3, S-L8-4).
+"""PII masking response middleware (S18 W3, cycle 54 pure ASGI).
 
 Глобальный wrapper, применяющий :class:`core.security.pii_masker.PIIMasker`
 к JSON-телам ответов на configurable path patterns. В отличие от
 :class:`entrypoints.middlewares.data_masking.DataMaskingMiddleware` (S8A
 legacy, локальные regex), этот middleware использует единый
 :func:`default_masker` из ``core.security.pii_masker``, что соответствует
-плану S22 W1 A-07 «PII Masker Unification» (см. KNOWN_ISSUES.md).
+плану S22 W1 A-07 «PII Masker Unification».
 
 Поведение:
     * Feature-flag ``pii_response_middleware_enabled`` (default-OFF) —
-      при False middleware прозрачен (pass-through call_next).
+      при False middleware прозрачен (pass-through).
     * ``path_patterns`` (список regex) ограничивает применение к
       указанным путям. ``None`` или ``[]`` → применять ко всем путям.
     * Применяется только к ответам с ``Content-Type: application/json``.
-    * Используется :meth:`PIIMasker.mask_dict` (rekursive); 8 типов PII
-      покрыты дефолтными patterns (jwt/iban/snils/card/passport/email/inn/phone).
+    * Используется :meth:`PIIMasker.mask_dict` (rekursive).
 
-Пример::
+Cycle 54: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
+архитектурной консистентности с cycle 33-53 (L1 middlewares).
 
-    from fastapi import FastAPI
-    from src.backend.entrypoints.middlewares.pii_masking_response import (
-        PIIMaskingResponseMiddleware,
-    )
-
-    app = FastAPI()
-    app.add_middleware(
-        PIIMaskingResponseMiddleware,
-        path_patterns=[r"^/api/v1/users(/.*)?$", r"^/api/v1/admin/.*$"],
-    )
+Cycle 54 critical: response body modification.
+В pure ASGI нельзя модифицировать body ПОСЛЕ отправки downstream.
+Нужно: suppress original body messages, send new http.response.start
+(with updated content-length) + http.response.body с masked body.
 """
 
-
+import json
 import re
 from collections.abc import Iterable
 from typing import Any
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
 from src.backend.core.security.pii_masker import default_masker
-from src.backend.core.utils.async_helpers import async_chunk_iterator
 
 __all__ = ("PIIMaskingResponseMiddleware",)
 
 _logger = get_logger(__name__)
 
 
-class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
-    """Маскирует PII в JSON-телах ответов на configurable путях.
+class PIIMaskingResponseMiddleware:
+    """Pure ASGI middleware: маскирует PII в JSON-телах ответов (cycle 54).
 
     Args:
         app: ASGI-приложение.
         path_patterns: Список regex для путей, к которым применять
             маскировку. ``None`` / пустой список — применять ко всем
-            путям. Сравнение через :func:`re.search` (match anywhere
-            в pathname). Шаблоны компилируются в ``__init__``.
+            путям.
 
     Notes:
-        Feature-flag ``pii_response_middleware_enabled`` (S18 W3
-        backbone) проверяется внутри :meth:`dispatch` lazy-импортом
-        — middleware можно безопасно зарегистрировать даже когда flag
-        выключен. При OFF behavior идентичен pass-through.
+        Feature-flag ``pii_response_middleware_enabled`` (S18 W3 backbone)
+        проверяется внутри :meth:`dispatch` lazy-импортом.
     """
 
     def __init__(
@@ -72,54 +58,115 @@ class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
-        super().__init__(app)
+        Args:
+            app: ASGI-приложение.
+            path_patterns: Список regex для путей маскировки.
+        """
+        self.app = app
         self._path_patterns: tuple[re.Pattern[str], ...] = tuple(
             re.compile(p) for p in (path_patterns or ())
         )
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Process PII masking for response bodies.
 
         Args:
-            request: HTTP request.
-            call_next: Next middleware/endpoint.
-
-        Returns:
-            HTTP response with masked PII.
+            scope: ASGI scope.
+            receive: ASGI receive callable.
+            send: ASGI send callable.
         """
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         if not self._is_enabled():
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
-        if not self._path_matches(request.url.path):
-            return await call_next(request)
+        path = scope.get("path", "")
+        if not self._path_matches(path):
+            await self.app(scope, receive, send)
+            return
 
-        response = await call_next(request)
+        # Cycle 54 critical: collect body chunks через send-wrapper.
+        # Pure ASGI: buffer body messages, apply mask, re-send.
+        state: dict = {"should_mask": True, "content_type": ""}
+        body_chunks: list[bytes] = []
+        original_status: int = 200
+        original_headers: list[tuple[bytes, bytes]] = []
 
-        content_type = response.headers.get("content-type", "")
-        if "application/json" not in content_type:
-            return response
+        async def send_wrapper(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                # Capture status + headers (для replay).
+                nonlocal original_status, original_headers
+                original_status = message.get("status", 200)
+                original_headers = list(message.get("headers", []))
 
-        body = await self._capture_body(response)
+                # Check content-type перед сбором body.
+                content_type = b""
+                for k, v in original_headers:
+                    if k.lower() == b"content-type":
+                        content_type = v.decode("latin-1", errors="replace")
+                        break
+                if "application/json" not in content_type:
+                    # Skip PII masking — пробрасываем original.
+                    state["should_mask"] = False
+                    # Send start immediately (downstream-уже-ждёт).
+                    await send(message)
+                else:
+                    # Suppress original start — мы отправим свой.
+                    pass
+            elif message["type"] == "http.response.body":
+                if state["should_mask"]:
+                    # Collect chunks (не отправляем пока).
+                    body_chunks.append(message.get("body", b""))
+                    # НЕ отправляем сейчас.
+                else:
+                    # Не маскируем — пробрасываем original.
+                    await send(message)
+            else:
+                await send(message)
+
+        # Пробрасываем downstream (collect body через send_wrapper).
+        await self.app(scope, receive, send_wrapper)
+
+        # Если не маскируем — ничего не делаем (original уже отправлен).
+        if not state["should_mask"]:
+            return
+
+        body = b"".join(body_chunks)
+        if not body:
+            return
+
         try:
             masked = self._mask_json_bytes(body)
         except Exception as exc:
             _logger.warning(
                 "PIIMaskingResponseMiddleware: ошибка маскировки %s, payload "
                 "пропущен без изменений: %s",
-                request.url.path,
+                path,
                 exc,
             )
-            body_iter: Any = response
-            body_iter.body_iterator = async_chunk_iterator([body])
-            return response
+            return
 
-        response.headers["content-length"] = str(len(masked))
-        body_iter = response
-        body_iter.body_iterator = async_chunk_iterator([masked])
-        return response
+        # Cycle 54 critical: send new response (start + body) с masked body.
+        # Update content-length в headers.
+        new_headers: list[tuple[bytes, bytes]] = []
+        for k, v in original_headers:
+            if k.lower() == b"content-length":
+                # Skip — добавим с новым значением.
+                continue
+            new_headers.append((k, v))
+        new_headers.append((b"content-length", str(len(masked)).encode("latin-1")))
+
+        await send(
+            {
+                "type": "http.response.start",
+                "status": original_status,
+                "headers": new_headers,
+            }
+        )
+        await send({"type": "http.response.body", "body": masked})
 
     # ----------------------------------------------------------------- helpers
 
@@ -132,7 +179,7 @@ class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
             return bool(
                 getattr(feature_flags, "pii_response_middleware_enabled", False)
             )
-        except Exception as _:
+        except Exception:
             return False
 
     def _path_matches(self, path: str) -> bool:
@@ -153,15 +200,5 @@ class PIIMaskingResponseMiddleware(BaseHTTPMiddleware):
             masked = masker.mask_dict(data)
         else:
             # Top-level list / scalar — обход через приватный recursive helper.
-            # mask_dict работает только с dict; для list/scalar используем
-            # обёртку в одноразовый dict с key="_root" и распаковку.
             masked = masker.mask_dict({"_root": data})["_root"]
         return orjson.dumps(masked)
-
-    @staticmethod
-    async def _capture_body(response: Response) -> bytes:
-        """Собирает body_iterator в bytes (для дальнейшей трансформации)."""
-        chunks: list[bytes] = []
-        async for chunk in response.body_iterator:  # type: ignore[attr-defined]
-            chunks.append(chunk)
-        return b"".join(chunks)
