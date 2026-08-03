@@ -1,10 +1,9 @@
-"""RpaPolicyMiddleware (S171 M6 — security middleware).
+"""RpaPolicyMiddleware (S171 M6, cycle 40 pure ASGI) — security middleware.
 
 Deny-by-default policy для ``/api/v1/rpa/*`` endpoints.
 
 Security policy:
-- /api/v1/rpa/* paths require ``rpa.admin`` role (from ``X-Roles`` header)
-- Optional IP allowlist (configurable)
+- /api/v1/rpa/* paths require ``rpa.admin`` role (из auth context)
 - Audit all denied requests
 - All other paths → pass through
 
@@ -13,36 +12,40 @@ Layer 1 (early exit) — блокирует malicious RCE-shaped requests до �
 
 Defense in depth: 2 layers (HTTP role + DSL capability).
 
-Example::
+Cycle 40: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
+архитектурной консистентности с cycle 33-39 (L1 middlewares).
 
-    mw = RpaPolicyMiddleware(app, rpa_path_prefix="/api/v1/rpa")
+Cycle 40 retrospective: auth context устанавливается в
+``scope['state']['auth']`` UPSTREAM auth middleware (rpa_policy
+идёт ПОСЛЕ auth в middleware chain). Поэтому resolution может
+происходить в ``__call__`` напрямую — не нужен send-wrapper
+pattern (как в cycle 37/38).
+
+Cycle 40 critical: как и cycle 39 (BlockedRoutes), pure ASGI
+НЕ МОЖЕТ return JSONResponse из __call__ — exception не
+обрабатывается. Поэтому 403 отправляется напрямую через send.
 """
+
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING
+import json
 
-from starlette.middleware.base import BaseHTTPMiddleware
-
-if TYPE_CHECKING:
-    from fastapi import Request, Response
-    from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
+
+__all__ = ("RpaPolicyMiddleware",)
 
 _logger = get_logger(__name__)
 
 
-class RpaPolicyMiddleware(BaseHTTPMiddleware):
-    """Deny-by-default policy для RPA endpoints (S171 M6).
-
-    Блокирует все запросы к ``rpa_path_prefix`` если в ``X-Roles`` header
-    нет ``required_role``. Audit denied requests.
+class RpaPolicyMiddleware:
+    """Pure ASGI middleware: deny-by-default для RPA endpoints (S171 M6).
 
     Args:
         app: ASGI app.
         rpa_path_prefix: Prefix для RPA endpoints (default ``"/api/v1/rpa"``).
-        required_role: Required role в X-Roles header (default ``"rpa.admin"``).
+        required_role: Required role в auth context (default ``"rpa.admin"``).
 
     Example:
         >>> mw = RpaPolicyMiddleware(app, rpa_path_prefix="/api/v1/rpa")
@@ -50,61 +53,108 @@ class RpaPolicyMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app: "ASGIApp",
+        app: ASGIApp,
         *,
         rpa_path_prefix: str = "/api/v1/rpa",
         required_role: str = "rpa.admin",
     ) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
-        super().__init__(app)
+        Args:
+            app: ASGI-приложение.
+            rpa_path_prefix: Префикс RPA endpoints.
+            required_role: Требуемая роль в auth context.
+        """
+        self.app = app
         self.rpa_path_prefix = rpa_path_prefix
         self.required_role = required_role
 
-    async def dispatch(
-        self,
-        request: "Request",
-        call_next: Callable[["Request"], Awaitable["Response"]],
-    ) -> "Response":
-        """Применить role-gate к RPA endpoints + логировать policy violations."""
-        if not request.url.path.startswith(self.rpa_path_prefix):
-            return await call_next(request)
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Точка входа ASGI-протокола.
 
-        # Path matches RPA → check role from trusted auth context (not client header)
-        auth = getattr(request.state, "auth", None)
+        Non-HTTP scope (``websocket`` / ``lifespan``) пробрасывается
+        downstream-приложению без role-gate.
+        """
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+
+        # Path не RPA → пробрасываем downstream.
+        if not path.startswith(self.rpa_path_prefix):
+            await self.app(scope, receive, send)
+            return
+
+        # Path matches RPA → check role из auth context.
+        # Auth middleware (outer) установил state['auth'] в pure ASGI scope.
+        state = scope.get("state", {})
+        auth = state.get("auth") if isinstance(state, dict) else None
+
         if auth is None:
-            # No auth context → deny (fail-closed)
-            from starlette.responses import JSONResponse
-
+            # No auth context → deny (fail-closed).
             _logger.warning(
                 "rpa_policy DENY path=%s method=%s reason=no_auth_context",
-                request.url.path, request.method,
+                path,
+                scope.get("method", "?"),
             )
-            return JSONResponse(
-                status_code=403,
-                content={
+            await self._send_403(
+                send,
+                body={
                     "detail": "authentication required for RPA endpoints",
                     "code": "rpa_policy_no_auth",
                 },
             )
+            return
 
-        roles = set(getattr(auth, "roles", []) or [])
+        roles_attr = getattr(auth, "roles", []) or []
+        # roles может быть set, list, tuple, или iterable.
+        try:
+            roles = set(roles_attr)
+        except TypeError:
+            roles = set()
+
         if self.required_role not in roles:
-            from starlette.responses import JSONResponse
+            # Get client host из scope (аналог request.client.host).
+            client = scope.get("client")
+            client_host = client[0] if client else "?"
 
             _logger.warning(
                 "rpa_policy DENY path=%s method=%s client=%s roles=%s",
-                request.url.path, request.method,
-                request.client.host if request.client else "?",
+                path,
+                scope.get("method", "?"),
+                client_host,
                 ",".join(sorted(roles)),
             )
-            return JSONResponse(
-                status_code=403,
-                content={
+            await self._send_403(
+                send,
+                body={
                     "detail": f"role '{self.required_role}' required for {self.rpa_path_prefix}/*",
                     "code": "rpa_policy_denied",
                 },
             )
+            return
 
-        return await call_next(request)
+        # Role есть → пробрасываем downstream.
+        await self.app(scope, receive, send)
+
+    @staticmethod
+    async def _send_403(send: Send, *, body: dict) -> None:
+        """Отправляет 403 JSON response через send."""
+        body_bytes = json.dumps(body).encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 403,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body_bytes)).encode("latin-1")),
+                ],
+            }
+        )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": body_bytes,
+            }
+        )
