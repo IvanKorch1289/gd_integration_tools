@@ -31,30 +31,48 @@ from src.backend.entrypoints.middlewares.security_headers import (
 
 @pytest.mark.asyncio
 async def test_auth_method_header_with_method() -> None:
-    # Cycle 81 L10: middleware defaults to enabled=False (S191 security
-    # fix — no information disclosure). Pass enabled=True to emit header.
+    # Cycle 37: AuthMethodHeaderMiddleware — pure ASGI.
     app = AsyncMock()
+
+    async def downstream(scope, receive, send):
+        # Downstream выставляет auth context в scope['state'].
+        scope["state"] = {
+            "auth": type("AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()})()
+        }
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    app.side_effect = downstream
     mw = AuthMethodHeaderMiddleware(app, enabled=True)
-    request = MagicMock()
-    request.state.auth = MagicMock()
-    request.state.auth.method = MagicMock()
-    request.state.auth.method.value = "jwt"
-    response = Response(content=b"ok")
-    call_next = AsyncMock(return_value=response)
-    result = await mw.dispatch(request, call_next)
-    assert result.headers["X-Auth-Method"] == "jwt"
+    send = AsyncMock()
+    await mw({"type": "http", "method": "GET", "path": "/", "headers": []}, AsyncMock(), send)
+
+    start_msg = next(
+        c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.start"
+    )
+    headers = dict(start_msg["headers"])
+    assert headers[b"x-auth-method"] == b"jwt"
 
 
 @pytest.mark.asyncio
 async def test_auth_method_header_no_auth() -> None:
+    # Cycle 37: enabled=False default — НЕ emit'ит header (security).
     app = AsyncMock()
-    mw = AuthMethodHeaderMiddleware(app)
-    request = MagicMock()
-    request.state.auth = None
-    response = Response(content=b"ok")
-    call_next = AsyncMock(return_value=response)
-    result = await mw.dispatch(request, call_next)
-    assert "X-Auth-Method" not in result.headers
+
+    async def downstream(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    app.side_effect = downstream
+    mw = AuthMethodHeaderMiddleware(app)  # enabled=False default
+    send = AsyncMock()
+    await mw({"type": "http", "method": "GET", "path": "/", "headers": []}, AsyncMock(), send)
+
+    start_msg = next(
+        c.args[0] for c in send.await_args_list if c.args[0]["type"] == "http.response.start"
+    )
+    headers = dict(start_msg["headers"])
+    assert b"x-auth-method" not in headers
 
 
 # ─── BlockedRoutesMiddleware ────────────────────────────────────────────────
