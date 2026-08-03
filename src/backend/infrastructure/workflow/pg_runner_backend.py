@@ -221,17 +221,19 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
             interval = min(interval * 2, self._poll_max_interval_s)
 
     async def replay(self, *, workflow_name: str, history: bytes) -> None:
-        """deg-mode: pg-runner не имеет detection недетерминизма.
+        """pg-runner не реализует Temporal-совместимый replay-gate.
 
-        ``history`` (Temporal-bytes) игнорируется; реальный replay
-        делает ``DurableWorkflowRunner`` через ``read_events``.
-        Метод оставлен no-op для совместимости с Protocol — Wave D.2
-        TemporalBackend реализует полноценный replay-gate.
+        В отличие от :class:`TemporalWorkflowBackend`, pg-runner работает
+        через ``DurableWorkflowRunner.read_events`` (event-sourcing из
+        ``workflow_events`` table) — у него нет ``WorkflowHistory.from_json``
+        и он не может воспроизводить Temporal history bytes.
+
+        Raises:
+            NotImplementedError: всегда (pg-runner не реализует replay API).
         """
-        _logger.debug(
-            "PgRunnerWorkflowBackend.replay: no-op (workflow=%s, history_size=%d)",
-            workflow_name,
-            len(history),
+        raise NotImplementedError(
+            "pg-runner does not implement Temporal-compatible replay; "
+            "use DurableWorkflowRunner._run_step() instead"
         )
 
     # --- helpers -------------------------------------------------------

@@ -182,5 +182,8 @@ async def test_fail_closed_on_backend_error() -> None:
             soft_limit=10, hard_limit=20, fail_mode="closed"
         ),
     )
-    with pytest.raises(ConnectionError):
+    # Cycle 36: raise typed BudgetBackendUnavailable вместо bare ConnectionError.
+    from src.backend.core.tenancy.token_budget import BudgetBackendUnavailable
+
+    with pytest.raises(BudgetBackendUnavailable):
         await budget_closed.reserve(tenant_id="t-fail-closed", tokens=5)

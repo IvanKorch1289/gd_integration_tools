@@ -44,8 +44,9 @@ class TestQuotaTracker:
         raw = _make_raw()
         raw.incrby = AsyncMock(return_value=11)
         raw.expire = AsyncMock()
+        # S31 Task 5: patch infrastructure_locator (canonical), not deprecated facade.
         monkeypatch.setattr(
-            "src.backend.core.di.providers.infrastructure_facade.get_redis_client_factory",
+            "src.backend.core.di.providers.infrastructure_locator.get_redis_client_factory",
             lambda: (lambda: raw),
         )
         with pytest.raises(QuotaExceeded):
