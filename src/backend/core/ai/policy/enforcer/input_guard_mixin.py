@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec, GuardRef
 
 from src.backend.core.ai.errors import GuardrailViolationError, GuardResult
+from src.backend.core.audit.facade import emit_audit_safe
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -156,8 +157,6 @@ class InputGuardMixin:
                 ) from exc
             # Explicit audited override (dev/staging with degraded provider).
             try:
-                from src.backend.core.audit.facade import emit_audit_safe
-
                 emit_audit_safe(
                     event="ai.guardrail.provider_failure",
                     details={
