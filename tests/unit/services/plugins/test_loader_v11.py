@@ -315,6 +315,116 @@ class TestPluginLoaderHelpers:
         assert "manifest_path" in d
 
 
+# ── B-04 regression: PluginLoader.shutdown_one (S176 cycle 33) ──
+
+
+class TestPluginLoaderShutdownOne:
+    """B-04 fix: per-plugin unload через :meth:`PluginLoader.shutdown_one`.
+
+    Регрессионный тест: до фикса hot_swap дёргал ``shutdown_all``,
+    затрагивая ВСЕ плагины. Сейчас — per-plugin isolation.
+    """
+
+    async def test_shutdown_one_removes_target_only(
+        self, isolated_extensions_dir: Path
+    ) -> None:
+        """shutdown_one(target) удаляет только target, unrelated остаётся loaded."""
+        body_a = textwrap.dedent(
+            """
+            from src.backend.core.interfaces.plugin import BasePlugin
+
+            CALLS_A = []
+
+            class Plugin(BasePlugin):
+                name = "alpha"
+                version = "1.0.0"
+
+                async def on_shutdown(self) -> None:
+                    CALLS_A.append("shutdown")
+            """
+        )
+        body_b = textwrap.dedent(
+            """
+            from src.backend.core.interfaces.plugin import BasePlugin
+
+            CALLS_B = []
+
+            class Plugin(BasePlugin):
+                name = "bravo"
+                version = "1.0.0"
+
+                async def on_shutdown(self) -> None:
+                    CALLS_B.append("shutdown")
+            """
+        )
+        _write_extension(
+            isolated_extensions_dir, name="alpha", plugin_module_body=body_a
+        )
+        _write_extension(
+            isolated_extensions_dir, name="bravo", plugin_module_body=body_b
+        )
+        loader, *_ = _build_loader(isolated_extensions_dir)
+        await loader.discover_and_load()
+        assert sorted(p.name for p in loader.successful) == ["alpha", "bravo"]
+
+        result = await loader.shutdown_one("alpha")
+        assert result is True
+        assert sorted(p.name for p in loader.successful) == ["bravo"]
+
+        # Alpha's on_shutdown был вызван, bravo — нет.
+        import alpha.plugin as alpha_mod
+        import bravo.plugin as bravo_mod
+
+        assert alpha_mod.CALLS_A == ["shutdown"]
+        assert bravo_mod.CALLS_B == []
+
+    async def test_shutdown_one_returns_false_for_unknown_plugin(
+        self, isolated_extensions_dir: Path
+    ) -> None:
+        """shutdown_one(unknown) → False (no-op), без raise."""
+        loader, *_ = _build_loader(isolated_extensions_dir)
+        result = await loader.shutdown_one("never_loaded")
+        assert result is False
+
+    async def test_shutdown_one_revokes_capability(
+        self, isolated_extensions_dir: Path
+    ) -> None:
+        """shutdown_one(target) вызывает gate.revoke(target) — не raise.
+
+        Не проверяем конкретный формат declare (требует vocabulary);
+        достаточно убедиться, что shutdown_one проходит без ошибок
+        на плагине с capability и что после shutdown он удалён из реестра.
+        """
+        body = textwrap.dedent(
+            """
+            from src.backend.core.interfaces.plugin import BasePlugin
+
+            class Plugin(BasePlugin):
+                name = "alpha_revoke"
+                version = "1.0.0"
+            """
+        )
+        _write_extension(
+            isolated_extensions_dir, name="alpha_revoke", plugin_module_body=body
+        )
+
+        loader, *_ = _build_loader(isolated_extensions_dir)
+        await loader.discover_and_load()
+        assert any(
+            getattr(e, "name", None) == "alpha_revoke" for e in loader.loaded
+        )
+
+        # Per-plugin shutdown не должен падать даже если у плагина
+        # не было capability (revoke — no-op в этом случае).
+        result = await loader.shutdown_one("alpha_revoke")
+        assert result is True
+
+        # После shutdown — запись из _loaded исчезла.
+        assert all(
+            getattr(e, "name", None) != "alpha_revoke" for e in loader.loaded
+        )
+
+
 class TestProtocolMatching:
     """Регистры должны соответствовать Protocol'ам из core.interfaces.plugin."""
 

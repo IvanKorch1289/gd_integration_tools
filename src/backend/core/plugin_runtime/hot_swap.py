@@ -121,6 +121,16 @@ class PluginLoaderProtocol(Protocol):
         """Graceful shutdown всех загруженных плагинов."""
         ...
 
+    async def shutdown_one(self, plugin_name: str) -> bool:
+        """Graceful shutdown одного плагина (per-plugin unload).
+
+        B-04 fix (S176 cycle 33): hot_swap предпочитает этот метод
+        ``shutdown_all``, чтобы не затрагивать не-целевые плагины.
+        Возвращает ``True`` если плагин был в реестре, ``False`` если
+        не найден (no-op).
+        """
+        ...
+
     async def discover_and_load(self) -> tuple[Any, ...]:
         """Discovery + load всех плагинов в extensions/."""
         ...
@@ -162,18 +172,22 @@ async def hot_swap(
 ) -> HotSwapResult:
     """Hot-swap (reload без рестарта) одного in-tree плагина.
 
-    Алгоритм:
+    Алгоритм (B-04 fix, S176 cycle 33):
 
     1. Найти текущую запись плагина в ``loader.loaded`` по имени.
     2. Сохранить ``old_version`` и dotted-name модуля ``entry_class``.
-    3. Выполнить graceful shutdown через ``loader.shutdown_all()``
-       (текущая реализация PluginLoader не имеет per-plugin unload,
-       поэтому здесь делается full shutdown + reload — это безопасно
-       для in-tree dev-режима; production-вариант появится в S8).
+    3. Per-plugin shutdown через ``loader.shutdown_one(plugin_name)``
+       (НЕ ``shutdown_all`` — раньше это затрагивало все плагины,
+       что нарушало isolation между расширениями и приводило к
+       каскадным перезагрузкам при hot-swap одного плагина).
     4. Reload модуля ``entry_class`` через :func:`importlib.reload`.
     5. Повторно выполнить ``discover_and_load()`` (loader перечитает
        все ``plugin.toml`` и заново применит capability-gate).
     6. Проверить, что плагин снова в реестре в статусе ``"loaded"``.
+
+    Совместимость: если loader-имплементация не имеет ``shutdown_one``
+    (legacy / test-double), fallback на ``shutdown_all`` с warning.
+    Это сохраняет backward-compat со старыми test-fake-loader'ами.
 
     Args:
         plugin_name: Имя плагина (как в ``plugin.toml::name``).
@@ -209,12 +223,28 @@ async def hot_swap(
         if entry_class:
             module_name = entry_class.rpartition(".")[0]
 
-    # Graceful shutdown текущей версии (если есть что shutdown-ить).
-    try:
-        await loader.shutdown_all()
-    except Exception as exc:
-        _logger.exception("shutdown_all() during hot_swap raised")
-        raise HotSwapError(plugin_name, "shutdown_all_failed", cause=exc) from exc
+    # Per-plugin shutdown: B-04 fix — затрагиваем ТОЛЬКО целевой плагин.
+    # Fallback на shutdown_all если loader-имплементация не имеет
+    # ``shutdown_one`` (legacy PluginLoader / test-double).
+    if hasattr(loader, "shutdown_one"):
+        shutdown_reason = "shutdown_one_failed"
+        try:
+            await loader.shutdown_one(plugin_name)
+        except Exception as exc:
+            _logger.exception("shutdown_one() during hot_swap raised")
+            raise HotSwapError(plugin_name, shutdown_reason, cause=exc) from exc
+    else:
+        shutdown_reason = "shutdown_all_failed"
+        _logger.warning(
+            "PluginLoader %r lacks shutdown_one; falling back to "
+            "shutdown_all (legacy behavior, affects all plugins)",
+            type(loader).__name__,
+        )
+        try:
+            await loader.shutdown_all()
+        except Exception as exc:
+            _logger.exception("shutdown_all() during hot_swap raised")
+            raise HotSwapError(plugin_name, shutdown_reason, cause=exc) from exc
 
     # Reload Python-модуля, чтобы захватить изменения исходников.
     if module_name:

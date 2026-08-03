@@ -205,6 +205,69 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
             self._unmount_frontend_pages(entry.name)
             self._gate.revoke(entry.name)
 
+    async def shutdown_one(self, plugin_name: str) -> bool:
+        """Graceful shutdown одного плагина (per-plugin unload).
+
+        B-04 fix (S176 cycle 33): hot_swap ранее дёргал ``shutdown_all``,
+        что затрагивало ВСЕ загруженные плагины (включая не-целевые).
+        Per-plugin shutdown — минимальная инвазивная операция:
+
+        1. Найти :class:`LoadedPlugin` в ``self._loaded`` по имени.
+        2. Если ``status != "loaded"`` или ``instance is None`` — удалить
+           запись из ``_loaded`` (unload manifest-only) и вернуть ``True``.
+        3. ``await entry.instance.on_shutdown()`` (failures — log, не raise).
+        4. ``_unmount_frontend_pages(name)`` (если были Streamlit-pages).
+        5. ``self._gate.revoke(name)`` — отозвать capabilities.
+        6. ``self._loaded.pop(name, None)`` — выгрузить из реестра.
+        7. Очистить owner-tracking (``_owners``) от записей этого плагина.
+
+        Args:
+            plugin_name: Имя плагина (``plugin.toml::name``).
+
+        Returns:
+            ``True`` если плагин был в реестре и shutdown выполнен.
+            ``False`` если плагин не найден (no-op).
+        """
+        entry = self._loaded.get(plugin_name)
+        if entry is None:
+            _logger.debug(
+                "shutdown_one: plugin %r not in registry (already unloaded?)",
+                plugin_name,
+            )
+            return False
+
+        if entry.status == "loaded" and entry.instance is not None:
+            try:
+                await entry.instance.on_shutdown()
+            except Exception:
+                _logger.exception(
+                    "Plugin %s on_shutdown failed (per-plugin unload continues)",
+                    plugin_name,
+                )
+            self._unmount_frontend_pages(plugin_name)
+            self._gate.revoke(plugin_name)
+        else:
+            # Плагин был в failed/skipped-статусе — не было instance,
+            # но запись из реестра всё равно убираем.
+            _logger.debug(
+                "shutdown_one: plugin %r status=%s, no instance to shutdown",
+                plugin_name, entry.status,
+            )
+
+        # Удаляем из реестра (no-op если уже отсутствует).
+        self._loaded.pop(plugin_name, None)
+
+        # Чистим owner-tracking: ищем kind_map, где value == plugin_name.
+        for kind_map in self._owners.values():
+            if not isinstance(kind_map, dict):
+                continue
+            for owner_key, owner_name in list(kind_map.items()):
+                if owner_name == plugin_name:
+                    kind_map.pop(owner_key, None)
+
+        _logger.info("Plugin unloaded (per-plugin): %s", plugin_name)
+        return True
+
 
 # Backward-compat singleton accessor (S168 W15-17 deprecation shim).
 # The new PluginLoader requires explicit DI (extensions_dir, capability_gate,

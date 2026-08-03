@@ -218,3 +218,159 @@ async def test_hot_swap_reloads_module() -> None:
         assert result.status == "reloaded"
     finally:
         sys.modules.pop("tests_unit_hot_swap_fake_mod", None)
+
+
+# ── B-04 regression: per-plugin shutdown не затрагивает unrelated plugins ──
+
+
+class _PerPluginFakeLoader:
+    """Loader с per-plugin shutdown для B-04 regression-тестов.
+
+    Трекит вызовы ``shutdown_one(target)`` и ``shutdown_all()`` раздельно
+    чтобы тесты могли проверить, что hot_swap дёргает ровно
+    ``shutdown_one(target)`` и НЕ дёргает ``shutdown_all()``.
+    """
+
+    def __init__(
+        self,
+        *,
+        target_name: str,
+        other_names: tuple[str, ...] = (),
+        target_after: _FakeEntry | None = None,
+    ) -> None:
+        self._target = _FakeEntry(name=target_name, version="1.0.0")
+        self._others = tuple(_FakeEntry(name=n, version="1.0.0") for n in other_names)
+        self._target_after = target_after or _FakeEntry(
+            name=target_name, version="1.0.1"
+        )
+        self._loaded_dict: dict[str, _FakeEntry] = {
+            self._target.name: self._target,
+            **{e.name: e for e in self._others},
+        }
+        self._owners: dict[str, dict[str, str]] = {}
+        self.shutdown_one_calls: list[str] = []
+        self.shutdown_all_calls: int = 0
+        self.shutdown_one_raises: BaseException | None = None
+
+    @property
+    def loaded(self) -> tuple[_FakeEntry, ...]:
+        return tuple(self._loaded_dict.values())
+
+    @property
+    def _loaded(self) -> dict[str, _FakeEntry]:
+        return self._loaded_dict
+
+    async def shutdown_one(self, plugin_name: str) -> bool:
+        self.shutdown_one_calls.append(plugin_name)
+        if self.shutdown_one_raises is not None:
+            raise self.shutdown_one_raises
+        return True
+
+    async def shutdown_all(self) -> None:
+        self.shutdown_all_calls += 1
+        # Никогда не должен вызываться в per-plugin flow.
+
+    async def discover_and_load(self) -> tuple[_FakeEntry, ...]:
+        # Возвращаем обновлённый target + остальные.
+        self._loaded_dict = {self._target_after.name: self._target_after}
+        for e in self._others:
+            self._loaded_dict[e.name] = e
+        return tuple(self._loaded_dict.values())
+
+
+@pytest.mark.asyncio
+async def test_hot_swap_uses_shutdown_one_not_shutdown_all() -> None:
+    """B-04: hot_swap предпочитает shutdown_one(target), не трогает shutdown_all.
+
+    Регрессионный тест: до фикса ``hot_swap`` вызывал
+    ``loader.shutdown_all()`` (затрагивая все плагины) при перезагрузке
+    одного. Сейчас — per-plugin isolation.
+    """
+    loader = _PerPluginFakeLoader(
+        target_name="target_plugin",
+        other_names=("unrelated_a", "unrelated_b", "unrelated_c"),
+    )
+
+    result = await hot_swap("target_plugin", loader)  # type: ignore[arg-type]
+
+    assert result.status == "reloaded"
+    assert loader.shutdown_one_calls == ["target_plugin"]
+    assert loader.shutdown_all_calls == 0  # B-04 fix: never called for per-plugin swap
+
+
+@pytest.mark.asyncio
+async def test_hot_swap_does_not_disturb_unrelated_plugins() -> None:
+    """B-04: несвязанные плагины не затрагиваются при hot_swap одного.
+
+    Loader трекает что ``shutdown_one`` был вызван ровно для
+    целевого плагина, ни разу для ``unrelated_*``. Эмулирует
+    production-сценарий: 50 плагинов в registry, hot-swap одного
+    не должен прерывать работу остальных.
+    """
+    loader = _PerPluginFakeLoader(
+        target_name="target_plugin",
+        other_names=("unrelated_a", "unrelated_b", "unrelated_c"),
+    )
+
+    await hot_swap("target_plugin", loader)  # type: ignore[arg-type]
+
+    # Per-plugin shutdown дёрнут ровно для target_plugin.
+    assert loader.shutdown_one_calls == ["target_plugin"]
+    # Unrelated plugins НЕ shutdown'нуты (per-plugin isolation).
+    for unrelated in ("unrelated_a", "unrelated_b", "unrelated_c"):
+        assert unrelated not in loader.shutdown_one_calls
+
+
+@pytest.mark.asyncio
+async def test_hot_swap_shutdown_one_failure_wraps_with_specific_reason() -> None:
+    """B-04: падение shutdown_one оборачивается в HotSwapError с reason='shutdown_one_failed'.
+
+    Различает legacy-fallback (reason='shutdown_all_failed') от
+    per-plugin shutdown (reason='shutdown_one_failed') — оператору
+    понятно, какая ветка упала.
+    """
+    loader = _PerPluginFakeLoader(target_name="p")
+    loader.shutdown_one_raises = RuntimeError("per-plugin boom")
+
+    with pytest.raises(HotSwapError) as excinfo:
+        await hot_swap("p", loader)  # type: ignore[arg-type]
+    assert "shutdown_one_failed" in str(excinfo.value)
+    assert loader.shutdown_all_calls == 0  # не fallback
+
+
+@pytest.mark.asyncio
+async def test_hot_swap_falls_back_to_shutdown_all_when_loader_lacks_method() -> None:
+    """B-04 backward-compat: legacy loader без shutdown_one → fallback на shutdown_all.
+
+    Старые test-double и legacy PluginLoader (до S176) не имеют
+    ``shutdown_one``. hot_swap детектирует это через ``hasattr`` и
+    идёт по legacy-пути, логируя WARNING для observability.
+    """
+    # _FakeLoader из этого же файла НЕ имеет shutdown_one — fallback.
+    entry_before = _FakeEntry(name="p", version="1.0.0")
+    entry_after = _FakeEntry(name="p", version="1.0.1")
+    loader = _FakeLoader(entries_before=[entry_before], entries_after=[entry_after])
+
+    result = await hot_swap("p", loader)  # type: ignore[arg-type]
+    assert result.status == "reloaded"
+    # _FakeLegacy не имеет shutdown_one → shutdown_all вызван один раз.
+    assert loader.shutdown_calls == 1
+    assert loader.discover_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_hot_swap_legacy_shutdown_all_failure_uses_all_reason() -> None:
+    """B-04 legacy-path: shutdown_all-падение в fallback-ветке → reason='shutdown_all_failed'.
+
+    Когда loader не имеет shutdown_one, ошибка приходит из
+    shutdown_all и должна помечаться ``shutdown_all_failed`` (для
+    совместимости с pre-fix тестами и логированием в alerting).
+    """
+    entry_before = _FakeEntry(name="p", version="1.0.0")
+    loader = _FakeLoader(
+        entries_before=[entry_before], shutdown_raises=RuntimeError("all boom")
+    )
+
+    with pytest.raises(HotSwapError) as excinfo:
+        await hot_swap("p", loader)  # type: ignore[arg-type]
+    assert "shutdown_all_failed" in str(excinfo.value)
