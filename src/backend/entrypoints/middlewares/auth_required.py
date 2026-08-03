@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-"""Глобальный auth-guard middleware (V7 defense-in-depth).
+"""Глобальный auth-guard middleware (V7 defense-in-depth, cycle 43 pure ASGI).
 
 Wave [s2/k1-3-auth-guard]: гарантирует, что **каждый** non-public endpoint
 проходит хотя бы один auth-метод (API_KEY / JWT / BASIC / MTLS / SAML /
@@ -11,21 +9,34 @@ EXPRESS_JWT). Альтернатива fragile regex-bypass в :class:`APIKeyMid
   :class:`pathlib.PurePosixPath`);
 * для остальных запросов middleware пробует все настроенные верификаторы
   в порядке приоритета; при успехе записывает ``AuthContext`` в
-  ``request.state.auth``;
-* при провале возвращает 401 без вызова endpoint'а.
+  ``scope['state']['auth']``;
+* при провале отправляет 401 через send (no-raise, cycle 39 lesson).
 
-Сам middleware **не управляет** конкретными верификаторами — он
-импортирует их из :mod:`auth_selector`, чтобы не дублировать логику.
+Cycle 43: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
+архитектурной консистентности с cycle 33-42 (L1 middlewares).
+
+Cycle 43 design:
+- Public-path check в __call__ (читает scope['path']).
+- Auth-вызов через ``verify_request`` (read из scope['headers']/method).
+- AuthContext записывается в ``scope['state']['auth']`` (вместо
+  ``request.state.auth``) — downstream handlers получают через
+  ``request.state.auth`` алиасом.
+- 401 отправляется через send (no-raise pattern, cycle 39).
+
+Cycle 43 critical: scope['state'] модифицируется в __call__
+(до downstream) — auth context доступен downstream-обработчикам
+через request.state.auth. Это отличается от cycle 37
+(AuthMethodHeader), где state читал из downstream.
 """
 
+from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from pathlib import PurePosixPath
 
-from fastapi import Request
-from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.types import ASGIApp
+from starlette.requests import Request
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.auth import AuthContext, AuthMethod
 
@@ -67,16 +78,21 @@ def is_path_public(path: str, prefixes: Iterable[str]) -> bool:
     return False
 
 
-class AuthRequiredMiddleware(BaseHTTPMiddleware):
-    """Middleware, требующий аутентификацию для всех non-public endpoints.
+class AuthRequiredMiddleware:
+    """Pure ASGI middleware: auth-guard для non-public endpoints (cycle 43).
+
+    Поведение:
+    1. Извлекает scope['path'] и scope['method'].
+    2. Public-path → пробрасывает downstream без auth.
+    3. OPTIONS preflight → пробрасывает downstream без auth.
+    4. Иначе → вызывает ``verify_request`` для auth.
+    5. Успех → записывает ``AuthContext`` в ``scope['state']['auth']``.
+    6. Провал → 401 JSON через send (no-raise, cycle 39).
 
     Args:
         app: ASGI-приложение.
         public_prefixes: Префиксы путей, для которых auth не требуется.
         accepted_methods: Какие auth-методы пробовать (по умолчанию все).
-
-    Attrs:
-        public_prefixes: Текущий allowlist путей.
     """
 
     def __init__(
@@ -88,8 +104,12 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
-        super().__init__(app)
+        Args:
+            app: ASGI-приложение.
+            public_prefixes: Префиксы путей, для которых auth не требуется.
+            accepted_methods: Какие auth-методы пробовать (по умолчанию все).
+        """
+        self.app = app
         self.public_prefixes = tuple(public_prefixes)
         self._accepted_methods = (
             tuple(accepted_methods)
@@ -104,33 +124,76 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
             )
         )
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
-        """Process authentication for requests.
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Точка входа ASGI-протокола.
 
-        Args:
-            request: HTTP request.
-            call_next: Next middleware/endpoint.
-
-        Returns:
-            HTTP response.
+        Non-HTTP scope (``websocket`` / ``lifespan``) пробрасывается
+        downstream без auth-проверки.
         """
-        if is_path_public(request.url.path, self.public_prefixes):
-            return await call_next(request)
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-        if request.method == "OPTIONS":  # CORS preflight
-            return await call_next(request)
+        path = scope.get("path", "")
+        method = scope.get("method", "")
 
-        ctx = await self._authenticate(request)
+        # Public path → пробрасываем без auth.
+        if is_path_public(path, self.public_prefixes):
+            await self.app(scope, receive, send)
+            return
+
+        # OPTIONS preflight (CORS) → пробрасываем без auth.
+        if method == "OPTIONS":
+            await self.app(scope, receive, send)
+            return
+
+        # Authenticate.
+        ctx = await self._authenticate(scope, receive)
         if ctx is None:
-            return JSONResponse({"detail": "Authentication required"}, status_code=401)
+            # 401 через send (no-raise, cycle 39).
+            await self._send_401(send)
+            return
 
-        request.state.auth = ctx
-        return await call_next(request)
+        # Устанавливаем AuthContext в scope['state'] для downstream.
+        # В BaseHTTPMiddleware версии было request.state.auth — в pure
+        # ASGI эквивалент это scope['state']['auth']. FastAPI автоматически
+        # алиасит request.state на scope['state'], поэтому downstream
+        # handlers получают ctx через request.state.auth без изменений.
+        if "state" not in scope:
+            scope["state"] = {}
+        scope["state"]["auth"] = ctx
 
-    async def _authenticate(self, request: Request) -> AuthContext | None:
+        # Auth OK → пробрасываем downstream.
+        await self.app(scope, receive, send)
+
+    async def _authenticate(self, scope: Scope, receive: Receive) -> AuthContext | None:
+        """Вызывает verify_request для auth (cycle 43 helper).
+
+        Cycle 43: verify_request имеет signature ``(Request, methods)``.
+        Конструируем Starlette Request из scope+receive для совместимости
+        с public API auth_selector (S93 W3 refactor).
+        """
         # S93 W3: public verify_request вместо private _VERIFIERS access.
         from src.backend.entrypoints.api.dependencies.auth_selector import (
             verify_request,
         )
 
+        request = Request(scope, receive=receive)
         return await verify_request(request, methods=self._accepted_methods)
+
+    @staticmethod
+    async def _send_401(send: Send) -> None:
+        """Отправляет 401 JSON response через send (cycle 39 lesson)."""
+        body = json.dumps({"detail": "Authentication required"}).encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 401,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode("latin-1")),
+                    (b"www-authenticate", b"Bearer"),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
