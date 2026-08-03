@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from typing import Any
@@ -411,7 +412,7 @@ class StreamClient:
             ping = getattr(self, "ping", None)
             if ping is None:
                 return {"status": "ok", "latency_ms": 0.0, "error": None}
-            result = await ping() if asyncio.iscoroutinefunction(ping) else ping()
+            result = await ping() if inspect.iscoroutinefunction(ping) else ping()
             return {
                 "status": "ok" if result else "down",
                 "latency_ms": round((time.monotonic() - start) * 1000, 2),

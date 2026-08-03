@@ -15,6 +15,7 @@ env-based callback (``on_refresh``), теперь поддерживаются:
 """
 
 import asyncio
+import inspect
 from collections import defaultdict
 from collections.abc import Awaitable, Callable
 from os import getenv
@@ -151,7 +152,7 @@ class VaultSecretRefresher:
         """Уведомляет подписчиков об обновлении секретов."""
         for cb in self._callbacks:
             try:
-                if asyncio.iscoroutinefunction(cb):
+                if inspect.iscoroutinefunction(cb):
                     await cb(new_secrets)
                 else:
                     cb(new_secrets)
@@ -207,7 +208,7 @@ class VaultSecretRefresher:
     ) -> None:
         for cb in self._path_callbacks.get(path, []):
             try:
-                if asyncio.iscoroutinefunction(cb):
+                if inspect.iscoroutinefunction(cb):
                     await cb(path, new_secrets)
                 else:
                     cb(path, new_secrets)

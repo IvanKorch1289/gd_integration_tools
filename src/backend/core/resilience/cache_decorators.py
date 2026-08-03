@@ -28,6 +28,7 @@ time resolve, поэтому performance-cost ничтожен.
 from __future__ import annotations
 
 import asyncio
+import inspect
 from collections.abc import Awaitable, Callable, Mapping
 from functools import wraps
 from typing import Any, Literal
@@ -105,7 +106,7 @@ def cached(
         Returns:
             Cached version of the function.
         """
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise TypeError("@cached поддерживает только async-функции")
 
         if callable(key):
@@ -159,7 +160,7 @@ def invalidate(
     """
 
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise TypeError("@invalidate поддерживает только async-функции")
 
         @wraps(func)

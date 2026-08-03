@@ -31,6 +31,7 @@ Feature flag: ``feature_flags.workflow_step_log_enabled`` (default-OFF).
 from __future__ import annotations
 
 import asyncio
+import inspect
 import hashlib
 import time
 import uuid
@@ -198,7 +199,7 @@ class StepAuditMiddleware:
             return
         try:
             insert = getattr(self._client, "insert", None)
-            if insert and asyncio.iscoroutinefunction(insert):
+            if insert and inspect.iscoroutinefunction(insert):
                 await insert("workflow_step_log", rows)
             elif insert:
                 insert("workflow_step_log", rows)

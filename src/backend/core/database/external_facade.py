@@ -131,7 +131,7 @@ async def _call_procedure_impl(bundle: Any, name: str, params: dict[str, Any]) -
             "call_procedure not supported on this bundle (dialect-specific). "
             "Use 'db_call_procedure' DSL step or dialect-specific driver directly."
         )
-    if asyncio.iscoroutinefunction(fn):
+    if inspect.iscoroutinefunction(fn):
         return await fn(name, **params)
     return fn(name, **params)
 

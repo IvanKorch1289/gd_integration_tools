@@ -18,6 +18,7 @@ Lazy-import temporalio SDK (~15-20MB) — отсутствие пакета не
 from __future__ import annotations
 
 import asyncio
+import inspect
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -145,7 +146,7 @@ class TemporalClientFactory:
         async with self._lock:
             for entry in self._cache.values():
                 close = getattr(entry.client, "close", None)
-                if asyncio.iscoroutinefunction(close):
+                if inspect.iscoroutinefunction(close):
                     try:
                         await close()
                     except Exception as exc:

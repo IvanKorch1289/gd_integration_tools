@@ -364,7 +364,7 @@ class SkillRegistry:
         # Call — sync or async handler
         import asyncio
 
-        if asyncio.iscoroutinefunction(fn):
+        if inspect.iscoroutinefunction(fn):
             coro = fn(**kwargs)
             if timeout is not None and timeout > 0:
                 return await asyncio.wait_for(coro, timeout=timeout)
