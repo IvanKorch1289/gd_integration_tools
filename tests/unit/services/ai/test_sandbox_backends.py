@@ -23,10 +23,23 @@ import pytest
 # S172 M5 ARC-008: пропускаем ARC-008 тесты если запуск в production-env
 # (GD_INTEGRATION_PRODUCTION=1 уже set). In-process тесты будут raise.
 @pytest.fixture(autouse=True)
-def _ensure_dev_env() -> None:
-    """Force ``GD_INTEGRATION_PRODUCTION`` UNSET for dev/test runs."""
+def _ensure_dev_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Force ``GD_INTEGRATION_PRODUCTION`` UNSET for dev/test runs.
+
+    Также устанавливает ``feature_flags.ai_in_process_sandbox_disabled=False``
+    для legacy-тестов, которые проверяют DeprecationWarning-путь.
+    Тесты которые тестируют fail-closed (cycle 33) явно patch'ат флаг
+    обратно в True внутри test-body.
+    """
     if "GD_INTEGRATION_PRODUCTION" in os.environ:
         del os.environ["GD_INTEGRATION_PRODUCTION"]
+    # Разрешаем in-process для dev-legacy-тестов (DeprecationWarning path).
+    try:
+        from src.backend.core.config.features import feature_flags
+        monkeypatch.setattr(feature_flags, "ai_in_process_sandbox_disabled", False)
+    except Exception:
+        # feature_flags может не быть в test-env; пропускаем.
+        pass
 
 
 class TestInProcessAgentSandboxDeprecation:
@@ -93,6 +106,111 @@ class TestProcessPoolAgentSandboxUnchanged:
         b = get_process_pool_agent_sandbox()
         assert a is b
 
+
+class TestInProcessAgentSandboxFeatureFlagGate:
+    """Cycle 33 S176: feature-flag fail-closed regression tests (P0-1 second layer).
+
+    Дополнительно к production hard-gate (тест выше): при
+    ``feature_flags.ai_in_process_sandbox_disabled=True`` (default ON)
+    ``InProcessAgentSandbox.__init__`` должен raise RuntimeError. Это
+    второй слой защиты: если production-env bypass завершён через
+    misconfigured env, feature-flag всё равно блокирует zero-isolation
+    sandbox. Default ON в feature_flags значит, что оператор должен
+    явно opt-out для использования.
+
+    Без этих тестов — риск фиктивного закрытия: код содержит guard,
+    но если guard уберут, ничто не провалится.
+    """
+
+    def test_in_process_blocked_when_feature_flag_enabled(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """ai_in_process_sandbox_disabled=True (default) → RuntimeError.
+
+        Без ``GD_INTEGRATION_PRODUCTION=1`` (dev-env), но с feature-flag
+        включённым по умолчанию — in-process всё равно заблокирован.
+        """
+        from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
+
+        with patch(
+            "src.backend.core.config.features.feature_flags.ai_in_process_sandbox_disabled",
+            True,
+            create=True,
+        ):
+            with pytest.raises(RuntimeError, match="blocked by feature_flags"):
+                InProcessAgentSandbox()
+
+    def test_in_process_allowed_when_feature_flag_explicitly_disabled(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """ai_in_process_sandbox_disabled=False (explicit opt-out) → DeprecationWarning.
+
+        Оператор явно отключил feature-flag для dev-использования.
+        Sandbox создаётся, но emit DeprecationWarning (S172 ARC-008).
+        """
+        from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
+
+        with patch(
+            "src.backend.core.config.features.feature_flags.ai_in_process_sandbox_disabled",
+            False,
+            create=True,
+        ):
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                sandbox = InProcessAgentSandbox()
+
+            assert sandbox is not None
+            assert any(
+                issubclass(w.category, DeprecationWarning) for w in caught
+            ), "explicit opt-out должен по-прежнему emit DeprecationWarning"
+
+    def test_in_process_blocked_when_feature_flags_module_unavailable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Если feature_flags module не импортируется — fail-closed.
+
+        Защита от ситуации, когда feature_flags сломан/не установлен
+        и default ON пропускается. Безопасный fallback — блокировать.
+        Используем sys.modules-sysmonkeypatch чтобы simulate ImportError.
+        """
+        import sys
+
+        # Подкладываем в sys.modules заглушку, которая raise ImportError
+        # на любой attribute access. Это заставляет внутри __init__:
+        #   from src.backend.core.config.features import feature_flags
+        # упасть с ImportError на import-time.
+        class _BrokenModule:
+            def __getattr__(self, name: str) -> object:
+                raise ImportError(f"simulated: feature_flags.{name} unavailable")
+
+        # Сохраняем оригинал, чтобы корректно откатить.
+        original = sys.modules.get("src.backend.core.config.features")
+        sys.modules["src.backend.core.config.features"] = _BrokenModule()
+        try:
+            # Сбрасываем cached attribute, чтобы agent_sandbox re-import'нул.
+            from src.backend.services.ai import agent_sandbox as _mod
+
+            if "feature_flags" in _mod.__dict__:
+                del _mod.feature_flags
+
+            InProcessAgentSandbox = _mod.InProcessAgentSandbox
+
+            with pytest.raises(RuntimeError, match="module unavailable"):
+                InProcessAgentSandbox()
+        finally:
+            # Restore original module.
+            if original is not None:
+                sys.modules["src.backend.core.config.features"] = original
+            else:
+                sys.modules.pop("src.backend.core.config.features", None)
+            # Force re-import of original feature_flags.
+            import importlib
+
+            import src.backend.core.config.features  # noqa: F401
+
+            from src.backend.core.config.features import feature_flags  # noqa: F401
+
+            importlib.reload(importlib.import_module("src.backend.core.config.features"))
 
 class TestE2BAgentSandbox:
     """M5 ARC-008 — E2B backend config + lifecycle."""
