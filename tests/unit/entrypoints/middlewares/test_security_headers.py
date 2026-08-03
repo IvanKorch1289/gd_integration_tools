@@ -9,6 +9,11 @@ Cycle 78 L10: rewritten for pure ASGI middleware API. Previous version used
 ``mw.dispatch(request, call_next)`` (BaseHTTPMiddleware pattern) — but the
 middleware is pure ASGI with ``__call__(scope, receive, send)``, so all
 6 tests failed with AttributeError. Now uses ASGI triple directly.
+
+S176 cycle 33 B-07 fix: middleware implementation is now actually pure
+ASGI (was BaseHTTPMiddleware). The 7 base tests pass under both
+implementations, but the new test_preserves_streaming_body_chunks
+verifies the property that only the ASGI implementation can satisfy.
 """
 
 # ruff: noqa: S101
@@ -172,3 +177,84 @@ async def test_headers_added_to_error_response() -> None:
     headers = _captured_headers(send)
     assert headers[b"x-content-type-options"] == b"nosniff"
     assert headers[b"x-frame-options"] == b"DENY"
+
+
+# ── B-07 regression: pure ASGI must preserve streaming body chunks ──
+
+
+@pytest.mark.asyncio
+async def test_preserves_streaming_body_chunks() -> None:
+    """B-07: pure ASGI не буферизует body — multiple http.response.body проходят как есть.
+
+    Pre-fix (BaseHTTPMiddleware) буферизовал весь response.body в памяти
+    до полного завершения ``await call_next(request)`` и только потом
+    отправлял клиенту. Это ломает SSE/streaming и добавляет O(N) памяти
+    на каждый запрос. Pure ASGI-вариант передаёт каждое ``http.response.body``
+    сообщение downstream-send-у немедленно — body-chunks доходят в
+    исходном порядке, без модификации.
+    """
+    inner = AsyncMock()
+    chunks = [b"chunk-1\n", b"chunk-2\n", b"chunk-3\n"]
+
+    async def streaming_app(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        for chunk in chunks:
+            await send({"type": "http.response.body", "body": chunk})
+        await send({"type": "http.response.body", "body": b"", "more_body": False})
+
+    inner.side_effect = streaming_app
+    mw = SecurityHeadersMiddleware(inner)
+    send = AsyncMock()
+    await mw(_http_scope(), AsyncMock(), send)
+
+    # Find all body messages in order.
+    body_messages = [
+        call.args[0] for call in send.await_args_list
+        if call.args[0]["type"] == "http.response.body"
+    ]
+    assert len(body_messages) == 4  # 3 chunks + 1 final empty
+    assert body_messages[0]["body"] == b"chunk-1\n"
+    assert body_messages[1]["body"] == b"chunk-2\n"
+    assert body_messages[2]["body"] == b"chunk-3\n"
+    # Final message has more_body=False (stream terminator).
+    assert body_messages[3].get("more_body") is False
+
+
+@pytest.mark.asyncio
+async def test_does_not_buffer_headers_until_body_complete() -> None:
+    """B-07: http.response.start отправляется до любого body-сообщения.
+
+    BaseHTTPMiddleware переупорядочивал сообщения: downstream мог
+    отправить headers + body, но BaseHTTPMiddleware ждал body-complete
+    перед тем как начать отправлять. Это нарушает backpressure. В pure
+    ASGI порядок строго сохраняется.
+    """
+    inner = AsyncMock()
+    seen_types: list[str] = []
+
+    async def mixed_app(scope, receive, send):
+        seen_types.append("app:start")
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        seen_types.append("app:body1")
+        await send({"type": "http.response.body", "body": b"hello"})
+        seen_types.append("app:body2")
+        await send({"type": "http.response.body", "body": b"world"})
+
+    inner.side_effect = mixed_app
+    mw = SecurityHeadersMiddleware(inner)
+    send = AsyncMock()
+    await mw(_http_scope(), AsyncMock(), send)
+
+    # The downstream app must see start → body1 → body2 in that order.
+    assert seen_types == ["app:start", "app:body1", "app:body2"]
+    # And the headers we inject must appear on the FIRST http.response.start.
+    start_idx = next(
+        i for i, c in enumerate(send.await_args_list)
+        if c.args[0]["type"] == "http.response.start"
+    )
+    body1_idx = next(
+        i
+        for i, c in enumerate(send.await_args_list[start_idx + 1 :], start=start_idx + 1)
+        if c.args[0]["type"] == "http.response.body"
+    )
+    assert start_idx < body1_idx, "headers must be sent before any body chunk"
