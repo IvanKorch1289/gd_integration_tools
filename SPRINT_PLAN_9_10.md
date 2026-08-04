@@ -2461,4 +2461,41 @@ R25-3 (`_safe_orjson_loads` DRY across 7 files — YAGNI abstraction).
 
 26 раундов все закоммичены в master. Working tree clean.
 
+### Round 27 (2026-08-03 — Round 26 typo fix)
+
+**Цель Round 27**: Trivial fix — Round 26 commit сослался на `Round 25 fix`
+вместо `Round 26 fix` (typo).
+
+#### Round 27.1: Docstring round reference fix
+
+`src/backend/core/interfaces/multi_protocol.py:149` — comment
+`Round 25 fix:` → `Round 26 fix:`.
+
+#### Round 27 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+
+#### Round 27 Domain impact:
+
+| Домен | Round 26 → **Round 27** |
+|---|---|
+| Docs | 8.0 → **8.0** (typo fix) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 27 Cumulative scorecard (post R1-R27):
+
+| Домен | C2 → R27 (27 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| Tests/QA | 5.5 → **8.1** | +2.6 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+27 раундов все закоммичены в master. Working tree clean.
+
 
