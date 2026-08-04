@@ -151,7 +151,7 @@ async def run_hub_notebook(
 
         if not bool(getattr(feature_flags, "jupyter_hub_enabled", False)):
             raise JupyterHubNotEnabledError()
-    except ImportError, AttributeError:
+    except (ImportError, AttributeError):
         raise JupyterHubNotEnabledError() from None
 
     # 2. Resolve notebook spec — три источника в порядке приоритета:

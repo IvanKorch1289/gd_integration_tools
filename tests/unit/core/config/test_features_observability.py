@@ -34,7 +34,7 @@ class TestObservabilityFlagsClass:
         obs_names = list(fields.keys())
         assert "tracing_baggage_strict" in obs_names
         assert "audit_clickhouse_enabled" in obs_names
-        assert len(obs_names) == 2
+        assert len(obs_names) == 3  # +1 Sprint 4.6 (audit_hmac_verify_enabled)
 
 
 class TestObservabilityFlagsComposition:

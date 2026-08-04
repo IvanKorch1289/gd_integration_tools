@@ -152,7 +152,7 @@ def _main() -> int:
     lines.extend(
         [
             "",
-            "См. также: [PLAN.md](../../PLAN.md), [CHANGELOG.md](../../CHANGELOG.md),",
+            "См. также: [CHANGELOG.md](../../CHANGELOG.md),",
             "[TECH_DEBT.md](../../../.shared/context/TECH_DEBT.md).",
             "",
         ]

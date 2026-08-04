@@ -165,23 +165,37 @@ def test_canonical_json_b_and_uuid_t_are_callable_factories() -> None:
     assert c is not d
 
 
-# ── Shim: _compat (deprecated) ──
+# ── Shim: _compat (REMOVED in 2026-08) ──
 
 
 def test_shim_compat_reexports_json_b() -> None:
-    """``migrations._compat`` re-export'ит json_b ИЗ canonical."""
-    from src.backend.core.database.dialect_types import json_b as Canonical
-    from src.backend.infrastructure.database.migrations._compat import json_b as Shim
+    """``migrations._compat`` shim was removed (2026-08).
 
-    assert Shim is Canonical
+    Canonical path is ``core.database.dialect_types.json_b``.
+    Проверяем, что shim-модуль действительно удалён.
+    """
+    import importlib
+    import pytest
+
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module(
+            "src.backend.infrastructure.database.migrations._compat"
+        )
 
 
 def test_shim_compat_reexports_uuid_t() -> None:
-    """``migrations._compat`` re-export'ит uuid_t ИЗ canonical."""
-    from src.backend.core.database.dialect_types import uuid_t as Canonical
-    from src.backend.infrastructure.database.migrations._compat import uuid_t as Shim
+    """``migrations._compat`` shim was removed (2026-08).
 
-    assert Shim is Canonical
+    Canonical path is ``core.database.dialect_types.uuid_t``.
+    Проверяем, что shim-модуль действительно удалён.
+    """
+    import importlib
+    import pytest
+
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module(
+            "src.backend.infrastructure.database.migrations._compat"
+        )
 
 
 # ── Consumer integration ──

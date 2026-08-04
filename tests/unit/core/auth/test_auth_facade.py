@@ -274,20 +274,20 @@ class TestAuthFacadeTokenIssuance:
 
     @pytest.mark.asyncio
     async def test_revoke_token_success(self) -> None:
-        """revoke_token → SecurityFacade.add_to_blacklist."""
+        """revoke_token → SecurityFacade.blacklist_token."""
         facade = AuthFacade()
         with patch(
             "src.backend.services.security.facade.get_security_facade"
         ) as mock_get_facade:
             mock_sec_facade = MagicMock()
-            mock_sec_facade.add_to_blacklist = MagicMock(
+            mock_sec_facade.blacklist_token = MagicMock(
                 return_value=None  # sync — could be sync or async
             )
             # Make it return a coroutine to support await
-            async def _awaitable_add(jti: str) -> None:
-                return None
+            async def _awaitable_blacklist(jti: str) -> bool:
+                return True
 
-            mock_sec_facade.add_to_blacklist = _awaitable_add
+            mock_sec_facade.blacklist_token = _awaitable_blacklist
             mock_get_facade.return_value = mock_sec_facade
 
             result = await facade.revoke_token("jti-revoke-1")

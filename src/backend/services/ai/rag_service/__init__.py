@@ -37,7 +37,9 @@ from src.backend.services.ai.rag_service.search_mixin import (
     SearchMixin,  # S64 W4: MRO
     _extract_source_id,  # S152 W2: re-export для tests
     _filter_by_embedding_version,  # S152 W1: re-export для tests
+    _filter_chunks_by_tenant,  # Sprint 2.6: tenant post-filter helper
     _format_context_with_sources,  # S152 W2: re-export для tests
+    _resolve_effective_tenant_id,  # Sprint 2.6: tenant resolution helper
 )
 from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-export
 from src.backend.services.ai.rag_types import AugmentResult, FreshnessLabel
@@ -49,7 +51,9 @@ __all__ = (
     "RAGService",
     "_extract_source_id",
     "_filter_by_embedding_version",
+    "_filter_chunks_by_tenant",
     "_format_context_with_sources",
+    "_resolve_effective_tenant_id",
 )
 
 

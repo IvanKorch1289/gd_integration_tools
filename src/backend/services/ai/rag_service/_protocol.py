@@ -28,5 +28,10 @@ class _RAGServiceProtocol(Protocol):
     async def _invalidate_namespace(self, namespace: str | None) -> None: ...
 
     async def search(
-        self, query: str, top_k: int = 5, namespace: str | None = None
+        self,
+        query: str,
+        top_k: int = 5,
+        namespace: str | None = None,
+        *,
+        tenant_id: str | None = None,
     ) -> list[dict[str, Any]]: ...
