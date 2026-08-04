@@ -1899,4 +1899,55 @@ Per ponytail: эти failures относятся к feature areas (Lakera integr
 
 15 раундов все закоммичены в master. Working tree clean.
 
+### Round 16 (2026-08-03 — R5 regression catch)
+
+**Цель Round 16**: Поймать regression тесты после Round 5 R1.1 (get_ai_gateway delegation).
+
+#### Round 16.1: test_gateway_adapter regression fix
+
+`tests/unit/services/ai/test_gateway_adapter.py::test_adapter_default_gateway_construction`:
+- Тест mock'ал `AIGateway` class напрямую, expected 1 instance.
+- Round 5 R1.1 fix изменил `invoke_via_gateway` — больше не вызывает `AIGateway()` напрямую, а делегирует в `get_ai_gateway()` (Sprint 1.3 composition root + R5 Imp.1).
+- Mock target изменён: `AIGateway` class → `get_ai_gateway` function.
+
+**Tests**: 6/6 gateway_adapter tests passing (было 5/6 + 1 fail).
+
+#### Round 16.2: Other pre-existing failures survey
+
+- `test_langmem_smoke.py` (4 tests) — `LangMemService` API changed (no `add_episodic`, `add_semantic`, `qdrant_client`, `session_factory`). Pre-existing, R-неintroduced.
+- `test_aigateway_capability_wiring.py` (4 tests) — capability wiring API mismatch. Pre-existing.
+- `test_msgspec_speedup_nested_dict` — benchmark flake (verified pre-existing).
+- `test_react_isolated_uses_sandbox` + `test_gateway_enforce_uses_aigateway` — test ordering pollution (passes isolated).
+- `test_handles_import_error` (eventbus) — pre-existing.
+
+#### Round 16 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_gateway_adapter | ✅ **6 passed** |
+
+#### Round 16 Domain impact:
+
+| Домен | Round 15 → **Round 16** |
+|---|---|
+| L5 AI/agents | 8.7 → **8.7** |
+| L9 Security E2E | 8.8 → **8.8** |
+| Tests/QA | 7.9 → **7.9** (+1 test fixed) |
+| **Медиана** | 8.6 → **8.6** (regression catch) |
+
+#### Round 16 Cumulative scorecard (post R1-R16):
+
+| Домен | C2 → R16 (16 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.8** | +1.3 |
+| L3 DSL/routes | 8.4 → **8.7** | +0.3 |
+| Tests/QA | 5.5 → **7.9** | +2.4 |
+| Docs | 6.5 → **7.9** | +1.4 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+16 раундов все закоммичены в master. Working tree clean.
+
 
