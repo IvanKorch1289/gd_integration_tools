@@ -7,9 +7,10 @@ import os
 from src.backend.core.config.features import feature_flags
 from src.backend.core.config.features.sprint6 import Sprint6Flags
 
-# 21 fields total, distributed across 5 K-domains (Sprint 6):
+# Round 7 fix: 20 fields total после удаления ``structlog_batching_enabled``
+# (YAGNI cleanup — wrapper был dead code без production callers). Распределение:
 #   K1 Security: 6
-#   K2 Resilience+Perf: 7
+#   K2 Resilience+Perf: 6 (было 7 — minus structlog_batching_enabled)
 #   K3 DSL+Workflow: 2
 #   K4 AI+Quality: 3
 #   K5 Frontend+Chaos: 3
@@ -21,9 +22,8 @@ SPRINT6_FIELD_NAMES = (
     "owasp_zap_gate_enabled",
     "custom_code_audit_enabled",
     "codeclone_fail_on_new",
-    # K2 Resilience+Perf (7)
+    # K2 Resilience+Perf (6) — Round 7: structlog_batching_enabled удалён
     "perf_gate_strict",
-    "structlog_batching_enabled",
     "processor_health_checks_strict",
     "backpressure_streaming_enabled",
     "granian_rsgi_mode_enabled",
@@ -41,7 +41,7 @@ SPRINT6_FIELD_NAMES = (
     "resilience_dashboard_enabled",
     "pool_monitor_enabled",
 )
-EXPECTED_SPRINT6_FIELD_COUNT = 21
+EXPECTED_SPRINT6_FIELD_COUNT = 20
 
 
 class TestSprint6FlagsClass:
@@ -70,7 +70,7 @@ class TestSprint6FlagsClass:
     def test_sprint6_field_count(self) -> None:
         fields = Sprint6Flags.model_fields
         names = list(fields.keys())
-        # 21 fields: 6 K1 + 7 K2 + 2 K3 + 3 K4 + 3 K5
+        # 20 fields: 6 K1 + 6 K2 + 2 K3 + 3 K4 + 3 K5 (Round 7: structlog_batching removed)
         assert len(names) == EXPECTED_SPRINT6_FIELD_COUNT
         assert tuple(names) == SPRINT6_FIELD_NAMES
 

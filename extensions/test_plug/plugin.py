@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from gd_integration_tools.core.plugin_runtime import BasePlugin
+from src.backend.core.interfaces.plugin import BasePlugin
 
 
 @dataclass

@@ -236,6 +236,122 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
             "use DurableWorkflowRunner._run_step() instead"
         )
 
+    async def await_external_signal(
+        self,
+        *,
+        handle: WorkflowHandle,
+        signal_name: str,
+        timeout: timedelta | None = None,
+    ) -> dict[str, Any]:
+        """Round 5 Sprint 5.2: polling-реализация для pg-runner backend.
+
+        ADR-031 pg-runner не имеет LISTEN/NOTIFY wait-queue (carryover, см.
+        ADR-NEW-21). Реализация через polling ``workflow_events`` table:
+        ищем последний ``signal_received`` event с ``signal_name==<signal_name>``
+        для instance. Polling interval растёт экспоненциально (1s → 5s max).
+        При таймауте возвращаем ``{"timed_out": True}`` (semantics совпадает
+        с :class:`FakeWorkflowBackend.await_external_signal`).
+
+        Args:
+            handle: Дескриптор ожидающего workflow.
+            signal_name: Имя сигнала, которого ждём.
+            timeout: Максимальное время ожидания (None = бесконечно).
+
+        Returns:
+            Payload сигнала (dict). При таймауте: ``{"timed_out": True}``.
+        """
+        instance_id = self._uuid_from_handle(handle)
+        deadline: float | None = None
+        if timeout is not None:
+            loop = asyncio.get_running_loop()
+            deadline = loop.time() + timeout.total_seconds()
+
+        interval = self._poll_interval_s
+        seen_event_ids: set[int] = set()
+        # Используем read_events (WorkflowEventStore API, не list_for_workflow):
+        # читаем все события после последнего consumed seq.
+        last_seq = await self._event_store.latest_seq(instance_id)
+        after_seq = 0
+        while True:
+            events = await self._event_store.read_events(
+                workflow_id=instance_id, after_seq=after_seq, limit=1000
+            )
+            for event in events:
+                if event.seq in seen_event_ids:
+                    continue
+                payload = event.payload or {}
+                if (
+                    event.event_type is WorkflowEventType.signal_received
+                    and payload.get("signal_name") == signal_name
+                ):
+                    return dict(payload.get("data", {}))
+                seen_event_ids.add(event.seq)
+            after_seq = max(seen_event_ids, default=last_seq)
+            if deadline is not None:
+                loop = asyncio.get_running_loop()
+                remaining = deadline - loop.time()
+                if remaining <= 0:
+                    return {"timed_out": True}
+                await asyncio.sleep(min(interval, remaining))
+            else:
+                await asyncio.sleep(interval)
+            interval = min(interval * 2, self._poll_max_interval_s)
+
+    async def start_child_workflow(
+        self,
+        *,
+        parent_handle: WorkflowHandle,
+        workflow_name: str,
+        workflow_id: str,
+        input: dict[str, Any],
+        task_queue: str,
+        execution_timeout: timedelta | None = None,
+    ) -> WorkflowHandle:
+        """Round 5 Sprint 5.2: запуск child workflow для pg-runner.
+
+        Pg-runner не имеет parent-child cascade через Temporal API.
+        Используем тот же ``state_store.create`` path, но помечаем
+        ``parent_run_id`` в ``input_payload["__parent_run_id"]`` для
+        observability и тестов cancellation cascade. Namespace
+        наследуется от parent (multi-tenant consistency).
+
+        Args:
+            parent_handle: Дескриптор parent workflow (для namespace inheritance).
+            workflow_name: Имя запускаемого workflow.
+            workflow_id: Temporal-style deduplication-tag.
+            input: Input payload (включая ``__parent_run_id`` маркер).
+            task_queue: Task queue (pg-runner игнорирует, хранится для trace).
+            execution_timeout: Сохраняется в payload (pg-runner управляет
+                retry/lease через RunnerConfig).
+
+        Returns:
+            :class:`WorkflowHandle` нового child instance.
+        """
+        tenant_id = (
+            "default" if parent_handle.namespace == "global" else parent_handle.namespace
+        )
+        payload = {
+            "__workflow_id": workflow_id,
+            "__task_queue": task_queue,
+            "__parent_run_id": parent_handle.run_id,
+            "__parent_workflow_id": parent_handle.workflow_id,
+            "__execution_timeout_s": (
+                execution_timeout.total_seconds() if execution_timeout else None
+            ),
+            **input,
+        }
+        instance_id = await self._state_store.create(
+            workflow_name=workflow_name,
+            route_id=workflow_name,
+            input_payload=payload,
+            tenant_id=tenant_id,
+        )
+        return WorkflowHandle(
+            workflow_id=workflow_id,
+            run_id=instance_id.hex,
+            namespace=parent_handle.namespace,
+        )
+
     # --- helpers -------------------------------------------------------
 
     @staticmethod

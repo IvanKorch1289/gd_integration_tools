@@ -161,18 +161,24 @@ class AuditLogMiddleware:
 
         # Также ClickHouse writer (lazy import).
         try:
-            from src.backend.core.di.providers import (
-                get_audit_log_writer_provider,
+            import src.backend.core.di.providers as _di_providers
+
+            get_audit_log_writer_provider = getattr(
+                _di_providers, "get_audit_log_writer_provider", None
             )
+            if get_audit_log_writer_provider is None:
+                # Provider ещё не реализован (carryover, см. ADR-NEW-21);
+                # корректно skip без поднятия ошибки mypy/runtime.
+                pass
+            else:
+                writer = get_audit_log_writer_provider()
+                if writer is not None:
+                    # Async write — но мы в sync path, используем create_task.
+                    import asyncio
 
-            writer = get_audit_log_writer_provider()
-            if writer is not None:
-                # Async write — но мы в sync path, используем create_task.
-                import asyncio
-
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    loop.create_task(writer.write(audit_event))
+                    loop = asyncio.get_event_loop()
+                    if loop.is_running():
+                        loop.create_task(writer.write(audit_event))
         except Exception as exc:
             _clickhouse_logger.debug("ClickHouse audit write skipped: %s", exc)
 

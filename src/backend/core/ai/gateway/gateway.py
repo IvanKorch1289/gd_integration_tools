@@ -146,6 +146,36 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
             workflow_id=workflow_id, tenant_id=tenant_id
         )
 
+    def _enforce_production_wiring(self) -> None:
+        """Sprint 1.3 (S177 M2): production-wiring guard.
+
+        Проверяет, что в production все три обязательных DI инжектированы:
+        ``policy_resolver``, ``capability_gate``, ``token_budget``.
+        При отсутствии хотя бы одной зависимости бросает
+        :class:`AIGatewayProductionWiringError` ДО начала invoke
+        (чтобы production с broken composition упала сразу с понятной
+        ошибкой, а не с ProviderLookupError из policy_resolver/capability_gate).
+
+        Backward-compat: в development/staging недостающие зависимости
+        пропускаются (gate не активируется).
+        """
+        from src.backend.core.config.settings import settings as app_settings
+        from src.backend.core.ai.errors import AIGatewayProductionWiringError
+
+        env = getattr(getattr(app_settings, "app", None), "environment", "")
+        if env != "production":
+            return  # dev/staging: skip guard
+
+        missing: list[str] = []
+        if self._policy_resolver is None:
+            missing.append("policy_resolver")
+        if self._capability_gate is None:
+            missing.append("capability_gate")
+        if self._token_budget is None:
+            missing.append("token_budget")
+        if missing:
+            raise AIGatewayProductionWiringError(tuple(missing))
+
     async def invoke(self, request: AIRequest) -> AIResponse:
         """Главный entrypoint AI-инвокации.
 
@@ -158,6 +188,9 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
             (tokens / cost / guards).
 
         Raises:
+            AIGatewayProductionWiringError: В production при отсутствии
+                обязательных DI (``policy_resolver``, ``capability_gate``,
+                ``token_budget``).
             CapabilityDeniedError: При отсутствии ``ai.invoke.<workflow_id>``
                 в plugin.toml::capabilities.
             PolicyNotResolvedError: При :data:`feature_flags.ai_policy_enforce = True`,
@@ -170,6 +203,10 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
         Notes:
             S85 W1 (V2 P0 #1): _legacy_invoke удалён. Enforcement обязателен.
         """
+        # Sprint 1.3: production-wiring guard ПЕРЕД enforcement
+        # (чтобы production с broken composition упала сразу с понятной ошибкой,
+        # а не с ProviderLookupError из policy_resolver/capability_gate).
+        self._enforce_production_wiring()
         from src.backend.core.config.features import feature_flags
 
         # S85 W1 (V2 P0 #1): enforcement is mandatory, scaffold-режим запрещён.

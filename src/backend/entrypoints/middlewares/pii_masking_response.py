@@ -103,7 +103,10 @@ class PIIMaskingResponseMiddleware:
                 original_headers = list(message.get("headers", []))
 
                 # Check content-type перед сбором body.
-                content_type = b""
+                # ponytail: инициализируем как str, чтобы ``"application/json" not in content_type``
+                # работал и для случая, когда content-type header отсутствует (ранее
+                # крашилось с TypeError str-in-bytes).
+                content_type = ""
                 for k, v in original_headers:
                     if k.lower() == b"content-type":
                         content_type = v.decode("latin-1", errors="replace")

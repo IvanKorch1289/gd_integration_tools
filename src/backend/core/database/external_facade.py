@@ -21,6 +21,7 @@ API::
 
 from __future__ import annotations
 
+import inspect
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator
@@ -136,7 +137,6 @@ async def _call_procedure_impl(bundle: Any, name: str, params: dict[str, Any]) -
     return fn(name, **params)
 
 
-import asyncio  # noqa: E402  (kept at bottom to avoid top-level cost)
 
 # ---------------------------------------------------------------------------
 # Façade

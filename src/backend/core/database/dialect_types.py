@@ -2,7 +2,7 @@
 
 Helpers для PG-специфичных типов с автоматическим fallback'ом на
 портативные аналоги для SQLite. Перемещено из
-:mod:`src.backend.infrastructure.database.migrations._compat` (S107 W1,
+``src.backend.infrastructure.database.migrations._compat`` (S107 W1,
 TD-002 residual) для устранения layer violation: domain models
 импортировали ``json_b``/``uuid_t`` из ``infrastructure/``, что
 нарушает V22 layer policy.

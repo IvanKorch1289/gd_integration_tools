@@ -99,7 +99,8 @@ class RagCacheSettings(BaseSettingsWithLoader):
         default="rag_cache_l2", description="Имя коллекции Qdrant для L2."
     )
     l3_enabled: bool = Field(
-        default=True, description="L3 retrieval-cache (Redis prefix rag:l3:)."
+        default=True,
+        description="L3 retrieval-cache (Redis prefix rag:l3:v2:).",
     )
     l3_ttl: int = Field(
         default=600, ge=1, description="TTL L3 retrieval-кэша (секунды)."

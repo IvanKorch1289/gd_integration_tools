@@ -44,7 +44,10 @@ def _get_outbox_dlq_session_factory() -> Any:
 
     @asynccontextmanager
     async def _factory() -> AsyncIterator[AsyncSession]:
-        async with mgr.session() as session:
+        # Round 5 Sprint 5.2: использовали mgr.get_session() (async generator),
+        # но `async with` требует context manager. Используем mgr.create_session()
+        # (он @asynccontextmanager) — даёт auto-commit/rollback через circuit breaker.
+        async with mgr.create_session() as session:
             yield session
 
     return _factory
