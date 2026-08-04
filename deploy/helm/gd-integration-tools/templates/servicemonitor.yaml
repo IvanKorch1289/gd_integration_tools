@@ -1,0 +1,64 @@
+# S36 Devops 2: Prometheus Operator ServiceMonitor для gd-app.
+#
+# Это НЕ standalone Prometheus scrape-config — это CRD из prometheus-operator
+# (api `monitoring.coreos.com/v1`). Prometheus instance с
+# `serviceMonitorSelector` (по умолчанию `release: prometheus`) подберёт этот
+# ресурс и автоматически сгенерирует scrape-targets.
+#
+# Покрытие:
+#   * `spec.selector.matchLabels` — должен совпадать с labels `Service`
+#     (`templates/service-app.yaml`), а не pod'ов;
+#   * `endpoints[].port` — имя порта из Service (`metrics`, targetPort=9090);
+#   * `endpoints[].path` — фактический scrape-path контейнера (`/metrics`),
+#     см. аннотацию `prometheus.io/path` в deployment-app.yaml;
+#   * `endpoints[].interval` — как часто Prometheus Operator scrape'ит.
+#
+# Opt-in: шаблон обёрнут в `{{- if ... }}` через default `true` — production
+# с `kube-prometheus-stack` включает scrape по умолчанию; opt-out через
+# `--set serviceMonitor.enabled=false` или `.Values.serviceMonitor.enabled`
+# в values.yaml (см. паттерн `networkPolicy.enabled` / `pdb.enabled`).
+#
+# Defaults через `default` (а не values.yaml): минимизирует diff в Sprint 6
+# scope (2 файла правок: deployment-app.yaml + этот template). При появлении
+# real-world overrides добавить ключи в values.yaml.
+#
+# См. PLAN.md V22 §S36 (Devops 2) и docs/integration/INTEGRATION_GUIDE.md
+# (Prometheus Operator conventions).
+{{- if .Values.serviceMonitor.enabled | default true }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    # `release: prometheus` — дефолтный label-selector `kube-prometheus-stack`
+    # (`prometheus.spec.serviceMonitorSelector`). Если стек развёрнут под
+    # другим release-именем — override через `.Values.serviceMonitor.selectorLabels`.
+    {{- $releaseLabel := .Values.serviceMonitor.selectorLabels.release | default "prometheus" }}
+    release: {{ $releaseLabel | quote }}
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: app
+spec:
+  # Selector должен совпадать с labels `Service gd-app`, иначе Prometheus
+  # Operator не найдёт endpoints. Метка `app.kubernetes.io/component: app`
+  # фильтрует worker service — у воркера свой `component: workflow-worker`
+  # и отдельный scrape-endpoint (TBD, S37+).
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gd-integration-tools
+      app.kubernetes.io/component: app
+  # Namespace selector ограничивает lookup Service'ов указанным namespace'ом —
+  # обязателен в multi-tenant кластерах, иначе Prometheus найдёт все Services
+  # с подходящими labels во всех namespace'ах.
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace.name }}
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: {{ .Values.serviceMonitor.interval | default "30s" }}
+      scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout | default "10s" }}
+      # honorLabels сохраняет pod-labels в метриках (deployment labels
+      # `app.kubernetes.io/version` полезны для per-version алертинга).
+      honorLabels: true
+{{- end }}
