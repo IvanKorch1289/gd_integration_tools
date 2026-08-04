@@ -2864,4 +2864,51 @@ multi-line `from src.backend.core.ai.policy.enforcer.tools_policy import
 35 итераций (31 раундов закоммиченных + 4 null rounds).
 Working tree clean.
 
+### Round 36 (2026-08-03 — Try/Except import removal, NOT COMMITTED)
+
+**Цель Round 36**: Fix Round 35 TYPE_CHECKING bug + add Try/Except handling.
+
+#### Round 36.1: Skipped — Try/Except blocks have complex AST
+
+Two attempts:
+- Phase 1: handle `if TYPE_CHECKING:` blocks (passes for that case).
+- Phase 2: but `try: from x import y except:` blocks — script
+  removes `from x import y` but leaves `try:` empty → syntax error.
+
+Полный revert. Try/Except blocks содержат сложную AST структуру
+(handler'ы в `except` могут ссылаться на imported names).
+
+Ponytail decision: STOP bulk-cleanup attempts. Round 36 = null commit.
+Dedicated migration требует proper AST visitor + try/except handler.
+
+#### Round 36 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK (clean после revert) |
+| `mypy -p src` | ✅ **0 errors** (clean) |
+
+#### Round 36 Domain impact:
+
+| Домен | Round 35 → **Round 36** |
+|---|---|
+| All | **unchanged** (no commits) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 36 Cumulative scorecard (post R1-R36, 31 раундов закоммиченных):
+
+| Домен | C2 → R36 | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.2** | +2.7 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+36 итераций (31 раундов закоммиченных + 5 null rounds).
+Working tree clean.
+
 
