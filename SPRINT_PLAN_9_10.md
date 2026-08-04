@@ -3281,4 +3281,52 @@ Per Ponytail "не выдумывай улучшения" — Round 43 = null co
 43 итерации (37 раундов закоммиченных + 6 null rounds).
 Working tree clean.
 
+### Round 44 (2026-08-03 — analyst micro-wins, 5 fixes)
+
+**Цель Round 44**: Применить 5 micro-wins от analyst agent.
+
+#### Round 44.1-5: 5 micro-wins done
+
+| ID | Что | Impact |
+|---|---|---|
+| R44-1 | Dead ``_XFAIL_WIRING_ERROR_HIERARCHY`` marker удалён в `test_aigateway_production_wiring.py` (15 LOC). | -15 LOC |
+| R44-2 | Russian grammar: \"со старше\" → \"со старым\" в 3 docstrings (errors.py, workspace_manager.py, test_saml_backend.py). | docstring accuracy |
+| R44-3 | `adapt_capability_gate` добавлен в `gateway_adapter.__all__` (был доступен через import но не публичным). | Public API |
+| R44-4 | `_DeprecationAuditEmitted` docstring исправлен — убран misleading \"Статический счётчик + set\" (actual — bool guard). | docstring accuracy |
+| R44-5 | +5 smoke tests для `HierarchicalStrategy` (ни одного теста ранее). `tests/unit/core/ai/test_context_strategy.py` (87 LOC). | +5 tests |
+
+#### Round 44 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_context_strategy (NEW) | ✅ **5 passed** |
+| test_aigateway_production_wiring | ✅ **10 passed** |
+
+#### Round 44 Domain impact:
+
+| Домен | Round 43 → **Round 44** |
+|---|---|
+| L5 AI/agents | 8.8 → **8.9** (+5 strategy tests) |
+| Tests/QA | 8.4 → **8.5** (+5 tests) |
+| Docs | 8.0 → **8.1** (grammar + docstring accuracy) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 44 Cumulative scorecard (post R1-R44, 38 раундов закоммиченных):
+
+| Домен | C2 → R44 (44 итерации) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.9** | +2.9 |
+| L9 Security E2E | 7.5 → **9.0** | +1.5 |
+| L3 DSL/routes | 8.4 → **9.0** | +0.6 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.5** | +3.0 |
+| Docs | 6.5 → **8.1** | +1.6 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+44 итерации (38 раундов закоммиченных + 6 null rounds).
+Working tree clean.
+
 
