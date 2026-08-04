@@ -2817,4 +2817,51 @@ lines, оставив syntax error).
 34 итераций (31 раундов закоммиченных + 3 null rounds).
 Working tree clean.
 
+### Round 35 (2026-08-03 — node-based import removal, NOT COMMITTED)
+
+**Цель Round 35**: Fix Round 34 multi-line bug через AST node-based removal.
+
+#### Round 35.1: Skipped — inline comments in multi-line imports
+
+Node-based script нашёл 3092 candidate imports в 341 файлах, но
+bulk-remove сломал `core/ai/policy/enforcer/__init__.py:41` —
+multi-line `from src.backend.core.ai.policy.enforcer.tools_policy import
+(  # S76 W3` имеет inline comments, мой script удалил эти comments
+вместо сохранения как no-op.
+
+Полный revert. Multi-line imports с inline comments + trailing names
+требуют proper token-level preservation (not line-level).
+
+Документировано как "не реализовано" — dedicated migration.
+
+#### Round 35 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK (clean) |
+| `mypy -p src` | ✅ **0 errors** (clean) |
+
+#### Round 35 Domain impact:
+
+| Домен | Round 34 → **Round 35** |
+|---|---|
+| All | **unchanged** (no commits) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 35 Cumulative scorecard (post R1-R35, 31 раундов закоммиченных):
+
+| Домен | C2 → R35 | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.2** | +2.7 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+35 итераций (31 раундов закоммиченных + 4 null rounds).
+Working tree clean.
+
 
