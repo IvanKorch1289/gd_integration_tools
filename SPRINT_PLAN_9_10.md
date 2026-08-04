@@ -2109,4 +2109,55 @@ Per ponytail: эти failures относятся к feature areas (Lakera integr
 
 19 раундов все закоммичены в master. Working tree clean.
 
+### Round 20 (2026-08-03 — test ordering pollution root cause fix)
+
+**Цель Round 20**: Найти root cause test ordering pollution в test_ai_tool_dispatch (pre-existing failures pass isolated).
+
+#### Round 20.1: Pollution root cause + fix
+
+**Root cause**:
+1. `test_gateway_adapter.py` устанавливает `feature_flags.ai_gateway_enforce=True` через `monkeypatch.setattr` (без сброса).
+2. `get_ai_gateway_provider()` использует `@lru_cache(maxsize=1)` для `_build_ai_gateway_singleton` — cached instance bypass'ит последующие mock'и.
+
+Когда `test_ai_tool_dispatch_end_to_end_*` запускаются после `test_gateway_adapter.py`:
+- Cached AIGateway instance возвращает stale mock result (mock bypass).
+- `feature_flag=True` → production-wiring guard бросает `AIPolicySpec не найден для workflow_id='ai_tool_dispatch'` ДО mock_invoke → dispatcher получает `'no_selection'` вместо mock'нутого ответа.
+
+**Fix**: добавлен `cache_clear()` + feature_flag reset в 3 теста:
+- `test_ai_tool_dispatch_end_to_end_happy_path`
+- `test_ai_tool_dispatch_end_to_end_blocks_tool_outside_whitelist`
+- `test_ai_tool_dispatch_no_selection_when_llm_unavailable`
+
+**Tests**: 28 passed (was 2 failed + 26 passed).
+
+#### Round 20 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_ai_tool_dispatch + test_gateway_adapter combined | ✅ **28 passed** |
+
+#### Round 20 Domain impact:
+
+| Домен | Round 19 → **Round 20** |
+|---|---|
+| L5 AI/agents | 8.7 → **8.7** |
+| L3 DSL/routes | 8.7 → **8.8** (+test isolation fix) |
+| Tests/QA | 7.9 → **8.0** (+2 tests fixed) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 20 Cumulative scorecard (post R1-R20):
+
+| Домен | C2 → R20 (20 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.8** | +1.3 |
+| L3 DSL/routes | 8.4 → **8.8** | +0.4 |
+| Tests/QA | 5.5 → **8.0** | +2.5 |
+| Docs | 6.5 → **7.9** | +1.4 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+20 раундов все закоммичены в master. Working tree clean.
+
 
