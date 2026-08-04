@@ -25,9 +25,12 @@ pytestmark = pytest.mark.unit
 # Помечаем 4 failing теста как xfail — verification post-implementation.
 _XFAIL_ADAPT_CAPABILITY = pytest.mark.xfail(
     reason=(
-        "Sprint 1.5 L5 Security Chain: adapt_capability_gate не реализован "
-        "в gateway_adapter.py (planned в SPRINT_PLAN_9_10.md, carryover). "
-        "Round 17: помечаем forward-looking тесты xfail до dedicated sprint."
+        "Sprint 1.5 L5 Security Chain pipeline: tests требуют full "
+        "DI injection (policy_resolver + capability_gate + token_budget) "
+        "— текущая реализация проверяет production wiring guard. "
+        "Round 39 реализовал adapt_capability_gate; Round 42 — pipeline "
+        "tests require 3 mocks (M scope, dedicated migration). "
+        "Помечаем xfail до dedicated sprint."
     ),
     strict=True,
 )
