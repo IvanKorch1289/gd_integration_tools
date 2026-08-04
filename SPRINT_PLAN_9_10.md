@@ -2588,4 +2588,53 @@ AST-анализ нашёл 72 файла в `src/backend/` где `_logger = ge
 
 29 раундов все закоммичены в master. Working tree clean.
 
+### Round 30 (2026-08-03 — Round 29 followup, NOT COMMITTED)
+
+**Цель Round 30**: Bulk remove unused `logger = get_logger(...)` declarations (similar to Round 29).
+
+#### Round 30.1: Skipped — false positives
+
+AST-анализ нашёл 74 truly unused `logger` declarations в `src/backend/`.
+Bulk-remove script использовал regex `\blogger\.` для проверки usage,
+но `logger` также используется как:
+- bare argument: `log_audit_event_lite(logger, ...)`
+- function argument: `def helper(logger) -> ...`
+
+Скрипт нашёл 85 false positives после применения. Round 30
+**отменён** (полный revert), требует более тщательной проверки
+(полная AST-валидация использования имени во всех контекстах, не только
+dotted access).
+
+Документировано для будущего dedicated migration с proper AST visitor.
+
+#### Round 30 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK (clean state после revert) |
+| `mypy -p src` | ✅ **0 errors** (clean state) |
+
+#### Round 30 Domain impact:
+
+| Домен | Round 29 → **Round 30** |
+|---|---|
+| All | **unchanged** (no commits) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 30 Cumulative scorecard (post R1-R30, 29 раундов закоммиченных):
+
+| Домен | C2 → R30 | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.1** | +2.6 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+30 итераций (29 раундов закоммичены + Round 30 = null result).
+Working tree clean.
+
 
