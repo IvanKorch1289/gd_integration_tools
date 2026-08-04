@@ -24,7 +24,8 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, Final
+from types import MappingProxyType
+from typing import Any, Final, Mapping
 
 from purgatory import AsyncCircuitBreakerFactory
 from purgatory.domain.messages.base import Event
@@ -52,12 +53,15 @@ logger = get_logger(__name__)
 CircuitOpen = OpenedState
 
 # S168 W4: PEP 695 type alias для clarity и DRY.
-type StateMap = dict[str, str]
-_STATE_MAP: Final[StateMap] = {
+# Round 6 K-6.1: ``MappingProxyType`` даёт runtime защиту от mutation
+# (Final не делает dict immutable) + zero-cost wrapper над dict-storage.
+# type alias на ``Mapping`` (read-only view) вместо ``dict`` для type-checker clarity.
+type StateMap = Mapping[str, str]
+_STATE_MAP: Final[StateMap] = MappingProxyType({
     "closed": "closed",
     "opened": "open",
     "half-opened": "half_open",
-}
+})
 
 
 @dataclass(slots=True, frozen=True)

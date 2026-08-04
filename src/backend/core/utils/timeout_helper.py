@@ -1,7 +1,15 @@
 """Timeout helper (S171 M5 — централизация для 8+ scattered call sites).
 
-Единый wrapper над :func:`asyncio.wait_for` с structured logging на slow_call
+Единый wrapper над :func:`asyncio.timeout` с structured logging на slow_call
 и context-manager для inline-использования.
+
+Round 6 (K-1.1, S171 W5+): миграция ``asyncio.wait_for`` →
+:func:`asyncio.timeout` context manager (Python 3.11+, проект на 3.14).
+Преимущества:
+
+* Cancellation работает на nested scopes, не только на top-level.
+* Поддерживает async-генераторы и async comprehensions.
+* Stack-trace включает актуальный duration.
 
 Pattern (Ponytail, D139): thin wrapper без абстракций.
 Заменяет дубли в jupyter_mixin / health / gateway / agent_sandbox /
@@ -50,20 +58,25 @@ async def with_timeout(
         Результат ``coro``.
 
     Raises:
-        asyncio.TimeoutError: Если таймаут истёк до завершения ``coro``.
+        TimeoutError: Если таймаут истёк до завершения ``coro``
+            (в Python 3.11+ ``asyncio.TimeoutError`` ≡ ``builtins.TimeoutError``).
     """
     start = time.monotonic()
     try:
-        result = await asyncio.wait_for(coro, timeout=timeout)
-        if slow_threshold and op:
-            elapsed = time.monotonic() - start
-            if elapsed >= slow_threshold:
-                _logger.warning(
-                    "slow_call op=%s elapsed=%.3fs threshold=%.3fs",
-                    op, elapsed, slow_threshold,
-                )
-        return result
-    except asyncio.TimeoutError:
+        # Round 6 K-1.1: asyncio.timeout context manager (Py 3.11+)
+        # вместо asyncio.wait_for — лучше семантика cancellation,
+        # поддержка nested scopes.
+        async with asyncio.timeout(timeout):
+            result = await coro
+    except TimeoutError:
         elapsed = time.monotonic() - start
         _logger.warning("timeout op=%s elapsed=%.3fs limit=%.3fs", op or "?", elapsed, timeout)
         raise
+    if slow_threshold and op:
+        elapsed = time.monotonic() - start
+        if elapsed >= slow_threshold:
+            _logger.warning(
+                "slow_call op=%s elapsed=%.3fs threshold=%.3fs",
+                op, elapsed, slow_threshold,
+            )
+    return result

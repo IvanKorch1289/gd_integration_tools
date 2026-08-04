@@ -134,6 +134,7 @@ class LLMCallProcessor(BaseProcessor):
             try:
                 from src.backend.core.ai.gateway import AIGateway
                 from src.backend.core.ai.gateway_models import AIRequest
+                from src.backend.services.ai.gateway_adapter import get_ai_gateway
             except ImportError as exc:
                 exchange.fail(f"AIGateway unavailable: {exc}")
                 return
@@ -152,7 +153,7 @@ class LLMCallProcessor(BaseProcessor):
                 prompt_inline=prompt,
             )
 
-            gateway = AIGateway()
+            gateway = get_ai_gateway()
             response = None
             for attempt in range(self._max_retries + 1):
                 try:

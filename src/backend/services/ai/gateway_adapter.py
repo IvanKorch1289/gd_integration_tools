@@ -48,9 +48,45 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
-__all__ = ("AIGatewayAdapter", "invoke_via_gateway")
+__all__ = ("AIGatewayAdapter", "get_ai_gateway", "invoke_via_gateway")
 
 logger = get_logger(__name__)
+
+
+def get_ai_gateway() -> AIGateway:
+    """Получить singleton :class:`AIGateway` из composition root.
+
+    Sprint 1 (Sprint 1.3 fix): проброс singleton-экземпляра AIGateway
+    с обязательными DI (``policy_resolver``, ``capability_gate``,
+    ``token_budget``) в кодопути ``services/ai/ai_graph.py``,
+    ``dsl/workflow/compiler/activity_bridge.py`` и другие
+    (4 callsites заменяют ``AIGateway()`` на ``get_ai_gateway()``).
+
+    Composition-root приоритет: ``app.state.ai_gateway`` →
+    :func:`src.backend.core.di.providers.ai.get_ai_gateway_provider`
+    → fallback ``AIGateway()`` (dev only; production-wiring guard в
+    :class:`AIGateway` бросает :class:`AIGatewayProductionWiringError`).
+
+    Returns:
+        :class:`AIGateway` с заполненными DI.
+    """
+    try:
+        from src.backend.core.di.app_state import get_app_ref
+
+        app = get_app_ref()
+        if app is not None:
+            gateway = getattr(app.state, "ai_gateway", None)
+            if gateway is not None:
+                return gateway
+    except Exception:
+        pass
+
+    try:
+        from src.backend.core.di.providers.ai import get_ai_gateway_provider
+
+        return get_ai_gateway_provider()
+    except (KeyError, RuntimeError):
+        return AIGateway()
 
 
 async def invoke_via_gateway(
@@ -109,7 +145,7 @@ async def invoke_via_gateway(
     if not feature_flags.ai_gateway_enforce:
         return await legacy_callable(*legacy_args, **(legacy_kwargs or {}))
 
-    gw = gateway if gateway is not None else AIGateway()
+    gw = gateway if gateway is not None else get_ai_gateway()
     request = AIRequest(
         workflow_id=workflow_id,
         tenant_id=tenant_id,

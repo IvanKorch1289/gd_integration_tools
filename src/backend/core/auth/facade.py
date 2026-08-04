@@ -433,7 +433,7 @@ class AuthFacade:
             from src.backend.services.security.facade import get_security_facade
 
             facade = get_security_facade()
-            await facade.add_to_blacklist(jti)
+            await facade.blacklist_token(jti)
             return True
         except Exception as exc:
             raise RuntimeError(f"revoke_token failed: {exc}") from exc

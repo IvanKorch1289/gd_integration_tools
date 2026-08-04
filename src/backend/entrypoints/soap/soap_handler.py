@@ -28,6 +28,7 @@ from src.backend.core.interfaces.invoker import (
 )
 from src.backend.core.logging import get_logger
 from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.service import get_dsl_service
 
 __all__ = ("soap_router",)
@@ -174,6 +175,12 @@ async def handle_soap_request(request: Request) -> Response:
         dsl = get_dsl_service()
         route_id = operation if "." in operation else f"soap.{operation}"
 
+        # Sprint 1.1: проброс principal/permissions из ``request.state.auth``
+        # в ``ExecutionContext`` для route-wide permission enforcement.
+        # ``from_auth(None)`` даёт principal="" + permissions=() (fail-closed).
+        auth = getattr(request.state, "auth", None)
+        context = ExecutionContext.from_auth(auth, route_id=route_id)
+
         exchange = await dsl.dispatch(
             route_id=route_id,
             body=payload,
@@ -181,6 +188,7 @@ async def handle_soap_request(request: Request) -> Response:
                 "soap-action": request.headers.get("SOAPAction", ""),
                 "content-type": "text/xml",
             },
+            context=context,
         )
 
         if exchange.error:

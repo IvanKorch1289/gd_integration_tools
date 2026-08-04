@@ -65,12 +65,14 @@ async def _agent_invoke_activity(payload: dict[str, Any]) -> Any:
     Payload содержит сериализованный :class:`AIRequest` как dict.
     """
 
-    from src.backend.core.ai.gateway import AIGateway
     from src.backend.core.ai.gateway_models import AIRequest
+    from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]
+        get_ai_gateway,
+    )
 
     # Reconstruct AIRequest from dict (dataclass)
     request = AIRequest(**payload)
-    gateway = AIGateway()
+    gateway = get_ai_gateway()
     return await gateway.invoke(request)
 
 

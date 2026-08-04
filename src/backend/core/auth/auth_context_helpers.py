@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-__all__ = ("extract_tenant_id", "extract_user_groups")
+__all__ = ("extract_tenant_id", "extract_user_groups", "extract_user_permissions")
 
 
 def extract_tenant_id(auth: Any) -> str | None:
@@ -46,3 +46,30 @@ def extract_user_groups(auth: Any) -> list[str]:
     if not isinstance(groups, list):
         return []
     return [g for g in groups if isinstance(g, str)]
+
+
+def extract_user_permissions(auth: Any) -> tuple[str, ...]:
+    """Извлекает user permissions из AuthContext.metadata.
+
+    Sprint 1 (route-wide permission enforcement): permissions хранятся в
+    ``metadata["permissions"]`` (list/tuple of str) или в OAuth-style
+    ``metadata["scope"]`` (space-separated string с префиксом ``scope:``).
+
+    Args:
+        auth: :class:`AuthContext` (или duck-typed объект с ``metadata``).
+
+    Returns:
+        Кортеж строк-permissions. Пустой кортеж если отсутствуют.
+        Нормализация: ``"read:users" → "scope:read:users"`` для
+        совместимости с :class:`AuthorizationGateway` API.
+    """
+    metadata = getattr(auth, "metadata", None)
+    if not isinstance(metadata, dict):
+        return ()
+    permissions = metadata.get("permissions")
+    if isinstance(permissions, (list, tuple)):
+        return tuple(p for p in permissions if isinstance(p, str))
+    scope = metadata.get("scope")
+    if isinstance(scope, str):
+        return tuple(f"scope:{p}" for p in scope.split() if p)
+    return ()

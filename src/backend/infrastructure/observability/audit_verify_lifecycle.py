@@ -30,7 +30,7 @@ HMAC-цепочке ``audit_log_immutable`` и детектирует tampering 
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
@@ -45,6 +45,7 @@ __all__ = (
     "default_scheduler",
     "start_audit_verify",
     "stop_audit_verify",
+    "try_start_default",
 )
 
 _logger = get_logger("observability.audit_verify_lifecycle")
@@ -188,3 +189,44 @@ async def stop_audit_verify() -> None:
     global default_scheduler
     if default_scheduler is not None and default_scheduler.is_running:
         await default_scheduler.stop()
+
+
+async def try_start_default(
+    session_factory: Any = None,
+    interval_hours: float = 24.0,
+) -> bool:
+    """Best-effort: запустить default audit verify scheduler (Sprint 4.6).
+
+    Обёртка над :func:`start_audit_verify` с graceful fall-through на
+    ``False`` при любой ошибке (недоступен Postgres, отсутствует feature
+    flag, noop store). Используется в composition root lifespan
+    (startup.py) — НЕ должна ломать startup при недоступности.
+
+    Args:
+        session_factory: :class:`sqlalchemy.orm.sessionmaker`-compatible
+            объект (например, ``get_db_session()``). Если ``None`` или
+            :data:`feature_flags.audit_hmac_verify_enabled = False` —
+            возвращает ``False`` без старта.
+        interval_hours: период verify (default 24h).
+
+    Returns:
+        ``True`` если scheduler успешно запущен, ``False`` в любом
+        другом случае (включая ``Exception`` внутри ``start_audit_verify``).
+    """
+    try:
+        from src.backend.core.config import features as features_module
+
+        if not getattr(features_module.feature_flags, "audit_hmac_verify_enabled", False):
+            return False
+        if session_factory is None:
+            return False
+        from src.backend.infrastructure.observability.immutable_audit import (
+            ImmutableAuditStore,
+        )
+
+        store = ImmutableAuditStore(session_factory=session_factory)
+        await start_audit_verify(store=store, interval_hours=interval_hours)
+        return True
+    except Exception as exc:
+        _logger.warning("audit verify scheduler start failed: %s", exc)
+        return False

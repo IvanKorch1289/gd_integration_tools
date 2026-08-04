@@ -31,6 +31,7 @@ S168 W11 P2-4 DECISION (per master prompt v8):
 
 from collections.abc import AsyncGenerator
 from datetime import datetime
+from types import SimpleNamespace
 from typing import Any
 
 import strawberry
@@ -46,6 +47,7 @@ from src.backend.dsl.commands.registry import action_handler_registry
 from src.backend.dsl.engine.tracer import get_tracer
 from src.backend.dsl.registry import route_registry
 from src.backend.dsl.service import get_dsl_service
+from src.backend.dsl.engine.context import ExecutionContext
 
 # S168 W12 P2-4: DslResult + ActionResult + dispatch_action extracted
 # to dsl_result.py. Re-exported here для backward-compat (existing
@@ -187,12 +189,47 @@ def _schema_to_order_kind(data: Any) -> OrderKindType:
     )
 
 
-async def _dispatch_dsl(route_id: str, payload: dict[str, Any]) -> DslResult:
-    """Диспетчеризует вызов через DslService."""
+async def _dispatch_dsl(
+    route_id: str,
+    payload: dict[str, Any],
+    *,
+    principal: str = "",
+    permissions: tuple[str, ...] = (),
+) -> DslResult:
+    """Диспетчеризует вызов через DslService.
+
+    Round 5 Sprint 1.1 fix (graphql entrypoint parity с SOAP/REST):
+    принимает ``principal``/``permissions`` (defaulted kwargs для
+    backward-compat со старыми callsites) и пробрасывает в
+    :class:`ExecutionContext` через :meth:`ExecutionContext.from_auth`
+    чтобы :class:`DslService.dispatch` применил route-wide
+    permission check (Sprint 1.1).
+
+    Args:
+        route_id: Имя DSL-маршрута.
+        payload: Входной payload (после GraphQL arg parsing).
+        principal: Идентификатор пользователя из AuthContext (default ""
+            для анонимных запросов — fail-closed).
+        permissions: Кортеж permissions из AuthContext.metadata (default
+            () для анонимных запросов — fail-closed на protected routes).
+
+    Returns:
+        :class:`DslResult` с ``status`` и ``result`` либо ``error``.
+    """
     try:
         dsl = get_dsl_service()
+        # Round 5 Sprint 1.1: используем _make_auth_from_principal для
+        # построения AuthContext-подобного объекта, который ExecutionContext
+        # сможет разобрать (delegates в extract_user_permissions).
+        auth_ctx = _make_auth_from_principal(principal, permissions)
+        context = ExecutionContext.from_auth(
+            auth_ctx, route_id=route_id
+        )
         exchange = await dsl.dispatch(
-            route_id=route_id, body=payload, headers={"x-source": "graphql"}
+            route_id=route_id,
+            body=payload,
+            headers={"x-source": "graphql"},
+            context=context,
         )
         result_body = exchange.out_message.body if exchange.out_message else None
         return DslResult(
@@ -210,6 +247,62 @@ async def _dispatch_dsl(route_id: str, payload: dict[str, Any]) -> DslResult:
     except Exception as exc:
         logger.exception("GraphQL DSL error: %s", exc)
         return DslResult(route_id=route_id, status="failed", error=str(exc))
+
+
+def _make_auth_from_principal(
+    principal: str, permissions: tuple[str, ...]
+) -> Any:
+    """Построить AuthContext-подобный объект из principal/permissions.
+
+    Round 5 Sprint 1.1: GraphQL resolver получает principal/permissions
+    из middleware (например, JWTAuthMiddleware). Чтобы ExecutionContext
+    смог переиспользовать ту же :func:`extract_user_permissions` логику,
+    что и REST/SOAP entrypoints, оборачиваем principal/permissions в
+    объект с ``.principal`` + ``.metadata['permissions']``.
+
+    Args:
+        principal: Идентификатор пользователя.
+        permissions: Кортеж permissions.
+
+    Returns:
+        Объект с атрибутами ``principal`` (str) и ``metadata``
+        (dict с ключом ``"permissions"`` — list[str]).
+    """
+    return SimpleNamespace(
+        principal=principal,
+        metadata={"permissions": list(permissions)},
+    )
+
+
+def _extract_auth_from_info(
+    info: Any,
+) -> tuple[str, tuple[str, ...]]:
+    """Извлечь principal/permissions из Strawberry ``info.context``.
+
+    Round 5 Sprint 1.1: parity с REST/SOAP entrypoints. AuthMiddleware
+    кладёт AuthContext в ``info.context.auth`` (если auth required).
+    При отсутствии (anonymous) возвращаем ``("", ())`` — fail-closed.
+
+    Args:
+        info: Strawberry Info (или None для прямого вызова в тестах).
+
+    Returns:
+        Tuple (principal, permissions). Defaults к ``("", ())``.
+    """
+    if info is None:
+        return ("", ())
+    context = getattr(info, "context", None)
+    if context is None:
+        return ("", ())
+    auth = getattr(context, "auth", None)
+    if auth is None:
+        return ("", ())
+    principal = getattr(auth, "principal", "") or ""
+    # Используем общий helper для извлечения permissions
+    from src.backend.core.auth.auth_context_helpers import extract_user_permissions
+
+    permissions = extract_user_permissions(auth)
+    return (principal, tuple(permissions))
 
 
 @strawberry.type
@@ -286,9 +379,22 @@ class Query:
         return await _dispatch_action("tech.check_all_services")
 
     @strawberry.field(description="Выполнить произвольный DSL-маршрут (read-only).")
-    async def dsl_query(self, route_id: str, payload: JSON | None = None) -> DslResult:
-        """Выполнить операцию dsl query."""
-        return await _dispatch_dsl(route_id, payload or {})
+    async def dsl_query(
+        self, route_id: str, payload: JSON | None = None, info: Info = None  # type: ignore[assignment]
+    ) -> DslResult:
+        """Выполнить операцию dsl query.
+
+        Round 5 Sprint 1.1: extract principal/permissions из
+        ``info.context.auth`` (через :func:`_extract_auth_from_info`)
+        и пробрасываем в ``_dispatch_dsl`` для route-wide permission check.
+        """
+        principal, permissions = _extract_auth_from_info(info)
+        return await _dispatch_dsl(
+            route_id,
+            payload or {},
+            principal=principal,
+            permissions=permissions,
+        )
 
     @strawberry.field(description="Список зарегистрированных DSL-маршрутов.")
     async def dsl_routes(self) -> list[str]:
@@ -373,10 +479,22 @@ class Mutation:
 
     @strawberry.mutation(description="Выполнить DSL-маршрут (write).")
     async def dsl_execute(
-        self, route_id: str, payload: JSON | None = None
+        self,
+        route_id: str,
+        payload: JSON | None = None,
+        info: Info = None,  # type: ignore[assignment]
     ) -> DslResult:
-        """Выполнить операцию dsl execute."""
-        return await _dispatch_dsl(route_id, payload or {})
+        """Выполнить операцию dsl execute.
+
+        Round 5 Sprint 1.1: extract principal/permissions из info.context.auth.
+        """
+        principal, permissions = _extract_auth_from_info(info)
+        return await _dispatch_dsl(
+            route_id,
+            payload or {},
+            principal=principal,
+            permissions=permissions,
+        )
 
 
 @strawberry.type

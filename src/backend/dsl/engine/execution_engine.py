@@ -73,7 +73,7 @@ class ExecutionEngine:
         self._middleware = middleware or _default_middleware_factory()
         self._validate = validate_before_execute
         self._pool = pool or get_processor_pool()
-        self._validation_cache: dict[str, Any] = {}
+        self._validation_cache: dict[tuple[str, tuple[str, ...]], Any] = {}
 
     @staticmethod
     def _find_timeout_middleware_in(chain: MiddlewareChain) -> TimeoutMiddleware | None:

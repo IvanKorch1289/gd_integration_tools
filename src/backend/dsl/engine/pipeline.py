@@ -55,6 +55,7 @@ class Pipeline:
     tenant_aware: bool = False
     middlewares: list[Any] = field(default_factory=list)
     route_overrides: dict[str, Any] = field(default_factory=dict)  # S163 W15
+    security: tuple[str, ...] = field(default_factory=tuple)  # Sprint 1: requires_permission
 
     def add_processor(self, processor: BaseProcessor) -> Pipeline:
         """

@@ -238,6 +238,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
         try:
             from src.backend.core.ai.gateway import AIGateway
             from src.backend.core.ai.gateway_models import AIRequest
+            from src.backend.services.ai.gateway_adapter import get_ai_gateway
         except Exception as exc:
             _logger.debug("%s: AIGateway import failed (%s) — skip", self.name, exc)
             return None
@@ -245,7 +246,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
         # Lazy AIRequest construction. tenant_id/correlation_id best-effort
         # (audit-sink в _base.AuditMixin.process подхватит их позже).
         try:
-            gateway = AIGateway()
+            gateway = get_ai_gateway()
             request = AIRequest(
                 workflow_id="ai_tool_dispatch",
                 tenant_id="default",

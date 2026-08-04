@@ -50,5 +50,18 @@ class ObservabilityFlags(BaseSettings):
         ),
     )
 
+    audit_hmac_verify_enabled: bool = Field(
+        default=False,
+        title="Audit: HMAC-chain verify scheduler",
+        description=(
+            "Sprint 4.6 (B-series 2026-08-03, FIX-H5). Owner: K8 Audit. "
+            "Opt-in (default False) — dev/dev_light не должны поднимать "
+            "Postgres audit_log_immutable таблицу только ради verify-цикла; "
+            "в prod выставляется через env ``FEATURE_AUDIT_HMAC_VERIFY_ENABLED=true``. "
+            "При True запускает :func:`audit_verify_lifecycle.try_start_default` "
+            "в lifespan startup; verify-цикл каждые 24h."
+        ),
+    )
+
 
 __all__ = ("ObservabilityFlags",)

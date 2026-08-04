@@ -89,6 +89,10 @@ def register_app_state(app: FastAPI) -> None:
     app.state.slo_tracker = SLOTracker()
     app.state.pool_monitor = PoolMonitor()
     app.state.langfuse_client = LangFuseClient()
+    # Sprint 1.3: AIGateway singleton с обязательными DI (S177 M2 guard).
+    from src.backend.core.di.providers.ai import get_ai_gateway_provider
+
+    app.state.ai_gateway = get_ai_gateway_provider()
 
     # W22 техдолг: composition root для Invoker + ReplyChannelRegistry.
     # Concrete реализация регистрируется здесь, чтобы services/execution

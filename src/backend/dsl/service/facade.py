@@ -35,7 +35,7 @@ class DslService:
             route_id: Идентификатор маршрута.
             body: Тело входного сообщения.
             headers: Заголовки входного сообщения.
-            context: Runtime context.
+            context: Runtime context (если ``None`` — создаётся пустой).
 
         Returns:
             Exchange[Any]: Итоговый Exchange.
@@ -43,11 +43,52 @@ class DslService:
         Raises:
             RouteDisabledError: Маршрут заблокирован feature-флагом.
             KeyError: Маршрут не зарегистрирован.
+            RoutePermissionDeniedError: principal не имеет требуемой
+                permission (V22 R-V15-1 / Sprint 1).
         """
+        if context is None:
+            context = ExecutionContext()
         pipeline = route_registry.get(route_id)
+        # Sprint 1: route-wide permission enforcement (V22 R-V15-1).
+        # Если pipeline.security декларирует требуемые permissions и
+        # ``AuthorizationGateway`` зарегистрирован, делаем check.
+        # Иначе — fail-closed (anonymous → deny).
+        await self._enforce_route_permission(pipeline, context)
         return await self._engine.execute(
             pipeline, body=body, headers=headers, context=context
         )
+
+    @staticmethod
+    async def _enforce_route_permission(
+        pipeline: Any, context: ExecutionContext
+    ) -> None:
+        """Sprint 1: route-wide permission enforcement (V22 R-V15-1).
+
+        Если ``pipeline.security`` пустой — public route, skip check.
+        Иначе проверяет ``context.principal`` против требуемых permissions
+        через :class:`AuthorizationGateway`. Fail-closed: anonymous
+        (principal="") → deny; gateway not registered → deny.
+        """
+        from src.backend.core.errors import RoutePermissionDeniedError
+        from src.backend.services.routes.route_authz import check_route_permission
+
+        required = getattr(pipeline, "security", ()) or ()
+        if not required:
+            return  # public route, no permission check
+        principal = getattr(context, "principal", "") or "anonymous"
+        permissions = getattr(context, "permissions", ()) or ()
+        allowed, reason = await check_route_permission(
+            route_id=getattr(pipeline, "route_id", ""),
+            principal=principal,
+            permissions=tuple(required),
+        )
+        if not allowed:
+            raise RoutePermissionDeniedError(
+                route_id=getattr(pipeline, "route_id", ""),
+                principal=principal,
+                required_permissions=tuple(required),
+                reason=reason,
+            )
 
     @staticmethod
     def list_routes() -> tuple[str, ...]:

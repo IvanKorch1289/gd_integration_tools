@@ -17,6 +17,7 @@ __all__ = (
     "DatabaseError",
     "NotFoundError",
     "RouteDisabledError",
+    "RoutePermissionDeniedError",
     "ServiceError",
     "TenantContextRequiredError",
     "UnprocessableError",
@@ -187,4 +188,38 @@ class TenantContextRequiredError(BaseError):
                 "RequestContextMiddleware are wired in the middleware chain."
             ),
             status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class RoutePermissionDeniedError(BaseError):
+    """Маршрут декларирует ``requires_permission``, но principal не имеет нужной role/scope.
+
+    Sprint 1: route-wide permission enforcement (V22 R-V15-1 / K-ARCH-1).
+    ``DsлService.dispatch`` валит pipeline с этой ошибкой при наличии
+    ненулевого ``pipeline.security`` и отсутствии требуемой permission
+    у ``ExecutionContext.principal``.
+
+    Отличие от :class:`AuthorizationError`: эта ошибка возникает
+    на уровне DSL pipeline (route-wide), а не endpoint-guard.
+    """
+
+    def __init__(
+        self,
+        *_: Any,
+        route_id: str = "",
+        principal: str = "",
+        required_permissions: tuple[str, ...] = (),
+        reason: str = "",
+    ) -> None:
+        self.route_id = route_id
+        self.principal = principal
+        self.required_permissions = required_permissions
+        self.reason = reason
+        super().__init__(
+            message=(
+                f"Route '{route_id}' requires permissions {list(required_permissions)} "
+                f"but principal '{principal}' lacks them"
+                + (f" (reason: {reason})" if reason else "")
+            ),
+            status_code=status.HTTP_403_FORBIDDEN,
         )

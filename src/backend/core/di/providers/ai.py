@@ -1,15 +1,16 @@
 """AI domain providers — sanitizer, PII tokenizer, LLM metrics, model registry, vault.
 
 T-P1.2c split: извлечено из monolithic ``providers.py`` (S38 P1 epic).
-Domain scope: 12 funcs (6 get + 6 set) + 3 private helpers
+Domain scope: 14 funcs (7 get + 7 set) + 3 private helpers
 (``_resolve_pii_token_registry``, ``_resolve_unified_audit_service``,
-``_noop_llm_judge_metrics``).
+``_noop_llm_judge_metrics``, ``_build_ai_gateway_singleton``).
 
 Singleton cache ``_overrides`` is per-domain (NOT shared).
 """
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any
 
 from src.backend.core.di.module_registry import resolve_module
@@ -232,12 +233,80 @@ def get_skill_registry() -> Any:
 
         return app_state_singleton("skill_registry", factory=None)()
     except Exception:
-        _overrides.get("_skill_registry_error")  # touch to keep linter happy
+        # Round 12 fix: убрана dead-строка ``_overrides.get("_skill_registry_error")``
+        # — функция и так возвращает None, ключа нигде нет, .get() ничего не делает.
         return None
+
+
+# ─────────────── AIGateway composition root (Sprint 1.3, ADR-NEW-19) ───────────────
+
+
+@lru_cache(maxsize=1)
+def _build_ai_gateway_singleton() -> Any:
+    """Строит :class:`AIGateway` со всеми обязательными DI (Sprint 1.3).
+
+    Composition-root singleton с тремя обязательными зависимостями
+    (Sprint 1.3, ADR-NEW-19):
+    * :class:`core.ai.policy.resolver.PolicyResolver` — резолвер
+      :class:`AIPolicySpec` по ``workflow_id`` + ``tenant_id``.
+    * :class:`core.security.capabilities.gate.CapabilityGate` — fail-closed
+      gate для ``ai.invoke.<workflow_id>``.
+    * :class:`core.tenancy.token_budget.InMemoryTokenBudgetBackend` —
+      счётчик токенов для per-tenant budget enforcement
+      (S172 M4 ARC-007).
+
+    Использует существующие фасады/классы без новых абстракций.
+
+    Returns:
+        :class:`AIGateway` instance с полным DI.
+    """
+    from src.backend.core.ai.gateway import AIGateway
+    from src.backend.core.ai.policy.resolver import PolicyResolver
+    from src.backend.core.security.capabilities.gate import CapabilityGate
+    from src.backend.core.tenancy.token_budget import InMemoryTokenBudgetBackend
+
+    return AIGateway(
+        policy_resolver=PolicyResolver(),
+        capability_gate=CapabilityGate(),
+        token_budget=InMemoryTokenBudgetBackend(),
+    )
+
+
+def get_ai_gateway_provider() -> Any:
+    """Возвращает :class:`AIGateway` с обязательными DI (Sprint 1.3).
+
+    Сначала проверяет override из :func:`set_ai_gateway_provider`
+    (test-инжекция); при отсутствии — лениво строит и кеширует через
+    :func:`_build_ai_gateway_singleton` (``@lru_cache(maxsize=1)``).
+    Callers должны вызывать :meth:`_build_ai_gateway_singleton.cache_clear`
+    для сброса lru-cache между тестами.
+
+    Returns:
+        :class:`AIGateway` instance с инжектированными
+        ``policy_resolver``, ``capability_gate``, ``token_budget``.
+    """
+    if "ai_gateway" in _overrides:
+        return _overrides["ai_gateway"]
+    return _build_ai_gateway_singleton()
+
+
+def set_ai_gateway_provider(impl: Any) -> None:
+    """Установить / сбросить override для ``ai_gateway`` provider.
+
+    Args:
+        impl: :class:`AIGateway` instance для тестового инжекта;
+            ``None`` сбрасывает override (lru-cache сбрасывается
+            отдельно через :func:`_build_ai_gateway_singleton.cache_clear`).
+    """
+    if impl is None:
+        _overrides.pop("ai_gateway", None)
+    else:
+        _overrides["ai_gateway"] = impl
 
 
 __all__ = (
     "get_agent_security_framework_provider",
+    "get_ai_gateway_provider",
     "get_ai_sanitizer_provider",
     "get_antivirus_service_provider",
     "get_llm_judge_metrics_provider",
@@ -246,6 +315,7 @@ __all__ = (
     "get_skill_registry",
     "get_vault_refresher_provider",
     "set_agent_security_framework_provider",
+    "set_ai_gateway_provider",
     "set_ai_sanitizer_provider",
     "set_antivirus_service_provider",
     "set_llm_judge_metrics_provider",

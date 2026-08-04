@@ -83,6 +83,8 @@ async def dispatch_action_or_dsl(
     correlation_id: str | None = None,
     idempotency_key: str | None = None,
     attributes: Mapping[str, Any] | None = None,
+    principal: str = "",
+    permissions: tuple[str, ...] = (),
 ) -> BridgeResult:
     """Выполняет action через ActionDispatcher или fallback на DSL-маршрут.
 
@@ -98,6 +100,13 @@ async def dispatch_action_or_dsl(
         idempotency_key: Ключ идемпотентности (если транспорт его передаёт).
         attributes: Произвольные атрибуты транспорта (sync_id, client_id,
             event_type и т.п.) — попадут в ``DispatchContext.attributes``.
+        principal: Sprint 1.1 — идентификатор аутентифицированного
+            пользователя (пробрасывается в ``ExecutionContext`` для
+            route-wide permission enforcement). По умолчанию ``""`` →
+            ``DslService`` трактует как ``"anonymous"`` (fail-closed).
+        permissions: Sprint 1.1 — кортеж permissions principal'а
+            (пробрасывается в ``ExecutionContext.permissions``). По
+            умолчанию пустой кортеж.
 
     Returns:
         :class:`BridgeResult``. Поле ``via`` показывает, какой путь
@@ -156,11 +165,21 @@ async def dispatch_action_or_dsl(
         # S163 W15: per-action timeout via route_overrides (DSL with_message_timeout).
         if action_timeout_s is None:
             return await _dispatch_dsl(
-                dsl_route_id=dsl_route_id, payload=payload, headers=headers
+                dsl_route_id=dsl_route_id,
+                payload=payload,
+                headers=headers,
+                principal=principal,
+                permissions=permissions,
             )
 
         return await asyncio.wait_for(
-            _dispatch_dsl(dsl_route_id=dsl_route_id, payload=payload, headers=headers),
+            _dispatch_dsl(
+                dsl_route_id=dsl_route_id,
+                payload=payload,
+                headers=headers,
+                principal=principal,
+                permissions=permissions,
+            ),
             timeout=float(action_timeout_s),
         )
     except asyncio.TimeoutError:
@@ -236,7 +255,12 @@ async def _try_dispatcher(
 
 
 async def _dispatch_dsl(
-    *, dsl_route_id: str, payload: Mapping[str, Any], headers: Mapping[str, Any] | None
+    *,
+    dsl_route_id: str,
+    payload: Mapping[str, Any],
+    headers: Mapping[str, Any] | None,
+    principal: str = "",
+    permissions: tuple[str, ...] = (),
 ) -> BridgeResult:
     """Tier 3 fallback: классический DSL-dispatch через ``DslService``.
 
@@ -244,15 +268,37 @@ async def _dispatch_dsl(
     результат маршрута. Ошибка ``KeyError`` интерпретируется как
     «маршрут не найден» (``via="missing"``), любая другая — как сбой
     выполнения (``via="dsl"``, ``success=False``).
+
+    Sprint 1.1: ``principal``/``permissions`` пробрасываются в
+    :class:`ExecutionContext` для route-wide permission enforcement
+    (``DslService._enforce_route_permission``). ``RoutePermissionDeniedError``
+    ловится ``except Exception`` и конвертируется в ``BridgeResult(success=False)``
+    — вышестоящий HTTP/WS-layer решает, что делать с failure-result.
+
+    Args:
+        dsl_route_id: ID DSL-маршрута.
+        payload: Полезная нагрузка вызова.
+        headers: Заголовки запроса.
+        principal: Идентификатор principal'а (``""`` → ``"anonymous"``
+            в DslService — fail-closed для protected routes).
+        permissions: Кортеж permissions principal'а (для
+            ``ExecutionContext.permissions``).
     """
+    from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.service import get_dsl_service
 
     dsl = get_dsl_service()
+    context = ExecutionContext(
+        route_id=dsl_route_id,
+        principal=principal,
+        permissions=permissions,
+    )
     try:
         exchange = await dsl.dispatch(
             route_id=dsl_route_id,
             body=dict(payload),
             headers=dict(headers) if headers else None,
+            context=context,
         )
     except KeyError:
         return BridgeResult(
