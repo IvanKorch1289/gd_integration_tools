@@ -3420,4 +3420,48 @@ Per Ponytail "не выдумывай улучшения" — Round 46 = null co
 46 итераций (38 раундов закоммиченных + 8 null rounds).
 Working tree clean.
 
+### Round 47 (2026-08-03 — scan, NOT COMMITTED)
+
+**Цель Round 47**: Scan для final improvements.
+
+#### Round 47.1: Skipped — no actionable wins
+
+Сканированы:
+- `core/cache.rag` ThreeTierRagCache imports — все используются
+- Mock patterns в tests/unit/services/ai/ — все используются
+- Lazy docstrings `"""Метод X (см. signature)."""` — intentional placeholders
+  в generated/wrapper code (base.py, webhook_signature.py)
+
+Per Ponytail "не выдумывай улучшения" — Round 47 = null commit.
+
+#### Round 47 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK (clean) |
+| `mypy -p src` | ✅ **0 errors** (clean) |
+
+#### Round 47 Domain impact:
+
+| Домен | Round 46 → **Round 47** |
+|---|---|
+| All | **unchanged** (no commits) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 47 Cumulative scorecard (post R1-R47, 38 раундов закоммиченных):
+
+| Домен | C2 → R47 (47 итераций) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.9** | +2.9 |
+| L9 Security E2E | 7.5 → **9.0** | +1.5 |
+| L3 DSL/routes | 8.4 → **9.0** | +0.6 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.5** | +3.0 |
+| Docs | 6.5 → **8.1** | +1.6 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+47 итераций (38 раундов закоммиченных + 9 null rounds).
+Working tree clean.
+
 
