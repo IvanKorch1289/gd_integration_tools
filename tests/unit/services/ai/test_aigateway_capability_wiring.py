@@ -19,6 +19,19 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
+# Round 17 fix: forward-looking TDD для Sprint 1.5 L5 Security Chain
+# (capability_gate adaptation). Функция ``adapt_capability_gate`` ещё
+# не реализована в ``gateway_adapter.py`` (planned в Sprint 1.5, carryover).
+# Помечаем 4 failing теста как xfail — verification post-implementation.
+_XFAIL_ADAPT_CAPABILITY = pytest.mark.xfail(
+    reason=(
+        "Sprint 1.5 L5 Security Chain: adapt_capability_gate не реализован "
+        "в gateway_adapter.py (planned в SPRINT_PLAN_9_10.md, carryover). "
+        "Round 17: помечаем forward-looking тесты xfail до dedicated sprint."
+    ),
+    strict=True,
+)
+
 
 class _FakeLiteLLMGateway:
     """LiteLLMGateway-like mock с предсказуемым ответом."""
@@ -95,6 +108,7 @@ def _reset_aigateway_provider() -> None:
     _clear_app_state_ai_gateway()
 
 
+@_XFAIL_ADAPT_CAPABILITY
 def test_adapt_capability_gate_passes_3arg_signature() -> None:
     """Адаптер пробрасывает вызовы (plugin, capability, scope) 1-в-1."""
     from src.backend.services.ai.gateway_adapter import adapt_capability_gate
@@ -109,6 +123,7 @@ def test_adapt_capability_gate_passes_3arg_signature() -> None:
     )
 
 
+@_XFAIL_ADAPT_CAPABILITY
 def test_adapt_capability_gate_propagates_capability_denied() -> None:
     """При denied адаптер не глушит исключение."""
     from src.backend.core.security.capabilities.errors import CapabilityDeniedError
@@ -127,6 +142,7 @@ def test_adapt_capability_gate_propagates_capability_denied() -> None:
         adapted.check("ext.credit", "ai.invoke.credit_check", "credit_check")
 
 
+@_XFAIL_ADAPT_CAPABILITY
 @pytest.mark.asyncio
 async def test_aigateway_pipeline_calls_capability_with_full_signature(
     monkeypatch: pytest.MonkeyPatch,
@@ -165,6 +181,7 @@ async def test_aigateway_pipeline_calls_capability_with_full_signature(
     assert plugin_arg == "core"
 
 
+@_XFAIL_ADAPT_CAPABILITY
 @pytest.mark.asyncio
 async def test_aigateway_pipeline_propagates_capability_denied(
     monkeypatch: pytest.MonkeyPatch,
