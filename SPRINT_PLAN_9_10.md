@@ -1823,4 +1823,80 @@ Per ponytail: эти failures относятся к feature areas (Lakera integr
 
 14 раундов все закоммичены в master. Working tree clean.
 
+### Round 15 (2026-08-03 — R7 PII test regression fix)
+
+**Цель Round 15**: Поймать regression тесты после Round 7 PII masking implementation.
+
+#### Round 15.1: test_ingest regression fix
+
+`tests/unit/dsl/engine/processors/rag/test_ingest.py` — `test_ingest_calls_rag_service_with_body`:
+- Тест был написан до Round 7 (когда RagIngestProcessor не применял `_maybe_mask_pii`).
+- Round 7 Sprint 1.1 P0 fix добавил `pii_masked` + `pii_masker_version` в metadata для parity с canonical RagIngestService._run.
+- Тест expectations обновлены: добавлены 2 новых ключа.
+
+**Tests**: 6/6 rag ingest tests passing (раньше 5/6 + 1 fail).
+
+#### Round 15.2: Pre-existing DSL failures survey
+
+| Test | Status | Reason |
+|---|---|---|
+| `test_ingest_calls_rag_service_with_body` | ✅ FIXED | R7 PII metadata regression |
+| `test_msgspec_speedup_nested_dict` | pre-existing | benchmark flake (1.29x ratio variance) |
+| `test_react_isolated_uses_sandbox` | pre-existing | test ordering pollution (passes isolated) |
+| `test_gateway_enforce_uses_aigateway` | pre-existing | test ordering pollution (passes isolated) |
+| `test_handles_import_error` (eventbus) | pre-existing | unrelated, R-неintroduced |
+| `test_ai_tool_dispatch_end_to_end_*` | pre-existing | test ordering pollution |
+
+#### Round 15 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| DSL rag/dq tests | ✅ **20 passed** |
+
+#### Round 15 Domain impact:
+
+| Домен | Round 14 → **Round 15** |
+|---|---|
+| L5 AI/agents | 8.7 → **8.7** |
+| L7 Infra/data | 8.7 → **8.7** |
+| L9 Security E2E | 8.8 → **8.8** |
+| L10 Observability | 8.8 → **8.8** |
+| L1 Gateway/middleware | 8.7 → **8.7** |
+| L2 Core/DI | 8.8 → **8.8** |
+| L3 DSL/routes | 8.7 → **8.7** |
+| L4 Workflow | 8.5 → **8.5** |
+| L6 RPA | 9.0 → **9.0** |
+| L8 Messaging/CDC | 8.5 → **8.5** |
+| Frontend/portal | 7.5 → **7.5** |
+| Extensions | 7.5 → **7.5** |
+| **Tests/QA** | 7.9 → **7.9** (+1 rag test passing) |
+| Devops/deploy | 8.0 → **8.0** |
+| Docs | 7.9 → **7.9** |
+| **Медиана** | 8.6 → **8.6** (regression catch) |
+
+#### Round 15 Cumulative scorecard (post R1-R15):
+
+| Домен | C2 → R15 (15 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L7 Infra/data | 8.5 → **8.7** | +0.2 |
+| L9 Security E2E | 7.5 → **8.8** | +1.3 |
+| L10 Observability | 8.3 → **8.8** | +0.5 |
+| L1 Gateway/middleware | 8.7 → **8.7** | 0.0 |
+| L2 Core/DI | 8.5 → **8.8** | +0.3 |
+| L3 DSL/routes | 8.4 → **8.7** | +0.3 |
+| L4 Workflow | 8.3 → **8.5** | +0.2 |
+| L6 RPA | 9.0 → **9.0** | 0.0 |
+| L8 Messaging/CDC | 8.3 → **8.5** | +0.2 |
+| Frontend/portal | 7.5 → **7.5** | 0.0 |
+| Extensions | 6.5 → **7.5** | +1.0 |
+| **Tests/QA** | 5.5 → **7.9** | +2.4 |
+| Devops/deploy | 7.5 → **8.0** | +0.5 |
+| Docs | 6.5 → **7.9** | +1.4 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+15 раундов все закоммичены в master. Working tree clean.
+
 
