@@ -161,6 +161,77 @@ def test_unknown_target_raises() -> None:
         MaskPiiProcessor(targets=["body", "cookies"])
 
 
+# ── Round 37 R37-4: DataMaskingProcessor._mask_value edge cases ───────────────
+
+
+def test_data_masking_processor_nested_dict_masking() -> None:
+    """Nested dict (dict-in-dict) — все string values маскируются.
+
+    DataMaskingProcessor._mask_value recurses через dict/list.
+    Тест проверяет что вложенные dicts тоже маскируются.
+    Используем ``inn`` pattern key (10-12 digit numbers).
+    """
+    from src.backend.dsl.engine.processors.business import DataMaskingProcessor
+
+    # ``patterns`` принимает ключи из _DEFAULT_PATTERNS (не regex strings).
+    proc = DataMaskingProcessor(patterns=["inn"], replacement="***")
+    nested = {
+        "outer": {
+            "inner_inn": "ИНН 1234567890",
+            "deep": {"other_inn": "987654321012"},
+        },
+        "sibling": "no inn here",
+    }
+    result = proc._mask_value(nested)
+    assert result["outer"]["inner_inn"] == "ИНН ***"
+    assert result["outer"]["deep"]["other_inn"] == "***"
+    assert result["sibling"] == "no inn here"
+    # Original не модифицирован
+    assert nested["outer"]["inner_inn"] == "ИНН 1234567890"
+
+
+def test_data_masking_processor_list_of_dicts_masking() -> None:
+    """List of dicts — каждый dict маскируется отдельно."""
+    from src.backend.dsl.engine.processors.business import DataMaskingProcessor
+
+    proc = DataMaskingProcessor(patterns=["inn"], replacement="***")
+    data = [
+        {"a": "ИНН 1111111111"},
+        {"a": "ИНН 2222222222"},
+        {"other": "no inn"},
+    ]
+    result = proc._mask_value(data)
+    assert result[0]["a"] == "ИНН ***"
+    assert result[1]["a"] == "ИНН ***"
+    assert result[2]["other"] == "no inn"
+    assert len(result) == 3
+
+
+def test_data_masking_processor_non_str_scalar_passthrough() -> None:
+    """int/float/None/bool — pass-through (не маскируется).
+
+    _mask_value returns value as-is если type не str/dict/list.
+    """
+    from src.backend.dsl.engine.processors.business import DataMaskingProcessor
+
+    proc = DataMaskingProcessor(patterns=["inn"], replacement="***")
+    assert proc._mask_value(42) == 42
+    assert proc._mask_value(3.14) == 3.14
+    assert proc._mask_value(None) is None
+    assert proc._mask_value(True) is True
+    assert proc._mask_value(False) is False
+
+
+def test_data_masking_processor_empty_containers() -> None:
+    """Empty dict / list / str — pass-through без exceptions."""
+    from src.backend.dsl.engine.processors.business import DataMaskingProcessor
+
+    proc = DataMaskingProcessor(patterns=["inn"], replacement="***")
+    assert proc._mask_value({}) == {}
+    assert proc._mask_value([]) == []
+    assert proc._mask_value("") == ""
+
+
 def test_invalid_custom_regex_raises() -> None:
     with pytest.raises(ValueError, match="invalid regex"):
         MaskPiiProcessor(targets=["body"], patterns=["[invalid"])
