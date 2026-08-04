@@ -2498,4 +2498,46 @@ R25-3 (`_safe_orjson_loads` DRY across 7 files — YAGNI abstraction).
 
 27 раундов все закоммичены в master. Working tree clean.
 
+### Round 28 (2026-08-03 — unused _logger removal)
+
+**Цель Round 28**: Ponytail cleanup — remove unused `_logger` declaration.
+
+#### Round 28.1: client_metrics.py cleanup
+
+`src/backend/infrastructure/observability/client_metrics.py`:
+- Line 37: `_logger = get_logger(__name__)` — declared, 0 references.
+- Line 30: `from src.backend.core.logging import get_logger` — только
+  для `_logger`, после удаления тоже unused.
+
+Removed оба. File уменьшился на 4 LOC.
+
+#### Round 28 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_observability (93 tests) | ✅ **93 passing** |
+
+#### Round 28 Domain impact:
+
+| Домен | Round 27 → **Round 28** |
+|---|---|
+| L10 Observability | 8.8 → **8.9** (+dead code removal) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 28 Cumulative scorecard (post R1-R28):
+
+| Домен | C2 → R28 (28 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| Tests/QA | 5.5 → **8.1** | +2.6 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+28 раундов все закоммичены в master. Working tree clean.
+
 
