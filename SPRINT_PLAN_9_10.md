@@ -2685,4 +2685,44 @@ Verified:
 31 итераций (30 раундов закоммичены + Round 30 = null + Round 31 = real fix).
 Working tree clean.
 
+### Round 32 (2026-08-03 — unused test imports cleanup)
+
+**Цель Round 32**: AST-based scan `tests/unit/` для unused imports.
+
+#### Round 32.1: 23 unused test imports removed
+
+AST visitor обнаружил 28 candidates (excluding `annotations`).
+Bulk removal: 23 removed across 13 test files. -23 LOC.
+
+#### Round 32 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| DSL processors | ✅ **1684 passed** |
+
+#### Round 32 Domain impact:
+
+| Домен | Round 31 → **Round 32** |
+|---|---|
+| Tests/QA | 8.1 → **8.2** (+cleanup) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 32 Cumulative scorecard (post R1-R32, 31 раундов закоммиченных):
+
+| Домен | C2 → R32 | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.2** | +2.7 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+32 итераций (31 раунд закоммичены + Round 32 = +23 imports cleanup).
+Working tree clean.
+
 
