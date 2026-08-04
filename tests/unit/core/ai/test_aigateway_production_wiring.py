@@ -73,13 +73,15 @@ async def test_production_no_di_raises_production_wiring_error(
         assert missing in msg, f"Expected {missing!r} in error message, got: {msg!r}"
 
 
-@_XFAIL_WIRING_ERROR_HIERARCHY
 @pytest.mark.asyncio
 async def test_production_wiring_error_is_enforcement_error() -> None:
     """AIGatewayProductionWiringError — subclass AIGatewayEnforcementRequiredError.
 
     Endpoint-обработчики, которые ловят AIGatewayEnforcementRequiredError
     для маппинга в 503, должны также ловить новый класс.
+
+    Round 40 fix: ``AIGatewayProductionWiringError`` теперь subclass
+    ``AIGatewayEnforcementRequiredError`` (был bare ``RuntimeError``).
     """
     from src.backend.core.ai.errors import (
         AIGatewayEnforcementRequiredError,

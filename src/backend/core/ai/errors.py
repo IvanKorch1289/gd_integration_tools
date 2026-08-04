@@ -142,7 +142,7 @@ class AIGatewayEnforcementRequiredError(Exception):
     """
 
 
-class AIGatewayProductionWiringError(RuntimeError):
+class AIGatewayProductionWiringError(AIGatewayEnforcementRequiredError):
     """Sprint 1.3 (S177 M2): AIGateway composition root не имеет обязательных DI в production.
 
     Поднимается в :meth:`AIGateway._enforce_production_wiring` при
@@ -151,6 +151,9 @@ class AIGatewayProductionWiringError(RuntimeError):
 
     Защищает от silent fail-open: bare ``AIGateway()`` без DI не должен
     проходить policy/capability/budget проверки в production.
+
+    Round 40 fix: subclass ``AIGatewayEnforcementRequiredError`` для unified
+    catch в endpoint layer (503 mapping для enforcement errors).
     """
 
     def __init__(self, missing: tuple[str, ...] = ()) -> None:
