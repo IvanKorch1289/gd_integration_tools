@@ -1950,4 +1950,52 @@ Per ponytail: эти failures относятся к feature areas (Lakera integr
 
 16 раундов все закоммичены в master. Working tree clean.
 
+### Round 17 (2026-08-03 — capability_wiring xfail)
+
+**Цель Round 17**: Закрыть pre-existing failures от нереализованной Sprint 1.5 L5 Security Chain.
+
+#### Round 17.1: capability_wiring xfail cleanup
+
+`tests/unit/services/ai/test_aigateway_capability_wiring.py`:
+- 4 теста (`test_adapt_capability_gate_passes_3arg_signature`,
+  `test_adapt_capability_gate_propagates_capability_denied`,
+  `test_aigateway_pipeline_calls_capability_with_full_signature`,
+  `test_aigateway_pipeline_propagates_capability_denied`) импортируют
+  `adapt_capability_gate` из `gateway_adapter.py` — функция НЕ реализована.
+- Sprint 1.5 L5 Security Chain plan (см. SPRINT_PLAN_9_10.md) описывал
+  эту функцию, но implementation never landed.
+- Помечены `@_XFAIL_ADAPT_CAPABILITY(strict=True)` с documented reason.
+
+**Tests**: 4 passed, 4 xfailed (was 4 passed, 4 failed).
+
+#### Round 17 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_aigateway_capability_wiring | ✅ **4 passed, 4 xfailed** |
+
+#### Round 17 Domain impact:
+
+| Домен | Round 16 → **Round 17** |
+|---|---|
+| L5 AI/agents | 8.7 → **8.7** |
+| L9 Security E2E | 8.8 → **8.8** |
+| Tests/QA | 7.9 → **7.9** (xfail cleanup) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 17 Cumulative scorecard (post R1-R17):
+
+| Домен | C2 → R17 (17 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.8** | +1.3 |
+| L3 DSL/routes | 8.4 → **8.7** | +0.3 |
+| Tests/QA | 5.5 → **7.9** | +2.4 |
+| Docs | 6.5 → **7.9** | +1.4 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+17 раундов все закоммичены в master. Working tree clean.
+
 
