@@ -1690,3 +1690,70 @@ Per ponytail: эти failures относятся к feature areas (Lakera integr
 | Docs | 6.5 → **7.9** | +1.4 |
 | **Медиана** | 7.5 → **8.6** | **+1.1** |
 
+### Round 13 (2026-08-03 — consistency scan + COMMITS)
+
+**Цель Round 13**: Финальный scan + коммиты всей accumulated work за 13 раундов.
+
+#### Round 13.1: Remaining consistency fixes
+
+- `src/backend/services/ai/pii/presidio_analyzer.py:334` — wrong `[security-pii]` extras hint → `[ai-safety]`
+- `tools/migrate_plugin_manifest.py:17,161` — CLI default `">=0.2,<0.3"` → `">=0.20,<0.21"`
+- `tools/migrate_dsl_routes_to_v11.py:108-109` — CLI default sync
+
+#### Round 13.2: COMMITS — 9 atomic commits на master
+
+| # | Hash (short) | Title | Files |
+|---|---|---|---|
+| 1 | 3167bcfb | feat(security): Round 5+7 — AIGateway composition, RAG PII, dead code cleanup | ~30 files |
+| 2 | 55d1626a | feat(security,perf): Round 5+6 — route authz, GraphQL propagation, stdlib upgrades | ~25 files |
+| 3 | e715349c | feat(tools): Round 8+11+12 — wizard semver sync + cleanup micro-wins | 17 files |
+| 4 | 958c19fe | fix(core,tests): Round 9+10 — PIITokenizer auto-persist + test_features_sprint6 sync | 12 files |
+| 5 | 60117166 | docs: SPRINT_PLAN_9_10.md — retrospective 13 rounds + cumulative scorecard | 2 files |
+| 6 | 9a322e4b | feat(rag,jupyter): Round 5 — RAG tenant isolation + auth fixes | 8 files |
+| 7 | f96d9e5d | test: Round 7+10+11 — pre-existing test files coverage expansion | 23 files |
+| 8 | 18e3dfce | chore(docs,devops): Sprint 35-38 docs + deployment updates | 8 files |
+| 9 | 99402650 | test: remove legacy test_structlog_batching.py (Round 7 cleanup) | 1 file (delete) |
+
+**Total: 9 commits, 117 файлов, +2600 LOC, -350 LOC (net).**
+
+#### Round 13 verification
+
+| Gate | Result |
+|---|---|
+| `git status --short` | ✅ clean (no uncommitted) |
+| `git log --oneline` | ✅ 9 новых commits на master |
+
+#### Round 13 Domain impact (unchanged from R12):
+
+| Домен | Round 12 → **Round 13** |
+|---|---|
+| L5 AI/agents | 8.7 → **8.7** |
+| L9 Security E2E | 8.8 → **8.8** |
+| Tests/QA | 7.8 → **7.8** |
+| Docs | 7.9 → **7.9** |
+| **Медиана** | 8.6 → **8.6** (organizational fix — все закоммичено) |
+
+#### Round 13 Cumulative scorecard (post R1-R13, **all committed**):
+
+| Домен | C2 → R13 (13 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L7 Infra/data | 8.5 → **8.7** | +0.2 |
+| L9 Security E2E | 7.5 → **8.8** | +1.3 |
+| L10 Observability | 8.3 → **8.8** | +0.5 |
+| L1 Gateway/middleware | 8.7 → **8.7** | 0.0 |
+| L2 Core/DI | 8.5 → **8.8** | +0.3 |
+| L3 DSL/routes | 8.4 → **8.6** | +0.2 |
+| L4 Workflow | 8.3 → **8.5** | +0.2 |
+| L6 RPA | 9.0 → **9.0** | 0.0 |
+| L8 Messaging/CDC | 8.3 → **8.5** | +0.2 |
+| Frontend/portal | 7.5 → **7.5** | 0.0 |
+| Extensions | 6.5 → **7.5** | +1.0 |
+| **Tests/QA** | 5.5 → **7.8** | +2.3 |
+| Devops/deploy | 7.5 → **8.0** | +0.5 |
+| Docs | 6.5 → **7.9** | +1.4 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+13 раундов все закоммичены в master. Working tree clean.
+
+
