@@ -237,6 +237,23 @@ async def test_ai_tool_dispatch_end_to_end_happy_path(
     verify tool.callable was awaited with parsed args + result_property
     has {dispatched: True, tool_id, args, result}.
     """
+    # Round 20 fix: lru_cache reset между тестами — без cache_clear()
+    # _build_ai_gateway_singleton возвращает cached instance и mock
+    # AIGateway class НЕ применяется. Также сбрасываем feature_flag override
+    # от других тестов (test_gateway_adapter.py ставит True).
+    from src.backend.core.di.providers.ai import (
+        _build_ai_gateway_singleton,
+        _overrides,
+    )
+
+    _overrides.pop("ai_gateway", None)
+    _build_ai_gateway_singleton.cache_clear()
+    from src.backend.core.config import features as features_module
+
+    monkeypatch.setattr(features_module.feature_flags, "ai_gateway_enforce", False)
+
+    from src.backend.core.ai.gateway_models import AIRequest, AIResponse
+    from src.backend.services.ai.tools.registry import AgentTool
     from src.backend.core.ai.gateway_models import AIRequest, AIResponse
     from src.backend.services.ai.tools.registry import AgentTool
 
@@ -301,6 +318,19 @@ async def test_ai_tool_dispatch_end_to_end_blocks_tool_outside_whitelist(
     processor's whitelist only contains ``["safe_tool"]``. The dispatch
     should be blocked with reason ``tool_id_not_in_whitelist``.
     """
+    # Round 20 fix: cache_clear + feature_flag reset (см. happy_path test).
+    from src.backend.core.di.providers.ai import (
+        _build_ai_gateway_singleton,
+        _overrides,
+    )
+
+    _overrides.pop("ai_gateway", None)
+    _build_ai_gateway_singleton.cache_clear()
+    from src.backend.core.config import features as features_module
+
+    monkeypatch.setattr(features_module.feature_flags, "ai_gateway_enforce", False)
+
+    from src.backend.core.ai.gateway_models import AIRequest, AIResponse
     from src.backend.core.ai.gateway_models import AIRequest, AIResponse
 
     async def _mock_invoke(request: AIRequest) -> AIResponse:
@@ -345,6 +375,17 @@ async def test_ai_tool_dispatch_end_to_end_blocks_tool_outside_whitelist(
 @pytest.mark.asyncio
 async def test_ai_tool_dispatch_no_selection_when_llm_unavailable() -> None:
     """AIGateway.invoke fails → reason='no_selection' (graceful)."""
+    # Round 20 fix: cache_clear от предыдущих тестов — без этого cached
+    # mock instance от happy_path теста возвращает успех, и этот тест
+    # не получает ожидаемый failure path.
+    from src.backend.core.di.providers.ai import (
+        _build_ai_gateway_singleton,
+        _overrides,
+    )
+
+    _overrides.pop("ai_gateway", None)
+    _build_ai_gateway_singleton.cache_clear()
+
     p = AIToolDispatchProcessor(available_tool_ids=["x"], query="test")
     ex = _ex()
     # AIGateway raises (в test env) → catch в _ask_llm_for_tool_selection
