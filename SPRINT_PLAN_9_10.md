@@ -2415,4 +2415,50 @@ R25-3 (`_safe_orjson_loads` DRY across 7 files — YAGNI abstraction).
 
 25 раундов все закоммичены в master. Working tree clean.
 
+### Round 26 (2026-08-03 — LoggerProtocol docstring fix)
+
+**Цель Round 26**: Update stale docstring referencing deprecated `logging_service`.
+
+#### Round 26.1: LoggerProtocol docstring fix
+
+`src/backend/core/interfaces/multi_protocol.py:149` ссылался на
+`infrastructure.external_apis.logging_service` (deprecated в Sprint 38,
+см. `stdlib_backend.py:7`).
+
+**Fix**: docstring обновлён на canonical
+`infrastructure.logging.structlog_backend`.
+
+**Tests**: 165 interfaces tests passing (excluding pre-existing
+`test_is_runtime_checkable` runtime checkable issue, verified via git stash).
+
+#### Round 26 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_interfaces (excluding pre-existing fail) | ✅ **165 passed** |
+
+#### Round 26 Domain impact:
+
+| Домен | Round 25 → **Round 26** |
+|---|---|
+| L2 Core/DI | 8.8 → **8.8** (docstring accuracy) |
+| Docs | 7.9 → **8.0** (stale reference fix) |
+| Tests/QA | 8.1 → **8.1** |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 26 Cumulative scorecard (post R1-R26):
+
+| Домен | C2 → R26 (26 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| Tests/QA | 5.5 → **8.1** | +2.6 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+26 раундов все закоммичены в master. Working tree clean.
+
 
