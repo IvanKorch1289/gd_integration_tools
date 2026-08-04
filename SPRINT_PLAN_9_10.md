@@ -2160,4 +2160,57 @@ Per ponytail: эти failures относятся к feature areas (Lakera integr
 
 20 раундов все закоммичены в master. Working tree clean.
 
+### Round 21 (2026-08-03 — DSL processors conftest for AIGateway reset)
+
+**Цель Round 21**: Расширить Round 20 fix (test_ai_tool_dispatch pollution) на весь DSL processors directory.
+
+#### Round 21.1: New conftest.py для DSL processors
+
+`tests/unit/dsl/engine/processors/conftest.py` (NEW) — зеркало
+`tests/unit/services/ai/conftest.py` (Sprint 3 improvement #5).
+Autouse fixture сбрасывает `_overrides["ai_gateway"]` и
+`_build_ai_gateway_singleton.cache_clear()` перед/после каждого теста.
+
+До этого DSL тесты не имели аналога — silent AIGateway pollution
+от других DSL тестов (test_sprint1_3_ai_gateway_composition запускал
+singleton build → cache polluted → DSL тесты с mocked AIGateway получали
+stale result).
+
+**Tests closed**: 1 (`test_gateway_enforce_uses_aigateway` — was failing
+in DSL processors suite, now passes).
+
+**Remaining pollution**: `test_react_isolated_uses_sandbox` — отдельный
+root cause (`svcs_registry.clear_registry()` от `test_agent_graph_tool_policy`
+без restore). Environment-variable registry pollution, не AIGateway
+singleton. Требует dedicated fix (svcs_registry fixture в conftest).
+
+#### Round 21 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| DSL processors (full) | ✅ **1683 passed, 1 skipped** (was 1682 + 1 fail) |
+
+#### Round 21 Domain impact:
+
+| Домен | Round 20 → **Round 21** |
+|---|---|
+| L3 DSL/routes | 8.8 → **8.8** (test isolation) |
+| Tests/QA | 8.0 → **8.0** (+1 test fixed, -1 remaining env pollution) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 21 Cumulative scorecard (post R1-R21):
+
+| Домен | C2 → R21 (21 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.8** | +1.3 |
+| L3 DSL/routes | 8.4 → **8.8** | +0.4 |
+| Tests/QA | 5.5 → **8.0** | +2.5 |
+| Docs | 6.5 → **7.9** | +1.4 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+21 раундов все закоммичены в master. Working tree clean.
+
 
