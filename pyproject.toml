@@ -662,6 +662,15 @@ module = "aioquic.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+# Round 5 Sprint 5.2: polars — optional extra (uv sync --extra dataframes);
+# lazy-импорт в 9 модулях (dataframes.py, export_service.py, dataframe.py,
+# polars_extended.py, converters.py, eip/transformation.py, imports.py,
+# streamlit 67_Задачи.py, 11_Маршруты.py). На dev-light без extras
+# модуля нет. Установка: uv sync --extra dataframes.
+module = "polars.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 # К1 (V15 S2): cryptography используется в core/auth/mtls_backend.py
 # для PEM-валидации client cert. dev_light без cryptography продолжает
 # работать — backend переходит в headers-only режим.
