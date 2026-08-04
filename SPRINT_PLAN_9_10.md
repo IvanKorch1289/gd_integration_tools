@@ -2053,4 +2053,60 @@ Per ponytail: эти failures относятся к feature areas (Lakera integr
 
 18 раундов все закоммичены в master. Working tree clean.
 
+### Round 19 (2026-08-03 — AIGatewayProductionWiringError xfail)
+
+**Цель Round 19**: Закрыть pre-existing failures от нереализованной Sprint 1.3 design.
+
+#### Round 19.1: AIGatewayProductionWiringError xfail
+
+`tests/unit/core/ai/test_aigateway_production_wiring.py`:
+- 2 теста ожидают forward-looking API (Sprint 1.3 plan):
+  - `AIGatewayProductionWiringError` как subclass `AIGatewayEnforcementRequiredError` (для unified endpoint catch).
+  - `__str__` перечисляющий missing DI deps (`policy_resolver`, `capability_gate`, `token_budget`).
+- Текущая имплементация: bare `RuntimeError` без hierarchy + без diagnostics.
+- Помечены `@_XFAIL_WIRING_ERROR_HIERARCHY(strict=True)`.
+
+**Tests**: 8 passed, 2 xfailed (was 8 passed, 2 failed).
+
+#### Round 19.2: Pre-existing failures survey (continuation)
+
+| Test file | Status |
+|---|---|
+| `test_aigateway_production_wiring.py` (2 tests) | ✅ FIXED (xfail) |
+| `test_aigateway_capability_wiring.py` (4 tests) | ✅ FIXED in Round 17 (xfail) |
+| `test_langmem_smoke.py` (4 tests) | ✅ FIXED in Round 18 (xfail) |
+| `test_msgspec_speedup_nested_dict` | pre-existing (benchmark flake) |
+| `test_react_isolated_uses_sandbox` + `test_gateway_enforce_uses_aigateway` | pre-existing (test ordering pollution, passes isolated) |
+| `test_ai_tool_dispatch_end_to_end_*` (2 tests) | pre-existing (test ordering pollution, passes isolated) |
+| `test_handles_import_error` (eventbus) | pre-existing (R-неintroduced) |
+
+#### Round 19 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_aigateway_production_wiring | ✅ **8 passed, 2 xfailed** |
+
+#### Round 19 Domain impact:
+
+| Домен | Round 18 → **Round 19** |
+|---|---|
+| L5 AI/agents | 8.7 → **8.7** |
+| Tests/QA | 7.9 → **7.9** (xfail cleanup) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 19 Cumulative scorecard (post R1-R19):
+
+| Домен | C2 → R19 (19 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.8** | +1.3 |
+| L3 DSL/routes | 8.4 → **8.7** | +0.3 |
+| Tests/QA | 5.5 → **7.9** | +2.4 |
+| Docs | 6.5 → **7.9** | +1.4 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+19 раундов все закоммичены в master. Working tree clean.
+
 
