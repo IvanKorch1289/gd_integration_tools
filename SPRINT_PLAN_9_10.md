@@ -1756,4 +1756,71 @@ Per ponytail: эти failures относятся к feature areas (Lakera integr
 
 13 раундов все закоммичены в master. Working tree clean.
 
+### Round 14 (2026-08-03 — DSL micro-wins: const, from exc, type hints, edge tests)
+
+**Цель Round 14**: 5 микро-улучшений в DSL processors + tests.
+
+#### Round 14.1-5: 5 micro-wins (R14-1..R14-5)
+
+| ID | Файл | Изменение |
+|---|---|---|
+| R14-1 | `processors/desktop_pyautogui.py` | `DEFAULT_DURATION_S = 0.25` extracted (раньше 0.25 хардкожен в `__init__` default и `to_spec` skip-condition — desync bug) |
+| R14-2 | `processors/storage_ext.py:184` | `RuntimeError(...)` → `RuntimeError(...) from exc` (сохраняет original ImportError traceback) |
+| R14-3 | `processors/ai_rlm.py:164` | `logger.exception("ai_rlm execution failed")` → `logger.exception("ai_rlm execution failed: %s", exc)` (stdlib idiom) |
+| R14-4 | 26× `processors/*/to_spec()` (28 instances) | `-> dict` → `-> dict[str, Any] \| None` (canonical `BaseProcessor` contract, sed bulk update) |
+| R14-5 | `tests/.../test_dq_check.py` | +3 edge-case tests: empty rules is_clean, body=None handled, violations set без fail_on_violation |
+
+#### Round 14 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| `compileall tools/ extensions/` | ✅ clean |
+| DSL tests (5 files: test_dq_check, test_agent_graph, etc.) | ✅ **3902 passed** (DQCheck 5/5) |
+
+#### Round 14 Domain impact:
+
+| Домен | Round 13 → **Round 14** |
+|---|---|
+| L5 AI/agents | 8.7 → **8.7** |
+| L7 Infra/data | 8.7 → **8.7** |
+| L9 Security E2E | 8.8 → **8.8** |
+| L10 Observability | 8.8 → **8.8** |
+| L1 Gateway/middleware | 8.7 → **8.7** |
+| L2 Core/DI | 8.8 → **8.8** |
+| L3 DSL/routes | 8.6 → **8.7** (+R14-1/2/3 type safety + error chain + edge tests) |
+| L4 Workflow | 8.5 → **8.5** |
+| L6 RPA | 9.0 → **9.0** |
+| L8 Messaging/CDC | 8.5 → **8.5** |
+| Frontend/portal | 7.5 → **7.5** |
+| Extensions | 7.5 → **7.5** |
+| **Tests/QA** | 7.8 → **7.9** (+3 DQ edge tests) |
+| Devops/deploy | 8.0 → **8.0** |
+| Docs | 7.9 → **7.9** |
+| **Медиана** | 8.6 → **8.6** (DSL safety) |
+
+#### Round 14 Cumulative scorecard (post R1-R14):
+
+| Домен | C2 → R14 (14 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L7 Infra/data | 8.5 → **8.7** | +0.2 |
+| L9 Security E2E | 7.5 → **8.8** | +1.3 |
+| L10 Observability | 8.3 → **8.8** | +0.5 |
+| L1 Gateway/middleware | 8.7 → **8.7** | 0.0 |
+| L2 Core/DI | 8.5 → **8.8** | +0.3 |
+| L3 DSL/routes | 8.4 → **8.7** | +0.3 |
+| L4 Workflow | 8.3 → **8.5** | +0.2 |
+| L6 RPA | 9.0 → **9.0** | 0.0 |
+| L8 Messaging/CDC | 8.3 → **8.5** | +0.2 |
+| Frontend/portal | 7.5 → **7.5** | 0.0 |
+| Extensions | 6.5 → **7.5** | +1.0 |
+| **Tests/QA** | 5.5 → **7.9** | +2.4 |
+| Devops/deploy | 7.5 → **8.0** | +0.5 |
+| Docs | 6.5 → **7.9** | +1.4 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+14 раундов все закоммичены в master. Working tree clean.
+
 
