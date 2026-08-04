@@ -3373,4 +3373,51 @@ Per Ponytail "не выдумывай улучшения" — Round 45 = null co
 45 итераций (38 раундов закоммиченных + 7 null rounds).
 Working tree clean.
 
+### Round 46 (2026-08-03 — scan, NOT COMMITTED)
+
+**Цель Round 46**: Targeted AST scan для unused functions в tests.
+
+#### Round 46.1: Skipped — false positives too high
+
+AST scan нашёл 15603 "potentially unused" functions в tests/
+(все тесты вызываются pytest'ом напрямую, не Python кодом — AST
+detection не может это увидеть без специального анализа pytest
+collection).
+
+Другие сканы:
+- `database.py` NotImplementedError — legitimate (DB driver dispatch)
+- Все tests passing, no missed regressions
+
+Per Ponytail "не выдумывай улучшения" — Round 46 = null commit.
+
+#### Round 46 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK (clean) |
+| `mypy -p src` | ✅ **0 errors** (clean) |
+
+#### Round 46 Domain impact:
+
+| Домен | Round 45 → **Round 46** |
+|---|---|
+| All | **unchanged** (no commits) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 46 Cumulative scorecard (post R1-R46, 38 раундов закоммиченных):
+
+| Домен | C2 → R46 (46 итераций) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.9** | +2.9 |
+| L9 Security E2E | 7.5 → **9.0** | +1.5 |
+| L3 DSL/routes | 8.4 → **9.0** | +0.6 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.5** | +3.0 |
+| Docs | 6.5 → **8.1** | +1.6 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+46 итераций (38 раундов закоммиченных + 8 null rounds).
+Working tree clean.
+
 
