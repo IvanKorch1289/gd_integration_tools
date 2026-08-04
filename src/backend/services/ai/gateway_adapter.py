@@ -51,6 +51,44 @@ __all__ = ("AIGatewayAdapter", "get_ai_gateway", "invoke_via_gateway")
 
 
 
+def adapt_capability_gate(gate: Any) -> Any:
+    """Адаптирует :class:`CapabilityGate` к 3-arg signature для AIGateway.
+
+    Round 39: Sprint 1.5 L5 Security Chain — ``AIGateway._check_capability``
+    вызывает ``gate.check(plugin, capability, requested_scope)``
+    (canonical signature из :class:`CheckMixin.check`).
+
+    Args:
+        gate: :class:`CapabilityGate` instance с ``.check`` методом.
+
+    Returns:
+        Adapter object с тем же ``.check(plugin, capability, scope)`` interface
+        (1-в-1 pass-through — canonical signal уже matches).
+
+    Raises:
+        CapabilityDeniedError: пробрасывается из gate без модификации.
+    """
+    return _CapabilityGateAdapter(gate)
+
+
+class _CapabilityGateAdapter:
+    """Round 39: thin pass-through adapter для canonical ``CheckMixin`` signature.
+
+    Canonical ``gate.check(plugin, capability, requested_scope)`` уже matches
+    AIGateway expectations. Этот adapter нужен только для testing contract
+    (testability, mocking в :mod:`tests.unit.services.ai.test_aigateway_capability_wiring`).
+    """
+
+    __slots__ = ("_gate",)
+
+    def __init__(self, gate: Any) -> None:
+        self._gate = gate
+
+    def check(self, plugin: str, capability: str, requested_scope: str | None) -> None:
+        """Pass-through to canonical ``CheckMixin.check`` (3-arg signature)."""
+        self._gate.check(plugin, capability, requested_scope)
+
+
 def get_ai_gateway() -> AIGateway:
     """Получить singleton :class:`AIGateway` из composition root.
 
@@ -99,7 +137,7 @@ async def invoke_via_gateway(
     gateway: AIGateway | None = None,
     stream: bool = False,
     return_full_response: bool = False,
-) -> Any:
+) -> Any:  # noqa: E501 — existing function
     """Hybrid вызов: ``AIGateway.invoke`` при flag=ON или legacy_callable при OFF.
 
     Args:

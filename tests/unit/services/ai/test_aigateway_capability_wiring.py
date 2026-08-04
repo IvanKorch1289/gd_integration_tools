@@ -108,7 +108,6 @@ def _reset_aigateway_provider() -> None:
     _clear_app_state_ai_gateway()
 
 
-@_XFAIL_ADAPT_CAPABILITY
 def test_adapt_capability_gate_passes_3arg_signature() -> None:
     """Адаптер пробрасывает вызовы (plugin, capability, scope) 1-в-1."""
     from src.backend.services.ai.gateway_adapter import adapt_capability_gate
@@ -123,7 +122,6 @@ def test_adapt_capability_gate_passes_3arg_signature() -> None:
     )
 
 
-@_XFAIL_ADAPT_CAPABILITY
 def test_adapt_capability_gate_propagates_capability_denied() -> None:
     """При denied адаптер не глушит исключение."""
     from src.backend.core.security.capabilities.errors import CapabilityDeniedError
