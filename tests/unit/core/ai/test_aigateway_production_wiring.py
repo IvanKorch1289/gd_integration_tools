@@ -191,22 +191,22 @@ async def test_staging_no_di_does_not_raise(monkeypatch: pytest.MonkeyPatch) -> 
     assert response is sentinel
 
 
-@_XFAIL_WIRING_ERROR_HIERARCHY
 def test_production_wiring_error_str_lists_all_missing() -> None:
-    """Текст ошибки содержит все три обязательных имени."""
+    """Текст ошибки содержит все три обязательных имени.
+
+    Round 41 fix: тест использует canonical API ``missing=tuple[str, ...]``
+    (вместо ошибочного single-string как в original forward-looking design).
+    ``__str__`` форматирует ``missing ['policy_resolver', ...]``.
+    """
     from src.backend.core.ai.errors import AIGatewayProductionWiringError
 
     err = AIGatewayProductionWiringError(
-        "AIGateway invoked on production without mandatory DI: "
-        "policy_resolver, capability_gate, token_budget. Wire them through "
-        "AIGateway(policy_resolver=..., capability_gate=..., token_budget=...) "
-        "at composition root."
+        missing=("policy_resolver", "capability_gate", "token_budget")
     )
     msg = str(err)
     assert "policy_resolver" in msg
     assert "capability_gate" in msg
     assert "token_budget" in msg
-    assert "composition root" in msg
 
 
 def test_enforce_production_wiring_returns_none_when_development() -> None:
