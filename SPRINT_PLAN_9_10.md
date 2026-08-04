@@ -3011,4 +3011,66 @@ Plus 2 NEW tests:
 38 итераций (33 раундов закоммиченных + 5 null rounds).
 Working tree clean.
 
+### Round 39 (2026-08-03 — adapt_capability_gate implementation, Sprint 1.5 L5)
+
+**Цель Round 39**: Реализовать ``adapt_capability_gate`` function в
+``src/backend/services/ai/gateway_adapter.py`` для закрытия 2 of 4 xfail
+в ``test_aigateway_capability_wiring.py``.
+
+#### Round 39.1: adapt_capability_gate implementation
+
+**Implementation**:
+```python
+def adapt_capability_gate(gate: Any) -> Any:
+    return _CapabilityGateAdapter(gate)
+
+class _CapabilityGateAdapter:
+    def check(self, plugin, capability, requested_scope):
+        self._gate.check(plugin, capability, requested_scope)
+```
+
+Thin pass-through к canonical ``CheckMixin.check`` (3-arg signature
+уже matches AIGateway expectations).
+
+**Closed 2 xfail**:
+- test_adapt_capability_gate_passes_3arg_signature ✅
+- test_adapt_capability_gate_propagates_capability_denied ✅
+
+**Remaining xfail** (M scope — Sprint 1.5 L5 migration):
+- test_aigateway_pipeline_calls_capability_with_full_signature
+- test_aigateway_pipeline_propagates_capability_denied
+
+#### Round 39 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_aigateway_capability_wiring | ✅ **6 passed, 2 xfailed (was 4 passed, 4 xfailed)** |
+
+#### Round 39 Domain impact:
+
+| Домен | Round 38 → **Round 39** |
+|---|---|
+| L5 AI/agents | 8.8 → **8.8** (DEFER-2 partial) |
+| L9 Security E2E | 8.9 → **8.9** (Sprint 1.5 partial) |
+| Tests/QA | 8.4 → **8.4** (+2 tests) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 39 Cumulative scorecard (post R1-R39, 34 раундов закоммиченных):
+
+| Домен | C2 → R39 (39 итераций) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.8** | +2.8 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **9.0** | +0.6 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.4** | +2.9 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+39 итераций (34 раундов закоммиченных + 5 null rounds).
+Working tree clean.
+
 
