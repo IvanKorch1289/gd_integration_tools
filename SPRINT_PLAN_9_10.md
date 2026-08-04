@@ -2771,4 +2771,50 @@ AST visitor scan:
 33 итераций (31 раунд закоммичен + Round 32 + Round 33 null).
 Working tree clean.
 
+### Round 34 (2026-08-03 — multi-line import cleanup, NOT COMMITTED)
+
+**Цель Round 34**: Применить Round 32 AST-pattern ко всему `src/backend/`.
+
+#### Round 34.1: Skipped — multi-line imports bug
+
+AST visitor нашёл 940 candidate unused imports в `src/backend/`.
+Bulk-remove сломал `core/ai/__init__.py:30` (multi-line
+`from src.backend.X import (a, b, c)` — мой script удалил неправильные
+lines, оставив syntax error).
+
+Полный revert. Требуется careful AST handling для multi-line imports
+(parent ImportFrom node spans multiple lines).
+
+Документировано как "не реализовано" — dedicated migration.
+
+#### Round 34 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK (clean после revert) |
+| `mypy -p src` | ✅ **0 errors** (clean) |
+
+#### Round 34 Domain impact:
+
+| Домен | Round 33 → **Round 34** |
+|---|---|
+| All | **unchanged** (no commits) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 34 Cumulative scorecard (post R1-R34, 31 раундов закоммиченных):
+
+| Домен | C2 → R34 | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.2** | +2.7 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+34 итераций (31 раундов закоммиченных + 3 null rounds).
+Working tree clean.
+
 
