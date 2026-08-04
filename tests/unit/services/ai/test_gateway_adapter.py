@@ -117,7 +117,12 @@ async def test_adapter_default_gateway_construction(
         constructed.append(instance)
         return instance
 
-    monkeypatch.setattr("src.backend.services.ai.gateway_adapter.AIGateway", _capture)
+    # Round 5 R1.1 fix: invoke_via_gateway больше не вызывает AIGateway()
+    # напрямую — он делегирует в get_ai_gateway() (R5 Imp.1 + Sprint 1.3
+    # composition root). Подменяем get_ai_gateway вместо AIGateway.
+    monkeypatch.setattr(
+        "src.backend.services.ai.gateway_adapter.get_ai_gateway", _capture
+    )
     response = AIResponse(content="default-gw")
 
     # Подменяем invoke для всех новых instance'ов
