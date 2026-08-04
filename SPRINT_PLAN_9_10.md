@@ -3188,4 +3188,53 @@ err = AIGatewayProductionWiringError(
 41 итерация (36 раундов закоммиченных + 5 null rounds).
 Working tree clean.
 
+### Round 42 (2026-08-03 — capability_wiring xfail reason update)
+
+**Цель Round 42**: Update stale xfail reason в
+`test_aigateway_capability_wiring.py` (xfail reason упоминал
+"adapt_capability_gate не реализован", но Round 39 это реализовал).
+
+#### Round 42.1: xfail reason update
+
+Updated reason для `_XFAIL_ADAPT_CAPABILITY`:
+- Old: "adapt_capability_gate не реализован в gateway_adapter.py"
+- New: "pipeline tests require 3 mocks (M scope, dedicated migration)"
+
+2 remaining pipeline xfails (test_aigateway_pipeline_*):
+- test_aigateway_pipeline_calls_capability_with_full_signature
+- test_aigateway_pipeline_propagates_capability_denied
+
+Требуют full DI injection (policy_resolver + capability_gate +
+token_budget) — отдельная dedicated migration sprint scope.
+
+#### Round 42 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+
+#### Round 42 Domain impact:
+
+| Домен | Round 41 → **Round 42** |
+|---|---|
+| All | **unchanged** (docs only) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 42 Cumulative scorecard (post R1-R42, 37 раундов закоммиченных):
+
+| Домен | C2 → R42 (42 итерации) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.8** | +2.8 |
+| L9 Security E2E | 7.5 → **9.0** | +1.5 |
+| L3 DSL/routes | 8.4 → **9.0** | +0.6 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.4** | +2.9 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+42 итерации (37 раундов закоммиченных + 5 null rounds).
+Working tree clean.
+
 
