@@ -2213,4 +2213,52 @@ singleton. Требует dedicated fix (svcs_registry fixture в conftest).
 
 21 раундов все закоммичены в master. Working tree clean.
 
+### Round 22 (2026-08-03 — DSL conftest: svcs_registry reset)
+
+**Цель Round 22**: Закрыть последний remaining test ordering pollution в DSL processors.
+
+#### Round 22.1: conftest.py extension
+
+Расширен `tests/unit/dsl/engine/processors/conftest.py` (Round 21) вторым
+autouse fixture `_reset_svcs_registry_for_dsl` — `clear_registry()` перед
+и после каждого теста.
+
+**Root cause** (Round 21 remaining): `test_agent_graph_tool_policy.py`
+вызывает `clear_registry()` внутри test bodies без proper teardown —
+следующий тест в алфавитном порядке (`test_agent_graph.py::test_react_isolated_uses_sandbox`)
+видит пустой `svcs_registry` и fails.
+
+**Tests closed**: 1 (`test_react_isolated_uses_sandbox`).
+
+#### Round 22 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| DSL processors (full) | ✅ **1684 passed, 0 failed, 24 skipped** |
+
+**Major milestone**: ALL DSL processor tests passing впервые за many раундов.
+
+#### Round 22 Domain impact:
+
+| Домен | Round 21 → **Round 22** |
+|---|---|
+| L3 DSL/routes | 8.8 → **8.9** (+test isolation complete) |
+| Tests/QA | 8.0 → **8.1** (+1 test fixed) |
+| **Медиана** | 8.6 → **8.6** (L3 improvement) |
+
+#### Round 22 Cumulative scorecard (post R1-R22):
+
+| Домен | C2 → R22 (22 раунда) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.8** | +1.3 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| Tests/QA | 5.5 → **8.1** | +2.6 |
+| Docs | 6.5 → **7.9** | +1.4 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+22 раунда все закоммичены в master. Working tree clean.
+
 
