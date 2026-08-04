@@ -146,7 +146,7 @@ class LoggerProtocol(Protocol):
     """Минимальная поверхность structured-логгера.
 
     Реализация: ``infrastructure.logging.structlog_backend``
-    (Round 25 fix: ``external_apis.logging_service`` deprecated since
+    (Round 26 fix: ``external_apis.logging_service`` deprecated since
     Sprint 38 — больше не используется как DI-источник).
     """
 
