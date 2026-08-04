@@ -2911,4 +2911,50 @@ Dedicated migration требует proper AST visitor + try/except handler.
 36 итераций (31 раундов закоммиченных + 5 null rounds).
 Working tree clean.
 
+### Round 37 (2026-08-03 — analyst micro-wins, 4 fixes)
+
+**Цель Round 37**: Применить 4 micro-wins от analyst agent (R37-1..R37-4).
+Skipped: R37-5 (документация автогенерируется).
+
+#### Round 37.1-4: 4 micro-wins done
+
+| ID | Что | Impact |
+|---|---|---|
+| R37-1 | `extensions/core_entities/orders/workflows/orders_dsl.py` — удалены `_logger` + `import logging` (0 references). | -2 LOC |
+| R37-2 | `deploy/windows-worker/main.py` — удалены `_logger` + `import logging` (sub-modules сохраняют свои loggers). | -2 LOC |
+| R37-3 | `tools/checks/ragas_runner.py` — удалена dead `logger = logging.getLogger("tools.ragas_runner")`. | -1 LOC |
+| R37-4 | +4 edge case tests для `DataMaskingProcessor._mask_value` (nested dict, list-of-dicts, scalars, empty containers). | +71 LOC |
+
+#### Round 37 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_mask_pii | ✅ **23 passed (was 19, +4 new)** |
+
+#### Round 37 Domain impact:
+
+| Домен | Round 36 → **Round 37** |
+|---|---|
+| L3 DSL/routes | 8.9 → **9.0** (+edge case tests) |
+| Tests/QA | 8.2 → **8.3** (+4 tests) |
+| **Медиана** | 8.6 → **8.6** (L3 boosted) |
+
+#### Round 37 Cumulative scorecard (post R1-R37, 32 раундов закоммиченных):
+
+| Домен | C2 → R37 (37 итераций) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **9.0** | +0.6 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.3** | +2.8 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+37 итераций (32 раундов закоммиченных + 5 null rounds).
+Working tree clean.
+
 
