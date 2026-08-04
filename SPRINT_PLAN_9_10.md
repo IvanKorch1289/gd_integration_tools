@@ -2725,4 +2725,50 @@ Bulk removal: 23 removed across 13 test files. -23 LOC.
 32 итераций (31 раунд закоммичены + Round 32 = +23 imports cleanup).
 Working tree clean.
 
+### Round 33 (2026-08-03 — tools/ + extensions/ scan, NOT COMMITTED)
+
+**Цель Round 33**: Apply Round 32 pattern к `tools/` и `extensions/`.
+
+#### Round 33.1: Skipped — no clean wins
+
+AST visitor scan:
+- `tools/`: 0 unused imports, 0 unused loggers.
+- `extensions/`: 8 unused imports найдены, но bulk-remove сломал
+  `extensions/__init__.py` (IndentationError в `ActionRegistryProtocol`
+  импорте — pre-existing fragility в file).
+
+Полный revert. Документировано как "не реализовано" — extensions/
+требует careful manual review перед bulk-cleanup.
+
+#### Round 33 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK (clean после revert) |
+| `mypy -p src` | ✅ **0 errors** |
+| test_extensions | ✅ **37 passed** |
+
+#### Round 33 Domain impact:
+
+| Домен | Round 32 → **Round 33** |
+|---|---|
+| All | **unchanged** (no commits) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 33 Cumulative scorecard (post R1-R33, 31 раундов закоммиченных):
+
+| Домен | C2 → R33 | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.2** | +2.7 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+33 итераций (31 раунд закоммичен + Round 32 + Round 33 null).
+Working tree clean.
+
 
