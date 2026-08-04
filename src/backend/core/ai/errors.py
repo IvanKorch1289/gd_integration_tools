@@ -13,6 +13,7 @@ logger = get_logger(__name__)
 __all__ = (
     "AIFsError",
     "AIGatewayEnforcementRequiredError",
+    "AIGatewayProductionWiringError",
     "AIWorkspaceError",
     "FsForbiddenWriteError",
     "GatewayError",
@@ -33,7 +34,7 @@ class GuardResult:
     Attributes:
         guard_name: Идентификатор (``"llama_guard:safe_v3"``, ``"nemo:prompt_injection"``, etc.).
         verdict: Вердикт (``"passed"``, ``"blocked"``, ``"warned"``).
-        categories: Срабоавшие категории при блокировке.
+        categories: Сработавшие категории при блокировке.
     """
 
     guard_name: str
@@ -141,6 +142,25 @@ class AIGatewayEnforcementRequiredError(Exception):
     Scaffold-режим (silent pass-through) запрещён — каждый LLM call
     обязан идти через enforcement pipeline.
     """
+
+
+class AIGatewayProductionWiringError(RuntimeError):
+    """Sprint 1.3 (S177 M2): AIGateway composition root не имеет обязательных DI в production.
+
+    Поднимается в :meth:`AIGateway._enforce_production_wiring` при
+    :data:`app.environment == "production"`, если отсутствует хотя бы
+    один из: ``policy_resolver``, ``capability_gate``, ``token_budget``.
+
+    Защищает от silent fail-open: bare ``AIGateway()`` без DI не должен
+    проходить policy/capability/budget проверки в production.
+    """
+
+    def __init__(self, missing: tuple[str, ...] = ()) -> None:
+        self.missing = missing
+        super().__init__(
+            "AIGateway in production requires injected DI: "
+            f"missing {list(missing)}"
+        )
 
 
 class FsForbiddenWriteError(AIFsError):

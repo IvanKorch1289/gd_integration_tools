@@ -146,7 +146,7 @@ name = "{cap_name}"
 
 name = "{name}"
 version = "0.1.0"
-requires_core = ">=0.2,<0.3"
+requires_core = ">=0.20,<0.21"
 entry_class = "extensions.{name}.plugin.{class_name}"
 tenant_aware = false
 description = "{description_text}"

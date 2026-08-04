@@ -105,8 +105,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("routes_dir", type=Path, help="Целевой каталог routes/.")
     parser.add_argument(
         "--core-spec",
-        default=">=0.2,<0.3",
-        help="Значение requires_core (по умолчанию '>=0.2,<0.3').",
+        default=">=0.20,<0.21",
+        help="Значение requires_core (по умолчанию '>=0.20,<0.21').",
     )
     parser.add_argument(
         "--overwrite",

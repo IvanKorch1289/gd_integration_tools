@@ -31,6 +31,10 @@ from rich.syntax import Syntax
 ROOT = Path(__file__).resolve().parents[2]
 ROUTES_DIR = ROOT / "routes"
 
+# Round 11 fix: импортируем shared helper для синхронизации с pyproject.toml.
+# Аналогично Round 8 (plugin_wizard.py) — избегаем дублирования.
+from tools.wizards.plugin_wizard import _default_requires_core
+
 SOURCE_DESCRIPTIONS: dict[str, str] = {
     "http": "HTTP endpoint (REST/webhook-style)",
     "cron": "Cron scheduler (APScheduler cron-style)",
@@ -123,7 +127,7 @@ def _build_toml(
 # route.toml (V11): manifest for route '{name}' (S33 W1 wizard).
 name = "{name}"
 version = "0.1.0"
-requires_core = ">=22.0,<23"
+requires_core = "{_default_requires_core()}"
 capabilities = {cap_str}
 tenant_aware = {str(tenant_aware).lower()}
 feature_flag = {{ enabled = true, gate = "{name}_enabled" }}

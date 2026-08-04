@@ -1,7 +1,7 @@
 # route.toml (V11): manifest for route 'test_route_w1' (S33 W1 wizard).
 name = "test_route_w1"
 version = "0.1.0"
-requires_core = ">=22.0,<23"
+requires_core = ">=0.20,<0.21"
 capabilities = ["net.outbound", "db.write", "audit.write"]
 tenant_aware = true
 feature_flag = { enabled = true, gate = "test_route_w1_enabled" }

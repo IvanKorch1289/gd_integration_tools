@@ -1,7 +1,7 @@
 # V11 plugin manifest — extensions/test_plug (S33 W2 wizard)
 name = "test_plug"
 version = "0.1.0"
-requires_core = ">=22.0,<23"
+requires_core = ">=0.20,<0.21"
 entry_class = "extensions.test_plug.plugin.TestPlugPlugin"
 tenant_aware = true
 description = "Test plugin"

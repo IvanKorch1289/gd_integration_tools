@@ -28,6 +28,7 @@ from typing import Annotated, Optional
 
 import questionary
 import typer
+import yaml
 from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
@@ -37,6 +38,51 @@ EXTENSIONS_DIR = ROOT / "extensions"
 
 TRUST_TIER_CHOICES = ("A", "B", "C")
 TENANT_AWARE_CHOICES = ["true", "false"]
+
+
+def _get_core_version() -> str:
+    """Прочитать текущую версию ядра из ``pyproject.toml``.
+
+    Round 8 fix: wizard раньше хардкодил ``requires_core = ">=22.0,<23"``,
+    не соответствующий реальной semver-схеме ядра (``0.20.0``). Теперь
+    читаем ``[project].version`` из ``pyproject.toml`` и формируем
+    PEP-440 constraint ``>=X.Y,<X.(Y+1)``.
+
+    Returns:
+        Semver-строка вида ``"0.20.0"`` или fallback ``"0.0.0"``
+        при невозможности распарсить ``pyproject.toml``.
+    """
+    pyproject = ROOT / "pyproject.toml"
+    if not pyproject.exists():
+        return "0.0.0"
+    try:
+        import tomllib
+
+        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+        version = str(data.get("project", {}).get("version", "0.0.0"))
+    except Exception:
+        return "0.0.0"
+    return version
+
+
+def _default_requires_core() -> str:
+    """Сгенерировать ``requires_core`` constraint под текущую версию ядра.
+
+    Round 8 fix: вместо хардкоженного ``">=22.0,<23"`` строим
+    ``">=X.Y,<X.(Y+1)"`` из текущей semver-версии. Если версия
+    ``0.20.0``, constraint = ``">=0.20,<0.21"``.
+    """
+    version = _get_core_version()
+    parts = version.split(".")
+    if len(parts) >= 2:
+        major, minor = parts[0], parts[1]
+        try:
+            next_minor = int(minor) + 1
+            return f">={major}.{minor},<{major}.{next_minor}"
+        except ValueError:
+            return f">={version},<{version.split('.')[0]}.999"
+    return f">={version},<999.0"
+
 
 console = Console()
 
@@ -101,7 +147,7 @@ def _build_toml(
     description: str,
     tenant_aware: bool,
     trust_tier: str,
-    requires_core: str = ">=22.0,<23",
+    requires_core: str = _default_requires_core(),
 ) -> str:
     """Build plugin.toml manifest."""
     return f"""\
@@ -148,8 +194,6 @@ schemas = []
 def _build_yaml(
     name: str, description: str, *, tenant_aware: bool, trust_tier: str
 ) -> str:
-    import yaml
-
     data = {
         "plugin_id": name,
         "name": name,
@@ -198,7 +242,7 @@ def _write_scaffold(
     *,
     tenant_aware: bool = True,
     trust_tier: str = "B",
-    requires_core: str = ">=22.0,<23",
+    requires_core: str = _default_requires_core(),
     force: bool = False,
 ) -> Path:
     """Write plugin.toml + __init__.py + plugin.py. Returns path to directory."""
@@ -250,7 +294,7 @@ def cli(
     ] = None,
     tenant_aware: bool = True,
     trust_tier: str = "B",
-    requires_core: str = ">=22.0,<23",
+    requires_core: str = _default_requires_core(),
     dry_run: bool = dry_run_option,
     force: bool = force_option,
     extensions_dir: Path = extensions_dir_option,
@@ -292,9 +336,10 @@ def cli(
 
         requires_core = (
             questionary.text(
-                "requires_core (core version constraint):", default=">=22.0,<23"
+                "requires_core (core version constraint):",
+                default=_default_requires_core(),
             ).ask()
-            or ">=22.0,<23"
+            or _default_requires_core()
         )
 
         console.print("[bold cyan]== Preview ==[/bold cyan]")

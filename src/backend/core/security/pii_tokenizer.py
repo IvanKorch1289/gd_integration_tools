@@ -200,7 +200,12 @@ class PIITokenizer:
     # ─── mask / unmask ────────────────────────────────────────────────────
 
     async def mask_reversible(
-        self, text: str, policy: PIIPolicy
+        self,
+        text: str,
+        policy: PIIPolicy,
+        *,
+        tenant_id: str = "",
+        correlation_id: str = "",
     ) -> tuple[str, TokenMap]:
         """Reversible PII tokenization.
 
@@ -234,7 +239,7 @@ class PIITokenizer:
         if self._presidio is None:
             raise RuntimeError(
                 "PIITokenizer.mask_reversible requires presidio_analyzer "
-                "(install gd_integration_tools[security-pii])"
+                "(install gd_integration_tools[ai-safety])"
             )
 
         result = await self._presidio.sanitize_async(text, language=policy.language)
@@ -262,6 +267,28 @@ class PIITokenizer:
             created_at=datetime.now(UTC),
             ttl_s=policy.ttl_s,
         )
+
+        # Round 9 P0 fix: auto-persist TokenMap в Redis при наличии
+        # ``token_registry`` И явного ``tenant_id`` + ``correlation_id``.
+        # Без tenant_id — persist пропускается (testkit / single-tenant режим).
+        # Redis key: ``"pii:token:{tenant_id}:{correlation_id}"`` (per
+        # ADR-0068 isolation model).
+        if (
+            self._token_registry is not None
+            and tenant_id
+            and correlation_id
+        ):
+            redis_key = f"{tenant_id}:{correlation_id}"
+            try:
+                await self._token_registry.store(
+                    redis_key, token_map, ttl_s=policy.ttl_s
+                )
+            except Exception as exc:
+                _logger.warning(
+                    "PIITokenizer: Redis persist failed for tenant=%s corr=%s: %s",
+                    tenant_id, correlation_id, exc,
+                )
+
         await self._audit_safe_emit(
             event="ai.pii.tokenize.mask",
             action="mask",
@@ -297,7 +324,7 @@ class PIITokenizer:
         if self._presidio is None:
             raise RuntimeError(
                 "PIITokenizer.mask_irreversible requires presidio_analyzer "
-                "(install gd_integration_tools[security-pii])"
+                "(install gd_integration_tools[ai-safety])"
             )
 
         result = await self._presidio.sanitize_async(text, language=policy.language)
@@ -430,7 +457,7 @@ class PIITokenizer:
             language: ISO-код языка.
 
         Returns:
-            Tuple названий PII entity (PERSON, PHONE_NUMBER, ...).
+            Sequence названий PII entity (PERSON, PHONE_NUMBER, ...).
         """
         ru_specific = ("INN", "SNILS", "PASSPORT_RF", "CONTRACT")
         common = ("PERSON", "PHONE_NUMBER", "EMAIL_ADDRESS", "IP_ADDRESS")

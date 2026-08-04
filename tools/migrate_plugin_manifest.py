@@ -14,7 +14,7 @@
 Опции:
 
 * ``--dry-run`` — печатает результат, не пишет файл.
-* ``--core-spec`` — значение ``requires_core`` (по умолчанию ``">=0.2,<0.3"``).
+* ``--core-spec`` — значение ``requires_core`` (по умолчанию ``">=0.20,<0.21"`` — синхронизировано с текущей core semver 0.20.0).
 * ``--overwrite`` — перезаписать существующий ``plugin.toml``.
 """
 
@@ -158,8 +158,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     )
     parser.add_argument(
         "--core-spec",
-        default=">=0.2,<0.3",
-        help="Значение requires_core (по умолчанию '>=0.2,<0.3').",
+        default=">=0.20,<0.21",
+        help="Значение requires_core (по умолчанию '>=0.20,<0.21').",
     )
     parser.add_argument(
         "--overwrite",

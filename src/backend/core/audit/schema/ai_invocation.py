@@ -83,7 +83,7 @@ class AIInvocationPayload(BaseModel):
     guard_verdict: str | None = None
     """Вердикт: 'passed', 'blocked', 'warned'."""
     guard_categories: list[str] = Field(default_factory=list)
-    """Срабоавшие категории при блокировке."""
+    """Сработавшие категории при блокировке."""
 
     # PII
     pii_detected: bool | None = None

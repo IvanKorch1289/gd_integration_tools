@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+# Round 11 fix: shared helper для синхронизации default constraint с pyproject.toml.
+from tools.wizards.plugin_wizard import _default_requires_core
+
 ROOT = Path(__file__).resolve().parents[2]
 ROUTES_DIR = ROOT / "routes"
 
@@ -152,7 +155,7 @@ def build_route_toml(
 # route.toml (V11): manifest для route '{name}' (S33 W1 wizard).
 name = "{name}"
 version = "0.1.0"
-requires_core = ">=22.0,<23"
+requires_core = "{_default_requires_core()}"
 capabilities = {cap_toml}
 tenant_aware = {str(tenant_aware).lower()}
 feature_flag = {{ enabled = true, gate = "{name}_enabled" }}

@@ -331,7 +331,7 @@ def _record_presidio_fallback(*, reason: str) -> None:
     ``PRESIDIO_PII_ENABLED`` любой fallback на legacy regex-санайзер
     должен быть наблюдаемым. Алерт на ``rate(presidio_fallback_total[5m]) > 0``
     в production сигнализирует утрату NER-покрытия (отсутствует extra
-    ``[security-pii]`` либо spaCy-модель не загружена).
+    ``[ai-safety]`` либо spaCy-модель не загружена).
 
     Реализация через ``metrics_registry`` (centralized) — при отсутствии
     prometheus_client (минимальный профиль) — no-op.
