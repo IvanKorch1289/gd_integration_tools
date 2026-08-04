@@ -323,7 +323,7 @@ ai-2026 = [
 # Hugging Face Hub. Используется через services/ai/model_registry/.
 # mlflow ~150MB (тянет gunicorn, alembic, sqlalchemy-bind); HF Hub лёгкий.
 ai-model-registry = [
-    "mlflow>=3.11.0,<4",  # SECURITY: auth bypass fix (CVE-2026-2652, vulnerable < 3.11.0)
+    "mlflow>=3.14.0,<4",  # SECURITY: auth bypass fix (CVE-2026-2652, vulnerable < 3.11.0)
                            # NOTE: mlflow 3.x requires starlette<1.0.0 which conflicts with
                            # core starlette>=1.0.1 (PYSEC-2026-161). Install ai-model-registry
                            # extra in isolated environments (dedicated MLflow server container).
