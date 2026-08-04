@@ -47,7 +47,12 @@ from src.backend.core.ai import AIGateway, AIRequest
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
-__all__ = ("AIGatewayAdapter", "get_ai_gateway", "invoke_via_gateway")
+__all__ = (
+    "AIGatewayAdapter",
+    "adapt_capability_gate",
+    "get_ai_gateway",
+    "invoke_via_gateway",
+)
 
 
 

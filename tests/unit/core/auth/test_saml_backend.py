@@ -96,7 +96,7 @@ def test_unknown_request_id_rejected() -> None:
 
 
 def test_expired_request_id_rejected() -> None:
-    """``InResponseTo`` со старше ``replay_window_seconds`` → fail."""
+    """``InResponseTo`` со старым ``replay_window_seconds`` → fail."""
     # Clock: build (1000) → process (1000+999, expired).
     backend = _backend(now=[1000.0, 1000.0, 1000.0 + 9999])
     _, rid = backend.build_login_redirect_url()

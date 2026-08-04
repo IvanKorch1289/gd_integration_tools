@@ -93,7 +93,7 @@ class WorkspaceQuotaExceededError(AIWorkspaceError):
 
 
 class WorkspaceTTLExpiredError(AIWorkspaceError):
-    """Workspace со старше TTL — записи в него запрещены.
+    """Workspace со старым TTL — записи в него запрещены.
 
     Attributes:
         session_id: Идентификатор session-workspace'а.

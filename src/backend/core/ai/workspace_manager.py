@@ -166,7 +166,7 @@ class AIWorkspaceManager:
         usage.bytes_used += delta
 
     async def cleanup_expired(self) -> int:
-        """Удалить все workspaces со старше TTL.
+        """Удалить все workspaces со старым TTL.
 
         Returns:
             Число удалённых workspaces.

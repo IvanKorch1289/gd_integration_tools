@@ -53,8 +53,8 @@ _logger = get_logger("dsl.fs_directory_scan")
 class _DeprecationAuditEmitted:
     """S172 M1.2: per-process guard чтобы emit audit только один раз.
 
-    Статический счётчик + set per-call-site. Не глобальный mutable
-    side-effect — только best-effort signal.
+    Round 44 fix: Простой once-per-process boolean guard (``_emitted: bool``).
+    Best-effort signal для audit-event, не более (no counter, no set).
     """
 
     _emitted: bool = False

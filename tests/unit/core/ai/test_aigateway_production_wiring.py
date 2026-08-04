@@ -23,22 +23,6 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-# Round 19 fix: 2 теста ниже ожидают forward-looking API design (Sprint 1.3):
-# - ``AIGatewayProductionWiringError`` должен быть subclass
-#   ``AIGatewayEnforcementRequiredError`` для unified catch в endpoint layer.
-# - ``__str__`` должен перечислять missing DI deps (``policy_resolver``,
-#   ``capability_gate``, ``token_budget``) для оперативной диагностики.
-# Текущая имплементация — bare ``RuntimeError`` с generic message.
-# Помечаем xfail до dedicated migration.
-_XFAIL_WIRING_ERROR_HIERARCHY = pytest.mark.xfail(
-    reason=(
-        "AIGatewayProductionWiringError сейчас RuntimeError (не subclass "
-        "AIGatewayEnforcementRequiredError) и не перечисляет missing DI deps "
-        "в __str__. Sprint 1.3 design предполагал иерархию + diagnostics."
-    ),
-    strict=True,
-)
-
 
 def _patch_app_environment(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
     """Подменяет ``settings.app.environment`` на ``value``."""
