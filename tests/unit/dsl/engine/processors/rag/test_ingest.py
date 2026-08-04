@@ -59,7 +59,13 @@ async def test_ingest_calls_rag_service_with_body(stub_rag: _StubRag) -> None:
     assert stub_rag.calls == [
         {
             "content": "The quick brown fox",
-            "metadata": {"modal": "text", "collection": "docs"},
+            "metadata": {
+                "modal": "text",
+                "collection": "docs",
+                # Round 7 Sprint 1.1 P0 fix: PII masking auto-applied в metadata.
+                "pii_masked": True,
+                "pii_masker_version": "PresidioSanitizerAdapter",
+            },
             "namespace": "docs",
         }
     ]
