@@ -2540,4 +2540,52 @@ Removed оба. File уменьшился на 4 LOC.
 
 28 раундов все закоммичены в master. Working tree clean.
 
+### Round 29 (2026-08-03 — bulk unused _logger cleanup)
+
+**Цель Round 29**: Ponytail mechanical cleanup — AST-detected 72 unused `_logger` declarations.
+
+#### Round 29.1: 72 unused loggers removed
+
+AST-анализ нашёл 72 файла в `src/backend/` где `_logger = get_logger(...)`
+объявлен, но нигде не используется (0 references после declaration line).
+
+Изменения:
+- 72 файла модифицированы
+- -213 LOC (3 LOC per file: import + _logger + blank)
+- Дополнительно удалены unused `from src.backend.core.logging import get_logger`
+  imports где они стали unused после удаления.
+
+#### Round 29 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| DSL processors suite (1684 tests) | ✅ **1684 passing** |
+
+#### Round 29 Domain impact:
+
+| Домен | Round 28 → **Round 29** |
+|---|---|
+| L10 Observability | 8.9 → **8.9** |
+| L3 DSL/routes | 8.9 → **8.9** (Ponytail cleanup) |
+| L1 Gateway/middleware | 8.7 → **8.8** |
+| Tests/QA | 8.1 → **8.1** |
+| **Медиана** | 8.6 → **8.6** (cleanup, не score change) |
+
+#### Round 29 Cumulative scorecard (post R1-R29):
+
+| Домен | C2 → R29 (29 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.1** | +2.6 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+29 раундов все закоммичены в master. Working tree clean.
+
 
