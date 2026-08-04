@@ -2957,4 +2957,58 @@ Skipped: R37-5 (документация автогенерируется).
 37 итераций (32 раундов закоммиченных + 5 null rounds).
 Working tree clean.
 
+### Round 38 (2026-08-03 — test_langmem_smoke canonical API rewrite)
+
+**Цель Round 38**: Закрыть 4 pre-existing xfail в `test_langmem_smoke.py`
+через rewrite на canonical API.
+
+#### Round 38.1: test_langmem_smoke rewrite
+
+Тесты использовали legacy API (``add_episodic``, ``add_semantic``) от
+Sprint 164 W3, не реализованный в canonical `memory/langmem_service.py`.
+Round 38: полный rewrite на canonical API:
+
+| Old (legacy, xfail) | New (canonical, passing) |
+|---|---|
+| `add_episodic(session_id, role, content)` | `remember_episode(agent_id, content, metadata)` |
+| `add_semantic(text, tenant)` | `remember_fact(agent_id, content, embedding)` |
+| `LangMemDisabled` exception | soft no-op (returns empty entry) |
+| `LangMemService(session_factory=MagicMock())` | `LangMemService(use_inmemory=True)` |
+
+Plus 2 NEW tests:
+- `test_recall_returns_entries_after_remember` — round-trip
+- `test_remember_episode_works_when_enabled`
+
+#### Round 38 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_langmem_smoke | ✅ **6 passed, 1 xfailed (was 1 passed, 4 xfailed)** |
+
+#### Round 38 Domain impact:
+
+| Домен | Round 37 → **Round 38** |
+|---|---|
+| L5 AI/agents | 8.7 → **8.8** (+canonical API tests) |
+| Tests/QA | 8.3 → **8.4** (+2 tests, -4 xfail) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 38 Cumulative scorecard (post R1-R38, 33 раундов закоммиченных):
+
+| Домен | C2 → R38 (38 итераций) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.8** | +2.8 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **9.0** | +0.6 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.4** | +2.9 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+38 итераций (33 раундов закоммиченных + 5 null rounds).
+Working tree clean.
+
 
