@@ -26,7 +26,6 @@ API mapping:
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from src.backend.core.config.constants import consts
@@ -49,8 +48,6 @@ __all__ = (
     "order_processing_workflow_spec",
     "build_all_order_workflows",
 )
-
-_logger = logging.getLogger("workflows.orders_dsl")
 
 
 # -- Processors: thin wrappers над бизнес-сервисами ---------------------

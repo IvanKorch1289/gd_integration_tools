@@ -31,7 +31,6 @@ Feature flag (backend-side): ``feature_flags.com_sidecar_enabled``.
 
 from __future__ import annotations
 
-import logging
 import sys as _sys
 
 from fastapi import FastAPI
@@ -39,8 +38,6 @@ from windows_worker.handlers.com_handler import router as com_router
 from windows_worker.handlers.desktop_rpa_handler import router as rpa_router
 
 __all__ = ("app", "create_app")
-
-_logger = logging.getLogger("windows_worker")
 
 
 def create_app() -> FastAPI:

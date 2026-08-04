@@ -47,7 +47,6 @@ from src.backend.services.ai.eval.ragas_evaluator import (
     RAGASReport,
 )
 
-logger = logging.getLogger("tools.ragas_runner")
 
 ARTIFACT_DIR = Path("artifacts/ragas")
 REFERENCE_DATASETS: dict[str, tuple[RAGASRecord, ...]] = {
