@@ -2,8 +2,8 @@
 
 Sprint 1 рефакторит ``services/ai/embedding_providers.py`` целиком; до того
 момента BGE-провайдер и любые новые провайдеры регистрируются здесь.
-Существующая фабрика ``get_embedding_provider()`` НЕ правится — она
-доступна через :meth:`EmbeddingProviderRegistry.fallback_factory`.
+Существующая фабрика ``get_embedding_provider()`` НЕ правится (Round 25:
+``fallback_factory()`` staticmethod удалён — мёртвый код, 0 callers).
 """
 
 from __future__ import annotations
@@ -48,13 +48,6 @@ class EmbeddingProviderRegistry:
     def list(self) -> list[str]:
         """Возвращает имена зарегистрированных провайдеров."""
         return sorted(self._factories.keys())
-
-    @staticmethod
-    def fallback_factory() -> EmbeddingProvider:
-        """Делегирует к ``services.ai.embedding_providers.get_embedding_provider``."""
-        from src.backend.services.ai.embedding_providers import get_embedding_provider
-
-        return get_embedding_provider()
 
 
 _singleton: EmbeddingProviderRegistry | None = None

@@ -45,6 +45,25 @@ async def test_mark_false_positive() -> None:
 
 
 @pytest.mark.asyncio
+async def test_mark_false_positive_creates_tenant_entry() -> None:
+    """Round 25: документирует контракт ``setdefault`` для unknown tenant.
+
+    ``mark_false_positive`` использует ``setdefault`` (через ``_tenant_metrics``
+    dict), поэтому для tenant'а без предыдущих guardrail calls молча создаёт
+    entry с ``block=0, fp=1, false_positive_rate=0.0``.
+    """
+    svc = GuardrailsMetricsService()
+    # Tenant "t-new" никогда не вызывал record().
+    await svc.mark_false_positive(tenant_id="t-new", count=1)
+    snap = await svc.snapshot("t-new")
+    assert snap.tenant_id == "t-new"
+    assert snap.block == 0  # нет предыдущих блокировок
+    assert snap.false_positives == 1
+    assert snap.false_positive_rate == 0.0  # 0 blocks → division-safe
+    assert snap.allow == 0
+
+
+@pytest.mark.asyncio
 async def test_list_all_sorted() -> None:
     svc = GuardrailsMetricsService()
     await svc.record(tenant_id="t-b", verdict=GuardrailVerdict.ALLOW)

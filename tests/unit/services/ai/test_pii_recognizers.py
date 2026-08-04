@@ -80,6 +80,11 @@ def test_inn_recognizer_validate_result() -> None:
         ("99999999900", False),  # serial=999999999 > 10^8, CS=102 → invalid
         ("123-456-789 01", False),
         ("12345", False),  # неправильная длина
+        # Round 25: edge cases на \D+ strip в _DIGITS.sub() first branch.
+        ("", False),  # empty → 0 digits → len != 11
+        ("   ", False),  # whitespace only → 0 digits
+        ("abc-def", False),  # no digits → 0 digits
+        ("①②③④⑤⑥⑦⑧⑨00", False),  # unicode digits → \D+ strips
     ],
 )
 def test_snils_check_digit(value: str, valid: bool) -> None:
