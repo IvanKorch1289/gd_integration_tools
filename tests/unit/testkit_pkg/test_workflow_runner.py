@@ -12,7 +12,6 @@ change в сигнатуре ``run()``) пройдут незаметно.
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import Any
 
 import pytest
 

@@ -4,11 +4,8 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from starlette.requests import Request
-from starlette.responses import Response
 
 from src.backend.entrypoints.middlewares.auth_method_header import (
     AuthMethodHeaderMiddleware,

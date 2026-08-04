@@ -23,7 +23,6 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.backend.plugins.composition import di
-from src.backend.plugins.composition import (
     service_setup as _service_setup_marker,  # noqa: F401  (sidebar import check)
 )
 

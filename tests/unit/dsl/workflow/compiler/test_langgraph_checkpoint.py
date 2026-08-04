@@ -232,7 +232,6 @@ def _make_declaration(durable: bool):  # type: ignore[no-untyped-def]
     from src.backend.dsl.workflow.spec.advanced_declarations import (
         AgentInvokeDeclaration as _AdvAID,
     )
-    from src.backend.dsl.workflow.spec.policies import MemoryScope  # noqa: F401
 
     # Rebuild in the module's own globals so MemoryScope resolves.
     _AdvAID.model_rebuild()

@@ -10,7 +10,6 @@ endpoints. Cycle 43: переписано с BaseHTTPMiddleware на pure ASGI
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
