@@ -43,7 +43,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from src.backend.core.logging import get_logger
 import warnings
 
 warnings.warn(
@@ -53,7 +52,6 @@ warnings.warn(
     stacklevel=2,
 )
 
-logger = get_logger(__name__)
 
 __all__ = ("LangMemDisabled", "LangMemService", "get_langmem_service")
 

@@ -17,11 +17,9 @@ import contextlib
 import urllib.request
 from collections.abc import Iterator
 
-from src.backend.core.logging import get_logger
 
 __all__ = ("markitdown_network_disabled",)
 
-logger = get_logger(__name__)
 
 
 class _NetworkDeniedError(RuntimeError):

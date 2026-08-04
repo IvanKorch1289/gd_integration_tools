@@ -5,11 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.backend.core.logging import get_logger
 
 __all__ = ("PipelineValidator", "ValidationResult")
 
-logger = get_logger(__name__)
 
 
 @dataclass(slots=True)

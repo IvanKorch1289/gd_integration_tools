@@ -18,9 +18,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from src.backend.core.logging import get_logger
 
-logger = get_logger(__name__)
 
 # S172 M7.1: единый class-config для strict validation.
 _STRICT_CONFIG = ConfigDict(extra="forbid", validate_assignment=True)

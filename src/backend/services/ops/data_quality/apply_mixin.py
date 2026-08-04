@@ -11,9 +11,7 @@ from dataclasses import dataclass
 from dataclasses import field as dataclass_field
 from enum import Enum
 
-from src.backend.core.logging import get_logger
 
-logger = get_logger(__name__)
 
 """Data Quality Monitor — авто-детект схемы + аномалии.
 

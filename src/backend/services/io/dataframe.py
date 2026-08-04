@@ -24,7 +24,6 @@ try:
 except ImportError:
     pl = None  # type: ignore[assignment]
 
-from src.backend.core.logging import get_logger
 
 __all__ = (  # noqa: F822
     "DataFrame",
@@ -36,7 +35,6 @@ __all__ = (  # noqa: F822
     "write_excel",
 )
 
-logger = get_logger("services.dataframe")
 
 DataFrame = pl.DataFrame if pl is not None else Any
 

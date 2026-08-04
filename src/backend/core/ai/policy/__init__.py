@@ -41,9 +41,7 @@ from src.backend.core.ai.policy.spec import (
     ModelRouterSpec,
     SanitizerRef,
 )
-from src.backend.core.logging import get_logger
 
-logger = get_logger(__name__)
 
 
 __all__ = (

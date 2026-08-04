@@ -22,14 +22,12 @@ from pathlib import Path
 from typing import Any
 
 from src.backend.core.config.ai import markitdown_settings
-from src.backend.core.logging import get_logger
 from src.backend.services.ai.document_parsers._network import (
     markitdown_network_disabled,
 )
 
 __all__ = ("MarkitdownEngine", "MarkitdownUnavailableError")
 
-logger = get_logger(__name__)
 
 
 _EXT_BY_MIME: dict[str, str] = {

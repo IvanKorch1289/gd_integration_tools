@@ -21,9 +21,7 @@ from __future__ import annotations
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
-from src.backend.core.logging import get_logger
 
-logger = get_logger(__name__)
 
 
 class RetryPolicy(BaseModel):

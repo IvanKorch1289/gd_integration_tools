@@ -33,14 +33,12 @@ from typing import TYPE_CHECKING, Any
 from src.backend.core.ai.gateway_models import AIRequest, AIResponse
 from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
 from src.backend.core.ai.gateway_pipeline_mixin import PipelineStepsMixin
-from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
 
 __all__ = ("AIGateway",)
 
-logger = get_logger(__name__)
 
 
 class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):

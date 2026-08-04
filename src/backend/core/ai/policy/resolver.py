@@ -17,9 +17,7 @@ import yaml
 
 from src.backend.core.ai.policy.spec import AIPolicySpec
 from src.backend.core.ai.policy.specificity import find_specific_match
-from src.backend.core.logging import get_logger
 
-logger = get_logger(__name__)
 
 
 if TYPE_CHECKING:

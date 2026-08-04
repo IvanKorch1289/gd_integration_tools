@@ -20,11 +20,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from src.backend.core.logging import get_logger
 
 __all__ = ("CrossModalQueryResult", "ModalKind", "MultimodalPipeline")
 
-logger = get_logger("services.ai.rag.multimodal.pipeline")
 
 ModalKind = str  # ``text|image|audio|video``
 

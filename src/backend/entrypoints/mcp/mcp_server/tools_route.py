@@ -17,10 +17,8 @@ from typing import Any
 
 import orjson
 
-from src.backend.core.logging import get_logger
 from src.backend.core.serialization.msgspec_hotpath import encode_json
 
-logger = get_logger(__name__)
 
 
 # ── route tools (_register_route_tools) ──

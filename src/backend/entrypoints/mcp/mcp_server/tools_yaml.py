@@ -15,10 +15,8 @@
 
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.core.serialization.msgspec_hotpath import encode_json
 
-logger = get_logger(__name__)
 
 
 # ── YAML tools (_register_yaml_tools) ──

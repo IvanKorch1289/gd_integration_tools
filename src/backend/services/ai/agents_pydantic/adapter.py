@@ -11,9 +11,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from typing import Any
 
-from src.backend.core.logging import get_logger
 
-logger = get_logger(__name__)
 
 __all__ = ("LiteLLMModel",)
 

@@ -17,7 +17,6 @@ import importlib
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.auth import AuthContext, AuthMethod
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
@@ -26,7 +25,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
 __all__ = ("AuthValidateProcessor",)
 
-logger = get_logger(__name__)
 
 # Путь модуля с verifier-реестром. Импортируется через importlib, чтобы
 # не нарушать архитектурную границу dsl→entrypoints (verifier'ы держат

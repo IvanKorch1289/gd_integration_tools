@@ -33,7 +33,6 @@ import threading
 from collections.abc import Callable, Hashable
 from typing import Any, TypeVar, cast
 
-from src.backend.core.logging import get_logger
 
 __all__ = (
     "clear_registry",
@@ -43,7 +42,6 @@ __all__ = (
     "register_factory",
 )
 
-logger = get_logger("core.svcs_registry")
 
 T = TypeVar("T")
 

@@ -24,11 +24,9 @@ from typing import Final
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from src.backend.core.logging import get_logger
 
 __all__ = ("DegradationMiddleware",)
 
-logger = get_logger(__name__)
 
 
 _WRITE_METHODS: Final[frozenset[str]] = frozenset({"POST", "PUT", "PATCH", "DELETE"})

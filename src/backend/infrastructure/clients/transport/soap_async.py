@@ -15,12 +15,10 @@ from typing import Any
 # ``core.config.settings`` грузится ПЕРВЫМ — pre-breaks circular import chain
 # breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
 from src.backend.core.config.settings import settings as _settings  # noqa: F401
-from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 
 __all__ = ("AsyncSoapClient",)
 
-logger = get_logger("transport.soap_async")
 
 # S163 W4: единый canonical breaker для всех SOAP-вызовов (per endpoint можно
 # расширить позже через Settings.endpoint). Pattern matching smtp.py:68-75.

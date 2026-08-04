@@ -43,14 +43,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.ai import AIGateway, AIRequest
-from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
 __all__ = ("AIGatewayAdapter", "get_ai_gateway", "invoke_via_gateway")
 
-logger = get_logger(__name__)
 
 
 def get_ai_gateway() -> AIGateway:

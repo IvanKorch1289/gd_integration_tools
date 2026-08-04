@@ -7,7 +7,6 @@
 Использование:
     from src.backend.infrastructure.logging.factory import get_logger
 
-    logger = get_logger("application")
     logger.info("Order created", order_id=123, user_id="abc")
 
 Переключение бэкенда:

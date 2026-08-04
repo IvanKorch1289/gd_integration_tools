@@ -21,11 +21,9 @@ from typing import Any
 
 import orjson
 
-from src.backend.core.logging import get_logger
 
 __all__ = ("MQPublishCallable", "build_mq_fallbacks", "build_mq_primary")
 
-logger = get_logger(__name__)
 
 MQPublishCallable = Callable[[str, dict[str, Any]], Awaitable[None]]
 

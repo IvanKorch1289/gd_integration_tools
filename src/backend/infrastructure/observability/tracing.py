@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.middleware import ProcessorMiddleware
@@ -15,7 +14,6 @@ from src.backend.infrastructure.observability.correlation import get_correlation
 
 __all__ = ("TracingMiddleware", "get_tracer")
 
-logger = get_logger(__name__)
 
 _tracer = None
 

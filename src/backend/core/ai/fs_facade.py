@@ -21,9 +21,7 @@ from pathlib import Path
 
 from src.backend.core.ai.errors import FsForbiddenWriteError
 from src.backend.core.ai.workspace_manager import AIWorkspaceManager, WorkspaceHandle
-from src.backend.core.logging import get_logger
 
-logger = get_logger(__name__)
 
 
 __all__ = ("AIFsFacade",)

@@ -18,7 +18,6 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Any, TypeVar
 
-from src.backend.core.logging import get_logger
 
 __all__ = (
     "SoftDeleteMixin",
@@ -28,7 +27,6 @@ __all__ = (
     "with_audit_timestamps",
 )
 
-logger = get_logger("services.extensions")
 
 F = TypeVar("F", bound=Callable[..., Awaitable[Any]])
 

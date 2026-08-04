@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     pass
@@ -48,7 +47,6 @@ from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
 from src.backend.dsl.processors.reflection_loop_processor import ReflectionLoopMixin
 from src.backend.dsl.processors.router_specialist_processor import RouterSpecialistMixin
 
-logger = get_logger(__name__)
 from src.backend.dsl.builders.base.compliance_mixin import (
     ComplianceMixin,  # S57 W1: MRO
 )

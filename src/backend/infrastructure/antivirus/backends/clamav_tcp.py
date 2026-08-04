@@ -11,14 +11,12 @@ import struct
 import time
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
-from src.backend.core.logging import get_logger
 from src.backend.infrastructure.antivirus.backends.clamav_unix import (
     _parse_clamav_response,
 )
 
 __all__ = ("ClamAVTcpBackend",)
 
-logger = get_logger("infrastructure.antivirus.clamav_tcp")
 
 _CHUNK_SIZE = 64 * 1024
 

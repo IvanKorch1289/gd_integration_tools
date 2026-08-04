@@ -5,9 +5,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from src.backend.core.interfaces.ai_clients import AISanitizerProtocol
 
-from src.backend.core.logging import get_logger
 
-logger = get_logger(__name__)
 
 
 class HttpProvidersMixin:

@@ -14,13 +14,11 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.core.resilience.retry import make_async_retry
 
 __all__ = ("TgiBatchClient",)
 
-logger = get_logger(__name__)
 
 
 # S164 W1: shared Circuit Breaker (lazy-init, module-level).

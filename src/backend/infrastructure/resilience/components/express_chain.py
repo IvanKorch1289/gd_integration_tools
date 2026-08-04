@@ -15,11 +15,9 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from src.backend.core.logging import get_logger
 
 __all__ = ("NotificationCallable", "build_express_fallbacks", "build_express_primary")
 
-logger = get_logger(__name__)
 
 NotificationCallable = Callable[[dict[str, Any]], Awaitable[None]]
 

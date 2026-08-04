@@ -19,7 +19,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.codec.base64 import decode_base64, encode_base64
 from src.backend.dsl.codec.converters import (
     convert_numpy_types,
@@ -59,7 +58,6 @@ __all__ = (
     "transfer_model_to_schema",
 )
 
-logger = get_logger("dsl.codec")
 
 _TEXT_FORMATS = {"json", "csv", "xml", "yaml", "excel", "pdf"}
 _BINARY_FORMATS = {"avro", "protobuf", "msgpack", "parquet"}

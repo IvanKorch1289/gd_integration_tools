@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.logging import get_logger
 
-logger = get_logger(__name__)
 
 __all__ = ("ProceduralMemory",)
 

@@ -12,7 +12,6 @@ dynamic imports невидимы для static analysis (S27, ADR-001).
 Usage::
 
     from src.backend.core.logging import get_logger
-    logger = get_logger("application")
 """
 
 from __future__ import annotations

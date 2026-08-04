@@ -21,11 +21,9 @@ import time
 from pathlib import Path
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
-from src.backend.core.logging import get_logger
 
 __all__ = ("ClamAVUnixBackend",)
 
-logger = get_logger("infrastructure.antivirus.clamav_unix")
 
 _CHUNK_SIZE = 64 * 1024  # 64 KiB
 

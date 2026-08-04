@@ -15,11 +15,9 @@ from src.backend.core.di.providers import (
     get_redis_hash_factory_provider,
     get_redis_pubsub_factory_provider,
 )
-from src.backend.core.logging import get_logger
 
 __all__ = ("RedisWebhookRegistry", "WebhookSubscription", "redis_webhook_registry")
 
-logger = get_logger("entrypoints.webhook.redis_registry")
 
 
 @dataclass
