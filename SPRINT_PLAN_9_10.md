@@ -2637,4 +2637,52 @@ dotted access).
 30 итераций (29 раундов закоммичены + Round 30 = null result).
 Working tree clean.
 
+### Round 31 (2026-08-03 — AST-based logger cleanup, RE-DO of Round 30)
+
+**Цель Round 31**: Re-do Round 30 с proper AST visitor (безопасное удаление).
+
+#### Round 31.1: AST visitor scan
+
+Round 30 bulk-remove использовал regex `\blogger\.` который
+пропускал bare `logger` arguments. Round 31 fix: AST visitor для
+`Name` + `Attribute` nodes (proper Python AST).
+
+**Результат**: 75 файлов, -148 LOC, 0 mypy errors.
+
+Verified:
+- DSL processors: 1684 passed
+- core/security/observability: 344 passed, 13 xfailed (PIITokenizer forward-looking, R9)
+
+#### Round 31 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| DSL processors | ✅ **1684 passed** |
+| Core/Security/Observability | ✅ **344 passed, 13 xfailed** |
+
+#### Round 31 Domain impact:
+
+| Домен | Round 30 → **Round 31** |
+|---|---|
+| All | **+Ponytail cleanup** (75 файлов) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 31 Cumulative scorecard (post R1-R31, 30 раундов закоммиченных):
+
+| Домен | C2 → R31 | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.1** | +2.6 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+31 итераций (30 раундов закоммичены + Round 30 = null + Round 31 = real fix).
+Working tree clean.
+
 
