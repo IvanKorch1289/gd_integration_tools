@@ -181,7 +181,7 @@ class WindowedDedupProcessor(BaseProcessor):
             _logger.debug("windowed_dedup(unique): точный дубль ключа %r — стоп", key)
             exchange.stop()
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec для round-trip сериализации WindowedDedupProcessor."""
         return {
             "windowed_dedup": {
@@ -331,7 +331,7 @@ class WindowedCollectProcessor(BaseProcessor):
 
         return _dedup_batch(items, by=self._dedup_by, mode=self._dedup_mode)
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec для round-trip сериализации WindowedCollectProcessor."""
         return {
             "windowed_collect": {

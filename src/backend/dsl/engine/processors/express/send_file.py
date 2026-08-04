@@ -162,7 +162,7 @@ class ExpressSendFileProcessor(BaseProcessor):
                 return data.encode("utf-8")
         return None
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec для round-trip сериализации."""
         spec: dict = {
             "bot": self._bot,

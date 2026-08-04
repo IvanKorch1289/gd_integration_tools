@@ -160,7 +160,7 @@ class ScanFileProcessor(BaseProcessor):
         except Exception:
             pass
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec round-trip."""
         spec: dict[str, Any] = {
             "on_threat": self._on_threat,

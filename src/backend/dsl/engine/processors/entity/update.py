@@ -56,7 +56,7 @@ class EntityUpdateProcessor(_BaseEntityProcessor):
             return
         await self._dispatch({"id": entity_id, "data": payload}, context, exchange)
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """Сериализует entity_update конфиг в JSON-Schema spec."""
         return {
             "entity_update": {

@@ -153,7 +153,7 @@ class TelegramSendFileProcessor(BaseProcessor):
                 return data.encode("utf-8")
         return None
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec."""
         spec: dict = {
             "bot": self._bot,

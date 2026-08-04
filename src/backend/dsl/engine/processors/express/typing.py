@@ -59,7 +59,7 @@ class ExpressTypingProcessor(BaseProcessor):
         except Exception as exc:
             _logger.warning("ExpressTyping: ошибка: %s", exc)
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec."""
         return {
             "express_typing": {

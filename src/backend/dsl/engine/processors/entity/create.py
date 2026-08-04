@@ -48,7 +48,7 @@ class EntityCreateProcessor(_BaseEntityProcessor):
             return
         await self._dispatch(payload, context, exchange)
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec round-trip."""
         return {
             "entity_create": {

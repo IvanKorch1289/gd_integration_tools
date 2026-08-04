@@ -237,7 +237,7 @@ class MulticastRoutesProcessor(BaseProcessor):
             len(self._route_ids),
         )
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec для round-trip сериализации MulticastRoutesProcessor."""
         return {
             "multicast_routes": {

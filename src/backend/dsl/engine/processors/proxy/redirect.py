@@ -193,7 +193,7 @@ class RedirectProcessor(BaseProcessor):
         host = parsed.hostname or ""
         return host in self._allowed_hosts
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec для round-trip сериализации RedirectProcessor."""
         spec: dict = {"status_code": self._status_code}
         if self._mode == "static":

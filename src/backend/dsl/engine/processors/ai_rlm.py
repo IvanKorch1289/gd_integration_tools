@@ -161,7 +161,10 @@ class AIRLMProcessor(BaseProcessor):
             else:
                 result = await self._execute_direct(ctx, query)
         except Exception as exc:  # noqa: BLE001
-            logger.exception("ai_rlm execution failed")
+            # Round 14 fix: include ``exc`` в log message (stdlib idiom:
+            # format-args style; traceback добавлен автоматически через
+            # ``logger.exception`` + ``exc_info=True``).
+            logger.exception("ai_rlm execution failed: %s", exc)
             exchange.set_error(f"AIRLMProcessor: execution failed: {exc}")
             return
 

@@ -180,8 +180,10 @@ class TimeSeriesWriteProcessor(BaseProcessor):
         try:
             from influxdb_client import InfluxDBClient, Point
             from influxdb_client.client.write_api import SYNCHRONOUS
-        except ImportError:
-            raise RuntimeError("influxdb-client not installed")
+        except ImportError as exc:
+            # Round 14 fix: ``from exc`` сохраняет original ImportError traceback
+            # (без него original exception скрыт отладчиком/логов).
+            raise RuntimeError("influxdb-client not installed") from exc
 
         import os
 

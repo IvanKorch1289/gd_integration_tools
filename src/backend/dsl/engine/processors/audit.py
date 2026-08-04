@@ -160,7 +160,7 @@ class AuditProcessor(BaseProcessor):
 
         return ImmutableAuditStore(session_factory=main_session_manager.create_session)
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec round-trip."""
         spec: dict[str, Any] = {
             "outcome": self._outcome,

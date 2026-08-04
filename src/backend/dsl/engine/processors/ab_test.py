@@ -126,7 +126,7 @@ class ABTestProcessor(BaseProcessor):
             cid,
         )
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML round-trip."""
         spec: dict[str, Any] = {
             "experiment_id": self._experiment_id,

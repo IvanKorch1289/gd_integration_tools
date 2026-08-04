@@ -45,7 +45,7 @@ class EntityGetProcessor(_BaseEntityProcessor):
             return
         await self._dispatch({"id": entity_id}, context, exchange)
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """Сериализует entity_get конфиг в JSON-Schema spec."""
         return {
             "entity_get": {

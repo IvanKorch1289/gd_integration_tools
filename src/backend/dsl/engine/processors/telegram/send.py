@@ -116,7 +116,7 @@ class TelegramSendProcessor(BaseProcessor):
         allowed = {"text", "url", "callback_data", "switch_inline_query", "web_app_url"}
         return {k: v for k, v in raw.items() if k in allowed}
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec для round-trip сериализации."""
         spec: dict = {
             "bot": self._bot,

@@ -89,7 +89,7 @@ class TelegramReplyProcessor(BaseProcessor):
             _logger.warning("TelegramReply: ошибка: %s", exc)
             exchange.set_property(f"{self._result_property}_error", str(exc))
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec."""
         spec: dict = {
             "bot": self._bot,

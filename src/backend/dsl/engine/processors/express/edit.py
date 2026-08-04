@@ -91,7 +91,7 @@ class ExpressEditProcessor(BaseProcessor):
             _logger.warning("ExpressEdit: ошибка: %s", exc)
             exchange.set_property("express_edit_error", str(exc))
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec."""
         spec: dict = {"bot": self._bot, "sync_id_from": self._sync_id_from}
         if self._body is not None:

@@ -161,7 +161,7 @@ class FeedbackProcessor(BaseProcessor):
 
         return get_ai_feedback_service()
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML round-trip."""
         spec: dict[str, Any] = {
             "agent_id": self._agent_id,

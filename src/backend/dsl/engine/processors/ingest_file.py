@@ -198,7 +198,7 @@ class IngestFileProcessor(BaseProcessor):
                 return data.encode("utf-8"), filename
         return None, filename
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec round-trip."""
         spec: dict[str, Any] = {
             "result_property": self._result_property,

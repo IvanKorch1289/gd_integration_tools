@@ -111,7 +111,7 @@ class ExpressMentionProcessor(BaseProcessor):
             target,
         )
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec для round-trip сериализации."""
         spec: dict = {
             "mention_type": self._mention_type,

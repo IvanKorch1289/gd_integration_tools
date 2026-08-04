@@ -22,6 +22,10 @@ __all__ = ("DesktopPyAutoGUIProcessor",)
 _logger = get_logger("dsl.desktop_pyautogui")
 
 _VALID_ACTIONS = frozenset({"screenshot", "click", "type_text", "press_key", "move"})
+# Round 14 fix: extract default into named constant для round-trip consistency
+# (раньше 0.25 был хардкожен в 2 местах — ``__init__`` default и ``to_spec``
+# skip-condition; смена одного без другого ломала YAML round-trip).
+DEFAULT_DURATION_S = 0.25
 
 
 @processor(
@@ -66,7 +70,7 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
         y: int | None = None,
         text: str | None = None,
         key: str | None = None,
-        duration: float = 0.25,
+        duration: float = DEFAULT_DURATION_S,
         result_property: str = "desktop_result",
         name: str | None = None,
     ) -> None:
@@ -152,7 +156,7 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
             spec["text"] = self._text
         if self._key is not None:
             spec["key"] = self._key
-        if self._duration != 0.25:
+        if self._duration != DEFAULT_DURATION_S:
             spec["duration"] = self._duration
         if self._result_property != "desktop_result":
             spec["result_property"] = self._result_property

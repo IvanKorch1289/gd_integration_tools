@@ -104,7 +104,7 @@ class TelegramMentionProcessor(BaseProcessor):
             self._parse_mode,
         )
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec для round-trip сериализации."""
         spec: dict = {
             "user_id_from": self._user_id_from,

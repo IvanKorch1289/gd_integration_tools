@@ -72,7 +72,7 @@ class ExpressStatusProcessor(BaseProcessor):
             _logger.warning("ExpressStatus: ошибка: %s", exc)
             exchange.set_property(f"{self._result_property}_error", str(exc))
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec для round-trip сериализации."""
         return {
             "express_status": {

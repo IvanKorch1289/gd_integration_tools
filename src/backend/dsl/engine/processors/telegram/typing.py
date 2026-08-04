@@ -78,7 +78,7 @@ class TelegramTypingProcessor(BaseProcessor):
         except Exception as exc:
             _logger.warning("TelegramTyping: ошибка: %s", exc)
 
-    def to_spec(self) -> dict:
+    def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec."""
         return {
             "telegram_typing": {
