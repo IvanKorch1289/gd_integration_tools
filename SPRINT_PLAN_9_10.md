@@ -3237,4 +3237,48 @@ token_budget) — отдельная dedicated migration sprint scope.
 42 итерации (37 раундов закоммиченных + 5 null rounds).
 Working tree clean.
 
+### Round 43 (2026-08-03 — scan, NOT COMMITTED)
+
+**Цель Round 43**: Scan для small bug fixes в core/observability + services/ai.
+
+#### Round 43.1: Skipped — no actionable wins
+
+Сканированы:
+- `from typing import Dict/List` — нет (Python 3.14+ syntax используется)
+- NotImplementedError — все legitimate (Claude/video/agent_memory stub)
+- Old TODOs/FIXMEs — нет в recently-edited файлах
+- Sprint references — все historical, не stale
+
+Per Ponytail "не выдумывай улучшения" — Round 43 = null commit.
+
+#### Round 43 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK (clean) |
+| `mypy -p src` | ✅ **0 errors** (clean) |
+
+#### Round 43 Domain impact:
+
+| Домен | Round 42 → **Round 43** |
+|---|---|
+| All | **unchanged** (no commits) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 43 Cumulative scorecard (post R1-R43, 37 раундов закоммиченных):
+
+| Домен | C2 → R43 (43 итерации) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.8** | +2.8 |
+| L9 Security E2E | 7.5 → **9.0** | +1.5 |
+| L3 DSL/routes | 8.4 → **9.0** | +0.6 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.4** | +2.9 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+43 итерации (37 раундов закоммиченных + 6 null rounds).
+Working tree clean.
+
 
