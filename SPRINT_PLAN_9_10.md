@@ -2369,4 +2369,50 @@ Per ponytail: 15 закрыто достаточно для одного рау�
 
 24 раунда все закоммичены в master. Working tree clean.
 
+### Round 25 (2026-08-03 — micro-wins: dead code + edge tests)
+
+**Цель Round 25**: 3 micro-wins от analyst agent (R25-1, R25-4, R25-5).
+Skipped: R25-2 (SOAP unit tests, additive — defer to dedicated migration),
+R25-3 (`_safe_orjson_loads` DRY across 7 files — YAGNI abstraction).
+
+#### Round 25.1-3: 3 micro-wins done
+
+| ID | Что | Impact |
+|---|---|---|
+| R25-1 | `EmbeddingProviderRegistry.fallback_factory()` dead code удалён (-6 LOC, -7 net). 0 callers verified. | Ponytail cleanup |
+| R25-4 | +4 edge cases в `test_snils_check_digit` (empty/whitespace/no-digits/unicode digits). Production code unchanged. | +4 tests |
+| R25-5 | +1 docs test `test_mark_false_positive_creates_tenant_entry` документирующий `setdefault` контракт. Production code unchanged. | +1 test |
+
+**Tests**: 37 (R25-4) + 9 (R25-5) — net +3 tests vs -2 lost from R25-1.
+
+#### Round 25 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_pii_recognizers + test_guardrails_metrics | ✅ **37 + 9 passing** |
+
+#### Round 25 Domain impact:
+
+| Домен | Round 24 → **Round 25** |
+|---|---|
+| L5 AI/agents | 8.7 → **8.7** (edge tests) |
+| L2 Core/DI | 8.8 → **8.8** |
+| Tests/QA | 8.1 → **8.1** (+3 tests) |
+| **Медиана** | 8.6 → **8.6** (test coverage) |
+
+#### Round 25 Cumulative scorecard (post R1-R25):
+
+| Домен | C2 → R25 (25 раундов) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.7** | +2.7 |
+| L9 Security E2E | 7.5 → **8.9** | +1.4 |
+| L3 DSL/routes | 8.4 → **8.9** | +0.5 |
+| Tests/QA | 5.5 → **8.1** | +2.6 |
+| Docs | 6.5 → **7.9** | +1.4 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+25 раундов все закоммичены в master. Working tree clean.
+
 
