@@ -9,13 +9,10 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
-from src.backend.core.logging import get_logger
 from src.backend.core.utils.json_utils import dumps_str
 
 if TYPE_CHECKING:
     pass
-
-_logger = get_logger("services.audit.clickhouse")
 
 
 @dataclass(frozen=True, slots=True)

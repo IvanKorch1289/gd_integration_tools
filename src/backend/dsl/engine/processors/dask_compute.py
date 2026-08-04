@@ -20,7 +20,6 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.infrastructure.execution.dask_backend import get_dask_backend
@@ -32,8 +31,6 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("DaskComputeProcessor",)
-
-_logger = get_logger("dsl.dask")
 
 
 def _resolve_callable(dotted: str) -> Callable[..., Any]:

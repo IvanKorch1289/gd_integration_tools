@@ -46,11 +46,8 @@ from src.backend.core.auth.auth_context_helpers import (
     extract_user_groups,
 )
 from src.backend.core.auth.sso_registry import SsoRegistry
-from src.backend.core.logging import get_logger
 
 __all__ = ("RequireSsoAuthError", "require_sso_auth", "require_sso_capability")
-
-_logger = get_logger(__name__)
 
 # Type variable для wrapped handler.
 _F = TypeVar("_F", bound=Callable[..., Awaitable[Any]])

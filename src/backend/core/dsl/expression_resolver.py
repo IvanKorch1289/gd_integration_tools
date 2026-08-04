@@ -21,11 +21,8 @@ import re
 from typing import Any
 
 from src.backend.core.dsl.variables import DSLVariableStore, VariableScope
-from src.backend.core.logging import get_logger
 
 __all__ = ("ExpressionResolver", "ExpressionResolutionError", "resolve_expression")
-
-_logger = get_logger("core.dsl.expression_resolver")
 
 
 # Pattern for `${var('key', scope='tenant:acme', default='x')}`.

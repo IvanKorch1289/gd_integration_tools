@@ -28,7 +28,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 from src.backend.dsl.registry import processor
@@ -41,7 +40,6 @@ if TYPE_CHECKING:
 __all__ = ("DbCallProcedureProcessor",)
 
 
-_logger = get_logger("dsl.processors.db_call_procedure")
 _ALLOWED_PARAM_SOURCES = frozenset({"body", "properties", "headers", "none"})
 
 

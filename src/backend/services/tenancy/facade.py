@@ -20,11 +20,8 @@ from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import Any
 
-from src.backend.core.logging import get_logger
 
 __all__ = ("TenantFacade", "get_tenant_facade")
-
-_logger = get_logger("services.tenancy.facade")
 
 
 class TenantFacade:

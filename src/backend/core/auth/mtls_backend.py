@@ -22,11 +22,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from src.backend.core.logging import get_logger
 
 __all__ = ("MtlsBackend", "MtlsConfig", "MtlsVerificationError", "ParsedClientCert")
-
-_logger = get_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)

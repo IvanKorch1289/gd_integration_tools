@@ -5,7 +5,6 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
-from src.backend.core.logging import get_logger
 from src.backend.services.audit.clickhouse_audit_service.state import (
     AuditEvent,  # S68 W2: cross-import
 )
@@ -14,8 +13,6 @@ if TYPE_CHECKING:
     from src.backend.services.audit.clickhouse_audit_service.service import (
         ClickHouseAuditService,
     )
-
-_logger = get_logger("services.audit.clickhouse")
 
 # S114 W1: module-level singleton state (missing since S68 W2 decomp).
 # `_service_instance` + `_service_lock` должны жить в module scope,

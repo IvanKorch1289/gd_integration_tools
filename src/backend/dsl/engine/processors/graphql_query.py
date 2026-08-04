@@ -30,7 +30,6 @@ from typing import TYPE_CHECKING, Any
 
 import orjson
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
 
@@ -39,8 +38,6 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("GraphQLQueryProcessor",)
-
-_logger = get_logger(__name__)
 
 
 @processor(

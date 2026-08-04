@@ -10,9 +10,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-from src.backend.core.logging import get_logger
-
-_logger = get_logger("core.utils.doc_path_validator")
 
 __all__ = ("DocPathValidator", "validate_doc_paths")
 

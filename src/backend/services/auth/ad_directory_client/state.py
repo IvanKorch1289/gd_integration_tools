@@ -12,11 +12,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.auth.ldap_contract import AdServerConfig as _AdServerConfig
-from src.backend.core.logging import get_logger
 
 AdServerConfig = _AdServerConfig
-
-_logger = get_logger(__name__)
 
 
 class AdAuthError(Exception):

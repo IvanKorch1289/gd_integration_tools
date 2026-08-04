@@ -12,10 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.interfaces.plugin import BasePlugin
-from src.backend.core.logging import get_logger
 from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
-
-_logger = get_logger("services.plugins.loader")
 
 
 class PluginInventoryConflictError(RuntimeError):

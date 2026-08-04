@@ -11,7 +11,6 @@ import asyncio
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 
-from src.backend.core.logging import get_logger
 from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,
     ModelRegistryAdapter,
@@ -21,8 +20,6 @@ if TYPE_CHECKING:
     pass
 
 __all__ = ("MlflowModelRegistry",)
-
-_logger = get_logger(__name__)
 
 
 class MlflowModelRegistry(ModelRegistryAdapter):

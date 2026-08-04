@@ -10,9 +10,6 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
-from src.backend.core.logging import get_logger
-
-_logger = get_logger("dsl.eip.aggregation")
 
 __all__ = ("BatchAggregatorProcessor",)
 

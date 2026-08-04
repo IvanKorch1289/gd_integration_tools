@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
@@ -18,8 +17,6 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry.processor import processor
 
 __all__ = ("DesktopPyAutoGUIProcessor",)
-
-_logger = get_logger("dsl.desktop_pyautogui")
 
 _VALID_ACTIONS = frozenset({"screenshot", "click", "type_text", "press_key", "move"})
 # Round 14 fix: extract default into named constant для round-trip consistency

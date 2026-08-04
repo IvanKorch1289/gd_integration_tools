@@ -6,9 +6,6 @@ Pattern (D276): thin wrapper.
 # ruff: noqa: E501
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
-
-_logger = get_logger("dsl.rpa.mime_detect")
 
 __all__ = ("MimeDetectProcessor",)
 

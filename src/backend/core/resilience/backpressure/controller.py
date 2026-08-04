@@ -18,8 +18,6 @@ from src.backend.core.resilience.backpressure.types import (
 
 # Backward-compat alias — original code used bare `logger` name.
 logger = get_logger(__name__)
-_logger = logger
-
 # ---------------------------------------------------------------------------
 # Protocols
 # ---------------------------------------------------------------------------

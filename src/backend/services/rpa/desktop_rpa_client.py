@@ -18,12 +18,9 @@ from typing import Any
 
 import httpx
 
-from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 
 __all__ = ("DesktopRpaClient", "DesktopRpaError")
-
-_logger = get_logger(__name__)
 
 # Все поддерживаемые действия и соответствующие endpoint'ы worker'а.
 SUPPORTED_ACTIONS: dict[str, str] = {

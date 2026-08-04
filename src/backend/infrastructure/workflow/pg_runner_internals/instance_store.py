@@ -18,7 +18,6 @@ from src.backend.core.domain.models.workflow_instance import (
     WorkflowInstance,
     WorkflowStatus,
 )
-from src.backend.core.logging import get_logger
 from src.backend.infrastructure.database.session_manager import main_session_manager
 from src.backend.infrastructure.workflow.pg_runner_internals.event_store import (
     WorkflowEventStore,
@@ -27,8 +26,6 @@ from src.backend.infrastructure.workflow.pg_runner_internals.event_store import 
 from src.backend.infrastructure.workflow.pg_runner_internals.rows import (
     WorkflowInstanceRow,
 )
-
-_logger = get_logger("workflow.pg_runner_internals")
 
 # ─────────────────────────────── DTO ───────────────────────────────
 

@@ -16,11 +16,8 @@ from __future__ import annotations
 
 from src.backend.core.config.features import feature_flags
 from src.backend.core.feature_flags.runtime_overrides import get_runtime_overrides
-from src.backend.core.logging import get_logger
 
 __all__ = ("FeatureFlagService", "get_feature_flag_service")
-
-_logger = get_logger("core.feature_flags.service")
 
 
 class FeatureFlagService:

@@ -4,9 +4,6 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
-from src.backend.core.logging import get_logger
-
-_logger = get_logger("core.security.authorization_gateway")
 
 
 @dataclass

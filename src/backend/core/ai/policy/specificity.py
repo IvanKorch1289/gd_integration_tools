@@ -46,12 +46,9 @@ from __future__ import annotations
 import fnmatch
 from typing import TYPE_CHECKING
 
-from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
-
-_logger = get_logger("core.ai.policy.resolver.specific")
 
 __all__ = ("compute_specificity",)
 

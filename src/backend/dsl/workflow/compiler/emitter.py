@@ -24,7 +24,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.workflow.compiler.step_compilers import (
     _RESUME_SIGNAL,
     dispatch_step_compile,
@@ -37,8 +36,6 @@ from src.backend.dsl.workflow.spec import (
 
 __all__ = ("CompiledWorkflow", "compile_workflow", "compile_workflows")
 
-
-_logger = get_logger("workflow.compiler.emitter")
 
 
 @dataclass(frozen=True, slots=True)

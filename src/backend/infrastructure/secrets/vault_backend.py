@@ -17,12 +17,9 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.infrastructure.secrets.broker import SecretValue
 
 __all__ = ("VaultBackend", "VaultConfig")
-
-_logger = get_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)

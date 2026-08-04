@@ -2,13 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.core.security.authorization_gateway.state import (
     AuthorizationReason,
     PolicyDecider,
 )
-
-_logger = get_logger("core.security.authorization_gateway")
 
 
 class OpaMixin:

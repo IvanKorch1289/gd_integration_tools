@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
@@ -15,8 +14,6 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = ("PromptGetProcessor",)
-_logger = get_logger(__name__)
-
 
 class PromptGetProcessor(BaseProcessor):
     """DSL-процессор ``prompt_get``.

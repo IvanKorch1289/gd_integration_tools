@@ -10,10 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.base_connector import HealthResult
-
-_logger = get_logger(__name__)
 
 
 class EmailAdapter:

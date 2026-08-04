@@ -22,7 +22,6 @@ from typing import Any, Literal
 
 import httpx
 
-from src.backend.core.logging import get_logger
 
 __all__ = (
     "TelegramBotClient",
@@ -31,8 +30,6 @@ __all__ = (
     "TelegramMention",
     "TelegramMessage",
 )
-
-_logger = get_logger("infrastructure.telegram_bot")
 
 # Допустимые значения parse_mode Telegram.
 ParseMode = Literal["HTML", "MarkdownV2", "Markdown", ""]

@@ -23,9 +23,6 @@ import uuid
 from collections.abc import Sequence
 
 from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
-from src.backend.core.logging import get_logger
-
-_logger = get_logger("core.security.authorization_gateway")
 
 from src.backend.core.security.authorization_gateway.audit_mixin import (
     AuditMixin,  # S60 W4: MRO

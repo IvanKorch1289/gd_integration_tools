@@ -17,12 +17,9 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
-
-_logger = get_logger("dsl.fork_join")
 
 
 class ForkJoinProcessor(BaseProcessor):

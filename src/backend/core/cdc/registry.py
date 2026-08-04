@@ -37,7 +37,6 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.core.cdc.source import CDCSource, FakeCDCSource
-from src.backend.core.logging import get_logger
 
 __all__ = (
     "SUPPORTED_BACKENDS",
@@ -45,8 +44,6 @@ __all__ = (
     "is_backend_available",
     "list_backends",
 )
-
-_logger = get_logger("core.cdc.registry")
 
 
 # Stable backend names (DSL может reference через эту строку).

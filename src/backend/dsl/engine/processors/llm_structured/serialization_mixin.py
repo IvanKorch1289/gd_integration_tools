@@ -2,15 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.llm_structured._protocol import (
     _LLMStructuredProcessorProtocol,
 )
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
-
-_logger = get_logger(__name__)
 
 # Дефолтный ``temperature`` для structured-output: детерминизм важнее
 # креативности при заполнении схемы.

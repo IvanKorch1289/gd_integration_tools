@@ -19,15 +19,12 @@ import sys
 import tempfile
 from typing import Any, ClassVar
 
-from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 __all__ = ("ScriptRunnerProcessor",)
-
-_logger = get_logger("dsl.script_runner")
 
 # Language → default interpreter executable.
 _DEFAULT_INTERPRETERS: dict[str, str] = {

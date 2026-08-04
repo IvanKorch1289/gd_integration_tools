@@ -27,7 +27,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
 
@@ -37,8 +36,6 @@ if TYPE_CHECKING:
     from src.backend.services.rpa.desktop_rpa_client import DesktopRpaClient
 
 __all__ = ("DesktopRpaProcessor",)
-
-_logger = get_logger(__name__)
 
 _VALID_ACTIONS = frozenset({"click", "type", "screenshot"})
 

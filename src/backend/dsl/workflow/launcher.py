@@ -21,11 +21,8 @@ from dataclasses import dataclass
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version
 
-from src.backend.core.logging import get_logger
 
 __all__ = ("WorkflowLauncher", "WorkflowResolutionError")
-
-_logger = get_logger(__name__)
 
 
 class WorkflowResolutionError(ValueError):

@@ -22,7 +22,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.config.features import feature_flags
-from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
 
@@ -43,8 +42,6 @@ __all__ = (
     "ScreenshotProcessor",
     "WaitForProcessor",
 )
-
-_logger = get_logger(__name__)
 
 
 def _extract_domain(url: str) -> str:

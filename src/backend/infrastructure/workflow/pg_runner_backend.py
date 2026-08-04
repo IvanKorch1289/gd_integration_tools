@@ -36,7 +36,6 @@ from uuid import UUID
 
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.core.domain.models.workflow_instance import WorkflowStatus
-from src.backend.core.logging import get_logger
 from src.backend.core.workflow.backend import (
     WorkflowBackend,
     WorkflowHandle,
@@ -50,8 +49,6 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
 
 __all__ = ("PgRunnerWorkflowBackend",)
 
-
-_logger = get_logger("workflow.pg_runner_backend")
 
 
 _TERMINAL_STATUSES = frozenset(

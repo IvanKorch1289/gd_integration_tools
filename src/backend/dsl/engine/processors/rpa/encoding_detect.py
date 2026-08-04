@@ -6,9 +6,6 @@ Pattern (D277): thin wrapper.
 # ruff: noqa: E501
 from __future__ import annotations
 
-from src.backend.core.logging import get_logger
-
-_logger = get_logger("dsl.rpa.encoding_detect")
 
 __all__ = ("EncodingDetectProcessor",)
 

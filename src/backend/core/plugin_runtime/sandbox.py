@@ -37,7 +37,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Mapping
@@ -47,8 +46,6 @@ if TYPE_CHECKING:
     from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 
 __all__ = ("PluginSandboxAdapter", "PluginSandboxError", "ResourceLimitsExceeded")
-
-_logger = get_logger("core.plugin_runtime.sandbox")
 
 CapabilityChecker = "Callable[[str, str, str | None], None]"
 

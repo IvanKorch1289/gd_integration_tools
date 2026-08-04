@@ -17,9 +17,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     pass
 
-from src.backend.core.logging import get_logger
-
-_logger = get_logger("services.plugins.loader")
 
 from src.backend.services.plugins.loader.loading.frontend_mixin import (
     FrontendMixin,  # S63 W1: MRO
