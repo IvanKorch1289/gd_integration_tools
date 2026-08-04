@@ -3073,4 +3073,59 @@ Thin pass-through к canonical ``CheckMixin.check`` (3-arg signature
 39 итераций (34 раундов закоммиченных + 5 null rounds).
 Working tree clean.
 
+### Round 40 (2026-08-03 — AIGatewayProductionWiringError subclass)
+
+**Цель Round 40**: Закрыть `test_production_wiring_error_is_enforcement_error`
+через fix error hierarchy.
+
+#### Round 40.1: error hierarchy fix
+
+`src/backend/core/ai/errors.py:145`:
+- Было: `class AIGatewayProductionWiringError(RuntimeError)`
+- Стало: `class AIGatewayProductionWiringError(AIGatewayEnforcementRequiredError)`
+
+Endpoint-обработчики unified catch:
+```python
+except AIGatewayEnforcementRequiredError:  # ← теперь ловит оба
+    return 503  # Service Unavailable
+```
+
+**Closed 1 xfail** (`test_production_wiring_error_is_enforcement_error`).
+
+**Remaining 1 xfail**:
+- `test_production_wiring_error_str_lists_all_missing` — `__str__` пока
+  содержит generic text, не перечисляет `missing` tuple. M scope.
+
+#### Round 40 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_aigateway_production_wiring | ✅ **9 passed, 1 xfailed (was 8 passed, 2 xfailed)** |
+
+#### Round 40 Domain impact:
+
+| Домен | Round 39 → **Round 40** |
+|---|---|
+| L9 Security E2E | 8.9 → **9.0** (error hierarchy unified) |
+| Tests/QA | 8.4 → **8.4** (+1 test) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 40 Cumulative scorecard (post R1-R40, 35 раундов закоммиченных):
+
+| Домен | C2 → R40 (40 итераций) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.8** | +2.8 |
+| L9 Security E2E | 7.5 → **9.0** | +1.5 |
+| L3 DSL/routes | 8.4 → **9.0** | +0.6 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.4** | +2.9 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+40 итераций (35 раундов закоммиченных + 5 null rounds).
+Working tree clean.
+
 
