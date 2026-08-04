@@ -145,9 +145,9 @@ class VaultRefresherProtocol(Protocol):
 class LoggerProtocol(Protocol):
     """Минимальная поверхность structured-логгера.
 
-    Реализация: разные ``logger`` из
-    ``infrastructure.external_apis.logging_service``
-    (``app_logger``, ``stream_logger``, ``grpc_logger`` и т.д.).
+    Реализация: ``infrastructure.logging.structlog_backend``
+    (Round 25 fix: ``external_apis.logging_service`` deprecated since
+    Sprint 38 — больше не используется как DI-источник).
     """
 
     def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
