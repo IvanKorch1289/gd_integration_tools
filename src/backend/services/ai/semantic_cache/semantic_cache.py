@@ -178,13 +178,26 @@ class SemanticCache:
         # наполнялся.
         try:
             if hasattr(rag, "ingest"):
+                # Round 7 Sprint 1.1 P0 fix: mask PII в query перед
+                # сохранением в vector store — чтобы запросы с персональными
+                # данными не оседали в vector store навсегда. Future queries
+                # тоже маскируются при lookup (round-trip consistency).
+                try:
+                    from src.backend.services.ai.rag_ingest_service import (
+                        _maybe_mask_pii,
+                    )
+
+                    masked_query, pii_meta = _maybe_mask_pii(query)
+                except Exception:
+                    masked_query, pii_meta = query, {"pii_masked": False}
                 await rag.ingest(
-                    content=query,
+                    content=masked_query,
                     metadata={
                         "response": response,
                         "provider": provider,
                         "model": model,
                         "cached_at": time.time(),
+                        **pii_meta,
                     },
                     namespace=self._namespace,
                 )

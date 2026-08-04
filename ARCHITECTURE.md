@@ -166,7 +166,7 @@ CircuitBreaker, ExceptionHandler.
 |---|---|---|---|
 | Polling | `poll_backend.py` | **production-ready** | Кросс-БД (PG/Oracle/MSSQL/MySQL/DB2) через `updated_at`; самый универсальный путь. |
 | Listen/Notify | `listen_notify_backend.py` | **production-ready** | PG-only, small payload через `LISTEN/NOTIFY`. |
-| Debezium | `debezium_events_backend.py` | **scaffold** | Kafka topic с Debezium-сообщениями; полная реализация — Sprint R3.4 (требует Kafka + Debezium-connector). Методы `consume`/`commit_offset`/`replay` логируют намерение, но не подключаются к Kafka. |
+| Debezium | `debezium_events_backend.py` | **production-ready** | Kafka topics через `aiokafka.AIOKafkaConsumer` + `parse_debezium_event`; offset commit через `consumer.commit()`. Round 7 fix: docs ранее говорили "scaffold" — actual implementation (S62 W2) реальна, требует только running Kafka cluster для runtime-теста. |
 
 Включение CDC в runtime — через feature-flag `feature_flags.cdc_enabled`
 (default-OFF). Per-route активация — через `route.toml::sources.cdc`

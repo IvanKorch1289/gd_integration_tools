@@ -41,7 +41,20 @@ class TestRagIngestProcessor:
         exchange = _Exchange(body="document text")
         proc = RagIngestProcessor(collection="docs")
 
-        with patch("src.backend.services.ai.rag_service.get_rag_service") as mock_get:
+        # Round 7 Sprint 1.1 P0 fix: RagIngestProcessor теперь применяет
+        # _maybe_mask_pii перед записью в vector store. Mock'аем sanitizer
+        # в SOURCE-модуле (rag_ingest_service) — потому что processor импортит
+        # helper через from-import внутри process(), что привязывает к
+        # source module path.
+        with (
+            patch(
+                "src.backend.services.ai.rag_service.get_rag_service"
+            ) as mock_get,
+            patch(
+                "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
+                return_value=("document text", {"pii_masked": False}),
+            ),
+        ):
             mock_rag = AsyncMock()
             mock_rag.ingest = AsyncMock(return_value="doc-id-1")
             mock_get.return_value = mock_rag
@@ -50,7 +63,11 @@ class TestRagIngestProcessor:
 
         mock_rag.ingest.assert_awaited_once_with(
             content="document text",
-            metadata={"modal": "text", "collection": "docs"},
+            metadata={
+                "modal": "text",
+                "collection": "docs",
+                "pii_masked": False,
+            },
             namespace="docs",
         )
         assert exchange.properties["ingest_doc_id"] == "doc-id-1"
@@ -61,7 +78,15 @@ class TestRagIngestProcessor:
         exchange.set_property("doc", "prop text")
         proc = RagIngestProcessor(source_property="doc", collection="c")
 
-        with patch("src.backend.services.ai.rag_service.get_rag_service") as mock_get:
+        with (
+            patch(
+                "src.backend.services.ai.rag_service.get_rag_service"
+            ) as mock_get,
+            patch(
+                "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
+                return_value=("prop text", {"pii_masked": False}),
+            ),
+        ):
             mock_rag = AsyncMock()
             mock_rag.ingest = AsyncMock(return_value="id-2")
             mock_get.return_value = mock_rag
@@ -70,7 +95,11 @@ class TestRagIngestProcessor:
 
         mock_rag.ingest.assert_awaited_once_with(
             content="prop text",
-            metadata={"modal": "text", "collection": "c"},
+            metadata={
+                "modal": "text",
+                "collection": "c",
+                "pii_masked": False,
+            },
             namespace="c",
         )
         assert exchange.properties["ingest_doc_id"] == "id-2"
@@ -87,11 +116,63 @@ class TestRagIngestProcessor:
         assert exchange.properties["ingest_doc_id"] is None
 
     @pytest.mark.asyncio
+    async def test_pii_masking_applied_to_content(self) -> None:
+        """Round 7 Sprint 1.1 P0: PII в content маскируется перед ingest.
+
+        Тест проверяет, что ``_maybe_mask_pii`` вызывается и его результат
+        (masked text + pii_meta) пробрасывается в ``rag.ingest``. Реальный
+        Presidio не запускаем (slow + требует модели) — мокаем helper.
+        """
+        exchange = _Exchange(body="John Doe SSN: 123-45-6789")
+        proc = RagIngestProcessor(collection="sensitive")
+
+        with (
+            patch(
+                "src.backend.services.ai.rag_service.get_rag_service"
+            ) as mock_get,
+            patch(
+                "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
+                return_value=(
+                    "<PERSON> SSN: <US_SSN>",
+                    {
+                        "pii_masked": True,
+                        "pii_masker_version": "TestSanitizer",
+                    },
+                ),
+            ),
+        ):
+            mock_rag = AsyncMock()
+            mock_rag.ingest = AsyncMock(return_value="masked-id")
+            mock_get.return_value = mock_rag
+
+            await proc.process(exchange, _Context())
+
+        mock_rag.ingest.assert_awaited_once_with(
+            content="<PERSON> SSN: <US_SSN>",
+            metadata={
+                "modal": "text",
+                "collection": "sensitive",
+                "pii_masked": True,
+                "pii_masker_version": "TestSanitizer",
+            },
+            namespace="sensitive",
+        )
+        assert exchange.properties["ingest_doc_id"] == "masked-id"
+
+    @pytest.mark.asyncio
     async def test_non_string_content_converted(self) -> None:
         exchange = _Exchange(body={"key": "val"})
         proc = RagIngestProcessor()
 
-        with patch("src.backend.services.ai.rag_service.get_rag_service") as mock_get:
+        with (
+            patch(
+                "src.backend.services.ai.rag_service.get_rag_service"
+            ) as mock_get,
+            patch(
+                "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
+                side_effect=lambda txt: (txt, {"pii_masked": False}),
+            ),
+        ):
             mock_rag = AsyncMock()
             mock_rag.ingest = AsyncMock(return_value="id-3")
             mock_get.return_value = mock_rag

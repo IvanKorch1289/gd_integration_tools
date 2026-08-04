@@ -52,12 +52,12 @@ class ThreeTierRagCache:
         return None, None
 
     async def lookup_chunks(
-        self, query: str, *, namespace: str | None = None
+        self, query: str, *, tenant: str | None = None, namespace: str | None = None
     ) -> tuple[list[dict[str, Any]] | None, str | None]:
-        """Ищет сырые retrieval-чанки в L3."""
+        """Ищет сырые retrieval-чанки в L3 (с tenant-scope)."""
         if not self._l3_enabled:
             return None, None
-        chunks = await self._l3.get(query, namespace=namespace)
+        chunks = await self._l3.get(query, tenant=tenant, namespace=namespace)
         if chunks is not None:
             return chunks, "l3"
         return None, None
@@ -72,17 +72,23 @@ class ThreeTierRagCache:
             await self._l2.set(query, value, tenant=tenant)
 
     async def store_chunks(
-        self, query: str, chunks: list[dict[str, Any]], *, namespace: str | None = None
+        self,
+        query: str,
+        chunks: list[dict[str, Any]],
+        *,
+        tenant: str | None = None,
+        namespace: str | None = None,
     ) -> None:
-        """Store retrieval chunks in L3 cache.
+        """Store retrieval chunks in L3 cache (с tenant-scope).
 
         Args:
             query: Query string.
             chunks: List of chunk dictionaries.
+            tenant: Optional tenant scope (изоляция между tenant'ами).
             namespace: Optional namespace scope.
         """
         if self._l3_enabled:
-            await self._l3.set(query, chunks, namespace=namespace)
+            await self._l3.set(query, chunks, tenant=tenant, namespace=namespace)
 
     async def invalidate_by_tag(self, tag: str) -> int:
         """Публикует invalidate-событие. Подписчики реагируют по тегу."""

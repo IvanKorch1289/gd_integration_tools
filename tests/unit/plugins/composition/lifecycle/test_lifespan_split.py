@@ -147,15 +147,17 @@ def test_lifespan_reexports_startup_function(
 
 
 def test_startup_exposes_run_startup(startup_module: ModuleType) -> None:
-    """``startup.py`` экспортирует ``run_startup(app)``."""
+    """``startup.py`` экспортирует ``run_startup(app, task_registry)``."""
     assert hasattr(startup_module, "run_startup")
     assert callable(startup_module.run_startup)
     # Проверяем signature через inspect.
+    # Round 7 fix: signature ``(app, task_registry)`` — task_registry reserved
+    # for future use (correlating startup tasks to registry for graceful shutdown).
     import inspect
 
     sig = inspect.signature(startup_module.run_startup)
     params = list(sig.parameters.keys())
-    assert params == ["app"]
+    assert params == ["app", "task_registry"]
 
 
 def test_startup_exposes_outbox_dispatcher(startup_module: ModuleType) -> None:

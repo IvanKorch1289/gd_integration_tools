@@ -11,7 +11,6 @@
 - Sprint 6 K2 Resilience+Perf (7):
   - perf_gate_strict (Sprint 6 K2 W1)
   - granian_rsgi_mode_enabled (Sprint 6 K2 W2)
-  - structlog_batching_enabled (Sprint 6 K2 W4)
   - processor_health_checks_strict (Sprint 6 K2 W5)
   - backpressure_streaming_enabled (Sprint 6 K2 W6)
   - schemathesis_gate_enabled (Sprint 6 K2 W7)
@@ -129,17 +128,6 @@ class Sprint6Flags(BaseSettings):
             "Переключает perf-gate в blocking режим: p95<200ms / RPS>1000 для "
             "reference endpoints через k6+locust в docker-compose.perf.yml. "
             "Warn-only по решению пользователя — blocking откладывается до Sprint 9."
-        ),
-    )
-
-    structlog_batching_enabled: bool = Field(
-        default=True,
-        title="K2 S6: structlog batching wrapper (50-event / 100ms)",
-        description=(
-            "K2 Sprint 6 Wave 4. Owner: K2 Perf. ETA: S6-W4. "
-            "Активирует BatchingStructlogProcessor — 50-event batch / 100ms timeout "
-            "wrapper над structlog pipeline. Ожидаемое улучшение -1..3ms per log. "
-            "default-OFF до benchmark подтверждения."
         ),
     )
 

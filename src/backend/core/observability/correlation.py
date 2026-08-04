@@ -13,8 +13,10 @@ Phase 1a (infra analysis backlog): canonical class moved here.
 
 from __future__ import annotations
 
+import contextlib
 import uuid
 from contextvars import ContextVar
+from typing import Any
 
 import structlog
 
@@ -26,6 +28,8 @@ __all__ = (
     "new_correlation_id",
     "request_id_var",
     "set_correlation_context",
+    "set_correlation_id",
+    "start_span",
     "tenant_id_var",
 )
 
@@ -96,3 +100,37 @@ def new_correlation_id() -> str:
     cid = uuid.uuid4().hex[:16]
     correlation_id_var.set(cid)
     return cid
+
+
+def set_correlation_id(correlation_id: str) -> None:
+    """Установить correlation_id (alias для :func:`set_correlation_context`).
+
+    Round 5 Sprint 5.2: compat-shim для callers (например,
+    :class:`services.observability.facade.ObservabilityFacade.set_correlation_id`),
+    которые хотят установить только correlation_id без request_id/tenant_id.
+    Делегирует в :func:`set_correlation_context` с единственным параметром.
+
+    Args:
+        correlation_id: Correlation ID (UUID либо hex-string).
+    """
+    set_correlation_context(correlation_id=correlation_id)
+
+
+@contextlib.contextmanager
+def start_span(name: str, attributes: dict[str, Any] | None = None) -> Any:
+    """No-op tracing span context manager (Round 5 Sprint 5.2 compat-shim).
+
+    Изначально facade ожидал реальный OTEL-совместимый ``start_span``,
+    но проект пока не подключил OTEL SDK (carryover, см. ADR-NEW-21).
+    До тех пор возвращаем no-op context manager, который всегда
+    yields ``None``. При появлении OTEL SDK этот shim будет заменён
+    на ``opentelemetry.trace.get_tracer(__name__).start_as_current_span``.
+
+    Args:
+        name: Имя span (например, ``"process_order"``).
+        attributes: Span attributes (key-value).
+
+    Yields:
+        ``None`` (placeholder, real span появится с OTEL).
+    """
+    yield None

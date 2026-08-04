@@ -233,7 +233,6 @@ def main() -> int:
         # Logging infrastructure
         "src/backend/infrastructure/logging/",
         "src/backend/infrastructure/external_apis/logging_service.py",
-        "src/backend/infrastructure/observability/structlog_batching.py",
         "src/backend/infrastructure/clients/external/logger.py",
         # Early-load paths (loaded during settings/config import chain)
         "src/backend/core/config/",

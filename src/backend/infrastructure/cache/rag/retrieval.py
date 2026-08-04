@@ -1,4 +1,11 @@
-"""L3 Retrieval cache (Redis prefix ``rag:l3:``)."""
+"""L3 Retrieval cache (Redis prefix ``rag:l3:v2:``).
+
+Версионированный prefix (Sprint 2.1): legacy-ключи ``rag:l3:*`` (без
+``v2``) считаются устаревшими и недостижимыми. Ключ включает
+``tenant`` + ``namespace`` сегменты с sentinel-значениями
+``_unscoped_`` / ``_global_`` для backward-compat вызовов без
+явного scope.
+"""
 
 from __future__ import annotations
 
@@ -14,11 +21,17 @@ logger = get_logger(__name__)
 
 __all__ = ("L3RetrievalCache",)
 
+# Sentinel-значения для tenant/namespace при отсутствии явного scope.
+# Выделены в module-level константы чтобы избежать magic-strings
+# в hot-path и упростить grep по tenant-isolation тестам.
+_UNSCOPED_TENANT = "_unscoped_"
+_GLOBAL_NAMESPACE = "_global_"
+
 
 class L3RetrievalCache:
     """KV-кэш сырых retrieval-чанков (без LLM-ответа)."""
 
-    PREFIX = "rag:l3:"
+    PREFIX = "rag:l3:v2:"
 
     def __init__(
         self,
@@ -30,11 +43,23 @@ class L3RetrievalCache:
         self._ttl = ttl_seconds
         self._prefix = prefix or self.PREFIX
 
-    def _key(self, query: str, *, namespace: str | None = None) -> str:
+    def _key(
+        self, query: str, *, tenant: str | None = None, namespace: str | None = None
+    ) -> str:
+        """Строит tenant-aware ключ: ``{prefix}tenant:{t}:{ns}:{digest}``.
+
+        Args:
+            query: Текст запроса (хэшируется).
+            tenant: Tenant scope (``None`` → sentinel ``_unscoped_``).
+            namespace: Namespace scope (``None`` → sentinel ``_global_``).
+
+        Returns:
+            Полный Redis-ключ с sha256-digest.
+        """
         digest = hashlib.sha256(query.encode("utf-8")).hexdigest()
-        if namespace:
-            return f"{self._prefix}{namespace}:{digest}"
-        return f"{self._prefix}{digest}"
+        tenant_part = tenant if tenant else _UNSCOPED_TENANT
+        namespace_part = namespace if namespace else _GLOBAL_NAMESPACE
+        return f"{self._prefix}tenant:{tenant_part}:{namespace_part}:{digest}"
 
     def _ensure_client(self) -> Any:
         if self._client is not None:
@@ -45,12 +70,13 @@ class L3RetrievalCache:
         return self._client
 
     async def get(
-        self, query: str, *, namespace: str | None = None
+        self, query: str, *, tenant: str | None = None, namespace: str | None = None
     ) -> list[dict[str, Any]] | None:
         """Get cached retrieval results.
 
         Args:
             query: Query string.
+            tenant: Optional tenant scope (изоляция между tenant'ами).
             namespace: Optional namespace scope.
 
         Returns:
@@ -58,7 +84,9 @@ class L3RetrievalCache:
         """
         client = self._ensure_client()
         try:
-            raw = await client.cache_get(self._key(query, namespace=namespace))
+            raw = await client.cache_get(
+                self._key(query, tenant=tenant, namespace=namespace)
+            )
         except Exception as exc:
             logger.debug("L3 cache get failed: %s", exc)
             record_miss("l3")
@@ -75,38 +103,54 @@ class L3RetrievalCache:
             return None
 
     async def set(
-        self, query: str, chunks: list[dict[str, Any]], *, namespace: str | None = None
+        self,
+        query: str,
+        chunks: list[dict[str, Any]],
+        *,
+        tenant: str | None = None,
+        namespace: str | None = None,
     ) -> None:
         """Set retrieval results in cache.
 
         Args:
             query: Query string.
             chunks: List of chunk dictionaries.
+            tenant: Optional tenant scope (изоляция между tenant'ами).
             namespace: Optional namespace scope.
         """
         client = self._ensure_client()
         try:
             await client.cache_set(
-                self._key(query, namespace=namespace), orjson.dumps(chunks), self._ttl
+                self._key(query, tenant=tenant, namespace=namespace),
+                orjson.dumps(chunks),
+                self._ttl,
             )
         except Exception as exc:
             logger.debug("L3 cache set failed: %s", exc)
 
-    async def invalidate(self, query: str, *, namespace: str | None = None) -> None:
+    async def invalidate(
+        self, query: str, *, tenant: str | None = None, namespace: str | None = None
+    ) -> None:
         """Invalidate cache entry.
 
         Args:
             query: Query string.
+            tenant: Optional tenant scope (invalidate только указанного).
             namespace: Optional namespace scope.
         """
         client = self._ensure_client()
         try:
-            await client.cache_delete(self._key(query, namespace=namespace))
+            await client.cache_delete(
+                self._key(query, tenant=tenant, namespace=namespace)
+            )
         except Exception as exc:
             logger.debug("L3 cache invalidate failed: %s", exc)
 
     async def flush(self) -> int:
         """Flush all cache entries.
+
+        Удаляет только ключи текущего версионированного prefix
+        (``rag:l3:v2:*``); legacy ``rag:l3:*`` не трогает.
 
         Returns:
             Number of deleted entries.

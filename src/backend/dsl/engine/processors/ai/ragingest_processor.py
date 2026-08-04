@@ -17,6 +17,12 @@ class RagIngestProcessor(BaseProcessor):
     сохраняется в metadata как ``modal`` для downstream-консьюмеров
     мультимодального индекса (text/image/audio/video).
 
+    Round 7 Sprint 1.1 P0 fix: применяет PII-masking через
+    :func:`src.backend.services.ai.rag_ingest_service._maybe_mask_pii`
+    перед записью в vector store. Раньше DSL-путь обходил
+    RagIngestService и писал raw content (security gap).
+    Теперь parity с canonical bulk-ingest path.
+
     Usage::
 
         .rag_ingest(
@@ -52,12 +58,24 @@ class RagIngestProcessor(BaseProcessor):
             exchange.set_property(self._output_property, None)
             return
         text = content if isinstance(content, str) else str(content)
+
+        # Round 7 Sprint 1.1 P0 fix: apply PII masking перед записью в
+        # vector store — DSL-path обходил canonical RagIngestService
+        # и писал raw content. Теперь parity с bulk-ingest.
+        from src.backend.services.ai.rag_ingest_service import _maybe_mask_pii
+
+        masked_text, pii_meta = _maybe_mask_pii(text)
+
         from src.backend.services.ai.rag_service import get_rag_service
 
         rag = get_rag_service()
         doc_id = await rag.ingest(
-            content=text,
-            metadata={"modal": self._modal, "collection": self._collection},
+            content=masked_text,
+            metadata={
+                "modal": self._modal,
+                "collection": self._collection,
+                **pii_meta,
+            },
             namespace=self._collection,
         )
         exchange.set_property(self._output_property, doc_id)
