@@ -3128,4 +3128,64 @@ except AIGatewayEnforcementRequiredError:  # ← теперь ловит оба
 40 итераций (35 раундов закоммиченных + 5 null rounds).
 Working tree clean.
 
+### Round 41 (2026-08-03 — last production_wiring xfail closed)
+
+**Цель Round 41**: Закрыть последний remaining xfail в
+`test_aigateway_production_wiring.py`.
+
+#### Round 41.1: test fix
+
+Test использовал ошибочный API (`AIGatewayProductionWiringError(long_string)` —
+передавал single string как `missing: tuple[str, ...]`). Round 41:
+fixed test на canonical API — передача `missing=tuple[str, ...]`.
+
+Old:
+```python
+err = AIGatewayProductionWiringError(
+    "AIGateway invoked on production without mandatory DI: ..."
+)
+```
+
+New:
+```python
+err = AIGatewayProductionWiringError(
+    missing=("policy_resolver", "capability_gate", "token_budget")
+)
+```
+
+`__str__` теперь содержит все 3 имени через `missing [...]` formatting.
+
+#### Round 41 verification
+
+| Gate | Result |
+|---|---|
+| `python3_syntax.py` | ✅ OK |
+| `mypy -p src` | ✅ **0 errors** |
+| test_aigateway_production_wiring | ✅ **10 passed (was 9 passed + 1 xfailed)** |
+
+#### Round 41 Domain impact:
+
+| Домен | Round 40 → **Round 41** |
+|---|---|
+| L5 AI/agents | 8.8 → **8.8** |
+| L9 Security E2E | 9.0 → **9.0** |
+| Tests/QA | 8.4 → **8.4** (+1 test) |
+| **Медиана** | 8.6 → **8.6** |
+
+#### Round 41 Cumulative scorecard (post R1-R41, 36 раундов закоммиченных):
+
+| Домен | C2 → R41 (41 итерация) | Δ |
+|---|---|---|
+| L5 AI/agents | 6.0 → **8.8** | +2.8 |
+| L9 Security E2E | 7.5 → **9.0** | +1.5 |
+| L3 DSL/routes | 8.4 → **9.0** | +0.6 |
+| L10 Observability | 8.3 → **8.9** | +0.6 |
+| L1 Gateway/middleware | 8.7 → **8.8** | +0.1 |
+| Tests/QA | 5.5 → **8.4** | +2.9 |
+| Docs | 6.5 → **8.0** | +1.5 |
+| **Медиана** | 7.5 → **8.6** | **+1.1** |
+
+41 итерация (36 раундов закоммиченных + 5 null rounds).
+Working tree clean.
+
 
