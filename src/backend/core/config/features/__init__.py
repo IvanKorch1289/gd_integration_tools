@@ -161,8 +161,9 @@ class FeatureFlags(
         env_prefix="FEATURE_", extra="forbid", validate_default=True
     )
 
-    # K2 — Net & WAF fields (metering_per_host, connection_reuse_manager,
-    # waf_outbound_via_facade) — extracted в features/net.py::NetFlags (T1.3.5).
+    # K2 — Net & WAF fields (metering_per_host, waf_outbound_via_facade) —
+    # extracted в features/net.py::NetFlags (T1.3.5). connection_reuse_manager
+    # удалён в Round 51 (vaporware — класс не реализован, S204 retro-audit B21).
     # Наследуются через multiple inheritance. См. class FeatureFlags(...).
 
     # K4 — Workflow fields (workflow_legacy_disabled, workflow_yaml_round_trip,

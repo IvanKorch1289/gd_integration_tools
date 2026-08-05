@@ -1,9 +1,12 @@
 """Net feature-flags (T1.3.5 split from core.config.features.__init__).
 
-Извлечено 3 K2 — Net & WAF flags (S38 P1.1 epic, T1.3.5 PR):
+Извлечено 2 K2 — Net & WAF flags (S38 P1.1 epic, T1.3.5 PR):
 - metering_per_host
-- connection_reuse_manager
 - waf_outbound_via_facade
+
+Round 51: удалён ``connection_reuse_manager`` (vaporware — сам класс
+не реализован, S204 retro-audit B21; idle-ping перенесён в
+``infrastructure/clients/clickhouse.py`` и ``pool_health.py``).
 """
 
 from __future__ import annotations
@@ -36,20 +39,6 @@ class NetFlags(BaseSettings):
             "Активирует PerHostMeter — rolling-window (1000 obs) метрики "
             "по каждому host: request_count, error_count, p50/p95 latency_ms. "
             "default-OFF до staging-smoke и интеграции с OutboundHttpClient."
-        ),
-    )
-
-    connection_reuse_manager: bool = Field(
-        default=False,
-        title="K2: ConnectionReuseManager (idle ping + auto-recycle по lifetime)",
-        description=(
-            "S204 retro-audit B21: feature-flag для ConnectionReuseManager "
-            "имел default=True при отсутствии самого класса (vaporware). "
-            "default изменён на False (правдивый — не реализовано). Сам "
-            "класс не существует: idle-ping пере-реализован ad-hoc в "
-            "infrastructure/clients/clickhouse.py:175-187 и pool_health.py. "
-            "Поле оставлено для backward-compat config-files; чтобы его "
-            "удалить, нужен ADR + миграция профилей."
         ),
     )
 
