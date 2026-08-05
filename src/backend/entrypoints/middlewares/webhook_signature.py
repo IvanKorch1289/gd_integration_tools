@@ -29,6 +29,13 @@ path-prefix. Раньше middleware skip-verify с ``logger.debug`` и
 инкрементируется ``webhook_signature_missing_secret_total{path_prefix}``.
 Dev escape: passthrough допустим только при ``APP_ENVIRONMENT=dev``
 И ``WEBHOOK_ALLOW_MISSING_SECRET=true`` (явный opt-in).
+
+B-14 fix (cycle 36): webhook_signature 503 → unified error envelope.
+503 response теперь формируется через ``build_error_envelope`` из
+:mod:`src.backend.core.errors` для унификации формата с остальными
+middlewares (csrf, rpa, и т.п.). Поля ``code``, ``detail``, ``error_id``,
+``correlation_id``, ``request_id`` присутствуют в JSON body. Старое
+поле ``error`` сохранено как backward-compat alias на ``code``.
 """
 
 from __future__ import annotations
@@ -39,6 +46,7 @@ from collections.abc import Mapping
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from src.backend.core.errors import build_error_envelope
 from src.backend.core.logging import get_logger
 from src.backend.core.observability.metrics import (
     webhook_signature_missing_secret_total,
@@ -162,9 +170,9 @@ class WebhookSignatureMiddleware:
             await self._send_503(
                 send,
                 detail=(
-                    f"Webhook secret not configured for path prefix "
-                    f"{matched_prefix!r}"
+                    f"Webhook secret not configured for path prefix {matched_prefix!r}"
                 ),
+                scope=scope,
             )
             return
 
@@ -172,9 +180,7 @@ class WebhookSignatureMiddleware:
         sig_value = _get_header(scope, self._sig_header_lower)
         ts_value = _get_header(scope, self._ts_header_lower)
         if not sig_value or not ts_value:
-            await self._send_401(
-                send, detail="Webhook signature headers missing"
-            )
+            await self._send_401(send, detail="Webhook signature headers missing")
             return
 
         try:
@@ -210,11 +216,7 @@ class WebhookSignatureMiddleware:
             nonlocal body_sent
             if not body_sent:
                 body_sent = True
-                return {
-                    "type": "http.request",
-                    "body": body,
-                    "more_body": False,
-                }
+                return {"type": "http.request", "body": body, "more_body": False}
             # После первого запроса — disconnect (no more body).
             return {"type": "http.disconnect"}
 
@@ -228,9 +230,7 @@ class WebhookSignatureMiddleware:
         staging/production через унаследованный env var из CI/CD.
         """
         env_value = os.environ.get("APP_ENVIRONMENT", "").strip().lower()
-        allow_value = (
-            os.environ.get(_WEBHOOK_ALLOW_ENV, "").strip().lower() == "true"
-        )
+        allow_value = os.environ.get(_WEBHOOK_ALLOW_ENV, "").strip().lower() == "true"
         return env_value == _DEV_ENV_VALUE and allow_value
 
     @staticmethod
@@ -250,22 +250,31 @@ class WebhookSignatureMiddleware:
         await send({"type": "http.response.body", "body": body})
 
     @staticmethod
-    async def _send_503(send: Send, *, detail: str) -> None:
-        """Отправляет 503 JSON response через send (B-02 fix, cycle 33)."""
-        body = json.dumps(
-            {"error": "webhook_not_configured", "detail": detail}
-        ).encode("utf-8")
+    async def _send_503(send: Send, *, detail: str, scope: Scope | None = None) -> None:
+        """Отправляет 503 JSON response через send (B-02 fix, cycle 33).
+
+        B-14 fix (cycle 36): webhook_signature 503 → unified error envelope.
+        Использует ``build_error_envelope`` для унификации формата с
+        остальными middlewares (csrf, rpa, и т.п.). Старый формат
+        ``{"error","detail"}`` помечен как backward-compat alias в
+        ``body["error"]`` для legacy clients.
+        """
+        body = build_error_envelope(
+            code="webhook_not_configured", detail=detail, scope=scope
+        )
+        body["error"] = body["code"]  # backward-compat alias для legacy clients
+        body_bytes = json.dumps(body).encode("utf-8")
         await send(
             {
                 "type": "http.response.start",
                 "status": 503,
                 "headers": [
                     (b"content-type", b"application/json"),
-                    (b"content-length", str(len(body)).encode("latin-1")),
+                    (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
             }
         )
-        await send({"type": "http.response.body", "body": body})
+        await send({"type": "http.response.body", "body": body_bytes})
 
 
 def _get_header(scope: Scope, name: bytes) -> str | None:
