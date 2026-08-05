@@ -274,6 +274,77 @@ def _make_auth_from_principal(
     )
 
 
+def _context_getter(info: Any) -> Any:
+    """Унифицированный доступ к Strawberry ``info.context``.
+
+    Round 87: support both dict-style (``context["auth"]``) и
+    object-style (``context.auth``). Strawberry middleware может
+    класть context в любом формате. Возвращает ``None`` если нет
+    context или info.
+    """
+    if info is None:
+        return None
+    return getattr(info, "context", None)
+
+
+def _principal_from_info(info: Any) -> str:
+    """Извлекает ``principal`` из ``info.context.auth``.
+
+    Round 87 (refactor): выделено из ``_extract_auth_from_info``
+    для unit-testing (см. ``TestGraphQlInfoHelpers``). При отсутствии
+    auth/context возвращает ``""`` (fail-closed).
+    """
+    context = _context_getter(info)
+    if context is None:
+        return ""
+    auth = context.get("auth") if isinstance(context, dict) else getattr(context, "auth", None)
+    if auth is None:
+        return ""
+    return getattr(auth, "principal", "") or ""
+
+
+def _permissions_from_info(info: Any) -> tuple[str, ...]:
+    """Извлекает ``permissions`` из ``info.context.auth.metadata``.
+
+    Round 87 (refactor): выделено из ``_extract_auth_from_info``
+    для unit-testing. Использует canonical ``extract_user_permissions``
+    helper (parity с REST/SOAP entrypoints).
+    """
+    context = _context_getter(info)
+    if context is None:
+        return ()
+    auth = context.get("auth") if isinstance(context, dict) else getattr(context, "auth", None)
+    if auth is None:
+        return ()
+    from src.backend.core.auth.auth_context_helpers import extract_user_permissions
+
+    return tuple(extract_user_permissions(auth))
+
+
+async def _graphql_context_getter(request: Any) -> dict[str, Any]:
+    """Strawberry ASGI context getter — Round 87.
+
+    Build context dict из FastAPI/Starlette ``request``: ``{"request": request,
+    "auth": request.state.auth}``. Используется Strawberry как
+    ``context_getter`` hook для построения GraphQL context из HTTP-запроса.
+
+    Middleware (AuthRequiredMiddleware) кладёт :class:`AuthContext` в
+    ``request.state.auth`` после успешной аутентификации. При отсутствии
+    ``auth`` атрибута (anonymous / не-authenticated route) возвращает
+    ``None`` — fail-closed.
+
+    Args:
+        request: FastAPI/Starlette ``Request`` (или None для defensive case).
+
+    Returns:
+        Dict ``{"request": request, "auth": AuthContext | None}``.
+    """
+    if request is None:
+        return {"request": None, "auth": None}
+    auth = getattr(request.state, "auth", None)
+    return {"request": request, "auth": auth}
+
+
 def _extract_auth_from_info(
     info: Any,
 ) -> tuple[str, tuple[str, ...]]:
@@ -283,26 +354,16 @@ def _extract_auth_from_info(
     кладёт AuthContext в ``info.context.auth`` (если auth required).
     При отсутствии (anonymous) возвращаем ``("", ())`` — fail-closed.
 
+    Round 87 (refactor): делегирует к ``_principal_from_info`` +
+    ``_permissions_from_info`` для unit-testability.
+
     Args:
         info: Strawberry Info (или None для прямого вызова в тестах).
 
     Returns:
         Tuple (principal, permissions). Defaults к ``("", ())``.
     """
-    if info is None:
-        return ("", ())
-    context = getattr(info, "context", None)
-    if context is None:
-        return ("", ())
-    auth = getattr(context, "auth", None)
-    if auth is None:
-        return ("", ())
-    principal = getattr(auth, "principal", "") or ""
-    # Используем общий helper для извлечения permissions
-    from src.backend.core.auth.auth_context_helpers import extract_user_permissions
-
-    permissions = extract_user_permissions(auth)
-    return (principal, tuple(permissions))
+    return (_principal_from_info(info), _permissions_from_info(info))
 
 
 @strawberry.type
