@@ -7,6 +7,7 @@ mixins expect.
 
 from __future__ import annotations
 
+from threading import Lock
 from typing import Any, Protocol
 
 from src.backend.core.security.capabilities.models import CapabilityRef
@@ -25,6 +26,12 @@ class _CapabilityGateProtocol(Protocol):
     _lru_size: int
     _tenant_declarations: dict[str, dict[str, dict[str, CapabilityRef]]]
     _policy: CapabilityPolicy | None
+    # D-AUDIT-98 (S183 W1.1): coarse-grained lock protecting all reads/mutations
+    # of ``_cache`` and ``_tenant_cache``. ``threading.Lock`` (not asyncio.Lock)
+    # because callers may be sync (RouteLoader) or async (FastAPI handlers) —
+    # a thread lock serializes both. Acquired only for short critical sections
+    # (dict read + LRU pop + write), so contention is negligible.
+    _lock: Lock
 
     def _emit_audit(self, event: dict[str, object]) -> None: ...
 
