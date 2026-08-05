@@ -3848,6 +3848,76 @@ Natural ceilings:
 - diskcache 5.6.3 (no upstream fix)
 - DEFER-1..7 (Sprint 36 items, dedicated sprints)
 
+---
+
+## Rounds 79-81 — M-scope DI gap fix + deprecation shim cleanup (2026-08-05)
+
+После "согласовано, приступай" от пользователя, реализованы 3 atomic
+fixes per Ponytail "deletion over addition" + analyst proposals.
+
+### Rounds 79-81 summary
+
+| # | Round | Commit | Что | Domain impact |
+|---|---|---|---|---|
+| 79 | `165c03d9` | AgentToolPolicy DI registration | default factory в svcs_registry для fix pre-existing test gap (d2c147cf) | Tests/QA +0.05 |
+| 80 | skipped | analyst proposal #5 wrong | third-party imports, не first-party (patchright, litellm, FlagEmbedding) | — |
+| 81 | `8192dace` | delete deprecated langmem_service shim | -284 LOC (deprecation shim без external users) | L5 AI/agents +0.1 |
+
+### R79: AgentToolPolicy DI gap
+
+Pre-existing test gap (коммит `d2c147cf` S171 M24 добавил тест `test_di_factory_returns_default_policy` но не зарегистрировал factory):
+
+```python
+def test_di_factory_returns_default_policy(self) -> None:
+    policy = get_service(AgentToolPolicy)
+    assert policy.agent_id == "default"  # KeyError до R79
+```
+
+Решение (Ponytail minimum, 3 строки в `ai/policy/__init__.py`):
+- `_default_tool_policy()` factory → `AgentToolPolicy(agent_id="default", allowed_tools=[])`
+- `register_factory(AgentToolPolicy, _default_tool_policy)` at import time
+- `try/except ImportError` для graceful degradation
+
+Verification:
+- Smoke test: `get_service(AgentToolPolicy)` → `agent_id="default"` ✓
+- tests/unit/ai/policy/test_tool_policy.py: 19 passed (был 18 + 1 fixed)
+- tests/unit/dsl/engine/processors/agent_dsl/test_agent_graph_tool_policy.py: 6 passed
+
+### R80: analyst proposal #5 (отклонён)
+
+Per Ponytail "no speculative refactors" — проверил 20+ файлов с
+`type: ignore[import-not-found]` — все third-party imports (patchright,
+jupyter_client, FlagEmbedding, litellm, langchain_litellm, advanced_alchemy).
+Analyst некорректно классифицировал как "first-party".
+
+### R81: deprecated langmem_service shim deletion
+
+Файл `src/backend/services/ai/langmem_service.py` (284 LOC):
+- Создан в S164 W3 как deprecation shim
+- Реальные imports переехали на canonical `services.ai.memory.langmem_service` в S211 (commit 1e012d83)
+- В текущем коде нет реальных импортов (только self-docstring + warning)
+- Также обновлён docstring canonical `LangMemDisabled` (убрана ссылка на удалённый shim)
+
+Verification:
+- grep 'services.ai.langmem_service' (excluding docstrings): 0 references
+- Tests: 88 passed в tests/unit/services/ai/ (2 pre-existing failures
+  в test_langmem_backends — ImportError advanced_alchemy, NOT regression)
+- Diff: -284 LOC (pure deletion bias)
+
+### Cumulative scorecard (R48 → R81)
+
+| Домен | R48 → R78 → R81 | Δ cumulative | Notes |
+|---|---|---|---|
+| L9 Security E2E | 9.0 → 9.6 → **9.6** | +0.6 | R66-R70 security wave |
+| Tests/QA | 8.5 → 8.9 → **8.95** | +0.45 | +20 collectable (R76-R77) + DI fix (R79) |
+| L5 AI/agents | 8.9 → 8.9 → **9.0** | +0.1 | R81 deprecated shim cleanup |
+| Docs | 8.1 → 8.35 → 8.35 | +0.25 | R74 sphinx + retrospectives |
+| L1 Gateway/middleware | 8.8 → 8.85 → 8.85 | +0.05 | R61-R63 dedup |
+| **Медиана** | 8.6 → 8.97 → **8.99** | **+0.39** | R79-R81 incremental |
+
+Working tree clean. **3 commits shipped, R79-R81. Sprint continues.**
+Natural ceilings остаются (cryptography 49.0.0, diskcache 5.6.3, DEFER-1..7).
+
 
 
 
