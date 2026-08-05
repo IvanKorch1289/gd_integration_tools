@@ -79,6 +79,11 @@ class SchedulerManager:
         Sprint 16 Wave 5 (M-9/CP-22): подключает Prometheus-listeners для
         ``scheduler_job_executions_total`` + регистрирует тип jobstore
         (CRITICAL alert при ``MemoryJobStore`` в production).
+
+        S180 P0-3 (S36 multi-agent audit): подключает scheduler DLQ listener
+        для записи EVENT_JOB_ERROR failures в store + admin endpoint.
+        Без этого admin endpoint /admin/scheduler/dlq всегда возвращает
+        503 (default_store is None).
         """
         self.scheduler.start()
 
@@ -95,6 +100,15 @@ class SchedulerManager:
             )
         except Exception as exc:
             self.logger.warning("Scheduler observability bootstrap skipped: %s", exc)
+
+        # S180 P0-3: wire DLQ listener — without this, /admin/scheduler/dlq
+        # is unreachable (default store stays None).
+        try:
+            from src.backend.infrastructure.scheduler.dlq import attach_scheduler_dlq
+
+            attach_scheduler_dlq(self.scheduler)
+        except Exception as exc:
+            self.logger.warning("Scheduler DLQ attach skipped: %s", exc)
 
     async def stop(self):
         """

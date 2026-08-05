@@ -392,5 +392,21 @@ class InfrastructureFlags(BaseSettings):
         ),
     )
 
+    # ─── S180 P0-4 — Temporal Worker Versioning (D172 S171 M10) ────────
+    temporal_worker_versioning_enabled: bool = Field(
+        default=False,
+        title="K-Workflow: Temporal Worker Versioning (deployment_config)",
+        description=(
+            "S180 P0-4 (S36 multi-agent audit). Worker Versioning helper "
+            "exists (infrastructure/workflow/versioning/worker_versioning.py) "
+            "but WorkerVersioningHelper всегда создавался с use_versioning=False "
+            "(default) — production scaffolding без behavior. Этот флаг "
+            "пробрасывается в TemporalClientFactory → WorkerVersioningHelper и "
+            "активирует deployment_config kwargs в Worker(). "
+            "Default-OFF (default behavior не меняется) — для explicit opt-in "
+            "после temporal infra readiness verification."
+        ),
+    )
+
 
 __all__ = ("InfrastructureFlags",)

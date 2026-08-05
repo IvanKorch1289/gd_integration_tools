@@ -172,3 +172,7 @@ src/backend/services/security/pii_streaming_facade.py	services	src.backend.infra
 src/backend/services/workflow/__init__.py	services	src.backend.infrastructure.workflow.registry
 src/backend/services/workflows/cost_estimator.py	services	src.backend.dsl.workflow.versioning
 src/backend/services/workflows/hitl_pubsub.py	services	src.backend.infrastructure.clients.storage.redis
+src/backend/entrypoints/_action_bridge.py	entrypoints	src.backend.dsl.engine.context
+src/backend/entrypoints/graphql/schema.py	entrypoints	src.backend.dsl.engine.context
+src/backend/entrypoints/soap/soap_handler.py	entrypoints	src.backend.dsl.engine.context
+src/backend/services/audit/clickhouse_audit_service/service.py	services	src.backend.infrastructure.messaging.dlq_base
