@@ -48,12 +48,30 @@ class WebSocketRateLimitMiddleware:
             await send({"type": "websocket.close", "code": 1008})
             return
         except Exception as exc:
-            # Rate limiting must not become a single point of failure.
-            _logger.warning(
-                "ws_rate_limit_failed identifier=%s error=%r; failing open",
+            # B-05 fix (cycle 33): fail-mode управляется через
+            # ``settings.resilience.rate_limit_fail_mode``. ``closed``
+            # (default) → закрываем WS 1008 (deny-by-default),
+            # ``open`` → pass-through (legacy-режим).
+            try:
+                from src.backend.core.config.settings import settings
+
+                fail_mode = settings.resilience.rate_limit_fail_mode
+            except Exception as settings_exc:  # pragma: no cover
+                fail_mode = "closed"
+                _logger.debug(
+                    "ws_rate_limit_fail_mode_unavailable error=%r; using closed",
+                    settings_exc,
+                )
+
+            _logger.error(
+                "ws_rate_limit_failed identifier=%s error=%r fail_mode=%s",
                 identifier,
                 exc,
+                fail_mode,
             )
+            if fail_mode == "closed":
+                await send({"type": "websocket.close", "code": 1008})
+                return
 
         await self._app(scope, receive, send)
 

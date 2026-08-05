@@ -16,9 +16,24 @@ from src.backend.core.errors import ServiceError
 from src.backend.core.logging import get_logger
 from src.backend.core.observability.logging_helpers import log_audit_event_lite
 
-__all__ = ("ResilienceFacade",)
+__all__ = ("ResilienceFacade", "_get_rate_limit_settings")
 
 _logger = get_logger("services.resilience.facade")
+
+
+def _get_rate_limit_settings() -> Any:
+    """Получить settings-объект для rate-limit fail-mode (B-05 cycle 33).
+
+    Lazy import чтобы избежать циклических зависимостей на старте
+    приложения. При ошибке импорта возвращает ``None`` — caller
+    должен fallback на ``closed`` (deny-by-default).
+    """
+    try:
+        from src.backend.core.config.settings import settings
+
+        return settings
+    except Exception:  # pragma: no cover
+        return None
 
 
 class ResilienceFacade:
@@ -44,13 +59,21 @@ class ResilienceFacade:
     ) -> bool:
         """Проверить rate limit для идентификатора.
 
+        B-05 fix (cycle 33): fail-mode теперь конфигурируемый через
+        ``settings.resilience.rate_limit_fail_mode``. ``closed`` (default)
+        возвращает ``False`` при ошибке limiter'а (deny-by-default —
+        предотвращает abuse при Redis-outage). ``open`` — pass-through
+        (legacy-режим для pre-fix совместимости). Управляется через
+        env-переменную ``RESILIENCE_RATE_LIMIT_FAIL_MODE``.
+
         Args:
             identifier: Уникальный ключ (tenant_id/client_ip).
             limit: Максимум запросов в окне.
             window_seconds: Размер окна в секундах.
 
         Returns:
-            True если разрешено, False если превышен лимит.
+            True если разрешено, False если превышен лимит или
+            fail_mode="closed" при ошибке limiter'а.
         """
         self._assert("resilience.rate_limit", identifier)
         try:
@@ -66,18 +89,31 @@ class ResilienceFacade:
             result = await limiter.check(identifier, policy)
             return result.get("allowed", True)
         except Exception as exc:
-            # S175 M10.1: structured log (audit-event-type field)
-            # — observability через structlog/OTel pipeline.
+            # B-05 fix (cycle 33): fail-mode читается из настроек,
+            # default "closed" → deny-by-default (возвращаем False).
+            # Логируем на ERROR чтобы alerting pipeline заметил.
+            _settings = _get_rate_limit_settings()
+            fail_mode = "closed"
+            if _settings is not None:
+                try:
+                    fail_mode = _settings.resilience.rate_limit_fail_mode
+                except Exception as settings_exc:  # pragma: no cover
+                    _logger.debug(
+                        "rate_limit_fail_mode_unavailable error=%r; using closed",
+                        settings_exc,
+                    )
+
             log_audit_event_lite(
                 _logger,
-                severity="warning",
+                severity="error",
                 event="resilience.rate_limit.check_failed",
                 message=f"Rate limit check failed: {exc}",
                 identifier=identifier,
                 error=str(exc),
                 error_type=type(exc).__name__,
+                fail_mode=fail_mode,
             )
-            return True  # Fail-open for rate limiting
+            return fail_mode == "open"
 
     def get_breaker(self, name: str) -> Any:
         """Получить circuit breaker по имени.

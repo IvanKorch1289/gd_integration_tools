@@ -387,13 +387,43 @@ class GlobalRateLimitMiddleware:
         try:
             allowed, remaining, retry_after = await checker.check(identifier)
         except Exception as exc:
-            # Защитный fallback: если checker упал — пропускаем запрос,
-            # чтобы не превратить rate-limit infrastructure в SPoF.
-            _logger.warning(
-                "rate_limit_checker_failed identifier=%s error=%s",
+            # B-05 fix (cycle 33): fail-mode управляется через
+            # ``settings.resilience.rate_limit_fail_mode``. ``closed``
+            # (default) → отвечаем 429 (deny-by-default), ``open`` →
+            # pass-through (legacy-режим).
+            try:
+                from src.backend.core.config.settings import settings
+
+                fail_mode = settings.resilience.rate_limit_fail_mode
+            except Exception as settings_exc:  # pragma: no cover
+                fail_mode = "closed"
+                _logger.debug(
+                    "rate_limit_fail_mode_unavailable error=%r; using closed",
+                    settings_exc,
+                )
+
+            _logger.error(
+                "rate_limit_checker_failed identifier=%s error=%s fail_mode=%s",
                 identifier,
                 repr(exc),
+                fail_mode,
             )
+            if fail_mode == "closed":
+                headers = [
+                    (b"content-type", b"application/json"),
+                    (b"retry-after", b"60"),
+                    (b"x-ratelimit-remaining", b"0"),
+                ]
+                await send(
+                    {
+                        "type": "http.response.start",
+                        "status": 429,
+                        "headers": headers,
+                    }
+                )
+                body = b'{"detail":"Too Many Requests","retry_after":60}'
+                await send({"type": "http.response.body", "body": body})
+                return
             await self._app(scope, receive, send)
             return
 

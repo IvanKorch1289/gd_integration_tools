@@ -23,12 +23,18 @@ from src.backend.core.config.constants import consts
 __all__ = (
     "BreakerProfile",
     "FallbackPolicy",
+    "ResilienceFailMode",
     "ResilienceSettings",
     "resilience_settings",
 )
 
 
 FallbackMode = Literal["auto", "forced", "off"]
+
+# B-05 fix (cycle 33): Literal-тип для fail-mode rate-limit checks.
+# ``closed`` (default) — deny-by-default при ошибке limiter'а.
+# ``open`` — pass-through (сохраняет pre-fix поведение для legacy-тестов).
+ResilienceFailMode = Literal["open", "closed"]
 
 
 class BreakerProfile(BaseModel):
@@ -139,6 +145,18 @@ class ResilienceSettings(BaseSettingsWithLoader):
             "rate_limiter}`` (Step 3.3). Default OFF — backward-compat shim'ы "
             "из ``infrastructure.resilience`` остаются рабочими. Полностью "
             "снимется после удаления aliases в Step 3.3 финале."
+        ),
+    )
+    rate_limit_fail_mode: ResilienceFailMode = Field(
+        default="closed",
+        description=(
+            "B-05 fix (cycle 33): режим fail-mode для rate-limit checks. "
+            "``closed`` (default) — при ошибке limiter'а возвращаем False "
+            "(deny-by-default), что предотвращает abuse при Redis-outage. "
+            "``open`` — pass-through при ошибке (сохраняет обратную "
+            "совместимость с pre-fix поведением). Env: "
+            "``RESILIENCE_RATE_LIMIT_FAIL_MODE``. Читается в facade.py "
+            "и middlewares global_ratelimit/ws_rate_limit."
         ),
     )
 
