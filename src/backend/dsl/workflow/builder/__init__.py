@@ -1,16 +1,16 @@
 """WorkflowBuilder package (S58 W4 decomp from builder.py 554 LOC).
 
-21 methods decomposed в 6 mixin files:
+21 methods decomposed в 6 mixin files (cycle 33 restore):
 - ``sla_mixin.py`` (2): sla, activity
 - ``workflow_mixin.py`` (2): saga, build
 - ``wait_mixin.py`` (3): wait_for_signal, sleep, sensor
-- ``gateway_mixin.py`` (3): gateway_xor, gateway_and, gateway_or
+- ``gateway_mixin.py`` (3): gateway_xor, gateway_and, gateway_or  [cycle 33 restore]
 - ``ai_mixin.py`` (1): invoke_agent (BIG 66 LOC)
 - ``lifecycle_mixin.py`` (6): reflect, checkpoint, guardrail, pause, resume, escalate
 
-Note: gateway_mixin удалён в Cycle 3 (XOR/AND/OR — silent no-op → fail-fast
-в compile, см. commit 3543fa49 + df1d7f24). 20 methods decomposed в
-5 mixin files.
+Cycle 3 → Cycle 33: gateway_mixin был удалён (Layer 6 refactor 53bf6c3c,
+XOR/AND/OR — silent no-op → fail-fast в compile). Cycle 33 восстанавливает
+mixin + runtime-компиляцию (compiler/gateways.py) для closes P0 #8 + #9.
 
 Core (4) остается в __init__.py: __init__, description, default_timeout, default_retry.
 SagaBuilder (4 methods) preserved as separate class.
@@ -38,6 +38,9 @@ if TYPE_CHECKING:
     pass
 
 from src.backend.dsl.workflow.builder.ai_mixin import AiAgentMixin  # S58 W4: MRO
+from src.backend.dsl.workflow.builder.gateway_mixin import (
+    GatewayMixin,  # cycle 33 restore: BPMN gateway DSL (P0 #8 + #9)
+)
 from src.backend.dsl.workflow.builder.lifecycle_mixin import (
     LifecycleMixin,  # S58 W4: MRO
 )
@@ -49,13 +52,18 @@ __all__ = ("WorkflowBuilder", "SagaBuilder")
 
 
 class WorkflowBuilder(
-    SlaMixin, WorkflowMixin, WaitMixin, AiAgentMixin, LifecycleMixin
+    SlaMixin,
+    WorkflowMixin,
+    WaitMixin,
+    AiAgentMixin,
+    LifecycleMixin,
+    GatewayMixin,  # cycle 33 restore: 17 methods = 14 + 3 gateway
 ):
-    """Workflow DSL builder (5 mixins = 14 methods + 4 core).
+    """Workflow DSL builder (6 mixins = 17 methods + 4 core).
 
-    Cycle 3: GatewayMixin удалён (3 метода). gateway_xor/and/or в WorkflowBuilder
-    теперь AttributeError — fail-fast вместо silent no-op. Реализация требует
-    Wave C (compile_gateway_step).
+    Cycle 33: GatewayMixin восстановлен (3 метода: gateway_xor/and/or).
+    Runtime-компиляция — в :mod:`src.backend.dsl.workflow.compiler.gateways`.
+    MRO: Sla → Workflow → Wait → Ai → Lifecycle → Gateway.
     """
 
     __slots__ = (

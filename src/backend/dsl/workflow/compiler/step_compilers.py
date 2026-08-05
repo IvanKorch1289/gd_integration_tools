@@ -51,6 +51,15 @@ from .activity_bridge import (  # noqa: I001 — intentional relative
     LANGGRAPH_CHECKPOINT_PUT_ACTIVITY,
 )
 
+# Cycle 33 restore: gateway runtime compilers (P0 #8 + #9).
+# Lazy import inside compile_activity_step to avoid circular import at module
+# load time (gateways.py imports from spec.py which is already in MRO).
+from .gateways import (  # noqa: I001 — intentional relative
+    compile_and,
+    compile_or,
+    compile_xor,
+)
+
 # Layer 6 Workflow Cycle 2 fix: именованные константы для magic
 # timeout-чисел (Ponytail D-rule: no magic numbers).
 # LangGraph checkpoint I/O activities — обычно быстрые DB calls,
@@ -122,32 +131,30 @@ async def compile_activity_step(decl: ActivityDeclaration, ctx: dict[str, Any]) 
     Returns:
         Результат выполнения activity (Any).
     """
-    # Layer 6 Workflow Cycle 1 fix: BPMN gateway markers (XOR/AND/OR)
-    # приходят как ActivityDeclaration с args["gateway"] = GatewaySpec.
-    # Раньше это тихо исполнялось как no-op activity (workflow шёл дальше
-    # без branch resolution). Теперь — явная ошибка на старте workflow.
-    # Проверяем ДО temporalio import — fail-fast без внешних зависимостей.
+    # Cycle 33 restore: BPMN gateway markers (XOR/AND/OR) приходят как
+    # ActivityDeclaration с args["gateway"] = GatewaySpec (live or dict).
+    # Cycle 3 fail-fast (NotImplementedError) заменён на dispatch в
+    # runtime-компиляторы compile_xor/and/or из :mod:`.gateways`.
+    # Проверяем ДО temporalio import — fail-fast для неподдерживаемых kind.
     #
-    # Cycle 1 review fix: bpmn_importer сериализует GatewaySpec → dict
-    # (через to_dict), поэтому isinstance(gw, GatewaySpec) не ловит
-    # dict-вариант. Проверяем оба типа: live GatewaySpec instance + dict
-    # с ключом "kind" (форма bpmn_importer._gateway_spec_to_dict).
+    # Поддерживаем оба типа payload: live GatewaySpec instance (от
+    # WorkflowBuilder.gateway_xor/and/or) + dict (от bpmn_importer).
     if decl.args and "gateway" in decl.args:
         gw = decl.args["gateway"]
-        # Path 1: live GatewaySpec instance.
         gw_kind: str | None = getattr(gw, "kind", None)
-        # Path 2: dict (serialized form from bpmn_importer).
         if gw_kind is None and isinstance(gw, dict):
             gw_kind_raw = gw.get("kind")
             gw_kind = gw_kind_raw if isinstance(gw_kind_raw, str) else None
-        if gw_kind in ("xor", "and", "or"):
-            raise NotImplementedError(
-                f"Gateway (kind={gw_kind!r}) не скомпилирован в runtime — "
-                f"BPMN gateway nodes (XOR/AND/OR) требуют отдельного "
-                f"compile_gateway_step в step_compilers.py. "
-                f"Workflow: name={decl.name!r}. Используйте ActivityDeclaration "
-                f"с прямым условием либо дождитесь Wave C (spec.py extension)."
-            )
+        if gw_kind == "xor":
+            return await compile_xor(decl, ctx)
+        if gw_kind == "and":
+            return await compile_and(decl, ctx)
+        if gw_kind == "or":
+            return await compile_or(decl, ctx)
+        # Unknown kind → fall through to normal activity compile (will fail
+        # at Temporal layer with "activity not found"). This preserves the
+        # pre-cycle-33 behavior of treating non-gateway activity args as
+        # regular activity payloads.
 
     from temporalio import workflow
 
