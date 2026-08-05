@@ -57,9 +57,19 @@ class CheckMixin(_CapabilityGateProtocol):
             CapabilityDeniedError: Декларация отсутствует, scope
                 не покрывается, или policy вернула ``deny``.
             CapabilityNotFoundError: Имя отсутствует в vocabulary.
+
+        Notes:
+            D-AUDIT-98 fix (S183 W1.1): the initial ``cache_key in self._cache``
+            read must be guarded by ``self._lock`` so that a concurrent
+            ``_invalidate_plugin`` (which iterates ``cache.items()`` to
+            rebuild the dict) cannot raise ``RuntimeError: dictionary
+            changed size during iteration``. The remaining mutation goes
+            through ``_cache_granted`` which already holds the lock.
         """
         cache_key = (plugin, capability, requested_scope)
-        if cache_key in self._cache:
+        with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
+            cache_hit = cache_key in self._cache
+        if cache_hit:
             self._emit_audit(
                 plugin=plugin,
                 capability=capability,
@@ -197,19 +207,30 @@ class CheckMixin(_CapabilityGateProtocol):
             ``allow`` → ``True`` (skip declaration). ``no_match`` →
             fallback to per-tenant declaration. Не выбрасывает
             :class:`CapabilityDeniedError` — caller сам решает.
+
+            D-AUDIT-98 fix (S183 W1.1): cache reads/writes are guarded by
+            ``self._lock``. ``cached_value`` is snapshotted under the lock,
+            then the audit emit runs lock-free. Writes either go through
+            ``_tenant_cache_granted`` (already locked) or are wrapped
+            explicitly to prevent concurrent ``_invalidate_tenant`` from
+            racing with the assignment.
         """
         cache_key = (tenant, principal, capability, scope)
-        if cache_key in self._tenant_cache:
-            cached = self._tenant_cache[cache_key]
+        with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
+            if cache_key in self._tenant_cache:
+                cached_value = self._tenant_cache[cache_key]
+            else:
+                cached_value = None
+        if cached_value is not None:
             self._emit_audit(
                 plugin=principal,
                 capability=capability,
                 requested_scope=scope,
                 declared_scope=None,
-                outcome="granted" if cached else "denied",
+                outcome="granted" if cached_value else "denied",
                 tenant=tenant,
             )
-            return cached
+            return cached_value
 
         # 1. Policy consultation.
         if self._policy is not None:
@@ -217,7 +238,8 @@ class CheckMixin(_CapabilityGateProtocol):
                 tenant=tenant, principal=principal, capability=capability, scope=scope
             )
             if decision.effect == "deny":
-                self._tenant_cache[cache_key] = False
+                with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
+                    self._tenant_cache[cache_key] = False
                 self._emit_audit(
                     plugin=principal,
                     capability=capability,
@@ -229,7 +251,8 @@ class CheckMixin(_CapabilityGateProtocol):
                 )
                 return False
             if decision.effect == "allow":
-                self._tenant_cache[cache_key] = True
+                with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
+                    self._tenant_cache[cache_key] = True
                 self._emit_audit(
                     plugin=principal,
                     capability=capability,
@@ -247,7 +270,8 @@ class CheckMixin(_CapabilityGateProtocol):
             self._tenant_declarations.get(tenant, {}).get(principal, {}).get(capability)
         )
         if declared is None:
-            self._tenant_cache[cache_key] = False
+            with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
+                self._tenant_cache[cache_key] = False
             self._emit_audit(
                 plugin=principal,
                 capability=capability,
@@ -272,7 +296,8 @@ class CheckMixin(_CapabilityGateProtocol):
             return True
 
         if scope is None:
-            self._tenant_cache[cache_key] = False
+            with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
+                self._tenant_cache[cache_key] = False
             self._emit_audit(
                 plugin=principal,
                 capability=capability,
@@ -285,7 +310,8 @@ class CheckMixin(_CapabilityGateProtocol):
 
         assert declared.scope is not None
         if not definition.matcher.match(scope, declared.scope):
-            self._tenant_cache[cache_key] = False
+            with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
+                self._tenant_cache[cache_key] = False
             self._emit_audit(
                 plugin=principal,
                 capability=capability,
