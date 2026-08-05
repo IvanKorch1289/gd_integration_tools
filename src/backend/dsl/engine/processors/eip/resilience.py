@@ -31,43 +31,122 @@ class DeadLetterProcessor(BaseProcessor):
         processors: list[BaseProcessor],
         *,
         dlq_stream: str = "dsl-dlq",
+        dlq_path: str | None = None,
         max_retries: int = 0,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or "dead_letter")
         self._processors = processors
         self._dlq_stream = dlq_stream
+        self._dlq_path = dlq_path
         self._max_retries = max_retries
 
     async def _send_to_dlq(self, exchange: Exchange[Any]) -> None:
-        try:
-            from src.backend.infrastructure.clients.storage.redis import redis_client
+        """B-06 fix (cycle 33): 3-stage DLQ fallback (Redis → JSONL → metric+raise).
 
-            dlq_entry = {
-                "exchange_id": exchange.meta.exchange_id,
-                "route_id": exchange.meta.route_id or "",
-                "correlation_id": exchange.meta.correlation_id,
-                "error": exchange.error or "unknown",
-                "body": orjson.dumps(exchange.in_message.body, default=str).decode()[
-                    :8192
-                ]
-                if exchange.in_message.body
-                else "",
-                "properties": orjson.dumps(exchange.properties, default=str).decode()[
-                    :4096
-                ],
-                "timestamp": exchange.meta.created_at.isoformat(),
-            }
-            await redis_client.add_to_stream(
+        Stage 1: ``redis_client.add_to_stream(self._dlq_stream, dlq_entry)``
+            — primary hot-path DLQ (Redis stream).
+        Stage 2: локальный JSONL через :class:`JsonlAuditBackend` — capability
+            ``dsl.dlq.jsonl`` подключается по ``self._dlq_path`` (если
+            сконфигурирован). Резолвится через ``importlib`` чтобы
+            ``dsl/engine/`` не зависел от ``infrastructure/`` напрямую
+            (см. layer-rules в :file:`tools/checks/check_layers.py`).
+        Stage 3: терминальный отказ — инкремент :data:`dlq_send_failed_total`
+            (метка ``stage="primary"|"all"``), ``_eip_logger.critical`` и
+            raise :class:`RuntimeError`. Никогда silent loss.
+
+        B-06: silent failure на DLQ-of-DLQ = P0-data-loss. Метрика позволяет
+        алертингу отловить полную потерю записи (Redis down + JSONL down или
+        недоступен). Референсный паттерн: services/audit/clickhouse_audit_service
+        /service.py:159-219.
+        """
+        dlq_entry = {
+            "exchange_id": exchange.meta.exchange_id,
+            "route_id": exchange.meta.route_id or "",
+            "correlation_id": exchange.meta.correlation_id,
+            "error": exchange.error or "unknown",
+            "body": orjson.dumps(exchange.in_message.body, default=str).decode()[:8192]
+            if exchange.in_message.body
+            else "",
+            "properties": orjson.dumps(exchange.properties, default=str).decode()[
+                :4096
+            ],
+            "timestamp": exchange.meta.created_at.isoformat(),
+        }
+
+        # ── Stage 1: Redis stream (primary) ──────────────────────────────
+        try:
+            from src.backend.infrastructure.clients.storage.redis import (
+                redis_client as _redis_client,
+            )
+
+            await _redis_client.add_to_stream(
                 stream_name=self._dlq_stream, data=dlq_entry
             )
             _eip_logger.info(
-                "Exchange %s sent to DLQ stream '%s'",
+                "Exchange %s sent to DLQ stream '%s' (stage=redis)",
                 exchange.meta.exchange_id,
                 self._dlq_stream,
             )
-        except Exception as dlq_exc:
-            _eip_logger.error("Failed to send to DLQ: %s", dlq_exc)
+            return
+        except Exception as stage1_exc:
+            stage1_error: BaseException = stage1_exc
+
+        # ── Stage 2: local JSONL fallback (capability-gated via dlq_path) ─
+        stage2_error: BaseException | None = None
+        if self._dlq_path:
+            try:
+                import importlib
+
+                from src.backend.core.interfaces.audit import AuditRecord
+
+                _jsonl_mod = importlib.import_module(
+                    "src.backend.infrastructure.audit.jsonl_audit"
+                )
+                _backend = _jsonl_mod.JsonlAuditBackend(self._dlq_path)
+                _record = AuditRecord(
+                    {
+                        "event": "dsl.dlq",
+                        "action": "dlq_send_fallback_jsonl",
+                        "entity_id": exchange.meta.exchange_id,
+                        "after": dlq_entry,
+                        "metadata": {
+                            "dlq_reason": "redis_unavailable",
+                            "stage1_error": repr(stage1_error),
+                        },
+                    }
+                )
+                await _backend.append(_record)
+                _eip_logger.warning(
+                    "Exchange %s DLQ stage1 (redis) failed, written to JSONL "
+                    "'%s' (stage=jsonl): %s",
+                    exchange.meta.exchange_id,
+                    self._dlq_path,
+                    stage1_error,
+                )
+                return
+            except Exception as stage2_exc:
+                stage2_error = stage2_exc
+
+        # ── Stage 3: terminal — metric + critical log + raise ────────────
+        from src.backend.core.observability.metrics import dlq_send_failed_total
+
+        stage_label = "all" if self._dlq_path and stage2_error else "primary"
+        dlq_send_failed_total.labels(stage=stage_label).inc()
+        _eip_logger.critical(
+            "DLQ send failed for exchange %s (stage=%s). stage1=%r "
+            "stage2=%r dlq_path=%s",
+            exchange.meta.exchange_id,
+            stage_label,
+            stage1_error,
+            stage2_error,
+            self._dlq_path,
+        )
+        raise RuntimeError(
+            f"DLQ send failed for exchange {exchange.meta.exchange_id}: "
+            f"redis={stage1_error!r}, jsonl="
+            f"{(stage2_error if stage2_error else 'not_configured')!r}"
+        ) from stage1_error
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""

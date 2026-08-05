@@ -83,6 +83,7 @@ async def test_dead_letter_sends_to_dlq_on_failure() -> None:
     with patch(
         "src.backend.infrastructure.clients.storage.redis.redis_client"
     ) as mock_redis:
+        mock_redis.add_to_stream = AsyncMock(return_value=None)
         await proc.process(e, ctx)
 
     assert e.status == ExchangeStatus.failed
@@ -92,10 +93,16 @@ async def test_dead_letter_sends_to_dlq_on_failure() -> None:
 
 
 @pytest.mark.asyncio
-async def test_dead_letter_dlq_error_logged() -> None:
-    """Ошибка при отправке в DLQ логируется, не поднимается наружу."""
+async def test_dead_letter_dlq_error_logged(tmp_path: Any) -> None:
+    """Stage 1 (Redis) fail + dlq_path задан → Stage 2 (JSONL) подхватывает,
+    ошибка НЕ поднимается наружу. B-06 fix (cycle 33): заменили silent
+    log на 3-stage fallback — файл создаётся на диске, caller чист.
+    """
     failing = SetFailProcessor("boom")
-    proc = DeadLetterProcessor(processors=[failing])
+    dlq_file = tmp_path / "dlq.jsonl"
+    proc = DeadLetterProcessor(
+        processors=[failing], dlq_path=str(dlq_file)
+    )
     ctx = AsyncMock()
     e = _ex(body=1)
 
@@ -106,6 +113,7 @@ async def test_dead_letter_dlq_error_logged() -> None:
         await proc.process(e, ctx)
 
     assert e.status == ExchangeStatus.failed
+    assert dlq_file.exists(), "Stage 2 (JSONL) должен создать файл при сбое Redis"
 
 
 @pytest.mark.asyncio
@@ -116,7 +124,10 @@ async def test_dead_letter_max_retries_zero() -> None:
     ctx = AsyncMock()
     e = _ex(body=1)
 
-    with patch("src.backend.infrastructure.clients.storage.redis.redis_client"):
+    with patch(
+        "src.backend.infrastructure.clients.storage.redis.redis_client"
+    ) as mock_redis:
+        mock_redis.add_to_stream = AsyncMock(return_value=None)
         await proc.process(e, ctx)
 
     assert e.status == ExchangeStatus.failed
