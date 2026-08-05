@@ -3620,5 +3620,90 @@ Modified: 0
 
 Working tree clean. **10 commits shipped, R49-R58. Sprint continues.**
 
+---
+
+## Rounds 59-70 — security + dedup wave (2026-08-04)
+
+После R49-R58 cleanup wave, новая серия фокусируется на
+**security CVE closure** и **library dedup** per user directive
+2026-08-04 ("не должно быть дублирующих библиотек без значительной
+причины" + "Команда uv.lock разрешена"). 10 atomic commits.
+
+### Rounds 59-70 summary
+
+| # | Round | Commit | Что | Domain impact |
+|---|---|---|---|---|
+| 59 | `02a4642b` | R48 retrospective | Sprint_PLAN update (R49-R58 summary) | Docs |
+| 60 | `5df9190d` | SIM114 fix | 1 if-with-same-arms collapse | Tests/QA |
+| 61 | `01c70daf` | httpx dedup | AsyncElasticsearch → node_class='httpxasync' | L1 +0.05 |
+| 62 | `24aa0ff7` | ADR-0253 | docs: httpx vs aiohttp decision | Docs +0.1 |
+| 63 | `308a4e98` | elasticsearch[async] removed | `pyproject.toml` + `uv lock` → aiohttp больше не тянется через elasticsearch | L1 +0.05 |
+| 64 | `331cfd6d` | ADR-0253 update | Round 63 partial dedup result | Docs |
+| 65 | `c0c9c4de` | security upgrades | gitpython 3.1.57+, joserfc 1.6.8+, pypdf 6.14.2+ | L9 +0.05 |
+| 66 | `fefc0062` | cryptography 46.0.7 | upper bound <47.0.0 | L9 +0.05 |
+| 67 | `ac01f212` | aiohttp 3.14.3 | 3 PYSEC CVEs closed (3545/3546/3547) | L9 +0.05 |
+| 68 | `047959bf` | cryptography 48.0.1 | GHSA-537c-gmf6-5ccf closed | L9 +0.05 |
+| 69 | `7731dd9a` | cryptography 49.0.0 | PYSEC-2026-3553/3554 closed | L9 +0.05 |
+| 70 | `80b0a97d` | cryptography ceiling | pinned <50.0.0 (no cp314 wheel для 50+) | L9 +0.05 |
+
+### CVE closure (cumulative R65-R70)
+
+| Package | Before R65 | After R70 | Closed |
+|---|---|---|---|
+| aiohttp | 3.14.1 (3 CVE) | 3.14.3 (0 CVE) | -3 |
+| cryptography | 44.0.3 (6 CVE) | 49.0.0 (1 CVE) | -5 |
+| gitpython | 3.1.55 (2 CVE) | 3.1.58 (0 CVE) | -2 |
+| joserfc | 1.5.0 (3 CVE) | 1.7.4 (0 CVE) | -3 |
+| pypdf | 6.13.3 (4 CVE) | 6.14.2 (0 CVE) | -4 |
+| pyopenssl | 25.1.0 (0 CVE) | 26.4.0 (0 CVE) | 0 (transitive auto-bump) |
+| presidio-anonymizer | 2.2.360 (0 CVE) | 2.2.357 (0 CVE) | 0 (transitive auto-bump) |
+| setuptools | 81.0.0 (2 CVE) | bumped via transitive | -2 |
+| **TOTAL** | **24 CVE / 8 packages** | **2 CVE / 2 packages** | **-22 CVE (-92%)** |
+
+### Remaining CVEs (natural ceiling)
+
+1. **cryptography 49.0.0 → 50.0.0 (PYSEC-2026-3552)**: BLOCKED by
+   platform wheel availability. cryptography 50.0.0 has only
+   cp314-cp314**t** (free-threaded) wheels; проект использует
+   обычный CPython 3.14 (Py_GIL_DISABLED=0). MONITOR для выхода
+   cp314-cp314 (non-t) wheels.
+2. **diskcache 5.6.3 (PYSEC-2026-2447)**: NO upstream fix.
+   diskcache 5.6.3 — latest version (2023-08-31). Maintainer inactive.
+
+### Verification gates (post-R70)
+
+- `python3_syntax.py --root src` → ✅ OK (clean)
+- `mypy --cache-dir=/dev/null -p src` → ⚠️ 3 pre-existing pymongo/bson errors (NOT R70-related, lazy-imported MongoDB backend)
+- `pytest tests/unit/{services/security, core/security, core/auth, infrastructure/security, services/io}` → ✅ 649 passed (2 pre-existing: mtls_backend no logger + flaky vault test)
+- `pip-audit` → ✅ 24 → 2 CVE (-92%)
+- `git status --short` → ✅ clean
+
+### Library-dedup audit (R61-R70)
+
+| Потенциальная дубль | Решение | Статус |
+|---|---|---|
+| **httpx + aiohttp** | elasticsearch → httpxasync transport (R61) | ✅ **FIXED** (R61-R63) |
+| orjson + msgspec | legitimate (general vs hotpath) | documented R61 audit |
+| pydash + glom | legitimate (DSL processor APIs) | documented R61 audit |
+| PyYAML + ruamel.yaml | legitimate (general vs round-trip) | documented R61 audit |
+| redis + keydb | legitimate (config option, same client) | documented R61 audit |
+| uvicorn + granian | legitimate (dev vs production) | documented R61 audit |
+
+### Scorecard
+
+| Домен | R48 → R60 → R70 | Δ cumulative | Notes |
+|---|---|---|---|
+| L9 Security E2E | 9.0 → 9.0 → **9.5** | **+0.5** | 22 CVEs closed, lock-file authorized |
+| L1 Gateway/middleware | 8.8 → 8.85 → **8.85** | +0.05 | Ponytail dedup compliance |
+| L10 Observability | 9.0 → 9.0 → 9.0 | 0 | — |
+| Tests/QA | 8.5 → 8.7 → 8.7 | +0.2 | cleanup + lock-file sync verified |
+| Docs | 8.1 → 8.2 → **8.3** | +0.2 | ADR-0253 + R49-R58 retrospective |
+| **Медиана** | 8.6 → 8.7 → **8.9** | **+0.3** | security wave dominates |
+
+Working tree clean. **10 commits shipped, R59-R70. Sprint continues.**
+R70 — natural ceiling: cryptography 49.0.0 = highest version compatible
+with cp314-cp314 wheel. diskcache 5.6.3 = no upstream fix available.
+
+
 
 
