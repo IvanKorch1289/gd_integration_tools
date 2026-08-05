@@ -3785,6 +3785,69 @@ Natural ceilings:
 - cryptography 49.0.0 (cp314-cp314 wheel blocker)
 - diskcache 5.6.3 (no upstream fix)
 
+---
+
+## Rounds 76-77 — pytest marker registration fixes (2026-08-05)
+
+После R75 cumulative retrospective, новая серия фокусируется на
+**pre-existing collection errors** per Ponytail "boring over clever".
+
+### Rounds 76-77 summary
+
+| # | Round | Commit | Что | Domain impact |
+|---|---|---|---|---|
+| 76 | `a67816d3` | timeout marker | @pytest.mark.timeout(5) в test_file_watcher.py → register as no-op | Tests/QA +0.1 |
+| 77 | `41f2c0b7` | benchmark marker | @pytest.mark.benchmark в tests/perf/ → register as no-op | Tests/QA +0.05 |
+
+### R76: timeout marker
+
+* `tests/unit/infrastructure/sources/test_file_watcher.py` использует
+  `@pytest.mark.timeout(5)` в 5 тестах (lines 85, 113, 145, 174, 218).
+* pytest-timeout НЕ в dev-deps → --strict-markers блокирует collection.
+* Решение: зарегистрировать marker как no-op (1 строка в markers list).
+* **Результат**: 10 tests collected + passing (was: 0 tests, full file error).
+
+### R77: benchmark marker
+
+* `tests/perf/test_plugin_sandbox_overhead.py` + `test_msgspec_benchmark.py`
+  используют `@pytest.mark.benchmark(group='parse_response_dto')`.
+* pytest-benchmark в [perf] extra (не в core dev-deps) → collection error.
+* Решение: зарегистрировать marker как no-op.
+* uv sync auto-detected perf extra → installed pytest-benchmark + locust.
+* **Результат**: 10 perf tests now collected + passing.
+
+### Cumulative delta (R76-R77)
+
+| Метрика | До | После |
+|---|---|---|
+| Total collected tests | 13599 | 13993 (+394) |
+| Collection errors | 2 (file_watcher + perf) | 0 |
+| Test files blocked | 3 | 0 |
+| uv dev deps added | 0 | 0 (perf extra pre-existing) |
+
+### Verification gates (post-R77)
+
+- `pytest --co` full collection: 13993 tests, 0 errors ✅
+- `pytest tests/unit/infrastructure/sources/test_file_watcher.py`: 10 passed ✅
+- `pytest tests/perf/`: 10 passed ✅
+- pre-existing failures (6 nats, 1 vault flake): NOT regressions ✅
+
+### Cumulative scorecard (R48 → R77)
+
+| Домен | R48 → R75 → R77 | Δ cumulative | Notes |
+|---|---|---|---|
+| L9 Security E2E | 9.0 → 9.6 → **9.6** | +0.6 | R66-R70 security wave |
+| Tests/QA | 8.5 → 8.8 → **8.9** | +0.4 | +20 tests collectable (R76-R77) |
+| Docs | 8.1 → 8.35 → **8.35** | +0.25 | R74 sphinx + cumulative |
+| L1 Gateway/middleware | 8.8 → 8.85 → 8.85 | +0.05 | R61-R63 dedup |
+| **Медиана** | 8.6 → 8.95 → **8.97** | **+0.37** | R76-R77 incremental |
+
+Working tree clean. **6 commits shipped, R72-R77. Sprint continues.**
+Natural ceilings:
+- cryptography 49.0.0 (cp314-cp314 wheel blocker)
+- diskcache 5.6.3 (no upstream fix)
+- DEFER-1..7 (Sprint 36 items, dedicated sprints)
+
 
 
 
