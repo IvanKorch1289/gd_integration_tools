@@ -104,6 +104,11 @@ dependencies = [
     "casbin>=1.36.0,<2.0.0",
     "cachetools>=5.3.0,<8.0.0",
     # S31 Task 7: motor REMOVED. pymongo>=4.9 has native AsyncMongoClient.
+    # Round 73: pymongo добавлен в core deps (был TODO с lazy import'ом).
+    # MongoDB используется в AgentMemoryService (services/ai/agent_memory.py)
+    # и CertStore MongoDB backend (infrastructure/security/cert_store/).
+    # AsyncMongoClient (PyMongo 4.9+) — canonical, motor в maintenance mode.
+    "pymongo>=4.9,<5.0",
     # Round 63: [async] extra удалён — aiohttp transitive dep больше не нужен
     # (AsyncElasticsearch использует HttpxAsyncHttpNode через node_class='httpxasync',
     # см. ADR-0253). Дефолт async transport (без явного node_class) — fallback
