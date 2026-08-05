@@ -118,19 +118,38 @@ def set_correlation_id(correlation_id: str) -> None:
 
 @contextlib.contextmanager
 def start_span(name: str, attributes: dict[str, Any] | None = None) -> Any:
-    """No-op tracing span context manager (Round 5 Sprint 5.2 compat-shim).
+    """Tracing span context manager (S182 REAL fix after fb16f5d4 sham).
 
-    Изначально facade ожидал реальный OTEL-совместимый ``start_span``,
-    но проект пока не подключил OTEL SDK (carryover, см. ADR-NEW-21).
-    До тех пор возвращаем no-op context manager, который всегда
-    yields ``None``. При появлении OTEL SDK этот shim будет заменён
-    на ``opentelemetry.trace.get_tracer(__name__).start_as_current_span``.
+    Round 5 Sprint 5.2 carryover (ADR-NEW-21) — declared as no-op until
+    OTel SDK wired. Sprint 36 commit `fb16f5d4` claimed to fix this
+    but only added test stubs without modifying source (verified by
+    Sprint 182 critic review). This commit (S182) is the actual fix.
+
+    При configured TracerProvider (``infrastructure/observability/otel/setup.py``)
+    — returns real :class:`opentelemetry.trace.Span` через
+    :func:`start_as_current_span`. При отсутствии SDK или non-initialized
+    TracerProvider — fallback ``yield None`` для backward-compat с
+    pre-Sprint-36 callers (4 файла: ``services/observability/facade.py:84-91``
+    и др.).
 
     Args:
         name: Имя span (например, ``"process_order"``).
-        attributes: Span attributes (key-value).
+        attributes: Span attributes (key-value, optional).
 
     Yields:
-        ``None`` (placeholder, real span появится с OTEL).
+        :class:`opentelemetry.trace.Span` если SDK инициализирован,
+        иначе ``None`` (no-op fallback).
+
+    See also:
+        - Sprint 36 sham-fix commit ``fb16f5d4`` (reverted-only-via-test).
+        - Sprint 182 retrospective: ``docs/compose/reports/2026-08-05-s182-...``
     """
-    yield None
+    try:
+        from opentelemetry import trace
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span(name, attributes=attributes or {}) as span:
+            yield span
+    except (ImportError, AttributeError):
+        # OTel SDK не установлен или TracerProvider не сконфигурирован.
+        # Backward-compat fallback (no exception, no observable side effect).
+        yield None
