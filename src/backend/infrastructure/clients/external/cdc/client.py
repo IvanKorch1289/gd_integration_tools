@@ -13,6 +13,9 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.clients.external.cdc._dlq_writer_guard import (
+    mark_cdc_dlq_writer_wired,  # B-17 fix (cycle 37): fail-loud DLQ wiring
+)
 from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,  # S60 W2: cross-import
     CDCSubscription,  # S60 W2: cross-import
@@ -57,7 +60,12 @@ class CDCClient:
         "kafka": _KafkaDebeziumStrategy,  # S166 W1: re-added в S167 W1.1
     }
 
-    def __init__(self, *, dlq_writer: DLQWriter | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        dlq_writer: DLQWriter | None = None,
+        dlq_required: bool = True,
+    ) -> None:
         self._subscriptions: dict[str, CDCSubscription] = {}
         self._tasks: dict[str, asyncio.Task] = {}
         # B-02 fix (S176 cycle 33): DLQ handoff on callback/dispatch failure.
@@ -66,6 +74,11 @@ class CDCClient:
         # via ``dlq_writer.write(envelope)``. Composition root wires the
         # writer via :meth:`set_dlq_writer` (singleton-friendly).
         self._dlq_writer: DLQWriter | None = dlq_writer
+        # B-17 fix (cycle 37): fail-loud DLQ wiring. When ``True`` (default,
+        # production), :meth:`_send_to_dlq` raises ``RuntimeError`` instead
+        # of silent log-drop if writer is missing. dev_light / unit tests
+        # set ``dlq_required=False`` to preserve pre-fix log+drop behavior.
+        self._dlq_required: bool = dlq_required
 
     def set_dlq_writer(self, writer: DLQWriter | None) -> None:
         """Установить/сбросить DLQ-writer (для composition root wiring).
@@ -73,8 +86,23 @@ class CDCClient:
         B-02 fix (S176 cycle 33): singleton-инстанс, полученный через
         :func:`get_cdc_client`, не имеет доступа к ``__init__``-аргументам;
         этот метод позволяет wiring-слою установить writer пост-фактум.
+
+        B-17 fix (cycle 37): при установке ``writer is not None`` —
+        автоматически помечает :data:`cdc_dlq_writer_guard` как wired.
+        Composition root может также явно вызвать
+        :func:`mark_cdc_dlq_writer_wired` после этого вызова.
         """
         self._dlq_writer = writer
+        if writer is not None:
+            mark_cdc_dlq_writer_wired(writer)
+
+    def set_dlq_required(self, required: bool) -> None:
+        """Override ``_dlq_required`` (для dev_light / tests).
+
+        B-17 fix (cycle 37): production default ``True``; dev_light
+        выставляет ``False`` через ``DLQSettings``/profile.
+        """
+        self._dlq_required = required
 
     async def subscribe(
         self,
@@ -235,11 +263,30 @@ class CDCClient:
         import-time. Если DLQ сам упал — событие логируется с
         ``exc_info`` и не пробрасывается (consumer-loop не должен
         падать из-за сбоя нижестоящей системы).
+
+        B-17 fix (cycle 37): в production (default ``dlq_required=True``)
+        отсутствие writer'а — ``RuntimeError`` (fail-loud), а не silent
+        log+drop. Pre-fix поведение сохранено для dev_light / unit tests
+        (``dlq_required=False``) — log+drop, не raise.
         """
         if self._dlq_writer is None:
+            if self._dlq_required:
+                # B-17 fix (cycle 37): production fail-loud guard.
+                msg = (
+                    f"CDC event dropped: DLQ writer not wired "
+                    f"[stage={stage}, subscription={sub.id}, "
+                    f"profile={sub.profile}, table={event_dict.get('table')}]"
+                )
+                logger.error(msg)
+                raise RuntimeError(msg)
             # No DLQ wired — pre-fix behavior (log + drop). Operators
             # should configure ``set_dlq_writer`` in production; в
             # тестах-одиночках можно явно передать writer в ``__init__``.
+            logger.warning(
+                "CDC no DLQ writer configured; dropping event silently "
+                "(dev only) [stage=%s, subscription=%s]",
+                stage, sub.id,
+            )
             return
 
         try:

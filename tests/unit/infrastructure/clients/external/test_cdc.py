@@ -340,9 +340,10 @@ async def test_cdc_dispatch_change_handles_callback_error() -> None:
     Pre-fix (B-02 / S176 cycle 33): event was dropped silently.
     Post-fix: if ``dlq_writer`` is configured, the failed event is
     forwarded as :class:`DLQEnvelope`. Without a writer, the legacy
-    log+drop behavior is preserved.
+    log+drop behavior is preserved (B-17 cycle 37: requires
+    ``dlq_required=False`` opt-out).
     """
-    client = CDCClient()
+    client = CDCClient(dlq_required=False)  # B-17: dev_light opt-out
 
     async def bad_cb(_d: dict[str, object]) -> None:
         raise RuntimeError("callback boom")
@@ -432,8 +433,10 @@ async def test_cdc_dispatch_change_no_dlq_legacy_silent_drop() -> None:
 
     Pre-fix поведение сохранено для backward-compat: запуск без
     сконфигурированного writer роняет событие только в ERROR-лог.
+    B-17 (cycle 37): production default ``dlq_required=True`` → legacy
+    test должен явно opt-out через ``dlq_required=False``.
     """
-    client = CDCClient()  # no dlq_writer
+    client = CDCClient(dlq_required=False)  # no dlq_writer, dev mode
 
     async def bad_cb(_d: dict[str, object]) -> None:
         raise RuntimeError("callback boom")
