@@ -5,9 +5,12 @@
 для протоколо-агностичной сериализации.
 """
 
+import json
+import uuid
 from typing import Any
 
 from starlette import status
+from starlette.types import Scope
 
 __all__ = (
     "AuthenticationError",
@@ -21,7 +24,47 @@ __all__ = (
     "ServiceError",
     "TenantContextRequiredError",
     "UnprocessableError",
+    "build_error_envelope",
 )
+
+
+def build_error_envelope(
+    code: str,
+    detail: str,
+    *,
+    scope: Scope | None = None,
+    error_id: str | None = None,
+) -> dict[str, Any]:
+    """Собирает унифицированный error envelope для HTTP/middleware ответов.
+
+    Возвращает dict с ключами:
+    - code: машинно-читаемый код ошибки
+    - detail: человеко-читаемое описание
+    - error_id: UUID4 (генерируется, если не передан явно)
+    - correlation_id: из scope['state']['correlation_id'], если есть
+    - request_id: из scope, если есть
+
+    Используется в middleware для унификации формата ошибок
+    (cycle 35 A2, инициатива error-envelope unification).
+    """
+    correlation_id: str | None = None
+    request_id: str | None = None
+    if scope is not None:
+        state = scope.get("state") or {}
+        if isinstance(state, dict):
+            cid = state.get("correlation_id")
+            if isinstance(cid, str):
+                correlation_id = cid
+        rid = scope.get("request_id")
+        if isinstance(rid, str):
+            request_id = rid
+    return {
+        "code": code,
+        "detail": detail,
+        "error_id": error_id or str(uuid.uuid4()),
+        "correlation_id": correlation_id,
+        "request_id": request_id,
+    }
 
 # Маппинг HTTP → gRPC статусов для multi-protocol ошибок.
 _HTTP_TO_GRPC_STATUS: dict[int, int] = {

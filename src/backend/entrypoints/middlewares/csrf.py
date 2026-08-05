@@ -36,6 +36,7 @@ from collections.abc import Iterable
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.config.settings import settings
+from src.backend.core.errors import build_error_envelope
 from src.backend.core.logging import get_logger
 
 __all__ = ("CSRFMiddleware",)
@@ -137,6 +138,7 @@ class CSRFMiddleware:
                 send,
                 error="csrf_token_missing",
                 detail=f"CSRF token required in cookie and {self._header_name_lower} header",
+                scope=scope,
             )
             return
 
@@ -150,6 +152,7 @@ class CSRFMiddleware:
                 send,
                 error="csrf_token_mismatch",
                 detail="CSRF token mismatch between cookie and header",
+                scope=scope,
             )
             return
 
@@ -263,9 +266,23 @@ class CSRFMiddleware:
         return bool(CSRFMiddleware._get_cookie(scope, name))
 
     @staticmethod
-    async def _send_403(send: Send, *, error: str, detail: str) -> None:
-        """Отправляет 403 JSON response через send (no-raise, cycle 39)."""
-        body_bytes = json.dumps({"error": error, "detail": detail}).encode("utf-8")
+    async def _send_403(
+        send: Send,
+        *,
+        error: str,
+        detail: str,
+        scope: Scope | None = None,
+    ) -> None:
+        """Отправляет 403 JSON response через send (no-raise, cycle 39).
+
+        cycle 35 A2: использует build_error_envelope для унификации формата
+        с остальными middlewares (csrf_token_missing + correlation_id +
+        error_id + request_id). Старый формат {"error","detail"} помечен
+        как backward-compat alias в ``body["error"]`` для legacy clients.
+        """
+        body = build_error_envelope(code=error, detail=detail, scope=scope)
+        body["error"] = body["code"]  # backward-compat alias для legacy clients
+        body_bytes = json.dumps(body).encode("utf-8")
         await send(
             {
                 "type": "http.response.start",
