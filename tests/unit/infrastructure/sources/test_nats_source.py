@@ -90,6 +90,17 @@ def _install_fake_nats(
 
     monkeypatch.setitem(sys.modules, "nats", fake_nats)
 
+    # Round 83: mock check_source_capability → True (default-allow).
+    # Тесты не должны падать на capability_gate pre-existing default-deny.
+    # Производственный код по-прежнему делает реальный check в runtime.
+    async def _always_allowed(*_args: object, **_kwargs: object) -> bool:
+        return True
+
+    monkeypatch.setattr(
+        "src.backend.infrastructure.sources.nats.check_source_capability",
+        _always_allowed,
+    )
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Тесты
@@ -235,6 +246,15 @@ async def test_stream_reconnects_after_initial_failure(
     fake_nats = types.ModuleType("nats")
     fake_nats.connect = _connect  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "nats", fake_nats)
+
+    # Round 83: mock check_source_capability → True (default-allow)
+    async def _always_allowed(*_args: object, **_kwargs: object) -> bool:
+        return True
+
+    monkeypatch.setattr(
+        "src.backend.infrastructure.sources.nats.check_source_capability",
+        _always_allowed,
+    )
 
     src = NatsSource(
         subject="x", max_reconnect_attempts=3, reconnect_delay_seconds=0.01

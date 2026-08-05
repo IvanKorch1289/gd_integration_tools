@@ -80,6 +80,16 @@ def _install_fake_nats(monkeypatch: pytest.MonkeyPatch, msgs: list[MagicMock]) -
 
     monkeypatch.setitem(sys.modules, "nats", fake_nats)
 
+    # Round 83: mock check_source_capability → True (default-allow).
+    # Тесты не должны падать на capability_gate pre-existing default-deny.
+    async def _always_allowed(*_args: object, **_kwargs: object) -> bool:
+        return True
+
+    monkeypatch.setattr(
+        "src.backend.infrastructure.sources.nats_jetstream.check_source_capability",
+        _always_allowed,
+    )
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Тесты
