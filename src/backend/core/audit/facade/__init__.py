@@ -25,6 +25,9 @@ References:
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import TYPE_CHECKING
+
 # Canonical re-exports (backward compat с pre-S107 callers)
 from src.backend.core.audit.facade._base import emit_audit, emit_audit_safe
 from src.backend.core.audit.facade.ai import emit_ai_workspace
@@ -35,12 +38,41 @@ from src.backend.core.audit.facade.audit_service import (  # noqa: F401
 from src.backend.core.audit.facade.authorization import emit_authorization_decision
 from src.backend.core.audit.facade.banking import emit_banking_audit
 from src.backend.core.audit.facade.capability import emit_capability_check
-from src.backend.core.audit.facade.secrets import emit_secret_access, emit_secret_rotation
+from src.backend.core.audit.facade.secrets import (
+    emit_secret_access,
+    emit_secret_rotation,
+)
 from src.backend.core.audit.facade.waf import emit_waf_evaluation
+
+if TYPE_CHECKING:
+    from src.backend.infrastructure.audit.jsonl_audit import JsonlAuditBackend
+
+
+def get_jsonl_backend(path: str | Path) -> "JsonlAuditBackend":
+    """Capability-checked factory для :class:`JsonlAuditBackend` (B-11 fix, cycle 33).
+
+    Заменяет ``importlib.import_module('src.backend.infrastructure.audit.jsonl_audit')``
+    в callers из слоя ``services`` (где прямой импорт infrastructure нарушает
+    ``check_layers.py``). Lazy-import внутри функции — позволяет
+    ``services/*`` ссылаться на infrastructure через core-facade без
+    циркулярного import'a и без layer-violation.
+
+    Args:
+        path: Путь к JSONL-файлу (директория создаётся при необходимости).
+
+    Returns:
+        Готовый ``JsonlAuditBackend`` instance для DLQ-fallback.
+    """
+    # Lazy import: infrastructure → core facade import разрешён layer-rules.
+    from src.backend.infrastructure.audit.jsonl_audit import JsonlAuditBackend
+
+    return JsonlAuditBackend(path)
+
 
 __all__ = (
     "AuditService",
     "get_unified_audit_service",
+    "get_jsonl_backend",
     "emit_audit",
     # Per-domain helpers (S106 W2 Path A)
     "emit_authorization_decision",

@@ -138,22 +138,21 @@ class ClickHouseAuditService:
 
         Returns ``None`` если ``dlq_path`` не задан (legacy silent-loss path).
 
-        Ponytail: backend подгружается через ``importlib`` чтобы избежать
-        прямого ``from src.backend.infrastructure.audit.jsonl_audit``
-        import-statement — это layer-violation по правилам check_layers.py
-        (services → infrastructure напрямую запрещён).
+        B-11 fix (cycle 33): factory ``get_jsonl_backend`` живёт в
+        ``core.audit.facade`` — capability-checked обёртка над
+        infrastructure-слоем. Раньше backend подгружался через
+        ``importlib.import_module`` (bypass layer-rules); теперь —
+        явный facade-import, попадает под статический контроль
+        ``check_layers.py`` (services → core разрешён).
         """
         if self._dlq_path is None:
             return None
         if self._dlq_backend is None:
             with self._dlq_lock:
                 if self._dlq_backend is None:
-                    import importlib
+                    from src.backend.core.audit.facade import get_jsonl_backend
 
-                    mod = importlib.import_module(
-                        "src.backend.infrastructure.audit.jsonl_audit"
-                    )
-                    self._dlq_backend = mod.JsonlAuditBackend(self._dlq_path)
+                    self._dlq_backend = get_jsonl_backend(self._dlq_path)
         return self._dlq_backend
 
     async def _send_to_dlq(
