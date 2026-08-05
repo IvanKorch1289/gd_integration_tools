@@ -122,6 +122,18 @@ class GranianTuning(BaseSettingsWithLoader):
         ge=128,
     )
 
+    graceful_shutdown_timeout: int = Field(  # D-AUDIT-95 fix (S183 W1.2)
+        default=30,
+        title="Graceful shutdown timeout (секунды)",
+        description=(
+            "Granian --shutdown-timeout: сколько секунд ждать drain in-flight "
+            "запросов после SIGTERM. Default 30 (k8s terminationGracePeriodSeconds). "
+            "0 — отключить эмиссию флага (escape hatch)."
+        ),
+        ge=0,
+        le=300,
+    )
+
     @computed_field(description="Резолвленное число воркеров")
     def resolved_workers(self) -> int:
         """Возвращает фактическое число воркеров.
@@ -206,6 +218,9 @@ class GranianTuning(BaseSettingsWithLoader):
             cmd.append("--access-log")
         # blocking-threads — Granian флаг --threads
         cmd.extend(["--threads", str(self.resolved_blocking_threads)])
+        # D-AUDIT-95 fix (S183 W1.2): SIGTERM drain window.
+        if self.graceful_shutdown_timeout > 0:
+            cmd.extend(["--shutdown-timeout", str(self.graceful_shutdown_timeout)])
         cmd.append(app)
         return cmd
 
