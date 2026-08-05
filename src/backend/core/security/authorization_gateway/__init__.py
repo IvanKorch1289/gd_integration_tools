@@ -49,7 +49,33 @@ __all__ = (
     "AuthorizationReason",
     "AuthorizationDecision",
     "PolicyDecider",
+    # Round 88: lazy resolver для non-Request контекста (Sprint 1 K5).
+    # Использует app-state singleton из composition root + fallback на None
+    # (если app не зарегистрирован, при ошибках доступа).
+    "get_authorization_gateway",
 )
+
+
+def get_authorization_gateway() -> "AuthorizationGateway | None":
+    """Lazy resolver для :class:`AuthorizationGateway` singleton.
+
+    Round 88 (Sprint 1 K5): non-Request context — для CLI commands,
+    background workers, scheduler callbacks. Returns ``None`` если
+    app не зарегистрирован через ``register_app_state`` (fail-open
+    только в dev/test, в production app всегда зарегистрирован).
+
+    Returns:
+        :class:`AuthorizationGateway` singleton или ``None``.
+    """
+    try:
+        from src.backend.core.di.app_state import get_app_ref
+
+        app = get_app_ref()
+    except Exception:  # noqa: BLE001 — defensive, returns None per test_lazy_resolver_swallows_exceptions
+        return None
+    if app is None:
+        return None
+    return getattr(app.state, "authorization_gateway", None)
 
 
 class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):

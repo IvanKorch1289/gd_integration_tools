@@ -56,6 +56,8 @@ __all__ = (
     "get_mqtt_handler",
     "get_langfuse_client",
     "get_watermark_store",
+    # Round 88: AuthorizationGateway Depends (Sprint 1 K5).
+    "get_authorization_gateway",
 )
 
 
@@ -110,6 +112,25 @@ def register_app_state(app: FastAPI) -> None:
     )
 
     app.state.vault_refresher = VaultSecretRefresher()
+
+    # Round 88: AuthorizationGateway singleton registration (Sprint 1 K5).
+    # До этого: app.state.authorization_gateway отсутствовал → PolicyMixin
+    # _resolve_authz_gateway всегда возвращал None → LLM policy-gate работал
+    # только в fail-closed режиме. Регистрация как lazy singleton:
+    # создаётся один раз при старте, переиспользуется в каждом request.
+    from src.backend.core.security.authorization_gateway import (
+        AuthorizationGateway,
+    )
+    from src.backend.services.admin._capability_adapter import (
+        FacadeCapabilityAdapter,
+    )
+    from src.backend.services.capabilities.facade import (
+        get_capability_facade,
+    )
+
+    app.state.authorization_gateway = AuthorizationGateway(
+        capability_gateway=FacadeCapabilityAdapter(get_capability_facade())
+    )
 
     # W14.5: durable WatermarkStore — выбор бэкенда (memory/postgres) по
     # ``WatermarkSettings``. PG-вариант берёт главный session_manager;
@@ -175,6 +196,15 @@ async def get_vault_refresher(request: Request) -> VaultSecretRefresher:
 async def get_mqtt_handler(request: Request) -> MqttHandler:
     """Возвращает MqttHandler из app.state (FastAPI Depends)."""
     return request.app.state.mqtt_handler
+
+
+# Round 88: FastAPI Depends wrapper для AuthorizationGateway (Sprint 1 K5).
+# Test requires asyncio.iscoroutinefunction(di.get_authorization_gateway) → True.
+async def get_authorization_gateway(
+    request: Request,
+) -> "AuthorizationGateway":
+    """Возвращает AuthorizationGateway из app.state (FastAPI Depends)."""
+    return request.app.state.authorization_gateway
 
 
 async def get_langfuse_client(request: Request) -> LangFuseClient:
