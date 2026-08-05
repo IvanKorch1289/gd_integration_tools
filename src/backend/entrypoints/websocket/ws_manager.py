@@ -60,12 +60,8 @@ class ConnectionManager:
         """
         return len(self._connections_by_action.get(action_id, set()))
 
-    def actions_with_capacity(self, *, action_pool_size: int) -> dict[str, int]:
+    def actions_with_capacity(self) -> dict[str, int]:
         """S163 W25-A: для diagnostics — все actions и их текущий count.
-
-        Args:
-            action_pool_size: Используется только для вычисления available
-                capacity (необязательный, для отчётов).
 
         Returns:
             Dict ``{action_id: current_count}``.

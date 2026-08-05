@@ -65,7 +65,6 @@ class RedisLimiterAdapter:
         self,
         name: str = "pyrate",
         weight: int = 1,
-        blocking: bool = True,
         timeout: int | float = -1,
     ) -> bool:
         """Acquire `weight` permits from bucket `name`. Multi-instance via Redis.

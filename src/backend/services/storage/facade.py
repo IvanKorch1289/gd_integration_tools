@@ -82,7 +82,6 @@ class StorageFacade:
         data: Any,
         *,
         content_type: str | None = None,
-        multipart_threshold_bytes: int = 5 * 1024 * 1024,
     ) -> str:
         """Загрузить объект из async-stream или bytes (S176 fix).
 
@@ -94,7 +93,6 @@ class StorageFacade:
             key: Ключ объекта.
             data: bytes / str / async iterable (chunks of bytes).
             content_type: MIME-type (опционально).
-            multipart_threshold_bytes: Порог для multipart upload (default 5MB).
 
         Returns:
             Полный ключ загруженного объекта.

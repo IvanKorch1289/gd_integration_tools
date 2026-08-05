@@ -149,7 +149,7 @@ class DSLYamlWatcher:
         old_hashes = dict(self._file_hashes)
         old_cache = dict(self._pipeline_cache)
         try:
-            new_yaml_ids, new_hashes = self._collect_and_apply(incremental=False)
+            new_yaml_ids, new_hashes = self._collect_and_apply()
             self._yaml_route_ids = new_yaml_ids
             self._file_hashes = new_hashes
             return {"loaded": len(new_yaml_ids), "errors": []}
@@ -258,7 +258,7 @@ class DSLYamlWatcher:
             logger.error("DSLYamlWatcher incremental reload failed: %s", exc)
 
     def _collect_and_apply(
-        self, incremental: bool = True
+        self,
     ) -> tuple[dict[Path, str], dict[Path, str]]:
         """Полный rescan + atomic apply.
 
