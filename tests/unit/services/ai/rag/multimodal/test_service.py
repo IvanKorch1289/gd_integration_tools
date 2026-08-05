@@ -85,7 +85,9 @@ async def test_service_search_returns_sorted_results() -> None:
     for _ in range(3):
         await svc.ingest_document(_png_bytes(), collection="default", mime="image/png")
 
-    results = await svc.search("query string", collection="default", top_k=2)
+    results = await svc.search(
+        "query string", collection="default", top_k=2, tenant_id="test"
+    )
 
     assert len(results) <= 2
     assert all(isinstance(r, SearchResult) for r in results)
@@ -108,7 +110,7 @@ async def test_service_delete_collection() -> None:
     deleted = svc.delete_collection("temp")
     assert deleted == 2
 
-    results = await svc.search("anything", collection="temp")
+    results = await svc.search("anything", collection="temp", tenant_id="test")
     assert results == []
 
 
@@ -127,7 +129,7 @@ async def test_service_respects_feature_flag_off() -> None:
     assert isinstance(result, IngestResult)
     assert "bucket" not in svc._collections
 
-    search = await svc.search("query", collection="bucket")
+    search = await svc.search("query", collection="bucket", tenant_id="test")
     assert search == []
 
 

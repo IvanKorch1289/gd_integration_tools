@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from src.backend.services.ai.rag.multimodal._tenant import _resolve_effective_tenant_id
 
 __all__ = ("CrossModalQueryResult", "ModalKind", "MultimodalPipeline")
 
@@ -69,14 +70,20 @@ class MultimodalPipeline:
         payload: bytes | Path | str,
         collection: str = "default",
         metadata: dict[str, Any] | None = None,
+        tenant_id: str | None = None,
     ) -> str:
         """Ingest одного объекта произвольной модальности.
+
+        # B-11 fix (cycle 37): tenant_id kwarg → stamp ``metadata["tenant_id"]``
+        # для post-filter изоляции на query.
 
         Returns:
             chunk_id первого чанка (для tracking).
         """
         meta = dict(metadata or {})
         meta.setdefault("modal", modal)
+        if tenant_id:
+            meta["tenant_id"] = tenant_id
 
         match modal:
             case "text":
@@ -127,8 +134,12 @@ class MultimodalPipeline:
         collection: str = "default",
         top_k: int = 5,
         modal_filter: ModalKind | None = None,
+        tenant_id: str | None = None,
     ) -> list[CrossModalQueryResult]:
         """Cross-modal retrieval: text-query → результаты любой модальности.
+
+        # B-11 fix (cycle 37): tenant_id kwarg + defence-in-depth post-filter
+        # через ``doc["metadata"]["tenant_id"] == effective_tenant``.
 
         Простой keyword-overlap scoring для tests без embedder.
         """
@@ -136,11 +147,15 @@ class MultimodalPipeline:
         items = store.get(collection, {})
         results: list[CrossModalQueryResult] = []
 
+        effective_tenant = _resolve_effective_tenant_id(tenant_id)
         query_terms = set(query_text.lower().split())
         for chunk_id, doc in items.items():
             meta = doc.get("metadata") or {}
             modal = meta.get("modal", "text")
             if modal_filter and modal != modal_filter:
+                continue
+            # Defence-in-depth post-filter: drop chunks с чужим tenant_id.
+            if effective_tenant and meta.get("tenant_id") != effective_tenant:
                 continue
             content_str = str(doc.get("content") or "")
             terms = set(content_str.lower().split())

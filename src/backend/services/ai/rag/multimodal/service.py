@@ -25,6 +25,7 @@ from src.backend.services.ai.rag.multimodal._legacy import (
     MultimodalRAGService as _LegacyMultimodalRAGService,
 )
 from src.backend.services.ai.rag.multimodal._legacy import _dummy_embedding
+from src.backend.services.ai.rag.multimodal._tenant import _resolve_effective_tenant_id
 from src.backend.services.ai.rag.multimodal.image_ingester import ImageIngester
 from src.backend.services.ai.rag.multimodal.pdf_ingester import PDFIngester
 from src.backend.services.ai.rag.multimodal.types import (
@@ -143,6 +144,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
         collection: str = "default",
         *,
         mime: str | None = None,
+        tenant_id: str | None = None,
     ) -> IngestResult:
         """Ingestion документа: диспетчер по MIME на нужный ingester.
 
@@ -154,6 +156,8 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
             path: Путь к файлу или bytes (тогда ``mime`` обязателен).
             collection: Имя коллекции (namespace) для хранения чанков.
             mime: Опциональный MIME-override; иначе sniff по расширению.
+            tenant_id: Опциональный tenant-тег, проставляется в
+                ``chunk.metadata["tenant_id"]`` для post-filter изоляции.
 
         Returns:
             IngestResult с chunks, metadata, warnings.
@@ -196,25 +200,40 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
                 else:
                     chunk.embedding_kind = chunk.embedding_kind or "dummy"
             chunk.metadata["collection"] = collection
+            if tenant_id:
+                chunk.metadata["tenant_id"] = tenant_id
             bucket[chunk.chunk_id] = chunk
 
         return result
 
     async def search(
-        self, query: str | bytes, collection: str = "default", top_k: int = 10
+        self,
+        query: str | bytes,
+        collection: str = "default",
+        top_k: int = 10,
+        *,
+        tenant_id: str | None = None,
     ) -> list[SearchResult]:
         """Semantic search по embeddings (cosine similarity).
+
+        # B-11 fix (cycle 37): tenant_id filter — обязательный kwarg
+        # для cross-tenant изоляции; defence-in-depth post-filter через
+        # ``chunk.metadata["tenant_id"] == effective_tenant``.
 
         Args:
             query: Текст или image bytes.
             collection: Имя коллекции для поиска.
             top_k: Максимум возвращаемых результатов.
+            tenant_id: Tenant-фильтр (``None`` → fallback на
+                ``TenantContext``; ``""`` → явный opt-out legacy).
 
         Returns:
             Отсортированный по score список SearchResult.
         """
         if not self._is_enabled():
             return []
+
+        effective_tenant = _resolve_effective_tenant_id(tenant_id)
 
         bucket = self._collections.get(collection)
         if not bucket:
@@ -225,6 +244,10 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
         scored: list[SearchResult] = []
         for chunk in bucket.values():
             if chunk.embedding is None:
+                continue
+            # Defence-in-depth post-filter: даже если кто-то вставил chunk
+            # с чужим tenant_id (минуя ingest), отсекаем на retrieval-фазе.
+            if effective_tenant and chunk.metadata.get("tenant_id") != effective_tenant:
                 continue
             score = _cosine(chunk.embedding, query_vec)
             scored.append(SearchResult(chunk=chunk, score=score))

@@ -308,7 +308,7 @@ async def test_image_caption_pipeline_e2e(
 
     # Step 4: semantic search "cat" → top-K должен содержать cat-chunk.
     hits = await multimodal_service.search(
-        "cat", collection="e2e_images", top_k=3
+        "cat", collection="e2e_images", top_k=3, tenant_id="e2e"
     )
     assert len(hits) >= 1
     top = hits[0]
@@ -390,7 +390,7 @@ async def test_audio_transcript_pipeline_e2e(
 
     # Step C: search "hello" → audio chunk.
     hits = await multimodal_service.search(
-        "hello", collection="e2e_audio", top_k=3
+        "hello", collection="e2e_audio", top_k=3, tenant_id="e2e"
     )
     assert len(hits) >= 1
     assert hits[0].chunk.kind == "audio"

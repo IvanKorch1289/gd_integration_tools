@@ -65,13 +65,21 @@ async def test_cross_modal_retrieval_returns_all_modalities() -> None:
     """Query без filter возвращает результаты разных модальностей."""
     service = MultimodalRAGService()
     pipeline = MultimodalPipeline(service)
-    await pipeline.ingest(modal="text", payload="cat dog", collection="kb")
+    await pipeline.ingest(
+        modal="text", payload="cat dog", collection="kb", tenant_id="test"
+    )
     service.caption_image = AsyncMock(return_value="cat playing")
-    await pipeline.ingest(modal="image", payload=b"img", collection="kb")
+    await pipeline.ingest(
+        modal="image", payload=b"img", collection="kb", tenant_id="test"
+    )
     service.transcribe_audio = AsyncMock(return_value="dog barking loud")
-    await pipeline.ingest(modal="audio", payload=b"wav", collection="kb")
+    await pipeline.ingest(
+        modal="audio", payload=b"wav", collection="kb", tenant_id="test"
+    )
 
-    results = await pipeline.query("cat dog", collection="kb", top_k=10)
+    results = await pipeline.query(
+        "cat dog", collection="kb", top_k=10, tenant_id="test"
+    )
     modalities = {r.modal for r in results}
     assert {"text", "image", "audio"}.issubset(modalities)
     assert all(isinstance(r, CrossModalQueryResult) for r in results)
@@ -82,9 +90,15 @@ async def test_modal_filter_restricts_results() -> None:
     """``modal_filter="image"`` возвращает только image-чанки."""
     service = MultimodalRAGService()
     pipeline = MultimodalPipeline(service)
-    await pipeline.ingest(modal="text", payload="some text", collection="kb")
+    await pipeline.ingest(
+        modal="text", payload="some text", collection="kb", tenant_id="test"
+    )
     service.caption_image = AsyncMock(return_value="image caption")
-    await pipeline.ingest(modal="image", payload=b"img", collection="kb")
+    await pipeline.ingest(
+        modal="image", payload=b"img", collection="kb", tenant_id="test"
+    )
 
-    only_images = await pipeline.query("text", collection="kb", modal_filter="image")
+    only_images = await pipeline.query(
+        "text", collection="kb", modal_filter="image", tenant_id="test"
+    )
     assert all(r.modal == "image" for r in only_images)

@@ -21,6 +21,8 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 from uuid import uuid4
 
+from src.backend.services.ai.rag.multimodal._tenant import _resolve_effective_tenant_id
+
 if TYPE_CHECKING:
     pass
 
@@ -125,34 +127,52 @@ class MultimodalRAGService:
         return feature_flags.multimodal_rag_enabled
 
     async def ingest_text(
-        self, content: str, metadata: dict[str, Any] | None = None
+        self,
+        content: str,
+        metadata: dict[str, Any] | None = None,
+        *,
+        tenant_id: str | None = None,
     ) -> MultimodalEntry:
         """Добавляет текстовый документ в multimodal store.
+
+        # B-11 fix (cycle 37): tenant_id kwarg → stamp ``metadata["tenant_id"]``
+        # для post-filter изоляции на retrieve.
 
         При отключённом feature-flag возвращает entry без записи в store.
 
         Args:
             content: Текстовое содержимое.
             metadata: Произвольные метаданные.
+            tenant_id: Опциональный tenant-тег для metadata.
 
         Returns:
             MultimodalEntry с заполненным embedding.
         """
+        meta = dict(metadata or {})
+        if tenant_id:
+            meta["tenant_id"] = tenant_id
         entry = MultimodalEntry(
             entry_id=str(uuid4()),
             modality="text",
             content=content,
             embedding=_dummy_embedding(content),
-            metadata=metadata or {},
+            metadata=meta,
         )
         if self._is_enabled():
             self._store[entry.entry_id] = entry
         return entry
 
     async def ingest_image(
-        self, content: bytes, metadata: dict[str, Any] | None = None
+        self,
+        content: bytes,
+        metadata: dict[str, Any] | None = None,
+        *,
+        tenant_id: str | None = None,
     ) -> MultimodalEntry:
         """Добавляет изображение в multimodal store.
+
+        # B-11 fix (cycle 37): tenant_id kwarg → stamp ``metadata["tenant_id"]``
+        # для post-filter изоляции на retrieve.
 
         В production заменяется на CLIP-embedder (lazy-import).
         При отключённом feature-flag возвращает entry без записи в store.
@@ -160,25 +180,36 @@ class MultimodalRAGService:
         Args:
             content: Бинарное содержимое изображения (PNG/JPEG/WebP и др.).
             metadata: Произвольные метаданные (filename, mime_type и т.п.).
+            tenant_id: Опциональный tenant-тег для metadata.
 
         Returns:
             MultimodalEntry с заполненным dummy embedding.
         """
+        meta = dict(metadata or {})
+        if tenant_id:
+            meta["tenant_id"] = tenant_id
         entry = MultimodalEntry(
             entry_id=str(uuid4()),
             modality="image",
             content=content,
             embedding=_dummy_embedding(content),
-            metadata=metadata or {},
+            metadata=meta,
         )
         if self._is_enabled():
             self._store[entry.entry_id] = entry
         return entry
 
     async def ingest_audio(
-        self, content: bytes, metadata: dict[str, Any] | None = None
+        self,
+        content: bytes,
+        metadata: dict[str, Any] | None = None,
+        *,
+        tenant_id: str | None = None,
     ) -> MultimodalEntry:
         """Добавляет аудиофайл в multimodal store.
+
+        # B-11 fix (cycle 37): tenant_id kwarg → stamp ``metadata["tenant_id"]``
+        # для post-filter изоляции на retrieve.
 
         В production: Whisper транскрибирует аудио → text-embedding.
         При отключённом feature-flag возвращает entry без записи в store.
@@ -186,16 +217,20 @@ class MultimodalRAGService:
         Args:
             content: Бинарное содержимое аудиофайла (WAV/MP3/OGG и др.).
             metadata: Произвольные метаданные (duration_s, codec и т.п.).
+            tenant_id: Опциональный tenant-тег для metadata.
 
         Returns:
             MultimodalEntry с заполненным dummy embedding.
         """
+        meta = dict(metadata or {})
+        if tenant_id:
+            meta["tenant_id"] = tenant_id
         entry = MultimodalEntry(
             entry_id=str(uuid4()),
             modality="audio",
             content=content,
             embedding=_dummy_embedding(content),
-            metadata=metadata or {},
+            metadata=meta,
         )
         if self._is_enabled():
             self._store[entry.entry_id] = entry
@@ -206,8 +241,13 @@ class MultimodalRAGService:
         query: str | bytes,
         modality_filter: list[str] | None = None,
         top_k: int = 10,
+        *,
+        tenant_id: str | None = None,
     ) -> list[MultimodalEntry]:
         """Возвращает top-K записей, наиболее близких к query.
+
+        # B-11 fix (cycle 37): tenant_id kwarg + defence-in-depth post-filter
+        # через ``entry.metadata.get("tenant_id") == effective_tenant``.
 
         При отключённом feature-flag возвращает пустой список.
 
@@ -216,12 +256,16 @@ class MultimodalRAGService:
             modality_filter: Список модальностей для ограничения поиска
                 (например, ``["text", "image"]``). При None — поиск по всем.
             top_k: Максимальное количество возвращаемых записей.
+            tenant_id: Tenant-фильтр (``None`` → fallback на
+                ``TenantContext``; ``""`` → явный opt-out legacy).
 
         Returns:
             Список MultimodalEntry, упорядоченный по убыванию cosine similarity.
         """
         if not self._is_enabled():
             return []
+
+        effective_tenant = _resolve_effective_tenant_id(tenant_id)
 
         query_embedding = _dummy_embedding(query)
 
@@ -230,6 +274,12 @@ class MultimodalRAGService:
             for entry in self._store.values()
             if modality_filter is None or entry.modality in modality_filter
         )
+
+        # Defence-in-depth post-filter: drop entries с чужим tenant_id.
+        if effective_tenant:
+            candidates = (
+                e for e in candidates if e.metadata.get("tenant_id") == effective_tenant
+            )
 
         scored = sorted(
             candidates,

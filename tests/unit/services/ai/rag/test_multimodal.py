@@ -44,7 +44,7 @@ async def test_multimodal_skips_when_flag_off() -> None:
     assert entry.modality == "text"
     assert len(svc._store) == 0
 
-    results = await svc.retrieve("hello world")
+    results = await svc.retrieve("hello world", tenant_id="test")
     assert results == []
 
 
@@ -116,11 +116,13 @@ async def test_retrieve_filters_by_modality() -> None:
     """retrieve с modality_filter=['text'] возвращает только text-записи."""
     svc = _make_service(enabled=True)
 
-    text_entry = await svc.ingest_text("документ о кредитах", {})
-    await svc.ingest_image(b"\xff\xd8\xff" + b"\x00" * 16, {})  # jpeg-имитация
-    await svc.ingest_audio(b"\x00" * 32, {})
+    text_entry = await svc.ingest_text("документ о кредитах", {}, tenant_id="test")
+    await svc.ingest_image(
+        b"\xff\xd8\xff" + b"\x00" * 16, {}, tenant_id="test"
+    )  # jpeg-имитация
+    await svc.ingest_audio(b"\x00" * 32, {}, tenant_id="test")
 
-    results = await svc.retrieve("кредиты", modality_filter=["text"])
+    results = await svc.retrieve("кредиты", modality_filter=["text"], tenant_id="test")
 
     assert len(results) == 1
     assert results[0].entry_id == text_entry.entry_id
@@ -136,9 +138,9 @@ async def test_retrieve_top_k() -> None:
     svc = _make_service(enabled=True)
 
     for i in range(5):
-        await svc.ingest_text(f"документ {i}", {"index": i})
+        await svc.ingest_text(f"документ {i}", {"index": i}, tenant_id="test")
 
-    results = await svc.retrieve("документ", top_k=2)
+    results = await svc.retrieve("документ", top_k=2, tenant_id="test")
 
     assert len(results) == 2
     # Все результаты — MultimodalEntry
