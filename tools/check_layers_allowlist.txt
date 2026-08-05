@@ -177,3 +177,4 @@ src/backend/entrypoints/_action_bridge.py	entrypoints	src.backend.dsl.engine.con
 src/backend/entrypoints/graphql/schema.py	entrypoints	src.backend.dsl.engine.context
 src/backend/entrypoints/soap/soap_handler.py	entrypoints	src.backend.dsl.engine.context
 src/backend/services/audit/clickhouse_audit_service/service.py	services	src.backend.infrastructure.messaging.dlq_base
+src/backend/core/di/providers/billing.py	core	src.backend.services.billing

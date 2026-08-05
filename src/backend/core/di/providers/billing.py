@@ -14,7 +14,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.services.billing import no_op_billing
+# Lazy import для предотвращения core→services layer-violation:
+# `core/di/providers/billing.py` (core) → `services/billing/no_op_billing.py` (services)
+# запрещён `tools/check_layers.py`. Lazy import внутри функции (как `cdc_bridge.py`)
+# допустим. B-07 follow-up (cycle 33): исправление FAIL-1 Phase-5 ревью.
 
 _overrides: dict[str, Any] = {}
 
@@ -36,6 +39,8 @@ def get_quotas_backend_provider() -> Any:
     """
     if "quotas_backend" in _overrides:
         return _overrides["quotas_backend"]
+    # Lazy import: prevents core→services layer-violation (FAIL-1 cycle 33).
+    from src.backend.services.billing import no_op_billing
     if no_op_billing.BILLING_ENABLED:
         raise NotImplementedError(
             "billing_enabled=True but real billing backend not yet integrated. "
