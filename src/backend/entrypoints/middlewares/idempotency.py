@@ -10,6 +10,13 @@
   не обработаются одновременно (второй получит 409 Conflict в течение
   ``pending_ttl`` секунд).
 
+D-AUDIT-103 fix (S183 W1.3): при недоступности Redis (``ConnectionError`` /
+``TimeoutError`` / ``OSError``) ``_LazyRedisProxy`` возвращает degraded-ответы
+вместо проброса исключения — middleware не возвращает 5xx. ``pending_ttl``
+auto-release (D-LESSON-3) при этом не нарушается: когда Redis возвращается,
+NX-семантика возобновляется с чистого состояния (никакого fallback-стейта
+не персистится внутри proxy).
+
 См. V5 в ``CLAUDE.md`` (Sprint 0 #12, security constraint).
 """
 
@@ -35,6 +42,20 @@ __all__ = (
 IDEMPOTENCY_HEADER = "Idempotency-Key"
 
 _logger = get_logger(__name__)
+
+# D-AUDIT-103: исключения, при которых proxy возвращает degraded-ответы.
+# Ponytail: список узкий — только сетевые/IO сбои Redis, чтобы не маскировать
+# баги (TypeError, ValueError и RuntimeError продолжают пробрасываться).
+try:
+    import redis.exceptions as _redis_exceptions
+
+    _REDIS_DOWN_EXC: tuple[type[BaseException], ...] = (
+        _redis_exceptions.ConnectionError,
+        _redis_exceptions.TimeoutError,
+        OSError,
+    )
+except ImportError:  # pragma: no cover — redis обязателен в prod
+    _REDIS_DOWN_EXC = (OSError,)
 
 
 class RedisNxBackend(Backend):
@@ -157,6 +178,14 @@ class _LazyRedisProxy:
     Нужен потому, что ``setup_middlewares`` выполняется до ``app.startup``,
     когда ``redis_client`` ещё не инициализирован. На каждом ``__call__``
     обращается к DI-провайдеру (singleton-кеш внутри провайдера).
+
+    D-AUDIT-103 fix (S183 W1.3): при недоступности Redis (ConnectionError /
+    TimeoutError / OSError) прокси возвращает degraded-ответы вместо
+    проброса исключения — middleware отдаёт 200 OK как при первом запросе,
+    а не 5xx. ``pending_ttl`` auto-release (D-LESSON-3) при этом
+    не нарушается: когда Redis возвращается, NX-семантика возобновляется
+    с чистого состояния (никакого fallback-стейта не сохраняется внутри
+    proxy, поэтому нет рассинхрона).
     """
 
     def __init__(self, resolver: Any) -> None:
@@ -169,12 +198,40 @@ class _LazyRedisProxy:
         return self._resolver()
 
     async def get(self, key: str) -> bytes | None:
-        return await self._client().get(key)
+        try:
+            return await self._client().get(key)
+        except _REDIS_DOWN_EXC as exc:
+            _logger.warning(
+                "IdempotencyMiddleware: Redis недоступен (get key=%s), degraded: %s",
+                key,
+                exc,
+            )
+            return None
 
     async def set(
         self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
     ) -> bool | None:
-        return await self._client().set(key, value, ex=ex, nx=nx)
+        try:
+            return await self._client().set(key, value, ex=ex, nx=nx)
+        except _REDIS_DOWN_EXC as exc:
+            _logger.warning(
+                "IdempotencyMiddleware: Redis недоступен (set key=%s), degraded: %s",
+                key,
+                exc,
+            )
+            # Degraded: возвращаем True (как успешный SET). При nx=True
+            # это означает «не существует» → первый запрос пройдёт, дубль
+            # получит второй True (treated as fresh, NOT 5xx). Когда Redis
+            # возвращается — NX-логика возобновляется с чистого состояния.
+            return True
 
     async def delete(self, *keys: str) -> int:
-        return await self._client().delete(*keys)
+        try:
+            return await self._client().delete(*keys)
+        except _REDIS_DOWN_EXC as exc:
+            _logger.warning(
+                "IdempotencyMiddleware: Redis недоступен (delete keys=%s), degraded: %s",
+                keys,
+                exc,
+            )
+            return 0
