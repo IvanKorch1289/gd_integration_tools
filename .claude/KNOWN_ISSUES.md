@@ -1686,6 +1686,77 @@ Agent с `isolation: "worktree"`, делает intermediate commits после �
 **Дата**: 2026-05-28
 **Commits**: `99cc4945` — fix(arch): устранить 4 layer violations (core → infrastructure imports)
 
+---
+
+## S181 P0-cycle carryover (2026-08-05) — 3 items closed
+
+> Методологическая заметка: продолжение Sprint 36 P0-batch
+> (см. multi-agent audit `docs/compose/reports/2026-08-05-multi-agent-domain-audit.md`).
+> Каждый fix верифицирован через file:line + regression-тест.
+
+### ✅ Закрыто с верификацией кода
+
+- ✅ **P0-#8 (ToolsPolicy glob lie)**: `src/backend/core/ai/policy/enforcer/tools_policy.py:73-78`
+  использовал ``tool_name in spec.whitelist`` (exact match) при том что
+  docstring (``check_tool_allowed``:65-68) и ``filter_tools_by_policy``:157-159
+  эксплицитно требовали glob (``db.*`` должен match ``db.read``).
+  Operators, писавшие ``whitelist: ["db.*"]``, получали silent over-deny
+  всех tools. Заменено на ``any(fnmatch.fnmatchcase(tool_name, p) for p in spec.whitelist)``
+  — case-sensitive glob (`*`, `?`, `[seq]`), precedent уже есть в
+  ``core/ai/policy/resolver.py:220``. Backward-compat: литеральные patterns
+  (без glob-символов) продолжают работать как exact-match через fnmatch.
+  **Commits**: `a94a8b70`. **Тесты**: 12 новых
+  (``tests/unit/core/ai/test_tool_policy_glob.py``) — glob_whitelist,
+  glob_blacklist, backward_compat_literal_name, case_sensitive,
+  question_mark_wildcard, brackets_range, combined priority.
+
+- ✅ **P0-#10 (Memcached silent delete_pattern foot-gun)**: silent warning
+  + return-no-op на Memcached превращён в ``raise NotImplementedError``
+  с explicit message о Memcached protocol limitations (нет KEYS/SCAN).
+  ``services/cache/facade.py:162-165`` уже имеет try/except для
+  ``backend.delete_pattern`` — catches exception и degraded-mode
+  continuation. Tenant wrapper ``tenant_wrapper.py:129`` propagates
+  exception к caller (consistent с другими error paths).
+  **Commits**: `a93570e9`. **Тесты**: 2 новых минимальных + 1 updated
+  (``tests/unit/cache/backends/test_memcached_delete_pattern.py`` +
+  обновление ``tests/unit/cache/backends/test_memcached.py`` для
+  match нового exception-based behaviour).
+
+- ✅ **P0-#9 (start_span no-op shim → real OTel SDK)**: ``core/observability/correlation.py:start_span:120``
+  был hard-coded ``yield None`` с явным комментарием "carryover,
+  см. ADR-NEW-21" — проект не подключил OTel SDK в span layer
+  (observability audit фиксировал trace_id gap в audit events).
+  Заменено на ``opentelemetry.trace.get_tracer().start_as_current_span``
+  call, обёрнутый в try/except (ImportError + AttributeError → yield None
+  fallback). При configured ``TracerProvider`` возвращает real OTel Span;
+  при отсутствии SDK или non-initialized provider — backward-compat
+  no-op. Полный trace_id→audit propagation требует дополнительный wiring
+  в ``services/audit/workflow_audit_sink.py`` — отдельный PR.
+  **Commits**: `fb16f5d4`. **Тесты**: 5 новых
+  (``tests/unit/core/observability/test_start_span.py``) — fall-back path,
+  attribute passing, None attributes, import-error fallback, real SDK path.
+
+### Чего этот цикл НЕ закрывает
+
+- **S-L7-2 (audit trace_id binding)**: P0-#9 закрыл SDK wiring, но
+  ``services/audit/workflow_audit_sink.py:152`` всё ещё defaults
+  ``trace_id=None``. Полная trace_id propagation требует audit-event
+  binding через ``correlation.trace_id_var`` или via Span context
+  в audit-event constructor. Следующий carryover.
+- **S-L7-5 (cross-service trace_id propagation в Kafka headers)**:
+  остаётся; wiring вложенный, приоритет после S178 audit backlog.
+- **10+ других P0 из multi-agent audit (#1-#26)**: остаются в
+  pre-prod backlog; см. ``docs/compose/reports/2026-08-05-multi-agent-domain-audit.md``.
+
+### Проверки
+
+- 19/19 new regression tests pass (12 + 2 + 5).
+- 4/4 existing test_tool_policy_tool_name.py still pass (backward-compat).
+- ruff + mypy + check_layers + check_docstrings clean across all 6 changed files.
+- Frontend (Streamlit): ноль regression — ``check_tool_allowed`` не
+  используется в ``src/frontend/streamlit_app/`` (AI tool dispatch только
+  через backend ``services/ai/gateway_orchestrator_mixin.py`` + facade).
+
 ### Исправлено
 
 1. **`core/resilience/rate_limiter.py`** — TYPE_CHECKING guard + lazy `__getattr__` для re-export RedisRateLimiter из infrastructure
