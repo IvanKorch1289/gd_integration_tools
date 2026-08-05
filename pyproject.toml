@@ -22,8 +22,11 @@ dependencies = [
     "argon2-cffi>=23.1.0,<24.0.0",
     # S183: cryptography for mTLS / x509 cert verification (core/auth/mtls_backend.py).
     # Раньше был только в mypy.overrides — теперь primary dep.
-    # Round 69: upper bound <49.0.0 → <50.0.0 для фикса PYSEC-2026-3553/3554
-    # (49.0.0+). PYSEC-2026-3552 остаётся (фикс в 50.0.0).
+    # Round 70: upper bound <50.0.0 (NOT <51.0.0) — cryptography 50.0.0+ имеет
+    # только cp314-cp314**t** (free-threaded) wheels, проект использует
+    # обычный CPython 3.14 (Py_GIL_DISABLED=0). pip-audit показывает 1
+    # remaining CVE (PYSEC-2026-3552, fix в 50.0.0) — не закрыт до
+    # выхода cp314-cp314 wheel для cryptography 50+. MONITOR.
     "cryptography>=42.0.0,<50.0.0",
     "aiosmtplib>=5.1.1,<6.0.0",
     "sqlalchemy-utils>=0.41.2,<1.0.0",
