@@ -150,8 +150,10 @@ class TestExceptionHandlerMiddleware:
         assert start["status"] == 500
         body = _body_message(send)
         parsed = json.loads(body["body"].decode("utf-8"))
-        assert "Internal server error" in parsed["message"]
-        assert parsed["hasErrors"] is True
+        # Cycle 34 (B-12 fix): новый envelope с error_id (uuid4).
+        assert parsed["code"] == "internal_error"
+        assert parsed["detail"] == "Internal server error"
+        assert "error_id" in parsed
 
     @pytest.mark.asyncio
     async def test_correlation_and_request_id_injected(
