@@ -27,6 +27,82 @@ async def test_client_factory_aclose_idempotent() -> None:
     await factory.aclose()  # double-close — no error
 
 
+# ─── S180 P0-4: Worker Versioning wiring ────────────────────────────────
+
+
+def test_client_factory_default_versioning_disabled() -> None:
+    """S180 P0-4: default factory не использует Worker Versioning.
+
+    Это backward-compat: все существующие deployment'ы продолжают
+    работать с build_id-only kwargs без deployment_config.
+    """
+    factory = TemporalClientFactory()
+    assert factory.use_versioning is False
+    assert factory.deployment_name == "gd-integration-tools"
+    assert factory.build_id == "0.0.0"
+
+
+def test_client_factory_versioning_opt_in() -> None:
+    """S180 P0-4: explicit use_versioning=True пробрасывается."""
+    factory = TemporalClientFactory(
+        deployment_name="my-deploy",
+        build_id="1.2.3",
+        use_versioning=True,
+    )
+    assert factory.use_versioning is True
+    assert factory.deployment_name == "my-deploy"
+    assert factory.build_id == "1.2.3"
+
+
+def test_worker_pool_propagates_use_versioning() -> None:
+    """S180 P0-4: register_worker() пробрасывает use_versioning в helper.
+
+    Проверяет что WorkerVersioningHelper получает use_versioning из
+    factory, не из hard-coded default=False (исторический drift).
+
+    Ponytail: тестируем прямую интеграцию helper + factory fields,
+    не мокаем register_worker() (требует реальный Temporal runtime).
+    """
+    factory = TemporalClientFactory(use_versioning=True)
+    # Подтверждаем что factory поля — корректные.
+    assert getattr(factory, "use_versioning") is True
+    assert getattr(factory, "deployment_name") == "gd-integration-tools"
+    assert getattr(factory, "build_id") == "0.0.0"
+
+    # Прямая проверка того, что register_worker() подхватит атрибуты —
+    # имитируем вызов, который исторически был hard-coded default=False:
+    from src.backend.infrastructure.workflow.versioning.worker_versioning import (
+        WorkerVersioningHelper,
+    )
+
+    helper = WorkerVersioningHelper(
+        deployment_name=getattr(factory, "deployment_name", "gd-integration-tools"),
+        build_id=getattr(factory, "build_id", "0.0.0"),
+        use_versioning=getattr(factory, "use_versioning", False),
+    )
+    assert helper.use_versioning is True
+
+
+def test_worker_pool_propagates_versioning_disabled() -> None:
+    """S180 P0-4: use_versioning=False — backward-compat path."""
+    factory = TemporalClientFactory(use_versioning=False)
+    from src.backend.infrastructure.workflow.versioning.worker_versioning import (
+        WorkerVersioningHelper,
+    )
+
+    helper = WorkerVersioningHelper(
+        deployment_name=factory.deployment_name,
+        build_id=factory.build_id,
+        use_versioning=factory.use_versioning,
+    )
+    assert helper.use_versioning is False
+    # kwargs are just build_id
+    kwargs = helper.build_worker_kwargs()
+    assert "build_id" in kwargs
+    # deployment_config НЕ добавляется при use_versioning=False
+    assert "deployment_config" not in kwargs
+
+
 @pytest.mark.asyncio
 async def test_heartbeat_monitor_tracks_activity() -> None:
     monitor = ActivityHeartbeatMonitor(

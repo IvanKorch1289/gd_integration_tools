@@ -63,7 +63,24 @@ class TemporalClientFactory:
         pki_role: str = "temporal-worker",
         pki_common_name: str = "temporal-worker",
         pki_ttl: str = "24h",
+        deployment_name: str = "gd-integration-tools",
+        build_id: str = "0.0.0",
+        use_versioning: bool = False,
     ) -> None:
+        """Инициализирует фабрику Temporal client'ов.
+
+        Args:
+            target_host: ``host:port`` Temporal frontend.
+            tls: dict с TLS config или None.
+            recycle_seconds: TTL client'а.
+            pki_backend/pki_role/pki_common_name/pki_ttl: PKI параметры.
+            deployment_name: S180 P0-4 — имя deployment для Worker Versioning.
+            build_id: S180 P0-4 — Build ID этой версии worker.
+            use_versioning: S180 P0-4 — включить Worker Versioning
+                (см. core.config.features.temporal_worker_versioning_enabled).
+                Default False — backward-compat; опт-ин через explicit
+                factory-args или settings.
+        """
         self._target = target_host
         self._tls = tls
         self._recycle = recycle_seconds
@@ -71,6 +88,11 @@ class TemporalClientFactory:
         self._pki_role = pki_role
         self._pki_common_name = pki_common_name
         self._pki_ttl = pki_ttl
+        # S180 P0-4: Worker Versioning fields — propagated to
+        # WorkerVersioningHelper on each register_worker() call.
+        self.deployment_name = deployment_name
+        self.build_id = build_id
+        self.use_versioning = use_versioning
         self._cache: dict[str, _ClientCacheEntry] = {}
         self._lock = asyncio.Lock()
 
@@ -250,12 +272,16 @@ class TemporalWorkerPool:
 
             # Worker Versioning (S171 M10 P0, D172): kwargs из helper.
             # При use_versioning=False (default) — backward-compat: kwargs пустые.
+            # S180 P0-4: use_versioning теперь пробрасывается из factory.
             from src.backend.infrastructure.workflow.versioning.worker_versioning import (
                 WorkerVersioningHelper,
             )
             versioning_helper = WorkerVersioningHelper(
-                deployment_name=getattr(self._factory, "deployment_name", "gd-integration-tools"),
+                deployment_name=getattr(
+                    self._factory, "deployment_name", "gd-integration-tools"
+                ),
                 build_id=getattr(self._factory, "build_id", "0.0.0"),
+                use_versioning=getattr(self._factory, "use_versioning", False),
             )
             worker_kwargs = versioning_helper.build_worker_kwargs()
 
