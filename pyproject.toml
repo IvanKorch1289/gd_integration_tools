@@ -535,11 +535,10 @@ dev = [
     "py-spy>=0.4.0,<1.0.0",
     "grpcio-tools>=1.70.0,<2.0.0",
     "ruff>=0.15.10,<1.0.0",
-    "sphinx>=9.1.0,<10.0.0",
-    "sphinx-autoapi>=3.3.2,<4.0.0",
-    "pydata-sphinx-theme>=0.16.0,<1.0.0",
-    "myst-parser>=5.0.0,<6.0.0",
-    "sphinx-design>=0.6,<1.0",
+    # Round 74: sphinx dev-deps удалены — B2 (M10.2) мигрировал docs на mkdocs
+    # canonical, но sphinx deps оставались как R5.2 leftover. docs-publish.yml
+    # (mkdocs + mike) — canonical; docs.yml (sphinx) удалён в этом commit.
+    # Mkdocs deps в [project.optional-dependencies].docs.
     "schemathesis>=4.15.2,<5.0.0",
     "python-semantic-release>=10.5.3,<11.0.0",
     "detect-secrets>=1.5.0,<2.0.0",
@@ -563,8 +562,6 @@ dev = [
     "pip-audit>=2.7,<3",
     # К5 (Wave K5/docs): Vale-совместимый prose lint.
     "proselint>=0.14,<1",
-    "sphinx-copybutton>=0.5,<1",
-    "sphinx-tabs>=3.4,<4",
     # K3 S6 [wave:s6/k3-dsl-linter-lsp]: LSP-сервер для DSL route.toml + *.dsl.yaml.
     # pygls — pure-Python LSP, совместим с 3.14; зависимость lsprotocol тянется автоматом.
     # S16 K1 W4 (gate-w0-ops-reorg-smoke): унификация с [lsp]-extra pygls>=2.0.0.
