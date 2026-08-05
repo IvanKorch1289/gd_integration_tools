@@ -1031,7 +1031,12 @@ markers = [
     "e2e: end-to-end multi-protocol action tests",
     "perf: performance benchmarks (msgspec, plugin_sandbox)",
     "property: hypothesis property-based tests",
-] 
+    # Round 76: pytest-timeout НЕ установлен, но @pytest.mark.timeout(N) используется
+    # в test_file_watcher.py (5 вызовов). Без регистрации marker'а --strict-markers
+    # блокирует collection всей test-file (35 tests). Регистрируем как no-op
+    # marker — Ponytail-минимальное изменение (1 строка) без добавления deps.
+    "timeout: per-test timeout marker (no-op: pytest-timeout not in dev deps)",
+]
 
 
 [tool.coverage.run]
