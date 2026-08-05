@@ -101,8 +101,12 @@ class ContinueAsNewHandler:
             list(args["input"].keys()) if isinstance(args["input"], dict) else "?",
             list(args["search_attributes"].keys()),
         )
-        # workflow.continue_as_new — Temporal API
-        workflow.continue_as_new(
-            *(args["input"],) if isinstance(args["input"], list) else (),
-            **args,
-        )
+        # B-18 fix (cycle 37): separate upsert_search_attributes from continue_as_new
+        # to avoid TypeError: temporalio.workflow.continue_as_new() does NOT accept
+        # ``search_attributes`` kwarg — это отдельный метод workflow.upsert_search_attributes().
+        # Defensive skip: пустой {} mapping Temporal raises в некоторых версиях.
+        sa = args.get("search_attributes") or {}
+        if sa:
+            workflow.upsert_search_attributes(sa)
+        # workflow.continue_as_new — Temporal API, без search_attributes
+        workflow.continue_as_new(args["input"])
