@@ -24,6 +24,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from src.backend.services.plugins import (  # noqa: F401  (smoke regression)
     ActionRegistryAdapter,
     ProcessorRegistryAdapter,
     RepositoryHookRegistry,
