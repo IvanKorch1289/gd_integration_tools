@@ -95,6 +95,30 @@ guard): `uv lock --upgrade` влияет на весь lock-tree.
 → `uv lock --upgrade-package aiohttp` → `aiohttp` больше не
 резолвится как transitive → устраняется полностью.
 
+## Round 63 followup (2026-08-04)
+
+User authorized `uv lock` (per directive 2026-08-04). Round 63 закрыл
+pyproject.toml change:
+
+* `elasticsearch[async]>=8.0,<9.0` → `elasticsearch>=8.0,<9.0` (+ комментарий)
+* `uv lock` обновлён: aiohttp больше НЕ тянется через elasticsearch.
+* Commit: `308a4e98 refactor: Round 63 - remove elasticsearch[async] extra`
+
+**Partial dedup result**: aiohttp остаётся в lock как transitive dep
+через:
+* `aiobotocore` (S3 async, core dep — canonical async S3 HTTP transport)
+* `deepeval` / `deepteam` (optional ai-eval/redteam extras)
+* `fsspec[http]` (optional filesystem http backend)
+* `python-consul2` (optional)
+* `elastic-transport[aiohttp]` (legacy default, не используется в src/)
+
+**Conclusion**: aiohttp остаётся в lock — НЕ orphan, а legitimate
+non-duplicate dep для aiobotocore (canonical async S3). Per Ponytail
+rule "не должно быть дублирующих библиотек без значительной причины":
+aiohttp не duplicate httpx в src/ (0 imports). Оба сосуществуют как
+разные транспорты для разных задач (httpx = HTTP-клиент в src/,
+aiohttp = S3-async backend в aiobotocore).
+
 ## Trade-offs
 
 | Aspect | До (aiohttp) | После (httpxasync) |
