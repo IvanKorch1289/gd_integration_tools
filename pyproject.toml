@@ -56,7 +56,14 @@ dependencies = [
     # остаётся backward-compat (pendulum.DateTime — subclass of datetime.datetime).
     "pendulum>=3.2.0,<4.0.0",
     "apscheduler>=3.11.0,<4.0.0",
-    "croniter>=2.0.0,<3.0.0",
+    # Round 72: croniter 2.0.7 → 6.2.4 (major version bump).
+    # Breaking changes: iter_occurences (typo!) removed → use croniter_range()
+    # или итерация через croniter() напрямую. Наш src/ использует ТОЛЬКО
+    # croniter(expr, base_dt, second_at_beginning=...) + .get_next(datetime) —
+    # оба API сохранены в 6.x (проверено через wheel inspection).
+    # 6.x новые features: DST-aware per-job, microsecond precision,
+    # улучшенная обработка overflow на 32-bit Python.
+    "croniter>=6.2.0,<7.0.0",
     "faststream[kafka]>=0.6.7,<1.0.0",
     "aiokafka>=0.12.0,<1.0.0",
     "grpcio>=1.70.0,<2.0.0",
