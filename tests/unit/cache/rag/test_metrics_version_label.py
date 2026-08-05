@@ -7,7 +7,6 @@ legacy-нагрузка (carry-over от pre-Sprint 2.1 deployments).
 
 from __future__ import annotations
 
-import pytest
 
 
 class TestMetricsVersionLabel:

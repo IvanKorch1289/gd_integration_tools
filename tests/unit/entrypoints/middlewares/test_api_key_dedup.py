@@ -138,7 +138,6 @@ class TestAPIKeyMiddlewarePureASGI:
         middleware = APIKeyMiddleware(app=app)
         # Excluded pattern: /health/*
 
-        import re
         from re import compile
         middleware.compiled_patterns = [compile("/health")]
 

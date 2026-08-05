@@ -26,7 +26,6 @@ def _enable_in_process_sandbox(monkeypatch: pytest.MonkeyPatch) -> None:
 
     + bypass AgentToolPolicy fail-closed (DI policy не зарегистрирован в unit-тестах).
     """
-    import os
 
     from src.backend.core.config.features import feature_flags
 
