@@ -91,13 +91,25 @@ class MemcachedBackend(CacheBackend):
             await self._client.delete(self._to_bytes(key))
 
     async def delete_pattern(self, pattern: str) -> None:
-        """Delete values matching pattern (no-op for Memcached).
+        """Delete values matching pattern (NOT supported by Memcached protocol).
+
+        Memcached не имеет KEYS/SCAN — pattern-delete структурно невозможен.
+        Вместо silent-no-op (предыдущее поведение) raise ``NotImplementedError``
+        чтобы caller знал о foot-gun и мог отреагировать.
+
+        Facade layer (``services/cache/facade.py:154``) ловит этот exception
+        и продолжает с degraded mode — silent cache invalidation был
+        опасен для multi-tenancy scenarios.
 
         Args:
-            pattern: Glob pattern (ignored, Memcached doesn't support pattern delete).
+            pattern: Glob pattern (unused — Memcached не поддерживает).
+
+        Raises:
+            NotImplementedError: always — Memcached structurally не может.
         """
-        _logger.warning(
-            "memcached: delete_pattern не поддерживается (нет KEYS/SCAN), no-op"
+        raise NotImplementedError(
+            "Memcached protocol не поддерживает pattern-delete "
+            "(нет KEYS/SCAN). Используйте Redis/KeyDB для cache invalidation."
         )
 
     async def exists(self, key: str) -> bool:

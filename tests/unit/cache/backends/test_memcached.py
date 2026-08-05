@@ -72,14 +72,19 @@ async def test_delete_multiple_keys(backend: MemcachedBackend) -> None:
     assert backend._client.delete.await_count == 3
 
 
-async def test_delete_pattern_is_noop_with_warning(
-    backend: MemcachedBackend, caplog: pytest.LogCaptureFixture
+async def test_delete_pattern_raises_not_implemented(
+    backend: MemcachedBackend,
 ) -> None:
-    """``delete_pattern`` логирует warning и не вызывает client."""
-    with caplog.at_level(logging.WARNING):
+    """``delete_pattern`` raises NotImplementedError вместо silent no-op.
+
+    S181 P0-#10 — silent warning был foot-gun (cache invalidation silently
+    игнорировалась на Memcached). Теперь fail-loud: caller знает о
+    неподдерживаемой операции и может degraded mode (см.
+    services/cache/facade.py:164 try/except).
+    """
+    with pytest.raises(NotImplementedError, match="pattern-delete"):
         await backend.delete_pattern("any:*")
     backend._client.delete.assert_not_called()
-    assert any("delete_pattern" in r.message for r in caplog.records)
 
 
 async def test_exists_true(backend: MemcachedBackend) -> None:
