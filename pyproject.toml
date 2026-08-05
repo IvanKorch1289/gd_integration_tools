@@ -1036,6 +1036,10 @@ markers = [
     # блокирует collection всей test-file (35 tests). Регистрируем как no-op
     # marker — Ponytail-минимальное изменение (1 строка) без добавления deps.
     "timeout: per-test timeout marker (no-op: pytest-timeout not in dev deps)",
+    # Round 77: pytest-benchmark НЕ установлен, но @pytest.mark.benchmark
+    # используется в tests/perf/*.py (2 файла). Без регистрации блокирует
+    # collection всего tests/perf/ (15+ tests). Регистрируем как no-op.
+    "benchmark: pytest-benchmark marker (no-op: pytest-benchmark not in dev deps)",
 ]
 
 
