@@ -1,5 +1,12 @@
 """CSRF Protection Middleware (S184, cycle 57 pure ASGI).
 
+B-04 fix (cycle 33): default cookie ужесточен — ``httponly=True``,
+``samesite=strict``, ``secure=settings.app.environment == "production"``.
+Ранее httponly=False (cookie readable из JS) и SameSite=lax (разрешал
+GET-initiated cross-site CSRF на state-changing endpoints при наличии
+метода GET-→-POST redirect). Теперь ``strict`` блокирует любой
+cross-origin запрос с cookie.
+
 Защищает от Cross-Site Request Forgery атак для cookie-based auth.
 Критично для банковской шины где используются cookies (Express sessions).
 
@@ -168,9 +175,13 @@ class CSRFMiddleware:
                 # Auto-issue CSRF cookie (S192) если нет.
                 if not cookie_already_present:
                     token = secrets.token_urlsafe(32)
-                    # S202 audit fix: secure от deployment setting.
-                    cookie_secure = getattr(
-                        getattr(settings, "secure", None), "cookie_secure", True
+                    # B-04 fix (cycle 33): secure от deployment setting
+                    # + httponly=True (cookie не readable из JS, защита
+                    # от XSS-based token theft) + SameSite=strict (НЕ lax —
+                    # блокирует cross-origin GET-initiated CSRF).
+                    is_production = (
+                        getattr(getattr(settings, "app", None), "environment", "")
+                        == "production"
                     )
                     headers.append(
                         (
@@ -178,8 +189,8 @@ class CSRFMiddleware:
                             (
                                 f"{self._cookie_name}={token}; "
                                 f"Max-Age=3600; Path=/; "
-                                f"SameSite=lax"
-                                + ("; Secure" if cookie_secure else "")
+                                f"HttpOnly; SameSite=strict"
+                                + ("; Secure" if is_production else "")
                             ).encode("latin-1"),
                         )
                     )

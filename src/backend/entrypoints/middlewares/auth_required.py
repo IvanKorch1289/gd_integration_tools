@@ -55,12 +55,12 @@ DEFAULT_PUBLIC_PATH_PREFIXES: tuple[str, ...] = (
     "/openapi.json",
     "/static",
     "/favicon.ico",
-    # S171: auth endpoints must be public for Login page to work.
-    # Login page needs to call /api/v1/auth/methods to show available
-    # methods BEFORE user is authenticated. Without these, /Login crashes
-    # with traceback visible to user.
+    # B-04 fix (cycle 33): /api/v1/auth/login удалён из public allowlist.
+    # Step-up auth (LoginStepUpMiddleware) требует X-Step-Up-Token header
+    # и rate-limits 10 attempts/5min per IP — login НЕ может быть public.
+    # /api/v1/auth/methods остаётся public (Login page нужны available
+    # methods до аутентификации).
     "/api/v1/auth/methods",
-    "/api/v1/auth/login",
 )
 
 
