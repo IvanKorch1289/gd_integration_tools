@@ -22,9 +22,9 @@ dependencies = [
     "argon2-cffi>=23.1.0,<24.0.0",
     # S183: cryptography for mTLS / x509 cert verification (core/auth/mtls_backend.py).
     # Раньше был только в mypy.overrides — теперь primary dep.
-    # Round 68: upper bound <47.0.0 → <49.0.0 для фикса GHSA-537c-gmf6-5ccf
-    # (48.0.1+). PYSEC-2026-3552/3553/3554 в 49-50.0.0 — отдельный PR.
-    "cryptography>=42.0.0,<49.0.0",
+    # Round 69: upper bound <49.0.0 → <50.0.0 для фикса PYSEC-2026-3553/3554
+    # (49.0.0+). PYSEC-2026-3552 остаётся (фикс в 50.0.0).
+    "cryptography>=42.0.0,<50.0.0",
     "aiosmtplib>=5.1.1,<6.0.0",
     "sqlalchemy-utils>=0.41.2,<1.0.0",
     "passlib>=1.7.4,<2.0.0",  # S171: required by sqlalchemy_utils PasswordType in 20036813ff7c migration
