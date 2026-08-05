@@ -96,14 +96,12 @@ class DeadLetterProcessor(BaseProcessor):
         stage2_error: BaseException | None = None
         if self._dlq_path:
             try:
-                import importlib
-
+                # B-11 follow-up (cycle 33): use capability-checked facade
+                # instead of raw importlib (FAIL-2 Phase-5 ревью).
+                from src.backend.core.audit.facade import get_jsonl_backend
                 from src.backend.core.interfaces.audit import AuditRecord
 
-                _jsonl_mod = importlib.import_module(
-                    "src.backend.infrastructure.audit.jsonl_audit"
-                )
-                _backend = _jsonl_mod.JsonlAuditBackend(self._dlq_path)
+                _backend = get_jsonl_backend(self._dlq_path)
                 _record = AuditRecord(
                     {
                         "event": "dsl.dlq",
