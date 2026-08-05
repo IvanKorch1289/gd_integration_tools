@@ -52,9 +52,7 @@ def _find_bare_aigateway_calls(tree: ast.Module) -> list[tuple[int, int, str]]:
             continue
         func = node.func
         name: str | None = None
-        if isinstance(func, ast.Name) and func.id == "AIGateway":
-            name = "AIGateway"
-        elif isinstance(func, ast.Attribute) and func.attr == "AIGateway":
+        if isinstance(func, ast.Name) and func.id == "AIGateway" or isinstance(func, ast.Attribute) and func.attr == "AIGateway":
             name = "AIGateway"
         if name is None:
             continue
