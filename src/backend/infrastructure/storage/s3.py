@@ -138,15 +138,15 @@ class S3ObjectStorage(ObjectStorage):
 
     @property
     def _client_kwargs(self) -> dict[str, Any]:
-        return dict(
-            service_name="s3",
-            endpoint_url=self._settings.endpoint,
-            aws_access_key_id=self._settings.access_key,
-            aws_secret_access_key=self._settings.secret_key,
-            config=self._boto_config(),
-            use_ssl=self._settings.use_ssl,
-            verify=self._settings.verify,
-        )
+        return {
+            "service_name": "s3",
+            "endpoint_url": self._settings.endpoint,
+            "aws_access_key_id": self._settings.access_key,
+            "aws_secret_access_key": self._settings.secret_key,
+            "config": self._boto_config(),
+            "use_ssl": self._settings.use_ssl,
+            "verify": self._settings.verify,
+        }
 
     def _open(self) -> _S3Session:
         """Вернуть async context manager для s3 client (для ``async with``)."""

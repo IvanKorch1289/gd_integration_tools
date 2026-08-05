@@ -182,7 +182,7 @@ class DataFormatsMixin:
         hdrs = [str(h) if h is not None else f"col_{i}" for i, h in enumerate(rows[0])]
         out: list[dict[str, Any]] = []
         for r in rows[1:]:
-            out.append({h: v for h, v in zip(hdrs, r, strict=False)})
+            out.append(dict(zip(hdrs, r, strict=False)))
         return out
 
     def _to_parquet(self, data: Any) -> bytes:

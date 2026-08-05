@@ -161,7 +161,7 @@ class ServiceSchemaRegistry:
         итерации даже при конкурентной перезаписи.
         """
         bucket = self._by_kind[kind]
-        names = sorted(list(bucket.keys()))
+        names = sorted(bucket.keys())
         result = [bucket[n] for n in names if n in bucket]
 
         if self._metrics is not None:

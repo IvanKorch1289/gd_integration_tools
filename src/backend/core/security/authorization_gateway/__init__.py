@@ -131,7 +131,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
                 resource=resource,
                 action=action,
                 correlation_id=correlation_id,
-                reasons=tuple([*reasons, reason]),
+                reasons=(*reasons, reason),
             )
 
         # 2. Доп. policies (Casbin / OPA / custom) — short-circuit на deny.

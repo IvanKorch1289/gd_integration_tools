@@ -113,7 +113,7 @@ class _FeatureRuntime:
     outcomes: deque[bool] = field(default_factory=lambda: deque(maxlen=100))
 
     def __post_init__(self) -> None:
-        if not self.outcomes.maxlen == self.feature.window_size:
+        if self.outcomes.maxlen != self.feature.window_size:
             self.outcomes = deque(self.outcomes, maxlen=self.feature.window_size)
 
 
