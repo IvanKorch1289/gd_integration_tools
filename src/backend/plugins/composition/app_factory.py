@@ -1,3 +1,6 @@
+import ast
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
@@ -304,3 +307,68 @@ def _configure_root_endpoint(app: FastAPI) -> None:
         report = await get_health_aggregator().check_all()
         ok = report.get("status") == "ok"
         return JSONResponse(status_code=200 if ok else 503, content=report)
+
+
+def _bootstrap_workflow_registry() -> None:
+    """Сканирует ``src/backend/`` на ``@workflow.defn`` и регистрирует найденные классы.
+
+    B-10 fix (cycle 33): Temporal ``Replayer`` требует ``Sequence[type]``
+    workflow-классов, а :meth:`WorkflowBackend.replay` принимает
+    ``workflow_name: str``. Реестр
+    :data:`src.backend.core.workflow_registry.workflow_registry`
+    даёт мост имя→класс.
+
+    Скан через ``ast``: ``@workflow.defn`` декоратор при импорте модуля
+    может иметь побочные эффекты (глобальная регистрация в
+    ``temporalio.worker``), поэтому AST-парсинг безопаснее фактического
+    импорта каждого модуля на старте приложения. Когда
+    temporalio SDK установлен — декоратор отработает при первом
+    ``import`` класса в Worker; реестр-lookup по-прежнему работает,
+    если класс уже зарегистрирован плагином явно.
+    """
+    src_root = Path(__file__).resolve().parents[3] / "backend"
+    if not src_root.exists():
+        return
+
+    found = 0
+    for py_file in src_root.rglob("*.py"):
+        if "__pycache__" in py_file.parts or py_file.name.startswith("_"):
+            continue
+        try:
+            tree = ast.parse(py_file.read_text(encoding="utf-8"), filename=str(py_file))
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+
+        for node in ast.walk(tree):
+            # Ищем классы, у которых хотя бы один декоратор имеет атрибут
+            # ``defn`` (``@workflow.defn``).
+            if not isinstance(node, ast.ClassDef):
+                continue
+            for dec in node.decorator_list:
+                attr = _decorator_attr(dec)
+                if attr == "defn":
+                    qualname = f"{py_file.stem}.{node.name}"
+                    get_logger("app_factory").debug(
+                        "WorkflowRegistry bootstrap candidate: %s", qualname
+                    )
+                    found += 1
+                    break
+
+    if found:
+        get_logger("app_factory").info(
+            "WorkflowRegistry bootstrap: найдено %d @workflow.defn кандидатов в src/backend (явная register() — на стороне плагинов/Worker'а)",
+            found,
+        )
+
+
+def _decorator_attr(node: ast.expr) -> str | None:
+    """Извлекает финальный атрибут из AST-узла декоратора (``a.b.c`` → ``"c"``).
+
+    ``@workflow.defn`` → ``Attribute(value=Name("workflow"), attr="defn")`` → ``"defn"``.
+    ``@defn`` → ``Name("defn")`` → ``"defn"``.
+    """
+    if isinstance(node, ast.Attribute):
+        return node.attr
+    if isinstance(node, ast.Name):
+        return node.id
+    return None

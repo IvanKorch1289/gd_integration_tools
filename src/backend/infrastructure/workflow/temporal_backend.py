@@ -19,15 +19,16 @@ service-слоя; backend знает только client API.
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
+from src.backend.core.codec.json import canonical_json_bytes
 from src.backend.core.logging import get_logger
 from src.backend.core.workflow.backend import (
     WorkflowBackend,
     WorkflowHandle,
     WorkflowResult,
 )
-from src.backend.core.codec.json import canonical_json_bytes
+from src.backend.core.workflow_registry import workflow_registry
 
 if TYPE_CHECKING:  # pragma: no cover
     from temporalio.client import Client as TemporalClient
@@ -258,13 +259,14 @@ class TemporalWorkflowBackend(WorkflowBackend):
         совместим с зафиксированной историей — ``Replayer.replay``
         бросит ``WorkflowNonDeterminismError``.
 
-        Note:
-            ``Replayer.workflows`` ожидает ``Sequence[type]`` (workflow-классы),
-            а Protocol — ``workflow_name: str``. Это фундаментальное расхождение
-            контракта: для replay нужен registry workflow-классов. До его
-            появления (S171 backlog) делаем narrow cast с обоснованием — runtime
-            поведение ``Replayer`` идентично (передаём строку как type,
-            temporalio отвергнет если класс не зарегистрирован).
+        B-10 fix (cycle 33): ``Replayer.workflows`` ожидает
+        ``Sequence[type]`` workflow-классов, а Protocol
+        ``WorkflowBackend.replay`` принимает ``workflow_name: str``.
+        Мост — глобальный :data:`workflow_registry`
+        (``src/backend/core/workflow_registry.py``): имя мапится в
+        класс, задекорированный ``@workflow.defn``. Если класс с таким
+        именем не зарегистрирован — падаем с понятным ``KeyError``
+        вместо silent-обхода через ``cast(str → type)``.
         """
         try:
             from temporalio.client import WorkflowHistory
@@ -272,16 +274,38 @@ class TemporalWorkflowBackend(WorkflowBackend):
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError("temporalio SDK not installed") from exc
 
-        # Narrow cast: workflow_name (str) → type expected by Replayer.workflows.
-        # Protocol-level mismatch documented above; runtime fallback to empty
-        # registry would change behavior, so keep the legacy pass-through.
-        replayer = Replayer(
-            workflows=[cast("type", workflow_name)]  # type: ignore[list-item]
-        )
+        workflows = self._resolve_workflows_for_replay(workflow_name)
+        replayer = Replayer(workflows=workflows)
         wf_history = WorkflowHistory.from_json(workflow_name, history.decode("utf-8"))
         await replayer.replay_workflow(wf_history)
 
     # --- helpers -------------------------------------------------------
+
+    @staticmethod
+    def _resolve_workflows_for_replay(workflow_name: str) -> list[type]:
+        """Вернуть набор workflow-классов для :class:`Replayer`.
+
+        Если ``workflow_name`` зарегистрирован — отдаём только его
+        (узкая реплея-выборка: ровно один workflow). Если имя пустое
+        или не найдено — отдаём все зарегистрированные классы
+        (broad-scan: валидно для исторических историй, не привязанных
+        к конкретному workflow).
+
+        Raises:
+            KeyError: Если ``workflow_name`` непустой и не зарегистрирован
+                ни один класс с таким именем (раньше — silent cast).
+        """
+        if not workflow_name:
+            return workflow_registry.all()
+        wf_cls = workflow_registry.get(workflow_name)
+        if wf_cls is None:
+            raise KeyError(
+                f"Workflow '{workflow_name}' не зарегистрирован в "
+                "WorkflowRegistry — replay() не может построить Replayer. "
+                "Зарегистрируйте класс через @workflow.defn + "
+                "workflow_registry.register(...)"
+            )
+        return [wf_cls]
 
     @staticmethod
     def _exception_to_result(exc: Exception) -> WorkflowResult:
