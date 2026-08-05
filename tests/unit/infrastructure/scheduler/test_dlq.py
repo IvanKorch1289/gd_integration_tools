@@ -345,3 +345,40 @@ class TestAttachSchedulerDLQ:
         with caplog.at_level("ERROR"):
             handler(event)
         assert "DLQ listener failed" in caplog.text
+
+
+# ─── S180 P0-3 regression: SchedulerManager.start() wires DLQ listener ─────
+
+
+class TestSchedulerManagerDLQAttach:
+    """S180 regression: SchedulerManager.start() должна вызывать
+    attach_scheduler_dlq чтобы /admin/scheduler/dlq endpoint работал.
+
+    Без wire admin endpoint всегда возвращает 503 (default store stays None),
+    что задокументировано как P0-3 в multi-agent аудите 2026-08-05.
+    """
+
+    async def test_start_attaches_dlq_listener(self) -> None:
+        from src.backend.infrastructure.scheduler.scheduler_manager import (
+            SchedulerManager,
+        )
+
+        manager = SchedulerManager.__new__(SchedulerManager)
+        manager.logger = MagicMock()
+        manager.scheduler = MagicMock()
+        manager._default_jobstore_is_memory = True
+
+        with patch(
+            "src.backend.infrastructure.scheduler.observability.attach_scheduler_metrics"
+        ):
+            with patch(
+                "src.backend.infrastructure.scheduler.observability.report_jobstore_type"
+            ):
+                with patch(
+                    "src.backend.infrastructure.scheduler.dlq.attach_scheduler_dlq"
+                ) as mock_attach:
+                    await manager.start()
+
+        mock_attach.assert_called_once()
+        # First positional arg — это scheduler instance.
+        assert mock_attach.call_args[0][0] is manager.scheduler
