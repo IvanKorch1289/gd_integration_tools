@@ -22,8 +22,11 @@ dependencies = [
     "argon2-cffi>=23.1.0,<24.0.0",
     # S183: cryptography for mTLS / x509 cert verification (core/auth/mtls_backend.py).
     # Раньше был только в mypy.overrides — теперь primary dep.
-    # Round 69: upper bound <49.0.0 → <50.0.0 для фикса PYSEC-2026-3553/3554
-    # (49.0.0+). PYSEC-2026-3552 остаётся (фикс в 50.0.0).
+    # Round 70: upper bound <50.0.0 (NOT <51.0.0) — cryptography 50.0.0+ имеет
+    # только cp314-cp314**t** (free-threaded) wheels, проект использует
+    # обычный CPython 3.14 (Py_GIL_DISABLED=0). pip-audit показывает 1
+    # remaining CVE (PYSEC-2026-3552, fix в 50.0.0) — не закрыт до
+    # выхода cp314-cp314 wheel для cryptography 50+. MONITOR.
     "cryptography>=42.0.0,<50.0.0",
     "aiosmtplib>=5.1.1,<6.0.0",
     "sqlalchemy-utils>=0.41.2,<1.0.0",
@@ -53,7 +56,14 @@ dependencies = [
     # остаётся backward-compat (pendulum.DateTime — subclass of datetime.datetime).
     "pendulum>=3.2.0,<4.0.0",
     "apscheduler>=3.11.0,<4.0.0",
-    "croniter>=2.0.0,<3.0.0",
+    # Round 72: croniter 2.0.7 → 6.2.4 (major version bump).
+    # Breaking changes: iter_occurences (typo!) removed → use croniter_range()
+    # или итерация через croniter() напрямую. Наш src/ использует ТОЛЬКО
+    # croniter(expr, base_dt, second_at_beginning=...) + .get_next(datetime) —
+    # оба API сохранены в 6.x (проверено через wheel inspection).
+    # 6.x новые features: DST-aware per-job, microsecond precision,
+    # улучшенная обработка overflow на 32-bit Python.
+    "croniter>=6.2.0,<7.0.0",
     "faststream[kafka]>=0.6.7,<1.0.0",
     "aiokafka>=0.12.0,<1.0.0",
     "grpcio>=1.70.0,<2.0.0",
@@ -94,6 +104,11 @@ dependencies = [
     "casbin>=1.36.0,<2.0.0",
     "cachetools>=5.3.0,<8.0.0",
     # S31 Task 7: motor REMOVED. pymongo>=4.9 has native AsyncMongoClient.
+    # Round 73: pymongo добавлен в core deps (был TODO с lazy import'ом).
+    # MongoDB используется в AgentMemoryService (services/ai/agent_memory.py)
+    # и CertStore MongoDB backend (infrastructure/security/cert_store/).
+    # AsyncMongoClient (PyMongo 4.9+) — canonical, motor в maintenance mode.
+    "pymongo>=4.9,<5.0",
     # Round 63: [async] extra удалён — aiohttp transitive dep больше не нужен
     # (AsyncElasticsearch использует HttpxAsyncHttpNode через node_class='httpxasync',
     # см. ADR-0253). Дефолт async transport (без явного node_class) — fallback
@@ -520,11 +535,10 @@ dev = [
     "py-spy>=0.4.0,<1.0.0",
     "grpcio-tools>=1.70.0,<2.0.0",
     "ruff>=0.15.10,<1.0.0",
-    "sphinx>=9.1.0,<10.0.0",
-    "sphinx-autoapi>=3.3.2,<4.0.0",
-    "pydata-sphinx-theme>=0.16.0,<1.0.0",
-    "myst-parser>=5.0.0,<6.0.0",
-    "sphinx-design>=0.6,<1.0",
+    # Round 74: sphinx dev-deps удалены — B2 (M10.2) мигрировал docs на mkdocs
+    # canonical, но sphinx deps оставались как R5.2 leftover. docs-publish.yml
+    # (mkdocs + mike) — canonical; docs.yml (sphinx) удалён в этом commit.
+    # Mkdocs deps в [project.optional-dependencies].docs.
     "schemathesis>=4.15.2,<5.0.0",
     "python-semantic-release>=10.5.3,<11.0.0",
     "detect-secrets>=1.5.0,<2.0.0",
@@ -548,8 +562,6 @@ dev = [
     "pip-audit>=2.7,<3",
     # К5 (Wave K5/docs): Vale-совместимый prose lint.
     "proselint>=0.14,<1",
-    "sphinx-copybutton>=0.5,<1",
-    "sphinx-tabs>=3.4,<4",
     # K3 S6 [wave:s6/k3-dsl-linter-lsp]: LSP-сервер для DSL route.toml + *.dsl.yaml.
     # pygls — pure-Python LSP, совместим с 3.14; зависимость lsprotocol тянется автоматом.
     # S16 K1 W4 (gate-w0-ops-reorg-smoke): унификация с [lsp]-extra pygls>=2.0.0.
