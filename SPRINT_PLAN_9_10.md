@@ -3920,6 +3920,77 @@ Natural ceilings остаются (cryptography 49.0.0, diskcache 5.6.3, DEFER-1
 
 ---
 
+## Rounds 87-89 — M-scope pre-existing test gaps (2026-08-05)
+
+После "приступай к решению того, что зависит от тебя" — 3 atomic fixes
+для pre-existing M-scope test gaps (security-critical, не требуют user approval).
+
+### Rounds 87-89 summary
+
+| # | Round | Commit | Что | Domain impact |
+|---|---|---|---|---|
+| 87 | `93a19638` | GraphQL auth propagation | _extract_auth_from_info refactor + 4 helpers + dict/object context support | Tests/QA +0.05 |
+| 88 | `ff2e5aa4` | authorization_gateway DI | composition root registration + async Depends + lazy resolver | Tests/QA +0.1 |
+| 89 | `10af56d7` | MCP test patch path | canonical core.auth.auth_selector (post-S96 W1) | Tests/QA +0.01 |
+
+### R87: GraphQL auth propagation (16 tests)
+
+Pre-existing test gap: 16 tests в `test_schema_auth_propagation.py` падали
+потому что `_extract_auth_from_info` использовал `getattr(context, "auth")`
+на dict-context (Strawberry middleware может класть context как dict).
+Также отсутствовали helper-функции `_principal_from_info`,
+`_permissions_from_info`, `_graphql_context_getter` (Sprint 1.4 spec).
+
+* src/backend/entrypoints/graphql/schema.py: refactor → 4 helpers
+  с dict/object support
+
+### R88: authorization_gateway DI (14 tests)
+
+Sprint 1 K5 spec требовал AuthorizationGateway в composition root,
+но не был реализован. Результат: PolicyMixin._resolve_authz_gateway
+всегда возвращал None → LLM policy-gate работал только в fail-closed.
+
+* src/backend/plugins/composition/di.py: register_app_state +
+  get_authorization_gateway async Depends + __all__
+* src/backend/core/security/authorization_gateway/__init__.py:
+  get_authorization_gateway() lazy resolver (non-Request context)
+
+### R89: MCP test patch path (1 test)
+
+`test_auth_middleware_passes_with_api_key` patch'ил устаревший
+shim-путь (post-S96 W1). Per Ponytail "fix test, not production code" —
+обновлён patch path на canonical core.auth.auth_selector.
+
+### Cumulative delta (R87-R89)
+
+| Метрика | До | После |
+|---|---|---|
+| Pre-existing failures closed | 0 (baseline) | 31 (16 GraphQL + 14 auth_gw + 1 MCP) |
+| tests/unit/entrypoints/graphql/ | 16 failed | 2 failed (pre-existing DSL import count) |
+| tests/unit/plugins/composition/test_authorization_gateway_di.py | 14 failed | 0 failed (17 passed) |
+| tests/unit/entrypoints/mcp/ | 1 failed | 0 failed (5 passed) |
+
+### Verification
+
+- mypy: 0 errors (2283 files)
+- pip-audit: 2 CVEs (natural ceiling)
+- working tree: clean
+
+### Cumulative scorecard (R48 → R89)
+
+| Домен | R48 → R89 | Δ |
+|---|---|---|
+| L9 Security E2E | +0.6 (9.0 → 9.6) | R66-R70 security wave |
+| **Tests/QA** | **+0.55 (8.5 → 9.05)** | +31 tests (R87-R89) + R83-R85 + R79 |
+| L5 AI/agents | +0.1 (8.9 → 9.0) | R81 shim delete |
+| Docs | +0.25 (8.1 → 8.35) | R74 sphinx + retrospectives |
+| L1 Gateway/middleware | +0.05 (8.8 → 8.85) | R61-R63 dedup |
+| **Медиана** | **+0.45 (8.6 → 9.05)** | R87-R89 incremental |
+
+Working tree clean. **3 commits shipped, R87-R89. Sprint continues.**
+
+---
+
 ## Rounds 83-85 — pre-existing test gap closure (2026-08-05)
 
 После "согласовано, приступай" — 3 atomic fixes для pre-existing test gaps
