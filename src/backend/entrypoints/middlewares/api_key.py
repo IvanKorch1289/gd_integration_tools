@@ -27,6 +27,7 @@ from re import compile
 
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.config.settings import settings
 from src.backend.dsl.codec.converters import convert_pattern
 
@@ -96,6 +97,19 @@ class APIKeyMiddleware:
         if not _secrets.compare_digest(api_key, settings.secure.api_key):
             await self._send_401(send, detail="Неверный API-ключ")
             return
+
+        # B-13 fix (cycle 34): api_key пишет AuthContext в scope['state']
+        # для interop с audit_log/rpa_policy (audit_log читает
+        # scope['state']['auth'].principal, rpa_policy — .roles через
+        # duck-typed fallback). Без этого audit_log видел anonymous.
+        scope.setdefault("state", {})["auth"] = AuthContext(
+            method=AuthMethod.API_KEY,
+            principal="api_key_consumer",
+            metadata={
+                "tenant_id": "default",
+                "groups": ("api_key_consumer",),
+            },
+        )
 
         # API-ключ валиден → пробрасываем downstream.
         await self.app(scope, receive, send)
