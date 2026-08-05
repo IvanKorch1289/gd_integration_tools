@@ -57,6 +57,13 @@ class ElasticSearchClient:
             "verify_certs": self._verify_certs,
             "request_timeout": self._request_timeout,
             "max_retries": self._max_retries,
+            # Round 61 (Ponytail): httpxasync transport вместо default aiohttp.
+            # Устраняет дублирование HTTP-клиентов: httpx (canonical)
+            # + aiohttp (legacy transitive dep). elastic-transport имеет
+            # встроенный HttpxAsyncHttpNode (key='httpxasync') с lazy-import
+            # только httpx. aiohttp становится orphan transitive dep —
+            # удаление планируется отдельным PR (требует lock-file change).
+            "node_class": "httpxasync",
         }
 
         if self._api_key:
