@@ -2219,11 +2219,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/56/0f/ac126833c385b06166d41c486e4911f58ad7791fd1a53dd6e0b8d16ff214/elasticsearch-8.19.3-py3-none-any.whl", hash = "sha256:fe1db2555811192e8a1be78b01234d0a49d32b185ea7eeeb6f059331dee32838", size = 952820, upload-time = "2025-12-23T12:55:56.796Z" },
 ]
 
-[package.optional-dependencies]
-async = [
-    { name = "aiohttp", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-]
-
 [[package]]
 name = "email-validator"
 version = "2.3.0"
@@ -2774,7 +2769,7 @@ dependencies = [
     { name = "croniter", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "cryptography", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "diskcache", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "elasticsearch", extra = ["async"], marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "elasticsearch", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "fastapi", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "fastapi-filter", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "fastapi-limiter", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -3092,7 +3087,7 @@ requires-dist = [
     { name = "duckdb", marker = "extra == 'analytics'", specifier = ">=1.5.2,<2.0.0" },
     { name = "duckduckgo-search", marker = "extra == 'search-providers'", specifier = ">=6.0.0,<7.0.0" },
     { name = "e2b-code-interpreter", marker = "extra == 'ai'", specifier = ">=1.0.0,<3.0.0" },
-    { name = "elasticsearch", extras = ["async"], specifier = ">=8.0,<9.0" },
+    { name = "elasticsearch", specifier = ">=8.0,<9.0" },
     { name = "fastapi", specifier = ">=0.116.0" },
     { name = "fastapi-filter", specifier = ">=2.0.0,<3.0.0" },
     { name = "fastapi-limiter", specifier = ">=0.1.6,<1.0.0" },
