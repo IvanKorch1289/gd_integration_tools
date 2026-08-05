@@ -26,6 +26,7 @@ Pre-S76 YAML не имел ``tools`` секции → default ToolsSpec → all 
 
 from __future__ import annotations
 
+import fnmatch
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
@@ -57,9 +58,14 @@ class ToolPolicyViolationError(PermissionError):
 def check_tool_allowed(tool_name: str, spec: "ToolsSpec") -> bool:
     """Check if ``tool_name`` allowed per spec (no side effects).
 
+    Pattern matching uses **case-sensitive glob** (:func:`fnmatch.fnmatchcase`,
+    consistent with ``core/ai/policy/resolver.py:220`` precedent).
+    Patterns support ``*``, ``?``, ``[seq]``. Pure literal names match only
+    identically — operators who want glob must write the glob.
+
     Returns:
-        True если tool allowed (in whitelist или whitelist empty
-        AND not in blacklist). False otherwise.
+        True если tool allowed (matches whitelist via glob или
+        whitelist empty AND not matching blacklist via glob). False otherwise.
 
     Examples:
         >>> check_tool_allowed("db.read", ToolsSpec(whitelist=["db.*"]))
@@ -69,13 +75,17 @@ def check_tool_allowed(tool_name: str, spec: "ToolsSpec") -> bool:
         >>> check_tool_allowed("any", ToolsSpec())  # default empty = allow
         True
     """
-    # Blacklist — explicit denylist, applied regardless of whitelist
-    if spec.blacklist and tool_name in spec.blacklist:
+    # Blacklist — explicit denylist (glob-матчинг), applied regardless of whitelist
+    if spec.blacklist and any(
+        fnmatch.fnmatchcase(tool_name, pattern) for pattern in spec.blacklist
+    ):
         return False
 
-    # Whitelist — if non-empty, tool must be in it
+    # Whitelist — if non-empty, tool must glob-match at least one pattern
     if spec.whitelist:
-        return tool_name in spec.whitelist
+        return any(
+            fnmatch.fnmatchcase(tool_name, pattern) for pattern in spec.whitelist
+        )
 
     # No whitelist, no blacklist → allow all
     return True
