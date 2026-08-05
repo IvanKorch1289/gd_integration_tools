@@ -58,11 +58,11 @@ async def test_auth_middleware_passes_with_api_key() -> None:
 
     with (
         patch(
-            "src.backend.entrypoints.api.dependencies.auth_selector._verify_api_key",
+            "src.backend.core.auth.auth_selector._verify_api_key",
             AsyncMock(return_value=fake_ctx),
         ),
         patch(
-            "src.backend.entrypoints.api.dependencies.auth_selector._verify_jwt",
+            "src.backend.core.auth.auth_selector._verify_jwt",
             AsyncMock(return_value=None),
         ),
     ):
