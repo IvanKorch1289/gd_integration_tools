@@ -14,6 +14,7 @@ Backward-compat: ``from src.backend.core.security.capabilities.gate import Capab
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from threading import Lock
 from typing import TYPE_CHECKING, Final
 
 from src.backend.core.security.capabilities.errors import (
@@ -64,6 +65,7 @@ class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
 
     _cache: dict[tuple[str, str, str | None], bool]
     _tenant_cache: dict[tuple[str, str, str, str | None], bool]
+    _lock: "Lock"  # D-AUDIT-98 (S183 W1.1)
 
     def __init__(
         self,
@@ -83,6 +85,10 @@ class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
         # Per-tenant LRU cache: (tenant, principal, capability, scope) → bool.
         self._tenant_cache: dict[tuple[str, str, str, str | None], bool] = {}
         self._policy: "CapabilityPolicy | None" = policy
+        # D-AUDIT-98 (S183 W1.1): guard _cache / _tenant_cache against
+        # grant+revoke races that previously raised
+        # "RuntimeError: dictionary changed size during iteration".
+        self._lock: Lock = Lock()
 
     @property
     def vocabulary(self) -> CapabilityVocabulary:
