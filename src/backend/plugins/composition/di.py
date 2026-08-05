@@ -118,18 +118,72 @@ def register_app_state(app: FastAPI) -> None:
     # _resolve_authz_gateway всегда возвращал None → LLM policy-gate работал
     # только в fail-closed режиме. Регистрация как lazy singleton:
     # создаётся один раз при старте, переиспользуется в каждом request.
-    from src.backend.core.security.authorization_gateway import (
-        AuthorizationGateway,
-    )
-    from src.backend.services.admin._capability_adapter import (
-        FacadeCapabilityAdapter,
-    )
-    from src.backend.services.capabilities.facade import (
-        get_capability_facade,
-    )
+    # B-12 fix (cycle 37): production wiring OPA/Casbin в composition root.
+    from src.backend.core.security.authorization_gateway import AuthorizationGateway
+    from src.backend.services.admin._capability_adapter import FacadeCapabilityAdapter
+    from src.backend.services.capabilities.facade import get_capability_facade
+
+    # B-12 fix (cycle 37): инстанциация OPA/Casbin только при явной активации
+    # через ``policy_settings.engine_enabled`` (default OFF на dev/dev_light).
+    # На prod-профиле YAML-overlay поднимает флаг → реальные движки подцепляются.
+    auth_policies: list = []
+    try:
+        from src.backend.core.config.services.policy import policy_settings
+
+        if policy_settings.engine_enabled:
+            from src.backend.core.security.authorization_gateway.policies import (
+                build_casbin_policy_decider,
+                build_opa_policy_decider,
+            )
+            from src.backend.infrastructure.policy.casbin_adapter import CasbinAdapter
+            from src.backend.infrastructure.policy.casbin_tenant_scoped import (
+                TenantScopedCasbin,
+            )
+            from src.backend.infrastructure.policy.opa.client import OPAClient
+
+            # OPA + Casbin поднимаются как обычные singletons; ``policies``
+            # получает упорядоченную цепочку: сначала OPA (data-level), потом
+            # Casbin (RBAC/ABAC). Любой из них опционален — если путь None,
+            # соответствующий policy-engine просто не регистрируется.
+            if policy_settings.opa_url:
+                opa_client = OPAClient(base_url=policy_settings.opa_url)
+                auth_policies.append(
+                    build_opa_policy_decider(
+                        opa_client, policy_name=policy_settings.opa_policy_name
+                    )
+                )
+            if policy_settings.casbin_model_path:
+                casbin_base = CasbinAdapter(
+                    model_path=policy_settings.casbin_model_path,
+                    policy_path=policy_settings.casbin_policy_path,
+                )
+                auth_policies.append(
+                    build_casbin_policy_decider(
+                        TenantScopedCasbin(base_adapter=casbin_base)
+                    )
+                )
+            from src.backend.core.logging import get_logger as _gl
+
+            _gl("policy.composition").info(
+                "policy engines wired (opa=%s, casbin=%s)",
+                bool(policy_settings.opa_url),
+                bool(policy_settings.casbin_model_path),
+            )
+    except Exception as _pol_exc:
+        # Fail-soft при ошибке сборки (например, OPA-клиент пытается
+        # выполнить make_http_client во время DI). В prod это должно
+        # попасть в лог-агрегатор; цепочка остаётся пустой (capability check
+        # остаётся единственной обязательной policy — fail-closed).
+        from src.backend.core.logging import get_logger as _gl
+
+        _gl("policy.composition").warning(
+            "policy engines NOT wired (engine_enabled but init failed): %s",
+            _pol_exc,
+        )
 
     app.state.authorization_gateway = AuthorizationGateway(
-        capability_gateway=FacadeCapabilityAdapter(get_capability_facade())
+        capability_gateway=FacadeCapabilityAdapter(get_capability_facade()),
+        policies=tuple(auth_policies),
     )
 
     # W14.5: durable WatermarkStore — выбор бэкенда (memory/postgres) по
@@ -153,6 +207,31 @@ def register_app_state(app: FastAPI) -> None:
         # Fallback: use class defaults (MqttSettings already has broker_host="localhost", broker_port=1883)
         mqtt_settings = MqttSettings(enabled=False)
     app.state.mqtt_handler = MqttHandler(mqtt_settings)
+
+    # B-17 fix (cycle 37): production fail-loud DLQ wiring для CDCClient.
+    # До этого setter ``set_dlq_writer`` существовал (S176 cycle 33 B-02),
+    # но никем не вызывался → silent event loss при сбое callback/dispatch.
+    # Подключаем InboxDLQWriter к singleton CDCClient через тот же
+    # session_factory, что и outbox DLQ handler.
+    from src.backend.infrastructure.clients.external.cdc import get_cdc_client
+    from src.backend.infrastructure.messaging.dlq.inbox_writer import InboxDLQWriter
+    from src.backend.plugins.composition.lifecycle.outbox_setup import (
+        _get_outbox_dlq_session_factory,
+    )
+
+    cdc_singleton = get_cdc_client()
+    inbox_dlq_writer = InboxDLQWriter(
+        session_factory=_get_outbox_dlq_session_factory()
+    )
+    cdc_singleton.set_dlq_writer(inbox_dlq_writer)
+    # mark_cdc_dlq_writer_wired вызывается автоматически из
+    # ``set_dlq_writer`` для не-None writer, но делаем явный mark
+    # для observability (счётчик в guard обновляется дважды, idempotent).
+    from src.backend.infrastructure.clients.external.cdc._dlq_writer_guard import (
+        mark_cdc_dlq_writer_wired,
+    )
+
+    mark_cdc_dlq_writer_wired(inbox_dlq_writer)
 
 
 # --- FastAPI Depends-функции для инъекции singletons в эндпоинты ---
