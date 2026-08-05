@@ -259,22 +259,21 @@ class S3Client(BaseS3Client):
     ) -> dict[str, Any]:
         """Загружает объект в S3 (S165 W3: with CB)."""
         breaker = _get_s3_breaker()
-        async with breaker.guard():
-            async with self.client_context() as client:
-                try:
-                    await client.put_object(
-                        Bucket=self._settings.bucket,
-                        Key=key,
-                        Body=body,
-                        Metadata=metadata,
-                    )
-                    self.logger.info(f"Файл {key} успешно загружен")
-                    return {"status": "success"}
-                except BotoClientError as exc:
-                    self.logger.error(
-                        f"Ошибка при загрузке объекта: {exc!s}", exc_info=True
-                    )
-                    return {"status": "error", "message": str(exc)}
+        async with breaker.guard(), self.client_context() as client:
+            try:
+                await client.put_object(
+                    Bucket=self._settings.bucket,
+                    Key=key,
+                    Body=body,
+                    Metadata=metadata,
+                )
+                self.logger.info(f"Файл {key} успешно загружен")
+                return {"status": "success"}
+            except BotoClientError as exc:
+                self.logger.error(
+                    f"Ошибка при загрузке объекта: {exc!s}", exc_info=True
+                )
+                return {"status": "error", "message": str(exc)}
 
     @ensure_connected
     async def get_object(self, key: str) -> tuple[Any, dict[str, Any]] | None:

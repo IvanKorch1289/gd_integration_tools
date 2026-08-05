@@ -53,35 +53,34 @@ class TgiBatchClient:
     ) -> str:
         # S164 W1 (AI-R1): CB guard + retry для TGI HTTP POST.
         breaker = _get_tgi_breaker()
-        async with breaker.guard():
-            async with self._semaphore:
-                payload = {
-                    "inputs": prompt,
-                    "parameters": {
-                        "max_new_tokens": max_tokens,
-                        "temperature": temperature,
-                        "return_full_text": False,
-                    },
-                }
+        async with breaker.guard(), self._semaphore:
+            payload = {
+                "inputs": prompt,
+                "parameters": {
+                    "max_new_tokens": max_tokens,
+                    "temperature": temperature,
+                    "return_full_text": False,
+                },
+            }
 
-                @make_async_retry(max_attempts=3)
-                async def _do_post() -> str:
-                    response = await self._client.post(
-                        f"{self._url}/generate", json=payload, timeout=self._timeout
-                    )
-                    if hasattr(response, "raise_for_status"):
-                        response.raise_for_status()
-                    data = response.json() if hasattr(response, "json") else response
-                    if isinstance(data, list) and data:
-                        return str(data[0].get("generated_text", ""))
-                    if isinstance(data, dict):
-                        return str(data.get("generated_text", ""))
-                    return ""
+            @make_async_retry(max_attempts=3)
+            async def _do_post() -> str:
+                response = await self._client.post(
+                    f"{self._url}/generate", json=payload, timeout=self._timeout
+                )
+                if hasattr(response, "raise_for_status"):
+                    response.raise_for_status()
+                data = response.json() if hasattr(response, "json") else response
+                if isinstance(data, list) and data:
+                    return str(data[0].get("generated_text", ""))
+                if isinstance(data, dict):
+                    return str(data.get("generated_text", ""))
+                return ""
 
-                result = await _do_post()
-                if not isinstance(result, str):
-                    raise TypeError("TGI completion response must be a string")
-                return result
+            result = await _do_post()
+            if not isinstance(result, str):
+                raise TypeError("TGI completion response must be a string")
+            return result
 
     async def batch_completions(
         self,

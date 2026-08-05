@@ -146,12 +146,7 @@ def inject_prompt_cache(
             cfg.apply_to_user_content
             and msg.get("role") == "user"
             and isinstance(content, str)
-        ):
-            new_msg["content"] = [
-                {"type": "text", "text": content, "cache_control": cache_control}
-            ]
-        # Inject cache_control в system message (если role=system).
-        elif msg.get("role") == "system" and isinstance(content, str):
+        ) or msg.get("role") == "system" and isinstance(content, str):
             new_msg["content"] = [
                 {"type": "text", "text": content, "cache_control": cache_control}
             ]
@@ -187,9 +182,7 @@ def _derive_openai_cache_key(messages: list[dict[str, Any]]) -> str:
     parts: list[str] = []
     for msg in messages[:2]:
         content = msg.get("content", "")
-        if isinstance(content, list):
-            content = str(content)
-        elif not isinstance(content, str):
+        if isinstance(content, list) or not isinstance(content, str):
             content = str(content)
         parts.append(f"{msg.get('role')}:{content[:200]}")
     digest = hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()

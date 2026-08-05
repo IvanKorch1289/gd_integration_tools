@@ -192,29 +192,28 @@ class SftpClient(BaseSftpClient):
         """
         import asyncssh
 
-        async with self._breaker.guard():
-            async with (
-                asyncssh.connect(
-                    self.host,
-                    port=self.port,
-                    username=self.username,
-                    password=self.password,
-                    known_hosts=_resolve_known_hosts(),
-                ) as conn,
-                conn.start_sftp_client() as sftp,
-            ):
-                entries = await sftp.readdir(remote_path)
-                return [
-                    {
-                        "filename": entry.filename,
-                        "size": entry.attrs.size if entry.attrs else None,
-                        "modified": str(entry.attrs.mtime)
-                        if entry.attrs and entry.attrs.mtime
-                        else None,
-                    }
-                    for entry in entries
-                    if entry.filename not in (".", "..")
-                ]
+        async with (
+            self._breaker.guard(), asyncssh.connect(
+                self.host,
+                port=self.port,
+                username=self.username,
+                password=self.password,
+                known_hosts=_resolve_known_hosts(),
+            ) as conn,
+            conn.start_sftp_client() as sftp,
+        ):
+            entries = await sftp.readdir(remote_path)
+            return [
+                {
+                    "filename": entry.filename,
+                    "size": entry.attrs.size if entry.attrs else None,
+                    "modified": str(entry.attrs.mtime)
+                    if entry.attrs and entry.attrs.mtime
+                    else None,
+                }
+                for entry in entries
+                if entry.filename not in (".", "..")
+            ]
 
     @_sftp_retry
     async def _do_download_bytes(self, remote_path: str) -> bytes:

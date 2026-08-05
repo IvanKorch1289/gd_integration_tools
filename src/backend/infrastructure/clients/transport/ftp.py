@@ -215,45 +215,40 @@ class FTPClient:
     async def list_dir(self, path: str = "/") -> list[dict[str, Any]]:
         """Список файлов в директории."""
         result: list[dict[str, Any]] = []
-        async with self._breaker.guard():
-            async with await self._get_client() as client:
-                async for entry_path, info in client.list(path):
-                    result.append(
-                        {
-                            "name": str(entry_path),
-                            "type": info.get("type", "unknown"),
-                            "size": int(info.get("size", 0)),
-                            "modify": info.get("modify"),
-                        }
-                    )
+        async with self._breaker.guard(), await self._get_client() as client:
+            async for entry_path, info in client.list(path):
+                result.append(
+                    {
+                        "name": str(entry_path),
+                        "type": info.get("type", "unknown"),
+                        "size": int(info.get("size", 0)),
+                        "modify": info.get("modify"),
+                    }
+                )
         return result
 
     async def delete(self, remote_path: str) -> None:
         """Удаляет файл на FTP-сервере."""
-        async with self._breaker.guard():
-            async with await self._get_client() as client:
-                await client.remove(remote_path)
-                logger.info("Deleted %s", remote_path)
+        async with self._breaker.guard(), await self._get_client() as client:
+            await client.remove(remote_path)
+            logger.info("Deleted %s", remote_path)
 
     async def rename(self, old_path: str, new_path: str) -> None:
         """Переименовывает файл."""
-        async with self._breaker.guard():
-            async with await self._get_client() as client:
-                await client.rename(old_path, new_path)
-                logger.info("Renamed %s -> %s", old_path, new_path)
+        async with self._breaker.guard(), await self._get_client() as client:
+            await client.rename(old_path, new_path)
+            logger.info("Renamed %s -> %s", old_path, new_path)
 
     async def exists(self, remote_path: str) -> bool:
         """Проверяет существование файла."""
-        async with self._breaker.guard():
-            async with await self._get_client() as client:
-                return await client.exists(remote_path)
+        async with self._breaker.guard(), await self._get_client() as client:
+            return await client.exists(remote_path)
 
     async def ping(self) -> bool:
         """Проверка доступности FTP-сервера (CircuitOpen → False)."""
         try:
-            async with self._breaker.guard():
-                async with await self._get_client():
-                    return True
+            async with self._breaker.guard(), await self._get_client():
+                return True
         except (ConnectionError, TimeoutError, OSError, CircuitOpen):
             return False
 
