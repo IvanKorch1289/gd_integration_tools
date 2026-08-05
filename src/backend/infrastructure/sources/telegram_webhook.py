@@ -29,7 +29,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any
 
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
@@ -136,13 +136,3 @@ def _verify_payload_signature(
     return hmac.compare_digest(expected, signature_header)
 
 
-async def consume_updates(
-    source: TelegramWebhookSource,
-) -> AsyncIterator[TelegramUpdate]:
-    """Async generator для pre-validated updates (in-memory).
-
-    Реальный production webhook handler — в :mod:`entrypoints.webhook.handler`
-    (S73). Этот helper — для in-memory replay / testing / batch import.
-    """
-    if False:  # pragma: no cover — placeholder для real stream
-        yield TelegramUpdate(update_id=0)
