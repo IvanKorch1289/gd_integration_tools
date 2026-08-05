@@ -41,9 +41,8 @@ class LangMemDisabled(RuntimeError):
     """S210: поднимается при вызове API-методов на отключённом LangMem.
 
     Canonical ``LangMemService`` (3-tier с feature-flag) раньше возвращал
-    пустые results при ``langmem_enabled=False`` (soft no-op). Для
-    backward-compat с legacy API (см. ``services.ai.langmem_service``),
-    который raise'ил при disabled — S210 добавляет этот exception.
+    пустые results при ``langmem_enabled=False`` (soft no-op). S210 добавил
+    raise при disabled для явного сигнала caller'ам.
     """
 
 
