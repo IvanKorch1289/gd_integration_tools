@@ -2,16 +2,25 @@
 
 Auth-схема СКБ — query-параметр ``api-key``, поэтому подкласс подмешивает его
 во все запросы через override ``_request``.
+
+Cycle-35 B2: чистая логика WAF-маршрутизации вынесена в
+``extensions.sk.b.services.waf_route.resolve_waf_route``. Старый
+shim-символ ``resolve_waf_route`` оставлен здесь для backward-compat
+с ``DeprecationWarning`` (удалить в Sprint 37+).
 """
 
+import warnings
 from typing import Any
 from uuid import UUID
 
+from extensions.skb.services.waf_route import (
+    resolve_waf_route as _resolve_waf_route_impl,
+)
 from src.backend.core.config.settings import SKBAPISettings, settings
 from src.backend.core.errors import ServiceError
 from src.backend.services.core.base_external_api import BaseExternalAPIClient
 
-__all__ = ("APISKBService", "get_skb_service")
+__all__ = ("APISKBService", "get_skb_service", "resolve_waf_route")
 
 
 class APISKBService(BaseExternalAPIClient):
@@ -37,13 +46,12 @@ class APISKBService(BaseExternalAPIClient):
         """Возвращает (waf_url, use_waf) для production-маршрутизации.
 
         Используется только в эндпоинте справочника видов запросов.
+        Cycle-35 B2: чистая логика делегирована
+        ``extensions.skb.services.waf_route.resolve_waf_route``.
         """
-        if (
-            settings.app.environment == "production"
-            and settings.http_base_settings.waf_url
-        ):
-            return settings.http_base_settings.waf_url, True
-        return None, False
+        return _resolve_waf_route_impl(
+            settings.app.environment, settings.http_base_settings.waf_url
+        )
 
     async def get_request_kinds(self) -> dict[str, Any]:
         """Получить справочник видов запросов из СКБ-Техно."""
@@ -125,3 +133,20 @@ def get_skb_service() -> APISKBService:
     if _skb_service_instance is None:
         _skb_service_instance = APISKBService(skb_settings=settings.skb_api)
     return _skb_service_instance
+
+
+# Cycle-35 B2: backward-compat shim для ранее приватного WAF-решателя.
+# Функция была приватным методом ``APISKBService._waf_route``, но в тестах и
+# DSL-роутах иногда использовалась как ``from skb import resolve_waf_route``.
+# Оставляем модульный символ с DeprecationWarning на одну мажорную версию.
+def resolve_waf_route(
+    environment: str | None, waf_url: str | None
+) -> tuple[str | None, bool]:
+    """DEPRECATED: используйте ``extensions.skb.services.waf_route.resolve_waf_route``."""
+    warnings.warn(
+        "resolve_waf_route из src.backend.services.integrations.skb устарел; "
+        "импортируйте из extensions.skb.services.waf_route.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return _resolve_waf_route_impl(environment, waf_url)
