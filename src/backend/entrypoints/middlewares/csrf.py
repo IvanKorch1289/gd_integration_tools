@@ -25,7 +25,6 @@ import hmac
 import json
 import secrets
 from collections.abc import Iterable
-from typing import Any
 
 from starlette.types import ASGIApp, Receive, Scope, Send
 

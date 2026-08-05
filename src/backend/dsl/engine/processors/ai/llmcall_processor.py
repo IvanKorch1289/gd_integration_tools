@@ -132,7 +132,7 @@ class LLMCallProcessor(BaseProcessor):
 
         if feature_flags is not None and feature_flags.ai_gateway_enforce:
             try:
-                from src.backend.core.ai.gateway import AIGateway
+                import src.backend.core.ai.gateway  # noqa: F401  (availability check)
                 from src.backend.core.ai.gateway_models import AIRequest
                 from src.backend.services.ai.gateway_adapter import get_ai_gateway
             except ImportError as exc:

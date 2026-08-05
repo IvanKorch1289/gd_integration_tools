@@ -8,7 +8,6 @@ publish() валидирует payload через ``jsonschema``; на fail — 
 
 from __future__ import annotations
 
-import asyncio
 import inspect
 from typing import Any
 

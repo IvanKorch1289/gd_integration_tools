@@ -11,7 +11,6 @@ API совместим на ~95% — ``find``, ``insert_one``, ``update_many``, 
 
 from __future__ import annotations
 
-import asyncio
 import inspect
 from typing import Any
 

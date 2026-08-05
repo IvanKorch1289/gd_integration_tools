@@ -24,7 +24,6 @@ Cycle 54 critical: response body modification.
 (with updated content-length) + http.response.body с masked body.
 """
 
-import json
 import re
 from collections.abc import Iterable
 from typing import Any

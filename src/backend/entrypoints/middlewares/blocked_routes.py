@@ -21,7 +21,7 @@ from __future__ import annotations
 import fnmatch
 import json
 
-from starlette.types import ASGIApp, Message, Receive, Scope, Send
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.state.runtime import blocked_routes
 

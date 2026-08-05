@@ -25,7 +25,6 @@ Downstream middleware (audit_log, request_log, audit_replay) первым
 
 from __future__ import annotations
 
-from typing import Any
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 

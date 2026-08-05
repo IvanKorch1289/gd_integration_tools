@@ -236,7 +236,6 @@ class AIToolDispatchProcessor(BaseAIProcessor):
         """
         prompt = self._build_selection_prompt(query=query, tools_desc=tools_desc)
         try:
-            from src.backend.core.ai.gateway import AIGateway
             from src.backend.core.ai.gateway_models import AIRequest
             from src.backend.services.ai.gateway_adapter import get_ai_gateway
         except Exception as exc:

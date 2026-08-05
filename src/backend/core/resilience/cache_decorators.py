@@ -27,7 +27,6 @@ time resolve, поэтому performance-cost ничтожен.
 
 from __future__ import annotations
 
-import asyncio
 import inspect
 from collections.abc import Awaitable, Callable, Mapping
 from functools import wraps

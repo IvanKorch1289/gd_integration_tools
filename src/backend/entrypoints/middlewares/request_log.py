@@ -18,14 +18,12 @@ Cycle 53 design: logging не нужен headers modification, только
 
 from __future__ import annotations
 
-import json
 from time import time
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.config.settings import settings
 from src.backend.core.di.providers import get_app_logger_provider
-from src.backend.core.utils.async_helpers import async_chunk_iterator
 
 __all__ = ("InnerRequestLoggingMiddleware",)
 

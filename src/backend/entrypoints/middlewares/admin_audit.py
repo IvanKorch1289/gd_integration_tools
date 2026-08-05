@@ -19,7 +19,6 @@ Cycle 49: переписано с ``BaseHTTPMiddleware`` на pure ASGI для
 
 from __future__ import annotations
 
-import json
 import time as _time
 from datetime import UTC, datetime
 

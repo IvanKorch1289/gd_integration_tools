@@ -177,7 +177,7 @@ async def build_and_run_agent(
         # S85 W2 (V2 P0 #1): enforcement check через AIGateway
         # перед LiteLLM call. Если enforcement не пройден —
         # возврат с error без silent pass-through.
-        from src.backend.core.ai.gateway import AIGateway
+        import src.backend.core.ai.gateway  # noqa: F401  (availability check)
         from src.backend.core.config.features import feature_flags
 
         # S85 W2: pre-flight enforcement check.

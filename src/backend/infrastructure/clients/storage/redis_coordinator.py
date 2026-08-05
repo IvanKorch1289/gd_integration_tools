@@ -11,7 +11,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import inspect
 from collections.abc import AsyncIterator
 from typing import Any
