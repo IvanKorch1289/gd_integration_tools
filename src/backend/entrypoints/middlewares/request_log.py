@@ -174,7 +174,6 @@ class InnerRequestLoggingMiddleware:
         if not body:
             return
 
-        content_type = _get_header_value(scope, b"content-type") or ""
         content_encoding = _get_header_value(scope, b"content-encoding") or ""
 
         # Обработка сжатых данных (gzip).

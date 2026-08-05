@@ -73,8 +73,6 @@ class ResponseCacheMiddleware:
             await self.app(scope, receive, send)
             return
 
-        path = scope.get("path", "")
-
         # Cycle 55 critical: collect body chunks через send-wrapper
         # для вычисления ETag. Pure ASGI: body приходит через
         # http.response.body messages.

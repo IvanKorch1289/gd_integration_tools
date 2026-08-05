@@ -54,7 +54,6 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     )
     from src.backend.plugins.composition.lifecycle.watchers import stop_dsl_yaml_watcher
 
-    app = app  # type: ignore[assignment]
     app.state.infrastructure_ready = False
 
     # ── 1. Workflow runtime / outbox worker ──

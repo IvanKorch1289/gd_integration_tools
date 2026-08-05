@@ -76,7 +76,6 @@ class DslService:
         if not required:
             return  # public route, no permission check
         principal = getattr(context, "principal", "") or "anonymous"
-        permissions = getattr(context, "permissions", ()) or ()
         allowed, reason = await check_route_permission(
             route_id=getattr(pipeline, "route_id", ""),
             principal=principal,
