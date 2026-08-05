@@ -21,4 +21,20 @@ Usage::
 
 from src.backend.ai.policy.tool_policy import AgentToolPolicy, ToolPermission
 
+# Round 79: register default AgentToolPolicy в svcs_registry для
+# canonical `get_service(AgentToolPolicy)` (тест test_di_factory_returns_default_policy
+# требовал эту регистрацию — pre-existing test gap).
+# Default policy: empty allowed_tools = default-deny всё (S169 security).
+# Production код может override через register_factory() для custom policy.
+def _default_tool_policy() -> AgentToolPolicy:
+    return AgentToolPolicy(agent_id="default")
+
+
+try:
+    from src.backend.core.svcs_registry import register_factory
+
+    register_factory(AgentToolPolicy, _default_tool_policy)
+except ImportError:  # pragma: no cover — svcs_registry optional
+    pass
+
 __all__ = ["AgentToolPolicy", "ToolPermission"]
