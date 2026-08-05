@@ -14,6 +14,7 @@ removes the budget enforcement call from invoke() pipeline.
 from __future__ import annotations
 
 import inspect
+from unittest.mock import MagicMock
 
 import pytest
 
