@@ -294,6 +294,13 @@ class TemporalWorkflowBackend(WorkflowBackend):
         Raises:
             KeyError: Если ``workflow_name`` непустой и не зарегистрирован
                 ни один класс с таким именем (раньше — silent cast).
+
+        Note:
+            B-15 fix (cycle 37): end-to-end replay теперь работает
+            благодаря ``compile_workflow()`` →
+            ``workflow_registry.register(cls)`` в
+            :mod:`dsl.workflow.compiler.emitter`. Без этого fix'а
+            ``get(name)`` всегда возвращал ``None``.
         """
         if not workflow_name:
             return workflow_registry.all()

@@ -24,6 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from src.backend.core.workflow_registry import workflow_registry
 from src.backend.dsl.workflow.compiler.step_compilers import (
     _RESUME_SIGNAL,
     dispatch_step_compile,
@@ -77,6 +78,12 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
     Returns:
         :class:`CompiledWorkflow` — пара (динамический класс, имя)
         + список signal-имён (для регистрации Worker).
+
+    Side effects:
+        Регистрирует скомпилированный класс в singleton
+        :data:`src.backend.core.workflow_registry.workflow_registry`
+        (см. B-15 fix (cycle 37)). Повторная компиляция того же
+        ``decl.name`` идемпотентна (skip через ``ValueError`` guard).
 
     Raises:
         RuntimeError: Если ``temporalio`` SDK не установлен.
@@ -148,6 +155,23 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
     # Применяем @workflow.defn(name=decl.name) ПОСЛЕ создания класса.
     cls = temporal_workflow.defn(name=decl.name)(cls)
 
+    # B-15 fix (cycle 37): register compiled class in workflow_registry so that
+    # ``TemporalWorkflowBackend.replay(workflow_name=...)`` может резолвить
+    # имя → класс через ``workflow_registry.get(name)`` (иначе KeyError).
+    # Guard: повторная компиляция того же ``decl.name`` (replay-determinism)
+    # бросает ``ValueError`` — логируем и пропускаем (idempotent).
+    try:
+        workflow_registry.register(cls)
+    except ValueError:
+        # Класс уже зарегистрирован (повторный compile_workflow с тем же decl).
+        # Это ожидаемо для replay-determinism; не считаем ошибкой.
+        from src.backend.core.logging import get_logger as _gl
+
+        _gl("dsl.workflow.compiler.emitter").debug(
+            "Workflow '%s' уже зарегистрирован в WorkflowRegistry — skip",
+            decl.name,
+        )
+
     return CompiledWorkflow(
         name=decl.name, cls=cls, declaration=decl, signal_names=signal_names
     )
@@ -163,8 +187,24 @@ def compile_workflows(
 
     Returns:
         Список :class:`CompiledWorkflow` в исходном порядке.
+
+    Raises:
+        RuntimeError: Если после компиляции хотя бы один класс не попал в
+            :data:`workflow_registry` (replay будет сломан).
     """
-    return [compile_workflow(decl) for decl in declarations]
+    out = [compile_workflow(decl) for decl in declarations]
+
+    # B-15 fix (cycle 37): post-step guard — все скомпилированные классы
+    # должны попасть в реестр. Если нет — fail-loud: replay через
+    # ``TemporalWorkflowBackend.replay()`` молча вернёт ``KeyError``.
+    for compiled in out:
+        if compiled.name not in workflow_registry:
+            raise RuntimeError(
+                f"Workflow {compiled.name} compiled but NOT registered в "
+                "WorkflowRegistry — replay() будет сломан. Проверьте, что "
+                "compile_workflow() корректно вызывает workflow_registry.register()."
+            )
+    return out
 
 
 def _make_signal_handler(

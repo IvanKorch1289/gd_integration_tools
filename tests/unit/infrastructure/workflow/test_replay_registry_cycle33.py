@@ -8,10 +8,12 @@
   воспроизводит ``WorkflowNonDeterminismError`` если зарегистрированный
   workflow не совпадает с историей;
 * unknown ``workflow_name`` → ``KeyError`` (раньше — silent cast);
-* ``workflow_registry.all()`` используется для empty-name replay;
-* bootstrap helper ``_bootstrap_workflow_registry`` в
-  ``app_factory`` не падает на текущем коде (где нет ``@workflow.defn``
-  классов напрямую) и не ломает старт приложения.
+* ``workflow_registry.all()`` используется для empty-name replay.
+
+B-15 fix (cycle 37): тесты на ``_bootstrap_workflow_registry`` и
+``_decorator_attr`` удалены вместе с самим AST-сканером —
+``compile_workflow()`` теперь регистрирует класс в
+``workflow_registry`` напрямую (см. emitter.py).
 
 temporalio SDK опционален (extra dep ``uv sync --extra workflow``); если
 не установлен — replay-тесты скипаются, registry-тесты идут в полном
@@ -28,7 +30,7 @@ from typing import Any
 import pytest
 
 from src.backend.core import workflow_registry as registry_module
-from src.backend.core.workflow_registry import WorkflowRegistry, workflow_registry
+from src.backend.core.workflow_registry import workflow_registry
 
 # --- WorkflowRegistry unit-тесты -----------------------------------------
 
@@ -341,59 +343,3 @@ async def test_replay_does_not_use_str_cast(
     # Если бы остался cast — workflows был бы ["RealWorkflowStub"].
     assert replayer.workflows != ["RealWorkflowStub"]
     assert all(isinstance(w, type) for w in replayer.workflows)
-
-
-# --- bootstrap helper ------------------------------------------------------
-
-
-def test_bootstrap_workflow_registry_runs_without_error() -> None:
-    """``_bootstrap_workflow_registry`` не должен падать на старте
-    приложения (в коде сейчас нет ``@workflow.defn`` напрямую)."""
-    from src.backend.plugins.composition.app_factory import _bootstrap_workflow_registry
-
-    # Идемпотентный запуск.
-    _bootstrap_workflow_registry()
-    _bootstrap_workflow_registry()
-
-    # Реестр может быть пуст (нет реальных классов) — это OK.
-    assert isinstance(workflow_registry, WorkflowRegistry)
-
-
-def test_bootstrap_finds_at_decorator_in_source() -> None:
-    """AST-сканер обнаруживает ``@workflow.defn`` в синтетическом исходнике.
-
-    Это проверяет, что bootstrap-логика корректно работает: если в
-    кодовой базе появится ``@workflow.defn`` — сканер его увидит
-    (даже без реального temporalio SDK).
-    """
-    import ast
-    import tempfile
-    from pathlib import Path
-
-    from src.backend.plugins.composition import app_factory
-
-    # Подменяем ``ast.parse`` и ``Path.rglob`` сложно; вместо этого
-    # верифицируем AST-парсинг непосредственно: создаём синтетический
-    # файл и прогоняем ту же логику, что в bootstrap.
-    src = (
-        "from temporalio import workflow\n"
-        "@workflow.defn\n"
-        "class DummyWorkflow:\n"
-        "    async def run(self):\n"
-        "        return 1\n"
-    )
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp) / "dummy_module.py"
-        tmp_path.write_text(src, encoding="utf-8")
-
-        tree = ast.parse(tmp_path.read_text(encoding="utf-8"), filename=str(tmp_path))
-        found_decorator = False
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.ClassDef):
-                continue
-            for dec in node.decorator_list:
-                if app_factory._decorator_attr(dec) == "defn":
-                    found_decorator = True
-                    assert node.name == "DummyWorkflow"
-                    break
-        assert found_decorator, "AST-scan не нашёл @workflow.defn"
