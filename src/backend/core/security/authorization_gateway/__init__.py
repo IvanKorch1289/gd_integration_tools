@@ -23,7 +23,7 @@ import uuid
 from collections.abc import Sequence
 
 from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
-
+from src.backend.core.logging import get_logger
 from src.backend.core.security.authorization_gateway.audit_mixin import (
     AuditMixin,  # S60 W4: MRO
 )
@@ -42,6 +42,7 @@ from src.backend.core.security.authorization_gateway.state import (
     AuthorizationReason,  # S60 W4: re-export
     PolicyDecider,  # S60 W4: re-export
 )
+from src.backend.core.utils.metrics_registry import metrics_registry
 
 __all__ = (
     "AuditCallback",
@@ -53,6 +54,18 @@ __all__ = (
     # Использует app-state singleton из composition root + fallback на None
     # (если app не зарегистрирован, при ошибках доступа).
     "get_authorization_gateway",
+)
+
+
+# ────────────────── Prometheus metrics (cycle 33 B-01/B-03) ──────────────────
+# B-01/B-03 fix (cycle 33): authz fail-open → deny-by-default.
+# Counter для engine-failure visibility в ``check()`` (sync path).
+# Идемпотентная регистрация через ``metrics_registry`` singleton.
+_logger = get_logger("core.security.authorization_gateway")
+authz_check_engine_failed_total = metrics_registry.counter(
+    "authz_check_engine_failed_total",
+    "Failed AuthorizationGateway.check() engine dispatches (casbin/opa).",
+    labels=("engine",),
 )
 
 
@@ -262,20 +275,35 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
             return self._in_memory_policies[key]
 
         # 2. Try Casbin step if registered
+        # B-03 fix (cycle 33): silent ``except: pass`` → warning + counter.
+        # Раньше exception из Casbin engine'а глохся и в логах ничего не
+        # появлялось — observability gap для security-path. Теперь WARNING
+        # с engine + типом исключения, и ``authz_check_engine_failed_total``
+        # растёт по ``engine="casbin"``, чтобы алерты видели деградацию.
         try:
             casbin_result = self._casbin_check(subject, action, resource)
             if casbin_result is not None:
                 return casbin_result
-        except Exception:
-            pass
+        except Exception as exc:
+            authz_check_engine_failed_total.labels(engine="casbin").inc()
+            _logger.warning(
+                "authz.check() engine=casbin failed: %s",
+                exc,
+            )
 
         # 3. Try OPA step if registered
+        # B-03 fix (cycle 33): см. выше — same observability gap, та же
+        # правка для OPA engine'а (``engine="opa"``).
         try:
             opa_result = self._opa_check(subject, action, resource, context)
             if opa_result is not None:
                 return opa_result
-        except Exception:
-            pass
+        except Exception as exc:
+            authz_check_engine_failed_total.labels(engine="opa").inc()
+            _logger.warning(
+                "authz.check() engine=opa failed: %s",
+                exc,
+            )
 
         # 4. Default deny (fail-closed)
         return False
@@ -355,12 +383,26 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
         return None
 
     def _is_enabled(self) -> bool:
-        """Источник: явный конструктор или ``feature_flags``."""
+        """Источник: явный конструктор или ``feature_flags``.
+
+        B-01 fix (cycle 33): invert fail-open → deny-by-default.
+        Если lookup фичи упал (Redis down, registry corrupt и т.п.),
+        РАНЬШЕ возвращали ``False`` → ``authorize()`` дальше делал
+        ``return allowed=True`` без проверок (P0 — обход authz при
+        деградации feature-flag service). ТЕПЕРЬ: ERROR-лог + ``True``,
+        чтобы шёл нормальный chain (capability check → fail-closed deny
+        при исключении). Конструкторский ``_enabled`` имеет приоритет.
+        """
         if self._enabled is not None:
             return self._enabled
         try:
             from src.backend.core.feature_flags import get_feature_flag_service
 
             return get_feature_flag_service().is_enabled("authz_gateway_enabled")
-        except Exception as _:
-            return False
+        except Exception as exc:
+            _logger.error(
+                "authz feature-flag lookup failed; treating as enabled "
+                "to preserve deny-by-default chain: %s",
+                exc,
+            )
+            return True
