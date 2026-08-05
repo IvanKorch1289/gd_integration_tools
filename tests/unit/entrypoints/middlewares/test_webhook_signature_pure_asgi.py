@@ -207,10 +207,27 @@ class TestWebhookSignatureMiddlewarePureASGI:
         assert start["status"] == 401
 
     @pytest.mark.asyncio
-    async def test_protected_prefix_without_secret_passes(self) -> None:
-        """Path protected, но secret не сконфигурирован → skip-verify с warning."""
+    async def test_protected_prefix_without_secret_returns_503(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """B-02 fix: path protected, но secret не сконфигурирован → 503 fail-closed.
+
+        Раньше этот тест проверял fail-open (skip-verify с warning).
+        Cycle 33 B-02: protected path без secret = misconfiguration
+        = потенциальный обход подписи. Возвращаем 503 и инкрементируем
+        ``webhook_signature_missing_secret_total`` для алертинга.
+        Dev escape требует явного opt-in (см. test_webhook_signature.py).
+        """
+        monkeypatch.delenv("APP_ENVIRONMENT", raising=False)
+        monkeypatch.delenv("WEBHOOK_ALLOW_MISSING_SECRET", raising=False)
+
+        async def downstream(scope, receive, send):
+            raise AssertionError(
+                "downstream НЕ должен быть вызван при missing secret"
+            )
+
         app = AsyncMock()
-        app.side_effect = _downstream_ok()
+        app.side_effect = downstream
         mw = WebhookSignatureMiddleware(
             app=app,
             path_prefixes=("/webhooks/",),
@@ -226,7 +243,8 @@ class TestWebhookSignatureMiddlewarePureASGI:
 
         start = _start_message(send)
         assert start is not None
-        assert start["status"] == 200
+        assert start["status"] == 503
+        app.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_most_specific_prefix_wins(self) -> None:

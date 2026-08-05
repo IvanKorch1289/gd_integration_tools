@@ -20,21 +20,43 @@ Cycle 44 critical: body buffering. Webhook signature verify требует
 BaseHTTPMiddleware body уже buffered. В pure ASGI body приходит
 через receive() chunks — middleware буферизует, верифицирует, и
 ``_receive`` re-injects body для downstream handlers.
+
+B-02 fix (cycle 33): fail-closed при отсутствии secret для protected
+path-prefix. Раньше middleware skip-verify с ``logger.debug`` и
+пропускал downstream — это давало обход подписи в любой среде, где
+оператор забыл сконфигурировать ``secrets_by_prefix``. Теперь
+возвращается 503 ``{"error":"webhook_not_configured"}`` и
+инкрементируется ``webhook_signature_missing_secret_total{path_prefix}``.
+Dev escape: passthrough допустим только при ``APP_ENVIRONMENT=dev``
+И ``WEBHOOK_ALLOW_MISSING_SECRET=true`` (явный opt-in).
 """
 
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Mapping
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.logging import get_logger
+from src.backend.core.observability.metrics import (
+    webhook_signature_missing_secret_total,
+)
 from src.backend.services.security import DEFAULT_TIMESTAMP_WINDOW, verify_signature
 
 __all__ = ("WebhookSignatureMiddleware",)
 
 _logger = get_logger(__name__)
+
+# Dev escape opt-in: пропуск webhook без secret разрешён только когда
+# ОБА условия выполнены. ``APP_ENVIRONMENT=dev`` гарантирует, что escape
+# не сработает в staging/production (даже если env var случайно выставлен
+# при деплое из CI). ``WEBHOOK_ALLOW_MISSING_SECRET=true`` — explicit
+# acknowledgment оператора, что он понимает риск (без подписи запросы
+# доходят до downstream handler'а).
+_DEV_ENV_VALUE = "dev"
+_WEBHOOK_ALLOW_ENV = "WEBHOOK_ALLOW_MISSING_SECRET"
 
 
 class WebhookSignatureMiddleware:
@@ -89,6 +111,11 @@ class WebhookSignatureMiddleware:
     def _is_protected(self, path: str) -> bool:
         return any(path.startswith(p) for p in self._prefixes)
 
+    def _matched_path_prefix(self, path: str) -> str:
+        """Самый специфичный (самый длинный) matched path_prefix для метрики."""
+        matches = [p for p in self._prefixes if path.startswith(p)]
+        return max(matches, key=len) if matches else ""
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Точка входа ASGI-протокола.
 
@@ -108,14 +135,37 @@ class WebhookSignatureMiddleware:
 
         secret = self._resolve_secret(path)
         if secret is None:
-            # Префикс protected, но secret не сконфигурирован: skip-verify
-            # с warning'ом — это разрешает тестовые webhooks без подписи,
-            # но в prod-конфигурации не должно встречаться.
-            _logger.debug(
-                "WebhookSignatureMiddleware: no secret for path=%s, skipping",
+            # B-02 fix (cycle 33): fail-closed. Protected path-prefix без
+            # сконфигурированного secret раньше skip-verify с debug-логом
+            # — это давало обход подписи при drift конфигурации. Теперь
+            # 503 + метрика. Dev escape требует явного opt-in через
+            # ``APP_ENVIRONMENT=dev`` + ``WEBHOOK_ALLOW_MISSING_SECRET=true``.
+            matched_prefix = self._matched_path_prefix(path)
+            webhook_signature_missing_secret_total.labels(
+                path_prefix=matched_prefix
+            ).inc()
+            if self._is_dev_escape_allowed():
+                _logger.warning(
+                    "WebhookSignatureMiddleware: no secret for path=%s "
+                    "prefix=%s — dev escape active, passthrough",
+                    path,
+                    matched_prefix,
+                )
+                await self.app(scope, receive, send)
+                return
+            _logger.error(
+                "WebhookSignatureMiddleware: no secret for path=%s "
+                "prefix=%s — fail-closed 503",
                 path,
+                matched_prefix,
             )
-            await self.app(scope, receive, send)
+            await self._send_503(
+                send,
+                detail=(
+                    f"Webhook secret not configured for path prefix "
+                    f"{matched_prefix!r}"
+                ),
+            )
             return
 
         # Читаем signature + timestamp headers (case-insensitive).
@@ -171,6 +221,19 @@ class WebhookSignatureMiddleware:
         await self.app(scope, replay_receive, send)
 
     @staticmethod
+    def _is_dev_escape_allowed() -> bool:
+        """Возвращает True только если dev-режим И opt-in env var выставлены.
+
+        Двойная проверка защищает от случайного включения escape в
+        staging/production через унаследованный env var из CI/CD.
+        """
+        env_value = os.environ.get("APP_ENVIRONMENT", "").strip().lower()
+        allow_value = (
+            os.environ.get(_WEBHOOK_ALLOW_ENV, "").strip().lower() == "true"
+        )
+        return env_value == _DEV_ENV_VALUE and allow_value
+
+    @staticmethod
     async def _send_401(send: Send, *, detail: str) -> None:
         """Отправляет 401 JSON response через send (cycle 39 lesson)."""
         body = json.dumps({"detail": detail}).encode("utf-8")
@@ -178,6 +241,24 @@ class WebhookSignatureMiddleware:
             {
                 "type": "http.response.start",
                 "status": 401,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode("latin-1")),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
+
+    @staticmethod
+    async def _send_503(send: Send, *, detail: str) -> None:
+        """Отправляет 503 JSON response через send (B-02 fix, cycle 33)."""
+        body = json.dumps(
+            {"error": "webhook_not_configured", "detail": detail}
+        ).encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 503,
                 "headers": [
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("latin-1")),
