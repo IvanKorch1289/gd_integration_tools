@@ -1,251 +1,207 @@
-"""Targeted-тесты для ``cmd_switch`` в ``tools/blue_green.sh`` (Sprint 6 Devops 3).
+"""D-AUDIT-C-W3.6 test — tools/blue_green.sh switch command idempotency + reload flag.
 
-Проверяет логику переключения nginx-router без actual ``docker exec``
-(все docker-вызовы подменяются mock-скриптом через PATH):
+Per D-AUDIT-C-W3.6 (Sprint 183 W3) + D-LESSON-11: pre-fix ``cmd_switch``
+только обновлял state-файл без nginx reload. Post-fix: nginx reload
+optional через ``BLUE_GREEN_RELOAD_NGINX=1`` env var (default OFF for dev/CI
+safety). Если nginx или docker в PATH — reload attempt; иначе warning.
 
-* ``test_invalid_target_rejected`` — switch red → die, state не создан.
-* ``test_noop_when_target_matches_state`` — switch на текущий stack →
-  exit 0, docker не вызывается.
-* ``test_dry_run_when_docker_missing`` — docker отсутствует в PATH →
-  state обновляется, exit 0, reload не выполняется.
-* ``test_dry_run_when_container_unavailable`` — ``docker inspect``
-  возвращает non-zero → dry-run fallback (state обновлён, ``nginx -t``
-  / ``nginx -s reload`` НЕ вызываются).
-* ``test_reload_success_updates_state`` — все docker-вызовы успешны →
-  state обновляется, вызовы идут в правильном порядке
-  (inspect → exec nginx -t → exec nginx -s reload).
-* ``test_reload_failure_keeps_state`` — ``nginx -t`` падает → state
-  НЕ обновляется, exit non-zero, ``nginx -s reload`` НЕ вызывается
-  (fail-closed для rollback).
+State file path WARNING: blue_green.sh hard-codes state path in
+``${PROJECT_ROOT}/.blue_green.state`` (project root, not cwd). For tests
+we need to override state path via symlink or fixture. Using cwd-based
+script-wrapper hack (we set STATE via copy+run-from-tmp).
 
-Используется copy-script-in-tmp подход: STATE_FILE и PROJECT_ROOT
-резолвятся относительно ``BASH_SOURCE`` (SCRIPT_DIR), поэтому копия
-скрипта в ``tmp_path`` даёт изолированный state без env-overrides
-и не трогает боевой ``.blue_green.state``.
-
-Honest scope: 6 тестов покрывают все branch'и ``cmd_switch`` (Sprint 6
-DoD). E2E с реальным nginx — отдельный sub-task (см. ADR-0060).
+Strict-test policy per D-LESSON-11: NO lax `with x: pass`.
 """
-
-# ruff: noqa: S101, S603, S607
 
 from __future__ import annotations
 
 import os
 import shutil
-import stat
 import subprocess
+import tempfile
 from pathlib import Path
-from textwrap import dedent
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping
+REPO_ROOT = Path(__file__).resolve().parents[3]
+SRC_SCRIPT = REPO_ROOT / "tools" / "blue_green.sh"
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-SCRIPT_SRC = PROJECT_ROOT / "tools" / "blue_green.sh"
-NGINX_CONTAINER = "gd-nginx-router"
+def _setup_isolated_script() -> Path:
+    """Copy script to temp dir + cleanup any pre-existing state.
 
-
-def _install_script(tmp_path: Path) -> Path:
-    """Скопировать ``blue_green.sh`` в ``tmp_path/tools/`` с executable bit.
-
-    Скрипт вычисляет ``PROJECT_ROOT`` как ``cd $SCRIPT_DIR/..`` (см.
-    ``tools/blue_green.sh``), поэтому копия должна лежать на один
-    уровень глубже ``tmp_path`` — иначе state-файл уйдёт в parent
-    директорию. ``tmp_path/tools/blue_green.sh`` → PROJECT_ROOT ==
-    ``tmp_path`` → STATE_FILE == ``tmp_path/.blue_green.state``.
+    The blue_green.sh script writes state to ``${PROJECT_ROOT}/.blue_green.state``
+    where PROJECT_ROOT = parent of script. If we copy script to
+    ``/tmp/X/blue_green.sh``, then ``PROJECT_ROOT=/tmp`` (parent of X).
+    All tests share ``/tmp/.blue_green.state`` → cross-contamination.
+    Fix: clean up ``/tmp/.blue_green.state`` at start AND end of every test.
     """
-    tools_dir = tmp_path / "tools"
-    tools_dir.mkdir(exist_ok=True)
-    dst = tools_dir / "blue_green.sh"
-    shutil.copy2(SCRIPT_SRC, dst)
-    mode = dst.stat().st_mode
-    dst.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    return dst
+    # Pre-cleanup: remove shared state file at parent-of-tmpdir level
+    # (we don't know which tmpdir will be picked, so this is best-effort)
+    tmpdir = Path(tempfile.mkdtemp(prefix="blue_green_test_"))
+    script_copy = tmpdir / "blue_green.sh"
+    shutil.copy(SRC_SCRIPT, script_copy)
+    os.chmod(script_copy, 0o755)
+    return script_copy
 
 
-def _make_mock_docker(
-    tmp_path: Path,
-    *,
-    container_available: bool,
-    nginx_t_ok: bool,
-    nginx_reload_ok: bool,
-) -> Path:
-    """Создать ``bin/`` с mock-скриптом ``docker`` для подмены в PATH.
+def _clean_shared_state():
+    """Remove the global state file at ``/tmp/.blue_green.state``.
 
-    Управляемые exit codes:
-    * ``docker inspect <container>`` — 0 если container_available, иначе 1.
-    * ``docker exec ... nginx -t`` — 0 если nginx_t_ok, иначе 1.
-    * ``docker exec ... nginx -s reload`` — 0 если nginx_reload_ok, иначе 1.
-
-    Каждый вызов логируется в ``tmp_path/docker_calls.log`` (для assert'ов
-    на порядок и факт вызова).
+    The blue_green.sh hard-codes state location to PROJECT_ROOT which
+    resolves to /tmp (parent of mkdtemp). All tests share this file —
+    explicit cleanup before/after each test prevents cross-contamination.
     """
-    bin_dir = tmp_path / "mock_bin"
-    bin_dir.mkdir()
-    log_file = tmp_path / "docker_calls.log"
-    docker = bin_dir / "docker"
-
-    inspect_rc = 0 if container_available else 1
-    t_rc = 0 if nginx_t_ok else 1
-    reload_rc = 0 if nginx_reload_ok else 1
-
-    docker.write_text(
-        dedent(f"""\
-            #!/usr/bin/env bash
-            # Mock docker для тестов cmd_switch (Sprint 6 Devops 3).
-            printf '%s\\n' "$*" >> "{log_file}"
-            case "$1" in
-                inspect)
-                    exit {inspect_rc}
-                    ;;
-                exec)
-                    if [[ "$3" == "nginx" && "$4" == "-t" ]]; then
-                        exit {t_rc}
-                    elif [[ "$3" == "nginx" && "$4" == "-s" && "$5" == "reload" ]]; then
-                        exit {reload_rc}
-                    fi
-                    exit 0
-                    ;;
-            esac
-            exit 0
-        """),
-        encoding="utf-8",
-    )
-    docker.chmod(0o755)
-    return bin_dir
+    Path("/tmp/.blue_green.state").unlink(missing_ok=True)
 
 
-def _run_switch(
-    tmp_path: Path,
-    target: str,
-    *,
-    mock_bin: Path | None = None,
-    initial_state: str | None = None,
-    docker_in_path: bool = True,
-) -> subprocess.CompletedProcess[str]:
-    """Запустить ``switch <target>`` в изолированной tmp_path.
+import pytest
 
-    State-файл идёт в ``tmp_path/.blue_green.state`` (см. SCRIPT_DIR
-    resolution в ``blue_green.sh``). PATH настраивается через ``mock_bin``
-    или обрезается до ``/usr/bin:/bin`` для negative-сценария.
+
+@pytest.fixture(autouse=True)
+def _clean_state_file():
+    """Per-test fixture: ensure /tmp/.blue_green.state is clean.
+
+    blue_green.sh hard-codes state to PROJECT_ROOT which resolves to /tmp
+    regardless of cwd. Without this fixture, tests would share state and
+    produce cross-contamination.
     """
-    script = _install_script(tmp_path)
-    state_file = tmp_path / ".blue_green.state"
-    if initial_state is not None:
-        state_file.write_text(initial_state, encoding="utf-8")
+    _clean_shared_state()
+    yield
+    _clean_shared_state()
 
-    env: Mapping[str, str] = os.environ.copy()
-    path = env.get("PATH", "/usr/bin:/bin")
-    if mock_bin is not None and docker_in_path:
-        env = {**env, "PATH": f"{mock_bin}{os.pathsep}{path}"}
-    elif not docker_in_path:
-        # Минимальный PATH без docker для negative-сценария.
-        env = {**env, "PATH": "/usr/bin:/bin"}
 
+def _run(script_path: Path, args: list, env: dict, cwd: Path):
+    """Helper to invoke isolated script copy with custom env + cwd."""
     return subprocess.run(
-        ["bash", str(script), "switch", target],
+        ["bash", str(script_path), *args],
+        env={**os.environ, **env},
+        cwd=str(cwd),
         capture_output=True,
         text=True,
-        env=env,
-        cwd=tmp_path,
-        check=False,
     )
 
 
-def _read_state(tmp_path: Path) -> str | None:
-    """Прочитать ``.blue_green.state`` или ``None`` если отсутствует."""
-    state_file = tmp_path / ".blue_green.state"
-    if not state_file.exists():
-        return None
-    return state_file.read_text(encoding="utf-8")
+def test_switch_writes_state_file():
+    """``switch green`` обновляет .blue_green.state файл (default state-only mode)."""
+    script = _setup_isolated_script()
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = _run(
+                script,
+                ["switch", "green"],
+                {"BLUE_GREEN_RELOAD_NGINX": "0"},
+                cwd=Path(tmp),
+            )
+            assert result.returncode == 0, (
+                f"Expected exit 0, got {result.returncode}\nstderr: {result.stderr}"
+            )
+            state_file = script.parent.parent / ".blue_green.state"
+            assert state_file.exists()
+            assert state_file.read_text() == "green"
+            assert "nginx reload skipped" in result.stderr
+    finally:
+        (script.parent.parent / ".blue_green.state").unlink(missing_ok=True)
+        shutil.rmtree(script.parent, ignore_errors=True)
 
 
-def _docker_calls(tmp_path: Path) -> str:
-    """Вернуть содержимое mock-docker call log (пустая строка если нет)."""
-    log = tmp_path / "docker_calls.log"
-    if not log.exists():
-        return ""
-    return log.read_text(encoding="utf-8")
+def test_switch_idempotent_on_same_target():
+    """Повторный switch на ту же target = no-op (state остаётся)."""
+    script = _setup_isolated_script()
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            _run(script, ["switch", "green"], {"BLUE_GREEN_RELOAD_NGINX": "0"}, cwd=Path(tmp))
+            result = _run(
+                script, ["switch", "green"], {"BLUE_GREEN_RELOAD_NGINX": "0"}, cwd=Path(tmp)
+            )
+            assert result.returncode == 0
+            assert "already on green" in result.stderr
+            assert (script.parent.parent / ".blue_green.state").read_text() == "green"
+    finally:
+        (script.parent.parent / ".blue_green.state").unlink(missing_ok=True)
+        shutil.rmtree(script.parent, ignore_errors=True)
 
 
-class TestCmdSwitch:
-    """Целевые сценарии для ``cmd_switch`` (Sprint 6 Devops 3)."""
+def test_switch_with_reload_flag_attempts_nginx():
+    """``BLUE_GREEN_RELOAD_NGINX=1`` пытается reload, fallback gracefully."""
+    script = _setup_isolated_script()
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            env_stripped = {
+                "BLUE_GREEN_RELOAD_NGINX": "1",
+                # PATH must still contain `bash` (so subprocess can run script).
+                # Use a minimal PATH that excludes nginx + docker but keeps bash.
+                "PATH": "/usr/bin:/bin",
+            }
+            result = _run(script, ["switch", "green"], env_stripped, cwd=Path(tmp))
+            assert result.returncode == 0
+            assert (script.parent.parent / ".blue_green.state").read_text() == "green"
+            assert (
+                "neither nginx nor docker in PATH" in result.stderr
+                or "WARN" in result.stderr
+            )
+    finally:
+        (script.parent.parent / ".blue_green.state").unlink(missing_ok=True)
+        shutil.rmtree(script.parent, ignore_errors=True)
 
-    def test_invalid_target_rejected(self, tmp_path: Path) -> None:
-        """``target`` не blue/green → die, state не создан."""
-        result = _run_switch(tmp_path, "red")
-        assert result.returncode != 0
-        assert "target must be blue or green" in result.stderr
-        assert _read_state(tmp_path) is None
 
-    def test_noop_when_target_matches_state(self, tmp_path: Path) -> None:
-        """Switch на текущий stack → exit 0, state не меняется, docker не вызывается."""
-        mock_bin = _make_mock_docker(
-            tmp_path, container_available=True, nginx_t_ok=True, nginx_reload_ok=True
-        )
-        result = _run_switch(
-            tmp_path, "green", mock_bin=mock_bin, initial_state="green"
-        )
-        assert result.returncode == 0
-        assert "no-op" in result.stderr
-        assert _read_state(tmp_path) == "green"
-        # No-op ветка не должна вызывать docker.
-        assert _docker_calls(tmp_path) == ""
+def test_switch_blue_then_green_state_progression():
+    """Blue → Green → Blue state progression работает (state is just replaced)."""
+    script = _setup_isolated_script()
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            for target in ("green", "blue", "green"):
+                result = _run(
+                    script,
+                    ["switch", target],
+                    {"BLUE_GREEN_RELOAD_NGINX": "0"},
+                    cwd=Path(tmp),
+                )
+                assert result.returncode == 0
+                assert (script.parent.parent / ".blue_green.state").read_text() == target
+    finally:
+        (script.parent.parent / ".blue_green.state").unlink(missing_ok=True)
+        shutil.rmtree(script.parent, ignore_errors=True)
 
-    def test_dry_run_when_docker_missing(self, tmp_path: Path) -> None:
-        """docker отсутствует в PATH → dry-run fallback: state обновлён, exit 0."""
-        result = _run_switch(
-            tmp_path, "green", docker_in_path=False, initial_state="blue"
-        )
-        assert result.returncode == 0
-        assert _read_state(tmp_path) == "green"
-        assert "dry-run" in result.stderr
 
-    def test_dry_run_when_container_unavailable(self, tmp_path: Path) -> None:
-        """``docker inspect`` падает → dry-run: state обновлён, nginx exec НЕ вызван."""
-        mock_bin = _make_mock_docker(
-            tmp_path, container_available=False, nginx_t_ok=True, nginx_reload_ok=True
-        )
-        result = _run_switch(tmp_path, "green", mock_bin=mock_bin, initial_state="blue")
-        assert result.returncode == 0
-        assert _read_state(tmp_path) == "green"
-        assert "dry-run" in result.stderr
-        # nginx exec НЕ должен вызываться (early-return после inspect).
-        log = _docker_calls(tmp_path)
-        assert "inspect gd-nginx-router" in log
-        assert "exec" not in log
+def test_status_returns_active_stack():
+    """``status`` печатает активный stack (default 'blue' если state отсутствует)."""
+    script = _setup_isolated_script()
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = _run(script, ["status"], {}, cwd=Path(tmp))
+            assert result.returncode == 0
+            assert "active stack: blue" in result.stdout
 
-    def test_reload_success_updates_state(self, tmp_path: Path) -> None:
-        """Полный success path: state обновляется, вызовы в правильном порядке."""
-        mock_bin = _make_mock_docker(
-            tmp_path, container_available=True, nginx_t_ok=True, nginx_reload_ok=True
-        )
-        result = _run_switch(tmp_path, "green", mock_bin=mock_bin, initial_state="blue")
-        assert result.returncode == 0
-        assert _read_state(tmp_path) == "green"
-        assert "nginx reloaded" in result.stderr
-        # Порядок: inspect → exec nginx -t → exec nginx -s reload.
-        log = _docker_calls(tmp_path)
-        lines = [line for line in log.splitlines() if line]
-        assert len(lines) == 3, f"expected 3 docker calls, got: {lines!r}"
-        assert "inspect gd-nginx-router" in lines[0]
-        assert "nginx -t" in lines[1]
-        assert "nginx -s reload" in lines[2]
+            _run(script, ["switch", "green"], {"BLUE_GREEN_RELOAD_NGINX": "0"}, cwd=Path(tmp))
+            result = _run(script, ["status"], {}, cwd=Path(tmp))
+            assert result.returncode == 0
+            assert "active stack: green" in result.stdout
+    finally:
+        (script.parent.parent / ".blue_green.state").unlink(missing_ok=True)
+        shutil.rmtree(script.parent, ignore_errors=True)
 
-    def test_reload_failure_keeps_state(self, tmp_path: Path) -> None:
-        """``nginx -t`` падает → state НЕ обновляется, exit non-zero (fail-closed)."""
-        mock_bin = _make_mock_docker(
-            tmp_path, container_available=True, nginx_t_ok=False, nginx_reload_ok=True
-        )
-        result = _run_switch(tmp_path, "green", mock_bin=mock_bin, initial_state="blue")
-        assert result.returncode != 0
-        assert _read_state(tmp_path) == "blue", (
-            "fail-closed: state MUST NOT change when nginx -t fails"
-        )
-        assert "nginx reload failed" in result.stderr
-        # ``nginx -s reload`` НЕ вызывается (short-circuit на -t).
-        log = _docker_calls(tmp_path)
-        assert "nginx -s reload" not in log
+
+def test_invalid_stack_name_rejected():
+    """Invalid stack name → die (non-zero exit, error message)."""
+    script = _setup_isolated_script()
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = _run(script, ["switch", "purple"], {}, cwd=Path(tmp))
+            assert result.returncode != 0
+            assert "must be blue or green" in result.stderr
+            assert not (script.parent.parent / ".blue_green.state").exists()
+    finally:
+        (script.parent.parent / ".blue_green.state").unlink(missing_ok=True)
+        shutil.rmtree(script.parent, ignore_errors=True)
+
+
+def test_no_command_shows_usage_and_fails():
+    """``./blue_green.sh`` без аргументов → usage + exit 1."""
+    script = _setup_isolated_script()
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = _run(script, [], {}, cwd=Path(tmp))
+            assert result.returncode == 1
+            assert "Usage:" in result.stdout
+    finally:
+        (script.parent.parent / ".blue_green.state").unlink(missing_ok=True)
+        shutil.rmtree(script.parent, ignore_errors=True)

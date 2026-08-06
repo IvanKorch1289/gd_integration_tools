@@ -19,11 +19,15 @@
 #     ./scripts/blue_green.sh down blue            # остановить старую версию
 #     ./scripts/blue_green.sh status               # текущий active
 #     ./scripts/blue_green.sh rollback             # вернуться на предыдущий
+#     BLUE_GREEN_RELOAD_NGINX=1 ./scripts/blue_green.sh switch green
+#         # переключить + перезагрузить nginx (если установлен)
 #
 # Замечания:
 #     - Скрипт идемпотентен: повторный вызов с тем же аргументом — no-op.
-#     - Stub-реализация (Sprint 7 R1.6): production NGINX-роутер
-#       подключается в Sprint 8 R2 через configs/nginx/active.conf.
+#     - D-AUDIT-C-W3.6 fix (S183 W3, 2026-08-05): nginx reload теперь
+#       optional (env var), default state-only для dev/CI. Скрипт
+#       проверяет наличие `nginx` или `docker compose exec router nginx`
+#       перед reload, fallback на warning-log при отсутствии.
 #     - Хранит активный stack в .blue_green.state (gitignore).
 
 set -euo pipefail
@@ -118,9 +122,26 @@ cmd_switch() {
         return 0
     fi
     log "switching router: ${current} → ${target}"
-    # Stub: production nginx reload запускается в Sprint 8 R2.
-    # Здесь только обновляем state-файл.
+    # Update state first (always) — idempo­tent, no-op if rollback needed.
     write_state "${target}"
+    # D-AUDIT-C-W3.6 fix (S183 W3, 2026-08-05): optional nginx reload.
+    # Default: state-only (dev/CI safe). Opt-in via BLUE_GREEN_RELOAD_NGINX=1.
+    if [[ "${BLUE_GREEN_RELOAD_NGINX:-0}" == "1" ]]; then
+        if command -v nginx >/dev/null 2>&1; then
+            log "reloading nginx (BLUE_GREEN_RELOAD_NGINX=1)"
+            nginx -s reload \
+                || log "WARN: nginx -s reload failed — state updated but router not reloaded"
+        elif command -v docker >/dev/null 2>&1; then
+            # Fallback: reload via docker compose exec на router-service.
+            log "nginx binary not found, attempting docker compose reload"
+            docker compose -f "${COMPOSE_FILE}" --profile router exec -T router nginx -s reload \
+                || log "WARN: docker compose exec nginx reload failed"
+        else
+            log "WARN: BLUE_GREEN_RELOAD_NGINX=1 but neither nginx nor docker in PATH"
+        fi
+    else
+        log "nginx reload skipped (BLUE_GREEN_RELOAD_NGINX != 1, default for safety)"
+    fi
     log "router switched to ${target}"
 }
 
