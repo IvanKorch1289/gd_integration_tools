@@ -103,12 +103,16 @@ class CallFunctionProcessor(BaseProcessor):
         """K-ARCH-5 (S17): strict-режим whitelist.
 
         Источники (любой True → strict):
-            * ENV ``ENVIRONMENT == "production"`` (без feature-flag);
+            * ENV ``ENVIRONMENT`` ∈ ``{"production", "prod", "staging", "dev_staging"}``
+              (D-AUDIT-#20 S183 W2: добавлен staging/dev_staging чтобы
+              staging-профиль не получал dev-bypass);
             * ``feature_flags.call_function_whitelist_strict == True``.
 
         В strict-режиме пустой whitelist → PermissionError.
+        Dev-light остаётся permissive (per project convention — см. CLAUDE.md/dev).
         """
-        if os.environ.get("ENVIRONMENT", "").strip().lower() == "production":
+        env_value = os.environ.get("ENVIRONMENT", "").strip().lower()
+        if env_value in {"production", "prod", "staging", "dev_staging"}:
             return True
         try:
             from src.backend.core.config.features import feature_flags
