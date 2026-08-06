@@ -24,7 +24,7 @@
 | V22-3 | Plugin runtime через `BasePlugin + PluginLoader` + `plugin.toml` capabilities (D78) | `core/plugin_runtime/` | ✅ 8/8 tests |
 | V22-4 | DSL декларативен: 80% YAML/TOML, 20% Python через `call_function("module:fn")` | `dsl/route/`, `dsl/workflow/`, `dsl/engine/processors/` | ✅ 415 routes |
 | V22-5 | Multi-backend Tier-A/B explicit (ADR-NEW-11) | `docs/backends.md`, `pyproject.toml` extras | ✅ PG/Oracle/Kafka/RabbitMQ/S3/MinIO |
-| V22-6 | Multi-protocol auto-registration: один handler → REST/SOAP/gRPC/GraphQL/WS/SSE/MQ/MQTT/MCP/CDC | `entrypoints/`, `docs/integration/INTEGRATION_GUIDE.md` | ✅ 14+ protocols |
+| V22-6 | Multi-protocol: 14+ протоколов (REST/SOAP/gRPC/GraphQL/WS/SSE/MQ/MQTT/MCP/CDC) | `entrypoints/`, `docs/integration/INTEGRATION_GUIDE.md` | ⚠️ **PARTIAL** — только REST auto-генерируется; остальные подключаются вручную через `include_router()` в `app_factory.py` (D-AUDIT-101, Sprint 182) |
 | V22-7 | Multi-tenancy (TenantContext + per-tenant SLO/quotas) | `core/tenancy/`, `core/auth/quotas.py` | ✅ |
 | V22-8 | `.env` STRICTLY forbidden (D248) — `CERT_INLINE_*` env vars only | `AGENTS.md` deny-list, `infrastructure/security/cert_store/` | ✅ enforced |
 | V22-9 | Schema-registry (R1, RAM) — JSON-Schema каталог для LSP/docs/AsyncAPI | `src/backend/dsl/contracts/schema_registry.py` (D175) | ✅ |

@@ -114,20 +114,40 @@ for meta in service_dsl_registry.list_services():
     print(f"{meta.name}: {len(meta.methods)} methods, protocols={meta.protocols}")
 ```
 
-## Multi-protocol auto-registration
+## Multi-protocol auto-registration (D-AUDIT-101, partial)
 
-Один зарегистрированный сервис автоматически доступен через:
+**Reality check (D-AUDIT-101, 2026-08-05)**: только REST auto-генерируется через
+`entrypoints/api/generator/auto_register.py` (V22-6, Sprint 6). Остальные
+протоколы (SOAP/gRPC/GraphQL/WS/SSE/MQ/MQTT/MCP) подключаются вручную
+через `include_router(...)` в `src/backend/plugins/composition/app_factory.py`
+(см. `docker_admin_router`, `graphql_router`, `soap_router`, `ws_router`,
+`mcp_router`).
+
+Документация ниже описывает **target architecture (R-V15-3)** vs **текущая
+реализация**. Multi-protocol auto-registration as a single 1-action
+deploys-to-all-protocols feature is NOT yet shipped (separate ADR-level
+work, see `KNOWN_ISSUES.md` carry-over).
+
+### Currently shipped (per protocol)
 
 ```
-REST  POST   /api/invoices          → invoices.add
-gRPC  rpc    AddInvoice(...)        → invoices.add
-SOAP  POST   /soap/invoices         → invoices.add
-GraphQL mutation addInvoice         → invoices.add
-MQ    queue: invoices.add           → invoices.add
-WS    ws://  /invoices/subscribe    → invoices.add
-SSE   GET    /sse/invoices          → invoices.add
-MCP   tool   invoices_add           → invoices.add
-MQTT  topic  invoices/add           → invoices.add
+REST  POST   /api/v1/auto/<action>    → @register_action (auto-generated)
+SOAP  POST   /soap/<route>           → include_router(soap_router) (manual)
+gRPC  rpc    <Service>.<Method>      → auto_servicer (manual setup in app_factory)
+GraphQL mutation <action>           → include_router(graphql_router) (manual)
+WS    ws://  /<route>/subscribe     → include_router(ws_router) (manual)
+SSE   GET    /<route>/events         → include_router(sse_router) (manual)
+MCP   tool   <action>                → include_router(mcp_router) (manual)
+MQTT  topic  <action>                → include_router(mqtt_router) (manual)
+MQ    queue: <action>                → include_router(mq_router) (manual)
+CDC   subscription <table>           → include_router(cdc_routes) (manual)
+```
+
+### Target architecture (R-V15-3, not yet shipped)
+
+```
+One registered @register_action auto-deploys to ALL protocols above.
+See docs/architecture/ for ADR on R-V15-3 work split.
 ```
 
 ## Регистрация через scan
