@@ -20,6 +20,7 @@ from src.backend.dsl.engine.processors.eip.reliability._legacy import (
     HEADER_REDELIVERY_COUNT,
     RedeliveryAttempt,
 )
+from src.backend.dsl.registry import processor
 
 _log = get_logger(__name__)
 
@@ -34,8 +35,44 @@ __all__ = (
 # ── RedeliveryPolicyProcessor ───────────────────────────────────────
 
 
+@processor(
+    "redelivery_policy",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "description": "Retry-with-backoff policy (Camel Redelivery EIP).",
+        "properties": {
+            "max_attempts": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 3,
+                "description": "Maximum redelivery attempts before dispatch.",
+            },
+            "initial_delay_s": {"type": "number", "minimum": 0, "default": 1.0},
+            "backoff_multiplier": {"type": "number", "minimum": 1.0, "default": 2.0},
+            "max_delay_s": {"type": "number", "minimum": 0, "default": 60.0},
+            "redelivery_header": {"type": "string"},
+            "on_exhausted_action": {
+                "type": "string",
+                "default": "dlq",
+                "description": "Action name dispatched after max_attempts exhausted.",
+            },
+            "name": {"type": "string"},
+        },
+    },
+    output_schema={
+        "type": "object",
+        "description": "Exchange with redelivery headers updated; may carry exhausted flag.",
+    },
+    capabilities=("dsl.eip.redelivery_policy",),
+    tags=("eip", "reliability", "redelivery", "retry"),
+)
 class RedeliveryPolicyProcessor(BaseProcessor):
     """Retry-with-backoff policy для failed message delivery (Camel Redelivery).
+
+    B-04 fix (cycle 38): registered через ``@processor`` декоратор —
+    ``core:redelivery_policy``. Spec покрывает retry/backoff параметры;
+    output описывает Exchange с обновлёнными redelivery headers.
 
     Args:
         max_attempts: максимум retries (default 3).
@@ -105,7 +142,7 @@ class RedeliveryPolicyProcessor(BaseProcessor):
         else:
             try:
                 attempt = int(attempt_raw) + 1
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 attempt = 1
             exchange.in_message.set_header(self._header, attempt)
 

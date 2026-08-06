@@ -37,6 +37,7 @@ from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.dsl.registry import processor
 
 __all__ = ("ProcessorRegistry", "RoutingSlipProcessor", "SimpleRegistry")
 
@@ -79,12 +80,45 @@ class SimpleRegistry:
 StepsResolver = Callable[[Exchange[Any]], Any]
 
 
+@processor(
+    "routing_slip",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "description": "Dynamic per-message chain (Camel Routing Slip EIP).",
+        "properties": {
+            "strict": {
+                "type": "boolean",
+                "default": True,
+                "description": "Raise KeyError on missing step (vs warning + skip).",
+            },
+            "max_steps": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 50,
+                "description": "Cap to prevent infinite chains.",
+            },
+            "name": {"type": "string"},
+        },
+    },
+    output_schema={
+        "type": "object",
+        "description": "Same Exchange after sequential step execution; properties "
+        "track remaining/current step.",
+    },
+    capabilities=("dsl.eip.routing_slip",),
+    tags=("eip", "routing", "routing_slip", "dynamic"),
+)
 class RoutingSlipProcessor(BaseProcessor):
     """Динамическая цепочка processors per-message (Camel Routing Slip).
 
     На каждом exchange: резолвит список steps → выполняет их последовательно
     в текущем ExecutionContext. Если step не найден в registry — raises
     ``KeyError`` (можно отключить strict mode).
+
+    B-04 fix (cycle 38): registered через ``@processor`` декоратор —
+    ``core:routing_slip``. Spec покрывает strict/max_steps; output
+    описывает Exchange с tracking-properties.
 
     State:
         ``exchange.set_property("routing_slip.remaining", [...])`` — оставшиеся

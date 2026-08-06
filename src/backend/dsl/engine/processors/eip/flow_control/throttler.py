@@ -12,15 +12,50 @@ from typing import Any
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.registry import processor
 
 __all__ = ("ThrottlerProcessor",)
 
 
+@processor(
+    "throttler",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "description": "Token-bucket rate limiter (Camel Throttler EIP).",
+        "properties": {
+            "rate": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Steady-state tokens per second.",
+            },
+            "burst": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1,
+                "description": "Maximum bucket capacity (initial token count).",
+            },
+            "name": {"type": "string"},
+        },
+        "required": ["rate"],
+    },
+    output_schema={
+        "type": "object",
+        "description": "Same Exchange (passthrough) after optional throttle delay.",
+    },
+    capabilities=("dsl.eip.throttler",),
+    tags=("eip", "flow_control", "throttle"),
+)
 class ThrottlerProcessor(BaseProcessor):
     """Rate-limit per route: N сообщений в секунду.
 
     Использует token bucket для контроля пропускной
     способности. При превышении — задержка.
+
+    B-04 fix (cycle 38): registered через ``@processor`` декоратор —
+    ``core:throttler``. Spec покрывает ``rate`` + ``burst``; output
+    схема описывает passthrough-Exchange. Reference pattern для
+    оставшихся 36 EIP процессоров (cycle 39).
     """
 
     def __init__(self, rate: float, *, burst: int = 1, name: str | None = None) -> None:

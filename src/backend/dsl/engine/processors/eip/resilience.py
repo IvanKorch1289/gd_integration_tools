@@ -7,6 +7,7 @@ from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.registry import processor
 
 _eip_logger = get_logger("dsl.eip")
 _camel_logger = get_logger("dsl.camel")
@@ -19,11 +20,42 @@ __all__ = (
 )
 
 
+@processor(
+    "dead_letter",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "description": "Camel Dead Letter Channel — wrap sub-pipeline и DLQ-route.",
+        "properties": {
+            "dlq_stream": {
+                "type": "string",
+                "default": "dsl-dlq",
+                "description": "Redis stream name для DLQ записей.",
+            },
+            "dlq_path": {
+                "type": ["string", "null"],
+                "description": "Опциональный локальный JSONL fallback path.",
+            },
+            "max_retries": {"type": "integer", "minimum": 0, "default": 0},
+            "name": {"type": "string"},
+        },
+    },
+    output_schema={
+        "type": "object",
+        "description": "Exchange с DLQ entry в Redis stream (при failure); "
+        "иначе passthrough.",
+    },
+    capabilities=("dsl.eip.dead_letter", "dsl.dlq.write"),
+    tags=("eip", "reliability", "dlq"),
+)
 class DeadLetterProcessor(BaseProcessor):
     """Dead Letter Channel — направляет упавшие Exchange в DLQ.
 
     Оборачивает sub-pipeline. При неуспехе сохраняет Exchange
     в DLQ-хранилище (Redis stream) с полным контекстом ошибки.
+
+    B-04 fix (cycle 38): registered через ``@processor`` декоратор —
+    ``core:dead_letter``. Spec покрывает DLQ-target + max_retries.
     """
 
     def __init__(
@@ -159,12 +191,30 @@ class DeadLetterProcessor(BaseProcessor):
             await self._send_to_dlq(exchange)
 
 
+@processor(
+    "fallback_chain",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "description": "Camel Fallback Chain — sequential try-until-success.",
+        "properties": {"name": {"type": "string"}},
+    },
+    output_schema={
+        "type": "object",
+        "description": "Exchange от первого успешного процессора; при exhausted — failed.",
+    },
+    capabilities=("dsl.eip.fallback_chain",),
+    tags=("eip", "resilience", "fallback"),
+)
 class FallbackChainProcessor(BaseProcessor):
     """Fallback Chain — последовательно пробует процессоры.
 
     Выполняет первый процессор. При ошибке — следующий.
     Останавливается на первом успешном. Если все провалились —
     Exchange завершается ошибкой последнего.
+
+    B-04 fix (cycle 38): registered через ``@processor`` декоратор —
+    ``core:fallback_chain``.
     """
 
     def __init__(
@@ -204,6 +254,45 @@ class _SubPipelineFailure(Exception):
     """
 
 
+@processor(
+    "circuit_breaker",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "description": "Camel Circuit Breaker — fail-fast guard с fallback.",
+        "properties": {
+            "failure_threshold": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 5,
+                "description": "Сколько failures до open state.",
+            },
+            "recovery_timeout": {
+                "type": "number",
+                "minimum": 0,
+                "default": 30.0,
+                "description": "Секунд до half-open trial.",
+            },
+            "half_open_max": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1,
+                "description": "(Deprecated) оставлен для обратной совместимости.",
+            },
+            "breaker_name": {
+                "type": "string",
+                "description": "Override имени breaker'а (default: dsl.pipeline.<route_id>).",
+            },
+            "name": {"type": "string"},
+        },
+    },
+    output_schema={
+        "type": "object",
+        "description": "Exchange с property ``cb_state`` (open/closed/half_open/open_fallback).",
+    },
+    capabilities=("dsl.eip.circuit_breaker",),
+    tags=("eip", "resilience", "circuit_breaker", "purgatory"),
+)
 class CircuitBreakerProcessor(BaseProcessor):
     """Camel Circuit Breaker EIP — fail-fast pattern inside DSL pipeline.
 
@@ -211,6 +300,9 @@ class CircuitBreakerProcessor(BaseProcessor):
     (purgatory-based). Метрика ``infra_client_circuit_state`` публикуется
     автоматически. Локальное состояние не хранится — единый источник
     правды на процесс.
+
+    B-04 fix (cycle 38): registered через ``@processor`` декоратор —
+    ``core:circuit_breaker``. Spec покрывает threshold/timeout/breaker_name.
 
     Namespace в имени breaker'а:
         ``dsl.pipeline.<route_id>`` — если ``name`` не задан явно;
@@ -305,11 +397,33 @@ class CircuitBreakerProcessor(BaseProcessor):
         exchange.set_property("cb_state", breaker.state)
 
 
+@processor(
+    "timeout",
+    namespace="core",
+    spec_schema={
+        "type": "object",
+        "description": "Camel Timeout — wrap sub-processors with a time limit.",
+        "properties": {
+            "seconds": {"type": "number", "minimum": 0, "default": 30.0},
+            "name": {"type": "string"},
+        },
+        "required": [],
+    },
+    output_schema={
+        "type": "object",
+        "description": "Exchange; при timeout — failed или fallback exchange.",
+    },
+    capabilities=("dsl.eip.timeout",),
+    tags=("eip", "resilience", "timeout"),
+)
 class TimeoutProcessor(BaseProcessor):
     """Camel Timeout EIP — wrap sub-processors with a time limit.
 
     If processing exceeds the timeout, the exchange is failed
     and an optional fallback is executed.
+
+    B-04 fix (cycle 38): registered через ``@processor`` декоратор —
+    ``core:timeout``.
 
     Usage::
 
