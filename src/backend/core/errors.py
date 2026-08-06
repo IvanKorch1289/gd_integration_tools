@@ -19,6 +19,7 @@ __all__ = (
     "BaseError",
     "DatabaseError",
     "NotFoundError",
+    "ProductionWiringError",
     "RouteDisabledError",
     "RoutePermissionDeniedError",
     "ServiceError",
@@ -163,6 +164,35 @@ class DatabaseError(BaseError):
     def __init__(self, *_: Any, message: str = "Database error") -> None:
         super().__init__(
             message=message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+class ProductionWiringError(BaseError):
+    """Composition root имеет незавершённую/неконсистентную продакшн-конфигурацию.
+
+    B-20 fix (cycle 38): поднимается при ``engine_enabled=True`` без
+    сконфигурированных policy-движков (OPA/Casbin) — fake-active security
+    в production-профиле запрещена. Также подходит для любых других
+    composition-root случаев, когда мастер-флаг ``enabled=True`` обязан
+    сопровождаться зависимыми настройками, но они пусты.
+
+    Используется в :func:`src.backend.plugins.composition.di.register_app_state`
+    для fail-loud при ``policy.engine_enabled=True`` и пустых
+    ``policy.opa_url`` / ``policy.casbin_model_path``.
+    """
+
+    def __init__(
+        self,
+        *_: Any,
+        message: str = "Production wiring is incomplete",
+        missing: tuple[str, ...] = (),
+    ) -> None:
+        self.missing: tuple[str, ...] = missing
+        if missing:
+            message = f"{message} (missing: {list(missing)})"
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
 
 

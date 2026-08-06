@@ -126,11 +126,35 @@ def register_app_state(app: FastAPI) -> None:
     # B-12 fix (cycle 37): инстанциация OPA/Casbin только при явной активации
     # через ``policy_settings.engine_enabled`` (default OFF на dev/dev_light).
     # На prod-профиле YAML-overlay поднимает флаг → реальные движки подцепляются.
+    # B-20 fix (cycle 38): auth_policies fail-loud при engine_enabled=True
+    # без сконфигурированных OPA/Casbin (fake-active security). До этого
+    # silent skip log-warning при пустых URL приводил к регистрации
+    # AuthorizationGateway с пустой policies chain → LLM policy-gate работал
+    # только в fail-closed capability-check. На prod-профиле это становится
+    # P0: разрешает prod запуск с engine_enabled=True, но без фактически
+    # работающих policy-движков. Каждый движок по-прежнему опционален
+    # (OPA-only / Casbin-only — валидные конфигурации), но ОБА пустыми
+    # быть не могут.
     auth_policies: list = []
     try:
         from src.backend.core.config.services.policy import policy_settings
 
         if policy_settings.engine_enabled:
+            if not policy_settings.opa_url and not policy_settings.casbin_model_path:
+                # B-20 fix (cycle 38): fail-loud — production-wiring с
+                # engine_enabled=True обязан иметь хотя бы один policy-engine.
+                from src.backend.core.errors import ProductionWiringError
+
+                raise ProductionWiringError(
+                    message=(
+                        "policy.engine_enabled=True requires at least one of "
+                        "policy.opa_url or policy.casbin_model_path to be set"
+                    ),
+                    missing=(
+                        "policy.opa_url",
+                        "policy.casbin_model_path",
+                    ),
+                )
             from src.backend.core.security.authorization_gateway.policies import (
                 build_casbin_policy_decider,
                 build_opa_policy_decider,
@@ -169,6 +193,10 @@ def register_app_state(app: FastAPI) -> None:
                 bool(policy_settings.opa_url),
                 bool(policy_settings.casbin_model_path),
             )
+    except ProductionWiringError:
+        # B-20 fix (cycle 38): production-wiring ошибки пробрасываются
+        # наружу — fail-loud запрещает fake-active security.
+        raise
     except Exception as _pol_exc:
         # Fail-soft при ошибке сборки (например, OPA-клиент пытается
         # выполнить make_http_client во время DI). В prod это должно
