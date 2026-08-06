@@ -28,6 +28,20 @@ security:
     - "*.staging.local"
 
 
+# B-12 fix (cycle 37) + cycle 38 Task #1: pre-production enforcement policy
+# engines (OPA + Casbin). engine_enabled=True обязывает composition root
+# инстанцировать runtime policy-цепочку. На staging это позволяет заранее
+# валидировать rego-пакеты и Casbin-модель до prod-релиза. dev/dev_light
+# остаются выключенными (default OFF в base.yml). URLs — из env, чтобы
+# тестовая конфигурация k8s-Namespace отличалась от prod.
+policy:
+  engine_enabled: true
+  opa_url: "${OPA_URL:-http://opa-staging:8181}"
+  opa_policy_name: "authz/default"
+  casbin_model_path: "${CASBIN_MODEL_PATH:-/etc/casbin/model.conf}"
+  casbin_policy_path: "${CASBIN_POLICY_PATH:-/etc/casbin/policies.csv}"
+
+
 database:
   type: "postgresql"
   host: "postgres-staging"

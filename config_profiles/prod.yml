@@ -39,6 +39,21 @@ features:
   presidio_pii_enabled: true
 
 
+# B-12 fix (cycle 37) + cycle 38 Task #1: production-enforcement policy
+# engines (OPA + Casbin). engine_enabled=True обязывает composition root
+# инстанцировать runtime policy-цепочку и пробрасывать её в
+# AuthorizationGateway. default OFF в base.yml → dev/dev_light не дёргают
+# OPA/Casbin вообще (никаких сетевых вызовов при разработке). URLs берутся
+# из env с fallback на prod-стандартный k8s-адрес opa:8181; casbin_model_path
+# маунтится через Secret в /etc/casbin/. POLICY_* env-vars имеют приоритет.
+policy:
+  engine_enabled: true
+  opa_url: "${OPA_URL:-http://opa:8181}"
+  opa_policy_name: "authz/default"
+  casbin_model_path: "${CASBIN_MODEL_PATH:-/etc/casbin/model.conf}"
+  casbin_policy_path: "${CASBIN_POLICY_PATH:-/etc/casbin/policies.csv}"
+
+
 database:
   type: "postgresql"
   host: "postgres-prod"
