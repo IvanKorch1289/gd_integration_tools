@@ -19,6 +19,17 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from src.backend.core.messaging.dlq_policy import DLQPolicyRegistry
 
+
+def _iso_to_yyyymm(iso_str: str) -> str:
+    """Convert ISO-8601 string → ClickHouse partition suffix (YYYYMM).
+
+    ClickHouse PARTITION BY toYYYYMM(created_at) → partition name
+    pattern is ``YYYYMM`` (e.g. ``202608`` for Aug 2026).
+    D-AUDIT-FIX-184-4: helper for ALTER TABLE ... DROP PARTITION ID.
+    """
+    # iso_str is e.g. "2026-08-05T14:30:00+00:00"; take first 7 chars "YYYY-MM"
+    return iso_str[:7].replace("-", "")
+
 __all__ = ("DLQCleanupJob", "DLQCleanupStats")
 
 logger = get_logger(__name__)
@@ -73,19 +84,28 @@ class DLQCleanupJob:
         self._clock = clock or (lambda: datetime.now(UTC))
 
     async def run(self) -> DLQCleanupStats:
-        """Выполнить cleanup один раз; вернуть статистику."""
+        """Выполнить cleanup один раз; вернуть статистику.
+
+        D-AUDIT-FIX-184-4 (S184 W4 #4, 2026-08-05): заменён DELETE
+        на PARTITION DETACH ... DROP PARTITION (per b69d6b49
+        migration). ClickHouse PARTITION pruning O(n*log(n)) эффективнее
+        full-table DELETE (O(n)) и не вызывает heavy-merge.
+        """
         stats = DLQCleanupStats()
         now = self._clock()
         for policy in self._registry.list_all():
             cutoff = now - timedelta(days=policy.retention_days)
-            # table_name контролируется конструктором (не user input); параметры — через %s.
-            sql = f"DELETE FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # noqa: S608  # internal query with controlled parameters
+            cutoff_partition = _iso_to_yyyymm(cutoff.isoformat())
+            # table_name контролируется конструктором (не user input);
+            # partition suffix вычисляется из cutoff (controlled).
+            sql = (
+                f"ALTER TABLE {self._table} "  # noqa: S608
+                f"DROP PARTITION ID '{cutoff_partition}'"
+            )
             try:
-                await self._client.execute(
-                    sql, params=[policy.class_name, cutoff.isoformat()]
-                )
-                # ClickHouse не возвращает row count из DELETE; для целей
-                # метрик используем приблизительное значение из predicate.
+                await self._client.execute(sql)
+                # ClickHouse не возвращает row count из DROP PARTITION;
+                # используем приблизительное значение из predicate.
                 deleted = await self._count_deleted_approx(policy.class_name, cutoff)
                 stats.deleted_per_class[policy.class_name] = deleted
                 if _CLEANUP_COUNTER is not None:
