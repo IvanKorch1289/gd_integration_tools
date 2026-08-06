@@ -75,7 +75,7 @@ class ExperimentalFlags(BaseSettings):
     )
 
     openfeature_external: bool = Field(
-        default=True,
+        default=False,  # D-AUDIT-FIX-184-2 (S184 W4 #2, 2026-08-05): code matches doc
         title="Sprint 7 T5: OpenFeature external provider (Flagsmith)",
         description=(
             "Sprint 7 Team T5. Owner: T5 Plugin/Platform. ETA: S7. "
