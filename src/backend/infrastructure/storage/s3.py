@@ -330,28 +330,21 @@ class S3ObjectStorage(ObjectStorage):
                     MultipartUpload={"Parts": parts},
                 )
                 return full_key
+            # D-AUDIT-#14 fix (S183 W2 #1, 2026-08-05):
+            # CancelledError/MemoryError bypass the narrow tuple below and would
+            # leak an in-flight multipart upload. Catch them BEFORE the OSError
+            # branch (BaseException is parent), attempt abort, then re-raise
+            # unchanged so the runtime/loop sees the original cancel signal.
             except (asyncio.CancelledError, MemoryError):
-                # B-19 fix (cycle 38): S3 multipart cancel при asyncio.CancelledError/MemoryError.
-                # D-AUDIT-#14 fix (S183 W2 #1, 2026-08-05):
-                # BaseException-level failures (task cancellation / OOM)
-                # propagate WITHOUT await — fire-and-forget abort to avoid
-                # blocking shutdown propagation. Original code only caught
-                # Exception subclasses (OSError/RuntimeError/KeyError/ValueError),
-                # leaking orphan multipart uploads on cancel/OOM.
                 if upload_id is not None:
-                    # `async with self._open()` released `s3` before re-raise;
-                    # call bare client via ``self._client`` (aioboto3 Session) —
-                    # cheap fire-and-forget; aioboto3 manages its own state.
                     try:
-                        async with self._open() as s3:
-                            await s3.abort_multipart_upload(
-                                Bucket=self._bucket,
-                                Key=full_key,
-                                UploadId=upload_id,
-                            )
-                    except Exception as abort_exc:
+                        await s3.abort_multipart_upload(
+                            Bucket=self._bucket, Key=full_key, UploadId=upload_id
+                        )
+                    except (OSError, RuntimeError, KeyError) as abort_exc:
                         self.logger.exception(
-                            "S3ObjectStorage.upload_stream abort on cancel/OOM failed: %s",
+                            "S3ObjectStorage.upload_stream abort failed key=%s: %s",
+                            full_key,
                             abort_exc,
                         )
                 raise

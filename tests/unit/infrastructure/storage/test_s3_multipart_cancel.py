@@ -10,7 +10,7 @@ Pre-fix: тесты должны fall (или expired-cleanup-via-aiobotocore Н
 Post-fix: ``abort_multipart_upload`` called + caller sees original
 CancelledError/MemoryError re-raised.
 
-Strict-test policy per D-LESSON-11: NO lax `with x: pass`.
+Strict-test policy per D-LESSON-11: NO lax `with x: pass``.
 """
 
 from __future__ import annotations
@@ -47,26 +47,23 @@ def _make_storage() -> S3ObjectStorage:
     return storage
 
 
-@asynccontextmanager
-async def _async_iter(chunks: list[bytes]):
-    for c in chunks:
-        yield c
-
-
 def _make_stream(chunks: list[bytes]):
     """Return async generator that yields chunks (NOT a context manager).
 
     Source checks ``isinstance(stream, AsyncIterable)`` — AsyncGenerator
-    satisfies this. Wrapping in @asynccontextmanager makes it CM, not AI.
+    satisfies this.
     """
+
     async def _gen():
         for c in chunks:
             yield c
+
     return _gen()
 
 
 def _patched_open(s3_mock: AsyncMock):
     """Mock ``S3ObjectStorage._open`` to yield a single aioboto3 client mock."""
+
     @asynccontextmanager
     async def _open():
         yield s3_mock
@@ -83,7 +80,6 @@ async def test_cancelled_error_triggers_abort(monkeypatch) -> None:
         return_value={"UploadId": "upload-cancel-test"}
     )
 
-    # upload_part triggers CancelledError when called
     async def upload_part_raise_cancel(**kwargs) -> dict:
         raise asyncio.CancelledError("task cancelled mid-upload")
 
@@ -99,7 +95,6 @@ async def test_cancelled_error_triggers_abort(monkeypatch) -> None:
     with pytest.raises(asyncio.CancelledError):
         await storage.upload_stream(key="k-cancel", stream=stream)
 
-    # CRITICAL: abort must have been called
     s3_mock.abort_multipart_upload.assert_called_once_with(
         Bucket="test-bucket", Key="k-cancel", UploadId="upload-cancel-test"
     )
@@ -142,9 +137,7 @@ async def test_os_error_still_wrapped_as_service_error(monkeypatch) -> None:
     s3_mock.create_multipart_upload = AsyncMock(
         return_value={"UploadId": "upload-os-test"}
     )
-    s3_mock.upload_part = AsyncMock(
-        side_effect=OSError("connection reset")
-    )
+    s3_mock.upload_part = AsyncMock(side_effect=OSError("connection reset"))
     s3_mock.abort_multipart_upload = AsyncMock(return_value={})
 
     monkeypatch.setattr(storage, "_open", _patched_open(s3_mock))
@@ -176,7 +169,7 @@ async def test_abort_failure_logged_but_original_exception_propagates(
         raise asyncio.CancelledError("task cancelled")
 
     s3_mock.upload_part = upload_part_raise_cancel
-    # abort ITSELF raises — should be logged, not propagated (cancel takes precedence)
+    # abort ITSELF raises — should be logged, not propagated
     s3_mock.abort_multipart_upload = AsyncMock(
         side_effect=OSError("abort S3 also down")
     )
@@ -190,7 +183,6 @@ async def test_abort_failure_logged_but_original_exception_propagates(
     with pytest.raises(asyncio.CancelledError):
         await storage.upload_stream(key="k-double-fail", stream=stream)
 
-    # abort was attempted (failed) but original CancelledError still raised
     s3_mock.abort_multipart_upload.assert_called_once()
     storage.logger.exception.assert_called()
 
@@ -200,12 +192,8 @@ async def test_successful_upload_does_not_abort(monkeypatch) -> None:
     """Happy path: NO abort call, returns full_key."""
     storage = _make_storage()
     s3_mock = AsyncMock()
-    s3_mock.create_multipart_upload = AsyncMock(
-        return_value={"UploadId": "ok-upload"}
-    )
-    s3_mock.upload_part = AsyncMock(
-        return_value={"ETag": "etag-abc"}
-    )
+    s3_mock.create_multipart_upload = AsyncMock(return_value={"UploadId": "ok-upload"})
+    s3_mock.upload_part = AsyncMock(return_value={"ETag": "etag-abc"})
     s3_mock.complete_multipart_upload = AsyncMock(return_value={})
     s3_mock.abort_multipart_upload = AsyncMock(return_value={})
 
