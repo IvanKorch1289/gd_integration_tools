@@ -4,6 +4,9 @@ name = "core_admin"
 version = "1.0.0"
 description = "Cross-cutting admin schemas (cache, feature flags, route toggles) — S168 W17 P2-10"
 entry_class = "extensions.core_admin.schemas_only:SchemasOnlyEntry"
+# D-AUDIT-FIX-184-5 (S184 W4 #5, 2026-08-05): required by pre-prod-check #33
+# Plugin trust tier per extension security model ("A" = audited, "B" = community, "C" = experimental)
+trust_tier = "A"
 
 [dependencies]
 # No hard deps — pure Pydantic schemas
