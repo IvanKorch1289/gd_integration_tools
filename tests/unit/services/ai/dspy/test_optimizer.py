@@ -9,10 +9,13 @@ from typing import Any
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="S171 M13.3 R3 partial: test/code sync needed — cache.lookup returns data when disabled (test expects None). Defer to M14 (see docs/m11_deferred_tests.md)")
-
-
 from src.backend.services.ai.dspy import BaselineDataset, CompileReport, DSPyOptimizer
+
+# cycle 38 fix (Task #3): stale pytestmark.skip removed.
+# Verifier: `grep -i cache src/backend/services/ai/dspy/optimizer.py` → 0 matches.
+# Skip-причина S171 M13.3 R3 ("cache.lookup returns data when disabled") относится
+# к services/ai/cache/, не к DSPyOptimizer. Все 9 тестов проходят без skip.
+# ponytail: удаление вместо замены на skipif — модуль domain-clean, skip не нужен.
 
 
 @dataclass(frozen=True, slots=True)
