@@ -1039,6 +1039,10 @@ markers = [
     # используется в tests/perf/*.py (2 файла). Без регистрации блокирует
     # collection всего tests/perf/ (15+ tests). Регистрируем как no-op.
     "benchmark: pytest-benchmark marker (no-op: pytest-benchmark not in dev deps)",
+    # D-AUDIT-#26 fix (S183 W2, 2026-08-05): polars-based dataframe transforms
+    # require `uv sync --extra analytics`. Without marker, collection-error
+    # cascades to entire tests/ directory.
+    "dataframes: polars-dependent dataframe transforms (skipped unless polars installed),"
 ]
 
 

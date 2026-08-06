@@ -5,10 +5,13 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-import polars as pl
 import pytest
 
+pl = pytest.importorskip("polars")
+
 from src.backend.dsl.transforms.dataframes import read_csv, read_excel, write_parquet
+
+pytestmark = pytest.mark.dataframes
 
 
 class TestDataframeTransforms:
