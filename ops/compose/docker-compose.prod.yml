@@ -227,6 +227,12 @@ services:
       APP_PROFILE: prod
       APP_SERVER: ${APP_SERVER:-granian}
       APP_WORKERS: ${APP_WORKERS:-4}
+    # D-A12-05 fix (cycle 22): mem_limit/cpus для production app
+    # (консервативные defaults, override через APP_MEM_LIMIT/APP_CPUS env).
+    # Cycle 1 audit (hypothesis #1) confirmed: ни в одном compose-файле не было
+    # resource limits — risk OOM kill всего compose-stack'а при runaway workload.
+    mem_limit: ${APP_MEM_LIMIT:-4g}
+    cpus: ${APP_CPUS:-2.0}
     depends_on:
       postgres:
         condition: service_healthy
@@ -249,6 +255,9 @@ services:
     environment:
       APP_PROFILE: prod
       WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-dsl}
+    # D-A12-05 fix (cycle 22): mem_limit/cpus для workflow-worker.
+    mem_limit: ${WORKFLOW_WORKER_MEM_LIMIT:-2g}
+    cpus: ${WORKFLOW_WORKER_CPUS:-1.0}
     depends_on:
       postgres:
         condition: service_healthy
