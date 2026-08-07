@@ -58,8 +58,16 @@ class ClamAVUnixBackend(AntivirusBackend):
             writer.close()
             try:
                 await writer.wait_closed()
-            except Exception:
-                pass
+            except (OSError, ConnectionError) as wait_closed_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-914: narrow exceptions + observability.
+                # OSError/ConnectionError для unix socket cleanup. Bare
+                # `except Exception` маскировал unrelated runtime errors
+                # (KeyError, TypeError). wait_closed() best-effort.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "clamav_unix.wait_closed_failed",
+                    extra={"error": str(wait_closed_exc)},
+                )
 
     async def scan_bytes(self, payload: bytes) -> AntivirusScanResult:
         """Сканирует payload через ClamAV по unix-сокету (протокол INSTREAM)."""
@@ -84,8 +92,13 @@ class ClamAVUnixBackend(AntivirusBackend):
             writer.close()
             try:
                 await writer.wait_closed()
-            except Exception:
-                pass
+            except (OSError, ConnectionError) as wait_closed_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-914: см. выше — тот же narrow для scan_bytes.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "clamav_unix.wait_closed_failed",
+                    extra={"error": str(wait_closed_exc)},
+                )
 
         latency_ms = (time.monotonic() - start) * 1000
         return _parse_clamav_response(
