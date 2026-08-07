@@ -8,13 +8,19 @@ module is the batch/bulk-write path used by
 :mod:`core.audit.facade._base` fan-out helpers and
 :mod:`services.audit.workflow_audit_sink`. Per-event emit goes via
 :func:`core.audit.facade.audit_service.emit` instead.
+
+B-25 fix (cycle 1): при сбое ClickHouse client'а failed-events
+роутятся в DLQ через ``DLQWriter`` Protocol (аналогично
+:class:`~src.backend.infrastructure.clients.external.cdc.client.CDCClient`).
+Без writer'а в production поднимается ``RuntimeError`` (fail-loud,
+mirror ``mark_cdc_dlq_writer_wired`` pattern из cycle 37).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces import AsyncBatcher
 from src.backend.core.logging import get_logger
@@ -26,6 +32,9 @@ from src.backend.infrastructure.observability.correlation import (
 # S44 W5: facade import через core.observability (was string-bypass
 # dynamic import 'src.backend.services.io.indexers.log_indexer' чтобы
 # обойти static AST layer linter). Теперь прямой static import.
+
+if TYPE_CHECKING:
+    from src.backend.infrastructure.messaging.dlq_base import DLQWriter
 
 __all__ = ("AuditEvent", "AuditEventLog", "emit_audit_event", "get_audit_log")
 
@@ -49,15 +58,71 @@ class AuditEvent:
 
 
 class AuditEventLog:
-    """Записывает audit events в ClickHouse через batch insert."""
+    """Записывает audit events в ClickHouse через batch insert.
 
-    def __init__(self, table: str = "audit_events", batch_size: int = 50) -> None:
+    B-25 fix (cycle 1): DLQ wiring.
+
+    При сбое ``client.insert()`` в ``_flush_to_clickhouse`` failed-events
+    сериализуются в :class:`DLQEnvelope` и пишутся через настроенный
+    ``DLQWriter``. Без writer'а:
+
+    * production (``dlq_required=True``, default) — ``RuntimeError``
+      (fail-loud, как ``mark_cdc_dlq_writer_wired``);
+    * dev_light / tests (``dlq_required=False``) — log+drop, не raise.
+    """
+
+    def __init__(
+        self,
+        table: str = "audit_events",
+        batch_size: int = 50,
+        *,
+        dlq_writer: "DLQWriter | None" = None,
+        dlq_required: bool = True,
+    ) -> None:
+        """Инициализирует AuditEventLog.
+
+        Args:
+            table: имя таблицы ClickHouse (allowlist: ``audit_events`` /
+                ``audit_log`` enforced только в ``query``).
+            batch_size: размер батча для AsyncBatcher.
+            dlq_writer: [B-25 fix (cycle 1)] ``DLQWriter`` для
+                failed-events при сбое ClickHouse. Устанавливается
+                post-init через :meth:`set_dlq_writer` из composition
+                root (для singleton-friendly pattern, см. CDCClient).
+            dlq_required: [B-25 fix (cycle 1)] production-guard.
+                Если ``True`` (default) и writer не сконфигурирован —
+                ``_send_to_dlq`` поднимет ``RuntimeError`` (fail-loud).
+                В dev_light / unit-tests выставляется ``False`` через
+                :meth:`set_dlq_required` или напрямую.
+        """
         self._table = table
+        # B-25 fix (cycle 1): DLQ handoff на сбое ClickHouse client.
+        self._dlq_writer: "DLQWriter | None" = dlq_writer
+        self._dlq_required: bool = dlq_required
         self._batcher = AsyncBatcher(
             flush_fn=self._flush_to_clickhouse,
             batch_size=batch_size,
             flush_interval_seconds=5.0,
         )
+
+    def set_dlq_writer(self, writer: "DLQWriter | None") -> None:
+        """Установить/сбросить DLQ-writer (для composition root wiring).
+
+        B-25 fix (cycle 1): singleton :func:`get_audit_log` не имеет
+        доступа к ``__init__``-аргументам; этот setter позволяет
+        composition root подключить InboxDLQWriter/KafkaDLQWriter/etc.
+        пост-фактум (тот же паттерн, что
+        :meth:`CDCClient.set_dlq_writer` из S176 cycle 33).
+        """
+        self._dlq_writer = writer
+
+    def set_dlq_required(self, required: bool) -> None:
+        """Override ``dlq_required`` (для dev_light / tests).
+
+        B-25 fix (cycle 1): production default ``True`` (fail-loud);
+        ``DLQSettings``/profile в dev_light выставляет ``False``.
+        """
+        self._dlq_required = required
 
     async def start(self) -> None:
         """Метод start (см. signature)."""
@@ -110,10 +175,17 @@ class AuditEventLog:
             await client.insert(self._table, rows)
             logger.debug("Flushed %d audit events to ClickHouse", len(rows))
         except Exception as exc:
+            # B-25 fix (cycle 1): silent-loss был P0 — failed-events
+            # теперь роутятся в DLQ через _send_to_dlq (production
+            # fail-loud при отсутствии writer'а). Лог сохранён для
+            # обратной совместимости с существующими дашбордами.
             logger.error("Audit flush to ClickHouse failed: %s", exc)
+            await self._send_to_dlq(events, exc)
 
         # Wave 9.3.1: secondary indexing в Elasticsearch (best-effort).
         # S44 W5: facade import через core.observability (was string-bypass).
+        # B-25 fix (cycle 1) scope: только ClickHouse-failure path; ES —
+        # secondary best-effort, оставляем log+drop (известное поведение).
         try:
             from src.backend.core.observability.log_indexer import get_log_indexer
 
@@ -121,6 +193,149 @@ class AuditEventLog:
             await indexer.index_batch(events)
         except Exception as es_exc:
             logger.warning("LogIndexer.index_batch failed: %s", es_exc)
+
+    async def _send_to_dlq(
+        self,
+        events: list[AuditEvent],
+        exc: BaseException,
+    ) -> None:
+        """Отправить failed-events в DLQ (B-25 fix (cycle 1)).
+
+        Зеркалит :meth:`CDCClient._send_to_dlq` (S176 cycle 33 B-02 +
+        S180 cycle 37 B-17 fail-loud guard):
+
+        1. ``writer is None`` + ``_dlq_required=True`` → ``RuntimeError``
+           (production fail-loud, аналог ``mark_cdc_dlq_writer_wired``).
+        2. ``writer is None`` + ``_dlq_required=False`` → log+drop
+           (dev_light / unit-tests).
+        3. ``writer`` сконфигурирован → :class:`DLQEnvelope` per event
+           + ``await writer.write(envelope)``. Failure DLQ-записи логируется
+           на ``exc_info`` и не пробрасывается (consumer-loop не должен
+           падать из-за observability-сбоя).
+
+        Args:
+            events: батч событий, не доехавший в ClickHouse.
+            exc: исключение от ClickHouse client'а (для envelope metadata).
+
+        Raises:
+            RuntimeError: только в production-mode без writer'а.
+        """
+        if self._dlq_writer is None:
+            if self._dlq_required:
+                # B-25 fix (cycle 1): production fail-loud (analog CDCClient).
+                msg = (
+                    f"Audit events dropped: DLQ writer not wired "
+                    f"[count={len(events)}, table={self._table}, "
+                    f"error={type(exc).__name__}: {exc}]"
+                )
+                logger.error(msg)
+                raise RuntimeError(msg)
+            # B-25 fix (cycle 1): dev_light / unit-tests — log+drop.
+            logger.warning(
+                "Audit no DLQ writer configured; dropping events silently "
+                "(dev_light) [count=%d, error=%s]",
+                len(events),
+                type(exc).__name__,
+            )
+            return
+
+        # B-25 fix (cycle 1): build DLQ envelopes.
+        envelopes = self._build_dlq_envelopes(events, exc)
+        if not envelopes:
+            return
+
+        # B-25 fix (cycle 1): write каскадно, fail-each отдельно,
+        # чтобы падение одного envelope не теряло остальные.
+        for env in envelopes:
+            try:
+                await self._dlq_writer.write(env)
+            except Exception as dlq_exc:  # noqa: BLE001
+                logger.exception(
+                    "Audit DLQ handoff failed [dlq_id=%s, tenant=%s]: %s "
+                    "— EVENT WILL BE LOST",
+                    env.dlq_id,
+                    env.tenant_id,
+                    dlq_exc,
+                )
+                # Не пробрасываем: audit-middleware не должен падать
+                # из-за DLQ-сбоя (fire-and-forget semantics как в
+                # ClickHouseAuditService._send_to_dlq).
+                continue
+        logger.warning(
+            "Audit events forwarded to DLQ after ClickHouse failure "
+            "[count=%d, table=%s]",
+            len(envelopes),
+            self._table,
+        )
+
+    def _build_dlq_envelopes(
+        self,
+        events: list[AuditEvent],
+        exc: BaseException,
+    ) -> list[Any]:
+        """Строит :class:`DLQEnvelope` список для batch'а.
+
+        B-25 fix (cycle 1): lazy import ``DLQEnvelope`` / ``DLQReason``
+        чтобы избежать циклической зависимости с messaging-слоем на
+        import-time (mirror CDCClient._send_to_dlq).
+
+        Returns:
+            Список envelopes; пустой список если build упал.
+        """
+        try:
+            from src.backend.infrastructure.messaging.dlq_base import (
+                DLQEnvelope,
+                DLQReason,
+            )
+        except ImportError:  # pragma: no cover -- defensive
+            logger.exception("DLQ base import failed; cannot build envelopes")
+            return []
+
+        envelopes: list[Any] = []
+        error_class = type(exc).__name__
+        error_message = f"clickhouse flush failed: {exc}"
+        for e in events:
+            try:
+                envelopes.append(
+                    DLQEnvelope(
+                        transport="audit_event_log",
+                        trace_id=e.correlation_id or None,
+                        tenant_id=e.tenant_id or None,
+                        route_id=e.entity_type or None,
+                        original_payload={
+                            "who": e.who,
+                            "what": e.what,
+                            "entity_type": e.entity_type,
+                            "entity_id": e.entity_id,
+                            "action": e.action,
+                            "when": e.when.isoformat(),
+                            "before": e.before,
+                            "after": e.after,
+                            "correlation_id": e.correlation_id,
+                            "tenant_id": e.tenant_id,
+                            "metadata": dict(e.metadata),
+                        },
+                        error_class=error_class,
+                        error_message=error_message,
+                        reason=DLQReason.UNEXPECTED,
+                        metadata={
+                            "table": self._table,
+                            "batch_size": len(events),
+                        },
+                        dlq_class="operational",
+                    )
+                )
+            except Exception as build_exc:  # noqa: BLE001
+                # Envelope build failed (should not happen, defensive):
+                # log + drop, never propagate.
+                logger.exception(
+                    "Audit DLQ envelope build failed "
+                    "[who=%s, entity_id=%s]: %s",
+                    e.who,
+                    e.entity_id,
+                    build_exc,
+                )
+        return envelopes
 
     async def query(
         self,
