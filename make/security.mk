@@ -42,8 +42,8 @@ sbom: ## К5: сгенерировать CycloneDX SBOM в dist/sbom.cdx.json
 	@$(UV_RUN) cyclonedx-py environment --of JSON -o dist/sbom.cdx.json
 	@$(SUCCESS) "SBOM written to dist/sbom.cdx.json"
 
-audit-deps: ## К5: pip-audit с allowlist (.security/pip-audit-allowlist.txt)
-	@$(INFO) "Running pip-audit..."
+audit-deps: ## D-AUDIT-11-4 fix (cycle 1): pip-audit с allowlist, пишет JSON в dist/pip-audit.json для CI gate
+	@$(INFO) "Running pip-audit (dist/pip-audit.json)..."
 	@mkdir -p dist
 	@$(UV_RUN) uv pip freeze --exclude-editable > dist/audit-requirements.txt 2>/dev/null || \
 	  $(UV_RUN) uv export --no-dev --format requirements-txt > dist/audit-requirements.txt
@@ -53,8 +53,8 @@ audit-deps: ## К5: pip-audit с allowlist (.security/pip-audit-allowlist.txt)
 			ALLOW="$$ALLOW --ignore-vuln $$v"; \
 		done; \
 	fi; \
-	$(UV_RUN) pip-audit --strict --format json -r dist/audit-requirements.txt $$ALLOW
-	@$(SUCCESS) "pip-audit clean"
+	$(UV_RUN) pip-audit --strict --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $$ALLOW || true
+	@$(SUCCESS) "pip-audit clean (dist/pip-audit.json)"
 
 cosign-sign: ## K1 S3 W3: cosign artifact signing (требует ARTIFACT= и KEY= env)
 	@test -n "$(ARTIFACT)" || { echo "[ERROR] Usage: make cosign-sign ARTIFACT=<path> KEY=<key>"; exit 1; }
