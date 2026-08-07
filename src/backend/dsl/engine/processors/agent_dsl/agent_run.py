@@ -50,7 +50,29 @@ __all__ = ("AgentRunProcessor",)
 
 _logger = get_logger(__name__)
 
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 26)
 
+
+@processor(
+    "agent_run",
+    namespace="core",
+    capabilities=("ai.gateway.invoke",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "workflow_id": {"type": "string"},
+            "prompt_ref": {"type": "string"},
+            "prompt_inline": {"type": "string"},
+            "policy_ref": {"type": "string"},
+            "context_property": {"type": "string"},
+            "result_property": {"type": "string"},
+            "timeout_s": {"type": "number", "exclusiveMinimum": 0},
+            "max_retries": {"type": "integer", "minimum": 0},
+        },
+        "required": ["workflow_id"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class AgentRunProcessor(BaseAIProcessor):
     """Вызвать :class:`AIGateway.invoke` по ``workflow_id`` + prompt.
 

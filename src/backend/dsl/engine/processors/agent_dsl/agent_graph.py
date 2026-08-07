@@ -75,11 +75,27 @@ __all__ = ("AgentGraphProcessor",)
 
 _logger = get_logger(__name__)
 
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 26)
+
 
 # Supported graph types.
 GRAPH_TYPES = frozenset(("supervisor", "react"))
 
 
+@processor(
+    "agent_graph",
+    namespace="core",
+    capabilities=("ai.invoke",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "graph_name": {"type": "string"},
+            "tools": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["graph_name"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class AgentGraphProcessor(BaseAIProcessor):
     """LangGraph execution as DSL step.
 

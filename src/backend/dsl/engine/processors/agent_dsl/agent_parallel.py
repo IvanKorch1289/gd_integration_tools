@@ -50,7 +50,23 @@ __all__ = ("AgentParallelProcessor",)
 
 _logger = get_logger(__name__)
 
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 26)
 
+
+@processor(
+    "agent_parallel",
+    namespace="core",
+    capabilities=("ai.parallel",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "branches": {"type": "array", "items": {"type": "string"}, "minItems": 2},
+            "join_strategy": {"enum": ["all", "first", "any"]},
+        },
+        "required": ["branches"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class AgentParallelProcessor(BaseAIProcessor):
     """Параллельный fan-out агентов через :class:`asyncio.TaskGroup`.
 

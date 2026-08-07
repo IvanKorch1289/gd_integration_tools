@@ -47,10 +47,26 @@ __all__ = ("AgentSecurityCheckProcessor",)
 
 _logger = get_logger("dsl.agent_security_check")
 
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 26)
+
 
 CheckType = Literal["prompt", "command", "sql", "file"]
 
 
+@processor(
+    "agent_security_check",
+    namespace="core",
+    capabilities=("agent.security.check",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "policy": {"type": "string"},
+            "action_on_deny": {"enum": ["block", "warn", "log"]},
+        },
+        "required": ["policy"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class AgentSecurityCheckProcessor(BaseProcessor):
     """DSL processor для Agent Security Framework (S187).
 

@@ -45,7 +45,22 @@ __all__ = ("AgentBranchProcessor",)
 
 _logger = get_logger(__name__)
 
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 26)
 
+
+@processor(
+    "agent_branch",
+    namespace="core",
+    capabilities=("ai.branch",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "branches": {"type": "array", "items": {"type": "string"}},
+            "default_branch": {"type": "string"},
+        },
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class AgentBranchProcessor(BaseAIProcessor):
     """Условная развилка по verdict из agent_result.
 

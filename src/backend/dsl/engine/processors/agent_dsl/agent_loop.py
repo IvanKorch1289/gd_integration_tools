@@ -49,7 +49,23 @@ __all__ = ("AgentLoopProcessor",)
 
 _logger = get_logger(__name__)
 
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 26)
 
+
+@processor(
+    "agent_loop",
+    namespace="core",
+    capabilities=("ai.loop",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "max_iterations": {"type": "integer", "minimum": 1, "maximum": 1000},
+            "stop_condition": {"type": "string"},
+            "initial_prompt_ref": {"type": "string"},
+        },
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class AgentLoopProcessor(BaseAIProcessor):
     """Повтор вложенного pipeline до stop_condition / max_iterations / budget.
 
