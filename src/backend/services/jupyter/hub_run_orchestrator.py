@@ -193,13 +193,26 @@ async def run_hub_notebook(
 
             await emit_audit_safe(
                 action="jupyter.hub.run.inline",
-                resource=notebook_name,
-                principal=user_name,
-                detail={"content_size": len(notebook_content)},
+                event="jupyter.hub.run.inline",
+                outcome="success",
+                extra={
+                    "resource": notebook_name,
+                    "principal": user_name,
+                    "content_size": len(notebook_content),
+                },
             )
-        except Exception:
-            # Audit emission — best-effort, не блокируем notebook-run.
-            _logger.debug("audit emit failed for jupyter.hub.run.inline", exc_info=True)
+        except (ImportError, RuntimeError, AttributeError, OSError, TypeError) as audit_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-905: narrow exceptions + observability.
+            # Bare `except Exception` маскировал unrelated runtime errors
+            # (KeyError, TypeError, ValueError). Audit emission — best-effort,
+            # не блокируем notebook-run, но нужна visibility для диагностики.
+            # TypeError включён т.к. emit_audit_safe() — defensive signature
+            # (kwargs mismatch на audit schema evolution не должен ронять notebook-run).
+            _logger.debug(
+                "audit emit failed for jupyter.hub.run.inline: %s",
+                audit_exc,
+                exc_info=True,
+            )
 
         # Сохраняем во временный файл и передаём как path.
         # M7.2: помечаем ``is_temp_file=True`` для post-execute cleanup
