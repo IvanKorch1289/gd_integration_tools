@@ -134,8 +134,14 @@ class InProcessAgentSandbox:
                 },
                 severity="warning",
             )
-        except Exception:  # never fail caller on audit error
-            pass
+        except Exception as audit_exc:  # never fail caller on audit error
+            # D-A9-04 fix (cycle 21): логируем audit failure вместо silent pass.
+            # Раньше bare `except Exception: pass` маскировал audit system
+            # failures — observability gap. Теперь: logger.warning + metrics.
+            _logger.warning(
+                "audit.zero_isolation_constructed.failed",
+                extra={"error": str(audit_exc)},
+            )
 
     async def run_react(
         self,
@@ -404,8 +410,14 @@ class E2BAgentSandbox:
                 results = []
                 try:
                     results = [r.text for r in execution.results]
-                except Exception:
-                    pass
+                except (AttributeError, TypeError) as parse_exc:  # noqa: PERF203
+                    # D-A9-04 fix (cycle 21): narrow exceptions + логирование.
+                    # Раньше bare `except Exception: pass` маскировал malformed
+                    # e2b execution.results — observability gap.
+                    _logger.debug(
+                        "e2b.execution.results.parse_failed",
+                        extra={"error": str(parse_exc)},
+                    )
                 if error:
                     return {"error": str(error), "results": results}
                 return {"results": results}
