@@ -23,6 +23,7 @@ Actions: webhook.relay, webhook.transform, webhook.dlq_list, webhook.dlq_retry.
 from __future__ import annotations
 
 import time
+from collections import deque
 from dataclasses import asdict, dataclass, field
 from typing import Any, cast
 from uuid import uuid4
@@ -84,12 +85,22 @@ class WebhookRelay:
     Rules хранятся in-memory (предполагается что они перечитываются из БД
     при старте). DLQ хранится в Redis — переживает рестарты и shared между
     инстансами приложения.
+
+    cycle-8/D-AUDIT-802: ``_memory_dlq`` ограничен ``_DLQ_MAX_LEN`` через
+    ``deque(maxlen=...)`` — защита от unbounded growth при недоступности Redis.
+    ``_dead_rule_dlq`` хранит DLQ-записи, для которых правило уже удалено
+    (``dlq_retry`` → ``rule_not_found``) — они не блокируют основную очередь,
+    но остаются инспектируемыми.
     """
 
     def __init__(self) -> None:
         self._rules: dict[str, RelayRule] = {}
-        # Fallback-storage на случай недоступности Redis.
-        self._memory_dlq: list[DLQEntry] = []
+        # cycle-8/D-AUDIT-802: Bounded LRU queue — deque(maxlen=...) автоматически
+        # вытесняет самые старые записи при переполнении (защита от silent loss).
+        self._memory_dlq: deque[DLQEntry] = deque(maxlen=_DLQ_MAX_LEN)
+        # cycle-8/D-AUDIT-802: dead-rule DLQ для записей без живого правила —
+        # отдельная bounded очередь, не подмешивается в основную retry-логику.
+        self._dead_rule_dlq: deque[DLQEntry] = deque(maxlen=_DLQ_MAX_LEN)
 
     # ── Rules management ──
 
@@ -296,10 +307,18 @@ class WebhookRelay:
     async def _dlq_remove(
         self, entry_id: str, _entry_raw: bytes | str | None = None
     ) -> None:
-        """Удаляет одну запись DLQ по id (находит raw через полный обход)."""
+        """Удаляет одну запись DLQ по id (находит raw через полный обход).
+
+        cycle-8/D-AUDIT-802: LREM-ошибки логируются на уровне ``error`` (не
+        warning) + ``exc_info=True`` — иначе silent loss при broken Redis
+        оставлял бы записи в DLQ навсегда без видимого сигнала.
+        """
         raw = await _redis_raw()
         if raw is None:
-            self._memory_dlq = [e for e in self._memory_dlq if e.id != entry_id]
+            self._memory_dlq = deque(
+                (e for e in self._memory_dlq if e.id != entry_id),
+                maxlen=_DLQ_MAX_LEN,
+            )
             return
         try:
             items = await raw.lrange(_DLQ_KEY, 0, -1)
@@ -315,12 +334,23 @@ class WebhookRelay:
                     )
                     continue
         except Exception as exc:
-            logger.warning("DLQ Redis remove failed: %s", exc)
+            # cycle-8/D-AUDIT-802: error-уровень + exc_info — иначе сбой LREM
+            # теряется без следа и запись остаётся в DLQ навсегда.
+            logger.error(
+                "DLQ Redis remove failed; entry remains in queue until next retry: %s",
+                exc,
+                exc_info=True,
+            )
 
     async def dlq_list(self, limit: int = 50) -> dict[str, Any]:
-        """Список DLQ записей (последние ``limit``)."""
+        """Список DLQ записей (последние ``limit``).
+
+        cycle-8/D-AUDIT-802: дополнительно возвращает ``dead_rule_total`` и
+        ``dead_rule_entries`` для инспекции перенесённых dead-rule записей.
+        """
         all_entries = await self._dlq_all()
         entries = all_entries[-limit:]
+        dead_snapshot = list(self._dead_rule_dlq)[-limit:]
         return {
             "total": len(all_entries),
             "entries": [
@@ -333,12 +363,27 @@ class WebhookRelay:
                 }
                 for e in entries
             ],
+            "dead_rule_total": len(self._dead_rule_dlq),
+            "dead_rule_entries": [
+                {
+                    "id": e.id,
+                    "rule_id": e.rule_id,
+                    "error": e.error,
+                    "attempts": e.attempts,
+                    "timestamp": e.timestamp,
+                }
+                for e in dead_snapshot
+            ],
         }
 
     async def dlq_retry(self, entry_id: str | None = None) -> dict[str, Any]:
         """Повторная отправка из DLQ.
 
         Если ``entry_id`` передан — ретраим только эту запись; иначе все.
+
+        cycle-8/D-AUDIT-802: записи, для которых правило уже удалено, переносятся
+        в отдельный ``_dead_rule_dlq`` (тоже bounded) и удаляются из основной
+        очереди. Раньше они оставались в основной DLQ навсегда — silent loss.
         """
         all_entries = await self._dlq_all()
         targets = (
@@ -346,10 +391,27 @@ class WebhookRelay:
         )
 
         results = []
+        dead_moved = 0
         for entry in targets:
             rule = self._rules.get(entry.rule_id)
             if rule is None:
-                results.append({"id": entry.id, "status": "rule_not_found"})
+                # cycle-8/D-AUDIT-802: dead-rule path — переносим в отдельную
+                # bounded очередь, не блокируем основную retry-логику.
+                self._dead_rule_dlq.append(entry)
+                await self._dlq_remove(entry.id)
+                dead_moved += 1
+                logger.warning(
+                    "DLQ entry %s moved to dead-rule queue: rule_id=%s not registered",
+                    entry.id,
+                    entry.rule_id,
+                )
+                results.append(
+                    {
+                        "id": entry.id,
+                        "status": "rule_not_found",
+                        "moved_to_dead_rule_queue": True,
+                    }
+                )
                 continue
             r = await self._send_with_retry(rule, entry.payload)
             if r.get("status") == "sent":
@@ -357,7 +419,12 @@ class WebhookRelay:
             results.append({"id": entry.id, **r})
 
         retried = sum(1 for r in results if r.get("status") == "sent")
-        return {"retried": retried, "total": len(targets), "results": results}
+        return {
+            "retried": retried,
+            "total": len(targets),
+            "dead_rule_moved": dead_moved,
+            "results": results,
+        }
 
 
 _webhook_relay = WebhookRelay()
