@@ -2,13 +2,18 @@
 
 Предоставляет endpoints для создания, удаления
 и просмотра наблюдателей.
+
+cycle-2/D-AUDIT-07 fix: management endpoints защищены
+``Depends(require_admin((SUPER_ADMIN,)))`` на уровне router.
+Pure ASGI fail-closed: неаутентифицированные запросы → 403.
 """
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.entrypoints.filewatcher.watcher_manager import (
     WatcherSpec,
     watcher_manager,
@@ -16,7 +21,14 @@ from src.backend.entrypoints.filewatcher.watcher_manager import (
 
 __all__ = ("watcher_router",)
 
-watcher_router = APIRouter(prefix="/watchers", tags=["File Watchers"])
+# cycle-2/D-AUDIT-07 fix: module-level identity для dependency_overrides.
+_admin_dep = require_admin((AdminRole.SUPER_ADMIN,))
+
+watcher_router = APIRouter(
+    prefix="/watchers",
+    tags=["File Watchers"],
+    dependencies=[Depends(_admin_dep)],
+)
 
 
 class CreateWatcherRequest(BaseModel):

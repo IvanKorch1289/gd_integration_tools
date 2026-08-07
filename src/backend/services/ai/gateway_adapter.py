@@ -126,8 +126,37 @@ def get_ai_gateway() -> AIGateway:
         from src.backend.core.di.providers.ai import get_ai_gateway_provider
 
         return get_ai_gateway_provider()
-    except (KeyError, RuntimeError):
-        return AIGateway()
+    except (KeyError, RuntimeError) as exc:
+        # cycle-1/B-05 fix: composition-root DI fail-closed. На production
+        # отсутствие обязательных DI-параметров (policy_resolver /
+        # capability_gate / token_budget) поднимает
+        # AIGatewayProductionWiringError вместо silent bare AIGateway().
+        try:
+            from src.backend.core.ai.gateway import AIGatewayProductionWiringError
+
+            _logger.error(
+                "AIGateway: composition-root DI lookup failed",
+                extra={
+                    "component": "gateway_adapter",
+                    "lookup": "get_ai_gateway_provider",
+                },
+            )
+            raise AIGatewayProductionWiringError(
+                missing=("ai_gateway",),
+            ) from exc
+        except ImportError:
+            # Fallback когда production-guard недоступен (например в
+            # unit-тестах без полной composition root): logger.error
+            # остаётся, дальше — bare AIGateway() с явным признаком
+            # failed DI lookup.
+            _logger.error(
+                "AIGateway: composition-root DI lookup failed; AIGatewayProductionWiringError unavailable",
+                extra={
+                    "component": "gateway_adapter",
+                    "lookup": "get_ai_gateway_provider",
+                },
+            )
+            return AIGateway()  # B-05 fix (cycle 1)
 
 
 async def invoke_via_gateway(

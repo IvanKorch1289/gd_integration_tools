@@ -2,18 +2,32 @@
 
 Предоставляет CRUD-операции для подписок на изменения
 в таблицах внешних баз данных.
+
+cycle-2/D-AUDIT-07 fix: management endpoints защищены
+``Depends(require_admin((SUPER_ADMIN,)))`` на уровне router.
+Pure ASGI fail-closed: неаутентифицированные запросы → 403.
 """
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
+from src.backend.core.auth.admin_roles import AdminRole, require_admin
 from src.backend.core.di.providers import get_cdc_client_provider
 
 __all__ = ("cdc_router",)
 
-cdc_router = APIRouter(prefix="/api/v1/cdc", tags=["CDC"])
+# cycle-2/D-AUDIT-07 fix: module-level identity для dependency_overrides
+# в тестах. Inline require_admin(...) создаёт новую closure при каждом
+# вызове, ломая FastAPI dependency_overrides identity check.
+_admin_dep = require_admin((AdminRole.SUPER_ADMIN,))
+
+cdc_router = APIRouter(
+    prefix="/api/v1/cdc",
+    tags=["CDC"],
+    dependencies=[Depends(_admin_dep)],
+)
 
 
 class CDCSubscribeRequest(BaseModel):

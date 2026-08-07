@@ -58,22 +58,16 @@ CVE-2026-42561
 CVE-2026-44708
 # mistune 3.2.0 — figclass/figwidth attribute injection (нет fix-version)
 CVE-2026-44896
-# mistune 3.2.0 — heading id= XSS (fix 3.2.1; bump вместе с CVE-2026-33079)
-CVE-2026-44897
-# gitpython 3.1.47 — RCE через core.hooksPath injection (fix 3.1.50);
-# semantic-release dependency, carryover с CVE-2026-44244
-GHSA-mv93-w799-cj2w
-# urllib3 2.6.3 — decompression DoS (fix 2.7.0); patch-level minor bump
-PYSEC-2026-142
-# urllib3 2.6.3 — cross-origin redirect header leak (fix 2.7.0); patch-level
-PYSEC-2026-141
-# idna 3.13 — DoS в idna.encode (fix 3.15); patch-level minor bump
-CVE-2026-45409
-# starlette 0.52.1 — Host header injection / auth bypass (fix 1.0.1);
-# major bump → требует совместимости с FastAPI 0.136.1, отдельная wave
-PYSEC-2026-161
-# sqladmin 0.25.0 — ajax_lookup auth bypass (fix 0.25.1); patch-level
-CVE-2026-46645
-# strawberry-graphql 0.315.2 — GraphiQL headers URL leak (fix 0.315.4);
-# patch-level (default IDE отключён в production через graphql_ide=None)
-CVE-2026-45739
+
+# cycle-4 / D-AUDIT-02: 8 stale CVE удалены — installed versions ≥ fix
+# (cross-check через importlib.metadata / uv.lock). Removed:
+#   CVE-2026-44897 (mistune, fix 3.2.1; installed 3.3.4)
+#   GHSA-mv93-w799-cj2w (gitpython, fix 3.1.50; installed 3.1.58)
+#   PYSEC-2026-142 (urllib3, fix 2.7.0; installed 2.7.0)
+#   PYSEC-2026-141 (urllib3, fix 2.7.0; installed 2.7.0)
+#   CVE-2026-45409 (idna, fix 3.15; installed 3.18)
+#   PYSEC-2026-161 (starlette, fix 1.0.1; installed 1.3.1)
+#   CVE-2026-46645 (sqladmin, fix 0.25.1; installed 0.30.0)
+#   CVE-2026-45739 (strawberry-graphql, fix 0.315.4; installed 0.323.2)
+#   PYSEC-2026-87 (lxml, fix 6.1.0; installed 6.1.1) — also removed from
+#   tools/pip_audit_gate.py IGNORED_VULNS.

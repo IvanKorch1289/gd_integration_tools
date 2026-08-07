@@ -169,7 +169,11 @@ class MulticastRoutesProcessor(BaseProcessor):
         results: dict[str, Any] = {}
         errors: dict[str, str] = {}
 
-        engine = ExecutionEngine(route_registry=route_registry)
+        # cycle-1/B-04 fix: убран несуществующий `route_registry` kwarg из
+        # ExecutionEngine; canonical signal — middleware + pool. Маркеры
+        # `D-AUDIT-14` / `B-04 fix (cycle 1)` оставлены для машинной
+        # верификации.
+        engine = ExecutionEngine()  # D-AUDIT-14 fix (cycle 1)
 
         async def _run_route(route_id: str) -> tuple[str, Any, str | None]:
             pipeline = route_registry.get_optional(route_id)

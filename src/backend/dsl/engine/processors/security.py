@@ -17,6 +17,7 @@ import importlib
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.auth import AuthContext, AuthMethod
+from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
@@ -26,16 +27,52 @@ if TYPE_CHECKING:  # pragma: no cover
 __all__ = ("AuthValidateProcessor",)
 
 
+# cycle-2/D-AUDIT-03 fix: явный fail-closed exception при недоступности
+# реестра verifiers. Раньше _load_verifiers возвращал {} — silent fail-open.
+class AuthenticationProviderUnavailableError(RuntimeError):
+    """Поднимается когда реестр verifiers недоступен.
+
+    Pure ASGI fail-closed: DSL-роут с required=True падает в 401,
+    required=False — в 503 (provider unavailable).
+    """
+
+
 # Путь модуля с verifier-реестром. Импортируется через importlib, чтобы
 # не нарушать архитектурную границу dsl→entrypoints (verifier'ы держат
 # FastAPI/Request, поэтому живут в entrypoints).
 _VERIFIERS_MODULE = "src.backend.entrypoints.api.dependencies.auth_selector"
 
+_logger = get_logger("dsl.security.auth")
+
 
 def _load_verifiers() -> dict[AuthMethod, Any]:
-    """Lazy-loads verifier-реестр из entrypoints (runtime-only)."""
-    module = importlib.import_module(_VERIFIERS_MODULE)
-    return getattr(module, "_VERIFIERS", {})
+    """Lazy-loads verifier-реестр из entrypoints (runtime-only).
+
+    cycle-2/D-AUDIT-03 fix: pure ASGI fail-closed. При недоступности реестра
+    (import error, missing ``_VERIFIERS``) поднимает
+    :class:`AuthenticationProviderUnavailableError` вместо silent
+    ``return {}`` (который ранее приводил к fail-open auth bypass).
+    """
+    try:
+        module = importlib.import_module(_VERIFIERS_MODULE)
+        verifiers = getattr(module, "_VERIFIERS", None)
+        if verifiers is None:
+            _logger.error(
+                "auth_provider_unavailable: missing _VERIFIERS in %s",
+                _VERIFIERS_MODULE,
+            )
+            raise AuthenticationProviderUnavailableError(
+                f"verifier-реестр не сконфигурирован в {_VERIFIERS_MODULE}",
+            )
+        return verifiers
+    except (ImportError, AttributeError) as exc:
+        _logger.error(
+            "auth_provider_unavailable: import failed: %s",
+            exc,
+        )
+        raise AuthenticationProviderUnavailableError(
+            f"verifier-реестр недоступен: {exc}",
+        ) from exc
 
 
 class AuthValidateProcessor(BaseProcessor):
@@ -99,7 +136,18 @@ class AuthValidateProcessor(BaseProcessor):
             )
             return
 
-        verifiers = _load_verifiers()
+        # cycle-2/D-AUDIT-03 fix: pure ASGI fail-closed при недоступности
+        # реестра verifiers. AuthenticationProviderUnavailableError →
+        # exchange.set_error + stop (DSL-движок возвращает 401/503).
+        try:
+            verifiers = _load_verifiers()
+        except AuthenticationProviderUnavailableError as exc:
+            exchange.set_error(
+                f"auth: provider_unavailable: {exc}",
+            )
+            exchange.stop()
+            return
+
         for method in methods:
             verifier = verifiers.get(method)
             if verifier is None:

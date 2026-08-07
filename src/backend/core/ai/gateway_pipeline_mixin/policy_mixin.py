@@ -97,11 +97,46 @@ class PolicyMixin(_PipelineStepsProtocol):
         check = getattr(self._capability_gate, "check", None)
         if check is None:
             return
-        result = check(capability)
-        try:
-            import inspect
+        # cycle-1/B-05 fix: canonical CapabilityFacade.check требует
+        # 3 аргумента (plugin, capability, scope). Делаем duck-typing
+        # через inspect.signature: 3-arg call → правильный, иначе →
+        # 1-arg fallback. TypeError safety net + logger.error.
+        import inspect as _inspect  # B-05 fix (cycle 1)
 
-            if inspect.isawaitable(result):
+        try:
+            sig = _inspect.signature(check)
+            positional_params = sum(
+                1
+                for p in sig.parameters.values()
+                if p.kind
+                in (
+                    _inspect.Parameter.POSITIONAL_ONLY,
+                    _inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                )
+            )
+            if positional_params >= 3:
+                result = check(
+                    "core",
+                    capability,
+                    f"workflow:{request.workflow_id}",
+                )
+            else:
+                result = check(capability)
+        except TypeError as exc:
+            logger.error(
+                "AIGateway: capability check 3-arg call failed, fallback 1-arg: %s",
+                exc,
+            )
+            try:
+                result = check(capability)
+            except Exception as fallback_exc:
+                logger.debug(
+                    "AIGateway: capability 1-arg fallback failed: %s",
+                    fallback_exc,
+                )
+                return
+        try:
+            if _inspect.isawaitable(result):
                 await result
         except Exception as exc:
             logger.debug(

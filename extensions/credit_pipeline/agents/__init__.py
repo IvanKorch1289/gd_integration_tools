@@ -72,16 +72,49 @@ async def scoring_agent(payload: dict[str, Any]) -> dict[str, Any]:
     client_id = payload.get("client_id") or payload.get("applicant_id") or 0
 
     # Rule-based scoring (placeholder для production ML model).
-    # Real impl: load pkl, call SKB/НБКИ, etc.
+    # cycle-2/D-AUDIT-10 fix: fail-closed на unknown tenant. Пустой
+    # payload / income <= 0 / amount <= 0 → credit_rejected (HIGH risk).
+    # Раньше default score 750 → APPROVE (LOW risk) — fail-OPEN.
+    # Реальная banking-логика (load pkl, call SKB/НБКИ) — out of scope.
     amount = int(payload.get("amount", 0))
     duration = int(payload.get("duration_months", 12))
     income = int(payload.get("monthly_income", 0))
+
+    if income <= 0 or amount <= 0:
+        # Audit event emission через canonical facade (fail-safe wrapper,
+        # designed to absorb missing ClickHouse без падения).
+        try:
+            from src.backend.core.audit.facade import emit_audit_safe
+
+            await emit_audit_safe(
+                event="credit_rejected",
+                action="score",
+                outcome="failure",
+                severity="warning",
+                details={
+                    "reason": "unknown_tenant",
+                    "income": income,
+                    "amount": amount,
+                    "agent": "scoring_agent",
+                },
+            )
+        except Exception:
+            # Audit emission не должен блокировать scoring decision.
+            pass
+        return {
+            "agent": "scoring_agent",
+            "credit_score": 0,
+            "risk_class": "HIGH",
+            "reason": "unknown_tenant",
+            "model_version": "s76-w1-rule-based-v1",
+            "stub": False,
+        }
 
     # Simple debt-to-income ratio + amount-based penalty.
     monthly_payment = amount / max(duration, 1) if duration else 0
     dti = (monthly_payment / max(income, 1)) if income > 0 else 0.5
 
-    base_score = 750  # Default for unknown
+    base_score = 750  # Default for known tenant
     if income > 0 and amount > 0:
         # Linear model: low DTI + reasonable amount → high score
         if dti < 0.3:

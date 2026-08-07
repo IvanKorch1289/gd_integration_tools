@@ -142,7 +142,9 @@ class RedeliveryPolicyProcessor(BaseProcessor):
         else:
             try:
                 attempt = int(attempt_raw) + 1
-            except TypeError, ValueError:
+            # cycle-1/B-04 fix: Python-2 syntax `except TypeError, ValueError:`
+            # заменён на Python-3 tuple form.
+            except (TypeError, ValueError):  # D-AUDIT-14 fix (cycle 1)
                 attempt = 1
             exchange.in_message.set_header(self._header, attempt)
 
