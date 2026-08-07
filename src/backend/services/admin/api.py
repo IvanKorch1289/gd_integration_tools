@@ -90,6 +90,13 @@ class AdminService:
         """
         Check authorization via AuthorizationGateway.
 
+        D-AUDIT-801 fix (cycle 8): re-verify fail-CLOSED по умолчанию (cycle-1 fix
+        D-AUDIT-A3-01, commit ``da9d6173``). Cycle-4 phase-1/03-services.md
+        SERV-P0-002 silent fail-OPEN vector ЗАКРЫТ: gateway=None →
+        :class:`AdminAuthorizationError` (НЕ silent ``True``). Opt-in fail-OPEN
+        только через ``ADMIN_AUTHZ_FAIL_OPEN=true`` (для dev_light без AuthZ
+        composition root). Тесты: ``tests/unit/services/admin/test_authz_fail_closed.py``.
+
         Raises:
             AdminAuthorizationError: если AuthZ deny (fail-closed).
         """
