@@ -8,6 +8,9 @@ Public API:
     * :class:`ServiceSchemaRegistry` — runtime-каталог.
     * :func:`get_schema_registry` — global singleton (lazy).
     * :class:`SchemaKind` — enum типов артефактов.
+    * :class:`SchemaTypedAdapter` — typed wrapper для public API boundary
+      (D-AUDIT-A5-01 fix, cycle 1).
+    * :class:`SchemaEntryView`, :class:`SnapshotView` — typed views.
     * Populator-функции (populate_from_*).
     * Экспортеры (export_jsonschema / export_openapi / export_asyncapi).
 """
@@ -24,16 +27,26 @@ from src.backend.services.schema_registry.populator import (
     populate_from_routes,
 )
 from src.backend.services.schema_registry.registry import (
+    CURRENT_SNAPSHOT_VERSION,
     SchemaEntry,
     SchemaKind,
     ServiceSchemaRegistry,
     get_schema_registry,
 )
+from src.backend.services.schema_registry.typed_adapter import (
+    SchemaEntryView,
+    SchemaTypedAdapter,
+    SnapshotView,
+)
 
 __all__ = (
+    "CURRENT_SNAPSHOT_VERSION",
     "SchemaEntry",
+    "SchemaEntryView",
     "SchemaKind",
+    "SchemaTypedAdapter",
     "ServiceSchemaRegistry",
+    "SnapshotView",
     "export_asyncapi",
     "export_jsonschema",
     "export_openapi",

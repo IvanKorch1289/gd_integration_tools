@@ -45,11 +45,26 @@ from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
     from src.backend.core.utils.metrics_registry import MetricsRegistry
+    from src.backend.services.schema_registry.typed_adapter import SchemaTypedAdapter
 
-__all__ = ("SchemaEntry", "SchemaKind", "ServiceSchemaRegistry", "get_schema_registry")
+__all__ = (
+    "CURRENT_SNAPSHOT_VERSION",
+    "SchemaEntry",
+    "SchemaKind",
+    "ServiceSchemaRegistry",
+    "get_schema_registry",
+)
 
 _get_logger = cast(Callable[[str], Any], get_logger)
 logger = _get_logger(__name__)
+
+
+CURRENT_SNAPSHOT_VERSION: str = "2.0"
+"""Версия snapshot-формата для :meth:`ServiceSchemaRegistry.to_snapshot`.
+
+Используется как :class:`pydantic.TypeAdapter` boundary-validation marker
+в :mod:`typed_adapter` (D-AUDIT-A5-01 fix, cycle 1).
+"""
 
 
 class SchemaKind(StrEnum):
@@ -87,6 +102,11 @@ class SchemaEntry:
 class ServiceSchemaRegistry:
     """Lock-free каталог схем (Sprint 16 К2 W1).
 
+    D-AUDIT-A5-01 fix (cycle 1): public API использует typed wrapper
+    ``SchemaTypedAdapter`` / ``SchemaEntryView`` / ``SnapshotView`` для
+    type-safe boundary (Pydantic TypeAdapter runtime validation,
+    ``from_snapshot`` использует ``schema_view.validate_snapshot``).
+
     See module docstring для деталей конкурентности и DoD-2.
 
     Args:
@@ -96,7 +116,29 @@ class ServiceSchemaRegistry:
             операций реестра.
     """
 
-    __slots__ = ("_by_kind", "_metrics", "_strict_validation")
+    __slots__ = ("_by_kind", "_metrics", "_schema_view", "_strict_validation")
+
+    @property
+    def schema_view(self) -> "SchemaTypedAdapter":
+        """Typed view для public API boundary (D-AUDIT-A5-01 fix, cycle 1).
+
+        Returns:
+            :class:`SchemaTypedAdapter` instance, привязанный к этому реестру.
+            Используется для type-safe ``(de)serialization`` через
+            :class:`pydantic.TypeAdapter` вместо untyped ``dict[str, Any]``.
+
+        Lazy import ``typed_adapter`` чтобы избежать circular import
+        (typed_adapter → registry). Singleton per registry.
+        """
+        view = getattr(self, "_schema_view", None)
+        if view is None:
+            from src.backend.services.schema_registry.typed_adapter import (
+                SchemaTypedAdapter,
+            )
+
+            view = SchemaTypedAdapter()
+            self._schema_view = view
+        return view
 
     def __init__(
         self, *, strict_validation: bool = False, metrics: MetricsRegistry | None = None
@@ -208,8 +250,10 @@ class ServiceSchemaRegistry:
         """Сериализует реестр в plain-dict snapshot.
 
         Returns:
-            Словарь ``{"version": "2.0", "entries": [{...}]}`` для
-            последующего восстановления через :meth:`from_snapshot`.
+            TypedAdapter-compatible dict ``{"version": "...", "entries": [...]}``
+            для последующего восстановления через :meth:`from_snapshot`.
+            Для type-safe (de)serialization см. :attr:`schema_view` →
+            :class:`SnapshotView` (D-AUDIT-A5-01 fix, cycle 1).
         """
         entries: list[dict[str, Any]] = []
         for kind in SchemaKind:
@@ -223,27 +267,25 @@ class ServiceSchemaRegistry:
                         "meta": dict(entry.meta),
                     }
                 )
-        return {"version": "2.0", "entries": entries}
+        return {"version": CURRENT_SNAPSHOT_VERSION, "entries": entries}
 
     def from_snapshot(self, data: dict[str, Any]) -> None:
         """Восстанавливает реестр из snapshot (идемпотентно).
 
+        Использует :class:`pydantic.TypeAdapter` validation через
+        :attr:`schema_view` для type-safe boundary (D-AUDIT-A5-01 fix, cycle 1).
         Существующие записи перезаписываются; отсутствующие в snapshot
         остаются нетронутыми. Для полной очистки вызовите :meth:`clear`
         перед восстановлением.
-        """
-        if data.get("version") != "2.0":
-            raise ValueError(f"Unsupported snapshot version: {data.get('version')!r}")
 
-        for raw in data.get("entries", []):
-            kind = SchemaKind(raw["kind"])
-            entry = SchemaEntry(
-                kind=kind,
-                name=raw["name"],
-                spec_schema=raw.get("spec_schema"),
-                output_schema=raw.get("output_schema"),
-                meta=raw.get("meta") or {},
-            )
+        Raises:
+            pydantic.ValidationError: Если payload не проходит validation.
+            ValueError: Если version невалиден или ``kind`` не в :class:`SchemaKind`.
+        """
+        validated_snapshot = self.schema_view.validate_snapshot(data)
+
+        for raw in validated_snapshot["entries"]:
+            entry = self.schema_view.entry_from_dict(raw)
             self.register(entry)
 
     # ── private ──────────────────────────────────────────────────────
