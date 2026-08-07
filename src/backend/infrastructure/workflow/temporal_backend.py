@@ -101,6 +101,19 @@ def build_temporal_data_converter() -> Any:
     )
 
 
+# D-A8-08 fix (cycle 1): explicit exception для multi-tenant namespace mismatch.
+# Banking context: silent use of wrong tenant namespace = tenant isolation
+# bypass (cross-tenant data leak). Раньше logger.warning + use client's
+# namespace — silent fail-OPEN.
+class TemporalNamespaceMismatchError(RuntimeError):
+    """Raised when Temporal client namespace не совпадает с requested namespace.
+
+    D-A8-08 cycle 1: multi-tenant routing должен быть fail-CLOSED, не
+    silent fallthrough на client's namespace. R3 multi-tenant ADR-045
+    §opens описывает per-namespace client composition.
+    """
+
+
 class TemporalWorkflowBackend(WorkflowBackend):
     """`WorkflowBackend` поверх ``temporalio.client.Client``."""
 
@@ -166,12 +179,17 @@ class TemporalWorkflowBackend(WorkflowBackend):
         target_namespace = "default" if namespace == "global" else namespace
         # Temporal client привязан к одному namespace; multi-tenant —
         # отдельный client per namespace в R3 (см. ADR-045 §opens).
-        if getattr(self._client, "namespace", target_namespace) != target_namespace:
-            _logger.warning(
-                "TemporalWorkflowBackend: namespace mismatch "
-                "(client=%s, requested=%s) — using client's namespace",
-                getattr(self._client, "namespace", "?"),
-                target_namespace,
+        client_namespace = getattr(self._client, "namespace", target_namespace)
+        if client_namespace != target_namespace:
+            # D-A8-08 fix (cycle 1): fail-CLOSED при multi-tenant namespace
+            # mismatch. Ранее bare logger.warning + continue с использованием
+            # client's namespace — silent tenant isolation bypass (banking context).
+            raise TemporalNamespaceMismatchError(
+                f"TemporalWorkflowBackend: namespace mismatch "
+                f"(client={client_namespace}, requested={target_namespace}) — "
+                f"refusing to route workflow to wrong tenant namespace. "
+                f"Создайте отдельный client per namespace (R3 multi-tenant "
+                f"ADR-045 §opens)."
             )
         handle = await self._client.start_workflow(
             workflow_name,
