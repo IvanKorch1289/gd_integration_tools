@@ -170,7 +170,22 @@ class PiiEraseProcessor(BaseProcessor):
                     "vector deletion skipped: capability denied"
                 )
         except Exception as exc:
-            _logger.warning("vector deletion failed: %s", exc)
+            # cycle-8/D-AUDIT-804: PII erasure fail-CLOSED.
+            # Bare `except Exception` ранее молча логировал warning и
+            # exchange продолжал как "успешный" — PII оставался в vector
+            # store (security regression, ADR-152FZ). Теперь: error +
+            # DLQWriter.enqueue для durable observability + re-raise
+            # (caller через @handle_processor_error → exchange.stop+error).
+            _logger.error(
+                "vector deletion failed: erasure_id=%s scope=%s error=%s",
+                erasure_id,
+                self._scope,
+                exc,
+            )
+            await self._enqueue_failure_to_dlq(
+                erasure_id=erasure_id, step="vectors", exc=exc,
+            )
+            raise
 
         # Step 3: DB anonymization
         records_anonymized = 0
@@ -181,7 +196,18 @@ class PiiEraseProcessor(BaseProcessor):
             if cap_facade.check("dsl", "pii.audit", scope=self._scope):
                 records_anonymized = await self._anonymize_db(erasure_id)
         except Exception as exc:
-            _logger.warning("DB anonymization failed: %s", exc)
+            # cycle-8/D-AUDIT-804: см. выше — тот же fail-CLOSED pattern
+            # для DB anonymization (PII остался бы в таблице ``<entity>_pii``).
+            _logger.error(
+                "DB anonymization failed: erasure_id=%s scope=%s error=%s",
+                erasure_id,
+                self._scope,
+                exc,
+            )
+            await self._enqueue_failure_to_dlq(
+                erasure_id=erasure_id, step="db_anonymize", exc=exc,
+            )
+            raise
 
         duration_ms = (time.monotonic() - start) * 1000
 
@@ -247,7 +273,7 @@ class PiiEraseProcessor(BaseProcessor):
 
             store = get_vector_store()
             # Scope формат: "user:42" → filter {"entity_type": "user", "entity_id": "42"}
-            # Если scope не парсится — soft skip с warning.
+            # Если scope не парсится — soft skip с warning (input error, не backend).
             if ":" not in self._scope:
                 _logger.warning(
                     "vector deletion: scope=%r не парсится (нет ':'), skip",
@@ -259,13 +285,18 @@ class PiiEraseProcessor(BaseProcessor):
                 {"entity_type": entity_type, "entity_id": entity_id}
             )
         except Exception as exc:
-            _logger.warning(
+            # cycle-8/D-AUDIT-804: PII erasure fail-CLOSED.
+            # Bare `except Exception` ранее молча возвращал 0 — PII оставался
+            # в vector store (ADR-152FZ regression). Теперь: error + propagate
+            # до outer process() который enqueue DLQ + re-raise (caller
+            # fail-CLOSED через @handle_processor_error → exchange.stop+error).
+            _logger.error(
                 "vector deletion failed: erasure_id=%s scope=%s error=%s",
                 erasure_id,
                 self._scope,
                 exc,
             )
-            return 0
+            raise
 
     async def _anonymize_db(self, erasure_id: str) -> int:
         """S214: anonymize records в основной DB (PostgreSQL/MongoDB).
@@ -319,13 +350,18 @@ class PiiEraseProcessor(BaseProcessor):
                 await session.commit()
                 return int(result.rowcount or 0)
         except Exception as exc:
-            _logger.warning(
+            # cycle-8/D-AUDIT-804: PII erasure fail-CLOSED.
+            # Bare `except Exception` ранее молча возвращал 0 — PII оставался
+            # в таблице ``<entity>_pii`` (ADR-152FZ regression). Теперь: error
+            # + propagate до outer process() который enqueue DLQ + re-raise
+            # (caller fail-CLOSED через @handle_processor_error → exchange.stop+error).
+            _logger.error(
                 "DB anonymization failed: erasure_id=%s scope=%s error=%s",
                 erasure_id,
                 self._scope,
                 exc,
             )
-            return 0
+            raise
 
     async def _emit_audit(
         self,
@@ -366,3 +402,49 @@ class PiiEraseProcessor(BaseProcessor):
             "reason": self._reason,
             "hard_delete": self._hard_delete,
         }
+
+    async def _enqueue_failure_to_dlq(
+        self,
+        *,
+        erasure_id: str,
+        step: str,
+        exc: BaseException,
+    ) -> None:
+        """Persist PII erasure failure в DLQ для durable observability (cycle-8/D-AUDIT-804).
+
+        Использует :class:`InMemoryDLQWriter` как минимальный writer.
+        Production должен переопределить через DI (composition root) —
+        :func:`set_stream_dlq_writer_provider` или singleton-инжекция.
+        При сбое DLQ самого — log error, но НЕ swallow (outer re-raise =
+        fail-CLOSED caller path).
+        """
+        try:
+            from src.backend.core.di.providers.dlq_bridge import (
+                get_dlq_envelope_class,
+                get_dlq_reason_class,
+            )
+
+            DLQEnvelope = get_dlq_envelope_class()
+            DLQReason = get_dlq_reason_class()
+            envelope = DLQEnvelope(
+                transport="dsl.pii_erase",
+                route_id=f"pii_erase[{self._scope}]",
+                original_payload={"erasure_id": erasure_id, "step": step},
+                error_class=type(exc).__name__,
+                error_message=str(exc),
+                reason=DLQReason.UNEXPECTED,
+            )
+            from src.backend.infrastructure.messaging.dlq.memory_writer import (
+                InMemoryDLQWriter,
+            )
+
+            writer = InMemoryDLQWriter()
+            await writer.write(envelope)
+        except Exception as dlq_exc:
+            # DLQ сам недоступен — log error (caller всё равно re-raise).
+            _logger.error(
+                "pii_erase: DLQ enqueue failed: erasure_id=%s step=%s dlq_error=%s",
+                erasure_id,
+                step,
+                dlq_exc,
+            )

@@ -61,11 +61,11 @@ class TestPiiEraseAnonymizeDbValidation:
     @pytest.mark.asyncio
     async def test_invalid_scope_rejected_before_sql(self) -> None:
         """Malformed scope (``entity_type`` fails whitelist) → no SQL
-        statement is ever executed, even though the outer try/except
-        absorbs the failure as a logged warning.
+        statement is ever executed; cycle-8/D-AUDIT-804 fail-CLOSED
+        propagates ValueError до outer process() (НЕ silent swallow).
 
-        This is the security-relevant invariant: the dangerous identifier
-        is not interpolated into a text() object passed to ``execute()``.
+        Security-relevant invariant: the dangerous identifier is not
+        interpolated into a text() object passed to ``execute()``.
         """
         mod = _load_pii_erase_module()
         proc = mod.PiiEraseProcessor(
@@ -95,10 +95,10 @@ class TestPiiEraseAnonymizeDbValidation:
             "src.backend.infrastructure.database.session_manager.main_session_manager",
             fake_mgr,
         ):
-            # The outer try/except absorbs the ValueError as a logged
-            # warning, but no SQL is built or executed.
-            count = await proc._anonymize_db("erasure-1")
-        assert count == 0
+            # cycle-8/D-AUDIT-804: fail-CLOSED — ValueError propagate
+            # до outer process() (вместо silent return 0).
+            with pytest.raises(ValueError, match="invalid entity_type"):
+                await proc._anonymize_db("erasure-1")
         assert executed == [], "no SQL must reach execute() for unsafe scope"
 
     @pytest.mark.asyncio
