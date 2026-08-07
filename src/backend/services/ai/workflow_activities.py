@@ -211,7 +211,11 @@ async def llm_activity(input_: LLMActivityInput) -> LLMActivityOutput:
         from temporalio import activity as temporal_activity
 
         heartbeat = temporal_activity.heartbeat
-    except Exception:
+    except (ImportError, AttributeError) as temporal_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-903: narrow exceptions — temporalio optional
+        # dep; ImportError when not installed, AttributeError when API
+        # surface differs between versions. Bare `except Exception` masks
+        # unrelated runtime errors (KeyError, TypeError).
         pass
 
     return await _execute_llm_call(input_, heartbeat=heartbeat)
@@ -222,7 +226,9 @@ try:
     from temporalio import activity as _temporal_activity_mod
 
     llm_activity = _temporal_activity_mod.defn(name="ai.llm.call")(llm_activity)
-except Exception:
+except (ImportError, AttributeError) as _temporal_decorate_exc:  # noqa: BLE001
+    # cycle-9/D-AUDIT-903: см. выше — тот же narrow для модуль-level
+    # decorator приложения.
     pass
 
 
