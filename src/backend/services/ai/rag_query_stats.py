@@ -2,10 +2,12 @@
 
 Хранит счётчики hash(query) → count в Redis ZSET с TTL 30 дней.
 
-D-A9-02 fix (cycle 1): ``RagCachePrewarmer`` (ранее ссылался здесь)
-удалён как dead code — никогда не инстанцировался в production lifespan.
+D-A9-02 fix (cycle 1): prewarm-подсистема (ранее ссылавшаяся здесь)
+удалена как dead code — никогда не инстанцировалась в production lifespan.
+D-AUDIT-506 (cycle 5) закрыл финальный caller.
 Модуль продолжает собирать статистику для observability/admin endpoints,
-но prewarm (cycle-5/D-AUDIT-506) больше не используется.
+но prewarm больше не используется. cycle-7/D-AUDIT-706 — финальный cleanup
+dangling references (0 imports, 0 call-sites подтверждено grep'ом).
 """
 
 from __future__ import annotations
