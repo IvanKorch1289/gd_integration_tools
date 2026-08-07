@@ -329,7 +329,17 @@ class DocsIndexer:
                 )
                 for i in range(len(chunks))
             ]
-        except Exception:  # noqa: BLE001 — fallback path
+        except (ImportError, AttributeError, TypeError, KeyError) as point_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-909: narrow exceptions + observability.
+            # ImportError — qdrant_client.models missing, AttributeError —
+            # API changed, TypeError — schema mismatch, KeyError — chunk
+            # missing required field. Bare `except Exception` маскировал
+            # unrelated runtime errors (ValueError, RuntimeError).
+            import logging
+            logging.getLogger(__name__).debug(
+                "project_docs._build_points_fallback",
+                extra={"error": str(point_exc), "chunks_count": len(chunks)},
+            )
             return [
                 {
                     "id": chunks[i]["id"],
