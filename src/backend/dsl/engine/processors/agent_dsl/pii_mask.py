@@ -44,6 +44,24 @@ __all__ = ("PIIMaskProcessor",)
 _logger = get_logger(__name__)
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "pii_mask",
+    namespace="core",
+    capabilities=("pii.mask",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "text": {'type': 'string'},
+        "patterns": {'type': 'array', 'items': {'type': 'string'}},
+        },
+        "required": ["text"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class PIIMaskProcessor(BaseAIProcessor):
     """Reversible PII tokenization через :class:`PIITokenizer.mask_reversible`.
 

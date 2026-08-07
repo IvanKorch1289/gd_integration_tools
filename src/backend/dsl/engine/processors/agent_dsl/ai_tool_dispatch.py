@@ -44,6 +44,24 @@ __all__ = ("AIToolDispatchProcessor",)
 _logger = get_logger(__name__)
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "ai_tool_dispatch",
+    namespace="core",
+    capabilities=("ai.tool.dispatch",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "tool_name": {'type': 'string'},
+        "arguments": {'type': 'object'},
+        },
+        "required": ["tool_name"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class AIToolDispatchProcessor(BaseAIProcessor):
     """LLM-orchestrated dispatch к одному tool из whitelist (S106 W4).
 

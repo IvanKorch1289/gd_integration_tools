@@ -38,6 +38,24 @@ __all__ = ("MemoryRecallProcessor",)
 _logger = get_logger(__name__)
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "memory_recall",
+    namespace="core",
+    capabilities=("memory.recall",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "query": {'type': 'string'},
+        "top_k": {'type': 'integer', 'minimum': 1, 'maximum': 100},
+        },
+        "required": ["query"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class MemoryRecallProcessor(BaseAIProcessor):
     """Поиск релевантных записей памяти (RAG-style retrieval).
 

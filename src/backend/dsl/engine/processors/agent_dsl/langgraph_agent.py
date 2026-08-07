@@ -20,6 +20,24 @@ __all__ = ("LangGraphAgentProcessor",)
 _logger = get_logger(__name__)
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "langgraph_agent",
+    namespace="core",
+    capabilities=("ai.langgraph.invoke",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "graph_id": {'type': 'string'},
+        "state": {'type': 'object'},
+        },
+        "required": ["graph_id"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class LangGraphAgentProcessor(BaseAIProcessor):
     """DSL-процессор ``langgraph_agent``.
 

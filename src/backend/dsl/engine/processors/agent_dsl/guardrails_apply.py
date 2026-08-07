@@ -45,6 +45,24 @@ _StageLiteral = Literal["input", "output"]
 _OnBlockLiteral = Literal["dlq", "fail", "warn"]
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "guardrails_apply",
+    namespace="core",
+    capabilities=("guardrails.apply",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "ruleset": {'type': 'string'},
+        "on_violation": {'enum': ['block', 'warn']},
+        },
+        "required": ["ruleset"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class GuardrailsApplyProcessor(BaseAIProcessor):
     """Применить Llama Guard к input или output stage'у agent pipeline'а.
 

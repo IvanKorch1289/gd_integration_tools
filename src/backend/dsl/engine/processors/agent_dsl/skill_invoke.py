@@ -36,6 +36,24 @@ __all__ = ("SkillInvokeProcessor",)
 _logger = get_logger(__name__)
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "skill_invoke",
+    namespace="core",
+    capabilities=("skill.invoke",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "skill_name": {'type': 'string'},
+        "input": {'type': 'object'},
+        },
+        "required": ["skill_name"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class SkillInvokeProcessor(BaseAIProcessor):
     """Вызов AI skill через :class:`SkillRegistry.invoke` (S27 W3).
 

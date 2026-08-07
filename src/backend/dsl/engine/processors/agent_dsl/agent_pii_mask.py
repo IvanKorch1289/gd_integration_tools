@@ -94,6 +94,23 @@ def _write_dict_at_path(exchange: Any, path: str, value: Any) -> None:
             parent[parts[-1]] = value
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "agent_pii_mask",
+    namespace="core",
+    capabilities=("agent.pii.mask",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "mode": {'enum': ['strict', 'warn', 'log']},
+        },
+        "required": ["mode"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class AgentDictPIIMaskProcessor(BaseAIProcessor):
     """Маскирует PII в dict (tool args / action params) перед исполнением.
 

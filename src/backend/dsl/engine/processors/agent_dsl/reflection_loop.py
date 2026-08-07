@@ -50,6 +50,24 @@ __all__ = ("ReflectionLoopProcessor",)
 _logger = get_logger(__name__)
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "reflection_loop",
+    namespace="core",
+    capabilities=("agent.reflect",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "prompt_ref": {'type': 'string'},
+        "iterations": {'type': 'integer'},
+        },
+        "required": ["prompt_ref"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class ReflectionLoopProcessor(BaseAIProcessor):
     """Generate → Reflect → Refine с остановкой по stop_verdict.
 

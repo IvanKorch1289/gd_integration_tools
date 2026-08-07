@@ -40,6 +40,24 @@ __all__ = ("BindSkillProcessor",)
 _logger = get_logger("workflow.processors.bind_skill")
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "bind_skill",
+    namespace="core",
+    capabilities=("skill.bind",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "skill_name": {'type': 'string'},
+        "version": {'type': 'string'},
+        },
+        "required": ["skill_name"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class BindSkillProcessor(BaseAIProcessor):
     """Привязка skill pack к агенту/workflow step (S29 W2).
 

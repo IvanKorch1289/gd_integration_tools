@@ -28,6 +28,24 @@ __all__ = ("PIIUnmaskProcessor",)
 _logger = get_logger(__name__)
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "pii_unmask",
+    namespace="core",
+    capabilities=("pii.unmask",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "token": {'type': 'string'},
+        "scope": {'enum': ['admin', 'system']},
+        },
+        "required": ["token"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class PIIUnmaskProcessor(BaseAIProcessor):
     """Восстановить PII из ``token_map`` (round-trip к ``pii_mask``).
 

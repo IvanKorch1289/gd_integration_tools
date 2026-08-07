@@ -47,6 +47,24 @@ except ImportError:
 __all__ = ("MCPToolProcessor",)
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "mcp_tool",
+    namespace="core",
+    capabilities=("mcp.tool.invoke",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "tool_name": {'type': 'string'},
+        "arguments": {'type': 'object'},
+        },
+        "required": ["tool_name"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class MCPToolProcessor(BaseAIProcessor):
     """Вызов MCP tool через FastMCP Client.
 

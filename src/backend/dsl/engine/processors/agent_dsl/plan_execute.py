@@ -47,6 +47,24 @@ __all__ = ("PlanExecuteProcessor",)
 _logger = get_logger(__name__)
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "plan_execute",
+    namespace="core",
+    capabilities=("agent.plan",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "goal": {'type': 'string'},
+        "max_steps": {'type': 'integer'},
+        },
+        "required": ["goal"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class PlanExecuteProcessor(BaseAIProcessor):
     """Plan → Execute → Verify с автоматическим replan.
 

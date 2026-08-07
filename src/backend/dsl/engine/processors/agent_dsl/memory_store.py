@@ -31,6 +31,24 @@ __all__ = ("MemoryStoreProcessor",)
 _logger = get_logger(__name__)
 
 
+
+from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
+
+
+@processor(
+    "memory_store",
+    namespace="core",
+    capabilities=("memory.store",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+        "key": {'type': 'string'},
+        "value": {'type': 'object'},
+        },
+        "required": ["key"],
+    },
+    meta={"tier": 1, "category": "agent"},
+)
 class MemoryStoreProcessor(BaseAIProcessor):
     """Сохранить запись в :class:`MemoryProtocol`-backend (S27 W3).
 
