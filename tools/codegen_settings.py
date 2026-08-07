@@ -59,10 +59,11 @@ import libcst as cst
 import libcst.matchers as m
 
 ROOT = Path(__file__).resolve().parents[1]
-SERVICES_DIR = ROOT / "src" / "core" / "config" / "services"
-SETTINGS_FILE = ROOT / "src" / "core" / "config" / "settings.py"
+# cycle-7/D-AUDIT-701 fix: real path is src/backend/core/config/ (was src/core/config/)
+SERVICES_DIR = ROOT / "src" / "backend" / "core" / "config" / "services"
+SETTINGS_FILE = ROOT / "src" / "backend" / "core" / "config" / "settings.py"
 SERVICES_INIT = SERVICES_DIR / "__init__.py"
-INTEGRATION_BASE = ROOT / "src" / "core" / "config" / "integration_base.py"
+INTEGRATION_BASE = ROOT / "src" / "backend" / "core" / "config" / "integration_base.py"
 BASE_YAML = ROOT / "config_profiles" / "base.yml"
 ENV_EXAMPLE = ROOT / ".env.example"
 CONFIG_SPEC_DIR = ROOT / "config-spec"

@@ -302,10 +302,15 @@ async def test_scan_file_backend_unavailable_fail_mode(
     assert "antivirus_scan_result_error" in exchange.properties
 
 
-async def test_scan_file_backend_unavailable_warn_mode_does_not_fail(
+async def test_scan_file_backend_unavailable_warn_mode_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """``on_threat=warn`` + бэкенд недоступен → не валит exchange."""
+    """``on_threat=warn`` + бэкенд недоступен → fail-CLOSED (cycle-7/D-AUDIT-703).
+
+    Банковский-grade: при недоступности AV-бэкенда payload НЕ пропускается
+    через pipeline как "чистый". ``on_threat`` остаётся для логирования
+    severity, но не влияет на fail-closed behavior.
+    """
     fake_backend = MagicMock()
     fake_backend.scan_bytes = AsyncMock(side_effect=RuntimeError("network"))
     _patch_factory(monkeypatch, fake_backend)
@@ -315,7 +320,8 @@ async def test_scan_file_backend_unavailable_warn_mode_does_not_fail(
     exchange = _make_exchange(properties={"file_data": b"x"})
     await proc.process(exchange, MagicMock())
 
-    assert exchange.status != ExchangeStatus.failed
+    assert exchange.status == ExchangeStatus.failed
+    assert "AV-бэкенд недоступен" in (exchange.error or "")
     assert "antivirus_scan_result_error" in exchange.properties
 
 

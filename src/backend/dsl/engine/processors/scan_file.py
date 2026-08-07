@@ -90,10 +90,20 @@ class ScanFileProcessor(BaseProcessor):
             backend = create_antivirus_backend()
             result = await backend.scan_bytes(payload)
         except Exception as exc:
-            _logger.warning("ScanFileProcessor: AV-бэкенд недоступен: %s", exc)
+            # cycle-7/D-AUDIT-703 fix: банковский-grade fail-CLOSED.
+            # Раньше при ``on_threat="warn"`` + AV-бэкенд недоступен
+            # payload пропускался через pipeline как "чистый" (fail-OPEN).
+            # Теперь — всегда exchange.fail (по требованиям 152-ФЗ +
+            # security grade); ``on_threat`` остаётся для совместимости
+            # как логирование severity.
+            _logger.error(
+                "ScanFileProcessor: AV-бэкенд недоступен: %s", exc,
+                extra={"on_threat": self._on_threat},
+            )
             exchange.set_property(f"{self._result_property}_error", str(exc))
-            if self._on_threat == "fail":
-                exchange.fail(f"ScanFileProcessor: AV-бэкенд недоступен: {exc}")
+            exchange.fail(
+                f"ScanFileProcessor: AV-бэкенд недоступен: {exc}",
+            )
             return
 
         verdict = {

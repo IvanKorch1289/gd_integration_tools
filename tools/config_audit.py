@@ -1,7 +1,7 @@
 """Двусторонний аудит конфигурации (W20.1+W20.2).
 
 Сверяет YAML-конфигурацию (``config_profiles/base.yml`` + overlay активного
-профиля) с моделями ``BaseSettingsWithLoader`` из ``src/core/config/``.
+профиля) с моделями ``BaseSettingsWithLoader`` из ``src/backend/core/config/``.
 
 Прямой аудит (YAML → код):
     * orphan-ключи: top-level group без класса с таким ``yaml_group``;
@@ -33,7 +33,8 @@ from typing import Any
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG_DIR = ROOT / "src" / "core" / "config"
+# cycle-7/D-AUDIT-701 fix: real path is src/backend/core/config/ (was src/core/config/)
+CONFIG_DIR = ROOT / "src" / "backend" / "core" / "config"
 PROFILES_DIR = ROOT / "config_profiles"
 ENV_EXAMPLE = ROOT / ".env.example"
 
