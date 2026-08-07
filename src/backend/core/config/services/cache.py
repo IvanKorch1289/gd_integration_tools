@@ -1,6 +1,6 @@
 from typing import ClassVar, Literal
 
-from pydantic import Field, computed_field, field_validator
+from pydantic import Field, computed_field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -199,11 +199,13 @@ class RedisSettings(BaseSettingsWithLoader):
     # меняется, используется обычный ``redis.asyncio.Redis``. Включение
     # cluster_mode требует непустого ``cluster_nodes`` (см. валидатор).
     cluster_mode: bool = Field(
-        default=True,
+        default=False,
         description=(
+            "D-A12-04 fix (cycle 25): default-OFF (single Redis instance). "
             "Включить кластерный режим Redis "
             "(``redis.asyncio.cluster.RedisCluster``). При ``true`` стартовые "
-            "ноды берутся из ``cluster_nodes``; параметры ``db_*`` "
+            "ноды берутся из ``cluster_nodes`` (НЕПУСТОГО списка — enforced "
+            "через model_validator); параметры ``db_*`` "
             "игнорируются (cluster использует общую логическую БД)."
         ),
         json_schema_extra={"example": False},
@@ -258,6 +260,31 @@ class RedisSettings(BaseSettingsWithLoader):
             if not host or not port.isdigit():
                 raise ValueError(f"cluster_nodes: некорректный host:port — {node!r}")
         return v
+
+    @model_validator(mode="after")
+    def _check_cluster_consistency(self) -> "RedisSettings":
+        """D-A12-04 fix (cycle 25): cluster_mode=True требует непустого cluster_nodes.
+
+        Раньше был только field_validator на формат — но cross-field check
+        отсутствовал. cluster_mode=True + cluster_nodes=[] → production
+        Redis cluster runtime failure (connection refused).
+        """
+        if self.cluster_mode and not self.cluster_nodes:
+            raise ValueError(
+                "RedisSettings: cluster_mode=True требует непустого "
+                "cluster_nodes (хотя бы одна нода 'host:port'). "
+                "Production runtime не сможет подключиться к Redis cluster."
+            )
+        if not self.cluster_mode and self.cluster_nodes:
+            # Warning (НЕ error) — cluster_nodes заполнены но cluster_mode=False
+            # → cluster_nodes игнорируются. Это валидная конфигурация
+            # (например, в тестах), но operator должен знать.
+            import logging as _logging
+            _logging.getLogger("core.config.services.cache").info(
+                "RedisSettings: cluster_nodes заполнены, но cluster_mode=False — "
+                "cluster_nodes игнорируются, используется single Redis instance."
+            )
+        return self
 
     @computed_field(description="Создает URL подключения к Redis")
     def redis_url(self) -> str:
