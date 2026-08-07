@@ -171,8 +171,15 @@ class PIIFacade:
         try:
             if hasattr(self.masker, "_patterns"):
                 return list(self.masker._patterns.keys())
-        except Exception:
-            pass
+        except (AttributeError, TypeError) as introspect_exc:  # noqa: PERF203
+            # D-A1-04 fix (cycle 29): narrow exceptions + observability.
+            # Раньше bare `except Exception: pass` маскировал любые ошибки
+            # в masker._patterns (e.g. corrupted sanitizer state).
+            from src.backend.core.logging import get_logger
+            get_logger(__name__).debug(
+                "pii_facade.list_pattern_names.introspection_failed",
+                extra={"error": str(introspect_exc)},
+            )
         return []
 
 
