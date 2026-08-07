@@ -180,6 +180,74 @@ async def _start_pool_monitors() -> None:
         await manager.start_monitors()
 
 
+async def _build_temporal_activities() -> list[Any]:
+    """D-AUDIT-704 fix (cycle 7): собрать Temporal activity-list для Worker.
+
+    Создаёт :class:`ActivityBridge`, вызывает
+    :func:`register_langgraph_checkpoint_activities` (S100 W1) и
+    :meth:`ActivityBridge.decorate` — без этого
+    ``workflow.execute_activity("_langgraph_checkpoint_get", ...)``
+    падает с ``ActivityNotRegisteredError``.
+
+    Почему здесь, а не в :mod:`temporal_worker_runtime`:
+        ``infrastructure/workflow/`` не может импортировать
+        ``dsl/workflow/compiler/activity_bridge`` напрямую (layer rule
+        violation, см. ``temporal_worker_runtime.py:248-266``). Composition
+        layer (``plugins/``) — sandbox, здесь dsl-импорты разрешены.
+
+    Returns:
+        Список activity-callable (минимум 2 LangGraph checkpoint). Пустой
+        list при недоступности ``temporalio`` SDK или ``activity_bridge``
+        модуля (graceful degradation — Worker всё равно стартует, но
+        checkpoint activities не зарегистрированы).
+    """
+    try:
+        from src.backend.dsl.workflow.compiler.activity_bridge import (
+            ActivityBridge,
+            register_langgraph_checkpoint_activities,
+        )
+    except ImportError as exc:
+        app_logger.debug("temporal_activities: activity_bridge import skipped: %s", exc)
+        return []
+
+    bridge = ActivityBridge()
+    register_langgraph_checkpoint_activities(bridge)
+    try:
+        bridge.decorate()
+    except RuntimeError as exc:
+        # temporalio SDK не установлен — checkpoint activities остаются
+        # как raw Python функции (Temporal не сможет их маршрутизировать
+        # по имени), поэтому возвращаем [], чтобы Worker не получил
+        # «мёртвый» registration.
+        app_logger.debug("temporal_activities: bridge.decorate skipped: %s", exc)
+        return []
+
+    activities = list(bridge._cache.values())
+    app_logger.info(
+        "Temporal activities wired: %d (incl. langgraph checkpoint)",
+        len(activities),
+    )
+    return activities
+
+
+async def _start_temporal_worker_runtime_with_activities() -> None:
+    """D-AUDIT-704 fix (cycle 7): wire ActivityBridge в production lifespan.
+
+    Обёртка вокруг :func:`start_temporal_worker_runtime`, которая
+    собирает activity-list (ActivityBridge + checkpoint activities) и
+    передаёт его в Worker. Без этой обёртки production lifespan не
+    передавал activities в TemporalWorkerRuntime.start() и любое
+    ``workflow.execute_activity`` падало с
+    ``ActivityNotRegisteredError``.
+    """
+    from src.backend.infrastructure.workflow.temporal_worker_runtime import (
+        start_temporal_worker_runtime,
+    )
+
+    activities = await _build_temporal_activities()
+    await start_temporal_worker_runtime(activities=activities)
+
+
 async def _start_config_hot_reload() -> None:
     """D-AUDIT-A12-06 fix (cycle 1): wire ConfigHotReloader в production lifespan.
 
@@ -269,11 +337,15 @@ starting_operations: list[OperationItem] = [
     ),
     ("init_workflow_audit_sink", _init_workflow_audit_sink, _clickhouse_enabled),
     # D-A8-04 fix (cycle 1): wire TemporalWorkerRuntime в production lifespan.
+    # D-AUDIT-704 fix (cycle 7): обёртка с activity-list (ActivityBridge +
+    # register_langgraph_checkpoint_activities) — без этого Worker
+    # стартовал с activities=[] и workflow.execute_activity падал с
+    # ActivityNotRegisteredError.
     # Feature-flag guarded (default-OFF) через workflow_use_temporal —
     # см. src/backend/core/config/features/infrastructure.py.
     (
         "start_temporal_worker_runtime",
-        start_temporal_worker_runtime,
+        _start_temporal_worker_runtime_with_activities,
         None,  # flag check внутри start_temporal_worker_runtime
     ),
     (
