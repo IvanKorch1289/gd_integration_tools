@@ -126,7 +126,15 @@ class CodecFacade:
         # Try to parse as JSON first
         try:
             return self._decode_json(decoded)
-        except Exception:
+        except (ValueError, TypeError) as exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-901: narrow JSON-decode failure (не bare
+            # ``except Exception`` — ранее маскировал unrelated runtime
+            # errors как "not JSON" и терял сигнал).
+            import logging
+            logging.getLogger(__name__).debug(
+                "base64_decode_fallback_to_raw",
+                extra={"error": str(exc), "decoded_len": len(decoded)},
+            )
             # Return raw bytes or string
             try:
                 return decoded.decode("utf-8")
