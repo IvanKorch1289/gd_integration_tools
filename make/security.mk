@@ -36,11 +36,25 @@ check-ai-safety: ## К1 V15 R-V15-4 — AI workspace + sandbox + capability test
 
 ##@ К5 — supply-chain (SBOM / pip-audit / ZAP / bandit-strict)
 
-sbom: ## D-AUDIT-11-5 fix (cycle 1): canonical path — dist/sbom/sbom.cdx.json
-	@$(INFO) "Generating CycloneDX SBOM (dist/sbom/sbom.cdx.json)..."
+# D-AUDIT-11-2 fix (cycle 1): SBOM теперь генерируется через pip-audit
+# cyclonedx-json, который резолвится в .venv (Python 3.14 + uv.lock deps).
+# Раньше cyclonedx-py резолвился в /home/user/.local/bin/cyclonedx-py (Python 3.12)
+# → stale deps в SBOM (cryptography 41.0.7 vs 49.0.0).
+# Формат SBOM остаётся валидным CycloneDX 1.4 JSON (cosign подписывает opaque blob).
+# CVE-handling отделено: exit != 0 подавляется `|| true`, гейт — tools/pip_audit_gate.py.
+sbom: ## D-AUDIT-11-5 fix (cycle 1): canonical path — dist/sbom/sbom.cdx.json. D-AUDIT-11-2: pip-audit cyclonedx-json from .venv
+	@$(INFO) "Generating CycloneDX SBOM via pip-audit (dist/sbom/sbom.cdx.json)..."
 	@mkdir -p dist/sbom
-	@$(UV_RUN) cyclonedx-py environment --of JSON -o dist/sbom/sbom.cdx.json
-	@$(SUCCESS) "SBOM written to dist/sbom/sbom.cdx.json"
+	@$(UV_RUN) uv pip freeze --exclude-editable > dist/audit-requirements.txt 2>/dev/null || \
+	  $(UV_RUN) uv export --no-dev --format requirements-txt > dist/audit-requirements.txt
+	@ALLOW=""; \
+	if [ -f .security/pip-audit-allowlist.txt ]; then \
+		for v in $$(grep -v '^#' .security/pip-audit-allowlist.txt | grep -v '^$$' || true); do \
+			ALLOW="$$ALLOW --ignore-vuln $$v"; \
+		done; \
+	fi; \
+	$(UV_RUN) pip-audit --format cyclonedx-json --output dist/sbom/sbom.cdx.json -r dist/audit-requirements.txt $$ALLOW || true
+	@$(SUCCESS) "SBOM written to dist/sbom/sbom.cdx.json (via pip-audit cyclonedx-json from .venv)"
 
 audit-deps: ## D-AUDIT-11-4 fix (cycle 1): pip-audit с allowlist, пишет JSON в dist/pip-audit.json для CI gate
 	@$(INFO) "Running pip-audit (dist/pip-audit.json)..."
