@@ -47,6 +47,30 @@ class TemporalWorkerRuntime:
         self._task: asyncio.Task[None] | None = None
         self._lock = asyncio.Lock()
         self._task_queue: str | None = None
+        # D-AUDIT-808 fix (cycle 8): TemporalWorkerPool instance (production wire).
+        # Production lifespan создаёт pool через :func:`start_temporal_worker_runtime`
+        # и регистрирует worker в нём — это даёт OTel-interceptor + Worker Versioning
+        # kwargs в production. Unit-тесты :func:`start` (single-client path) — не
+        # используют pool, оставляя self._pool = None.
+        self._pool: Any | None = None
+
+    def bind_pool(self, pool: Any) -> None:
+        """D-AUDIT-808 fix (cycle 8): привязать worker+task от :class:`TemporalWorkerPool`.
+
+        Используется в production lifespan после :meth:`TemporalWorkerPool.register_worker`
+        — копирует ссылки на worker и background-task из pool'а в runtime,
+        чтобы :attr:`is_running` и :attr:`task_queue` отражали production-state.
+        """
+        if pool is None:
+            return
+        self._pool = pool
+        # Берём единственный зарегистрированный worker (production — single
+        # task_queue). Если зарегистрировано несколько — берём первый.
+        if pool._workers:
+            first_tq = next(iter(pool._workers))
+            self._worker = pool._workers[first_tq]
+            self._task = pool._tasks.get(first_tq)
+            self._task_queue = first_tq
 
     @property
     def is_running(self) -> bool:
@@ -257,16 +281,82 @@ async def start_temporal_worker_runtime(
     # Default — [] (backward-compat когда wrapper не передал activities).
     activities_to_use = activities or []
 
+    # D-AUDIT-808 fix (cycle 8): wire TemporalWorkerPool в production lifespan.
+    # Раньше (cycle 1 D-A8-04) Worker создавался напрямую через
+    # :meth:`TemporalWorkerRuntime.start` (client, task_queue, workflows, activities) —
+    # TemporalWorkerPool был defined but never instantiated. Этот fix
+    # оборачивает production-wire через :class:`TemporalWorkerPool`, что даёт:
+    #   * OTel-interceptor auto-wire (TD-013 observability);
+    #   * Worker Versioning kwargs через :class:`WorkerVersioningHelper`
+    #     (S171 M10 P0, D172);
+    #   * единая точка для мульти-task_queue scale-out (S180 P0-4).
+    # Pre-seed factory cache — чтобы :meth:`TemporalWorkerPool.register_worker`
+    # использовал уже подключённый client, а не переподключался.
+    try:
+        from src.backend.infrastructure.workflow.temporal_client import (
+            TemporalWorkerPool,
+            _ClientCacheEntry,
+        )
+    except ImportError as exc:
+        _logger.warning(
+            "temporal.worker_runtime.pool_import_failed",
+            extra={"error": str(exc)},
+        )
+        return
+
+    import time as _time
+
+    factory._cache[namespace] = _ClientCacheEntry(
+        client=client, created_at=_time.monotonic(), last_used_at=_time.monotonic(),
+    )
+    pool = TemporalWorkerPool(factory=factory, namespace=namespace)
+    try:
+        await pool.register_worker(
+            task_queue=task_queue,
+            workflows=workflow_registry.all(),
+            activities=activities_to_use,
+        )
+    except (ImportError, RuntimeError, OSError, AttributeError) as exc:
+        _logger.warning(
+            "temporal.worker_runtime.register_worker_failed",
+            extra={"error": str(exc), "task_queue": task_queue},
+        )
+        return
+
     runtime = get_temporal_worker_runtime()
-    await runtime.start(
-        client=client,
-        task_queue=task_queue,
-        workflow_classes=workflow_registry.all(),
-        activities=activities_to_use,
+    runtime.bind_pool(pool)
+    _logger.info(
+        "temporal.worker_runtime.pool_wired",
+        extra={
+            "task_queue": task_queue,
+            "namespace": namespace,
+            "worker_count": len(pool.list_workers()),
+        },
     )
 
 
 async def stop_temporal_worker_runtime() -> None:
-    """Lifespan-entrypoint: graceful shutdown worker'а. Idempotent."""
+    """Lifespan-entrypoint: graceful shutdown worker'а. Idempotent.
+
+    D-AUDIT-808 fix (cycle 8): также закрывает :class:`TemporalWorkerPool`
+    если production-lifespan его wire'нул (через :meth:`TemporalWorkerRuntime.bind_pool`).
+    Для unit-test path (single-client ``runtime.start``) ``_pool is None`` — fallback
+    на ``runtime.stop()`` как раньше.
+    """
     runtime = get_temporal_worker_runtime()
+    pool = runtime._pool
+    if pool is not None:
+        try:
+            await pool.shutdown()
+        except (RuntimeError, OSError, AttributeError) as exc:
+            _logger.warning(
+                "temporal.worker_runtime.pool_shutdown_error",
+                extra={"error": str(exc)},
+            )
+        runtime._pool = None
+        # После pool.shutdown() — обнуляем runtime refs чтобы is_running=False.
+        runtime._worker = None
+        runtime._task = None
+        runtime._task_queue = None
+        return
     await runtime.stop()
