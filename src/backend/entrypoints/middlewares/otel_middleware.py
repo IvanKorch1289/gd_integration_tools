@@ -116,18 +116,16 @@ class OtelMiddleware:
             span_name, context=ctx, kind=SpanKind.SERVER, attributes=attributes
         )
 
-        # Cycle 56 critical: inject traceparent в response headers
-        # через send-wrapper (аналог cycle 36-55 pattern).
-        # suppress original start message — мы отправляем свой с
-        # traceparent. Original body пропускаем.
-        # Use object attribute (cycle 56: captured status через setattr
-        # на middleware instance — simpler than closure).
-        self._cycle56_status: int = 0
+        # D-AUDIT-A2-03 fix (cycle 1): scope["state"] для per-request state
+        # вместо instance attribute. Ранее self._cycle56_status сохранялся
+        # на middleware instance — shared между всеми concurrent requests
+        # → race condition (status code от request A мог попасть в response B).
+        scope.setdefault("state", {})["otel_response_status"] = 0
         response_body_chunks: list[bytes] = []
 
         async def send_wrapper(message: Message) -> None:
             if message["type"] == "http.response.start":
-                self._cycle56_status = message.get("status", 200)
+                scope["state"]["otel_response_status"] = message.get("status", 200)
                 # Get original headers + inject traceparent.
                 new_headers = list(message.get("headers", []))
                 self._inject_traceparent_to_headers(new_headers)
@@ -135,7 +133,7 @@ class OtelMiddleware:
                 await send(
                     {
                         "type": "http.response.start",
-                        "status": self._cycle56_status,
+                        "status": scope["state"]["otel_response_status"],
                         "headers": new_headers,
                     }
                 )
@@ -164,10 +162,12 @@ class OtelMiddleware:
             self._mark_error(span, exc)
             raise
         else:
-            # Get status from send_wrapper (cycle 56: stored on
-            # self._cycle56_status).
+            # Get status from send_wrapper (D-AUDIT-A2-03 fix cycle 1:
+            # stored on scope['state'] — per-request, не instance attribute).
             try:
-                response_status = getattr(self, "_cycle56_status", 200)
+                response_status = scope.get("state", {}).get(
+                    "otel_response_status", 200
+                )
                 span.set_attribute("http.status_code", response_status)
                 if response_status >= 500:
                     self._mark_error(span, RuntimeError(f"HTTP {response_status}"))
