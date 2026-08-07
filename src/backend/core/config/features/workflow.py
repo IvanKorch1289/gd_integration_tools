@@ -25,12 +25,16 @@ class WorkflowFlags(BaseSettings):
             ...
 
     Env-var prefix: ``FEATURE_`` (inherited from parent pydantic-settings config).
+
+    # cycle-3/D-AUDIT-07: defaults aligned with description "default-OFF"
+    # (workflow_legacy_disabled, workflow_yaml_round_trip, workflow_bpmn_import,
+    # workflow_gateways_enabled — все default=False, не default=True).
     """
 
     model_config = SettingsConfigDict(env_prefix="FEATURE_", extra="forbid")
 
     workflow_legacy_disabled: bool = Field(
-        default=True,
+        default=False,  # D-AUDIT-11 fix (cycle 1): aligned with docstring "default-OFF"
         title="Workflow: отключить legacy infrastructure/workflow/state*",
         description=(
             "K4 Wave 1. Owner: K4 Workflow. ETA: S2-W1. "
@@ -41,7 +45,7 @@ class WorkflowFlags(BaseSettings):
     )
 
     workflow_yaml_round_trip: bool = Field(
-        default=True,
+        default=False,  # D-AUDIT-11 fix (cycle 1): aligned with docstring "default-OFF"
         title="Workflow: YAML round-trip API (to_yaml/from_yaml/diff)",
         description=(
             "K4 Wave 2. Owner: K4 Workflow. ETA: S2-W2. "
@@ -51,7 +55,7 @@ class WorkflowFlags(BaseSettings):
     )
 
     workflow_bpmn_import: bool = Field(
-        default=True,
+        default=False,  # D-AUDIT-11 fix (cycle 1): aligned with docstring "default-OFF"
         title="Workflow: BPMN 2.0 import через SpiffWorkflow 3.0",
         description=(
             "K4 Wave 3. Owner: K4 Workflow. ETA: S2-W3. "
@@ -61,7 +65,7 @@ class WorkflowFlags(BaseSettings):
     )
 
     workflow_gateways_enabled: bool = Field(
-        default=True,
+        default=False,  # D-AUDIT-11 fix (cycle 1): aligned with docstring "default-OFF"
         title="Workflow: XOR/AND/OR gateways (.gateway_xor/.gateway_and/.gateway_or)",
         description=(
             "K3 Wave 4. Owner: K3 Workflow DSL. ETA: S3-W4. "
