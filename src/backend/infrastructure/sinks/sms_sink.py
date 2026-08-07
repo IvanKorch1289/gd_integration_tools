@@ -104,9 +104,15 @@ class SmsSink(Sink):
             return SinkResult(ok=False, details={"error": "missing to/body"})
 
         try:
-            import httpx
+            # D-AUDIT-A2-01 fix (cycle 1): использовать OutboundHttpClient с WAF pre-hook
+            # вместо прямого httpx.AsyncClient. Ранее sms_sink обходил WAF-coverage,
+            # tools/check_waf_coverage.py exit 1 с этими violations.
+            from src.backend.core.net.outbound_http import OutboundHttpClient
 
-            async with httpx.AsyncClient(timeout=self.timeout_s) as client:
+            async with OutboundHttpClient(
+                plugin=f"sms_sink.{self.provider}",
+                timeout_s=self.timeout_s,
+            ) as client:
                 resp = await client.post(
                     self._endpoint(),
                     params={
@@ -150,12 +156,19 @@ class SmsSink(Sink):
         return None, None, None
 
     async def health(self, mode: str = "fast") -> HealthResult:
-        """HEAD на endpoint провайдера (cheap probe)."""
+        """HEAD на endpoint провайдера (cheap probe).
+
+        D-AUDIT-A2-01 fix (cycle 1): использует OutboundHttpClient для HEAD probe.
+        """
         try:
-            import httpx
+            # D-AUDIT-A2-01 fix (cycle 1): OutboundHttpClient вместо прямого httpx
+            from src.backend.core.net.outbound_http import OutboundHttpClient
 
             start = time.perf_counter()
-            async with httpx.AsyncClient(timeout=2.0) as client:
+            async with OutboundHttpClient(
+                plugin=f"sms_sink.{self.provider}",
+                timeout_s=2.0,
+            ) as client:
                 resp = await client.head(self._endpoint())
                 latency_ms = (time.perf_counter() - start) * 1000.0
                 if 200 <= resp.status_code < 500:
