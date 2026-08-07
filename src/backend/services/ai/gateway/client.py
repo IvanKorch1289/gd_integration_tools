@@ -95,7 +95,15 @@ class LiteLLMGateway:
                     ):
                         return f"{rec.tags.get('provider', 'openai')}/{rec.name}"
             return self._default_model
-        except Exception:  # noqa: BLE001
+        except (AttributeError, KeyError, TypeError) as model_resolve_exc:  # noqa: BLE001
+            # D-A1-04 fix (cycle 41): narrow exceptions + observability.
+            # Bare `except Exception` маскировал malformed model registry
+            # (corrupted metadata, missing tags). Fallback: default model.
+            from src.backend.core.logging import get_logger
+            get_logger(__name__).debug(
+                "ai_gateway.model_resolve_failed",
+                extra={"error": str(model_resolve_exc)},
+            )
             return self._default_model
 
     def _ensure_litellm(self) -> Any:
