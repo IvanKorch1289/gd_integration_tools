@@ -1,5 +1,9 @@
 # ruff: noqa: S101, SLF001
-"""Smoke-тесты Sprint 4 К3-B §5 — feature-flag bootstrap saga-деклараций."""
+"""Smoke-тесты Sprint 4 К3-B §5 — workflow_setup runtime.
+
+D-AUDIT-A8-05 fix (cycle 1): ``_bootstrap_default_declarations`` удалена.
+Ранее тесты проверяли saga-bootstrap, но saga-демо удалены в 9164a59.
+"""
 
 from __future__ import annotations
 
@@ -24,71 +28,45 @@ def _clean_registry() -> workflow_setup.WorkflowCompilerRegistry:
         registry.restore(snapshot)
 
 
-def test_bootstrap_defaults_disabled_by_default(
-    monkeypatch: pytest.MonkeyPatch,
-    _clean_registry: workflow_setup.WorkflowCompilerRegistry,
-) -> None:
-    """Default-OFF: при пустой среде декларации не регистрируются."""
+class TestBootstrapRemoved:
+    """D-AUDIT-A8-05 fix (cycle 1): _bootstrap_default_declarations удалена."""
 
-    monkeypatch.setattr(
-        "src.backend.core.config.settings.settings.workflow.bootstrap_defaults_enabled",
-        False,
-        raising=False,
-    )
+    def test_bootstrap_function_removed(self) -> None:
+        """D-AUDIT-A8-05 fix: функция удалена — saga-демо модулей больше нет."""
+        assert not hasattr(workflow_setup, "_bootstrap_default_declarations"), (
+            "workflow_setup._bootstrap_default_declarations должна быть удалена "
+            "(saga-демо удалены в коммите 9164a59)"
+        )
 
-    compiled = workflow_setup._bootstrap_default_declarations()
+    def test_settings_workflow_attribute_removed(self) -> None:
+        """D-AUDIT-A8-05 fix: settings.workflow.bootstrap_defaults_enabled удалён.
 
-    assert compiled == []
-    assert _clean_registry.list_names() == ()
+        Поле осиротело после удаления bootstrap-функции — оставлено бы для
+        silent fail-OPEN в external tooling. Удалено полностью.
+        """
+        # Проверяем, что поле удалено из WorkflowSettings (для legacy-compat cleanup).
+        from src.backend.core.config.workflow import WorkflowSettings
 
+        assert "bootstrap_defaults_enabled" not in WorkflowSettings.model_fields, (
+            "WorkflowSettings.bootstrap_defaults_enabled должен быть удалён "
+            "(D-AUDIT-A8-05 fix cycle 1)"
+        )
 
-@pytest.mark.skip(reason="S171 M13.2 R6 partial: saga files created (orders_saga.py + payments_saga.py), but _clean_registry API changed — DurableWorkflowProcessor.steps missing. Defer to M14 (see docs/m11_deferred_tests.md)")
-def test_bootstrap_defaults_registers_two_sagas_when_enabled(
-    monkeypatch: pytest.MonkeyPatch,
-    _clean_registry: workflow_setup.WorkflowCompilerRegistry,
-) -> None:
-    """При выставленном флаге регистрируются orders_saga + payments_saga."""
-    pytest.importorskip("temporalio")
-    monkeypatch.setattr(
-        "src.backend.core.config.settings.settings.workflow.bootstrap_defaults_enabled",
-        True,
-        raising=False,
-    )
-
-    print(f"DEBUG: workflow_setup.settings id = {id(workflow_setup.settings)}")
-    print(
-        f"DEBUG: global settings id = {id(__import__('src.backend.core.config.settings', fromlist=['settings']).settings)}"
-    )
-    print(
-        f"DEBUG: workflow_setup.settings.workflow.bootstrap_defaults_enabled = {workflow_setup.settings.workflow.bootstrap_defaults_enabled}"
-    )
-    print(
-        f"DEBUG: global settings.workflow.bootstrap_defaults_enabled = {__import__('src.backend.core.config.settings', fromlist=['settings']).settings.workflow.bootstrap_defaults_enabled}"
-    )
-
-    # M13.2 R6 fix: _bootstrap_default_declarations возвращает список,
-    # WorkflowBuilder.build() возвращает DurableWorkflowProcessor (по текущему API).
-    compiled = workflow_setup._bootstrap_default_declarations()
-
-    assert len(compiled) >= 2
-    names = set(_clean_registry.list_names())
-    # После bootstrap registry содержит orders + payments workflows
-    assert "orders.create_with_payment" in names
-    assert "payments.charge_card" in names
+    @pytest.mark.asyncio
+    async def test_start_runtime_no_crash_without_bootstrap(
+        self, _clean_registry: workflow_setup.WorkflowCompilerRegistry,
+    ) -> None:
+        """D-AUDIT-A8-05 fix: ``start_workflow_runtime`` отрабатывает без bootstrap."""
+        app = SimpleNamespace(state=SimpleNamespace())
+        await workflow_setup.start_workflow_runtime(app)
+        assert app.state.workflow_compiler_registry is workflow_setup.workflow_compiler_registry
 
 
 @pytest.mark.asyncio
 async def test_start_workflow_runtime_attaches_registry_to_app_state(
-    monkeypatch: pytest.MonkeyPatch,
     _clean_registry: workflow_setup.WorkflowCompilerRegistry,
 ) -> None:
     """``start_workflow_runtime`` кладёт compiler-реестр в ``app.state``."""
-
-    monkeypatch.setattr(
-        "src.backend.core.config.settings.settings.workflow.bootstrap_defaults_enabled",
-        False,
-        raising=False,
-    )
 
     app = SimpleNamespace(state=SimpleNamespace())
     await workflow_setup.start_workflow_runtime(app)
