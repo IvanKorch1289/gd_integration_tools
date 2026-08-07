@@ -166,12 +166,26 @@ class BrowserCookieStore:
         new_ciphertext = self._fernet.encrypt(new_payload)
         try:
             existing_raw = await self._redis.get(key)
-        except Exception:
+        except (ConnectionError, TimeoutError) as read_exc:  # noqa: PERF203
+            # D-A1-04 fix (cycle 36): narrow exceptions + observability.
+            # Bare `except Exception` маскировал Redis backend failures
+            # (Redis down, timeout). Fallback: write fresh cookies.
+            _logger.warning(
+                "BrowserCookieStore.redis_get_failed",
+                extra={"error": str(read_exc)},
+            )
             existing_raw = None  # proceed with write if read fails
         if existing_raw is not None:
             try:
                 existing_plain = self._fernet.decrypt(existing_raw)
-            except Exception:
+            except (ValueError, TypeError) as decrypt_exc:  # noqa: PERF203
+                # D-A1-04 fix (cycle 36): narrow exceptions + observability.
+                # Bare `except Exception` маскировал corrupted ciphertext
+                # (key rotation, tampering). Fallback: write fresh cookies.
+                _logger.warning(
+                    "BrowserCookieStore.fernet_decrypt_failed",
+                    extra={"error": str(decrypt_exc)},
+                )
                 existing_plain = None  # corrupted → write new
             if existing_plain == new_payload:
                 # No-op: cookies unchanged since last save.
