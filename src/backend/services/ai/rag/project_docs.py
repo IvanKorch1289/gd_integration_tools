@@ -217,7 +217,11 @@ class DocsIndexer:
             return
         try:
             self._qdrant.get_collection(self._collection_name)
-        except Exception:  # noqa: BLE001 — collection may not exist yet
+        except (AttributeError, RuntimeError, ValueError, ConnectionError) as get_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-906: narrow exceptions + observability.
+            # Qdrant raises RuntimeError/ValueError для invalid collections,
+            # ConnectionError для network issues. Bare `except Exception`
+            # маскировал unrelated errors (KeyError, TypeError).
             try:
                 from qdrant_client.models import Distance, VectorParams
 
@@ -227,7 +231,9 @@ class DocsIndexer:
                         size=_EMBED_DIM, distance=Distance.COSINE
                     ),
                 )
-            except Exception:  # noqa: BLE001 — fallback API
+            except (ImportError, AttributeError) as create_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-906: см. выше — narrow для fallback API
+                # (legacy qdrant без VectorParams — old signature).
                 self._qdrant.create_collection(self._collection_name)
         self._collection_ready = True
 
