@@ -119,8 +119,15 @@ def get_ai_gateway() -> AIGateway:
             gateway = getattr(app.state, "ai_gateway", None)
             if gateway is not None:
                 return gateway
-    except Exception:
-        pass
+    except (ImportError, AttributeError, RuntimeError) as app_state_exc:  # noqa: PERF203
+        # D-A1-04 fix (cycle 39): narrow exceptions + observability.
+        # Bare `except Exception` маскировал broken app_state (early-init,
+        # не инициализированный app.state). Fallback: provider chain.
+        from src.backend.core.logging import get_logger
+        get_logger(__name__).debug(
+            "gateway_adapter.app_state_resolve_failed",
+            extra={"error": str(app_state_exc)},
+        )
 
     try:
         from src.backend.core.di.providers.ai import get_ai_gateway_provider
