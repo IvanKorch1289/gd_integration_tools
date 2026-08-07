@@ -349,6 +349,7 @@ class BaseSettingsWithLoader(BaseSettings):
             env_settings,
             VaultConfigSettingsSource(settings_cls),
             YamlConfigSettingsLoader(settings_cls),
+            ConsulConfigSettingsSource(settings_cls),  # D-AUDIT-A12-02 fix (cycle 1)
             dotenv_settings,
             file_secret_settings,
         )
