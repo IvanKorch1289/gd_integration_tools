@@ -194,7 +194,11 @@ class TestStartTemporalWorkerRuntimeFeatureFlag:
 
     @pytest.mark.asyncio
     async def test_feature_flag_enabled_starts_worker(self) -> None:
-        """workflow_use_temporal=True → worker стартует (TemporalClient mocked)."""
+        """workflow_use_temporal=True → worker стартует (TemporalClient mocked).
+
+        D-A8-03 fix (cycle 1): activities=[] — ActivityBridge.decorate wire
+        отдельно через composition layer (cross-layer concern).
+        """
         from src.backend.infrastructure.workflow import (
             temporal_worker_runtime as mod,
         )
@@ -225,3 +229,6 @@ class TestStartTemporalWorkerRuntimeFeatureFlag:
         runtime = mod.get_temporal_worker_runtime()
         assert runtime.is_running
         fake_factory.get_client.assert_awaited()
+        # D-A8-03 fix: activities=[] (ActivityBridge wire вне scope cycle 1)
+        kwargs = fake_worker_mod.Worker.call_args.kwargs
+        assert kwargs["activities"] == []

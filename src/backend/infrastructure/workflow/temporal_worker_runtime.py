@@ -245,12 +245,24 @@ async def start_temporal_worker_runtime() -> None:
         )
         return
 
+    # D-A8-03 fix (cycle 1): worker стартует с activities=[].
+    # ActivityBridge.decorate() wire — отдельный трек (cross-layer concern:
+    # infrastructure не может импортировать dsl/workflow/compiler/activity_bridge
+    # напрямую — layer rule violation). Cycle 1 ограничивается TemporalWorkerPool
+    # wire; ActivityBridge.decorate() wire требует registry-based callback
+    # через core/workflow_registry (вне scope cycle 1).
+    #
+    # Operator: для activity-регистрации wire ActivityBridge отдельно
+    # в composition layer (src/backend/plugins/composition/workflow_setup.py
+    # или setup_infra/lifecycle.py) — там dsl-импорты разрешены.
+    activities: list[Any] = []
+
     runtime = get_temporal_worker_runtime()
     await runtime.start(
         client=client,
         task_queue=task_queue,
         workflow_classes=workflow_registry.all(),
-        activities=[],
+        activities=activities,
     )
 
 

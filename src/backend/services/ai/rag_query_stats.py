@@ -1,8 +1,11 @@
-"""Сбор top-N RAG-запросов per-tenant для cache prewarm (S13 K4 W1).
+"""Сбор top-N RAG-запросов per-tenant для аналитики и observability.
 
 Хранит счётчики hash(query) → count в Redis ZSET с TTL 30 дней.
-Используется :class:`RagCachePrewarmer` для prewarm L2 semantic cache
-на startup (top-100 запросов).
+
+D-A9-02 fix (cycle 1): ``RagCachePrewarmer`` (ранее ссылался здесь)
+удалён как dead code — никогда не инстанцировался в production lifespan.
+Модуль продолжает собирать статистику для observability/admin endpoints,
+но prewarm (cycle-5/D-AUDIT-506) больше не используется.
 """
 
 from __future__ import annotations
