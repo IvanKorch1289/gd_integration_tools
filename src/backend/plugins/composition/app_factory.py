@@ -97,11 +97,6 @@ def _configure_application_components(app: FastAPI) -> None:
     if settings.app.monitoring_enabled:
         setup_monitoring(app=app)
 
-    # B-10 fix (cycle 33): bootstrap Temporal workflow-классов в
-    # WorkflowRegistry — иначе ``TemporalWorkflowBackend.replay()``
-    # не сможет построить ``Replayer`` (Protocol-mismatch str → type).
-    _bootstrap_workflow_registry()
-
 
 def _configure_business_routers(app: FastAPI) -> None:
     """Подключение бизнес-маршрутизаторов"""
