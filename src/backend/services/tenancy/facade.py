@@ -71,7 +71,15 @@ class TenantFacade:
             from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
 
             return ctx.tenant_id == SYSTEM_TENANT_ID
-        except Exception:
+        except (ImportError, AttributeError) as tenant_exc:  # noqa: PERF203
+            # D-A1-04 fix (cycle 32): narrow exceptions + observability.
+            # Bare `except Exception` маскировал security-critical
+            # SYSTEM_TENANT_ID import failure → silent permission grant.
+            from src.backend.core.logging import get_logger
+            get_logger(__name__).warning(
+                "tenancy.system_tenant_check.failed",
+                extra={"error": str(tenant_exc)},
+            )
             return False
 
     def tenant_id(self) -> str:
