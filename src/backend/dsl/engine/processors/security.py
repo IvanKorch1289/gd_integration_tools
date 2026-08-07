@@ -37,10 +37,13 @@ class AuthenticationProviderUnavailableError(RuntimeError):
     """
 
 
-# Путь модуля с verifier-реестром. Импортируется через importlib, чтобы
-# не нарушать архитектурную границу dsl→entrypoints (verifier'ы держат
-# FastAPI/Request, поэтому живут в entrypoints).
-_VERIFIERS_MODULE = "src.backend.entrypoints.api.dependencies.auth_selector"
+# D-AUDIT-04 fix (cycle 1): канонический путь к verifier-реестру — core.auth.auth_selector,
+# а не legacy entrypoints.api.dependencies.auth_selector (DEPRECATED shim, не содержит
+# _VERIFIERS — auth всегда fail-CLOSED через AuthenticationProviderUnavailableError).
+#
+# Импортируется через importlib для сохранения архитектурной границы dsl→core
+# (DSL-движок исполняется поверх runtime HTTP-request, доступ через exchange.headers).
+_VERIFIERS_MODULE = "src.backend.core.auth.auth_selector"
 
 _logger = get_logger("dsl.security.auth")
 
