@@ -52,6 +52,19 @@ _logger = get_logger("services.workflows.hitl_signal_store_redis")
 
 _HASH_KEY = "hitl:signals"
 
+# D-A8-11 fix (cycle 1): default cap для WATCH retry-loop.
+# Persistent contention приводит к tight loop → CPU saturation (DoS vector).
+_MAX_WATCH_RETRIES_DEFAULT: int = 10
+
+
+# D-A8-11 fix (cycle 1): explicit exception при persistent contention.
+class HITLWatchContentionError(RuntimeError):
+    """Raised when WATCH conflict exceeds max_watch_retries (D-A8-11 cycle 1).
+
+    Persistent contention = tight loop без progress → CPU saturation.
+    Caller должен retry с backoff или escalate.
+    """
+
 
 class RedisHitlSignalStore:
     """S207: Redis-backed реализация :class:`HitlSignalStore` для multi-instance.
@@ -73,9 +86,24 @@ class RedisHitlSignalStore:
           фильтром по ``signal_id`` (через payload JSON).
     """
 
-    def __init__(self, redis_client: _HitlRedisClient | None = None) -> None:
+    def __init__(
+        self,
+        redis_client: _HitlRedisClient | None = None,
+        *,
+        max_watch_retries: int = _MAX_WATCH_RETRIES_DEFAULT,
+    ) -> None:
+        """Конструктор RedisHitlSignalStore.
+
+        Args:
+            redis_client: Optional redis client (для тестов с fakeredis).
+                Если None — lazy ``get_redis_client().get_client(RedisKind.QUEUE)``.
+            max_watch_retries: D-A8-11 fix (cycle 1): max retries для WATCH
+                conflict в _mark_resolved_transactional. Persistent
+                contention → HITLWatchContentionError.
+        """
         self._client = redis_client
         self._owns_client = redis_client is None
+        self._max_watch_retries = max_watch_retries
 
     async def _get_client(self) -> _HitlRedisClient:
         """Lazy resolve redis client (для unit-тестов — inject через ctor)."""
@@ -218,11 +246,27 @@ class RedisHitlSignalStore:
     async def _mark_resolved_transactional(
         self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str
     ) -> dict[str, Any]:
-        """Atomic WATCH/MULTI update for the production Redis client."""
+        """Atomic WATCH/MULTI update for the production Redis client.
+
+        D-A8-11 fix (cycle 1): iteration cap для WATCH retry-loop. Ранее
+        bare 'while True: ... continue' без cap → persistent contention
+        приводил к tight loop → CPU saturation (DoS vector). Теперь:
+        max_watch_retries (default 10) → raise HITLWatchContentionError
+        при превышении.
+        """
         async with client.pipeline(transaction=True) as pipe:
             data: dict[str, Any] = {}
+            watch_attempts = 0
             while True:
                 try:
+                    watch_attempts += 1
+                    if watch_attempts > self._max_watch_retries:
+                        # D-A8-11 fix (cycle 1): explicit fail после max_watch_retries.
+                        raise HITLWatchContentionError(
+                            f"HITL signal {signal_id!r} WATCH conflict exceeded "
+                            f"{self._max_watch_retries} retries — persistent contention. "
+                            f"Caller must retry или escalate."
+                        )
                     await pipe.watch(_HASH_KEY)
                     raw = await pipe.hget(_HASH_KEY, signal_id)
                     if raw is None:
