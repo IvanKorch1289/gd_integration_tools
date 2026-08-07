@@ -19,7 +19,9 @@ _ROOT = Path(__file__).parent.parent.parent.parent
 _GENERATE_SBOM = _ROOT / "tools" / "checks" / "generate_sbom.py"
 _RUN_PIP_AUDIT = _ROOT / "tools" / "checks" / "run_pip_audit.py"
 _COSIGN_SIGN = _ROOT / "tools" / "checks" / "cosign_sign.py"
-_MAKEFILE_SECURITY = _ROOT / "Makefile.security"
+# D-AUDIT-11-3 fix (cycle 1): canonical path — make/security.mk, не legacy Makefile.security.
+# Makefile.security был разделён на make/*.mk в Org-4 S64; supply-chain Makefile — make/security.mk.
+_MAKEFILE_SECURITY = _ROOT / "make" / "security.mk"
 
 
 def test_generate_sbom_module_importable() -> None:
@@ -71,9 +73,12 @@ def test_cosign_sign_module_importable() -> None:
 
 
 def test_makefile_targets_present() -> None:
-    """Makefile.security содержит все три обязательных supply-chain targets."""
+    """make/security.mk содержит все три обязательных supply-chain targets.
+
+    D-AUDIT-11-3 fix (cycle 1): Makefile.security → make/security.mk (canonical path).
+    """
     assert _MAKEFILE_SECURITY.exists(), (
-        f"Makefile.security не найден: {_MAKEFILE_SECURITY}"
+        f"make/security.mk не найден: {_MAKEFILE_SECURITY}"
     )
 
     content = _MAKEFILE_SECURITY.read_text(encoding="utf-8")
@@ -81,5 +86,5 @@ def test_makefile_targets_present() -> None:
     required_targets = ("sbom", "audit-deps", "cosign-sign")
     for target in required_targets:
         assert f"{target}:" in content, (
-            f"Target '{target}:' не найден в Makefile.security"
+            f"Target '{target}:' не найден в make/security.mk"
         )
