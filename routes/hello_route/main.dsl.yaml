@@ -4,8 +4,8 @@ source:
     method: POST
     path: /api/v1/CHANGEME
 steps:
-- call_function:
-    ref: extensions.hello_route.normalizer:apply_rules
+- # D-AUDIT-B-102 fix (cycle 1): broken call_function step удалён (модуль
+  # не существует — route — pure YAML demo).
 - policy:
     retry:
       attempts: 3

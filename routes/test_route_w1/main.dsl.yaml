@@ -4,8 +4,8 @@ source:
     method: POST
     path: /api/v1/CHANGEME
 steps:
-- call_function:
-    ref: extensions.test_route_w1.normalizer:apply_rules
+- # D-AUDIT-B-103 fix (cycle 1): broken call_function step удалён (модуль
+  # не существует — route — pure YAML demo).
 - http_call:
     url: https://api.test/sink
     method: POST

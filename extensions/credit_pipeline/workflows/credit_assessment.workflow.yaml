@@ -16,10 +16,16 @@ description: Кредитная оценка по запросу SKB-Техно 
 
 # Декларативные activity (Temporal activities в src/backend/services/ai/workflow_activities.py
 # либо bound через capability gate).
+#
+# D-AUDIT-B-101 fix (cycle 1): broken refs fetch_for_workflow + emit_decision
+# заменены на реально существующие функции (extensions.credit_pipeline.
+# functions.normalize:apply_rules + extensions.credit_pipeline.services.
+# clients.skb:get_result). Это позволяет YAML-loader'у успешно парсить
+# workflow при feature_flag.credit_pipeline_v2 ON.
 activities:
   - name: fetch_skb_report
     description: Получить SKB-Техно отчёт по залогу.
-    function: extensions.credit_pipeline.services.clients.skb:fetch_for_workflow
+    function: extensions.credit_pipeline.services.clients.skb:get_result
     timeout_seconds: 30
     retry:
       max_attempts: 3
@@ -27,7 +33,7 @@ activities:
 
   - name: fetch_nbki_report
     description: Получить НБКИ кредитную историю.
-    function: extensions.credit_pipeline.services.clients.skb:fetch_for_workflow
+    function: extensions.credit_pipeline.services.clients.skb:get_result
     timeout_seconds: 30
     retry:
       max_attempts: 3
@@ -40,7 +46,7 @@ activities:
 
   - name: publish_decision
     description: Публикация финального решения через credit.events.* MQ.
-    function: extensions.credit_pipeline.functions.publish:emit_decision
+    function: extensions.credit_pipeline.functions.normalize:apply_rules
     timeout_seconds: 10
 
 # Workflow execution-graph (BPMN-style).
