@@ -36,11 +36,11 @@ check-ai-safety: ## К1 V15 R-V15-4 — AI workspace + sandbox + capability test
 
 ##@ К5 — supply-chain (SBOM / pip-audit / ZAP / bandit-strict)
 
-sbom: ## К5: сгенерировать CycloneDX SBOM в dist/sbom.cdx.json
-	@$(INFO) "Generating CycloneDX SBOM..."
-	@mkdir -p dist
-	@$(UV_RUN) cyclonedx-py environment --of JSON -o dist/sbom.cdx.json
-	@$(SUCCESS) "SBOM written to dist/sbom.cdx.json"
+sbom: ## D-AUDIT-11-5 fix (cycle 1): canonical path — dist/sbom/sbom.cdx.json
+	@$(INFO) "Generating CycloneDX SBOM (dist/sbom/sbom.cdx.json)..."
+	@mkdir -p dist/sbom
+	@$(UV_RUN) cyclonedx-py environment --of JSON -o dist/sbom/sbom.cdx.json
+	@$(SUCCESS) "SBOM written to dist/sbom/sbom.cdx.json"
 
 audit-deps: ## D-AUDIT-11-4 fix (cycle 1): pip-audit с allowlist, пишет JSON в dist/pip-audit.json для CI gate
 	@$(INFO) "Running pip-audit (dist/pip-audit.json)..."

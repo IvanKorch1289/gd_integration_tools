@@ -51,10 +51,12 @@ jobs:
         run: uv run twine check dist/*
 
       - name: Generate SBOM (CycloneDX)
-        # Sprint 9 K1 W5: SBOM as release artifact
+        # D-AUDIT-11-5 fix (cycle 1): canonical path — dist/sbom/sbom.cdx.json
+        # (3-way drift fixed: make/security.mk + tools/checks/* теперь пишут в dist/sbom/,
+        #  не в legacy dist/sbom.cdx.json).
         run: |
           uv run python tools/checks/generate_sbom.py \
-            --output dist/sbom.cdx.json
+            --output-dir dist/sbom
         continue-on-error: false
 
       - name: pip-audit dependency vulnerability scan
