@@ -161,7 +161,17 @@ def from_environment() -> OCRProcessor:
 
         if not feature_flags.rpa_ocr_enabled:
             return NoOpOCRProcessor()
-    except Exception:  # на ранней инициализации возможны импорт-ошибки
+    except (ImportError, AttributeError) as feature_exc:  # noqa: PERF203
+        # D-A1-04 fix (cycle 34): narrow exceptions + debug logging.
+        # Bare `except Exception` маскировал ImportError (early-init
+        # feature_flags module not ready) и AttributeError (feature_flags
+        # missing rpa_ocr_enabled attribute). Fallback NoOpOCRProcessor
+        # корректен — caller проверяет availability отдельно.
+        from src.backend.core.logging import get_logger
+        get_logger(__name__).debug(
+            "rpa.ocr.feature_flags_resolve_failed",
+            extra={"error": str(feature_exc)},
+        )
         return NoOpOCRProcessor()
 
     return PytesseractOCRProcessor()  # availability check перенесён в caller
