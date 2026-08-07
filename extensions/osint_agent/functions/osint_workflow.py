@@ -224,14 +224,18 @@ def validate_report(raw_text: str) -> dict[str, Any]:
 
 
 async def _scrape_url(url: str, *, max_chars: int = 2000) -> str:
-    """Scrape URL content via httpx (S170 M3 helper).
+    """Scrape URL content via OutboundHttpClient (D-AUDIT-A2-02 fix cycle 1).
 
-    Ponytail: используем прямой httpx (не facade) — это helper для
-    OSINT workflow, не infrastructure-layer component.
+    Ранее использовался прямой httpx.AsyncClient — обходил WAF-coverage gate.
+    Заменён на OutboundHttpClient (WAF pre-hook + capability-gate active).
     """
-    import httpx
     try:
-        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+        from src.backend.core.net.outbound_http import OutboundHttpClient
+
+        async with OutboundHttpClient(
+            plugin="osint_agent.scrape",
+            timeout_s=10.0,
+        ) as client:
             resp = await client.get(url, headers={"User-Agent": "GD-OSINT/1.0"})
             resp.raise_for_status()
             text = resp.text[:max_chars]
