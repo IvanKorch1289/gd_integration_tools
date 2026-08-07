@@ -289,9 +289,15 @@ async def test_image_caption_pipeline_e2e(
     multimodal_service.set_image_ingester(image_ingester)
 
     # Step 1+2+3: ingest image (real ImageIngester + StubEmbedder).
+    # cycle-8/D-AUDIT-806: tenant_id="e2e" обязателен для consistency с
+    # search-tenant — defence-in-depth post-filter в service.search
+    # сравнивает chunk.metadata["tenant_id"] == effective_tenant.
     fake_image = _make_fake_png()
     result = await multimodal_service.ingest_document(
-        fake_image, collection="e2e_images", mime="image/png"
+        fake_image,
+        collection="e2e_images",
+        mime="image/png",
+        tenant_id="e2e",
     )
 
     assert len(result.chunks) == 1, "ImageIngester должен вернуть ровно 1 chunk"
@@ -378,6 +384,8 @@ async def test_audio_transcript_pipeline_e2e(
             "transcript": transcript,
             "mime": "audio/wav",
             "collection": "e2e_audio",
+            # cycle-8/D-AUDIT-806: tenant_id для consistency с search.
+            "tenant_id": "e2e",
         },
         embedding_kind="stub-token-overlap",
     )
