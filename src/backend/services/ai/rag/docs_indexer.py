@@ -194,7 +194,15 @@ class DocsIndexer:
             return
         try:
             self._qdrant.get_collection(self._collection_name)
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, RuntimeError, ValueError) as qdrant_exc:  # noqa: BLE001
+            # D-A1-04 fix (cycle 42): narrow exceptions + observability.
+            # Bare `except Exception` маскировал Qdrant backend failures
+            # (connection refused, timeout, malformed response).
+            from src.backend.core.logging import get_logger
+            get_logger(__name__).debug(
+                "rag.docs_indexer.qdrant_get_collection_failed",
+                extra={"error": str(qdrant_exc), "collection": self._collection_name},
+            )
             try:
                 from qdrant_client.models import Distance, VectorParams
 
