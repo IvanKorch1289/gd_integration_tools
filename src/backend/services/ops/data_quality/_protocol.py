@@ -8,13 +8,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Protocol
 
-if TYPE_CHECKING:  # S154 W2: break circular import
+if TYPE_CHECKING:  # S154 W2 + cycle-8/D-AUDIT-803: break circular import
     # Was: module-level 'from ...check_mixin import DQRule, DQViolation'
     # (caused ImportError on DataQualityMonitor init because _protocol
     # imports from check_mixin AND check_mixin inherits from _protocol).
     # TYPE_CHECKING-only is safe here because all uses are in annotations
     # (from __future__ import annotations makes them lazy strings).
-    from src.backend.services.ops.data_quality.check_mixin import DQRule, DQViolation
+    # cycle-8/D-AUDIT-803: canonical source is __init__.py (post-load injection
+    # pattern — import here is type-only, runtime uses injected names).
+    from src.backend.services.ops.data_quality import DQRule, DQViolation
 
 
 class _DataQualityProtocol(Protocol):

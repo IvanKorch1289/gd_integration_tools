@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.backend.services.ops.data_quality import DQRemediationResult
+    from src.backend.services.ops.data_quality import (
+        DQRemediationResult,
+        DQRule,
+        DQViolation,
+        DQSeverity,
+    )
 
 """Data Quality Monitor — авто-детект схемы + аномалии.
 
@@ -16,66 +21,15 @@ if TYPE_CHECKING:
 - Schema drift (новые/удалённые поля)
 
 Actions: dq.check, dq.schema_infer, dq.stats, dq.rules
-"""
 
-from dataclasses import dataclass
-from dataclasses import field as dataclass_field
-from enum import Enum
+cycle-8/D-AUDIT-803: DQSeverity/DQViolation/DQCheckResult/DQRule consolidated
+в __init__.py (canonical). Здесь только runtime use через post-load injection
+(см. __init__.py).
+"""
 
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
-
-
-class DQSeverity(str, Enum):
-    """Data quality violation severity levels."""
-
-    INFO = "info"
-    WARNING = "warning"
-    ERROR = "error"
-    CRITICAL = "critical"
-
-
-@dataclass(slots=True)
-class DQViolation:
-    """Data quality violation record."""
-
-    rule: str
-    field: str
-    severity: DQSeverity
-    message: str
-    value: Any = None
-
-
-@dataclass(slots=True)
-class DQCheckResult:
-    """Data quality check result."""
-
-    violations: list[DQViolation] = dataclass_field(default_factory=list)
-    passed: int = 0
-    failed: int = 0
-
-    @property
-    def is_clean(self) -> bool:
-        """Check if no violations found.
-
-        Returns:
-            True if no violations.
-        """
-        return len(self.violations) == 0
-
-
-# DQRemediationResult lives in __init__.py (S153 W1: 5x dedup)
-@dataclass(slots=True)
-class DQRule:
-    """Правило проверки качества данных."""
-
-    name: str
-    field: str
-    check: str  # "not_null", "type", "range", "unique", "regex"
-    params: dict[str, Any] = dataclass_field(default_factory=dict)
-    severity: DQSeverity = DQSeverity.WARNING
-    enabled: bool = True
 
 
 from src.backend.services.ops.data_quality._protocol import _DataQualityProtocol

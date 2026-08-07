@@ -2,8 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass  # cross-mixin / state attrs declared below
+if TYPE_CHECKING:  # cycle-8/D-AUDIT-803: canonical DQ types live in __init__.py
+    from src.backend.services.ops.data_quality import (
+        DQCheckResult,
+        DQRule,
+        DQSeverity,
+        DQViolation,
+    )
 
 """Data Quality Monitor — авто-детект схемы + аномалии.
 
@@ -16,58 +21,13 @@ if TYPE_CHECKING:
 - Schema drift (новые/удалённые поля)
 
 Actions: dq.check, dq.schema_infer, dq.stats, dq.rules
+
+cycle-8/D-AUDIT-803: DQSeverity/DQViolation/DQCheckResult/DQRule consolidated
+в __init__.py (canonical). Здесь только runtime use через post-load injection
+(см. __init__.py).
 """
 
 from collections import defaultdict
-from dataclasses import dataclass
-from dataclasses import field as dataclass_field
-from enum import Enum
-
-
-
-
-class DQSeverity(str, Enum):
-    """Severity enum: INFO / WARNING / ERROR / CRITICAL."""
-    INFO = "info"
-    WARNING = "warning"
-    ERROR = "error"
-    CRITICAL = "critical"
-
-
-@dataclass(slots=True)
-class DQViolation:
-    """Метод DQViolation (см. signature)."""
-    rule: str
-    field: str
-    severity: DQSeverity
-    message: str
-    value: Any = None
-
-
-@dataclass(slots=True)
-class DQCheckResult:
-    """Метод DQCheckResult (см. signature)."""
-    violations: list[DQViolation] = dataclass_field(default_factory=list)
-    passed: int = 0
-    failed: int = 0
-
-    @property
-    def is_clean(self) -> bool:
-        """True если нет violations (severity >= ERROR)."""
-        return len(self.violations) == 0
-
-
-# DQRemediationResult lives in __init__.py (S153 W1: 5x dedup)
-@dataclass(slots=True)
-class DQRule:
-    """Правило проверки качества данных."""
-
-    name: str
-    field: str
-    check: str  # "not_null", "type", "range", "unique", "regex"
-    params: dict[str, Any] = dataclass_field(default_factory=dict)
-    severity: DQSeverity = DQSeverity.WARNING
-    enabled: bool = True
 
 
 from src.backend.services.ops.data_quality._protocol import _DataQualityProtocol
