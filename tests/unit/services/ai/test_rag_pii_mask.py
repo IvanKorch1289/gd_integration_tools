@@ -111,12 +111,17 @@ async def test_ingest_masks_pii_when_flag_on(monkeypatch: pytest.MonkeyPatch) ->
 
 
 @pytest.mark.asyncio
-async def test_ingest_graceful_on_sanitizer_failure(
+async def test_ingest_fail_closed_on_sanitizer_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """При sanitize_text exception ingest продолжается + metadata содержит pii_mask_error."""
+    """cycle-4/D-AUDIT-109: при sanitize_text exception — fail-CLOSED.
+
+    Raw PII НЕ пишется в vector store; файл пропускается; ошибка
+    попадает в state["errors"] для observability.
+    """
     from src.backend.core.config import ai_stack
     from src.backend.core.di import providers
+    from src.backend.core.policy.pii_fail_closed import PIIFailClosedError
     from src.backend.services.ai.rag_ingest_service import RagIngestService
 
     monkeypatch.setattr(
@@ -128,13 +133,35 @@ async def test_ingest_graceful_on_sanitizer_failure(
         rag_mock.ingest = AsyncMock(return_value="doc-1")
         svc = RagIngestService(rag_service=rag_mock)
 
-        await svc.ingest([("file.txt", b"some text")], collection="ns")
-        call = rag_mock.ingest.await_args
-        assert call is not None
-        metadata = call.kwargs["metadata"]
-        # Graceful: ingest продолжился, текст не изменился, metadata содержит error.
-        assert metadata["pii_masked"] is False
-        assert "pii_mask_error" in metadata
-        assert "simulated sanitizer failure" in metadata["pii_mask_error"]
+        result = await svc.ingest(
+            [("file.txt", b"some text")], collection="ns"
+        )
+        # Fail-CLOSED: rag.ingest НЕ вызван (raw PII не пишется).
+        assert rag_mock.ingest.await_count == 0
+        # Ошибка зафиксирована в errors для observability;
+        # message содержит source identifier (PIIFailClosedError.args[0]).
+        assert result["processed"] == 1
+        assert len(result["errors"]) == 1
+        assert result["errors"][0]["file"] == "file.txt"
+        assert "rag_ingest._maybe_mask_pii" in result["errors"][0]["error"]
+        # Sanity-check: PIIFailClosedError класс поднят (через logger.error).
+    finally:
+        providers.ai._overrides.pop("ai_sanitizer", None)
+
+
+@pytest.mark.asyncio
+async def test_ingest_maybe_mask_pii_raises_pii_fail_closed() -> None:
+    """cycle-4/D-AUDIT-109: _maybe_mask_pii raises PIIFailClosedError on failure."""
+    from src.backend.core.config import ai_stack
+    from src.backend.core.di import providers
+    from src.backend.core.policy.pii_fail_closed import PIIFailClosedError
+    from src.backend.services.ai.rag_ingest_service import _maybe_mask_pii
+
+    providers.set_ai_sanitizer_provider(_FailingSanitizer())
+    try:
+        with pytest.raises(PIIFailClosedError) as caught:
+            _maybe_mask_pii("test content with PII")
+        # Source identifies failure point.
+        assert caught.value.args[0] == "rag_ingest._maybe_mask_pii"
     finally:
         providers.ai._overrides.pop("ai_sanitizer", None)

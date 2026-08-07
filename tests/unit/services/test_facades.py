@@ -37,18 +37,35 @@ class TestPIIFacade:
         assert f1 is f2
 
     def test_mask_returns_string(self) -> None:
-        """mask возвращает string (или input при ошибке)."""
+        """mask возвращает string при успехе (или raises при failure)."""
         facade = PIIFacade()
-        result = facade.mask("test@example.com")
-        assert isinstance(result, str)
+        # Если sanitizer работает — возвращает string.
+        # Если sanitizer падает — cycle-4/D-AUDIT-109 raise PIIFailClosedError.
+        try:
+            result = facade.mask("test@example.com")
+            assert isinstance(result, str)
+        except Exception as exc:
+            from src.backend.core.policy.pii_fail_closed import (
+                PIIFailClosedError,
+            )
+
+            assert isinstance(exc, PIIFailClosedError)
 
     def test_mask_struct_returns_same_type(self) -> None:
-        """mask_struct возвращает тот же тип объекта."""
+        """mask_struct возвращает тот же тип объекта (или raises)."""
         facade = PIIFacade()
         data = {"email": "user@example.com", "age": 30}
-        result = facade.mask_struct(data)
-        assert isinstance(result, dict)
-        assert "age" in result
+        # cycle-4/D-AUDIT-109: либо dict, либо fail-CLOSED raise.
+        try:
+            result = facade.mask_struct(data)
+            assert isinstance(result, dict)
+            assert "age" in result
+        except Exception as exc:
+            from src.backend.core.policy.pii_fail_closed import (
+                PIIFailClosedError,
+            )
+
+            assert isinstance(exc, PIIFailClosedError)
 
     def test_list_patterns_returns_list(self) -> None:
         """list_patterns возвращает list."""
