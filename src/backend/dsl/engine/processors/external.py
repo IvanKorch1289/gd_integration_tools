@@ -1,73 +1,23 @@
+"""External-integration processors (CDC only).
+
+D-AUDIT-04 fix (cycle 1): удалены дубликаты MCPToolProcessor и AgentGraphProcessor,
+которые shadoowed canonical классы в agent_dsl/mcp_tool.py и agent_dsl/agent_graph.py.
+
+Удалены:
+- MCPToolProcessor (был на file:// attack surface — нет protocol validation)
+- AgentGraphProcessor (нарушал layer boundary: dsl → services.ai.ai_graph)
+
+Оставлен:
+- CDCProcessor (canonical, нет дубля)
+"""
+
 from typing import Any, ClassVar
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
-__all__ = ("AgentGraphProcessor", "CDCProcessor", "MCPToolProcessor")
-
-
-class MCPToolProcessor(BaseProcessor):
-    """Вызывает внешний MCP tool из DSL pipeline."""
-
-    required_capability: ClassVar[str | None] = 'mcp.tool.invoke'
-    audit_event: ClassVar[str | None] = 'mcp.tool.invoke'
-
-    def __init__(
-        self,
-        tool_uri: str,
-        tool_name: str,
-        *,
-        result_property: str = "mcp_result",
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name=name or f"mcp_tool:{tool_name}")
-        self.tool_uri = tool_uri
-        self.tool_name = tool_name
-        self.result_property = result_property
-
-    @handle_processor_error
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Метод process (см. signature)."""
-        if not await self.auth_check(exchange, action="invoke"):
-            return
-        from fastmcp import Client
-
-        async with Client(self.tool_uri) as client:
-            result = await client.call_tool(
-                self.tool_name,
-                arguments=exchange.in_message.body
-                if isinstance(exchange.in_message.body, dict)
-                else {},
-            )
-            exchange.set_property(self.result_property, result)
-            exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
-
-
-class AgentGraphProcessor(BaseProcessor):
-    """Запускает LangGraph-агента внутри DSL pipeline."""
-
-    required_capability: ClassVar[str | None] = 'agent.graph.invoke'
-    audit_event: ClassVar[str | None] = 'agent.graph.invoke'
-
-    def __init__(
-        self, graph_name: str, tools: list[str], *, name: str | None = None
-    ) -> None:
-        super().__init__(name=name or f"agent_graph:{graph_name}")
-        self.graph_name = graph_name
-        self.tools = tools
-
-    @handle_processor_error
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Метод process (см. signature)."""
-        if not await self.auth_check(exchange, action="invoke"):
-            return
-        from src.backend.services.ai.ai_graph import build_and_run_agent
-
-        body = exchange.in_message.body
-        prompt = body if isinstance(body, str) else str(body)
-        result = await build_and_run_agent(prompt=prompt, tool_actions=self.tools)
-        exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+__all__ = ("CDCProcessor",)
 
 
 class CDCProcessor(BaseProcessor):
