@@ -33,19 +33,22 @@ class IngestMixin(_RAGServiceProtocol):
         return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
     def chunk_text(self, text: str) -> list[str]:
-        """Разбивает текст на overlap-чанки согласно ``rag_settings``."""
+        """Разбивает текст на overlap-чанки согласно ``rag_settings``.
+
+        cycle-4/D-AUDIT-140: использует :class:`RecursiveChunker` через
+        ``get_chunker("recursive", ...)`` вместо naive sliding-window
+        (разрывал слова/предложения посередине). Иерархия separator'ов:
+        ``\\n\\n`` → ``\\n`` → ``. `` → ``" "`` → char.
+        """
         from src.backend.core.config.rag import rag_settings
+        from src.backend.services.ai.chunkers import get_chunker
 
-        size = rag_settings.chunk_size
-        overlap = rag_settings.chunk_overlap
-
-        chunks: list[str] = []
-        start = 0
-        while start < len(text):
-            end = start + size
-            chunks.append(text[start:end])
-            start = end - overlap
-        return chunks
+        chunker = get_chunker(
+            "recursive",
+            chunk_size=rag_settings.chunk_size,
+            chunk_overlap=rag_settings.chunk_overlap,
+        )
+        return chunker.split(text)
 
     async def _embed(self, texts: list[str]) -> list[list[float]]:
         return await self._embedder.embed(texts)
