@@ -51,9 +51,24 @@ webhook_signature_missing_secret_total = metrics_registry.counter(
     labels=("path_prefix",),
 )
 
+# D-A3-02 fix (cycle 1): ClickHouse audit silent-loss counter.
+# Инкрементируется в :meth:`ClickHouseAuditService._send_to_dlq` когда
+# НИ canonical DLQWriter НИ legacy JSONL path не сконфигурированы —
+# терминальный сигнал полной потери audit-события (production data-loss
+# без наблюдаемости). Метка ``transport`` дискриминирует источник
+# (по умолчанию ``clickhouse_audit``); метка ``reason`` — high-level
+# причина (например ``no_dlq_configured``). Используется алертингом
+# для детекции fail-OPEN условий.
+audit_silent_loss_total = metrics_registry.counter(
+    "audit_silent_loss_total",
+    "Audit events lost without DLQ persistence (fail-OPEN path).",
+    labels=("transport", "reason"),
+)
+
 __all__ = (
     "DEFAULT_LABELS",
     "MetricsRegistry",
+    "audit_silent_loss_total",
     "dlq_send_failed_total",
     "metrics_registry",
     "webhook_signature_missing_secret_total",

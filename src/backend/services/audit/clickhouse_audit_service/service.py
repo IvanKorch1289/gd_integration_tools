@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
 from src.backend.core.logging import get_logger
+from src.backend.core.observability.metrics import audit_silent_loss_total
 from src.backend.services.audit.clickhouse_audit_service.state import AuditEvent
 
 if TYPE_CHECKING:
@@ -220,6 +221,32 @@ class ClickHouseAuditService:
         # Приоритет 2: legacy JSONL path (deprecated, для старых deployment).
         backend = self._get_dlq_backend()
         if backend is None:
+            # D-A3-02 fix (cycle 1): silent-loss observability — раньше
+            # bare `return` без trace = production data-loss незаметен.
+            # Теперь: CRITICAL log + Prometheus counter audit_silent_loss_total.
+            loss_payload = {
+                "transport": "clickhouse_audit",
+                "reason": "no_dlq_configured",
+                "lost_count": len(targets),
+                "event_ids": [
+                    getattr(ev, "event_id", None) for ev in targets if ev is not None
+                ],
+                "tenant_ids": [
+                    getattr(ev, "tenant_id", None) for ev in targets if ev is not None
+                ],
+                "error_class": type(error).__name__,
+                "error_message": str(error),
+            }
+            _logger.critical(
+                "audit_silent_loss: %d event(s) lost (transport=clickhouse_audit "
+                "reason=no_dlq_configured error=%s)",
+                len(targets),
+                error,
+                extra=loss_payload,
+            )
+            audit_silent_loss_total.labels(
+                transport="clickhouse_audit", reason="no_dlq_configured"
+            ).inc()
             return
         try:
             for ev in targets:
