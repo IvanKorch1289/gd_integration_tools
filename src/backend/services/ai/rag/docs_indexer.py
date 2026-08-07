@@ -210,7 +210,21 @@ class DocsIndexer:
                     collection_name=self._collection_name,
                     vectors_config=VectorParams(size=384, distance=Distance.COSINE),
                 )
-            except Exception:  # noqa: BLE001
+            except (ImportError, AttributeError, TypeError) as legacy_qdrant_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-910: narrow exceptions + observability.
+                # ImportError — qdrant_client.models missing, AttributeError
+                # — legacy Qdrant (нет VectorParams), TypeError —
+                # InMemoryQdrantFallback (только name, без vectors_config).
+                # Bare `except Exception` маскировал unrelated runtime errors
+                # (KeyError, ValueError).
+                import logging
+                logging.getLogger(__name__).debug(
+                    "docs_indexer._ensure_collection_legacy_fallback",
+                    extra={
+                        "error": str(legacy_qdrant_exc),
+                        "collection": self._collection_name,
+                    },
+                )
                 self._qdrant.create_collection(self._collection_name)
         self._collection_ready = True
 
