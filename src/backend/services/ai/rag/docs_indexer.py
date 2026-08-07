@@ -295,7 +295,17 @@ class DocsIndexer:
                 )
                 for i in range(len(chunks))
             ]
-        except Exception:  # noqa: BLE001
+        except (ImportError, AttributeError, TypeError, KeyError) as point_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-912: narrow exceptions + observability.
+            # ImportError — qdrant_client.models missing, AttributeError —
+            # API change, TypeError/KeyError — schema mismatch. Bare
+            # `except Exception` маскировал unrelated runtime errors
+            # (ValueError, RuntimeError).
+            import logging
+            logging.getLogger(__name__).debug(
+                "docs_indexer._build_points_fallback",
+                extra={"error": str(point_exc), "chunks_count": len(chunks)},
+            )
             return [
                 {
                     "id": chunks[i]["id"],
