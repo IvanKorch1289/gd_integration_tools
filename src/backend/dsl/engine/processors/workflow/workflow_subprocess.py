@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.registry import processor  # B-1 fix (cycle 1): registry integration
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -53,6 +54,22 @@ async def run_workflow_by_id(
     }
 
 
+@processor(
+    "workflow_subprocess",
+    namespace="core",
+    capabilities=("workflow.subprocess.invoke",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "workflow_id": {"type": "string"},
+            "input_from": {"type": "string"},
+            "to": {"type": "string"},
+            "timeout": {"type": "number", "exclusiveMinimum": 0},
+        },
+        "required": ["workflow_id"],
+    },
+    meta={"tier": 1, "category": "workflow"},
+)
 class WorkflowSubprocessProcessor(BaseProcessor):
     """Запускает sub-workflow по его ID.
 

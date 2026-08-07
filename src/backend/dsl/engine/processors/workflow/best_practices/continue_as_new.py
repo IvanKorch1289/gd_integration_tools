@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.registry import processor  # B-1 fix (cycle 1): registry integration
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -26,6 +27,20 @@ if TYPE_CHECKING:
 _logger = get_logger("dsl.workflow.continue_as_new")
 
 
+@processor(
+    "workflow_continue_as_new",
+    namespace="core",
+    capabilities=("workflow.continue_as_new.request",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "same_workflow_id": {"type": "boolean"},
+            "same_input": {"type": "boolean"},
+            "search_attributes": {"type": "object"},
+        },
+    },
+    meta={"tier": 1, "category": "workflow"},
+)
 class WorkflowContinueAsNewProcessor(BaseProcessor):
     """Маркирует запрос на Continue-As-New в Exchange.
 

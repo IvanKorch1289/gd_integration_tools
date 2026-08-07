@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.registry import processor  # B-1 fix (cycle 1): registry integration
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -40,6 +41,24 @@ _logger = get_logger("dsl.workflow.claim_check")
 _DEFAULT_TTL_SECONDS: int = 3600
 
 
+@processor(
+    "workflow_claim_check",
+    namespace="core",
+    capabilities=("workflow.claim_check.store",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "source_property": {"type": "string"},
+            "storage_backend": {"enum": ["s3", "redis", "local"]},
+            "bucket": {"type": "string"},
+            "max_size_bytes": {"type": "integer", "exclusiveMinimum": 0},
+            "to": {"type": "string"},
+            "ttl_seconds": {"type": "integer", "exclusiveMinimum": 0},
+        },
+        "required": ["storage_backend"],
+    },
+    meta={"tier": 1, "category": "workflow"},
+)
 class WorkflowClaimCheckProcessor(BaseProcessor):
     """Claim Check pattern: внешнее хранилище для больших payloads.
 

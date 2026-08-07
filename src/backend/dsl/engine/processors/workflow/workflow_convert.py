@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.registry import processor  # B-1 fix (cycle 1): registry integration
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -20,6 +21,22 @@ if TYPE_CHECKING:
 _logger = get_logger("dsl.workflow.convert")
 
 
+@processor(
+    "workflow_convert",
+    namespace="core",
+    capabilities=("workflow.convert.format",),
+    spec_schema={
+        "type": "object",
+        "properties": {
+            "from_format": {"enum": ["json", "yaml", "dict", "string"]},
+            "to_format": {"enum": ["json", "yaml", "dict", "string"]},
+            "source_property": {"type": "string"},
+            "to": {"type": "string"},
+        },
+        "required": ["from_format", "to_format"],
+    },
+    meta={"tier": 1, "category": "workflow"},
+)
 class WorkflowConvertProcessor(BaseProcessor):
     """Конвертирует данные между форматами.
 
