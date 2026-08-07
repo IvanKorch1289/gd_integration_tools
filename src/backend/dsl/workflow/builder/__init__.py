@@ -90,6 +90,29 @@ class WorkflowBuilder(
         self._description = text
         return self
 
+    def then(self, step: WorkflowStep) -> Self:
+        """D-AUDIT-A8-06 fix (cycle 1): добавить произвольный WorkflowStep в pipeline.
+
+        Fluent alias для добавления шага декларативно. Используется в
+        extensions/core_entities/orders/workflows/orders_dsl.py и других
+        DSL builders, где удобнее выразить шаги через
+        ``.then(ActivityDeclaration(...)).then(SensorDeclaration(...))``
+        вместо последовательных вызовов ``.activity(...).sensor(...)``.
+
+        Args:
+            step: WorkflowStep (ActivityDeclaration | SagaDeclaration |
+                SignalWaitDeclaration | SleepDeclaration | PauseDeclaration |
+                ResumeDeclaration | SensorDeclaration | AgentInvokeDeclaration |
+                ReflectDeclaration | CheckpointDeclaration | GuardrailDeclaration |
+                EscalateDeclaration).
+
+        Returns:
+            Self для fluent chaining.
+        """
+        self._steps.append(step)
+        return self
+        return self
+
     def version(self, ver: str) -> Self:
         """Установить semver-версию workflow (например, ``"2.1"``).
 
