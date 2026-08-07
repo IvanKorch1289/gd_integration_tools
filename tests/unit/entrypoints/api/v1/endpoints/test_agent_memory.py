@@ -1,4 +1,12 @@
-"""Регрессии tenant isolation для AgentMemory REST и service."""
+"""Регрессии tenant isolation для AgentMemory REST и service (cycle-8/D-AUDIT-807).
+
+cycle-6/D-AUDIT-606: ``AgentMemoryService.add_message`` / ``get_conversation``
+теперь требуют ``tenant_id`` (kw-only required).
+cycle-8/D-AUDIT-807: REST facade ``_AgentMemoryFacade`` пробрасывает
+``tenant_id`` из :class:`RequestContext` (X-Tenant-ID header через
+:class:`RequestContextMiddleware`) в service — иначе kw-only ``tenant_id``
+бросает TypeError на каждом вызове и открывает cross-tenant data breach.
+"""
 
 from __future__ import annotations
 
@@ -13,18 +21,6 @@ from src.backend.entrypoints.middlewares.request_context import RequestContextMi
 from src.backend.services.ai.agent_memory import AgentMemoryService
 
 pytestmark = pytest.mark.unit
-
-# cycle-6/D-AUDIT-606: add_message/get_conversation теперь требуют tenant_id
-# (kw-only required). Service-level test стал green; REST-тест остаётся xfail
-# пока endpoint не начнёт пробрасывать tenant_id из RequestContext.
-_XFAIL_AGENT_MEMORY_REST_TENANT = pytest.mark.xfail(
-    reason=(
-        "AgentMemory REST tenant scope: endpoint facade ещё не извлекает "
-        "tenant_id из RequestContext и не пробрасывает в service. DEFER-2 "
-        "(endpoint migration, требует ActionRouterBuilder hook)."
-    ),
-    strict=True,
-)
 
 
 class _FakeCollection:
@@ -117,11 +113,16 @@ async def test_service_tenant_a_cannot_read_tenant_b_session() -> None:
     assert [message["content"] for message in tenant_b_messages] == ["tenant-b-secret"]
 
 
-@_XFAIL_AGENT_MEMORY_REST_TENANT
 def test_rest_tenant_a_cannot_read_tenant_b_session(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """REST извлекает tenant из RequestContext и изолирует одинаковый session_id."""
+    """REST извлекает tenant из RequestContext и изолирует одинаковый session_id.
+
+    cycle-8/D-AUDIT-807: facade ``_AgentMemoryFacade.list_messages`` /
+    ``add_message`` пробрасывают ``tenant_id`` из
+    :class:`RequestContext` (X-Tenant-ID header) в service. Tenant A
+    GET видит ``items=[]``; tenant B GET видит ``tenant-b-secret``.
+    """
     mongo = _FakeMongoClient()
     service = AgentMemoryService(client_factory=mongo.factory)
     monkeypatch.setattr(endpoint_module, "get_agent_memory_service", lambda: service)
@@ -149,3 +150,24 @@ def test_rest_tenant_a_cannot_read_tenant_b_session(
     assert tenant_a.json() == {"items": []}
     assert tenant_b.status_code == 200
     assert [item["content"] for item in tenant_b.json()["items"]] == ["tenant-b-secret"]
+
+
+def test_rest_missing_tenant_header_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """POST без X-Tenant-ID → 403 (cycle-8/D-AUDIT-807: fail-CLOSED)."""
+    mongo = _FakeMongoClient()
+    service = AgentMemoryService(client_factory=mongo.factory)
+    monkeypatch.setattr(endpoint_module, "get_agent_memory_service", lambda: service)
+    app = FastAPI()
+    app.add_middleware(RequestContextMiddleware)
+    app.include_router(endpoint_module.router, prefix="/agent_memory")
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/agent_memory/sessions/shared/messages",
+            json={"role": "user", "content": "x"},
+        )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Tenant context required"

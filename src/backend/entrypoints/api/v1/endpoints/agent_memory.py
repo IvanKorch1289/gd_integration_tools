@@ -9,14 +9,21 @@
 
 Регистрируется в ``v1/routers.py`` под префиксом ``/agent_memory``.
 TTL уважается на стороне Mongo (см. ``AgentMemoryService``).
+
+cycle-8/D-AUDIT-807: facade пробрасывает ``tenant_id`` из
+:class:`RequestContext` (``X-Tenant-ID`` header, через
+:class:`RequestContextMiddleware`) в ``AgentMemoryService`` для
+``add_message``/``get_conversation`` — иначе kw-only ``tenant_id``
+в service бросает TypeError на каждом вызове (cross-tenant data breach).
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 
+from src.backend.core.request_context import RequestContext
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
@@ -38,22 +45,49 @@ from src.backend.services.ai.agent_memory import get_agent_memory_service
 __all__ = ("router",)
 
 
+def _current_tenant_id() -> str:
+    """Возвращает ``tenant_id`` из :class:`RequestContext` (D-AUDIT-807).
+
+    Источник — ``X-Tenant-ID`` header, который
+    :class:`RequestContextMiddleware` кладёт в ``RequestContext.tenant_id``.
+    При отсутствии — ``HTTPException(403)``, чтобы не сделать silent fallback
+    в "no tenant" (multi-tenant data breach).
+
+    Raises:
+        HTTPException: 403 если tenant_id отсутствует.
+    """
+    ctx = RequestContext.current()
+    tenant_id = ctx.tenant_id if ctx is not None else None
+    if not isinstance(tenant_id, str) or not tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tenant context required",
+        )
+    return tenant_id
+
+
 class _AgentMemoryFacade:
     """Адаптер над ``AgentMemoryService`` для action-маршрутов."""
 
     async def list_messages(
         self, *, session_id: str, last_n: int = 20
     ) -> MessagesResponse:
-        """Получить список messages."""
-        items = await get_agent_memory_service().get_conversation(session_id, last_n)
+        """Получить список messages (cycle-8/D-AUDIT-807: tenant-scoped)."""
+        items = await get_agent_memory_service().get_conversation(
+            session_id, last_n, tenant_id=_current_tenant_id()
+        )
         return MessagesResponse(items=items)
 
     async def add_message(
         self, *, session_id: str, role: str, content: str, metadata: Any = None
     ) -> dict[str, str]:
-        """Добавить message."""
+        """Добавить message (cycle-8/D-AUDIT-807: tenant-scoped)."""
         await get_agent_memory_service().add_message(
-            session_id, role=role, content=content, metadata=metadata
+            session_id,
+            role=role,
+            content=content,
+            metadata=metadata,
+            tenant_id=_current_tenant_id(),
         )
         return {"status": "ok"}
 
