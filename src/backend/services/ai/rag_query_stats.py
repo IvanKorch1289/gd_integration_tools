@@ -61,8 +61,15 @@ class RagQueryStatsCollector:
                 await self._redis.hset(f"{self._prefix}:query:{tenant_id}", h, query)
                 await self._redis.expire(f"{self._prefix}:query:{tenant_id}", self._ttl)
                 return
-            except Exception:
-                logger.debug("RagQueryStatsCollector: Redis fail, in-memory fallback")
+            except (ConnectionError, TimeoutError, ValueError, TypeError) as redis_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-904: narrow exceptions + observability.
+                # Bare `except Exception` маскировал Redis failures (Redis
+                # down, malformed payload, decode errors) — silently
+                # fallback в in-memory counter (нужен visibility).
+                logger.debug(
+                    "rag_query_stats.record_redis_fail",
+                    extra={"error": str(redis_exc), "tenant_id": tenant_id},
+                )
         # Fallback. ``Counter`` здесь — ``collections.Counter`` (счётчик
         # ключей), не ``prometheus_client.Counter`` — violation-check
         # ругается из-за идентичного имени.
