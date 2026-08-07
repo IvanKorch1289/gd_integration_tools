@@ -94,8 +94,14 @@ class RagQueryStatsCollector:
                         normalized.append((raw_q, int(score)))
                 if normalized:
                     return normalized
-            except Exception:
-                pass
+            except (ConnectionError, ValueError, TypeError, KeyError) as redis_exc:  # noqa: PERF203
+                # D-A1-04 fix (cycle 43): narrow exceptions + observability.
+                # Bare `except Exception` маскировал Redis failures
+                # (Redis down, malformed payload, decode errors).
+                logger.debug(
+                    "rag_query_stats.redis_decode_failed",
+                    extra={"error": str(redis_exc), "tenant_id": tenant_id},
+                )
         # Fallback in-memory. ``Counter`` здесь — ``collections.Counter``.
         tenant_counter = self._memory.get(tenant_id, Counter())
         tenant_originals = self._original.get(tenant_id, {})
