@@ -68,6 +68,9 @@ LANGGRAPH_CHECKPOINT_TIMEOUT_S: int = 10
 
 __all__ = (
     "GuardrailValueTypeError",
+    "SensorMaxIterationsError",
+    "SensorPollIntervalError",
+    "SensorTimeoutRequiredError",
     "StepCompiler",
     "compile_activity_step",
     "compile_agent_invoke_step",
@@ -86,6 +89,32 @@ __all__ = (
 
 
 _logger = get_logger("workflow.compiler.step_compilers")
+
+
+# D-A8-10 fix (cycle 1): guards для sensor infinite polling.
+_SENSOR_MAX_ITERATIONS_DEFAULT: int = 1000
+
+
+class SensorTimeoutRequiredError(ValueError):
+    """Raised when sensor timeout_s не выставлен (D-A8-10 cycle 1).
+
+    Default-OFF policy: sensor без timeout = infinite polling.
+    """
+
+
+class SensorPollIntervalError(ValueError):
+    """Raised when sensor poll_interval_s <= 0 (D-A8-10 cycle 1).
+
+    Tight loop DoS vector — poll_interval_s должно быть > 0.
+    """
+
+
+class SensorMaxIterationsError(RuntimeError):
+    """Raised when sensor exceeds max_iterations (D-A8-10 cycle 1).
+
+    Защита от unbounded event history growth в Temporal даже при
+    выставленном timeout_s.
+    """
 
 
 # D-A8-07 fix (cycle 1): explicit exception для non-numeric guardrail value.
@@ -393,11 +422,39 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
 
     Predicate — строка ``module:fn`` или ``action_id``: компилируется в
     activity-вызов. Если predicate возвращает truthy — sensor завершается.
+
+    D-A8-10 fix (cycle 1): защита от infinite polling. Три проверки:
+    1. timeout_s обязателен (default-OFF: None → fail-fast SensorTimeoutRequiredError).
+    2. poll_interval_s > 0 (иначе tight loop → CPU saturation, DoS vector).
+    3. max_iterations cap (default 1000) — защита от unbounded event history
+       growth в Temporal даже при timeout.
     """
     from temporalio import workflow
 
+    # D-A8-10 fix (cycle 1): validation guards.
+    if decl.timeout_s is None:
+        raise SensorTimeoutRequiredError(
+            f"sensor {decl.predicate!r} requires explicit timeout_s "
+            f"(D-A8-10 cycle 1 — default-OFF, иначе infinite polling)."
+        )
+    if decl.poll_interval_s <= 0:
+        raise SensorPollIntervalError(
+            f"sensor {decl.predicate!r} poll_interval_s={decl.poll_interval_s} "
+            f"must be > 0 (D-A8-10 cycle 1 — иначе tight loop DoS)."
+        )
+    max_iterations = _SENSOR_MAX_ITERATIONS_DEFAULT
     elapsed = 0.0
+    iterations = 0
     while True:
+        iterations += 1
+        if iterations > max_iterations:
+            # D-A8-10 fix (cycle 1): iteration cap защищает от unbounded
+            # event history growth в Temporal даже при выставленном timeout.
+            raise SensorMaxIterationsError(
+                f"sensor {decl.predicate!r} exceeded max_iterations={max_iterations} "
+                f"(elapsed={elapsed}s, timeout_s={decl.timeout_s}s) "
+                f"(D-A8-10 cycle 1)."
+            )
         result = await workflow.execute_activity(
             decl.predicate,
             {},
@@ -405,7 +462,7 @@ async def compile_sensor_step(decl: SensorDeclaration, ctx: dict[str, Any]) -> A
         )
         if result:
             return result
-        if decl.timeout_s is not None and elapsed >= decl.timeout_s:
+        if elapsed >= decl.timeout_s:
             raise TimeoutError(
                 f"sensor {decl.predicate!r} timed out after {decl.timeout_s}s"
             )
