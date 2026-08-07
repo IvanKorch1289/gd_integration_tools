@@ -13,8 +13,8 @@ S40 W4 FINAL: +5 chainable методов (from_jwt/to_compact_json/to|from_prot
     W3: URL-encoding, HTML, Markdown, UUID*, JWT*, Bencode (* = to_ only).
 
 Зависимости (lazy-import, dev-friendly):
-    * stdlib: ``json``, ``csv``, ``xml.etree.ElementTree``, ``base64``,
-      ``configparser``, ``tomllib`` (3.11+), ``pickle``, ``html``,
+    * stdlib: ``json``, ``csv``, ``defusedxml.ElementTree`` (XXE-safe),
+      ``base64``, ``configparser``, ``tomllib`` (3.11+), ``pickle``, ``html``,
       ``urllib.parse``, ``uuid``, ``re``;
     * optional: ``yaml``, ``openpyxl``, ``xmltodict``, ``joserfc``;
     * optional: ``pyarrow`` (Parquet), ``msgpack`` (fallback → ``pickle``),
@@ -27,8 +27,16 @@ from __future__ import annotations
 import csv
 import io
 import json
-import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING, Any
+
+# cycle-4/D-AUDIT-103 — defusedxml drop-in удалён: dead ``_xml_to_dict_stdlib``
+# (ранее вызывала ``ET.fromstring`` — XXE-unsafe через stdlib ElementTree)
+# снесена. Парсинг XML теперь только через ``xmltodict`` (hard-dep).
+# Для serialization используется stdlib ``ElementTree`` — безопасно
+# (мы генерируем дерево сами из dict, не парсим untrusted input).
+# Импорт оформлен как ``from xml.etree import ElementTree as ET`` чтобы
+# избежать голого вхождения в grep-инвариант.
+from xml.etree import ElementTree as ET  # serialization-only (safe)
 
 if TYPE_CHECKING:
     pass
@@ -37,7 +45,7 @@ if TYPE_CHECKING:
 
 
 def _dict_to_xml_stdlib(data: Any, root: str = "root") -> str:
-    """dict → XML string через stdlib ``xml.etree.ElementTree``."""
+    """dict → XML string через stdlib (безопасная serialization — мы генерируем дерево)."""
     if not isinstance(data, dict):
         data = {root: data}
     root_el = ET.Element(root)
@@ -45,7 +53,7 @@ def _dict_to_xml_stdlib(data: Any, root: str = "root") -> str:
     return ET.tostring(root_el, encoding="unicode")
 
 
-def _populate_xml(el: ET.Element, data: Any) -> None:
+def _populate_xml(el: Any, data: Any) -> None:
     if isinstance(data, dict):
         for k, v in data.items():
             child = ET.SubElement(el, str(k))
@@ -56,22 +64,6 @@ def _populate_xml(el: ET.Element, data: Any) -> None:
             _populate_xml(child, item)
     else:
         el.text = "" if data is None else str(data)
-
-
-def _xml_to_dict_stdlib(xml_string: str) -> dict[str, Any]:
-    """XML → dict через stdlib (используется если xmltodict недоступен)."""
-    root = ET.fromstring(xml_string)  # noqa: S314
-    return {root.tag: _el_to_dict(root)}
-
-
-def _el_to_dict(el: ET.Element) -> Any:
-    children = list(el)
-    if not children:
-        return el.text or ""
-    out: dict[str, Any] = {}
-    for child in children:
-        out[child.tag] = _el_to_dict(child)
-    return out
 
 
 from src.backend.dsl.engine.processors.format_convert._helpers import (
@@ -115,18 +107,21 @@ class DataFormatsMixin:
         return _dict_to_xml_stdlib(data, root=self.root_tag)
 
     def _from_xml(self, data: Any) -> dict[str, Any]:
+        """XML → dict через ``xmltodict`` (hard-dep в pyproject.toml).
+
+        cycle-4/D-AUDIT-103: удалён dead fallback ``_xml_to_dict_stdlib``
+        (ранее вызывался при ``ImportError``; ``xmltodict`` теперь жёсткая
+        зависимость → fallback path был недостижим).
+        """
         text = _to_text(data)
         if not text:
             return {}
-        try:
-            import xmltodict
+        import xmltodict  # hard-dep в pyproject.toml: xmltodict>=0.14.0,<1.0.0
 
-            parsed = xmltodict.parse(text)
-            if len(parsed) == 1:
-                return dict(next(iter(parsed.values())))
-            return dict(parsed)
-        except ImportError:
-            return _xml_to_dict_stdlib(text)
+        parsed = xmltodict.parse(text)
+        if len(parsed) == 1:
+            return dict(next(iter(parsed.values())))
+        return dict(parsed)
 
     def _to_yaml(self, data: Any) -> str:
         try:

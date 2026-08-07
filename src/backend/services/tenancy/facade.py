@@ -109,13 +109,19 @@ class TenantFacade:
             async with facade.with_tenant("tenant_42", principal_id="user_1"):
                 # All operations используют tenant_42
         """
-        from src.backend.core.security.capabilities.tenant import CapabilityTenant
+        # cycle-4/D-AUDIT-100 — kwargs re-fix: CapabilityTenant(id, principal),
+        # not CapabilityTenant(tenant_id, principal_id). При None principal —
+        # fallback на SYSTEM_TENANT_ID ("system code без явного principal").
+        from src.backend.core.security.capabilities.tenant import (
+            SYSTEM_TENANT_ID,
+            CapabilityTenant,
+        )
         from src.backend.core.tenancy import set_tenant
 
         prev_ctx = self.current()
         new_ctx = CapabilityTenant(
-            tenant_id=tenant_id,
-            principal_id=principal_id,
+            id=tenant_id,
+            principal=principal_id or SYSTEM_TENANT_ID,
         )
         set_tenant(new_ctx)
         try:

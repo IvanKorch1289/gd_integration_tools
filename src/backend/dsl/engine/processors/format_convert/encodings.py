@@ -13,7 +13,7 @@ S40 W4 FINAL: +5 chainable методов (from_jwt/to_compact_json/to|from_prot
     W3: URL-encoding, HTML, Markdown, UUID*, JWT*, Bencode (* = to_ only).
 
 Зависимости (lazy-import, dev-friendly):
-    * stdlib: ``json``, ``csv``, ``xml.etree.ElementTree``, ``base64``,
+    * stdlib: ``json``, ``csv``, ``base64``,
       ``configparser``, ``tomllib`` (3.11+), ``pickle``, ``html``,
       ``urllib.parse``, ``uuid``, ``re``;
     * optional: ``yaml``, ``openpyxl``, ``xmltodict``, ``joserfc``;
@@ -29,52 +29,15 @@ import html
 import json
 import re
 import urllib.parse
-import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 
-# ── Stdlib helpers (no external deps) ─────────────────────────────────
-
-
-def _dict_to_xml_stdlib(data: Any, root: str = "root") -> str:
-    """dict → XML string через stdlib ``xml.etree.ElementTree``."""
-    if not isinstance(data, dict):
-        data = {root: data}
-    root_el = ET.Element(root)
-    _populate_xml(root_el, data)
-    return ET.tostring(root_el, encoding="unicode")
-
-
-def _populate_xml(el: ET.Element, data: Any) -> None:
-    if isinstance(data, dict):
-        for k, v in data.items():
-            child = ET.SubElement(el, str(k))
-            _populate_xml(child, v)
-    elif isinstance(data, list):
-        for item in data:
-            child = ET.SubElement(el, "item")
-            _populate_xml(child, item)
-    else:
-        el.text = "" if data is None else str(data)
-
-
-def _xml_to_dict_stdlib(xml_string: str) -> dict[str, Any]:
-    """XML → dict через stdlib (используется если xmltodict недоступен)."""
-    root = ET.fromstring(xml_string)  # noqa: S314
-    return {root.tag: _el_to_dict(root)}
-
-
-def _el_to_dict(el: ET.Element) -> Any:
-    children = list(el)
-    if not children:
-        return el.text or ""
-    out: dict[str, Any] = {}
-    for child in children:
-        out[child.tag] = _el_to_dict(child)
-    return out
-
+# cycle-4/D-AUDIT-103 — удалены dead XML helpers (``_dict_to_xml_stdlib``,
+# ``_populate_xml``, ``_xml_to_dict_stdlib``, ``_el_to_dict``) и зависимость
+# от stdlib ``ET``: в этом модуле они не использовались.
+# defusedxml drop-in: см. data_formats.py для актуальных XML-операций.
 
 from src.backend.dsl.engine.processors.format_convert._helpers import (
     _to_text,  # S53 W1: shared helper

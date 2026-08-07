@@ -61,14 +61,23 @@ class PIIFacade:
 
         Returns:
             Masked text: ``"Иван И.***"``, ``"i.***@example.com"``, etc.
+
+        Raises:
+            PIIFailClosedError: cycle-4/D-AUDIT-109 — при sanitizer failure.
+                Caller НЕ ДОЛЖЕН пробрасывать raw PII downstream.
         """
         try:
             result = self.masker.mask_text(text)
             self._emit_audit("pii.masked", text)
             return result
         except Exception as exc:
-            _logger.warning("PII mask failed: %s", exc)
-            return text
+            from src.backend.core.policy.pii_fail_closed import (
+                raise_pii_fail_closed,
+            )
+
+            raise_pii_fail_closed(
+                source="pii.facade.mask", payload_size=len(text), exc=exc
+            )
 
     def mask_struct(self, obj: Any) -> Any:
         """Рекурсивно mask PII в dict/list/str structures.
@@ -91,14 +100,22 @@ class PIIFacade:
         PIITokenizer.mask_reversible is async and requires PIIPolicy + returns
         tuple[str, TokenMap]. For sync facade path, use mask_text (regex-based).
         For full reversible tokenization, use SecurityFacade.tokenize_pii (async).
+
+        Raises:
+            PIIFailClosedError: cycle-4/D-AUDIT-109 — при sanitizer failure.
         """
         try:
             result = self.masker.mask_text(text)
             self._emit_audit("pii.tokenized", text)
             return result
         except Exception as exc:
-            _logger.warning("PII tokenize failed: %s", exc)
-            return text
+            from src.backend.core.policy.pii_fail_closed import (
+                raise_pii_fail_closed,
+            )
+
+            raise_pii_fail_closed(
+                source="pii.facade.tokenize", payload_size=len(text), exc=exc
+            )
 
     def detokenize(self, text: str) -> str:
         """Reversible PII detokenization — no-op without TokenMap.
