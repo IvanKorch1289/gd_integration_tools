@@ -188,7 +188,16 @@ class SemanticCache:
                     )
 
                     masked_query, pii_meta = _maybe_mask_pii(query)
-                except Exception:
+                except (ImportError, RuntimeError, ValueError) as pii_mask_exc:  # noqa: PERF203
+                    # D-A1-04 fix (cycle 40): narrow exceptions + observability.
+                    # Bare `except Exception` маскировал ImportError (rag_ingest_service
+                    # недоступен), RuntimeError/ValueError (sanitizer failure).
+                    # Fallback: ingest raw query (raw + pii_masked=False flag).
+                    from src.backend.core.logging import get_logger
+                    get_logger(__name__).warning(
+                        "semantic_cache.pii_mask_failed",
+                        extra={"error": str(pii_mask_exc)},
+                    )
                     masked_query, pii_meta = query, {"pii_masked": False}
                 await rag.ingest(
                     content=masked_query,
