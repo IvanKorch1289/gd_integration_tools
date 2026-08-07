@@ -128,5 +128,7 @@ def test_key_is_sha256_hex() -> None:
 def test_defaults_match_baseline() -> None:
     """Defaults: ttl=300s, maxsize=1024 (baseline контракт сохранён)."""
     cache = EmbeddingVectorCache()
-    assert cache._cache.maxsize == 1024
-    assert cache._cache.ttl == 300.0
+    # cycle-5/D-AUDIT-501 fix: реальные атрибуты на _maxsize/_ttl/_store (не cachetools subobject).
+    assert cache._maxsize == 1024
+    assert cache._ttl == 300.0
+    assert cache._store.maxsize == 1024

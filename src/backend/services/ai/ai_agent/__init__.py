@@ -131,7 +131,10 @@ def get_ai_agent_service() -> AIAgentService:
             instance = getattr(app.state, "ai_agent_service", None)
             if instance is not None:
                 return instance
-    except Exception:
+    except (ImportError, AttributeError):
+        # cycle-5/D-AUDIT-501 fix: narrowed from broad `except Exception: pass`
+        # to concrete DI-lookup failure modes; bare Exception was silent
+        # fail-OPEN (per critic cycle-5).
         pass
 
     try:

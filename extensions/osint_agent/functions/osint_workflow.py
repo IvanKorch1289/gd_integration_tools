@@ -7,6 +7,12 @@ Pipeline:
 4. Compose prompt with search results.
 5. LLM call to generate structured report.
 6. Validate report format and length.
+
+Fail-CLOSED contract (cycle-5/D-AUDIT-503):
+- Если search вернул пустые данные — raise InsufficientDataError ДО LLM,
+  чтобы LLM не галлюцинировал отчёт без фактов.
+- Если LLM недоступен — raise LLMUnavailableError (НЕ возвращать prompt
+  template как report).
 """
 
 from __future__ import annotations
@@ -17,6 +23,16 @@ from src.backend.core.logging import get_logger
 from src.backend.dsl.helpers.banking import validate_inn
 logger = get_logger("osint_agent.workflow")
 from typing import Any
+
+
+# cycle-5/D-AUDIT-503: domain-specific fail-CLOSED exceptions.
+class LLMUnavailableError(Exception):
+    """LLM gateway недоступен — fail-CLOSED, не возвращаем prompt template."""
+
+
+class InsufficientDataError(Exception):
+    """Search providers вернули пустые данные — fail-CLOSED до LLM-вызова."""
+
 
 OSINT_REPORT_TEMPLATE = """\
 Ты — аналитик OSINT. Сформируй строгий отчёт по компании.
@@ -281,6 +297,22 @@ async def _search_multi_provider(
     return results
 
 
+def _all_search_results_empty(*results: dict[str, Any]) -> bool:
+    """cycle-5/D-AUDIT-503: True если во всех 3 search-результатах все провайдеры пусты.
+
+    Пустой = None / [] / {} / "" (после failure-handler search возвращает такие
+    sentinel-значения). Если хоть один провайдер дал непустой результат — НЕ пусто.
+    """
+    for r in results:
+        if not isinstance(r, dict):
+            return False
+        for key in ("perplexity", "tavily", "scraped"):
+            value = r.get(key)
+            if value not in (None, [], {}, ""):
+                return False
+    return True
+
+
 async def run_osint(payload: dict[str, Any]) -> dict[str, Any]:
     """Execute OSINT workflow for a company by INN.
 
@@ -298,6 +330,10 @@ async def run_osint(payload: dict[str, Any]) -> dict[str, Any]:
 
     Raises:
         ValueError: If INN is invalid.
+        InsufficientDataError: All search providers returned empty (cycle-5/D-AUDIT-503).
+            Caller should treat as ``{"status": "insufficient_data", "report": None}``.
+        LLMUnavailableError: LLM gateway failed (cycle-5/D-AUDIT-503). Caller should
+            treat as ``{"status": "insufficient_data", "report": None}``.
     """
     inn = str(payload.get("inn", "")).strip()
     if not validate_inn(inn):
@@ -316,6 +352,17 @@ async def run_osint(payload: dict[str, Any]) -> dict[str, Any]:
         results_courts = {"perplexity": None, "tavily": None, "scraped": []}
         results_negative = {"perplexity": None, "tavily": None, "scraped": []}
 
+    # cycle-5/D-AUDIT-503 (BL-P0-002): fail-CLOSED — если все 3 search providers
+    # вернули None/empty, НЕ вызываем LLM (иначе LLM галлюцинирует отчёт без фактов).
+    if _all_search_results_empty(results_general, results_courts, results_negative):
+        logger.error(
+            "osint_search_insufficient_data",
+            extra={"inn": inn, "company_name": company_name},
+        )
+        raise InsufficientDataError(
+            f"All 3 search providers returned empty results for INN {inn!r}"
+        )
+
     prompt = compose_prompt(
         inn=inn,
         company_name=company_name,
@@ -324,6 +371,9 @@ async def run_osint(payload: dict[str, Any]) -> dict[str, Any]:
         results_negative=results_negative,
     )
 
+    # cycle-5/D-AUDIT-503 (BL-P0-001): fail-CLOSED — при LLM failure поднимаем
+    # доменное исключение вместо fallback `raw_text = prompt` (это эхо template
+    # как валидный отчёт — compliance risk).
     try:
         from src.backend.core.ai.llm_gateway import get_litellm_gateway
 
@@ -334,8 +384,14 @@ async def run_osint(payload: dict[str, Any]) -> dict[str, Any]:
             max_tokens=2048,
         )
         raw_text = response.get("choices", [{}])[0].get("message", {}).get("content", "")
-    except Exception:
-        raw_text = prompt
+    except Exception as exc:
+        logger.error(
+            "osint_llm_unavailable",
+            extra={"inn": inn, "company_name": company_name, "error": str(exc)},
+        )
+        raise LLMUnavailableError(
+            f"LLM unavailable for INN {inn!r}: {exc}"
+        ) from exc
 
     report = validate_report(raw_text)
     report["inn"] = inn
