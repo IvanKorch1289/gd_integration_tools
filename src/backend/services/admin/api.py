@@ -95,11 +95,38 @@ class AdminService:
         """
         authz = self._get_authz()
         if authz is None:
-            # AuthZ unavailable — fail-open for dev, but log warning
-            logger.warning(
-                "AuthZ unavailable for %s@%s/%s — allowing", actor, resource, action
+            # D-AUDIT-A3-01 fix (cycle 1): fail-CLOSED by default для admin actions.
+            # Ранее silent fail-OPEN: при AuthZ unavailable — log warning + return
+            # (privilege-escalation vector при AuthZ outage).
+            # Default: fail-CLOSED — raise AdminAuthorizationError → 403.
+            # Opt-in fail-OPEN только через ADMIN_AUTHZ_FAIL_OPEN=true (для dev_light
+            # без AuthZ composition root).
+            import os
+
+            fail_open = os.getenv("ADMIN_AUTHZ_FAIL_OPEN", "").lower() in {
+                "1", "true", "yes",
+            }
+            if fail_open:
+                logger.warning(
+                    "AuthZ unavailable for %s@%s/%s — allowing (ADMIN_AUTHZ_FAIL_OPEN=true, dev_light mode)",
+                    actor, resource, action,
+                )
+                return
+            logger.critical(
+                "AuthZ unavailable for %s@%s/%s — DENYING (fail-CLOSED, ADMIN_AUTHZ_FAIL_OPEN not set)",
+                actor, resource, action,
             )
-            return
+            emit_admin_action(
+                actor=actor,
+                action=action,
+                resource=resource,
+                outcome="denied",
+                details={"reason": "authz_unavailable"},
+            )
+            raise AdminAuthorizationError(
+                f"AuthorizationGateway unavailable for {actor} on {resource}/{action} "
+                "(fail-CLOSED; set ADMIN_AUTHZ_FAIL_OPEN=true for dev_light)"
+            )
 
         try:
             decision = await authz.authorize(
