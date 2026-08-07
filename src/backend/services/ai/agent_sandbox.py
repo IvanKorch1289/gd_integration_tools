@@ -556,7 +556,16 @@ def resolve_agent_sandbox(
             from src.backend.core.config.ai import ai_workspace_settings
 
             default_kind = str(ai_workspace_settings.default_agent_sandbox)
-        except Exception:
+        except (ImportError, AttributeError) as ai_settings_exc:  # noqa: PERF203
+            # D-A1-04 fix (cycle 38): narrow exceptions + observability.
+            # Bare `except Exception` маскировал ImportError (ai_settings
+            # module not ready) и AttributeError (неправильный settings).
+            # Fallback "process_pool" — default-OFF-safe.
+            from src.backend.core.logging import get_logger
+            get_logger(__name__).debug(
+                "agent_sandbox.default_kind_resolve_failed",
+                extra={"error": str(ai_settings_exc)},
+            )
             default_kind = "process_pool"
 
     return AgentSandboxSelector(
