@@ -30,6 +30,10 @@ services:
       APP_PROFILE: dev_light
       APP_SERVER: ${APP_SERVER:-granian}
       APP_WORKERS: ${APP_WORKERS:-2}
+    # D-A12-05 fix (cycle 23): mem_limit/cpus для light-профиля (dev_light).
+    # Консервативные defaults (override через env): 1 GB / 0.5 CPU.
+    mem_limit: ${APP_MEM_LIMIT:-1g}
+    cpus: ${APP_CPUS:-0.5}
     volumes:
       - ../../.run:/app/.run  # logs, sqlite, runtime state
     restart: unless-stopped

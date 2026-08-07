@@ -50,6 +50,10 @@ services:
             ENV: "${ENV:-staging}"
             # K2 Sprint 7: feature-flag, экспорт в /metrics + Grafana
             FEATURE_BLUE_GREEN_DEPLOY_ENABLED: "true"
+        # D-A12-05 fix (cycle 23): mem_limit/cpus для blue-green stack.
+        # 2 GB / 1.0 CPU per replica — blue + green итого 4 GB / 2.0 CPU.
+        mem_limit: ${BLUE_MEM_LIMIT:-2g}
+        cpus: ${BLUE_CPUS:-1.0}
         labels:
             # K2 observability labels — попадают в Prometheus relabel_config
             # и Grafana variables (см. dashboards/api_latency_p95.json).
@@ -82,6 +86,9 @@ services:
             ENV: "${ENV:-staging}"
             # K2 Sprint 7: feature-flag, экспорт в /metrics + Grafana
             FEATURE_BLUE_GREEN_DEPLOY_ENABLED: "true"
+        # D-A12-05 fix (cycle 23): mem_limit/cpus для green-stack.
+        mem_limit: ${GREEN_MEM_LIMIT:-2g}
+        cpus: ${GREEN_CPUS:-1.0}
         labels:
             org.label-schema.app: "gd_integration_tools"
             org.label-schema.stack: "green"
