@@ -19,7 +19,11 @@ from src.backend.services.ai.model_registry.adapter import (
 if TYPE_CHECKING:
     pass
 
+from src.backend.core.logging import get_logger  # D-A1-04 fix (cycle 30)
+
 __all__ = ("MlflowModelRegistry",)
+
+_logger = get_logger("services.ai.model_registry.mlflow")
 
 
 class MlflowModelRegistry(ModelRegistryAdapter):
@@ -113,8 +117,14 @@ class MlflowModelRegistry(ModelRegistryAdapter):
             await loop.run_in_executor(
                 None, lambda: client.create_registered_model(record.name)
             )
-        except Exception as _:
-            pass
+        except (ConnectionError, TimeoutError, RuntimeError) as _mlflow_exc:  # noqa: PERF203
+            # D-A1-04 fix (cycle 30): narrow exceptions + debug logging.
+            # Bare `except Exception: pass` маскировал MLflow backend failures
+            # (e.g. registry down, timeout, name conflict).
+            _logger.debug(
+                "mlflow.create_registered_model.skipped",
+                extra={"error": str(_mlflow_exc), "name": record.name},
+            )
 
         artifact_uri = record.artifact_uri or "models:/placeholder"
         mv = await loop.run_in_executor(
