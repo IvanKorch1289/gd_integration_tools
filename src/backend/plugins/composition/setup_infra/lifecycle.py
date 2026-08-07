@@ -27,6 +27,10 @@ from src.backend.plugins.composition.setup_infra.workflow_audit import (
     _close_workflow_audit_sink,
     _init_workflow_audit_sink,
 )
+from src.backend.infrastructure.workflow.temporal_worker_runtime import (
+    start_temporal_worker_runtime,
+    stop_temporal_worker_runtime,
+)
 
 app_logger = get_logger("application")
 
@@ -264,6 +268,14 @@ starting_operations: list[OperationItem] = [
         None,
     ),
     ("init_workflow_audit_sink", _init_workflow_audit_sink, _clickhouse_enabled),
+    # D-A8-04 fix (cycle 1): wire TemporalWorkerRuntime в production lifespan.
+    # Feature-flag guarded (default-OFF) через workflow_use_temporal —
+    # см. src/backend/core/config/features/infrastructure.py.
+    (
+        "start_temporal_worker_runtime",
+        start_temporal_worker_runtime,
+        None,  # flag check внутри start_temporal_worker_runtime
+    ),
     (
         "start_scheduler_with_leader_election",
         _start_scheduler_with_leader_election,
@@ -276,4 +288,6 @@ ending_operations: list[OperationItem] = [
     ("stop_scheduler_if_leader", _stop_scheduler_if_leader, None),
     # D-AUDIT-A12-06 fix (cycle 1): stop ConfigHotReloader в shutdown
     ("stop_config_hot_reload", _stop_config_hot_reload, None),
+    # D-A8-04 fix (cycle 1): graceful stop TemporalWorkerRuntime.
+    ("stop_temporal_worker_runtime", stop_temporal_worker_runtime, None),
 ]

@@ -392,6 +392,20 @@ class InfrastructureFlags(BaseSettings):
         ),
     )
 
+    # ─── D-A8-04 fix (cycle 1) — Temporal Worker runtime wire ─────────
+    workflow_use_temporal: bool = Field(
+        default=False,
+        title="K-Workflow: Temporal Worker runtime в production lifespan (D-A8-04)",
+        description=(
+            "D-A8-04 fix (cycle 1): wire TemporalWorkerRuntime в "
+            "setup_infra/lifecycle.starting_operations. Default-OFF — "
+            "production продолжает использовать pg-runner path до "
+            "staging-smoke Temporal-кластера. При True — стартует "
+            "Worker через TemporalClientFactory и регистрирует workflow "
+            "классы из workflow_registry."
+        ),
+    )
+
     # ─── S180 P0-4 — Temporal Worker Versioning (D172 S171 M10) ────────
     temporal_worker_versioning_enabled: bool = Field(
         default=False,
