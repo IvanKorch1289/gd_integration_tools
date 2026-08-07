@@ -143,8 +143,12 @@ class CancelWorkflowProcessor(BaseProcessor):
             )
 
         backend = await self._resolve_backend()
+        # D-A8-09 fix (cycle 24): run_id=None для cancel (cancels ALL runs).
+        # Раньше run_id=wf_id — semantic violation: Temporal различает
+        # workflow_id vs run_id. С run_id=wf_id cancel может fail при
+        # workflow с retry/replay → stale run_id.
         handle = WorkflowHandle(
-            workflow_id=wf_id, run_id=wf_id, namespace=self.namespace_name
+            workflow_id=wf_id, run_id=None, namespace=self.namespace_name
         )
         await backend.cancel_workflow(handle=handle)
 

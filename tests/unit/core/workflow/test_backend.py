@@ -30,13 +30,28 @@ class TestWorkflowHandle:
         assert h.run_id == "run-a"
         assert h.namespace == "t1"
 
+    def test_valid_handle_run_id_none(self) -> None:
+        """D-A8-09 fix (cycle 24): run_id=None — cancel/signal/query all runs."""
+        h = WorkflowHandle(workflow_id="wf-1", run_id=None, namespace="t1")
+        assert h.workflow_id == "wf-1"
+        assert h.run_id is None
+        assert h.namespace == "t1"
+
+    def test_run_id_default_is_none(self) -> None:
+        """run_id default = None (опциональный)."""
+        h = WorkflowHandle(workflow_id="wf-2", namespace="t1")
+        assert h.run_id is None
+
     def test_empty_workflow_id_raises(self) -> None:
         with pytest.raises(ValidationError):
             WorkflowHandle(workflow_id="", run_id="r", namespace="t")
 
-    def test_empty_run_id_raises(self) -> None:
-        with pytest.raises(ValidationError):
-            WorkflowHandle(workflow_id="w", run_id="", namespace="t")
+    def test_empty_run_id_treated_as_none(self) -> None:
+        """D-A8-09 fix (cycle 24): run_id опциональный — пустая строка допустима (= None)."""
+        # D-A8-09 fix: run_id стал опциональным (default=None).
+        # Empty string НЕ raise — семантика "all runs".
+        h = WorkflowHandle(workflow_id="w", run_id="", namespace="t")
+        assert h.run_id == ""  # preserved as empty string (callers normalize)
 
     def test_empty_namespace_raises(self) -> None:
         with pytest.raises(ValidationError):

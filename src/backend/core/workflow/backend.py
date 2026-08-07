@@ -38,12 +38,16 @@ class WorkflowHandle(BaseModel):
     `namespace` хранит tenant-id (multi-tenant) или ``"global"`` для
     cross-tenant supervisors. `run_id` — backend-specific идентификатор
     конкретного запуска (Temporal run-id / pg-runner instance-id).
+
+    D-A8-09 fix (cycle 24): `run_id` опциональный — None означает
+    "cancel/signal/query all runs of this workflow_id" (Temporal cancel
+    semantics при ``run_id=None``).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     workflow_id: str = Field(min_length=1)
-    run_id: str = Field(min_length=1)
+    run_id: str | None = Field(default=None)
     namespace: str = Field(min_length=1)
 
 
