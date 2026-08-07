@@ -146,6 +146,20 @@ class RagIngestSettings(BaseSettingsWithLoader):
             "в base.yml; ON в staging/prod через features-override."
         ),
     )
+    # D-A9-01 fix (cycle 1): PII fail-CLOSED contract на single-doc API.
+    # При sanitizer failure → raise PIIFailClosedError (raw PII НЕ пишется
+    # в vector store). При True (только dev_light) → log warning + skip mask
+    # (raw text уходит в vector store с metadata flag pii_mask_skipped=True).
+    # Production MUST быть False.
+    pii_fail_open: bool = Field(
+        default=False,
+        description=(
+            "D-A9-01 fix (cycle 1): PII fail-CLOSED contract. False (default, "
+            "production) — sanitizer failure → PIIFailClosedError → HTTPException(503). "
+            "True (только dev_light через RAG_INGEST_PII_FAIL_OPEN=true) — "
+            "log warning + audit event + raw text в vector store. Production MUST False."
+        ),
+    )
 
 
 class BGESettings(BaseSettingsWithLoader):

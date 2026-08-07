@@ -207,10 +207,57 @@ class _RAGFacade:
         namespace: str = "default",
         metadata: dict[str, Any] | None = None,
     ) -> IngestResponse:
-        """Ingest документа в RAG-хранилище с заданным namespace."""
+        """Ingest документа в RAG-хранилище с заданным namespace.
+
+        D-A9-01 fix (cycle 1): PII fail-CLOSED contract на single-doc API.
+        ``_maybe_mask_pii`` применяется перед ingest. При sanitizer
+        failure → ``PIIFailClosedError`` → ``HTTPException(503)``.
+        Raw PII НЕ пишется в vector store (production safety).
+        Feature-flag ``RAG_INGEST_PII_FAIL_OPEN=true`` (только dev_light)
+        → log warning + skip mask (raw text уходит в vector store).
+        """
+        from src.backend.core.config import ai_stack
+        from src.backend.core.policy.pii_fail_closed import (
+            PIIFailClosedError,
+            raise_pii_fail_closed,
+        )
+        from src.backend.services.ai.rag_ingest_service import (
+            _maybe_mask_pii,
+        )
+
         _check_enabled()
+
+        # D-A9-01 fix (cycle 1): explicit PII mask с fail-CLOSED contract.
+        settings = ai_stack.rag_ingest_settings
+        pii_fail_open = bool(getattr(settings, "pii_fail_open", False))
+
+        try:
+            masked_content, pii_meta = _maybe_mask_pii(content)
+            metadata_with_pii = {**(metadata or {}), **pii_meta}
+        except PIIFailClosedError as exc:
+            if pii_fail_open:
+                # D-A9-01 fix (cycle 1, opt-in): dev_light only.
+                logger.warning(
+                    "rag.ingest: pii_fail_open=True, skipping mask (sanitizer: %s)",
+                    exc.__cause__ or exc,
+                )
+                metadata_with_pii = {
+                    **(metadata or {}),
+                    "pii_masked": False,
+                    "pii_mask_skipped": True,
+                }
+                masked_content = content  # raw text
+            else:
+                # Production: fail-CLOSED. Surface as 503.
+                logger.error("rag.ingest: PII redaction failed: %s", exc)
+                raise_pii_fail_closed(
+                    source="rag.ingest",
+                    payload_size=len(content),
+                    exc=exc,
+                )
+
         doc_id = await get_rag_service().ingest(
-            content=content, metadata=metadata, namespace=namespace
+            content=masked_content, metadata=metadata_with_pii, namespace=namespace
         )
         return IngestResponse(doc_id=doc_id)
 
