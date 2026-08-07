@@ -1,5 +1,9 @@
 """S72 W4 — TD-S64-W1 closure tests для per-row outbox claim + sweeper.
 
+cycle-6/D-AUDIT-610: ``lambda: fake_txn`` → ``lambda *_a, **_kw: fake_txn``
+(monkeypatch stub) — production вызывает ``main_session_manager.transaction(session)``
+с 1 аргументом, 0-arg lambda падала с TypeError (INFRA-P0-002).
+
 Покрывает S72 W2 (per-row claim) + S72 W3 (sweeper job):
 
 * ``claim_pending`` sets ``claimed_by/claimed_at/claimed_until`` и propagates
@@ -24,7 +28,9 @@ import pytest
 
 
 class _StubSessionManager:
-    def transaction(self) -> "MagicMock":
+    def transaction(self, _session: object = None) -> "MagicMock":
+        # Cycle 86 L10: production ``DatabaseSessionManager.transaction(session)``
+        # accepts the session arg — stub must match.
         m = MagicMock()
         m.__aenter__ = AsyncMock(return_value=MagicMock())
         m.__aexit__ = AsyncMock(return_value=None)
@@ -39,6 +45,12 @@ class _StubSessionManager:
 
 _stub_sm = types.ModuleType("src.backend.infrastructure.database.session_manager")
 _stub_sm.main_session_manager = _StubSessionManager()  # type: ignore[attr-defined]
+# Cycle 86 L10: production session_manager module exports both
+# ``main_session_manager`` (singleton) and ``get_main_session_manager``
+# (factory function). Stub must mirror both — otherwise callers using
+# the factory get AttributeError on import. Lambda accepts *args/**kwargs
+# to mirror any call shape.
+_stub_sm.get_main_session_manager = lambda *_a, **_kw: _StubSessionManager()  # type: ignore[attr-defined]
 sys.modules["src.backend.infrastructure.database.session_manager"] = _stub_sm
 
 from src.backend.infrastructure.repositories.outbox import (  # noqa: E402
@@ -91,13 +103,17 @@ async def test_claim_pending_propagates_claimed_columns(
     update_result.fetchall.return_value = [fake_row]
     fake_session.execute = AsyncMock(side_effect=[advisory_result, update_result])
 
-    fake_txn = MagicMock()
-    fake_txn.__aenter__ = AsyncMock(return_value=fake_session)
-    fake_txn.__aexit__ = AsyncMock(return_value=None)
+    fake_session_ctx = MagicMock()
+    fake_session_ctx.__aenter__ = AsyncMock(return_value=fake_session)
+    fake_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
     monkeypatch.setattr(
+        "src.backend.infrastructure.repositories.outbox.main_session_manager.create_session",
+        lambda: fake_session_ctx,
+    )
+    monkeypatch.setattr(
         "src.backend.infrastructure.repositories.outbox.main_session_manager.transaction",
-        lambda: fake_txn,
+        lambda *_a, **_kw: fake_session_ctx,
     )
 
     result = await claim_pending(limit=10, worker_id="worker-A")
@@ -125,13 +141,17 @@ async def test_claim_pending_sql_includes_status_processing(
     update_result.fetchall.return_value = []
     fake_session.execute = AsyncMock(side_effect=[advisory_result, update_result])
 
-    fake_txn = MagicMock()
-    fake_txn.__aenter__ = AsyncMock(return_value=fake_session)
-    fake_txn.__aexit__ = AsyncMock(return_value=None)
+    fake_session_ctx = MagicMock()
+    fake_session_ctx.__aenter__ = AsyncMock(return_value=fake_session)
+    fake_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
     monkeypatch.setattr(
+        "src.backend.infrastructure.repositories.outbox.main_session_manager.create_session",
+        lambda: fake_session_ctx,
+    )
+    monkeypatch.setattr(
         "src.backend.infrastructure.repositories.outbox.main_session_manager.transaction",
-        lambda: fake_txn,
+        lambda *_a, **_kw: fake_session_ctx,
     )
 
     await claim_pending(limit=10, worker_id="worker-A", lease_seconds=300)
@@ -172,13 +192,17 @@ async def test_reset_stuck_processing_returns_count(
     ]
     fake_session.execute = AsyncMock(return_value=update_result)
 
-    fake_txn = MagicMock()
-    fake_txn.__aenter__ = AsyncMock(return_value=fake_session)
-    fake_txn.__aexit__ = AsyncMock(return_value=None)
+    fake_session_ctx = MagicMock()
+    fake_session_ctx.__aenter__ = AsyncMock(return_value=fake_session)
+    fake_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
     monkeypatch.setattr(
+        "src.backend.infrastructure.repositories.outbox.main_session_manager.create_session",
+        lambda: fake_session_ctx,
+    )
+    monkeypatch.setattr(
         "src.backend.infrastructure.repositories.outbox.main_session_manager.transaction",
-        lambda: fake_txn,
+        lambda *_a, **_kw: fake_session_ctx,
     )
 
     count = await reset_stuck_processing(threshold_seconds=300, limit=1000)
@@ -195,13 +219,17 @@ async def test_reset_stuck_processing_no_stuck_returns_zero(
     update_result.fetchall.return_value = []  # no rows
     fake_session.execute = AsyncMock(return_value=update_result)
 
-    fake_txn = MagicMock()
-    fake_txn.__aenter__ = AsyncMock(return_value=fake_session)
-    fake_txn.__aexit__ = AsyncMock(return_value=None)
+    fake_session_ctx = MagicMock()
+    fake_session_ctx.__aenter__ = AsyncMock(return_value=fake_session)
+    fake_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
     monkeypatch.setattr(
+        "src.backend.infrastructure.repositories.outbox.main_session_manager.create_session",
+        lambda: fake_session_ctx,
+    )
+    monkeypatch.setattr(
         "src.backend.infrastructure.repositories.outbox.main_session_manager.transaction",
-        lambda: fake_txn,
+        lambda *_a, **_kw: fake_session_ctx,
     )
 
     count = await reset_stuck_processing()
@@ -218,13 +246,17 @@ async def test_reset_stuck_processing_filters_by_status_processing(
     update_result.fetchall.return_value = []
     fake_session.execute = AsyncMock(return_value=update_result)
 
-    fake_txn = MagicMock()
-    fake_txn.__aenter__ = AsyncMock(return_value=fake_session)
-    fake_txn.__aexit__ = AsyncMock(return_value=None)
+    fake_session_ctx = MagicMock()
+    fake_session_ctx.__aenter__ = AsyncMock(return_value=fake_session)
+    fake_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
     monkeypatch.setattr(
+        "src.backend.infrastructure.repositories.outbox.main_session_manager.create_session",
+        lambda: fake_session_ctx,
+    )
+    monkeypatch.setattr(
         "src.backend.infrastructure.repositories.outbox.main_session_manager.transaction",
-        lambda: fake_txn,
+        lambda *_a, **_kw: fake_session_ctx,
     )
 
     await reset_stuck_processing(threshold_seconds=300)
@@ -253,13 +285,17 @@ async def test_reset_stuck_processing_respects_threshold(
     update_result.fetchall.return_value = []
     fake_session.execute = AsyncMock(return_value=update_result)
 
-    fake_txn = MagicMock()
-    fake_txn.__aenter__ = AsyncMock(return_value=fake_session)
-    fake_txn.__aexit__ = AsyncMock(return_value=None)
+    fake_session_ctx = MagicMock()
+    fake_session_ctx.__aenter__ = AsyncMock(return_value=fake_session)
+    fake_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
     monkeypatch.setattr(
+        "src.backend.infrastructure.repositories.outbox.main_session_manager.create_session",
+        lambda: fake_session_ctx,
+    )
+    monkeypatch.setattr(
         "src.backend.infrastructure.repositories.outbox.main_session_manager.transaction",
-        lambda: fake_txn,
+        lambda *_a, **_kw: fake_session_ctx,
     )
 
     before_call = datetime.now(UTC)

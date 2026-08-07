@@ -110,6 +110,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
                 role=role,
                 content=content,
                 metadata={**(dict(metadata) if metadata else {}), "id": message_id},
+                tenant_id=tenant_id,
             )
         except Exception as exc:
             logger.warning("memory_gateway.save_message_failed: %s", exc)

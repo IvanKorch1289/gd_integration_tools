@@ -199,6 +199,82 @@ async def test_feature_flag_off_is_pass_through(
     assert ex.get_property("guardrails_verdict") is None
 
 
+def test_resolve_runtime_returns_none_when_provider_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """cycle-6/D-AUDIT-605: без override provider возвращает ``None``.
+
+    ``LlamaGuardRuntime`` в текущем HEAD не инстанцируется (upstream stale
+    import из несуществующего ``llamaguard.py``); при таких условиях
+    ``_resolve_runtime`` обязан вернуть ``None`` (callers обработают через
+    silent pass-through + WARNING).
+    """
+    from src.backend.core.di.providers import ai as providers_ai
+
+    # Гарантируем, что override пуст (предыдущие тесты не должны влиять).
+    monkeypatch.setattr(
+        providers_ai, "_overrides", dict(providers_ai._overrides)
+    )
+    providers_ai._overrides.pop("llm_guard_runtime", None)
+
+    assert GuardrailsApplyProcessor._resolve_runtime() is None
+
+
+def test_resolve_runtime_not_none_when_provider_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """cycle-6/D-AUDIT-605: с override provider runtime НЕ None.
+
+    Verification gate задачи: после фикса ``_resolve_runtime`` ДОЛЖЕН
+    вернуть установленный через :func:`set_llm_guard_runtime_provider`
+    runtime, а не ``None`` hardcoded.
+    """
+    from src.backend.core.di.providers import ai as providers_ai
+
+    fake_runtime = _FakeRuntime(_FakeGuardResult(safe=True))
+    providers_ai.set_llm_guard_runtime_provider(fake_runtime)
+    try:
+        resolved = GuardrailsApplyProcessor._resolve_runtime()
+        assert resolved is not None
+        assert resolved is fake_runtime
+    finally:
+        # Reset override для изоляции от других тестов.
+        providers_ai.set_llm_guard_runtime_provider(None)
+
+
+@pytest.mark.asyncio
+async def test_run_uses_provider_runtime_without_monkeypatch(
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+) -> None:
+    """cycle-6/D-AUDIT-605: end-to-end без monkeypatch на ``_resolve_runtime``.
+
+    Регистрируем runtime через :func:`set_llm_guard_runtime_provider` и
+    убеждаемся, что ``_run`` его использует: ``classify`` вызван, verdict
+    записан. Это regression-guard против возврата к ``return None``
+    hardcoded.
+    """
+    from src.backend.core.config.features import feature_flags
+    from src.backend.core.di.providers import ai as providers_ai
+
+    monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+    fake_runtime = _FakeRuntime(_FakeGuardResult(safe=True))
+    providers_ai.set_llm_guard_runtime_provider(fake_runtime)
+    try:
+        ex: Exchange[Any] = Exchange(in_message=Message(body="hello"))
+        proc = GuardrailsApplyProcessor(stage="input", on_block="fail")
+        await proc.process(ex, context)
+
+        # runtime НЕ None → classify вызван.
+        assert fake_runtime.calls == [("hello", None)]
+        verdict = ex.get_property("guardrails_verdict")
+        assert verdict == {
+            "input": {"safe": True, "flagged_categories": [], "stage": "input"}
+        }
+        assert ex.error is None
+    finally:
+        providers_ai.set_llm_guard_runtime_provider(None)
+
+
 def test_to_spec_round_trip() -> None:
     proc = GuardrailsApplyProcessor(
         stage="output",

@@ -83,15 +83,38 @@ class CronDashboardSummary(BaseModel):
     jobs: list[CronJobSummary] = Field(default_factory=list)
 
 
+#: cycle-6/D-AUDIT-608 — whitelist модулей, из которых разрешено резолвить
+#: cron-callable. Без него ``_resolve_callable`` импортировал произвольный
+#: модуль (``os:system``, ``builtins:exec``) → RCE от лица OPERATOR-админа.
+ALLOWED_CALLABLE_MODULES = frozenset(
+    {
+        "src.backend.infrastructure.scheduler.scheduled_tasks",
+    }
+)
+
+
 def _resolve_callable(ref: str) -> Any:
-    """Резолвит ``module.path:function`` в callable."""
+    """Резолвит ``module.path:function`` в callable.
+
+    cycle-6/D-AUDIT-608: модуль обязан входить в
+    :data:`ALLOWED_CALLABLE_MODULES` — import выполняется только после
+    проверки, поэтому side-effect произвольного модуля недостижим.
+    """
     import importlib
 
     module_path, _, attr = ref.partition(":")
     if not attr:
         raise ValueError(f"Невалидный callable_ref={ref!r} (нет ':function').")
+    if module_path not in ALLOWED_CALLABLE_MODULES:
+        raise ValueError(
+            f"Модуль {module_path!r} не входит в cron-whitelist "
+            f"(разрешено: {sorted(ALLOWED_CALLABLE_MODULES)})."
+        )
     module = importlib.import_module(module_path)
-    return getattr(module, attr)
+    resolved = getattr(module, attr)
+    if not callable(resolved):
+        raise ValueError(f"{ref!r} не является callable.")
+    return resolved
 
 
 @router.get("/list", response_model=list[CronJobSummary])

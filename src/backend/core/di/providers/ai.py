@@ -238,6 +238,45 @@ def get_skill_registry() -> Any:
         return None
 
 
+# ─────────────── LLM Guard runtime (cycle-6/D-AUDIT-605) ───────────────
+
+
+def get_llm_guard_runtime_provider() -> Any:
+    """Возвращает singleton :class:`LlamaGuardRuntime` для ``guardrails_apply``.
+
+    cycle-6/D-AUDIT-605: ``GuardrailsApplyProcessor._resolve_runtime`` ранее
+    возвращал ``None`` hardcoded, из-за чего DSL-шаг молча превращался в
+    pass-through (fail-open safety gate). Теперь резолвит runtime через
+    :mod:`src.backend.core.ai.guardrails`; при сбое импорта или инстанциации
+    возвращает ``None`` (callers обязаны логировать WARNING и продолжать
+    silent pass-through — см. ``_resolve_runtime``).
+    """
+    if "llm_guard_runtime" in _overrides:
+        return _overrides["llm_guard_runtime"]
+    try:
+        from src.backend.core.ai.guardrails import LlamaGuardRuntime
+
+        return LlamaGuardRuntime()
+    except Exception as exc:  # noqa: BLE001 — DI provider, contract = None
+        # `core.ai.guardrails.__init__` импортирует из несуществующего
+        # `llamaguard.py` (upstream stale); не наша ответственность.
+        import logging
+
+        logging.getLogger(__name__).debug(
+            "get_llm_guard_runtime_provider: LlamaGuardRuntime unavailable: %s",
+            exc,
+        )
+        return None
+
+
+def set_llm_guard_runtime_provider(impl: Any) -> None:
+    """Test-override для ``llm_guard_runtime`` provider."""
+    if impl is None:
+        _overrides.pop("llm_guard_runtime", None)
+    else:
+        _overrides["llm_guard_runtime"] = impl
+
+
 # ─────────────── AIGateway composition root (Sprint 1.3, ADR-NEW-19) ───────────────
 
 
@@ -309,6 +348,7 @@ __all__ = (
     "get_ai_gateway_provider",
     "get_ai_sanitizer_provider",
     "get_antivirus_service_provider",
+    "get_llm_guard_runtime_provider",
     "get_llm_judge_metrics_provider",
     "get_model_enum_provider",
     "get_pii_tokenizer_provider",
@@ -318,6 +358,7 @@ __all__ = (
     "set_ai_gateway_provider",
     "set_ai_sanitizer_provider",
     "set_antivirus_service_provider",
+    "set_llm_guard_runtime_provider",
     "set_llm_judge_metrics_provider",
     "set_model_enum_provider",
     "set_pii_tokenizer_provider",

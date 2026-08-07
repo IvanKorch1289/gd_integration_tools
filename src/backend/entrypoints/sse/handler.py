@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
+from src.backend.core.auth.auth_context_helpers import extract_user_permissions
 from src.backend.core.auth.auth_selector import AuthMethod, require_auth
 from src.backend.core.logging import get_logger
 from src.backend.core.serialization.msgspec_hotpath import encode_json_str
@@ -175,6 +176,36 @@ class _InvokeRequest(BaseModel):
     )
 
 
+def _extract_auth_from_request(
+    request: Request,
+) -> tuple[str, tuple[str, ...]]:
+    """Извлекает principal/permissions из ``request.state.auth``.
+
+    Cycle-6/D-AUDIT-609: parity с GraphQL/SOAP/REST entrypoints — проброс
+    ``principal`` и ``permissions`` в ``dispatch_action_or_dsl`` →
+    ``DslService.dispatch`` для route-wide permission enforcement.
+
+    AuthMiddleware кладёт :class:`AuthContext` в ``request.state.auth``
+    после успешной аутентификации. При отсутствии ``auth`` (anonymous /
+    нет auth middleware) возвращает ``("", ())`` — fail-closed, что
+    соответствует поведению ``_extract_auth_from_info`` в GraphQL
+    (см. ``src/backend/entrypoints/graphql/schema.py:348-360``).
+
+    Args:
+        request: FastAPI/Starlette ``Request``.
+
+    Returns:
+        Tuple ``(principal, permissions)``. Defaults — ``("", ())``
+        (fail-closed anonymous).
+    """
+    auth = getattr(request.state, "auth", None)
+    if auth is None:
+        return ("", ())
+    principal = getattr(auth, "principal", "") or ""
+    permissions = extract_user_permissions(auth)
+    return (principal, permissions)
+
+
 @sse_router.post(
     "/invoke",
     summary="SSE invoke: однократный action → SSE response",
@@ -198,11 +229,16 @@ async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingRespons
     Это симметрично WS/Webhook/Express и закрывает scope Wave 1.5
     для SSE: SSE из чисто push-канала превращается также в
     request-response-канал поверх HTTP.
+
+    Cycle-6/D-AUDIT-609: проброс ``principal`` / ``permissions`` из
+    ``request.state.auth`` в ``dispatch_action_or_dsl`` (parity с
+    GraphQL/SOAP/REST) для route-wide permission enforcement.
     """
     correlation_id = request.headers.get("x-correlation-id") or request.headers.get(
         "x-request-id"
     )
     idempotency_key = request.headers.get("idempotency-key")
+    principal, permissions = _extract_auth_from_request(request)
 
     async def stream() -> Any:
         """Генератор SSE-событий: start → result|error → end."""
@@ -216,6 +252,8 @@ async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingRespons
                 correlation_id=correlation_id,
                 idempotency_key=idempotency_key,
                 attributes={"path": str(request.url.path)},
+                principal=principal,
+                permissions=permissions,
             )
         except Exception as exc:
             logger.exception("SSE invoke ошибка: %s", exc)

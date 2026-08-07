@@ -145,26 +145,42 @@ async def _verify_mtls(request: Request) -> AuthContext | None:
 
 
 async def _verify_saml(request: Request) -> AuthContext | None:
-    """Проверка SAML session (V15 S6).
+    """Проверка SAML session (V15 S6) — FAIL-CLOSED.
 
     Полный SP-initiated SSO flow реализован отдельным endpoint'ом
     ``/api/v1/saml/{login,acs,sls}`` (см. :class:`SamlBackend`). Здесь
     верификация лимитирована проверкой signed session-cookie или
     header'а ``X-SAML-Session-ID``, который выставляется ACS-handler'ом
     после успешной обработки SAMLResponse.
+
+    cycle-6/D-AUDIT-601 (SECURITY-P0-001): ранее эта функция принимала
+    ЛЮБОЕ значение ``saml_session`` cookie / ``X-SAML-Session-ID``
+    header как валидный principal — CVE-уровень impersonation через
+    подделку cookie (``auth_selector.py:147-167``). Теперь — fail-CLOSED:
+    явный ``logger.error`` + ``NotImplementedError`` (``verify_request``
+    оборачивает verifier в ``try/except`` и при исключении движется к
+    следующему методу, либо возвращает ``None`` если SAML единственный;
+    middleware/``require_auth`` трактует это как 401). Production usage:
+    extensions должны настраивать ``SamlBackend`` напрямую через
+    ``core/auth/saml_backend.py`` + ``AuthRequiredMiddleware`` с custom
+    verifier или переходить на ``AuthMethod.JWT`` до полной реализации
+    SP-side session store (cycle-6/D-AUDIT-601 follow-up).
     """
     session_id = request.cookies.get("saml_session") or request.headers.get(
         "X-SAML-Session-ID"
     )
     if not session_id:
         return None
-    # Реальная валидация session_id — в SP-side store (Redis/in-memory).
-    # На уровне ядра принимаем cookie как заявку; проверка её подлинности
-    # делается middleware'ом. Это согласуется с тем, как сейчас сделано
-    # для X-Client-Cert-Fingerprint (доверяем TLS-proxy / SAML-handler'у).
-    return AuthContext(
-        AuthMethod.SAML, principal=session_id, metadata={"session_id": session_id}
+    # cycle-6/D-AUDIT-601: SAML verification not yet wired in
+    # core/auth/auth_selector.py — reject unvalidated session_id
+    # to prevent impersonation (CVE).
+    logger.error(
+        "SAML verification not wired in core auth_selector "
+        "(cycle-6/D-AUDIT-601 SECURITY-P0-001); rejecting unvalidated "
+        "session_id to prevent impersonation. Use JWT or wire "
+        "SamlBackend via core/auth/saml_backend.py."
     )
+    raise NotImplementedError("SAML verification not yet wired; use JWT instead")
 
 
 async def _verify_express(request: Request) -> AuthContext | None:

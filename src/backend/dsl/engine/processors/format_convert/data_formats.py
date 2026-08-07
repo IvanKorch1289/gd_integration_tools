@@ -17,7 +17,8 @@ S40 W4 FINAL: +5 chainable методов (from_jwt/to_compact_json/to|from_prot
       ``base64``, ``configparser``, ``tomllib`` (3.11+), ``pickle``, ``html``,
       ``urllib.parse``, ``uuid``, ``re``;
     * optional: ``yaml``, ``openpyxl``, ``xmltodict``, ``joserfc``;
-    * optional: ``pyarrow`` (Parquet), ``msgpack`` (fallback → ``pickle``),
+    * optional: ``pyarrow`` (Parquet), ``msgpack`` (cycle-6/D-AUDIT-603:
+      pickle fallback удалён → ImportError при отсутствии),
       ``tomli_w`` (TOML write — fallback на ImportError с понятным message);
     * bencode: собственная ~40-строчная реализация (без внешних deps).
 """
@@ -212,17 +213,18 @@ class DataFormatsMixin:
         return table.to_pylist()
 
     def _to_msgpack(self, data: Any) -> bytes:
+        # cycle-6/D-AUDIT-603: pickle fallback удалён (RCE: ``pickle.loads``
+        # исполняет произвольный код из payload). При отсутствии ``msgpack``
+        # ImportError пробрасывается наверх, ``process()`` ловит в ``except
+        # Exception`` и делает ``exchange.fail``. Тот же паттерн что и
+        # ``_to_parquet`` / ``_from_parquet`` ниже.
         try:
             import msgpack
-
-            return msgpack.packb(data, use_bin_type=True)
-        except ImportError:
-            # Fallback: pickle используется только когда msgpack недоступен
-            # (dev_light / minimal install). Данные остаются в pipeline — это
-            # наш собственный round-trip, не untrusted input.
-            import pickle
-
-            return pickle.dumps(data)
+        except ImportError as exc:
+            raise ImportError(
+                "to_msgpack requires 'msgpack' (pip install msgpack)"
+            ) from exc
+        return msgpack.packb(data, use_bin_type=True)
 
     def _from_msgpack(self, data: Any) -> Any:
         if isinstance(data, (bytes, bytearray)):
@@ -231,15 +233,17 @@ class DataFormatsMixin:
             raw = data.encode("utf-8")
         else:
             raw = data
+        # cycle-6/D-AUDIT-603: симметрично ``_to_msgpack`` — pickle fallback
+        # удалён. ``msgpack.unpackb`` не выполняет произвольный код (только
+        # msgpack-типы), в отличие от pickle, поэтому единственный безопасный
+        # путь — требовать ``msgpack`` как hard-dep.
         try:
             import msgpack
-
-            return msgpack.unpackb(raw, raw=False)
-        except ImportError:
-            # Symmetric fallback к pickle — см. комментарий в _to_msgpack.
-            import pickle
-
-            return pickle.loads(raw)  # noqa: S301 — см. комментарий выше
+        except ImportError as exc:
+            raise ImportError(
+                "from_msgpack requires 'msgpack' (pip install msgpack)"
+            ) from exc
+        return msgpack.unpackb(raw, raw=False)
 
     def _to_toml(self, data: Any) -> str:
         if not isinstance(data, dict):

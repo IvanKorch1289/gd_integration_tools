@@ -163,8 +163,26 @@ class PIIUnmaskProcessor(BaseAIProcessor):
 
     @staticmethod
     def _resolve_tokenizer() -> Any | None:
-        """Lazy-резолв :class:`PIITokenizer`."""
-        return None
+        """Lazy-резолв :class:`PIITokenizer` через DI provider.
+
+        cycle-6/D-AUDIT-604: ранее возвращал ``None`` hardcoded, из-за чего
+        ``PIIUnmaskProcessor._run`` всегда падал в pass-through (masked PII
+        оставалось masked → data leak / incorrect output). Теперь зеркалит
+        ``PIIMaskProcessor._resolve_tokenizer`` через DI provider, что
+        позволяет round-trip ``pii_mask → agent_run → pii_unmask`` работать.
+        При сбое резолва — warning + ``None`` (silent pass-through).
+        """
+        try:
+            from src.backend.core.di.providers.ai import get_pii_tokenizer_provider
+
+            provider = get_pii_tokenizer_provider()
+            return provider() if provider else None
+        except Exception as exc:
+            _logger.warning(
+                "PIIUnmaskProcessor: PIITokenizer resolution failed: %s",
+                exc,
+            )
+            return None
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML."""

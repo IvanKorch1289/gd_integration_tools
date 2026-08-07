@@ -14,15 +14,14 @@ from src.backend.services.ai.agent_memory import AgentMemoryService
 
 pytestmark = pytest.mark.unit
 
-# Round 23 fix: 2 теста ожидают tenant_id kwarg в AgentMemoryService —
-# forward-looking TDD для DEFER-1 (AgentMemory REST tenant scope).
-# Текущий API add_message() не принимает tenant_id, endpoint НЕ извлекает
-# tenant context → нет изоляции. Помечаем xfail до dedicated migration sprint.
-_XFAIL_AGENT_MEMORY_TENANT = pytest.mark.xfail(
+# cycle-6/D-AUDIT-606: add_message/get_conversation теперь требуют tenant_id
+# (kw-only required). Service-level test стал green; REST-тест остаётся xfail
+# пока endpoint не начнёт пробрасывать tenant_id из RequestContext.
+_XFAIL_AGENT_MEMORY_REST_TENANT = pytest.mark.xfail(
     reason=(
-        "AgentMemory tenant scope: ``add_message()`` не принимает ``tenant_id`` "
-        "kwarg, endpoint не извлекает tenant context. DEFER-1 "
-        "(dedicated sprint, L scope)."
+        "AgentMemory REST tenant scope: endpoint facade ещё не извлекает "
+        "tenant_id из RequestContext и не пробрасывает в service. DEFER-2 "
+        "(endpoint migration, требует ActionRouterBuilder hook)."
     ),
     strict=True,
 )
@@ -95,10 +94,14 @@ class _FakeMongoClient:
         return docs
 
 
-@_XFAIL_AGENT_MEMORY_TENANT
 @pytest.mark.asyncio
 async def test_service_tenant_a_cannot_read_tenant_b_session() -> None:
-    """Tenant A не читает сообщения tenant B при одинаковом session_id."""
+    """Tenant A не читает сообщения tenant B при одинаковом session_id.
+
+    cycle-6/D-AUDIT-606: ``add_message``/``get_conversation`` теперь
+    требуют ``tenant_id`` (kw-only) → Mongo query фильтрует по
+    ``(session_id, tenant_id)`` → cross-tenant read невозможен.
+    """
     mongo = _FakeMongoClient()
     service = AgentMemoryService(client_factory=mongo.factory)
 
@@ -106,7 +109,6 @@ async def test_service_tenant_a_cannot_read_tenant_b_session() -> None:
         "shared",
         role="user",
         content="tenant-b-secret",
-        metadata={"session_id": "tenant_a:shared"},
         tenant_id="tenant_b",
     )
 
@@ -115,7 +117,7 @@ async def test_service_tenant_a_cannot_read_tenant_b_session() -> None:
     assert [message["content"] for message in tenant_b_messages] == ["tenant-b-secret"]
 
 
-@_XFAIL_AGENT_MEMORY_TENANT
+@_XFAIL_AGENT_MEMORY_REST_TENANT
 def test_rest_tenant_a_cannot_read_tenant_b_session(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -380,3 +380,40 @@ async def test_pii_mask_tokenizer_raises_pass_through(
     assert ex.in_message.body == text  # unchanged
     assert ex.get_property("pii_detected") is False
     assert ex.error is None
+
+
+@pytest.mark.asyncio
+async def test_pii_unmask_uses_di_provider_without_monkeypatch(
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+) -> None:
+    """cycle-6/D-AUDIT-604: ``PIIUnmaskProcessor._resolve_tokenizer`` обязан
+    работать через DI provider ``get_pii_tokenizer_provider``, а не возвращать
+    ``None`` hardcoded. Тест НЕ мокает ``_resolve_tokenizer`` напрямую —
+    вместо этого инжектит tokenizer через ``set_pii_tokenizer_provider`` и
+    проверяет, что round-trip ``pii_mask → pii_unmask`` восстанавливает
+    оригинал.
+    """
+    from src.backend.core.config.features import feature_flags
+    from src.backend.core.di.providers import ai
+
+    monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
+    tokenizer = _FakePIITokenizer()
+    ai.set_pii_tokenizer_provider(lambda: tokenizer)
+    try:
+        original = "Контакт Иванова: petrov@bank.ru, +7 495 555 12 34"
+        ex: Exchange[Any] = Exchange(in_message=Message(body=original))
+
+        mask_proc = PIIMaskProcessor(scope="banking")
+        await mask_proc.process(ex, context)
+
+        assert ex.in_message.body != original  # masked
+
+        # НЕ monkeypatch._resolve_tokenizer — резолв через DI provider.
+        unmask_proc = PIIUnmaskProcessor(scope="banking", strict=True)
+        await unmask_proc.process(ex, context)
+
+        assert ex.in_message.body == original  # round-trip restored
+        assert ex.error is None
+    finally:
+        # pop из _overrides, чтобы не загрязнить global state других тестов.
+        ai._overrides.pop("pii_tokenizer", None)

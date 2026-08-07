@@ -181,8 +181,31 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
 
     @staticmethod
     def _resolve_runtime() -> Any | None:
-        """Lazy-резолв :class:`LLMGuardClient` (S24 W2 partial)."""
-        return None
+        """Lazy-резолв :class:`LlamaGuardRuntime` через DI provider.
+
+        cycle-6/D-AUDIT-605: ранее возвращал ``None`` hardcoded, из-за чего
+        ``GuardrailsApplyProcessor._run`` всегда падал в pass-through
+        (``runtime is None`` → L105-109), и pipeline с ``on_block="block"``
+        молча пропускал unsafe content — **fail-open safety gate**.
+        Теперь зеркалит ``PIIMaskProcessor._resolve_tokenizer`` через DI
+        provider, что позволяет шагу выполнять реальный ``classify`` при
+        наличии :class:`LlamaGuardRuntime`. При сбое резолва — ``None``
+        (callers обязаны логировать WARNING и продолжать silent pass-through,
+        чтобы dev_light/CI без llm-guard не падали — см. L105-109).
+        """
+        try:
+            from src.backend.core.di.providers.ai import (
+                get_llm_guard_runtime_provider,
+            )
+
+            return get_llm_guard_runtime_provider()
+        except Exception as exc:
+            _logger.warning(
+                "GuardrailsApplyProcessor: LLMGuardClient resolution "
+                "failed: %s",
+                exc,
+            )
+            return None
 
     def to_spec(self) -> dict[str, Any]:
         """Round-trip сериализация для YAML."""

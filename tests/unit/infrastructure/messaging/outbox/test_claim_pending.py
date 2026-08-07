@@ -1,5 +1,9 @@
 """Unit-тесты для outbox.claim_pending (S64 W1).
 
+cycle-6/D-AUDIT-610: ``lambda: fake_txn`` → ``lambda *_a, **_kw: fake_txn``
+(monkeypatch stub) — production вызывает ``main_session_manager.transaction(session)``
+с 1 аргументом, 0-arg lambda падала с TypeError (INFRA-P0-002).
+
 Проверяет multi-instance safety primitives:
 
 * ``_advisory_lock_key`` — детерминистичный hash → 64-bit int.
@@ -99,13 +103,17 @@ async def test_claim_pending_lock_not_acquired_returns_empty(
     advisory_result.scalar.return_value = False
     fake_session.execute = AsyncMock(return_value=advisory_result)
 
-    fake_txn = MagicMock()
-    fake_txn.__aenter__ = AsyncMock(return_value=fake_session)
-    fake_txn.__aexit__ = AsyncMock(return_value=None)
+    fake_session_ctx = MagicMock()
+    fake_session_ctx.__aenter__ = AsyncMock(return_value=fake_session)
+    fake_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
     monkeypatch.setattr(
+        "src.backend.infrastructure.repositories.outbox.main_session_manager.create_session",
+        lambda: fake_session_ctx,
+    )
+    monkeypatch.setattr(
         "src.backend.infrastructure.repositories.outbox.main_session_manager.transaction",
-        lambda: fake_txn,
+        lambda *_a, **_kw: fake_session_ctx,
     )
 
     result = await claim_pending(limit=10, worker_id="worker-B")
@@ -128,13 +136,17 @@ async def test_claim_pending_lock_acclaimed_db_empty_returns_empty(
     update_result.fetchall.return_value = []
     fake_session.execute = AsyncMock(side_effect=[advisory_result, update_result])
 
-    fake_txn = MagicMock()
-    fake_txn.__aenter__ = AsyncMock(return_value=fake_session)
-    fake_txn.__aexit__ = AsyncMock(return_value=None)
+    fake_session_ctx = MagicMock()
+    fake_session_ctx.__aenter__ = AsyncMock(return_value=fake_session)
+    fake_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
     monkeypatch.setattr(
+        "src.backend.infrastructure.repositories.outbox.main_session_manager.create_session",
+        lambda: fake_session_ctx,
+    )
+    monkeypatch.setattr(
         "src.backend.infrastructure.repositories.outbox.main_session_manager.transaction",
-        lambda: fake_txn,
+        lambda *_a, **_kw: fake_session_ctx,
     )
 
     result = await claim_pending(limit=10, worker_id="worker-A")
@@ -168,13 +180,17 @@ async def test_claim_pending_lock_acclaimed_returns_orm_objects(
     update_result.fetchall.return_value = [fake_row]
     fake_session.execute = AsyncMock(side_effect=[advisory_result, update_result])
 
-    fake_txn = MagicMock()
-    fake_txn.__aenter__ = AsyncMock(return_value=fake_session)
-    fake_txn.__aexit__ = AsyncMock(return_value=None)
+    fake_session_ctx = MagicMock()
+    fake_session_ctx.__aenter__ = AsyncMock(return_value=fake_session)
+    fake_session_ctx.__aexit__ = AsyncMock(return_value=None)
 
     monkeypatch.setattr(
+        "src.backend.infrastructure.repositories.outbox.main_session_manager.create_session",
+        lambda: fake_session_ctx,
+    )
+    monkeypatch.setattr(
         "src.backend.infrastructure.repositories.outbox.main_session_manager.transaction",
-        lambda: fake_txn,
+        lambda *_a, **_kw: fake_session_ctx,
     )
 
     result = await claim_pending(limit=10, worker_id="worker-A")

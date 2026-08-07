@@ -98,13 +98,20 @@ class AgentMemoryService:
             logger.warning("AgentMemory: ensure_indexes failed: %s", exc)
 
     async def get_conversation(
-        self, session_id: str, last_n: int = 20
+        self,
+        session_id: str,
+        last_n: int = 20,
+        *,
+        tenant_id: str,
     ) -> list[dict[str, Any]]:
         """Get conversation history for a session.
 
         Args:
             session_id: Session identifier.
             last_n: Number of recent messages.
+            tenant_id: Tenant identifier (cycle-6/D-AUDIT-606: required для multi-tenant
+                isolation; иначе Tenant A читает сообщения Tenant B при одинаковом
+                session_id).
 
         Returns:
             List of message dicts.
@@ -112,8 +119,8 @@ class AgentMemoryService:
         client = self._client()
         docs = await client.find(
             _MESSAGES,
-            query={"session_id": session_id},
-            projection={"_id": 0, "session_id": 0},
+            query={"session_id": session_id, "tenant_id": tenant_id},
+            projection={"_id": 0, "session_id": 0, "tenant_id": 0},
             limit=last_n,
             sort=[("ts", -1)],
         )
@@ -125,6 +132,8 @@ class AgentMemoryService:
         role: str,
         content: str,
         metadata: dict[str, Any] | None = None,
+        *,
+        tenant_id: str,
     ) -> None:
         """Add a message to conversation history.
 
@@ -133,10 +142,16 @@ class AgentMemoryService:
             role: Message role (user/assistant/system).
             content: Message content.
             metadata: Optional metadata.
+            tenant_id: Tenant identifier (cycle-6/D-AUDIT-606: required kwarg,
+                иначе multi-tenant data breach при одинаковых session_id).
+
+        Raises:
+            TypeError: при отсутствии ``tenant_id`` (kw-only, no default).
         """
         client = self._client()
         doc = {
             "session_id": session_id,
+            "tenant_id": tenant_id,
             "role": role,
             "content": content,
             "ts": time.time(),
@@ -146,20 +161,24 @@ class AgentMemoryService:
         # Periodic trim: run only every ~N inserts to avoid O(N) overhead.
         self._trim_counter += 1
         if self._trim_counter >= self._trim_interval:
-            await self._trim_messages(session_id)
+            await self._trim_messages(session_id, tenant_id=tenant_id)
             self._trim_counter = 0
 
-    async def _trim_messages(self, session_id: str) -> None:
+    async def _trim_messages(
+        self, session_id: str, *, tenant_id: str
+    ) -> None:
         """Trim messages to keep only max_messages most recent.
 
         Args:
             session_id: Session identifier.
+            tenant_id: Tenant identifier (cycle-6/D-AUDIT-606: фильтруем trim
+                только в рамках tenant, чтобы не удалить чужие сообщения).
         """
         async with self._trim_lock:
             client = self._client()
             keep_doc = await client.find(
                 _MESSAGES,
-                query={"session_id": session_id},
+                query={"session_id": session_id, "tenant_id": tenant_id},
                 projection={"ts": 1, "_id": 0},
                 limit=1,
                 skip=self._max_messages,
@@ -168,7 +187,11 @@ class AgentMemoryService:
             if keep_doc:
                 cutoff = keep_doc[0]["ts"]
                 await client.collection(_MESSAGES).delete_many(
-                    {"session_id": session_id, "ts": {"$lt": cutoff}}
+                    {
+                        "session_id": session_id,
+                        "tenant_id": tenant_id,
+                        "ts": {"$lt": cutoff},
+                    }
                 )
 
     async def clear_conversation(self, session_id: str) -> None:
