@@ -216,7 +216,17 @@ class KafkaFacade:
         try:
             self._get_producer()
             return True
-        except Exception:
+        except (ImportError, RuntimeError, OSError, ConnectionError, AttributeError) as kafka_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-907: narrow exceptions + observability.
+            # ImportError — kafka backend not installed, RuntimeError/
+            # ConnectionError — broker down, OSError — network, AttributeError
+            # — malformed config. Bare `except Exception` маскировал
+            # unrelated errors (KeyError, TypeError).
+            import logging
+            logging.getLogger(__name__).debug(
+                "kafka_facade.is_available_false",
+                extra={"error": str(kafka_exc), "error_type": type(kafka_exc).__name__},
+            )
             return False
 
     @staticmethod
