@@ -24,7 +24,7 @@ S35 GAP-AI-1
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.prompts.base import Prompt, PromptArgument
@@ -33,10 +33,14 @@ from src.backend.core.ai.errors import MCPToolError
 from src.backend.core.ai.skill_registry import SkillRegistry, SkillSpec
 from src.backend.core.logging import get_logger
 from src.backend.core.tenancy import current_tenant
-from src.backend.infrastructure.workflow.registry import (
-    WorkflowDescriptor,
-    workflow_registry,
-)
+
+if TYPE_CHECKING:
+    # cycle-5/D-AUDIT-501: структурный Protocol из core/ вместо прямого
+    # импорта infrastructure.workflow.registry на module-level.
+    from src.backend.core.ai.workflow_protocol import (
+        WorkflowDescriptorProtocol,
+        WorkflowRegistryProtocol,
+    )
 
 __all__ = ("FastMCPserver",)
 
@@ -46,7 +50,7 @@ logger = get_logger("dsl.agents.fastmcp_server")
 # ── Workflow prompts ──────────────────────────────────────────────────────────
 
 
-def _build_workflow_prompt_fn(wf: WorkflowDescriptor) -> Any:
+def _build_workflow_prompt_fn(wf: "WorkflowDescriptorProtocol") -> Any:
     """Build an async prompt function that returns workflow catalogue information."""
 
     async def prompt_fn(
@@ -191,7 +195,12 @@ class FastMCPserver:
         self._ensure_mcp()
         assert self._mcp is not None
 
-        for wf in workflow_registry.list_all():
+        # cycle-5/D-AUDIT-501: lazy import — DSL-слой не должен держать
+        # прямой module-level import infrastructure.workflow.registry.
+        from src.backend.infrastructure.workflow.registry import workflow_registry
+
+        descriptors = workflow_registry.list_all()
+        for wf in descriptors:
             safe_name = f"workflow_{wf.name.replace('.', '_').replace('-', '_')}"
             prompt_fn = _build_workflow_prompt_fn(wf)
             prompt_obj = Prompt(
@@ -222,7 +231,7 @@ class FastMCPserver:
 
         logger.info(
             "FastMCPserver registered %d workflow prompts",
-            len(workflow_registry.list_all()),
+            len(descriptors),
         )
 
 

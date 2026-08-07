@@ -126,10 +126,31 @@ class AgentSecurityFacade:
         Args:
             query: SQL query text.
             workflow_id: Опциональный workflow ID для per-workflow policy.
+                При наличии workflow-specific policy override вызов
+                фейлится с :class:`NotImplementedError` (cycle-5/D-AUDIT-502),
+                поскольку :class:`AgentSecurityFramework.validate_sql` не
+                принимает ни ``context``, ни ``policy_override`` —
+                молчаливое игнорирование override = security P0 fail-OPEN.
+
+        Raises:
+            NotImplementedError: Если задан per-workflow policy override.
+                Caller должен либо очистить override (``clear_workflow_policy``),
+                либо реализовать ``AgentSecurityFramework.validate_sql(..., policy=)``.
         """
         policy = self.get_policy_for_workflow(workflow_id)
         if policy is not None:
-            kwargs["policy_override"] = policy
+            _logger.error(
+                "validate_sql: policy_override dropped (framework.validate_sql "
+                "не принимает context/policy); workflow_id=%s policy=%s",
+                workflow_id,
+                type(policy).__name__,
+            )
+            raise NotImplementedError(
+                "AgentSecurityFramework.validate_sql does not yet support "
+                f"policy_override (workflow_id={workflow_id!r}); "
+                "see cycle-5/D-AUDIT-502"
+            )
+        # Без override — passthrough на framework (common path).
         return self.framework.validate_sql(query)
 
     def validate_file_modification(

@@ -285,6 +285,34 @@ def set_stream_logger_provider(logger: Any) -> None:
     _overrides["stream_logger"] = logger
 
 
+# ─────────────── Stream DLQ writer (cycle-5/D-AUDIT-504) ───────────────
+#
+# MQ subscribers (``entrypoints/stream/subscribers.py``,
+# ``entrypoints/stream/invoker_subscribers.py``) используют
+# ``get_stream_dlq_writer_provider()`` для enqueue poison message в
+# DLQ при exception в handler (B-17 fail-loud pattern).
+#
+# Composition root (``plugins/composition/di.py``) ОБЯЗАН вызвать
+# ``set_stream_dlq_writer_provider(writer)`` после wiring'a
+# :class:`InboxDLQWriter` — иначе MQ poison-message теряются
+# (silent fallback с warning-логом).
+
+
+def get_stream_dlq_writer_provider() -> Any:
+    """Возвращает ``DLQWriter`` для MQ subscribers.
+
+    Returns:
+        ``None`` если composition root не установил writer — MQ handlers
+        log warning и drop poison message (fail-loud signal).
+    """
+    return _overrides.get("stream_dlq_writer")
+
+
+def set_stream_dlq_writer_provider(writer: Any) -> None:
+    """Установить override для ``stream_dlq_writer`` provider (test-инжекция)."""
+    _overrides["stream_dlq_writer"] = writer
+
+
 __all__ = (
     "get_action_bus_service_provider",
     "get_action_dispatcher_provider",
@@ -296,6 +324,7 @@ __all__ = (
     "get_resilience_components_report_provider",
     "get_resilience_coordinator_provider",
     "get_scheduler_manager_provider",
+    "get_stream_dlq_writer_provider",
     "get_stream_logger_provider",
     "get_workflow_event_store_provider",
     "get_workflow_instance_model_provider",
@@ -312,6 +341,7 @@ __all__ = (
     "set_resilience_components_report_provider",
     "set_resilience_coordinator_provider",
     "set_scheduler_manager_provider",
+    "set_stream_dlq_writer_provider",
     "set_stream_logger_provider",
     "set_workflow_event_store_provider",
     "set_workflow_main_session_provider",

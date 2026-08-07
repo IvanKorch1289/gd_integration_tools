@@ -47,31 +47,30 @@ async def test_prewarmer_loads_top_queries() -> None:
     await stats.record("t1", "q2")
 
     rag = AsyncMock()
-    rag.query = AsyncMock(return_value={"answer": "x"})
+    rag.search = AsyncMock(return_value=[{"text": "x"}])
 
     prewarmer = RagCachePrewarmer(
         rag_service=rag, stats_collector=stats, top_n=10, throttle_ms=0
     )
     loaded = await prewarmer.prewarm_tenant("t1")
     assert loaded == 2
-    # 2 уникальных query → 2 вызова rag.query.
-    assert rag.query.await_count == 2
+    # 2 уникальных query → 2 вызова rag.search.
+    assert rag.search.await_count == 2
 
 
 @pytest.mark.asyncio
-async def test_prewarmer_handles_query_exception() -> None:
+async def test_prewarmer_handles_search_exception() -> None:
     stats = RagQueryStatsCollector()
     await stats.record("t1", "q1")
 
     rag = AsyncMock()
-    rag.query = AsyncMock(side_effect=RuntimeError("qdrant down"))
+    rag.search = AsyncMock(side_effect=RuntimeError("qdrant down"))
 
     prewarmer = RagCachePrewarmer(
         rag_service=rag, stats_collector=stats, top_n=10, throttle_ms=0
     )
     loaded = await prewarmer.prewarm_tenant("t1")
-    # Exception не приостанавливает работу, но `loaded` всё равно 0
-    # т.к. TypeError fallback в `query` тоже падает.
+    # Exception не приостанавливает работу — query пропускается, loaded=0.
     assert loaded == 0
 
 
@@ -82,7 +81,7 @@ async def test_prewarm_all_tenants() -> None:
     await stats.record("t2", "q2")
 
     rag = AsyncMock()
-    rag.query = AsyncMock(return_value={"answer": "x"})
+    rag.search = AsyncMock(return_value=[{"text": "x"}])
 
     prewarmer = RagCachePrewarmer(
         rag_service=rag, stats_collector=stats, top_n=10, throttle_ms=0

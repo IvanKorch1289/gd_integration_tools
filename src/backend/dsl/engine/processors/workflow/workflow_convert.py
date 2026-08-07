@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 _logger = get_logger("dsl.workflow.convert")
 
 
+# cycle-5/D-AUDIT-505 — register 4 workflow processors via @processor() decorator
 @processor(
     "workflow_convert",
     namespace="core",

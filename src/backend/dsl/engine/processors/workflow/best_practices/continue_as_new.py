@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 _logger = get_logger("dsl.workflow.continue_as_new")
 
 
+# cycle-5/D-AUDIT-505 — register 4 workflow processors via @processor() decorator
 @processor(
     "workflow_continue_as_new",
     namespace="core",

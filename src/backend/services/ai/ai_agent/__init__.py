@@ -107,5 +107,38 @@ class AIAgentService(
 
 
 def get_ai_agent_service() -> AIAgentService:
-    """Фабрика AI-сервиса."""
-    raise NotImplementedError  # заменяется декоратором
+    """Фабрика AI-сервиса (cycle-5/D-AUDIT-501).
+
+    Composition-root DI lookup по pattern :func:`get_ai_gateway` из
+    :mod:`src.backend.services.ai.gateway_adapter` (S177 M2 B-05 fix).
+    Приоритет:
+
+    1. ``app.state.ai_agent_service`` (composition-root registered singleton);
+    2. bare :class:`AIAgentService` для dev/unit-test (lazy construction).
+
+    При отсутствии composition-root DI в production-контексте bare
+    construction через :class:`AIAgentService` может упасть (например,
+    при отсутствии обязательных :class:`Settings`) — это всплывает
+    :class:`AIGatewayProductionWiringError` (fail-closed), чтобы
+    caller (``route_authz``, ``llm_judge``, ``service_setup``) не получал
+    silent-fallback на broken service.
+    """
+    try:
+        from src.backend.core.di.app_state import get_app_ref
+
+        app = get_app_ref()
+        if app is not None:
+            instance = getattr(app.state, "ai_agent_service", None)
+            if instance is not None:
+                return instance
+    except Exception:
+        pass
+
+    try:
+        return AIAgentService()
+    except Exception as exc:
+        from src.backend.core.ai.errors import AIGatewayProductionWiringError
+
+        raise AIGatewayProductionWiringError(
+            missing=("ai_agent_service",),
+        ) from exc

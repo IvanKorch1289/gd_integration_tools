@@ -13,6 +13,8 @@ Topic/queue имена:
 Результат публикуется через ``reply_channel``, указанный в request
 (по умолчанию ``api`` — polling-канал; для durable обратной связи —
 ``queue`` с ``metadata.queue_topic``).
+
+cycle-5/D-AUDIT-504: B-17 fail-loud DLQ handoff для MQ consumer.
 """
 
 from __future__ import annotations
@@ -27,6 +29,7 @@ from src.backend.core.di.providers import (
     get_stream_client_provider,
     get_stream_logger_provider,
 )
+from src.backend.entrypoints.stream._dlq_helper import enqueue_mq_poison_message
 
 __all__ = ("handle_rabbit_invocation", "handle_redis_invocation")
 
@@ -69,6 +72,20 @@ async def _dispatch_invocation_message(
     try:
         request = _deserialize_request(body)
     except (KeyError, ValueError, TypeError) as exc:
+        # cycle-5/D-AUDIT-504: невалидный body → enqueue в DLQ для replay/debug
+        # (B-17 fail-loud pattern). Раньше silently drop'ался.
+        await enqueue_mq_poison_message(
+            exc=exc,
+            body=body,
+            source=source,
+            route_id=(
+                settings.redis.get_stream_name("invocations-in")
+                if source == "redis"
+                else settings.queue.get_queue_name("invocations-in")
+            ),
+            correlation_id=correlation_id,
+            logger=stream_logger,
+        )
         stream_logger.warning(
             "MQ invocation: невалидный body source=%s correlation_id=%s err=%s",
             source,
@@ -86,9 +103,58 @@ async def _dispatch_invocation_message(
     invoker = get_invoker()
     try:
         await invoker.invoke(request)
-    except Exception as _:
+    except Exception as exc:
+        # cycle-5/D-AUDIT-504: B-17 fail-loud DLQ handoff для MQ consumer.
+        # Enqueue poison message с tenant_id/correlation_id/invocation_id,
+        # затем logger.error. Не raise'им — handler уже в except-блоке,
+        # чтобы не маскировать исходную ошибку.
+        await enqueue_mq_poison_message(
+            exc=exc,
+            body=body,
+            source=source,
+            route_id=(
+                settings.redis.get_stream_name("invocations-in")
+                if source == "redis"
+                else settings.queue.get_queue_name("invocations-in")
+            ),
+            correlation_id=correlation_id,
+            tenant_id=_extract_tenant_id(request),
+            logger=stream_logger,
+        )
         stream_logger.exception(
-            "MQ invocation: Invoker.invoke failed source=%s id=%s",
+            "MQ invocation: Invoker.invoke failed source=%s id=%s "
+            "correlation_id=%s tenant_id=%s poison_message=%s",
             source,
             request.invocation_id,
+            correlation_id,
+            _extract_tenant_id(request),
+            _summarize_poison(body),
         )
+
+
+def _summarize_poison(body: Any, *, max_len: int = 256) -> str:
+    """Краткое summary body для error log (truncate to ``max_len``)."""
+    try:
+        rendered = repr(body)
+    except Exception:
+        rendered = "<unrepresentable body>"
+    if len(rendered) > max_len:
+        return rendered[: max_len - 3] + "..."
+    return rendered
+
+
+def _extract_tenant_id(request: Any) -> str | None:
+    """Извлекает ``tenant_id`` из ``InvocationRequest``.
+
+    Поля ``tenant_id`` в dataclass нет — обычно кладут в ``metadata`` dict.
+    Используем ``getattr(metadata, "get", ...)`` чтобы не падать, если
+    ``metadata`` отсутствует или имеет другой тип (mock, None).
+    """
+    metadata = getattr(request, "metadata", None)
+    if metadata is None:
+        return None
+    getter = getattr(metadata, "get", None)
+    if getter is None or not callable(getter):
+        return None
+    value = getter("tenant_id")
+    return value if isinstance(value, str) else None

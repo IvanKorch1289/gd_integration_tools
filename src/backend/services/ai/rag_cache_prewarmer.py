@@ -7,6 +7,11 @@ Throttled (1 query / 100ms по умолчанию) чтобы не положи
 
 * ``rag_prewarm_loaded_total{tenant}``;
 * ``rag_prewarm_duration_seconds{tenant}``.
+
+cycle-5/D-AUDIT-506: ``RagCachePrewarmer`` вызывает ``RAGService.search()``
+(а не phantom ``query(query, fill_cache=True, ...)``). L3 cache заполняется
+внутри ``search()`` при ``self._cache is not None`` — никаких отдельных
+``fill_cache`` kwargs не требуется.
 """
 
 from __future__ import annotations
@@ -43,7 +48,15 @@ except Exception:
 
 
 class RagCachePrewarmer:
-    """Pre-warm top-N RAG queries для каждого opt-in tenant'а."""
+    """Pre-warm top-N RAG queries для каждого opt-in tenant'а.
+
+    cycle-5/D-AUDIT-506: ``prewarm_tenant`` вызывает
+    ``self._rag.search(query, tenant_id=...)`` — единственный публичный
+    retrieval-метод ``RAGService`` (см. ``rag_service/search_mixin.py:179``).
+    Старый ``self._rag.query(query, fill_cache=True, ...)`` был phantom:
+    ``query()`` не существует в ``RAGService``, ``fill_cache`` ни одним
+    retrieval-методом не принимается (L3 cache заполняется внутри ``search()``).
+    """
 
     def __init__(
         self,
@@ -59,22 +72,22 @@ class RagCachePrewarmer:
         self._throttle = throttle_ms / 1000.0
 
     async def prewarm_tenant(self, tenant_id: str) -> int:
-        """Pre-warm для одного tenant; возвращает количество прогретых query."""
+        """Pre-warm для одного tenant; возвращает количество прогретых query.
+
+        cycle-5/D-AUDIT-506: используется ``RAGService.search(query, tenant_id=...)``.
+        ``fill_cache`` — phantom kwarg: L3 cache заполняется в ``search()`` при
+        активном ``self._cache`` (см. ``search_mixin.py:227-231``).
+        """
         start = time.monotonic()
         loaded = 0
         try:
             top = await self._stats.top_queries(tenant_id, n=self._top_n)
             for query, _count in top:
+                # search() сам наполняет L3-кэш при self._cache is not None.
                 try:
-                    await self._rag.query(query, fill_cache=True, tenant_id=tenant_id)
-                except TypeError:
-                    # Если RAG-сервис не поддерживает fill_cache — fallback на обычный query.
-                    try:
-                        await self._rag.query(query, tenant_id=tenant_id)
-                    except Exception:
-                        continue
+                    await self._rag.search(query, tenant_id=tenant_id)
                 except Exception as exc:
-                    logger.debug("rag_prewarm.query_failed: %s", exc)
+                    logger.debug("rag_prewarm.search_failed tenant=%s query=%r: %s", tenant_id, query, exc)
                     continue
                 loaded += 1
                 await asyncio.sleep(self._throttle)
