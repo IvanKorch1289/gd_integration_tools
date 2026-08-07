@@ -67,6 +67,7 @@ from .gateways import (  # noqa: I001 — intentional relative
 LANGGRAPH_CHECKPOINT_TIMEOUT_S: int = 10
 
 __all__ = (
+    "GuardrailValueTypeError",
     "StepCompiler",
     "compile_activity_step",
     "compile_agent_invoke_step",
@@ -85,6 +86,17 @@ __all__ = (
 
 
 _logger = get_logger("workflow.compiler.step_compilers")
+
+
+# D-A8-07 fix (cycle 1): explicit exception для non-numeric guardrail value.
+# Banking context: guardrail на cost/max должен fail-CLOSED, не silently
+# PASS при non-numeric value (cost explosion без обнаружения).
+class GuardrailValueTypeError(RuntimeError):
+    """Raised when guardrail target value не является numeric (int/float).
+
+    Banking-context critical: silent fail-OPEN при non-numeric = cost
+    explosion без alerting. D-A8-07 cycle 1 fix.
+    """
 
 # Сигнатура компилятора шага: декларация + рантайм-контекст → coroutine.
 # ``ctx`` — словарь в котором workflow держит output_key значения,
@@ -611,6 +623,11 @@ async def compile_guardrail_step(
     - ``dlq`` → emit DLQ event + continue (не fail).
     - ``escalate`` → set ctx flag ``_escalate_requested`` для downstream.
 
+    D-A8-07 fix (cycle 1): fail-CLOSED при non-numeric value. Ранее
+    fallback к ``0.0`` для non-numeric (dict, str, None) — guardrail
+    молча PASS, banking-context cost explosion без обнаружения.
+    Теперь: raise GuardrailValueTypeError при non-numeric.
+
     Args:
         decl: Декларация guardrail-шага.
         ctx: Рантайм-контекст workflow.
@@ -620,7 +637,7 @@ async def compile_guardrail_step(
     """
     outputs = ctx.get("_outputs", {})
     target = decl.target
-    value: float = 0.0
+    raw_value: Any = None
     if target is None:
         # Используем последний output (current step). Warn если их >1 —
         # implicit ordering сценарий хрупкий; рекомендуем explicit target.
@@ -631,8 +648,7 @@ async def compile_guardrail_step(
                     "using last; prefer explicit target to avoid order-dependence",
                     extra={"output_keys": list(outputs.keys()), "rule": decl.rule},
                 )
-            last = next(reversed(outputs.values()))
-            value = float(last) if isinstance(last, (int, float)) else 0.0
+            raw_value = next(reversed(outputs.values()))
     elif "." in target:
         # Dot-path — простая навигация по dict.
         cur: Any = outputs
@@ -642,9 +658,22 @@ async def compile_guardrail_step(
             else:
                 cur = None
                 break
-        value = float(cur) if isinstance(cur, (int, float)) else 0.0
+        raw_value = cur
     else:
-        value = float(outputs.get(target, 0) or 0)
+        raw_value = outputs.get(target, 0)
+
+    # D-A8-07 fix (cycle 1): explicit fail-CLOSED при non-numeric.
+    # Раньше: \`value = float(cur) if isinstance(cur, (int, float)) else 0.0\`
+    # → silent fallback к 0.0 → guardrail PASS даже при cost explosion.
+    if not isinstance(raw_value, (int, float)):
+        raise GuardrailValueTypeError(
+            f"Guardrail {decl.rule!r} target={target!r} value type "
+            f"{type(raw_value).__name__} (value={raw_value!r}) — "
+            f"expected numeric (int/float) для banking-context cost safety. "
+            f"Fallback к 0.0 был silent fail-OPEN (D-A8-07 cycle 1)."
+        )
+
+    value: float = float(raw_value)
 
     exceeded = value > decl.threshold
     result = {"rule": decl.rule, "value": value, "exceeded": exceeded}
