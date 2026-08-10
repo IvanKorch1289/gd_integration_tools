@@ -27,6 +27,8 @@ from src.backend.core.logging import get_logger
 from src.backend.infrastructure.database.database import db_initializer  # noqa: F401
 from src.backend.infrastructure.database.migrations.types import load_types
 
+_logger = get_logger("alembic.env")  # Cycle-19 (D-AUDIT-1906): explicit logger
+
 # Cycle-15 (D-AUDIT-1503): auto-import ORM-модулей плагинов для Alembic.
 # Раньше список плагинов был hardcoded (только 4 core_entities). Теперь
 # сканируем ``extensions/*/plugin.toml`` через
