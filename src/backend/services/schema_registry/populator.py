@@ -165,7 +165,16 @@ def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> in
 
     try:
         plugin_registry = get_plugin_registry()
-    except Exception:  # pragma: no cover - runtime может быть не готов
+    except (ImportError, AttributeError, RuntimeError) as plugin_reg_exc:  # pragma: no cover - runtime может быть не готов
+        # cycle-9/D-AUDIT-916: narrow exceptions + observability.
+        # ImportError — plugin_runtime missing, AttributeError — malformed
+        # registry, RuntimeError — not initialized. Bare `except Exception`
+        # маскировал unrelated runtime errors (KeyError, TypeError).
+        import logging
+        logging.getLogger(__name__).debug(
+            "schema_registry.populator_plugin_registry_unavailable",
+            extra={"error": str(plugin_reg_exc)},
+        )
         return 0
 
     count = 0
