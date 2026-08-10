@@ -178,3 +178,8 @@ src/backend/entrypoints/graphql/schema.py	entrypoints	src.backend.dsl.engine.con
 src/backend/entrypoints/soap/soap_handler.py	entrypoints	src.backend.dsl.engine.context
 src/backend/services/audit/clickhouse_audit_service/service.py	services	src.backend.infrastructure.messaging.dlq_base
 src/backend/core/di/providers/billing.py	core	src.backend.services.billing
+# Cycle-15 (D-AUDIT-1503) — Alembic env.py auto-discovers plugin models
+# via ``load_plugin_manifests_for_migrations``. infrastructure → services
+# forbidden, но alembic env.py выполняется в sync-context до plugin loader
+# lifecycle, и ORM-model registration требует этого import'а.
+src/backend/infrastructure/database/migrations/env.py	infrastructure	src.backend.services.plugins.loader
