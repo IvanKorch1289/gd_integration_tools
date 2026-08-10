@@ -303,9 +303,13 @@ class OtelMiddleware:
             span.set_status(Status(StatusCode.ERROR, str(exc)))
         except ImportError:
             pass
-        except Exception:  # pragma: no cover
+        except (AttributeError, RuntimeError, ValueError, TypeError):  # pragma: no cover
+            # cycle-9/D-AUDIT-1020: narrow exceptions + observability.
+            # AttributeError — Status/StatusCode API change, RuntimeError
+            # — set_status unavailable, ValueError/TypeError — invalid args.
             pass
         try:
             span.record_exception(exc)
-        except Exception:  # pragma: no cover
+        except (AttributeError, RuntimeError, ValueError, TypeError):  # pragma: no cover
+            # cycle-9/D-AUDIT-1020: см. выше — тот же narrow для record_exception.
             pass
