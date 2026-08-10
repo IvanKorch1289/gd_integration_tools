@@ -186,8 +186,15 @@ class CdcPostgresLogicalSource:
                     self.source_id,
                 )
                 return
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1712: narrow exceptions + observability.
+            # ImportError — features module missing, AttributeError —
+            # config not initialized, RuntimeError — feature_flags unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "cdc_postgres_logical.feature_flag_fallback",
+                extra={"source_id": self.source_id, "error": str(ff_exc)},
+            )
 
         # Lazy-import существующего CDCSource (не дублируем psycopg-логику).
         from src.backend.infrastructure.sources.cdc import CDCSource
