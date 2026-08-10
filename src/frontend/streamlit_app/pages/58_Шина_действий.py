@@ -37,7 +37,15 @@ try:
     )
 
     _flag_enabled: bool = _ff.frontend_action_bus_ui
-except Exception:  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+    # cycle-9/D-AUDIT-1062: narrow exceptions + observability.
+    # ImportError — features module missing, AttributeError — API
+    # change, RuntimeError — feature_flags unavailable.
+    import logging
+    logging.getLogger(__name__).debug(
+        "streamlit_58_Шина.feature_flag_fallback",
+        extra={"error": str(ff_exc)},
+    )
     _flag_enabled = False
 
 with st.sidebar:
