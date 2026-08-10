@@ -146,7 +146,7 @@ class TestAntivirusServiceHealth:
 
 class TestHealthCheckErrorPaths:
     """Verify health_check catches exceptions and returns error dict (not raises)."""
-    
+
     @pytest.mark.asyncio
     async def test_health_check_returns_valid_dict_structure(self) -> None:
         """All health_check impls must return dict with at minimum 'status' key."""
