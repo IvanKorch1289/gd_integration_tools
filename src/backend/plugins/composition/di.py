@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     )
     from src.backend.infrastructure.database.pool_monitor import PoolMonitor
     from src.backend.infrastructure.security.api_key_manager import APIKeyManager
+    from src.backend.core.security.authorization_gateway import AuthorizationGateway  # Cycle-19 (D-AUDIT-1907): forward-ref для get_authorization_gateway
 
 __all__ = (
     "register_app_state",
