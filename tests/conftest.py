@@ -83,7 +83,7 @@ def test_db():
     Для реального подключения используйте testcontainers в
     tests/integration/conftest.py.
     """
-    return None
+    return
 
 
 @pytest.fixture
@@ -93,4 +93,4 @@ def test_cache():
     Для реального подключения используйте testcontainers в
     tests/integration/conftest.py.
     """
-    return None
+    return

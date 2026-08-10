@@ -152,7 +152,7 @@ class PrometheusMetricsMiddleware(ProcessorMiddleware):
     ) -> None:
         """Pre-execution hook: метрики регистрируются at-import, no-op."""
         # Метрики уже зарегистрированы при импорте модуля — no-op hook.
-        return None
+        return
 
     async def after(
         self,

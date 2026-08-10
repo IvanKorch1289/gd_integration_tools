@@ -64,7 +64,7 @@ async def test_timeout_check_returns_ok_false() -> None:
 
     async def slow_check():
         await asyncio.sleep(0.1)  # Долго
-        return None
+        return
 
     service = ProcessorHealthService(timeout_per_check_s=0.1)
     service.register_check("slow", slow_check)

@@ -86,7 +86,7 @@ def hide_msgpack(monkeypatch: pytest.MonkeyPatch) -> None:
                 raise ImportError(
                     f"[cycle-6/D-AUDIT-603] msgpack blocked for test: {fullname}",
                 )
-            return None
+            return
 
     blocker = _BlockedMetaFinder()
     sys.meta_path.insert(0, blocker)

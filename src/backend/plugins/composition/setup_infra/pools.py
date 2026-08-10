@@ -254,8 +254,8 @@ async def _register_pools_in_unified_manager() -> None:
         async def _ping_browser() -> None:
             # Browser is lazily initialized; check client state
             if hasattr(BrowserClient, "_instance"):
-                return None
-            return None
+                return
+            return
 
         manager.register(
             "browser_main",

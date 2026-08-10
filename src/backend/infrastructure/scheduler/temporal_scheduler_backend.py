@@ -83,7 +83,7 @@ class TemporalSchedulerBackend:
         при первом вызове. Этот метод — no-op для совместимости с
         :class:`APSchedulerBackend` API.
         """
-        return None
+        return
 
     async def stop(self) -> None:
         """Остановка backend'а: cleanup.
@@ -91,7 +91,7 @@ class TemporalSchedulerBackend:
         Тоже no-op: Temporal client lifecycle управляется через
         :class:`TemporalClientFactory.aclose` (явно из lifespan).
         """
-        return None
+        return
 
     # ── schedule_cron ─────────────────────────────────────────────────
 

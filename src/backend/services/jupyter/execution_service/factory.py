@@ -112,19 +112,19 @@ class ExecutionBackendFactory:
                     "HUB backend требует JupyterHubSettings (settings=...)",
                 )
             return NotebookExecutionService(settings)
-        elif kind == BackendKind.PAPERMILL:
+        if kind == BackendKind.PAPERMILL:
             from src.backend.services.jupyter.execution_service import (
                 PapermillExecutionBackend,
             )
 
             return PapermillExecutionBackend(**kwargs)
-        elif kind == BackendKind.NBCLIENT:
+        if kind == BackendKind.NBCLIENT:
             from src.backend.services.jupyter.execution_service import (
                 NbClientExecutionBackend,
             )
 
             return NbClientExecutionBackend(**kwargs)
-        elif kind == BackendKind.E2B:
+        if kind == BackendKind.E2B:
             # S75 W2: E2BExecutionBackend integration (was NotImplementedError
             # в S74 W2 stub). e2b_code_interpreter opt-in dep ([ai] extra).
             from src.backend.services.jupyter.execution_service import (
@@ -132,8 +132,7 @@ class ExecutionBackendFactory:
             )
 
             return E2BExecutionBackend(**kwargs)
-        else:
-            raise ValueError(f"Unknown backend kind: {kind!r}")
+        raise ValueError(f"Unknown backend kind: {kind!r}")
 
     def from_config(
         self, *, settings: JupyterHubSettings | None = None, **kwargs: Any,

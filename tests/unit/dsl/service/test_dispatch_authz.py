@@ -42,7 +42,7 @@ class _NoopProcessor(BaseProcessor):
 
     async def process(self, exchange: Any, context: Any) -> None:  # type: ignore[override]
         """Пропускает exchange без изменений (no-op для regression-теста)."""
-        return None
+        return
 
 
 def _make_pipeline(route_id: str, security: tuple[str, ...] | None) -> Pipeline:

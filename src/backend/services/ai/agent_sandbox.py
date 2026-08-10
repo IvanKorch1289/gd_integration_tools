@@ -169,7 +169,7 @@ class InProcessAgentSandbox:
 
     async def shutdown(self) -> None:
         """Shutdown E2B sandbox (InProcessAgentSandbox)."""
-        return None
+        return
 
 
 def _sync_run_react(

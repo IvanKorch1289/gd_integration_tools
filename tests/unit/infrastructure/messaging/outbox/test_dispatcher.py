@@ -301,7 +301,7 @@ class _AlwaysFailDeliverer:
 
 async def _noop_deliverer(_event: OutboxEvent) -> None:
     """No-op deliverer для пустых сценариев."""
-    return None
+    return
 
 
 # ---------------------------------------------------------------------------

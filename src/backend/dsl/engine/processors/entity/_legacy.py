@@ -64,7 +64,7 @@ class _BaseEntityProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Default no-op — subclasses override."""
-        return None
+        return
 
     async def _dispatch(
         self,

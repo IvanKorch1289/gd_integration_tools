@@ -116,7 +116,7 @@ def enforce_tool_policy(tool_name: str, spec: ToolsSpec) -> None:
             f"Tool {tool_name!r} violates AIPolicySpec.tools policy. "
             f"Whitelist={spec.whitelist}, Blacklist={spec.blacklist}.",
         )
-    elif spec.on_violation == "warn":
+    if spec.on_violation == "warn":
         _logger.warning(
             "Tool %r violates policy (whitelist=%s, blacklist=%s) — "
             "allowing invocation per on_violation=warn",
@@ -125,7 +125,7 @@ def enforce_tool_policy(tool_name: str, spec: ToolsSpec) -> None:
             spec.blacklist,
         )
         return  # Allow
-    elif spec.on_violation == "block":
+    if spec.on_violation == "block":
         _logger.info(  # Use info (not warning) — silent per spec
             "Tool %r blocked per policy (whitelist=%s, blacklist=%s)",
             tool_name,
@@ -136,12 +136,11 @@ def enforce_tool_policy(tool_name: str, spec: ToolsSpec) -> None:
         raise ToolPolicyViolationError(
             f"Tool {tool_name!r} blocked per policy (on_violation=block)",
         )
-    else:
-        # Defensive: unknown on_violation → fail (safe default)
-        _logger.error("Unknown on_violation=%r — defaulting to fail", spec.on_violation)
-        raise ToolPolicyViolationError(
-            f"Tool {tool_name!r} blocked per policy (unknown on_violation)",
-        )
+    # Defensive: unknown on_violation → fail (safe default)
+    _logger.error("Unknown on_violation=%r — defaulting to fail", spec.on_violation)
+    raise ToolPolicyViolationError(
+        f"Tool {tool_name!r} blocked per policy (unknown on_violation)",
+    )
 
 
 def filter_tools_by_policy(tool_names: Iterable[str], spec: ToolsSpec) -> list[str]:
