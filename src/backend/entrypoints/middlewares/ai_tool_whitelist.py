@@ -243,6 +243,14 @@ def _default_whitelist_check(tenant_id: str, tool_name: str) -> bool:
             f"tool:{tool_name}",
         )
         return True
-    except Exception:
-        # Deny-by-default при ошибке
+    except (ImportError, AttributeError, RuntimeError, ValueError, TypeError) as gate_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1016: narrow exceptions + observability.
+        # ImportError — gate missing, AttributeError — gate API change,
+        # RuntimeError — gate unavailable, ValueError/TypeError — invalid
+        # args. Deny-by-default при ошибке (fail-closed).
+        import logging
+        logging.getLogger(__name__).debug(
+            "ai_tool_whitelist.gate_check_failed",
+            extra={"tool_name": tool_name, "error": str(gate_exc)},
+        )
         return False
