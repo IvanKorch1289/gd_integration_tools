@@ -47,6 +47,14 @@ class PluginProvides(BaseModel):
     Перечисляет публичные имена, которые плагин зарегистрирует через
     lifecycle-хуки (:class:`BasePlugin.on_register_*`). Используется
     `PluginLoader` для проверки коллизий **до** активации плагина.
+
+    Cycle-15 (D-AUDIT-1506): добавлено поле ``endpoints`` для
+    декларативной регистрации протоколов плагина. Каждый endpoint
+    содержит ``protocol`` (``"rest"``/``"graphql"``/``"grpc"``/``"mcp"``
+    /``"sse"``/``"websocket"``/``"soap"``), ``name`` (action ID или
+    RPC method) и ``path`` (URL pattern / GraphQL field / gRPC method).
+    Используется :func:`tools.check_protocol_sync` для cross-check
+    покрытия во всех протоколах.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -57,6 +65,41 @@ class PluginProvides(BaseModel):
     sources: tuple[str, ...] = ()
     sinks: tuple[str, ...] = ()
     schemas: tuple[str, ...] = ()
+    endpoints: tuple["PluginEndpoint", ...] = ()
+    """Cycle-15 (D-AUDIT-1506): декларативные endpoint'ы плагина по протоколам.
+
+    Empty tuple = плагин не предоставляет endpoints через
+    auto_register (legacy plugins без protocol parity). Сейчас только
+    информационный — не блокирует load. В Wave 1.5+ планируется
+    использовать для автоматического wire-up в app_factory.
+    """
+
+
+class PluginEndpoint(BaseModel):
+    """Cycle-15 (D-AUDIT-1506): декларация endpoint'а плагина для протокола.
+
+    Используется в :attr:`PluginProvides.endpoints` для cross-protocol
+    parity gate (:func:`tools.check_protocol_sync`).
+
+    Attributes:
+        protocol: Протокол: ``"rest"`` / ``"graphql"`` / ``"grpc"`` /
+            ``"mcp"`` / ``"sse"`` / ``"websocket"`` / ``"soap"`` /
+            ``"mqtt"``.
+        name: Имя endpoint'а — action ID, GraphQL field name, gRPC method
+            name, MCP tool name, etc.
+        path: URL pattern (REST path), GraphQL field path (``Query.x`` /
+            ``Mutation.x``), gRPC method path (``Service/Method``),
+            MCP tool path (``mcp.<plugin>.<tool>``).
+        method: HTTP method (для REST): ``"GET"``/``"POST"``/``"PUT"``/
+            ``"DELETE"``/``"PATCH"``. Empty для GraphQL/gRPC/MCP.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    protocol: str = Field(min_length=1, pattern=r"^(rest|graphql|grpc|mcp|sse|websocket|soap|mqtt)$")
+    name: str = Field(min_length=1, pattern=r"^[a-z][a-z0-9_.]*$")
+    path: str = Field(min_length=1)
+    method: str = Field(default="", pattern=r"^(GET|POST|PUT|DELETE|PATCH|)$")
 
 
 class PluginCompatibility(BaseModel):

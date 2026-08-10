@@ -18,27 +18,6 @@ requires_core = ">=0.2,<0.3"
 entry_class = "extensions.credit_pipeline.plugin.CreditPipelinePlugin"
 tenant_aware = true
 description = "Credit pipeline plugin (S76 — real agents: score/parse/decide)"
-# S18 W12 (ADR-NEW-6): internal banking-critical plugin → Tier-A.
-trust_tier = "A"
-
-# ─── Runtime capabilities (capability-gate) ───────────────────────
-# net.outbound — GlobScopeMatcher по '.' (DNS-стиль); :external требует WAF.
-[[capabilities]]
-name = "net.outbound"
-scope = "*.skb-techno.ru"
-
-[[capabilities]]
-name = "net.outbound"
-scope = "*.nbki.ru"
-
-# db.read/db.write — ExactAliasMatcher: scope = имя домена ресурса.
-[[capabilities]]
-name = "db.read"
-scope = "credit_applications"
-
-[[capabilities]]
-name = "db.write"
-scope = "credit_applications"
 
 [[capabilities]]
 name = "db.read"
@@ -55,6 +34,9 @@ scope = "credit.events.*"
 
 # ─── Декларативный inventory ──────────────────────────────────────
 # S76 W2: 3 real actions (scoring, document_parser, decision agents).
+# Cycle-15 (D-AUDIT-1506): ``endpoints`` секция — декларативная
+# per-protocol регистрация. tools/check_protocol_sync использует для
+# parity-гейта (REST/GraphQL/gRPC/MCP).
 [provides]
 actions = [
     "credit_pipeline.score",
@@ -66,3 +48,27 @@ processors = []
 sources = []
 sinks = []
 schemas = []
+
+[[provides.endpoints]]
+protocol = "rest"
+name = "credit_pipeline.score"
+path = "/api/v1/auto/credit_pipeline.score"
+method = "POST"
+
+[[provides.endpoints]]
+protocol = "graphql"
+name = "credit_pipeline_score"
+path = "Mutation.credit_pipeline_score"
+method = ""
+
+[[provides.endpoints]]
+protocol = "grpc"
+name = "credit_pipeline_score"
+path = "credit_pipeline.CreditPipelineService/Score"
+method = ""
+
+[[provides.endpoints]]
+protocol = "mcp"
+name = "credit_pipeline.score"
+path = "mcp.credit_pipeline.score"
+method = ""
