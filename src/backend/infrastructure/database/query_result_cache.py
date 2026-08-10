@@ -312,7 +312,15 @@ class QueryResultCache:
             raw = await self._backend.get(idx_key)
             try:
                 keys: list[str] = loads(raw) if raw else []
-            except Exception:  # noqa: BLE001,S110
+            except (ValueError, TypeError) as decode_exc:  # noqa: BLE001,S110
+                # cycle-9/D-AUDIT-1030: narrow exceptions + observability.
+                # ValueError для malformed JSON, TypeError для wrong
+                # data type, pickle.UnpicklingError для corrupted cache.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "query_result_cache.index_load_failed",
+                    extra={"error": str(decode_exc), "key": idx_key},
+                )
                 keys = []
             if key not in keys:
                 keys.append(key)
