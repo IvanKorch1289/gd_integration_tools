@@ -116,7 +116,7 @@ class StreamClient:
 
     @staticmethod
     async def _log_middleware_exception(exc: Exception) -> None:
-        stream_logger.error("Ошибка брокера: %s", str(exc), exc_info=True)
+        stream_logger.error("Ошибка брокера: %s", str(exc))
 
     def _setup_redis_router(self) -> None:
         if not getattr(self.redis_settings, "enabled", True):
