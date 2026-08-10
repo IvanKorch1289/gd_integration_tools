@@ -24,7 +24,7 @@ from src.backend.infrastructure.cache.tenant_wrapper import (
     DEFAULT_UNSCOPED_PREFIX,
     TenantCacheBackend,
 )
-from src.backend.infrastructure.cache.tiered import TieredCacheBackend  # re-exported as TieredCacheBackend  # re-exported
+from src.backend.infrastructure.cache.tiered import TieredCacheBackend  # noqa: F401 — re-exported as TieredCacheBackend
 from src.backend.infrastructure.cache.validator import (
     CacheConfigEntry,
     CacheConfigRegistry,

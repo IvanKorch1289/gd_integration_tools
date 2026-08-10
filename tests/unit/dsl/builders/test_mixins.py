@@ -153,7 +153,8 @@ class TestContentFilter:
         assert isinstance(proc, FilterProcessor)
 
     def test_predicate_set(self) -> None:
-        pred = lambda e: True
+        def pred(e):
+            return True
         pipeline = (
             RouteBuilder.from_("test.filter", source="internal:test")
             .content_filter(predicate=pred)

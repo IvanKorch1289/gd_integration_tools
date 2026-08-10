@@ -265,7 +265,8 @@ class TestDeferUntil:
 
 class TestDeferIf:
     def test_defer_if_callable_stored(self, builder: RouteBuilder) -> None:
-        cond = lambda ex: True
+        def cond(ex):
+            return True
         b = builder.defer_if(cond)
         assert b._deferred["type"] == "conditional"
         assert b._deferred["condition"] is cond
