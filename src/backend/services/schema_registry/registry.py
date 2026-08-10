@@ -173,8 +173,15 @@ class ServiceSchemaRegistry:
                     "Total schema registrations",
                     labels=("kind",),
                 ).labels(kind=entry.kind.value).inc()
-            except Exception:  # pragma: no cover - metrics best-effort
-                pass
+            except (AttributeError, TypeError, ValueError) as counter_exc:  # pragma: no cover - metrics best-effort
+                # cycle-9/D-AUDIT-938: narrow exceptions + observability.
+                # AttributeError — counter API change, TypeError — invalid
+                # arg type, ValueError — invalid label value.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "schema_registry.register_counter_failed",
+                    extra={"error": str(counter_exc)},
+                )
 
         return entry
 
@@ -191,8 +198,13 @@ class ServiceSchemaRegistry:
                 ).labels(
                     kind=kind.value, hit="true" if result is not None else "false"
                 ).inc()
-            except Exception:  # pragma: no cover - metrics best-effort
-                pass
+            except (AttributeError, TypeError, ValueError) as counter_exc:  # pragma: no cover - metrics best-effort
+                # cycle-9/D-AUDIT-938: см. выше — тот же narrow для get path.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "schema_registry.get_counter_failed",
+                    extra={"error": str(counter_exc)},
+                )
 
         return result
 
