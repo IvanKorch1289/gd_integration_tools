@@ -102,14 +102,29 @@ class AdminClient(BaseAPIClient):
         """GET /ready — агрегированный health status всех подсистем."""
         try:
             return self.get("/ready")
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as ready_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1073: narrow exceptions + observability.
+            # ConnectionError/TimeoutError — server unreachable, RuntimeError
+            # — API failure, ValueError — invalid response, TypeError —
+            # wrong type.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_admin_client.ready_failed",
+                extra={"error": str(ready_exc)},
+            )
             return {"status": "error", "components": {}}
 
     def get_capability_catalog(self) -> dict[str, Any]:
         """GET /api/v1/admin/capabilities."""
         try:
             return self.get("/api/v1/admin/capabilities")
-        except Exception as exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1073: см. выше — mirror для capability_catalog.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_admin_client.capability_catalog_failed",
+                extra={"error": str(exc)},
+            )
             return {"vocabulary": [], "catalog": [], "error": str(exc)}
 
     def get_processor_catalog(
@@ -121,7 +136,13 @@ class AdminClient(BaseAPIClient):
             params["namespace"] = namespace
         try:
             return self.get("/api/v1/dsl/processors/search", params=params)
-        except Exception as exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1073: см. выше — mirror для processor_catalog.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_admin_client.processor_catalog_failed",
+                extra={"error": str(exc)},
+            )
             return {"query": query, "items": [], "total": 0, "error": str(exc)}
 
     def get_audit_events(
@@ -138,7 +159,13 @@ class AdminClient(BaseAPIClient):
             if isinstance(response, list):
                 return response
             return response.get("events", []) if isinstance(response, dict) else []
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as audit_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1073: см. выше — mirror для audit_events.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_admin_client.audit_events_failed",
+                extra={"error": str(audit_exc)},
+            )
             return []
 
     def get_dependency_graph(self) -> dict[str, Any]:
