@@ -177,7 +177,7 @@ class MultiAgentSupervisor:
     def _is_langgraph_available(self) -> bool:
         """Проверяет наличие ``langgraph`` SDK (extra ``ai``)."""
         try:
-            import langgraph
+            import langgraph  # noqa: F401 — availability probe
 
             return True
         except ImportError:

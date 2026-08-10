@@ -184,13 +184,16 @@ def get_module_scope(key: str) -> Scope:
     Если ``key`` отсутствует в :data:`MODULE_SCOPES` — возвращает
     :attr:`Scope.SINGLETON` (default, backward-compat).
 
-    Parameters:
+    Parameters
+    ----------
         key: Ключ модуля в :data:`INFRA_MODULES`.
 
-    Returns:
+    Returns
+    -------
         :class:`Scope` для данного модуля.
 
-    Raises:
+    Raises
+    ------
         ModuleRegistryError: Если ``key`` отсутствует в :data:`INFRA_MODULES`.
     """
     if key not in INFRA_MODULES:

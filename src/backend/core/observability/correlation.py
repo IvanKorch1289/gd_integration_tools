@@ -140,7 +140,7 @@ def start_span(name: str, attributes: dict[str, Any] | None = None) -> Any:
         :class:`opentelemetry.trace.Span` если SDK инициализирован,
         иначе ``None`` (no-op fallback).
 
-    See also:
+    See Also:
         - Sprint 36 sham-fix commit ``fb16f5d4`` (reverted-only-via-test).
         - Sprint 182 retrospective: ``docs/compose/reports/2026-08-05-s182-...``
     """

@@ -164,7 +164,7 @@ class ColpaliEmbedder:
             LazyImportError: Если colpali_engine не установлен.
         """
         try:
-            import colpali_engine  # type: ignore[import-not-found]
+            import colpali_engine  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         except ImportError as exc:
             raise LazyImportError(
                 "colpali_engine не установлен. "
