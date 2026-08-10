@@ -50,10 +50,10 @@ class DLQWriterGuard:
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._wired: bool = False
-        self._writer_ref: "DLQWriter | None" = None
+        self._writer_ref: DLQWriter | None = None
         self._wired_at_count: int = 0
 
-    def mark_wired(self, writer: "DLQWriter | None" = None) -> None:
+    def mark_wired(self, writer: DLQWriter | None = None) -> None:
         """Зафиксировать факт wiring'а writer'а в CDC singleton.
 
         Args:
@@ -81,7 +81,7 @@ class DLQWriterGuard:
         with self._lock:
             return self._wired
 
-    def writer_ref(self) -> "DLQWriter | None":
+    def writer_ref(self) -> DLQWriter | None:
         """Optional reference to last wired writer (read-only)."""
         with self._lock:
             return self._writer_ref
@@ -91,7 +91,7 @@ class DLQWriterGuard:
 cdc_dlq_writer_guard: DLQWriterGuard = DLQWriterGuard()
 
 
-def mark_cdc_dlq_writer_wired(writer: "DLQWriter | None" = None) -> None:
+def mark_cdc_dlq_writer_wired(writer: DLQWriter | None = None) -> None:
     """Convenience wrapper для composition root.
 
     Вызывается из ``plugins/composition/di.py`` сразу после

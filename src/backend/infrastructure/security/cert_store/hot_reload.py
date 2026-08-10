@@ -48,7 +48,7 @@ class CertFileWatcher:
         self,
         *,
         path: Path,
-        store: "CertStore",
+        store: CertStore,
         extensions: tuple[str, ...] | None = None,
     ) -> None:
         self.path = path

@@ -70,7 +70,7 @@ class TavilySearchProcessor(BaseProcessor):
         self.target = to
 
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Выполняет web-поиск через Tavily API и пишет результаты в target."""
         if not await self.auth_check(exchange, action="invoke"):

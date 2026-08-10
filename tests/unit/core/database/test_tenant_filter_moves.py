@@ -92,7 +92,7 @@ def test_shim_tenant_filter_emits_deprecation_warning() -> None:
         from src.backend.infrastructure.database.tenant_filter import TenantMixin
 
         # Check any DeprecationWarning was raised
-        dep_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
+        [x for x in w if issubclass(x.category, DeprecationWarning)]
         # At minimum один deprecation warning должен был сработать при
         # reload (на стороне module load).
         # Note: если все import'ы cache'нуты, может не быть — это

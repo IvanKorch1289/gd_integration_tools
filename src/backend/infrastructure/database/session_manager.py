@@ -166,7 +166,7 @@ class DatabaseSessionManager:
 
 
 @lru_cache(maxsize=1)
-def get_main_session_manager() -> "DatabaseSessionManager":
+def get_main_session_manager() -> DatabaseSessionManager:
     """Lazy singleton ``DatabaseSessionManager`` для main-БД (Wave 6.1)."""
     return DatabaseSessionManager(
         session_maker=get_db_initializer().async_session_maker, db_name="main"

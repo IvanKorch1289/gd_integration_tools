@@ -257,7 +257,7 @@ class ExternalDatabaseItemSettings(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_database_target(self) -> "ExternalDatabaseItemSettings":
+    def validate_database_target(self) -> ExternalDatabaseItemSettings:
         """Проверяет обязательные поля для конкретного типа СУБД."""
         if self.type == DatabaseTypeChoices.oracle:
             if not self.sid and not self.service_name:

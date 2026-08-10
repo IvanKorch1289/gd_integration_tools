@@ -146,7 +146,7 @@ class StdlibLogger(LoggerProtocol):
         """True if level enabled в stdlib logging config."""
         return self._inner.isEnabledFor(level)
 
-    def bind(self, **kwargs: Any) -> "StdlibLogger":
+    def bind(self, **kwargs: Any) -> StdlibLogger:
         """Вернуть новый logger с extra-контекстом (**kwargs в каждый log)."""
         adapter = logging.LoggerAdapter(self._inner, kwargs)
         wrapped = StdlibLogger.__new__(StdlibLogger)

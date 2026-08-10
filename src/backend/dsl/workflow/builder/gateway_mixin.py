@@ -26,7 +26,7 @@ class GatewayMixin(_WorkflowBuilderProtocol):
 
     __slots__ = ()
 
-    def gateway_xor(self, *branches: "BranchSpec") -> Self:
+    def gateway_xor(self, *branches: BranchSpec) -> Self:
         """B-08/B-09 fix (cycle 33): добавить XOR (exclusive) gateway.
 
         Семантика: из переданных веток выполняется **первая**, чьё
@@ -52,7 +52,7 @@ class GatewayMixin(_WorkflowBuilderProtocol):
         )
         return self
 
-    def gateway_and(self, *branches: "BranchSpec") -> Self:
+    def gateway_and(self, *branches: BranchSpec) -> Self:
         """B-08 fix (cycle 33): добавить AND (parallel) gateway — fan-out, join-all.
 
         Семантика: все ветки запускаются параллельно через
@@ -77,7 +77,7 @@ class GatewayMixin(_WorkflowBuilderProtocol):
         )
         return self
 
-    def gateway_or(self, *branches: "BranchSpec") -> Self:
+    def gateway_or(self, *branches: BranchSpec) -> Self:
         """B-09 fix (cycle 33): добавить OR (inclusive) gateway — race, cancel losers.
 
         Семантика: все ветки запускаются как ``asyncio.Task``; завершение

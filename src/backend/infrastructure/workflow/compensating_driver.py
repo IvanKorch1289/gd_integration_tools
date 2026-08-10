@@ -59,7 +59,7 @@ class CompensatingDriverWorker:
 
     def __init__(
         self,
-        session_factory: "Any",
+        session_factory: Any,
         *,
         interval_seconds: float = _INTERVAL_SECONDS_DEFAULT,
     ) -> None:

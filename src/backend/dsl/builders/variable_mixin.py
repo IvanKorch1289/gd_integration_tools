@@ -42,7 +42,7 @@ class VariableMixin:
         default: str | None = None,
         scope: str = "global",
         name: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Inline variable resolution shortcut.
 
         Args:
@@ -65,7 +65,7 @@ class VariableMixin:
         scope: str = "global",
         fail_on_unresolved: bool = False,
         name: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Resolve all ``${var('key')}`` expressions in exchange.body.
 
         Args:

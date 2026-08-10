@@ -22,7 +22,7 @@ class OutputGuardMixin:
         _protocol_self: _AIPolicyEnforcerProtocol
 
     async def guard_output(
-        self: "_AIPolicyEnforcerProtocol", response: AIResponse, policy: AIPolicySpec
+        self: _AIPolicyEnforcerProtocol, response: AIResponse, policy: AIPolicySpec
     ) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.output_guards` к ``response.content``.
 
@@ -44,7 +44,7 @@ class OutputGuardMixin:
         return results
 
     async def _guard_output_one(
-        self: "_AIPolicyEnforcerProtocol", response: AIResponse, ref: GuardRef
+        self: _AIPolicyEnforcerProtocol, response: AIResponse, ref: GuardRef
     ) -> GuardResult | None:
         """Apply single output guard ref."""
         name = ref.name.lower()

@@ -266,7 +266,7 @@ def test_handle_error_truncates_long_statements(
     error_handler(ctx)
 
     # Verify truncation via MockDbLogger.
-    listener_logger = DatabaseListener(
+    DatabaseListener(
         async_engine=_make_async_engine(), db_name="db2", slow_query_threshold=0.5
     ).logger
     # Свежий listener → re-register handlers; используем последний listener.

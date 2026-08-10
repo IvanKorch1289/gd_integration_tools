@@ -47,7 +47,7 @@ class AIAgentService(
     """AI Agent Service (5 mixins = 16 methods + 3 core)."""
 
     # State attrs (S54 W2: class-level annotations for mypy MRO)
-    _sanitizer: "AISanitizerProtocol"
+    _sanitizer: AISanitizerProtocol
     _ai_cfg: Any
     _providers: dict[str, Any]
     _open_webui: Any

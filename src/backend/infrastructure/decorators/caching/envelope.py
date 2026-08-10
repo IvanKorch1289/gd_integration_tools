@@ -51,7 +51,7 @@ class CacheEnvelope:
     @classmethod
     def create(
         cls, value: Any, ttl_seconds: int | None, stale_if_error_seconds: int = 0
-    ) -> "CacheEnvelope":
+    ) -> CacheEnvelope:
         """Create a new cache envelope.
 
         Args:
@@ -78,7 +78,7 @@ class CacheEnvelope:
             stale_until=stale_until,
         )
 
-    def renew(self) -> "CacheEnvelope":
+    def renew(self) -> CacheEnvelope:
         """Renew envelope with fresh timestamps.
 
         Returns:
@@ -142,7 +142,7 @@ class CacheEnvelope:
         }
 
     @classmethod
-    def from_payload(cls, payload: Any) -> "CacheEnvelope":
+    def from_payload(cls, payload: Any) -> CacheEnvelope:
         """Метод from_payload (см. signature)."""
         if isinstance(payload, dict) and payload.get("__cache_envelope__") is True:
             return cls(

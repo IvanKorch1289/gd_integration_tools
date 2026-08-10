@@ -314,7 +314,7 @@ class MigrationMixin:
         traffic_split_pct: float = 0.0,
         deterministic_seed: int | None = None,
         on_new_error: bool = True,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Добавить :class:`StranglerFigProcessor` в pipeline.
 
         Args:

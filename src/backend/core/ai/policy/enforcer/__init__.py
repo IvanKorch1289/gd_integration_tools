@@ -79,7 +79,7 @@ class AIPolicyEnforcer(InputGuardMixin, OutputGuardMixin, HandleMixin, SanitizeM
         self._llama_guard_runtime = llama_guard_runtime
         self._dlq_writer = dlq_writer
 
-    def filter_tools(self, tool_names: Iterable[str], spec: "ToolsSpec") -> list[str]:
+    def filter_tools(self, tool_names: Iterable[str], spec: ToolsSpec) -> list[str]:
         """S76 W3 — pre-init filter tool list per AIPolicySpec.tools.
 
         Convenience method wrapping

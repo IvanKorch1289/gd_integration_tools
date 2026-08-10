@@ -39,8 +39,7 @@ class TestJWTBlacklistFallback:
         """blacklist_token добавляет через Redis."""
         with patch(
             "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist"
-        ) as mock_redis_cls:
-            mock_blacklist = mock_redis_cls.return_value
+        ):
 
             facade = SecurityFacade()
             facade.blacklist_token("jti-test-1")
@@ -62,8 +61,7 @@ class TestJWTBlacklistFallback:
         """unblacklist_token удаляет токен."""
         with patch(
             "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist"
-        ) as mock_redis_cls:
-            mock_blacklist = mock_redis_cls.return_value
+        ):
 
             facade = SecurityFacade()
             facade.blacklist_token("jti-1")
@@ -76,8 +74,7 @@ class TestJWTBlacklistFallback:
         """clear_blacklist очищает Redis blacklist."""
         with patch(
             "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist"
-        ) as mock_redis_cls:
-            mock_blacklist = mock_redis_cls.return_value
+        ):
 
             facade = SecurityFacade()
             facade.blacklist_token("jti-1")

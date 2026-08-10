@@ -22,7 +22,7 @@ __all__ = (
 # Wave B: глобальный реестр созданных ActionSpec для аудита
 # explicit/inferred ``action_id``. Заполняется из ``__post_init__``;
 # используется ``manage.py actions --strict`` и аналитикой в Streamlit.
-_REGISTERED_ACTION_SPECS: list["ActionSpec"] = []
+_REGISTERED_ACTION_SPECS: list[ActionSpec] = []
 
 
 HttpMethod = Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
@@ -148,7 +148,7 @@ class ActionSpec:
         _REGISTERED_ACTION_SPECS.append(self)
 
 
-def iter_registered_action_specs() -> tuple["ActionSpec", ...]:
+def iter_registered_action_specs() -> tuple[ActionSpec, ...]:
     """Снимок реестра созданных ActionSpec (Wave B).
 
     Возвращает копию, чтобы внешний код не мог мутировать внутренний список.
@@ -156,7 +156,7 @@ def iter_registered_action_specs() -> tuple["ActionSpec", ...]:
     return tuple(_REGISTERED_ACTION_SPECS)
 
 
-def audit_action_specs() -> tuple[tuple["ActionSpec", ...], tuple["ActionSpec", ...]]:
+def audit_action_specs() -> tuple[tuple[ActionSpec, ...], tuple[ActionSpec, ...]]:
     """Раскладывает зарегистрированные ActionSpec на (explicit, inferred).
 
     Используется командой ``manage.py actions --strict``.

@@ -161,7 +161,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
     - При недоступности backend (ImportError / DI None) — graceful no-op.
     """
 
-    def __init__(self, app: "ASGIApp", config: ObservabilityConfig | None = None) -> None:
+    def __init__(self, app: ASGIApp, config: ObservabilityConfig | None = None) -> None:
         """Инициализирует middleware.
 
 :param app: значение app.
@@ -171,9 +171,9 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(
         self,
-        request: "Request",
-        call_next: Callable[["Request"], Awaitable["Response"]],
-    ) -> "Response":
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         """Оборачивает request observability-событием (duration, status, IDs).
 
         Cycle 33 L1 fix: каждый ``_emit_*`` обёрнут в try/except —

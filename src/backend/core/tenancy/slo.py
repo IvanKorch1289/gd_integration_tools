@@ -45,12 +45,12 @@ class TenantSLO:
     error_rate_target: float = 0.01
 
     @classmethod
-    def default(cls) -> "TenantSLO":
+    def default(cls) -> TenantSLO:
         """Production baseline SLO (для всех тенантов без override)."""
         return cls()
 
     @classmethod
-    def for_tenant(cls, tenant_id: str | None) -> "TenantSLO":
+    def for_tenant(cls, tenant_id: str | None) -> TenantSLO:
         """Вернуть SLO для конкретного тенанта.
 
         Args:
@@ -70,7 +70,7 @@ class TenantSLO:
         latency_p99_ms: float | None = None,
         availability: float | None = None,
         error_rate: float | None = None,
-    ) -> "SLOEvaluation":
+    ) -> SLOEvaluation:
         """Проверить метрики против SLO порогов.
 
         Args:

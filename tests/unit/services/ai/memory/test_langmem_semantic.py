@@ -113,7 +113,7 @@ class TestSemanticMemoryAdd:
         """add() upserts vector to Qdrant collection."""
         mem, qdrant, _embedder = memory
 
-        point_id = await mem.add(text="hello world")
+        await mem.add(text="hello world")
 
         qdrant.upsert.assert_awaited_once()
         # upsert called with kwargs (or positional).

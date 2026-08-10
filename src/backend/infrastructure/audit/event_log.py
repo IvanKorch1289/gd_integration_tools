@@ -76,7 +76,7 @@ class AuditEventLog:
         table: str = "audit_events",
         batch_size: int = 50,
         *,
-        dlq_writer: "DLQWriter | None" = None,
+        dlq_writer: DLQWriter | None = None,
         dlq_required: bool = True,
     ) -> None:
         """Инициализирует AuditEventLog.
@@ -97,7 +97,7 @@ class AuditEventLog:
         """
         self._table = table
         # B-25 fix (cycle 1): DLQ handoff на сбое ClickHouse client.
-        self._dlq_writer: "DLQWriter | None" = dlq_writer
+        self._dlq_writer: DLQWriter | None = dlq_writer
         self._dlq_required: bool = dlq_required
         self._batcher = AsyncBatcher(
             flush_fn=self._flush_to_clickhouse,
@@ -105,7 +105,7 @@ class AuditEventLog:
             flush_interval_seconds=5.0,
         )
 
-    def set_dlq_writer(self, writer: "DLQWriter | None") -> None:
+    def set_dlq_writer(self, writer: DLQWriter | None) -> None:
         """Установить/сбросить DLQ-writer (для composition root wiring).
 
         B-25 fix (cycle 1): singleton :func:`get_audit_log` не имеет

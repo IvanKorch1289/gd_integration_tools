@@ -30,7 +30,7 @@ class ControlFlowMixin:
         _protocol_self: _DSLStepExecutorProtocol
 
     async def _exec_branch(
-        self: "_DSLStepExecutorProtocol",
+        self: _DSLStepExecutorProtocol,
         step: WorkflowStep,
         state: WorkflowState,
         instance: WorkflowInstanceRow,
@@ -86,7 +86,7 @@ class ControlFlowMixin:
         )
 
     async def _exec_loop(
-        self: "_DSLStepExecutorProtocol",
+        self: _DSLStepExecutorProtocol,
         step: WorkflowStep,
         state: WorkflowState,
         instance: WorkflowInstanceRow,
@@ -168,7 +168,7 @@ class ControlFlowMixin:
         )
 
     async def _exec_for_each(
-        self: "_DSLStepExecutorProtocol",
+        self: _DSLStepExecutorProtocol,
         step: WorkflowStep,
         state: WorkflowState,
         instance: WorkflowInstanceRow,

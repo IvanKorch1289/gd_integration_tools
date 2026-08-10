@@ -69,7 +69,7 @@ authz_check_engine_failed_total = metrics_registry.counter(
 )
 
 
-def get_authorization_gateway() -> "AuthorizationGateway | None":
+def get_authorization_gateway() -> AuthorizationGateway | None:
     """Lazy resolver для :class:`AuthorizationGateway` singleton.
 
     Round 88 (Sprint 1 K5): non-Request context — для CLI commands,

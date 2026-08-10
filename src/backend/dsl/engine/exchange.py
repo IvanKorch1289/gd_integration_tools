@@ -222,7 +222,7 @@ class Exchange[T](BaseModel):
         """Устанавливает ошибку без изменения статуса."""
         self.error = reason
 
-    def clone(self, *, body: Any = None) -> "Exchange[Any]":
+    def clone(self, *, body: Any = None) -> Exchange[Any]:
         """Создаёт копию Exchange для параллельной обработки.
 
         Копирует in_message (с опциональной заменой body),

@@ -30,7 +30,7 @@ grpc_logger = get_grpc_logger_provider()
 # без protobuf-stubs (top-level ``invoker_pb2`` требует sys.path-magic).
 
 
-def _load_tls_credentials() -> "grpc.ServerCredentials | None":
+def _load_tls_credentials() -> grpc.ServerCredentials | None:
     """Загружает TLS-credentials из settings.grpc. None — если TLS отключён.
 
     Ожидаемые файлы: server_cert.pem, server_key.pem, optional ca_cert.pem

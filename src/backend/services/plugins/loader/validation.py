@@ -88,9 +88,9 @@ class ValidationMixin:
 
     # State attrs (declared on PluginLoader; mypy needs hint)
     _owners: dict[str, dict[str, str]]
-    _loaded: dict[str, "LoadedPlugin"]
-    _loaded_failed: list["LoadedPlugin"]
-    _loaded_skipped: list["LoadedPlugin"]
+    _loaded: dict[str, LoadedPlugin]
+    _loaded_failed: list[LoadedPlugin]
+    _loaded_skipped: list[LoadedPlugin]
 
     __slots__ = ()
 

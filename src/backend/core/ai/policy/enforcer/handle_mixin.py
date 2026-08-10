@@ -20,7 +20,7 @@ class HandleMixin:
         _protocol_self: _AIPolicyEnforcerProtocol
 
     def _handle_guard_block(
-        self: "_AIPolicyEnforcerProtocol",
+        self: _AIPolicyEnforcerProtocol,
         *,
         guard_name: str,
         flagged: list[str],
@@ -57,7 +57,7 @@ class HandleMixin:
         )
 
     async def _publish_dlq(
-        self: "_AIPolicyEnforcerProtocol",
+        self: _AIPolicyEnforcerProtocol,
         guard_name: str,
         flagged: list[str],
         content: str,

@@ -178,7 +178,7 @@ class HttpBaseSettings(BaseSettingsWithLoader):
     )
 
     @model_validator(mode="after")
-    def validate_timeouts(self) -> "HttpBaseSettings":
+    def validate_timeouts(self) -> HttpBaseSettings:
         """Проверяет корректность настроек таймаутов."""
         if self.connect_timeout >= self.total_timeout:
             raise ValueError("Таймаут подключения должен быть меньше общего таймаута")

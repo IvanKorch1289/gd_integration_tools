@@ -151,7 +151,7 @@ class StructlogLogger(LoggerProtocol):
         """True if level enabled в structlog config."""
         return self._inner.isEnabledFor(level)
 
-    def bind(self, **kwargs: Any) -> "StructlogLogger":
+    def bind(self, **kwargs: Any) -> StructlogLogger:
         """Метод bind (см. signature)."""
         return StructlogLogger(self._inner.bind(**kwargs))
 

@@ -55,7 +55,7 @@ class HttpRequestProcessor(BaseProcessor):
         self.target = to
 
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Выполняет HTTP-запрос через httpx и пишет JSON/text-ответ в target."""
         if not await self.auth_check(exchange, action="execute"):

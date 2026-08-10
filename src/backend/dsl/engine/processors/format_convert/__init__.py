@@ -100,7 +100,7 @@ class FormatConvertProcessor(
         self.schema = schema
 
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Метод process (см. signature)."""
         # 1. resolve input

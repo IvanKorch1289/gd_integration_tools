@@ -282,7 +282,7 @@ class DataLineageMixin:
         node_type: LineageNodeType = LineageNodeType.DATASET,
         lineage_emitter: LineageEmitter | None = None,
         event_type: str = "transform",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Добавить :class:`DataLineageProcessor` в pipeline.
 
         Args:

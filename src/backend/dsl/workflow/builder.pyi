@@ -209,6 +209,6 @@ class SagaBuilder:
         """Добавить compensate-activity (откат forward-шагов)."""
         ...
 
-    def end_saga(self) -> "WorkflowBuilder":
+    def end_saga(self) -> WorkflowBuilder:
         """Завершить саб-chain и вернуть родительский ``WorkflowBuilder``."""
         ...

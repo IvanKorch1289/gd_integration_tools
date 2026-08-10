@@ -170,7 +170,7 @@ class S3Client(BaseS3Client):
         """Декоратор для проверки подключения перед вызовом функции."""
 
         @wraps(func)
-        async def wrapper(self: "S3Client", *args: Any, **kwargs: Any) -> Any:
+        async def wrapper(self: S3Client, *args: Any, **kwargs: Any) -> Any:
             if not self.is_connected:
                 await self.connect()
             return await func(self, *args, **kwargs)

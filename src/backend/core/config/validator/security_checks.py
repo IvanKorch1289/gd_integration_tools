@@ -21,7 +21,7 @@ class SecurityChecksMixin:
 
     __slots__ = ()
 
-    _is_prod: "Callable[[object], bool]"  # S52 W2: set on ConfigValidator (MRO root)
+    _is_prod: Callable[[object], bool]  # S52 W2: set on ConfigValidator (MRO root)
     # --- security_checks methods ---
 
     def _check_waf_strict_prod(

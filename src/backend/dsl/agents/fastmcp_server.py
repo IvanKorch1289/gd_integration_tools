@@ -49,7 +49,7 @@ logger = get_logger("dsl.agents.fastmcp_server")
 # ── Workflow prompts ──────────────────────────────────────────────────────────
 
 
-def _build_workflow_prompt_fn(wf: "WorkflowDescriptorProtocol") -> Any:
+def _build_workflow_prompt_fn(wf: WorkflowDescriptorProtocol) -> Any:
     """Build an async prompt function that returns workflow catalogue information."""
 
     async def prompt_fn(

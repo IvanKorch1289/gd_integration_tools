@@ -309,7 +309,7 @@ class AgentSecurityPolicy:
     )
 
     @classmethod
-    def strict(cls) -> "AgentSecurityPolicy":
+    def strict(cls) -> AgentSecurityPolicy:
         """Strict policy для production."""
         return cls(
             enable_prompt_validation=True,
@@ -333,7 +333,7 @@ class AgentSecurityPolicy:
         )
 
     @classmethod
-    def dev(cls) -> "AgentSecurityPolicy":
+    def dev(cls) -> AgentSecurityPolicy:
         """Permissive policy для development."""
         return cls(
             enable_prompt_validation=False,

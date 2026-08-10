@@ -14,7 +14,7 @@ class AgentOrchestrationMixin:
     """agent orchestration (chat, run_agent, _record_feedback) для AIAgentService. S54 W2 extraction."""
 
     # State attrs + cross-method hints (S54 W2: class-level annotations for mypy MRO)
-    _sanitizer: "AISanitizerProtocol"
+    _sanitizer: AISanitizerProtocol
     _ai_cfg: Any
     _providers: dict[str, Any]
     _open_webui: Any

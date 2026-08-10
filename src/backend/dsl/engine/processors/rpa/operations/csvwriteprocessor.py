@@ -45,7 +45,7 @@ class CsvWriteProcessor(BaseProcessor):
         self.delimiter = delimiter
 
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="write"):

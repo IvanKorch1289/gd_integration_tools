@@ -28,7 +28,7 @@ class WriteMixin:
     if TYPE_CHECKING:
         _protocol_self: _CrudMixinProtocol
 
-    def _register_create(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
+    def _register_create(self: _CrudMixinProtocol, spec: CrudSpec) -> None:
         """Выполнить операцию  register create."""
 
         async def endpoint(request: Request, payload: BaseModel) -> Any:
@@ -67,7 +67,7 @@ class WriteMixin:
             output_model=spec.schema_out,
         )
 
-    def _register_create_many(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
+    def _register_create_many(self: _CrudMixinProtocol, spec: CrudSpec) -> None:
         """Выполнить операцию  register create many."""
 
         async def endpoint(request: Request, payloads: list[BaseModel]) -> Any:
@@ -110,7 +110,7 @@ class WriteMixin:
             output_model=None,
         )
 
-    def _register_update(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
+    def _register_update(self: _CrudMixinProtocol, spec: CrudSpec) -> None:
         """Выполнить операцию  register update."""
 
         async def endpoint(request: Request, payload: BaseModel, **kwargs: Any) -> Any:
@@ -156,7 +156,7 @@ class WriteMixin:
             output_model=spec.schema_out,
         )
 
-    def _register_delete(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
+    def _register_delete(self: _CrudMixinProtocol, spec: CrudSpec) -> None:
         """Выполнить операцию  register delete."""
 
         async def endpoint(request: Request, **kwargs: Any) -> None:
@@ -198,7 +198,7 @@ class WriteMixin:
             output_model=None,
         )
 
-    def _register_all_versions(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
+    def _register_all_versions(self: _CrudMixinProtocol, spec: CrudSpec) -> None:
         """Выполнить операцию  register all versions."""
 
         async def endpoint(request: Request, **kwargs: Any) -> Any:

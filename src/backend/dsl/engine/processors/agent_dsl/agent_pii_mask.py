@@ -163,7 +163,7 @@ class AgentDictPIIMaskProcessor(BaseAIProcessor):
         source_property: str = "body.args",
         target_property: str | None = None,
         language: str = "ru",
-    ) -> "AgentDictPIIMaskProcessor":
+    ) -> AgentDictPIIMaskProcessor:
         """Маскирование tool_call args.
 
         Capability: pii.tokenize.reversible.agent_tools
@@ -189,7 +189,7 @@ class AgentDictPIIMaskProcessor(BaseAIProcessor):
         source_property: str = "body.params",
         target_property: str | None = None,
         language: str = "ru",
-    ) -> "AgentDictPIIMaskProcessor":
+    ) -> AgentDictPIIMaskProcessor:
         """Маскирование action params.
 
         Capability: pii.tokenize.reversible.agent_actions

@@ -14,7 +14,7 @@ class RagMixin:
     """RAG integration (_maybe_augment_with_rag, _resolve_rag_service) для AIAgentService. S54 W2 extraction."""
 
     # State attrs + cross-method hints (S54 W2: class-level annotations for mypy MRO)
-    _sanitizer: "AISanitizerProtocol"
+    _sanitizer: AISanitizerProtocol
     _ai_cfg: Any
     _providers: dict[str, Any]
     _open_webui: Any

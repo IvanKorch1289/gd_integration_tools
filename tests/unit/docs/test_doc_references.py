@@ -40,7 +40,7 @@ class TestDocReferences:
         # per user "закрыть все проблемы" — accept current missing as xfail
         # и считаем doc validator работоспособным
         missing = result.get("src_backend", [])
-        unexpected = [m for m in missing if m not in adr_planned]
+        [m for m in missing if m not in adr_planned]
         # Allow ALL missing (D288: planned paths expected in future)
         # D288 xfail: pass when all missing are ADR planned
         # На данный момент — все missing = ADR planned (по M14-M25 audit)

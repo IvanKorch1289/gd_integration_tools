@@ -7,10 +7,10 @@ if TYPE_CHECKING:
     from src.backend.infrastructure.clients.transport.http import HttpClient
 
 
-_http_client_singleton: "HttpClient | None" = None
+_http_client_singleton: HttpClient | None = None
 
 
-async def get_http_client() -> AsyncGenerator["HttpClient"]:
+async def get_http_client() -> AsyncGenerator[HttpClient]:
     """Async context manager: отдаёт :class:`HttpClient` и закрывает его при выходе."""
     # Lazy import to break circular dependency: __init__.py imports
     # factory functions, factory functions cannot import HttpClient
@@ -24,7 +24,7 @@ async def get_http_client() -> AsyncGenerator["HttpClient"]:
         await client.close()
 
 
-def get_http_client_dependency() -> "HttpClient":
+def get_http_client_dependency() -> HttpClient:
     """Returns the global singleton HttpClient instance.
 
     ponytail: Исправлено — был создавал новый инстанс при каждом вызове.
@@ -36,13 +36,13 @@ def get_http_client_dependency() -> "HttpClient":
     return _http_client_singleton
 
 
-def _create_http_client_sync() -> "HttpClient":
+def _create_http_client_sync() -> HttpClient:
     """Create HttpClient in sync context (for singleton init)."""
     from . import HttpClient
 
     return HttpClient()
 
 
-def get_http_client_typed() -> "HttpClient":
+def get_http_client_typed() -> HttpClient:
     """Alias для get_http_client_dependency — для использования в typed DI."""
     return get_http_client_dependency()

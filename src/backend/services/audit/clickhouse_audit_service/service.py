@@ -60,7 +60,7 @@ class ClickHouseAuditService:
         self,
         client: Any | None = None,
         dlq_path: Any | None = None,
-        dlq_writer: "DLQWriter | None" = None,
+        dlq_writer: DLQWriter | None = None,
     ) -> None:
         """Инициализирует сервис с опциональным pre-built клиентом.
 
@@ -77,12 +77,12 @@ class ClickHouseAuditService:
         """
         self._client: Any | None = client
         self._lock = threading.Lock()
-        self._dlq_writer: "DLQWriter | None" = dlq_writer
+        self._dlq_writer: DLQWriter | None = dlq_writer
         self._dlq_path = dlq_path
         self._dlq_backend: AuditBackend | None = None
         self._dlq_lock = threading.Lock()
 
-    def set_dlq_writer(self, writer: "DLQWriter | None") -> None:
+    def set_dlq_writer(self, writer: DLQWriter | None) -> None:
         """Установить/сбросить canonical DLQWriter (composition root wiring).
 
         S180 P1-#1: позволяет composer установить writer после init.

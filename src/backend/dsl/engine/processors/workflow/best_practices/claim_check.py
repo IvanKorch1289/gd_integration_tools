@@ -102,7 +102,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         self.ttl_seconds = ttl_seconds
 
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Применяет паттерн Claim Check: выгружает большой payload во внешнее хранилище и заменяет его токеном.
 

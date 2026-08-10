@@ -116,7 +116,7 @@ class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
         return mapping[kind]
 
     @property
-    def client(self) -> "RedisClient":
+    def client(self) -> RedisClient:
         """Self-reference для backward-compat ``redis_client.client.*``.
 
         S146 W2: некоторые caller'ы (ai_sanitizer, cache/factory) ожидают

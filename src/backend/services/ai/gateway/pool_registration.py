@@ -53,7 +53,7 @@ _logger = get_logger("services.ai.gateway.pool_registration")
 __all__ = ("register_litellm_pool",)
 
 
-async def _litellm_ping(gateway: "LiteLLMGateway") -> bool:
+async def _litellm_ping(gateway: LiteLLMGateway) -> bool:
     """S80 W1 — LiteLLM liveness check (model list query).
 
     Returns:
@@ -84,11 +84,11 @@ async def _litellm_ping(gateway: "LiteLLMGateway") -> bool:
 
 
 def register_litellm_pool(
-    gateway: "LiteLLMGateway",
+    gateway: LiteLLMGateway,
     *,
     name: str = "litellm_main",
     idle_timeout: float = 60.0,
-    monitor: "PoolHealthMonitor | None" = None,
+    monitor: PoolHealthMonitor | None = None,
 ) -> None:
     """Register LiteLLM Gateway в :class:`PoolHealthMonitor`.
 

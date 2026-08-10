@@ -78,11 +78,11 @@ class ToolCapabilityCheckError(PermissionError):
 
 def check_tool_with_policy(
     *,
-    gate: "CapabilityGate",
+    gate: CapabilityGate,
     plugin: str,
     tool_name: str,
     scope: str | None,
-    policy: "ToolsSpec",
+    policy: ToolsSpec,
 ) -> None:
     """Two-layer tool call enforcement (S79 W1).
 
@@ -137,11 +137,11 @@ def check_tool_with_policy(
 
 def filter_tools_with_gate(
     *,
-    gate: "CapabilityGate",
+    gate: CapabilityGate,
     plugin: str,
     tool_names: Iterable[str],
     scope: str | None,
-    policy: "ToolsSpec",
+    policy: ToolsSpec,
 ) -> list[str]:
     """S79 W3 — pre-init filter tool list через two-layer enforcement.
 

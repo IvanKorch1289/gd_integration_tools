@@ -87,7 +87,7 @@ def _reset_aigateway_provider() -> None:
     def _clear_app_state_ai_gateway() -> None:
         """Удалить ``app.state.ai_gateway`` через ``app_state_singleton``."""
         try:
-            state = app_state_singleton("ai_gateway") if False else None
+            app_state_singleton("ai_gateway") if False else None
         except Exception:
             return
         # ``app_state_singleton(name)`` raises KeyError, если attr не задан;

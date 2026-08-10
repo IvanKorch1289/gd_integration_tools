@@ -142,7 +142,7 @@ class SecureSettings(BaseSettingsWithLoader):
         return value
 
     @model_validator(mode="after")
-    def _forbid_wildcard_with_credentials(self) -> "SecureSettings":
+    def _forbid_wildcard_with_credentials(self) -> SecureSettings:
         """Cycle 25 S1: never allow wildcard origin WITH credentials enabled.
 
         Browsers reject this combination, but misconfiguration can leak

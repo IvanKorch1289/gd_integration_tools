@@ -27,7 +27,7 @@ class InputGuardMixin:
         _protocol_self: _AIPolicyEnforcerProtocol
 
     async def guard_input(
-        self: "_AIPolicyEnforcerProtocol", prompt: str, policy: AIPolicySpec
+        self: _AIPolicyEnforcerProtocol, prompt: str, policy: AIPolicySpec
     ) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.input_guards` к sanitized prompt.
 
@@ -49,7 +49,7 @@ class InputGuardMixin:
         return results
 
     async def _guard_input_one(
-        self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef
+        self: _AIPolicyEnforcerProtocol, prompt: str, ref: GuardRef
     ) -> GuardResult | None:
         """Apply single input guard ref.
 
@@ -115,7 +115,7 @@ class InputGuardMixin:
         return None
 
     async def _guard_input_lakera(
-        self: "_AIPolicyEnforcerProtocol", prompt: str, ref: GuardRef, on_block: str
+        self: _AIPolicyEnforcerProtocol, prompt: str, ref: GuardRef, on_block: str
     ) -> GuardResult:
         """Lakera input guard check."""
         try:

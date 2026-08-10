@@ -262,7 +262,7 @@ class RedisSettings(BaseSettingsWithLoader):
         return v
 
     @model_validator(mode="after")
-    def _check_cluster_consistency(self) -> "RedisSettings":
+    def _check_cluster_consistency(self) -> RedisSettings:
         """D-A12-04 fix (cycle 25): cluster_mode=True требует непустого cluster_nodes.
 
         Раньше был только field_validator на формат — но cross-field check

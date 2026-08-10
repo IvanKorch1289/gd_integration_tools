@@ -371,7 +371,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
 
     # Валидация бизнес-правил
     @model_validator(mode="after")
-    def check_debug_mode(self) -> "AppBaseSettings":
+    def check_debug_mode(self) -> AppBaseSettings:
         """Запрещает debug_mode=True в production-окружении."""
         if self.environment == "production" and self.debug_mode:
             raise ValueError("Режим отладки запрещен в production!")

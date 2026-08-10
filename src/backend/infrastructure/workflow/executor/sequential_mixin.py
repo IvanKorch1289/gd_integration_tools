@@ -99,7 +99,7 @@ class SequentialMixin:
         _protocol_self: _DSLStepExecutorProtocol
 
     async def _exec_sequential(
-        self: "_DSLStepExecutorProtocol",
+        self: _DSLStepExecutorProtocol,
         step: WorkflowStep,
         state: WorkflowState,
         instance: WorkflowInstanceRow,

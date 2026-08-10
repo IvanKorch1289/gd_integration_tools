@@ -124,7 +124,7 @@ def register_e2b_sandbox() -> None:
     register_factory(CodeSandbox, _factory)
 
 
-async def start_ai_safety(app: "FastAPI" | None = None) -> None:
+async def start_ai_safety(app: FastAPI | None = None) -> None:
     """Lifespan startup: запустить cleanup-loop через TaskRegistry."""
     if not has_service(AIWorkspaceManager):
         register_ai_safety()
@@ -144,7 +144,7 @@ async def start_ai_safety(app: "FastAPI" | None = None) -> None:
     )
 
 
-async def stop_ai_safety(app: "FastAPI" | None = None) -> None:
+async def stop_ai_safety(app: FastAPI | None = None) -> None:
     """Lifespan shutdown: остановить cleanup-loop, отменить task."""
     if not has_service(AIWorkspaceManager):
         return

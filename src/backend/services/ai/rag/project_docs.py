@@ -207,7 +207,7 @@ class DocsIndexer:
         """True если Qdrant недоступен и используется in-memory fallback."""
         return self._fallback
 
-    def set_embedder(self, embed_fn: Any) -> "DocsIndexer":
+    def set_embedder(self, embed_fn: Any) -> DocsIndexer:
         """DI: ``(texts: list[str]) -> list[list[float]]`` (sync/async). Chainable."""
         self._embedder = embed_fn
         return self

@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from src.backend.infrastructure.audit.jsonl_audit import JsonlAuditBackend
 
 
-def get_jsonl_backend(path: str | Path) -> "JsonlAuditBackend":
+def get_jsonl_backend(path: str | Path) -> JsonlAuditBackend:
     """Capability-checked factory для :class:`JsonlAuditBackend` (B-11 fix, cycle 33).
 
     Заменяет ``importlib.import_module('src.backend.infrastructure.audit.jsonl_audit')``

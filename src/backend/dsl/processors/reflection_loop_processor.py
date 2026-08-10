@@ -93,7 +93,7 @@ class ReflectionLoopProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Generate → critique → refine (max_refinements раз)."""
         prompt = self._build_prompt(exchange)
@@ -179,7 +179,7 @@ class ReflectionLoopProcessor(BaseProcessor):
         )
 
     @staticmethod
-    def _build_prompt(exchange: "Exchange[Any]") -> str:
+    def _build_prompt(exchange: Exchange[Any]) -> str:
         body = exchange.in_message.body
         if isinstance(body, str):
             return body
@@ -210,7 +210,7 @@ class ReflectionLoopMixin:
         critic: CriticFn,
         max_refinements: int = 3,
         score_threshold: float = 0.8,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Добавить :class:`ReflectionLoopProcessor` в pipeline.
 
         Args:

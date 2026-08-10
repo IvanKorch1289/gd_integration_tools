@@ -87,7 +87,7 @@ class SchedulerSettings(BaseSettingsWithLoader):
     )
 
     @model_validator(mode="after")
-    def check_jobstores(self) -> "SchedulerSettings":
+    def check_jobstores(self) -> SchedulerSettings:
         """Запрещает совпадение основного и резервного jobstore."""
         if self.default_jobstore_name == self.backup_jobstore_name:
             raise ValueError("Основное и резервное хранилища не могут совпадать!")

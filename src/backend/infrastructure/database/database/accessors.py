@@ -25,7 +25,7 @@ DatabaseSettings: TypeAlias = (
 
 
 @lru_cache(maxsize=1)
-def get_db_initializer() -> "DatabaseInitializer":
+def get_db_initializer() -> DatabaseInitializer:
     """Lazy singleton ``DatabaseInitializer`` для main-БД (Wave 6.1)."""
     return DatabaseInitializer(settings=settings.database, name="main")
 
@@ -60,7 +60,7 @@ def get_smart_session_manager() -> Any:
 
 
 @lru_cache(maxsize=1)
-def get_external_db_registry() -> "ExternalDatabaseRegistry":
+def get_external_db_registry() -> ExternalDatabaseRegistry:
     """Lazy singleton реестра внешних БД (Wave 6.1)."""
     return ExternalDatabaseRegistry(configs=settings.external_databases.profiles)
 

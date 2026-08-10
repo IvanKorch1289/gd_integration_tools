@@ -46,7 +46,7 @@ class _BankingAIProcessor(BaseProcessor):
         self._model = model
         self._provider = model.split("/", 1)[0]
 
-    def _build_prompt(self, exchange: "Exchange[Any]") -> str:
+    def _build_prompt(self, exchange: Exchange[Any]) -> str:
         """Строит prompt из шаблона с подстановкой ${body.field}."""
         body = exchange.in_message.body
         body_dict = body if isinstance(body, dict) else {"_raw": body}
@@ -55,7 +55,7 @@ class _BankingAIProcessor(BaseProcessor):
 
         pattern = re.compile(r"\$\{([^}]+)\}")
 
-        def _replace(match: "re.Match[str]") -> str:
+        def _replace(match: re.Match[str]) -> str:
             path = match.group(1).strip()
             if path == "body":
                 return str(body)
@@ -69,7 +69,7 @@ class _BankingAIProcessor(BaseProcessor):
 
         return pattern.sub(_replace, self.prompt_template)
 
-    def _write_result(self, exchange: "Exchange[Any]", result: BaseModel) -> None:
+    def _write_result(self, exchange: Exchange[Any], result: BaseModel) -> None:
         """Пишет Pydantic-результат в body.<field>."""
         field_name = self.__class__.__name__.replace("Processor", "").lower()
         body = exchange.in_message.body
@@ -80,7 +80,7 @@ class _BankingAIProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Выполняет AI-обработку: строит prompt, вызывает LLM через instructor+litellm и пишет результат."""
         # Feature gate

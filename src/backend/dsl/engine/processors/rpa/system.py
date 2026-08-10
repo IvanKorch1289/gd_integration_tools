@@ -183,7 +183,7 @@ class TerminalExecProcessor(BaseProcessor):
         self.shell = shell
 
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="execute"):
@@ -266,7 +266,7 @@ class EmailReadProcessor(BaseProcessor):
         self.target = to
 
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Подключается к IMAP-серверу, читает все письма из папки и пишет их в target."""
         if not await self.auth_check(exchange, action="read"):

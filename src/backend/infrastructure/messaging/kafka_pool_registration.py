@@ -54,7 +54,7 @@ async def kafka_ping_fn() -> bool:
 
 
 def register_kafka_pool_if_available(
-    manager: "UnifiedPoolManager",
+    manager: UnifiedPoolManager,
     *,
     name: str = "kafka_main",
     bootstrap_servers: list[str] | None = None,

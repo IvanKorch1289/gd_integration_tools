@@ -1926,7 +1926,7 @@ class RouteBuilder:
 
     def on_completion(
         self,
-        processors: list["BaseProcessor"],
+        processors: list[BaseProcessor],
         *,
         on_success_only: bool = ...,
         on_failure_only: bool = ...,

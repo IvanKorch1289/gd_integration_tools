@@ -65,7 +65,7 @@ class PluginProvides(BaseModel):
     sources: tuple[str, ...] = ()
     sinks: tuple[str, ...] = ()
     schemas: tuple[str, ...] = ()
-    endpoints: tuple["PluginEndpoint", ...] = ()
+    endpoints: tuple[PluginEndpoint, ...] = ()
     """Cycle-15 (D-AUDIT-1506): декларативные endpoint'ы плагина по протоколам.
 
     Empty tuple = плагин не предоставляет endpoints через

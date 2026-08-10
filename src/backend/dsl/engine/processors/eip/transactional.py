@@ -115,7 +115,7 @@ class TransactionalClientProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Метод process (см. signature)."""
         # 1. Run user action. Если падает — НЕ enqueue.

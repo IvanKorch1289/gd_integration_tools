@@ -22,7 +22,7 @@ class InfrastructureChecksMixin:
 
     __slots__ = ()
 
-    _is_prod: "Callable[[object], bool]"  # S52 W2: set on ConfigValidator (MRO root)
+    _is_prod: Callable[[object], bool]  # S52 W2: set on ConfigValidator (MRO root)
     # --- infrastructure_checks methods ---
 
     def _check_debug_mode_in_prod(self, app: AppBaseSettings) -> list[ConfigViolation]:

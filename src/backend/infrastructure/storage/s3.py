@@ -72,7 +72,7 @@ class _S3Session(AbstractAsyncContextManager[Any]):
     (важно для hot-path: idle connection leak prevention).
     """
 
-    def __init__(self, storage: "S3ObjectStorage") -> None:
+    def __init__(self, storage: S3ObjectStorage) -> None:
         self._storage = storage
         self._cm: Any = None
         self._s3: Any = None
@@ -212,7 +212,7 @@ class S3ObjectStorage(ObjectStorage):
                 raise ServiceError(f"S3 head_bucket failed: {exc}") from exc
         self._bucket_ready = True
 
-    def _wrap_boto(self, op: str, full_key: str) -> "ServiceError":
+    def _wrap_boto(self, op: str, full_key: str) -> ServiceError:
         """Вернуть ServiceError-обёртку для boto-исключений (helper)."""
         return ServiceError(f"S3 {op} failed: {{}}").__class__(  # type: ignore[arg-type]
             f"S3 {op} failed for key={full_key}"

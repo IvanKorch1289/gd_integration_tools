@@ -226,7 +226,7 @@ class ExternalDBObjectMeta(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_meta(self) -> "ExternalDBObjectMeta":
+    def validate_meta(self) -> ExternalDBObjectMeta:
         """
         Проверяет согласованность описания объекта.
         """
@@ -407,14 +407,14 @@ class ExternalDBObjectChoices(Enum):
         return self.value
 
     @classmethod
-    def get(cls, name: str) -> "ExternalDBObjectChoices":
+    def get(cls, name: str) -> ExternalDBObjectChoices:
         """
         Возвращает enum-элемент по имени.
         """
         return cls[name]
 
     @classmethod
-    def list_by_profile(cls, profile_name: str) -> list["ExternalDBObjectChoices"]:
+    def list_by_profile(cls, profile_name: str) -> list[ExternalDBObjectChoices]:
         """
         Возвращает все разрешённые объекты для конкретного профиля БД.
         """

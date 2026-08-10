@@ -310,7 +310,7 @@ async def get_mqtt_handler(request: Request) -> MqttHandler:
 # Test requires asyncio.iscoroutinefunction(di.get_authorization_gateway) → True.
 async def get_authorization_gateway(
     request: Request,
-) -> "AuthorizationGateway":
+) -> AuthorizationGateway:
     """Возвращает AuthorizationGateway из app.state (FastAPI Depends)."""
     return request.app.state.authorization_gateway
 

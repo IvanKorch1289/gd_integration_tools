@@ -70,7 +70,7 @@ __all__ = (
 
 
 def _compensate_handler(
-    self: "DSLStepExecutor",
+    self: DSLStepExecutor,
     step: WorkflowStep,
     state: WorkflowState,
     instance: WorkflowInstanceRow,

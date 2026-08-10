@@ -88,7 +88,7 @@ class WafCheckProcessor(BaseProcessor):
         ]
 
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Проверяет payload на WAF-паттерны и применяет действие (log/block/warn)."""
         if not await self.auth_check(exchange, action="check"):

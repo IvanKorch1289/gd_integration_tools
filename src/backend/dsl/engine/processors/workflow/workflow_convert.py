@@ -75,7 +75,7 @@ class WorkflowConvertProcessor(BaseProcessor):
         self.target = to
 
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Конвертирует данные между форматами (JSON/YAML/string/dict).
 

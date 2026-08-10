@@ -197,7 +197,7 @@ async def dispatch_action_or_dsl(
 
 def _get_or_create_route_semaphore(
     route_id: str, pool_size: int
-) -> "asyncio.Semaphore":
+) -> asyncio.Semaphore:
     """S163 W25: lazy-init semaphore для per-route concurrency limit."""
     global _route_semaphores  # noqa: PLW0603
 
@@ -208,7 +208,7 @@ def _get_or_create_route_semaphore(
     return sem
 
 
-_route_semaphores: dict[str, "asyncio.Semaphore"] = {}
+_route_semaphores: dict[str, asyncio.Semaphore] = {}
 """S163 W25: per-route semaphores (lazy-init). Key: route_id."""
 
 

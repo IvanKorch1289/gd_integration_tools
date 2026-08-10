@@ -28,7 +28,7 @@ __all__ = ("TransformationEIPsMixin",)
 class TransformationEIPsMixin(EIPMixinBase):
     """EIP transformation patterns: split, aggregate, sort, sample, claim_check, normalize, resequence."""
 
-    def split(self, expression: str, processors: list[BaseProcessor]) -> "RouteBuilder":
+    def split(self, expression: str, processors: list[BaseProcessor]) -> RouteBuilder:
         """Splitter: разбиение массива на отдельные Exchange по JMESPath."""
         return cast(
             "RouteBuilder",
@@ -43,7 +43,7 @@ class TransformationEIPsMixin(EIPMixinBase):
         *,
         batch_size: int = 10,
         timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Aggregator: собирает N Exchange по correlation_key в batch."""
         return cast(
             "RouteBuilder",
@@ -62,7 +62,7 @@ class TransformationEIPsMixin(EIPMixinBase):
         key_fn: Callable[[Any], Any] | None = None,
         key_field: str | None = None,
         reverse: bool = False,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Sort — сортировка list body по функции ключа или имени поля."""
         return cast(
             "RouteBuilder",
@@ -81,7 +81,7 @@ class TransformationEIPsMixin(EIPMixinBase):
         store: str = "redis",
         ttl_seconds: int = 3600,
         threshold_bytes: int = 256 * 1024,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Claim Check (store): сохраняет body в Redis/S3, body → {_claim_token: ...}.
 
         Args:
@@ -101,11 +101,11 @@ class TransformationEIPsMixin(EIPMixinBase):
             ),
         )
 
-    def claim_check_out(self) -> "RouteBuilder":
+    def claim_check_out(self) -> RouteBuilder:
         """Claim Check (retrieve): восстанавливает body по _claim_token."""
         return cast("RouteBuilder", self._add(ClaimCheckProcessor(mode="retrieve")))  # type: ignore[attr-defined]
 
-    def normalize(self, target_schema: type | None = None) -> "RouteBuilder":
+    def normalize(self, target_schema: type | None = None) -> RouteBuilder:
         """Normalizer: автоопределение формата (XML/CSV/YAML/JSON) → canonical dict."""
         return cast(
             "RouteBuilder",
@@ -119,7 +119,7 @@ class TransformationEIPsMixin(EIPMixinBase):
         sequence_field: str = "seq",
         batch_size: int = 10,
         timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Resequencer: восстановление порядка сообщений по sequence_field."""
         return cast(
             "RouteBuilder",

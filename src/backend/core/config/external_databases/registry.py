@@ -132,7 +132,7 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
     )
 
     @model_validator(mode="after")
-    def validate_unique_profiles(self) -> "ExternalDatabasesSettings":
+    def validate_unique_profiles(self) -> ExternalDatabasesSettings:
         """Проверяет уникальность profile_name."""
         profiles = [connection.profile_name for connection in self.connections]
         duplicates = {name for name in profiles if profiles.count(name) > 1}

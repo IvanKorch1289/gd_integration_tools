@@ -321,7 +321,7 @@ class AIPolicySpec(BaseModel):
         return self.model_router.primary
 
     @model_validator(mode="after")
-    def _validate_cross_field_consistency(self) -> "AIPolicySpec":
+    def _validate_cross_field_consistency(self) -> AIPolicySpec:
         """S172 M7.1 (ARC-010) cross-field consistency checks.
 
         Validates semantic invariants across nested spec-classes —

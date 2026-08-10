@@ -119,7 +119,7 @@ class RedisHitlSignalStore:
         )
         return self._client
 
-    async def put(self, signal: "HitlPendingSignal") -> None:
+    async def put(self, signal: HitlPendingSignal) -> None:
         """Store signal в Redis hash.
 
         Args:
@@ -128,7 +128,7 @@ class RedisHitlSignalStore:
         client = await self._get_client()
         await client.hset(_HASH_KEY, signal.signal_id, json.dumps(signal.to_dict()))
 
-    async def get(self, signal_id: str) -> "HitlPendingSignal | None":
+    async def get(self, signal_id: str) -> HitlPendingSignal | None:
         """Получить signal по ID.
 
         Args:
@@ -154,7 +154,7 @@ class RedisHitlSignalStore:
 
     async def list_pending(
         self, *, tenant_id: str | None = None
-    ) -> list["HitlPendingSignal"]:
+    ) -> list[HitlPendingSignal]:
         """List pending (unresolved) signals.
 
         Args:
@@ -184,7 +184,7 @@ class RedisHitlSignalStore:
 
     async def mark_resolved(
         self, signal_id: str, *, action: str, resolved_by: str
-    ) -> "HitlPendingSignal":
+    ) -> HitlPendingSignal:
         """Mark signal as resolved (атомарно через Lua).
 
         Args:

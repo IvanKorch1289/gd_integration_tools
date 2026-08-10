@@ -390,7 +390,7 @@ class PersistenceMixin:
 
     def lookup(
         self, key_from: str, *, target: str, result_property: str = "lookup_result"
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Chainable lookup DSL method (S168 W10 P1-1, per master prompt).
 
         Сейчас: thin wrapper над ``data_store_get`` (in-memory dict lookup).
@@ -426,7 +426,7 @@ class PersistenceMixin:
         *,
         target_property: str = "merge_result",
         strategy: str = "merge_dicts",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Chainable merge DSL method (S168 W10 P1-1, per master prompt).
 
         Per master prompt: "first-class merge with on, strategy"

@@ -18,7 +18,7 @@ class APIDocsChecksMixin:
 
     __slots__ = ()
 
-    _is_prod: "Callable[[object], bool]"  # S52 W2: set on ConfigValidator (MRO root)
+    _is_prod: Callable[[object], bool]  # S52 W2: set on ConfigValidator (MRO root)
     # --- api_docs_checks methods ---
 
     def _check_swagger_in_prod(self, app: AppBaseSettings) -> list[ConfigViolation]:

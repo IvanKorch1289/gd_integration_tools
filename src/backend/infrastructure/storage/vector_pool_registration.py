@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     )
 
 
-def _async_ping(backend: str) -> "Awaitable[bool]":
+def _async_ping(backend: str) -> Awaitable[bool]:
     """Лёгкий async ping через ``count()`` (canonical Protocol method).
 
     Note:
@@ -54,18 +54,18 @@ def _async_ping(backend: str) -> "Awaitable[bool]":
     return _probe()
 
 
-def qdrant_ping_fn() -> "Awaitable[bool]":
+def qdrant_ping_fn() -> Awaitable[bool]:
     """Qdrant liveness check (best-effort)."""
     return _async_ping("qdrant")
 
 
-def chroma_ping_fn() -> "Awaitable[bool]":
+def chroma_ping_fn() -> Awaitable[bool]:
     """Chroma liveness check (best-effort)."""
     return _async_ping("chroma")
 
 
 def register_vector_pool_if_available(
-    manager: "UnifiedPoolManager", *, name: str = "vector_main", backend: str = "qdrant"
+    manager: UnifiedPoolManager, *, name: str = "vector_main", backend: str = "qdrant"
 ) -> bool:
     """Регистрирует vector store pool если доступен.
 

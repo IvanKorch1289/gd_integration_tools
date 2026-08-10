@@ -90,7 +90,7 @@ class LoggerProtocol(ABC):
         ...
 
     @abstractmethod
-    def bind(self, **kwargs: Any) -> "LoggerProtocol":
+    def bind(self, **kwargs: Any) -> LoggerProtocol:
         """Return logger with bound context.
 
         Args:

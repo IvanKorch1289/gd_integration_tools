@@ -26,7 +26,7 @@ __all__ = ("RoutingEIPsMixin",)
 class RoutingEIPsMixin(EIPMixinBase):
     """EIP routing patterns: dynamic / scatter-gather / routing slip / CBR / sampling / load balance / multicast."""
 
-    def translate(self, from_format: str, to_format: str) -> "RouteBuilder":
+    def translate(self, from_format: str, to_format: str) -> RouteBuilder:
         """DEPRECATED: используйте .convert(). translate() — alias для обратной совместимости."""
         return cast(
             "RouteBuilder",
@@ -35,7 +35,7 @@ class RoutingEIPsMixin(EIPMixinBase):
 
     def dynamic_route(
         self, route_expression: Callable[[Exchange[Any]], str]
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Dynamic Router: runtime-вычисление route_id."""
         return cast(
             "RouteBuilder",
@@ -48,7 +48,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         *,
         aggregation: str = "merge",
         timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Scatter-Gather: fan-out на N маршрутов + сборка результатов."""
         return cast(
             "RouteBuilder",
@@ -68,7 +68,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         header: str | None = None,
         strict: bool = True,
         max_steps: int = 50,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Routing Slip EIP: динамическая цепочка processors per-message.
 
         Apache Camel Routing Slip: https://camel.apache.org/components/latest/eips/routingSlip.html
@@ -150,7 +150,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         routes: list[tuple[Callable[[Exchange[Any]], bool], str]],
         *,
         default_endpoint: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Content-Based Router EIP: route по predicate.
 
         Apache Camel: https://camel.apache.org/components/latest/eips/contentBasedRouter.html
@@ -184,7 +184,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         time_window_ms: int | None = None,
         max_in_window: int | None = None,
         seed: int | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Sampling EIP: probabilistic subset of messages.
 
         Apache Camel: https://camel.apache.org/components/latest/eips/sampling.html
@@ -224,7 +224,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         strategy: str = "round_robin",
         weights: list[float] | None = None,
         sticky_header: str | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Load Balancer: round_robin/random/weighted/sticky распределение."""
         return cast(
             "RouteBuilder",
@@ -245,7 +245,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         strategy: str = "all",
         on_error: str = "continue",
         timeout: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Fan-out на зарегистрированные DSL-маршруты по route_id.
 
         Args:

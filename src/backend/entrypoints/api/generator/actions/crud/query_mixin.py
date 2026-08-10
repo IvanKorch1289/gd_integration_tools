@@ -30,7 +30,7 @@ class QueryMixin:
     if TYPE_CHECKING:
         _protocol_self: _CrudMixinProtocol
 
-    def _register_filter(self: "_CrudMixinProtocol", spec: CrudSpec) -> None:
+    def _register_filter(self: _CrudMixinProtocol, spec: CrudSpec) -> None:
         """Выполнить операцию  register filter."""
         filter_class = spec.filter_class
         if filter_class is None:

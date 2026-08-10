@@ -32,7 +32,7 @@ class MessagingEIPsMixin(EIPMixinBase):
 
     def validate_schema(
         self, subject: str, *, schema_loader: Any = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Валидация по схеме из реестра (JSON Schema / Avro / Protobuf)."""
         return cast(
             "RouteBuilder",
@@ -47,7 +47,7 @@ class MessagingEIPsMixin(EIPMixinBase):
         *,
         reply_to_header: str = "reply-to",
         correlation_header: str = "x-correlation-id",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Return Address: публикует ответ в очередь из reply-to заголовка."""
         return cast(
             "RouteBuilder",
@@ -67,7 +67,7 @@ class MessagingEIPsMixin(EIPMixinBase):
         id_header: str = "x-message-id",
         ttl_seconds: int = 86_400,
         namespace: str = "exactly-once",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Exactly-once: dedup через storage по message-id."""
         return cast(
             "RouteBuilder",
@@ -81,7 +81,7 @@ class MessagingEIPsMixin(EIPMixinBase):
             ),
         )
 
-    def durable_fanout(self, broker: Any, subscribers: list[str]) -> "RouteBuilder":
+    def durable_fanout(self, broker: Any, subscribers: list[str]) -> RouteBuilder:
         """Durable Subscriber: fan-out к persistent-подписчикам."""
         return cast(
             "RouteBuilder",
@@ -92,7 +92,7 @@ class MessagingEIPsMixin(EIPMixinBase):
 
     def purge_channel(
         self, broker: Any, channel: str, *, dry_run: bool = True
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Очистка очереди/стрима (admin-операция)."""
         return cast(
             "RouteBuilder",
@@ -101,14 +101,14 @@ class MessagingEIPsMixin(EIPMixinBase):
             ),
         )
 
-    def sample(self, probability: float = 0.1) -> "RouteBuilder":
+    def sample(self, probability: float = 0.1) -> RouteBuilder:
         """Вероятностный сэмплинг (A/B, canary, debug-sampling)."""
         return cast(
             "RouteBuilder",
             self._add(SamplingProcessor(probability=probability)),  # type: ignore[attr-defined]
         )
 
-    def schema_validate(self, schema: dict[str, Any]) -> "RouteBuilder":
+    def schema_validate(self, schema: dict[str, Any]) -> RouteBuilder:
         """Валидация body по JSON Schema (Draft 2020-12)."""
         from src.backend.dsl.engine.processors.generic import SchemaValidateProcessor
 
@@ -122,7 +122,7 @@ class MessagingEIPsMixin(EIPMixinBase):
         splitter: Callable[[Exchange[Any]], Any],
         processors: list[BaseProcessor],
         aggregator: Callable[[list[Exchange[Any]]], Any],
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Composed Message Processor: split → per-part → aggregate."""
         return cast(
             "RouteBuilder",

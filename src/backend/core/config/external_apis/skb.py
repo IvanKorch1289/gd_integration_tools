@@ -68,7 +68,7 @@ class SKBAPISettings(BaseSettingsWithLoader):
     )
 
     @model_validator(mode="after")
-    def validate_urls(self) -> "SKBAPISettings":
+    def validate_urls(self) -> SKBAPISettings:
         """Проверяет корректность URL."""
         if not self.prod_url.startswith("https"):
             raise ValueError("Продакшн URL должен использовать HTTPS")

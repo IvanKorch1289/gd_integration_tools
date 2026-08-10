@@ -181,7 +181,7 @@ class RouterSpecialistProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Запустить LLM-routing → specialist delegation.
 
@@ -282,7 +282,7 @@ class RouterSpecialistProcessor(BaseProcessor):
         exchange.set_out(body=output, headers=dict(exchange.in_message.headers))
 
     @staticmethod
-    def _extract_input(exchange: "Exchange[Any]") -> str:
+    def _extract_input(exchange: Exchange[Any]) -> str:
         body = exchange.in_message.body
         if isinstance(body, str):
             return body
@@ -321,7 +321,7 @@ class RouterSpecialistMixin:
         specialists: list[SpecialistAgent],
         fallback_specialist: str | None = None,
         min_confidence: float = 0.6,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Добавить :class:`RouterSpecialistProcessor` в pipeline.
 
         Args:

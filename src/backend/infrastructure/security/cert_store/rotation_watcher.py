@@ -44,10 +44,10 @@ class CertRotationWatcher:
     def __init__(
         self,
         *,
-        cert_store: "CertStore",
+        cert_store: CertStore,
         check_interval_seconds: float = 3600.0,
         rotation_threshold_days: int = 30,
-        prometheus_exporter: "CertPrometheusExporter | None" = None,
+        prometheus_exporter: CertPrometheusExporter | None = None,
         auto_rotate: bool = False,
         renewal_callback=None,
     ) -> None:

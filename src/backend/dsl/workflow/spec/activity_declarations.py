@@ -84,7 +84,7 @@ class SagaDeclaration(BaseModel):
     )
 
     @model_validator(mode="after")
-    def _validate_compensate_map(self) -> "SagaDeclaration":
+    def _validate_compensate_map(self) -> SagaDeclaration:
         """Phase 6: validate ``compensate_map`` references known steps.
 
         Forward name must exist in ``forward[]``; compensate name must

@@ -361,7 +361,7 @@ class APICompositionMixin:
         merge_strategy: MergeStrategy | str = MergeStrategy.MERGE_DICTS,
         custom_merger: Callable[[dict[str, Any]], Any] | None = None,
         timeout_seconds: float = 30.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Добавить :class:`APICompositionProcessor` в pipeline.
 
         Args:

@@ -163,7 +163,7 @@ class APIKeyAuth:
         return self._hasher.hash(raw)
 
     @staticmethod
-    def validate_strength(raw: str) -> "StrengthReport":
+    def validate_strength(raw: str) -> StrengthReport:
         """S173 M8.3: weak-API-key detector.
 
         Rejects trivially weak secrets (``"password"``, ``"x"``, ``""``,

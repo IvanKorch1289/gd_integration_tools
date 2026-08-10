@@ -47,7 +47,7 @@ class TransactionContext:
     _connection: Any = None
     _in_transaction: bool = False
 
-    async def __aenter__(self) -> "TransactionContext":
+    async def __aenter__(self) -> TransactionContext:
         # DatabaseBundle is async context manager; enter it.
         self._bundle = await self._bundle.__aenter__()
         self._in_transaction = True
@@ -156,17 +156,17 @@ class ExternalDBFacade:
     """
 
     _registry_getter: Any = None
-    _instance: "ExternalDBFacade | None" = field(default=None, init=False, repr=False)
+    _instance: ExternalDBFacade | None = field(default=None, init=False, repr=False)
 
     @classmethod
-    def get_default(cls) -> "ExternalDBFacade":
+    def get_default(cls) -> ExternalDBFacade:
         """Singleton accessor (lazy-init на first call)."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
-    def configure(cls, registry_getter: Any) -> "ExternalDBFacade":
+    def configure(cls, registry_getter: Any) -> ExternalDBFacade:
         """Установить custom registry getter (для тестов / DI)."""
         instance = cls(_registry_getter=registry_getter)
         cls._instance = instance

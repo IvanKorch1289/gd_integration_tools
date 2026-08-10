@@ -123,7 +123,7 @@ class PlanExecuteProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(
-        self, exchange: "Exchange[Any]", context: "ExecutionContext"
+        self, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Plan → execute → verify (replan on fail)."""
         prompt = self._build_prompt(exchange)
@@ -218,7 +218,7 @@ class PlanExecuteProcessor(BaseProcessor):
         exchange.set_out(body=body, headers=dict(exchange.in_message.headers))
 
     @staticmethod
-    def _build_prompt(exchange: "Exchange[Any]") -> str:
+    def _build_prompt(exchange: Exchange[Any]) -> str:
         body = exchange.in_message.body
         if isinstance(body, str):
             return body
@@ -262,7 +262,7 @@ class PlanExecuteMixin:
         verifier: VerifierFn | None = None,
         max_steps: int = 10,
         max_replans: int = 2,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Добавить :class:`PlanExecuteProcessor` в pipeline.
 
         Args:

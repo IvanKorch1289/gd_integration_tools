@@ -77,7 +77,7 @@ class CertPrometheusExporter:
         # initialize last_rotation to 0
         self.cert_last_rotation_timestamp_seconds.set(0)
 
-    async def update(self, store: "CertStore", *, days: int = 30) -> None:
+    async def update(self, store: CertStore, *, days: int = 30) -> None:
         """Обновить метрики на основе текущего состояния cert_store.
 
         Args:

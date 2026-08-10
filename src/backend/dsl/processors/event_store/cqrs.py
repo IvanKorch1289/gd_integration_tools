@@ -139,7 +139,7 @@ class CQRSMixin:
         event_store: EventStore | None = None,
         aggregate_id_field: str = "aggregate_id",
         events_field: str = "events",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Добавить :class:`EventStoreProcessor` в pipeline.
 
         Args:

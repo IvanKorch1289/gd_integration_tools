@@ -119,7 +119,7 @@ class ServiceSchemaRegistry:
     __slots__ = ("_by_kind", "_metrics", "_schema_view", "_strict_validation")
 
     @property
-    def schema_view(self) -> "SchemaTypedAdapter":
+    def schema_view(self) -> SchemaTypedAdapter:
         """Typed view для public API boundary (D-AUDIT-A5-01 fix, cycle 1).
 
         Returns:

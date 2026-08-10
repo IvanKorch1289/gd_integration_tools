@@ -284,14 +284,14 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         raise NotImplementedError(f"Поддержка СУБД '{self.type}' не реализована")
 
     @model_validator(mode="after")
-    def validate_ssl(self) -> "DatabaseConnectionSettings":
+    def validate_ssl(self) -> DatabaseConnectionSettings:
         """Проверяет корректность SSL-настроек."""
         if self.ssl_mode and self.type != DatabaseTypeChoices.postgresql:
             raise ValueError("SSL доступен только для PostgreSQL")
         return self
 
     @model_validator(mode="after")
-    def validate_oracle_drivers(self) -> "DatabaseConnectionSettings":
+    def validate_oracle_drivers(self) -> DatabaseConnectionSettings:
         """Для Oracle драйверы PG-семейства не работают.
 
         В ``base.yml`` зашиты PG-defaults ``asyncpg``/``psycopg2``. При
@@ -312,7 +312,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         return self
 
     @model_validator(mode="after")
-    def validate_required_fields(self) -> "DatabaseConnectionSettings":
+    def validate_required_fields(self) -> DatabaseConnectionSettings:
         """Проверяет наличие обязательных полей в зависимости от типа СУБД."""
         if self.type == DatabaseTypeChoices.sqlite:
             if not self.path:

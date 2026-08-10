@@ -65,7 +65,7 @@ class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
 
     _cache: dict[tuple[str, str, str | None], bool]
     _tenant_cache: dict[tuple[str, str, str, str | None], bool]
-    _lock: "Lock"  # D-AUDIT-98 (S183 W1.1)
+    _lock: Lock  # D-AUDIT-98 (S183 W1.1)
 
     def __init__(
         self,
@@ -73,7 +73,7 @@ class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
         vocabulary: CapabilityVocabulary | None = None,
         audit: AuditCallback | None = None,
         lru_size: int = _DEFAULT_LRU_SIZE,
-        policy: "CapabilityPolicy | None" = None,
+        policy: CapabilityPolicy | None = None,
     ) -> None:
         self._vocabulary = vocabulary or build_default_vocabulary()
         self._audit = audit
@@ -84,7 +84,7 @@ class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
         self._tenant_declarations: dict[str, dict[str, dict[str, CapabilityRef]]] = {}
         # Per-tenant LRU cache: (tenant, principal, capability, scope) → bool.
         self._tenant_cache: dict[tuple[str, str, str, str | None], bool] = {}
-        self._policy: "CapabilityPolicy | None" = policy
+        self._policy: CapabilityPolicy | None = policy
         # D-AUDIT-98 (S183 W1.1): guard _cache / _tenant_cache against
         # grant+revoke races that previously raised
         # "RuntimeError: dictionary changed size during iteration".
@@ -96,7 +96,7 @@ class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
         return self._vocabulary
 
     @property
-    def policy(self) -> "CapabilityPolicy | None":
+    def policy(self) -> CapabilityPolicy | None:
         """Опц. policy, интегрированная в gate (``None`` → no policy)."""
         return self._policy
 

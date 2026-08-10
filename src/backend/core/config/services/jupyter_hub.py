@@ -124,7 +124,7 @@ class JupyterHubSettings(BaseSettingsWithLoader):
     # ── Валидация ──
 
     @model_validator(mode="after")
-    def check_token_when_enabled(self) -> "JupyterHubSettings":
+    def check_token_when_enabled(self) -> JupyterHubSettings:
         """Если enabled=True — api_token должен быть задан."""
         if self.enabled and not self.api_token:
             raise ValueError("api_token обязателен при enabled=true")

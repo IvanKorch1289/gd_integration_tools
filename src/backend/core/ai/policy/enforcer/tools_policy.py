@@ -55,7 +55,7 @@ class ToolPolicyViolationError(PermissionError):
     """
 
 
-def check_tool_allowed(tool_name: str, spec: "ToolsSpec") -> bool:
+def check_tool_allowed(tool_name: str, spec: ToolsSpec) -> bool:
     """Check if ``tool_name`` allowed per spec (no side effects).
 
     Pattern matching uses **case-sensitive glob** (:func:`fnmatch.fnmatchcase`,
@@ -91,7 +91,7 @@ def check_tool_allowed(tool_name: str, spec: "ToolsSpec") -> bool:
     return True
 
 
-def enforce_tool_policy(tool_name: str, spec: "ToolsSpec") -> None:
+def enforce_tool_policy(tool_name: str, spec: ToolsSpec) -> None:
     """Enforce tool policy per spec.on_violation.
 
     Args:
@@ -144,7 +144,7 @@ def enforce_tool_policy(tool_name: str, spec: "ToolsSpec") -> None:
         )
 
 
-def filter_tools_by_policy(tool_names: Iterable[str], spec: "ToolsSpec") -> list[str]:
+def filter_tools_by_policy(tool_names: Iterable[str], spec: ToolsSpec) -> list[str]:
     """Filter list of tool names per spec (whitelist/blacklist).
 
     Useful для AIGateway initialize: pre-compute allowed tool set,

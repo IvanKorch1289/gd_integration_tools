@@ -35,7 +35,7 @@ class StreamingEIPsMixin(EIPMixinBase):
         key_prefix: str = "dedup",
         window_seconds: int = 60,
         mode: str = "first",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Дедупликация в скользящем окне с Redis-персистентностью.
 
         Args:
@@ -62,7 +62,7 @@ class StreamingEIPsMixin(EIPMixinBase):
 
     def batch(
         self, *, size: int = 100, timeout_ms: int = 500, group_by: str | None = None
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Накопление сообщений в окно с flush по N ИЛИ по таймауту.
 
         Args:
@@ -89,7 +89,7 @@ class StreamingEIPsMixin(EIPMixinBase):
         window_seconds: int = 60,
         dedup_mode: str = "last",
         inject_as: str = "collected_batch",
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Накопление и батч-дедупликация сообщений в окне.
 
         Args:
@@ -123,7 +123,7 @@ class StreamingEIPsMixin(EIPMixinBase):
         size: int = 100,
         interval_seconds: float = 10.0,
         watermark_store: WatermarkStore | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Streaming tumbling-окно фиксированного размера.
 
         Если ``watermark_store`` не задан и в ``app.state`` уже
@@ -150,7 +150,7 @@ class StreamingEIPsMixin(EIPMixinBase):
         window_seconds: float = 10.0,
         step_seconds: float = 2.0,
         watermark_store: WatermarkStore | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Streaming sliding-окно с перекрытием."""
         store = watermark_store or get_watermark_store_optional()
         return cast(
@@ -172,7 +172,7 @@ class StreamingEIPsMixin(EIPMixinBase):
         *,
         gap_seconds: float = 30.0,
         watermark_store: WatermarkStore | None = None,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Streaming session-окно (закрывается по паузе)."""
         store = watermark_store or get_watermark_store_optional()
         return cast(
@@ -193,7 +193,7 @@ class StreamingEIPsMixin(EIPMixinBase):
         sink: Callable[[dict[Any, list[Any]]], Any],
         *,
         window_seconds: float = 60.0,
-    ) -> "RouteBuilder":
+    ) -> RouteBuilder:
         """Группировка по ключу (jmespath) в пределах окна."""
         return cast(
             "RouteBuilder",

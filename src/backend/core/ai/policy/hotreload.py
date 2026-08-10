@@ -70,7 +70,7 @@ class PolicyReloadEvent:
 
 
 async def watch_policy_files(
-    resolver: "PolicyResolver",
+    resolver: PolicyResolver,
     *,
     paths: list[Path] | None = None,
     stop_event: asyncio.Event | None = None,

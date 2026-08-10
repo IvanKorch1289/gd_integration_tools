@@ -91,7 +91,7 @@ class CertBackendRegistry:
         """Список всех зарегистрированных id (sorted)."""
         return sorted(self._backends.keys())
 
-    def instantiate(self, backend_id: str, **kwargs: Any) -> "CertBackend":
+    def instantiate(self, backend_id: str, **kwargs: Any) -> CertBackend:
         """Создать экземпляр backend по id (D258 convenience method)."""
         cls = self.get(backend_id)
         return cls(**kwargs)

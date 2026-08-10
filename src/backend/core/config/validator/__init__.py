@@ -56,7 +56,7 @@ class ConfigValidator(
     __slots__ = ()
 
     def validate(
-        self, settings: "Settings", waf_settings: "WafSettings"
+        self, settings: Settings, waf_settings: WafSettings
     ) -> tuple[ConfigViolation, ...]:
         """Возвращает кортеж обнаруженных нарушений (может быть пустым).
 

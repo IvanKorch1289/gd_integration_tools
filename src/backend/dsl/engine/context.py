@@ -44,7 +44,7 @@ class ExecutionContext:
         route_id: str = "",
         logger: logging.Logger | None = None,
         state: dict[str, Any] | None = None,
-    ) -> "ExecutionContext":
+    ) -> ExecutionContext:
         """Собирает ``ExecutionContext`` из ``AuthContext``.
 
         Sprint 1: проброс ``principal/permissions`` из middleware auth

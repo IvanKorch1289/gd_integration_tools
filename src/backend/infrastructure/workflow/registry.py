@@ -59,8 +59,8 @@ class WorkflowDescriptor:
 
     name: str
     description: str = ""
-    input_schema: type["BaseModel"] | None = None
-    output_schema: type["BaseModel"] | None = None
+    input_schema: type[BaseModel] | None = None
+    output_schema: type[BaseModel] | None = None
     max_attempts: int = 10
     tags: tuple[str, ...] = field(default_factory=tuple)
 
@@ -81,14 +81,14 @@ class WorkflowRegistry:
         self._route_ids: dict[str, str] = {}
         # IL-WF1.3 (Wave 3.2): route_id → WorkflowSpec для DSLStepExecutor.
         # Позволяет runner'у hot-reload spec без перезапуска worker-а.
-        self._specs: dict[str, "WorkflowSpec"] = {}
+        self._specs: dict[str, WorkflowSpec] = {}
         self._lock = threading.Lock()
 
     def register(
         self,
         descriptor: WorkflowDescriptor,
         route_id: str,
-        spec: "WorkflowSpec | None" = None,
+        spec: WorkflowSpec | None = None,
     ) -> None:
         """Регистрирует workflow в реестре.
 
@@ -128,7 +128,7 @@ class WorkflowRegistry:
             if route_id is not None:
                 self._specs.pop(route_id, None)
 
-    def register_spec(self, route_id: str, spec: "WorkflowSpec") -> None:
+    def register_spec(self, route_id: str, spec: WorkflowSpec) -> None:
         """Кладёт актуальный :class:`WorkflowSpec` под ``route_id``.
 
         Вызывается из ``WorkflowBuilder`` в пайплайне регистрации роутов
@@ -140,7 +140,7 @@ class WorkflowRegistry:
         with self._lock:
             self._specs[route_id] = spec
 
-    def get_spec(self, route_id: str) -> "WorkflowSpec | None":
+    def get_spec(self, route_id: str) -> WorkflowSpec | None:
         """Возвращает :class:`WorkflowSpec` по ``route_id`` или ``None``."""
         return self._specs.get(route_id)
 

@@ -79,22 +79,22 @@ class VariableScope:
         return f"{self.kind}:{self.identifier}"
 
     @classmethod
-    def global_scope(cls) -> "VariableScope":
+    def global_scope(cls) -> VariableScope:
         """Вернуть singleton scope 'global' (process-wide)."""
         return cls(kind="global")
 
     @classmethod
-    def for_tenant(cls, tenant_id: str) -> "VariableScope":
+    def for_tenant(cls, tenant_id: str) -> VariableScope:
         """Вернуть scope, изолированный по tenant_id."""
         return cls(kind="tenant", identifier=tenant_id)
 
     @classmethod
-    def for_route(cls, route_id: str) -> "VariableScope":
+    def for_route(cls, route_id: str) -> VariableScope:
         """Вернуть scope, изолированный по route_id."""
         return cls(kind="route", identifier=route_id)
 
     @classmethod
-    def parse(cls, raw: str) -> "VariableScope":
+    def parse(cls, raw: str) -> VariableScope:
         """Parse scope string. Examples: `"global"`, `"tenant:acme"`.
 
         Raises:
@@ -472,7 +472,7 @@ class DSLVariableStore:
     name: str = "default"
 
     @classmethod
-    def get_default(cls) -> "DSLVariableStore":
+    def get_default(cls) -> DSLVariableStore:
         """Singleton с дефолтным backend (in-memory).
 
         В production переопределите через `configure()` в lifespan.py.
@@ -482,7 +482,7 @@ class DSLVariableStore:
         return _default_instance[0]
 
     @classmethod
-    def configure(cls, backends: list[VariableBackend]) -> "DSLVariableStore":
+    def configure(cls, backends: list[VariableBackend]) -> DSLVariableStore:
         """Установить custom backends (singleton reset)."""
         instance = cls(backends=list(backends))
         _default_instance.clear()

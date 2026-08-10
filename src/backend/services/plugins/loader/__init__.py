@@ -322,7 +322,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
 from src.backend.core.di.app_state import app_state_singleton  # noqa: E402
 
 
-def _empty_plugin_loader_factory() -> "PluginLoader":
+def _empty_plugin_loader_factory() -> PluginLoader:
     """Factory для app_state_singleton — raises с понятной ошибкой."""
     raise RuntimeError(
         "PluginLoader требует explicit DI. Use PluginLoader("
@@ -333,6 +333,6 @@ def _empty_plugin_loader_factory() -> "PluginLoader":
 
 
 @app_state_singleton("plugin_loader", factory=_empty_plugin_loader_factory)
-def get_plugin_loader() -> "PluginLoader":
+def get_plugin_loader() -> PluginLoader:
     """Singleton-accessor (backward compat, see app_state_singleton)."""
     raise RuntimeError("unreachable — see app_state_singleton decorator")

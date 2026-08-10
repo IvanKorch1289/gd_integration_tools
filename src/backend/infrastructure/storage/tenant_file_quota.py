@@ -96,7 +96,7 @@ class QuotaConfig:
     enabled: bool = True
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any] | None) -> "QuotaConfig":
+    def from_dict(cls, data: dict[str, Any] | None) -> QuotaConfig:
         """Build from settings dict (gracefully handle None/missing keys)."""
         if not data:
             return cls()
