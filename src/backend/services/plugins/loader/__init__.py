@@ -282,8 +282,16 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
                     "old_version": entry.version,
                 },
             )
-        except Exception:  # pragma: no cover — audit must never block
-            pass
+        except (ImportError, AttributeError, RuntimeError) as audit_exc:  # pragma: no cover — audit must never block
+            # cycle-9/D-AUDIT-937: narrow exceptions + observability.
+            # ImportError — audit facade missing, AttributeError — schema
+            # change, RuntimeError — backend unavailable. Bare `except
+            # Exception` маскировал unrelated runtime errors.
+            import logging
+            logging.getLogger(__name__).debug(
+                "plugin_loader.unload_audit_failed",
+                extra={"plugin_name": plugin_name, "error": str(audit_exc)},
+            )
 
         _logger.info("Plugin unloaded (per-plugin): %s", plugin_name)
         return True
