@@ -290,8 +290,15 @@ class EmailReadProcessor(BaseProcessor):
             finally:
                 try:
                     conn.logout()
-                except Exception:
-                    pass
+                except (OSError, ConnectionError, RuntimeError, AttributeError) as logout_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-948: narrow exceptions + observability.
+                    # OSError/ConnectionError для IMAP network, RuntimeError
+                    # — server error, AttributeError — IMAP API change.
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "email_read.imap_logout_failed",
+                        extra={"error": str(logout_exc)},
+                    )
 
         emails = await asyncio.to_thread(_fetch)
         _rpa_logger.info("email_read host=%s folder=%s count=%d", self.host, self.folder, len(emails))
