@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -55,7 +55,7 @@ def test_cleanup_expired_removes_old_sessions(tmp_path: Path) -> None:
     os.utime(old_session, (old_mtime, old_mtime))
 
     cleaner = AIWorkspaceCleaner(workspace_root=workspace_root, ttl_days=7)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     removed = cleaner.cleanup_expired(now, ttl_days=7)
 
     assert removed == 1
@@ -191,7 +191,7 @@ async def test_stop_cancels_running_task(tmp_path: Path) -> None:
 
 def test_cleanup_expired_no_root(tmp_path: Path) -> None:
     cleaner = AIWorkspaceCleaner(workspace_root=tmp_path / "missing")
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     assert cleaner.cleanup_expired(now) == 0
 
 
@@ -203,7 +203,7 @@ def test_cleanup_expired_skips_nondir(tmp_path: Path) -> None:
     tenant_dir.mkdir()
     (tenant_dir / "session1").write_text("x")
     cleaner = AIWorkspaceCleaner(workspace_root=root, ttl_days=7)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     assert cleaner.cleanup_expired(now) == 0
 
 
@@ -221,7 +221,7 @@ def test_cleanup_expired_oserror_on_remove(tmp_path: Path) -> None:
     os.utime(session_dir, (old_mtime, old_mtime))
 
     cleaner = AIWorkspaceCleaner(workspace_root=root, ttl_days=7)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     with patch(
         "src.backend.core.ai.workspace_cleaner.shutil.rmtree",
         side_effect=OSError("perm"),

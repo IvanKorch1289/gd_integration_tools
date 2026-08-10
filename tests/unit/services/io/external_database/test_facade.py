@@ -34,7 +34,7 @@ class _FakeResult:
         self._rows = rows or []
         self.rowcount = rowcount
 
-    def mappings(self) -> "_FakeResult":
+    def mappings(self) -> _FakeResult:
         return self
 
     def all(self) -> list[dict[str, Any]]:

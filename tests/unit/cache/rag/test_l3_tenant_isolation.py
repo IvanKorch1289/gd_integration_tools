@@ -54,15 +54,15 @@ class _FakeRedis:
         """Имитация execute('cache', op) — flush scanner."""
 
         class _Conn:
-            def __init__(self_outer: "_Conn", outer: _FakeRedis) -> None:
+            def __init__(self_outer: _Conn, outer: _FakeRedis) -> None:
                 self_outer._outer = outer
 
-            async def scan_iter(self_outer: "_Conn", match: str, count: int) -> Any:
+            async def scan_iter(self_outer: _Conn, match: str, count: int) -> Any:
                 for k in list(self_outer._outer.store.keys()):
                     if _glob_match(k, match):
                         yield k
 
-            async def unlink(self_outer: "_Conn", *keys: str) -> int:
+            async def unlink(self_outer: _Conn, *keys: str) -> int:
                 n = 0
                 for k in keys:
                     if k in self_outer._outer.store:

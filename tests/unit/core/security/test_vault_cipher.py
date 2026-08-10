@@ -138,7 +138,7 @@ class TestEncrypt:
 
         result = await cipher.encrypt("привет")
         assert result == "vault:v1:abc"
-        expected_b64 = base64.b64encode("привет".encode("utf-8")).decode("ascii")
+        expected_b64 = base64.b64encode("привет".encode()).decode("ascii")
         mock_client.post.assert_awaited_once_with(
             "/v1/transit/encrypt/k", json={"plaintext": expected_b64}
         )

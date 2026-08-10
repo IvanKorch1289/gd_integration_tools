@@ -10,7 +10,7 @@ Coverage:
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 
 import pytest
 
@@ -115,7 +115,7 @@ class TestEnsureUtc:
         naive = datetime(2025, 6, 1, 12, 0, 0)
         result = ensure_utc(naive)
         assert result.utcoffset() == timedelta(0)
-        assert result == naive.replace(tzinfo=timezone.utc)
+        assert result == naive.replace(tzinfo=UTC)
 
     def test_aware_to_utc_converts(self) -> None:
         """Aware +03:00 → converted to UTC (hour -3)."""
@@ -127,7 +127,7 @@ class TestEnsureUtc:
 
     def test_already_utc_unchanged(self) -> None:
         """Already UTC → returned as-is."""
-        utc = datetime(2025, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+        utc = datetime(2025, 6, 1, 12, 0, 0, tzinfo=UTC)
         result = ensure_utc(utc)
         assert result == utc
 

@@ -23,7 +23,7 @@ pytestmark = pytest.mark.requires_pg
 
 @pytest.mark.asyncio
 async def test_dsl_snapshot_round_trip_with_api_version_pg(
-    pg_engine_with_alembic: "AsyncEngine",
+    pg_engine_with_alembic: AsyncEngine,
 ) -> None:
     """Создание/чтение DslSnapshot с api_version='v2' через реальный Postgres."""
     from sqlalchemy import select

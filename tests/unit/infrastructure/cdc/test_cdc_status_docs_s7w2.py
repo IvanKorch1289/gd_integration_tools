@@ -149,7 +149,7 @@ async def test_poll_backend_polling_mode_is_scaffold_no_events() -> None:
     await backend.close()
     try:
         await asyncio.wait_for(task, timeout=1.0)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         task.cancel()
     assert events == [], (
         f"PollCDCBackend polling-mode yielded events; scaffold-контракт нарушен: {events!r}"
@@ -186,7 +186,7 @@ async def test_listen_notify_subscribe_blocks_until_close() -> None:
     await backend.close()  # это выводит subscribe из wait
     try:
         await asyncio.wait_for(task, timeout=1.0)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         task.cancel()
     assert events == [], (
         f"ListenNotifyCDCBackend.subscribe yielded events; scaffold-контракт нарушен: {events!r}"

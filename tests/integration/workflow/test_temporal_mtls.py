@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -28,7 +28,7 @@ def fake_vault_response() -> dict:
             "issuing_ca": "-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----",
             "ca_chain": ["-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----"],
             "expiration": int(
-                (datetime.now(timezone.utc) + timedelta(hours=24)).timestamp()
+                (datetime.now(UTC) + timedelta(hours=24)).timestamp()
             ),
             "serial_number": "abc:def",
         }

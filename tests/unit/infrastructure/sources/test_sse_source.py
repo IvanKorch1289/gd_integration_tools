@@ -47,7 +47,7 @@ class _FakeAsyncClient:
     def stream(self, *args: Any, **kwargs: Any) -> _FakeStreamCM:
         return _FakeStreamCM(_FakeAsyncClient._shared_resp)
 
-    async def __aenter__(self) -> "_FakeAsyncClient":
+    async def __aenter__(self) -> _FakeAsyncClient:
         return self
 
     async def __aexit__(self, *args: Any) -> None:

@@ -10,7 +10,7 @@ Pattern (D275, Ponytail): thin wrapper.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 
 
@@ -32,9 +32,9 @@ class TestBatchAggregatorProcessor:
             window_type="tumbling", window_size_seconds=60.0
         )
         events = [
-            {"key": "a", "value": 1, "ts": datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)},
-            {"key": "a", "value": 2, "ts": datetime(2026, 1, 1, 12, 0, 30, tzinfo=timezone.utc)},
-            {"key": "a", "value": 3, "ts": datetime(2026, 1, 1, 12, 1, 0, tzinfo=timezone.utc)},
+            {"key": "a", "value": 1, "ts": datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)},
+            {"key": "a", "value": 2, "ts": datetime(2026, 1, 1, 12, 0, 30, tzinfo=UTC)},
+            {"key": "a", "value": 3, "ts": datetime(2026, 1, 1, 12, 1, 0, tzinfo=UTC)},
         ]
         # Two windows: 12:00 (events 1,2), 12:01 (event 3)
         windows = proc.aggregate(events, key="key", value="value")

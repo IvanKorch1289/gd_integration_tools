@@ -14,7 +14,7 @@ Requirements:
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -68,8 +68,8 @@ class TestOracleCDCSourcePolling:
             mock_conn = AsyncMock()
             mock_connect.return_value = mock_conn
             mock_conn.execute.return_value = [
-                {"id": 1, "updated_at": datetime.now(timezone.utc)},
-                {"id": 2, "updated_at": datetime.now(timezone.utc)},
+                {"id": 1, "updated_at": datetime.now(UTC)},
+                {"id": 2, "updated_at": datetime.now(UTC)},
             ]
             changes = await source._fetch_changes_since("HR.EMPLOYEES", watermark=0)
         assert len(changes) == 2

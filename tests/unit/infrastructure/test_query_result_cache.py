@@ -12,6 +12,7 @@ from src.backend.infrastructure.database.query_result_cache import (
     QueryResultCache,
     get_default_serializer,
 )
+from datetime import UTC
 
 pytestmark = pytest.mark.unit
 
@@ -31,7 +32,7 @@ class TestSerializers:
         from datetime import datetime, timezone
 
         ser = JsonSerializer()
-        dt = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
         raw = ser.dumps({"dt": dt})
         assert b"2024-01-01" in raw
 

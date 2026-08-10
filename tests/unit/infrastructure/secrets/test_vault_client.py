@@ -29,7 +29,7 @@ class TestVaultClient:
         return MagicMock()
 
     @pytest.fixture
-    def rotator(self) -> "VaultClient":
+    def rotator(self) -> VaultClient:
         """Create a fresh VaultClient for each test."""
         from src.backend.infrastructure.secrets.vault_client import (
             VaultClient,
@@ -49,7 +49,7 @@ class TestVaultClient:
     # Registration tests
     # ─────────────────────────────────────────────────────────────────────────
 
-    def test_register_adds_entry(self, rotator: "VaultClient") -> None:
+    def test_register_adds_entry(self, rotator: VaultClient) -> None:
         """register() should add path to internal entries dict."""
         callback = MagicMock()
         rotator.register("secret/data/test/key", callback)
@@ -61,7 +61,7 @@ class TestVaultClient:
         assert entry.validator is None
         assert entry.current_version is None
 
-    def test_register_with_validator(self, rotator: "VaultClient") -> None:
+    def test_register_with_validator(self, rotator: VaultClient) -> None:
         """register() should store validator function when provided."""
         validator = MagicMock(return_value=True)
         callback = MagicMock()
@@ -75,14 +75,14 @@ class TestVaultClient:
     # ─────────────────────────────────────────────────────────────────────────
 
     def test_get_active_secret_returns_none_when_not_registered(
-        self, rotator: "VaultClient"
+        self, rotator: VaultClient
     ) -> None:
         """get_active_secret() should return None for unregistered path."""
         result = rotator.get_active_secret("secret/data/nonexistent")
         assert result is None
 
     def test_get_active_secret_returns_cached_after_init(
-        self, rotator: "VaultClient"
+        self, rotator: VaultClient
     ) -> None:
         """get_active_secret() should return active_secret_data after init."""
         callback = MagicMock()
@@ -98,7 +98,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_initial_version_cached_no_callback(
-        self, rotator: "VaultClient"
+        self, rotator: VaultClient
     ) -> None:
         """First read should cache version and data but NOT call callback."""
         callback = MagicMock()
@@ -121,7 +121,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_version_change_activates_after_drift_window(
-        self, rotator: "VaultClient"
+        self, rotator: VaultClient
     ) -> None:
         """Version change after drift window should trigger callback."""
         callback = MagicMock()
@@ -157,7 +157,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_version_change_kept_during_drift_window(
-        self, rotator: "VaultClient"
+        self, rotator: VaultClient
     ) -> None:
         """Within drift window, old secret should stay active (no callback)."""
         callback = MagicMock()
@@ -194,7 +194,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_validation_failure_keeps_old_secret(
-        self, rotator: "VaultClient"
+        self, rotator: VaultClient
     ) -> None:
         """If validator returns False, old secret should remain active."""
         validator = MagicMock(return_value=False)
@@ -233,7 +233,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_validation_success_activates_new_secret(
-        self, rotator: "VaultClient"
+        self, rotator: VaultClient
     ) -> None:
         """If validator returns True, new secret should be activated."""
         validator = MagicMock(return_value=True)
@@ -272,7 +272,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_validation_exception_keeps_old_secret(
-        self, rotator: "VaultClient"
+        self, rotator: VaultClient
     ) -> None:
         """If validator raises, old secret should remain active."""
         validator = MagicMock(side_effect=Exception("Connection failed"))
@@ -312,7 +312,7 @@ class TestVaultClient:
     # ─────────────────────────────────────────────────────────────────────────
 
     @pytest.mark.asyncio()
-    async def test_start_creates_rotation_task(self, rotator: "VaultClient") -> None:
+    async def test_start_creates_rotation_task(self, rotator: VaultClient) -> None:
         """start() should create an asyncio.Task for rotation loop."""
         rotator._running = False
 
@@ -326,7 +326,7 @@ class TestVaultClient:
         await rotator.stop()
 
     @pytest.mark.asyncio()
-    async def test_stop_cancels_rotation_task(self, rotator: "VaultClient") -> None:
+    async def test_stop_cancels_rotation_task(self, rotator: VaultClient) -> None:
         """stop() should cancel the rotation task."""
         await rotator.start()
         task = rotator._rotation_task
@@ -338,7 +338,7 @@ class TestVaultClient:
         assert task.done()
 
     @pytest.mark.asyncio()
-    async def test_idempotent_start(self, rotator: "VaultClient") -> None:
+    async def test_idempotent_start(self, rotator: VaultClient) -> None:
         """Multiple start() calls should be idempotent (no duplicate tasks)."""
         rotator._running = False
 
@@ -360,7 +360,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_connection_error_resets_client_for_reconnect(
-        self, rotator: "VaultClient"
+        self, rotator: VaultClient
     ) -> None:
         """On connection error, client should be reset to None for reconnect."""
         callback = MagicMock()

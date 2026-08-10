@@ -13,7 +13,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 import pytest
 from pydantic import ValidationError
@@ -38,7 +38,7 @@ def test_notebook_defaults_minimal_fields() -> None:
     # timestamps — UTC, tz-aware
     assert isinstance(nb.created_at, datetime)
     assert nb.created_at.tzinfo is not None
-    assert nb.created_at.utcoffset() == timezone.utc.utcoffset(nb.created_at)
+    assert nb.created_at.utcoffset() == UTC.utcoffset(nb.created_at)
 
 
 def test_notebook_unique_default_ids() -> None:

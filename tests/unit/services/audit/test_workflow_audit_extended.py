@@ -12,7 +12,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -129,7 +129,7 @@ async def test_emit_hitl_events(sink: WorkflowAuditSink, writer_mock: Any) -> No
 async def test_emit_with_explicit_event_id_and_created_at(
     sink: WorkflowAuditSink, writer_mock: Any
 ) -> None:
-    explicit_ts = datetime(2026, 5, 20, 12, 0, 0, tzinfo=timezone.utc)
+    explicit_ts = datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
     await sink.emit(
         event_type="workflow.start",
         workflow_id="wf-explicit",

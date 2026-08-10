@@ -145,7 +145,7 @@ async def test_sample_once_updates_gauge() -> None:
         labels_calls: list[tuple[str, float]] = []
 
         class _FakeGauge:
-            def labels(self, transport: str) -> "_FakeGauge":
+            def labels(self, transport: str) -> _FakeGauge:
                 self._last_transport = transport
                 return self
 

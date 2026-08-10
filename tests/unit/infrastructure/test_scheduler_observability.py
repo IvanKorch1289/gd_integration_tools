@@ -112,7 +112,7 @@ def test_emit_handles_unknown_job_id_label() -> None:
         def __init__(self) -> None:
             self.calls: list[dict[str, str]] = []
 
-        def labels(self, **kwargs: str) -> "_FakeCounter":
+        def labels(self, **kwargs: str) -> _FakeCounter:
             self.calls.append(kwargs)
             return self
 

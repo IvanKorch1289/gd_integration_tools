@@ -10,7 +10,8 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 from unittest.mock import AsyncMock
 
 import pytest

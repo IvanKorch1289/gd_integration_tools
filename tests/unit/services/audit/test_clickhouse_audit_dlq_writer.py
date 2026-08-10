@@ -19,7 +19,7 @@ Acceptance:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -37,7 +37,7 @@ def _make_event(**kwargs: Any) -> AuditEvent:
     """Builds a minimal AuditEvent for tests."""
     defaults: dict[str, Any] = {
         "event_id": str(uuid.uuid4()),
-        "timestamp": datetime(2026, 8, 5, 12, 0, 0, tzinfo=timezone.utc),
+        "timestamp": datetime(2026, 8, 5, 12, 0, 0, tzinfo=UTC),
         "event_type": "test.dlq.event",
         "tenant_id": "tenant-42",
         "user_id": "user-7",

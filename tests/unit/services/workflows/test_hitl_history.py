@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -34,7 +34,7 @@ async def test_history_empty() -> None:
 
 @pytest.mark.asyncio
 async def test_history_single_approve() -> None:
-    ts = datetime(2026, 5, 20, 12, 0, tzinfo=timezone.utc)
+    ts = datetime(2026, 5, 20, 12, 0, tzinfo=UTC)
     rows = [
         (
             "wf-1",
@@ -107,7 +107,7 @@ async def test_history_ch_unavailable() -> None:
 
 @pytest.mark.asyncio
 async def test_history_invalid_payload_json() -> None:
-    ts = datetime(2026, 5, 20, 12, 0, tzinfo=timezone.utc)
+    ts = datetime(2026, 5, 20, 12, 0, tzinfo=UTC)
     rows = [("wf-1", "t1", "hitl.rejected", "alice", "not-json", ts, None)]
     client = MagicMock()
     client.query = AsyncMock(return_value=_make_result(rows))

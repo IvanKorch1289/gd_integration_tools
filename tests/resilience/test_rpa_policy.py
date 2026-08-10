@@ -94,7 +94,7 @@ async def test_slow_response_backoff_applied(dlq: _InMemoryDLQ) -> None:
         jitter=0.0,
         dlq_writer=dlq,
     )
-    coro = AsyncMock(side_effect=asyncio.TimeoutError("slow"))
+    coro = AsyncMock(side_effect=TimeoutError("slow"))
     start = asyncio.get_event_loop().time()
     with pytest.raises(RPACallExhausted):
         await policy.call(coro, transport="file_watcher")

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 
 from src.backend.services.ai.rag_augment import (
     AugmentResult,
@@ -13,7 +13,7 @@ from src.backend.services.ai.rag_augment import (
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def test_compute_freshness_fresh() -> None:

@@ -6,7 +6,7 @@ invalidate и hot-reload через feature flag.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 
 import pytest
 
@@ -134,7 +134,7 @@ async def test_hot_reload_re_fetches_after_ttl() -> None:
     repo.put(RulesetDoc(name="rs", yaml_body=_VALID_YAML))
     flags = FakeFlags(hot_reload=True)
 
-    fixed = datetime(2026, 5, 15, 12, 0, 0, tzinfo=timezone.utc)
+    fixed = datetime(2026, 5, 15, 12, 0, 0, tzinfo=UTC)
     times: list[datetime] = [fixed]
 
     def clock() -> datetime:
@@ -157,7 +157,7 @@ async def test_hot_reload_off_does_not_refetch() -> None:
     repo = FakeRepo()
     repo.put(RulesetDoc(name="rs", yaml_body=_VALID_YAML))
 
-    fixed = datetime(2026, 5, 15, 12, 0, 0, tzinfo=timezone.utc)
+    fixed = datetime(2026, 5, 15, 12, 0, 0, tzinfo=UTC)
     times: list[datetime] = [fixed]
     registry = RuleEngineRegistry(
         repo, FakeFlags(hot_reload=False), clock=lambda: times[-1]

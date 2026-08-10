@@ -94,7 +94,7 @@ async def test_evaluate_returns_metrics_on_mock(
 
     class _FakeDataset:
         @classmethod
-        def from_dict(cls, _rows: dict[str, list[Any]]) -> "_FakeDataset":
+        def from_dict(cls, _rows: dict[str, list[Any]]) -> _FakeDataset:
             return cls()
 
     import sys

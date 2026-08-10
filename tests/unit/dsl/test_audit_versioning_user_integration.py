@@ -18,7 +18,7 @@ version tables (users_version, transaction).
 from __future__ import annotations
 
 import uuid
-from typing import Iterator
+from collections.abc import Iterator
 
 import pytest
 from sqlalchemy import create_engine

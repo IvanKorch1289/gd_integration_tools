@@ -55,7 +55,7 @@ class _NestedOuter(BaseModel):
 class _UnionModel(BaseModel):
     """Сложный union → должен fallback в Any."""
 
-    value: Union[int, str]
+    value: int | str
 
 
 class TestScalars:

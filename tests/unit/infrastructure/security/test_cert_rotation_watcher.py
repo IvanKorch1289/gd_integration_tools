@@ -7,7 +7,7 @@ Periodic check + auto-rotation certs via Vault.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -50,7 +50,7 @@ class TestCertRotationWatcher:
         )
         mock_store = MagicMock()
         mock_entry = MagicMock()
-        mock_entry.expires_at = datetime.now(timezone.utc)
+        mock_entry.expires_at = datetime.now(UTC)
         mock_entry.service_id = "skb_api"
         mock_store._backend.list_expiring = AsyncMock(return_value=[mock_entry])
         watcher = CertRotationWatcher(

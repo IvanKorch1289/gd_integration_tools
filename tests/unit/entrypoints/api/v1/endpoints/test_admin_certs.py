@@ -8,7 +8,7 @@ Pattern (D256, D237 TDD): RED → GREEN → review.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 
 
@@ -35,7 +35,7 @@ class TestAdminCertsExpiring:
         )
         item = CertExpiringItem(
             cert_id="skb_api",
-            expires_at=datetime(2027, 1, 1, tzinfo=timezone.utc),
+            expires_at=datetime(2027, 1, 1, tzinfo=UTC),
             days_remaining=200,
         )
         assert item.cert_id == "skb_api"

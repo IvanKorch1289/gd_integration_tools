@@ -19,7 +19,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 import pytest
 
@@ -81,7 +81,7 @@ class TestInternalHelpers:
     def test_coerce_datetime_naive(self) -> None:
         naive = datetime(2026, 12, 31, 23, 59, 59)
         result = _coerce_timestamp(naive)
-        expected = naive.replace(tzinfo=timezone.utc).timestamp()
+        expected = naive.replace(tzinfo=UTC).timestamp()
         assert result == expected
 
     def test_coerce_datetime_aware(self) -> None:
@@ -91,22 +91,22 @@ class TestInternalHelpers:
         aware = datetime(2026, 12, 31, 23, 59, 59, tzinfo=moscow)
         result = _coerce_timestamp(aware)
         # Moscow is UTC+3, so 23:59:59 MSK = 20:59:59 UTC
-        expected = aware.astimezone(timezone.utc).timestamp()
+        expected = aware.astimezone(UTC).timestamp()
         assert result == expected
 
     def test_coerce_iso_string_with_tz(self) -> None:
         result = _coerce_timestamp("2026-12-31T23:59:59+00:00")
-        expected = datetime(2026, 12, 31, 23, 59, 59, tzinfo=timezone.utc).timestamp()
+        expected = datetime(2026, 12, 31, 23, 59, 59, tzinfo=UTC).timestamp()
         assert result == expected
 
     def test_coerce_iso_string_naive(self) -> None:
         result = _coerce_timestamp("2026-12-31T23:59:59")
-        expected = datetime(2026, 12, 31, 23, 59, 59, tzinfo=timezone.utc).timestamp()
+        expected = datetime(2026, 12, 31, 23, 59, 59, tzinfo=UTC).timestamp()
         assert result == expected
 
     def test_coerce_iso_string_with_whitespace(self) -> None:
         result = _coerce_timestamp("  2026-12-31T23:59:59  ")
-        expected = datetime(2026, 12, 31, 23, 59, 59, tzinfo=timezone.utc).timestamp()
+        expected = datetime(2026, 12, 31, 23, 59, 59, tzinfo=UTC).timestamp()
         assert result == expected
 
     def test_coerce_unix_int(self) -> None:
@@ -210,14 +210,14 @@ class TestSchedule:
 
 class TestDeferUntil:
     def test_defer_until_datetime(self, builder: RouteBuilder) -> None:
-        target = datetime(2026, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+        target = datetime(2026, 12, 31, 23, 59, 59, tzinfo=UTC)
         b = builder.defer_until(target)
         assert b._deferred["type"] == "until"
         assert b._deferred["timestamp"] == target.timestamp()
 
     def test_defer_until_iso_string(self, builder: RouteBuilder) -> None:
         b = builder.defer_until("2026-12-31T23:59:59")
-        expected = datetime(2026, 12, 31, 23, 59, 59, tzinfo=timezone.utc).timestamp()
+        expected = datetime(2026, 12, 31, 23, 59, 59, tzinfo=UTC).timestamp()
         assert b._deferred["timestamp"] == expected
 
     def test_defer_until_unix_int(self, builder: RouteBuilder) -> None:
@@ -233,7 +233,7 @@ class TestDeferUntil:
     ) -> None:
         naive = datetime(2026, 6, 1, 12, 0, 0)  # no tz
         b = builder.defer_until(naive)
-        expected = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc).timestamp()
+        expected = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC).timestamp()
         assert b._deferred["timestamp"] == expected
 
     def test_defer_until_aware_datetime_converted_to_utc(
@@ -244,7 +244,7 @@ class TestDeferUntil:
         moscow = ZoneInfo("Europe/Moscow")
         aware = datetime(2026, 6, 1, 15, 0, 0, tzinfo=moscow)  # 12:00 UTC
         b = builder.defer_until(aware)
-        expected = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc).timestamp()
+        expected = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC).timestamp()
         assert b._deferred["timestamp"] == expected
 
     def test_defer_until_invalid_string_raises(self, builder: RouteBuilder) -> None:

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 import pytest
 from pydantic import ValidationError
@@ -19,7 +19,7 @@ def _ev(
         operation=op,  # type: ignore[arg-type]
         source="fake",
         table=table,
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         cursor=CDCCursor(value=cursor_value, backend="fake"),
         new={"id": payload},
     )
@@ -38,7 +38,7 @@ class TestCDCEvent:
                 operation="BOGUS",  # type: ignore[arg-type]
                 source="x",
                 table="t",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 cursor=CDCCursor(value="1", backend="x"),
             )
 

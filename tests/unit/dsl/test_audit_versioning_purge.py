@@ -16,8 +16,8 @@ Coverage:
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from typing import Iterator
+from datetime import datetime, timedelta, timezone, UTC
+from collections.abc import Iterator
 
 import pytest
 from sqlalchemy import Column, Integer, String, create_engine
@@ -130,7 +130,7 @@ def _backdate_transaction(
     session.commit()
     tx_id = obj.versions[0].transaction_id
     Transaction = versioning_manager.transaction_cls
-    new_issued = datetime.now(timezone.utc) - timedelta(days=days_ago)
+    new_issued = datetime.now(UTC) - timedelta(days=days_ago)
     session.query(Transaction).filter(Transaction.id == tx_id).update(
         {"issued_at": new_issued}, synchronize_session=False
     )

@@ -298,7 +298,7 @@ async def test_heartbeat_loop_detects_dead_connection() -> None:
                 try:
                     await asyncio.wait_for(mock_ws.ping(), timeout=HEARTBEAT_TIMEOUT_S)
                     last_pong_time = now
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     connection_dead.set()
                     break
 

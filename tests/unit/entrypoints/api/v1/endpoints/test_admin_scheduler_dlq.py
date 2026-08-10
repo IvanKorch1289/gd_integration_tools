@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -41,8 +41,8 @@ def sample_entry() -> SchedulerDLQEntry:
         job_id="job-1",
         exception="ValueError: boom",
         traceback_text="trace",
-        scheduled_at=datetime.now(timezone.utc),
-        failed_at=datetime.now(timezone.utc),
+        scheduled_at=datetime.now(UTC),
+        failed_at=datetime.now(UTC),
     )
 
 

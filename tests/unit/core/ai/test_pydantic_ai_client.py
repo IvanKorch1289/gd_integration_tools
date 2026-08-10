@@ -122,7 +122,7 @@ class _FakeCounter:
         self._name = name
         self._storage = storage
 
-    def labels(self, **kwargs: str) -> "_FakeCounterLabel":
+    def labels(self, **kwargs: str) -> _FakeCounterLabel:
         return _FakeCounterLabel(self._name, kwargs, self._storage)
 
 
@@ -148,7 +148,7 @@ class _FakeHistogram:
         self._name = name
         self._storage = storage
 
-    def labels(self, **kwargs: str) -> "_FakeHistogramLabel":
+    def labels(self, **kwargs: str) -> _FakeHistogramLabel:
         return _FakeHistogramLabel(self._name, kwargs, self._storage)
 
 

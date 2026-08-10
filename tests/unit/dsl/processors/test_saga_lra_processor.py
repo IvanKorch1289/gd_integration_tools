@@ -64,7 +64,7 @@ def _identity(name: str, *, fail: bool = False, raise_exc: bool = False):
     """
     calls: list[str] = []
 
-    def _fn(exchange: "Exchange[Any]", context: "ExecutionContext") -> None:
+    def _fn(exchange: Exchange[Any], context: ExecutionContext) -> None:
         calls.append(name)
         if raise_exc:
             raise RuntimeError(f"raise:{name}")
@@ -80,7 +80,7 @@ def _identity_async(name: str, *, raise_exc: bool = False):
     """Async variant of ``_identity``."""
     calls: list[str] = []
 
-    async def _fn(exchange: "Exchange[Any]", context: "ExecutionContext") -> None:
+    async def _fn(exchange: Exchange[Any], context: ExecutionContext) -> None:
         calls.append(name)
         if raise_exc:
             raise RuntimeError(f"raise:{name}")
@@ -216,7 +216,7 @@ class TestSagaLRAHappyPath:
     async def test_on_state_change_callback(self) -> None:
         transitions: list[tuple[str, str]] = []
 
-        def _cb(old: str, new: str, ex: "Exchange[Any]") -> None:
+        def _cb(old: str, new: str, ex: Exchange[Any]) -> None:
             transitions.append((old, new))
 
         a1 = _identity("a1")
@@ -269,13 +269,13 @@ class TestSagaLRAFailure:
             _identity(n)  # discard
 
         def make_action(n: str):
-            def _f(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+            def _f(ex: Exchange[Any], ctx: ExecutionContext) -> None:
                 order.append(n)
 
             return _f
 
         def make_comp(n: str):
-            def _f(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+            def _f(ex: Exchange[Any], ctx: ExecutionContext) -> None:
                 order.append(f"comp_{n}")
 
             return _f
@@ -301,7 +301,7 @@ class TestSagaLRAFailure:
             ]
         )
 
-        def fail_a3(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+        def fail_a3(ex: Exchange[Any], ctx: ExecutionContext) -> None:
             order.append("a3-fail")
             raise RuntimeError("boom")
 
@@ -390,7 +390,7 @@ class TestSagaLRAFailure:
 
     async def test_compensation_failure_marks_state_failed(self) -> None:
         def make_comp_fails():
-            def _f(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+            def _f(ex: Exchange[Any], ctx: ExecutionContext) -> None:
                 raise RuntimeError("comp-boom")
 
             return _f
@@ -421,14 +421,14 @@ class TestSagaLRAFailure:
     async def test_fail_fast_aborts_remaining_compensations(self) -> None:
         comp_calls: list[str] = []
 
-        def comp_fails_a1(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+        def comp_fails_a1(ex: Exchange[Any], ctx: ExecutionContext) -> None:
             comp_calls.append("comp_a1")
             raise RuntimeError("comp-a1-boom")
 
-        def comp_a2(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+        def comp_a2(ex: Exchange[Any], ctx: ExecutionContext) -> None:
             comp_calls.append("comp_a2")
 
-        def comp_a3(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+        def comp_a3(ex: Exchange[Any], ctx: ExecutionContext) -> None:
             comp_calls.append("comp_a3")
 
         p = SagaLRAProcessor(
@@ -476,7 +476,7 @@ class TestSagaLRAEdgeCases:
         assert ex.get_property("saga_failed_step") is None
 
     async def test_action_that_calls_exchange_fail_treated_as_failure(self) -> None:
-        def fail_step(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+        def fail_step(ex: Exchange[Any], ctx: ExecutionContext) -> None:
             ex.fail("explicit-fail")
 
         p = SagaLRAProcessor(
@@ -495,7 +495,7 @@ class TestSagaLRAEdgeCases:
         assert ex.get_property("saga_state") in (STATE_COMPENSATED, STATE_FAILED)
 
     async def test_per_step_timeout_raises_lra_error(self) -> None:
-        async def slow_action(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+        async def slow_action(ex: Exchange[Any], ctx: ExecutionContext) -> None:
             await asyncio.sleep(1.0)
 
         p = SagaLRAProcessor(
@@ -510,12 +510,12 @@ class TestSagaLRAEdgeCases:
         assert ex.get_property("saga_failed_step") == "a1"
 
     async def test_overall_timeout_triggers_compensation(self) -> None:
-        async def slow_action(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+        async def slow_action(ex: Exchange[Any], ctx: ExecutionContext) -> None:
             await asyncio.sleep(0.2)
 
         comp_calls: list[str] = []
 
-        def comp(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+        def comp(ex: Exchange[Any], ctx: ExecutionContext) -> None:
             comp_calls.append("comp")
 
         p = SagaLRAProcessor(
@@ -605,13 +605,13 @@ class TestSagaLRAConcurrency:
         comp_calls: list[str] = []
 
         def make_comp(tag: str):
-            def _f(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+            def _f(ex: Exchange[Any], ctx: ExecutionContext) -> None:
                 comp_calls.append(f"comp_{tag}")
 
             return _f
 
         def make_fail():
-            def _f(ex: "Exchange[Any]", ctx: "ExecutionContext") -> None:
+            def _f(ex: Exchange[Any], ctx: ExecutionContext) -> None:
                 raise RuntimeError("boom")
 
             return _f

@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -40,7 +40,7 @@ async def test_get_saga_history_empty() -> None:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_saga_history_returns_records() -> None:
-    ts = datetime(2026, 5, 20, 12, 0, tzinfo=timezone.utc)
+    ts = datetime(2026, 5, 20, 12, 0, tzinfo=UTC)
     rows = [
         (
             "ev-1",
@@ -165,7 +165,7 @@ async def test_get_saga_history_query_exception() -> None:
 @pytest.mark.asyncio
 async def test_get_saga_history_invalid_payload() -> None:
     """Покрывает except (TypeError, JSONDecodeError) при json.loads (lines 94-95)."""
-    ts = datetime(2026, 5, 20, 12, 0, tzinfo=timezone.utc)
+    ts = datetime(2026, 5, 20, 12, 0, tzinfo=UTC)
     rows = [
         ("ev-bad", "workflow.compensation_fail", "wf-1", "t1", "not-json", ts, 100),
         ("ev-none", "workflow.compensation_fail", "wf-1", "t1", None, ts, 200),

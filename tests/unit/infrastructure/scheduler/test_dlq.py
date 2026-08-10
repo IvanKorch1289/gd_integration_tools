@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 import uuid
 from collections.abc import Iterator
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -21,7 +21,7 @@ from src.backend.infrastructure.scheduler.dlq import (
 
 class TestSchedulerDLQEntry:
     def test_init(self) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         entry = SchedulerDLQEntry(
             job_id="job-1",
             exception="ValueError: boom",
@@ -43,13 +43,13 @@ class TestSchedulerDLQEntry:
             exception="e",
             traceback_text="t",
             scheduled_at=None,
-            failed_at=datetime.now(timezone.utc),
+            failed_at=datetime.now(UTC),
         )
         entry.mark_retried()
         assert entry.retry_count == 1
 
     def test_to_dict(self) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         entry = SchedulerDLQEntry(
             job_id="j",
             exception="e",
@@ -67,7 +67,7 @@ class TestSchedulerDLQEntry:
         assert "id" in d
 
     def test_to_dict_no_scheduled(self) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         entry = SchedulerDLQEntry(
             job_id="j",
             exception="e",
@@ -91,14 +91,14 @@ class TestSchedulerDLQStore:
             exception="e",
             traceback_text="t",
             scheduled_at=None,
-            failed_at=datetime.now(timezone.utc),
+            failed_at=datetime.now(UTC),
         )
         e2 = SchedulerDLQEntry(
             job_id="b",
             exception="e",
             traceback_text="t",
             scheduled_at=None,
-            failed_at=datetime.now(timezone.utc),
+            failed_at=datetime.now(UTC),
         )
         store.add(e1)
         store.add(e2)
@@ -114,21 +114,21 @@ class TestSchedulerDLQStore:
             exception="e",
             traceback_text="t",
             scheduled_at=None,
-            failed_at=datetime.now(timezone.utc),
+            failed_at=datetime.now(UTC),
         )
         e2 = SchedulerDLQEntry(
             job_id="b",
             exception="e",
             traceback_text="t",
             scheduled_at=None,
-            failed_at=datetime.now(timezone.utc),
+            failed_at=datetime.now(UTC),
         )
         e3 = SchedulerDLQEntry(
             job_id="c",
             exception="e",
             traceback_text="t",
             scheduled_at=None,
-            failed_at=datetime.now(timezone.utc),
+            failed_at=datetime.now(UTC),
         )
         store.add(e1)
         store.add(e2)
@@ -147,7 +147,7 @@ class TestSchedulerDLQStore:
                     exception="e",
                     traceback_text="t",
                     scheduled_at=None,
-                    failed_at=datetime.now(timezone.utc),
+                    failed_at=datetime.now(UTC),
                 )
             )
         assert len(store.list(limit=2)) == 2
@@ -159,7 +159,7 @@ class TestSchedulerDLQStore:
             exception="e",
             traceback_text="t",
             scheduled_at=None,
-            failed_at=datetime.now(timezone.utc),
+            failed_at=datetime.now(UTC),
         )
         store.add(e)
         assert store.get(e.id) is e
@@ -179,7 +179,7 @@ class TestSchedulerDLQStore:
                         exception="e",
                         traceback_text="t",
                         scheduled_at=None,
-                        failed_at=datetime.now(timezone.utc),
+                        failed_at=datetime.now(UTC),
                     )
                     store.add(e)
                     store.list(limit=10)
@@ -249,7 +249,7 @@ class TestAttachSchedulerDLQ:
         event.job_id = "job-1"
         event.exception = ValueError("boom")
         event.traceback = None
-        event.scheduled_run_time = datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc)
+        event.scheduled_run_time = datetime(2024, 1, 1, 12, 0, tzinfo=UTC)
         handler(event)
         assert store.size() == 1
         entry = store.list()[0]
@@ -299,7 +299,7 @@ class TestAttachSchedulerDLQ:
                     event.job_id = "job-3"
                     event.exception = RuntimeError("fail")
                     event.traceback = None
-                    event.scheduled_run_time = datetime.now(timezone.utc)
+                    event.scheduled_run_time = datetime.now(UTC)
                     handler(event)
         assert store.size() == 1
         tr.create_task.assert_called_once()

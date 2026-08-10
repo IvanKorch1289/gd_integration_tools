@@ -13,7 +13,7 @@ ClickHouseAuditService эмитит:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -29,7 +29,7 @@ from src.backend.services.audit.clickhouse_audit_service import (
 def _make_event(**kwargs: Any) -> AuditEvent:
     defaults: dict[str, Any] = {
         "event_id": str(uuid.uuid4()),
-        "timestamp": datetime(2026, 8, 7, 12, 0, 0, tzinfo=timezone.utc),
+        "timestamp": datetime(2026, 8, 7, 12, 0, 0, tzinfo=UTC),
         "event_type": "test.silent.loss",
         "tenant_id": "tenant-da302",
         "user_id": "user-1",

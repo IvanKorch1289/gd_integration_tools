@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 
 import pytest
 
@@ -39,7 +39,7 @@ _TEST_PEM_V2 = _TEST_PEM.replace("TEST-CERT-PAYLOAD-FOR-UNIT", "ROTATED-PAYLOAD-
 
 def _future(days: int = 365) -> datetime:
     """Возвращает datetime ``days`` дней в будущем (UTC)."""
-    return datetime.now(tz=timezone.utc) + timedelta(days=days)
+    return datetime.now(tz=UTC) + timedelta(days=days)
 
 
 def _settings() -> CertStoreSettings:

@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 
 import pytest
@@ -71,7 +71,7 @@ async def test_emit_basic_schema() -> None:
     assert json.loads(row["payload"]) == {"input": {"k": 1}}
     # created_at — timezone-aware UTC.
     assert isinstance(row["created_at"], datetime)
-    assert row["created_at"].tzinfo is timezone.utc
+    assert row["created_at"].tzinfo is UTC
 
 
 @pytest.mark.asyncio
@@ -126,7 +126,7 @@ async def test_emit_explicit_event_id_and_timestamp() -> None:
     sink = WorkflowAuditSink(writer=writer)
 
     custom_id = "00000000-0000-0000-0000-000000000001"
-    custom_ts = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    custom_ts = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
     await sink.emit(
         event_type="workflow.complete",
         workflow_id="wf-3",

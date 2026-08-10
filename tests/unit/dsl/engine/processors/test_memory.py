@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 
 import pytest
@@ -33,7 +33,7 @@ def _make_entry(
         agent_id=agent_id,
         content=content,
         metadata=metadata or {},
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         embedding=None,
     )
 

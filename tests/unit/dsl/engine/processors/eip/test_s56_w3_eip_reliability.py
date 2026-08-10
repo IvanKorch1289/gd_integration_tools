@@ -10,7 +10,7 @@ Coverage:
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 
 import pytest
 
@@ -119,7 +119,7 @@ class TestMessageExpiration:
         def dispatcher(action: str, ex: Exchange) -> None:
             dispatched.append((action, ex))
 
-        past = datetime.now(tz=timezone.utc) - timedelta(seconds=10)
+        past = datetime.now(tz=UTC) - timedelta(seconds=10)
         op = MessageExpirationProcessor(
             expiration_resolver=lambda ex: past,
             on_expired_action="dlq",

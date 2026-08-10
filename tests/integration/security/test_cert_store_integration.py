@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -103,7 +103,7 @@ async def test_postgres_set_get_roundtrip(pg_session_manager) -> None:
     from src.backend.infrastructure.security.cert_store import PostgresCertBackend
 
     backend = PostgresCertBackend()
-    expires = datetime.now(tz=timezone.utc) + timedelta(days=365)
+    expires = datetime.now(tz=UTC) + timedelta(days=365)
 
     await backend.save("svc.alpha", _TEST_PEM, expires)
     entry = await backend.get("svc.alpha")
@@ -120,7 +120,7 @@ async def test_postgres_history_two_versions(pg_session_manager) -> None:
     from src.backend.infrastructure.security.cert_store import PostgresCertBackend
 
     backend = PostgresCertBackend()
-    expires = datetime.now(tz=timezone.utc) + timedelta(days=180)
+    expires = datetime.now(tz=UTC) + timedelta(days=180)
 
     await backend.save("svc.beta", _TEST_PEM, expires, uploaded_by="user-a")
     await backend.save("svc.beta", _TEST_PEM + "EXTRA\n", expires, uploaded_by="user-b")
@@ -135,7 +135,7 @@ async def test_postgres_get_expiring_soon(pg_session_manager) -> None:
     from src.backend.infrastructure.security.cert_store import PostgresCertBackend
 
     backend = PostgresCertBackend()
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     await backend.save("svc.expiring", _TEST_PEM, now + timedelta(days=10))
     await backend.save("svc.fresh", _TEST_PEM, now + timedelta(days=400))
@@ -185,7 +185,7 @@ async def test_vault_backend_with_mock(monkeypatch) -> None:
     backend = VaultCertBackend(base_path="secret/certs")
     monkeypatch.setattr(backend, "_client", lambda: fake)
 
-    expires = datetime.now(tz=timezone.utc) + timedelta(days=90)
+    expires = datetime.now(tz=UTC) + timedelta(days=90)
     await backend.save("svc.gamma", _TEST_PEM, expires, uploaded_by="vault-user")
 
     entry = await backend.get("svc.gamma")
@@ -220,7 +220,7 @@ async def test_subscribe_updates_invalidates_cache() -> None:
         received.append(service_id)
 
     store.subscribe_updates(listener)
-    expires = datetime.now(tz=timezone.utc) + timedelta(days=30)
+    expires = datetime.now(tz=UTC) + timedelta(days=30)
 
     await store.set("svc.delta", _TEST_PEM, expires)
 

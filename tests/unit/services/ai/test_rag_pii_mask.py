@@ -64,7 +64,7 @@ async def test_ingest_passthrough_when_flag_off(
     rag_mock.ingest = AsyncMock(return_value="doc-1")
     svc = RagIngestService(rag_service=rag_mock)
 
-    await svc.ingest([("file.txt", "ИНН 7707083893".encode("utf-8"))], collection="ns")
+    await svc.ingest([("file.txt", "ИНН 7707083893".encode())], collection="ns")
     call = rag_mock.ingest.await_args
     assert call is not None
     text_arg = call.args[0]
@@ -90,7 +90,7 @@ async def test_ingest_masks_pii_when_flag_on(monkeypatch: pytest.MonkeyPatch) ->
         svc = RagIngestService(rag_service=rag_mock)
 
         await svc.ingest(
-            [("file.txt", "ИНН 7707083893, договор 12345".encode("utf-8"))],
+            [("file.txt", "ИНН 7707083893, договор 12345".encode())],
             collection="ns",
         )
         call = rag_mock.ingest.await_args

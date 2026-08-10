@@ -105,7 +105,7 @@ async def test_webhook_5xx_burst_triggers_dlq(dlq: _InMemoryDLQ) -> None:
             self.request = None
 
     class _FakeClient:
-        async def __aenter__(self) -> "_FakeClient":
+        async def __aenter__(self) -> _FakeClient:
             return self
 
         async def __aexit__(self, *a, **kw) -> None:
@@ -144,7 +144,7 @@ async def test_webhook_2xx_success_no_dlq(dlq: _InMemoryDLQ) -> None:
             self.headers = {"x-request-id": "rid-1"}
 
     class _FakeClient:
-        async def __aenter__(self) -> "_FakeClient":
+        async def __aenter__(self) -> _FakeClient:
             return self
 
         async def __aexit__(self, *a, **kw) -> None:
@@ -186,7 +186,7 @@ async def test_webhook_breaker_open_skip(dlq: _InMemoryDLQ) -> None:
             self.status_code = 200
 
     class _FakeClient:
-        async def __aenter__(self) -> "_FakeClient":
+        async def __aenter__(self) -> _FakeClient:
             return self
 
         async def __aexit__(self, *a, **kw) -> None:
@@ -232,7 +232,7 @@ async def test_webhook_feature_flag_off_no_retry(
             self.headers = {}
 
     class _FakeClient:
-        async def __aenter__(self) -> "_FakeClient":
+        async def __aenter__(self) -> _FakeClient:
             return self
 
         async def __aexit__(self, *a, **kw) -> None:

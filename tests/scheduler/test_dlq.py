@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 import pytest
 
@@ -35,8 +35,8 @@ def _make_entry(job_id: str = "test_job") -> SchedulerDLQEntry:
         job_id=job_id,
         exception="ConnectionError('refused')",
         traceback_text="Traceback...",
-        scheduled_at=datetime(2026, 5, 22, tzinfo=timezone.utc),
-        failed_at=datetime.now(timezone.utc),
+        scheduled_at=datetime(2026, 5, 22, tzinfo=UTC),
+        failed_at=datetime.now(UTC),
     )
 
 
@@ -155,7 +155,7 @@ def test_listener_writes_entry_to_store(monkeypatch: pytest.MonkeyPatch) -> None
         job_id = "fail_job"
         exception = ValueError("boom")
         traceback = None
-        scheduled_run_time = datetime(2026, 5, 22, tzinfo=timezone.utc)
+        scheduled_run_time = datetime(2026, 5, 22, tzinfo=UTC)
 
     handler(_FakeEvent())
     assert store.size() == 1

@@ -115,7 +115,7 @@ async def test_audit_sink_failure_does_not_break_caller() -> None:
     """
 
     async def failing_sink(ev: RotationAuditEvent) -> None:
-        raise IOError("audit log unavailable")
+        raise OSError("audit log unavailable")
 
     rotator = AuditableRotator(inner=FakeRotator(), audit_sink=failing_sink)
     # Не должно бросить — sink-error поглощается с log.

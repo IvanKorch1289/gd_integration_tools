@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 import pytest
 from fastapi.testclient import TestClient
@@ -103,7 +103,7 @@ def test_notifications_paginated(client: TestClient) -> None:
                 id=f"n-{i}",
                 title=f"Title {i}",
                 body="body",
-                created_at=datetime.now(tz=timezone.utc),
+                created_at=datetime.now(tz=UTC),
             ),
         )
     # First page
@@ -209,7 +209,7 @@ def test_payload_optimizer_truncates_long_strings() -> None:
 
 
 def test_payload_optimizer_converts_datetime_to_timestamp() -> None:
-    dt = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
     data = {"created": dt}
     result = PayloadOptimizer.compact(data)
     assert isinstance(result["created"], int)
@@ -255,7 +255,7 @@ def test_cursor_page_defaults() -> None:
 
 def test_compressed_response_metadata() -> None:
     cr = CompressedResponse(
-        data={"x": 1}, timestamp=datetime.now(tz=timezone.utc), request_id="abc"
+        data={"x": 1}, timestamp=datetime.now(tz=UTC), request_id="abc"
     )
     assert cr.compressed is False  # default — router sets True explicitly
     assert cr.schema_version == 1  # default

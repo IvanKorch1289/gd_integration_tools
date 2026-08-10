@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 import pytest
 from sqlalchemy import create_engine, inspect
@@ -44,7 +44,7 @@ class TestCertRecord:
     @pytest.mark.unit
     def test_create_with_valid_data(self, db_session: Session) -> None:
         """CertRecord can be created with valid data."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cert = CertRecord(
             service_id="svc-1",
             pem="-----BEGIN CERTIFICATE-----\nTEST\n-----END CERTIFICATE-----",
@@ -73,7 +73,7 @@ class TestCertRecord:
     @pytest.mark.unit
     def test_nullable_description(self, db_session: Session) -> None:
         """CertRecord allows description to be NULL."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cert = CertRecord(
             service_id="svc-no-desc",
             pem="pem",
@@ -95,7 +95,7 @@ class TestCertRecord:
     @pytest.mark.unit
     def test_default_version(self, db_session: Session) -> None:
         """CertRecord defaults version to 1 when not provided."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cert = CertRecord(
             service_id="svc-default-version",
             pem="pem",
@@ -154,7 +154,7 @@ class TestCertHistory:
     @pytest.mark.unit
     def test_create_with_valid_data(self, db_session: Session) -> None:
         """CertHistory can be created with valid data."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         record = CertHistory(
             service_id="svc-1",
             version=1,
@@ -177,7 +177,7 @@ class TestCertHistory:
     @pytest.mark.unit
     def test_nullable_uploaded_by(self, db_session: Session) -> None:
         """CertHistory allows uploaded_by to be NULL."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         record = CertHistory(
             service_id="svc-null-user",
             version=2,
@@ -197,7 +197,7 @@ class TestCertHistory:
     @pytest.mark.unit
     def test_autoincrement_id(self, db_session: Session) -> None:
         """CertHistory id auto-increments."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for i in range(3):
             record = CertHistory(
                 service_id=f"svc-{i}", version=i, pem="pem", uploaded_at=now

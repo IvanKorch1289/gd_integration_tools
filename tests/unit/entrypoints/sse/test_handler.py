@@ -312,7 +312,7 @@ class TestSseInvoke:
         request.headers = {}
         request.url.path = "/events/invoke"
         body = _InvokeRequest(action="test", payload={})
-        now = datetime.datetime(2026, 6, 5, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        now = datetime.datetime(2026, 6, 5, 12, 0, 0, tzinfo=datetime.UTC)
         with patch(
             "src.backend.entrypoints.sse.handler.dispatch_action_or_dsl",
             new_callable=AsyncMock,
@@ -364,7 +364,7 @@ class TestToPrimitive:
         assert _to_primitive(Item(name="x", count=1)) == {"name": "x", "count": 1}
 
     def test_datetime(self) -> None:
-        now = datetime.datetime(2026, 6, 5, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        now = datetime.datetime(2026, 6, 5, 12, 0, 0, tzinfo=datetime.UTC)
         assert _to_primitive(now) == "2026-06-05T12:00:00+00:00"
 
     def test_enum(self) -> None:

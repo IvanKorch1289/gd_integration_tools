@@ -7,7 +7,7 @@ Postgres. Реальные интеграционные тесты с testcontai
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -61,7 +61,7 @@ class _FakeStateStore:
         snapshot_state: dict[str, Any] | None = None,
         finished_at: datetime | None = None,
     ) -> WorkflowInstanceRow:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return WorkflowInstanceRow(
             id=instance_id,
             workflow_name=workflow_name,
@@ -130,7 +130,7 @@ class _FakeStateStore:
                 WorkflowStatus.failed,
                 WorkflowStatus.cancelled,
             }
-            else datetime.now(timezone.utc)
+            else datetime.now(UTC)
         )
         self._rows[workflow_id] = self._make_row(
             existing.id,
@@ -165,7 +165,7 @@ class _FakeStateStore:
                 else existing.snapshot_state
             ),
             finished_at=(
-                datetime.now(timezone.utc)
+                datetime.now(UTC)
                 if status
                 in {
                     WorkflowStatus.succeeded,

@@ -142,7 +142,7 @@ async def test_poll_cdc_polling_scaffold_no_events() -> None:
     await backend.close()
     try:
         await asyncio.wait_for(task, timeout=1.0)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         task.cancel()
     # Scaffold не yield'ит события — events должен быть пуст
     assert events == []

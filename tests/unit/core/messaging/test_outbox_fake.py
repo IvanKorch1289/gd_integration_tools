@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 
 import pytest
 
@@ -113,7 +113,7 @@ async def test_list_dlq_filters_by_since(outbox: FakeOutbox) -> None:
         transport="http",
         action="api.send",
         status=OutboxEventStatus.DLQ,
-        created_at=datetime.now(timezone.utc) - timedelta(hours=2),
+        created_at=datetime.now(UTC) - timedelta(hours=2),
     )
     new_event = OutboxEvent(
         transport="http", action="api.send", status=OutboxEventStatus.DLQ
@@ -121,7 +121,7 @@ async def test_list_dlq_filters_by_since(outbox: FakeOutbox) -> None:
     await outbox.enqueue(old_event)
     await outbox.enqueue(new_event)
 
-    since = datetime.now(timezone.utc) - timedelta(hours=1)
+    since = datetime.now(UTC) - timedelta(hours=1)
     result = await outbox.list_dlq(since=since)
 
     assert {e.event_id for e in result} == {new_event.event_id}

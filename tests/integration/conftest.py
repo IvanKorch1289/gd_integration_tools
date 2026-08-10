@@ -60,7 +60,7 @@ def test_cache():
 
 
 @pytest.fixture(scope="session")
-def pg_engine_with_alembic() -> Iterator["AsyncEngine"]:
+def pg_engine_with_alembic() -> Iterator[AsyncEngine]:
     """Поднимает Postgres-контейнер и накатывает alembic-миграции.
 
     Используется для тестов, требующих актуальной production-схемы

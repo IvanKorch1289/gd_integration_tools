@@ -149,7 +149,7 @@ async def test_scan_file_data_property_str_is_encoded_utf8(
     exchange = _make_exchange(properties={"file_data": "привет"})
     await proc.process(exchange, MagicMock())
 
-    fake_backend.scan_bytes.assert_awaited_once_with("привет".encode("utf-8"))
+    fake_backend.scan_bytes.assert_awaited_once_with("привет".encode())
 
 
 # ----------------------------- Источник: S3 ------------------------------------

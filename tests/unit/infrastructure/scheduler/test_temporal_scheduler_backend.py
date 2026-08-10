@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import AsyncIterator
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -224,7 +224,7 @@ async def test_schedule_oneshot_future_time() -> None:
     with patch.dict(sys.modules, {"temporalio.client": fake_client_module}):
         result = await backend.schedule_oneshot(
             name="my-oneshot",
-            run_at=datetime.now(tz=timezone.utc) + timedelta(hours=1),
+            run_at=datetime.now(tz=UTC) + timedelta(hours=1),
             callable_ref="OneshotWorkflow",
         )
 
@@ -248,7 +248,7 @@ async def test_schedule_oneshot_past_time() -> None:
     with patch.dict(sys.modules, {"temporalio.client": MagicMock()}):
         result = await backend.schedule_oneshot(
             name="past-oneshot",
-            run_at=datetime.now(tz=timezone.utc) - timedelta(hours=1),
+            run_at=datetime.now(tz=UTC) - timedelta(hours=1),
             callable_ref="OneshotWorkflow",
         )
 
@@ -285,7 +285,7 @@ async def test_schedule_oneshot_invalid_callable_raises() -> None:
     with pytest.raises(TypeError, match="must be str"):
         await backend.schedule_oneshot(
             name="bad",
-            run_at=datetime.now(tz=timezone.utc) + timedelta(hours=1),
+            run_at=datetime.now(tz=UTC) + timedelta(hours=1),
             callable_ref={"key": "value"},  # type: ignore[arg-type]
         )
 

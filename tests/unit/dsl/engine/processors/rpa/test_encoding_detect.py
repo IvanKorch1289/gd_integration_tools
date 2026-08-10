@@ -46,7 +46,7 @@ class TestEncodingDetectProcessor:
         )
         proc = EncodingDetectProcessor()
         # Валидный UTF-8 без BOM
-        enc = proc.detect("Hello, мир!".encode("utf-8"))
+        enc = proc.detect("Hello, мир!".encode())
         assert enc == "utf-8"
 
     def test_detect_latin1_fallback(self) -> None:

@@ -155,14 +155,14 @@ _stub_lock = _StubLock()
 
 
 @pytest.fixture
-def reset_leader_flag() -> "object":  # type: ignore[valid-type]
+def reset_leader_flag() -> object:  # type: ignore[valid-type]
     """Сбрасывает module-level ``_scheduler_leader_acquired`` после теста."""
     yield
     _setup_infra._scheduler_leader_acquired = False
 
 
 @pytest.fixture
-def mock_distributed_lock() -> "object":  # type: ignore[valid-type]
+def mock_distributed_lock() -> object:  # type: ignore[valid-type]
     """Подменяет ``distributed_lock`` в исходном модуле redis_lock на stub.
 
     ВАЖНО: ``distributed_lock`` импортируется function-local внутри
@@ -179,7 +179,7 @@ def mock_distributed_lock() -> "object":  # type: ignore[valid-type]
 
 
 @pytest.fixture
-def mock_scheduler_manager(monkeypatch: pytest.MonkeyPatch) -> "object":  # type: ignore[valid-type]
+def mock_scheduler_manager(monkeypatch: pytest.MonkeyPatch) -> object:  # type: ignore[valid-type]
     """Подменяет ``get_scheduler_manager()`` на mock с start/stop.
 
     S116 W4: scheduler декомпозирован в setup_infra/scheduler_leader.py,

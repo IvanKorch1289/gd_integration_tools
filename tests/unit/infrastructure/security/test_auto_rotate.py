@@ -8,6 +8,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from datetime import UTC
 
 
 class TestAutoRotate:
@@ -35,7 +36,7 @@ class TestAutoRotate:
         mock_store = MagicMock()
         mock_entry = MagicMock()
         mock_entry.service_id = "skb_api"
-        mock_entry.expires_at = datetime.now(timezone.utc) - timedelta(days=1)  # expired
+        mock_entry.expires_at = datetime.now(UTC) - timedelta(days=1)  # expired
         mock_store._backend.list_expiring = AsyncMock(return_value=[mock_entry])
         mock_renewal = AsyncMock()
         watcher = CertRotationWatcher(

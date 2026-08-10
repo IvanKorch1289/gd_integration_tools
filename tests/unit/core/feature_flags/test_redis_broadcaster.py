@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 
 import pytest
@@ -42,7 +42,7 @@ def _make_change(
         old_value=None,
         new_value=new_value,
         actor="test",
-        timestamp=datetime(2026, 5, 22, 18, 0, tzinfo=timezone.utc),
+        timestamp=datetime(2026, 5, 22, 18, 0, tzinfo=UTC),
     )
 
 
@@ -60,7 +60,7 @@ class _FakeRedis:
         self.published.append((channel, payload))
         return 1
 
-    def pubsub(self) -> "_FakePubSub":
+    def pubsub(self) -> _FakePubSub:
         self.pubsub_instance = _FakePubSub()
         return self.pubsub_instance
 
@@ -247,7 +247,7 @@ class TestSubscriber:
                     old_value=True,
                     new_value=None,
                     actor="remote",
-                    timestamp=datetime.now(timezone.utc),
+                    timestamp=datetime.now(UTC),
                 )
             )
             mod._PROCESS_REPLICA_ID = "local-replica"

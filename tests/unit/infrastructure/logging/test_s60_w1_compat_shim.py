@@ -40,7 +40,7 @@ class _RecorderInner:
     def exception(self, msg: str, **kw: Any) -> None:
         self.calls.append(("exception", msg, kw))
 
-    def bind(self, **kw: Any) -> "_RecorderInner":
+    def bind(self, **kw: Any) -> _RecorderInner:
         return self  # bind не тестируется в compat shim
 
 

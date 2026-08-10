@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 import pytest
 
@@ -22,12 +22,12 @@ def test_envelope_minimal_creation() -> None:
     assert env.reason is DLQReason.UNEXPECTED
     assert env.retry_count == 0
     assert env.metadata == {}
-    assert env.first_failed_at.tzinfo == timezone.utc
+    assert env.first_failed_at.tzinfo == UTC
 
 
 def test_envelope_with_all_fields() -> None:
     """Все необязательные поля корректно проставляются."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     env = DLQEnvelope(
         transport="grpc",
         trace_id="trace-123",

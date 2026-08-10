@@ -67,7 +67,7 @@ def _make_pipeline(route_id: str, security: tuple[str, ...] | None) -> Pipeline:
 
 
 @pytest.fixture(autouse=True)
-def _cleanup_registry() -> Generator[None, None, None]:
+def _cleanup_registry() -> Generator[None]:
     """Очистить ``route_registry`` после каждого теста."""
     yield
     route_registry.clear()

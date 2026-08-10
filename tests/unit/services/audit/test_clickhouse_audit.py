@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -34,7 +34,7 @@ def _make_event(**kwargs: Any) -> AuditEvent:
     """Строит минимальный AuditEvent для тестов."""
     defaults: dict[str, Any] = {
         "event_id": str(uuid.uuid4()),
-        "timestamp": datetime(2026, 5, 13, 12, 0, 0, tzinfo=timezone.utc),
+        "timestamp": datetime(2026, 5, 13, 12, 0, 0, tzinfo=UTC),
         "event_type": "test.event",
         "tenant_id": "tenant-1",
         "user_id": "user-42",
@@ -110,7 +110,7 @@ async def test_emit_lazy_imports_clickhouse() -> None:
 
 def test_audit_event_dataclass_serializes() -> None:
     """AuditEvent.to_row() возвращает словарь с JSON-строкой в поле payload."""
-    ts = datetime(2026, 5, 13, 10, 30, 0, tzinfo=timezone.utc)
+    ts = datetime(2026, 5, 13, 10, 30, 0, tzinfo=UTC)
     event = AuditEvent(
         event_id="test-uuid-123",
         timestamp=ts,

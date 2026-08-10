@@ -107,4 +107,4 @@ async def test_close_delegates_to_client(backend: MemcachedBackend) -> None:
 def test_to_bytes_encodes_utf8() -> None:
     """``_to_bytes`` кодирует строку в UTF-8."""
     assert MemcachedBackend._to_bytes("hello") == b"hello"
-    assert MemcachedBackend._to_bytes("ключ") == "ключ".encode("utf-8")
+    assert MemcachedBackend._to_bytes("ключ") == "ключ".encode()

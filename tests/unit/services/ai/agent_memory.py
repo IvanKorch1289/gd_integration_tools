@@ -25,7 +25,7 @@ pytestmark = pytest.mark.unit
 class _FakeCollection:
     """Минимальная Mongo collection для regression-тестов."""
 
-    def __init__(self, client: "_FakeMongoClient", name: str) -> None:
+    def __init__(self, client: _FakeMongoClient, name: str) -> None:
         self._client = client
         self._name = name
 
@@ -44,7 +44,7 @@ class _FakeMongoClient:
     def __init__(self) -> None:
         self.documents: dict[str, list[dict[str, Any]]] = {}
 
-    def factory(self) -> "_FakeMongoClient":
+    def factory(self) -> _FakeMongoClient:
         """Вернуть client из AgentMemory client_factory."""
         return self
 

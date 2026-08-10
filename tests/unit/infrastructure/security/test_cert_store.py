@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -27,7 +27,7 @@ async def test_memory_backend_get_missing() -> None:
 @pytest.mark.asyncio
 async def test_memory_backend_save_and_get() -> None:
     backend = MemoryCertBackend()
-    expires = datetime.now(tz=timezone.utc) + timedelta(days=30)
+    expires = datetime.now(tz=UTC) + timedelta(days=30)
     entry = await backend.save(
         service_id="svc-1",
         pem="-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----",
@@ -47,7 +47,7 @@ async def test_memory_backend_save_and_get() -> None:
 @pytest.mark.asyncio
 async def test_memory_backend_save_increments_version() -> None:
     backend = MemoryCertBackend()
-    expires = datetime.now(tz=timezone.utc) + timedelta(days=30)
+    expires = datetime.now(tz=UTC) + timedelta(days=30)
 
     e1 = await backend.save("svc", "pem1", expires)
     e2 = await backend.save("svc", "pem2", expires)
@@ -61,7 +61,7 @@ async def test_memory_backend_save_increments_version() -> None:
 @pytest.mark.asyncio
 async def test_memory_backend_save_with_metadata() -> None:
     backend = MemoryCertBackend()
-    expires = datetime.now(tz=timezone.utc) + timedelta(days=30)
+    expires = datetime.now(tz=UTC) + timedelta(days=30)
     # CertEntry may not have uploaded_by/description — only add ones it accepts
     entry = await backend.save("svc", "pem", expires, description="test cert")
     # uploaded_by may not be stored on the entry itself, only used for audit log
@@ -71,13 +71,13 @@ async def test_memory_backend_save_with_metadata() -> None:
 @pytest.mark.asyncio
 async def test_memory_backend_list_expiring() -> None:
     backend = MemoryCertBackend()
-    soon = datetime.now(tz=timezone.utc) + timedelta(days=2)
-    far = datetime.now(tz=timezone.utc) + timedelta(days=365)
+    soon = datetime.now(tz=UTC) + timedelta(days=2)
+    far = datetime.now(tz=UTC) + timedelta(days=365)
 
     await backend.save("soon", "pem1", soon)
     await backend.save("far", "pem2", far)
 
-    cutoff = datetime.now(tz=timezone.utc) + timedelta(days=7)
+    cutoff = datetime.now(tz=UTC) + timedelta(days=7)
     expiring = await backend.list_expiring(cutoff)
     assert len(expiring) == 1
     assert expiring[0].service_id == "soon"
@@ -93,7 +93,7 @@ async def test_memory_backend_name() -> None:
 
 
 def test_cert_entry_construction() -> None:
-    expires = datetime.now(tz=timezone.utc) + timedelta(days=30)
+    expires = datetime.now(tz=UTC) + timedelta(days=30)
     entry = CertEntry(
         service_id="x", pem="pem", fingerprint="abc", expires_at=expires, version=1
     )

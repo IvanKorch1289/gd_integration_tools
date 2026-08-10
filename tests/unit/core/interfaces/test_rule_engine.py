@@ -6,6 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from src.backend.core.interfaces.rule_engine import RuleEngineRepository, RulesetDoc
+from datetime import UTC
 
 
 class TestRulesetDoc:
@@ -25,7 +26,7 @@ class TestRulesetDoc:
     def test_full(self) -> None:
         from datetime import datetime, timezone
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         doc = RulesetDoc(
             id=1,
             name="rs1",
