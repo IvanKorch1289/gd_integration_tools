@@ -330,9 +330,16 @@ class TemporalSchedulerBackend:
                         "status": "active",
                     }
                 )
-        except Exception:  # noqa: BLE001
-            # list_schedules может не существовать в старых версиях.
-            pass
+        except (RuntimeError, AttributeError, OSError, ConnectionError) as list_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1024: narrow exceptions + observability.
+            # RuntimeError — list_schedules not supported (old Temporal),
+            # AttributeError — API change, OSError/ConnectionError — cluster
+            # unavailable. list_schedules может не существовать в старых версиях.
+            import logging
+            logging.getLogger(__name__).debug(
+                "temporal_scheduler_backend.list_schedules_failed",
+                extra={"error": str(list_exc)},
+            )
 
         # 2. Oneshot workflows (из локального кэша — Temporal не имеет
         # "list oneshot workflows" API в чистом виде; workflows
