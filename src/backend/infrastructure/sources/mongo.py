@@ -19,7 +19,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -57,7 +57,7 @@ class MongoChangeEvent:
     document_key: dict[str, Any] | None = None
     full_document: dict[str, Any] | None = None
     resume_token: dict[str, Any] | None = None
-    timestamp: datetime = datetime.now(UTC)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass(slots=True)
