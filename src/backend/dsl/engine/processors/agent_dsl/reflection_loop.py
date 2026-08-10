@@ -338,7 +338,14 @@ class ReflectionLoopProcessor(BaseAIProcessor):
             )
 
             return get_ai_gateway()
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError) as di_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-967: narrow exceptions + observability (mirror
+            # D-AUDIT-966 для plan_execute).
+            import logging
+            logging.getLogger(__name__).debug(
+                "reflection_loop.ai_gateway_resolve_fallback",
+                extra={"error": str(di_exc)},
+            )
             return None
 
     def to_spec(self) -> dict[str, Any]:
