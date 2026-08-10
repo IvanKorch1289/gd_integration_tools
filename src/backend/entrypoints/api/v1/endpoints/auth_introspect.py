@@ -72,6 +72,14 @@ async def introspect(
                 value = raw.get(key)
                 if value is not None:
                     response[key] = value
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError, KeyError) as claims_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1009: narrow exceptions + observability.
+            # AttributeError — claims.raw missing, TypeError — wrong claims
+            # type, ValueError — invalid claims value, KeyError — missing
+            # required key.
+            import logging
+            logging.getLogger(__name__).debug(
+                "auth_introspect.claims_fallback",
+                extra={"error": str(claims_exc)},
+            )
     return response
