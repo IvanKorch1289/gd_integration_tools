@@ -40,7 +40,16 @@ async def kafka_ping_fn() -> bool:
 
         producer = KafkaProducer()
         return producer.is_available()
-    except Exception:
+    except (ImportError, RuntimeError, OSError, ConnectionError, AttributeError) as ping_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-933: narrow exceptions + observability.
+        # ImportError — Kafka SDK missing, RuntimeError — broker unavailable,
+        # OSError/ConnectionError — network, AttributeError — producer API
+        # change. Bare `except Exception` маскировал unrelated runtime errors.
+        import logging
+        logging.getLogger(__name__).debug(
+            "kafka_pool.ping_failed",
+            extra={"error": str(ping_exc)},
+        )
         return False
 
 
@@ -73,8 +82,16 @@ def register_kafka_pool_if_available(
     except ImportError:
         # Kafka SDK not available (purgatory/faststream missing)
         return False
-    except Exception:
-        # Any other error — graceful skip
+    except (RuntimeError, AttributeError, ValueError) as reg_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-933: narrow exceptions + observability.
+        # RuntimeError — manager.register failed, AttributeError — manager
+        # API change, ValueError — invalid args. Bare `except Exception`
+        # маскировал unrelated runtime errors (KeyError, TypeError).
+        import logging
+        logging.getLogger(__name__).debug(
+            "kafka_pool.register_failed",
+            extra={"name": name, "error": str(reg_exc)},
+        )
         return False
 
 
