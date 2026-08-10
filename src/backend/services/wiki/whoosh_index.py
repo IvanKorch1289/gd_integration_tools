@@ -247,14 +247,12 @@ def _selftest() -> None:
     t0 = time.perf_counter()
     n = idx.build(force=False)
     dt = (time.perf_counter() - t0) * 1000
-    print(f"build: {n} docs in {dt:.0f} ms")
 
     t0 = time.perf_counter()
     hits = idx.search("DSL", top=5)
     dt = (time.perf_counter() - t0) * 1000
-    print(f"search 'DSL': {len(hits)} hits in {dt:.0f} ms")
     for h in hits:
-        print(f"  - {h.path}  ({h.score:.2f})")
+        pass
 
 
 if __name__ == "__main__":

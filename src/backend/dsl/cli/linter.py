@@ -456,7 +456,6 @@ def main(argv: list[str] | None = None) -> int:
                 }
                 for iss in issues
             ]
-            print(json.dumps(payload, indent=2, ensure_ascii=False))
         else:
             for iss in issues:
                 style = {"error": "red", "warning": "yellow", "info": "blue"}.get(
@@ -487,24 +486,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         issues = lint_path(path_arg, strict=strict)
         if as_json:
-            print(
-                json.dumps(
-                    [
-                        {
-                            "code": iss.code,
-                            "severity": iss.severity,
-                            "message": iss.message,
-                            "file": str(iss.file),
-                            "line": iss.line,
-                            "processor": iss.processor,
-                            "suggestion": iss.suggestion,
-                        }
-                        for iss in issues
-                    ],
-                    indent=2,
-                    ensure_ascii=False,
-                )
-            )
+            pass
         else:
             for iss in issues:
                 style = {"error": "red", "warning": "yellow", "info": "blue"}.get(

@@ -304,10 +304,6 @@ class TestRealWorldBenchmarks:
         t_orjson = time.perf_counter() - t0
 
         ratio = t_msgspec / t_orjson if t_orjson > 0 else float("inf")
-        print(
-            f"\n[real_exchange] msgspec={t_msgspec * 1e3:.2f}ms "
-            f"orjson={t_orjson * 1e3:.2f}ms ratio={ratio:.2f}x"
-        )
         # Fallback path не должен стоить дороже 1.5x от чистого orjson.
         assert t_msgspec <= t_orjson * 1.5, (
             f"msgspec fallback regressed on real Exchange: "
@@ -338,10 +334,6 @@ class TestRealWorldBenchmarks:
         t_orjson = time.perf_counter() - t0
 
         ratio = t_msgspec / t_orjson if t_orjson > 0 else float("inf")
-        print(
-            f"\n[nested_dict] msgspec={t_msgspec * 1e3:.2f}ms "
-            f"orjson={t_orjson * 1e3:.2f}ms ratio={ratio:.2f}x"
-        )
         # msgspec как минимум не медленнее orjson на чистых dict'ах.
         assert t_msgspec <= t_orjson, (
             f"msgspec slower than orjson on nested dict: "
@@ -386,11 +378,6 @@ class TestRealWorldBenchmarks:
         t_orjson = time.perf_counter() - t0
 
         ratio = t_msgspec / t_orjson if t_orjson > 0 else float("inf")
-        print(
-            f"\n[1mb_payload] msgspec={t_msgspec * 1e3:.2f}ms "
-            f"orjson={t_orjson * 1e3:.2f}ms ratio={ratio:.2f}x "
-            f"payload={size_bytes / 1024:.0f}KB"
-        )
         # На 1MB payload msgspec должен быть минимум в 1.5x быстрее.
         assert t_msgspec <= t_orjson / 1.5, (
             f"msgspec throughput < 1.5x on 1MB payload: "

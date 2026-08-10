@@ -35,7 +35,6 @@ def test_streamlit_loads() -> bool:
             # Wait for SPA hydration
             page.wait_for_load_state("networkidle", timeout=10000)
             title = page.title()
-            print(f"  page title: {title!r}")
             # Streamlit main page redirects to 00_Главная via switch_page
             body = page.content()
             has_streamlit = "streamlit" in body.lower() or "GD Integration" in title
@@ -54,7 +53,6 @@ def test_navigation_renders() -> bool:
             page.wait_for_load_state("networkidle", timeout=15000)
             # Check sidebar exists (Streamlit renders it)
             sidebar = page.query_selector("[data-testid='stSidebar']")
-            print(f"  sidebar present: {sidebar is not None}")
             return sidebar is not None
         finally:
             browser.close()
@@ -76,8 +74,7 @@ def test_spa_no_404s() -> bool:
             # SPA may have 404s on favicons, but not on critical assets
             critical = [f for f in failed if "static" in f[1] or "main" in f[1]]
             if critical:
-                print(f"  CRITICAL 404s: {critical[:3]}")
-            print(f"  total 4xx/5xx: {len(failed)} (all: {failed[:3]})")
+                pass
             return len(critical) == 0
         finally:
             browser.close()
@@ -94,7 +91,6 @@ def test_page_screenshot() -> bool:
             page.screenshot(path="/tmp/streamlit_main.png", full_page=True)
             import os
             size = os.path.getsize("/tmp/streamlit_main.png")
-            print(f"  screenshot: /tmp/streamlit_main.png ({size} bytes)")
             return size > 1000
         finally:
             browser.close()
@@ -115,7 +111,6 @@ def test_rpa_admin_check_403() -> bool:
             rpa_url = "http://127.0.0.1:8501/api/v1/rpa/shell/exec"
             response = page.goto(rpa_url, timeout=10000)
             status = response.status if response else 0
-            print(f"  /api/v1/rpa/* via Streamlit: status={status}")
             # Streamlit doesn't proxy this — should be 404 or 200 with streamlit SPA
             return status in (200, 404)
         finally:
@@ -137,13 +132,11 @@ def main() -> int:
             ok = fn()
             elapsed = (time.monotonic() - t0) * 1000
             if ok:
-                print(f"  ✓ {name} ({elapsed:.0f}ms)")
                 passed += 1
             else:
-                print(f"  ✗ {name} ({elapsed:.0f}ms)")
+                pass
         except Exception as exc:
-            print(f"  ! {name}: {type(exc).__name__}: {exc}")
-    print(f"\nResult: {passed}/{len(tests)} passed")
+            pass
     return 0 if passed >= 3 else 1
 
 

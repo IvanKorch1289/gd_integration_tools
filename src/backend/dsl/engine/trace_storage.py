@@ -199,7 +199,6 @@ if __name__ == "__main__":
         await mem.append(e1)
         assert len(await mem.read_recent("r1", 10)) == 1
         assert mem.list_routes() == ["r1"]
-        print("InMemory OK")
 
         # Test 2: JsonFile.
         with tempfile.TemporaryDirectory() as td:
@@ -219,7 +218,5 @@ if __name__ == "__main__":
             assert recent[0].processor_name == "p1"
             assert recent[1].processor_name == "p2"
             assert js.list_routes() == ["r1"]
-            print("JsonFile OK")
-        print("All tests pass.")
 
     asyncio.run(_self_test())

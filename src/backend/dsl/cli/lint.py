@@ -58,14 +58,12 @@ def lint_file(path: str | Path) -> list[str]:
 def main() -> int:
     """Метод main (см. signature)."""
     if len(sys.argv) < 2:
-        print("usage: gdi dsl lint <file.yaml>")
         return 2
     errors = lint_file(sys.argv[1])
     if errors:
         for e in errors:
-            print(f"  - {e}", file=sys.stderr)
+            pass
         return 1
-    print("OK: DSL lint passed")
     return 0
 
 

@@ -165,11 +165,6 @@ sys.modules["src.backend.plugins.composition.lifecycle.lifespan"] = _lifespan
 # Force-overwrite DEBUG print to verify _lifespan version matches
 # S111 W2: re-exported from startup, but co_filename / co_firstlineno
 # указывают на startup.py (где функция реально определена).
-print(
-    f"DEBUG TEST: _lifespan._register_outbox_dispatcher source = "
-    f"{_lifespan._register_outbox_dispatcher.__code__.co_filename}:"
-    f"{_lifespan._register_outbox_dispatcher.__code__.co_firstlineno}"
-)
 
 # Pre-stub outbox_repo module (BEFORE any test runs, ensure real
 # outbox.py is not loaded by accidental pytest collection).
@@ -238,8 +233,6 @@ async def test_cutover_dispatcher_path_when_enabled(
     # Verify fixture applied
     import src.backend.core.config.services.outbox as _svc_outbox
 
-    print(f"\nDEBUG: outbox_settings type={type(_svc_outbox.outbox_settings)}")
-    print(f"DEBUG: outbox_settings.enabled={_svc_outbox.outbox_settings.enabled}")
     with patch(
         "src.backend.infrastructure.messaging.outbox.lifecycle.start_outbox_dispatcher",
         new=AsyncMock(),
@@ -250,7 +243,6 @@ async def test_cutover_dispatcher_path_when_enabled(
             new=AsyncMock(return_value=[]),
         ):
             await _lifespan._register_outbox_dispatcher(fresh_app)
-            print(f"DEBUG: dispatcher.await_count={mock_dispatcher.await_count}")
         mock_dispatcher.assert_awaited_once()
         # Verify call kwargs
         kwargs = mock_dispatcher.await_args.kwargs

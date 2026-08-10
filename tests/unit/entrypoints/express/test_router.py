@@ -12,7 +12,6 @@ from fastapi.testclient import TestClient
 
 mod = importlib.import_module("src.backend.entrypoints.express.router")
 
-print("MOD TYPE:", type(mod), mod)
 
 
 def _make_app() -> FastAPI:
