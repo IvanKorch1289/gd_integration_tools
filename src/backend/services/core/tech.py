@@ -6,7 +6,7 @@ from typing import Any
 # без polars; реальное обращение к pl.read_excel в import_excel_data()
 # даёт понятную ошибку с инструкцией install.
 try:
-    import polars as pl  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+    import polars as pl  # type: ignore[import-not-found]
 except ImportError:
     pl = None  # type: ignore[assignment]
 

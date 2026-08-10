@@ -236,9 +236,7 @@ class OutboundHttpClient:
         При недоступности — silent pass.
         """
         try:
-            from src.backend.core.interfaces.observability import (
-                CorrelationIdProvider,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.interfaces.observability import CorrelationIdProvider
 
             def _get_cid() -> str | None:
                 from src.backend.core.di.providers.infrastructure_locator import (
@@ -255,7 +253,7 @@ class OutboundHttpClient:
             # ImportError — provider missing, AttributeError — API change,
             # RuntimeError — provider unavailable, TypeError — wrong
             # return type.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "outbound_http.correlation_id_provider_failed",
                 extra={"error": str(cid_exc)},
@@ -330,7 +328,7 @@ class OutboundHttpClient:
             # ImportError — audit facade missing, AttributeError — API
             # change, RuntimeError — backend unavailable. never raise from
             # audit emission (best-effort).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "outbound_http.audit_emit_failed",
                 extra={"error": str(audit_exc)},

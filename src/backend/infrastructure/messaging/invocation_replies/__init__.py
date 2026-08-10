@@ -28,9 +28,7 @@ from src.backend.infrastructure.messaging.invocation_replies.registry import (
     ReplyChannelRegistry,
     get_reply_channel_registry,
 )
-from src.backend.infrastructure.messaging.invocation_replies.ws import (
-    WsReplyChannel,  # noqa: F401 — re-export
-)
+from src.backend.infrastructure.messaging.invocation_replies.ws import WsReplyChannel
 
 __all__ = (
     "EmailReplyChannel",

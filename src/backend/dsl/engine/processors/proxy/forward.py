@@ -174,8 +174,8 @@ class ForwardToProcessor(BaseProcessor):
         self, body: Any, headers: dict[str, str], exchange: Exchange[Any],
     ) -> None:
         try:
-            import grpc  # noqa: F401 — availability probe
-            from grpc import aio as grpc_aio  # noqa: F401 — availability probe
+            import grpc
+            from grpc import aio as grpc_aio
         except ImportError as exc:
             raise RuntimeError("grpcio не установлен — gRPC-proxy недоступен") from exc
 

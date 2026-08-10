@@ -16,7 +16,7 @@ from src.backend.core.logging import get_logger
 # surface; stdlib ET is only used for the controlled marshal path (we generate
 # the tree ourselves from a dict, never parse untrusted XML).
 try:
-    import defusedxml.ElementTree as DET  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+    import defusedxml.ElementTree as DET  # type: ignore[import-not-found]
 except ImportError:  # pragma: no cover — dev-light fallback
     DET = None  # type: ignore[assignment]
 

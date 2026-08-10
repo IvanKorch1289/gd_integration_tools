@@ -32,7 +32,7 @@ class EmailAdapter:
         """
         # Поздний импорт — SMTPClient может иметь тяжёлые зависимости.
         try:
-            from src.backend.infrastructure.clients.transport.smtp import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.clients.transport.smtp import (
                 get_smtp_client,
             )
         except ImportError as exc:

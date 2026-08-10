@@ -1,7 +1,5 @@
 """Scheduler services facade."""
 
-from src.backend.services.scheduler.facade import (
-    SchedulerFacade,  # noqa: F401 — re-export
-)
+from src.backend.services.scheduler.facade import SchedulerFacade
 
 __all__ = ("SchedulerFacade",)

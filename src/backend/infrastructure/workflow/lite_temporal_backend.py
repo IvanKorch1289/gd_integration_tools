@@ -51,9 +51,7 @@ class LiteTemporalBackend(TemporalWorkflowBackend):
     ) -> LiteTemporalBackend:
         """Поднять in-process env; ``target`` / ``api_key`` игнорируются."""
         try:
-            from temporalio.testing import (
-                WorkflowEnvironment,  # noqa: F401 — availability probe
-            )
+            from temporalio.testing import WorkflowEnvironment
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
                 "temporalio SDK not installed. Install via `uv sync --extra workflow`.",

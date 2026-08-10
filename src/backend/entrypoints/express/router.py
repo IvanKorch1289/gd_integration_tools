@@ -121,9 +121,7 @@ async def receive_command(request: Request) -> JSONResponse:
     )
 
     try:
-        from src.backend.core.di.providers import (
-            get_express_metrics_recorder_provider,  # noqa: F401 — availability probe
-        )
+        from src.backend.core.di.providers import get_express_metrics_recorder_provider
 
         recorder = get_express_metrics_recorder_provider()
         bot_name = str(payload.get("bot_id", "main_bot"))
@@ -132,7 +130,7 @@ async def receive_command(request: Request) -> JSONResponse:
         # cycle-9/D-AUDIT-1008: narrow exceptions + observability.
         # ImportError — recorder missing, AttributeError — API change,
         # RuntimeError — metrics unavailable, TypeError — wrong arg type.
-        import logging  # noqa: F401 — availability probe
+        import logging
         logging.getLogger(__name__).debug(
             "express_router.metrics_recorder_failed",
             extra={"error": str(rec_exc)},

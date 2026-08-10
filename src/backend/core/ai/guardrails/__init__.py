@@ -11,9 +11,6 @@
 
 from __future__ import annotations as annotations
 
-from src.backend.core.ai.guardrails.llamaguard import (  # noqa: F401 — re-export
-    GuardResult,
-    LlamaGuardRuntime,
-)
+from src.backend.core.ai.guardrails.llamaguard import GuardResult, LlamaGuardRuntime
 
 __all__ = ("GuardResult", "LlamaGuardRuntime")

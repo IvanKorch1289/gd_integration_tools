@@ -61,7 +61,7 @@ class MessageTranslatorProcessor(BaseProcessor):
     @staticmethod
     def _dict_to_xml(data: dict, root_tag: str = "root") -> str:
         try:
-            import xmltodict  # noqa: F401 — availability probe
+            import xmltodict
 
             return xmltodict.unparse({root_tag: data}, pretty=True)
         except ImportError:
@@ -74,14 +74,14 @@ class MessageTranslatorProcessor(BaseProcessor):
     @staticmethod
     def _xml_to_dict(xml_str: str) -> dict[str, Any]:
         try:
-            import xmltodict  # noqa: F401 — availability probe
+            import xmltodict
 
             parsed = xmltodict.parse(xml_str)
             if len(parsed) == 1:
                 return dict(next(iter(parsed.values())))
             return dict(parsed)
         except ImportError:
-            import re as _re  # noqa: F401 — availability probe
+            import re as _re
 
             return {
                 m.group(1): m.group(2)
@@ -93,7 +93,7 @@ class MessageTranslatorProcessor(BaseProcessor):
         if not data:
             return ""
         try:
-            import polars as pl  # noqa: F401 — availability probe
+            import polars as pl
 
             df = pl.DataFrame(data)
             return df.write_csv()
@@ -107,9 +107,9 @@ class MessageTranslatorProcessor(BaseProcessor):
     @staticmethod
     def _csv_to_dict_list(csv_str: str) -> list[dict[str, str]]:
         try:
-            import io  # noqa: F401 — availability probe
+            import io
 
-            import polars as pl  # noqa: F401 — availability probe
+            import polars as pl
 
             df = pl.read_csv(io.StringIO(csv_str))
             return df.to_dicts()

@@ -12,17 +12,13 @@ response_cache` остаётся рабочим.
 """
 
 import hashlib
-from collections.abc import (
-    Awaitable as Awaitable,
-    Callable as Callable,
-)
+from collections.abc import Awaitable as Awaitable
+from collections.abc import Callable as Callable
 from functools import lru_cache as lru_cache
 from typing import Any as Any
 
 from src.backend.core.codec.json import json_dumps as json_dumps
-from src.backend.infrastructure.decorators.caching.decorator import (
-    CachingDecorator,  # noqa: F401 — re-export
-)
+from src.backend.infrastructure.decorators.caching.decorator import CachingDecorator
 
 __all__ = (
     "CachingDecorator",

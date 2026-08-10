@@ -93,8 +93,8 @@ class SoapSink(Sink):
             if self._client is not None:
                 return self._client
             try:
-                from zeep import Client  # noqa: F401 — availability probe
-                from zeep.transports import Transport  # noqa: F401 — availability probe
+                from zeep import Client
+                from zeep.transports import Transport
             except ImportError:
                 return None
             transport = Transport(timeout=self.timeout)

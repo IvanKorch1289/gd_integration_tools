@@ -170,7 +170,7 @@ class VaultSecretsBackend(SecretsBackend):
     def _is_auth_error(exc: BaseException) -> bool:
         """Распознать ошибки аутентификации hvac (Forbidden / InvalidRequest)."""
         try:
-            import hvac.exceptions as hv_exc  # noqa: F401 — availability probe
+            import hvac.exceptions as hv_exc
         except ImportError:
             return False
         return isinstance(exc, (hv_exc.Forbidden, hv_exc.InvalidRequest))

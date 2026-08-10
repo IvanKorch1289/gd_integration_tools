@@ -134,11 +134,11 @@ def _url_is_safe(url: str, allow_internal: bool) -> bool:
 
 def _json_encode(payload: dict[str, Any]) -> bytes:
     try:
-        import orjson  # noqa: F401 — availability probe
+        import orjson
 
         return orjson.dumps(payload)
     except ImportError:
-        import json  # noqa: F401 — availability probe
+        import json
 
         return json.dumps(payload, ensure_ascii=False).encode("utf-8")
 

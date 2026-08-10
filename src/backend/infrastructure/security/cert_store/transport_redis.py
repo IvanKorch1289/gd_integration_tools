@@ -37,7 +37,7 @@ class RedisCertTransport:
         if self._redis is not None:
             return self._redis
         try:
-            import redis.asyncio as redis_asyncio  # noqa: F401 — availability probe
+            import redis.asyncio as redis_asyncio
         except ImportError as exc:
             raise ImportError(
                 "redis не установлен. pip install redis>=5.0",

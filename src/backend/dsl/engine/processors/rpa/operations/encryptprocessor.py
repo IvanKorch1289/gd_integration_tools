@@ -50,7 +50,7 @@ class EncryptProcessor(BaseProcessor):
         if not await self.auth_check(exchange, action="execute"):
             return
         try:
-            from cryptography.fernet import Fernet  # noqa: F401 — availability probe
+            from cryptography.fernet import Fernet
         except ImportError:
             exchange.fail("cryptography not installed: pip install cryptography")
             return
@@ -64,7 +64,7 @@ class EncryptProcessor(BaseProcessor):
         elif isinstance(body, bytes):
             data = body
         else:
-            import orjson  # noqa: F401 — availability probe
+            import orjson
 
             data = orjson.dumps(body, default=str)
         try:

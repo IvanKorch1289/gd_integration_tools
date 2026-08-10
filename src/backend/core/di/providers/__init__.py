@@ -25,15 +25,13 @@ History:
 """
 
 from src.backend.core.di.module_registry import resolve_module as resolve_module
-from src.backend.core.di.providers import (
-    ai as ai,
-    auth as auth,
-    cache as cache,
-    db as db,
-    http as http,
-    storage as storage,
-    workflow as workflow,
-)
+from src.backend.core.di.providers import ai as ai
+from src.backend.core.di.providers import auth as auth
+from src.backend.core.di.providers import cache as cache
+from src.backend.core.di.providers import db as db
+from src.backend.core.di.providers import http as http
+from src.backend.core.di.providers import storage as storage
+from src.backend.core.di.providers import workflow as workflow
 
 # --- ai.py (12) ---
 from src.backend.core.di.providers.ai import (
@@ -187,7 +185,8 @@ from src.backend.core.di.providers.workflow import (
     set_workflow_main_session_provider,
     set_workflow_state_store_provider,
 )
-__all__ = [  # noqa: F822 — auto-generated from imports
+
+__all__ = [
     "ai",
     "auth",
     "cache",

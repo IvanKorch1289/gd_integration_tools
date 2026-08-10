@@ -7,9 +7,6 @@ Sprint 40 W5 (v15 §10 RAG over project documentation):
 
 from __future__ import annotations as annotations
 
-from src.backend.services.ai.rag.project_docs import (  # noqa: F401 — re-export
-    DocsIndexer,
-    InMemoryQdrantFallback,
-)
+from src.backend.services.ai.rag.project_docs import DocsIndexer, InMemoryQdrantFallback
 
 __all__ = ("DocsIndexer", "InMemoryQdrantFallback")

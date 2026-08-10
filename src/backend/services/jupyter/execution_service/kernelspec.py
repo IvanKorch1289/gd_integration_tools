@@ -88,7 +88,7 @@ class KernelSpecDiscovery:
             return self._cache
 
         try:
-            from jupyter_client.kernelspec import (  # noqa: F401 — availability probe
+            from jupyter_client.kernelspec import (
                 KernelSpecManager,  # type: ignore[import-not-found]
             )
         except ImportError:

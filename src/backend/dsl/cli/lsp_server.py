@@ -42,7 +42,7 @@ _logger = get_logger(__name__)
 def _try_import_pygls() -> Any | None:
     """Lazy import pygls. Возвращает None, если не установлен."""
     try:
-        from pygls.lsp.server import LanguageServer  # noqa: F401 — availability probe
+        from pygls.lsp.server import LanguageServer
 
         return True
     except ImportError:
@@ -142,7 +142,7 @@ def create_server() -> Any:
         """
         # Lazy import schema_completion — tools/ может не быть в PYTHONPATH.
         try:
-            from tools.dsl_lsp.schema_completion import (  # noqa: F401 — availability probe
+            from tools.dsl_lsp.schema_completion import (
                 ROUTE_COMPLETIONS,
                 STEP_COMPLETIONS,
             )
@@ -164,7 +164,7 @@ def create_server() -> Any:
         """Hover-описание поля под курсором (Tier 1 — статический lookup)."""
         # Lazy import schema_completion.
         try:
-            from tools.dsl_lsp.schema_completion import (  # noqa: F401 — availability probe
+            from tools.dsl_lsp.schema_completion import (
                 ROUTE_COMPLETIONS,
                 STEP_COMPLETIONS,
             )
@@ -204,9 +204,7 @@ async def _publish_diagnostics(ls: Any, uri: str) -> None:
 
     # Запускаем linter (strict-mode читаем из feature_flag).
     try:
-        from src.backend.core.config.features import (
-            feature_flags,  # noqa: F401 — availability probe
-        )
+        from src.backend.core.config.features import feature_flags
 
         strict = bool(getattr(feature_flags, "dsl_linter_strict", False))
     except ImportError:

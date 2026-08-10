@@ -7,10 +7,8 @@ Sprint 36 — ponytail (D111): PEP 562 ``__getattr__`` для разрыва imp
 
 from __future__ import annotations as annotations
 
-from typing import (
-    TYPE_CHECKING as TYPE_CHECKING,
-    Any as Any,
-)
+from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
 
 if TYPE_CHECKING:
     from src.backend.infrastructure.repositories.base.base import (
@@ -28,9 +26,7 @@ __all__ = ("AbstractRepository", "SQLAlchemyRepository", "get_repository_for_mod
 
 def __getattr__(name: str) -> Any:
     if name == "AbstractRepository":
-        from src.backend.infrastructure.repositories.base.base import (
-            AbstractRepository,  # noqa: F401 — re-export
-        )
+        from src.backend.infrastructure.repositories.base.base import AbstractRepository
         return AbstractRepository
     if name == "SQLAlchemyRepository":
         from src.backend.infrastructure.repositories.base.sqlalchemy import (

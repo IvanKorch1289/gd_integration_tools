@@ -246,12 +246,12 @@ def _selftest() -> None:
     """CLI smoke: pyrun этот модуль как ``-m`` для построения и поиска."""
     idx = WhooshIndex()
     t0 = time.perf_counter()
-    n = idx.build(force=False)  # noqa: F841 — selftest diagnostic
-    dt = (time.perf_counter() - t0) * 1000  # noqa: F841 — selftest diagnostic
+    n = idx.build(force=False)
+    dt = (time.perf_counter() - t0) * 1000
     _ = (n, dt)  # pair-marker для F841 silence
     t0 = time.perf_counter()
-    hits = idx.search("DSL", top=5)  # noqa: F841 — selftest diagnostic
-    dt = (time.perf_counter() - t0) * 1000  # noqa: F841 — selftest diagnostic
+    hits = idx.search("DSL", top=5)
+    dt = (time.perf_counter() - t0) * 1000
     _ = (hits, dt)
 
 

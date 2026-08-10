@@ -71,7 +71,7 @@ def is_httpx_retries_available() -> bool:
 
     """
     try:
-        import httpx_retries  # noqa: F401 — availability probe
+        import httpx_retries
 
         return True
     except ImportError:

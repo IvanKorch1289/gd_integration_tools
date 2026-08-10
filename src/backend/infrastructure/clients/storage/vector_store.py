@@ -53,9 +53,7 @@ class QdrantVectorStore(BaseVectorStore):
         if self._client is not None:
             return self._client
         try:
-            from qdrant_client import (
-                AsyncQdrantClient,  # noqa: F401 — availability probe
-            )
+            from qdrant_client import AsyncQdrantClient
         except ImportError as exc:
             raise RuntimeError(
                 "qdrant-client не установлен — добавьте в зависимости проекта",

@@ -20,9 +20,7 @@ __all__ = (
 )
 
 try:  # pragma: no cover
-    from src.backend.core.utils.metrics_registry import (
-        metrics_registry,  # noqa: F401 — availability probe
-    )
+    from src.backend.core.utils.metrics_registry import metrics_registry
 
     consumer_pending = metrics_registry.gauge(
         "nats_consumer_pending",
@@ -51,7 +49,7 @@ except (ImportError, AttributeError, RuntimeError, ValueError) as metrics_init_e
     # API changed, RuntimeError — registry not initialized, ValueError
     # — invalid label tuple. Bare `except Exception` маскировал unrelated
     # runtime errors.
-    import logging  # noqa: F401 — availability probe
+    import logging
     logging.getLogger(__name__).debug(
         "nats_metrics.registry_init_fallback",
         extra={"error": str(metrics_init_exc)},

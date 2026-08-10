@@ -63,11 +63,9 @@ class WebhookSink(Sink):
         policy поведение остаётся прежним (legacy ad-hoc try/except).
         """
         try:
-            import httpx  # noqa: F401 — availability probe
+            import httpx
 
-            from src.backend.core.net import (
-                OutboundHttpClient,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return SinkResult(ok=False, details={"error": "httpx not installed"})
 
@@ -141,11 +139,9 @@ class WebhookSink(Sink):
     async def health(self, mode: str = "fast") -> HealthResult:
         """HEAD-запрос на webhook-URL; ``ok`` если адрес отвечает."""
         try:
-            import httpx  # noqa: F401 — availability probe
+            import httpx
 
-            from src.backend.core.net import (
-                OutboundHttpClient,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return HealthResult.failed(error="httpx not installed", mode=mode)
         start = time.perf_counter()

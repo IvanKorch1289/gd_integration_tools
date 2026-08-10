@@ -32,7 +32,9 @@ from src.backend.services.ai.rag_service.augment_mixin import (
 from src.backend.services.ai.rag_service.collection_mixin import (
     CollectionMixin,  # S64 W4: MRO
 )
-from src.backend.services.ai.rag_service.ingest_mixin import IngestMixin  # S64 W4: MRO as IngestMixin  # S64 W4: MRO
+from src.backend.services.ai.rag_service.ingest_mixin import (
+    IngestMixin,  # S64 W4: MRO as IngestMixin  # S64 W4: MRO
+)
 from src.backend.services.ai.rag_service.search_mixin import (
     SearchMixin,  # S64 W4: MRO
     _extract_source_id,  # S152 W2: re-export для tests
@@ -41,11 +43,10 @@ from src.backend.services.ai.rag_service.search_mixin import (
     _format_context_with_sources,  # S152 W2: re-export для tests
     _resolve_effective_tenant_id,  # Sprint 2.6: tenant resolution helper
 )
-from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-export as RAGCitation  # S64 W4: re-export
-from src.backend.services.ai.rag_types import (  # noqa: F401 — re-export
-    AugmentResult,
-    FreshnessLabel,
+from src.backend.services.ai.rag_service.state import (
+    RAGCitation,  # S64 W4: re-export as RAGCitation  # S64 W4: re-export
 )
+from src.backend.services.ai.rag_types import AugmentResult, FreshnessLabel
 
 __all__ = (
     "AugmentResult",

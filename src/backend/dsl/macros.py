@@ -50,9 +50,7 @@ def _emit_deprecation_once() -> None:
     (импорты до загрузки settings) исключения не должны ломать импорт.
     """
     try:
-        from src.backend.core.config.features import (
-            feature_flags,  # noqa: F401 — availability probe
-        )
+        from src.backend.core.config.features import feature_flags
 
         if getattr(feature_flags, "dsl_blueprints_migrate", False):
             warnings.warn(
@@ -71,7 +69,7 @@ def _emit_deprecation_once() -> None:
         # `except Exception` маскировал unrelated runtime errors.
         # Bootstrap-окружение без settings — молча игнорируем.
         # Deprecation-warning не критичен, чтобы из-за него падал импорт.
-        import logging  # noqa: F401 — availability probe
+        import logging
         logging.getLogger(__name__).debug(
             "macros._emit_deprecation_skipped",
             extra={"error": str(dep_exc)},

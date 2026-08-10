@@ -25,10 +25,7 @@ from src.backend.services.ai.feedback.feedback_service import (
     AIFeedbackService,
     get_ai_feedback_service,
 )
-from src.backend.services.ai.feedback.models import (  # noqa: F401 — re-export
-    AIFeedbackDoc,
-    FeedbackLabel,
-)
+from src.backend.services.ai.feedback.models import AIFeedbackDoc, FeedbackLabel
 from src.backend.services.ai.feedback.repository import (
     FeedbackRepository,
     InMemoryFeedbackRepository,

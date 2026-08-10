@@ -124,7 +124,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
             # ImportError — strategy module missing, AttributeError —
             # API change, KeyError — strategy name not registered,
             # TypeError — wrong arg type, ValueError — invalid config.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "llm_mixin.context_strategy_resolve_failed",
                 extra={"strategy_type": strategy_type, "error": str(strategy_exc)},
@@ -178,7 +178,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
             and hasattr(policy, "model_router")
             and policy.model_router is not None
         ):
-            from src.backend.core.ai.pydantic_ai_client import (  # noqa: F401 — availability probe
+            from src.backend.core.ai.pydantic_ai_client import (
                 LLMDependencies,
                 PydanticAIClient,
             )

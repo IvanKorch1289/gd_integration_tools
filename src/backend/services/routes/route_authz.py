@@ -123,9 +123,7 @@ def _resolve_authz_gateway() -> AuthorizationGateway | None:
     """
     # Pattern from ai_agent.py::_resolve_authz_gateway
     try:
-        from src.backend.services.ai.ai_agent import (
-            get_ai_agent_service,  # noqa: F401 — availability probe
-        )
+        from src.backend.services.ai.ai_agent import get_ai_agent_service
 
         agent = get_ai_agent_service()
         gateway = getattr(agent, "_authz_gateway", None)

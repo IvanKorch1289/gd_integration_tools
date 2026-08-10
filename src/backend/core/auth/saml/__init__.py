@@ -13,10 +13,7 @@ SamlBackend`` работает наравне с историческим ``saml
 
 from __future__ import annotations as annotations
 
-from src.backend.core.auth.saml.sp_handler import (  # noqa: F401 — re-export
-    SamlSpHandler,
-    SpInitiatedLoginResult,
-)
+from src.backend.core.auth.saml.sp_handler import SamlSpHandler, SpInitiatedLoginResult
 from src.backend.core.auth.saml_backend import (
     IdpMetadata,
     SamlAuthResult,

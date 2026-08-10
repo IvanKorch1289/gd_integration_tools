@@ -126,7 +126,7 @@ class DataFormatsMixin:
 
     def _to_yaml(self, data: Any) -> str:
         try:
-            import yaml  # noqa: F401 — availability probe
+            import yaml
 
             return yaml.dump(data, default_flow_style=False, allow_unicode=True)
         except ImportError:
@@ -137,7 +137,7 @@ class DataFormatsMixin:
         if not text:
             return {}
         try:
-            import yaml  # noqa: F401 — availability probe
+            import yaml
 
             return yaml.safe_load(text) or {}
         except ImportError:
@@ -183,8 +183,8 @@ class DataFormatsMixin:
 
     def _to_parquet(self, data: Any) -> bytes:
         try:
-            import pyarrow as pa  # noqa: F401 — availability probe
-            import pyarrow.parquet as pq  # noqa: F401 — availability probe
+            import pyarrow as pa
+            import pyarrow.parquet as pq
         except ImportError as exc:
             raise ImportError(
                 "to_parquet requires 'pyarrow' (pip install pyarrow)",
@@ -199,7 +199,7 @@ class DataFormatsMixin:
 
     def _from_parquet(self, data: Any) -> list[dict[str, Any]]:
         try:
-            import pyarrow.parquet as pq  # noqa: F401 — availability probe
+            import pyarrow.parquet as pq
         except ImportError as exc:
             raise ImportError(
                 "from_parquet requires 'pyarrow' (pip install pyarrow)",
@@ -219,7 +219,7 @@ class DataFormatsMixin:
         # Exception`` и делает ``exchange.fail``. Тот же паттерн что и
         # ``_to_parquet`` / ``_from_parquet`` ниже.
         try:
-            import msgpack  # noqa: F401 — availability probe
+            import msgpack
         except ImportError as exc:
             raise ImportError(
                 "to_msgpack requires 'msgpack' (pip install msgpack)",
@@ -238,7 +238,7 @@ class DataFormatsMixin:
         # msgpack-типы), в отличие от pickle, поэтому единственный безопасный
         # путь — требовать ``msgpack`` как hard-dep.
         try:
-            import msgpack  # noqa: F401 — availability probe
+            import msgpack
         except ImportError as exc:
             raise ImportError(
                 "from_msgpack requires 'msgpack' (pip install msgpack)",
@@ -249,7 +249,7 @@ class DataFormatsMixin:
         if not isinstance(data, dict):
             raise ValueError("to_toml requires dict at body")
         try:
-            import tomli_w  # noqa: F401 — availability probe
+            import tomli_w
 
             return tomli_w.dumps(data)
         except ImportError as exc:
@@ -262,10 +262,10 @@ class DataFormatsMixin:
         if not text:
             return {}
         try:
-            import tomllib  # noqa: F401 — availability probe
+            import tomllib
         except ImportError:  # Python < 3.11
             try:
-                import tomli as tomllib  # type: ignore[import-untyped,no-redef]  # type: ignore  # type: ignore[unused-ignore]  # noqa: F401 — availability probe
+                import tomli as tomllib  # type: ignore[import-untyped,no-redef]  # type: ignore  # type: ignore[unused-ignore]
             except ImportError as exc:
                 raise ImportError(
                     "from_toml requires 'tomllib' (stdlib 3.11+) or 'tomli'",

@@ -43,7 +43,7 @@ def load_pipeline_from_yaml(yaml_str: str, base_path: Path | None = None) -> Pip
 
     """
     try:
-        import yaml  # noqa: F401 — availability probe
+        import yaml
     except ImportError as exc:
         raise ImportError("PyYAML required: pip install pyyaml") from exc
 

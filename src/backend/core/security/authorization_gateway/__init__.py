@@ -14,10 +14,8 @@ Backward-compat: ``from src.backend.core.security.authorization_gateway import A
 
 from __future__ import annotations as annotations
 
-from typing import (
-    TYPE_CHECKING as TYPE_CHECKING,
-    Any as Any,
-)
+from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
 
 if TYPE_CHECKING:
     pass
@@ -25,7 +23,9 @@ if TYPE_CHECKING:
 import uuid
 from collections.abc import Sequence as Sequence
 
-from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol as CapabilityGatewayProtocol
+from src.backend.core.interfaces.capability_gateway import (
+    CapabilityGatewayProtocol as CapabilityGatewayProtocol,
+)
 from src.backend.core.logging import get_logger as get_logger
 from src.backend.core.security.authorization_gateway.audit_mixin import (
     AuditMixin,  # S60 W4: MRO
@@ -85,16 +85,14 @@ def get_authorization_gateway() -> AuthorizationGateway | None:
 
     """
     try:
-        from src.backend.core.di.app_state import (
-            get_app_ref,  # noqa: F401 — availability probe
-        )
+        from src.backend.core.di.app_state import get_app_ref
 
         app = get_app_ref()
     except (ImportError, AttributeError, RuntimeError) as app_exc:
         # cycle-9/D-AUDIT-1036: narrow exceptions + observability.
         # ImportError — get_app_ref missing, AttributeError — API
         # change, RuntimeError — app_state unavailable.
-        import logging  # noqa: F401 — availability probe
+        import logging
         logging.getLogger(__name__).debug(
             "authorization_gateway.app_state_fallback",
             extra={"error": str(app_exc)},

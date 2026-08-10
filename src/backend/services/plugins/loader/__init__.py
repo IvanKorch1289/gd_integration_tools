@@ -38,7 +38,9 @@ from src.backend.services.plugins.loader.discovery import (
     LoadedPlugin,  # S52 W3: re-export для backward compat
     PluginInventoryConflictError,  # S52 W3: re-export для backward compat
 )
-from src.backend.services.plugins.loader.loading import LoadingMixin  # S52 W3: MRO as LoadingMixin  # S52 W3: MRO
+from src.backend.services.plugins.loader.loading import (
+    LoadingMixin,  # S52 W3: MRO as LoadingMixin  # S52 W3: MRO
+)
 from src.backend.services.plugins.loader.models_discovery import (  # cycle-15: D-AUDIT-1502
     ManifestWithPath,
     load_plugin_manifests_for_migrations,
@@ -286,9 +288,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         # нужно видеть, какие плагины были выгружены и в каком
         # контексте (per-plugin shutdown vs full unload).
         try:
-            from src.backend.core.audit.facade import (
-                emit_audit_safe,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.audit.facade import emit_audit_safe
 
             emit_audit_safe(
                 event="plugin.unload",
@@ -305,7 +305,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
             # ImportError — audit facade missing, AttributeError — schema
             # change, RuntimeError — backend unavailable. Bare `except
             # Exception` маскировал unrelated runtime errors.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "plugin_loader.unload_audit_failed",
                 extra={"plugin_name": plugin_name, "error": str(audit_exc)},

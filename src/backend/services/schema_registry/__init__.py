@@ -17,15 +17,9 @@ Public API:
 
 from __future__ import annotations as annotations
 
-from src.backend.services.schema_registry.exporter_asyncapi import (
-    export_asyncapi,  # noqa: F401 — re-export
-)
-from src.backend.services.schema_registry.exporter_jsonschema import (
-    export_jsonschema,  # noqa: F401 — re-export
-)
-from src.backend.services.schema_registry.exporter_openapi import (
-    export_openapi,  # noqa: F401 — re-export
-)
+from src.backend.services.schema_registry.exporter_asyncapi import export_asyncapi
+from src.backend.services.schema_registry.exporter_jsonschema import export_jsonschema
+from src.backend.services.schema_registry.exporter_openapi import export_openapi
 from src.backend.services.schema_registry.populator import (
     populate_from_actions,
     populate_from_manifests,

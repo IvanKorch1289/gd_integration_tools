@@ -28,7 +28,7 @@ class PdfExtractProcessor:
 
         """
         try:
-            from pypdf import PdfReader  # noqa: F401 — availability probe
+            from pypdf import PdfReader
         except ImportError:
             _logger.debug("pdf_extract.pypdf_not_installed")
             return None

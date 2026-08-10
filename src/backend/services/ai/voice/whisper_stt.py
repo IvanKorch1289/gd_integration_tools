@@ -137,7 +137,7 @@ class WhisperSTTService:
         if not self.enabled:
             return False
         try:
-            import whisper  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            import whisper  # type: ignore[import-not-found]
 
             return True
         except ImportError:
@@ -152,7 +152,7 @@ class WhisperSTTService:
                 "WhisperSTTService отключён (voice_stt_tts_enabled=false).",
             )
         try:
-            import whisper  # noqa: F401 — availability probe
+            import whisper
         except ImportError as exc:
             raise VoiceServiceUnavailable(
                 "Пакет 'openai-whisper' не установлен — добавьте extra '[ai-voice]'.",

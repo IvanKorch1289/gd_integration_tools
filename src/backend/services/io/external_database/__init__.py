@@ -15,10 +15,8 @@ Backward-compat: ``from src.backend.services.io.external_database import Externa
 
 from __future__ import annotations as annotations
 
-from typing import (
-    TYPE_CHECKING as TYPE_CHECKING,
-    Any as Any,
-)
+from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
 
 if TYPE_CHECKING:
     pass

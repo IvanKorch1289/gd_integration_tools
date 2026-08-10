@@ -38,7 +38,7 @@ def _inject_correlation_id_headers(headers: dict[str, Any] | None) -> dict[str, 
     if "correlation_id" in result:
         return result
     try:
-        from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — availability probe
+        from src.backend.infrastructure.observability.correlation import (
             get_correlation_id,
         )
     except ImportError:
@@ -180,9 +180,7 @@ class StreamClient:
             )
             return
         try:
-            from faststream.kafka.fastapi import (
-                KafkaRouter,  # noqa: F401 — availability probe
-            )
+            from faststream.kafka.fastapi import KafkaRouter
         except ImportError as exc:
             stream_logger.warning(
                 "faststream[kafka] not installed — Kafka router skipped: %s", exc,

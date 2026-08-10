@@ -17,17 +17,13 @@ Usage::
 from __future__ import annotations as annotations
 
 from collections.abc import Callable as Callable
-from typing import (
-    TYPE_CHECKING as TYPE_CHECKING,
-    Any as Any,
-)
+from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
 
 if TYPE_CHECKING:
     # Static contract for the runtime-lazy facade below.  The implementation
     # remains infrastructure-backed, while core callers depend on a Protocol.
-    from src.backend.core.interfaces.multi_protocol import (
-        LoggerProtocol,  # noqa: F401 — re-export
-    )
+    from src.backend.core.interfaces.multi_protocol import LoggerProtocol
 
     get_logger: Callable[[str], LoggerProtocol]
 

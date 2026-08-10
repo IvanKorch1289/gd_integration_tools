@@ -94,7 +94,7 @@ class LangGraphPostgresSaverWrapper:
             return self._dsn
         try:
             from src.backend.core.config.application_settings import (
-                settings,  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+                settings,  # type: ignore[import-not-found]
             )
 
             db = getattr(settings, "database", None)
@@ -106,7 +106,7 @@ class LangGraphPostgresSaverWrapper:
             # cycle-9/D-AUDIT-1728: narrow exceptions + observability.
             # ImportError — application_settings missing, AttributeError
             # — settings.database missing, RuntimeError — settings unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "langgraph_postgres_saver.dsn_resolve_failed",
                 extra={"error": str(dsn_exc)},
@@ -133,9 +133,7 @@ class LangGraphPostgresSaverWrapper:
         if self._saver is not None:
             return self._saver
         try:
-            from langchain_postgres import (
-                AsyncPostgresSaver,  # noqa: F401 — availability probe
-            )
+            from langchain_postgres import AsyncPostgresSaver
         except ImportError as exc:
             raise LangGraphPostgresSaverUnavailable(
                 "Пакет langchain_postgres не установлен — добавьте extra ai-memory",

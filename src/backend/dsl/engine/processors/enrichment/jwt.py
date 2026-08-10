@@ -40,7 +40,7 @@ class JwtSignProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
         try:
-            import jwt  # noqa: F401 — availability probe
+            import jwt
         except ImportError:
             exchange.fail("PyJWT not installed")
             return
@@ -94,7 +94,7 @@ class JwtVerifyProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
         try:
-            import jwt  # noqa: F401 — availability probe
+            import jwt
         except ImportError:
             exchange.fail("PyJWT not installed")
             return

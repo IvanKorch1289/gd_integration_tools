@@ -13,11 +13,9 @@
 
 from __future__ import annotations as annotations
 
-from typing import (
-    Literal as Literal,
-    Protocol as Protocol,
-    runtime_checkable as runtime_checkable,
-)
+from typing import Literal as Literal
+from typing import Protocol as Protocol
+from typing import runtime_checkable as runtime_checkable
 
 __all__ = ("ChunkStrategy", "Chunker", "get_chunker")
 

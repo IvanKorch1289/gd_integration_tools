@@ -39,7 +39,7 @@ def is_hishel_available() -> bool:
 
     """
     try:
-        import hishel  # noqa: F401 — availability probe
+        import hishel
 
         return True
     except ImportError:
@@ -75,7 +75,7 @@ def build_cache_transport(
 
     """
     try:
-        import hishel  # noqa: F401 — availability probe
+        import hishel
     except ImportError:
         logger.debug("hishel недоступен — cache transport не активирован")
         return None

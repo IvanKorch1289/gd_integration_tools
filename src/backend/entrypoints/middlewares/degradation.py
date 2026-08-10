@@ -196,7 +196,7 @@ class DegradationMiddleware:
     def _check_blocked_components() -> list[str]:
         """Возвращает список компонентов, которые блокируют writes."""
         try:
-            from src.backend.core.di.providers import (  # noqa: F401 — availability probe
+            from src.backend.core.di.providers import (
                 get_resilience_coordinator_provider,
             )
 
@@ -205,7 +205,7 @@ class DegradationMiddleware:
             # cycle-9/D-AUDIT-995: narrow exceptions + observability.
             # ImportError — providers missing, AttributeError — provider
             # API change, RuntimeError — coordinator unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "degradation.resilience_coordinator_fallback",
                 extra={"error": str(di_exc)},

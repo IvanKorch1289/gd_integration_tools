@@ -24,7 +24,7 @@ headers добавляются). Можно: добавить headers через
 from __future__ import annotations
 
 try:
-    import xxhash  # noqa: F401 — availability probe
+    import xxhash
 
     _USE_XXHASH = True
 except ImportError:

@@ -12,19 +12,13 @@ Scaffold для операционных примитивов оркестрац
 from __future__ import annotations as annotations
 
 import asyncio
-from collections.abc import (
-    Awaitable as Awaitable,
-    Callable as Callable,
-)
-from dataclasses import (
-    dataclass as dataclass,
-    field as field,
-)
-from datetime import (
-    UTC as UTC,
-    date as date,
-    datetime as datetime,
-)
+from collections.abc import Awaitable as Awaitable
+from collections.abc import Callable as Callable
+from dataclasses import dataclass as dataclass
+from dataclasses import field as field
+from datetime import UTC as UTC
+from datetime import date as date
+from datetime import datetime as datetime
 from typing import Any as Any
 
 from src.backend.core.logging import get_logger as get_logger

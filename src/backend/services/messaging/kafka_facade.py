@@ -226,7 +226,7 @@ class KafkaFacade:
             # ConnectionError — broker down, OSError — network, AttributeError
             # — malformed config. Bare `except Exception` маскировал
             # unrelated errors (KeyError, TypeError).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "kafka_facade.is_available_false",
                 extra={"error": str(kafka_exc), "error_type": type(kafka_exc).__name__},

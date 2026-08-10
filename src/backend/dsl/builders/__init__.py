@@ -43,9 +43,7 @@ def __getattr__(name: str) -> Any:
     """
 
     if name == "RouteBuilder":
-        from src.backend.dsl.builders.base import (
-            RouteBuilder as _R,  # noqa: F401 — re-export
-        )
+        from src.backend.dsl.builders.base import RouteBuilder as _R
 
         return _R
 
@@ -61,16 +59,12 @@ def __getattr__(name: str) -> Any:
         "SecurityMixin",
         "ObservabilityMixin",
     }:
-        from src.backend.dsl.builders.base import (
-            RouteBuilder as _R,  # noqa: F401 — re-export
-        )
+        from src.backend.dsl.builders.base import RouteBuilder as _R
 
         return type(name, (_R,), {"__doc__": f"Marker-mixin {name} (B1 phase-1)."})
 
     if name == "EIPMixin":
-        from src.backend.dsl.builders.eip import (
-            EIPMixin as _M,  # noqa: F401 — re-export
-        )
+        from src.backend.dsl.builders.eip import EIPMixin as _M
 
         return _M
 

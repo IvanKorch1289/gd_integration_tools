@@ -13,10 +13,8 @@ Backward-compat: ``from src.backend.dsl.engine.processors.format_convert import 
 from __future__ import annotations as annotations
 
 import json
-from typing import (
-    TYPE_CHECKING as TYPE_CHECKING,
-    Any as Any,
-)
+from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
 
 from src.backend.dsl.engine.processors.base import BaseProcessor as BaseProcessor
 from src.backend.dsl.engine.processors.format_convert._helpers import (

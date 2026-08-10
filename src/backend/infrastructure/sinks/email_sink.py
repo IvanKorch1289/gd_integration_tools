@@ -73,7 +73,7 @@ class EmailSink(Sink):
         await limiter.check(f"{self.sink_id}_{self.kind}")
 
         try:
-            import aiosmtplib  # noqa: F401 — availability probe
+            import aiosmtplib
         except ImportError:
             return SinkResult(ok=False, details={"error": "aiosmtplib not installed"})
 
@@ -142,7 +142,7 @@ class EmailSink(Sink):
     async def health(self, mode: str = "fast") -> HealthResult:
         """Проверка доступности SMTP-сервера через ``EHLO``."""
         try:
-            import aiosmtplib  # noqa: F401 — availability probe
+            import aiosmtplib
         except ImportError:
             return HealthResult.failed(error="aiosmtplib not installed", mode=mode)
         start = time.perf_counter()

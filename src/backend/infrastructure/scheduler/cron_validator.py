@@ -75,7 +75,7 @@ def validate_cron_expression(
         )
 
     try:
-        from croniter import croniter  # noqa: F401 — availability probe
+        from croniter import croniter
     except ImportError:
         return CronValidationResult(
             expression=expression,

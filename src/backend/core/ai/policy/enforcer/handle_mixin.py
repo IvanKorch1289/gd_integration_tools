@@ -65,7 +65,7 @@ class HandleMixin:
         """Publish blocked content to DLQ (fire-and-forget)."""
         if self._dlq_writer is None:
             try:
-                import importlib.util  # noqa: F401 — availability probe
+                import importlib.util
 
                 if importlib.util.find_spec("src.backend.core.messaging.dlq") is None:
                     logger.debug("DLQWriter not available — skipping DLQ publish")

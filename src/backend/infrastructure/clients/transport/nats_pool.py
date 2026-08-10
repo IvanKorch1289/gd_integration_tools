@@ -69,7 +69,7 @@ class NatsConnectionPool:
         if self._started:
             return
         try:
-            import nats  # noqa: F401 — availability probe
+            import nats
         except ImportError:
             _logger.warning("nats-py not installed, pool disabled")
             return

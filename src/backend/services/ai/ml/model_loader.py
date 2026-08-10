@@ -150,7 +150,7 @@ class MLModelLoader:
 
     def _load_torch(self, path: Path) -> Any:
         try:
-            import torch  # noqa: F401 — availability probe
+            import torch
         except ImportError as exc:
             raise RuntimeError(
                 "torch не установлен; установите: uv add torch "
@@ -171,14 +171,14 @@ class MLModelLoader:
 
     def _load_torchscript(self, path: Path) -> Any:
         try:
-            import torch  # noqa: F401 — availability probe
+            import torch
         except ImportError as exc:
             raise RuntimeError("torch не установлен") from exc
         return torch.jit.load(path, map_location="cpu")
 
     def _load_onnx(self, path: Path) -> Any:
         try:
-            import onnxruntime as ort  # noqa: F401 — availability probe
+            import onnxruntime as ort
         except ImportError as exc:
             raise RuntimeError(
                 "onnxruntime не установлен; установите: uv add onnxruntime",
@@ -187,7 +187,7 @@ class MLModelLoader:
 
     def _load_sklearn(self, path: Path) -> Any:
         try:
-            import joblib  # noqa: F401 — availability probe
+            import joblib
         except ImportError as exc:
             raise RuntimeError(
                 "scikit-learn не установлен; установите: uv add scikit-learn",
@@ -197,10 +197,7 @@ class MLModelLoader:
 
     def _load_catboost(self, path: Path) -> Any:
         try:
-            from catboost import (  # noqa: F401 — availability probe
-                CatBoostClassifier,
-                CatBoostRegressor,
-            )
+            from catboost import CatBoostClassifier, CatBoostRegressor
         except ImportError as exc:
             raise RuntimeError(
                 "catboost не установлен; установите: uv add catboost",
@@ -218,7 +215,7 @@ class MLModelLoader:
 
     def _load_lightgbm(self, path: Path) -> Any:
         try:
-            import lightgbm as lgb  # noqa: F401 — availability probe
+            import lightgbm as lgb
         except ImportError as exc:
             raise RuntimeError(
                 "lightgbm не установлен; установите: uv add lightgbm",
@@ -227,7 +224,7 @@ class MLModelLoader:
 
     def _load_joblib(self, path: Path) -> Any:
         try:
-            import joblib  # noqa: F401 — availability probe
+            import joblib
         except ImportError as exc:
             raise RuntimeError(
                 "joblib не установлен; установите: uv add joblib",

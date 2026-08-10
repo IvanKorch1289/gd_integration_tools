@@ -228,7 +228,7 @@ class StepAuditMiddleware:
         effective_tenant_id = tenant_id
         if not effective_correlation_id or not effective_tenant_id:
             try:
-                from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — availability probe
+                from src.backend.infrastructure.observability.correlation import (
                     get_correlation_id,
                     get_tenant_id,
                 )
@@ -284,9 +284,7 @@ class StepAuditMiddleware:
     ) -> None:
         """Best-effort OTel span attribute set (no-op без подключения OTel)."""
         try:
-            from opentelemetry import (
-                trace as _otel_trace,  # noqa: F401 — availability probe
-            )
+            from opentelemetry import trace as _otel_trace
 
             span = _otel_trace.get_current_span()
             if not span or not span.is_recording():

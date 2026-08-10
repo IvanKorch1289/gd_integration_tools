@@ -184,10 +184,8 @@ def validate_input_schema(
 
     # Lazy-import jsonschema
     try:
-        import jsonschema  # noqa: F401 — availability probe
-        from jsonschema import (
-            ValidationError as JsonSchemaValidationError,  # noqa: F401 — availability probe
-        )
+        import jsonschema
+        from jsonschema import ValidationError as JsonSchemaValidationError
     except ImportError as exc:
         logger.error(
             "jsonschema не установлен — валидация MCP input_schema недоступна: %s", exc,

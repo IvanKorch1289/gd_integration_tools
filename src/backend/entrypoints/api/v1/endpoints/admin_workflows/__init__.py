@@ -11,16 +11,12 @@ Backward-compat: ``from src.backend.entrypoints.api.v1.endpoints.admin_workflows
 
 from __future__ import annotations as annotations
 
-from fastapi import (
-    APIRouter as APIRouter,
-    Depends as Depends,
-    status  # noqa: F401 — re-export as status  # noqa: F401 — re-export,
-)
+from fastapi import APIRouter as APIRouter
+from fastapi import Depends as Depends
+from fastapi import status
 
-from src.backend.core.auth.admin_roles import (
-    AdminRole as AdminRole,
-    require_admin as require_admin,
-)
+from src.backend.core.auth.admin_roles import AdminRole as AdminRole
+from src.backend.core.auth.admin_roles import require_admin as require_admin
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,

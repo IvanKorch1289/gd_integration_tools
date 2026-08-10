@@ -27,36 +27,24 @@ Sprint 173 M2.4: backward-compat re-exports для
 
 from __future__ import annotations as annotations
 
-from abc import (
-    ABC as ABC,
-    abstractmethod as abstractmethod,
-)
+from abc import ABC as ABC
+from abc import abstractmethod as abstractmethod
 from dataclasses import dataclass as dataclass
 from enum import Enum as Enum
-from typing import (
-    TYPE_CHECKING as TYPE_CHECKING,
-    Any as Any,
-)
+from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
 
-from src.backend.core.interfaces.antivirus import (  # noqa: F401 — re-export
-    AntivirusBackend,
-    AntivirusScanResult,
-)
-from src.backend.core.interfaces.audit import (  # noqa: F401 — re-export
-    AuditBackend,
-    AuditRecord,
-)
-from src.backend.core.interfaces.cache import CacheBackend  # noqa: F401 — re-export as CacheBackend  # noqa: F401 — re-export
-from src.backend.core.interfaces.doc_store import (
-    DocStoreBackend,  # noqa: F401 — re-export
-)
-from src.backend.core.interfaces.metrics import MetricsBackend  # noqa: F401 — re-export as MetricsBackend  # noqa: F401 — re-export
+from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
+from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
+from src.backend.core.interfaces.cache import CacheBackend
+from src.backend.core.interfaces.doc_store import DocStoreBackend
+from src.backend.core.interfaces.metrics import MetricsBackend
 from src.backend.core.interfaces.notification import (
     NotificationAdapter,
     NotificationMessage,
 )
-from src.backend.core.interfaces.secrets import SecretsBackend  # noqa: F401 — re-export as SecretsBackend  # noqa: F401 — re-export
-from src.backend.core.interfaces.storage import ObjectStorage  # noqa: F401 — re-export as ObjectStorage  # noqa: F401 — re-export
+from src.backend.core.interfaces.secrets import SecretsBackend
+from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger as get_logger
 
 logger = get_logger(__name__)
@@ -76,9 +64,7 @@ _CIRCUIT_BREAKER_REEXPORTS = (
 if TYPE_CHECKING:
     from src.backend.core.resilience.breaker import BreakerSpec as CircuitBreakerConfig
     from src.backend.core.resilience.breaker import BreakerState as CircuitState
-    from src.backend.core.resilience.breaker import (
-        CircuitBreaker,  # noqa: F401 — re-export
-    )
+    from src.backend.core.resilience.breaker import CircuitBreaker
     from src.backend.core.resilience.breaker import (
         CircuitOpen as CircuitBreakerOpenError,
     )
@@ -104,9 +90,7 @@ def __getattr__(name: str) -> Any:
             BreakerSpec as CircuitBreakerConfig,
         )
         from src.backend.core.resilience.breaker import BreakerState as CircuitState
-        from src.backend.core.resilience.breaker import (
-            CircuitBreaker,  # noqa: F401 — re-export
-        )
+        from src.backend.core.resilience.breaker import CircuitBreaker
         from src.backend.core.resilience.breaker import (
             CircuitOpen as CircuitBreakerOpenError,
         )

@@ -287,7 +287,7 @@ class AuditEventLog:
 
         """
         try:
-            from src.backend.infrastructure.messaging.dlq_base import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.messaging.dlq_base import (
                 DLQEnvelope,
                 DLQReason,
             )

@@ -18,6 +18,8 @@ Related:
 
 from __future__ import annotations as annotations
 
-from src.backend.services.core.base_external_api import BaseExternalAPIClient as BaseExternalAPIClient
+from src.backend.services.core.base_external_api import (
+    BaseExternalAPIClient as BaseExternalAPIClient,
+)
 
 __all__ = ("BaseExternalAPIClient",)

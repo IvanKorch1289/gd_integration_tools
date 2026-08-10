@@ -99,7 +99,7 @@ class ExceptionHandlerMiddleware:
                 )
                 # Capture в Sentry (если SDK установлен и инициализирован).
                 try:
-                    import sentry_sdk  # noqa: F401 — availability probe
+                    import sentry_sdk
 
                     sentry_sdk.capture_exception(exc)
                 except ImportError:

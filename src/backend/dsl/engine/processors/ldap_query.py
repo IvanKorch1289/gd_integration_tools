@@ -154,9 +154,7 @@ class LdapQueryProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         try:
-            from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_ldap_query:
                 exchange.set_property("ldap_query_status", "skipped")
@@ -164,7 +162,7 @@ class LdapQueryProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1707: narrow exceptions + observability (mirror
             # D-AUDIT-1705/1706 pattern).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "ldap_query.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

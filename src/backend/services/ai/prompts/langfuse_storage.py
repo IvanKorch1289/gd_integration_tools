@@ -98,7 +98,7 @@ class LangfusePromptStorage:
                 return
 
             # Lazy-import: не загружаем SDK при отключённом флаге
-            from langfuse import Langfuse  # noqa: F401 — availability probe
+            from langfuse import Langfuse
 
             self._langfuse = Langfuse()
             self._langfuse_available = True

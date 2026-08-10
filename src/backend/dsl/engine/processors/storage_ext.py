@@ -67,7 +67,7 @@ class Neo4jQueryProcessor(BaseProcessor):
 
         """
         try:
-            from neo4j import AsyncGraphDatabase  # noqa: F401 — availability probe
+            from neo4j import AsyncGraphDatabase
         except ImportError:
             exchange.fail("neo4j driver not installed")
             return
@@ -177,13 +177,8 @@ class TimeSeriesWriteProcessor(BaseProcessor):
 
     async def _write_influxdb(self, points: list[dict]) -> None:
         try:
-            from influxdb_client import (  # noqa: F401 — availability probe
-                InfluxDBClient,
-                Point,
-            )
-            from influxdb_client.client.write_api import (
-                SYNCHRONOUS,  # noqa: F401 — availability probe
-            )
+            from influxdb_client import InfluxDBClient, Point
+            from influxdb_client.client.write_api import SYNCHRONOUS
         except ImportError as exc:
             # Round 14 fix: ``from exc`` сохраняет original ImportError traceback
             # (без него original exception скрыт отладчиком/логов).

@@ -108,7 +108,7 @@ def _get_plugin_registry() -> Any:
     """
     try:
         from src.backend.core.plugin_runtime.loader import (
-            PluginLoader,  # type: ignore[import-not-found]  # lazy import  # noqa: F401 — availability probe
+            PluginLoader,  # type: ignore[import-not-found]  # lazy import
         )
 
         return PluginLoader.get_instance()
@@ -347,16 +347,12 @@ def _get_version_service() -> Any | None:
     Lazy-import чтобы не тянуть infrastructure при сборке schema.
     """
     try:
-        from src.backend.main import (
-            app as fastapi_app,  # noqa: F401 — availability probe
-        )
+        from src.backend.main import app as fastapi_app
 
         loader = getattr(fastapi_app.state, "plugin_loader_v1", None)
         if loader is None:
             return None
-        from src.backend.services.plugins.versioning import (
-            PluginVersionService,  # noqa: F401 — availability probe
-        )
+        from src.backend.services.plugins.versioning import PluginVersionService
 
         return PluginVersionService(loader=loader, extensions_dir=Path("extensions"))
     except (ImportError, AttributeError, OSError, TypeError):

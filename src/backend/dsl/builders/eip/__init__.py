@@ -26,13 +26,23 @@ Apache Airflow Sensor: https://airflow.apache.org/docs/apache-airflow/stable/cor
 from __future__ import annotations as annotations
 
 from src.backend.dsl.builders.eip.core import CoreEIPsMixin as CoreEIPsMixin
-from src.backend.dsl.builders.eip.messaging import MessagingEIPsMixin as MessagingEIPsMixin
-from src.backend.dsl.builders.eip.messengers import MessengersEIPsMixin as MessengersEIPsMixin
-from src.backend.dsl.builders.eip.protocols import ProtocolsEIPsMixin as ProtocolsEIPsMixin
+from src.backend.dsl.builders.eip.messaging import (
+    MessagingEIPsMixin as MessagingEIPsMixin,
+)
+from src.backend.dsl.builders.eip.messengers import (
+    MessengersEIPsMixin as MessengersEIPsMixin,
+)
+from src.backend.dsl.builders.eip.protocols import (
+    ProtocolsEIPsMixin as ProtocolsEIPsMixin,
+)
 from src.backend.dsl.builders.eip.routing import RoutingEIPsMixin as RoutingEIPsMixin
 from src.backend.dsl.builders.eip.sources import SourcesEIPsMixin as SourcesEIPsMixin
-from src.backend.dsl.builders.eip.streaming import StreamingEIPsMixin as StreamingEIPsMixin
-from src.backend.dsl.builders.eip.transformation import TransformationEIPsMixin as TransformationEIPsMixin
+from src.backend.dsl.builders.eip.streaming import (
+    StreamingEIPsMixin as StreamingEIPsMixin,
+)
+from src.backend.dsl.builders.eip.transformation import (
+    TransformationEIPsMixin as TransformationEIPsMixin,
+)
 
 __all__ = ("EIPMixin",)
 

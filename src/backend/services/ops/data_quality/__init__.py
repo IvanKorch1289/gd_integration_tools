@@ -22,10 +22,8 @@ from collections import defaultdict as defaultdict
 from dataclasses import dataclass as dataclass
 from dataclasses import field as dataclass_field
 from enum import StrEnum as StrEnum
-from typing import (
-    TYPE_CHECKING as TYPE_CHECKING,
-    Any as Any,
-)
+from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
 
 if TYPE_CHECKING:
     pass
@@ -47,8 +45,12 @@ from src.backend.services.ops.data_quality import (
 )
 
 # Bare-class imports — для MRO в DataQualityMonitor ниже.
-from src.backend.services.ops.data_quality.apply_mixin import ApplyMixin  # S55 W4: MRO as ApplyMixin  # S55 W4: MRO
-from src.backend.services.ops.data_quality.check_mixin import CheckMixin  # S55 W4: MRO as CheckMixin  # S55 W4: MRO
+from src.backend.services.ops.data_quality.apply_mixin import (
+    ApplyMixin,  # S55 W4: MRO as ApplyMixin  # S55 W4: MRO
+)
+from src.backend.services.ops.data_quality.check_mixin import (
+    CheckMixin,  # S55 W4: MRO as CheckMixin  # S55 W4: MRO
+)
 from src.backend.services.ops.data_quality.rule_mgmt_mixin import (
     RuleManagementMixin,  # S55 W4: MRO
 )

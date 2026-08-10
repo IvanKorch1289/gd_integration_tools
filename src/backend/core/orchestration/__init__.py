@@ -5,15 +5,8 @@ Default backend — Temporal (через `WorkflowFacade`); pg-runner — fallba
 для dev_light. Этот модуль — Protocol-слой ядра, без heavy SDK.
 """
 
-from src.backend.core.orchestration.saga import (  # noqa: F401 — re-export
-    SagaPrimitive,
-    SagaResult,
-    SagaStep,
-)
-from src.backend.core.orchestration.sensor import (  # noqa: F401 — re-export
-    Sensor,
-    SensorTrigger,
-)
+from src.backend.core.orchestration.saga import SagaPrimitive, SagaResult, SagaStep
+from src.backend.core.orchestration.sensor import Sensor, SensorTrigger
 from src.backend.core.orchestration.temporal_activity_adapter import (
     TemporalActivityWrapper,
     wrap_as_temporal_activity,

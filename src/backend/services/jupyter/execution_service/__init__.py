@@ -20,7 +20,9 @@ if TYPE_CHECKING:
     pass
 
 from src.backend.core.clients.jupyter_hub import JupyterHubClient as JupyterHubClient
-from src.backend.core.config.services.jupyter_hub import JupyterHubSettings as JupyterHubSettings
+from src.backend.core.config.services.jupyter_hub import (
+    JupyterHubSettings as JupyterHubSettings,
+)
 from src.backend.services.jupyter.execution_service.backend import (
     NbClientExecutionBackend,  # S60 W1: re-export
 )

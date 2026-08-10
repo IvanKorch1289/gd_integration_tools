@@ -20,12 +20,8 @@ from src.backend.dsl.engine.processors.proxy.forward import (
     ForwardToProcessor,
     ProxyOutboundSpec,
 )
-from src.backend.dsl.engine.processors.proxy.headers import (
-    HeaderMapPolicy,  # noqa: F401 — re-export
-)
-from src.backend.dsl.engine.processors.proxy.redirect import (
-    RedirectProcessor,  # noqa: F401 — re-export
-)
+from src.backend.dsl.engine.processors.proxy.headers import HeaderMapPolicy
+from src.backend.dsl.engine.processors.proxy.redirect import RedirectProcessor
 
 __all__ = (
     "ExposeProxyProcessor",

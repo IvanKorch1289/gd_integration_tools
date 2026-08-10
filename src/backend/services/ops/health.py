@@ -570,9 +570,7 @@ async def _check_graylog() -> ProcessorHealthResult:
 def _is_strict_mode() -> bool:
     """Проверить feature-flag processor_health_checks_strict."""
     try:
-        from src.backend.core.config.features import (
-            feature_flags,  # noqa: F401 — availability probe
-        )
+        from src.backend.core.config.features import feature_flags
 
         return feature_flags.processor_health_checks_strict
     except (ImportError, AttributeError):

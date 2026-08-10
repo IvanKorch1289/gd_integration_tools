@@ -114,9 +114,7 @@ def get_ai_gateway() -> AIGateway:
 
     """
     try:
-        from src.backend.core.di.app_state import (
-            get_app_ref,  # noqa: F401 — availability probe
-        )
+        from src.backend.core.di.app_state import get_app_ref
 
         app = get_app_ref()
         if app is not None:
@@ -127,9 +125,7 @@ def get_ai_gateway() -> AIGateway:
         # D-A1-04 fix (cycle 39): narrow exceptions + observability.
         # Bare `except Exception` маскировал broken app_state (early-init,
         # не инициализированный app.state). Fallback: provider chain.
-        from src.backend.core.logging import (
-            get_logger,  # noqa: F401 — availability probe
-        )
+        from src.backend.core.logging import get_logger
         get_logger(__name__).debug(
             "gateway_adapter.app_state_resolve_failed",
             extra={"error": str(app_state_exc)},
@@ -145,12 +141,8 @@ def get_ai_gateway() -> AIGateway:
         # capability_gate / token_budget) поднимает
         # AIGatewayProductionWiringError вместо silent bare AIGateway().
         try:
-            from src.backend.core.ai.gateway import (
-                AIGatewayProductionWiringError,  # noqa: F401 — availability probe
-            )
-            from src.backend.core.logging import (
-                get_logger,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.ai.gateway import AIGatewayProductionWiringError
+            from src.backend.core.logging import get_logger
 
             get_logger(__name__).error(
                 "AIGateway: composition-root DI lookup failed",
@@ -167,9 +159,7 @@ def get_ai_gateway() -> AIGateway:
             # unit-тестах без полной composition root): logger.error
             # остаётся, дальше — bare AIGateway() с явным признаком
             # failed DI lookup.
-            from src.backend.core.logging import (
-                get_logger,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.logging import get_logger
 
             get_logger(__name__).error(
                 "AIGateway: composition-root DI lookup failed; AIGatewayProductionWiringError unavailable",

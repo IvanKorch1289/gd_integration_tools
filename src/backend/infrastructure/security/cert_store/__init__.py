@@ -14,7 +14,9 @@ Backward-compat: ``from src.backend.infrastructure.security.cert_store import Ce
 
 from __future__ import annotations as annotations
 
-from src.backend.core.config.cert_store import cert_store_settings as cert_store_settings
+from src.backend.core.config.cert_store import (
+    cert_store_settings as cert_store_settings,
+)
 from src.backend.infrastructure.security.cert_store.backend_base import (
     CertBackend,  # S55 W1: re-export
 )
@@ -60,4 +62,6 @@ def create_cert_store() -> CertStore:
 
 
 # S171 M16: file watcher для cert hot-reload (D245)
-from src.backend.infrastructure.security.cert_store.hot_reload import CertFileWatcher as CertFileWatcher
+from src.backend.infrastructure.security.cert_store.hot_reload import (
+    CertFileWatcher as CertFileWatcher,
+)

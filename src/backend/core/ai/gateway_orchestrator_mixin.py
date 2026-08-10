@@ -179,9 +179,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 },
             )
             try:
-                from src.backend.core.audit.facade import (
-                    emit_audit_safe,  # noqa: F401 — availability probe
-                )
+                from src.backend.core.audit.facade import emit_audit_safe
 
                 emit_audit_safe(
                     event="ai.budget.tenant_less_invocation",
@@ -199,7 +197,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             except (ImportError, AttributeError, RuntimeError) as audit_exc:  # never fail caller
                 # cycle-9/D-AUDIT-985: narrow exceptions + observability
                 # (mirror D-AUDIT-984 для enforced_invoke).
-                import logging  # noqa: F401 — availability probe
+                import logging
                 logging.getLogger(__name__).debug(
                     "gateway_orchestrator_mixin.audit_emit_failed",
                     extra={"error": str(audit_exc)},

@@ -162,9 +162,7 @@ class AuditReplayMiddleware:
     ) -> None:
         """Отправляет запись в Redis stream (cycle 45 helper)."""
         try:
-            from src.backend.core.di.providers import (
-                get_redis_stream_client_provider,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
         except ImportError:

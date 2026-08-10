@@ -18,36 +18,27 @@ from src.backend.core.utils.async_helpers import (
     AsyncChunkIterator,
     async_chunk_iterator,
 )
-from src.backend.core.utils.cache_keys import build_cache_key  # noqa: F401 — re-export as build_cache_key  # noqa: F401 — re-export
+from src.backend.core.utils.cache_keys import build_cache_key
 from src.backend.core.utils.datetime_utils import (
     ensure_utc,
     humanize_delta,
     parse_dt,
     utc_now,
 )
-from src.backend.core.utils.json_utils import (  # noqa: F401 — re-export
-    dumps_bytes,
-    dumps_str,
-    loads,
-)
-from src.backend.core.utils.metrics_registry import (  # noqa: F401 — re-export
-    MetricsRegistry,
-    metrics_registry,
-)
+from src.backend.core.utils.json_utils import dumps_bytes, dumps_str, loads
+from src.backend.core.utils.metrics_registry import MetricsRegistry, metrics_registry
 from src.backend.core.utils.redis_fallback import (
     FallbackCache,
     RedisErrorCategory,
     RedisLike,
 )
-from src.backend.core.utils.route_timeout import (
-    RouteTimeoutSpec,  # noqa: F401 — re-export
-)
+from src.backend.core.utils.route_timeout import RouteTimeoutSpec
 from src.backend.core.utils.task_registry import (
     TaskRegistry,
     get_task_registry,
     reset_task_registry,
 )
-from src.backend.core.utils.watchdog import Watchdog  # noqa: F401 — re-export as Watchdog  # noqa: F401 — re-export
+from src.backend.core.utils.watchdog import Watchdog
 
 __all__ = (
     "AsyncChunkIterator",

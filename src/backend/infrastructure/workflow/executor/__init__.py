@@ -15,25 +15,23 @@ Backward-compat: ``from src.backend.infrastructure.workflow.executor import DSLS
 from __future__ import annotations as annotations
 
 from collections.abc import Callable as Callable
-from typing import (
-    TYPE_CHECKING as TYPE_CHECKING,
-    Any as Any,
-    Literal as Literal,
-)
+from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
+from typing import Literal as Literal
 
 if TYPE_CHECKING:
     pass
 
-from src.backend.core.domain.models.workflow_event import WorkflowEventType as WorkflowEventType
+from src.backend.core.domain.models.workflow_event import (
+    WorkflowEventType as WorkflowEventType,
+)
 from src.backend.core.logging import get_logger as get_logger
 from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,
     WorkflowState,
 )
-from src.backend.infrastructure.workflow.runner import (
-    StepOutcome as StepOutcome,
-    StepResult as StepResult,
-)
+from src.backend.infrastructure.workflow.runner import StepOutcome as StepOutcome
+from src.backend.infrastructure.workflow.runner import StepResult as StepResult
 
 _logger = get_logger("workflow.executor")
 

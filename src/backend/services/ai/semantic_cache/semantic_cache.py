@@ -80,11 +80,9 @@ class SemanticCache:
         """Redis-backed exact lookup (fast path)."""
         # Wave 6.3: Redis-клиент — через core/di.providers.
         try:
-            import orjson  # noqa: F401 — availability probe
+            import orjson
 
-            from src.backend.core.di.providers import (
-                get_redis_stream_client_provider,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
         except ImportError:
@@ -105,11 +103,9 @@ class SemanticCache:
     ) -> None:
         # Wave 6.3: Redis-клиент — через core/di.providers.
         try:
-            import orjson  # noqa: F401 — availability probe
+            import orjson
 
-            from src.backend.core.di.providers import (
-                get_redis_stream_client_provider,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
         except ImportError:
@@ -136,9 +132,7 @@ class SemanticCache:
     ) -> dict[str, Any] | None:
         """Vector similarity поиск через RAG service."""
         try:
-            from src.backend.services.ai.rag_service import (
-                get_rag_service,  # noqa: F401 — availability probe
-            )
+            from src.backend.services.ai.rag_service import get_rag_service
 
             rag = get_rag_service()
         except ImportError:
@@ -171,9 +165,7 @@ class SemanticCache:
     ) -> None:
         """Сохраняет query + response в vector store для semantic search."""
         try:
-            from src.backend.services.ai.rag_service import (
-                get_rag_service,  # noqa: F401 — availability probe
-            )
+            from src.backend.services.ai.rag_service import get_rag_service
 
             rag = get_rag_service()
         except ImportError:
@@ -191,7 +183,7 @@ class SemanticCache:
                 # данными не оседали в vector store навсегда. Future queries
                 # тоже маскируются при lookup (round-trip consistency).
                 try:
-                    from src.backend.services.ai.rag_ingest_service import (  # noqa: F401 — availability probe
+                    from src.backend.services.ai.rag_ingest_service import (
                         _maybe_mask_pii,
                     )
 
@@ -201,9 +193,7 @@ class SemanticCache:
                     # Bare `except Exception` маскировал ImportError (rag_ingest_service
                     # недоступен), RuntimeError/ValueError (sanitizer failure).
                     # Fallback: ingest raw query (raw + pii_masked=False flag).
-                    from src.backend.core.logging import (
-                        get_logger,  # noqa: F401 — availability probe
-                    )
+                    from src.backend.core.logging import get_logger
                     get_logger(__name__).warning(
                         "semantic_cache.pii_mask_failed",
                         extra={"error": str(pii_mask_exc)},

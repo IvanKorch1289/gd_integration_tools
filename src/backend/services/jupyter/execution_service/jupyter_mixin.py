@@ -93,7 +93,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
         HEARTBEAT_TIMEOUT_S = 60.0  # 2x interval (typical WS pong latency)
 
         try:
-            import websockets  # noqa: F401 — availability probe
+            import websockets
         except ImportError as exc:
             raise JupyterExecutionError(
                 "websockets package required for notebook execution. "

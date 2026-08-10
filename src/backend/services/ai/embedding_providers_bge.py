@@ -42,9 +42,7 @@ class BGEM3EmbeddingProvider:
         if self._model is not None:
             return self._model
         try:
-            from FlagEmbedding import (
-                BGEM3FlagModel,  # type: ignore[import-not-found]  # noqa: F401 — availability probe
-            )
+            from FlagEmbedding import BGEM3FlagModel  # type: ignore[import-not-found]
         except ImportError as exc:
             raise BGEUnavailable(
                 "FlagEmbedding не установлен — добавьте extra '[ai-2026]'.",
@@ -89,7 +87,7 @@ class BGERerankerV2M3:
         if self._model is not None:
             return self._model
         try:
-            from FlagEmbedding import FlagReranker  # noqa: F401 — availability probe
+            from FlagEmbedding import FlagReranker
         except ImportError as exc:
             raise BGEUnavailable(
                 "FlagEmbedding не установлен — добавьте extra '[ai-2026]'.",

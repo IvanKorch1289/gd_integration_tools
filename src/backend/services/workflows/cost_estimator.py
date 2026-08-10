@@ -201,9 +201,7 @@ class WorkflowCostEstimator:
         historical avg tokens × model price.
         """
         try:
-            from src.backend.services.ai.costs.llm_model_pricing import (
-                LLMModelPricing,  # noqa: F401 — availability probe
-            )
+            from src.backend.services.ai.costs.llm_model_pricing import LLMModelPricing
         except ImportError:
             return None
 

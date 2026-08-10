@@ -35,7 +35,7 @@ def _async_ping(backend: str) -> Awaitable[bool]:
 
     async def _probe() -> bool:
         try:
-            from src.backend.infrastructure.clients.storage.vector_store import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.clients.storage.vector_store import (
                 get_vector_store,
             )
 
@@ -46,7 +46,7 @@ def _async_ping(backend: str) -> Awaitable[bool]:
             # ImportError — vector store missing, RuntimeError —
             # backend unavailable, OSError/ConnectionError — network,
             # AttributeError — API mismatch.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "vector_pool._async_ping_failed",
                 extra={"backend": backend, "error": str(probe_exc)},
@@ -94,7 +94,7 @@ def register_vector_pool_if_available(
         # cycle-9/D-AUDIT-926: narrow exceptions + observability.
         # ImportError — manager missing, RuntimeError — already registered,
         # AttributeError — manager API change, ValueError — invalid args.
-        import logging  # noqa: F401 — availability probe
+        import logging
         logging.getLogger(__name__).debug(
             "vector_pool.register_failed",
             extra={"name": name, "backend": backend, "error": str(reg_exc)},

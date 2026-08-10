@@ -13,10 +13,8 @@ Backward-compat: ``from src.backend.infrastructure.clients.storage.redis import 
 
 from __future__ import annotations as annotations
 
-from typing import (
-    TYPE_CHECKING as TYPE_CHECKING,
-    Any as Any,
-)
+from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
 
 if TYPE_CHECKING:
     pass
@@ -26,12 +24,12 @@ from typing import Literal as Literal
 
 from redis.asyncio import Redis as Redis
 
-from src.backend.core.config.settings import (
-    RedisSettings as RedisSettings,
-    settings as settings,
-)
+from src.backend.core.config.settings import RedisSettings as RedisSettings
+from src.backend.core.config.settings import settings as settings
 from src.backend.core.logging import get_logger as get_logger
-from src.backend.infrastructure.resilience.client_breaker import ClientCircuitBreaker as ClientCircuitBreaker
+from src.backend.infrastructure.resilience.client_breaker import (
+    ClientCircuitBreaker as ClientCircuitBreaker,
+)
 
 redis_logger = get_logger("redis")
 

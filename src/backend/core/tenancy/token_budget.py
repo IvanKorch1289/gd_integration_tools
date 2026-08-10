@@ -283,9 +283,7 @@ class TokenBudget:
         current behavior (per-tenant config takes effect).
         """
         try:
-            from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
-            )
+            from src.backend.core.config.features import feature_flags
 
             if getattr(feature_flags, "token_budget_fail_closed", False):
                 return "closed"
@@ -294,7 +292,7 @@ class TokenBudget:
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags
             # unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "token_budget.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

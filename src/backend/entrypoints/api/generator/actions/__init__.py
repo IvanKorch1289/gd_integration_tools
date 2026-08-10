@@ -2,25 +2,23 @@ from __future__ import annotations as annotations
 
 import inspect
 import os
-from collections.abc import (
-    Awaitable as Awaitable,
-    Callable as Callable,
-    Sequence as Sequence,
-)
-from inspect import (
-    Parameter as Parameter,
-    Signature as Signature,
-)
+from collections.abc import Awaitable as Awaitable
+from collections.abc import Callable as Callable
+from collections.abc import Sequence as Sequence
+from inspect import Parameter as Parameter
+from inspect import Signature as Signature
 from typing import Any as Any
 
-from fastapi import (
-    APIRouter as APIRouter,
-    Request as Request,
-)
+from fastapi import APIRouter as APIRouter
+from fastapi import Request as Request
 from fastapi.responses import JSONResponse as JSONResponse
 
-from src.backend.core.actions.spec_to_metadata import action_spec_to_metadata as action_spec_to_metadata
-from src.backend.dsl.commands.action_registry import action_handler_registry as action_handler_registry
+from src.backend.core.actions.spec_to_metadata import (
+    action_spec_to_metadata as action_spec_to_metadata,
+)
+from src.backend.dsl.commands.action_registry import (
+    action_handler_registry as action_handler_registry,
+)
 from src.backend.entrypoints.api.generator.actions.crud import (
     CrudMixin,  # S49 W3: MRO composition per ADR-0107
 )
@@ -36,10 +34,7 @@ from src.backend.entrypoints.api.generator.reflection import (
     make_signature,
     request_parameter,
 )
-from src.backend.entrypoints.api.generator.specs import (  # noqa: F401 — re-export
-    ActionSpec,
-    CrudSpec,
-)
+from src.backend.entrypoints.api.generator.specs import ActionSpec, CrudSpec
 from src.backend.schemas.invocation import (
     InvocationOptionsSchema,
     InvocationResultSchema,

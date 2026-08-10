@@ -34,9 +34,7 @@ from src.backend.services.ai.eval.ragas_evaluator import (
     RAGASReport,
     get_ragas_evaluator,
 )
-from src.backend.services.ai.eval.suites import (
-    REFERENCE_SUITES,  # noqa: F401 — re-export
-)
+from src.backend.services.ai.eval.suites import REFERENCE_SUITES
 
 __all__ = (
     "DEFAULT_THRESHOLDS",

@@ -16,10 +16,8 @@ Backward-compat: ``from src.backend.core.ai.policy.enforcer import AIPolicyEnfor
 
 from __future__ import annotations as annotations
 
-from typing import (
-    TYPE_CHECKING as TYPE_CHECKING,
-    Any as Any,
-)
+from typing import TYPE_CHECKING as TYPE_CHECKING
+from typing import Any as Any
 
 if TYPE_CHECKING:
     pass
@@ -31,7 +29,9 @@ if TYPE_CHECKING:
 
     from src.backend.core.ai.policy.spec import ToolsSpec  # S76 W3
     from src.backend.core.messaging.dlq import DLQWriter
-from src.backend.core.ai.policy.enforcer.handle_mixin import HandleMixin  # S67 W2: MRO as HandleMixin  # S67 W2: MRO
+from src.backend.core.ai.policy.enforcer.handle_mixin import (
+    HandleMixin,  # S67 W2: MRO as HandleMixin  # S67 W2: MRO
+)
 from src.backend.core.ai.policy.enforcer.input_guard_mixin import (
     InputGuardMixin,  # S67 W2: MRO
 )
