@@ -11,7 +11,7 @@ from __future__ import annotations
 # lazy __getattr__ exports verified by runtime test
 from typing import Any
 
-__all__ = (
+__all__ = (  # noqa: F822 — lazy __getattr__ export
     "EventBusFacade",
     "get_event_bus_facade",
     "get_stream_client",

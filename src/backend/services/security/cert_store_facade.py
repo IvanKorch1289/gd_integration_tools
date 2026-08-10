@@ -9,7 +9,7 @@ from __future__ import annotations
 # lazy __getattr__ exports verified by runtime test
 from typing import Any
 
-__all__ = ("CertStore",)
+__all__ = ("CertStore",  # noqa: F822 — lazy __getattr__ export)
 
 
 def __getattr__(name: str) -> Any:
