@@ -67,8 +67,15 @@ class OptimizePromptProcessor(BaseProcessor):
                     {"status": "skipped", "reason": "dspy_eval_pipeline_enabled=False"},
                 )
                 return
-        except Exception:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-962: narrow exceptions + observability.
+            # ImportError — features module missing, AttributeError — config
+            # not initialized, RuntimeError — feature_flags unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "optimize_prompt.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         # Lazy-resolve trainer from DI
         try:
