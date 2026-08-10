@@ -278,13 +278,27 @@ class TemporalSchedulerBackend:
                 handle = client.get_schedule_handle(job_id)
                 await handle.delete()
                 return True
-            except Exception:  # noqa: BLE001
+            except (RuntimeError, AttributeError, KeyError) as sched_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-1023: narrow exceptions + observability.
+                # RuntimeError — schedule not found, AttributeError —
+                # handle API change, KeyError — _oneshot_ids missing.
                 # Не schedule — пробуем как workflow.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "temporal_scheduler_backend.schedule_delete_failed",
+                    extra={"job_id": job_id, "error": str(sched_exc)},
+                )
                 wf_handle = client.get_workflow_handle(job_id)
                 await wf_handle.cancel()
                 self._oneshot_ids.pop(job_id, None)
                 return True
-        except Exception:  # noqa: BLE001
+        except (RuntimeError, AttributeError, OSError, ConnectionError) as outer_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1023: см. выше — outer cancel path.
+            import logging
+            logging.getLogger(__name__).debug(
+                "temporal_scheduler_backend.cancel_outer_failed",
+                extra={"job_id": job_id, "error": str(outer_exc)},
+            )
             return False
 
     # ── list_jobs ─────────────────────────────────────────────────────
