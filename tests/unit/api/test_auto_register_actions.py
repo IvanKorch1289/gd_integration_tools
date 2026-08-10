@@ -151,7 +151,7 @@ class TestAutoRegisterUnroutedActions:
         self, app: FastAPI, registry: ActionHandlerRegistry,
     ) -> None:
         service = _FakeService()
-        for verb, expected_method in [
+        for verb, _expected_method in [
             ("list", "GET"),
             ("create", "POST"),
             ("update", "PUT"),

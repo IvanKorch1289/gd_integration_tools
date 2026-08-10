@@ -50,7 +50,7 @@ FORBIDDEN_TOP_LEVELS: tuple[str, ...] = (
 
 def _walk_python_files(root: str):
     """Yield all .py files under root, skipping __pycache__."""
-    for dirpath, dirnames, filenames in os.walk(root):
+    for dirpath, _dirnames, filenames in os.walk(root):
         if "__pycache__" in dirpath:
             continue
         for f in filenames:

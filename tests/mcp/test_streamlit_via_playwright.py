@@ -126,7 +126,7 @@ def main() -> int:
         ("rpa_path_check", test_rpa_admin_check_403),
     ]
     passed = 0
-    for name, fn in tests:
+    for _name, fn in tests:
         try:
             t0 = time.monotonic()
             ok = fn()

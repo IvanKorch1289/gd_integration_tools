@@ -121,7 +121,7 @@ class DeclarationMixin(_CapabilityGateProtocol):
         revoked = False
         tenant_bucket = self._tenant_declarations.get(tenant)
         if tenant_bucket is not None:
-            for principal, principal_bucket in list(tenant_bucket.items()):
+            for _principal, principal_bucket in list(tenant_bucket.items()):
                 if capability in principal_bucket:
                     principal_bucket.pop(capability, None)
                     revoked = True

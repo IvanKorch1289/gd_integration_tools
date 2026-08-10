@@ -118,7 +118,7 @@ class TestContentBasedRouter:
     async def test_rate_passes_every_nth(self) -> None:
         s = SamplingProcessor(rate=3, seed=42)
         passed = 0
-        for i in range(9):
+        for _i in range(9):
             ex = _ex()
             await s.process(ex, _ctx())
             if ex.get_property("sampling.passed"):

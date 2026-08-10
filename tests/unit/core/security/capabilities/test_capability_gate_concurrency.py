@@ -199,7 +199,7 @@ class TestCheckMixinRaceAsync:
 
         async def check_task(task_id: int) -> None:
             try:
-                for i in range(200):
+                for _i in range(200):
                     tenant = f"tenant_{task_id % 4}"
                     await asyncio.sleep(0)
                     gate.check_tenant("db.read", tenant, "plug", "credit_db")

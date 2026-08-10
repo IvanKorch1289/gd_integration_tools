@@ -154,7 +154,7 @@ async def test_late_events_total_increments_for_each_call() -> None:
     state = _make_state()
     assert state.late_events_total == 0
 
-    for i in range(3):
+    for _i in range(3):
         exchange = _make_exchange()
         await apply_late_policy(exchange, state=state, policy=LatePolicy.DROP)
 

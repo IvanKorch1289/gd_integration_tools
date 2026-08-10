@@ -344,7 +344,7 @@ class TemporalSchedulerBackend:
         # 2. Oneshot workflows (из локального кэша — Temporal не имеет
         # "list oneshot workflows" API в чистом виде; workflows
         # отслеживаются через Temporal Visibility queries, что out of scope).
-        for name, wf_id in self._oneshot_ids.items():
+        for _name, wf_id in self._oneshot_ids.items():
             result.append(
                 {
                     "id": wf_id,

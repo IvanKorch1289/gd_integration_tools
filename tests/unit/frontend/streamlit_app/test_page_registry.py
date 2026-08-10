@@ -73,7 +73,7 @@ def test_titles_are_russian() -> None:
     Exception: product names (e.g., 'GD Integration Tools') stay English.
     """
     russian_count = 0
-    for key, meta in PAGE_METADATA.items():
+    for _key, meta in PAGE_METADATA.items():
         title = meta["title"]
         has_cyrillic = any(0x0400 <= ord(c) <= 0x04FF for c in title)
         if has_cyrillic:

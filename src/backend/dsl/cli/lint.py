@@ -61,7 +61,7 @@ def main() -> int:
         return 2
     errors = lint_file(sys.argv[1])
     if errors:
-        for e in errors:
+        for _e in errors:
             pass
         return 1
     return 0
