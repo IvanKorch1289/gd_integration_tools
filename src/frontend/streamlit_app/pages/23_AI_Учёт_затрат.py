@@ -143,7 +143,16 @@ try:
     data = _fetch_snapshot(
         window_hours, tenant_filter, model_filter, pipeline_filter, top_n
     )
-except Exception:  # noqa: BLE001
+except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, KeyError) as fetch_exc:  # noqa: BLE001
+    # cycle-9/D-AUDIT-1052: narrow exceptions + observability.
+    # ConnectionError/TimeoutError — server unreachable, RuntimeError —
+    # API failure, ValueError — invalid response, TypeError — wrong type,
+    # KeyError — missing key.
+    import logging
+    logging.getLogger(__name__).debug(
+        "streamlit_23_AI.snapshot_fetch_failed",
+        extra={"error": str(fetch_exc)},
+    )
     data = _fallback_snapshot(window_hours)
 
 
