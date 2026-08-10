@@ -31,7 +31,7 @@ from typing import Any
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.exchange import Exchange
 
-__all__ = (
+__all__ = (  # noqa: F822 — lazy __getattr__ exports
     "CorrelationIdentifierProcessor",
     "MessageExpirationProcessor",
     "RedeliveryPolicyProcessor",
