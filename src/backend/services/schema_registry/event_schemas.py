@@ -41,7 +41,21 @@ def register_default_event_schemas(registry: ServiceSchemaRegistry) -> int:
     for subject, model_cls in items:
         try:
             schema = model_cls.model_json_schema()
-        except Exception:
+        except (AttributeError, TypeError, ValueError, ImportError, RuntimeError) as schema_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-915: narrow exceptions + observability.
+            # AttributeError — model_cls не Pydantic, TypeError — schema
+            # generation failed, ValueError — invalid field, ImportError —
+            # forward-ref missing. Bare `except Exception` маскировал
+            # unrelated runtime errors (KeyError, RuntimeError).
+            import logging
+            logging.getLogger(__name__).debug(
+                "event_schemas.model_schema_failed",
+                extra={
+                    "subject": subject,
+                    "model": model_cls.__name__,
+                    "error": str(schema_exc),
+                },
+            )
             continue
         registry.register(
             SchemaEntry(
