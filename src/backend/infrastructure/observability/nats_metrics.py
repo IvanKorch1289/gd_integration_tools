@@ -43,7 +43,17 @@ try:  # pragma: no cover
         "Total errors fetching NATS consumer_info",
         labels=("stream", "consumer"),
     )
-except Exception:
+except (ImportError, AttributeError, RuntimeError, ValueError) as metrics_init_exc:  # noqa: BLE001
+    # cycle-9/D-AUDIT-921: narrow exceptions + observability.
+    # ImportError — metrics_registry missing, AttributeError — counter
+    # API changed, RuntimeError — registry not initialized, ValueError
+    # — invalid label tuple. Bare `except Exception` маскировал unrelated
+    # runtime errors.
+    import logging
+    logging.getLogger(__name__).debug(
+        "nats_metrics.registry_init_fallback",
+        extra={"error": str(metrics_init_exc)},
+    )
     consumer_pending = None  # type: ignore[assignment,unused-ignore]
     consumer_delivered = None  # type: ignore[assignment,unused-ignore]
     consumer_ack_lag = None  # type: ignore[assignment,unused-ignore]
