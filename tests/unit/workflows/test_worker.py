@@ -48,16 +48,15 @@ def test_build_spec_loader_not_found() -> None:
 
 
 def test_resolve_executor_dsl_default() -> None:
-    with patch.dict(os.environ, {}, clear=True):
-        with patch(
-            "src.backend.infrastructure.workflow.executor.DSLStepExecutor"
-        ) as MockDSL:
-            exc = _resolve_executor()
-            MockDSL.assert_called_once()
-            call_kwargs = MockDSL.call_args.kwargs
-            assert "spec_loader" in call_kwargs
-            assert callable(call_kwargs["spec_loader"])
-            assert exc is MockDSL.return_value
+    with patch.dict(os.environ, {}, clear=True), patch(
+        "src.backend.infrastructure.workflow.executor.DSLStepExecutor"
+    ) as MockDSL:
+        exc = _resolve_executor()
+        MockDSL.assert_called_once()
+        call_kwargs = MockDSL.call_args.kwargs
+        assert "spec_loader" in call_kwargs
+        assert callable(call_kwargs["spec_loader"])
+        assert exc is MockDSL.return_value
 
 
 def test_resolve_executor_noop() -> None:

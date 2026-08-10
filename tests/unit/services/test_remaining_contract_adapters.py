@@ -16,10 +16,9 @@ from src.backend.services.workflows.hitl_signal_store_redis import RedisHitlSign
 def test_observability_log_event_does_not_swallow_body_error() -> None:
     with patch(
         "src.backend.core.observability.logging_helpers.log_audit_event_lite"
-    ) as log_event:
-        with pytest.raises(ValueError, match="body failed"):
-            with ObservabilityFacade().log_event("orders.failed", order_id="42"):
-                raise ValueError("body failed")
+    ) as log_event, pytest.raises(ValueError, match="body failed"):
+        with ObservabilityFacade().log_event("orders.failed", order_id="42"):
+            raise ValueError("body failed")
 
     log_event.assert_called_once()
 

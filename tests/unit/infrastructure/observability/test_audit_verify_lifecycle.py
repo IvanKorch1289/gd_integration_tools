@@ -164,9 +164,8 @@ async def test_try_start_default_swallows_start_failure(
             "src.backend.infrastructure.observability.audit_verify_lifecycle"
             ".start_audit_verify",
             side_effect=RuntimeError("TaskRegistry unavailable"),
-        ):
-            with caplog.at_level("WARNING"):
-                result = await try_start_default(session_factory=lambda: None)
+        ), caplog.at_level("WARNING"):
+            result = await try_start_default(session_factory=lambda: None)
 
     assert result is False
     # Лог должен содержать warning о пропуске bootstrap.

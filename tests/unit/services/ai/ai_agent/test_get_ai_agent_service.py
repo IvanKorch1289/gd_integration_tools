@@ -74,10 +74,9 @@ class TestGetAiAgentServiceFactory:
             patch(
                 "src.backend.services.ai.ai_agent.AIAgentService",
                 side_effect=RuntimeError("settings missing"),
-            ),
+            ),pytest.raises(AIGatewayProductionWiringError) as exc_info
         ):
-            with pytest.raises(AIGatewayProductionWiringError) as exc_info:
-                get_ai_agent_service()
+            get_ai_agent_service()
 
         assert "ai_agent_service" in exc_info.value.missing
 

@@ -80,7 +80,7 @@ def test_build_cli_command_has_required_flags() -> None:
     ):
         cmd = cfg.build_cli_command(app="src.main:app", host="0.0.0.0", port=8000)
 
-    assert "granian" == cmd[0]
+    assert cmd[0] == "granian"
     assert "--interface" in cmd
     assert "--workers" in cmd
     assert "4" in cmd  # workers=4
@@ -88,7 +88,7 @@ def test_build_cli_command_has_required_flags() -> None:
     assert "uvloop" in cmd
     assert "--threads" in cmd
     assert "16" in cmd  # blocking_threads=16
-    assert "src.main:app" == cmd[-1]
+    assert cmd[-1] == "src.main:app"
 
 
 def test_build_cli_command_access_log_toggle() -> None:

@@ -226,20 +226,19 @@ class TestHttpBridgeAuthContextPropagation:
         with patch(
             "src.backend.services.routes.route_authz.check_route_permission",
             new=AsyncMock(return_value=(True, "allowed")),
-        ):
-            with patch(
-                "src.backend.dsl.service.facade.DslService.dispatch",
-                new=AsyncMock(return_value=_ok_exchange()),
-            ) as mock_dispatch:
-                from src.backend.entrypoints._action_bridge import _dispatch_dsl
+        ), patch(
+            "src.backend.dsl.service.facade.DslService.dispatch",
+            new=AsyncMock(return_value=_ok_exchange()),
+        ) as mock_dispatch:
+            from src.backend.entrypoints._action_bridge import _dispatch_dsl
 
-                await _dispatch_dsl(
-                    dsl_route_id="r1",
-                    payload={"k": "v"},
-                    headers=None,
-                    principal="alice",
-                    permissions=("role:admin", "scope:read"),
-                )
+            await _dispatch_dsl(
+                dsl_route_id="r1",
+                payload={"k": "v"},
+                headers=None,
+                principal="alice",
+                permissions=("role:admin", "scope:read"),
+            )
 
         # mock_dispatch is on the class, so we look at the call args.
         call_kwargs = mock_dispatch.await_args.kwargs
@@ -292,18 +291,17 @@ class TestSoapHandlerAuthContextPropagation:
             soap_handler.action_handler_registry,
             "is_registered",
             return_value=False,
-        ):
-            with patch(
-                "src.backend.entrypoints.soap.soap_handler.get_dsl_service"
-            ) as mock_get_dsl:
-                mock_dsl = MagicMock()
-                mock_dsl.dispatch = AsyncMock(side_effect=fake_dispatch)
-                mock_get_dsl.return_value = mock_dsl
+        ), patch(
+            "src.backend.entrypoints.soap.soap_handler.get_dsl_service"
+        ) as mock_get_dsl:
+            mock_dsl = MagicMock()
+            mock_dsl.dispatch = AsyncMock(side_effect=fake_dispatch)
+            mock_get_dsl.return_value = mock_dsl
 
-                with patch.object(
-                    soap_handler, "_build_soap_response", return_value="<ok/>"
-                ):
-                    response = await soap_handler.handle_soap_request(mock_request)
+            with patch.object(
+                soap_handler, "_build_soap_response", return_value="<ok/>"
+            ):
+                response = await soap_handler.handle_soap_request(mock_request)
 
         assert captured_context["principal"] == "admin-user"
         assert captured_context["permissions"] == ("role:admin",)
@@ -336,15 +334,13 @@ class TestSoapHandlerAuthContextPropagation:
             soap_handler.action_handler_registry,
             "is_registered",
             return_value=False,
+        ), patch(
+            "src.backend.services.routes.route_authz.check_route_permission",
+            new=AsyncMock(return_value=(False, "missing_permissions:role:admin")),
+        ) as mock_check, patch.object(
+            soap_handler, "_build_soap_fault", return_value="<fault/>"
         ):
-            with patch(
-                "src.backend.services.routes.route_authz.check_route_permission",
-                new=AsyncMock(return_value=(False, "missing_permissions:role:admin")),
-            ) as mock_check:
-                with patch.object(
-                    soap_handler, "_build_soap_fault", return_value="<fault/>"
-                ):
-                    response = await soap_handler.handle_soap_request(mock_request)
+            response = await soap_handler.handle_soap_request(mock_request)
 
         kwargs = mock_check.await_args.kwargs
         assert kwargs["principal"] == "anonymous"

@@ -407,13 +407,12 @@ class TestBackwardCompatRouteAuthz:
             with patch(
                 "src.backend.services.routes.route_authz._resolve_authz_gateway",
                 return_value=None,
-            ):
-                with pytest.raises(RoutePermissionDeniedError) as exc_info:
-                    await DslService().dispatch(
-                        "r1",
-                        body={},
-                        context=ExecutionContext(principal="admin", permissions=()),
-                    )
+            ), pytest.raises(RoutePermissionDeniedError) as exc_info:
+                await DslService().dispatch(
+                    "r1",
+                    body={},
+                    context=ExecutionContext(principal="admin", permissions=()),
+                )
             assert "authorization_gateway_not_registered" in exc_info.value.reason
         finally:
             route_registry.clear()

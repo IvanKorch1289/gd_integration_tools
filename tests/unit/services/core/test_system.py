@@ -57,13 +57,12 @@ async def test_health_falls_back_to_tech_on_import_error(
     with patch(
         "src.backend.services.core.system.get_health_aggregator_provider",
         side_effect=ImportError,
+    ), patch(
+        "src.backend.services.core.tech.get_tech_service", return_value=mock_tech
     ):
-        with patch(
-            "src.backend.services.core.tech.get_tech_service", return_value=mock_tech
-        ):
-            mock_tech.check_all_services.return_value = {"fallback": True}
-            result = await service.health()
-            assert result == {"fallback": True}
+        mock_tech.check_all_services.return_value = {"fallback": True}
+        result = await service.health()
+        assert result == {"fallback": True}
 
 
 @pytest.mark.asyncio

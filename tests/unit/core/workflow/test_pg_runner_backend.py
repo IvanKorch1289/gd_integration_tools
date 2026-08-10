@@ -423,7 +423,7 @@ class TestAwaitCompletion:
         )
         assert result.status == "timed_out"
         assert result.failure is not None
-        assert "TimeoutError" == result.failure["type"]
+        assert result.failure["type"] == "TimeoutError"
 
 
 @pytest.mark.asyncio

@@ -172,12 +172,11 @@ async def test_delay_by_scheduled_time() -> None:
     with patch(
         "src.backend.dsl.engine.processors.eip.flow_control.delay.time.time",
         return_value=500.0,
-    ):
-        with patch(
-            "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
-        ) as mock_sleep:
-            await proc.process(e, ctx)
-            mock_sleep.assert_called_once_with(500.0)
+    ), patch(
+        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
+    ) as mock_sleep:
+        await proc.process(e, ctx)
+        mock_sleep.assert_called_once_with(500.0)
 
 
 @pytest.mark.asyncio
@@ -190,12 +189,11 @@ async def test_delay_no_sleep_when_past() -> None:
     with patch(
         "src.backend.dsl.engine.processors.eip.flow_control.delay.time.time",
         return_value=500.0,
-    ):
-        with patch(
-            "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
-        ) as mock_sleep:
-            await proc.process(e, ctx)
-            mock_sleep.assert_not_called()
+    ), patch(
+        "src.backend.dsl.engine.processors.eip.flow_control.throttler.asyncio.sleep"
+    ) as mock_sleep:
+        await proc.process(e, ctx)
+        mock_sleep.assert_not_called()
 
 
 @pytest.mark.asyncio

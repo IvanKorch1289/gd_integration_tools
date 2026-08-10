@@ -45,9 +45,8 @@ class TestMarkitdownNetworkDisabled:
 
     def test_urlopen_denied_inside_context(self) -> None:
         """Внутри context urllib.request.urlopen raises _NetworkDeniedError."""
-        with markitdown_network_disabled():
-            with pytest.raises(_NetworkDeniedError):
-                urllib.request.urlopen("https://example.com")
+        with markitdown_network_disabled(), pytest.raises(_NetworkDeniedError):
+            urllib.request.urlopen("https://example.com")
 
     def test_urlopen_restored_after_context(self) -> None:
         """После context — urlopen = original (NOT _denied_urlopen)."""

@@ -73,7 +73,6 @@ async def test_make_dedupe_store_propagates_redis_get_client_error() -> None:
         patch(
             "src.backend.core.storage.redis.get_redis_client",
             return_value=fake_redis_client_singleton,
-        ),
+        ),pytest.raises(ConnectionError, match="redis down")
     ):
-        with pytest.raises(ConnectionError, match="redis down"):
-            await make_dedupe_store()
+        await make_dedupe_store()

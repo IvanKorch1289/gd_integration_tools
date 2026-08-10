@@ -21,28 +21,27 @@ class TestBuildDefaultRegistry:
         with patch(
             "src.backend.entrypoints.middlewares.registry.MiddlewareRegistry",
             return_value=mock_registry,
-        ):
-            with patch(
-                "src.backend.core.config.settings.settings",
-                MagicMock(
-                    secure=MagicMock(
-                        cors_origins=["*"],
-                        cors_allow_credentials=True,
-                        cors_allow_methods=["GET"],
-                        cors_allow_headers=["*"],
-                        allowed_hosts=["*"],
-                    ),
-                    app=MagicMock(
-                        compression_brotli=False,
-                        brotli_minimum_size=100,
-                        brotli_quality=4,
-                        gzip_minimum_size=500,
-                        gzip_compresslevel=6,
-                        title="test",
-                    ),
+        ), patch(
+            "src.backend.core.config.settings.settings",
+            MagicMock(
+                secure=MagicMock(
+                    cors_origins=["*"],
+                    cors_allow_credentials=True,
+                    cors_allow_methods=["GET"],
+                    cors_allow_headers=["*"],
+                    allowed_hosts=["*"],
                 ),
-            ):
-                registry = build_default_registry()
+                app=MagicMock(
+                    compression_brotli=False,
+                    brotli_minimum_size=100,
+                    brotli_quality=4,
+                    gzip_minimum_size=500,
+                    gzip_compresslevel=6,
+                    title="test",
+                ),
+            ),
+        ):
+            registry = build_default_registry()
         assert registry is mock_registry
         assert mock_registry.register_builtin.call_count >= 10
 

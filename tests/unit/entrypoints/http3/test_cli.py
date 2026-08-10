@@ -59,10 +59,8 @@ def test_run_rejects_when_aioquic_missing(tmp_path: Path) -> None:
     key.write_bytes(b"-----BEGIN PRIVATE KEY-----\n")
     settings = _stub_settings(http3_certfile=str(cert), http3_keyfile=str(key))
 
-    with patch("src.backend.core.config.settings.settings", settings):
-        with patch(
-            "src.backend.entrypoints.http3.cli._ensure_aioquic_installed",
-            side_effect=RuntimeError("uv sync --extra http3"),
-        ):
-            with pytest.raises(RuntimeError, match="extra http3"):
-                run_from_settings()
+    with patch("src.backend.core.config.settings.settings", settings), patch(
+        "src.backend.entrypoints.http3.cli._ensure_aioquic_installed",
+        side_effect=RuntimeError("uv sync --extra http3"),
+    ), pytest.raises(RuntimeError, match="extra http3"):
+        run_from_settings()

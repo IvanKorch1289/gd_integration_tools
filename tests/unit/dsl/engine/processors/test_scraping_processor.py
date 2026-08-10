@@ -136,12 +136,10 @@ async def test_scrape_processor_process_success() -> None:
         "src.backend.infrastructure.clients.transport.http.HttpClient.make_request",
         new_callable=AsyncMock,
         return_value=fake_response,
-    ) as mock_req:
-        with patch.dict(
-            "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
-        ):
-            with patch("selectolax.parser.HTMLParser", return_value=fake_tree):
-                await proc.process(ex, AsyncMock())
+    ) as mock_req, patch.dict(
+        "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
+    ), patch("selectolax.parser.HTMLParser", return_value=fake_tree):
+        await proc.process(ex, AsyncMock())
 
     mock_req.assert_awaited_once()
     assert ex.error is None
@@ -187,12 +185,10 @@ async def test_scrape_processor_url_from_property() -> None:
         "src.backend.infrastructure.clients.transport.http.HttpClient.make_request",
         new_callable=AsyncMock,
         return_value=fake_response,
-    ) as mock_req:
-        with patch.dict(
-            "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
-        ):
-            with patch("selectolax.parser.HTMLParser", return_value=fake_tree):
-                await proc.process(ex, AsyncMock())
+    ) as mock_req, patch.dict(
+        "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
+    ), patch("selectolax.parser.HTMLParser", return_value=fake_tree):
+        await proc.process(ex, AsyncMock())
 
     mock_req.assert_awaited_once()
     assert ex.error is None
@@ -287,18 +283,15 @@ async def test_paginate_processor_process_success() -> None:
         "src.backend.infrastructure.clients.transport.http.HttpClient.make_request",
         new_callable=AsyncMock,
         side_effect=responses,
+    ), patch.dict(
+        "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
+    ), patch(
+        "selectolax.parser.HTMLParser", side_effect=[fake_tree1, fake_tree2]
+    ), patch(
+        "src.backend.dsl.engine.processors.scraping._random_delay",
+        new_callable=AsyncMock,
     ):
-        with patch.dict(
-            "sys.modules", {"selectolax": MagicMock(), "selectolax.parser": MagicMock()}
-        ):
-            with patch(
-                "selectolax.parser.HTMLParser", side_effect=[fake_tree1, fake_tree2]
-            ):
-                with patch(
-                    "src.backend.dsl.engine.processors.scraping._random_delay",
-                    new_callable=AsyncMock,
-                ):
-                    await proc.process(ex, AsyncMock())
+        await proc.process(ex, AsyncMock())
 
     assert ex.error is None
     assert ex.properties["paginated_results"] == ["A", "B"]

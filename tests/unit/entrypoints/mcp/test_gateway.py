@@ -70,12 +70,11 @@ class TestResolveAuthProvider:
                     tool_authz_enabled=True, sso_issuer_url="https://sso.local"
                 )
             ),
+        ), patch(
+            "src.backend.entrypoints.mcp.gateway.JWTVerifier",
+            return_value=mock_verifier,
         ):
-            with patch(
-                "src.backend.entrypoints.mcp.gateway.JWTVerifier",
-                return_value=mock_verifier,
-            ):
-                result = _resolve_auth_provider()
+            result = _resolve_auth_provider()
         assert result is mock_verifier
 
     def test_returns_none_on_jwt_verifier_import_error(self) -> None:
@@ -86,12 +85,11 @@ class TestResolveAuthProvider:
                     tool_authz_enabled=True, sso_issuer_url="https://sso.local"
                 )
             ),
+        ), patch(
+            "src.backend.entrypoints.mcp.gateway.JWTVerifier",
+            side_effect=ImportError("nope"),
         ):
-            with patch(
-                "src.backend.entrypoints.mcp.gateway.JWTVerifier",
-                side_effect=ImportError("nope"),
-            ):
-                assert _resolve_auth_provider() is None
+            assert _resolve_auth_provider() is None
 
 
 class TestMCPGateway:
@@ -141,12 +139,11 @@ class TestMCPGateway:
         with patch(
             "src.backend.entrypoints.mcp.gateway.SkillRegistry",
             return_value=mock_registry,
+        ), patch(
+            "src.backend.entrypoints.mcp.gateway.get_namespace_for_action",
+            return_value=mock_namespace,
         ):
-            with patch(
-                "src.backend.entrypoints.mcp.gateway.get_namespace_for_action",
-                return_value=mock_namespace,
-            ):
-                assert gw.auto_register_skills() == 2
+            assert gw.auto_register_skills() == 2
 
 
 class TestCreateMcpGateway:
@@ -156,6 +153,5 @@ class TestCreateMcpGateway:
         with patch(
             "src.backend.entrypoints.mcp.gateway._resolve_auth_provider",
             return_value=None,
-        ):
-            with patch.object(MCPGateway, "create_server", return_value="server"):
-                assert create_mcp_gateway() == "server"
+        ), patch.object(MCPGateway, "create_server", return_value="server"):
+            assert create_mcp_gateway() == "server"

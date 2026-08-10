@@ -286,21 +286,20 @@ class TestAttachSchedulerDLQ:
             ff.scheduler_dlq_enabled = True
             with patch(
                 "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
-            ):
-                with patch(
-                    "src.backend.core.utils.task_registry.get_task_registry"
-                ) as mock_get_tr:
-                    tr = MagicMock()
-                    mock_get_tr.return_value = tr
-                    store = SchedulerDLQStore()
-                    attach_scheduler_dlq(scheduler, store=store, writer=writer)
-                    handler = scheduler.add_listener.call_args[0][0]
-                    event = MagicMock()
-                    event.job_id = "job-3"
-                    event.exception = RuntimeError("fail")
-                    event.traceback = None
-                    event.scheduled_run_time = datetime.now(UTC)
-                    handler(event)
+            ), patch(
+                "src.backend.core.utils.task_registry.get_task_registry"
+            ) as mock_get_tr:
+                tr = MagicMock()
+                mock_get_tr.return_value = tr
+                store = SchedulerDLQStore()
+                attach_scheduler_dlq(scheduler, store=store, writer=writer)
+                handler = scheduler.add_listener.call_args[0][0]
+                event = MagicMock()
+                event.job_id = "job-3"
+                event.exception = RuntimeError("fail")
+                event.traceback = None
+                event.scheduled_run_time = datetime.now(UTC)
+                handler(event)
         assert store.size() == 1
         tr.create_task.assert_called_once()
 

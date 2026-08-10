@@ -77,9 +77,8 @@ async def test_parallelism_report_route_not_found() -> None:
 
     with patch.dict(
         sys.modules, {"src.backend.dsl.route_loader.registry": fake_module}
-    ):
-        with pytest.raises(HTTPException) as exc_info:
-            await mod.parallelism_report("missing")
+    ), pytest.raises(HTTPException) as exc_info:
+        await mod.parallelism_report("missing")
 
     assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
     assert "not found" in exc_info.value.detail

@@ -420,9 +420,8 @@ async def test_splitter_stops_on_failure() -> None:
     ctx = AsyncMock()
     e = _ex(body={"data": {"items": [1, 2]}})
 
-    with patch("jmespath.search", return_value=[1, 2]):
-        with pytest.raises(RuntimeError):
-            await proc.process(e, ctx)
+    with patch("jmespath.search", return_value=[1, 2]), pytest.raises(RuntimeError):
+        await proc.process(e, ctx)
 
 
 # =============================================================================

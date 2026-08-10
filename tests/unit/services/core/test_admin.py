@@ -199,22 +199,19 @@ async def test_system_info(service: AdminService) -> None:
     mock_route.list_disabled_routes.return_value = []
     mock_action = MagicMock()
     mock_action.list_actions.return_value = ["a1"]
-    with patch("src.backend.services.core.admin.route_registry", mock_route):
-        with patch(
-            "src.backend.services.core.admin.action_handler_registry", mock_action
-        ):
-            with patch(
-                "src.backend.services.core.admin.disabled_feature_flags", {"f1"}
-            ):
-                with patch(
-                    "src.backend.services.core.admin._list_services",
-                    return_value=["svc"],
-                ):
-                    result = await service.system_info()
-                    assert result["routes_total"] == 1
-                    assert result["routes_enabled"] == 1
-                    assert result["routes_disabled"] == 0
-                    assert result["feature_flags_disabled"] == ["f1"]
+    with patch("src.backend.services.core.admin.route_registry", mock_route), patch(
+        "src.backend.services.core.admin.action_handler_registry", mock_action
+    ), patch(
+        "src.backend.services.core.admin.disabled_feature_flags", {"f1"}
+    ), patch(
+        "src.backend.services.core.admin._list_services",
+        return_value=["svc"],
+    ):
+        result = await service.system_info()
+        assert result["routes_total"] == 1
+        assert result["routes_enabled"] == 1
+        assert result["routes_disabled"] == 0
+        assert result["feature_flags_disabled"] == ["f1"]
 
 
 # ── slo report ──────────────────────────────────────────────────

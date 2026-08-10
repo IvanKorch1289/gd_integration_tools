@@ -268,9 +268,8 @@ class TestAuthFacadeTokenIssuance:
             facade.jwt,
             "encode",
             side_effect=ValueError("missing secret"),
-        ):
-            with pytest.raises(RuntimeError, match="issue_token failed"):
-                facade.issue_token(subject="user:1")
+        ), pytest.raises(RuntimeError, match="issue_token failed"):
+            facade.issue_token(subject="user:1")
 
     @pytest.mark.asyncio
     async def test_revoke_token_success(self) -> None:
@@ -307,9 +306,8 @@ class TestAuthFacadeTokenIssuance:
         with patch(
             "src.backend.services.security.facade.get_security_facade",
             side_effect=RuntimeError("redis down"),
-        ):
-            with pytest.raises(RuntimeError, match="revoke_token failed"):
-                await facade.revoke_token("jti-1")
+        ), pytest.raises(RuntimeError, match="revoke_token failed"):
+            await facade.revoke_token("jti-1")
 
 
 class TestAuthFacadeSAMLDevMode:

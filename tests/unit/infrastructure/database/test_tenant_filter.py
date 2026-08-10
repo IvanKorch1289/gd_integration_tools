@@ -37,12 +37,11 @@ def test_filter_by_tenant_skips_non_select() -> None:
     with patch(
         "src.backend.infrastructure.database.tenant_filter.event.listens_for",
         fake_listens_for,
+    ), patch(
+        "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+        return_value="t1",
     ):
-        with patch(
-            "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
-            return_value="t1",
-        ):
-            apply_tenant_filter(MagicMock())
+        apply_tenant_filter(MagicMock())
 
     orm_state = SimpleNamespace(is_select=False)
     captured["do_orm_execute"](orm_state)
@@ -62,12 +61,11 @@ def test_filter_by_tenant_no_tenant_returns() -> None:
     with patch(
         "src.backend.infrastructure.database.tenant_filter.event.listens_for",
         fake_listens_for,
+    ), patch(
+        "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+        return_value=None,
     ):
-        with patch(
-            "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
-            return_value=None,
-        ):
-            apply_tenant_filter(MagicMock())
+        apply_tenant_filter(MagicMock())
 
     stmt = MagicMock(froms=[MagicMock(entity_namespace=MagicMock(tenant_id="col"))])
     orm_state = SimpleNamespace(is_select=True, statement=stmt)
@@ -88,16 +86,15 @@ def test_set_tenant_on_new_sets_when_empty() -> None:
     with patch(
         "src.backend.infrastructure.database.tenant_filter.event.listens_for",
         fake_listens_for,
+    ), patch(
+        "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+        return_value="t1",
     ):
-        with patch(
-            "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
-            return_value="t1",
-        ):
-            apply_tenant_filter(MagicMock())
-            obj = SimpleNamespace(tenant_id="")
-            session = SimpleNamespace(new=[obj])
-            captured["before_flush"](session, None, None)
-            assert obj.tenant_id == "t1"
+        apply_tenant_filter(MagicMock())
+        obj = SimpleNamespace(tenant_id="")
+        session = SimpleNamespace(new=[obj])
+        captured["before_flush"](session, None, None)
+        assert obj.tenant_id == "t1"
 
 
 def test_set_tenant_on_new_preserves_existing() -> None:
@@ -113,13 +110,12 @@ def test_set_tenant_on_new_preserves_existing() -> None:
     with patch(
         "src.backend.infrastructure.database.tenant_filter.event.listens_for",
         fake_listens_for,
+    ), patch(
+        "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
+        return_value="t1",
     ):
-        with patch(
-            "src.backend.infrastructure.database.tenant_filter.get_tenant_id",
-            return_value="t1",
-        ):
-            apply_tenant_filter(MagicMock())
-            obj = SimpleNamespace(tenant_id="existing")
-            session = SimpleNamespace(new=[obj])
-            captured["before_flush"](session, None, None)
-            assert obj.tenant_id == "existing"
+        apply_tenant_filter(MagicMock())
+        obj = SimpleNamespace(tenant_id="existing")
+        session = SimpleNamespace(new=[obj])
+        captured["before_flush"](session, None, None)
+        assert obj.tenant_id == "existing"

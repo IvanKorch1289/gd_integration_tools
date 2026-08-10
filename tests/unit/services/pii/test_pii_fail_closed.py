@@ -79,13 +79,12 @@ class TestRaisePiiFailClosed:
         with patch(
             "src.backend.core.observability.logging_helpers.log_audit_event_lite",
             side_effect=RuntimeError("audit boom"),
-        ):
-            with pytest.raises(PIIFailClosedError):
-                raise_pii_fail_closed(
-                    source="test.audit.fail",
-                    payload_size=10,
-                    exc=RuntimeError("original"),
-                )
+        ), pytest.raises(PIIFailClosedError):
+            raise_pii_fail_closed(
+                source="test.audit.fail",
+                payload_size=10,
+                exc=RuntimeError("original"),
+            )
 
 
 class TestPIIFacadeMaskFailClosed:

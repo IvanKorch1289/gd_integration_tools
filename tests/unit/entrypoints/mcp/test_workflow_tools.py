@@ -54,12 +54,11 @@ class TestRegisterWorkflowTools:
         with patch(
             "src.backend.entrypoints.mcp.workflow_tools.workflow_registry.list_all",
             return_value=[desc],
+        ), patch(
+            "src.backend.entrypoints.mcp.workflow_tools.workflow_registry.get_route_id",
+            return_value="r1",
         ):
-            with patch(
-                "src.backend.entrypoints.mcp.workflow_tools.workflow_registry.get_route_id",
-                return_value="r1",
-            ):
-                register_workflow_tools(mock_mcp)
+            register_workflow_tools(mock_mcp)
         assert mock_mcp.tool.call_count >= 1
 
     def test_skips_missing_route_id(self) -> None:
@@ -68,12 +67,11 @@ class TestRegisterWorkflowTools:
         with patch(
             "src.backend.entrypoints.mcp.workflow_tools.workflow_registry.list_all",
             return_value=[desc],
+        ), patch(
+            "src.backend.entrypoints.mcp.workflow_tools.workflow_registry.get_route_id",
+            return_value=None,
         ):
-            with patch(
-                "src.backend.entrypoints.mcp.workflow_tools.workflow_registry.get_route_id",
-                return_value=None,
-            ):
-                register_workflow_tools(mock_mcp)
+            register_workflow_tools(mock_mcp)
         mock_mcp.tool.assert_not_called()
 
 

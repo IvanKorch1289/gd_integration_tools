@@ -150,9 +150,8 @@ async def test_stage3_terminal_raises_when_all_stages_fail(
         with patch(
             "src.backend.infrastructure.audit.jsonl_audit.JsonlAuditBackend.append",
             new=AsyncMock(side_effect=OSError("disk full")),
-        ):
-            with pytest.raises(RuntimeError) as exc_info:
-                await proc.process(e, ctx)
+        ), pytest.raises(RuntimeError) as exc_info:
+            await proc.process(e, ctx)
 
     msg = str(exc_info.value)
     assert "DLQ send failed" in msg

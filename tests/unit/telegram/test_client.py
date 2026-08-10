@@ -92,7 +92,7 @@ class TestModels:
     def test_mention_html(self) -> None:
         """HTML mention возвращает ``<a href=...>name</a>``."""
         m = TelegramMention(user_id=7, display_name="Alice", parse_mode="HTML")
-        assert '<a href="tg://user?id=7">Alice</a>' == m.to_inline()
+        assert m.to_inline() == '<a href="tg://user?id=7">Alice</a>'
 
     def test_message_payload_minimal(self) -> None:
         """Минимальный payload содержит только chat_id+text+parse_mode."""

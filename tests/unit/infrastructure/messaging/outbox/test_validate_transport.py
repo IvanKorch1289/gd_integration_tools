@@ -35,9 +35,9 @@ def test_validate_transport_all_allowed() -> None:
     """All 7 allowed values → returns lowercased input."""
     for t in ("kafka", "rabbitmq", "nats", "clickhouse", "s3", "webhook", "other"):
         assert validate_transport(t) == t
-    assert ALLOWED_TRANSPORTS == frozenset(
+    assert frozenset(
         {"kafka", "rabbitmq", "nats", "clickhouse", "s3", "webhook", "other"}
-    )
+    ) == ALLOWED_TRANSPORTS
 
 
 def test_validate_transport_normalizes_case_and_whitespace() -> None:

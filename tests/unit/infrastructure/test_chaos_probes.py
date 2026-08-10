@@ -43,10 +43,9 @@ class TestChaosEngineering:
         with patch(
             "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
             return_value=False,
-        ):
-            with patch("asyncio.sleep") as mock_sleep:
-                await chaos.latency("lat", probability=1.0, max_delay_ms=1000)
-                mock_sleep.assert_not_called()
+        ), patch("asyncio.sleep") as mock_sleep:
+            await chaos.latency("lat", probability=1.0, max_delay_ms=1000)
+            mock_sleep.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_latency_injects_when_enabled(self) -> None:
@@ -54,11 +53,10 @@ class TestChaosEngineering:
         with patch(
             "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
             return_value=True,
-        ):
-            with patch("asyncio.sleep") as mock_sleep:
-                await chaos.latency("lat", probability=1.0, max_delay_ms=10)
-                mock_sleep.assert_awaited_once()
-                assert 0 <= mock_sleep.call_args[0][0] <= 0.01
+        ), patch("asyncio.sleep") as mock_sleep:
+            await chaos.latency("lat", probability=1.0, max_delay_ms=10)
+            mock_sleep.assert_awaited_once()
+            assert 0 <= mock_sleep.call_args[0][0] <= 0.01
 
     @pytest.mark.asyncio
     async def test_latency_respects_probability(self) -> None:
@@ -66,10 +64,9 @@ class TestChaosEngineering:
         with patch(
             "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
             return_value=True,
-        ):
-            with patch("asyncio.sleep") as mock_sleep:
-                await chaos.latency("lat", probability=0.0, max_delay_ms=10)
-                mock_sleep.assert_not_called()
+        ), patch("asyncio.sleep") as mock_sleep:
+            await chaos.latency("lat", probability=0.0, max_delay_ms=10)
+            mock_sleep.assert_not_called()
 
     def test_maybe_raise_no_op_when_disabled(self) -> None:
         chaos = ChaosEngineering()
@@ -84,9 +81,8 @@ class TestChaosEngineering:
         with patch(
             "src.backend.infrastructure.chaos.probes.is_chaos_enabled",
             return_value=True,
-        ):
-            with pytest.raises(RuntimeError, match="Chaos error probe: err"):
-                chaos.maybe_raise("err", probability=1.0)
+        ), pytest.raises(RuntimeError, match="Chaos error probe: err"):
+            chaos.maybe_raise("err", probability=1.0)
 
     def test_maybe_raise_respects_probability(self) -> None:
         chaos = ChaosEngineering()

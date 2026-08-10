@@ -238,7 +238,7 @@ def test_invalid_custom_regex_raises() -> None:
 
 
 def test_allowed_targets_is_frozenset() -> None:
-    assert ALLOWED_TARGETS == frozenset({"body", "headers", "query", "path"})
+    assert frozenset({"body", "headers", "query", "path"}) == ALLOWED_TARGETS
 
 
 # ── multi-target ──

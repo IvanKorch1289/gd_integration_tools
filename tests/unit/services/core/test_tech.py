@@ -199,18 +199,17 @@ async def test_upload_excel_for_mass_create(service: TechService) -> None:
     with patch(
         "src.backend.services.core.tech.get_service_for_model",
         return_value=fake_service,
+    ), patch(
+        "polars.read_excel",
+        return_value=pl.DataFrame({"name": ["A"], "amount": [10]}),
     ):
-        with patch(
-            "polars.read_excel",
-            return_value=pl.DataFrame({"name": ["A"], "amount": [10]}),
-        ):
-            result = await service.upload_excel_for_mass_create(
-                b"",
-                "ORDERS",
-                FakeEnum,  # type: ignore[arg-type]
-            )
-            assert len(result) == 1
-            assert result[0] == {"id": 1}
+        result = await service.upload_excel_for_mass_create(
+            b"",
+            "ORDERS",
+            FakeEnum,  # type: ignore[arg-type]
+        )
+        assert len(result) == 1
+        assert result[0] == {"id": 1}
 
 
 @pytest.mark.asyncio

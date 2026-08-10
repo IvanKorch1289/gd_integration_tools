@@ -63,9 +63,8 @@ class TestExecute:
                 __aenter__=AsyncMock(return_value=mock_http),
                 __aexit__=AsyncMock(return_value=None),
             ),
-        ):
-            with pytest.raises(DesktopRpaError, match="transport error"):
-                await client.execute("click", {})
+        ), pytest.raises(DesktopRpaError, match="transport error"):
+            await client.execute("click", {})
 
     async def test_503(self) -> None:
         client = DesktopRpaClient("http://w")
@@ -78,9 +77,8 @@ class TestExecute:
             return_value=MagicMock(
                 __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
             ),
-        ):
-            with pytest.raises(DesktopRpaError, match="503"):
-                await client.execute("click", {})
+        ), pytest.raises(DesktopRpaError, match="503"):
+            await client.execute("click", {})
 
     async def test_400(self) -> None:
         client = DesktopRpaClient("http://w")
@@ -94,9 +92,8 @@ class TestExecute:
             return_value=MagicMock(
                 __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
             ),
-        ):
-            with pytest.raises(DesktopRpaError, match="400"):
-                await client.execute("click", {})
+        ), pytest.raises(DesktopRpaError, match="400"):
+            await client.execute("click", {})
 
     async def test_no_api_key(self) -> None:
         client = DesktopRpaClient("http://w")

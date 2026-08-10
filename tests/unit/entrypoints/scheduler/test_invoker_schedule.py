@@ -144,12 +144,11 @@ class TestRunScheduledInvocation:
         with patch(
             "src.backend.core.di.providers.get_action_dispatcher_provider",
             return_value=mock_dispatcher,
+        ), patch(
+            "src.backend.core.di.contexts.make_dispatch_context",
+            return_value=MagicMock(),
         ):
-            with patch(
-                "src.backend.core.di.contexts.make_dispatch_context",
-                return_value=MagicMock(),
-            ):
-                await _run_scheduled_invocation(spec)
+            await _run_scheduled_invocation(spec)
 
         mock_dispatcher.dispatch.assert_awaited_once()
 
@@ -163,12 +162,11 @@ class TestRunScheduledInvocation:
         with patch(
             "src.backend.core.di.providers.get_action_dispatcher_provider",
             return_value=mock_dispatcher,
+        ), patch(
+            "src.backend.core.di.contexts.make_dispatch_context",
+            return_value=MagicMock(),
         ):
-            with patch(
-                "src.backend.core.di.contexts.make_dispatch_context",
-                return_value=MagicMock(),
-            ):
-                await _run_scheduled_invocation(spec)
+            await _run_scheduled_invocation(spec)
 
         mock_dispatcher.dispatch.assert_awaited_once()
 
@@ -182,13 +180,12 @@ class TestRunScheduledInvocation:
         with patch(
             "src.backend.core.di.providers.get_action_dispatcher_provider",
             return_value=mock_dispatcher,
+        ), patch(
+            "src.backend.core.di.contexts.make_dispatch_context",
+            return_value=MagicMock(),
         ):
-            with patch(
-                "src.backend.core.di.contexts.make_dispatch_context",
-                return_value=MagicMock(),
-            ):
-                # should not raise
-                await _run_scheduled_invocation(spec)
+            # should not raise
+            await _run_scheduled_invocation(spec)
 
     @pytest.mark.asyncio
     async def test_unknown_mode_fallback(self) -> None:
@@ -200,12 +197,11 @@ class TestRunScheduledInvocation:
         with patch(
             "src.backend.core.di.providers.get_action_dispatcher_provider",
             return_value=mock_dispatcher,
+        ), patch(
+            "src.backend.core.di.contexts.make_dispatch_context",
+            return_value=MagicMock(),
         ):
-            with patch(
-                "src.backend.core.di.contexts.make_dispatch_context",
-                return_value=MagicMock(),
-            ):
-                await _run_scheduled_invocation(spec)
+            await _run_scheduled_invocation(spec)
 
         mock_dispatcher.dispatch.assert_awaited_once()
 

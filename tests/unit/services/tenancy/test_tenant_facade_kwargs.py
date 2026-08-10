@@ -27,18 +27,17 @@ class TestTenantFacadeKwargs:
         facade = TenantFacade()
         with patch(
             "src.backend.core.tenancy.current_tenant", return_value=None
-        ):
-            with patch(
-                "src.backend.core.tenancy.set_tenant"
-            ) as mock_set:
-                async with facade.with_tenant(
-                    tenant_id="t-001", principal_id="p-007"
-                ):
-                    # set_tenant должен быть вызван с CapabilityTenant
-                    assert mock_set.called
-                    new_ctx = mock_set.call_args_list[0].args[0]
-                    assert new_ctx.id == "t-001"
-                    assert new_ctx.principal == "p-007"
+        ), patch(
+            "src.backend.core.tenancy.set_tenant"
+        ) as mock_set:
+            async with facade.with_tenant(
+                tenant_id="t-001", principal_id="p-007"
+            ):
+                # set_tenant должен быть вызван с CapabilityTenant
+                assert mock_set.called
+                new_ctx = mock_set.call_args_list[0].args[0]
+                assert new_ctx.id == "t-001"
+                assert new_ctx.principal == "p-007"
 
     @pytest.mark.asyncio
     async def test_with_tenant_without_principal_uses_system_fallback(
@@ -48,12 +47,11 @@ class TestTenantFacadeKwargs:
         facade = TenantFacade()
         with patch(
             "src.backend.core.tenancy.current_tenant", return_value=None
-        ):
-            with patch(
-                "src.backend.core.tenancy.set_tenant"
-            ) as mock_set:
-                async with facade.with_tenant("tenant_42"):
-                    new_ctx = mock_set.call_args_list[0].args[0]
-                    assert new_ctx.id == "tenant_42"
-                    # principal fallback на SYSTEM_TENANT_ID ("_system")
-                    assert new_ctx.principal == "_system"
+        ), patch(
+            "src.backend.core.tenancy.set_tenant"
+        ) as mock_set:
+            async with facade.with_tenant("tenant_42"):
+                new_ctx = mock_set.call_args_list[0].args[0]
+                assert new_ctx.id == "tenant_42"
+                # principal fallback на SYSTEM_TENANT_ID ("_system")
+                assert new_ctx.principal == "_system"

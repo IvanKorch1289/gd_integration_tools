@@ -131,15 +131,14 @@ def test_bulkhead_creates_new_when_missing() -> None:
     with patch(
         "src.backend.core.resilience.bulkhead_registry.get_bulkhead_registry",
         return_value=fake_registry,
+    ), patch(
+        "src.backend.core.resilience.backpressure.bulkhead.AdaptiveBulkhead",
+        return_value=fake_bh,
     ):
-        with patch(
-            "src.backend.core.resilience.backpressure.bulkhead.AdaptiveBulkhead",
-            return_value=fake_bh,
-        ):
-            facade = ResilienceFacade()
-            result = facade.bulkhead("kafka_produce")
-            assert result is fake_bh
-            fake_registry.register.assert_called_once_with("kafka_produce", fake_bh)
+        facade = ResilienceFacade()
+        result = facade.bulkhead("kafka_produce")
+        assert result is fake_bh
+        fake_registry.register.assert_called_once_with("kafka_produce", fake_bh)
 
 
 # ── with_retry: decorator factory (S174) ────────────────────────────

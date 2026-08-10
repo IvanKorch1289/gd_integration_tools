@@ -153,15 +153,13 @@ class TestBuildAutoServicers:
         with patch(
             "src.backend.entrypoints.grpc.auto_servicer._discover_services",
             return_value=["orders"],
+        ), patch(
+            "src.backend.entrypoints.grpc.auto_servicer._import_pair",
+            return_value=(fake_pb2, fake_pb2_grpc),
+        ), patch(
+            "src.backend.dsl.commands.action_registry.action_handler_registry",
+            mock_registry,
         ):
-            with patch(
-                "src.backend.entrypoints.grpc.auto_servicer._import_pair",
-                return_value=(fake_pb2, fake_pb2_grpc),
-            ):
-                with patch(
-                    "src.backend.dsl.commands.action_registry.action_handler_registry",
-                    mock_registry,
-                ):
-                    bundles = build_auto_servicers()
+            bundles = build_auto_servicers()
         assert len(bundles) == 1
         assert bundles[0].service == "orders"

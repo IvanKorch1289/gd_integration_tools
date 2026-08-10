@@ -160,10 +160,10 @@ def build_delete_sql(table: str, where: dict[str, Any]) -> tuple[str, dict[str, 
             "db_delete: where cannot be empty (would DELETE all rows). "
             "Use db_query with explicit SQL for bulk operations."
         )
-    for col in where.keys():
+    for col in where:
         _quote_identifier(col)
     table_q = _quote_identifier(table)
-    conditions = " AND ".join(f"{_quote_identifier(c)} = :{c}" for c in where.keys())
+    conditions = " AND ".join(f"{_quote_identifier(c)} = :{c}" for c in where)
     sql = f"DELETE FROM {table_q} WHERE {conditions}"
     return sql, dict(where)
 
@@ -195,10 +195,10 @@ def build_update_sql(
         _quote_identifier(col)
     table_q = _quote_identifier(table)
     set_clause = ", ".join(
-        f"{_quote_identifier(c)} = :set_{c}" for c in data.keys()
+        f"{_quote_identifier(c)} = :set_{c}" for c in data
     )
     conditions = " AND ".join(
-        f"{_quote_identifier(c)} = :where_{c}" for c in where.keys()
+        f"{_quote_identifier(c)} = :where_{c}" for c in where
     )
     sql = f"UPDATE {table_q} SET {set_clause} WHERE {conditions}"
     # Merge params with prefixed keys to avoid collisions between SET and WHERE.

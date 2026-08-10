@@ -389,13 +389,12 @@ class TestRegionHealthChecker:
         mock_cm.__aexit__ = AsyncMock(return_value=False)
         writer_mock = MagicMock()
         writer_mock.wait_closed = AsyncMock()
-        with patch("asyncio.timeout", return_value=mock_cm):
-            with patch(
-                "asyncio.open_connection",
-                new_callable=AsyncMock,
-                return_value=(MagicMock(), writer_mock),
-            ):
-                result = await checker.probe(region)
+        with patch("asyncio.timeout", return_value=mock_cm), patch(
+            "asyncio.open_connection",
+            new_callable=AsyncMock,
+            return_value=(MagicMock(), writer_mock),
+        ):
+            result = await checker.probe(region)
         assert result is True
 
     @pytest.mark.unit

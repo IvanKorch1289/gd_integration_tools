@@ -46,9 +46,8 @@ async def test_observability_records_counter_through_registry() -> None:
 def test_observability_log_event_uses_logging_helper_as_function() -> None:
     with patch(
         "src.backend.core.observability.logging_helpers.log_audit_event_lite"
-    ) as log_event:
-        with ObservabilityFacade().log_event("order.created", order_id="42"):
-            pass
+    ) as log_event, ObservabilityFacade().log_event("order.created", order_id="42"):
+        pass
 
     log_event.assert_called_once()
 

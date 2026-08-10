@@ -59,9 +59,8 @@ class TestWSAuthenticator:
         with patch(
             "src.backend.core.di.providers.get_api_key_manager_provider",
             return_value=mock_mgr,
-        ):
-            with pytest.raises(WSAuthError, match="Invalid API key"):
-                await authenticator.authenticate("token")
+        ), pytest.raises(WSAuthError, match="Invalid API key"):
+            await authenticator.authenticate("token")
 
     @pytest.mark.asyncio
     async def test_auth_failure_raises(self, authenticator: WSAuthenticator) -> None:
@@ -72,9 +71,8 @@ class TestWSAuthenticator:
         with patch(
             "src.backend.core.di.providers.get_api_key_manager_provider",
             return_value=mock_mgr,
-        ):
-            with pytest.raises(WSAuthError, match="Auth failed"):
-                await authenticator.authenticate("token")
+        ), pytest.raises(WSAuthError, match="Auth failed"):
+            await authenticator.authenticate("token")
 
     @pytest.mark.asyncio
     async def test_load_groups_from_redis(self, authenticator: WSAuthenticator) -> None:

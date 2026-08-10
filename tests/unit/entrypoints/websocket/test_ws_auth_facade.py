@@ -159,9 +159,8 @@ class TestWSAuthenticatorJWT:
         with patch(
             "src.backend.core.auth.jwt_backend.JwtBackend",
             _FakeBackend,
-        ):
-            with pytest.raises(WSAuthError, match="JWT"):
-                await authenticator.authenticate_jwt("malformed.token.here")
+        ), pytest.raises(WSAuthError, match="JWT"):
+            await authenticator.authenticate_jwt("malformed.token.here")
 
     @pytest.mark.asyncio
     async def test_jwt_backend_unavailable_raises(

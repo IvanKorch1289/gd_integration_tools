@@ -136,22 +136,21 @@ class TestBuildTemporalActivities:
         from src.backend.plugins.composition.setup_infra import lifecycle
 
         # Hide the import → ImportError
-        with patch.dict("sys.modules", {"temporalio": MagicMock()}):
-            with patch(
-                "src.backend.plugins.composition.setup_infra.lifecycle.app_logger"
-            ):
-                # Force ImportError by patching builtins.__import__
-                import builtins
+        with patch.dict("sys.modules", {"temporalio": MagicMock()}), patch(
+            "src.backend.plugins.composition.setup_infra.lifecycle.app_logger"
+        ):
+            # Force ImportError by patching builtins.__import__
+            import builtins
 
-                real_import = builtins.__import__
+            real_import = builtins.__import__
 
-                def _import(name, *args, **kwargs):  # type: ignore[no-untyped-def]
-                    if name.endswith("activity_bridge"):
-                        raise ImportError("simulated: activity_bridge hidden")
-                    return real_import(name, *args, **kwargs)
+            def _import(name, *args, **kwargs):  # type: ignore[no-untyped-def]
+                if name.endswith("activity_bridge"):
+                    raise ImportError("simulated: activity_bridge hidden")
+                return real_import(name, *args, **kwargs)
 
-                with patch("builtins.__import__", side_effect=_import):
-                    activities = await lifecycle._build_temporal_activities()
+            with patch("builtins.__import__", side_effect=_import):
+                activities = await lifecycle._build_temporal_activities()
 
         assert activities == []
 

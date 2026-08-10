@@ -146,9 +146,8 @@ class TestAnonymizeDbFailClosed:
         with patch(
             "src.backend.infrastructure.database.session_manager.main_session_manager",
             fake_mgr,
-        ):
-            with pytest.raises(ConnectionError, match="postgres unreachable"):
-                await proc._anonymize_db("erasure-1")
+        ), pytest.raises(ConnectionError, match="postgres unreachable"):
+            await proc._anonymize_db("erasure-1")
 
     @pytest.mark.asyncio
     async def test_process_db_failure_marks_exchange_failed(self) -> None:

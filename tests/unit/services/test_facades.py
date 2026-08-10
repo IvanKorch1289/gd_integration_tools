@@ -152,16 +152,15 @@ class TestTenantFacade:
         facade = TenantFacade()
         with patch(
             "src.backend.core.tenancy.current_tenant", return_value=None
-        ):
-            with patch(
-                "src.backend.core.tenancy.set_tenant"
-            ) as mock_set:
-                async with facade.with_tenant("tenant_42"):
-                    # During context, set_tenant should be called with new ctx
-                    assert mock_set.called
+        ), patch(
+            "src.backend.core.tenancy.set_tenant"
+        ) as mock_set:
+            async with facade.with_tenant("tenant_42"):
+                # During context, set_tenant should be called with new ctx
+                assert mock_set.called
 
-                # After context, set_tenant should restore previous
-                assert mock_set.call_count >= 2
+            # After context, set_tenant should restore previous
+            assert mock_set.call_count >= 2
 
 
 class TestCapabilityFacade:
@@ -245,9 +244,8 @@ class TestCapabilityFacade:
             facade.gate,
             "check",
             side_effect=RuntimeError("boom"),
-        ):
-            with pytest.raises(CapabilityDeniedError) as caught:
-                facade.check_or_raise("plugin", "capability")
+        ), pytest.raises(CapabilityDeniedError) as caught:
+            facade.check_or_raise("plugin", "capability")
 
         assert isinstance(caught.value.__cause__, RuntimeError)
         assert str(caught.value.__cause__) == "boom"

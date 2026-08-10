@@ -80,15 +80,14 @@ class TestMcpAuthBypassDesign:
             helpers,
             "_action_input_schema_json",
             return_value=None,
-        ):
-            with patch(
-                "src.backend.dsl.commands.registry.action_handler_registry",
-            ) as mock_registry:
-                mock_registry.is_registered = MagicMock(return_value=False)
+        ), patch(
+            "src.backend.dsl.commands.registry.action_handler_registry",
+        ) as mock_registry:
+            mock_registry.is_registered = MagicMock(return_value=False)
 
-                # Should register tool without raising — function body
-                # captures ``action_name`` via closure for ``_check_mcp_tool_authz``.
-                helpers._register_single_tool(mcp, action_name="test.tool")
+            # Should register tool without raising — function body
+            # captures ``action_name`` via closure for ``_check_mcp_tool_authz``.
+            helpers._register_single_tool(mcp, action_name="test.tool")
 
         # The tool was registered (via fake_tool_decorator capture).
         assert tool_func.fn is not None

@@ -51,9 +51,8 @@ async def test_inbox_fail_open_when_redis_missing(
     # Подменяем __import__ чтобы он бросал ImportError
     with patch.dict(
         sys.modules, {"src.backend.infrastructure.clients.storage.redis": None}
-    ):
-        with patch("src.backend.infrastructure.eventing.inbox.logger.debug"):
-            result = await inbox.seen_or_mark("event-1")
+    ), patch("src.backend.infrastructure.eventing.inbox.logger.debug"):
+        result = await inbox.seen_or_mark("event-1")
     # При ImportError возвращает False (не дубликат)
     assert result is False
 

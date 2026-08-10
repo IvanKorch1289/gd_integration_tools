@@ -153,9 +153,8 @@ class TestDispatchAuthzEnforcement:
         with patch(
             "src.backend.services.routes.route_authz.check_route_permission",
             new=AsyncMock(return_value=(False, "missing_permissions:role:admin")),
-        ):
-            with pytest.raises(RoutePermissionDeniedError) as exc_info:
-                await DslService().dispatch("r1", body={}, context=ctx)
+        ), pytest.raises(RoutePermissionDeniedError) as exc_info:
+            await DslService().dispatch("r1", body={}, context=ctx)
 
         err = exc_info.value
         assert err.route_id == "r1"
@@ -174,9 +173,8 @@ class TestDispatchAuthzEnforcement:
         with patch(
             "src.backend.services.routes.route_authz._resolve_authz_gateway",
             return_value=None,
-        ):
-            with pytest.raises(RoutePermissionDeniedError) as exc_info:
-                await DslService().dispatch("r1", body={}, context=ctx)
+        ), pytest.raises(RoutePermissionDeniedError) as exc_info:
+            await DslService().dispatch("r1", body={}, context=ctx)
 
         assert "authorization_gateway_not_registered" in exc_info.value.reason
 

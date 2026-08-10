@@ -41,17 +41,16 @@ async def test_fail_closed_returns_false() -> None:
     fake_settings = MagicMock()
     fake_settings.resilience.rate_limit_fail_mode = "closed"
 
-    with patch.object(core_resilience, "get_rate_limiter", _factory):
-        with patch(
-            "src.backend.services.resilience.facade._get_rate_limit_settings",
-            return_value=fake_settings,
-        ):
-            facade = ResilienceFacade()
-            result = await facade.check_rate_limit(
-                "client-1", limit=10, window_seconds=1.0
-            )
-            # B-05 fix: closed → False (deny-by-default).
-            assert result is False
+    with patch.object(core_resilience, "get_rate_limiter", _factory), patch(
+        "src.backend.services.resilience.facade._get_rate_limit_settings",
+        return_value=fake_settings,
+    ):
+        facade = ResilienceFacade()
+        result = await facade.check_rate_limit(
+            "client-1", limit=10, window_seconds=1.0
+        )
+        # B-05 fix: closed → False (deny-by-default).
+        assert result is False
 
 
 # ── fail_open (legacy / opt-in) ────────────────────────────────────
@@ -70,17 +69,16 @@ async def test_fail_open_returns_true() -> None:
     fake_settings = MagicMock()
     fake_settings.resilience.rate_limit_fail_mode = "open"
 
-    with patch.object(core_resilience, "get_rate_limiter", _factory):
-        with patch(
-            "src.backend.services.resilience.facade._get_rate_limit_settings",
-            return_value=fake_settings,
-        ):
-            facade = ResilienceFacade()
-            result = await facade.check_rate_limit(
-                "client-1", limit=10, window_seconds=1.0
-            )
-            # B-05 fix: open → True (legacy pass-through).
-            assert result is True
+    with patch.object(core_resilience, "get_rate_limiter", _factory), patch(
+        "src.backend.services.resilience.facade._get_rate_limit_settings",
+        return_value=fake_settings,
+    ):
+        facade = ResilienceFacade()
+        result = await facade.check_rate_limit(
+            "client-1", limit=10, window_seconds=1.0
+        )
+        # B-05 fix: open → True (legacy pass-through).
+        assert result is True
 
 
 # ── happy path (no exception) — sanity check ───────────────────────
@@ -100,16 +98,15 @@ async def test_check_rate_limit_happy_path() -> None:
     fake_settings = MagicMock()
     fake_settings.resilience.rate_limit_fail_mode = "closed"
 
-    with patch.object(core_resilience, "get_rate_limiter", _factory):
-        with patch(
-            "src.backend.services.resilience.facade._get_rate_limit_settings",
-            return_value=fake_settings,
-        ):
-            facade = ResilienceFacade()
-            result = await facade.check_rate_limit(
-                "client-1", limit=10, window_seconds=1.0
-            )
-            assert result is True
+    with patch.object(core_resilience, "get_rate_limiter", _factory), patch(
+        "src.backend.services.resilience.facade._get_rate_limit_settings",
+        return_value=fake_settings,
+    ):
+        facade = ResilienceFacade()
+        result = await facade.check_rate_limit(
+            "client-1", limit=10, window_seconds=1.0
+        )
+        assert result is True
 
 
 # ── settings default value ─────────────────────────────────────────

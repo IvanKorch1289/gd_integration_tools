@@ -283,9 +283,8 @@ async def test_guard_input_rebuff_blocked(mock_rebuff_client: MagicMock) -> None
     with patch(
         "src.backend.services.ai.guardrails.rebuff_client.RebuffClient",
         return_value=mock_rebuff_client,
-    ):
-        with pytest.raises(GuardrailViolationError) as exc_info:
-            await enforcer.guard_input(prompt, policy)
+    ), pytest.raises(GuardrailViolationError) as exc_info:
+        await enforcer.guard_input(prompt, policy)
 
     assert exc_info.value.guard_name == "rebuff:default"
     assert "sqli" in exc_info.value.flagged_categories
@@ -304,9 +303,8 @@ async def test_guard_input_lakera_blocked(mock_lakera_client: MagicMock) -> None
     with patch(
         "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
         return_value=mock_lakera_client,
-    ):
-        with pytest.raises(GuardrailViolationError) as exc_info:
-            await enforcer.guard_input(prompt, policy)
+    ), pytest.raises(GuardrailViolationError) as exc_info:
+        await enforcer.guard_input(prompt, policy)
 
     assert exc_info.value.guard_name == "lakera:strict"
     assert "prompt_injection" in exc_info.value.flagged_categories
@@ -329,10 +327,9 @@ async def test_guard_input_lakera_provider_error_fails_closed_and_audits() -> No
         patch(
             "src.backend.core.ai.policy.enforcer.input_guard_mixin.emit_audit_safe",
             new_callable=AsyncMock,
-        ) as audit,
+        ) as audit,pytest.raises(GuardrailViolationError) as exc_info
     ):
-        with pytest.raises(GuardrailViolationError) as exc_info:
-            await AIPolicyEnforcer().guard_input("safe prompt", policy)
+        await AIPolicyEnforcer().guard_input("safe prompt", policy)
 
     assert exc_info.value.flagged_categories == ["lakera_error"]
     assert exc_info.value.on_block == "fail"
@@ -403,9 +400,8 @@ async def test_guard_input_lakera_flagged_blocks_even_with_fail_open(
     with patch(
         "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
         return_value=mock_lakera_client,
-    ):
-        with pytest.raises(GuardrailViolationError) as exc_info:
-            await AIPolicyEnforcer().guard_input("unsafe prompt", policy)
+    ), pytest.raises(GuardrailViolationError) as exc_info:
+        await AIPolicyEnforcer().guard_input("unsafe prompt", policy)
 
     assert exc_info.value.flagged_categories == ["prompt_injection"]
     assert exc_info.value.on_block == "warn"

@@ -276,9 +276,9 @@ def test_dsl_persistence_total_method_count() -> None:
 
 def test_supported_dialects_set() -> None:
     """P3 unified DML: ровно 5 диалектов (PG/SQLite/MySQL/Oracle/MSSQL)."""
-    assert SUPPORTED_DIALECTS == frozenset(
+    assert frozenset(
         {"postgresql", "sqlite", "mysql", "oracle", "mssql"}
-    )
+    ) == SUPPORTED_DIALECTS
 
 
 def test_build_upsert_sql_mysql_uses_duplicate_key() -> None:
