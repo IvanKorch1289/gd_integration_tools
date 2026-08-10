@@ -222,8 +222,16 @@ class InfraMixin:
                     details={"graph_type": graph_type, "model": model},
                     severity="warning",
                 )
-            except Exception:
-                pass  # audit is best-effort
+            except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-976: narrow exceptions + observability.
+                # ImportError — audit facade missing, AttributeError —
+                # schema change, RuntimeError — backend unavailable.
+                # audit is best-effort.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "agent_dsl_infra.audit_emit_failed",
+                    extra={"error": str(audit_exc)},
+                )
             sandbox = InProcessAgentSandbox()
 
         return self._add(  # type: ignore[attr-defined]
