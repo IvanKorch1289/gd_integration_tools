@@ -310,7 +310,7 @@ class InMemoryHitlSignalStore:
                 return True
         try:
             await asyncio.wait_for(event.wait(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return False
         return True
 

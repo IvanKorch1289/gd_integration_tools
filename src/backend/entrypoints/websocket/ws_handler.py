@@ -274,7 +274,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 data = await asyncio.wait_for(
                     websocket.receive_json(), timeout=ws_settings.message_timeout_s
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(
                     "WS message timeout client_id=%s timeout_s=%.1f",
                     client_id,

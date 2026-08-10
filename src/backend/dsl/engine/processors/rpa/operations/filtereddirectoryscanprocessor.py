@@ -117,7 +117,7 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
             files = await asyncio.wait_for(
                 asyncio.to_thread(_scan), timeout=self.timeout_seconds
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             _rpa_logger.warning(
                 "directory_scan timeout dir=%s pattern=%s timeout=%.1fs",
                 self.directory, self.pattern, self.timeout_seconds,

@@ -80,7 +80,7 @@ class RouteBuilder:
         *,
         source_property: str,
         branches: dict[str, list[BaseProcessor]],
-        default: Union[list[BaseProcessor], None] = ...,
+        default: list[BaseProcessor] | None = ...,
     ) -> RouteBuilder:
         """Verdict-based routing по ``agent_result`` (S27 W1)."""
         ...
@@ -94,9 +94,9 @@ class RouteBuilder:
         *,
         processors: list[BaseProcessor],
         max_iterations: int = ...,
-        stop_condition_property: Union[str, None] = ...,
-        budget_cost_usd: Union[float, None] = ...,
-        budget_tokens: Union[int, None] = ...,
+        stop_condition_property: str | None = ...,
+        budget_cost_usd: float | None = ...,
+        budget_tokens: int | None = ...,
     ) -> RouteBuilder:
         """Циклическое выполнение вложенного pipeline (S27 W1)."""
         ...
@@ -106,7 +106,7 @@ class RouteBuilder:
         *,
         agents: list[dict[str, Any]],
         result_property: str = ...,
-        timeout_s: Union[float, None] = ...,
+        timeout_s: float | None = ...,
         continue_on_error: bool = ...,
     ) -> RouteBuilder:
         """Параллельный fan-out агентов через :class:`asyncio.TaskGroup` (S27 W1)."""
@@ -116,10 +116,10 @@ class RouteBuilder:
         self,
         *,
         workflow_id: str,
-        prompt_ref: Union[str, None] = ...,
-        prompt_inline: Union[str, None] = ...,
-        policy_ref: Union[str, None] = ...,
-        context_property: Union[str, None] = ...,
+        prompt_ref: str | None = ...,
+        prompt_inline: str | None = ...,
+        policy_ref: str | None = ...,
+        context_property: str | None = ...,
         result_property: str = ...,
         timeout_s: float = ...,
         max_retries: int = ...,
@@ -141,10 +141,10 @@ class RouteBuilder:
         self,
         *,
         workflow_id: str,
-        prompt_ref: Union[str, None] = ...,
-        prompt_inline: Union[str, None] = ...,
-        policy_ref: Union[str, None] = ...,
-        context_property: Union[str, None] = ...,
+        prompt_ref: str | None = ...,
+        prompt_inline: str | None = ...,
+        policy_ref: str | None = ...,
+        context_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Алиас :meth:`agent_run` — для семантически нагруженных мест"""
@@ -154,8 +154,8 @@ class RouteBuilder:
         self,
         *,
         namespace: str,
-        query: Union[str, None] = ...,
-        query_property: Union[str, None] = ...,
+        query: str | None = ...,
+        query_property: str | None = ...,
         k: int = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
@@ -166,10 +166,10 @@ class RouteBuilder:
         self,
         *,
         namespace: str,
-        key: Union[str, None] = ...,
-        key_property: Union[str, None] = ...,
+        key: str | None = ...,
+        key_property: str | None = ...,
         value_property: str = ...,
-        ttl_s: Union[int, None] = ...,
+        ttl_s: int | None = ...,
     ) -> RouteBuilder:
         """Запись в :class:`MemoryProtocol` (S27 W3, ADR-NEW-18)."""
         ...
@@ -178,7 +178,7 @@ class RouteBuilder:
         self,
         *,
         task: str,
-        ui_context: Union[dict[str, Any], None] = ...,
+        ui_context: dict[str, Any] | None = ...,
         action_property: str = ...,
         model: str = ...,
         temperature: float = ...,
@@ -191,8 +191,8 @@ class RouteBuilder:
         self,
         *,
         available_tool_ids: list[str],
-        query: Union[str, None] = ...,
-        query_property: Union[str, None] = ...,
+        query: str | None = ...,
+        query_property: str | None = ...,
         result_property: str = ...,
         model: str = ...,
         temperature: float = ...,
@@ -227,16 +227,16 @@ class RouteBuilder:
     def audit(
         self,
         *,
-        action: Union[str, None] = ...,
-        action_from: Union[str, None] = ...,
+        action: str | None = ...,
+        action_from: str | None = ...,
         actor: str = ...,
-        actor_from: Union[str, None] = ...,
-        resource_from: Union[str, None] = ...,
+        actor_from: str | None = ...,
+        resource_from: str | None = ...,
         outcome: str = ...,
-        outcome_from: Union[str, None] = ...,
-        metadata_from: Union[str, None] = ...,
-        tenant_id_from: Union[str, None] = ...,
-        correlation_id_from: Union[str, None] = ...,
+        outcome_from: str | None = ...,
+        metadata_from: str | None = ...,
+        tenant_id_from: str | None = ...,
+        correlation_id_from: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Записать событие в immutable audit log (Wave 5.1)."""
@@ -244,7 +244,7 @@ class RouteBuilder:
 
     def auth(
         self,
-        methods: Union[list[str], str] = ...,
+        methods: list[str] | str = ...,
         *,
         result_property: str = ...,
         required: bool = ...,
@@ -257,7 +257,7 @@ class RouteBuilder:
         *,
         size: int = ...,
         timeout_ms: int = ...,
-        group_by: Union[str, None] = ...,
+        group_by: str | None = ...,
     ) -> RouteBuilder:
         """Накопление сообщений в окно с flush по N ИЛИ по таймауту."""
         ...
@@ -265,7 +265,7 @@ class RouteBuilder:
     def batch_delete(
         self,
         table: str,
-        ids: Union[list[Any], None] = ...,
+        ids: list[Any] | None = ...,
         *,
         key_field: str = ...,
         profile: str = ...,
@@ -276,7 +276,7 @@ class RouteBuilder:
     def batch_insert(
         self,
         table: str,
-        items: Union[list[dict[str, Any]], None] = ...,
+        items: list[dict[str, Any]] | None = ...,
         *,
         profile: str = ...,
     ) -> RouteBuilder:
@@ -286,7 +286,7 @@ class RouteBuilder:
     def batch_update(
         self,
         table: str,
-        items: Union[list[dict[str, Any]], None] = ...,
+        items: list[dict[str, Any]] | None = ...,
         *,
         key_field: str = ...,
         profile: str = ...,
@@ -305,7 +305,7 @@ class RouteBuilder:
         processors: list[BaseProcessor],
         *,
         wait: bool = ...,
-        timeout: Union[float, None] = ...,
+        timeout: float | None = ...,
     ) -> Self:
         """Ограничивает concurrency на ветку — защита провайдера от перегрузки."""
         ...
@@ -328,13 +328,13 @@ class RouteBuilder:
         *,
         payload_from: str = ...,
         result_property: str = ...,
-        inject: Union[list[str], None] = ...,
+        inject: list[str] | None = ...,
     ) -> RouteBuilder:
         """Вызов Python-функции ``module:fn`` (R-V15-6, V21 security)."""
         ...
 
     def call_llm(
-        self, provider: Union[str, None] = ..., model: Union[str, None] = ...
+        self, provider: str | None = ..., model: str | None = ...
     ) -> RouteBuilder:
         """LLM chat-completion через ai_agent сервис (с PII-маскировкой)."""
         ...
@@ -370,7 +370,7 @@ class RouteBuilder:
         interval: float = ...,
         timestamp_column: str = ...,
         batch_size: int = ...,
-        channel: Union[str, None] = ...,
+        channel: str | None = ...,
     ) -> RouteBuilder:
         """Change Data Capture — подписка на изменения в БД."""
         ...
@@ -378,8 +378,8 @@ class RouteBuilder:
     def cdc_transform(
         self,
         *,
-        operations: Union[list[str], None] = ...,
-        project: Union[list[str], None] = ...,
+        operations: list[str] | None = ...,
+        project: list[str] | None = ...,
         include_old: bool = ...,
         include_new: bool = ...,
         timestamp_field: str = ...,
@@ -392,7 +392,7 @@ class RouteBuilder:
         self,
         when: list[ChoiceBranch]
         | list[tuple[Callable[[Exchange[Any]], bool], list[BaseProcessor]]],
-        otherwise: Union[list[BaseProcessor], None] = ...,
+        otherwise: list[BaseProcessor] | None = ...,
     ) -> RouteBuilder:
         """When/Otherwise: ветвление по JMESPath-веткам или предикатам."""
         ...
@@ -403,8 +403,8 @@ class RouteBuilder:
         *,
         failure_threshold: int = ...,
         recovery_timeout: float = ...,
-        fallback_processors: Union[list[BaseProcessor], None] = ...,
-        breaker_name: Union[str, None] = ...,
+        fallback_processors: list[BaseProcessor] | None = ...,
+        breaker_name: str | None = ...,
     ) -> RouteBuilder:
         """Circuit Breaker: fail-fast при повторных ошибках (CLOSED/OPEN/HALF_OPEN)."""
         ...
@@ -449,7 +449,7 @@ class RouteBuilder:
     def collect(
         self,
         *,
-        field: Union[str, None] = ...,
+        field: str | None = ...,
         key_fn: Callable[[Any], Any] | None = ...,
     ) -> RouteBuilder:
         """Извлекает поле из каждого объекта коллекции в body."""
@@ -482,7 +482,7 @@ class RouteBuilder:
         self,
         routes: list[tuple[Callable[[Exchange[Any]], bool], str]],
         *,
-        default_endpoint: Union[str, None] = ...,
+        default_endpoint: str | None = ...,
     ) -> RouteBuilder:
         """Content-Based Router EIP: route по predicate."""
         ...
@@ -492,9 +492,9 @@ class RouteBuilder:
         *,
         strategy: str = ...,
         field: str = ...,
-        source: Union[str, None] = ...,
+        source: str | None = ...,
         value: Any = ...,
-        name: Union[str, None] = ...,
+        name: str | None = ...,
     ) -> RouteBuilder:
         """Content Enricher EIP — http/static/function strategies."""
         ...
@@ -527,7 +527,7 @@ class RouteBuilder:
         *,
         cron_expr: str,
         workflow_name: str,
-        workflow_args: Union[dict[str, Any], None] = ...,
+        workflow_args: dict[str, Any] | None = ...,
         namespace: str = ...,
         task_queue: str = ...,
         result_property: str = ...,
@@ -552,9 +552,9 @@ class RouteBuilder:
         self,
         entity: str,
         *,
-        filters_from: Union[str, None] = ...,
-        page: Union[int, None] = ...,
-        size: Union[int, None] = ...,
+        filters_from: str | None = ...,
+        page: int | None = ...,
+        size: int | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Алиас к :meth:`entity_list` (R-V15-12)."""
@@ -686,14 +686,14 @@ class RouteBuilder:
 
     def delay(
         self,
-        delay_ms: Union[int, None] = ...,
+        delay_ms: int | None = ...,
         *,
         scheduled_time_fn: Callable[[Exchange[Any]], float] | None = ...,
     ) -> RouteBuilder:
         """Delay: задержка на N миллисекунд или до timestamp."""
         ...
 
-    def depends(self, *deps: Union[str, tuple[str, str]]) -> Self:
+    def depends(self, *deps: str | tuple[str, str]) -> Self:
         """Добавляет DI-зависимости к последнему processor (call_function/process_fn)."""
         ...
 
@@ -727,8 +727,8 @@ class RouteBuilder:
     def do_try(
         self,
         try_processors: list[BaseProcessor],
-        catch_processors: Union[list[BaseProcessor], None] = ...,
-        finally_processors: Union[list[BaseProcessor], None] = ...,
+        catch_processors: list[BaseProcessor] | None = ...,
+        finally_processors: list[BaseProcessor] | None = ...,
     ) -> RouteBuilder:
         """Try/Catch/Finally: exception handling в pipeline."""
         ...
@@ -737,8 +737,8 @@ class RouteBuilder:
         self,
         sql: str,
         *,
-        sources: Union[dict[str, str], None] = ...,
-        persistent_path: Union[str, None] = ...,
+        sources: dict[str, str] | None = ...,
+        persistent_path: str | None = ...,
     ) -> RouteBuilder:
         """DuckDB analytical SQL over body + lookup tables."""
         ...
@@ -760,7 +760,7 @@ class RouteBuilder:
     def email_driven(
         self,
         mailbox: str = ...,
-        subject_filter: Union[str, None] = ...,
+        subject_filter: str | None = ...,
         extract: str = ...,
     ) -> RouteBuilder:
         """IMAP → structured data pipeline."""
@@ -802,11 +802,11 @@ class RouteBuilder:
         self,
         *,
         entity: str,
-        filters_from: Union[str, None] = ...,
-        page: Union[int, None] = ...,
-        size: Union[int, None] = ...,
-        page_from: Union[str, None] = ...,
-        size_from: Union[str, None] = ...,
+        filters_from: str | None = ...,
+        page: int | None = ...,
+        size: int | None = ...,
+        page_from: str | None = ...,
+        size_from: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Получить страницу сущностей через action ``<entity>.list``."""
@@ -824,7 +824,7 @@ class RouteBuilder:
         ...
 
     def es_index(
-        self, index: str, *, doc_id_from: Union[str, None] = ...
+        self, index: str, *, doc_id_from: str | None = ...
     ) -> RouteBuilder:
         """Индексирует документ из body в ES ``index``."""
         ...
@@ -837,7 +837,7 @@ class RouteBuilder:
         self,
         *,
         rules: list[Any],
-        context_from: Union[str, None] = ...,
+        context_from: str | None = ...,
         decision_to: str = ...,
         default_decision: str = ...,
     ) -> RouteBuilder:
@@ -855,7 +855,7 @@ class RouteBuilder:
         """Exactly-once: dedup через storage по message-id."""
         ...
 
-    def excel_read(self, *, sheet_name: Union[str, None] = ...) -> RouteBuilder:
+    def excel_read(self, *, sheet_name: str | None = ...) -> RouteBuilder:
         """Читать Excel файл в list[dict]."""
         ...
 
@@ -869,8 +869,8 @@ class RouteBuilder:
         self,
         src: str,
         *,
-        methods: Union[list[str], None] = ...,
-        header_map: Union[dict[str, Any], None] = ...,
+        methods: list[str] | None = ...,
+        header_map: dict[str, Any] | None = ...,
     ) -> RouteBuilder:
         """Объявить роут как прокси-вход."""
         ...
@@ -880,11 +880,11 @@ class RouteBuilder:
         sync_id_from: str = ...,
         *,
         bot: str = ...,
-        body: Union[str, None] = ...,
-        body_from: Union[str, None] = ...,
-        bubble: Union[list[list[dict[str, Any]]], None] = ...,
-        keyboard: Union[list[list[dict[str, Any]]], None] = ...,
-        status: Union[str, None] = ...,
+        body: str | None = ...,
+        body_from: str | None = ...,
+        bubble: list[list[dict[str, Any]]] | None = ...,
+        keyboard: list[list[dict[str, Any]]] | None = ...,
+        status: str | None = ...,
     ) -> RouteBuilder:
         """Редактировать ранее отправленное Express сообщение."""
         ...
@@ -893,9 +893,9 @@ class RouteBuilder:
         self,
         *,
         mention_type: str = ...,
-        target_from: Union[str, None] = ...,
-        mention_id: Union[str, None] = ...,
-        name_from: Union[str, None] = ...,
+        target_from: str | None = ...,
+        mention_id: str | None = ...,
+        name_from: str | None = ...,
         property_name: str = ...,
     ) -> RouteBuilder:
         """Добавить упоминание (user/chat/channel/contact/all) в exchange-property."""
@@ -903,12 +903,12 @@ class RouteBuilder:
 
     def express_reply(
         self,
-        body_from: Union[str, None] = ...,
+        body_from: str | None = ...,
         *,
         bot: str = ...,
         source_sync_id_from: str = ...,
         chat_id_from: str = ...,
-        body: Union[str, None] = ...,
+        body: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Ответить на исходное сообщение Express (reply-thread)."""
@@ -916,13 +916,13 @@ class RouteBuilder:
 
     def express_send(
         self,
-        body: Union[str, None] = ...,
+        body: str | None = ...,
         *,
         bot: str = ...,
         chat_id_from: str = ...,
-        body_from: Union[str, None] = ...,
-        bubble: Union[list[list[dict[str, Any]]], None] = ...,
-        keyboard: Union[list[list[dict[str, Any]]], None] = ...,
+        body_from: str | None = ...,
+        bubble: list[list[dict[str, Any]]] | None = ...,
+        keyboard: list[list[dict[str, Any]]] | None = ...,
         status: str = ...,
         silent_response: bool = ...,
         sync: bool = ...,
@@ -936,12 +936,12 @@ class RouteBuilder:
         *,
         bot: str = ...,
         chat_id_from: str = ...,
-        s3_key_from: Union[str, None] = ...,
-        file_data_property: Union[str, None] = ...,
-        file_name: Union[str, None] = ...,
-        file_name_from: Union[str, None] = ...,
-        body: Union[str, None] = ...,
-        body_from: Union[str, None] = ...,
+        s3_key_from: str | None = ...,
+        file_data_property: str | None = ...,
+        file_name: str | None = ...,
+        file_name_from: str | None = ...,
+        body: str | None = ...,
+        body_from: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Отправить файл (S3/LocalFS или exchange-property) в Express чат."""
@@ -960,7 +960,7 @@ class RouteBuilder:
         ...
 
     def extract(
-        self, selector: str, url: Union[str, None] = ..., output_property: str = ...
+        self, selector: str, url: str | None = ..., output_property: str = ...
     ) -> RouteBuilder:
         """Извлечение текста по CSS-селектору."""
         ...
@@ -985,8 +985,8 @@ class RouteBuilder:
 
     def file_move(
         self,
-        src: Union[str, None] = ...,
-        dst: Union[str, None] = ...,
+        src: str | None = ...,
+        dst: str | None = ...,
         *,
         mode: str = ...,
     ) -> RouteBuilder:
@@ -994,7 +994,7 @@ class RouteBuilder:
         ...
 
     def fill_form(
-        self, url: str, fields: Union[dict, None] = ..., submit: Union[str, None] = ...
+        self, url: str, fields: dict | None = ..., submit: str | None = ...
     ) -> RouteBuilder:
         """Заполнение формы по полям + опциональный submit."""
         ...
@@ -1007,7 +1007,7 @@ class RouteBuilder:
         self,
         *,
         predicate: Callable[[Any], bool] | None = ...,
-        condition: Union[str, None] = ...,
+        condition: str | None = ...,
     ) -> RouteBuilder:
         """Фильтрует коллекцию в body по условию."""
         ...
@@ -1036,7 +1036,7 @@ class RouteBuilder:
         branches: dict[str, list[BaseProcessor]],
         *,
         aggregation: str = ...,
-        timeout_seconds: Union[float, None] = ...,
+        timeout_seconds: float | None = ...,
     ) -> RouteBuilder:
         """Fork-Join pattern: explicit join semantics поверх ``parallel``."""
         ...
@@ -1046,24 +1046,24 @@ class RouteBuilder:
         dst: str,
         *,
         pass_headers: bool = ...,
-        header_map: Union[dict[str, Any], None] = ...,
-        rewrite_path: Union[str, None] = ...,
+        header_map: dict[str, Any] | None = ...,
+        rewrite_path: str | None = ...,
         timeout: float = ...,
     ) -> RouteBuilder:
         """Переслать текущее сообщение в backend без трансформаций."""
         ...
 
     def from_(
-        cls: Any, route_id: str, source: str, *, description: Union[str, None] = ...
+        cls: Any, route_id: str, source: str, *, description: str | None = ...
     ) -> RouteBuilder:
         """Точка входа: создаёт новый RouteBuilder."""
         ...
 
-    def from_base64(self, b64_string: Union[str, None] = ...) -> RouteBuilder:
+    def from_base64(self, b64_string: str | None = ...) -> RouteBuilder:
         """Decode base64 string → ``bytes`` (stdlib ``base64``)."""
         ...
 
-    def from_bencode(self, bcode_bytes: Union[bytes, None] = ...) -> RouteBuilder:
+    def from_bencode(self, bcode_bytes: bytes | None = ...) -> RouteBuilder:
         """Parse bencoded bytes → Python object (no external deps)."""
         ...
 
@@ -1074,7 +1074,7 @@ class RouteBuilder:
         *,
         dsn: str = ...,
         slot_name: str = ...,
-        publication_names: Union[list[str], None] = ...,
+        publication_names: list[str] | None = ...,
         plugin: str = ...,
         **kwargs: Any,
     ) -> RouteBuilder:
@@ -1091,7 +1091,7 @@ class RouteBuilder:
         interval: float = ...,
         timestamp_column: str = ...,
         batch_size: int = ...,
-        channel: Union[str, None] = ...,
+        channel: str | None = ...,
         **kwargs: Any,
     ) -> RouteBuilder:
         """Создаёт маршрут с источником CDC Capture."""
@@ -1104,8 +1104,8 @@ class RouteBuilder:
         *,
         dsn: str,
         mode: str = ...,
-        slot_name: Union[str, None] = ...,
-        publication: Union[str, None] = ...,
+        slot_name: str | None = ...,
+        publication: str | None = ...,
         plugin: str = ...,
         **kwargs: Any,
     ) -> RouteBuilder:
@@ -1118,17 +1118,17 @@ class RouteBuilder:
         """S101 W1 — создать маршрут с CDC-source через :func:`get_cdc_source`."""
         ...
 
-    def from_csv(self, csv_string: Union[str, None] = ...) -> RouteBuilder:
+    def from_csv(self, csv_string: str | None = ...) -> RouteBuilder:
         """Parse CSV → ``list[dict]``."""
         ...
 
     def from_eventbus(
-        self, topic_pattern: str, *, ack_mode: str = ..., name: Union[str, None] = ...
+        self, topic_pattern: str, *, ack_mode: str = ..., name: str | None = ...
     ) -> RouteBuilder:
         """Subscribe маршрут на EventBus topic_pattern (V22 NEW)."""
         ...
 
-    def from_excel(self, excel_bytes: Union[bytes, None] = ...) -> RouteBuilder:
+    def from_excel(self, excel_bytes: bytes | None = ...) -> RouteBuilder:
         """Parse Excel bytes → ``list[dict]`` (openpyxl)."""
         ...
 
@@ -1136,7 +1136,7 @@ class RouteBuilder:
         self,
         path: str,
         *,
-        pattern: Union[str, None] = ...,
+        pattern: str | None = ...,
         recursive: bool = ...,
         poll_interval_s: float = ...,
     ) -> RouteBuilder:
@@ -1150,10 +1150,10 @@ class RouteBuilder:
         *,
         paths: str | Path | list[str | Path] | None = ...,
         recursive: bool = ...,
-        glob_include: Union[list[str], str, None] = ...,
-        glob_exclude: Union[list[str], str, None] = ...,
-        batch_size: Union[int, None] = ...,
-        batch_window: Union[float, None] = ...,
+        glob_include: list[str] | str | None = ...,
+        glob_exclude: list[str] | str | None = ...,
+        batch_size: int | None = ...,
+        batch_window: float | None = ...,
         **kwargs: Any,
     ) -> RouteBuilder:
         """Создаёт маршрут с источником FileWatcher (watchfiles.awatch)."""
@@ -1168,13 +1168,13 @@ class RouteBuilder:
         method: str,
         request_module: str,
         request_class: str,
-        request_kwargs: Union[dict[str, Any], None] = ...,
+        request_kwargs: dict[str, Any] | None = ...,
         **kwargs: Any,
     ) -> RouteBuilder:
         """gRPC server-streaming source. See GrpcSource in infrastructure.sources.grpc."""
         ...
 
-    def from_html_unescape(self, html_string: Union[str, None] = ...) -> RouteBuilder:
+    def from_html_unescape(self, html_string: str | None = ...) -> RouteBuilder:
         """HTML-unescape string (entities → ``<>&"'`` chars)."""
         ...
 
@@ -1184,7 +1184,7 @@ class RouteBuilder:
         *,
         expected_status: int = ...,
         method: str = ...,
-        body_match: Union[str, None] = ...,
+        body_match: str | None = ...,
         poll_interval_s: float = ...,
     ) -> RouteBuilder:
         """Camel-style ``from("http:url")`` — HTTP sensor trigger."""
@@ -1199,14 +1199,14 @@ class RouteBuilder:
         password: str,
         *,
         folder: str = ...,
-        subject_filter: Union[str, None] = ...,
-        from_filter: Union[str, None] = ...,
+        subject_filter: str | None = ...,
+        from_filter: str | None = ...,
         **kwargs: Any,
     ) -> RouteBuilder:
         """Фабричный метод: маршрут с источником IMAP IDLE (K3 W5)."""
         ...
 
-    def from_ini(self, ini_string: Union[str, None] = ...) -> RouteBuilder:
+    def from_ini(self, ini_string: str | None = ...) -> RouteBuilder:
         """Parse INI → ``dict`` (stdlib ``configparser``)."""
         ...
 
@@ -1215,7 +1215,7 @@ class RouteBuilder:
         interval_s: float,
         *,
         start_immediately: bool = ...,
-        payload: Union[dict[str, Any], None] = ...,
+        payload: dict[str, Any] | None = ...,
     ) -> RouteBuilder:
         """Camel-style ``from("timer:foo?period=...")`` — periodic trigger."""
         ...
@@ -1225,7 +1225,7 @@ class RouteBuilder:
         ...
 
     def from_jwt(
-        self, jwt_string: Union[str, None] = ..., *, secret: str, algorithm: str = ...
+        self, jwt_string: str | None = ..., *, secret: str, algorithm: str = ...
     ) -> RouteBuilder:
         """Decode JWT ``str`` → claims ``dict`` (verify HS* signature via joserfc)."""
         ...
@@ -1241,7 +1241,7 @@ class RouteBuilder:
         """Создаёт маршрут с источником Apache Kafka."""
         ...
 
-    def from_markdown(self, md_string: Union[str, None] = ...) -> RouteBuilder:
+    def from_markdown(self, md_string: str | None = ...) -> RouteBuilder:
         """Parse markdown → ``dict`` (extracts ``# heading`` → content)."""
         ...
 
@@ -1253,8 +1253,8 @@ class RouteBuilder:
         collection: str = ...,
         *,
         full_document_lookup: bool = ...,
-        pipeline: Union[list[dict[str, Any]], None] = ...,
-        description: Union[str, None] = ...,
+        pipeline: list[dict[str, Any]] | None = ...,
+        description: str | None = ...,
     ) -> Self:
         """Точка входа: маршрут из MongoDB change-streams — S106 W4."""
         ...
@@ -1265,7 +1265,7 @@ class RouteBuilder:
         """Создаёт маршрут с источником MQTT."""
         ...
 
-    def from_msgpack(self, msgpack_bytes: Union[bytes, None] = ...) -> RouteBuilder:
+    def from_msgpack(self, msgpack_bytes: bytes | None = ...) -> RouteBuilder:
         """Parse msgpack → ``dict``/``list`` (fallback: ``pickle``)."""
         ...
 
@@ -1275,7 +1275,7 @@ class RouteBuilder:
         subject: str,
         *,
         nats_url: str = ...,
-        description: Union[str, None] = ...,
+        description: str | None = ...,
     ) -> Self:
         """Точка входа: маршрут из NATS core (sub, без JetStream) — S106 W4."""
         ...
@@ -1288,16 +1288,16 @@ class RouteBuilder:
         durable: str,
         *,
         nats_url: str = ...,
-        description: Union[str, None] = ...,
+        description: str | None = ...,
     ) -> Self:
         """Точка входа: маршрут из NATS JetStream durable consumer."""
         ...
 
-    def from_parquet(self, parquet_bytes: Union[bytes, None] = ...) -> RouteBuilder:
+    def from_parquet(self, parquet_bytes: bytes | None = ...) -> RouteBuilder:
         """Parse parquet → ``list[dict]`` (pyarrow)."""
         ...
 
-    def from_protobuf_like(self, pb_bytes: Union[bytes, None] = ...) -> RouteBuilder:
+    def from_protobuf_like(self, pb_bytes: bytes | None = ...) -> RouteBuilder:
         """Decode base64-encoded JSON ``bytes`` → ``dict`` (inverse of to_protobuf_like)."""
         ...
 
@@ -1314,7 +1314,7 @@ class RouteBuilder:
         ...
 
     def from_registered_source(
-        cls: Any, route_id: str, source_id: str, *, description: Union[str, None] = ...
+        cls: Any, route_id: str, source_id: str, *, description: str | None = ...
     ) -> RouteBuilder:
         """Точка входа W23: маршрут запитывается от зарегистрированного Source."""
         ...
@@ -1325,7 +1325,7 @@ class RouteBuilder:
         key: str,
         *,
         region: str = ...,
-        endpoint_url: Union[str, None] = ...,
+        endpoint_url: str | None = ...,
         poll_interval_s: float = ...,
     ) -> RouteBuilder:
         """Camel-style ``from("aws-s3:bucket/key")`` — S3 sensor trigger."""
@@ -1342,7 +1342,7 @@ class RouteBuilder:
         dsn: str,
         query: str,
         *,
-        predicate: Union[str, None] = ...,
+        predicate: str | None = ...,
         poll_interval_s: float = ...,
     ) -> RouteBuilder:
         """Camel-style ``from("sql:...")`` — SQL sensor trigger."""
@@ -1353,11 +1353,11 @@ class RouteBuilder:
         route_id: str,
         url: str,
         *,
-        headers: Union[dict[str, str], None] = ...,
-        event_type: Union[str, None] = ...,
-        last_event_id: Union[str, None] = ...,
+        headers: dict[str, str] | None = ...,
+        event_type: str | None = ...,
+        last_event_id: str | None = ...,
         heartbeat_timeout_s: float = ...,
-        reconnect_max_retries: Union[int, None] = ...,
+        reconnect_max_retries: int | None = ...,
         parse_json: bool = ...,
     ) -> _T:
         """SSE consumer: регистрирует маршрут с SSE-источником."""
@@ -1369,10 +1369,10 @@ class RouteBuilder:
         urls: list[str],
         *,
         merge_strategy: str = ...,
-        headers: Union[dict[str, str], None] = ...,
-        event_type: Union[str, None] = ...,
+        headers: dict[str, str] | None = ...,
+        event_type: str | None = ...,
         heartbeat_timeout_s: float = ...,
-        reconnect_max_retries: Union[int, None] = ...,
+        reconnect_max_retries: int | None = ...,
         parse_json: bool = ...,
     ) -> _T:
         """S96 W4: multi-stream SSE consumer — subscribe N URLs параллельно."""
@@ -1383,18 +1383,18 @@ class RouteBuilder:
         route_id: str,
         bot_token: str,
         *,
-        secret_token: Union[str, None] = ...,
-        allowed_updates: Union[tuple[str, Ellipsis], None] = ...,
+        secret_token: str | None = ...,
+        allowed_updates: tuple[str, Ellipsis] | None = ...,
         offset: int = ...,
     ) -> _T:
         """Telegram Bot webhook: регистрирует маршрут с Telegram-источником."""
         ...
 
-    def from_toml(self, toml_string: Union[str, None] = ...) -> RouteBuilder:
+    def from_toml(self, toml_string: str | None = ...) -> RouteBuilder:
         """Parse TOML → ``dict`` (``tomllib`` stdlib 3.11+)."""
         ...
 
-    def from_url_encoded(self, url_string: Union[str, None] = ...) -> RouteBuilder:
+    def from_url_encoded(self, url_string: str | None = ...) -> RouteBuilder:
         """Parse URL-encoded string → ``dict`` (multi-value → ``list``)."""
         ...
 
@@ -1406,11 +1406,11 @@ class RouteBuilder:
         watch_path: str = ...,
         poll_interval_seconds: int = ...,
         file_pattern: str = ...,
-        username: Union[str, None] = ...,
-        password: Union[str, None] = ...,
-        processed_marker_path: Union[str, None] = ...,
+        username: str | None = ...,
+        password: str | None = ...,
+        processed_marker_path: str | None = ...,
         marker_dedup: bool = ...,
-        description: Union[str, None] = ...,
+        description: str | None = ...,
     ) -> Self:
         """Точка входа: WebDAV polling-источник (S13 K3 W2, INF-2.8)."""
         ...
@@ -1419,11 +1419,11 @@ class RouteBuilder:
         """Camel-style ``from("http:host/path")`` — HTTP webhook trigger."""
         ...
 
-    def from_xml(self, xml_string: Union[str, None] = ...) -> RouteBuilder:
+    def from_xml(self, xml_string: str | None = ...) -> RouteBuilder:
         """Parse XML → ``dict`` (через ``xmltodict`` если есть, иначе stdlib)."""
         ...
 
-    def from_yaml(self, yaml_string: Union[str, None] = ...) -> RouteBuilder:
+    def from_yaml(self, yaml_string: str | None = ...) -> RouteBuilder:
         """Parse YAML → ``dict``/``list``."""
         ...
 
@@ -1431,9 +1431,9 @@ class RouteBuilder:
         self,
         mode: str,
         *,
-        address: Union[str, None] = ...,
-        point_a: Union[tuple[float, float], None] = ...,
-        point_b: Union[tuple[float, float], None] = ...,
+        address: str | None = ...,
+        point_a: tuple[float, float] | None = ...,
+        point_b: tuple[float, float] | None = ...,
         to: str = ...,
     ) -> RouteBuilder:
         """Geocoding, reverse geocoding, or distance calculation."""
@@ -1443,7 +1443,7 @@ class RouteBuilder:
         self,
         *,
         query_from: str = ...,
-        agent_id: Union[str, None] = ...,
+        agent_id: str | None = ...,
         positive_k: int = ...,
         negative_k: int = ...,
         min_similarity: float = ...,
@@ -1467,13 +1467,13 @@ class RouteBuilder:
         endpoint: str,
         query: str,
         *,
-        variables: Union[dict[str, Any], None] = ...,
-        operation_name: Union[str, None] = ...,
-        headers: Union[dict[str, str], None] = ...,
-        auth_token: Union[str, None] = ...,
+        variables: dict[str, Any] | None = ...,
+        operation_name: str | None = ...,
+        headers: dict[str, str] | None = ...,
+        auth_token: str | None = ...,
         auth_header: str = ...,
         timeout: float = ...,
-        result_property: Union[str, None] = ...,
+        result_property: str | None = ...,
     ) -> RouteBuilder:
         """GraphQL query/mutation executor."""
         ...
@@ -1481,7 +1481,7 @@ class RouteBuilder:
     def group_by(
         self,
         *,
-        field: Union[str, None] = ...,
+        field: str | None = ...,
         key_fn: Callable[[Any], Any] | None = ...,
     ) -> RouteBuilder:
         """Группирует коллекцию в body по полю."""
@@ -1501,8 +1501,8 @@ class RouteBuilder:
         self,
         *,
         max_length: int = ...,
-        blocked_patterns: Union[list[str], None] = ...,
-        required_fields: Union[list[str], None] = ...,
+        blocked_patterns: list[str] | None = ...,
+        required_fields: list[str] | None = ...,
     ) -> RouteBuilder:
         """Проверка LLM output на безопасность (длина, blocklist, required fields)."""
         ...
@@ -1511,9 +1511,9 @@ class RouteBuilder:
         self,
         *,
         stage: str = ...,
-        source_property: Union[str, None] = ...,
+        source_property: str | None = ...,
         on_block: str = ...,
-        categories: Union[list[str], None] = ...,
+        categories: list[str] | None = ...,
     ) -> RouteBuilder:
         """Content safety через Llama Guard 3 (S27 W2)."""
         ...
@@ -1528,10 +1528,10 @@ class RouteBuilder:
         *,
         title: str,
         description: str = ...,
-        approvers: Union[list[str], None] = ...,
+        approvers: list[str] | None = ...,
         timeout_seconds: float = ...,
-        payload_path: Union[str, None] = ...,
-        request_info_processors: Union[list[BaseProcessor], None] = ...,
+        payload_path: str | None = ...,
+        request_info_processors: list[BaseProcessor] | None = ...,
     ) -> RouteBuilder:
         """HITL-approval: приостанавливает pipeline, ожидает approve/reject от оператора."""
         ...
@@ -1552,10 +1552,10 @@ class RouteBuilder:
         url: str,
         *,
         method: str = ...,
-        headers: Union[dict[str, str], None] = ...,
-        auth_token: Union[str, None] = ...,
+        headers: dict[str, str] | None = ...,
+        auth_token: str | None = ...,
         timeout: float = ...,
-        result_property: Union[str, None] = ...,
+        result_property: str | None = ...,
     ) -> RouteBuilder:
         """HTTP client: GET/POST/PUT/DELETE с таймаутом и headers."""
         ...
@@ -1575,8 +1575,8 @@ class RouteBuilder:
     def image_resize(
         self,
         *,
-        width: Union[int, None] = ...,
-        height: Union[int, None] = ...,
+        width: int | None = ...,
+        height: int | None = ...,
         output_format: str = ...,
     ) -> RouteBuilder:
         """Изменить размер изображения."""
@@ -1589,9 +1589,9 @@ class RouteBuilder:
     def ingest_file(
         self,
         *,
-        file_path: Union[str, None] = ...,
-        file_path_from: Union[str, None] = ...,
-        content_type: Union[str, None] = ...,
+        file_path: str | None = ...,
+        file_path_from: str | None = ...,
+        content_type: str | None = ...,
         chunk_size: int = ...,
     ) -> RouteBuilder:
         """Ingest file into exchange for processing."""
@@ -1607,11 +1607,11 @@ class RouteBuilder:
         *,
         mode: str = ...,
         payload_factory: Callable[[Exchange[Any]], dict[str, Any]] | None = ...,
-        reply_channel: Union[str, None] = ...,
+        reply_channel: str | None = ...,
         result_property: str = ...,
         invocation_id_property: str = ...,
-        timeout: Union[float, None] = ...,
-        correlation_id: Union[str, None] = ...,
+        timeout: float | None = ...,
+        correlation_id: str | None = ...,
     ) -> RouteBuilder:
         """Вызывает action через :class:`Invoker` (W22) с заданным режимом."""
         ...
@@ -1621,22 +1621,22 @@ class RouteBuilder:
         name: str,
         *,
         mode: str = ...,
-        args: Union[dict[str, Any], None] = ...,
+        args: dict[str, Any] | None = ...,
         namespace: str = ...,
         task_queue: str = ...,
         result_property: str = ...,
         invocation_id_property: str = ...,
         reply_timeout_seconds: float = ...,
-        version: Union[str, None] = ...,
+        version: str | None = ...,
     ) -> RouteBuilder:
         """Запуск Workflow (Temporal/LiteTemporal/PgRunner) — R-V15-7 / R-V15-9."""
         ...
 
     def ip_restriction(
         self,
-        allowed_ips: Union[set[str], list[str], tuple[str, Ellipsis]],
+        allowed_ips: set[str] | list[str] | tuple[str, Ellipsis],
         *,
-        path_pattern: Union[str, None] = ...,
+        path_pattern: str | None = ...,
         enabled: bool = ...,
     ) -> Self:
         """Ограничивает доступ к маршруту по IP/CIDR."""
@@ -1684,7 +1684,7 @@ class RouteBuilder:
         *,
         secret_key: str,
         algorithm: str = ...,
-        expires_in_seconds: Union[int, None] = ...,
+        expires_in_seconds: int | None = ...,
         output_property: str = ...,
     ) -> RouteBuilder:
         """Подпись payload как JWT-токен (PyJWT)."""
@@ -1715,9 +1715,9 @@ class RouteBuilder:
         base_dn: str,
         filter: str = ...,
         *,
-        attributes: Union[list[str], None] = ...,
-        username: Union[str, None] = ...,
-        password: Union[str, None] = ...,
+        attributes: list[str] | None = ...,
+        username: str | None = ...,
+        password: str | None = ...,
         use_ssl: bool = ...,
         timeout: float = ...,
         result_property: str = ...,
@@ -1732,7 +1732,7 @@ class RouteBuilder:
     def llm_fallback(
         self,
         *,
-        models: Union[list[str], None] = ...,
+        models: list[str] | None = ...,
         fallback_strategy: str = ...,
         max_retries: int = ...,
         result_property: str = ...,
@@ -1748,9 +1748,9 @@ class RouteBuilder:
         prompt: str,
         retry: int = ...,
         temperature: float = ...,
-        cost_budget_usd: Union[float, None] = ...,
+        cost_budget_usd: float | None = ...,
         to: str = ...,
-        name: Union[str, None] = ...,
+        name: str | None = ...,
     ) -> RouteBuilder:
         """LLM-вызов с гарантированным Pydantic-объектом."""
         ...
@@ -1760,8 +1760,8 @@ class RouteBuilder:
         targets: list[str],
         *,
         strategy: str = ...,
-        weights: Union[list[float], None] = ...,
-        sticky_header: Union[str, None] = ...,
+        weights: list[float] | None = ...,
+        sticky_header: str | None = ...,
     ) -> RouteBuilder:
         """Load Balancer: round_robin/random/weighted/sticky распределение."""
         ...
@@ -1778,7 +1778,7 @@ class RouteBuilder:
         self,
         processors: list[BaseProcessor],
         *,
-        count: Union[int, None] = ...,
+        count: int | None = ...,
         until: Callable[[Exchange[Any]], bool] | None = ...,
         max_iterations: int = ...,
     ) -> RouteBuilder:
@@ -1786,7 +1786,7 @@ class RouteBuilder:
         ...
 
     def mask(
-        self, *, patterns: Union[list[str], None] = ..., replacement: str = ...
+        self, *, patterns: list[str] | None = ..., replacement: str = ...
     ) -> Self:
         """Маскирование PII/PCI в body (ИНН/СНИЛС/карта/email/телефон)."""
         ...
@@ -1795,9 +1795,9 @@ class RouteBuilder:
         self,
         *,
         targets: list[str],
-        fields: Union[list[str], None] = ...,
+        fields: list[str] | None = ...,
         replacement: str = ...,
-        patterns: Union[list[str], None] = ...,
+        patterns: list[str] | None = ...,
     ) -> RouteBuilder:
         """Маскировка PII в request/response (Sprint 8A K1 W4)."""
         ...
@@ -1828,8 +1828,8 @@ class RouteBuilder:
         *,
         input_field: str = ...,
         output_property: str = ...,
-        model_type: Union[str, None] = ...,
-        name: Union[str, None] = ...,
+        model_type: str | None = ...,
+        name: str | None = ...,
     ) -> RouteBuilder:
         """Выполняет ML-инференс через локальный filesystem model registry."""
         ...
@@ -1847,7 +1847,7 @@ class RouteBuilder:
         ...
 
     def multicast(
-        self, sinks: list[str], *, parallel: bool = ..., name: Union[str, None] = ...
+        self, sinks: list[str], *, parallel: bool = ..., name: str | None = ...
     ) -> RouteBuilder:
         """Multicast EIP — fan-out to multiple sinks (parallel by default)."""
         ...
@@ -1867,7 +1867,7 @@ class RouteBuilder:
         """Открыть URL в браузере (Playwright)."""
         ...
 
-    def normalize(self, target_schema: Union[type, None] = ...) -> RouteBuilder:
+    def normalize(self, target_schema: type | None = ...) -> RouteBuilder:
         """Normalizer: автоопределение формата (XML/CSV/YAML/JSON) → canonical dict."""
         ...
 
@@ -1876,10 +1876,10 @@ class RouteBuilder:
         channel: str = ...,
         *,
         template_key: str = ...,
-        recipient: Union[str, None] = ...,
+        recipient: str | None = ...,
         priority: str = ...,
         locale: str = ...,
-        context_property: Union[str, None] = ...,
+        context_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Отправка уведомления через NotificationGateway (Wave 8.3)."""
@@ -1900,8 +1900,8 @@ class RouteBuilder:
     def notify_cascade(
         self,
         *,
-        adapters: Union[list[Any], None] = ...,
-        adapter_names: Union[list[str], None] = ...,
+        adapters: list[Any] | None = ...,
+        adapter_names: list[str] | None = ...,
         recipient_path: str = ...,
         subject: str = ...,
         body_path: str = ...,
@@ -1938,8 +1938,8 @@ class RouteBuilder:
     def on_error(
         self,
         *,
-        action: Union[str, None] = ...,
-        processors: Union[list[BaseProcessor], None] = ...,
+        action: str | None = ...,
+        processors: list[BaseProcessor] | None = ...,
         dlq_stream: str = ...,
     ) -> RouteBuilder:
         """Глобальный error handler для pipeline — оборачивает ВСЕ накопленные процессоры."""
@@ -1957,9 +1957,9 @@ class RouteBuilder:
         self,
         *,
         next_selector: str = ...,
-        item_selector: Union[str, None] = ...,
+        item_selector: str | None = ...,
         max_pages: int = ...,
-        start_url: Union[str, None] = ...,
+        start_url: str | None = ...,
     ) -> RouteBuilder:
         """Multi-page crawling с защитой от циклов и лимитом страниц."""
         ...
@@ -1970,14 +1970,14 @@ class RouteBuilder:
         """Параллельное выполнение именованных веток. strategy: all|first."""
         ...
 
-    def parse_llm_output(self, schema: Union[type, None] = ...) -> RouteBuilder:
+    def parse_llm_output(self, schema: type | None = ...) -> RouteBuilder:
         """Парсинг LLM-ответа в Pydantic-модель (с попыткой извлечь JSON)."""
         ...
 
     def partition(
         self,
         *,
-        field: Union[str, None] = ...,
+        field: str | None = ...,
         predicate: Callable[[Any], bool] | None = ...,
     ) -> RouteBuilder:
         """Разбивает коллекцию на два списка: подходящие и нет."""
@@ -2007,7 +2007,7 @@ class RouteBuilder:
         *,
         scope: str,
         source_property: str = ...,
-        target_property: Union[str, None] = ...,
+        target_property: str | None = ...,
         language: str = ...,
     ) -> RouteBuilder:
         """Reversible PII tokenization через PIITokenizer (S27 W2, ADR-NEW-21)."""
@@ -2017,7 +2017,7 @@ class RouteBuilder:
         self,
         *,
         source_property: str = ...,
-        target_property: Union[str, None] = ...,
+        target_property: str | None = ...,
         token_map_property: str = ...,
         scope: str = ...,
         strict: bool = ...,
@@ -2055,7 +2055,7 @@ class RouteBuilder:
         self,
         source_action: str,
         *,
-        payload: Union[dict[str, Any], None] = ...,
+        payload: dict[str, Any] | None = ...,
         result_property: str = ...,
     ) -> Self:
         """Periodically вызывает action, результат → body."""
@@ -2066,7 +2066,7 @@ class RouteBuilder:
         ...
 
     def process_fn(
-        self, func: ProcessorCallable, *, name: Union[str, None] = ...
+        self, func: ProcessorCallable, *, name: str | None = ...
     ) -> Self:
         """Добавляет обычную функцию или coroutine как процессор."""
         ...
@@ -2080,10 +2080,10 @@ class RouteBuilder:
         src: str,
         dst: str,
         *,
-        methods: Union[list[str], None] = ...,
+        methods: list[str] | None = ...,
         pass_headers: bool = ...,
-        header_map: Union[dict[str, Any], None] = ...,
-        rewrite_path: Union[str, None] = ...,
+        header_map: dict[str, Any] | None = ...,
+        rewrite_path: str | None = ...,
         timeout: float = ...,
     ) -> RouteBuilder:
         """Сокращение: ``expose_proxy(src) → forward_to(dst)``."""
@@ -2103,7 +2103,7 @@ class RouteBuilder:
         self,
         *,
         collection: str = ...,
-        source_property: Union[str, None] = ...,
+        source_property: str | None = ...,
         modal: str = ...,
         output_property: str = ...,
     ) -> RouteBuilder:
@@ -2115,9 +2115,9 @@ class RouteBuilder:
         *,
         query_field: str = ...,
         top_k: int = ...,
-        namespace: Union[str, None] = ...,
+        namespace: str | None = ...,
         strategy: str = ...,
-        max_staleness_hours: Union[float, None] = ...,
+        max_staleness_hours: float | None = ...,
         system_prompt: str = ...,
         output_property: str = ...,
     ) -> RouteBuilder:
@@ -2128,19 +2128,19 @@ class RouteBuilder:
         self,
         query_field: str = ...,
         top_k: int = ...,
-        namespace: Union[str, None] = ...,
+        namespace: str | None = ...,
     ) -> RouteBuilder:
         """RAG vector search: top-K ближайших документов по семантике."""
         ...
 
     def read_file(
-        self, path: Union[str, None] = ..., *, binary: bool = ...
+        self, path: str | None = ..., *, binary: bool = ...
     ) -> RouteBuilder:
         """Чтение локального файла в body (text или bytes)."""
         ...
 
     def read_s3(
-        self, bucket: Union[str, None] = ..., key: Union[str, None] = ...
+        self, bucket: str | None = ..., key: str | None = ...
     ) -> RouteBuilder:
         """Загрузка объекта из S3."""
         ...
@@ -2150,19 +2150,19 @@ class RouteBuilder:
         recipients: list[str] | Callable[[Exchange[Any]], list[str]],
         *,
         parallel: bool = ...,
-        name: Union[str, None] = ...,
+        name: str | None = ...,
     ) -> RouteBuilder:
         """Recipient List EIP — list or callable ``(exchange) -> list``."""
         ...
 
     def redirect(
         self,
-        target_url: Union[str, None] = ...,
+        target_url: str | None = ...,
         *,
         status_code: int = ...,
-        url_source: Union[str, None] = ...,
-        source_key: Union[str, None] = ...,
-        allowed_hosts: Union[list[str], None] = ...,
+        url_source: str | None = ...,
+        source_key: str | None = ...,
+        allowed_hosts: list[str] | None = ...,
     ) -> RouteBuilder:
         """Добавляет HTTP-redirect в маршрут."""
         ...
@@ -2176,7 +2176,7 @@ class RouteBuilder:
         ...
 
     def redis_set(
-        self, key: str, value: str, *, ttl_seconds: Union[int, None] = ...
+        self, key: str, value: str, *, ttl_seconds: int | None = ...
     ) -> RouteBuilder:
         """``SET key value [EX ttl]`` в Redis. ``ttl_seconds=None`` = бессрочно."""
         ...
@@ -2197,11 +2197,11 @@ class RouteBuilder:
         *,
         generator_workflow_id: str,
         reflector_workflow_id: str,
-        refiner_workflow_id: Union[str, None] = ...,
+        refiner_workflow_id: str | None = ...,
         max_iterations: int = ...,
         stop_verdict: str = ...,
         result_property: str = ...,
-        history_property: Union[str, None] = ...,
+        history_property: str | None = ...,
         timeout_s: float = ...,
     ) -> RouteBuilder:
         """Generate → Reflect → Refine agentic pattern via workflows (S39 W3)."""
@@ -2242,7 +2242,7 @@ class RouteBuilder:
         self,
         *,
         template: str,
-        context_from: Union[str, None] = ...,
+        context_from: str | None = ...,
         output_to: str = ...,
     ) -> RouteBuilder:
         """Рендерит шаблон ``.docx`` со встроенными плейсхолдерами ``{{key}}``."""
@@ -2267,8 +2267,8 @@ class RouteBuilder:
     def render_xlsx(
         self,
         *,
-        template: Union[str, None] = ...,
-        context_from: Union[str, None] = ...,
+        template: str | None = ...,
+        context_from: str | None = ...,
         output_to: str = ...,
         mode: str = ...,
     ) -> RouteBuilder:
@@ -2277,10 +2277,10 @@ class RouteBuilder:
 
     def reply(
         self,
-        reply_channel: Union[str, None] = ...,
+        reply_channel: str | None = ...,
         payload: Any = ...,
         *,
-        correlation_id: Union[str, None] = ...,
+        correlation_id: str | None = ...,
     ) -> RouteBuilder:
         """Публикует reply в ``reply_channel`` (reply_to)."""
         ...
@@ -2297,7 +2297,7 @@ class RouteBuilder:
         payload: Any = ...,
         *,
         timeout: float = ...,
-        correlation_id: Union[str, None] = ...,
+        correlation_id: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Отправляет запрос в ``target_channel`` и ждёт reply."""
@@ -2367,7 +2367,7 @@ class RouteBuilder:
         *,
         llm_router: LLMRouterFn,
         specialists: list[SpecialistAgent],
-        fallback_specialist: Union[str, None] = ...,
+        fallback_specialist: str | None = ...,
         min_confidence: float = ...,
     ) -> RouteBuilder:
         """Добавить :class:`RouterSpecialistProcessor` в pipeline."""
@@ -2377,14 +2377,14 @@ class RouteBuilder:
         self,
         steps: Callable[[Exchange[Any]], Any] | list[str],
         *,
-        header: Union[str, None] = ...,
+        header: str | None = ...,
         strict: bool = ...,
         max_steps: int = ...,
     ) -> RouteBuilder:
         """Routing Slip EIP: динамическая цепочка processors per-message."""
         ...
 
-    def run_scenario(self, steps: Union[list[dict], None] = ...) -> RouteBuilder:
+    def run_scenario(self, steps: list[dict] | None = ...) -> RouteBuilder:
         """Multi-step web сценарий (navigate/click/fill/extract)."""
         ...
 
@@ -2397,7 +2397,7 @@ class RouteBuilder:
         ...
 
     def s3_list(
-        self, *, prefix_from: Union[str, None] = ..., result_property: str = ...
+        self, *, prefix_from: str | None = ..., result_property: str = ...
     ) -> RouteBuilder:
         """LIST ключей в S3 bucket с пагинацией по ``prefix_from``."""
         ...
@@ -2414,8 +2414,8 @@ class RouteBuilder:
         self,
         steps: list[SagaStep],
         *,
-        workflow_id: Union[str, None] = ...,
-        run_id: Union[str, None] = ...,
+        workflow_id: str | None = ...,
+        run_id: str | None = ...,
     ) -> RouteBuilder:
         """Saga LRA: долгоживущая сага с persistent checkpoints."""
         ...
@@ -2427,11 +2427,11 @@ class RouteBuilder:
     def sampling(
         self,
         *,
-        rate: Union[int, None] = ...,
-        fraction: Union[float, None] = ...,
-        time_window_ms: Union[int, None] = ...,
-        max_in_window: Union[int, None] = ...,
-        seed: Union[int, None] = ...,
+        rate: int | None = ...,
+        fraction: float | None = ...,
+        time_window_ms: int | None = ...,
+        max_in_window: int | None = ...,
+        seed: int | None = ...,
     ) -> RouteBuilder:
         """Sampling EIP: probabilistic subset of messages."""
         ...
@@ -2447,8 +2447,8 @@ class RouteBuilder:
     def scan_file(
         self,
         *,
-        s3_key_from: Union[str, None] = ...,
-        data_property: Union[str, None] = ...,
+        s3_key_from: str | None = ...,
+        data_property: str | None = ...,
         on_threat: str = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
@@ -2475,15 +2475,15 @@ class RouteBuilder:
 
     def scrape(
         self,
-        url: Union[str, None] = ...,
+        url: str | None = ...,
         *,
-        selectors: Union[dict[str, str], None] = ...,
+        selectors: dict[str, str] | None = ...,
         output_property: str = ...,
     ) -> RouteBuilder:
         """Извлечение данных с URL через CSS-селекторы (с SSRF-защитой)."""
         ...
 
-    def screenshot(self, url: Union[str, None] = ...) -> RouteBuilder:
+    def screenshot(self, url: str | None = ...) -> RouteBuilder:
         """Скриншот страницы как bytes."""
         ...
 
@@ -2492,8 +2492,8 @@ class RouteBuilder:
         code: str,
         *,
         timeout_seconds: float = ...,
-        env: Union[dict[str, str], None] = ...,
-        allowed_languages: Union[list[str], None] = ...,
+        env: dict[str, str] | None = ...,
+        allowed_languages: list[str] | None = ...,
     ) -> RouteBuilder:
         """Выполнить inline Node.js-код (требует ``node`` в PATH)."""
         ...
@@ -2503,8 +2503,8 @@ class RouteBuilder:
         code: str,
         *,
         timeout_seconds: float = ...,
-        env: Union[dict[str, str], None] = ...,
-        allowed_languages: Union[list[str], None] = ...,
+        env: dict[str, str] | None = ...,
+        allowed_languages: list[str] | None = ...,
     ) -> RouteBuilder:
         """Выполнить inline Python-код через текущий интерпретатор."""
         ...
@@ -2514,8 +2514,8 @@ class RouteBuilder:
         code: str,
         *,
         timeout_seconds: float = ...,
-        env: Union[dict[str, str], None] = ...,
-        allowed_languages: Union[list[str], None] = ...,
+        env: dict[str, str] | None = ...,
+        allowed_languages: list[str] | None = ...,
     ) -> RouteBuilder:
         """Выполнить inline Ruby-код (требует ``ruby`` в PATH)."""
         ...
@@ -2525,8 +2525,8 @@ class RouteBuilder:
         code: str,
         *,
         timeout_seconds: float = ...,
-        env: Union[dict[str, str], None] = ...,
-        allowed_languages: Union[list[str], None] = ...,
+        env: dict[str, str] | None = ...,
+        allowed_languages: list[str] | None = ...,
     ) -> RouteBuilder:
         """Выполнить shell-скрипт через ``/bin/sh`` (whitelist рекомендуется)."""
         ...
@@ -2535,7 +2535,7 @@ class RouteBuilder:
         self,
         intents: dict[str, str],
         *,
-        default_route: Union[str, None] = ...,
+        default_route: str | None = ...,
         query_field: str = ...,
         threshold: float = ...,
         namespace: str = ...,
@@ -2566,9 +2566,9 @@ class RouteBuilder:
         host: str,
         remote_path: str,
         *,
-        username: Union[str, None] = ...,
+        username: str | None = ...,
         password_from: str = ...,
-        key_file: Union[str, None] = ...,
+        key_file: str | None = ...,
         timeout: float = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
@@ -2581,9 +2581,9 @@ class RouteBuilder:
         remote_path: str,
         *,
         body_from: str = ...,
-        username: Union[str, None] = ...,
+        username: str | None = ...,
         password_from: str = ...,
-        key_file: Union[str, None] = ...,
+        key_file: str | None = ...,
         timeout: float = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
@@ -2598,8 +2598,8 @@ class RouteBuilder:
         self,
         command: str,
         *,
-        args: Union[list[str], None] = ...,
-        allowed_commands: Union[list[str], None] = ...,
+        args: list[str] | None = ...,
+        allowed_commands: list[str] | None = ...,
         timeout_seconds: float = ...,
     ) -> RouteBuilder:
         """Выполнить shell-команду."""
@@ -2611,13 +2611,13 @@ class RouteBuilder:
         host: str,
         from_addr: str,
         port: int = ...,
-        username: Union[str, None] = ...,
-        password: Union[str, None] = ...,
+        username: str | None = ...,
+        password: str | None = ...,
         use_tls: bool = ...,
         start_tls: bool = ...,
-        default_to: Union[str, None] = ...,
+        default_to: str | None = ...,
         default_subject: str = ...,
-        payload_property: Union[str, None] = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Camel-style fluent для SMTP-публикации (Sprint 3 W1 K3)."""
@@ -2630,7 +2630,7 @@ class RouteBuilder:
         mode: str = ...,
         encoding: str = ...,
         ensure_dir: bool = ...,
-        payload_property: Union[str, None] = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Camel-style fluent для записи в local FS (append / write)."""
@@ -2643,7 +2643,7 @@ class RouteBuilder:
         full_method: str,
         secure: bool = ...,
         timeout: float = ...,
-        payload_property: Union[str, None] = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Camel-style fluent для gRPC unary-вызова (Sprint 3 W1 K3)."""
@@ -2654,9 +2654,9 @@ class RouteBuilder:
         *,
         url: str,
         method: str = ...,
-        headers: Union[dict[str, str], None] = ...,
+        headers: dict[str, str] | None = ...,
         timeout: float = ...,
-        payload_property: Union[str, None] = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Camel-style fluent для REST POST/PUT/PATCH/DELETE через Sink."""
@@ -2668,8 +2668,8 @@ class RouteBuilder:
         broker: str,
         url: str,
         topic: str,
-        extra: Union[dict[str, Any], None] = ...,
-        payload_property: Union[str, None] = ...,
+        extra: dict[str, Any] | None = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Camel-style fluent для публикации в Kafka/RabbitMQ/Redis-Streams/NATS."""
@@ -2680,12 +2680,12 @@ class RouteBuilder:
         *,
         host: str,
         topic: str,
-        port: Union[int, None] = ...,
+        port: int | None = ...,
         qos: int = ...,
         retain: bool = ...,
-        username: Union[str, None] = ...,
-        password: Union[str, None] = ...,
-        payload_property: Union[str, None] = ...,
+        username: str | None = ...,
+        password: str | None = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Camel-style fluent для публикации в MQTT-брокер."""
@@ -2697,7 +2697,7 @@ class RouteBuilder:
         bucket: str,
         key: str,
         content_type: str = ...,
-        payload_property: Union[str, None] = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Camel-style fluent для выгрузки payload в S3/MinIO."""
@@ -2708,10 +2708,10 @@ class RouteBuilder:
         *,
         wsdl_url: str,
         operation: str,
-        service_name: Union[str, None] = ...,
-        port_name: Union[str, None] = ...,
+        service_name: str | None = ...,
+        port_name: str | None = ...,
         timeout: float = ...,
-        payload_property: Union[str, None] = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Camel-style fluent для SOAP/WSDL-вызова (Sprint 3 W1 K3)."""
@@ -2722,10 +2722,10 @@ class RouteBuilder:
         *,
         url: str,
         event: str,
-        secret: Union[str, None] = ...,
+        secret: str | None = ...,
         timeout: float = ...,
-        extra_headers: Union[dict[str, str], None] = ...,
-        payload_property: Union[str, None] = ...,
+        extra_headers: dict[str, str] | None = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Camel-style fluent для outbound webhook с HMAC-подписью."""
@@ -2735,9 +2735,9 @@ class RouteBuilder:
         self,
         *,
         url: str,
-        extra_headers: Union[dict[str, str], None] = ...,
+        extra_headers: dict[str, str] | None = ...,
         timeout: float = ...,
-        payload_property: Union[str, None] = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Camel-style fluent для outbound WebSocket publish."""
@@ -2747,7 +2747,7 @@ class RouteBuilder:
         self,
         *,
         skill_id: str,
-        params_property: Union[str, None] = ...,
+        params_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Вызов AI skill через :class:`SkillRegistry.invoke` (S27 W3, ADR-NEW-22)."""
@@ -2768,7 +2768,7 @@ class RouteBuilder:
         self,
         *,
         key_fn: Callable[[Any], Any] | None = ...,
-        key_field: Union[str, None] = ...,
+        key_field: str | None = ...,
         reverse: bool = ...,
     ) -> RouteBuilder:
         """Sort — сортировка list body по функции ключа или имени поля."""
@@ -2782,12 +2782,12 @@ class RouteBuilder:
         """Splitter: разбиение массива на отдельные Exchange по JMESPath."""
         ...
 
-    def sql_exec(self, query: str, *, params: Union[dict, None] = ...) -> RouteBuilder:
+    def sql_exec(self, query: str, *, params: dict | None = ...) -> RouteBuilder:
         """INSERT/UPDATE/DELETE с bind-параметрами ``:name``."""
         ...
 
     def sse_source(
-        self, url: str, event_types: Union[list[str], None] = ...
+        self, url: str, event_types: list[str] | None = ...
     ) -> RouteBuilder:
         """Source-процессор для Server-Sent Events."""
         ...
@@ -2797,9 +2797,9 @@ class RouteBuilder:
         host: str,
         command: str,
         *,
-        username: Union[str, None] = ...,
+        username: str | None = ...,
         password_from: str = ...,
-        key_file: Union[str, None] = ...,
+        key_file: str | None = ...,
         timeout: float = ...,
         result_property: str = ...,
         continue_on_error: bool = ...,
@@ -2812,9 +2812,9 @@ class RouteBuilder:
         host: str,
         command: str,
         *,
-        username: Union[str, None] = ...,
+        username: str | None = ...,
         password_from: str = ...,
-        key_file: Union[str, None] = ...,
+        key_file: str | None = ...,
         timeout: float = ...,
         result_property: str = ...,
         continue_on_error: bool = ...,
@@ -2846,7 +2846,7 @@ class RouteBuilder:
         field: str,
         cases: dict[str, list[BaseProcessor]],
         *,
-        default: Union[list[BaseProcessor], None] = ...,
+        default: list[BaseProcessor] | None = ...,
     ) -> RouteBuilder:
         """n8n Switch — case/match роутинг по значению поля."""
         ...
@@ -2857,10 +2857,10 @@ class RouteBuilder:
         *,
         bot: str = ...,
         chat_id_from: str = ...,
-        body: Union[str, None] = ...,
-        body_from: Union[str, None] = ...,
+        body: str | None = ...,
+        body_from: str | None = ...,
         parse_mode: str = ...,
-        inline_keyboard: Union[list[list[dict[str, Any]]], None] = ...,
+        inline_keyboard: list[list[dict[str, Any]]] | None = ...,
     ) -> RouteBuilder:
         """Редактировать ранее отправленное Telegram-сообщение."""
         ...
@@ -2869,7 +2869,7 @@ class RouteBuilder:
         self,
         *,
         user_id_from: str,
-        display_name_from: Union[str, None] = ...,
+        display_name_from: str | None = ...,
         parse_mode: str = ...,
         property_name: str = ...,
         append: bool = ...,
@@ -2879,12 +2879,12 @@ class RouteBuilder:
 
     def telegram_reply(
         self,
-        body_from: Union[str, None] = ...,
+        body_from: str | None = ...,
         *,
         bot: str = ...,
         source_message_id_from: str = ...,
         chat_id_from: str = ...,
-        body: Union[str, None] = ...,
+        body: str | None = ...,
         parse_mode: str = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
@@ -2893,14 +2893,14 @@ class RouteBuilder:
 
     def telegram_send(
         self,
-        body: Union[str, None] = ...,
+        body: str | None = ...,
         *,
         bot: str = ...,
         chat_id_from: str = ...,
-        body_from: Union[str, None] = ...,
+        body_from: str | None = ...,
         parse_mode: str = ...,
-        inline_keyboard: Union[list[list[dict[str, Any]]], None] = ...,
-        reply_keyboard: Union[list[list[str]], None] = ...,
+        inline_keyboard: list[list[dict[str, Any]]] | None = ...,
+        reply_keyboard: list[list[str]] | None = ...,
         disable_notification: bool = ...,
         disable_web_page_preview: bool = ...,
         result_property: str = ...,
@@ -2913,12 +2913,12 @@ class RouteBuilder:
         *,
         bot: str = ...,
         chat_id_from: str = ...,
-        s3_key_from: Union[str, None] = ...,
-        file_data_property: Union[str, None] = ...,
-        file_name: Union[str, None] = ...,
-        file_name_from: Union[str, None] = ...,
-        body: Union[str, None] = ...,
-        body_from: Union[str, None] = ...,
+        s3_key_from: str | None = ...,
+        file_data_property: str | None = ...,
+        file_name: str | None = ...,
+        file_name_from: str | None = ...,
+        body: str | None = ...,
+        body_from: str | None = ...,
         parse_mode: str = ...,
         disable_notification: bool = ...,
         result_property: str = ...,
@@ -2948,7 +2948,7 @@ class RouteBuilder:
         self,
         *,
         header: str = ...,
-        body_path: Union[str, None] = ...,
+        body_path: str | None = ...,
         required: bool = ...,
     ) -> Self:
         """Multi-tenancy scope: tenant_id из заголовка/body в Exchange."""
@@ -2969,7 +2969,7 @@ class RouteBuilder:
         processors: list[BaseProcessor],
         *,
         seconds: float = ...,
-        fallback_processors: Union[list[BaseProcessor], None] = ...,
+        fallback_processors: list[BaseProcessor] | None = ...,
     ) -> RouteBuilder:
         """Timeout — wrap sub-processors with a time limit."""
         ...
@@ -2977,9 +2977,9 @@ class RouteBuilder:
     def timer(
         self,
         *,
-        interval_seconds: Union[float, None] = ...,
-        cron: Union[str, None] = ...,
-        max_fires: Union[int, None] = ...,
+        interval_seconds: float | None = ...,
+        cron: str | None = ...,
+        max_fires: int | None = ...,
     ) -> Self:
         """Scheduled event source: интервал или cron-выражение."""
         ...
@@ -2988,7 +2988,7 @@ class RouteBuilder:
         """Алиас для process() — fluent naming."""
         ...
 
-    def to_avro_like(self, schema: Union[dict[str, Any], None] = ...) -> RouteBuilder:
+    def to_avro_like(self, schema: dict[str, Any] | None = ...) -> RouteBuilder:
         """Convert ``dict`` → JSON ``str`` c обёрткой ``{"schema": ..., "data": ...}``."""
         ...
 
@@ -3004,12 +3004,12 @@ class RouteBuilder:
         """Convert ``dict`` → minified JSON ``str`` (no indent, no spaces)."""
         ...
 
-    def to_csv(self, *, headers: Union[list[str], None] = ...) -> RouteBuilder:
+    def to_csv(self, *, headers: list[str] | None = ...) -> RouteBuilder:
         """Convert ``list[dict]`` → CSV string."""
         ...
 
     def to_eventbus(
-        self, topic: str, *, payload_ref: str = ..., name: Union[str, None] = ...
+        self, topic: str, *, payload_ref: str = ..., name: str | None = ...
     ) -> RouteBuilder:
         """Publish текущий exchange в EventBus topic (V22 NEW)."""
         ...
@@ -3026,7 +3026,7 @@ class RouteBuilder:
         """Convert ``dict`` → INI string (stdlib ``configparser``)."""
         ...
 
-    def to_json(self, *, indent: Union[int, None] = ...) -> RouteBuilder:
+    def to_json(self, *, indent: int | None = ...) -> RouteBuilder:
         """Serialize ``exchange.body`` → JSON string в ``out_message.body``."""
         ...
 
@@ -3035,7 +3035,7 @@ class RouteBuilder:
         *,
         secret: str,
         algorithm: str = ...,
-        claims: Union[dict[str, Any], None] = ...,
+        claims: dict[str, Any] | None = ...,
     ) -> RouteBuilder:
         """Encode ``exchange.body`` (dict) → JWT string (HS256 default)."""
         ...
@@ -3053,8 +3053,8 @@ class RouteBuilder:
         subject: str,
         *,
         nats_url: str = ...,
-        headers: Union[dict[str, str], None] = ...,
-        payload_property: Union[str, None] = ...,
+        headers: dict[str, str] | None = ...,
+        payload_property: str | None = ...,
         result_property: str = ...,
     ) -> Self:
         """Публикует payload в NATS JetStream (Sink step)."""
@@ -3126,7 +3126,7 @@ class RouteBuilder:
     def unique(
         self,
         *,
-        field: Union[str, None] = ...,
+        field: str | None = ...,
         key_fn: Callable[[Any], Any] | None = ...,
     ) -> RouteBuilder:
         """Уникальные элементы коллекции."""
@@ -3139,7 +3139,7 @@ class RouteBuilder:
     def validate_response(
         self,
         *,
-        schema: Union[type, str, None] = ...,
+        schema: type | str | None = ...,
         on_error: str = ...,
         source: str = ...,
     ) -> RouteBuilder:
@@ -3167,8 +3167,8 @@ class RouteBuilder:
         self,
         engine: str = ...,
         *,
-        query: Union[str, None] = ...,
-        query_source: Union[str, None] = ...,
+        query: str | None = ...,
+        query_source: str | None = ...,
         max_results: int = ...,
         to: str = ...,
         deep_research: bool = ...,
@@ -3180,8 +3180,8 @@ class RouteBuilder:
         self,
         url: str,
         *,
-        username: Union[str, None] = ...,
-        password: Union[str, None] = ...,
+        username: str | None = ...,
+        password: str | None = ...,
         mode: str = ...,
         remote_path: str = ...,
         source: str = ...,
@@ -3202,7 +3202,7 @@ class RouteBuilder:
         secret: str,
         header: str = ...,
         algorithm: str = ...,
-        prefix: Union[str, None] = ...,
+        prefix: str | None = ...,
         on_mismatch: str = ...,
     ) -> RouteBuilder:
         """Верификация HMAC-подписи входящего webhook'а (timing-safe)."""
@@ -3232,7 +3232,7 @@ class RouteBuilder:
         ...
 
     def wire_tap(
-        self, sink: str, *, async_: bool = ..., name: Union[str, None] = ...
+        self, sink: str, *, async_: bool = ..., name: str | None = ...
     ) -> RouteBuilder:
         """Wire Tap EIP — copy exchange to ``sink`` (async by default)."""
         ...
@@ -3240,9 +3240,9 @@ class RouteBuilder:
     def with_auth(
         self,
         *,
-        token: Union[str, None] = ...,
-        api_key: Union[str, None] = ...,
-        mtls_cert: Union[str, None] = ...,
+        token: str | None = ...,
+        api_key: str | None = ...,
+        mtls_cert: str | None = ...,
     ) -> Self:
         """Переопределяет auth для предыдущего step."""
         ...
@@ -3276,7 +3276,7 @@ class RouteBuilder:
         ...
 
     def with_retries(
-        self, max_attempts: int, *, backoff: Union[str, float, None] = ...
+        self, max_attempts: int, *, backoff: str | float | None = ...
     ) -> Self:
         """Переопределяет количество попыток retry для предыдущего step."""
         ...
@@ -3294,15 +3294,15 @@ class RouteBuilder:
         ...
 
     def write_file(
-        self, path: Union[str, None] = ..., *, format: str = ...
+        self, path: str | None = ..., *, format: str = ...
     ) -> RouteBuilder:
         """Запись body в файл. format: auto|json|csv|text."""
         ...
 
     def write_s3(
         self,
-        bucket: Union[str, None] = ...,
-        key: Union[str, None] = ...,
+        bucket: str | None = ...,
+        key: str | None = ...,
         *,
         content_type: str = ...,
     ) -> RouteBuilder:
@@ -3313,9 +3313,9 @@ class RouteBuilder:
         self,
         *,
         action: str = ...,
-        files_from: Union[str, None] = ...,
+        files_from: str | None = ...,
         archive_to: str = ...,
-        password: Union[str, None] = ...,
+        password: str | None = ...,
     ) -> RouteBuilder:
         """Create/extract ZIP archives."""
         ...

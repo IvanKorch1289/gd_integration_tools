@@ -774,7 +774,7 @@ async def _execute_with_timeout(*args: object, **kwargs: object) -> object:
         return await asyncio.wait_for(
             _original_execute(*args, **kwargs), timeout=timeout_s
         )
-    except asyncio.TimeoutError as exc:
+    except TimeoutError as exc:
         raise TimeoutError(f"GraphQL query timeout ({timeout_s}s)") from exc
 
 

@@ -137,7 +137,7 @@ class CertFileWatcher:
         self._stop_event.set()
         try:
             await asyncio.wait_for(self._task, timeout=5.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._task.cancel()
         self._task = None
         _logger.info("cert.hot_reload.stopped")

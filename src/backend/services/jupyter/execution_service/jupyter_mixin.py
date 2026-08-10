@@ -154,7 +154,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                             )
                             last_pong_time = now
                             _logger.debug("WS heartbeat OK (kernel=%s)", kernel_id)
-                        except asyncio.TimeoutError:
+                        except TimeoutError:
                             _logger.warning(
                                 "WS heartbeat timeout (kernel=%s) — "
                                 "connection presumed dead",
@@ -238,7 +238,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                     raise JupyterExecutionError(
                         f"Cell execution timed out after {timeout}s"
                     )
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise JupyterExecutionError(
                 f"Cell execution timed out after {timeout}s"
             ) from exc

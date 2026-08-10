@@ -336,7 +336,7 @@ class RedisHitlSignalStore:
                         ),
                         timeout=remaining,
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     return False
                 if msg is None:
                     continue

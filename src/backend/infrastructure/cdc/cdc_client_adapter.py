@@ -132,7 +132,7 @@ class CDCClientAdapter(CDCSource):
                         await asyncio.wait_for(
                             self._queue.put(event), timeout=5.0
                         )
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         await self._on_overflow(event)
 
         self._sub_id = await self._client.subscribe(

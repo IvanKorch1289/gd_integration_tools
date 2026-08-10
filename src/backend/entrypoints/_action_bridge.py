@@ -153,7 +153,7 @@ async def dispatch_action_or_dsl(
         # immediately, return pool_full.
         try:
             await asyncio.wait_for(semaphore.acquire(), timeout=0.001)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return BridgeResult(
                 success=False,
                 error=f"route pool exhausted ({pool_size} concurrent)",
@@ -182,7 +182,7 @@ async def dispatch_action_or_dsl(
             ),
             timeout=float(action_timeout_s),
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return BridgeResult(
             success=False,
             error=f"action timeout ({action_timeout_s}s)",

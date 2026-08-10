@@ -368,7 +368,7 @@ async def _warmup_connection_pools() -> None:
             redis_cache_client = await asyncio.wait_for(
                 get_redis_client().get_client("cache"), timeout=5.0
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             redis_cache_client = None
         except Exception as _:
             redis_cache_client = None

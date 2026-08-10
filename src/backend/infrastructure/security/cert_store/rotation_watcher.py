@@ -133,7 +133,7 @@ class CertRotationWatcher:
                         self._stop_event.wait(),
                         timeout=self._check_interval_seconds,
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     pass  # interval elapsed, continue
         except asyncio.CancelledError:
             logger.info("cert.rotation.cancelled")
@@ -160,7 +160,7 @@ class CertRotationWatcher:
         self._stop_event.set()
         try:
             await asyncio.wait_for(self._task, timeout=5.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._task.cancel()
         self._task = None
         logger.info("cert.rotation.stopped")

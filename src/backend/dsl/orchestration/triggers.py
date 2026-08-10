@@ -160,7 +160,7 @@ class IntervalTrigger:
             while not self._stop.is_set():
                 try:
                     await asyncio.wait_for(self._stop.wait(), timeout=self.interval_s)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     pass
                 if self._stop.is_set():
                     return
@@ -275,7 +275,7 @@ class CronTrigger:
                 sleep_s = max(0.0, (next_fire - now).total_seconds())
                 try:
                     await asyncio.wait_for(self._stop.wait(), timeout=sleep_s)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     pass
                 if self._stop.is_set():
                     return

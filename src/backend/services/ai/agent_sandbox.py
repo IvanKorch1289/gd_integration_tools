@@ -258,7 +258,7 @@ class ProcessPoolAgentSandbox:
             return AgentSandboxResult(
                 success=success, data=result, backend="process_pool"
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             _logger.warning(
                 "ProcessPoolAgentSandbox: wall_time_exceeded after %.1fs",
                 max_wall_time_s,
@@ -468,7 +468,7 @@ class E2BAgentSandbox:
             return AgentSandboxResult(
                 success=success, data=result, backend="e2b"
             )
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise AgentSandboxTimeoutError(
                 f"E2BAgentSandbox timeout after {self._timeout}s"
             ) from exc

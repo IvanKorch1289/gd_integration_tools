@@ -25,10 +25,10 @@ class WorkflowBuilder:
         self,
         name: str,
         *,
-        args: Union[dict[str, Any], None] = ...,
-        timeout_s: Union[float, None] = ...,
-        retry_policy: Union[RetryPolicy, None] = ...,
-        output_key: Union[str, None] = ...,
+        args: dict[str, Any] | None = ...,
+        timeout_s: float | None = ...,
+        retry_policy: RetryPolicy | None = ...,
+        output_key: str | None = ...,
     ) -> Self:
         """Добавить atomic activity-шаг в цепочку."""
         ...
@@ -40,10 +40,10 @@ class WorkflowBuilder:
     def checkpoint(
         self,
         *,
-        checkpoint_id: Union[str, None] = ...,
+        checkpoint_id: str | None = ...,
         include_steps: tuple[str, Ellipsis] = ...,
-        metadata: Union[dict[str, Any], None] = ...,
-        output_key: Union[str, None] = ...,
+        metadata: dict[str, Any] | None = ...,
+        output_key: str | None = ...,
     ) -> Self:
         """Добавить checkpoint-шаг для workflow state persistence (S28 W3)."""
         ...
@@ -67,10 +67,10 @@ class WorkflowBuilder:
     def escalate(
         self,
         *,
-        to_agent: Union[str, None] = ...,
-        to_model: Union[str, None] = ...,
-        reason: Union[str, None] = ...,
-        output_key: Union[str, None] = ...,
+        to_agent: str | None = ...,
+        to_model: str | None = ...,
+        reason: str | None = ...,
+        output_key: str | None = ...,
     ) -> Self:
         """Добавить escalate-шаг для переключения на другого агента/модель (S28 W3)."""
         ...
@@ -93,8 +93,8 @@ class WorkflowBuilder:
         threshold: float,
         *,
         on_exceed: str = ...,
-        target: Union[str, None] = ...,
-        output_key: Union[str, None] = ...,
+        target: str | None = ...,
+        output_key: str | None = ...,
     ) -> Self:
         """Добавить guardrail-шаг для лимитов доступа (S28 W3)."""
         ...
@@ -103,33 +103,33 @@ class WorkflowBuilder:
         self,
         agent_id: str,
         *,
-        input_context: Union[str, None] = ...,
+        input_context: str | None = ...,
         durable: bool = ...,
-        output_key: Union[str, None] = ...,
+        output_key: str | None = ...,
         max_turns: int = ...,
-        timeout_s: Union[float, None] = ...,
+        timeout_s: float | None = ...,
         memory_scope: MemoryScope | None = ...,
         write_episode: bool = ...,
-        namespace_template: Union[str, None] = ...,
+        namespace_template: str | None = ...,
         inject_memory: bool = ...,
-        recall_on: Union[str, None] = ...,
+        recall_on: str | None = ...,
     ) -> Self:
         """Добавить AI-агент как шаг workflow (S27 W6, S28 W2, R-V15-9)."""
         ...
 
-    def pause(self, output_key: Union[str, None] = ...) -> Self:
+    def pause(self, output_key: str | None = ...) -> Self:
         """Добавить pause-шаг для приостановки workflow (S35 GAP-DSL-2)."""
         ...
 
     def reflect(
         self,
         *,
-        trigger: Union[str, None] = ...,
-        source_step: Union[str, None] = ...,
-        memory_writes: Union[list[str], None] = ...,
+        trigger: str | None = ...,
+        source_step: str | None = ...,
+        memory_writes: list[str] | None = ...,
         consolidation_policy: str = ...,
         async_mode: bool = ...,
-        output_key: Union[str, None] = ...,
+        output_key: str | None = ...,
     ) -> Self:
         """Добавить reflect-шаг для procedural memory update (S28 W3)."""
         ...
@@ -150,7 +150,7 @@ class WorkflowBuilder:
         predicate: str,
         *,
         poll_interval_s: float = ...,
-        timeout_s: Union[float, None] = ...,
+        timeout_s: float | None = ...,
     ) -> Self:
         """Добавить periodic-sensor (Airflow-style poll-предикат)."""
         ...
@@ -160,8 +160,8 @@ class WorkflowBuilder:
         *,
         soft_limit_seconds: float,
         hard_limit_seconds: float,
-        escalation_email: Union[str, None] = ...,
-        escalation_slack: Union[str, None] = ...,
+        escalation_email: str | None = ...,
+        escalation_slack: str | None = ...,
         breach_action: str = ...,
     ) -> Self:
         """Установить SLA-политику workflow (Sprint 9 K3 W10)."""
@@ -175,8 +175,8 @@ class WorkflowBuilder:
         self,
         signal_name: str,
         *,
-        timeout_s: Union[float, None] = ...,
-        output_key: Union[str, None] = ...,
+        timeout_s: float | None = ...,
+        output_key: str | None = ...,
     ) -> Self:
         """Добавить durable-ожидание внешнего сигнала (HITL)."""
         ...
@@ -192,9 +192,9 @@ class SagaBuilder:
         name: str,
         *,
         args: dict[str, Any] | None = ...,
-        timeout_s: Union[float, None] = ...,
-        retry_policy: Union[RetryPolicy, None] = ...,
-        output_key: Union[str, None] = ...,
+        timeout_s: float | None = ...,
+        retry_policy: RetryPolicy | None = ...,
+        output_key: str | None = ...,
     ) -> Self:
         """Добавить forward-activity в saga-цепочку."""
         ...
@@ -204,8 +204,8 @@ class SagaBuilder:
         name: str,
         *,
         args: dict[str, Any] | None = ...,
-        timeout_s: Union[float, None] = ...,
-        retry_policy: Union[RetryPolicy, None] = ...,
+        timeout_s: float | None = ...,
+        retry_policy: RetryPolicy | None = ...,
     ) -> Self:
         """Добавить compensate-activity (откат forward-шагов)."""
         ...

@@ -107,7 +107,7 @@ class CompensatingDriverWorker:
                     await asyncio.wait_for(
                         self._stopping.wait(), timeout=self._interval
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     pass  # normal: tick
         except asyncio.CancelledError:
             _logger.info("CompensatingDriverWorker loop cancelled")

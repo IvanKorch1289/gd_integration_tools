@@ -127,7 +127,7 @@ class WorkerProbesServer:
         if self._serve_task is not None:
             try:
                 await asyncio.wait_for(self._serve_task, timeout=5)
-            except (asyncio.TimeoutError, asyncio.CancelledError) as exc:
+            except (TimeoutError, asyncio.CancelledError) as exc:
                 _logger.warning("probes server stop timeout/cancel: %s", exc)
             except Exception as exc:
                 _logger.warning("probes server stop error: %s", exc)

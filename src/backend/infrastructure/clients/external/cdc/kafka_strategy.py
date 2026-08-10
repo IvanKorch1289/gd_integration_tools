@@ -121,7 +121,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                     msg_batch = await asyncio.wait_for(
                         consumer.getmany(timeout_ms=1000, max_records=100), timeout=2.0
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
 
                 for tp, messages in msg_batch.items():

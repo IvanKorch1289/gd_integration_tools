@@ -40,9 +40,9 @@ from collections.abc import Sequence
 from alembic import op
 
 revision: str = "g3h4i5j6k7l8"
-down_revision: Union[str, None] = "f8a9b0c1d2e3"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "f8a9b0c1d2e3"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def _column_exists(table_name: str, column_name: str) -> bool:

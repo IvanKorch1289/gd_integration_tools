@@ -290,7 +290,7 @@ async def _run_worker(
         _logger.info("stopping runner (grace=%ds)...", grace_seconds)
         try:
             await asyncio.wait_for(runner.stop(), timeout=grace_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             _logger.warning("runner.stop() timed out after %ds", grace_seconds)
         except Exception as exc:
             _logger.error("runner.stop() error: %s", exc)

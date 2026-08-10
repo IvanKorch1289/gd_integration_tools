@@ -188,17 +188,7 @@ class LiteLLMGateway:
         async with self._cb.guard():
             try:
                 return await litellm.acompletion(**params)
-            except (
-                litellm_exc.RateLimitError,
-                litellm_exc.ServiceUnavailableError,
-                litellm_exc.Timeout,
-                litellm_exc.APIError,
-                litellm_exc.BadRequestError,
-                litellm_exc.AuthenticationError,
-                asyncio.TimeoutError,
-                GatewayRateLimited,
-                GatewayUnavailable,
-            ) as exc:
+            except (TimeoutError, litellm_exc.RateLimitError, litellm_exc.ServiceUnavailableError, litellm_exc.Timeout, litellm_exc.APIError, litellm_exc.BadRequestError, litellm_exc.AuthenticationError, GatewayRateLimited, GatewayUnavailable) as exc:
                 self._raise_normalized(exc)
 
     async def astream_completion(
@@ -224,17 +214,7 @@ class LiteLLMGateway:
         }
         try:
             response = await litellm.aembedding(**params)
-        except (
-            litellm_exc.RateLimitError,
-            litellm_exc.ServiceUnavailableError,
-            litellm_exc.Timeout,
-            litellm_exc.APIError,
-            litellm_exc.BadRequestError,
-            litellm_exc.AuthenticationError,
-            asyncio.TimeoutError,
-            GatewayRateLimited,
-            GatewayUnavailable,
-        ) as exc:
+        except (TimeoutError, litellm_exc.RateLimitError, litellm_exc.ServiceUnavailableError, litellm_exc.Timeout, litellm_exc.APIError, litellm_exc.BadRequestError, litellm_exc.AuthenticationError, GatewayRateLimited, GatewayUnavailable) as exc:
             self._raise_normalized(exc)
 
         data = getattr(response, "data", None)

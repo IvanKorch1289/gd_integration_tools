@@ -224,7 +224,7 @@ class UnifiedPoolManager:
                 await asyncio.wait_for(reg.ping_fn(), timeout=timeout)
                 latency_ms = round((time.monotonic() - start) * 1000, 2)
                 return {"status": "ok", "latency_ms": latency_ms}
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 return {
                     "status": "error",
                     "error": f"timeout after {timeout}s",
