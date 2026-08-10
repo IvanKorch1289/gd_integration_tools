@@ -124,8 +124,15 @@ async def receive_command(request: Request) -> JSONResponse:
         recorder = get_express_metrics_recorder_provider()
         bot_name = str(payload.get("bot_id", "main_bot"))
         recorder(bot_name, command_name)
-    except Exception:
-        pass
+    except (ImportError, AttributeError, RuntimeError, TypeError) as rec_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1008: narrow exceptions + observability.
+        # ImportError — recorder missing, AttributeError — API change,
+        # RuntimeError — metrics unavailable, TypeError — wrong arg type.
+        import logging
+        logging.getLogger(__name__).debug(
+            "express_router.metrics_recorder_failed",
+            extra={"error": str(rec_exc)},
+        )
 
     # Wave 9.2.4: лог входящего сообщения в ExpressDialogStore.
     await _log_incoming(payload, sync_id=sync_id)
