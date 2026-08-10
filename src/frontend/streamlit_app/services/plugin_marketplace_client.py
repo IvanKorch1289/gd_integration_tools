@@ -131,7 +131,15 @@ def list_plugins(status_filter: str = "all") -> list[dict[str, Any]]:
                 if isinstance(data, list)
                 else data.get("plugins", data.get("items", []))
             )
-    except Exception:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as plugins_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1077: narrow exceptions + observability.
+        # ConnectionError/TimeoutError — server unreachable, RuntimeError
+        # — API failure, ValueError — invalid response, TypeError — wrong.
+        import logging
+        logging.getLogger(__name__).debug(
+            "plugin_marketplace_client.list_failed",
+            extra={"error": str(plugins_exc)},
+        )
         plugins = list(_MOCK_PLUGINS)
 
     if status_filter != "all":
@@ -162,7 +170,14 @@ def get_plugin_manifest(name: str) -> dict[str, Any] | None:
                 return None
             response.raise_for_status()
             return response.json()
-    except Exception:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, httpx.HTTPError) as manifest_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1077: см. выше — mirror для get_plugin_manifest
+        # (+httpx.HTTPError для HTTP transport).
+        import logging
+        logging.getLogger(__name__).debug(
+            "plugin_marketplace_client.manifest_failed",
+            extra={"name": name, "error": str(manifest_exc)},
+        )
         return _MOCK_MANIFESTS.get(name)
 
 
@@ -189,6 +204,12 @@ def toggle_plugin(name: str, active: bool) -> bool:  # noqa: FBT001
                 f"{_BASE_URL}/api/v1/admin/plugins/{name}/toggle", json=body
             )
             return response.status_code < 400  # noqa: PLR2004
-    except Exception:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, httpx.HTTPError) as toggle_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1077: см. выше — mirror для toggle.
+        import logging
+        logging.getLogger(__name__).debug(
+            "plugin_marketplace_client.toggle_failed",
+            extra={"name": name, "error": str(toggle_exc)},
+        )
         # dev-fallback: считаем операцию успешной
         return True
