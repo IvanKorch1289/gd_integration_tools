@@ -310,8 +310,14 @@ class CronTrigger:
             await get_dsl_service().dispatch(
                 route_id=self.route_id, body=body, headers={"x-trigger": self.name}
             )
-        except Exception:
-            _log.exception("CronTrigger %s: dispatch failed", self.name)
+        except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as dispatch_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-969: narrow exceptions + observability (mirror
+            # D-AUDIT-968 для IntervalTrigger).
+            _log.exception(
+                "CronTrigger %s: dispatch failed: %s",
+                self.name,
+                dispatch_exc,
+            )
 
 
 # ── WebhookTrigger ─────────────────────────────────────────────────
