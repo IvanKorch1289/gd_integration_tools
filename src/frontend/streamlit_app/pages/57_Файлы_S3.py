@@ -81,10 +81,10 @@ with tab_mock:
         )
         if st.button("Загрузить в S3", type="primary", key="mock_btn"):
             st.success(
-                
+
                 f"✓ Mock-upload: '{uploaded.name}' → '{bucket}/{target_key}' "
                 f"({uploaded.size} bytes)"
-            
+
             )
 
     def _filter_objects(bucket: str, prefix: str) -> list[dict[str, object]]:

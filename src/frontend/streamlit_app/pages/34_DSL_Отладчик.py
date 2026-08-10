@@ -76,10 +76,10 @@ if mode == "Пошаговый Debugger":
                     if trace:
                         for idx, entry in enumerate(trace):
                             with st.expander(
-                                
+
                                     f"{idx + 1}. {entry.get('processor', 'unknown')} — "
                                     f"{entry.get('duration_ms', 0):.1f}мс"
-                                
+
                             ):
                                 st.json(entry)
                     else:
