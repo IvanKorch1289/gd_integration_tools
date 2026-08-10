@@ -63,7 +63,16 @@ class DSLRoutesClient(BaseAPIClient):
         try:
             self._request("DELETE", f"/api/v1/admin/dsl-routes/{route_id}")
             return True
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as del_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1071: narrow exceptions + observability.
+            # ConnectionError/TimeoutError — server unreachable, RuntimeError
+            # — API failure, ValueError — invalid response, TypeError —
+            # wrong type.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_dsl_routes.delete_failed",
+                extra={"route_id": route_id, "error": str(del_exc)},
+            )
             return False
 
     def validate_dsl_route(self, yaml_str: str) -> dict[str, Any]:
@@ -72,7 +81,7 @@ class DSLRoutesClient(BaseAPIClient):
             return self._request(
                 "POST", "/api/v1/admin/dsl-routes/validate", json={"yaml": yaml_str}
             )
-        except Exception as exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as exc:  # noqa: BLE001
             return {"valid": False, "error": str(exc)}
 
     def diff_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any] | None:
@@ -83,7 +92,13 @@ class DSLRoutesClient(BaseAPIClient):
                 f"/api/v1/admin/dsl-routes/{route_id}/diff",
                 json={"yaml": yaml_str},
             )
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as diff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1071: см. выше — mirror для diff.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_dsl_routes.diff_failed",
+                extra={"route_id": route_id, "error": str(diff_exc)},
+            )
             return None
 
     def get_dsl_route_traces(
@@ -101,7 +116,13 @@ class DSLRoutesClient(BaseAPIClient):
                 params={"limit": limit},
             )
             return result if isinstance(result, list) else []
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as traces_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1071: см. выше — mirror для traces.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_dsl_routes.traces_failed",
+                extra={"route_id": route_id, "error": str(traces_exc)},
+            )
             return []
 
     def execute_registered_route(
