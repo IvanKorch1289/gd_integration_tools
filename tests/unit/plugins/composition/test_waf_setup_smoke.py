@@ -129,12 +129,12 @@ def test_waf_audit_callback_emits_granted_outcome() -> None:
     record = captured[0]
     assert record.levelname == "INFO"
     assert record.getMessage() == "waf.evaluate"
-    assert getattr(record, "waf_outcome") == "granted"
-    assert getattr(record, "plugin") == "core"
-    assert getattr(record, "method") == "GET"
-    assert getattr(record, "host") == "example.com"
-    assert getattr(record, "url") == "https://example.com/x"
-    assert getattr(record, "reason") == "ok"
+    assert record.waf_outcome == "granted"
+    assert record.plugin == "core"
+    assert record.method == "GET"
+    assert record.host == "example.com"
+    assert record.url == "https://example.com/x"
+    assert record.reason == "ok"
 
 
 def test_waf_audit_callback_emits_denied_outcome() -> None:
@@ -159,8 +159,8 @@ def test_waf_audit_callback_emits_denied_outcome() -> None:
         waf_audit_logger.removeHandler(handler)
 
     assert len(captured) == 1
-    assert getattr(captured[0], "waf_outcome") == "denied"
-    assert getattr(captured[0], "reason") == "deny-list match"
+    assert captured[0].waf_outcome == "denied"
+    assert captured[0].reason == "deny-list match"
 
 
 def test_waf_audit_callback_handles_empty_event() -> None:
@@ -176,10 +176,10 @@ def test_waf_audit_callback_handles_empty_event() -> None:
         waf_audit_logger.removeHandler(handler)
 
     assert len(captured) == 1
-    assert getattr(captured[0], "waf_outcome") == "denied"
+    assert captured[0].waf_outcome == "denied"
     # missing-keys должны быть переданы как None в extra-полях.
-    assert getattr(captured[0], "plugin") is None
-    assert getattr(captured[0], "host") is None
+    assert captured[0].plugin is None
+    assert captured[0].host is None
 
 
 def test_waf_audit_callback_handles_none_event() -> None:

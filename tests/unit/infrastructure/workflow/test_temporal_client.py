@@ -65,9 +65,9 @@ def test_worker_pool_propagates_use_versioning() -> None:
     """
     factory = TemporalClientFactory(use_versioning=True)
     # Подтверждаем что factory поля — корректные.
-    assert getattr(factory, "use_versioning") is True
-    assert getattr(factory, "deployment_name") == "gd-integration-tools"
-    assert getattr(factory, "build_id") == "0.0.0"
+    assert factory.use_versioning is True
+    assert factory.deployment_name == "gd-integration-tools"
+    assert factory.build_id == "0.0.0"
 
     # Прямая проверка того, что register_worker() подхватит атрибуты —
     # имитируем вызов, который исторически был hard-coded default=False:

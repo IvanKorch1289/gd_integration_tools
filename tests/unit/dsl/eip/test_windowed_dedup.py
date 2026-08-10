@@ -129,7 +129,7 @@ def fake_redis(monkeypatch: pytest.MonkeyPatch) -> _FakeRedisClient:
     """Подменяет ``src.infrastructure.clients.storage.redis.redis_client``."""
     fake = _FakeRedisClient()
     fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.redis")
-    setattr(fake_module, "redis_client", fake)
+    fake_module.redis_client = fake
     monkeypatch.setitem(
         sys.modules, "src.backend.infrastructure.clients.storage.redis", fake_module
     )
@@ -224,7 +224,7 @@ async def test_redis_failure_passes_message(monkeypatch: pytest.MonkeyPatch) -> 
     """Если Redis-вызов бросает исключение — сообщение проходит (graceful)."""
     failing = AsyncMock(side_effect=RuntimeError("redis down"))
     fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.redis")
-    setattr(fake_module, "redis_client", types.SimpleNamespace(execute=failing))
+    fake_module.redis_client = types.SimpleNamespace(execute=failing)
     monkeypatch.setitem(
         sys.modules, "src.backend.infrastructure.clients.storage.redis", fake_module
     )

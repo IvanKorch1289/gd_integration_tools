@@ -70,7 +70,7 @@ def test_collect_activities_skips_duplicates_across_workflows() -> None:
         .build()
     )
     activities = bridge.collect_activities([decl1, decl2])
-    names = [getattr(fn, "__activity_name__") for fn in activities]
+    names = [fn.__activity_name__ for fn in activities]
     assert names == ["foo.shared", "foo.unique_a", "foo.unique_b"]
 
 
@@ -87,7 +87,7 @@ def test_collect_activities_includes_saga_forward_and_compensate() -> None:
         .build()
     )
     activities = bridge.collect_activities([decl])
-    names = [getattr(fn, "__activity_name__") for fn in activities]
+    names = [fn.__activity_name__ for fn in activities]
     assert set(names) == {
         "orders.create",
         "payment.charge",
@@ -108,7 +108,7 @@ def test_collect_activities_no_duplicates_for_saga_with_repeating_activities() -
         .build()
     )
     activities = bridge.collect_activities([decl])
-    names = [getattr(fn, "__activity_name__") for fn in activities]
+    names = [fn.__activity_name__ for fn in activities]
     assert names.count("foo.x") == 1
     assert names.count("foo.y") == 1
 
@@ -136,7 +136,7 @@ def test_get_activity_callables_with_default_bridge() -> None:
     decl = WorkflowBuilder("a").activity("foo").activity("bar").build()
     callables = get_activity_callables([decl])
     assert len(callables) == 2
-    names = [getattr(fn, "__activity_name__") for fn in callables]
+    names = [fn.__activity_name__ for fn in callables]
     assert names == ["foo", "bar"]
 
 
@@ -175,7 +175,7 @@ def test_activity_bridge_collects_agent_invoke_from_invoke_agent_step() -> None:
     bridge = ActivityBridge()
     decl = WorkflowBuilder("ai.wf").invoke_agent(agent_id="advisor").build()
     activities = bridge.collect_activities([decl])
-    names = [getattr(fn, "__activity_name__") for fn in activities]
+    names = [fn.__activity_name__ for fn in activities]
     assert names == ["_agent_invoke"]
 
 
@@ -192,5 +192,5 @@ def test_activity_bridge_mixes_activity_and_agent_invoke() -> None:
         .build()
     )
     activities = bridge.collect_activities([decl])
-    names = [getattr(fn, "__activity_name__") for fn in activities]
+    names = [fn.__activity_name__ for fn in activities]
     assert names == ["orders.create", "_agent_invoke", "orders.notify"]

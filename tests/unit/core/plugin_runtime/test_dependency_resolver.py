@@ -37,7 +37,7 @@ def _make_manifest(
         requires_core=">=0.2,<1.0",
         entry_class=f"extensions.{name}.plugin.Plugin",
         compatibility=PluginCompatibility(
-            requires_plugins={dep: ">=0.0" for dep in (requires or {})}
+            requires_plugins=dict.fromkeys(requires or {}, ">=0.0")
         ),
     )
 

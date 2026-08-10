@@ -41,13 +41,13 @@ class TestDSLCoverage:
 
     def test_routing_slip_documented(self) -> None:
         """DSL method должен иметь docstring с Camel reference."""
-        method = getattr(EIPMixin, "routing_slip")
+        method = EIPMixin.routing_slip
         assert method.__doc__ is not None
         assert "Camel" in method.__doc__
         assert "routingSlip" in method.__doc__
 
     def test_content_based_router_documented(self) -> None:
-        method = getattr(EIPMixin, "content_based_router")
+        method = EIPMixin.content_based_router
         assert method.__doc__ is not None
         assert "Camel" in method.__doc__
         assert "contentBasedRouter" in method.__doc__

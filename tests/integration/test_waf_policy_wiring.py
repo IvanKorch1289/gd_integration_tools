@@ -83,8 +83,8 @@ def test_audit_callback_receives_event(caplog: pytest.LogCaptureFixture) -> None
         }
     )
     record = next(r for r in caplog.records if r.name == "waf.audit")
-    assert getattr(record, "waf_outcome") == "granted"
-    assert getattr(record, "host") == "example.com"
+    assert record.waf_outcome == "granted"
+    assert record.host == "example.com"
 
 
 def test_capability_denied_when_gate_present_without_declaration() -> None:

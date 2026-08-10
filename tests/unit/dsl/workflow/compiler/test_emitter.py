@@ -170,7 +170,7 @@ def test_signal_handler_writes_to_signals_dict() -> None:
     decl = WorkflowBuilder("hitl").wait_for_signal("ev").build()
     compiled = compile_workflow(decl)
     instance = compiled.cls()
-    handler = getattr(compiled.cls, "_on_signal_ev")
+    handler = compiled.cls._on_signal_ev
     asyncio.run(handler(instance, {"k": "v"}))
     assert instance._signals == {"ev": {"k": "v"}}
 
