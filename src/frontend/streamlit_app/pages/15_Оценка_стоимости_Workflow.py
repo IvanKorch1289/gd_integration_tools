@@ -36,7 +36,15 @@ try:
     from src.backend.core.frontend_facade import get_global_registry
 
     all_ids = sorted(get_global_registry().all_workflow_ids())
-except Exception:  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError) as reg_exc:  # noqa: BLE001
+    # cycle-9/D-AUDIT-1061: narrow exceptions + observability.
+    # ImportError — frontend_facade missing, AttributeError — API
+    # change, RuntimeError — registry unavailable.
+    import logging
+    logging.getLogger(__name__).debug(
+        "streamlit_15_Оценка.registry_load_failed",
+        extra={"error": str(reg_exc)},
+    )
     all_ids = []
 
 workflow_id = st.selectbox(
