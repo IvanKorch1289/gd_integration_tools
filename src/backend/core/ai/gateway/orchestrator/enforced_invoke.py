@@ -187,8 +187,15 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                     },
                     severity="info",
                 )
-            except Exception:  # never fail caller
-                pass
+            except (ImportError, AttributeError, RuntimeError) as audit_exc:  # never fail caller
+                # cycle-9/D-AUDIT-984: narrow exceptions + observability.
+                # ImportError — audit facade missing, AttributeError —
+                # schema change, RuntimeError — backend unavailable.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "enforced_invoke.audit_emit_failed",
+                    extra={"error": str(audit_exc)},
+                )
             return None
         try:
             from src.backend.core.tenancy.budget_enforcer import (
