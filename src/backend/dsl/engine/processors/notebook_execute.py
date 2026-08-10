@@ -83,7 +83,16 @@ class NotebookExecuteProcessor(BaseProcessor):
             try:
                 body = exchange.in_message.body
                 cells = body if isinstance(body, list) else []
-            except Exception:
+            except (AttributeError, TypeError, ValueError) as body_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-973: narrow exceptions + observability.
+                # AttributeError — exchange missing body, TypeError — wrong
+                # type, ValueError — invalid body. Bare `except Exception`
+                # маскировал unrelated runtime errors.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "notebook_execute.body_fallback_empty",
+                    extra={"error": str(body_exc)},
+                )
                 cells = []
 
         if not cells:
