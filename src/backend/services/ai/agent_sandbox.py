@@ -444,8 +444,20 @@ class E2BAgentSandbox:
                             },
                             severity="warning",
                         )
-                    except Exception:  # never fail caller
-                        pass
+                    except (ImportError, AttributeError, RuntimeError) as audit_emit_exc:  # never fail caller
+                        # cycle-9/D-AUDIT-920: narrow exceptions + observability.
+                        # ImportError — audit facade missing, AttributeError
+                        # — malformed audit schema, RuntimeError — backend
+                        # unavailable. Bare `except Exception` маскировал
+                        # unrelated runtime errors (KeyError, TypeError).
+                        import logging
+                        logging.getLogger(__name__).debug(
+                            "agent_sandbox.audit_emit_failed",
+                            extra={
+                                "error": str(audit_emit_exc),
+                                "session_id": session_id,
+                            },
+                        )
 
         try:
             result = await asyncio.wait_for(
