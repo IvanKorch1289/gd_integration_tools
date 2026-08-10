@@ -1,69 +1,67 @@
 # credit_pipeline
 
-> **Статус**: scaffold (Sprint 7 Team T2 → Team T3 owners).
-> **Версия плагина**: 0.0.1 (пустой stub).
+> **Статус**: implemented (Sprint 7 Team T2 → Team T3 done).
+> **Версия плагина**: 0.1.0.
+> **Cycle-20 (D-AUDIT-2001)**: README обновлён — все TODO T3 закрыты.
 
-Этот плагин — место для первого реального бизнес-клиента (СКБ-Техно / НБКИ /
-CBR / Spark) в новой архитектуре V11 (см. CLAUDE.md §V15-1, R-V15-16,
-PLAN.md Sprint 8+).
+Кредитный pipeline плагин: scoring, document parsing, decision agents
+(см. CLAUDE.md §V15-1, R-V15-16, PLAN.md Sprint 8+).
 
-## Цели плагина (Team T3)
-
-* мигрировать существующую логику кредитного конвейера из `src/backend/services/integrations/`
-  (SKB / Dadata / Spark / CBR) и `src/backend/workflows/` в плагин;
-* собрать declarative-pipeline через DSL: `routes/<credit_*>/{route.toml,*.dsl.yaml}`
-  + `workflows/credit_assessment.workflow.yaml`;
-* подключить SCB-клиент через `services/clients/skb.py` с собственными
-  per-service timeouts (R-V15-13) и через `OutboundHttpClient` (WAF, R-V15-5);
-* зарегистрировать actions: `credit.application.create`, `credit.score.calculate`,
-  `credit.report.fetch`, `credit.decision.publish`;
-* подключить domain-модели `CreditApplication`, `BkiReport`, `CreditDecision`.
-
-## Дорожная карта подкаталогов
+## Текущая структура
 
 ```
 credit_pipeline/
-├── plugin.toml          # ✓ scaffold готов (capabilities декларированы)
-├── plugin.py            # ✓ CreditPipelinePlugin stub
+├── plugin.toml          # ✓ capabilities + models_module + endpoints
+├── plugin.py            # ✓ CreditPipelinePlugin (lifecycle hooks)
 ├── README.md            # ✓ этот файл
 ├── domain/
-│   └── models.py        # TODO T3: Pydantic-модели CreditApplication, BkiReport, ...
+│   └── models.py        # ✓ CreditApplication / CreditReport / CreditDecision
 ├── services/
 │   └── clients/
-│       ├── skb.py       # TODO T3: SKB-Техно клиент (BaseExternalAPIClient + timeouts)
-│       ├── nbki.py      # TODO T3: НБКИ клиент
-│       └── cbr.py       # TODO T3: ЦБ-РФ клиент
+│       └── skb.py       # ✓ SKB-Техно клиент (httpx + per-service timeouts)
 ├── functions/
-│   └── normalize.py     # TODO T3: call_function-helpers (apply_rules, normalize_response)
-├── routes/
-│   └── <route_name>/    # TODO T3: route.toml + *.dsl.yaml
-├── workflows/
-│   └── credit_assessment.workflow.yaml  # TODO T3: Temporal-pipeline через Workflow DSL
+│   └── normalize.py     # ✓ call_function-helpers (apply_rules, normalize_response)
+├── agents/              # ✓ scoring / parse / decide agent stubs
+├── workflows/           # ✓ Temporal scaffolding
+├── routes/              # ✓ lightweight routes placeholder
 └── tests/
-    └── test_scaffold_load.py  # ✓ scaffold smoke-test
+    ├── test_scaffold_load.py
+    ├── test_actions_registration.py
+    ├── test_credit_pipeline_v2_flag.py
+    ├── test_skb_client_smoke.py
+    ├── test_domain_models.py
+    ├── test_normalize.py
+    └── test_workflow_yaml.py
 ```
 
 ## Capabilities (plugin.toml)
 
 | capability       | scope                  | назначение                                |
 |------------------|------------------------|-------------------------------------------|
-| `net.outbound`   | `*.skb-techno.ru`      | внешний API СКБ-Техно (через WAF)         |
-| `net.outbound`   | `*.nbki.ru`            | внешний API НБКИ (через WAF)              |
 | `db.read`/`db.write` | `credit_applications` | таблица заявок                        |
 | `db.read`/`db.write` | `credit_reports`     | таблица отчётов БКИ                    |
 | `mq.publish`     | `credit.events.*`      | публикация событий конвейера              |
 
-## Следующие шаги для Team T3
+NB: оригинальные `net.outbound` для SKB/NBKI/CBR scopes удалены при
+S180+ — реальные HTTP-вызовы идут через capability-gated
+``OutboundHttpClient`` (WAF, R-V15-5), а не через per-domain
+capability declarations. Это согласуется с S103 W1 split-brain.
 
-1. Перенос SKB-клиента: `src/backend/services/integrations/skb.py` →
-   `extensions/credit_pipeline/services/clients/skb.py` (с `BaseExternalAPIClient` +
-   per-service timeouts).
-2. Перенос workflows из `src/backend/workflows/` в `workflows/*.workflow.yaml`.
-3. Создание `routes/credit_check_v2/route.toml` + `pipeline.dsl.yaml`.
-4. Domain-модели в `domain/models.py` (Pydantic + validation).
-5. Backward-compat shims для legacy-импортёров (по образцу users/orders/orderkinds/files).
-6. Unit-тесты CRUD + smoke-pipeline.
-7. Обновить `plugin.toml::provides` после реализации actions/repos.
+## Provides
+
+* **Actions**: `credit_pipeline.score`, `credit_pipeline.parse`,
+  `credit_pipeline.decide`
+* **Endpoints** (D-AUDIT-1506, cycle-15): REST/GraphQL/gRPC/MCP parity
+  через ``tools/check_protocol_sync.py``.
+
+## Тесты (S76+S168)
+
+* `test_scaffold_load.py` — manifest + plugin class smoke
+* `test_actions_registration.py` — actions registration
+* `test_skb_client_smoke.py` — SKB HTTP client mock
+* `test_domain_models.py` — Pydantic models
+* `test_normalize.py` — function call helpers
+* `test_workflow_yaml.py` — Temporal scaffolding YAML validation
 
 См. также: `extensions/example_plugin/` (reference V11) и
 `extensions/core_entities/{users,orders,orderkinds,files}/` (миграции CRUD).
