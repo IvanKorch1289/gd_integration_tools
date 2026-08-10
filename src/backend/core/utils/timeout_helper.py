@@ -38,7 +38,7 @@ T = TypeVar("T")
 __all__ = ("with_timeout",)
 
 
-async def with_timeout(
+async def with_timeout[T](
     coro: Awaitable[T],
     *,
     timeout: float,

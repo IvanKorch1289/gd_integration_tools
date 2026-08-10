@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 from uuid import uuid4
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 __all__ = ("EventCallback", "Source", "SourceEvent", "SourceKind")
 
 
-class SourceKind(str, Enum):
+class SourceKind(StrEnum):
     """Тип входящего источника.
 
     Один Gateway покрывает все варианты, конкретный бэкенд выбирается

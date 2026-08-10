@@ -8,7 +8,7 @@ HTTP/SOAP/gRPC/MQ/Mail/SMS. Конкретные бэкенды живут в
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 __all__ = ("Sink", "SinkKind", "SinkResult")
 
 
-class SinkKind(str, Enum):
+class SinkKind(StrEnum):
     """Тип исходящего канала.
 
     Wave 3 (Roadmap V10): добавлены ``ws`` / ``webhook`` / ``file``

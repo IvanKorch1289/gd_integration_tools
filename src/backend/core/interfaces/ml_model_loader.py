@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 __all__ = ("MLModelLoaderProtocol", "MLModelType")
 
-MLModelType: TypeAlias = Literal[
+type MLModelType = Literal[
     "torch", "torchscript", "onnx", "sklearn", "catboost", "lightgbm", "joblib"
 ]
 

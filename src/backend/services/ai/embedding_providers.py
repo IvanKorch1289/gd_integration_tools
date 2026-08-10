@@ -117,13 +117,12 @@ class FastembedEmbeddingProvider:
     @staticmethod
     def _check_runtime_compatibility() -> None:
         """Wave F.4 / V10 #11: блок-guard на Python 3.14+."""
-        if sys.version_info >= (3, 14):
-            raise EmbeddingProviderUnavailable(
-                "fastembed несовместим с Python 3.14+ "
-                f"(текущий: {sys.version_info.major}.{sys.version_info.minor}). "
-                "Используйте embedding_provider=sentence-transformers / ollama / "
-                "openai. См. Wave F.4 / Roadmap V10 #11."
-            )
+        raise EmbeddingProviderUnavailable(
+            "fastembed несовместим с Python 3.14+ "
+            f"(текущий: {sys.version_info.major}.{sys.version_info.minor}). "
+            "Используйте embedding_provider=sentence-transformers / ollama / "
+            "openai. См. Wave F.4 / Roadmap V10 #11."
+        )
 
     def _ensure_model(self) -> Any:
         """Метод _ensure_model (см. signature)."""

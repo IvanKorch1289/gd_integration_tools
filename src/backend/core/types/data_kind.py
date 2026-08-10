@@ -15,12 +15,12 @@ DSL-маршруты не меняют поведение. Процессоры,
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, StrEnum
 
 __all__ = ("DataKind",)
 
 
-class DataKind(str, Enum):
+class DataKind(StrEnum):
     """Форма payload'а ``Message``.
 
     Наследуется от ``str`` для прозрачной YAML/JSON-сериализации

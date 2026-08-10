@@ -14,13 +14,13 @@ data-model, не contract. Используется ImportGateway (core), Import
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 __all__ = ("AuthSchemeKind", "AuthSpec", "ConnectorSpec", "EndpointSpec", "SecretRef")
 
 
-class AuthSchemeKind(str, Enum):
+class AuthSchemeKind(StrEnum):
     """Поддерживаемые auth-схемы (унифицировано для OpenAPI/Postman)."""
 
     NONE = "none"

@@ -37,7 +37,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from functools import lru_cache
 from typing import Any
 
@@ -58,7 +58,7 @@ __all__ = (
 _logger = get_logger("core.ai.security.agent_security")
 
 
-class ThreatLevel(str, Enum):
+class ThreatLevel(StrEnum):
     """Уровень угрозы.
 
     - ``NONE``: No threat detected

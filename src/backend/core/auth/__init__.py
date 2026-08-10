@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 from src.backend.core.auth.api_key_backend import APIKeyAuth
@@ -73,7 +73,7 @@ __all__ = (
 )
 
 
-class AuthMethod(str, Enum):
+class AuthMethod(StrEnum):
     """Метод аутентификации запроса.
 
     Поддерживаемые значения:

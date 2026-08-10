@@ -21,7 +21,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ __all__ = (
 # ── Canonical DQ types (cycle-8/D-AUDIT-803) ──────────────────────────
 # DO NOT move these out of __init__.py — они single source of truth для
 # 5 module surfaces (4 mixin files + this __init__).
-class DQSeverity(str, Enum):
+class DQSeverity(StrEnum):
     """Severity enum (INFO / WARNING / ERROR / CRITICAL)."""
     INFO = "info"
     WARNING = "warning"

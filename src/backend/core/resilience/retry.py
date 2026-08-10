@@ -182,7 +182,7 @@ def default_retryable() -> tuple[type[BaseException], ...]:
     return (ConnectionError, OSError, asyncio.TimeoutError)
 
 
-async def retry_async(
+async def retry_async[T](
     coro_fn: Callable[..., Awaitable[T]],
     *,
     max_attempts: int = 3,

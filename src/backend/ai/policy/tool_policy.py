@@ -11,12 +11,12 @@ Security properties:
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, StrEnum
 
 from pydantic import BaseModel, Field, PrivateAttr
 
 
-class ToolPermission(str, Enum):
+class ToolPermission(StrEnum):
     """Результат проверки инструмента."""
 
     ALLOW = "allow"

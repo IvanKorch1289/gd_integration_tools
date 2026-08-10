@@ -42,7 +42,7 @@ import time
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
@@ -66,7 +66,7 @@ __all__ = (
 _log = get_logger(__name__)
 
 
-class LineageNodeType(str, Enum):
+class LineageNodeType(StrEnum):
     """Тип узла в lineage graph."""
 
     DATASET = "dataset"  # Сырой датасет (CSV, JSON, S3 object)

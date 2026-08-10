@@ -410,7 +410,7 @@ class ExpressBotClient:
             ``{file_id, file_url}`` для использования в сообщениях.
         """
         files = {"content": (file_name, file_data)}
-        data = {"meta": '{"group_chat_id":"%s"}' % group_chat_id}
+        data = {"meta": f'{{"group_chat_id":"{group_chat_id}"}}'}
         resp = await self.http.post(
             "/api/v3/botx/files/upload",
             files=files,

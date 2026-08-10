@@ -95,7 +95,7 @@ class _AgentRuntimeState:
     extra: dict[str, Any] = field(default_factory=dict)
 
 
-class BasePydanticAgent(Generic[ResultT]):
+class BasePydanticAgent[ResultT: BaseModel]:
     """Базовая обёртка над ``pydantic_ai.Agent`` с типизированным результатом.
 
     Args:

@@ -38,7 +38,7 @@ Usage::
 from __future__ import annotations
 
 import os
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
@@ -49,7 +49,7 @@ _logger = get_logger("services.jupyter.factory")
 __all__ = ("BackendKind", "ExecutionBackendFactory")
 
 
-class BackendKind(str, Enum):
+class BackendKind(StrEnum):
     """S74 W2 — enum для type-safe backend selection."""
 
     HUB = "hub"

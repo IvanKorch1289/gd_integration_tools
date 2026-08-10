@@ -15,12 +15,12 @@ Watermark — wall-clock секунды (Unix epoch), маркирующий г�
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, StrEnum
 
 __all__ = ("LatePolicy", "WatermarkState")
 
 
-class LatePolicy(str, Enum):
+class LatePolicy(StrEnum):
     """Политика обработки late events.
 
     * ``DROP`` — отбросить, инкрементировать метрику.

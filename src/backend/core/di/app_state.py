@@ -148,7 +148,7 @@ def _get_from_app_state(attr: str) -> Any | None:
     return None
 
 
-def app_state_singleton(
+def app_state_singleton[T](
     attr: str, factory: Callable[[], T] | None = None
 ) -> Callable[[Callable[[], T]], Callable[[], T]]:
     """Декоратор-фабрика singleton-доступа к объектам из ``app.state``.

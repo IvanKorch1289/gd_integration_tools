@@ -35,7 +35,8 @@ Wave 6.4: создано для устранения layer-violations в
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, AsyncContextManager, Protocol, runtime_checkable
+from contextlib import AbstractAsyncContextManager as AsyncContextManager
+from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
     "BrowserClientProtocol",

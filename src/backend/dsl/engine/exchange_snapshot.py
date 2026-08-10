@@ -144,7 +144,7 @@ def to_dict_fast(obj: Any, *, use_msgspec: bool = True) -> dict[str, Any]:
     return _encode_orjson(obj)
 
 
-def from_dict_fast(cls: type[T], data: dict[str, Any]) -> T:
+def from_dict_fast[T](cls: type[T], data: dict[str, Any]) -> T:
     """dict → typed object. msgspec.convert первым; fallback ``cls(**data)``.
 
     Args:

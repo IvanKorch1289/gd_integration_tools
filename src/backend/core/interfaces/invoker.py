@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Protocol, runtime_checkable
 from uuid import uuid4
 
@@ -28,7 +28,7 @@ __all__ = (
 )
 
 
-class InvocationMode(str, Enum):
+class InvocationMode(StrEnum):
     """Шесть режимов вызова через Invoker.
 
     * ``SYNC`` — блокирующий вызов, ответ сразу.
@@ -48,7 +48,7 @@ class InvocationMode(str, Enum):
     STREAMING = "streaming"
 
 
-class InvocationStatus(str, Enum):
+class InvocationStatus(StrEnum):
     """Статус вызова в response."""
 
     OK = "ok"

@@ -50,7 +50,7 @@ import asyncio
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
@@ -159,7 +159,7 @@ CacheStore = InMemoryCacheStore  # type alias for DI
 # ── APISource (config per source) ──────────────────────────────────────
 
 
-class MergeStrategy(str, Enum):
+class MergeStrategy(StrEnum):
     """Как merge результаты от sources в unified response."""
 
     MERGE_DICTS = "merge_dicts"  # dict.update() всех results

@@ -45,7 +45,7 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 from src.backend.core.di.app_state import app_state_singleton
@@ -65,7 +65,7 @@ warnings.warn(
 )
 
 
-class Channel(str, Enum):
+class Channel(StrEnum):
     """Метод Channel (см. signature)."""
     EMAIL = "email"
     EXPRESS = "express"

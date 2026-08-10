@@ -18,13 +18,13 @@ Composition root: ``services.integrations.import_service.ImportService``
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Protocol, runtime_checkable
 
 __all__ = ("ImportGateway", "ImportSource", "ImportSourceKind")
 
 
-class ImportSourceKind(str, Enum):
+class ImportSourceKind(StrEnum):
     """Тип импортируемой спецификации."""
 
     POSTMAN = "postman"

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 from uuid import uuid4
 
@@ -27,7 +27,7 @@ __all__ = (
 logger = get_logger(__name__)
 
 
-class ReplayStatus(str, Enum):
+class ReplayStatus(StrEnum):
     """Метод ReplayStatus (см. signature)."""
     STORED = "stored"
     REPLAYED = "replayed"

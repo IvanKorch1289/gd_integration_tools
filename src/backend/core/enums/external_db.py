@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -12,7 +12,7 @@ __all__ = (
 )
 
 
-class ExternalDBObjectTypeChoices(str, Enum):
+class ExternalDBObjectTypeChoices(StrEnum):
     """
     Типы разрешённых объектов внешних БД.
     """
@@ -23,7 +23,7 @@ class ExternalDBObjectTypeChoices(str, Enum):
     query = "query"
 
 
-class ExternalDBParameterModeChoices(str, Enum):
+class ExternalDBParameterModeChoices(StrEnum):
     """
     Режим передачи аргументов в вызов БД.
 

@@ -15,12 +15,12 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, StrEnum
 
 __all__ = ("SideEffectKind",)
 
 
-class SideEffectKind(str, Enum):
+class SideEffectKind(StrEnum):
     """Класс побочных эффектов процессора/action.
 
     * ``PURE`` — детерминированная функция input → output, без чтения

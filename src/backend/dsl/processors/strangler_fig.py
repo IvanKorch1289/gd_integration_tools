@@ -31,7 +31,7 @@ import random
 import threading
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
@@ -56,7 +56,7 @@ __all__ = (
 _log = get_logger(__name__)
 
 
-class RouteTarget(str, Enum):
+class RouteTarget(StrEnum):
     """Target system для routing."""
 
     OLD = "old"

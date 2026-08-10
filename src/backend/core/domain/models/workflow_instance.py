@@ -34,7 +34,7 @@ from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
 __all__ = ("WorkflowInstance", "WorkflowStatus")
 
 
-class WorkflowStatus(str, enum.Enum):
+class WorkflowStatus(enum.StrEnum):
     """Логические статусы инстанса workflow.
 
     * ``pending`` — создан, ожидает первого шага (worker ещё не подхватил).

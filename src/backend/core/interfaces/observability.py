@@ -15,7 +15,8 @@ Wave 6.2: вынесено из `infrastructure/application/...`, чтобы ser
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncContextManager, Protocol, runtime_checkable
+from contextlib import AbstractAsyncContextManager as AsyncContextManager
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     pass

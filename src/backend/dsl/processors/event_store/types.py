@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
@@ -23,7 +23,7 @@ _log = get_logger(__name__)
 # ── Event dataclass ─────────────────────────────────────────────────────
 
 
-class EventStream(str, Enum):
+class EventStream(StrEnum):
     """Имя event stream / topic / aggregate type."""
 
     ORDER = "order"

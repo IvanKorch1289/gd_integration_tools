@@ -83,7 +83,7 @@ def list_services() -> list[str]:
         )
 
 
-def get_service(key: Hashable | type[T]) -> T | Any:
+def get_service[T](key: Hashable | type[T]) -> T | Any:
     """Получает экземпляр сервиса (singleton).
 
     Args:

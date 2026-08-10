@@ -34,7 +34,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -48,7 +48,7 @@ _logger = get_logger("core.ai.policy.hotreload")
 __all__ = ("PolicyReloadAction", "PolicyReloadEvent", "watch_policy_files")
 
 
-class PolicyReloadAction(str, Enum):
+class PolicyReloadAction(StrEnum):
     """S77 W1 — тип change event для policy files."""
 
     ADDED = "added"

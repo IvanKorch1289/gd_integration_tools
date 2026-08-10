@@ -44,7 +44,7 @@ from __future__ import annotations
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
@@ -62,7 +62,7 @@ __all__ = (
 )
 
 
-class BreakerState(str, Enum):
+class BreakerState(StrEnum):
     """S81 W1 — circuit breaker states."""
 
     CLOSED = "closed"  # Normal operation

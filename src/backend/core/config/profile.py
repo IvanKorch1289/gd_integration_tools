@@ -9,7 +9,7 @@ production-стек (prod). Используется как ключ overlay-ф�
 from __future__ import annotations
 
 import os
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Final
 
 __all__ = (
@@ -23,7 +23,7 @@ __all__ = (
 APP_PROFILE_ENV: Final[str] = "APP_PROFILE"
 
 
-class AppProfileChoices(str, Enum):
+class AppProfileChoices(StrEnum):
     """Допустимые профили запуска приложения.
 
     Значения:

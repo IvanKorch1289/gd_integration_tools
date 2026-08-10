@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import Enum, StrEnum
 
 __all__ = ("DatabaseProfileChoices", "DatabaseTypeChoices", "IsolationLevelChoices")
 
 
-class DatabaseTypeChoices(str, Enum):
+class DatabaseTypeChoices(StrEnum):
     """
     Перечисление поддерживаемых реляционных СУБД.
 
@@ -27,7 +27,7 @@ class DatabaseTypeChoices(str, Enum):
     clickhouse = "clickhouse"  # S168 W10 P1-8 (analytics)
 
 
-class IsolationLevelChoices(str, Enum):
+class IsolationLevelChoices(StrEnum):
     """
     Перечисление допустимых уровней изоляции транзакций.
 
@@ -42,7 +42,7 @@ class IsolationLevelChoices(str, Enum):
     serializable = "SERIALIZABLE"
 
 
-class DatabaseProfileChoices(str, Enum):
+class DatabaseProfileChoices(StrEnum):
     """
     Перечисление профилей подключения к БД.
 

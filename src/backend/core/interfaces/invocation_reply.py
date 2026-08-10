@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Protocol, runtime_checkable
 
 from src.backend.core.interfaces.invoker import InvocationResponse
@@ -30,7 +30,7 @@ from src.backend.core.interfaces.invoker import InvocationResponse
 __all__ = ("InvocationReplyChannel", "ReplyChannelKind", "ReplyChannelRegistryProtocol")
 
 
-class ReplyChannelKind(str, Enum):
+class ReplyChannelKind(StrEnum):
     """Тип канала доставки :class:`InvocationResponse`."""
 
     API = "api"

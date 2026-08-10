@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import Enum, StrEnum
 
 __all__ = ("BrokerKind", "InvokeMode")
 
 
-class InvokeMode(str, Enum):
+class InvokeMode(StrEnum):
     """
     Режим выполнения действия.
 
@@ -16,7 +16,7 @@ class InvokeMode(str, Enum):
     event = "event"
 
 
-class BrokerKind(str, Enum):
+class BrokerKind(StrEnum):
     """
     Поддерживаемые типы брокеров для публикации команды.
 

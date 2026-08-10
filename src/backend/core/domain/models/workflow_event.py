@@ -29,7 +29,7 @@ from src.backend.core.tenancy.sqlalchemy_filter import TenantMixin
 __all__ = ("WorkflowEvent", "WorkflowEventType")
 
 
-class WorkflowEventType(str, enum.Enum):
+class WorkflowEventType(enum.StrEnum):
     """Типы событий, записываемых в event log.
 
     Instance-level:

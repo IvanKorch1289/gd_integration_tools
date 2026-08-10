@@ -31,7 +31,7 @@ __all__ = (
 F = TypeVar("F", bound=Callable[..., Awaitable[Any]])
 
 
-def transactional(fn: F) -> F:
+def transactional[F: Callable[..., Awaitable[Any]]](fn: F) -> F:
     """Декоратор: оборачивает async метод в DB-транзакцию.
 
     Использует session_manager из BaseService.repo если доступен.
@@ -155,7 +155,7 @@ async def soft_delete(repo: Any, key: str, value: Any) -> bool:
         return (result.rowcount or 0) > 0
 
 
-def with_audit_timestamps(fn: F) -> F:
+def with_audit_timestamps[F: Callable[..., Awaitable[Any]]](fn: F) -> F:
     """Декоратор: автоматически добавляет created_at/updated_at в payload.
 
     Для методов, принимающих dict данных (add, update).

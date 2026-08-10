@@ -42,7 +42,7 @@ def default_cpu_pool() -> ProcessPoolExecutor:
     return _default_pool
 
 
-async def run_cpu_bound(
+async def run_cpu_bound[T](
     fn: Callable[..., T],
     *args: object,
     use_process_pool: bool = False,

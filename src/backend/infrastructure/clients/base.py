@@ -33,7 +33,7 @@ __all__ = ("ManagedAsyncClient",)
 T = TypeVar("T")
 
 
-class ManagedAsyncClient(ABC, Generic[T]):
+class ManagedAsyncClient[T](ABC):
     """Абстрактная база для async клиентов с lifecycle-managed connection.
 
     Подклассы реализуют:
