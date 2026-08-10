@@ -148,7 +148,9 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
         )
         if isinstance(_data, dict) and _data:
             return _data, True
-    except Exception:  # noqa: BLE001, S110 — endpoint может ещё не существовать
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError) as pool_exc:  # noqa: BLE001, S110 — endpoint может ещё не существовать
+        # cycle-9/D-AUDIT-1057: narrow exceptions + observability (mirror
+        # D-AUDIT-1054 для resilience/snapshot).
         st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
         return _mock_pools_snapshot(), False
     return _mock_pools_snapshot(), False
