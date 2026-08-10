@@ -130,8 +130,16 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
                 encoded_full = enc.encode(prompt)
                 truncated_enc = encoded_full[:half] + encoded_full[-(limit - half) :]
                 return enc.decode(truncated_enc)
-            except Exception:
-                pass
+            except (AttributeError, TypeError, ValueError, UnicodeDecodeError) as tk_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-987: narrow exceptions + observability.
+                # AttributeError — encoder API change, TypeError — wrong
+                # prompt type, ValueError — invalid limit, UnicodeDecodeError
+                # — decode failed.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "llm_mixin.tiktoken_truncate_failed",
+                    extra={"error": str(tk_exc), "limit": limit},
+                )
 
         # Fallback: naive char-level
         half_chars = (limit * 4) // 2
