@@ -235,10 +235,13 @@ if st.button("Опросить") and poll_id:
             st.metric("HTTP", resp.status_code)
             try:
                 st.json(resp.json())
-            except Exception:  # noqa: BLE001
+            except (ValueError, TypeError) as poll_json_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-1055: narrow exceptions + observability.
+                # ValueError для malformed JSON, TypeError для wrong type.
                 st.code(resp.text[:10_000])
-    except Exception as exc:  # noqa: BLE001
-        st.error(f"HTTP error: {exc}")
+    except (ConnectionError, TimeoutError, RuntimeError, OSError) as poll_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1055: см. выше — narrow для outer HTTP error.
+        st.error(f"HTTP error: {poll_exc}")
 
 # ── История ──────────────────────────────────────────────────────────────
 
