@@ -239,10 +239,15 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         if entry.status == "loaded" and entry.instance is not None:
             try:
                 await entry.instance.on_shutdown()
-            except Exception:
+            except (ImportError, AttributeError, RuntimeError, OSError, TypeError) as shutdown_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-958: narrow exceptions + observability.
+                # ImportError — plugin dep missing, AttributeError — plugin
+                # API change, RuntimeError — plugin shutdown failure,
+                # OSError — file/network cleanup, TypeError — wrong arg type.
                 _logger.exception(
-                    "Plugin %s on_shutdown failed (per-plugin unload continues)",
+                    "Plugin %s on_shutdown failed (per-plugin unload continues): %s",
                     plugin_name,
+                    shutdown_exc,
                 )
             self._unmount_frontend_pages(plugin_name)
             self._gate.revoke(plugin_name)
