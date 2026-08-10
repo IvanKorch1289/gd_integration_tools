@@ -132,11 +132,16 @@ class SMSAdapter:
             # Best-effort: парсим JSON-ответ, проверяем status/success поле.
             try:
                 data = response.json()
-            except Exception:
+            except (ValueError, TypeError) as json_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-928: narrow exceptions + observability.
+                # ValueError/json.JSONDecodeError для malformed JSON.
+                # Bare `except Exception` маскировал unrelated runtime
+                # errors (KeyError, TypeError).
                 _logger.warning(
-                    "SMS/%s: non-JSON response (status=%d)",
+                    "SMS/%s: non-JSON response (status=%d error=%s)",
                     self._provider,
                     response.status_code,
+                    json_exc,
                 )
                 return
             if isinstance(data, dict) and data.get("status") not in (None, "OK", "ok", "success", 200, "200"):
