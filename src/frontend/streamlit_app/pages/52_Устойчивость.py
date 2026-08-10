@@ -154,7 +154,11 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
         )
         if isinstance(_data, dict) and _data:
             return _data, True
-    except Exception:  # noqa: BLE001, S110 — graceful fallback, endpoint может ещё не существовать
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError) as snap_exc:  # noqa: BLE001, S110 — graceful fallback, endpoint может ещё не существовать
+        # cycle-9/D-AUDIT-1054: narrow exceptions + observability.
+        # ConnectionError/TimeoutError — server unreachable, RuntimeError
+        # — API failure, ValueError — invalid response, TypeError — wrong
+        # type, AttributeError — _client API change.
         st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
         return _mock_snapshot(), False
     return _mock_snapshot(), False
