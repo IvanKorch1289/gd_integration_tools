@@ -469,8 +469,12 @@ class TriggerRegistry:
         for t in triggers:
             try:
                 await t.start()
-            except Exception:
-                _log.exception("Trigger %s start failed", t.name)
+            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as start_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-972: narrow exceptions + observability.
+                # ImportError — trigger dep missing, AttributeError — API
+                # change, RuntimeError — start failure, ConnectionError/
+                # OSError — backend unavailable.
+                _log.exception("Trigger %s start failed: %s", t.name, start_exc)
 
     async def stop_all(self) -> None:
         """Останавливает все triggers sequentially (errors swallowed per trigger)."""
