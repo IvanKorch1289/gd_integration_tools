@@ -150,11 +150,9 @@ class ProcessorPool:
                     processor.process(exchange, context), timeout=effective_timeout
                 )
             else:
-                loop = asyncio.get_event_loop()
                 await asyncio.wait_for(  # type: ignore[unused-coroutine]
-                    loop.run_in_executor(
-                        self._get_thread_pool(),
-                        lambda: processor.process(exchange, context),
+                    asyncio.to_thread(
+                        processor.process, exchange, context
                     ),
                     timeout=effective_timeout,
                 )

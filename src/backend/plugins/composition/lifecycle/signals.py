@@ -43,7 +43,7 @@ def install_signal_handlers() -> asyncio.Event:
     if os.environ.get("PYTEST_CURRENT_TEST"):
         return shutdown_event
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     installed = False
 
     for sig_name in ("SIGTERM", "SIGINT"):

@@ -176,8 +176,11 @@ class AuditLogMiddleware:
                     # Async write — но мы в sync path, используем create_task.
                     import asyncio
 
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
+                    try:
+                        loop = asyncio.get_running_loop()
+                    except RuntimeError:
+                        loop = None
+                    if loop is not None and loop.is_running():
                         loop.create_task(writer.write(audit_event))
         except Exception as exc:
             _clickhouse_logger.debug("ClickHouse audit write skipped: %s", exc)

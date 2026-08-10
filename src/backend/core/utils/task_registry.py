@@ -88,7 +88,7 @@ class TaskRegistry:
         else:
             wrapped = _runner()
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         # Сам TaskRegistry — это и есть санкционированная точка
         # обёртки raw create_task; CI-gate orphan-create-task здесь не
         # применим (мы уже регистрируем task в self._tasks ниже).

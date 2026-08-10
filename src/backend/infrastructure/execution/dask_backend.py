@@ -121,9 +121,7 @@ class DaskBackend:
         import asyncio
 
         client = self.ensure_started()
-        return await asyncio.get_event_loop().run_in_executor(
-            None, client.gather, futures
-        )
+        return await asyncio.to_thread(client.gather, futures)
 
     def compute(self, graph: Any) -> Any:
         """Вычислить dask-graph (delayed / dataframe / bag) синхронно."""
