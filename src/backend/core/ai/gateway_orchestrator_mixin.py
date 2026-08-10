@@ -192,8 +192,14 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                     },
                     severity="info",
                 )
-            except Exception:  # never fail caller
-                pass
+            except (ImportError, AttributeError, RuntimeError) as audit_exc:  # never fail caller
+                # cycle-9/D-AUDIT-985: narrow exceptions + observability
+                # (mirror D-AUDIT-984 для enforced_invoke).
+                import logging
+                logging.getLogger(__name__).debug(
+                    "gateway_orchestrator_mixin.audit_emit_failed",
+                    extra={"error": str(audit_exc)},
+                )
             return None
         try:
             from src.backend.core.tenancy.budget_enforcer import (
