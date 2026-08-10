@@ -32,14 +32,29 @@ class WorkflowsClient(BaseAPIClient):
         try:
             result = self._request("GET", "/api/v1/admin/workflows", params=params)
             return result if isinstance(result, list) else []
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_list_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1074: narrow exceptions + observability.
+            # ConnectionError/TimeoutError — server unreachable, RuntimeError
+            # — API failure, ValueError — invalid response, TypeError —
+            # wrong type.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_workflows_client.list_failed",
+                extra={"error": str(wf_list_exc)},
+            )
             return []
 
     def get_workflow(self, instance_id: str) -> dict[str, Any] | None:
         """GET /api/v1/admin/workflows/{id} — header + event log."""
         try:
             return self._request("GET", f"/api/v1/admin/workflows/{instance_id}")
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_get_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1074: см. выше — mirror для get_workflow.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_workflows_client.get_failed",
+                extra={"instance_id": instance_id, "error": str(wf_get_exc)},
+            )
             return None
 
     def get_workflow_events(
@@ -53,7 +68,13 @@ class WorkflowsClient(BaseAPIClient):
                 params={"after_seq": after_seq, "limit": limit},
             )
             return result if isinstance(result, list) else []
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_events_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1074: см. выше — mirror для events.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_workflows_client.events_failed",
+                extra={"instance_id": instance_id, "error": str(wf_events_exc)},
+            )
             return []
 
     def retry_workflow(self, instance_id: str) -> bool:
@@ -61,7 +82,13 @@ class WorkflowsClient(BaseAPIClient):
         try:
             self._request("POST", f"/api/v1/admin/workflows/{instance_id}/retry")
             return True
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_retry_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1074: см. выше — mirror для retry.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_workflows_client.retry_failed",
+                extra={"instance_id": instance_id, "error": str(wf_retry_exc)},
+            )
             return False
 
     def cancel_workflow(self, instance_id: str, reason: str | None = None) -> bool:
@@ -73,7 +100,13 @@ class WorkflowsClient(BaseAPIClient):
                 json={"reason": reason} if reason else {},
             )
             return True
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_cancel_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1074: см. выше — mirror для cancel.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_workflows_client.cancel_failed",
+                extra={"instance_id": instance_id, "error": str(wf_cancel_exc)},
+            )
             return False
 
     def resume_workflow(self, instance_id: str) -> bool:
@@ -81,7 +114,13 @@ class WorkflowsClient(BaseAPIClient):
         try:
             self._request("POST", f"/api/v1/admin/workflows/{instance_id}/resume")
             return True
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_resume_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1074: см. выше — mirror для resume.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_workflows_client.resume_failed",
+                extra={"instance_id": instance_id, "error": str(wf_resume_exc)},
+            )
             return False
 
     def trigger_workflow(
