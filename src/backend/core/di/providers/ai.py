@@ -232,7 +232,16 @@ def get_skill_registry() -> Any:
         from src.backend.core.di import app_state_singleton
 
         return app_state_singleton("skill_registry", factory=None)()
-    except Exception:
+    except (ImportError, AttributeError, RuntimeError, KeyError, TypeError) as di_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1000: narrow exceptions + observability.
+        # ImportError — app_state_singleton missing, AttributeError — API
+        # change, RuntimeError — DI unavailable, KeyError — singleton not
+        # registered, TypeError — factory type.
+        import logging
+        logging.getLogger(__name__).debug(
+            "di.providers.skill_registry_fallback",
+            extra={"error": str(di_exc)},
+        )
         # Round 12 fix: убрана dead-строка ``_overrides.get("_skill_registry_error")``
         # — функция и так возвращает None, ключа нигде нет, .get() ничего не делает.
         return None
