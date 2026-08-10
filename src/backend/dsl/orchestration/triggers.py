@@ -369,9 +369,14 @@ class WebhookTrigger:
                 from src.backend.entrypoints.api.app import get_app  # type: ignore[import-not-found]  # noqa: I001
 
                 app = get_app()
-            except Exception:
+            except (ImportError, AttributeError, RuntimeError) as app_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-1017: narrow exceptions + observability.
+                # ImportError — get_app missing, AttributeError — API
+                # change, RuntimeError — FastAPI app unavailable.
                 _log.warning(
-                    "WebhookTrigger %s: no FastAPI app found, deferring", self.name
+                    "WebhookTrigger %s: no FastAPI app found, deferring: %s",
+                    self.name,
+                    app_exc,
                 )
                 return
 
