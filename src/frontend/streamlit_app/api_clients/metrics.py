@@ -20,12 +20,26 @@ class MetricsClient(BaseAPIClient):
         """Метод get_metrics (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/metrics")
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as metrics_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1065: narrow exceptions + observability.
+            # ConnectionError/TimeoutError — server unreachable, RuntimeError
+            # — API failure, ValueError — invalid response, TypeError — wrong.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_metrics_client.metrics_failed",
+                extra={"error": str(metrics_exc)},
+            )
             return {}
 
     def get_health(self) -> dict[str, Any]:
         """Метод get_health (см. signature)."""
         try:
             return self._request("GET", "/api/v1/health/components")
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as health_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1065: см. выше — mirror для health.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_metrics_client.health_failed",
+                extra={"error": str(health_exc)},
+            )
             return {}
