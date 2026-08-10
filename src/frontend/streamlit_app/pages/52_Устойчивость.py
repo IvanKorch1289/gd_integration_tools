@@ -48,7 +48,10 @@ try:
     )
 
     _flag_enabled: bool = bool(getattr(_ff, "resilience_dashboard_enabled", False))
-except Exception:  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+    # cycle-9/D-AUDIT-1053: narrow exceptions + observability.
+    # ImportError — features module missing, AttributeError — API change,
+    # RuntimeError — feature_flags unavailable.
     st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
     _flag_enabled = False
 
