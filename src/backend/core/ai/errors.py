@@ -153,7 +153,7 @@ class AIGatewayProductionWiringError(AIGatewayEnforcementRequiredError):
     catch в endpoint layer (503 mapping для enforcement errors).
     """
 
-    def __init__(self, missing: tuple[str, ...] = ()) -> None:
+    def __init__(self, missing: tuple[str, ...] = ()) -> None:  # noqa: D107
         self.missing = missing
         super().__init__(
             "AIGateway in production requires injected DI: "
