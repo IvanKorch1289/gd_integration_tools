@@ -148,7 +148,15 @@ def _yaml_preview(bp: dict[str, Any]) -> str:
             allow_unicode=True,
             sort_keys=False,
         )
-    except Exception:  # noqa: BLE001
+    except (TypeError, ValueError, AttributeError) as yaml_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1058: narrow exceptions + observability.
+        # TypeError для wrong bp type, ValueError для invalid YAML,
+        # AttributeError для yaml.safe_dump API change.
+        import logging
+        logging.getLogger(__name__).debug(
+            "streamlit_38_Галерея.yaml_dump_failed",
+            extra={"error": str(yaml_exc)},
+        )
         return f"# {bp['name']}\n# Preview недоступен (требуется PyYAML)"
 
 
