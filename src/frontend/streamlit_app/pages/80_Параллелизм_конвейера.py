@@ -33,7 +33,15 @@ with tab_route:
         with st.spinner("Загрузка маршрутов..."):
             routes = client.get("/api/v1/routes")
         names = [r.get("route_id", "") for r in routes.get("routes", []) if r]
-    except Exception:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as routes_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1060: narrow exceptions + observability.
+        # ConnectionError/TimeoutError — server unreachable, RuntimeError
+        # — API failure, ValueError — invalid response, TypeError — wrong.
+        import logging
+        logging.getLogger(__name__).debug(
+            "streamlit_80_Параллелизм.routes_load_failed",
+            extra={"error": str(routes_exc)},
+        )
         names = []
 
     selected = (
