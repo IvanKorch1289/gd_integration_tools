@@ -49,7 +49,16 @@ class _BaseEntityProcessor(BaseProcessor):
         try:
             import jmespath
             return jmespath.search(self._payload_from, exchange.in_message.body)
-        except Exception:
+        except (ImportError, AttributeError, TypeError, ValueError, jmespath.exceptions.ParseError) as jmespath_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-975: narrow exceptions + observability.
+            # ImportError — jmespath missing, AttributeError — jmespath
+            # API change, TypeError — wrong body type, ValueError — invalid
+            # search syntax, jmespath.exceptions.ParseError — bad query.
+            import logging
+            logging.getLogger(__name__).debug(
+                "entity_legacy.jmespath_search_fallback",
+                extra={"error": str(jmespath_exc)},
+            )
             return None
 
     @handle_processor_error
