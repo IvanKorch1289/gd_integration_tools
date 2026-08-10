@@ -30,15 +30,39 @@ import aiofiles.os
 from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
+
+def _is_safe_tenant_segment(tenant_id: str) -> bool:
+    """Cycle-16 (D-AUDIT-1601): slug regex для tenant_id в FS-layout.
+
+    Разрешены alphanumeric + underscore + dash, max 64 chars. Не
+    разрешены: ``..`` (path traversal), ``/`` (path separator),
+    точки/спецсимволы, non-ASCII.
+    """
+    import re as _re
+
+    return bool(_re.match(r"^[a-zA-Z0-9_-]{1,64}$", tenant_id))
+
 __all__ = ("LocalFSStorage",)
 
 
 class LocalFSStorage(ObjectStorage):
-    """LocalFS-реализация ``ObjectStorage`` для dev-окружения."""
+    """LocalFS-реализация ``ObjectStorage`` для dev-окружения.
 
-    def __init__(self, base_path: str | os.PathLike[str]) -> None:
+    Cycle-16 (D-AUDIT-1601): добавлен :meth:`tenant_root` — multi-tenant
+    safe-path layout. Используется в app_factory для auto-prefixing
+    ключей (``<tenant_id>/<key>``) — это позволяет LocalFS-режиму
+    изолировать файлы по tenant'ам без изменения ObjectStorage.Protocol.
+    """
+
+    def __init__(
+        self,
+        base_path: str | os.PathLike[str],
+        *,
+        tenant_root_prefix: str = "tenants",
+    ) -> None:
         self._base = Path(base_path).expanduser().resolve()
         self._base.mkdir(parents=True, exist_ok=True)
+        self._tenant_root_prefix = tenant_root_prefix
 
         env = os.environ.get("APP_ENVIRONMENT") or os.environ.get(
             "ENVIRONMENT", "development"
@@ -50,6 +74,25 @@ class LocalFSStorage(ObjectStorage):
                 RuntimeWarning,
                 stacklevel=2,
             )
+
+    def tenant_root(self, tenant_id: str | None) -> Path:
+        """Возвращает корень tenant'а в local FS.
+
+        Multi-tenant layout: ``<base>/<tenant_root_prefix>/<tenant_id>/``.
+        System uploads (tenant_id=None): ``<base>/<tenant_root_prefix>/_system/``.
+
+        Args:
+            tenant_id: Tenant identifier (None для system uploads).
+
+        Returns:
+            Path к корню tenant'а (создаётся при первом обращении).
+        """
+        # Cycle-16 (D-AUDIT-1601): slug validation через shared helper.
+        if tenant_id is not None and not _is_safe_tenant_segment(tenant_id):
+            raise ValueError(f"Небезопасный tenant_id для LocalFSStorage: {tenant_id!r}")
+        slug = tenant_id if tenant_id is not None else "_system"
+        return self._base / self._tenant_root_prefix / slug
+
 
     def _safe_path(self, key: str) -> Path:
         """Резолвит ``key`` относительно base_path, отсекая path-traversal."""

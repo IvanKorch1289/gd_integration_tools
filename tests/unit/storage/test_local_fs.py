@@ -112,3 +112,38 @@ async def test_unsafe_key_empty_rejected(storage: LocalFSStorage) -> None:
     """Пустой ключ отвергается."""
     with pytest.raises(ValueError):
         await storage.exists("")
+
+
+# ─── Cycle-16 (D-AUDIT-1601): tenant_root + slug validation ────────────
+
+
+async def test_tenant_root_returns_tenant_subdir(
+    storage: LocalFSStorage,
+) -> None:
+    """``tenant_root(tenant_id)`` создаёт ``<base>/tenants/<tenant_id>/``."""
+    root = storage.tenant_root("acme_corp")
+    assert root == storage._base / "tenants" / "acme_corp"
+    assert root.parent.exists() or root.parent.parent.exists()
+
+
+async def test_tenant_root_system_uses_system_slug(
+    storage: LocalFSStorage,
+) -> None:
+    """System uploads (tenant_id=None) → ``tenants/_system/`` (не bare base)."""
+    root = storage.tenant_root(None)
+    assert root == storage._base / "tenants" / "_system"
+
+
+async def test_tenant_root_unsafe_tenant_rejected(
+    storage: LocalFSStorage,
+) -> None:
+    """Unsafe tenant_id (path traversal) → ValueError."""
+    for bad in ["../etc", "tenant/with/slash", "", "a" * 65, "tënant"]:
+        with pytest.raises(ValueError, match="Небезопасный tenant_id"):
+            storage.tenant_root(bad)
+
+
+def test_tenant_root_custom_prefix(tmp_path: Path) -> None:
+    """``tenant_root_prefix`` параметр работает."""
+    storage = LocalFSStorage(tmp_path, tenant_root_prefix="orgs")
+    assert storage.tenant_root("acme") == tmp_path / "orgs" / "acme"
