@@ -245,7 +245,16 @@ class OutboundHttpClient:
 
             provider: CorrelationIdProvider = _get_cid
             cid = provider()
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError, TypeError) as cid_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-989: narrow exceptions + observability.
+            # ImportError — provider missing, AttributeError — API change,
+            # RuntimeError — provider unavailable, TypeError — wrong
+            # return type.
+            import logging
+            logging.getLogger(__name__).debug(
+                "outbound_http.correlation_id_provider_failed",
+                extra={"error": str(cid_exc)},
+            )
             return headers
         if not cid:
             return headers
