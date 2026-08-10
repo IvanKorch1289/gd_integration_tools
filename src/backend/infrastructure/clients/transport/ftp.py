@@ -20,7 +20,6 @@ from typing import Any
 # circular import через chain:
 #   ftp → breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
 # Тот же pattern в smtp.py:12-17.
-from src.backend.core.config.settings import settings as _settings
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import (
     BreakerSpec,

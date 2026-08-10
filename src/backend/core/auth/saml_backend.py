@@ -131,7 +131,7 @@ class SamlBackend:
         ``uv sync --extra auth-saml``.
         """
         try:
-            import onelogin.saml2
+            import onelogin.saml2  # noqa: F401 — availability probe
 
             return True
         except ImportError:

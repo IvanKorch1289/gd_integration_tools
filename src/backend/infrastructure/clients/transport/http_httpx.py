@@ -70,7 +70,7 @@ def is_httpx_retries_available() -> bool:
         ``True`` если ``httpx_retries`` импортируется без ошибок.
     """
     try:
-        import httpx_retries
+        import httpx_retries  # noqa: F401 — availability probe
 
         return True
     except ImportError:

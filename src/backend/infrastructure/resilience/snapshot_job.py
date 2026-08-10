@@ -203,7 +203,6 @@ def sync_pg_to_sqlite(
     # S163 W12 fix: путь был сломан со S113 refactor (TD-001 CLOSED —
     # models переехали в core/domain/models/, infrastructure.database.models
     # никогда не существовало в git history).
-    import src.backend.core.domain.models
     from src.backend.core.domain.models.base import metadata
 
     target_tables = _select_tables(metadata.tables, tables)

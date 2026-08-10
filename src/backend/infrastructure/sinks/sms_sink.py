@@ -39,9 +39,6 @@ from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.security.connector_rate_limiter import (
     get_connector_rate_limiter,
 )
-from src.backend.infrastructure.sinks._timeouts import (
-    DEFAULT_SINK_TIMEOUT_S,
-)
 
 __all__ = ("SmsSink",)
 

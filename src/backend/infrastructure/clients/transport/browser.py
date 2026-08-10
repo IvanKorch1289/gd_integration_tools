@@ -19,7 +19,6 @@ from typing import Any
 # NB: порядок импортов критичен (S163 W3 lesson, см. ftp.py).
 # ``core.config.settings`` грузится ПЕРВЫМ — pre-breaks circular import chain
 # breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
-from src.backend.core.config.settings import settings as _settings
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 

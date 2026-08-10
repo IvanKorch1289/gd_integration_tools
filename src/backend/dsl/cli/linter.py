@@ -33,7 +33,6 @@ suggestion, file, line). Exit-code 0 при отсутствии errors, 1 пр�
 
 from __future__ import annotations
 
-import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path

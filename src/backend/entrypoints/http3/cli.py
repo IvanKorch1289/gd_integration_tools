@@ -20,7 +20,7 @@ __all__ = ("run_from_settings",)
 
 def _ensure_aioquic_installed() -> None:
     try:
-        import aioquic
+        import aioquic  # noqa: F401 — availability probe
     except ImportError as exc:  # pragma: no cover — env-dependent
         raise RuntimeError(
             "HTTP/3 server требует extra ``http3``: "
