@@ -254,7 +254,15 @@ class OtelMiddleware:
                 ctx = current_tenant()
                 if ctx is not None:
                     tenant_id = getattr(ctx, "tenant_id", "") or ""
-            except Exception:
+            except (ImportError, AttributeError, RuntimeError) as ten_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-1003: narrow exceptions + observability.
+                # ImportError — tenancy missing, AttributeError — API
+                # change, RuntimeError — context unavailable.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "otel_middleware.current_tenant_fallback",
+                    extra={"error": str(ten_exc)},
+                )
                 tenant_id = ""
 
         # Correlation/request id из state (cycle 52 pattern).
