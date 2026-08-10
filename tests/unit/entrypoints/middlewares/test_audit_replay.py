@@ -75,7 +75,7 @@ class TestAuditReplayMiddleware:
         send = AsyncMock()
         with patch(
             "src.backend.core.di.providers.get_redis_stream_client_provider",
-        ) as mock_provider:
+        ):
             await mw(
                 _make_scope("GET", "/health"),
                 _make_receive(b""),
@@ -97,7 +97,7 @@ class TestAuditReplayMiddleware:
         send = AsyncMock()
         with patch(
             "src.backend.core.di.providers.get_redis_stream_client_provider",
-        ) as mock_provider:
+        ):
             await mw(
                 _make_scope("GET", "/api/v1/users"),
                 _make_receive(b""),

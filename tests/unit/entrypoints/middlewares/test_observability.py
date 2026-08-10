@@ -66,7 +66,7 @@ async def test_event_payload_contains_all_metadata_fields() -> None:
     inner_app.return_value = inner_response
 
     config = ObservabilityConfig(service_name="test-service")
-    mw = ObservabilityMiddleware(inner_app, config=config)
+    ObservabilityMiddleware(inner_app, config=config)
 
     # Capture what would be emitted. Patch all 3 emit functions.
     with (

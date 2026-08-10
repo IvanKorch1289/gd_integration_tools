@@ -231,7 +231,7 @@ class TestDataMaskingMiddleware:
 
     def test_mask_email_short_local(self, middleware: DataMaskingMiddleware) -> None:
         """Email с коротким local (≤2 chars) → **@domain."""
-        masked = middleware._mask_email(type("M", (), {"group": lambda self, x: "a@b.com"})())
+        middleware._mask_email(type("M", (), {"group": lambda self, x: "a@b.com"})())
         # Just verify it doesn't crash.
 
     def test_mask_bytes_fallback(self, middleware: DataMaskingMiddleware) -> None:

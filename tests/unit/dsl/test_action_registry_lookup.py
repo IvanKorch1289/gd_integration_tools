@@ -52,7 +52,7 @@ class TestActionHandlerRegistryLookup:
             ActionMetadata,
         )
 
-        metadata = ActionMetadata(
+        ActionMetadata(
             action="nonexistent",
             input_model=None,
             output_model=None,

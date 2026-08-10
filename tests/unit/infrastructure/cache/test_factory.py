@@ -312,7 +312,7 @@ def test_wrapped_backend_uses_unscoped_prefix_when_flag_off_and_no_tenant(
 
     assert feature_flags.tenant_cache_prefix_enabled is False  # autouse
 
-    with patch.object(factory, "MemoryBackend") as mock_mem:
+    with patch.object(factory, "MemoryBackend"):
         wrapper = create_cache_backend(cfg_memory)
         # Wrapper создан, но при flag=OFF prefix=``.
         assert wrapper._prefix() == ""
@@ -331,7 +331,7 @@ def test_wrapped_backend_uses_tenant_prefix_when_flag_on_and_tenant_set(
     fake_tenant = TenantContext(tenant_id="bank_a")
     token = _current.set(fake_tenant)
     try:
-        with patch.object(factory, "MemoryBackend") as mock_mem:
+        with patch.object(factory, "MemoryBackend"):
             wrapper = create_cache_backend(cfg_memory)
             # С tenant в context → префикс tenant:bank_a:.
             assert wrapper._prefix() == "tenant:bank_a:"
@@ -359,7 +359,7 @@ def test_wrapped_backend_uses_unscoped_prefix_when_flag_on_but_no_tenant(
     except LookupError:
         token = None
     try:
-        with patch.object(factory, "MemoryBackend") as mock_mem:
+        with patch.object(factory, "MemoryBackend"):
             wrapper = create_cache_backend(cfg_memory)
             assert wrapper._prefix() == "tenant:_unscoped_:"
     finally:

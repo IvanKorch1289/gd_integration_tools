@@ -84,11 +84,11 @@ class TestAuditLogMiddleware:
             patch(
                 "src.backend.core.di.providers.get_redis_stream_client_provider",
                 return_value=AsyncMock(),
-            ) as mock_redis_provider,
+            ),
             patch(
                 "src.backend.core.di.providers.get_clickhouse_client_provider",
                 return_value=AsyncMock(),
-            ) as mock_ch_provider,
+            ),
         ):
             send = AsyncMock()
             await middleware(

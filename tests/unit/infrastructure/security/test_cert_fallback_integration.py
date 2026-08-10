@@ -39,7 +39,7 @@ class TestCertStoreFromSettingsFallback:
         )
         with patch(
             "src.backend.infrastructure.security.cert_store.store.PostgresCertBackend"
-        ) as mock_pg:
-            store = CertStore.from_settings(settings)
+        ):
+            CertStore.from_settings(settings)
             # Не проверяем mock — нужно проверить, что store._backend wrapped
         # Через инстанс — но это сложно, используем прямое создание

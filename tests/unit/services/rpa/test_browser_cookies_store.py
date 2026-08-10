@@ -161,7 +161,7 @@ class TestSaveAndRestore:
         Critical for high-traffic RPA scenarios (e.g. scraping many pages).
         """
         redis = AsyncMock()
-        fernet = Fernet(_TEST_FERNET_KEY)
+        Fernet(_TEST_FERNET_KEY)
         stored: dict[str, bytes] = {}
 
         async def _set(key: str, value: bytes, ex: int | None = None) -> None:

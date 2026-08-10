@@ -70,7 +70,7 @@ class TestResilientDecorator:
         from src.backend.core.resilience import get_breaker_registry
 
         registry = get_breaker_registry()
-        breaker_before = registry.get("test_cb_integration")
+        registry.get("test_cb_integration")
 
         mock_func = AsyncMock(return_value="ok")
 

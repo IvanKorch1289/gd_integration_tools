@@ -84,7 +84,7 @@ def test_from_sse_multi_builds_n_sources() -> None:
         mock_source.side_effect = lambda **kw: f"source_{kw['url']}"
 
         try:
-            builder = StreamingSSEMixin.from_sse_multi(
+            StreamingSSEMixin.from_sse_multi(
                 "multi.three_streams", urls, merge_strategy="interleave"
             )
             assert mock_source.call_count == 3

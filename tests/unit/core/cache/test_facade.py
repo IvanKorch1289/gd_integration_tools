@@ -75,7 +75,7 @@ async def test_healthcheck(cache: MemoryCacheFacade) -> None:
 
 @pytest.mark.asyncio
 async def test_fallback_decorator() -> None:
-    primary = MemoryCacheFacade()
+    MemoryCacheFacade()
     fallback = MemoryCacheFacade()
 
     class FailingFacade(MemoryCacheFacade):
