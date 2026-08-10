@@ -379,7 +379,7 @@ class E2BAgentSandbox:
             ) from exc
 
         # Sandbox API — sync. Wrap в asyncio.to_thread (NON-blocking).
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         def _run_in_sandbox() -> dict[str, Any]:
             """Execute ReAct agent внутри E2B cloud sandbox.
