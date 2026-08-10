@@ -99,7 +99,17 @@ class APSchedulerBackend:
         try:
             self._manager.scheduler.remove_job(job_id)
             return True
-        except Exception:  # APScheduler JobLookupError + др.
+        except (LookupError, AttributeError, RuntimeError) as cancel_exc:  # APScheduler JobLookupError + др.
+            # cycle-9/D-AUDIT-927: narrow exceptions + observability.
+            # LookupError — APScheduler JobLookupError (most common),
+            # AttributeError — scheduler API change, RuntimeError —
+            # scheduler not started. Bare `except Exception` маскировал
+            # unrelated runtime errors.
+            import logging
+            logging.getLogger(__name__).debug(
+                "apscheduler.cancel_failed",
+                extra={"job_id": job_id, "error": str(cancel_exc)},
+            )
             return False
 
     def list_jobs(self) -> list[dict[str, Any]]:
