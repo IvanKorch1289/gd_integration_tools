@@ -145,8 +145,14 @@ class DbCallProcedureProcessor(BaseProcessor):
             if not feature_flags.db_call_procedure_enabled:
                 exchange.set_property("db_call_procedure_status", "skipped")
                 return
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1721: narrow exceptions + observability (mirror
+            # D-AUDIT-1706..1720).
+            import logging
+            logging.getLogger(__name__).debug(
+                "db_call_procedure.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         from sqlalchemy import text
 
