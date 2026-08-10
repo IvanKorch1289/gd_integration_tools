@@ -268,8 +268,16 @@ class FallbackObjectStorage(ObjectStorage):
             try:
                 async for chunk in stream:
                     buffer.extend(chunk)
-            except Exception:
-                pass
+            except (OSError, ConnectionError, RuntimeError) as stream_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-934: narrow exceptions + observability.
+                # OSError/ConnectionError для stream, RuntimeError для
+                # backend failure. Bare `except Exception` маскировал
+                # unrelated runtime errors (KeyError, TypeError).
+                import logging
+                logging.getLogger(__name__).debug(
+                    "storage_fallback.stream_drain_failed",
+                    extra={"key": key, "error": str(stream_exc)},
+                )
             return await self._secondary.upload(
                 key, bytes(buffer), content_type=content_type
             )
