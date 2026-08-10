@@ -70,7 +70,11 @@ def render_canvas_tab(client) -> None:
         routes = []
         try:
             routes = client.list_dsl_routes()
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as list_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1045: narrow exceptions + observability.
+            # ConnectionError/TimeoutError — server unreachable, RuntimeError
+            # — API failure, ValueError — invalid response, TypeError —
+            # wrong response type.
             st.caption("Не удалось загрузить список маршрутов")
         selected_route = st.selectbox(
             "Открыть существующий", ["—"] + routes, key="route_load_select"
