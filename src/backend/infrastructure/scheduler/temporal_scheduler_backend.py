@@ -179,8 +179,16 @@ class TemporalSchedulerBackend:
             try:
                 handle = client.get_schedule_handle(name)
                 await handle.delete()
-            except Exception:  # noqa: BLE001 — schedule мог не существовать
-                pass
+            except (RuntimeError, AttributeError, OSError, ConnectionError) as delete_exc:  # noqa: BLE001 — schedule мог не существовать
+                # cycle-9/D-AUDIT-1022: narrow exceptions + observability.
+                # RuntimeError — schedule not found, AttributeError —
+                # handle API change, OSError/ConnectionError — Temporal
+                # cluster unavailable.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "temporal_scheduler_backend.handle_delete_failed",
+                    extra={"name": name, "error": str(delete_exc)},
+                )
 
         # Cron parsing: 5 fields "minute hour day month day_of_week"
         spec = self._parse_cron_to_spec(cron_expr, timezone)
