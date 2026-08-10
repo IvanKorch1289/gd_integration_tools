@@ -151,7 +151,10 @@ class SSESource:
                 # Server closed stream cleanly — reconnect.
             except asyncio.CancelledError:
                 raise
-            except Exception:  # noqa: BLE001
+            except (OSError, ConnectionError, TimeoutError, RuntimeError, ValueError) as sse_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-1025: narrow exceptions + observability.
+                # OSError/ConnectionError/TimeoutError — network/SSE transport,
+                # RuntimeError — server error, ValueError — malformed event.
                 if self._stopped.is_set():
                     return
                 if (
@@ -163,6 +166,11 @@ class SSESource:
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 30.0)  # cap at 30s
                 # Re-raise after max retries (на следующей итерации)
+                import logging
+                logging.getLogger(__name__).debug(
+                    "sse.connection_failed",
+                    extra={"retries": retries, "error": str(sse_exc)},
+                )
                 if (
                     self._reconnect_max_retries is not None
                     and retries > self._reconnect_max_retries
