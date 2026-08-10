@@ -331,7 +331,15 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
             key = (subject, action, resource)
             self._in_memory_policies[key] = allowed
             return True
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as policy_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-990: narrow exceptions + observability.
+            # AttributeError — effect missing, TypeError — wrong type,
+            # ValueError — invalid effect value.
+            import logging
+            logging.getLogger(__name__).debug(
+                "authorization_gateway.add_policy_failed",
+                extra={"error": str(policy_exc)},
+            )
             return False
 
     def remove_policy(
