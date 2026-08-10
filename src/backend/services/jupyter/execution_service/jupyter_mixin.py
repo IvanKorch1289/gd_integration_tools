@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 import uuid
 from typing import Any
 
@@ -27,8 +28,8 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
         self, user_name: str, *, timeout: float, interval: float = 1.0
     ) -> Any:
         """Poll server readiness until timeout."""
-        deadline = asyncio.get_event_loop().time() + timeout
-        while asyncio.get_event_loop().time() < deadline:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
             server = await self._hub.get_server(user_name)
             if server and server.ready:
                 return server
@@ -126,7 +127,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
 
         # S74 W3: heartbeat state (single-slot, скоординировано
         # между heartbeat task и main recv loop).
-        last_pong_time = asyncio.get_event_loop().time()
+        last_pong_time = time.monotonic()
         connection_dead = asyncio.Event()
         heartbeat_task: asyncio.Task[None] | None = None
 
@@ -144,7 +145,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                     await asyncio.sleep(HEARTBEAT_INTERVAL_S)
                     if connection_dead.is_set():
                         break
-                    now = asyncio.get_event_loop().time()
+                    now = time.monotonic()
                     # If we haven't seen a pong в last interval, send ping
                     if now - last_pong_time >= HEARTBEAT_INTERVAL_S:
                         try:
@@ -173,7 +174,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                 # S74 W3: register pong handler для updating last_pong_time
                 def _on_pong_received(*_args: Any) -> None:
                     nonlocal last_pong_time
-                    last_pong_time = asyncio.get_event_loop().time()
+                    last_pong_time = time.monotonic()
 
                 ws.pong_handler = _on_pong_received  # type: ignore[attr-defined]
 
@@ -183,8 +184,8 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                 await ws.send(json.dumps(execute_msg))
 
                 # Wait for execute_reply with msg_id matching our request
-                deadline = asyncio.get_event_loop().time() + timeout
-                while asyncio.get_event_loop().time() < deadline:
+                deadline = time.monotonic() + timeout
+                while time.monotonic() < deadline:
                     if connection_dead.is_set():
                         raise JupyterExecutionError(
                             f"WebSocket connection dead "
@@ -194,7 +195,7 @@ class JupyterBackendMixin(_NotebookExecutionProtocol):
                     raw = await asyncio.wait_for(ws.recv(), timeout=5.0)
                     # Update last_pong_time на любом message
                     # (sign of life, не только pong).
-                    last_pong_time = asyncio.get_event_loop().time()
+                    last_pong_time = time.monotonic()
                     msg = json.loads(raw)
                     msg_type = msg.get("msg_type", "")
                     parent_id = msg.get("parent_header", {}).get("msg_id")
