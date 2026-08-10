@@ -67,7 +67,11 @@ class OtelMiddleware:
         except ImportError:
             logger.debug("OpenTelemetry SDK not available — OtelMiddleware is no-op")
             return None
-        except Exception as exc:  # pragma: no cover — defensive
+        except (AttributeError, RuntimeError, ValueError, TypeError) as exc:  # pragma: no cover — defensive
+            # cycle-9/D-AUDIT-1019: narrow exceptions + observability.
+            # AttributeError — tracer_provider API change, RuntimeError —
+            # tracer unavailable, ValueError — invalid config, TypeError —
+            # wrong arg type.
             logger.warning("Failed to init OTEL tracer: %s", exc)
             return None
 
