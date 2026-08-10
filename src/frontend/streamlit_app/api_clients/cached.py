@@ -86,7 +86,15 @@ def cached_get_orders(page: int = 1, size: int = 50) -> Any:
         return client._request(
             "GET", "/api/v1/orders/all/", params={"page": page, "size": size}
         )
-    except Exception:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as orders_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1064: narrow exceptions + observability.
+        # ConnectionError/TimeoutError — server unreachable, RuntimeError
+        # — API failure, ValueError — invalid response, TypeError — wrong.
+        import logging
+        logging.getLogger(__name__).debug(
+            "streamlit_cached.orders_request_failed",
+            extra={"error": str(orders_exc)},
+        )
         return []
 
 
