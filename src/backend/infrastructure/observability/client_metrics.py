@@ -24,8 +24,8 @@ from __future__ import annotations
 
 import time
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, AsyncContextManager, Final, Literal
+from contextlib import AbstractAsyncContextManager as AsyncContextManager, asynccontextmanager
+from typing import TYPE_CHECKING, Final, Literal
 
 from src.backend.core.utils.metrics_registry import metrics_registry
 
