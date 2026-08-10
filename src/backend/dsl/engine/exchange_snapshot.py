@@ -75,8 +75,16 @@ def _orjson_default(obj: Any) -> Any:
     if _msgspec is not None:
         try:
             return _msgspec.to_builtins(obj, enc_hook=_msgspec_enc_hook)
-        except Exception:
-            pass
+        except (TypeError, ValueError, AttributeError, NotImplementedError) as msgspec_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-942: narrow exceptions + observability.
+            # TypeError для unsupported type, ValueError для invalid value,
+            # AttributeError для msgspec API change. Bare `except Exception`
+            # маскировал unrelated runtime errors (KeyError).
+            import logging
+            logging.getLogger(__name__).debug(
+                "exchange_snapshot.msgspec_to_builtins_failed",
+                extra={"error": str(msgspec_exc), "type": type(obj).__name__},
+            )
     # msgspec.Struct в режиме без msgspec: у него есть ``__struct_fields__``.
     # Иначе — dataclass.asdict.
     struct_fields = getattr(obj, "__struct_fields__", None)
