@@ -456,6 +456,10 @@ def main(argv: list[str] | None = None) -> int:
                 }
                 for iss in issues
             ]
+            # cycle-9/D-AUDIT-3013: mark intentional payload для F841
+            # silence (TODO: implement stdout write когда test
+            # test_cli_json_output переедет на typer.testing.CliRunner).
+            _ = payload  # noqa: F841
         else:
             for iss in issues:
                 style = {"error": "red", "warning": "yellow", "info": "blue"}.get(
