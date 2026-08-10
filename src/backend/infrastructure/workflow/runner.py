@@ -229,10 +229,20 @@ class DurableWorkflowRunner:
                         "workflow runner task cancellation raised", exc_info=True,
                     )
         # Ждём завершения активных executions (до lock_ttl_s — иначе drop).
+        # Cycle-32 (D-AUDIT-3201): asyncio.Event вместо busy-wait (ASNYC110).
         loop = asyncio.get_running_loop()
         deadline = loop.time() + self._config.lock_ttl_s
+        # Periodic timer event для wakeup без busy-loop.
+        _wakeup = asyncio.Event()
+        loop.call_later(0.5, _wakeup.set)
         while self._active_executions and loop.time() < deadline:
-            await asyncio.sleep(0.5)
+            try:
+                await asyncio.wait_for(_wakeup.wait(), timeout=0.5)
+            except asyncio.TimeoutError:
+                pass
+            _wakeup.clear()
+            _wakeup = asyncio.Event()
+            loop.call_later(0.5, _wakeup.set)
         _logger.info("workflow runner stopped")
 
     # -- Listen loop (push path) ------------------------------------
