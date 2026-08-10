@@ -152,8 +152,17 @@ class CallFunctionProcessor(BaseProcessor):
                 )
                 if global_wl:
                     whitelist |= set(global_wl)
-            except Exception:
-                pass
+            except (ImportError, AttributeError, RuntimeError, ValueError, TypeError) as wl_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-941: narrow exceptions + observability.
+                # ImportError — settings missing, AttributeError — schema
+                # change, RuntimeError — settings unavailable, ValueError —
+                # invalid config, TypeError — wrong type. Bare `except
+                # Exception` маскировал unrelated runtime errors.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "function_call.global_wl_failed",
+                    extra={"error": str(wl_exc)},
+                )
 
         strict = CallFunctionProcessor._is_strict_whitelist()
         validate_module_whitelist(
