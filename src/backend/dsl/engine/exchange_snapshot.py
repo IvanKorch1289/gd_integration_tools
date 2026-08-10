@@ -133,9 +133,14 @@ def to_dict_fast(obj: Any, *, use_msgspec: bool = True) -> dict[str, Any]:
     if use_msgspec and _HAS_MSGSPEC and _msgspec is not None:
         try:
             return _encode_msgspec(obj)
-        except Exception:
+        except (TypeError, ValueError, AttributeError, NotImplementedError) as msgspec_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-943: narrow exceptions + observability.
             # Тип не поддерживается msgspec (pydantic / exotic) — fallback.
-            pass
+            import logging
+            logging.getLogger(__name__).debug(
+                "exchange_snapshot.encode_msgspec_fallback",
+                extra={"error": str(msgspec_exc), "type": type(obj).__name__},
+            )
     return _encode_orjson(obj)
 
 
@@ -153,7 +158,12 @@ def from_dict_fast(cls: type[T], data: dict[str, Any]) -> T:
     if _HAS_MSGSPEC and _msgspec is not None:
         try:
             return _msgspec.convert(data, cls)
-        except Exception:
+        except (TypeError, ValueError, AttributeError, NotImplementedError) as msgspec_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-944: narrow exceptions + observability.
             # cls не поддерживается msgspec.convert (pydantic и пр.) — fallback.
-            pass
+            import logging
+            logging.getLogger(__name__).debug(
+                "exchange_snapshot.from_dict_msgspec_fallback",
+                extra={"error": str(msgspec_exc), "cls": cls.__name__},
+            )
     return cls(**data)
