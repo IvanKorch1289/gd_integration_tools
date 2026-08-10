@@ -329,4 +329,3 @@ def get_multimodal_rag() -> MultimodalRAGService:  # type: ignore[empty-body]
     Returns:
         Экземпляр MultimodalRAGService, зарегистрированный в app_state.
     """
-    ...

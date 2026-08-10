@@ -72,7 +72,6 @@ class TimeoutMiddleware(ProcessorMiddleware):
         self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Выполнить операцию before."""
-        pass
 
     async def after(
         self,
@@ -83,7 +82,6 @@ class TimeoutMiddleware(ProcessorMiddleware):
         duration_ms: float,
     ) -> None:
         """Выполнить операцию after."""
-        pass
 
 
 class ErrorNormalizerMiddleware(ProcessorMiddleware):
@@ -93,7 +91,6 @@ class ErrorNormalizerMiddleware(ProcessorMiddleware):
         self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Выполнить операцию before."""
-        pass
 
     async def after(
         self,
@@ -129,7 +126,6 @@ class MetricsMiddleware(ProcessorMiddleware):
         self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Выполнить операцию before."""
-        pass
 
     async def after(
         self,

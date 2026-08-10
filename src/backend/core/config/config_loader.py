@@ -128,7 +128,6 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
     @abstractmethod
     def _load_data(self) -> dict[str, Any]:
         """Load raw data from source."""
-        pass
 
     def _handle_error(self, error: Exception) -> None:
         """Handle errors during data loading."""

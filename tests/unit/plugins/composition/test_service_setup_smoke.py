@@ -359,7 +359,6 @@ def _mock_all_service_factories() -> None:
     # *по его origin-пути* через ``patch``-context manager.
     # Используем простой приём: заменяем ``register_factory`` на MagicMock и
     # верифицируем вызовы — так покрытие достигается без сетевых подключений.
-    pass
 
 
 # Альтернативная стратегия: ``register_factory`` подменяется на MagicMock,

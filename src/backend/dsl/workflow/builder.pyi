@@ -31,11 +31,9 @@ class WorkflowBuilder:
         output_key: str | None = ...,
     ) -> Self:
         """Добавить atomic activity-шаг в цепочку."""
-        ...
 
     def build(self) -> WorkflowDeclaration:
         """Собрать и провалидировать :class:`WorkflowDeclaration`."""
-        ...
 
     def checkpoint(
         self,
@@ -46,23 +44,18 @@ class WorkflowBuilder:
         output_key: str | None = ...,
     ) -> Self:
         """Добавить checkpoint-шаг для workflow state persistence (S28 W3)."""
-        ...
 
     def default_retry(self, policy: RetryPolicy) -> Self:
         """Установить default retry-политику workflow."""
-        ...
 
     def default_timeout(self, seconds: float) -> Self:
         """Установить default-timeout для activity без explicit ``timeout_s``."""
-        ...
 
     def description(self, text: str) -> Self:
         """Установить человекочитаемое описание workflow."""
-        ...
 
     def version(self, ver: str) -> Self:
         """Установить semver-версию workflow (Cycle 27 W3)."""
-        ...
 
     def escalate(
         self,
@@ -73,19 +66,15 @@ class WorkflowBuilder:
         output_key: str | None = ...,
     ) -> Self:
         """Добавить escalate-шаг для переключения на другого агента/модель (S28 W3)."""
-        ...
 
     def gateway_and(self, *branches: BranchSpec) -> Self:
         """Добавить AND (parallel) gateway — параллельный fan-out, ждёт всех."""
-        ...
 
     def gateway_or(self, *branches: BranchSpec) -> Self:
         """Добавить OR (inclusive) gateway — ждёт первую активную ветку."""
-        ...
 
     def gateway_xor(self, *branches: BranchSpec) -> Self:
         """Добавить XOR (exclusive) gateway — выбирает первую активную ветку."""
-        ...
 
     def guardrail(
         self,
@@ -97,7 +86,6 @@ class WorkflowBuilder:
         output_key: str | None = ...,
     ) -> Self:
         """Добавить guardrail-шаг для лимитов доступа (S28 W3)."""
-        ...
 
     def invoke_agent(
         self,
@@ -115,11 +103,9 @@ class WorkflowBuilder:
         recall_on: str | None = ...,
     ) -> Self:
         """Добавить AI-агент как шаг workflow (S27 W6, S28 W2, R-V15-9)."""
-        ...
 
     def pause(self, output_key: str | None = ...) -> Self:
         """Добавить pause-шаг для приостановки workflow (S35 GAP-DSL-2)."""
-        ...
 
     def reflect(
         self,
@@ -132,18 +118,15 @@ class WorkflowBuilder:
         output_key: str | None = ...,
     ) -> Self:
         """Добавить reflect-шаг для procedural memory update (S28 W3)."""
-        ...
 
     def resume(self) -> Self:
         """Добавить resume-шаг для возобновления paused workflow (S35 GAP-DSL-2).
 
         Cycle-26: ``checkpoint_id`` kwarg удалён — был dead contract.
         """
-        ...
 
     def saga(self) -> SagaBuilder:
         """Открыть саб-builder для saga-шага."""
-        ...
 
     def sensor(
         self,
@@ -153,7 +136,6 @@ class WorkflowBuilder:
         timeout_s: float | None = ...,
     ) -> Self:
         """Добавить periodic-sensor (Airflow-style poll-предикат)."""
-        ...
 
     def sla(
         self,
@@ -165,11 +147,9 @@ class WorkflowBuilder:
         breach_action: str = ...,
     ) -> Self:
         """Установить SLA-политику workflow (Sprint 9 K3 W10)."""
-        ...
 
     def sleep(self, duration_s: float) -> Self:
         """Добавить durable-sleep (Temporal-friendly)."""
-        ...
 
     def wait_for_signal(
         self,
@@ -179,7 +159,6 @@ class WorkflowBuilder:
         output_key: str | None = ...,
     ) -> Self:
         """Добавить durable-ожидание внешнего сигнала (HITL)."""
-        ...
 
 class SagaBuilder:
     """Саб-builder saga-шага. Аккумулирует forward/compensate цепочки.
@@ -197,7 +176,6 @@ class SagaBuilder:
         output_key: str | None = ...,
     ) -> Self:
         """Добавить forward-activity в saga-цепочку."""
-        ...
 
     def compensate(
         self,
@@ -208,8 +186,6 @@ class SagaBuilder:
         retry_policy: RetryPolicy | None = ...,
     ) -> Self:
         """Добавить compensate-activity (откат forward-шагов)."""
-        ...
 
     def end_saga(self) -> WorkflowBuilder:
         """Завершить саб-chain и вернуть родительский ``WorkflowBuilder``."""
-        ...

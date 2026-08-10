@@ -19,7 +19,6 @@ from src.backend.dsl.processors.event_store.types import (  # S66 W1: cross-impo
 if TYPE_CHECKING:
     from src.backend.dsl.processors.event_store.cqrs import Projection
 
-    pass
 
 _log = get_logger(__name__)
 

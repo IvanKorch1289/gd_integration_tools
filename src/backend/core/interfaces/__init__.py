@@ -238,7 +238,6 @@ class AsyncLifecycle(ABC):
 class ManagedResource(AsyncLifecycle, Healthcheck):
     """Компонент с lifecycle + health check."""
 
-    pass
 
 
 # ────────────────── Connection Pool Metrics ──────────────────

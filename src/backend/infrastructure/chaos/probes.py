@@ -227,7 +227,6 @@ class ChaosEngineering:
                                 "error": str(attr_probe_exc),
                             },
                         )
-                        pass
             if attr_name:
                 break
 

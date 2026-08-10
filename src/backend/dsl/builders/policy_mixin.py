@@ -273,7 +273,6 @@ class PolicyMarkerProcessor:
                 "policy_mixin.chainable_check_failed",
                 extra={"policy_name": self.policy_name, "error": str(ff_exc)},
             )
-            pass
 
         if not self.enabled:
             return

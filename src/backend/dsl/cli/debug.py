@@ -32,7 +32,6 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 @click.group()
 def cli() -> None:
     """DSL Debug CLI tools."""
-    pass
 
 
 @cli.command("validate-route")

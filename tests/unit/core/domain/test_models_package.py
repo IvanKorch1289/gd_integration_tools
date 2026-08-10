@@ -251,4 +251,3 @@ class TestCoreDomainModelsPackage:
 
 class TestLayerLinterAfterB1:
     """Linter check (после V11 migration tests obsolete — see commit history)."""
-    pass

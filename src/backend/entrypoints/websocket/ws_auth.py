@@ -43,7 +43,6 @@ WS_AUTH_COOKIE_NAME = "auth_session"
 class WSAuthError(Exception):
     """WebSocket authentication failure."""
 
-    pass
 
 
 @dataclass(slots=True)

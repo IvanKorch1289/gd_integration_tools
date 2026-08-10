@@ -60,7 +60,6 @@ def _make_exchange(body: Any) -> Exchange[Any]:
 class _MsgPickleHost(DataFormatsMixin):
     """Минимальный хост с DataFormatsMixin — для прямого вызова _from_msgpack."""
 
-    pass
 
 
 @pytest.fixture

@@ -284,4 +284,3 @@ class TestToSpec:
 class MagicMockCtx:
     """Minimal stub for ExecutionContext (не используется в process())."""
 
-    pass

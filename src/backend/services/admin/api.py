@@ -24,7 +24,6 @@ __all__ = ("AdminService",)
 class AdminAuthorizationError(RuntimeError):
     """Raised when AuthorizationGateway denies an admin action (fail-closed)."""
 
-    pass
 
 
 class AdminService:

@@ -41,78 +41,63 @@ class BaseS3Client(ABC):
     @abstractmethod
     async def connect(self):
         """Устанавливает соединение с хранилищем S3."""
-        pass
 
     @abstractmethod
     async def close(self):
         """Закрывает соединение корректно."""
-        pass
 
     @abstractmethod
     def ensure_connected(func):
         """Декоратор для проверки подключения перед вызовом функции."""
-        pass
 
     @property
     @abstractmethod
     def is_connected(self) -> bool:
         """Проверяет, установлено ли соединение."""
-        pass
 
     @abstractmethod
     @asynccontextmanager
     async def client_context(self) -> AsyncGenerator[Any]:
         """Контекстный менеджер для операций с клиентом."""
-        pass
 
     @abstractmethod
     async def put_object(
         self, key: str, body: Any, metadata: dict[str, Any]
     ) -> dict[str, Any]:
         """Загружает объект в S3."""
-        pass
 
     @abstractmethod
     async def get_object(self, key: str) -> tuple[Any, dict[str, Any]] | None:
         """Получает объект из S3."""
-        pass
 
     @abstractmethod
     async def delete_object(self, key: str) -> dict[str, Any]:
         """Удаляет объект из S3."""
-        pass
 
     @abstractmethod
     async def list_objects(self, prefix: str | None = None) -> list[str]:
         """Возвращает список объектов в бакете."""
-        pass
 
     @abstractmethod
     async def head_object(self, key: str) -> dict[str, Any] | None:
         """Получает метаданные объекта."""
-        pass
 
     @abstractmethod
     async def create_bucket_if_not_exists(self):
         """Создает бакет, если он не существует."""
-        pass
 
     @abstractmethod
     async def copy_object(self, source_key: str, dest_key: str) -> dict[str, Any]:
         """Копирует объект внутри S3."""
-        pass
 
     @abstractmethod
     async def generate_presigned_url(self, key: str, expiration: int = 3600) -> str:
         """Генерирует предварительно подписанный URL для доступа к объекту."""
-        pass
 
     @abstractmethod
     async def delete_objects(self, keys: list[str]) -> dict[str, Any]:
         """Удаляет несколько объектов одновременно."""
-        pass
 
     @abstractmethod
     async def get_object_bytes(self, key: str) -> bytes | None:
         """Получает содержимое объекта в виде байтов."""
-        pass
