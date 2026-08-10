@@ -256,7 +256,7 @@ class HttpxClient:
                 self._cert_subscribed = True
                 return
             except (TypeError, AttributeError, RuntimeError) as rotation_exc:  # noqa: BLE001
-                # cycle-9/D-AUDIT-1703: narrow exceptions + observability.
+                # cycle-17/D-AUDIT-1703: narrow exceptions + observability.
                 # TypeError — wrong callback signature, AttributeError —
                 # cert_store API change, RuntimeError — callback raised.
                 import logging
@@ -269,7 +269,14 @@ class HttpxClient:
             try:
                 register_listener(self._on_cert_rotated)
                 self._cert_subscribed = True
-            except Exception as _:
+            except (TypeError, AttributeError, RuntimeError) as listener_exc:  # noqa: BLE001
+                # cycle-17/D-AUDIT-1704: см. D-AUDIT-1703 — тот же narrow для
+                # register_listener path.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "http_httpx.cert_register_listener_failed",
+                    extra={"error": str(listener_exc)},
+                )
                 return
 
     def _on_cert_rotated(self, *_args: Any, **_kwargs: Any) -> None:
