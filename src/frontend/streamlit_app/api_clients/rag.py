@@ -23,7 +23,16 @@ class RAGClient(BaseAPIClient):
         try:
             resp = self.get("/api/v1/rag/stats", params=params)
             return resp if isinstance(resp, dict) else {}
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as stats_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1076: narrow exceptions + observability.
+            # ConnectionError/TimeoutError — server unreachable, RuntimeError
+            # — API failure, ValueError — invalid response, TypeError —
+            # wrong type.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_rag_client.stats_failed",
+                extra={"error": str(stats_exc)},
+            )
             return {}
 
     def search(
@@ -35,7 +44,13 @@ class RAGClient(BaseAPIClient):
             body["namespace"] = namespace
         try:
             return self.post("/api/v1/rag/search", json=body)
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as search_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1076: см. выше — mirror для search.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_rag_client.search_failed",
+                extra={"error": str(search_exc)},
+            )
             return {}
 
     def upload(
@@ -53,7 +68,14 @@ class RAGClient(BaseAPIClient):
             data["metadata_json"] = metadata_json
         try:
             return self._multipart_post("/api/v1/rag/upload", files=files, data=data)
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, OSError) as upload_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1076: см. выше — mirror для upload (добавлен
+            # OSError для multipart I/O).
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_rag_client.upload_failed",
+                extra={"error": str(upload_exc)},
+            )
             return {}
 
     def augment(
@@ -65,7 +87,13 @@ class RAGClient(BaseAPIClient):
             body["namespace"] = namespace
         try:
             return self.post("/api/v1/rag/augment", json=body)
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as augment_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1076: см. выше — mirror для augment.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_rag_client.augment_failed",
+                extra={"error": str(augment_exc)},
+            )
             return {}
 
     def _multipart_post(
