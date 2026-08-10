@@ -255,8 +255,15 @@ class HttpxClient:
                 on_rotation(str(cert_path), self._on_cert_rotated)
                 self._cert_subscribed = True
                 return
-            except Exception as _:
-                pass
+            except (TypeError, AttributeError, RuntimeError) as rotation_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-1703: narrow exceptions + observability.
+                # TypeError — wrong callback signature, AttributeError —
+                # cert_store API change, RuntimeError — callback raised.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "http_httpx.cert_rotation_callback_failed",
+                    extra={"error": str(rotation_exc)},
+                )
         register_listener = getattr(cert_store, "register_listener", None)
         if callable(register_listener):
             try:
