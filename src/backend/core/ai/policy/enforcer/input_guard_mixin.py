@@ -166,8 +166,15 @@ class InputGuardMixin:
                     },
                     severity="warning",
                 )
-            except Exception:  # pragma: no cover — audit must never block
-                pass
+            except (ImportError, AttributeError, RuntimeError) as audit_exc:  # pragma: no cover — audit must never block
+                # cycle-9/D-AUDIT-1034: narrow exceptions + observability.
+                # ImportError — audit facade missing, AttributeError —
+                # API change, RuntimeError — backend unavailable.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "input_guard_mixin.audit_failed",
+                    extra={"guard": ref.name, "error": str(audit_exc)},
+                )
             return GuardResult(
                 guard_name=ref.name,
                 verdict="warned",
