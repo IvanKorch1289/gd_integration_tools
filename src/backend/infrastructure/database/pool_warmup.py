@@ -84,13 +84,26 @@ def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
             _WARMUP_DURATION.labels(pool=pool, tenant_id=tenant_label).observe(
                 duration_ms
             )
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError) as observe_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-930: narrow exceptions + observability.
+            # AttributeError — histogram API change, TypeError — invalid
+            # arg type, ValueError — invalid label value. Bare `except
+            # Exception` маскировал unrelated runtime errors.
+            import logging
+            logging.getLogger(__name__).debug(
+                "pool_warmup.observe_failed",
+                extra={"pool": pool, "error": str(observe_exc)},
+            )
     if not success and _WARMUP_FAILURES is not None:
         try:
             _WARMUP_FAILURES.labels(pool=pool, tenant_id=tenant_label).inc()
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError) as inc_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-930: см. выше — тот же narrow для counter inc.
+            import logging
+            logging.getLogger(__name__).debug(
+                "pool_warmup.counter_inc_failed",
+                extra={"pool": pool, "error": str(inc_exc)},
+            )
 
 
 def _record_reconnect(pool: str) -> None:
@@ -98,8 +111,13 @@ def _record_reconnect(pool: str) -> None:
     if _POOL_RECONNECTS is not None:
         try:
             _POOL_RECONNECTS.labels(pool=pool, tenant_id=tenant_label).inc()
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError) as reconnect_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-930: см. выше — тот же narrow для reconnect counter.
+            import logging
+            logging.getLogger(__name__).debug(
+                "pool_warmup.reconnect_counter_failed",
+                extra={"pool": pool, "error": str(reconnect_exc)},
+            )
 
 
 @dataclass(slots=True)
