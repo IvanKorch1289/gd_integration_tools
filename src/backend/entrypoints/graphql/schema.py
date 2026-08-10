@@ -52,10 +52,7 @@ from src.backend.dsl.service import get_dsl_service
 # S168 W12 P2-4: DslResult + ActionResult + dispatch_action extracted
 # to dsl_result.py. Re-exported here для backward-compat (existing
 # callers: tests/unit/entrypoints/graphql/test_schema.py).
-from src.backend.entrypoints.graphql.dsl_result import (
-    ActionResult,
-    DslResult,
-)
+from src.backend.entrypoints.graphql.dsl_result import ActionResult, DslResult
 from src.backend.entrypoints.graphql.dsl_result import (
     dispatch_action as _dispatch_action,
 )

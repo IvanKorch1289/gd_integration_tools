@@ -80,7 +80,9 @@ class CLIPEmbedder:
             return self._model
 
         try:
-            from sentence_transformers import SentenceTransformer  # noqa: F401 — availability probe
+            from sentence_transformers import (
+                SentenceTransformer,  # noqa: F401 — availability probe
+            )
         except ImportError as exc:
             raise LazyImportError(
                 "sentence-transformers не установлен. "

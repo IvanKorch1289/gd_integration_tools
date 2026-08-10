@@ -179,7 +179,9 @@ class PIIMaskingResponseMiddleware:
     def _is_enabled() -> bool:
         """Lazy-проверка feature-flag ``pii_response_middleware_enabled``."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             return bool(
                 getattr(feature_flags, "pii_response_middleware_enabled", False),

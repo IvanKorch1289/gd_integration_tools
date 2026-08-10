@@ -94,7 +94,9 @@ class JqProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет JMESPath-выражение над body и пишет результат в target."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             if not feature_flags.proc_jq:
                 exchange.set_property("jq_status", "skipped")

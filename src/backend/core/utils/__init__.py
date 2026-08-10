@@ -25,14 +25,23 @@ from src.backend.core.utils.datetime_utils import (
     parse_dt,
     utc_now,
 )
-from src.backend.core.utils.json_utils import dumps_bytes, dumps_str, loads  # noqa: F401 — re-export
-from src.backend.core.utils.metrics_registry import MetricsRegistry, metrics_registry  # noqa: F401 — re-export
+from src.backend.core.utils.json_utils import (  # noqa: F401 — re-export
+    dumps_bytes,
+    dumps_str,
+    loads,
+)
+from src.backend.core.utils.metrics_registry import (  # noqa: F401 — re-export
+    MetricsRegistry,
+    metrics_registry,
+)
 from src.backend.core.utils.redis_fallback import (
     FallbackCache,
     RedisErrorCategory,
     RedisLike,
 )
-from src.backend.core.utils.route_timeout import RouteTimeoutSpec  # noqa: F401 — re-export
+from src.backend.core.utils.route_timeout import (
+    RouteTimeoutSpec,  # noqa: F401 — re-export
+)
 from src.backend.core.utils.task_registry import (
     TaskRegistry,
     get_task_registry,

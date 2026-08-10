@@ -1,4 +1,4 @@
-"""add users.tenant_id column (S91 W1, V2 P0 #6 continue)
+"""add users.tenant_id column (S91 W1, V2 P0 #6 continue).
 
 Revision ID: e7f8a9b0c1d2
 Revises: d6e7f8a9b0c1

@@ -11,15 +11,9 @@ Migration path:
 Future cycles will physically move the files here.
 """
 
-from src.backend.dsl.engine.processors.cancel_workflow import (
-    CancelWorkflowProcessor,
-)
-from src.backend.dsl.engine.processors.invoke_workflow import (
-    InvokeWorkflowProcessor,
-)
-from src.backend.dsl.engine.processors.sub_workflow import (
-    SubWorkflowProcessor,
-)
+from src.backend.dsl.engine.processors.cancel_workflow import CancelWorkflowProcessor
+from src.backend.dsl.engine.processors.invoke_workflow import InvokeWorkflowProcessor
+from src.backend.dsl.engine.processors.sub_workflow import SubWorkflowProcessor
 
 __all__ = (
     "CancelWorkflowProcessor",

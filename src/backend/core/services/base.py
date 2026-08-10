@@ -5,8 +5,6 @@ See ``src/backend/core/services/__init__.py`` for the facade rationale.
 
 from __future__ import annotations
 
-from src.backend.services.core.base_external_api import (
-    BaseExternalAPIClient,
-)
+from src.backend.services.core.base_external_api import BaseExternalAPIClient
 
 __all__ = ("BaseExternalAPIClient",)

@@ -92,7 +92,9 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
 
     """
     try:
-        from temporalio import workflow as temporal_workflow  # noqa: F401 — availability probe
+        from temporalio import (
+            workflow as temporal_workflow,  # noqa: F401 — availability probe
+        )
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
             "temporalio SDK not installed. Install via `uv sync --extra workflow`.",

@@ -219,7 +219,9 @@ class InfraMixin:
                 "(isolated=True default с S3). Audit-event emitted.",
             )
             try:
-                from src.backend.core.audit.facade import emit_audit_safe  # noqa: F401 — availability probe
+                from src.backend.core.audit.facade import (
+                    emit_audit_safe,  # noqa: F401 — availability probe
+                )
 
                 emit_audit_safe(
                     event="agent.sandbox.zero_isolation_opted",

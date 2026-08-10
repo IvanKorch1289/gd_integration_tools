@@ -11,6 +11,8 @@
 Composition root: ``services/integrations/import_service.py``.
 """
 
-from src.backend.infrastructure.import_gateway.factory import build_import_gateway  # noqa: F401 — re-export
+from src.backend.infrastructure.import_gateway.factory import (
+    build_import_gateway,  # noqa: F401 — re-export
+)
 
 __all__ = ("build_import_gateway",)

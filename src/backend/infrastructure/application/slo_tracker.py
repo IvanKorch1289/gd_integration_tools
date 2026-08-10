@@ -18,7 +18,9 @@ __all__ = ("SLOTracker", "get_slo_tracker")
 
 
 try:
-    from hdrh.histogram import HdrHistogram as _HdrHistogram  # noqa: F401 — availability probe
+    from hdrh.histogram import (
+        HdrHistogram as _HdrHistogram,  # noqa: F401 — availability probe
+    )
 
     _HDRH_AVAILABLE = True
 except ImportError:

@@ -29,14 +29,18 @@ def _get_rate_limit_settings() -> Any:
     должен fallback на ``closed`` (deny-by-default).
     """
     try:
-        from src.backend.core.config.settings import settings  # noqa: F401 — availability probe
+        from src.backend.core.config.settings import (
+            settings,  # noqa: F401 — availability probe
+        )
 
         return settings
     except (ImportError, AttributeError) as settings_exc:  # pragma: no cover
         # D-A1-04 fix (cycle 35): narrow exceptions + observability.
         # Bare `except Exception` маскировал ImportError (settings module
         # не инициализирован) или AttributeError (неправильный settings).
-        from src.backend.core.logging import get_logger  # noqa: F401 — availability probe
+        from src.backend.core.logging import (
+            get_logger,  # noqa: F401 — availability probe
+        )
         get_logger(__name__).debug(
             "resilience.settings_resolve_failed",
             extra={"error": str(settings_exc)},

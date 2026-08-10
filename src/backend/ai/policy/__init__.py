@@ -19,7 +19,10 @@ Usage::
     result = policy.check("shell_exec")    # ToolPermission.DENY
 """
 
-from src.backend.ai.policy.tool_policy import AgentToolPolicy, ToolPermission  # noqa: F401 — re-export
+from src.backend.ai.policy.tool_policy import (  # noqa: F401 — re-export
+    AgentToolPolicy,
+    ToolPermission,
+)
 
 
 # Round 79: register default AgentToolPolicy в svcs_registry для
@@ -32,7 +35,9 @@ def _default_tool_policy() -> AgentToolPolicy:
 
 
 try:
-    from src.backend.core.svcs_registry import register_factory  # noqa: F401 — availability probe
+    from src.backend.core.svcs_registry import (
+        register_factory,  # noqa: F401 — availability probe
+    )
 
     register_factory(AgentToolPolicy, _default_tool_policy)
 except ImportError:  # pragma: no cover — svcs_registry optional

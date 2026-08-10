@@ -25,15 +25,7 @@ History:
 """
 
 from src.backend.core.di.module_registry import resolve_module
-from src.backend.core.di.providers import (
-    ai,
-    auth,
-    cache,
-    db,
-    http,
-    storage,
-    workflow,
-)
+from src.backend.core.di.providers import ai, auth, cache, db, http, storage, workflow
 
 # --- ai.py (12) ---
 from src.backend.core.di.providers.ai import (

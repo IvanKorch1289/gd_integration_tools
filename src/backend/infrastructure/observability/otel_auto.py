@@ -63,7 +63,9 @@ def instrument_asyncpg_if_enabled() -> bool:
         return False
 
     try:
-        from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.asyncpg import (
+            AsyncPGInstrumentor,  # noqa: F401 — availability probe
+        )
 
         AsyncPGInstrumentor().instrument()
         _ASYNCPG_INSTRUMENTED = True
@@ -107,9 +109,15 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import (  # noqa: F401 — availability probe
             OTLPSpanExporter,
         )
-        from opentelemetry.sdk.resources import Resource  # noqa: F401 — availability probe
-        from opentelemetry.sdk.trace import TracerProvider  # noqa: F401 — availability probe
-        from opentelemetry.sdk.trace.export import BatchSpanProcessor  # noqa: F401 — availability probe
+        from opentelemetry.sdk.resources import (
+            Resource,  # noqa: F401 — availability probe
+        )
+        from opentelemetry.sdk.trace import (
+            TracerProvider,  # noqa: F401 — availability probe
+        )
+        from opentelemetry.sdk.trace.export import (
+            BatchSpanProcessor,  # noqa: F401 — availability probe
+        )
     except ImportError as exc:
         logger.warning("OpenTelemetry SDK not installed: %s", exc)
         return False
@@ -144,7 +152,9 @@ def _instrument_fastapi(app: Any) -> None:
     if app is None:
         return
     try:
-        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.fastapi import (
+            FastAPIInstrumentor,  # noqa: F401 — availability probe
+        )
 
         FastAPIInstrumentor.instrument_app(app)
         logger.debug("OTel FastAPI instrumented")
@@ -154,7 +164,9 @@ def _instrument_fastapi(app: Any) -> None:
 
 def _instrument_httpx() -> None:
     try:
-        from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.httpx import (
+            HTTPXClientInstrumentor,  # noqa: F401 — availability probe
+        )
 
         HTTPXClientInstrumentor().instrument()
         logger.debug("OTel httpx instrumented")
@@ -164,7 +176,9 @@ def _instrument_httpx() -> None:
 
 def _instrument_sqlalchemy() -> None:
     try:
-        from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.sqlalchemy import (
+            SQLAlchemyInstrumentor,  # noqa: F401 — availability probe
+        )
 
         SQLAlchemyInstrumentor().instrument()
         logger.debug("OTel SQLAlchemy instrumented")
@@ -174,7 +188,9 @@ def _instrument_sqlalchemy() -> None:
 
 def _instrument_redis() -> None:
     try:
-        from opentelemetry.instrumentation.redis import RedisInstrumentor  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.redis import (
+            RedisInstrumentor,  # noqa: F401 — availability probe
+        )
 
         RedisInstrumentor().instrument()
         logger.debug("OTel Redis instrumented")
@@ -184,7 +200,9 @@ def _instrument_redis() -> None:
 
 def _instrument_logging() -> None:
     try:
-        from opentelemetry.instrumentation.logging import LoggingInstrumentor  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.logging import (
+            LoggingInstrumentor,  # noqa: F401 — availability probe
+        )
 
         LoggingInstrumentor().instrument(set_logging_format=True)
         logger.debug("OTel Logging instrumented")
@@ -197,7 +215,9 @@ def _instrument_aiokafka() -> None:
     opentelemetry-instrumentation-aiokafka.
     """
     try:
-        from opentelemetry.instrumentation.aiokafka import AIOKafkaInstrumentor  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.aiokafka import (
+            AIOKafkaInstrumentor,  # noqa: F401 — availability probe
+        )
 
         AIOKafkaInstrumentor().instrument()
         logger.debug("OTel aiokafka instrumented")
@@ -210,7 +230,9 @@ def _instrument_aiopika() -> None:
     opentelemetry-instrumentation-aio-pika.
     """
     try:
-        from opentelemetry.instrumentation.aio_pika import AioPikaInstrumentor  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.aio_pika import (
+            AioPikaInstrumentor,  # noqa: F401 — availability probe
+        )
 
         AioPikaInstrumentor().instrument()
         logger.debug("OTel aio-pika instrumented")
@@ -226,7 +248,9 @@ def _instrument_pymongo() -> None:
     opentelemetry-instrumentation-pymongo.
     """
     try:
-        from opentelemetry.instrumentation.pymongo import PymongoInstrumentor  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.pymongo import (
+            PymongoInstrumentor,  # noqa: F401 — availability probe
+        )
 
         PymongoInstrumentor().instrument()
         logger.debug("OTel pymongo instrumented")
@@ -241,7 +265,9 @@ def _instrument_grpc_client() -> None:
     Требует opentelemetry-instrumentation-grpc.
     """
     try:
-        from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorClient  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.grpc import (
+            GrpcAioInstrumentorClient,  # noqa: F401 — availability probe
+        )
 
         GrpcAioInstrumentorClient().instrument()
         logger.debug("OTel gRPC async client instrumented")
@@ -259,7 +285,9 @@ def _instrument_asyncpg() -> None:
     opentelemetry-instrumentation-asyncpg.
     """
     try:
-        from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor  # noqa: F401 — availability probe
+        from opentelemetry.instrumentation.asyncpg import (
+            AsyncPGInstrumentor,  # noqa: F401 — availability probe
+        )
 
         AsyncPGInstrumentor().instrument()
         logger.debug("OTel asyncpg instrumented")

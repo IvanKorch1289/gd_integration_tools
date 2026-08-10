@@ -7,9 +7,6 @@ ADR-0207: extensions/core_entities/{orderkinds,orders}/services/*.py
 
 from __future__ import annotations
 
-from src.backend.services.integrations.skb import (
-    APISKBService,
-    get_skb_service,
-)
+from src.backend.services.integrations.skb import APISKBService, get_skb_service
 
 __all__ = ("APISKBService", "get_skb_service")

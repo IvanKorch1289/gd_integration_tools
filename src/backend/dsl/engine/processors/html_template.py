@@ -124,7 +124,9 @@ class HtmlTemplateProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             if not feature_flags.proc_html_template:
                 exchange.set_property("html_template_status", "skipped")
@@ -141,7 +143,9 @@ class HtmlTemplateProcessor(BaseProcessor):
             )
 
         try:
-            from jinja2.sandbox import SandboxedEnvironment  # noqa: F401 — availability probe
+            from jinja2.sandbox import (
+                SandboxedEnvironment,  # noqa: F401 — availability probe
+            )
         except ImportError as exc:
             exchange.fail(f"html_template: jinja2 not available: {exc}")
             return

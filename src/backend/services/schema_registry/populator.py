@@ -115,7 +115,9 @@ def populate_from_actions(registry: ServiceSchemaRegistry | None = None) -> int:
     """Импортирует action handlers в schema_registry."""
     reg = registry or get_schema_registry()
     try:
-        from src.backend.dsl.commands.registry import action_handler_registry  # noqa: F401 — availability probe
+        from src.backend.dsl.commands.registry import (
+            action_handler_registry,  # noqa: F401 — availability probe
+        )
     except (ImportError, AttributeError):
         return 0
 
@@ -160,7 +162,9 @@ def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> in
     """
     reg = registry or get_schema_registry()
     try:
-        from src.backend.core.plugin_runtime.registry import get_plugin_registry  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+        from src.backend.core.plugin_runtime.registry import (
+            get_plugin_registry,  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+        )
     except ImportError:
         return 0
 

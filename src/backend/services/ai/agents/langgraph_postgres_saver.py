@@ -93,7 +93,9 @@ class LangGraphPostgresSaverWrapper:
         if self._dsn:
             return self._dsn
         try:
-            from src.backend.core.config.application_settings import settings  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            from src.backend.core.config.application_settings import (
+                settings,  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            )
 
             db = getattr(settings, "database", None)
             if db is not None:
@@ -131,7 +133,9 @@ class LangGraphPostgresSaverWrapper:
         if self._saver is not None:
             return self._saver
         try:
-            from langchain_postgres import AsyncPostgresSaver  # noqa: F401 — availability probe
+            from langchain_postgres import (
+                AsyncPostgresSaver,  # noqa: F401 — availability probe
+            )
         except ImportError as exc:
             raise LangGraphPostgresSaverUnavailable(
                 "Пакет langchain_postgres не установлен — добавьте extra ai-memory",

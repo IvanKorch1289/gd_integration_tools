@@ -13,7 +13,10 @@ Capabilities (V11.1): ``voice.stt.<provider>``, ``voice.tts.<provider>``.
 :class:`VoiceServiceUnavailable`.
 """
 
-from src.backend.services.ai.voice.coqui_tts import CoquiTTSService, TTSResult  # noqa: F401 — re-export
+from src.backend.services.ai.voice.coqui_tts import (  # noqa: F401 — re-export
+    CoquiTTSService,
+    TTSResult,
+)
 from src.backend.services.ai.voice.whisper_stt import (
     STTResult,
     VoiceServiceUnavailable,

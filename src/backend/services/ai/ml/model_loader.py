@@ -197,7 +197,10 @@ class MLModelLoader:
 
     def _load_catboost(self, path: Path) -> Any:
         try:
-            from catboost import CatBoostClassifier, CatBoostRegressor  # noqa: F401 — availability probe
+            from catboost import (  # noqa: F401 — availability probe
+                CatBoostClassifier,
+                CatBoostRegressor,
+            )
         except ImportError as exc:
             raise RuntimeError(
                 "catboost не установлен; установите: uv add catboost",

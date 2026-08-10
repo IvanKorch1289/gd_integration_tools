@@ -1,4 +1,4 @@
-"""add orderkinds.tenant_id column (S171 fix)
+"""add orderkinds.tenant_id column (S171 fix).
 
 Revision ID: a1b2c3d4e5f7
 Revises: g3h4i5j6k7l8

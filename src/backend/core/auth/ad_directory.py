@@ -7,9 +7,6 @@ ADR-0207: extensions/core_entities/users/services/users.py импортируе�
 
 from __future__ import annotations
 
-from src.backend.services.auth.ad_directory_client import (
-    AdAuthError,
-    AdSearchEntry,
-)
+from src.backend.services.auth.ad_directory_client import AdAuthError, AdSearchEntry
 
 __all__ = ("AdAuthError", "AdSearchEntry")

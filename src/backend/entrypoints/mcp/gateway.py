@@ -33,12 +33,16 @@ except ImportError:  # pragma: no cover - optional FastMCP dependency
     FastMCP = None  # type: ignore[misc,assignment]
 
 try:
-    from fastmcp.server.auth.providers.jwt import JWTVerifier  # noqa: F401 — availability probe
+    from fastmcp.server.auth.providers.jwt import (
+        JWTVerifier,  # noqa: F401 — availability probe
+    )
 except ImportError:  # pragma: no cover - optional FastMCP 3.x dependency
     JWTVerifier = None  # type: ignore[misc,assignment]
 
 try:
-    from src.backend.core.ai.skill_registry import SkillRegistry  # noqa: F401 — availability probe
+    from src.backend.core.ai.skill_registry import (
+        SkillRegistry,  # noqa: F401 — availability probe
+    )
 except ImportError:  # pragma: no cover - optional skill registry dependency
     SkillRegistry = None  # type: ignore[misc,assignment]
 

@@ -50,7 +50,9 @@ def _emit_deprecation_once() -> None:
     (импорты до загрузки settings) исключения не должны ломать импорт.
     """
     try:
-        from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+        from src.backend.core.config.features import (
+            feature_flags,  # noqa: F401 — availability probe
+        )
 
         if getattr(feature_flags, "dsl_blueprints_migrate", False):
             warnings.warn(

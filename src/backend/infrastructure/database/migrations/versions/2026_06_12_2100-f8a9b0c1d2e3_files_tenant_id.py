@@ -1,4 +1,4 @@
-"""add files.tenant_id column (S92 W1, V2 P0 #6 continue)
+"""add files.tenant_id column (S92 W1, V2 P0 #6 continue).
 
 Revision ID: f8a9b0c1d2e3
 Revises: e7f8a9b0c1d2

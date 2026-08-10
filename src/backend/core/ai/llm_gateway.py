@@ -20,9 +20,6 @@ S44 W1 sprint goal: закрыть extensions violation в
 
 from __future__ import annotations
 
-from src.backend.services.ai.gateway.client import (
-    LiteLLMGateway,
-    get_litellm_gateway,
-)
+from src.backend.services.ai.gateway.client import LiteLLMGateway, get_litellm_gateway
 
 __all__ = ("LiteLLMGateway", "get_litellm_gateway")

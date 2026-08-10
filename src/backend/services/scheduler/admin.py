@@ -18,8 +18,6 @@ from src.backend.infrastructure.scheduler.dlq import (
     SchedulerDLQStore,
     get_scheduler_dlq_store,
 )
-from src.backend.infrastructure.scheduler.scheduler_manager import (
-    get_scheduler_manager,
-)
+from src.backend.infrastructure.scheduler.scheduler_manager import get_scheduler_manager
 
 __all__ = ("SchedulerDLQStore", "get_scheduler_dlq_store", "get_scheduler_manager")

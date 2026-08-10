@@ -278,7 +278,9 @@ async def _start_config_hot_reload() -> None:
 
     # Register reload callback: settings.reload() если доступен
     try:
-        from src.backend.core.config.settings import settings  # noqa: F401 — availability probe
+        from src.backend.core.config.settings import (
+            settings,  # noqa: F401 — availability probe
+        )
 
         async def _reload_settings() -> None:
             """Reload settings через hot-reload callback."""

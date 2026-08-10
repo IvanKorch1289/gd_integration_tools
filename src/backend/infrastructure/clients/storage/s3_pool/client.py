@@ -41,10 +41,7 @@ from src.backend.core.errors import ServiceError
 # Per skill: import _settings pre-loads core.config.settings, breaking
 # the circular chain breaker -> core.logging -> core.interfaces -> breaker.
 # Module-level shared CB (per-call, not per-instance) per skill pattern.
-from src.backend.core.resilience.breaker import (
-    BreakerSpec,
-    get_breaker_registry,
-)
+from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 
 
 def _get_s3_breaker() -> Any:
@@ -91,7 +88,9 @@ class S3Client(BaseS3Client):
         # skip без crash (тесты unrelated до S3 продолжают собираться).
         try:
             from aiobotocore.config import AioConfig  # noqa: F401 — availability probe
-            from aiobotocore.session import get_session  # noqa: F401 — availability probe
+            from aiobotocore.session import (
+                get_session,  # noqa: F401 — availability probe
+            )
         except ImportError:
             self._session = None
             self._config = None

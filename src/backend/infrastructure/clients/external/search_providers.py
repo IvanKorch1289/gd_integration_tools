@@ -326,7 +326,9 @@ def get_web_search_service() -> WebSearchService:
     _web_search = WebSearchService()
 
     try:
-        from src.backend.core.config.settings import settings  # noqa: F401 — availability probe
+        from src.backend.core.config.settings import (
+            settings,  # noqa: F401 — availability probe
+        )
 
         perplexity_key = getattr(settings, "perplexity_api_key", None) or ""
         tavily_key = getattr(settings, "tavily_api_key", None) or ""
@@ -341,7 +343,9 @@ def get_web_search_service() -> WebSearchService:
     # SearXNG registration через env var (без отдельного Settings класса).
     # Включается только если SEARXNG_BASE_URL задан И feature-flag активен.
     try:
-        from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+        from src.backend.core.config.features import (
+            feature_flags,  # noqa: F401 — availability probe
+        )
 
         searxng_url = os.getenv("SEARXNG_BASE_URL", "").strip()
         if searxng_url and getattr(feature_flags, "search_provider_searxng", False):

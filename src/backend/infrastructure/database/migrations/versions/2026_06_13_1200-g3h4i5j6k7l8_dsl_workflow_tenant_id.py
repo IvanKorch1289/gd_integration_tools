@@ -1,4 +1,4 @@
-"""add dsl_snapshots.tenant_id + workflow_events.tenant_id columns (S101 W4, V2 P0 #6 continue)
+"""add dsl_snapshots.tenant_id + workflow_events.tenant_id columns (S101 W4, V2 P0 #6 continue).
 
 Revision ID: g3h4i5j6k7l8
 Revises: f8a9b0c1d2e3

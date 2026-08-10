@@ -13,7 +13,9 @@
 
 from __future__ import annotations
 
-from src.backend.entrypoints.http3.config import Http3ServerConfig  # noqa: F401 — re-export
+from src.backend.entrypoints.http3.config import (
+    Http3ServerConfig,  # noqa: F401 — re-export
+)
 
 __all__ = ("Http3ServerConfig", "serve_http3")
 
@@ -25,6 +27,8 @@ def serve_http3(*args, **kwargs):
     ``aioquic``-зависимости до момента вызова. Сигнатура повторяет
     ``src.backend.entrypoints.http3.server.serve_http3``.
     """
-    from src.backend.entrypoints.http3.server import serve_http3 as _impl  # noqa: F401 — re-export
+    from src.backend.entrypoints.http3.server import (
+        serve_http3 as _impl,  # noqa: F401 — re-export
+    )
 
     return _impl(*args, **kwargs)

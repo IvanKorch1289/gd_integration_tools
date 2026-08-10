@@ -62,8 +62,12 @@ def configure_otel(
     """
     try:
         from opentelemetry import propagate, trace  # noqa: F401 — availability probe
-        from opentelemetry.sdk.resources import Resource  # noqa: F401 — availability probe
-        from opentelemetry.sdk.trace import TracerProvider  # noqa: F401 — availability probe
+        from opentelemetry.sdk.resources import (
+            Resource,  # noqa: F401 — availability probe
+        )
+        from opentelemetry.sdk.trace import (
+            TracerProvider,  # noqa: F401 — availability probe
+        )
         from opentelemetry.sdk.trace.export import (  # noqa: F401 — availability probe
             BatchSpanProcessor,
             ConsoleSpanExporter,
@@ -127,7 +131,9 @@ def configure_otel(
     # Composite propagator: W3C TraceContext (обязателен) + опционально B3.
     propagators: list[Any] = [TraceContextTextMapPropagator()]
     try:
-        from opentelemetry.propagators.b3 import B3MultiFormat  # noqa: F401 — availability probe
+        from opentelemetry.propagators.b3 import (
+            B3MultiFormat,  # noqa: F401 — availability probe
+        )
 
         propagators.append(B3MultiFormat())
     except ImportError:
@@ -137,7 +143,9 @@ def configure_otel(
 
     if len(propagators) > 1:
         try:
-            from opentelemetry.propagators.composite import CompositePropagator  # noqa: F401 — availability probe
+            from opentelemetry.propagators.composite import (
+                CompositePropagator,  # noqa: F401 — availability probe
+            )
 
             propagate.set_global_textmap(CompositePropagator(propagators))
         except ImportError:
@@ -188,13 +196,17 @@ def setup_otel_metrics(
 
     try:
         from opentelemetry import metrics  # noqa: F401 — availability probe
-        from opentelemetry.sdk.metrics import MeterProvider  # noqa: F401 — availability probe
+        from opentelemetry.sdk.metrics import (
+            MeterProvider,  # noqa: F401 — availability probe
+        )
         from opentelemetry.sdk.metrics.export import (  # noqa: F401 — availability probe
             ConsoleMetricExporter,
             MetricExporter,
             PeriodicExportingMetricReader,
         )
-        from opentelemetry.sdk.resources import Resource  # noqa: F401 — availability probe
+        from opentelemetry.sdk.resources import (
+            Resource,  # noqa: F401 — availability probe
+        )
     except ImportError as exc:
         logger.warning(
             "OTel metrics SDK не установлен — metrics-конфигурация пропущена: %s", exc,

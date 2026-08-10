@@ -144,7 +144,9 @@ class CallFunctionProcessor(BaseProcessor):
                 whitelist |= set(raw)
         if not whitelist:
             try:
-                from src.backend.core.config.settings import settings as app_settings  # noqa: F401 — availability probe
+                from src.backend.core.config.settings import (
+                    settings as app_settings,  # noqa: F401 — availability probe
+                )
 
                 global_wl = getattr(
                     getattr(app_settings, "security", app_settings),

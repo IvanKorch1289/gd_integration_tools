@@ -230,7 +230,9 @@ def get_skill_registry() -> Any:
 
     """
     try:
-        from src.backend.core.di import app_state_singleton  # noqa: F401 — availability probe
+        from src.backend.core.di import (
+            app_state_singleton,  # noqa: F401 — availability probe
+        )
 
         return app_state_singleton("skill_registry", factory=None)()
     except (ImportError, AttributeError, RuntimeError, KeyError, TypeError) as di_exc:

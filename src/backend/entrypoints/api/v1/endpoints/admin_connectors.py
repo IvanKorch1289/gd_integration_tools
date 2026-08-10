@@ -60,7 +60,9 @@ class _AdminConnectorsFacade:
         """Список всех зарегистрированных коннекторов с health-status."""
         # Wave 6.5a: registry резолвится через core.di.providers (lazy).
         try:
-            from src.backend.core.di.providers import get_connector_registry_provider  # noqa: F401 — availability probe
+            from src.backend.core.di.providers import (
+                get_connector_registry_provider,  # noqa: F401 — availability probe
+            )
 
             registry = get_connector_registry_provider()
         except ImportError as exc:

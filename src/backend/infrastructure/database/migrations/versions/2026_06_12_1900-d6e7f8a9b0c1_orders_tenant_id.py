@@ -1,4 +1,4 @@
-"""add orders.tenant_id column (S89 W1, V2 P0 #6 pilot migration)
+"""add orders.tenant_id column (S89 W1, V2 P0 #6 pilot migration).
 
 Revision ID: d6e7f8a9b0c1
 Revises: c5d6e7f8a9b0

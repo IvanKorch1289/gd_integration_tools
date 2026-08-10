@@ -280,7 +280,9 @@ class UnifiedPoolManager:
         """
         result: dict[str, str] = {}
         try:
-            from src.backend.infrastructure.database.pool_warmup import PoolWarmup  # noqa: F401 — availability probe
+            from src.backend.infrastructure.database.pool_warmup import (
+                PoolWarmup,  # noqa: F401 — availability probe
+            )
 
             warmup = PoolWarmup()
             for name, reg in self._pools.items():

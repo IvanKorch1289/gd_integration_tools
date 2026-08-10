@@ -37,7 +37,9 @@ async def kafka_ping_fn() -> bool:
 
     """
     try:
-        from src.backend.infrastructure.messaging.kafka_producer import KafkaProducer  # noqa: F401 — availability probe
+        from src.backend.infrastructure.messaging.kafka_producer import (
+            KafkaProducer,  # noqa: F401 — availability probe
+        )
 
         producer = KafkaProducer()
         return producer.is_available()
@@ -72,7 +74,9 @@ def register_kafka_pool_if_available(
 
     """
     try:
-        from src.backend.infrastructure.messaging.kafka_producer import KafkaProducer  # noqa: F401 — availability probe
+        from src.backend.infrastructure.messaging.kafka_producer import (
+            KafkaProducer,  # noqa: F401 — availability probe
+        )
 
         producer = KafkaProducer(bootstrap_servers=bootstrap_servers or [])
         manager.register(

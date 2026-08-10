@@ -149,7 +149,9 @@ async def run_hub_notebook(
 
     # 1. Feature flag gate
     try:
-        from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+        from src.backend.core.config.features import (
+            feature_flags,  # noqa: F401 — availability probe
+        )
 
         if not bool(getattr(feature_flags, "jupyter_hub_enabled", False)):
             raise JupyterHubNotEnabledError()
@@ -175,7 +177,9 @@ async def run_hub_notebook(
         # явного admin-opt-in через secure_settings.jupyter_inline_content_enabled.
         # Default False = deny (fail-closed). Registry-based notebooks остаются
         # доступны — они проходят ревью при регистрации в NotebookRegistry.
-        from src.backend.core.config.security import secure_settings  # noqa: F401 — availability probe
+        from src.backend.core.config.security import (
+            secure_settings,  # noqa: F401 — availability probe
+        )
 
         if not secure_settings.jupyter_inline_content_enabled:
             _logger.warning(
@@ -191,7 +195,9 @@ async def run_hub_notebook(
 
         # Audit-event: inline notebook use (даже при enabled — для traceability).
         try:
-            from src.backend.core.audit.facade import emit_audit_safe  # noqa: F401 — availability probe
+            from src.backend.core.audit.facade import (
+                emit_audit_safe,  # noqa: F401 — availability probe
+            )
 
             await emit_audit_safe(
                 action="jupyter.hub.run.inline",

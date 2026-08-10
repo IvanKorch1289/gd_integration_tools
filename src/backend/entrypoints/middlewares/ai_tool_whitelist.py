@@ -235,7 +235,9 @@ def _default_whitelist_check(tenant_id: str, tool_name: str) -> bool:
 
     """
     try:
-        from src.backend.core.security.capabilities import CapabilityGate  # noqa: F401 — availability probe
+        from src.backend.core.security.capabilities import (
+            CapabilityGate,  # noqa: F401 — availability probe
+        )
 
         # ``check`` signals allow by returning normally and deny by raising.
         gate = CapabilityGate()

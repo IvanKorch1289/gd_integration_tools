@@ -98,9 +98,15 @@ class PresidioSanitizerAdapter:
         if self._available is not None:
             return self._available
         try:
-            from presidio_analyzer import AnalyzerEngine  # noqa: F401 — availability probe
-            from presidio_analyzer.nlp_engine import NlpEngineProvider  # noqa: F401 — availability probe
-            from presidio_anonymizer import AnonymizerEngine  # noqa: F401 — availability probe
+            from presidio_analyzer import (
+                AnalyzerEngine,  # noqa: F401 — availability probe
+            )
+            from presidio_analyzer.nlp_engine import (
+                NlpEngineProvider,  # noqa: F401 — availability probe
+            )
+            from presidio_anonymizer import (
+                AnonymizerEngine,  # noqa: F401 — availability probe
+            )
         except ImportError as exc:
             logger.warning(
                 "Presidio/spaCy недоступны, fallback на AIDataSanitizer: %s", exc,

@@ -328,8 +328,13 @@ class AuthFacade:
         # "admin" в groups membership-only — privilege escalation risk
         # (любой IdP group с именем "admin" получал bypass).
         try:
-            from src.backend.core.auth import AuthContext  # noqa: F401 — availability probe
-            from src.backend.core.auth.admin_roles import AdminRole, extract_admin_roles  # noqa: F401 — availability probe
+            from src.backend.core.auth import (
+                AuthContext,  # noqa: F401 — availability probe
+            )
+            from src.backend.core.auth.admin_roles import (  # noqa: F401 — availability probe
+                AdminRole,
+                extract_admin_roles,
+            )
 
             # Cycle 91 fix: extract_admin_roles expects AuthContext (with
             # .metadata attribute), but auth here is AuthResult (also has
@@ -483,7 +488,9 @@ class AuthFacade:
         # SAML requires ACS flow; fail-closed unless dev_mode flag is on.
         dev_mode = False
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             dev_mode = bool(getattr(feature_flags, "saml_sp_initiated_enabled", False))
         except (ImportError, AttributeError, RuntimeError) as ff_exc:

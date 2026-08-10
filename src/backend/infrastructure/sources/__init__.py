@@ -9,7 +9,12 @@
 оставался работоспособным.
 """
 
-from src.backend.infrastructure.sources.factory import build_source  # noqa: F401 — re-export
-from src.backend.infrastructure.sources.file_watcher import FileEvent, FileWatcherSource  # noqa: F401 — re-export
+from src.backend.infrastructure.sources.factory import (
+    build_source,  # noqa: F401 — re-export
+)
+from src.backend.infrastructure.sources.file_watcher import (  # noqa: F401 — re-export
+    FileEvent,
+    FileWatcherSource,
+)
 
 __all__ = ("FileEvent", "FileWatcherSource", "build_source")

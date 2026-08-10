@@ -34,8 +34,15 @@ from src.backend.core.ai.errors import (
     WorkspaceTTLExpiredError,
 )
 from src.backend.core.ai.fs_facade import AIFsFacade  # noqa: F401 — re-export
-from src.backend.core.ai.gateway import AIGateway, AIRequest, AIResponse  # noqa: F401 — re-export
-from src.backend.core.ai.workspace_manager import AIWorkspaceManager, WorkspaceHandle  # noqa: F401 — re-export
+from src.backend.core.ai.gateway import (  # noqa: F401 — re-export
+    AIGateway,
+    AIRequest,
+    AIResponse,
+)
+from src.backend.core.ai.workspace_manager import (  # noqa: F401 — re-export
+    AIWorkspaceManager,
+    WorkspaceHandle,
+)
 
 __all__ = (
     "AIFsFacade",

@@ -139,7 +139,9 @@ class DSPyOptimizer:
     def is_enabled(self) -> bool:
         """Проверяет feature-flag ``dspy_eval_pipeline_enabled``."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             return bool(feature_flags.dspy_eval_pipeline_enabled)
         except (ImportError, AttributeError) as exc:

@@ -26,14 +26,11 @@ from __future__ import annotations
 
 # S4 fix (S36-W10): 4 shim-модуля удалены (files/orders/orderkinds/users).
 # Импорт напрямую из extensions/core_entities/ (S168 W14 P2-10 closure).
-from extensions.core_entities.files.domain.models import (
-    File,
-    OrderFile,
+from extensions.core_entities.files.domain.models import File, OrderFile
+from extensions.core_entities.orderkinds.domain.models import OrderKind
+from extensions.core_entities.orders.domain.models import (
+    Order,  # noqa: F401 — re-export
 )
-from extensions.core_entities.orderkinds.domain.models import (
-    OrderKind,
-)
-from extensions.core_entities.orders.domain.models import Order  # noqa: F401 — re-export
 from extensions.core_entities.users.domain.models import User  # noqa: F401 — re-export
 from src.backend.core.domain.models.base import (
     Base,
@@ -42,13 +39,20 @@ from src.backend.core.domain.models.base import (
     metadata,
     nullable_str,
 )
-from src.backend.core.domain.models.cert import CertHistory, CertRecord  # noqa: F401 — re-export
-from src.backend.core.domain.models.dsl_snapshot import DslSnapshot  # noqa: F401 — re-export
+from src.backend.core.domain.models.cert import (  # noqa: F401 — re-export
+    CertHistory,
+    CertRecord,
+)
+from src.backend.core.domain.models.dsl_snapshot import (
+    DslSnapshot,  # noqa: F401 — re-export
+)
 from src.backend.core.domain.models.langmem_models import (
     LangMemEpisodic,
     LangMemProcedural,
 )
-from src.backend.core.domain.models.outbox import OutboxMessage  # noqa: F401 — re-export
+from src.backend.core.domain.models.outbox import (
+    OutboxMessage,  # noqa: F401 — re-export
+)
 from src.backend.core.domain.models.rule_engine import (
     RuleEngineBase,
     RuleEngineRulesetORM,

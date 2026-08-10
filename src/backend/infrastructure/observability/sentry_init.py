@@ -47,9 +47,15 @@ def init_sentry(
 
     try:
         import sentry_sdk  # noqa: F401 — availability probe
-        from sentry_sdk.integrations.asyncio import AsyncioIntegration  # noqa: F401 — availability probe
-        from sentry_sdk.integrations.fastapi import FastApiIntegration  # noqa: F401 — availability probe
-        from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration  # noqa: F401 — availability probe
+        from sentry_sdk.integrations.asyncio import (
+            AsyncioIntegration,  # noqa: F401 — availability probe
+        )
+        from sentry_sdk.integrations.fastapi import (
+            FastApiIntegration,  # noqa: F401 — availability probe
+        )
+        from sentry_sdk.integrations.sqlalchemy import (
+            SqlalchemyIntegration,  # noqa: F401 — availability probe
+        )
     except ImportError:
         logger.warning("sentry-sdk not installed, error tracking disabled")
         return False

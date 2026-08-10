@@ -4,6 +4,11 @@
 каталог + re-exports (где уместно).
 """
 
-from src.backend.dsl.helpers import banking, datetime_utils, regex_presets, strings  # noqa: F401 — re-export
+from src.backend.dsl.helpers import (  # noqa: F401 — re-export
+    banking,
+    datetime_utils,
+    regex_presets,
+    strings,
+)
 
 __all__ = ("banking", "datetime_utils", "regex_presets", "strings")

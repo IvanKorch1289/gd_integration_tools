@@ -18,24 +18,16 @@ from __future__ import annotations
 from src.backend.dsl.engine.processors.eip.flow_control.aggregator import (
     AggregatorProcessor,
 )
-from src.backend.dsl.engine.processors.eip.flow_control.delay import (
-    DelayProcessor,
-)
-from src.backend.dsl.engine.processors.eip.flow_control.foreach import (
-    ForEachProcessor,
-)
-from src.backend.dsl.engine.processors.eip.flow_control.loop import (
-    LoopProcessor,
-)
+from src.backend.dsl.engine.processors.eip.flow_control.delay import DelayProcessor
+from src.backend.dsl.engine.processors.eip.flow_control.foreach import ForEachProcessor
+from src.backend.dsl.engine.processors.eip.flow_control.loop import LoopProcessor
 from src.backend.dsl.engine.processors.eip.flow_control.oncompletion import (
     OnCompletionProcessor,
 )
 from src.backend.dsl.engine.processors.eip.flow_control.throttler import (
     ThrottlerProcessor,
 )
-from src.backend.dsl.engine.processors.eip.flow_control.wire_tap import (
-    WireTapProcessor,
-)
+from src.backend.dsl.engine.processors.eip.flow_control.wire_tap import WireTapProcessor
 
 __all__ = (
     "AggregatorProcessor",

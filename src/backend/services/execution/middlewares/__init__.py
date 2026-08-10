@@ -19,7 +19,9 @@
 не заданы.
 """
 
-from src.backend.services.execution.middlewares.audit_middleware import AuditMiddleware  # noqa: F401 — re-export
+from src.backend.services.execution.middlewares.audit_middleware import (
+    AuditMiddleware,  # noqa: F401 — re-export
+)
 from src.backend.services.execution.middlewares.idempotency_middleware import (
     IdempotencyMiddleware,
 )

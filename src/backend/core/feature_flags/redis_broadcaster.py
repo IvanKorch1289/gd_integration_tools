@@ -278,7 +278,9 @@ async def maybe_start_broadcaster(
 
     """
     try:
-        from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+        from src.backend.core.config.features import (
+            feature_flags,  # noqa: F401 — availability probe
+        )
     except ImportError:
         return None
     if not getattr(feature_flags, "tenant_feature_flag_ui", False):

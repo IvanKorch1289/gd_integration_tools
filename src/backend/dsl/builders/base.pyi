@@ -140,7 +140,7 @@ class RouteBuilder:
         context_property: str | None = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
-        """Алиас :meth:`agent_run` — для семантически нагруженных мест"""
+        """Алиас :meth:`agent_run` — для семантически нагруженных мест."""
 
     def ai_memory_recall(
         self,

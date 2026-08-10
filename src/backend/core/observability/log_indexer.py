@@ -22,9 +22,6 @@ S44 W5 sprint goal: убрать string-bypass в
 
 from __future__ import annotations
 
-from src.backend.services.io.indexers.log_indexer import (
-    LogIndexer,
-    get_log_indexer,
-)
+from src.backend.services.io.indexers.log_indexer import LogIndexer, get_log_indexer
 
 __all__ = ("LogIndexer", "get_log_indexer")

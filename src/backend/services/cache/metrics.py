@@ -18,8 +18,6 @@ from __future__ import annotations
 from src.backend.infrastructure.cache.metrics_collector import (
     get_cache_metrics_snapshot,
 )
-from src.backend.infrastructure.cache.rag.metrics import (
-    get_metrics_snapshot,
-)
+from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
 
 __all__ = ("get_cache_metrics_snapshot", "get_metrics_snapshot")

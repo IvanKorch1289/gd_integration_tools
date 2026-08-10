@@ -73,7 +73,7 @@ def create_app() -> FastAPI:
 
 
 def _configure_application_components(app: FastAPI) -> None:
-    """Настройка системных компонентов приложения"""
+    """Настройка системных компонентов приложения."""
     # Middleware для обработки запросов
     setup_middlewares(app=app)
 
@@ -98,7 +98,7 @@ def _configure_application_components(app: FastAPI) -> None:
 
 
 def _configure_business_routers(app: FastAPI) -> None:
-    """Подключение бизнес-маршрутизаторов"""
+    """Подключение бизнес-маршрутизаторов."""
     from fastapi import APIRouter
     from fastapi.responses import RedirectResponse
 
@@ -271,7 +271,7 @@ def _configure_root_endpoint(app: FastAPI) -> None:
 
     @app.get("/", response_class=HTMLResponse, name="Корневой эндпоинт")
     async def root_endpoint():
-        """Основная входная точка приложения
+        """Основная входная точка приложения.
 
         Возвращает:
             HTMLResponse: Интерактивную стартовую страницу с:

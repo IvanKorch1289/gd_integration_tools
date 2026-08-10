@@ -25,11 +25,12 @@ from __future__ import annotations
 from src.backend.core.ai.gateway.gateway import AIGateway  # noqa: F401 — re-export
 
 # AIRequest / AIResponse — external (in gateway_models.py).
-from src.backend.core.ai.gateway_models import AIRequest, AIResponse  # noqa: F401 — re-export
+from src.backend.core.ai.gateway_models import (  # noqa: F401 — re-export
+    AIRequest,
+    AIResponse,
+)
 
 # Backward-compat re-export из orchestrator subpackage
-from src.backend.core.ai.gateway_orchestrator_mixin import (
-    EnforcedInvokeMixin,
-)
+from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
 
 __all__ = ("AIGateway", "AIRequest", "AIResponse", "EnforcedInvokeMixin")

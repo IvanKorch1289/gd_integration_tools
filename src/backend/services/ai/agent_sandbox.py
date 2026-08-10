@@ -23,10 +23,7 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.ai.agent_sandbox_protocol import (
-    AgentSandbox,
-    AgentSandboxResult,
-)
+from src.backend.core.ai.agent_sandbox_protocol import AgentSandbox, AgentSandboxResult
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.metrics_registry import metrics_registry
 
@@ -92,7 +89,9 @@ class InProcessAgentSandbox:
                 "See ARC-008 / docs/security/sandbox_backends.md.",
             )
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             if getattr(
                 feature_flags,
@@ -375,7 +374,9 @@ class E2BAgentSandbox:
 
         # Lazy import of e2b_code_interpreter (opt-in dep, ~5MB).
         try:
-            from e2b_code_interpreter import Sandbox as _E2BSandbox  # noqa: F401 — availability probe
+            from e2b_code_interpreter import (
+                Sandbox as _E2BSandbox,  # noqa: F401 — availability probe
+            )
         except ImportError as exc:
             raise AgentSandboxConfigError(
                 "e2b-code-interpreter not installed. "
@@ -436,7 +437,9 @@ class E2BAgentSandbox:
                         kill_exc,
                     )
                     try:
-                        from src.backend.core.audit.facade import emit_audit_safe  # noqa: F401 — availability probe
+                        from src.backend.core.audit.facade import (
+                            emit_audit_safe,  # noqa: F401 — availability probe
+                        )
 
                         emit_audit_safe(
                             event="e2b.sandbox.kill_failed",
@@ -571,7 +574,9 @@ def resolve_agent_sandbox(
     """
     if default_kind is None and use_settings_default:
         try:
-            from src.backend.core.config.ai import ai_workspace_settings  # noqa: F401 — availability probe
+            from src.backend.core.config.ai import (
+                ai_workspace_settings,  # noqa: F401 — availability probe
+            )
 
             default_kind = str(ai_workspace_settings.default_agent_sandbox)
         except (ImportError, AttributeError) as ai_settings_exc:
@@ -579,7 +584,9 @@ def resolve_agent_sandbox(
             # Bare `except Exception` маскировал ImportError (ai_settings
             # module not ready) и AttributeError (неправильный settings).
             # Fallback "process_pool" — default-OFF-safe.
-            from src.backend.core.logging import get_logger  # noqa: F401 — availability probe
+            from src.backend.core.logging import (
+                get_logger,  # noqa: F401 — availability probe
+            )
             get_logger(__name__).debug(
                 "agent_sandbox.default_kind_resolve_failed",
                 extra={"error": str(ai_settings_exc)},
