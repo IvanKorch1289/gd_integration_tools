@@ -37,7 +37,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from enum import Enum, StrEnum
+from enum import StrEnum
 from functools import lru_cache
 from typing import Any
 

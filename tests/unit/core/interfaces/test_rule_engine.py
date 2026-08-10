@@ -24,7 +24,7 @@ class TestRulesetDoc:
             RulesetDoc(yaml_body="rules: []")
 
     def test_full(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         now = datetime.now(UTC)
         doc = RulesetDoc(

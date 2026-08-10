@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch

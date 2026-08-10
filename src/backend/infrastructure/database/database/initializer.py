@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import ssl
-from typing import Any, TypeAlias
+from typing import Any
 
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.ext.asyncio import (

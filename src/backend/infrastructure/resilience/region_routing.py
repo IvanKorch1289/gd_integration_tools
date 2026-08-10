@@ -11,7 +11,7 @@ Provides:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger

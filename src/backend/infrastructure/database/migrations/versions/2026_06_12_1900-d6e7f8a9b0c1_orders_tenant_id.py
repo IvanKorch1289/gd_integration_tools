@@ -37,7 +37,6 @@ Test data:
 
 from __future__ import annotations
 
-from typing import Union
 from collections.abc import Sequence
 
 from alembic import op

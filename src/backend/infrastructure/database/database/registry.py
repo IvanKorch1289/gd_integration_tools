@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import TypeAlias
 
 from src.backend.core.config.database import DatabaseConnectionSettings
 from src.backend.core.config.external_databases import (

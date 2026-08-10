@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

@@ -10,7 +10,7 @@ Coverage:
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import datetime, timedelta, UTC
 
 import pytest
 

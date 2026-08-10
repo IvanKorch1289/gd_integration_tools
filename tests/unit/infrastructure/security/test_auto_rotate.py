@@ -32,7 +32,7 @@ class TestAutoRotate:
         from src.backend.infrastructure.security.cert_store.rotation_watcher import (
             CertRotationWatcher,
         )
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta
         mock_store = MagicMock()
         mock_entry = MagicMock()
         mock_entry.service_id = "skb_api"

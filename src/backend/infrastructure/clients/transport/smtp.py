@@ -1,7 +1,6 @@
 import asyncio
 import builtins
 from abc import ABC, abstractmethod
-from asyncio import TimeoutError as AsyncioTimeoutError
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from functools import lru_cache

@@ -8,7 +8,7 @@ PydanticAI 0.5.x — внутренний API ``Agent.run`` не изменён.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Generic, Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
 from pydantic import BaseModel, ValidationError
 

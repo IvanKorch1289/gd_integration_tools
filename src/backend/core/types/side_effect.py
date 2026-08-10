@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from enum import Enum, StrEnum
+from enum import StrEnum
 
 __all__ = ("SideEffectKind",)
 

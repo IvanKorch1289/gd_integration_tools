@@ -38,7 +38,7 @@ Usage::
 from __future__ import annotations
 
 import os
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 from src.backend.core.config.services.jupyter_hub import JupyterHubSettings

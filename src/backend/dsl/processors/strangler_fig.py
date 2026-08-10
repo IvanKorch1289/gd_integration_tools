@@ -31,7 +31,7 @@ import random
 import threading
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger

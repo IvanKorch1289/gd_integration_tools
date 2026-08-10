@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import AsyncIterator
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 

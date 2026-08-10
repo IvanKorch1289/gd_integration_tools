@@ -29,7 +29,7 @@ class TestSerializers:
         assert ser.loads(ser.dumps(data)) == data
 
     def test_json_datetime_fallback(self):
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         ser = JsonSerializer()
         dt = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)

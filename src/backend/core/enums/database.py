@@ -1,4 +1,4 @@
-from enum import Enum, StrEnum
+from enum import StrEnum
 
 __all__ = ("DatabaseProfileChoices", "DatabaseTypeChoices", "IsolationLevelChoices")
 

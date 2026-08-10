@@ -16,7 +16,7 @@ Coverage:
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import datetime, timedelta, UTC
 from collections.abc import Iterator
 
 import pytest

@@ -22,7 +22,7 @@
 
 from __future__ import annotations
 
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Protocol, runtime_checkable
 
 from src.backend.core.interfaces.invoker import InvocationResponse

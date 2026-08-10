@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 from src.backend.core.auth.api_key_backend import APIKeyAuth

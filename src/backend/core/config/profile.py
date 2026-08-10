@@ -9,7 +9,7 @@ production-стек (prod). Используется как ключ overlay-ф�
 from __future__ import annotations
 
 import os
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Final
 
 __all__ = (

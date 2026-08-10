@@ -21,7 +21,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:

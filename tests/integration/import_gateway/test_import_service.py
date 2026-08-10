@@ -36,7 +36,7 @@ class _FakeStore:
     ) -> ConnectorConfigEntry:
         existing = self._data.get(name)
         version = (existing.version + 1) if existing else 1
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         entry = ConnectorConfigEntry(
             name=name,

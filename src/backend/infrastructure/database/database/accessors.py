@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any, TypeAlias
+from typing import Any
 
 from src.backend.core.config.database import DatabaseConnectionSettings
 from src.backend.core.config.external_databases import (

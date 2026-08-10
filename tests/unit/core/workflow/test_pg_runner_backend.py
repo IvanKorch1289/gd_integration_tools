@@ -7,7 +7,7 @@ Postgres. Реальные интеграционные тесты с testcontai
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID, uuid4
 

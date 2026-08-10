@@ -26,7 +26,6 @@ Layer policy: модуль живёт в ``src/core/actions/`` и не импо�
 from __future__ import annotations
 
 import types
-import typing
 from dataclasses import dataclass, field
 from typing import Any, Union, get_args, get_origin
 
