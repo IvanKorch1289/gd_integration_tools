@@ -235,6 +235,22 @@ class PluginManifest(BaseModel):
     Default = ``"B"`` (secure-by-default): новые плагины без явной
     декларации рассматриваются как untrusted.
     """
+    models_module: tuple[str, ...] = ()
+    """Cycle-15 (D-AUDIT-1501): dotted-path SQLAlchemy ORM-модулей плагина.
+
+    Каждый путь — Python-importable dotted path (``extensions.<plugin>.domain.models``
+    или подобный), который содержит ``DeclarativeBase``-наследников. Используется
+    :mod:`src.backend.infrastructure.database.migrations.env` для auto-discovery
+    при Alembic ``autogenerate`` вместо hardcoded списка плагинов.
+
+    Empty tuple = плагин не имеет ORM-моделей (Pydantic-only / schemas-only
+    / capability-only плагины) — Alembic autogenerate пропускает.
+
+    Безопасно: пути не импортируются lifecycle'ом PluginLoader'а
+    (который импортирует ТОЛЬКО ``entry_class``); авто-import
+    выполняется ТОЛЬКО :func:`load_plugin_manifests_for_migrations`
+    в :mod:`migrations.env` при Alembic-командах.
+    """
     tenants: tuple[PluginTenantDecl, ...] = ()
     """V15 GAP Gap 4 (Sprint 36) — декларативные tenant-aware capabilities.
 

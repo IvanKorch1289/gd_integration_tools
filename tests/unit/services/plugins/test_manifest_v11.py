@@ -175,6 +175,36 @@ class TestPluginManifest:
                 }
             )
 
+    def test_models_module_default_empty(self) -> None:
+        """Cycle-15 (D-AUDIT-1501): models_module default = empty tuple."""
+        m = PluginManifest(
+            name="x", version="0.1.0", requires_core=">=0.1", entry_class="ext.x.Plugin"
+        )
+        assert m.models_module == ()
+
+    def test_models_module_roundtrip(self, tmp_path: Path) -> None:
+        """Cycle-15 (D-AUDIT-1501): models_module декларируется в TOML и парсится."""
+        path = tmp_path / "plugin.toml"
+        path.write_text(
+            'name = "x"\nversion = "1.0.0"\n'
+            'requires_core = ">=0.1"\nentry_class = "ext.x.Plugin"\n'
+            'models_module = ["extensions.x.domain.models"]\n',
+            encoding="utf-8",
+        )
+        m = load_plugin_manifest(path)
+        assert m.models_module == ("extensions.x.domain.models",)
+
+    def test_models_module_multiple(self) -> None:
+        """Cycle-15 (D-AUDIT-1501): models_module принимает несколько модулей."""
+        m = PluginManifest(
+            name="x",
+            version="1.0.0",
+            requires_core=">=0.1",
+            entry_class="ext.x.Plugin",
+            models_module=("ext.x.models_a", "ext.x.models_b"),
+        )
+        assert m.models_module == ("ext.x.models_a", "ext.x.models_b")
+
 
 # ── load_plugin_manifest (TOML round-trip) ────────────────────────────
 
