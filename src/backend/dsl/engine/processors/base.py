@@ -107,7 +107,16 @@ class BaseProcessor(ABC):
                 meta = getattr(exchange, "meta", None)
                 if meta is not None:
                     tenant_id = getattr(meta, "tenant_id", None)
-            except Exception:  # pragma: no cover
+            except (AttributeError, TypeError) as meta_exc:  # pragma: no cover
+                # cycle-9/D-AUDIT-946: narrow exceptions + observability.
+                # AttributeError — meta missing/None, TypeError — meta has
+                # wrong type. Bare `except Exception` маскировал unrelated
+                # runtime errors (KeyError, ValueError).
+                import logging
+                logging.getLogger(__name__).debug(
+                    "base_processor.meta_access_failed",
+                    extra={"error": str(meta_exc), "processor": self.name},
+                )
                 tenant_id = None
 
             allowed = await check_source_capability(
