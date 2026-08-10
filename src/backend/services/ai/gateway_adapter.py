@@ -119,7 +119,7 @@ def get_ai_gateway() -> AIGateway:
             gateway = getattr(app.state, "ai_gateway", None)
             if gateway is not None:
                 return gateway
-    except (ImportError, AttributeError, RuntimeError) as app_state_exc:  # noqa: PERF203
+    except (ImportError, AttributeError, RuntimeError) as app_state_exc:
         # D-A1-04 fix (cycle 39): narrow exceptions + observability.
         # Bare `except Exception` маскировал broken app_state (early-init,
         # не инициализированный app.state). Fallback: provider chain.
@@ -182,7 +182,7 @@ async def invoke_via_gateway(
     gateway: AIGateway | None = None,
     stream: bool = False,
     return_full_response: bool = False,
-) -> Any:  # noqa: E501 — existing function
+) -> Any:
     """Hybrid вызов: ``AIGateway.invoke`` при flag=ON или legacy_callable при OFF.
 
     Args:
