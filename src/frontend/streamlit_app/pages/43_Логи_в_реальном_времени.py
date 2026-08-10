@@ -67,9 +67,13 @@ def _start_sse_thread() -> None:
                                 st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
                                 q.get_nowait()  # вытесняем старое
                                 q.put_nowait(payload)
-        except Exception:  # noqa: BLE001
+        except (OSError, ConnectionError, RuntimeError, AttributeError, ValueError) as sse_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1050: narrow exceptions + observability.
+            # OSError/ConnectionError — SSE transport failure, RuntimeError
+            # — server error, AttributeError — SSE API change, ValueError
+            # — invalid event.
             st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
-            logger.debug("SSE logs stream consumer terminated", exc_info=True)
+            logger.debug("SSE logs stream consumer terminated: %s", sse_exc, exc_info=True)
 
     threading.Thread(target=consume, daemon=True, name="sse-logs").start()
     st.session_state["_sse_started"] = True
