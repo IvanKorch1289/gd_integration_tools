@@ -201,7 +201,15 @@ class DegradationMiddleware:
             )
 
             statuses = get_resilience_coordinator_provider().status()
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError) as di_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-995: narrow exceptions + observability.
+            # ImportError — providers missing, AttributeError — provider
+            # API change, RuntimeError — coordinator unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "degradation.resilience_coordinator_fallback",
+                extra={"error": str(di_exc)},
+            )
             return []
         blocked: list[str] = []
         db = statuses.get("db_main")
