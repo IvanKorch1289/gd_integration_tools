@@ -35,7 +35,16 @@ def _check_feature_flag() -> bool:
         if isinstance(flags, dict):
             return bool(flags.get(FEATURE_FLAG_NAME, False))
         return False
-    except Exception:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError) as ff_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1063: narrow exceptions + observability.
+        # ConnectionError/TimeoutError — server unreachable, RuntimeError
+        # — API failure, ValueError — invalid response, TypeError —
+        # wrong type, AttributeError — _client API change.
+        import logging
+        logging.getLogger(__name__).debug(
+            "streamlit_85_Массовая.feature_flag_check_failed",
+            extra={"error": str(ff_exc)},
+        )
         return False
 
 
