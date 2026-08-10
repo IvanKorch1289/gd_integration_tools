@@ -193,7 +193,8 @@ async def build_and_run_agent(
                 "(S85 W2: bypass via LiteLLMGateway is no longer supported)",
             )
         from src.backend.services.ai.gateway_adapter import get_ai_gateway
-        ai_gateway = get_ai_gateway()  # enforce instance для downstream hooks
+        ai_gateway = get_ai_gateway()  # noqa: F841 — enforce instance для downstream hooks
+        _ = ai_gateway
 
         tools = [_make_action_tool(action) for action in tool_actions]
         llm = build_chat_model(gateway=gateway, model=model, temperature=temperature)
