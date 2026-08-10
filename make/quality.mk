@@ -195,3 +195,12 @@ arch-ratchet: check-env ## P1 S172 W2: architecture ratchet (frontend layer + ap
 
 check-no-duplicate-scripts: ## S64 org-2: fail if scripts/ and tools/ have duplicate file names
 	@$(UV_RUN) python tools/checks/no_duplicate_scripts.py
+
+alembic-drift: check-env ## Cycle-15 (D-AUDIT-1504): Alembic schema drift detection gate (--metadata-only offline mode)
+	@$(UV_RUN) python -m tools.check_alembic_drift --metadata-only
+
+alembic-drift-db: check-env ## Cycle-15 (D-AUDIT-1504): Alembic drift check vs live DB (DATABASE_URL required)
+	@$(UV_RUN) python -m tools.check_alembic_drift
+
+alembic-drift-suggest: check-env ## Cycle-15 (D-AUDIT-1504): generate migration draft from drift (developer-only, non-CI)
+	@$(UV_RUN) python -m tools.check_alembic_drift --suggest-fix
