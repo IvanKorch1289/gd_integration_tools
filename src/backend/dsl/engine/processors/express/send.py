@@ -122,8 +122,16 @@ class ExpressSendProcessor(BaseProcessor):
                 )
 
                 record_express_message_sent(self._bot, status="ok")
-            except Exception:
-                pass
+            except (ImportError, AttributeError, RuntimeError, OSError) as metrics_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-974: narrow exceptions + observability.
+                # ImportError — metrics missing, AttributeError — schema
+                # change, RuntimeError — metrics unavailable, OSError —
+                # backend failure.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "express_send.metrics_ok_failed",
+                    extra={"error": str(metrics_exc)},
+                )
         except Exception as exc:
             _logger.warning("ExpressSend: ошибка отправки: %s", exc)
             exchange.set_property(f"{self._result_property}_error", str(exc))
@@ -133,8 +141,13 @@ class ExpressSendProcessor(BaseProcessor):
                 )
 
                 record_express_message_sent(self._bot, status="error")
-            except Exception:
-                pass
+            except (ImportError, AttributeError, RuntimeError, OSError) as err_metrics_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-974: см. выше — тот же narrow для error path.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "express_send.metrics_error_failed",
+                    extra={"error": str(err_metrics_exc)},
+                )
 
     @staticmethod
     def _normalize_btn(raw: dict[str, Any]) -> dict[str, Any]:
