@@ -342,10 +342,16 @@ class AgentGraphProcessor(BaseAIProcessor):
                 )
                 return [] if not fail_open_env else list(tool_actions)
             policy = get_service(AgentToolPolicy)
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError, KeyError) as di_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-964: narrow exceptions + observability.
+            # ImportError — DI module missing, AttributeError — policy
+            # class change, RuntimeError — DI unavailable, KeyError —
+            # policy not registered. Bare `except Exception` маскировал
+            # unrelated runtime errors.
             _logger.warning(
                 "agent_graph tool_policy: failed to resolve AgentToolPolicy from DI; "
-                "blocking all tools (fail-closed)",
+                "blocking all tools (fail-closed): %s",
+                di_exc,
                 exc_info=True,
             )
             return [] if not fail_open_env else list(tool_actions)
@@ -355,7 +361,15 @@ class AgentGraphProcessor(BaseAIProcessor):
             try:
                 if policy.is_allowed(tool):
                     allowed.append(tool)
-            except Exception:
+            except (AttributeError, TypeError, ValueError) as policy_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-965: narrow exceptions + observability.
+                # AttributeError — is_allowed API change, TypeError — wrong
+                # arg, ValueError — invalid tool name.
+                _logger.debug(
+                    "agent_graph policy.is_allowed failed: tool=%s error=%s",
+                    tool,
+                    policy_exc,
+                )
                 continue
         return allowed
 
