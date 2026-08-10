@@ -385,11 +385,11 @@ class DbCrudProcessor(BaseProcessor):
         """Метод process (см. signature)."""
         # 1. Build SQL
         if self._operation == "INSERT":
-            sql, params = build_insert_sql(self._table, self._data)
+            sql, _params = build_insert_sql(self._table, self._data)
         elif self._operation == "UPDATE":
-            sql, params = build_update_sql(self._table, self._data, self._where)
+            sql, _params = build_update_sql(self._table, self._data, self._where)
         elif self._operation == "UPSERT":
-            sql, params = build_upsert_sql_dialect(
+            sql, _params = build_upsert_sql_dialect(
                 self._dialect, self._table, self._data, self._conflict_keys
             )
         else:  # DELETE
