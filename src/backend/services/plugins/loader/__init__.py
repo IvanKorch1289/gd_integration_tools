@@ -34,6 +34,10 @@ from src.backend.services.plugins.loader.discovery import (
     PluginInventoryConflictError,  # S52 W3: re-export для backward compat
 )
 from src.backend.services.plugins.loader.loading import LoadingMixin  # S52 W3: MRO
+from src.backend.services.plugins.loader.models_discovery import (  # cycle-15: D-AUDIT-1502
+    ManifestWithPath,
+    load_plugin_manifests_for_migrations,
+)
 from src.backend.services.plugins.loader.validation import (
     ValidationMixin,  # S52 W3: MRO
 )
@@ -47,7 +51,13 @@ _logger = get_logger(
     "services.plugins.loader"
 )  # S52 W3: re-defined for backward compat
 
-__all__ = ("LoadedPlugin", "PluginInventoryConflictError", "PluginLoader")
+__all__ = (
+    "LoadedPlugin",
+    "ManifestWithPath",  # cycle-15: D-AUDIT-1502
+    "PluginInventoryConflictError",
+    "PluginLoader",
+    "load_plugin_manifests_for_migrations",  # cycle-15: D-AUDIT-1502
+)
 
 
 class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):

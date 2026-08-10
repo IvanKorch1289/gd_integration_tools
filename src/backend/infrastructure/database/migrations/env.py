@@ -27,6 +27,42 @@ from src.backend.core.logging import get_logger
 from src.backend.infrastructure.database.database import db_initializer  # noqa: F401
 from src.backend.infrastructure.database.migrations.types import load_types
 
+# Cycle-15 (D-AUDIT-1503): auto-import ORM-модулей плагинов для Alembic.
+# Раньше список плагинов был hardcoded (только 4 core_entities). Теперь
+# сканируем ``extensions/*/plugin.toml`` через
+# :func:`load_plugin_manifests_for_migrations` и импортируем
+# ``models_module`` каждого плагина. Плагины без ORM-моделей
+# (skb/dadata schemas-only, example_plugin capability-only) пропускаются.
+try:
+    from src.backend.services.plugins.loader import (
+        load_plugin_manifests_for_migrations,
+    )
+    from pathlib import Path
+
+    _EXTENSIONS_DIR = Path(__file__).resolve().parents[4] / "extensions"
+    for _mwp in load_plugin_manifests_for_migrations(_EXTENSIONS_DIR):
+        for _module_path in _mwp.manifest.models_module:
+            try:
+                importlib_import = __import__(
+                    _module_path,
+                    fromlist=["__name__"],
+                )
+            except ImportError as _imp_exc:
+                _logger.warning(
+                    "models_module %s для плагина %s недоступен: %s",
+                    _module_path,
+                    _mwp.manifest.name,
+                    _imp_exc,
+                )
+except Exception as _disc_exc:  # pragma: no cover — discovery best-effort
+    # Discovery не критичен для Alembic: hardcoded core_entities импорты
+    # уже покрывают базовые модели. Migration может работать без
+    # auto-discovery (migrations будут incomplete для плагинов).
+    _logger.debug(
+        "plugin models auto-discovery failed (env.py partial fallback): %s",
+        _disc_exc,
+    )
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
