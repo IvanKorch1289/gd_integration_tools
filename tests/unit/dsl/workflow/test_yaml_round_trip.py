@@ -31,7 +31,7 @@ class TestYamlIoPattern:
     """Verify the round-trip pattern (no behavior — AST inspection only)."""
 
     def test_to_yaml_signature(self):
-        """to_yaml(WorkflowDeclaration) -> str"""
+        """to_yaml(WorkflowDeclaration) -> str."""
         with open("src/backend/dsl/workflow/yaml_io.py") as f:
             tree = ast.parse(f.read())
         for node in ast.walk(tree):
@@ -51,7 +51,7 @@ class TestYamlIoPattern:
             assert False, "to_yaml not found"
 
     def test_from_yaml_signature(self):
-        """from_yaml(str) -> WorkflowDeclaration"""
+        """from_yaml(str) -> WorkflowDeclaration."""
         with open("src/backend/dsl/workflow/yaml_io.py") as f:
             tree = ast.parse(f.read())
         for node in ast.walk(tree):

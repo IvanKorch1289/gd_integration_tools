@@ -117,7 +117,7 @@ class TestAppStateSingletonDecorator:
 
         @app_state_singleton("nonexistent_attr")
         def get_thing() -> str:
-            """docstring preserved"""
+            """docstring preserved."""
 
         # Cache registered in singleton registry
         reg = app_state._registry()  # type: ignore[attr-defined]
@@ -137,7 +137,7 @@ class TestAppStateSingletonDecorator:
     def test_decorator_raises_without_app_state_and_no_factory(self) -> None:
         @app_state_singleton("definitely_not_in_app_state")
         def get_thing() -> str:
-            """Test"""
+            """Test."""
 
         with pytest.raises(RuntimeError, match="not in app.state and no factory provided"):
             get_thing()
@@ -147,7 +147,7 @@ class TestAppStateSingletonDecorator:
 
         @app_state_singleton("not_in_state", factory=lambda: calls.append(1) or "created")
         def get_thing() -> str:
-            """Test"""
+            """Test."""
 
         # First call → factory invoked
         assert get_thing() == "created"

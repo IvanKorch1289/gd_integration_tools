@@ -186,7 +186,7 @@ def test_register_secrets_backend_logs_kind(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """При регистрации пишется info-лог с kind=…"""
+    """При регистрации пишется info-лог с kind=…."""
 
     monkeypatch.delenv("SECRETS_BACKEND", raising=False)
     with caplog.at_level(logging.INFO, logger="composition.service_setup"):
