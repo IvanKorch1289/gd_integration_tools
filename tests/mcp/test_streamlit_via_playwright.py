@@ -134,7 +134,7 @@ def main() -> int:
                 passed += 1
             else:
                 pass
-        except Exception as exc:
+        except Exception:
             pass
     return 0 if passed >= 3 else 1
 

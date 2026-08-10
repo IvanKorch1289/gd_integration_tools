@@ -9,7 +9,6 @@ ProcessorRegistry и попадает в Schema Registry через
 from __future__ import annotations
 
 # Принудительно импортируем модуль — auto-registry @processor.
-import src.backend.dsl.engine.processors.mask_pii
 from src.backend.services.schema_registry import (
     SchemaKind,
     ServiceSchemaRegistry,

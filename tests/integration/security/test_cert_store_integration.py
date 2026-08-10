@@ -67,10 +67,6 @@ async def pg_session_manager(monkeypatch):
         engine = create_async_engine(async_url, future=True)
 
         from src.backend.core.domain.models.base import BaseModel
-        from src.backend.core.domain.models.cert import (
-            CertHistory,
-            CertRecord,
-        )
 
         async with engine.begin() as conn:
             await conn.run_sync(

@@ -332,7 +332,6 @@ def test_dlq_module_does_not_eagerly_import_infrastructure() -> None:
     saved = sys.modules.pop(infra_name, None)
     try:
         sys.modules.pop("src.backend.core.messaging.dlq", None)
-        import src.backend.core.messaging.dlq
 
         # dlq module loaded successfully even when base was evicted
         assert "src.backend.core.messaging.dlq" in sys.modules

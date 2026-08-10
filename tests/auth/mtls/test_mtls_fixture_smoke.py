@@ -24,9 +24,6 @@ from src.backend.core.auth.mtls_backend import (
 )
 from testkit.mtls_fixtures import (
     CertChain,
-    ca_cert,
-    client_cert_chain,
-    server_cert_chain,
 )
 
 

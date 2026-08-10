@@ -14,22 +14,6 @@ import pytest
 
 # Импорт фикстур: pytest автоматически их зарегистрирует благодаря
 # conftest-механизму.
-from testkit.chaos_fixtures import (
-    apply_disconnect,
-    apply_latency,
-    apply_random_drop,
-    toxiproxy_clickhouse,
-    toxiproxy_es,
-    toxiproxy_graylog,
-    toxiproxy_kafka,
-    toxiproxy_nats,
-    toxiproxy_pg,
-    toxiproxy_rabbitmq,
-    toxiproxy_redis,
-    toxiproxy_s3,
-    toxiproxy_temporal,
-    toxiproxy_vault,
-)
 
 
 def pytest_collection_modifyitems(

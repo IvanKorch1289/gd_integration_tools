@@ -326,7 +326,6 @@ def test_s3_list_to_spec_without_prefix() -> None:
 def test_processors_importable() -> None:
     """Smoke test: все 5 процессоров импортируются + to_spec() работает."""
     # Загружаем модуль чтобы триггернуть @processor decorator
-    import src.backend.dsl.engine.processors.storage.s3
 
     # Если хотя бы один to_spec работает — namespace/registration ОК
     spec = ToS3Processor().to_spec()

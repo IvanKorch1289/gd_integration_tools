@@ -231,7 +231,6 @@ async def test_cutover_dispatcher_path_when_enabled(
 ) -> None:
     """``enabled=True`` → ``start_outbox_dispatcher`` (S64 W1+W3 path)."""
     # Verify fixture applied
-    import src.backend.core.config.services.outbox as _svc_outbox
 
     with patch(
         "src.backend.infrastructure.messaging.outbox.lifecycle.start_outbox_dispatcher",

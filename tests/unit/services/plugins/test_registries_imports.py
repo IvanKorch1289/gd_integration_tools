@@ -26,7 +26,6 @@ from typing import TYPE_CHECKING
 from src.backend.services.plugins import (
     ActionRegistryAdapter,
     ProcessorRegistryAdapter,
-    RepositoryHookRegistry,
 )
 
 # ── Константы инварианта ──────────────────────────────────────────────

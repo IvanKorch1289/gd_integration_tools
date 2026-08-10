@@ -36,13 +36,6 @@ from src.backend.core.auth.saml_backend import (
     SamlConfig,
     SamlError,
 )
-from testkit.auth_fixtures import (
-    azure_ad_stub_metadata,
-    keycloak_container,
-    okta_stub_metadata,
-    saml_idp_metadata,
-    saml_sp_metadata,
-)
 
 
 def _config_from_stub(stub: dict[str, Any]) -> SamlConfig:
