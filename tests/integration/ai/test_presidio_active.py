@@ -101,9 +101,7 @@ def test_fallback_counter_increments_on_import_error(
     )
 
     def _fake_import(name: str, *args: object, **kwargs: object) -> object:
-        if name.startswith("presidio_analyzer") or name.startswith(
-            "presidio_anonymizer",
-        ):
+        if name.startswith(("presidio_analyzer", "presidio_anonymizer")):
             raise ImportError(f"эмуляция отсутствия пакета: {name}")
         return real_import(name, *args, **kwargs)
 

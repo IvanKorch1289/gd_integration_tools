@@ -32,7 +32,7 @@ def _resolve_context(exchange: Exchange[Any], context_from: str) -> dict[str, An
 def _safe_template_path(path: str) -> str:
     """Защита от path-traversal в шаблонах."""
     safe = os.path.normpath(path)
-    if safe.startswith("..") or safe.startswith("/"):
+    if safe.startswith(("..", "/")):
         raise ValueError(f"Invalid template path: {path!r}")
     return safe
 

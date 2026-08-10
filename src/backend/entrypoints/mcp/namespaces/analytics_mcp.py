@@ -25,7 +25,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
     analytics_actions = [
         name
         for name in action_handler_registry.list_actions()
-        if name.startswith("analytics.") or name.startswith("metrics.")
+        if name.startswith(("analytics.", "metrics."))
     ]
 
     for action_name in analytics_actions:

@@ -361,7 +361,7 @@ class NormalizerProcessor(BaseProcessor):
             except Exception as _:
                 _eip_logger.debug("XML parse failed; falling back", exc_info=True)
 
-        if text.startswith("{") or text.startswith("["):
+        if text.startswith(("{", "[")):
             try:
                 return orjson.loads(text)
             except Exception as _:

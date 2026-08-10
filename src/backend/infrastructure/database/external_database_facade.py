@@ -91,7 +91,7 @@ def _validate_select_sql(sql: str) -> None:
             "query() accepts a single statement only; multi-statement SQL is rejected",
         )
     head = body[:32].lstrip("(\n\t ").lower()
-    if not (head.startswith("select") or head.startswith("with")):
+    if not (head.startswith(("select", "with"))):
         raise SqlValidationError(
             f"query() requires a SELECT or WITH statement; got prefix {head[:16]!r}",
         )

@@ -71,7 +71,7 @@ class InputGuardMixin:
             return None
 
         # S172 audit: llm_guard archived 2026-07-16 (upstream gone).
-        if name.startswith("llm_guard:") or name.startswith("llm-guard:"):
+        if name.startswith(("llm_guard:", "llm-guard:")):
             logger.warning(
                 "AIPolicyEnforcer: llm_guard %r не поддерживается (S172 — "
                 "upstream archived 2026-07-16). Используйте lakera:.",

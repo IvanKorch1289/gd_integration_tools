@@ -55,7 +55,7 @@ def test_no_secrets_in_yml():
                 key, _, val = line_clean.partition(": ")
                 val = val.strip().strip('"').strip("'")
                 # Allow empty, placeholder, or "$" (env reference)
-                if not val or val.startswith("$") or val.startswith("{{"):
+                if not val or val.startswith(("$", "{{")):
                     continue
                 # Only flag if the value looks like a real secret (long random-looking, not a path)
                 if any(s in key for s in ["password", "token", "secret", "api_key"]):
