@@ -308,7 +308,16 @@ def is_chaos_enabled() -> bool:
     """
     try:
         return get_feature_flag_service().is_enabled("chaos_engineering_enabled")
-    except Exception:
+    except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-918: narrow exceptions + observability.
+        # ImportError — feature_flag service missing, AttributeError —
+        # service not initialized, RuntimeError — backend unavailable.
+        # Bare `except Exception` маскировал unrelated runtime errors.
+        import logging
+        logging.getLogger(__name__).debug(
+            "chaos_probes.is_chaos_enabled_fallback_false",
+            extra={"error": str(ff_exc)},
+        )
         return False
 
 
