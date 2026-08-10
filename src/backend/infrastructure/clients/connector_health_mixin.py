@@ -39,6 +39,7 @@ class ConnectorHealthMixin:
 
         Returns:
             HealthResult с ``status``/``latency_ms``/``error``.
+
         """
         start = time.perf_counter()
         try:

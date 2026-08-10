@@ -53,6 +53,7 @@ class RedisLimiterAdapter:
     Args:
         rate_limit: Maximum permits per window.
         window_seconds: Window duration in seconds.
+
     """
 
     def __init__(self, *, rate_limit: int, window_seconds: int) -> None:
@@ -71,6 +72,7 @@ class RedisLimiterAdapter:
 
         Returns:
             True if permits acquired, False if rate limit exceeded.
+
         """
         # Map pyrate_limiter semantics → RedisRateLimiter.check()
         # window: timeout > 0 используем timeout, иначе configured window

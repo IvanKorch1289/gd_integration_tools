@@ -31,6 +31,7 @@ def emit_authorization_decision(
 
     Returns:
         Result of ``AuditService.emit()``.
+
     """
     details: dict[str, Any] = {
         "allowed": getattr(decision, "allowed", None),

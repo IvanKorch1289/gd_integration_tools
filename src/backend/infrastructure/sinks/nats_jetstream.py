@@ -45,6 +45,7 @@ class NATSJetStreamSink(Sink):
         nats_url: URL NATS-сервера.
         default_subject: Целевой subject по умолчанию (для ``send``).
         timeout: Таймаут connect/publish в секундах.
+
     """
 
     sink_id: str
@@ -69,6 +70,7 @@ class NATSJetStreamSink(Sink):
 
         Returns:
             :class:`SinkResult` с флагом успеха и метаданными.
+
         """
         # S1: per-connector rate limit. Scope — per-subject для изоляции.
         limiter = get_connector_rate_limiter()
@@ -121,6 +123,7 @@ class NATSJetStreamSink(Sink):
 
         Returns:
             :class:`SinkResult` с флагом успеха.
+
         """
         if not self.default_subject:
             return SinkResult(

@@ -62,6 +62,7 @@ def record_hit(tier: str, *, version: str = DEFAULT_VERSION) -> None:
         tier: Уровень кэша (``"l1"``, ``"l2"``, ``"l3"``).
         version: Версия key-scheme (``"v2"`` default, ``"legacy"`` для
             carry-over ключей ``rag:l3:*`` без префикса ``v2``).
+
     """
     _ensure()
     _snapshot["hits"][tier] = _snapshot["hits"].get(tier, 0) + 1
@@ -75,6 +76,7 @@ def record_miss(tier: str, *, version: str = DEFAULT_VERSION) -> None:
     Args:
         tier: Уровень кэша.
         version: Версия key-scheme (см. :func:`record_hit`).
+
     """
     _ensure()
     _snapshot["misses"][tier] = _snapshot["misses"].get(tier, 0) + 1

@@ -62,6 +62,7 @@ class LLMProvider(Protocol):
 
     Attributes:
         name: Человекочитаемое имя провайдера (для логов и метрик).
+
     """
 
     name: str

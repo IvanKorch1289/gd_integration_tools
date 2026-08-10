@@ -67,6 +67,7 @@ class JobQueue:
 
         Raises:
             ValueError: Если указаны оба delay и cron.
+
         """
         if delay is not None and cron is not None:
             raise ValueError("Нельзя указать delay и cron одновременно")
@@ -124,6 +125,7 @@ class JobQueue:
 
         Returns:
             ``True`` если задача была найдена и отменена.
+
         """
         scheduler = self._ensure_scheduler()
         try:
@@ -138,6 +140,7 @@ class JobQueue:
 
         Returns:
             Список словарей с информацией о задачах.
+
         """
         scheduler = self._ensure_scheduler()
         jobs = scheduler.get_jobs()

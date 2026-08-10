@@ -105,6 +105,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
             token_budget: :class:`core.tenancy.token_budget.TokenBudget` для
                 per-tenant budget enforcement (S172 M4 ARC-007); при
                 ``None`` — budget enforcement пропускается (backward-compat).
+
         """
         self._policy_resolver = policy_resolver
         self._capability_gate = capability_gate
@@ -137,6 +138,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
         Returns:
             Resolved :class:`AIPolicySpec` или ``None`` если resolver
             не нашёл подходящей политики.
+
         """
         if self._policy_resolver is None:
             return None
@@ -200,6 +202,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
 
         Notes:
             S85 W1 (V2 P0 #1): _legacy_invoke удалён. Enforcement обязателен.
+
         """
         # Sprint 1.3: production-wiring guard ПЕРЕД enforcement
         # (чтобы production с broken composition упала сразу с понятной ошибкой,
@@ -229,6 +232,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
 
         Raises:
             RuntimeError: если no sandbox configured.
+
         """
         from src.backend.core.ai.sandbox import NoOpSandbox
 

@@ -72,6 +72,7 @@ class DbCallProcedureProcessor(BaseProcessor):
         params_from: Источник параметров — ``body`` / ``properties`` / ``headers`` / ``none``.
         result_property: Куда положить результат.
         dialect: Диалект CALL: ``postgres`` (CALL), ``mssql`` (EXEC), ``oracle`` (BEGIN..END).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING

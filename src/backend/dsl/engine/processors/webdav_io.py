@@ -70,6 +70,7 @@ class WebDavProcessor(BaseProcessor):
         remote_path: Путь на сервере (``/folder/file.txt``).
         source: Откуда читать данные для ``upload`` (``body``, ``body.<field>``).
         to: Куда положить результат (``body.<field>``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING

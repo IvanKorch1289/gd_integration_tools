@@ -45,6 +45,7 @@ def emit_admin_action(
         outcome:      ``allowed`` | ``denied`` | ``error``.
         details:      Доп. контекст (new_value, old_value, filter, ...).
         correlation_id: Опциональный correlation_id (генерируется если не передан).
+
     """
     cid = correlation_id or str(uuid.uuid4())
     event: dict[str, Any] = {

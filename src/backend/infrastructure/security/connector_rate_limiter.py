@@ -63,6 +63,7 @@ def _parse_rate(rate: str) -> tuple[int, int]:
         (200, 1)
         >>> _parse_rate("5/min")
         (5, 60)
+
     """
     m = _RATE_RE.match(rate)
     if m is None:
@@ -106,6 +107,7 @@ class ConnectorRateLimiter:
                 limiter — fixed-window, burst не дросселирует; параметр
                 сохранён для observability и обратной совместимости с
                 будущим token-bucket бэкендом.
+
         """
         _limit, window = _parse_rate(rate)
         self._policies[connector_name] = (rate, burst, window)
@@ -135,6 +137,7 @@ class ConnectorRateLimiter:
 
         Raises:
             RateLimitExceeded: Если лимит превышен.
+
         """
         rate_str, _burst, window = self._resolve(connector_name)
         limit, _ = _parse_rate(rate_str)
@@ -172,6 +175,7 @@ class ConnectorRateLimiter:
 
         Returns:
             Результат ``func(*args, **kwargs)``.
+
         """
         await self.check(connector_name, scope=scope)
         return await func(*args, **kwargs)

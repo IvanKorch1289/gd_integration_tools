@@ -38,6 +38,7 @@ class TenantSLO:
             ``0.999`` (99.9% = три девятки, ≈8.7h downtime/year).
         error_rate_target: Максимальная доля errors (``0.0`` … ``1.0``).
             Default ``0.01`` (1%).
+
     """
 
     latency_p99_ms: float = 500.0
@@ -60,6 +61,7 @@ class TenantSLO:
             :class:`TenantSLO` для тенанта. В текущей версии — всегда
             default; в S179+ будет lookup из ``TenantSettings.tenant_slo``
             или Redis (per-tenant overrides).
+
         """
         # S178 #4: только default. Per-tenant overrides — S179+ extension.
         return cls.default()
@@ -82,6 +84,7 @@ class TenantSLO:
             :class:`SLOEvaluation` с breakdown по каждой метрике +
             aggregate ``within_slo`` (True только если все available
             метрики within budget).
+
         """
         latency_ok: bool | None = None
         if latency_p99_ms is not None:
@@ -124,6 +127,7 @@ class SLOEvaluation:
         error_rate: Наблюдаемый error rate (``None`` если не замеряли).
         error_rate_ok: ``True`` если error_rate <= target.
         within_slo: ``True`` если все замерянные метрики within budget.
+
     """
 
     tenant_slo: TenantSLO
@@ -140,6 +144,7 @@ class SLOEvaluation:
 
         Returns:
             Dict с flat keys для structlog (``slo.*`` префикс).
+
         """
         return {
             "slo.latency_p99_ms": self.latency_p99_ms,

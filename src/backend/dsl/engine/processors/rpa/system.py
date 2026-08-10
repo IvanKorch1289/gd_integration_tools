@@ -159,6 +159,7 @@ class TerminalExecProcessor(BaseProcessor):
         timeout: Максимум секунд (default 30.0).
         to: Куда записать stdout (default ``"body.output"``).
         shell: Use ``/bin/sh -c`` (default True).
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.shell.exec"
@@ -241,6 +242,7 @@ class EmailReadProcessor(BaseProcessor):
         password: Password.
         folder: Mailbox folder (default ``"INBOX"``).
         to: Куда записать emails (default ``"body.emails"``).
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.email.read"

@@ -36,6 +36,7 @@ class ResolveMixin(_LLMStructuredProcessorProtocol):
 
         Raises:
             ValueError: Не удалось резолвить схему.
+
         """
         from pydantic import BaseModel
 
@@ -104,6 +105,7 @@ class ResolveMixin(_LLMStructuredProcessorProtocol):
 
         Returns:
             Готовый prompt-string.
+
         """
         body = exchange.in_message.body
         body_dict = body if isinstance(body, dict) else {"_raw": body}

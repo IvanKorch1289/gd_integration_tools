@@ -101,6 +101,7 @@ class ActionHandlerRegistry:
             service_getter: Фабрика сервиса.
             service_method: Имя метода сервиса.
             payload_model: Модель валидации payload.
+
         """
         self._handlers[action] = ActionHandlerSpec(
             action=action,
@@ -121,6 +122,7 @@ class ActionHandlerRegistry:
 
         Args:
             specs: Список спецификаций для регистрации.
+
         """
         for spec in specs:
             self._handlers[spec.action] = spec
@@ -161,6 +163,7 @@ class ActionHandlerRegistry:
         Raises:
             ValueError: Если ``metadata.action`` не совпадает с
                 переданным ``action``.
+
         """
         if metadata.action != action:
             raise ValueError(
@@ -243,6 +246,7 @@ class ActionHandlerRegistry:
         Returns:
             :class:`ActionMetadata` или ``None``, если action не
             зарегистрирован.
+
         """
         return self._metadata.get(action)
 
@@ -257,6 +261,7 @@ class ActionHandlerRegistry:
         Returns:
             Кортеж :class:`ActionMetadata`, отсортированный по
             ``action``.
+
         """
         items = sorted(self._metadata.values(), key=lambda m: m.action)
         if transport is None:
@@ -271,6 +276,7 @@ class ActionHandlerRegistry:
 
         Args:
             middleware: Реализация :class:`ActionMiddleware`.
+
         """
         self._middleware.append(middleware)
 
@@ -294,6 +300,7 @@ class ActionHandlerRegistry:
         Raises:
             KeyError: Если action не зарегистрирован.
             ValidationError: Если payload не прошёл валидацию.
+
         """
         spec = self._handlers[command.action]
 
@@ -328,6 +335,7 @@ class ActionHandlerRegistry:
 
         Returns:
             ``True`` если обработчик зарегистрирован.
+
         """
         return action in self._handlers
 
@@ -336,6 +344,7 @@ class ActionHandlerRegistry:
 
         Returns:
             Отсортированный кортеж имён.
+
         """
         return tuple(sorted(self._handlers.keys()))
 

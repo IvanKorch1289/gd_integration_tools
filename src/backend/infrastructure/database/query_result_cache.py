@@ -58,6 +58,7 @@ class PickleSerializer:
 
         Returns:
             Serialized bytes.
+
         """
         return pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -69,6 +70,7 @@ class PickleSerializer:
 
         Returns:
             Deserialized object.
+
         """
         # S301: pickle используется для сериализации собственных данных
         # из доверенного CacheBackend; входные данные контролируются приложением.
@@ -86,6 +88,7 @@ class JsonSerializer:
 
         Returns:
             JSON bytes.
+
         """
         return dumps_bytes(obj, default=str)
 
@@ -97,6 +100,7 @@ class JsonSerializer:
 
         Returns:
             Deserialized object.
+
         """
         return loads(data)
 
@@ -117,6 +121,7 @@ class OrjsonSerializer:
 
         Returns:
             Serialized bytes.
+
         """
         return self._mod.dumps(obj)
 
@@ -128,6 +133,7 @@ class OrjsonSerializer:
 
         Returns:
             Deserialized object.
+
         """
         return self._mod.loads(data)
 
@@ -150,6 +156,7 @@ def get_default_serializer() -> _Serializer:
     Raises:
         RuntimeError: if orjson is not importable (should never happen
         in production — pyproject.toml pins the dep).
+
     """
     # orjson is imported at module top — it's a hard dep. The
     # local import in the original was a fallback check that's no
@@ -165,6 +172,7 @@ class QueryResultCache:
         prefix: Префикс всех ключей (по умолчанию ``qrc``).
         default_ttl: TTL в секундах при отсутствии явного ``ttl`` в ``set()``.
         serializer: Экземпляр сериализатора; по умолчанию — ``get_default_serializer()``.
+
     """
 
     def __init__(
@@ -223,6 +231,7 @@ class QueryResultCache:
 
         Returns:
             Cached result or None if not found.
+
         """
         key = self._make_key(profile, sql, params)
         raw = await self._backend.get(key)
@@ -254,6 +263,7 @@ class QueryResultCache:
             result: Результат для кэширования.
             ttl: TTL в секундах (``None`` → ``default_ttl``).
             tables: Список затронутых таблиц для reverse-index инвалидации.
+
         """
         key = self._make_key(profile, sql, params)
         raw = self._serializer.dumps(result)
@@ -270,6 +280,7 @@ class QueryResultCache:
 
         Returns:
             Number of deleted keys.
+
         """
         idx_key = self._index_key(profile, table)
         raw = await self._backend.get(idx_key)
@@ -295,6 +306,7 @@ class QueryResultCache:
 
         Args:
             profile: Database profile name.
+
         """
         pattern = f"{self._prefix}:{profile}:*"
         await self._backend.delete_pattern(pattern)

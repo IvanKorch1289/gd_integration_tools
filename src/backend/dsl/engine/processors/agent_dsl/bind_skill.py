@@ -70,6 +70,7 @@ class BindSkillProcessor(BaseAIProcessor):
             Если ``None`` — pack привязывается к текущему step.
         output_key: Опц. ключ для сохранения bound skills в exchange.
         name: Имя процессора.
+
     """
 
     feature_flag_name: ClassVar[str | None] = "ai_bind_skill_enabled"
@@ -91,6 +92,7 @@ class BindSkillProcessor(BaseAIProcessor):
             target_agent: Опц. agent_id для привязки.
             output_key: Опц. ключ результата.
             name: Имя процессора.
+
         """
         super().__init__(name=name)
         self._pack_id = pack_id
@@ -151,6 +153,7 @@ class BindSkillProcessor(BaseAIProcessor):
 
         Returns:
             Pack dict или None если не найден.
+
         """
         # Try get_skill_pack method
         get_pack = getattr(registry, "get_skill_pack", None)

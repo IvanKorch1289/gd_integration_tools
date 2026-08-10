@@ -81,6 +81,7 @@ class ExpressClient:
 
         Returns:
             {"status": "sent", "sync_id": "..."}
+
         """
         if not self._enabled:
             return {"status": "disabled"}
@@ -133,6 +134,7 @@ class ExpressClient:
 
         Returns:
             {"status": "created", "chat_id": "..."}
+
         """
         if not self._enabled:
             return {"status": "disabled"}

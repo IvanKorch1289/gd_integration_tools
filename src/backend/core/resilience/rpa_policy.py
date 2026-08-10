@@ -114,6 +114,7 @@ class RPACallPolicy:
         on_attempt: Callback ``(ctx, attempt_index, error)`` — для audit/observability.
         retryable_exceptions: tuple исключений, которые triger retry. Иные
             — fail-fast в DLQ. Default — все ``Exception`` (без ``BaseException``).
+
     """
 
     def __init__(
@@ -186,6 +187,7 @@ class RPACallPolicy:
         Raises:
             RPACallExhausted: все попытки исчерпаны.
             ValueError: при breaker_open (если CB активен).
+
         """
         if not self._is_enabled():
             return await coro_factory()

@@ -236,6 +236,7 @@ class ExternalDatabaseFacade:
         session_manager_factory: Фабрика ``DatabaseSessionManager(profile_name)``.
         capability_check: Опц. callback ``CapabilityGate.check``.
         plugin: Имя caller'а для capability-audit.
+
     """
 
     def __init__(

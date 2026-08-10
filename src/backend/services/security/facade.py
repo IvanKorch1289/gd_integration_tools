@@ -47,6 +47,7 @@ class SecurityFacade:
     Args:
         capability_check: Опц. callback ``CapabilityGate.check``.
         plugin: Имя caller'а (для capability-event и audit).
+
     """
 
     def __init__(
@@ -82,6 +83,7 @@ class SecurityFacade:
         Returns:
             Redis-backed blacklist если Redis доступен, иначе
             fail-open in-memory fallback (per-pod revocation).
+
         """
         try:
             from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
@@ -121,6 +123,7 @@ class SecurityFacade:
 
         Returns:
             True если capability granted, False иначе.
+
         """
         try:
             from src.backend.services.capabilities.facade import get_capability_facade
@@ -152,6 +155,7 @@ class SecurityFacade:
 
         Returns:
             True если signature валидна.
+
         """
         from src.backend.infrastructure.security.signatures import (
             verify_signature as _verify,
@@ -171,6 +175,7 @@ class SecurityFacade:
 
         Returns:
             Токенизированный текст с placeholders ``<PII_TYPE_xxx>``.
+
         """
         self._assert("security.pii.tokenize", "text")
         try:
@@ -205,6 +210,7 @@ class SecurityFacade:
 
         Returns:
             Masked text: ``"Иван И.О."``, ``"i.***@example.com"``, etc.
+
         """
         self._assert("security.pii.mask", "text")
         try:
@@ -227,6 +233,7 @@ class SecurityFacade:
 
         Returns:
             Secret value или default.
+
         """
         self._assert("security.secret.read", key)
         try:
@@ -250,6 +257,7 @@ class SecurityFacade:
 
         Returns:
             PEM bytes или None если не найден.
+
         """
         self._assert("security.cert.read", cert_id)
         try:
@@ -273,6 +281,7 @@ class SecurityFacade:
 
         Returns:
             True если успешно, False при ошибке.
+
         """
         if self._jwt_blacklist is None:
             await self.init_jwt_blacklist()

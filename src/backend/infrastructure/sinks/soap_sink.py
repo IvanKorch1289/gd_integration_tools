@@ -39,6 +39,7 @@ class SoapSink(Sink):
         timeout: Таймаут в секундах.
 
     ``payload`` — dict с именованными параметрами SOAP-операции.
+
     """
 
     sink_id: str

@@ -36,6 +36,7 @@ class BrotliCompressionMiddleware:
         app: внутренний ASGI app.
         minimum_size: минимальный размер ответа (байты) для активации.
         quality: уровень сжатия brotli (0-11).
+
     """
 
     def __init__(self, app: Any, *, minimum_size: int = 500, quality: int = 4) -> None:

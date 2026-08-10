@@ -70,6 +70,7 @@ class HitlApprovalProcessor(BaseProcessor):
             Если None — весь body используется как payload.
         request_info_processors: Опциональные процессоры для выполнения
             при action=request_info (оператор запрашивает дополнительные данные).
+
     """
 
     side_effect = SideEffectKind.SIDE_EFFECTING
@@ -112,6 +113,7 @@ class HitlApprovalProcessor(BaseProcessor):
 
         Note:
             При timeout или reject exchange переводится в ``failed``.
+
         """
         signal_id = str(uuid.uuid4())
 
@@ -270,6 +272,7 @@ class HitlApprovalProcessor(BaseProcessor):
         Returns:
             YAML-spec процессора или None если не сериализуется
             (например, если используется payload_path с jmespath).
+
         """
         if self._payload_path is not None:
             # JMESPath expressions are not serializable to YAML

@@ -86,6 +86,7 @@ class HotSwapResult:
             new_version: Версия после reload (``"?"`` если reload не дошёл).
             status: ``"reloaded"`` | ``"failed"`` | ``"unchanged"``.
             reason: Описание ошибки или skip-причины (опционально).
+
         """
         self.plugin_name = plugin_name
         self.old_version = old_version
@@ -153,6 +154,7 @@ def _reload_module(module_name: str) -> bool:
     Returns:
         True, если модуль был в ``sys.modules`` и был reload-нут.
         False, если модуль ещё не был импортирован (reload не нужен).
+
     """
     if module_name in sys.modules:
         try:
@@ -204,6 +206,7 @@ async def hot_swap(
     Пример:
         >>> result = await hot_swap("example_plugin", loader)
         >>> assert result.status == "reloaded"
+
     """
     entry = _find_loaded_entry(loader, plugin_name)
     if entry is None:

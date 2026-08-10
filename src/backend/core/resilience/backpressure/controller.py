@@ -35,6 +35,7 @@ class StreamingBackpressureController:
         high_watermark: Порог pause (utilization). Default 0.85.
         low_watermark: Порог resume. Default 0.5.
         check_interval_s: Период auto-check loop. Default 0.5s.
+
     """
 
     def __init__(
@@ -66,6 +67,7 @@ class StreamingBackpressureController:
         Args:
             name: Логическое имя consumer'а.
             consumer: Объект с async-методами ``pause()`` / ``resume()``.
+
         """
         self._consumers[name] = consumer
         logger.debug("StreamingBackpressureController: consumer '%s' added", name)
@@ -80,6 +82,7 @@ class StreamingBackpressureController:
         Args:
             queue_size: Текущий размер очереди.
             queue_limit: Опц. новый limit (override).
+
         """
         self._state.queue_size = queue_size
         if queue_limit is not None:
@@ -90,6 +93,7 @@ class StreamingBackpressureController:
 
         Returns:
             True если состояние изменилось (pause↔resume).
+
         """
         if not self._is_flag_enabled():
             return False

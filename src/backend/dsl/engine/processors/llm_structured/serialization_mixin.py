@@ -32,6 +32,7 @@ class SerializationMixin(_LLMStructuredProcessorProtocol):
         Args:
             exchange: Текущий exchange.
             result: Pydantic-объект (валидный по схеме).
+
         """
         target = self._to
         if target.startswith("property:"):

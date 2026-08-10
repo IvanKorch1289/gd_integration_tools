@@ -38,6 +38,7 @@ class DegradationStateStore(Protocol):
         Args:
             mode: Current degradation mode.
             transition: Transition to record.
+
         """
         ...
 
@@ -46,6 +47,7 @@ class DegradationStateStore(Protocol):
 
         Returns:
             Current mode or None if not persisted.
+
         """
         ...
 
@@ -57,6 +59,7 @@ class DegradationStateStore(Protocol):
 
         Returns:
             List of transitions.
+
         """
         ...
 
@@ -76,6 +79,7 @@ class InMemoryDegradationStateStore:
         Args:
             mode: Current degradation mode.
             transition: Transition to record.
+
         """
         self._current = mode
         self._history.append(transition)
@@ -87,6 +91,7 @@ class InMemoryDegradationStateStore:
 
         Returns:
             Current mode or None if not persisted.
+
         """
         return self._current
 
@@ -98,6 +103,7 @@ class InMemoryDegradationStateStore:
 
         Returns:
             List of transitions.
+
         """
         return self._history[-n:]
 

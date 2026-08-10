@@ -51,6 +51,7 @@ class OpenAPIImportGateway:
         Raises:
             ValueError: Если версия OpenAPI не поддерживается.
             ImportError: Если spec не прошёл валидацию.
+
         """
         raw = (
             source.content

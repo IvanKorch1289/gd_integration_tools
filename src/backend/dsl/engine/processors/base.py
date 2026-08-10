@@ -55,6 +55,7 @@ class BaseProcessor(ABC):
             exchange: Текущий Exchange.
             target: Куда положить (body.<field>, properties.<name> или просто name).
             value: Значение.
+
         """
         if target.startswith("body."):
             field = target[len("body."):]
@@ -95,6 +96,7 @@ class BaseProcessor(ABC):
         Returns:
             ``True`` если доступ разрешён (или capability не задана),
             ``False`` если denied.
+
         """
         if self.required_capability is None:
             return True
@@ -156,6 +158,7 @@ class BaseProcessor(ABC):
         Returns:
             Словарь вида ``{method_name: {kwargs}}`` совместимый с YAML-лоадером,
             или ``None`` если процессор не поддерживает сериализацию.
+
         """
         return None
 

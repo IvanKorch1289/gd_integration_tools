@@ -99,6 +99,7 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
             exchange: Текущий exchange; результат -- в свойстве
                 ``result_property`` (default: ``pyautogui_result``).
             context: Контекст выполнения маршрута.
+
         """
         if not await self.auth_check(exchange, action="automate"):
             return

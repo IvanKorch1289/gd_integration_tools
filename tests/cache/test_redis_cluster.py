@@ -29,6 +29,7 @@ def _make_adapter_with_mock_cluster() -> tuple[RedisClusterAdapter, MagicMock]:
 
     Returns:
         tuple ``(adapter, mock_cluster_instance)``.
+
     """
     from redis.asyncio.cluster import ClusterNode
 

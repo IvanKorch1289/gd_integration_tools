@@ -74,6 +74,7 @@ def register_app_state(app: FastAPI) -> None:
 
     Args:
         app: Экземпляр FastAPI для записи singletons в ``app.state``.
+
     """
     set_app_ref(app)
 

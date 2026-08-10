@@ -65,6 +65,7 @@ def validate_transport(transport: str) -> str:
     Note: normalization (lowercase) обеспечивает consistent label values
     для Prometheus (per-transport gauge), иначе "Kafka" и "kafka" дают
     2 разных label'а.
+
     """
     if not isinstance(transport, str):
         raise ValueError(f"transport должен быть str, got {type(transport).__name__}")
@@ -100,6 +101,7 @@ async def write_within_session(
 
     Returns:
         ID созданной записи.
+
     """
     transport = validate_transport(transport)
     msg = OutboxMessage(
@@ -226,6 +228,7 @@ async def claim_pending(
     * **Backward compat**: existing rows (pre-S72 migration) имеют
       ``claimed_by=NULL`` и ``status='pending'`` — claim SQL filter
       ``WHERE status='pending'`` остаётся валидным.
+
     """
     if not worker_id:
         raise ValueError("worker_id обязателен для claim_pending")
@@ -349,6 +352,7 @@ async def reset_stuck_processing(
     * **Backward compat**: existing rows (pre-S72 migration) с
       ``claimed_until=NULL`` НЕ затрагиваются (filter requires
       ``status='processing'``, pre-migration rows имеют ``status='pending'``).
+
     """
     now = datetime.now(UTC)
     cutoff = now - timedelta(seconds=threshold_seconds)
@@ -399,6 +403,7 @@ async def fetch_stuck_pending(
 
     Returns:
         Список :class:`OutboxMessage` отсортированный по ``created_at`` ASC.
+
     """
     cutoff = datetime.now(UTC) - timedelta(seconds=threshold_seconds)
     async with main_session_manager.create_session() as session:
@@ -425,6 +430,7 @@ async def count_stuck_pending(*, threshold_seconds: int) -> int:
 
     Returns:
         Количество stuck-сообщений. 0 если ни одного.
+
     """
     if threshold_seconds <= 0:
         raise ValueError("threshold_seconds должен быть > 0")
@@ -453,6 +459,7 @@ async def count_stuck_pending_by_transport(*, threshold_seconds: int) -> dict[st
 
     Note: возвращает только non-zero для уменьшения label cardinality.
     Use :func:`count_stuck_pending` для aggregate.
+
     """
     if threshold_seconds <= 0:
         raise ValueError("threshold_seconds должен быть > 0")
@@ -502,6 +509,7 @@ async def mark_failed(
         error: Текст ошибки публикации (обрезается до 1024 символов).
         max_retries: Предел повторов до перевода в финальный ``failed``.
         backoff_seconds: База экспоненциального backoff.
+
     """
     async with main_session_manager.create_session() as session:
         async with main_session_manager.transaction(session):

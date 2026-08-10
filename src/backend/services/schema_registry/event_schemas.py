@@ -23,6 +23,7 @@ def register_default_event_schemas(registry: ServiceSchemaRegistry) -> int:
 
     Returns:
         int: Количество зарегистрированных entries.
+
     """
     from src.backend.core.messaging.event_bus import (
         FlagEvent,

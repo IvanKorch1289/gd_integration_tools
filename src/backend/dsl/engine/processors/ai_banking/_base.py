@@ -50,6 +50,7 @@ class _BankingAIProcessor(BaseProcessor):
         Returns:
             True если capability granted. На deny — exchange.fail()
             с emit banking audit event.
+
         """
         try:
             from src.backend.services.capabilities.facade import get_capability_facade
@@ -89,6 +90,7 @@ class _BankingAIProcessor(BaseProcessor):
 
         Returns:
             Parsed Pydantic model or None on failure.
+
         """
         from src.backend.core.resilience.retry import make_async_retry
 

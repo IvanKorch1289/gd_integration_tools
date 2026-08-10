@@ -50,6 +50,7 @@ class JupyterHubError(Exception):
         message: Человекочитаемое описание.
         status_code: HTTP-статус (если применимо).
         response_body: Тело ответа сервера (если применимо).
+
     """
 
     def __init__(
@@ -72,6 +73,7 @@ class JupyterHubServer:
         ready: Готов ли сервер к работе.
         url: URL сервера (если ready).
         pending: Статус pending-операции (spawn/stop и т.п.).
+
     """
 
     def __init__(self, raw: dict[str, Any]) -> None:
@@ -93,6 +95,7 @@ class JupyterHubUser:
         name: Имя пользователя.
         admin: Является ли администратором.
         servers: Словарь серверов {name: JupyterHubServer}.
+
     """
 
     def __init__(self, raw: dict[str, Any]) -> None:
@@ -125,6 +128,7 @@ class JupyterHubClient:
             user = await client.get_user("alice")
             if not user.servers.get("").ready:
                 await client.start_server("alice")
+
     """
 
     def __init__(self, settings: JupyterHubSettings) -> None:
@@ -168,6 +172,7 @@ class JupyterHubClient:
 
         Raises:
             JupyterHubError: при недоступности или auth-ошибке.
+
         """
         return await self._request("GET", "/hub/api/")
 
@@ -178,6 +183,7 @@ class JupyterHubClient:
 
         Returns:
             Список :class:`JupyterHubUser`.
+
         """
         data = await self._request("GET", "/hub/api/users")
         if not isinstance(data, list):
@@ -195,6 +201,7 @@ class JupyterHubClient:
 
         Raises:
             JupyterHubError: 404 — пользователь не найден.
+
         """
         data = await self._request("GET", f"/hub/api/users/{name}")
         if not isinstance(data, dict):
@@ -213,6 +220,7 @@ class JupyterHubClient:
 
         Raises:
             JupyterHubError: 409 — пользователь уже существует.
+
         """
         data = await self._request(
             "POST", f"/hub/api/users/{name}", json={"admin": admin},
@@ -229,6 +237,7 @@ class JupyterHubClient:
 
         Raises:
             JupyterHubError: 404 — пользователь не найден.
+
         """
         await self._request("DELETE", f"/hub/api/users/{name}")
 
@@ -243,6 +252,7 @@ class JupyterHubClient:
 
         Raises:
             JupyterHubError: 400 — сервер уже запущен; 404 — пользователь не найден.
+
         """
         path = f"/hub/api/users/{user_name}/servers"
         if server_name:
@@ -260,6 +270,7 @@ class JupyterHubClient:
 
         Raises:
             JupyterHubError: 404 — пользователь или сервер не найден.
+
         """
         path = f"/hub/api/users/{user_name}/servers"
         if server_name:
@@ -279,6 +290,7 @@ class JupyterHubClient:
 
         Returns:
             :class:`JupyterHubServer` или None если сервер не существует.
+
         """
         user = await self.get_user(user_name)
         return user.servers.get(server_name)

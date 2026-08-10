@@ -110,6 +110,7 @@ class RetryProcessor(BaseProcessor):
         delay_seconds: Базовая задержка (для exponential — множитель).
         backoff: ``"fixed"`` или ``"exponential"``.
         jitter_seconds: Максимум случайного сдвига (anti-thundering herd).
+
     """
 
     def __init__(
@@ -190,6 +191,7 @@ class RetryProcessor(BaseProcessor):
         Returns:
             ``{"retry": {processors, max_attempts, delay_seconds, backoff,
             jitter_seconds?}}`` или ``None``, если sub-pipeline не сериализуется.
+
         """
         sub = _serialize_sub(self._processors)
         if sub is None:

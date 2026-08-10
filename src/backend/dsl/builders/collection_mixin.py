@@ -51,6 +51,7 @@ class CollectionMixin:
 
         Returns:
             List of field values (or items if field=None).
+
         """
         items = list(items) if items is not None else []
         if field is None:
@@ -79,6 +80,7 @@ class CollectionMixin:
 
         Returns:
             Filtered list.
+
         """
         items = list(items) if items is not None else []
         if predicate is not None:
@@ -105,6 +107,7 @@ class CollectionMixin:
 
         Returns:
             First matching element, or None if not found.
+
         """
         items = list(items) if items is not None else []
         if predicate is not None:
@@ -130,6 +133,7 @@ class CollectionMixin:
 
         Returns:
             Dict[group_key, list_of_items].
+
         """
         items = list(items) if items is not None else []
         result: dict[Any, list[Any]] = {}
@@ -158,6 +162,7 @@ class CollectionMixin:
 
         Returns:
             Sorted list (new list, input not mutated).
+
         """
         items = list(items) if items is not None else []
         if field is None:
@@ -177,6 +182,7 @@ class CollectionMixin:
 
         Returns:
             Original list (Groovy convention).
+
         """
         items = list(items) if items is not None else []
         for item in items:
@@ -194,6 +200,7 @@ class CollectionMixin:
 
         Returns:
             Flattened list.
+
         """
         items = list(items) if items is not None else []
         if levels <= 0:
@@ -220,6 +227,7 @@ class CollectionMixin:
 
         Returns:
             Deduped list (order preserved).
+
         """
         items = list(items) if items is not None else []
         if field is None:
@@ -256,6 +264,7 @@ class CollectionMixin:
 
         Returns:
             New list with items + other.
+
         """
         items = list(items) if items is not None else []
         other = list(other) if other is not None else []

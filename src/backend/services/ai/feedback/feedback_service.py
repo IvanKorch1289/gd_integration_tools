@@ -54,6 +54,7 @@ class AIFeedbackService:
         Args:
             repository: Репозиторий feedback. ``None`` → singleton
                 из ``get_feedback_repository()``.
+
         """
         self._repo = repository or get_feedback_repository()
 
@@ -81,6 +82,7 @@ class AIFeedbackService:
 
         Returns:
             Идентификатор сохранённого документа.
+
         """
         doc = AIFeedbackDoc(
             query=query,
@@ -116,6 +118,7 @@ class AIFeedbackService:
 
         Raises:
             KeyError: Документ не найден.
+
         """
         existing = await self._repo.get(doc_id)
         if existing is None:
@@ -165,6 +168,7 @@ class AIFeedbackService:
         Args:
             agent_id: Идентификатор агента.
             label: Проставленная метка.
+
         """
         try:
             from src.backend.services.ai.metrics import get_agent_metrics_service
@@ -185,6 +189,7 @@ class AIFeedbackService:
 
         Returns:
             Список документов (свежие первыми).
+
         """
         return await self._repo.list_pending(
             agent_id=agent_id, limit=min(limit, 200), offset=max(offset, 0),
@@ -210,6 +215,7 @@ class AIFeedbackService:
 
         Returns:
             Список документов (свежие по ``labeled_at`` первыми).
+
         """
         return await self._repo.list_labeled(
             label=label,
@@ -227,6 +233,7 @@ class AIFeedbackService:
 
         Returns:
             Документ либо ``None``.
+
         """
         return await self._repo.get(doc_id)
 
@@ -242,6 +249,7 @@ class AIFeedbackService:
 
         Raises:
             KeyError: если документ не найден.
+
         """
         existing = await self._repo.get(doc_id)
         if existing is None:
@@ -254,6 +262,7 @@ class AIFeedbackService:
 
         Returns:
             Словарь ``{pending, positive, negative, skip, indexed}``.
+
         """
         return await self._repo.stats()
 

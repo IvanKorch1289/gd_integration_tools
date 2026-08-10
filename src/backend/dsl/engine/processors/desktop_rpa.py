@@ -54,6 +54,7 @@ class DesktopRpaProcessor(BaseProcessor):
 
     S202 audit fix: required_capability + auth_check для enforce
     capability gating (ранее отсутствовало).
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.desktop.invoke"

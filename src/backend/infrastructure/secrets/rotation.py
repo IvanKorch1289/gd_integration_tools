@@ -33,6 +33,7 @@ class RotationScheduler:
         poll_interval_seconds: Интервал поллинга (sec).
         version_fetcher: Функция ``(name) -> int`` (текущая версия по
             metadata). Обычно ``VaultBackend.get_metadata(...)["current_version"]``.
+
     """
 
     def __init__(
@@ -56,6 +57,7 @@ class RotationScheduler:
 
         Returns:
             Число обнаруженных и нотифицированных ротаций.
+
         """
         rotated = 0
         for name in self._watched:

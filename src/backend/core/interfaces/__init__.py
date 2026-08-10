@@ -81,6 +81,7 @@ def __getattr__(name: str) -> Any:
     Notes:
         Используется вместо eager ``from ... import ...`` чтобы
         разорвать circular import chain при collection.
+
     """
     if name in _CIRCUIT_BREAKER_REEXPORTS:
         from src.backend.core.resilience.breaker import (
@@ -167,6 +168,7 @@ class HealthReport:
         status: Текущий статус.
         latency_ms: Задержка проверки в миллисекундах.
         details: Дополнительная информация (версия, метрики).
+
     """
 
     name: str
@@ -255,6 +257,7 @@ class PoolMetrics:
         waiters: Ожидающие запросов.
         created_total: Всего созданных соединений.
         errors_total: Всего ошибок.
+
     """
 
     name: str

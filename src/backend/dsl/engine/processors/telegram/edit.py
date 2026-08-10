@@ -34,6 +34,7 @@ class TelegramEditProcessor(BaseProcessor):
         parse_mode: Разметка нового текста.
         inline_keyboard: Новые inline-кнопки (опционально, ``[]`` →
             очистить).
+
     """
 
     def __init__(

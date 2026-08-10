@@ -50,6 +50,7 @@ class PlanStep:
             ``"verify"``) — semantically meaningful для executor.
         params: Параметры действия, передаются в ``executor(step)``.
         depends_on: Список step_id, которые должны выполниться до этого.
+
     """
 
     step_id: str
@@ -71,6 +72,7 @@ class PlanResult:
         replans: Сколько раз был сделан replan.
         verified: ``True`` если verifier ок (``None`` если verifier нет).
         duration_ms: Длительность выполнения.
+
     """
 
     steps_planned: list[PlanStep]
@@ -274,6 +276,7 @@ class PlanExecuteMixin:
 
         Returns:
             :class:`RouteBuilder` для fluent-chaining.
+
         """
         return self._add(  # type: ignore[attr-defined]
             PlanExecuteProcessor(

@@ -51,6 +51,7 @@ class CapabilityTenant:
         >>> sys = CapabilityTenant(id="_system", principal="core")
         >>> sys.is_system
         True
+
     """
 
     id: str
@@ -82,6 +83,7 @@ class TenantContext:
         >>> ctx = TenantContext(tenant_id="t1", principal_id="plugin_a")
         >>> ctx.tenant_id
         't1'
+
     """
 
     tenant_id: str

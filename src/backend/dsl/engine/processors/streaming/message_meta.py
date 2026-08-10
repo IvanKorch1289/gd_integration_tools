@@ -53,6 +53,7 @@ class MessageExpirationProcessor(BaseProcessor):
         header_name: Имя заголовка с timestamp (default ``x-created-at``).
         drop_action: Что делать с просроченным сообщением:
             ``fail`` (default), ``skip``, ``log``.
+
     """
 
     def __init__(

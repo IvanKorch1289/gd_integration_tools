@@ -48,6 +48,7 @@ class TemporalActivityWrapper:
             fn: Целевой callable (sync или async).
             name: Имя activity для регистрации в Temporal worker;
                 по умолчанию — ``fn.__qualname__``.
+
         """
         self._callable = fn
         self._name = str(name or getattr(fn, "__qualname__", repr(fn)))
@@ -111,6 +112,7 @@ def wrap_as_temporal_activity(
         activity = wrap_as_temporal_activity(normalize_payload)
         result = await activity({"x": 1})
         # → {"normalized": True, "x": 1}
+
     """
     # Идемпотентность: повторный wrap возвращает тот же объект.
     if isinstance(fn, TemporalActivityWrapper):

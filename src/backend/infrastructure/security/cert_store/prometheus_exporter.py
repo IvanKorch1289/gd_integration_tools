@@ -82,6 +82,7 @@ class CertPrometheusExporter:
         Args:
             store: CertStore instance.
             days: Окно в днях для проверки expiring.
+
         """
         now = datetime.now(UTC)
         before = now.timestamp() + days * 86400
@@ -119,6 +120,7 @@ class CertPrometheusExporter:
 
         Args:
             success: True если rotation успешна, False если failed.
+
         """
         if success:
             self.cert_last_rotation_timestamp_seconds.set(time.time())

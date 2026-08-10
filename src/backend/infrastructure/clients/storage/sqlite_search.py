@@ -56,6 +56,7 @@ class SqliteFTS5Search:
 
         Returns:
             Dict with _id and result status.
+
         """
         table = await self._ensure_index(index)
         doc_id = (
@@ -84,6 +85,7 @@ class SqliteFTS5Search:
 
         Returns:
             Dict with indexed count.
+
         """
         for d in documents:
             doc_id = d.get(id_field) if id_field else None
@@ -109,6 +111,7 @@ class SqliteFTS5Search:
 
         Returns:
             List of matching documents.
+
         """
         table = await self._ensure_index(index)
         match = self._build_match(query)
@@ -141,6 +144,7 @@ class SqliteFTS5Search:
 
         Returns:
             Aggregation results.
+
         """
         table = await self._ensure_index(index)
         match = self._build_match(query) if query else ""

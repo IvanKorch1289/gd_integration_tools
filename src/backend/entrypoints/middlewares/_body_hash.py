@@ -24,6 +24,7 @@ def payload_hash(body: bytes | None, *, prefix_len: int | None = 16) -> str:
 
     Returns:
         Hex string. ``""`` если body пустой.
+
     """
     if not body:
         return ""
@@ -40,6 +41,7 @@ def etag_hash(body: bytes, *, prefix_len: int = 16) -> str:
 
     Returns:
         ETag string в кавычках. ``""`` если body пустой.
+
     """
     digest = payload_hash(body, prefix_len=prefix_len)
     return f'"{digest}"' if digest else ""

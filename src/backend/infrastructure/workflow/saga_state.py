@@ -65,6 +65,7 @@ class _UUIDType(TypeDecorator[uuid.UUID]):
 
         Returns:
             Dialect-specific type descriptor.
+
         """
         if dialect.name == "postgresql":
             return dialect.type_descriptor(postgresql.UUID(as_uuid=True))
@@ -79,6 +80,7 @@ class _UUIDType(TypeDecorator[uuid.UUID]):
 
         Returns:
             Processed value for database.
+
         """
         if value is None:
             return None
@@ -95,6 +97,7 @@ class _UUIDType(TypeDecorator[uuid.UUID]):
 
         Returns:
             Processed Python value.
+
         """
         if value is None:
             return None
@@ -128,6 +131,7 @@ class WorkflowState(BaseModel, TenantMixin):
         tenant_id: RLS scope (через TenantMixin).
         result_payload: Результат успешного завершения (опц.).
         error_message: Сообщение последней ошибки (опц.).
+
     """
 
     __tablename__ = "workflow_state"
@@ -181,6 +185,7 @@ class WorkflowStateRepository:
 
     Args:
         session: AsyncSession через DI.
+
     """
 
     def __init__(self, session: AsyncSession) -> None:
@@ -205,6 +210,7 @@ class WorkflowStateRepository:
 
         Returns:
             Сохранённый ``WorkflowState`` (refreshed from DB).
+
         """
         existing = await self._fetch_one(workflow_id, run_id)
         if existing is None:
@@ -244,6 +250,7 @@ class WorkflowStateRepository:
         Args:
             tenant_id: опц. фильтр (применяется в дополнение к RLS).
             limit: max количество записей.
+
         """
         stmt = select(WorkflowState).where(WorkflowState.state == "compensating")
         if tenant_id is not None:

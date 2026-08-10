@@ -82,6 +82,7 @@ class KernelSpecDiscovery:
         **Fallback**: если ``jupyter_client`` не установлен или
         ``get_all_specs()`` fails → ``DEFAULT_FALLBACK_SPECS``
         (single python3 entry).
+
         """
         if self._cache is not None:
             return self._cache
@@ -141,6 +142,7 @@ class KernelSpecDiscovery:
 
         Use case: JupyterHubSettings.available_kernels (security
         policy — restrict kernels для multi-tenant deployments).
+
         """
         all_kernels = self.discover_available()
         if not whitelist:

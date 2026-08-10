@@ -144,6 +144,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
 
         Returns:
             HealthResult with status.
+
         """
         if self._client is None:
             return HealthResult.failed(error="client not started", mode=mode)
@@ -198,6 +199,7 @@ class HttpUpstreamClient(ClientMetricsMixin, InfrastructureClient):
 
         Returns:
             UpstreamProfile instance.
+
         """
         return self._profile
 
@@ -242,6 +244,7 @@ class UpstreamRegistry:
 
         Returns:
             UpstreamRegistry singleton.
+
         """
         if cls._instance is None:
             cls._instance = cls()
@@ -287,6 +290,7 @@ class UpstreamRegistry:
 
         Returns:
             Sorted list of upstream names.
+
         """
         return sorted(self._upstreams.keys())
 

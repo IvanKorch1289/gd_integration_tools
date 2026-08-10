@@ -65,6 +65,7 @@ class ComposedMessageProcessor(BaseProcessor):
             список обработанных sub-exchange и должен вернуть итоговый
             Exchange. Может быть sync или async.
         name: Опциональное имя.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

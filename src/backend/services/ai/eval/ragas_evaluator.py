@@ -27,6 +27,7 @@ Notes
 -----
 ragas требует :mod:`datasets` (HuggingFace) для построения объекта
 ``Dataset.from_dict``. Оба зависимостей — extra ``ai`` (см. ``pyproject.toml``).
+
 """
 
 from __future__ import annotations
@@ -72,6 +73,7 @@ class RAGASRecord:
         answer: Ответ цепочки (то, что вернул LLM).
         contexts: Retrieved-документы (text-chunks), на которых строился ответ.
         ground_truth: Опц. эталонный ответ (нужен для ``context_recall``).
+
     """
 
     question: str
@@ -89,6 +91,7 @@ class RAGASMetric:
         value: Среднее значение [0..1] по всему датасету.
         threshold: Пороговое значение для blocking-gate.
         passed: ``True`` если ``value >= threshold``.
+
     """
 
     name: str
@@ -107,6 +110,7 @@ class RAGASReport:
         skipped: ``True`` если ragas/datasets недоступны — оценка пропущена.
         skip_reason: Причина skip (для логов / CI-сообщений).
         errors: Список текстовых ошибок при evaluation (без падения).
+
     """
 
     metrics: list[RAGASMetric] = field(default_factory=list)
@@ -121,6 +125,7 @@ class RAGASReport:
         Returns:
             ``True`` если хотя бы одна метрика ниже порога. ``skipped`` → ``False``
             (отсутствие ragas — не повод валить CI, отдельный install-gate).
+
         """
         if self.skipped:
             return False
@@ -193,6 +198,7 @@ class RAGASEvaluator:
                 ``LangchainLLMWrapper``). При ``None`` ragas использует default
                 (OpenAI gpt-3.5; см. ENV ``OPENAI_API_KEY``).
             embeddings: Опц. embeddings-wrapper. При ``None`` — ragas default.
+
         """
         merged = dict(DEFAULT_THRESHOLDS)
         if thresholds:
@@ -214,6 +220,7 @@ class RAGASEvaluator:
 
         Returns:
             :class:`RAGASReport` с метриками + threshold-проверкой.
+
         """
         if not records:
             return RAGASReport(skipped=True, skip_reason="empty dataset")

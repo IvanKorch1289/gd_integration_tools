@@ -42,6 +42,7 @@ class CasbinMixin:
             ...     capability_gateway=gate,
             ...     policies=(AuthorizationGateway.casbin_step(casbin),),
             ... )
+
         """
 
         async def _step(

@@ -63,6 +63,7 @@ class EmailReplyChannel(InvocationReplyChannel):
         default_recipient: Fallback recipient, если ``response.metadata``
             не содержит email-адреса. Полезно для одиночного оператора
             в dev_light; ``None`` — пропускать доставку.
+
     """
 
     def __init__(

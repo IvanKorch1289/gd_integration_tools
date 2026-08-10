@@ -64,6 +64,7 @@ async def start_outbox_dispatcher(
 
     При ``outbox_settings.enabled=False`` — no-op. При повторном вызове
     (диспетчер уже в state) — также no-op.
+
     """
     if not outbox_settings.enabled:
         _logger.info("outbox.lifecycle.disabled")
@@ -131,6 +132,7 @@ def _build_default_dlq_handler(state: Any) -> DLQHandler | None:
         ``None`` если factory не зарегистрирована → OutboxDispatcher
         использует свой default ``_BackendDLQHandler`` (та же outbox
         таблица, status=DLQ). Pre-FW1 behavior.
+
     """
     session_factory = getattr(state, "outbox_dlq_session_factory", None)
     if session_factory is None:
@@ -179,6 +181,7 @@ async def stop_outbox_dispatcher(app: Any) -> None:
 
     Идемпотентен: если диспетчер не был запущен или уже остановлен —
     no-op.
+
     """
     state = _resolve_state(app)
     if state is None:

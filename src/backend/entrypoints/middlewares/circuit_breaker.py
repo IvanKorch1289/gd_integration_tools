@@ -80,6 +80,7 @@ class BreakerPolicy:
         reset_timeout: Seconds в OPEN state до HALF_OPEN probe.
         excluded_statuses: HTTP statuses НЕ считаются failures
             (e.g. 4xx client errors — не upstream failure).
+
     """
 
     failure_threshold: int = 5
@@ -136,6 +137,7 @@ class CircuitBreakerMiddleware:
                 :class:`SlidingWindowBreaker` из unified facade
                 (purgatory-ready). Если False — legacy deque state-machine
                 (backward-compat).
+
         """
         self.app = app
         self._default_policy = default_policy or BreakerPolicy()
@@ -187,6 +189,7 @@ class CircuitBreakerMiddleware:
 
         Returns:
             True if request should proceed, False if circuit OPEN.
+
         """
         if state.state == BreakerState.CLOSED:
             return True

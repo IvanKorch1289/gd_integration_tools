@@ -22,6 +22,7 @@ class _BaseEntityProcessor(BaseProcessor):
         payload_from: JMESPath expression для извлечения payload из exchange.
         result_property: имя property для записи результата.
         name: имя процессора.
+
     """
 
     _verb: ClassVar[str] = ""

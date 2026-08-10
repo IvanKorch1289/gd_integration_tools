@@ -87,6 +87,7 @@ class LongRunningSecretRotator:
     Поведение ``invalidate``:
         Сбрасывает кеш — следующий ``fetch_with_rotation`` пойдёт
         в backend без проверки интервала.
+
     """
 
     __slots__ = (
@@ -131,6 +132,7 @@ class LongRunningSecretRotator:
         Returns:
             Объект, возвращаемый ``backend.get(secret_path)`` — обычно
             :class:`SecretValue` или ``dict[str, str]``.
+
         """
         async with self._lock:
             now = self._time_source()

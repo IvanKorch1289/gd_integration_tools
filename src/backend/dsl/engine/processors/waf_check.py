@@ -59,6 +59,7 @@ class WafCheckProcessor(BaseProcessor):
         source_property: Dotted path к проверяемым данным в Exchange.
         action: "block" (raise) | "flag" (set_property + continue).
         to: Куда записать результат (по умолчанию "waf_decision").
+
     """
 
     required_capability: ClassVar[str | None] = "security.waf.check"

@@ -130,6 +130,7 @@ class HttpProvidersMixin:
 
         Returns:
             ``AgentMetricsService`` либо ``None``.
+
         """
         try:
             from src.backend.services.ai.metrics import get_agent_metrics_service

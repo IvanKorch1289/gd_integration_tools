@@ -93,6 +93,7 @@ class _PollingStrategy(_CDCStrategy):
         Args:
             sub: Подписка CDC (profile, tables, timestamp_column, batch_size).
             dispatch: Callback для отправки каждого CDC-события.
+
         """
         try:
             from sqlalchemy import text
@@ -195,6 +196,7 @@ class _ListenNotifyStrategy(_CDCStrategy):
 
         Note:
             Требует триггер на таблице, вызывающий ``pg_notify()`` с JSON payload.
+
         """
         try:
             import asyncpg
@@ -296,6 +298,7 @@ class _LogMinerStrategy(_CDCStrategy):
 
         Note:
             Требует привилегии SELECT ANY TRANSACTION, EXECUTE_CATALOG_ROLE.
+
         """
         try:
             from sqlalchemy import text

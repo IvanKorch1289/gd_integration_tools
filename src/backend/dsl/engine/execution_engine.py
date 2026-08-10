@@ -35,6 +35,7 @@ def _resolve_tenant_id() -> str | None:
 
     Returns:
         Найденный непустой tenant_id или ``None``.
+
     """
     from src.backend.core.request_context import RequestContext
     from src.backend.core.tenancy import current_tenant
@@ -129,6 +130,7 @@ class ExecutionEngine:
         Args:
             route_id: если задан — сбрасывает записи только этого route;
                 иначе (``None``) — сбрасывает весь cache.
+
         """
         if route_id is None:
             self._validation_cache.clear()
@@ -164,6 +166,7 @@ class ExecutionEngine:
             TenantContextRequiredError: pipeline.tenant_aware=True, но
                 ни RequestContext.tenant_id, ни current_tenant() не
                 содержат непустой tenant_id.
+
         """
         if not pipeline.tenant_aware:
             return None
@@ -255,6 +258,7 @@ class ExecutionEngine:
         Returns:
             Exchange с финальным статусом (completed / failed) и trace-log
             в свойстве ``_trace``.
+
         """
         self._check_feature_flag(pipeline)
         tenant_id = self._check_tenant_aware(pipeline)
@@ -358,6 +362,7 @@ class ExecutionEngine:
 
         Returns:
             Exchange with results from all processors.
+
         """
         if pipeline is not None:
             self._check_feature_flag(pipeline)

@@ -71,6 +71,7 @@ class RequestMixin(_HttpClientProtocol):
         Returns:
             Стандартизованный dict с ключами ``status_code``, ``headers``,
             ``body``, ``elapsed`` и т.д.
+
         """
         start_time = monotonic()
         last_exception: Exception | None = None

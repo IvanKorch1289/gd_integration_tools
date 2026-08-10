@@ -276,6 +276,7 @@ class AILlMMixin:
             fallback_strategy: ``"sequential"`` (try in order) or ``"parallel"`` (fastest wins).
             max_retries: Max retries per model.
             result_property: Property name for LLM response.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ai.llmfallback_processor",
@@ -301,6 +302,7 @@ class AILlMMixin:
             documents_from: dotted-path to list of documents.
             top_k: Number of top documents to return.
             result_property: Property name for reranked results.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ai.reranker",

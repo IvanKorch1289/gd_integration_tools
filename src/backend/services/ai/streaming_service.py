@@ -98,6 +98,7 @@ class LLMStreamingService:
             messages: chat-completion messages.
             model: переопределяет дефолтный.
             **kwargs: прозрачные параметры litellm.
+
         """
         gateway = self._ensure_gateway()
         try:

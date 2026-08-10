@@ -60,6 +60,7 @@ class _RunHubNotebookService:
 
         Raises:
             HubRunError: при любой ошибке (not found, validation, hub).
+
         """
         content: bytes | None = notebook_content
         if notebook_content_b64 is not None:
@@ -109,6 +110,7 @@ def register_jupyter_hub_actions(registry: Any) -> list[str]:
 
     Returns:
         Список зарегистрированных action-имён.
+
     """
     from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 

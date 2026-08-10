@@ -45,6 +45,7 @@ class TenantMiddleware:
         Args:
             app: ASGI-приложение.
             default_tenant: tenant_id если header и state пусты.
+
         """
         self.app = app
         self._default = default_tenant
@@ -99,6 +100,7 @@ def _get_header(scope: Scope, name: bytes) -> str | None:
 
     Returns:
         Header value (str) или None если не найден.
+
     """
     for header_name, header_value in scope.get("headers", []):
         if header_name == name:

@@ -33,6 +33,7 @@ class ProxyMixin:
             methods: HTTP-методы (для ``http``). ``None`` = все.
             header_map: Опциональный словарь ``{add|drop|override}`` для
                 политики inbound-headers.
+
         """
         from src.backend.dsl.engine.processors.proxy import (
             ExposeProxyProcessor,
@@ -113,6 +114,7 @@ class ProxyMixin:
                 ``header`` | ``body_field`` | ``exchange_var`` | ``query_param``.
             source_key: Ключ для извлечения URL из источника.
             allowed_hosts: Белый список хостов (для ``url_source=query_param``).
+
         """
         from src.backend.dsl.engine.processors.proxy import RedirectProcessor
 

@@ -68,6 +68,7 @@ def _validate_version(version: str) -> str | None:
 
     Returns:
         Сообщение об ошибке или None при корректном значении.
+
     """
     if not _SEMVER_RE.match(version):
         return f"version '{version}' не соответствует SemVer X.Y.Z(-pre)?"
@@ -82,6 +83,7 @@ def _validate_requires_core(requires_core: str) -> str | None:
 
     Returns:
         Сообщение об ошибке или None при корректном значении.
+
     """
     try:
         SpecifierSet(requires_core)
@@ -106,6 +108,7 @@ def check_plugin_semver(plugin_path: Path) -> SemverCheckResult:
 
     Returns:
         SemverCheckResult с результатом проверки.
+
     """
     # Определяем путь к toml-файлу.
     toml_path = (
@@ -174,6 +177,7 @@ def _check_strict_mode(version: str, requires_core: str, errors: list[str]) -> N
         version: Строка версии плагина.
         requires_core: Строка спецификатора версии ядра.
         errors: Список, в который добавляются найденные ошибки.
+
     """
     try:
         from src.backend.core.config.features import feature_flags
@@ -213,6 +217,7 @@ def is_compatible(plugin_requires: str, core_version: str) -> bool:
         True
         >>> is_compatible(">=0.2,<0.3", "0.3.0")
         False
+
     """
     try:
         spec = SpecifierSet(plugin_requires)

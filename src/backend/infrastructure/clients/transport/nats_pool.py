@@ -45,6 +45,7 @@ class NatsConnectionPool:
         url: NATS server URL.
         name: Connection name for monitoring.
         max_reconnect_attempts: Max reconnect attempts before giving up.
+
     """
 
     def __init__(

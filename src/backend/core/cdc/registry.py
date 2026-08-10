@@ -80,6 +80,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
 
     Raises:
         ValueError: Если ``backend`` не в :data:`SUPPORTED_BACKENDS`.
+
     """
     if backend not in SUPPORTED_BACKENDS:
         raise ValueError(

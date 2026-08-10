@@ -99,6 +99,7 @@ def register_scheduled_invocation(spec: ScheduleSpec) -> str:
 
     Raises:
         RuntimeError: если APScheduler недоступен.
+
     """
     from apscheduler.triggers.cron import CronTrigger
     from apscheduler.triggers.interval import IntervalTrigger

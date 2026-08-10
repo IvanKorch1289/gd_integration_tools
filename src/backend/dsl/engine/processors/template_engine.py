@@ -56,6 +56,7 @@ class RenderTemplateProcessor(BaseProcessor):
                 ``properties.<key>``).
             result_property: Куда сохранить результат в ``exchange.properties``.
             name: Опц. имя процессора.
+
         """
         super().__init__(name=name or "render_template")
         self._template_string = template_string
@@ -73,6 +74,7 @@ class RenderTemplateProcessor(BaseProcessor):
         Side Effects:
             - ``exchange.properties[result_property]`` — отрисованная строка.
             - ``exchange.out_message`` копируется из in_message (preserves body).
+
         """
         from jinja2 import Template
 
@@ -117,6 +119,7 @@ class RenderTemplateFileProcessor(BaseProcessor):
 
         Raises:
             ValueError: При path-traversal (``..`` или абсолютный путь).
+
         """
         super().__init__(name=name or f"render_template_file({path})")
         self._path = path
@@ -138,6 +141,7 @@ class RenderTemplateFileProcessor(BaseProcessor):
         Raises:
             jinja2.TemplateNotFound: Если файл шаблона не существует.
             ValueError: При path-traversal (``_safe_template_path``).
+
         """
         from jinja2 import Environment, FileSystemLoader
 

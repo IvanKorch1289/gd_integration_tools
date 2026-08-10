@@ -71,6 +71,7 @@ class FakeRateLimitChecker:
         Args:
             max_per_window: Лимит запросов в окне.
             window_seconds: Размер окна в секундах.
+
         """
         from time import monotonic
 
@@ -112,6 +113,7 @@ def tenant_aware_identifier(scope: dict[str, Any]) -> str:
 
     Returns:
         Идентификатор (``tenant:<id>``, ``user:<id>``, ``ip:<host>``).
+
     """
     headers = dict(scope.get("headers") or ())
     tenant = headers.get(b"x-tenant-id")
@@ -141,6 +143,7 @@ class RedisRateLimitChecker:
         route_overrides_hash: Optional Redis hash key for per-route overrides
             (e.g., ``"ratelimit:route_overrides"``). Hash stores
             ``{route_prefix: "max_per_window:window_seconds"}``.
+
     """
 
     def __init__(
@@ -327,6 +330,7 @@ class GlobalRateLimitMiddleware:
                 "/api/v1/heavy": FakeRateLimitChecker(max_per_window=10, window_seconds=60),
             },
         )
+
     """
 
     def __init__(

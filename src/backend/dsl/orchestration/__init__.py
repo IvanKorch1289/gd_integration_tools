@@ -32,6 +32,7 @@ class Sensor:
         predicate: Корутина, возвращающая True для запуска.
         interval_seconds: Интервал между проверками.
         route_id: Route, который запускается при True.
+
     """
 
     name: str

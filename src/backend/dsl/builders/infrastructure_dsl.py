@@ -89,6 +89,7 @@ class _InfraOp(BaseProcessor):
         Returns:
             dict c единственным ключом ``op_name`` и значением — копия
             ``self.params`` (защита от мутации caller'ом).
+
         """
         return {self.op_name: dict(self.params)}
 
@@ -507,6 +508,7 @@ class InfrastructureDSL:
 
         Returns:
             RouteBuilder с добавленным ``SftpGetProcessor`` в pipeline.
+
         """
         return self._add(  # type: ignore[attr-defined]
             SftpGetProcessor(
@@ -546,6 +548,7 @@ class InfrastructureDSL:
 
         Returns:
             RouteBuilder с добавленным ``SftpPutProcessor`` в pipeline.
+
         """
         return self._add(  # type: ignore[attr-defined]
             SftpPutProcessor(

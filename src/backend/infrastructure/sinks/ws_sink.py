@@ -38,6 +38,7 @@ class WsSink(Sink):
         url: WebSocket URL (``ws://`` / ``wss://``).
         timeout: Таймаут на connect+send в секундах.
         extra_headers: Дополнительные заголовки handshake.
+
     """
 
     sink_id: str

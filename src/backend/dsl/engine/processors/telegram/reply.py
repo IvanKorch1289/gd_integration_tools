@@ -30,6 +30,7 @@ class TelegramReplyProcessor(BaseProcessor):
         body_from: Выражение извлечения текста ответа.
         parse_mode: HTML / MarkdownV2 / Markdown / "".
         result_property: Имя property для записи message_id ответа.
+
     """
 
     def __init__(

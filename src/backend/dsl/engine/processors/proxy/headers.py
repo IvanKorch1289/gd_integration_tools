@@ -32,6 +32,7 @@ class HeaderMapPolicy:
             существующие — используйте ``override`` для этого).
         drop: Имена заголовков, удаляемых полностью (регистр игнорируется).
         override: Заголовки, которые переопределяют существующие.
+
     """
 
     add: dict[str, str] = field(default_factory=dict)

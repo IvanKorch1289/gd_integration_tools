@@ -130,6 +130,7 @@ class L2SemanticRagCache:
             query: Query string.
             value: Value to cache.
             tenant: Optional tenant scope.
+
         """
         client = self._ensure_client()
         if not client:

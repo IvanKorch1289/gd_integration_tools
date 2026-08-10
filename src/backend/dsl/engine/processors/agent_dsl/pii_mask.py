@@ -79,6 +79,7 @@ class PIIMaskProcessor(BaseAIProcessor):
         При недоступности :class:`PIITokenizer` (DI singleton ``None``
         или raises) — silent pass-through + WARNING + ``pii_detected=False``.
         Это поведение нужно для CI без presidio.
+
     """
 
     required_capability: ClassVar[str | None] = "pii.tokenize.reversible"

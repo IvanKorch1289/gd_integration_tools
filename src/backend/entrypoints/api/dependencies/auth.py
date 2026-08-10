@@ -40,6 +40,7 @@ async def require_api_key(
 
     Raises:
         HTTPException: 401 если ключ невалиден.
+
     """
     key_info = await manager.validate_key(x_api_key)
 

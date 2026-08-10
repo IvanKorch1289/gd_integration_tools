@@ -47,6 +47,7 @@ class PluginDependencyCycleError(RuntimeError):
         cycle: Кортеж имён плагинов в порядке цикла, как его вернул
             :class:`graphlib.CycleError`. Может быть пустым, если SDK
             не передал детали.
+
     """
 
     def __init__(self, cycle: tuple[str, ...]) -> None:
@@ -83,6 +84,7 @@ class PluginGraphResolver:
             PluginDependencyCycleError: Граф содержит цикл.
             KeyError: ``manifest.requires_plugins`` ссылается на имя,
                 которого нет в ``manifests``.
+
         """
         sorter: TopologicalSorter[str] = TopologicalSorter()
         for name, manifest in manifests.items():

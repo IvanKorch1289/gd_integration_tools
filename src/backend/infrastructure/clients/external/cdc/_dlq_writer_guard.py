@@ -58,6 +58,7 @@ class DLQWriterGuard:
 
         Args:
             writer: Опциональная weak-ссылка на writer (для logging / debug).
+
         """
         with self._lock:
             self._wired = True

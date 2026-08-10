@@ -66,6 +66,7 @@ class SkillInvokeProcessor(BaseAIProcessor):
         result_property: Свойство exchange для записи результата.
             Default ``"skill_result"``.
         name: Имя процессора.
+
     """
 
     required_capability: ClassVar[str | None] = "skill.invoke"
@@ -153,6 +154,7 @@ class SkillInvokeProcessor(BaseAIProcessor):
         Returns:
             :class:`SkillRegistry` singleton или ``None`` если registry
             не зарегистрирован в ``app.state.skill_registry``.
+
         """
         try:
             from src.backend.core.di.providers.ai import get_skill_registry

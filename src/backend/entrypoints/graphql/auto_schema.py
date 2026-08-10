@@ -47,6 +47,7 @@ class AutoSchemaResult:
         query_count: Сколько Query-полей добавлено.
         mutation_count: Сколько Mutation-полей добавлено.
         skipped: Список (action, причина) — пропущенные actions.
+
     """
 
     __slots__ = ("mutation_count", "query_count", "schema", "skipped")
@@ -133,6 +134,7 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
     Returns:
         :class:`AutoSchemaResult` с готовой ``schema`` или ``None``,
         если нет ни одного action.
+
     """
     import strawberry
 
@@ -229,6 +231,7 @@ def auto_register_strawberry_schema(
 
     Returns:
         :class:`AutoSchemaResult` — готовая схема и счётчики.
+
     """
     result = build_auto_strawberry_schema()
     if result.schema is None:

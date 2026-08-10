@@ -98,6 +98,7 @@ class BreakerState:
         state: ``closed`` / ``open`` / ``half_open``.
         fail_counter: Текущий счётчик отказов.
         last_failure_at_iso: ISO-timestamp последнего отказа (или ``""``).
+
     """
 
     name: str
@@ -175,6 +176,7 @@ class BreakerRegistry:
 
         Returns:
             Breaker instance.
+
         """
         breaker = self._breakers.get(name)
         if breaker is None:
@@ -192,6 +194,7 @@ class BreakerRegistry:
 
         Returns:
             Breaker instance or None if not found.
+
         """
         return self._breakers.get(name)
 
@@ -200,6 +203,7 @@ class BreakerRegistry:
 
         Returns:
             Dict mapping breaker names to their current states.
+
         """
         return {name: br.state for name, br in self._breakers.items()}
 

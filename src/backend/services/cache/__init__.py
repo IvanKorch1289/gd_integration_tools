@@ -18,6 +18,7 @@ def get_unified_cache_facade(*, plugin: str = "extension") -> UnifiedCacheFacade
 
     Raises:
         RuntimeError: если ``UnifiedCacheFacade`` не зарегистрирован в svcs.
+
     """
     from src.backend.core.svcs_registry import get_service, has_service
 

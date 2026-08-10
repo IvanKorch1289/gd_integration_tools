@@ -133,6 +133,7 @@ class AntivirusService:
 
         Returns:
             Ответ antivirus-сервиса в виде словаря.
+
         """
         resolved_content_type = self._resolve_content_type(
             filename=filename, content_type=content_type,
@@ -243,6 +244,7 @@ class AntivirusService:
 
         Returns:
             Dict со status (ok/degraded/down), latency_ms, error.
+
         """
         import time
 

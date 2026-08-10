@@ -91,6 +91,7 @@ class ProcessorPool:
             По умолчанию ``4``.
         thread_pool: Опциональный ThreadPoolExecutor для CPU-bound задач.
             Если не передан, создаётся внутри eager'но.
+
     """
 
     def __init__(
@@ -200,6 +201,7 @@ class ProcessorPool:
 
         Returns:
             List of trace entries for each processor execution.
+
         """
         self._metrics.inc_submitted(len(processors))
 
@@ -267,6 +269,7 @@ class ProcessorPool:
 
         Returns:
             Trace entry dictionary.
+
         """
         _, result = await self._execute_one(processor, exchange, context, timeout)
 
@@ -280,6 +283,7 @@ class ProcessorPool:
 
         Args:
             cancel_pending: If True, cancel all active tasks. Otherwise, wait for them.
+
         """
         if cancel_pending:
             for task in self._active:
@@ -311,6 +315,7 @@ def get_processor_pool() -> ProcessorPool:
 
     Returns:
         The global ProcessorPool instance.
+
     """
     global _global_pool
     if _global_pool is None:

@@ -37,6 +37,7 @@ class CorrelationIdentifierProcessor(BaseProcessor):
 
     Side effect: ``exchange.in_message.set_header(correlation_id, ...)``.
     Также синхронизирует ``exchange.meta.correlation_id`` (для observability/tracing).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

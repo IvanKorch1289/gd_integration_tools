@@ -48,6 +48,7 @@ class DataStore:
 
         Returns:
             Value или ``default``. Expired записи lazy-удаляются при access.
+
         """
         with self._lock:
             entry = self._data.get(key)
@@ -66,6 +67,7 @@ class DataStore:
             key: Ключ записи.
             value: Любой picklable value.
             ttl_seconds: TTL в секундах (``None`` = бессрочно).
+
         """
         with self._lock:
             exp = time.monotonic() + ttl_seconds if ttl_seconds is not None else None
@@ -76,6 +78,7 @@ class DataStore:
 
         Returns:
             ``True`` если ключ существовал, ``False`` если нет.
+
         """
         with self._lock:
             return self._data.pop(key, None) is not None

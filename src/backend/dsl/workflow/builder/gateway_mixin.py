@@ -39,6 +39,7 @@ class GatewayMixin(_WorkflowBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         from src.backend.dsl.workflow.gateways import GatewaySpec
         from src.backend.dsl.workflow.spec import ActivityDeclaration
@@ -64,6 +65,7 @@ class GatewayMixin(_WorkflowBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         from src.backend.dsl.workflow.gateways import GatewaySpec
         from src.backend.dsl.workflow.spec import ActivityDeclaration
@@ -88,6 +90,7 @@ class GatewayMixin(_WorkflowBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         from src.backend.dsl.workflow.gateways import GatewaySpec
         from src.backend.dsl.workflow.spec import ActivityDeclaration

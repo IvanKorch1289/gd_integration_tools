@@ -40,6 +40,7 @@ class AppriseNotifyParams(BaseModel):
         body: Тело уведомления.
         body_format: Формат тела — ``text`` | ``html`` | ``markdown``.
         result_property: Куда записать результат (``True``/``False``).
+
     """
 
     channel: str = Field(..., description="Имя канала Apprise (зарегистрированного)")
@@ -71,6 +72,7 @@ class AppriseNotifyProcessor(BaseProcessor):
         body_format: Формат тела (``text`` | ``html`` | ``markdown``).
         result_property: Имя exchange-property для результата доставки.
         name: Имя процессора для логов/observability.
+
     """
 
     def __init__(
@@ -99,6 +101,7 @@ class AppriseNotifyProcessor(BaseProcessor):
 
         Returns:
             Сконфигурированный экземпляр :class:`AppriseNotifyProcessor`.
+
         """
         return cls(
             channel=params.channel,

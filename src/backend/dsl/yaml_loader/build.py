@@ -82,6 +82,7 @@ def _build_sub(parent: RouteBuilder, specs: list[Any]) -> list[Any]:
 
     Returns:
         Список собранных :class:`BaseProcessor`.
+
     """
     sub_builder = RouteBuilder.from_(
         f"{parent.route_id}.__sub__",  # type: ignore[attr-defined]

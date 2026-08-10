@@ -92,6 +92,7 @@ class SkillSpec(BaseModel):
         feature_flag: Опционально — имя feature-flag из
             :mod:`core.config.features`; skill доступен только при
             ``FeatureFlags.<name> = True``.
+
     """
 
     id: str
@@ -135,6 +136,7 @@ class SkillRegistry:
     Notes:
         Scaffold-методы поднимают ``NotImplementedError`` до полной
         реализации в S26 W5.
+
     """
 
     def __init__(self) -> None:
@@ -153,6 +155,7 @@ class SkillRegistry:
 
         Raises:
             ValueError: TOML syntax error или missing required fields.
+
         """
         import tomllib
 
@@ -204,6 +207,7 @@ class SkillRegistry:
 
         Raises:
             NotImplementedError: S26 W5 — bridge с existing registry.
+
         """
         del func
         raise NotImplementedError("S26 W5: bridge с services/ai/tools/registry")
@@ -227,6 +231,7 @@ class SkillRegistry:
         Raises:
             ValueError: Whitelist пустой (caller не передал).
             PermissionError: Module не в whitelist.
+
         """
         from src.backend.core.security.module_whitelist import validate_module_whitelist
 
@@ -277,6 +282,7 @@ class SkillRegistry:
             CapabilityDeniedError: Отсутствует одна из capabilities.
             ImportError: Handler module/function not found.
             asyncio.TimeoutError: При превышении ``timeout``.
+
         """
         skill = self._skills.get(skill_id)
         if skill is None:
@@ -448,6 +454,7 @@ class SkillRegistry:
         Example:
             >>> registry.export_to_mcp()
             [{"name": "credit.score.calculate", "description": "...", ...}]
+
         """
         tools = []
         for skill in self._skills.values():
@@ -495,6 +502,7 @@ class SkillRegistry:
         Example:
             >>> registry.export_to_langgraph()
             [<class 'CreditScoreCalculateTool'>]
+
         """
         try:
             from langchain_core.tools import StructuredTool
@@ -584,6 +592,7 @@ class SkillRegistry:
         Example:
             >>> registry.export_to_openai_tools()
             [{"type": "function", "function": {"name": "credit.score.calculate", ...}}]
+
         """
         tools = []
         for skill in self._skills.values():
@@ -628,5 +637,6 @@ class SkillRegistry:
 
         Returns:
             Snapshot всех :class:`SkillSpec` (deterministic order).
+
         """
         return sorted(self._skills.values(), key=lambda s: s.id)

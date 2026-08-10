@@ -96,6 +96,7 @@ def register_outbound_http_client(*, plugin: str = "core") -> None:
         plugin: Имя caller'а для audit-event (по-умолчанию ``core``).
             Плагины регистрируют свои клиенты с собственным plugin-name
             через эту же функцию.
+
     """
     if has_service(OutboundHttpClient):
         return

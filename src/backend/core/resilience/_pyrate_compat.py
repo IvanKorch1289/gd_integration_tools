@@ -51,6 +51,7 @@ async def shutdown_pyrate_leaker(limiter: Limiter) -> None:
         limiter: pyrate ``Limiter`` (singleton из
             ``entrypoints/dependencies/rate_limit.py::get_default_limiter``
             или любой другой инстанс).
+
     """
     leaker = getattr(limiter, "_leaker", None) or getattr(
         getattr(limiter, "bucket_factory", None), "_leaker", None,
@@ -84,6 +85,7 @@ class BoundedInMemoryBucket(InMemoryBucket):
     Args:
         rates: Список ``Rate`` (передаётся в ``InMemoryBucket``).
         max_items: Жёсткий потолок ``len(items)``. Default ``10_000``.
+
     """
 
     def __init__(self, rates: list[Rate], *, max_items: int = 10_000) -> None:

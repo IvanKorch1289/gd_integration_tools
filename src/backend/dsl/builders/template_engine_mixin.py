@@ -8,6 +8,7 @@ Methods:
 - register_filter(name, fn) → RouteBuilder (chainable)
 
 Lazy jinja2 import; stdlib ``pathlib``; str/Path supported.
+
 """
 
 from __future__ import annotations
@@ -124,6 +125,7 @@ class TemplateEngineMixin:
             to: Destination dotted-path.
             context_from: Source: ``"body"``, ``"properties"``, or ``"merged"``.
             autoescape: Enable HTML autoescaping.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.html_template",
@@ -149,6 +151,7 @@ class TemplateEngineMixin:
             to: Destination dotted-path for PDF bytes.
             page_size: ``"A4"``, ``"LETTER"``, ``"A3"``, ``"A5"``.
             font_size: Base font size.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.pdf_template",

@@ -25,6 +25,7 @@ def extract_completion(
 
     Returns:
         ``(content, prompt_tokens, completion_tokens, model_used)``.
+
     """
     if isinstance(response, dict):
         choices = response.get("choices", [])

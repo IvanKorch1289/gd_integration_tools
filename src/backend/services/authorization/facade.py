@@ -45,6 +45,7 @@ class AuthDecision:
         scopes: Granted scopes/permissions.
         reason: Decision reason (for deny/error).
         audit_id: Audit event ID для tracking.
+
     """
 
     allowed: bool
@@ -117,6 +118,7 @@ class AuthorizationFacade:
 
         Returns:
             AuthDecision с allowed, method, scopes, etc.
+
         """
         # 1. Authentication phase
         auth_result = None
@@ -194,6 +196,7 @@ class AuthorizationFacade:
 
         Returns:
             AuthDecision.
+
         """
         if method == "api_key" or token.startswith("ak_"):
             return await self._check_api_key(token, required_capability)
@@ -213,6 +216,7 @@ class AuthorizationFacade:
 
         Returns:
             AuthDecision.
+
         """
         return await self._check_cookie_session(session_id, required_capability)
 
@@ -230,6 +234,7 @@ class AuthorizationFacade:
 
         Returns:
             AuthDecision.
+
         """
         return await self._check_api_key(api_key, required_scope)
 
@@ -247,6 +252,7 @@ class AuthorizationFacade:
 
         Returns:
             AuthDecision.
+
         """
         return await self._check_jwt(jwt_token, required_capability)
 
@@ -268,6 +274,7 @@ class AuthorizationFacade:
 
         Returns:
             AuthDecision.
+
         """
         allowed = self.check(principal, required_action, required_resource, context)
         return AuthDecision(

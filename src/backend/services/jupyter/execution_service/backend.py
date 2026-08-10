@@ -25,6 +25,7 @@ class NbClientExecutionBackend:
 
         Returns:
             List of output dicts per cell (same format as Hub execution).
+
         """
         try:
             import nbclient

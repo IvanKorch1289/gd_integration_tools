@@ -19,6 +19,7 @@ async def client():
 
     Yields:
         Настроенный AsyncClient без запуска реального сервера.
+
     """
     try:
         from src.backend.plugins.composition.app_factory import create_app

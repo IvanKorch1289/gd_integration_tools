@@ -52,6 +52,7 @@ class LangGraphAgentProcessor(BaseAIProcessor):
 
     Example:
         >>> p = LangGraphAgentProcessor(query="What is INN 7707083893?", thread_id="t1")
+
     """
 
     required_capability: ClassVar[str | None] = "agent.run"

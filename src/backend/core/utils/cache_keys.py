@@ -33,6 +33,7 @@ def build_cache_key(
 
     Returns:
         Строка ключа вида ``prefix:<sha256>``.
+
     """
     key_data = {
         "module": func.__module__,

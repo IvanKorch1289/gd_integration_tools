@@ -264,6 +264,7 @@ class LiteLLMGateway:
 
         Returns:
             ``True`` если gateway operational, ``False`` otherwise.
+
         """
         try:
             await self.acompletion(

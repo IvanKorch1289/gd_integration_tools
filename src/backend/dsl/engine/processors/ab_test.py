@@ -58,6 +58,7 @@ def select_variant(*, correlation_id: str | None, split: tuple[float, float]) ->
 
     Returns:
         Литерал "A" или "B".
+
     """
     a_weight, b_weight = split
     total = a_weight + b_weight
@@ -87,6 +88,7 @@ class ABTestProcessor(BaseProcessor):
         track_metric: name метрики для последующего разбора (write-only
             field — runtime смотрит exchange.properties[f"ab_test:{exp}"]).
         result_property: куда положить выбранный variant ("A"/"B").
+
     """
 
     def __init__(

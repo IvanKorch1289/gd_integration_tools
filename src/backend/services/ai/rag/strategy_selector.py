@@ -36,6 +36,7 @@ class StrategyDecision:
         confidence: Уверенность классификатора [0..1]; 0.0 для default fallback.
         elapsed_ms: Время выполнения select() в миллисекундах (для bench).
         from_cache: True, если результат взят из in-memory кэша.
+
     """
 
     strategy: str
@@ -80,6 +81,7 @@ class AdaptiveStrategySelector:
         llm_classify: Опциональная async callable
             ``(query: str) -> tuple[str, float]`` для production-режима.
             Если None — используется только эвристика.
+
     """
 
     def __init__(

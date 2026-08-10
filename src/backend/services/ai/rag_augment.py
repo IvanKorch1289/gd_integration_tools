@@ -35,6 +35,7 @@ def compute_freshness(
 
     Returns:
         :class:`FreshnessLabel`.
+
     """
     if ingested_at is None:
         return FreshnessLabel.EXPIRED
@@ -70,6 +71,7 @@ def build_augment_result(
 
     Returns:
         :class:`AugmentResult`.
+
     """
     citations: list[RAGCitation] = []
     distribution = {label.value: 0 for label in FreshnessLabel}

@@ -60,6 +60,7 @@ class CacheBackendProtocol(Protocol):
 
         Returns:
             Количество удалённых ключей (0 если тегов не было).
+
         """
         ...
 
@@ -72,6 +73,7 @@ class CacheBackendProtocol(Protocol):
 
         Returns:
             Количество удалённых ключей (0 если не было совпадений).
+
         """
         ...
 
@@ -103,6 +105,7 @@ class InMemoryCacheBackend:
 
         Returns:
             Количество удалённых ключей.
+
         """
         keys = self._tag_to_keys.pop(tag, set())
         for key in keys:
@@ -118,6 +121,7 @@ class InMemoryCacheBackend:
 
         Returns:
             Количество удалённых ключей.
+
         """
         matching_keys = {key for key in self._keys if fnmatch.fnmatch(key, pattern)}
         for key in matching_keys:
@@ -142,6 +146,7 @@ class CacheInvalidator:
         Args:
             backends: Список backend'ов. Если None — создаётся пустой
                 список, backend'ы добавляются через ``add_backend``.
+
         """
         self._backends: list[CacheBackendProtocol] = list(backends or [])
 
@@ -159,6 +164,7 @@ class CacheInvalidator:
 
         Returns:
             Суммарное число удалённых ключей (по всем backend'ам).
+
         """
         if not tags or not self._backends:
             return 0
@@ -183,6 +189,7 @@ class CacheInvalidator:
 
         Returns:
             Суммарное число удалённых ключей (по всем backend'ам).
+
         """
         if not pattern or not self._backends:
             return 0
@@ -206,6 +213,7 @@ class CacheInvalidator:
 
         Returns:
             Суммарное число удалённых ключей (по всем backend'ам).
+
         """
         return await self.invalidate(*tags)
 
@@ -226,6 +234,7 @@ def set_cache_invalidator(invalidator: CacheInvalidator) -> None:
 
     Args:
         invalidator: Новый ``CacheInvalidator``.
+
     """
     global _global_invalidator
     _global_invalidator = invalidator

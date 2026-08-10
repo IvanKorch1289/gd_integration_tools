@@ -80,6 +80,7 @@ class LruMemoryCache:
         не наследует от него — храним произвольные Python-объекты, а не
         ``bytes``. Если потребуется serialised-fallback — оборачивать
         снаружи в :class:`MemoryBackend`.
+
     """
 
     def __init__(
@@ -139,6 +140,7 @@ class LruMemoryCache:
 
         Returns:
             Сохранённое значение либо ``None`` при miss / expiry.
+
         """
         async with self._lock:
             value = self._cache.get(key)
@@ -161,6 +163,7 @@ class LruMemoryCache:
             ttl: Игнорируется (cachetools.TTLCache использует глобальный
                 TTL на весь кэш). Параметр оставлен для API-совместимости
                 с :class:`CacheBackend`.
+
         """
         del ttl  # API-совместимость
         async with self._lock:

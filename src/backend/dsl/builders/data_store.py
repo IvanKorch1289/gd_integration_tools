@@ -28,6 +28,7 @@ class DataStoreStepMixin:
         Args:
             key: Ключ в хранилище.
             value: Значение (Any, сериализуемое).
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.data_store",
@@ -49,6 +50,7 @@ class DataStoreStepMixin:
             key: Ключ в хранилище.
             default: Значение по умолчанию, если ключ отсутствует.
             result_property: Имя property для записи результата.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.data_store",

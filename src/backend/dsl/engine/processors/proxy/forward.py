@@ -53,6 +53,7 @@ class ForwardToProcessor(BaseProcessor):
             (``{{request.path}}`` и т.п.). ``None`` = не переписывать.
         timeout: Секунд ждать backend.
         name: Имя процессора в трассе.
+
     """
 
     def __init__(

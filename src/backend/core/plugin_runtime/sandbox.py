@@ -113,6 +113,7 @@ def _read_resource_snapshot(
     Returns:
         :class:`_ResourceSnapshot` либо ``None`` если psutil не установлен
         (best-effort; в этом случае enforcement пропускается).
+
     """
     process = _get_process()
     if process is None:
@@ -177,6 +178,7 @@ class PluginSandboxAdapter:
         manifest: Манифест плагина — берётся ``sandbox`` + ``capabilities``.
         capability_check: Callback для проверки ``code.execute``
             (обычно ``CapabilityGate.check``).
+
     """
 
     def __init__(
@@ -216,6 +218,7 @@ class PluginSandboxAdapter:
             PluginSandboxError: ``[sandbox]`` не задекларирован / mode не
                 поддержан / capability ``code.execute`` отсутствует.
             ResourceLimitsExceeded: psutil зафиксировал превышение лимита.
+
         """
         profile = self._manifest.sandbox
         if profile is None or not profile.enabled:

@@ -36,6 +36,7 @@ class MCPNamespace:
         action_prefixes: Список prefix-действий, принадлежащих namespace
             (напр. ["credit.", "credit_score."] для credit).
         capabilities_required: Список capability, необходимых для доступа к namespace.
+
     """
 
     name: str
@@ -85,6 +86,7 @@ def get_namespace_for_action(action_name: str) -> MCPNamespace | None:
 
     Returns:
         MCPNamespace или None если action не принадлежит ни одному namespace.
+
     """
     for ns in (CREDIT_NAMESPACE, ANALYTICS_NAMESPACE, SYSTEM_NAMESPACE, AI_NAMESPACE):
         for prefix in ns.action_prefixes:
@@ -98,5 +100,6 @@ def list_namespaces() -> list[MCPNamespace]:
 
     Returns:
         Список [credit, analytics, system, ai] namespaces.
+
     """
     return [CREDIT_NAMESPACE, ANALYTICS_NAMESPACE, SYSTEM_NAMESPACE, AI_NAMESPACE]

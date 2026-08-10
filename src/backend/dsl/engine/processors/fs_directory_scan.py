@@ -87,6 +87,7 @@ class DirectoryScanProcessor(BaseProcessor):
 
     Warnings:
         DeprecationWarning — рекомендуется :class:`FilteredDirectoryScanProcessor`.
+
     """
 
     side_effect = SideEffectKind.SIDE_EFFECTING
@@ -148,6 +149,7 @@ class DirectoryScanProcessor(BaseProcessor):
         Warning:
             Депрекирован (S172 M1.2). Используйте
             :class:`FilteredDirectoryScanProcessor`.
+
         """
         # Resolve path.
         path = self._path

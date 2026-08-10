@@ -101,6 +101,7 @@ class CrudMixin(ReadMixin, WriteMixin, VersioningMixin, QueryMixin):
 
         Returns:
             Сформированный ``action_id``.
+
         """
         action_id = f"{spec.name}.{verb}"
         side_effect = "read" if method.upper() == "GET" else "write"

@@ -47,6 +47,7 @@ class AuditReplayMiddleware:
     Args:
         skip_paths: Paths to exclude from audit (e.g., /health, /metrics).
         sample_rate: Доля запросов для аудита (0.0..1.0). 1.0 = все запросы.
+
     """
 
     def __init__(
@@ -62,6 +63,7 @@ class AuditReplayMiddleware:
             app: ASGI-приложение.
             skip_paths: Paths to exclude from audit.
             sample_rate: Доля запросов для аудита (0.0..1.0).
+
         """
         self.app = app
         self._skip_paths = skip_paths or {"/health", "/metrics", "/readyz", "/livez"}

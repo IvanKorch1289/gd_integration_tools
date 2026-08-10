@@ -63,6 +63,7 @@ class CoreMixin(_ExternalDatabaseProtocol):
 
         Returns:
             Any: Результат выполнения операции после optional response validation.
+
         """
         meta = db_object.meta
         validated_payload = self._validate_request(meta, payload)

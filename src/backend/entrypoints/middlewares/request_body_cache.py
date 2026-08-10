@@ -45,6 +45,7 @@ def cached_body(scope: Scope) -> bytes | None:
 
     Returns:
         Cached body bytes или None если не закэшировано.
+
     """
     state = scope.get("state", {}) if "state" in scope else {}
     if not isinstance(state, dict):
@@ -70,6 +71,7 @@ class RequestBodyCacheMiddleware:
     Args:
         app: ASGI-приложение.
         max_body_size: Максимальный размер тела для кеширования (bytes).
+
     """
 
     def __init__(
@@ -80,6 +82,7 @@ class RequestBodyCacheMiddleware:
         Args:
             app: ASGI-приложение.
             max_body_size: Максимальный размер тела для кеширования.
+
         """
         self.app = app
         self.max_body_size = max(0, int(max_body_size))
@@ -91,6 +94,7 @@ class RequestBodyCacheMiddleware:
             scope: ASGI scope.
             receive: ASGI receive callable.
             send: ASGI send callable.
+
         """
         if scope["type"] != "http":
             # Non-HTTP scope (websocket/lifespan) — no body caching.
@@ -163,6 +167,7 @@ class RequestBodyCacheMiddleware:
 
         Returns:
             int или None если отсутствует/некорректен.
+
         """
         for header_name, header_value in scope.get("headers", []):
             if header_name == b"content-length":

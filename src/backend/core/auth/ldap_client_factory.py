@@ -79,6 +79,7 @@ def get_ad_client(
         * ``ldap3`` optional — если не установлен, ``is_available()``
           возвращает False, но factory не падает (для unit-тестов
           без LDAP).
+
     """
     global _ad_client_instance, _ad_client_attempted
 

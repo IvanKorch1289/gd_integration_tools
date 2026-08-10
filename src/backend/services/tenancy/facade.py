@@ -38,6 +38,7 @@ class TenantFacade:
 
         Returns:
             Current :class:`TenantContext` или None.
+
         """
         from src.backend.core.tenancy import current_tenant
 
@@ -51,6 +52,7 @@ class TenantFacade:
 
         Returns:
             Token для восстановления (use with ``reset()``).
+
         """
         from src.backend.core.tenancy import set_tenant
 
@@ -61,6 +63,7 @@ class TenantFacade:
 
         Returns:
             True если current_tenant is system tenant.
+
         """
         ctx = self.current()
         if ctx is None:
@@ -86,6 +89,7 @@ class TenantFacade:
 
         Returns:
             tenant_id или ``"_system"`` как fallback.
+
         """
         ctx = self.current()
         if ctx is None:
@@ -115,6 +119,7 @@ class TenantFacade:
 
             async with facade.with_tenant("tenant_42", principal_id="user_1"):
                 # All operations используют tenant_42
+
         """
         # cycle-4/D-AUDIT-100 — kwargs re-fix: CapabilityTenant(id, principal),
         # not CapabilityTenant(tenant_id, principal_id). При None principal —

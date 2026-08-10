@@ -53,6 +53,7 @@ class MessageExpirationProcessor(BaseProcessor):
         name: имя процессора.
 
     Side effect: expired messages — ``exchange.stop()`` + optional dispatch.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = (

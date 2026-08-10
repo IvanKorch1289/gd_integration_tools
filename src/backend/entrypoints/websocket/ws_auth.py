@@ -110,6 +110,7 @@ def extract_credential(
         WSCredential(token='eyJhbGc...', method='jwt', source='subprotocol')
         >>> extract_credential(None, {"auth_session": "abc"})
         WSCredential(token='abc', method='api_key', source='cookie')
+
     """
     # Приоритет 1: Sec-WebSocket-Protocol.
     if subprotocol:
@@ -177,6 +178,7 @@ class WSAuthenticator:
             Backward-compat: ``token`` обрабатывается как API key
             (Bearer-prefix stripping). Для JWT используйте
             :meth:`authenticate_jwt` или :meth:`authenticate_via_facade`.
+
         """
         if not token:
             raise WSAuthError("Missing authentication token")
@@ -218,6 +220,7 @@ class WSAuthenticator:
 
         Raises:
             WSAuthError: Если JWT невалиден (expired / bad-sig / claims).
+
         """
         if not token:
             raise WSAuthError("Missing JWT token")
@@ -278,6 +281,7 @@ class WSAuthenticator:
 
         Raises:
             WSAuthError: При ошибке верификации.
+
         """
         if credential.method == "jwt":
             session = await self.authenticate_jwt(credential.token)

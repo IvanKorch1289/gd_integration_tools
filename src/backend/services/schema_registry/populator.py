@@ -38,6 +38,7 @@ def populate_from_processor_registry(
 
     Returns:
         Количество зарегистрированных записей.
+
     """
     reg = registry or get_schema_registry()
     from src.backend.dsl.registry import get_processor_registry

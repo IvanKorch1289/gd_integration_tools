@@ -26,6 +26,7 @@ class CacheMixin(_BaseServiceProtocol):
 
         Args:
             entity_id: Идентификатор конкретной записи (опционально).
+
         """
         await response_cache.invalidate_pattern(pattern=self.__class__.__name__)
 

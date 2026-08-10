@@ -72,6 +72,7 @@ async def _verify_mobile_token(authorization: str | None) -> str:
 
     Raises:
         HTTPException 401 if invalid/missing.
+
     """
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(

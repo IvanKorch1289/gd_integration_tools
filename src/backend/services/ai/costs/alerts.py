@@ -71,6 +71,7 @@ class CostAlertService:
             window: длительность одного окна.
             group_by: ключ группировки cost-таблицы.
             top_n: размер топа для анализа.
+
         """
         current = await self._reader.fetch_costs(
             window=window, group_by=group_by, top_n=top_n,

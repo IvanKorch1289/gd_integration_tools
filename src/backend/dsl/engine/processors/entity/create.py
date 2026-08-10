@@ -22,6 +22,7 @@ class EntityCreateProcessor(_BaseEntityProcessor):
         entity: Имя сущности (``orders``, ``users``, ...).
         payload_from: Выражение извлечения payload (default ``body``).
         result_property: Имя property для записи созданной сущности.
+
     """
 
     _verb = "create"

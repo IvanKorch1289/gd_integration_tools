@@ -56,6 +56,7 @@ class DeclarationMixin(_CapabilityGateProtocol):
                 vocabulary.
             ValueError: Уже задекларировано для этого плагина (по имени
                 capability).
+
         """
         bucket = self._declarations.setdefault(plugin, {})
         for ref in capabilities:
@@ -88,6 +89,7 @@ class DeclarationMixin(_CapabilityGateProtocol):
                 vocabulary.
             ValueError: Уже задекларировано для этой пары
                 (tenant, principal).
+
         """
         self._vocabulary.validate_ref(capability)
         tenant_bucket = self._tenant_declarations.setdefault(tenant, {})
@@ -117,6 +119,7 @@ class DeclarationMixin(_CapabilityGateProtocol):
         Args:
             capability: Имя capability для отзыва.
             tenant: Tenant-id.
+
         """
         revoked = False
         tenant_bucket = self._tenant_declarations.get(tenant)
@@ -150,6 +153,7 @@ class DeclarationMixin(_CapabilityGateProtocol):
 
         Returns:
             Кортеж :class:`CapabilityRef` (может быть пустым).
+
         """
         result: list[CapabilityRef] = []
         tenant_bucket = self._tenant_declarations.get(tenant)

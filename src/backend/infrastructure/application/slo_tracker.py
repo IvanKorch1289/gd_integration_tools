@@ -37,6 +37,7 @@ class _FallbackStats:
 
         Args:
             latency_ms: Latency in milliseconds.
+
         """
         self.latencies.append(latency_ms)
         if len(self.latencies) > 10000:
@@ -50,6 +51,7 @@ class _FallbackStats:
 
         Returns:
             Latency at percentile.
+
         """
         if not self.latencies:
             return 0.0
@@ -63,6 +65,7 @@ class _FallbackStats:
 
         Returns:
             Sample count.
+
         """
         return len(self.latencies)
 
@@ -89,6 +92,7 @@ class RouteStats:
         Args:
             latency_ms: Latency in milliseconds.
             is_error: Whether this was an error.
+
         """
         self.total_count += 1
         if is_error:
@@ -107,6 +111,7 @@ class RouteStats:
 
         Returns:
             Latency at percentile in milliseconds.
+
         """
         if self._hdr is not None:
             return float(self._hdr.get_value_at_percentile(p))
@@ -118,6 +123,7 @@ class RouteStats:
 
         Returns:
             Sample count.
+
         """
         if self._hdr is not None:
             return int(self._hdr.get_total_count())
@@ -128,6 +134,7 @@ class RouteStats:
 
         Returns:
             Dictionary with total, errors, error_rate, p50_ms, p95_ms, p99_ms.
+
         """
         return {
             "total": self.total_count,
@@ -166,6 +173,7 @@ class SLOTracker:
 
         Returns:
             Dictionary mapping route IDs to their stats.
+
         """
         return {
             route_id: stats.to_dict()
@@ -191,6 +199,7 @@ class SLOTracker:
         Returns:
             True если бюджет не превышен (маршрут healthy).
             False если error-rate > max_error_rate.
+
         """
         stats = self._stats.get(route_id)
         if stats is None or stats.total_count == 0:
@@ -221,6 +230,7 @@ def enforce_slo(route_id: str, *, max_error_rate: float = 5.0):
 
     Raises:
         SLOBudgetExceeded: Если error-rate > max_error_rate.
+
     """
 
     def decorator(func: Any) -> Any:

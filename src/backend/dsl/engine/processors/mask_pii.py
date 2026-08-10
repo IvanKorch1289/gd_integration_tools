@@ -93,6 +93,7 @@ class MaskPiiProcessor(BaseProcessor):
             Если ``None`` — используются дефолтные patterns из
             :func:`build_default_patterns`.
         name: Имя процессора (для логирования).
+
     """
 
     def __init__(

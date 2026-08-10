@@ -67,6 +67,7 @@ async def hash_stream(
 
     Returns:
         Hex digest. Empty string если stream пустой.
+
     """
     hasher = StreamingBodyHasher()
     async for chunk in chunks:

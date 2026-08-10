@@ -40,6 +40,7 @@ class BaseProtocolAdapter(ABC):
 
         Returns:
             Подготовленный ``Exchange`` для обработки pipeline.
+
         """
 
     @abstractmethod
@@ -53,6 +54,7 @@ class BaseProtocolAdapter(ABC):
 
         Returns:
             Результат в формате протокола.
+
         """
 
     @abstractmethod
@@ -70,6 +72,7 @@ class BaseProtocolAdapter(ABC):
             exchange: Exchange для обогащения.
             **kwargs: Протокол-специфичные атрибуты
                 (например, ``soap_action``, ``grpc_status``).
+
         """
         exchange.meta.protocol = self.protocol
         exchange.meta.protocol_attrs.update(kwargs)

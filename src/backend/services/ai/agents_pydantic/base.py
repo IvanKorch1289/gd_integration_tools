@@ -117,6 +117,7 @@ class BasePydanticAgent[ResultT: BaseModel]:
 
     Sprint 4 уберёт adapter-shim ``LiteLLMModel`` и привяжет
     ``pydantic_ai_litellm`` напрямую.
+
     """
 
     result_type: type[BaseModel]
@@ -279,6 +280,7 @@ class BasePydanticAgent[ResultT: BaseModel]:
             ValidationError: при ``on_validation_error="fail"``.
             Exception: пробрасываются исключения, не классифицированные
                 как transient (TypeError, ValueError и т.д.).
+
         """
         deps_arg = deps if deps else None
         primary = self._ensure_agent()

@@ -80,6 +80,7 @@ class TemplateRegistry:
 
         Returns:
             TemplateRegistry singleton.
+
         """
         if cls._instance is None:
             cls._instance = cls()
@@ -186,6 +187,7 @@ class TemplateRegistry:
 
         Returns:
             Sorted list of template keys.
+
         """
         return sorted(self._entries.keys())
 
@@ -197,6 +199,7 @@ class TemplateRegistry:
 
         Returns:
             Sorted list of locale codes.
+
         """
         entry = self._entries.get(key)
         return sorted(entry.locales.keys()) if entry else []
@@ -209,6 +212,7 @@ class TemplateRegistry:
 
         Returns:
             True if registered, False otherwise.
+
         """
         return key in self._entries
 

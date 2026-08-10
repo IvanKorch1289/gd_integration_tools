@@ -33,6 +33,7 @@ class SecurityMixin:
                 (``api_key`` / ``jwt`` / ``express_jwt`` / ``mtls`` / ``basic``).
             result_property: Имя property для AuthContext.
             required: Если True — при провале маршрут останавливается.
+
         """
         from src.backend.dsl.engine.processors.security import AuthValidateProcessor
 
@@ -222,6 +223,7 @@ class SecurityMixin:
             replacement: Строка-заменитель (default ``"***"``).
             patterns: Опц. список regex-строк. Если задан — заменяет
                 дефолтные patterns. ``None`` = дефолты (8 типов PII).
+
         """
         from src.backend.dsl.engine.processors.mask_pii import MaskPiiProcessor
 

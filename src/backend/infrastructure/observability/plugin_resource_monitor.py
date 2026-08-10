@@ -93,6 +93,7 @@ class PluginResourceMonitor:
         plugins: Кортеж имён плагинов, которые мониторим. Пустой
             кортеж — отключает loop (NoOp).
         interval_seconds: Период сэмплирования (default 30s).
+
     """
 
     def __init__(

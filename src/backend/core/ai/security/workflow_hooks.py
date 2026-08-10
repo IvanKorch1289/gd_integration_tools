@@ -80,6 +80,7 @@ def banking_transaction_hook(subject: str, context: dict[str, Any]) -> SecurityD
     Returns:
         SecurityDecision: allowed=True if all checks pass, else
         SecurityDecision(allowed=False, threat_level=CRITICAL, reason=...).
+
     """
     workflow = context.get("workflow", "")
     if not workflow.startswith("banking."):
@@ -182,6 +183,7 @@ def rpa_browser_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
 
     Returns:
         SecurityDecision.
+
     """
     workflow = context.get("workflow", "")
     if not workflow.startswith("rpa."):
@@ -222,6 +224,7 @@ def code_generation_hook(subject: str, context: dict[str, Any]) -> SecurityDecis
 
     Returns:
         SecurityDecision.
+
     """
     workflow = context.get("workflow", "")
     if not workflow.startswith("code_generation."):
@@ -256,6 +259,7 @@ def data_export_hook(subject: str, context: dict[str, Any]) -> SecurityDecision:
 
     Returns:
         SecurityDecision.
+
     """
     workflow = context.get("workflow", "")
     if not workflow.startswith("data_export."):

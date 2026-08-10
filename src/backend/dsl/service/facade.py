@@ -45,6 +45,7 @@ class DslService:
             KeyError: Маршрут не зарегистрирован.
             RoutePermissionDeniedError: principal не имеет требуемой
                 permission (V22 R-V15-1 / Sprint 1).
+
         """
         if context is None:
             context = ExecutionContext()
@@ -121,6 +122,7 @@ class DslService:
 
         Returns:
             Dict с override values (e.g. ``{"pool_size": 50, "message_timeout_s": 5.0}``).
+
         """
         return route_registry.get_route_overrides(route_id)
 
@@ -132,6 +134,7 @@ class DslService:
             flag_name: Имя feature-флага.
             enable: ``True`` — маршруты доступны,
                 ``False`` — заблокированы.
+
         """
         route_registry.toggle_feature_flag(flag_name, enable=enable)
 

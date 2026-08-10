@@ -37,6 +37,7 @@ class RAGChunkSource:
         source_doc_version: Version source document (ISO date или git SHA).
         embedding_model: Embedding model used (``"text-embedding-3-small"``, ...).
         retrieval_score: Cosine similarity score (0.0-1.0).
+
     """
 
     chunk_id: str
@@ -58,6 +59,7 @@ class RAGResponseLineage:
         chunk_sources: Per-chunk source info.
         prompt_template: Template name (если используется).
         timestamp: Unix timestamp (sec).
+
     """
 
     response_id: str = field(default_factory=lambda: str(uuid.uuid4()))

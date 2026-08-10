@@ -28,6 +28,7 @@ def _resolve_effective_tenant_id(tenant_id: str | None) -> str | None:
     Returns:
         Эффективный tenant_id для фильтра или ``None``, если фильтр
         применять не нужно.
+
     """
     if tenant_id is not None:
         return tenant_id or None
@@ -49,6 +50,7 @@ def _build_where(namespace: str | None, tenant_id: str | None) -> dict[str, Any]
 
     Returns:
         ``dict`` с непустыми полями или ``None``.
+
     """
     where: dict[str, Any] = {}
     if namespace:
@@ -79,6 +81,7 @@ def _filter_chunks_by_tenant(
 
     Returns:
         Отфильтрованный список chunks (исходный объект не мутируется).
+
     """
     if tenant_id is None:
         return chunks

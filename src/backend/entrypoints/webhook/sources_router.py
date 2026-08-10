@@ -50,6 +50,7 @@ async def receive_source_webhook(source_id: str, request: Request) -> dict[str, 
         HTTPException 404: Source не зарегистрирован или kind != webhook.
         HTTPException 401: Не прошла HMAC/timestamp валидация.
         HTTPException 400: Невалидный JSON в body.
+
     """
     registry = get_source_registry()
     try:

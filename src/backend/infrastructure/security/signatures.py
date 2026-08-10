@@ -50,6 +50,7 @@ def sign_payload(
 
     Returns:
         (signature, timestamp) — hex-подпись и использованный timestamp.
+
     """
     ts = timestamp or int(time.time())
     body = _canonical_body(payload)
@@ -76,6 +77,7 @@ def verify_signature(
 
     Returns:
         True если подпись валидна и timestamp в окне.
+
     """
     now = int(time.time())
     if abs(now - timestamp) > window_seconds:
@@ -92,6 +94,7 @@ def build_signature_headers(
 
     Returns:
         {"X-Webhook-Signature": ..., "X-Webhook-Timestamp": ...}
+
     """
     signature, ts = sign_payload(payload, secret)
     return {"X-Webhook-Signature": signature, "X-Webhook-Timestamp": str(ts)}

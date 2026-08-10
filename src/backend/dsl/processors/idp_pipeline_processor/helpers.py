@@ -97,6 +97,7 @@ def classify_document(text: str) -> str:
 
     Returns:
         Doc type string. Always one of ``_VALID_TYPES``.
+
     """
     if not text:
         return _DEFAULT_TYPE
@@ -125,6 +126,7 @@ def extract_fields(
 
     Returns:
         Mapping ``{field_name: first_match}`` for fields that matched.
+
     """
     if not text:
         return {}
@@ -200,6 +202,7 @@ def validate_result(
     Returns:
         The list of validation errors (also stored in
         ``result.validation_errors``).
+
     """
     names = list(validators) if validators else list(_VALIDATORS)
     errors: list[str] = []

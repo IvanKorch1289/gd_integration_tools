@@ -53,6 +53,7 @@ class LoaderMixin(_LoadingProtocol):
                 цикл зависимостей; помечаются ``status="failed"`` с
                 ``reason=cycle_reason`` до import_module.
             cycle_reason: Текст причины для cycle_blocked плагинов.
+
         """
         blocked = blocked or set()
         parse_failures = parse_failures or {}

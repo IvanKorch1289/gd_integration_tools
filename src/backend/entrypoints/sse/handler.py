@@ -65,6 +65,7 @@ class EventBus:
 
         Returns:
             Очередь, в которую будут приходить события.
+
         """
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=100)
         self._subscribers.append(queue)
@@ -75,6 +76,7 @@ class EventBus:
 
         Args:
             queue: Очередь подписки.
+
         """
         self._subscribers = [q for q in self._subscribers if q is not queue]
 
@@ -84,6 +86,7 @@ class EventBus:
         Args:
             event_type: Тип события (поле ``event`` в SSE).
             data: Данные события (сериализуются в JSON).
+
         """
         event = {"event": event_type, "data": data}
 
@@ -197,6 +200,7 @@ def _extract_auth_from_request(
     Returns:
         Tuple ``(principal, permissions)``. Defaults — ``("", ())``
         (fail-closed anonymous).
+
     """
     auth = getattr(request.state, "auth", None)
     if auth is None:

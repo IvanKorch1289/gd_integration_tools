@@ -77,6 +77,7 @@ class WatcherManager:
 
         Raises:
             ValueError: Если директория не существует.
+
         """
         path = Path(spec.directory)
         if not path.is_dir():
@@ -107,6 +108,7 @@ class WatcherManager:
 
         Raises:
             KeyError: Если наблюдатель не найден.
+
         """
         if watcher_id not in self._watchers:
             raise KeyError(f"Watcher {watcher_id} не найден")
@@ -128,6 +130,7 @@ class WatcherManager:
 
         Returns:
             Список словарей с параметрами наблюдателей.
+
         """
         return [
             {

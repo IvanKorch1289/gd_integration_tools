@@ -28,6 +28,7 @@ class ExpressSessionStore(Protocol):
 
         Returns:
             Session ID.
+
         """
         ...
 
@@ -39,6 +40,7 @@ class ExpressSessionStore(Protocol):
 
         Returns:
             ExpressSession or None if not found.
+
         """
         ...
 
@@ -50,6 +52,7 @@ class ExpressSessionStore(Protocol):
         Args:
             session_id: Session identifier.
             context_delta: Context fields to update.
+
         """
         ...
 
@@ -58,6 +61,7 @@ class ExpressSessionStore(Protocol):
 
         Args:
             session_id: Session identifier.
+
         """
         ...
 

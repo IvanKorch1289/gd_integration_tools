@@ -19,6 +19,7 @@ class GraylogHandler:
 
         Args:
             config (LogStorageSettings): Настройки логирования для Graylog.
+
         """
         self.config = config
         self.handler: Handler | None = None
@@ -29,6 +30,7 @@ class GraylogHandler:
 
         Returns:
             bool: True, если логирование включено, иначе False.
+
         """
         return bool(self.config.host and self.config.udp_port)
 
@@ -41,6 +43,7 @@ class GraylogHandler:
 
         Raises:
             ConnectionError: Если конфигурация соединения недействительна.
+
         """
         if not self.enabled:
             return None
@@ -83,6 +86,7 @@ class GraylogHandler:
 
         Raises:
             ConnectionError: Если проверка соединения не удалась.
+
         """
         import socket
 

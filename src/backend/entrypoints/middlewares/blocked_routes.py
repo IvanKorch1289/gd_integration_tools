@@ -56,6 +56,7 @@ class BlockedRoutesMiddleware:
 
         Args:
             app: ASGI-приложение.
+
         """
         self.app = app
 

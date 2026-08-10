@@ -122,6 +122,7 @@ class SchedulerManager:
 
         Args:
             job_name (str): Имя задачи, для которой регистрируется обработчик.
+
         """
         from apscheduler.events import EVENT_JOB_EXECUTED
 
@@ -153,6 +154,7 @@ class SchedulerManager:
 
         Args:
             job_name (str): Имя задачи, для которой удаляется обработчик.
+
         """
         if job_name not in self._event_handlers:
             self.logger.warning(f"Обработчик для задачи '{job_name}' не найден.")
@@ -169,6 +171,7 @@ class SchedulerManager:
 
         Args:
             job_name (str): Имя задачи, которую необходимо очистить.
+
         """
         jobs = self.scheduler.get_jobs()
         for job in jobs:
@@ -204,6 +207,7 @@ class SchedulerManager:
 
         Returns:
             ``job_id`` зарегистрированной задачи (равно ``name``).
+
         """
         from apscheduler.triggers.cron import CronTrigger
 

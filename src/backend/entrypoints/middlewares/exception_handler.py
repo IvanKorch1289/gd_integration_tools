@@ -47,6 +47,7 @@ class ExceptionHandlerMiddleware:
 
         Args:
             app: ASGI-приложение.
+
         """
         self.app = app
 
@@ -57,6 +58,7 @@ class ExceptionHandlerMiddleware:
             scope: ASGI scope.
             receive: ASGI receive callable.
             send: ASGI send callable.
+
         """
         if scope["type"] != "http":
             # Cycle 51 critical: non-HTTP scope (websocket/lifespan) —

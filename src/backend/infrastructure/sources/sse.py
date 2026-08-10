@@ -53,6 +53,7 @@ class SSEEvent:
         event_id: Поле ``id:`` (для resume через ``Last-Event-ID``).
         event_type: Поле ``event:`` (``message`` если не указан).
         timestamp: Unix-время получения.
+
     """
 
     data: str | dict
@@ -80,6 +81,7 @@ class SSESource:
             streaming (S36-W7 R-V15-5). Если ``None`` — создаётся
             default-инстанс через :func:`make_http_client` lazy-import
             (для backward compat с тестами и dev-сценариями без DI).
+
     """
 
     def __init__(
@@ -123,6 +125,7 @@ class SSESource:
 
         Raises:
             PermissionError: Если ``sse.read`` capability denied.
+
         """
         # S172 (Wave S2): capability check на старте stream-сессии.
         # Делается один раз — auth на каждое событие было бы слишком

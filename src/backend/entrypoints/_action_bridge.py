@@ -64,6 +64,7 @@ class BridgeResult:
         error_code: Машиночитаемый код ошибки от ActionDispatcher
             (``"action_not_found"``, ``"validation_failed"`` и т.п.) —
             ``None`` для DSL-пути.
+
     """
 
     success: bool
@@ -111,6 +112,7 @@ async def dispatch_action_or_dsl(
     Returns:
         :class:`BridgeResult``. Поле ``via`` показывает, какой путь
         отработал.
+
     """
     if is_dispatcher_enabled_for(transport):
         result = await _try_dispatcher(
@@ -283,6 +285,7 @@ async def _dispatch_dsl(
             в DslService — fail-closed для protected routes).
         permissions: Кортеж permissions principal'а (для
             ``ExecutionContext.permissions``).
+
     """
     from src.backend.dsl.engine.context import ExecutionContext
     from src.backend.dsl.service import get_dsl_service

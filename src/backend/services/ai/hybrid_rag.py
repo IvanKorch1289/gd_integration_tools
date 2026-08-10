@@ -113,6 +113,7 @@ class HybridRAGSearch:
 
         Returns:
             Список документов {text, score, source: "vector"|"bm25"|"hybrid"}.
+
         """
         rag = self._get_rag()
 

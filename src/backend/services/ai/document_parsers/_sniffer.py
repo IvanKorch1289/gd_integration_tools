@@ -37,6 +37,7 @@ def sniff_mime(filename: str | None, declared: str | None) -> str:
     Returns:
         Эффективный MIME-type. Если расширение неизвестно — возвращает
         ``declared`` либо ``application/octet-stream``.
+
     """
     if declared and declared != "application/octet-stream":
         return declared

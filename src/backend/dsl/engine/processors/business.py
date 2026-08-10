@@ -135,6 +135,7 @@ class HumanApprovalProcessor(BaseProcessor):
         notifier: Callable для уведомления согласующих (email/Express/etc).
         timeout_seconds: Максимальное ожидание ответа.
         approvers: Список получателей уведомления.
+
     """
 
     def __init__(
@@ -191,6 +192,7 @@ class OutboxProcessor(BaseProcessor):
             По умолчанию используется
             :func:`app.infrastructure.repositories.outbox.write`, который
             сохраняет запись в таблицу ``outbox_messages``.
+
     """
 
     def __init__(

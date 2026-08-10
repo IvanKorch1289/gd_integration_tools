@@ -39,6 +39,7 @@ class StorageFacade:
             ``get_object_storage()``).
         capability_check: Опц. callback ``CapabilityGate.check``.
         plugin: Имя caller'а (для capability-event и audit).
+
     """
 
     def __init__(
@@ -68,6 +69,7 @@ class StorageFacade:
         Raises:
             CapabilityDeniedError: недостаточно прав.
             ServiceError: ошибка backend'а.
+
         """
         self._assert_write(key)
         try:
@@ -96,6 +98,7 @@ class StorageFacade:
 
         Returns:
             Полный ключ загруженного объекта.
+
         """
         self._assert_write(key)
         try:

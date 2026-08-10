@@ -44,6 +44,7 @@ def anonymize_trace_payload(
     Returns:
         Новый словарь с замаскированными строками; mapping не возвращается
         (это односторонняя анонимизация — restore не предполагается).
+
     """
     if payload is None or not feature_flags.presidio_pii_enabled:
         return payload

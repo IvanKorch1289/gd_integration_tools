@@ -44,6 +44,7 @@ async def _publish(
     Raises:
         Exception: Любая ошибка пробрасывается вызывающему (_run_once), чтобы
         тот обновил retry_count.
+
     """
     if ":" in topic:
         protocol, dest = topic.split(":", 1)

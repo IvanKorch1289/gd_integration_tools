@@ -66,6 +66,7 @@ class Pipeline:
 
         Returns:
             Pipeline: Текущий маршрут для fluent-chain.
+
         """
         self.processors.append(processor)
         return self
@@ -79,6 +80,7 @@ class Pipeline:
 
         Returns:
             Pipeline: Текущий маршрут для fluent-chain.
+
         """
         self.processors.extend(processors)
         return self
@@ -93,6 +95,7 @@ class Pipeline:
         Returns:
             Словарь с ключами apiVersion, route_id, source, description,
             processors.
+
         """
         from src.backend.dsl.versioning import CURRENT_VERSION
 
@@ -125,6 +128,7 @@ class Pipeline:
 
         Raises:
             ImportError: Если PyYAML не установлен.
+
         """
         try:
             import yaml
@@ -137,6 +141,7 @@ class Pipeline:
 
         Returns:
             Строка Python-кода.
+
         """
         lines = [
             "from src.backend.dsl.builder import RouteBuilder",
@@ -196,6 +201,7 @@ class PipelineCompiler:
 
         Returns:
             Кортеж (route_id, is_valid).
+
         """
         is_valid = processor_count > 0
         return (route_id, is_valid)
@@ -208,6 +214,7 @@ class PipelineCompiler:
 
         Returns:
             CompiledPipeline — скомпилированное представление.
+
         """
         processor_names = tuple(
             getattr(p, "name", p.__class__.__name__) for p in pipeline.processors

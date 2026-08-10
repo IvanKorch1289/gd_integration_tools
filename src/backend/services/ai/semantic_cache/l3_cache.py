@@ -50,6 +50,7 @@ class L3RetrievalGraphCache:
                 FIFO-вытеснение по времени вставки.
             ttl_seconds: TTL записи в секундах; expired-записи удаляются
                 lazy при lookup.
+
         """
         self._max_entries = max_entries
         self._ttl = ttl_seconds
@@ -90,6 +91,7 @@ class L3RetrievalGraphCache:
         Returns:
             Список документов либо None, если запись отсутствует, истекла
             либо feature-flag выключен.
+
         """
         if not self._is_enabled():
             return None
@@ -111,6 +113,7 @@ class L3RetrievalGraphCache:
             query: Текст запроса.
             namespace: RAG-коллекция / namespace.
             result: Список документов из RAG-поиска.
+
         """
         if not self._is_enabled():
             return
@@ -134,6 +137,7 @@ class L3RetrievalGraphCache:
 
         Returns:
             Количество удалённых записей.
+
         """
         if namespace == "*":
             removed = len(self._store)
@@ -157,6 +161,7 @@ class L3RetrievalGraphCache:
 
         Returns:
             True при успешной публикации, False при недоступности Redis.
+
         """
         if not self._is_enabled():
             return False

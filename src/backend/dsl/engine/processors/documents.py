@@ -223,6 +223,7 @@ class RenderXlsxProcessor(BaseProcessor):
             exchange: Текущий exchange; data — из body (опционально через
                 ``context_from`` path). Путь к xlsx — в ``output_to``.
             context: Контекст выполнения маршрута.
+
         """
         from openpyxl import Workbook, load_workbook  # lazy-import
 

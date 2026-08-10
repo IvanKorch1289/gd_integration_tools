@@ -43,6 +43,7 @@ class FileStreamConfig:
     Attributes:
         chunk_size: Размер chunk в байтах (default 64KB).
         max_file_size: Макс. размер файла в байтах (default 1GB).
+
     """
 
     chunk_size: int = 64 * 1024
@@ -100,6 +101,7 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
         Yields:
             :class:`FileChunk` последовательно. Последний chunk имеет
             ``is_last=True`` и заполненный ``final_fingerprint``.
+
         """
         # Late import: files_pb2 regen-зависимый (модули protobuf — динамически
         # генерируются protoc; mypy не видит message-классы).
@@ -151,6 +153,7 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
 
         Returns:
             :class:`FileUploadResponse` с file_id, object_uuid, size, fingerprint.
+
         """
         from src.backend.entrypoints.grpc.protobuf import (
             files_pb2,  # type: ignore[attr-defined]

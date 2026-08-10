@@ -68,6 +68,7 @@ class WorkflowCompilerRegistry:
 
         Returns:
             Свежий :class:`CompiledWorkflow`.
+
         """
         with self._lock:
             compiled = compile_workflow(decl)
@@ -80,6 +81,7 @@ class WorkflowCompilerRegistry:
 
         Returns:
             ``True`` если ключ был найден и удалён.
+
         """
         with self._lock:
             return self._cache.pop(name, None) is not None
@@ -118,6 +120,7 @@ class WorkflowCompilerRegistry:
         Returns:
             Список свежих :class:`CompiledWorkflow` (всегда
             пересобранные — каждое имя реплейсится).
+
         """
         with self._lock:
             result: list[CompiledWorkflow] = []

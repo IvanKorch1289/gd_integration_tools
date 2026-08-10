@@ -162,6 +162,7 @@ class DegradationManager:
         Args:
             name: Component identifier (e.g. "database", "redis").
             fallback: Optional callable to invoke when component is degraded.
+
         """
         self._components[name] = ComponentState(name=name)
         if fallback:
@@ -172,6 +173,7 @@ class DegradationManager:
 
         Args:
             name: Component identifier.
+
         """
         if name not in self._components:
             self.register(name)
@@ -188,6 +190,7 @@ class DegradationManager:
 
         Args:
             name: Component identifier.
+
         """
         if name not in self._components:
             self.register(name)
@@ -206,6 +209,7 @@ class DegradationManager:
 
         Returns:
             Fallback callable if component is degraded, None otherwise.
+
         """
         return (
             self._fallbacks.get(name)
@@ -221,6 +225,7 @@ class DegradationManager:
 
         Returns:
             True if component is available, False if degraded.
+
         """
         return self._components.get(name, ComponentState(name=name)).available
 
@@ -231,6 +236,7 @@ class DegradationManager:
             DEGRADED if any critical component is down,
             EMERGENCY if 2+ critical components are down,
             NORMAL otherwise.
+
         """
         critical = ["database", "redis"]
         critical_down = sum(
@@ -253,6 +259,7 @@ class DegradationManager:
             ``{"mode": "full"|"degraded"|"emergency", "components": {...}}``
             где ``components[name] = {"available": bool, "last_error": str|None,
             "error_count": int}``.
+
         """
         return {
             "mode": self.mode().value,

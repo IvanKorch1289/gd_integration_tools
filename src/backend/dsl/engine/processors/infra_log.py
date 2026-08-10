@@ -48,6 +48,7 @@ class InfraLogWriteProcessor(BaseProcessor):
 
         Raises:
             ValueError: Если ``level`` не из допустимого набора.
+
         """
         super().__init__(name="infra_log_write")
         if level not in ("debug", "info", "warning", "error", "critical"):
@@ -66,6 +67,7 @@ class InfraLogWriteProcessor(BaseProcessor):
             ``exchange`` и ``context`` принимаются для совместимости с
             базовым ``BaseProcessor.process`` API, но не используются —
             процессор stateless и не модифицирует exchange.
+
         """
         from src.backend.core.di.providers.infrastructure_locator import (
             get_logger_factory as _get_logger_factory_fn,

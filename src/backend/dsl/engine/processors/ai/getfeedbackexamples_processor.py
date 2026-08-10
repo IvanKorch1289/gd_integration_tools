@@ -63,6 +63,7 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
             min_similarity: Минимальный порог сходства (0..1).
             inject_as: Ключ в ``exchange.properties`` для результата.
             name: Имя процессора для трейсов/метрик.
+
         """
         super().__init__(name or "get_feedback_examples")
         self._query_from = query_from
@@ -93,6 +94,7 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
 
         Returns:
             Строковое представление запроса.
+
         """
         path = self._query_from
         body = exchange.in_message.body
@@ -119,6 +121,7 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
 
         Returns:
             Список пар (может быть пустым при отсутствии RAG-данных).
+
         """
         if top_k <= 0:
             return []
@@ -158,6 +161,7 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
 
         Returns:
             ``{"query": str, "response": str}``.
+
         """
         q_part = ""
         a_part = ""

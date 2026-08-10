@@ -30,6 +30,7 @@ class CrudMixin(_BaseServiceProtocol):
 
         Returns:
             Схема ответа или ``None``.
+
         """
         async with self._service_error_boundary():
             result: Any | None = await self.helper._process_and_transfer(
@@ -54,6 +55,7 @@ class CrudMixin(_BaseServiceProtocol):
 
         Raises:
             ServiceError: Если хотя бы один элемент не был создан.
+
         """
         result: list[Any | None] = []
         errors: list[dict[str, Any]] = []
@@ -91,6 +93,7 @@ class CrudMixin(_BaseServiceProtocol):
 
         Returns:
             Обновлённая схема ответа или ``None``.
+
         """
         async with self._service_error_boundary():
             result = await self.helper._process_and_transfer(
@@ -121,6 +124,7 @@ class CrudMixin(_BaseServiceProtocol):
 
         Returns:
             Схема, список схем, ``Page`` или ``None``.
+
         """
         async with self._service_error_boundary():
             result = await self.helper._process_and_transfer(
@@ -155,6 +159,7 @@ class CrudMixin(_BaseServiceProtocol):
 
         Returns:
             Схема ответа или ``None``.
+
         """
         async with self._service_error_boundary():
             instance = None
@@ -184,6 +189,7 @@ class CrudMixin(_BaseServiceProtocol):
         Args:
             key: Название поля.
             value: Значение поля.
+
         """
         async with self._service_error_boundary():
             await self.repo.delete(key=key, value=value)

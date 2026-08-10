@@ -52,6 +52,7 @@ class MLModelLoader:
 
     Args:
         max_models: Максимальное число моделей в кэше (default 8).
+
     """
 
     _MAX_MODELS: int = 8

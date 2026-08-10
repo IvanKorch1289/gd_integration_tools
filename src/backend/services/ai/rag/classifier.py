@@ -61,6 +61,7 @@ class ClassifierResult:
         source: ``llm`` / ``heuristic`` / ``cache`` — для трассировки и
             метрик.
         elapsed_ms: Время вычисления в миллисекундах.
+
     """
 
     strategy: str
@@ -78,6 +79,7 @@ class AccuracyBenchmarkResult:
         heuristic_correct: Сколько правильных ответов даёт чистая эвристика.
         llm_correct: Сколько правильных ответов даёт LLM-classifier.
         accuracy_uplift_pct: Процентный пункт прироста (llm − heuristic).
+
     """
 
     total: int
@@ -112,6 +114,7 @@ class QueryClassifier:
             llm_classify: Async-callable LLM-классификатор. ``None`` →
                 только эвристика.
             cache_size: Размер LRU-кэша внутри [AdaptiveStrategySelector].
+
         """
         self._selector = AdaptiveStrategySelector(
             cache_size=cache_size, llm_classify=llm_classify,
@@ -126,6 +129,7 @@ class QueryClassifier:
 
         Returns:
             ClassifierResult с source (llm/heuristic/cache).
+
         """
         decision: StrategyDecision = await self._selector.select(query)
         if decision.from_cache:
@@ -150,6 +154,7 @@ class QueryClassifier:
 
         Returns:
             Список ClassifierResult в том же порядке.
+
         """
         if not queries:
             return []
@@ -175,6 +180,7 @@ async def benchmark_accuracy(
 
     Returns:
         AccuracyBenchmarkResult с heuristic_correct, llm_correct, uplift.
+
     """
     if not dataset:
         return AccuracyBenchmarkResult(

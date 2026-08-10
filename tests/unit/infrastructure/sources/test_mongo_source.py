@@ -118,6 +118,7 @@ def _install_fake_motor_with_full_control(
 
     Args:
         change_stream_factory: callable(db_mock) -> change_stream_mock
+
     """
     admin = MagicMock()
     admin.command = AsyncMock(return_value={"ok": 1.0})

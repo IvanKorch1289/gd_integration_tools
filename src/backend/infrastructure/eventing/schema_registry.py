@@ -44,6 +44,7 @@ class SchemaRegistry:
         Args:
             subject: Schema subject identifier.
             schema: JSON Schema dictionary.
+
         """
         self._json_cache[subject] = schema
 
@@ -53,6 +54,7 @@ class SchemaRegistry:
         Args:
             subject: Schema subject identifier.
             schema_str: Avro schema as JSON string.
+
         """
         self._avro_cache[subject] = schema_str
 
@@ -64,6 +66,7 @@ class SchemaRegistry:
 
         Returns:
             JSON Schema dictionary or None if not found.
+
         """
         return self._json_cache.get(subject)
 
@@ -75,6 +78,7 @@ class SchemaRegistry:
 
         Returns:
             Avro schema string or None if not found.
+
         """
         return self._avro_cache.get(subject)
 
@@ -87,6 +91,7 @@ class SchemaRegistry:
 
         Raises:
             SchemaRegistryError: If schema not found or validation fails.
+
         """
         schema = self.get_json(subject)
         if not schema:
@@ -114,6 +119,7 @@ class SchemaRegistry:
 
         Raises:
             SchemaRegistryError: If schema not found or validation fails.
+
         """
         schema_str = self.get_avro(subject)
         if not schema_str:

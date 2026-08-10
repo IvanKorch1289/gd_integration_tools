@@ -63,6 +63,7 @@ class ObservabilityMixin(_PipelineStepsProtocol):
             request: AIRequest.
             policy: Resolved AIPolicySpec.
             response: Sanitized AIResponse.
+
         """
         audit = self._audit_service
         if audit is None:
@@ -125,6 +126,7 @@ class ObservabilityMixin(_PipelineStepsProtocol):
             request: AIRequest.
             policy: Resolved AIPolicySpec (для budget enforce — Wave S25 W5).
             response: AIResponse с tokens + cost_usd.
+
         """
         # S168 W9 P0-2: enforce max_cost_usd BEFORE recording metrics.
         # Default BudgetSpec.max_cost_usd=0.50 (ge=0); if 0 → no cap.

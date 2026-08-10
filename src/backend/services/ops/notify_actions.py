@@ -58,6 +58,7 @@ class NotifyGatewayActions:
 
         Returns:
             Gateway send result.
+
         """
         return await self._send(channel=channel, **kwargs)
 
@@ -69,6 +70,7 @@ class NotifyGatewayActions:
 
         Returns:
             Gateway send result.
+
         """
         return await self._send(channel="email", **kwargs)
 
@@ -80,6 +82,7 @@ class NotifyGatewayActions:
 
         Returns:
             Gateway send result.
+
         """
         return await self._send(channel="telegram", **kwargs)
 
@@ -91,6 +94,7 @@ class NotifyGatewayActions:
 
         Returns:
             Gateway send result.
+
         """
         return await self._send(channel="slack", **kwargs)
 
@@ -102,6 +106,7 @@ class NotifyGatewayActions:
 
         Returns:
             Gateway send result.
+
         """
         return await self._send(channel="teams", **kwargs)
 
@@ -113,6 +118,7 @@ class NotifyGatewayActions:
 
         Returns:
             Gateway send result.
+
         """
         return await self._send(channel="sms", **kwargs)
 
@@ -124,6 +130,7 @@ class NotifyGatewayActions:
 
         Returns:
             Gateway send result.
+
         """
         return await self._send(channel="webhook", **kwargs)
 
@@ -135,6 +142,7 @@ class NotifyGatewayActions:
 
         Returns:
             Gateway send result.
+
         """
         return await self._send(channel="express", **kwargs)
 
@@ -163,6 +171,7 @@ def register_notify_actions(
 
     Returns:
         Список зарегистрированных имён action'ов.
+
     """
     from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 

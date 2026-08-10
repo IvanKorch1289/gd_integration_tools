@@ -41,6 +41,7 @@ class Inbox:
         fail_mode: Поведение при недоступности Redis:
           ``"open"`` (default) — пропускает событие; ``"closed"`` —
           выбрасывает :class:`InboxUnavailableError` (caller отдаёт 503).
+
     """
 
     def __init__(
@@ -60,6 +61,7 @@ class Inbox:
         Raises:
             InboxUnavailableError: Если Redis недоступен и
                 ``fail_mode="closed"``.
+
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import (

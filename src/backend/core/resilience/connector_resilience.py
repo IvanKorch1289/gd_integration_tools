@@ -61,6 +61,7 @@ def resilient(
     scope текущего фикса. Если нужны excluded — добавить ``excluded: tuple``
     поле в ``RetryPolicy`` и обработать в ``with_retry`` через
     ``retry_if_not_exception_type``.
+
     """
 
     def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
@@ -124,6 +125,7 @@ class ResilientConnectorMixin:
     Note:
         ``__init_subclass__`` оборачивает методы перечисленные в
         ``_resilient_methods`` (S182 refactor).
+
     """
 
     _resilient_methods: dict[str, str] = {}

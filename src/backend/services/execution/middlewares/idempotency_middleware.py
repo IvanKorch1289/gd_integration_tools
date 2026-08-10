@@ -70,6 +70,7 @@ class IdempotencyMiddleware:
     Args:
         store: Реализация :class:`IdempotencyStore`. По умолчанию —
             in-memory; Redis-backed подменяется в composition root.
+
     """
 
     def __init__(self, store: IdempotencyStore | None = None) -> None:

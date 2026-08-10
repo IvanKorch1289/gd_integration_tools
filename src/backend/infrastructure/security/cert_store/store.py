@@ -82,6 +82,7 @@ class CertStore:
 
         Returns:
             Configured CertStore instance.
+
         """
         backend: CertBackend
         match settings.backend:
@@ -113,6 +114,7 @@ class CertStore:
 
         Returns:
             PEM string or None if not found.
+
         """
         cached = self._cache.get(service_id)
         if cached:
@@ -131,6 +133,7 @@ class CertStore:
 
         Returns:
             CertEntry or None if not found.
+
         """
         cached = self._cache.get(service_id)
         if cached:
@@ -160,6 +163,7 @@ class CertStore:
 
         Returns:
             Stored CertEntry.
+
         """
         entry = await self._backend.save(
             service_id,
@@ -184,6 +188,7 @@ class CertStore:
 
         Returns:
             ``True`` если запись существовала (backend сообщил об удалении).
+
         """
         existed = await self._backend.delete(service_id)
         if existed:
@@ -199,6 +204,7 @@ class CertStore:
 
         Returns:
             List of historical CertEntry objects.
+
         """
         return await self._backend.history(service_id)
 
@@ -207,6 +213,7 @@ class CertStore:
 
         Returns:
             List of expiring CertEntry objects.
+
         """
         deadline = datetime.now(tz=UTC) + timedelta(
             days=self._settings.expire_warn_days,

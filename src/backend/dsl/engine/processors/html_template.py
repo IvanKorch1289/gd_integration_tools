@@ -65,6 +65,7 @@ class HtmlTemplateProcessor(BaseProcessor):
         context_from: Источник контекста — ``body`` (default), ``properties``,
             ``merged`` (объединение body+properties, properties перекрывает body).
         autoescape: Включить autoescape для HTML (по умолчанию True для безопасности).
+
     """
 
     def __init__(

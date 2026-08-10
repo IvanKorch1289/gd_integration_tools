@@ -160,6 +160,7 @@ async def list_actions() -> list[ActionSummary]:
 
     Raises:
         HTTPException: 503 если feature_flags.admin_marketplace_endpoints=False.
+
     """
     _check_flag_enabled()
 
@@ -200,6 +201,7 @@ async def invoke_action(body: ActionInvokeRequest) -> ActionInvokeResponse:
 
     Raises:
         HTTPException: 503 если флаг выключен; 404 если action не найден.
+
     """
     _check_flag_enabled()
 
@@ -247,6 +249,7 @@ async def get_action_spec(name: str) -> ActionSpec:
 
     Raises:
         HTTPException: 503 если флаг выключен; 404 если action не найден.
+
     """
     _check_flag_enabled()
 

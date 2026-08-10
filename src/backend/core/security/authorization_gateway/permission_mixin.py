@@ -46,6 +46,7 @@ class PermissionMixin:
             ...         ),
             ...     ),
             ... )
+
         """
 
         async def _step(

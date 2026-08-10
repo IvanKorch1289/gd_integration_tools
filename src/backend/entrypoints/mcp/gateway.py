@@ -50,6 +50,7 @@ def _check_feature_flag() -> bool:
 
     Returns:
         True если namespaces enabled, False otherwise.
+
     """
     try:
         return bool(feature_flags.mcp_gateway_namespaces_enabled)
@@ -62,6 +63,7 @@ def _resolve_auth_provider() -> Any | None:
 
     Returns:
         JWTAuthProvider instance или None если недоступен / не настроен.
+
     """
     try:
         if not ai_stack.mcp_settings.tool_authz_enabled:
@@ -99,6 +101,7 @@ def create_mcp_gateway() -> Any:
 
     Returns:
         Экземпляр FastMCP с зарегистрированными namespaces.
+
     """
     auth = _resolve_auth_provider()
 
@@ -137,6 +140,7 @@ class MCPGateway:
 
         Returns:
             Экземпляр FastMCP с зарегистрированными tools.
+
         """
         if FastMCP is None:
             raise ImportError("fastmcp is not installed")
@@ -160,6 +164,7 @@ class MCPGateway:
 
         Args:
             mcp: Экземпляр FastMCP.
+
         """
         from src.backend.entrypoints.mcp.namespaces import (
             analytics_mcp,
@@ -193,6 +198,7 @@ class MCPGateway:
 
         Args:
             mcp: Экземпляр FastMCP.
+
         """
         try:
             from src.backend.entrypoints.mcp.workflow_tools import (
@@ -211,6 +217,7 @@ class MCPGateway:
 
         Args:
             mcp: Экземпляр FastMCP.
+
         """
         from src.backend.entrypoints.mcp import mcp_server
 
@@ -230,6 +237,7 @@ class MCPGateway:
 
         Returns:
             Количество зарегистрированных skills.
+
         """
         if SkillRegistry is None:
             logger.debug("SkillRegistry not available for auto-registration")

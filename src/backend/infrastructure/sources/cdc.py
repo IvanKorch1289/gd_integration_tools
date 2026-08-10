@@ -42,6 +42,7 @@ class CDCSource:
         plugin: Имя plug-in (``pgoutput`` default; альтернатива — ``wal2json``).
         decode_options: Дополнительные опции декодирования (зависят от plug-in).
         poll_interval_seconds: Интервал опроса слота при отсутствии сообщений.
+
     """
 
     kind: SourceKind = SourceKind.CDC

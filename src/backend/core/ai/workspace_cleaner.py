@@ -77,6 +77,7 @@ class AIWorkspaceCleaner:
         interval_seconds: Интервал между запусками cleanup (по умолчанию 3600 с).
         ttl_days: TTL для session-каталогов в днях (по умолчанию 7).
         max_bytes: Максимальный суммарный размер одного tenant-каталога в байтах.
+
     """
 
     def __init__(
@@ -140,6 +141,7 @@ class AIWorkspaceCleaner:
 
         Returns:
             Количество удалённых session-каталогов.
+
         """
         effective_ttl = ttl_days if ttl_days is not None else self._ttl_days
         cutoff_ts = now.timestamp() - effective_ttl * 86400
@@ -187,6 +189,7 @@ class AIWorkspaceCleaner:
 
         Returns:
             Количество удалённых session-каталогов.
+
         """
         limit = max_bytes if max_bytes is not None else self._max_bytes
         if not workspace.exists():

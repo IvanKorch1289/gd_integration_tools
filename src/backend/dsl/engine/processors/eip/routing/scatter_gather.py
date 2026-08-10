@@ -54,6 +54,7 @@ class ScatterGatherProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен с сообщением-источником.
             context: Контекст выполнения процессора.
+
         """
         tasks = [
             self._call_route(

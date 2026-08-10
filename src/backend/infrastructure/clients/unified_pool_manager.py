@@ -51,6 +51,7 @@ class PoolRegistration:
         kind: Тип пула ("sqlalchemy", "redis", "kafka", "clickhouse",
             "nats", "httpx", "smtp", "imap", …).
         max_size: Максимальный размер пула (для метрик).
+
     """
 
     name: str
@@ -216,6 +217,7 @@ class UnifiedPoolManager:
                         ...
                     }
                 }
+
         """
 
         async def _check_one(name: str, reg: PoolRegistration) -> dict[str, Any]:
@@ -274,6 +276,7 @@ class UnifiedPoolManager:
 
         Returns:
             dict ``name -> "ok" | "skipped" | "error: …"``.
+
         """
         result: dict[str, str] = {}
         try:

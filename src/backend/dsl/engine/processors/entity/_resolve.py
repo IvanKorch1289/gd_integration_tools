@@ -22,6 +22,7 @@ def _walk(node: Any, parts: list[str]) -> Any:
 
     Returns:
         Value по пути или ``None`` если путь не существует.
+
     """
     for part in parts:
         if isinstance(node, dict):
@@ -47,6 +48,7 @@ def _resolve(exchange: Exchange[Any], expression: str | None) -> Any:
 
     Returns:
         Resolved value или ``None`` если path отсутствует.
+
     """
     if not expression:
         return None

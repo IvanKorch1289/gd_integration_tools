@@ -53,6 +53,7 @@ class ContextMessage:
         role: Message role (user / assistant / system).
         content: Текст сообщения.
         token_count: Предвычисленный размер (если known).
+
     """
 
     role: str
@@ -68,6 +69,7 @@ class TokenBudget:
         limit: Максимальное число токенов (from BudgetSpec.max_tokens_prompt).
         system_tokens: Токены system prompt (reserved, not truncated).
         reserve_tokens: Резерв для текущего user message.
+
     """
 
     limit: int
@@ -110,6 +112,7 @@ class ContextStrategy(ABC):
 
         Returns:
             Модифицированный список messages для передачи в LLM.
+
         """
         ...
 
@@ -149,6 +152,7 @@ class RollingWindowStrategy(ContextStrategy):
         Returns:
             Новый список сообщений, вписывающийся в бюджет. ``[]`` если
             входной список пуст.
+
         """
         if not messages:
             return []
@@ -201,6 +205,7 @@ class MapReduceStrategy(ContextStrategy):
         Args:
             recent_count: Сколько самых свежих non-system сообщений
                 оставить без изменений.
+
         """
         self._recent_count = recent_count
 
@@ -292,6 +297,7 @@ class HierarchicalStrategy(ContextStrategy):
         Args:
             levels: Число уровней иерархии (default 3: recent + 2 summary levels).
             base_group_size: Размер группы на level=0 (default 20 messages).
+
         """
         self._levels = levels
         self._base_group_size = base_group_size

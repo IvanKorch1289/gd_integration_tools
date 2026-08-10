@@ -36,6 +36,7 @@ Note:
     * ``__slots__ = ()`` — обязательно (см. ADR DSL Foundation Refactor);
     * не содержит ``@dataclass``;
     * state хранится в :class:`RouteBuilder._deferred` (dict).
+
 """
 
 from __future__ import annotations
@@ -75,6 +76,7 @@ def _validate_cron_expression(expression: str) -> str:
 
     Raises:
         ValueError: некорректное cron-выражение.
+
     """
     if not isinstance(expression, str) or not expression.strip():
         raise ValueError("Cron expression must be a non-empty string")
@@ -115,6 +117,7 @@ def _coerce_timestamp(value: TimestampLike) -> float:
     Raises:
         TypeError: ``value`` имеет неподдерживаемый тип.
         ValueError: строка не парсится как ISO-8601.
+
     """
     if isinstance(value, datetime):
         if value.tzinfo is None:
@@ -172,6 +175,7 @@ class DeferredExecutionMixin:
         Raises:
             ValueError: ``seconds`` отрицательный.
             TypeError: ``seconds`` не int.
+
         """
         if not isinstance(seconds, int) or isinstance(seconds, bool):
             raise TypeError(
@@ -202,6 +206,7 @@ class DeferredExecutionMixin:
 
         Raises:
             ValueError: невалидное cron-выражение.
+
         """
         expression = _validate_cron_expression(cron)
         self._set_deferred(
@@ -229,6 +234,7 @@ class DeferredExecutionMixin:
         Raises:
             TypeError: ``timestamp`` имеет неподдерживаемый тип.
             ValueError: ``str`` не парсится как ISO-8601.
+
         """
         ts = _coerce_timestamp(timestamp)
         self._set_deferred(
@@ -248,6 +254,7 @@ class DeferredExecutionMixin:
 
         Raises:
             TypeError: ``condition`` не callable.
+
         """
         if not callable(condition):
             raise TypeError(
@@ -268,6 +275,7 @@ class DeferredExecutionMixin:
             Идемпотентно: устанавливает ``_deferred`` в ``{}`` (создаёт slot
             если отсутствует). Это нужно для downstream-assert'ов вида
             ``assert builder._deferred == {}`` после ``cancel_deferred()``.
+
         """
         object.__setattr__(self, "_deferred", {})
         return self  # type: ignore

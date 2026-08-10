@@ -75,6 +75,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
         model: LLM model для selection. Default ``"gpt-4o-mini"``.
         temperature: LLM temperature. Default ``0.0`` (deterministic).
         name: Имя процессора.
+
     """
 
     required_capability: ClassVar[str | None] = "ai.tool.dispatch"
@@ -251,6 +252,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
         Returns:
             ``{"tool_id": str, "args": dict}`` или ``None`` если LLM
             недоступен / parse failed / LLM вернул ``tool_id: null``.
+
         """
         prompt = self._build_selection_prompt(query=query, tools_desc=tools_desc)
         try:

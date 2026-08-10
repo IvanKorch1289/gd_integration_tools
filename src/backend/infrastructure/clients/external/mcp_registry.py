@@ -42,6 +42,7 @@ class MCPClientSpec(BaseModel):
         waf_policy: WAF policy: "strict" (default) или "permissive".
         timeout_s: Таймаут запроса в секундах.
         headers: Дополнительные HTTP headers (напр. Authorization).
+
     """
 
     name: str = Field(..., description="Уникальный identifier клиента")
@@ -92,6 +93,7 @@ class MCPClientRegistry:
 
         Args:
             spec: Спецификация клиента.
+
         """
         self._clients[spec.name] = spec
         logger.info("MCP external client registered: %s (%s)", spec.name, spec.url)
@@ -104,6 +106,7 @@ class MCPClientRegistry:
 
         Returns:
             Количество загруженных клиентов.
+
         """
         import yaml
 
@@ -132,6 +135,7 @@ class MCPClientRegistry:
 
         Returns:
             Список MCPClientSpec.
+
         """
         return list(self._clients.values())
 
@@ -143,6 +147,7 @@ class MCPClientRegistry:
 
         Returns:
             MCPClientSpec или None если не найден.
+
         """
         return self._clients.get(name)
 
@@ -161,6 +166,7 @@ class MCPClientRegistry:
             KeyError: Если client_name не зарегистрирован.
             PermissionError: Если capability check failed.
             RuntimeError: Если HTTP client недоступен.
+
         """
         from anyio import BrokenResourceError
 
@@ -218,6 +224,7 @@ class MCPClientRegistry:
 
         Returns:
             OutboundHttpClient instance.
+
         """
         if self._http_client is not None:
             return self._http_client
@@ -242,6 +249,7 @@ class MCPClientRegistry:
 
         Returns:
             API key string или None.
+
         """
         try:
             from src.backend.core.interfaces.secrets import SecretsBackend
@@ -281,6 +289,7 @@ def _check_capability(capability: str, client_name: str) -> None:
 
     Raises:
         PermissionError: Если capability denied.
+
     """
     try:
         from src.backend.core.security.capability_gate import CapabilityGate  # type: ignore[import-not-found]

@@ -38,6 +38,7 @@ class E2BSandbox(CodeSandbox):
         plugin: Имя caller'а для capability-event.
         fs_facade: Опц. ``AIFsFacade`` для сохранения artifacts в
             выданный workspace.
+
     """
 
     def __init__(
@@ -79,6 +80,7 @@ class E2BSandbox(CodeSandbox):
 
         Raises:
             RuntimeError: Если e2b-code-interpreter не установлен.
+
         """
         if self._capability_check is not None:
             scope = workspace.session_id if workspace is not None else None

@@ -232,6 +232,7 @@ class DatabaseInitializer:
 
         Returns:
             Query result.
+
         """
         async with self.async_engine.begin() as conn:
             return await conn.execute(query, params or {})
@@ -309,6 +310,7 @@ class DatabaseInitializer:
 
         Raises:
             DatabaseError: При ошибке проверки подключения.
+
         """
         ping_sql = (
             "SELECT 1 FROM dual"

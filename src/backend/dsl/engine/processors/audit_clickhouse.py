@@ -116,6 +116,7 @@ class AuditClickhouseProcessor(BaseProcessor):
         tenant_id_from: Имя exchange-property для tenant_id.
         user_id_from: Имя exchange-property для user_id.
         route_name_from: Имя exchange-property для route_name.
+
     """
 
     def __init__(
@@ -139,6 +140,7 @@ class AuditClickhouseProcessor(BaseProcessor):
             user_id_from: Имя property в exchange для user_id.
             route_name_from: Имя property в exchange для route_name.
             name: Переопределение имени процессора для логов.
+
         """
         super().__init__(name=name or f"audit_clickhouse:{event_type}")
         self._event_type = event_type
@@ -158,6 +160,7 @@ class AuditClickhouseProcessor(BaseProcessor):
         Args:
             exchange: Текущий контекст обмена данными в pipeline.
             context: Контекст выполнения с конфигурацией и зависимостями.
+
         """
         from src.backend.services.audit.clickhouse_audit_service import (
             AuditEvent,
@@ -199,6 +202,7 @@ class AuditClickhouseProcessor(BaseProcessor):
 
         Returns:
             Словарь, совместимый с DSL YAML-форматом шага ``audit_clickhouse``.
+
         """
         spec: dict[str, Any] = {
             "event_type": self._event_type,

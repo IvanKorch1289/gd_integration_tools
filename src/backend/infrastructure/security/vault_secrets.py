@@ -47,6 +47,7 @@ class VaultBackendConfig:
         token: Токен (либо AppRole-token из ``VaultSecretRefresher``).
         mount: KV v2 mount-point (по умолчанию ``secret``).
         cache_ttl_s: TTL in-memory кеша значений (≤ refresher.interval).
+
     """
 
     addr: str
@@ -67,6 +68,7 @@ class VaultSecretsBackend(SecretsBackend):
         client_factory: Опц. фабрика hvac-клиентов (для тестов / альтернативной
             аутентификации). Если ``None`` — конструируется ``hvac.Client``
             из ``addr``/``token``.
+
     """
 
     def __init__(

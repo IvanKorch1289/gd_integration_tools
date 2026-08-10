@@ -79,6 +79,7 @@ class SlidingWindowBreaker:
         Args:
             name: Уникальное имя breaker'а (для регистрации в purgatory).
             spec: Спецификация CB.
+
         """
         self._name = name
         self._spec = spec
@@ -139,6 +140,7 @@ class SlidingWindowBreaker:
 
         Raises:
             CircuitOpen: Если breaker открыт.
+
         """
         self._check_recovery()
         if self._state == "open":
@@ -175,6 +177,7 @@ class ReplicaFailoverBreaker:
         Args:
             name: Имя breaker'а.
             spec: Спецификация CB.
+
         """
         self._name = name
         self._spec = spec

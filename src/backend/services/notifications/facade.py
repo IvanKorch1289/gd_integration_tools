@@ -47,6 +47,7 @@ class NotificationsFacade:
         plugin: Имя caller'а (для capability-event и audit).
         prefer_apprise: Если True — предпочитать apprise для всех каналов
             (если доступен). Default False (использует MessagingFacade).
+
     """
 
     def __init__(
@@ -118,6 +119,7 @@ class NotificationsFacade:
 
         Returns:
             True если отправлено успешно, False если ошибка.
+
         """
         self._assert(f"notifications.send.{channel}", recipient)
 
@@ -217,6 +219,7 @@ class NotificationsFacade:
 
         Returns:
             True если канал доступен (через любой backend).
+
         """
         # Проверяем MessagingFacade
         try:
@@ -242,6 +245,7 @@ class NotificationsFacade:
 
         Returns:
             Список имён каналов.
+
         """
         channels = {"email", "telegram", "webhook", "express"}
         apprise = self._get_apprise()

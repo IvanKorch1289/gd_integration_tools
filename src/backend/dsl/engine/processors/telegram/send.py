@@ -35,6 +35,7 @@ class TelegramSendProcessor(BaseProcessor):
         disable_notification: Отправка без звука.
         disable_web_page_preview: Не показывать превью ссылок.
         result_property: Имя exchange-property для записи message_id.
+
     """
 
     def __init__(

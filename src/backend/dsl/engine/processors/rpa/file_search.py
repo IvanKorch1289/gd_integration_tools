@@ -23,6 +23,7 @@ class FileSearchProcessor:
         path_pattern: glob pattern (например, "**/*.py").
         pattern: regex pattern.
         max_results: hard cap (Ponytail YAGNI).
+
     """
 
     def __init__(

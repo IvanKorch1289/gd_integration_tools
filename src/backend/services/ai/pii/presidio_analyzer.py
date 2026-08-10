@@ -224,6 +224,7 @@ class PresidioSanitizerAdapter:
             RuntimeError: если Presidio недоступен в production (`PRESIDIO_PII_ENABLED=True`,
                 но `presidio_analyzer` не установлен или модель ru_core_news_lg не загружена).
                 Callers обязаны иметь feature-flag guard перед вызовом.
+
         """
         if not self._ensure_initialized():
             raise RuntimeError(
@@ -338,6 +339,7 @@ def _record_presidio_fallback(*, reason: str) -> None:
 
     Args:
         reason: Причина fallback (``import_error`` / ``init_error``).
+
     """
     try:
         from src.backend.core.utils.metrics_registry import metrics_registry

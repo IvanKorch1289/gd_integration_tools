@@ -57,6 +57,7 @@ class AuditVerifyScheduler:
     Args:
         store: :class:`ImmutableAuditStore` (поверх Postgres session_factory).
         interval_hours: период запуска verify() (default 24h).
+
     """
 
     def __init__(
@@ -167,6 +168,7 @@ async def start_audit_verify(
     Args:
         store: :class:`ImmutableAuditStore` (поверх Postgres session_factory).
         interval_hours: период verify (default 24h).
+
     """
     global default_scheduler
     if default_scheduler is not None and default_scheduler.is_running:
@@ -212,6 +214,7 @@ async def try_start_default(
     Returns:
         ``True`` если scheduler успешно запущен, ``False`` в любом
         другом случае (включая ``Exception`` внутри ``start_audit_verify``).
+
     """
     try:
         from src.backend.core.config import features as features_module

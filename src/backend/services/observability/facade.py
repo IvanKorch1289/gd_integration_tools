@@ -42,6 +42,7 @@ class ObservabilityFacade:
 
     Args:
         plugin: Имя caller'а (для metrics tag defaults).
+
     """
 
     def __init__(self, *, plugin: str = "extension") -> None:
@@ -57,6 +58,7 @@ class ObservabilityFacade:
             name: Имя metric (например, ``"orders.processed"``).
             value: Значение (counter: +1, gauge: текущее значение, histogram: latency).
             tags: Дополнительные теги (key-value).
+
         """
         try:
             counter = metrics_registry.counter(
@@ -78,6 +80,7 @@ class ObservabilityFacade:
 
         Yields:
             Span object (или None если tracing unavailable).
+
         """
         try:
             from src.backend.core.observability.correlation import (
@@ -95,6 +98,7 @@ class ObservabilityFacade:
 
         Args:
             correlation_id: UUID или другой уникальный идентификатор.
+
         """
         try:
             from src.backend.core.observability.correlation import (
@@ -110,6 +114,7 @@ class ObservabilityFacade:
 
         Returns:
             Correlation ID или None.
+
         """
         try:
             from src.backend.core.observability.correlation import (
@@ -138,6 +143,7 @@ class ObservabilityFacade:
             event: Имя события (например, ``"order.created"``).
             severity: ``"info"`` / ``"warning"`` / ``"error"``.
             **fields: Дополнительные structured fields.
+
         """
         try:
             from src.backend.core.observability.logging_helpers import (

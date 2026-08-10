@@ -72,6 +72,7 @@ class APIKeyManager:
             event_type: Schema-free string id (``auth.global_verify_error``).
             payload: Optional dict. ``client_id`` / ``actor`` / ``timestamp``
                 кладутся через ``add_to_stream``.
+
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import (
@@ -123,6 +124,7 @@ class APIKeyManager:
             Pre-S172: SHA-256 hash сравнивается с stored SHA.
             S172 M2: stored hash — Argon2 PHC (новый) или SHA-256 hex
             (legacy). Verify делегирует :class:`APIKeyAuth.verify`.
+
         """
         self._init_global_key()
 
@@ -236,6 +238,7 @@ class APIKeyManager:
             key (~258 bits entropy) → обязательно pass validate_strength
             (defensive: в случае secrets.token_urlsafe change-of-behavior,
             system НЕ создаст weak key).
+
         """
         from src.backend.core.auth.api_key_backend import APIKeyAuth, StrengthReport
 
@@ -314,6 +317,7 @@ class APIKeyManager:
         Notes:
             S172 M2: новый hash — Argon2id. Старый (даже если был Argon2)
             остаётся в ``prev_key_hash`` для grace period.
+
         """
         try:
             import orjson
@@ -453,6 +457,7 @@ class APIKeyManager:
         Returns:
             ``True`` если upgrade успешен, ``False`` если client не найден
             или verify failed.
+
         """
         try:
             import orjson

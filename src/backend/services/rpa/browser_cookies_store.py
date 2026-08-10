@@ -64,6 +64,7 @@ def _load_or_create_fernet_key() -> bytes:
 
     Raises:
         RuntimeError: non-dev_light + no key configured.
+
     """
     from cryptography.fernet import Fernet
 
@@ -106,6 +107,7 @@ class BrowserCookieStore:
         key_prefix: namespace prefix (default "browser:session:").
         fernet_key: Fernet key bytes (default: load from env).
             Pass explicitly to override (e.g. for testing).
+
     """
 
     def __init__(
@@ -151,6 +153,7 @@ class BrowserCookieStore:
             user_id: ID пользователя браузерной сессии.
             domain: domain для которого cookies применяются.
             cookies: список dict-cookies (playwright формат).
+
         """
         if not cookies:
             return

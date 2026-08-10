@@ -243,6 +243,7 @@ class RedisCacheFacade(UnifiedCacheFacade):
     Raises:
         CacheError: Если backend raises на любую операцию (консьюмер может
             перехватить через FallbackCacheFacade).
+
     """
 
     def __init__(self, backend: Any) -> None:

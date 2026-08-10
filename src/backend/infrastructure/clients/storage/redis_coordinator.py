@@ -53,6 +53,7 @@ class RedisHash:
         Args:
             field: Field name.
             value: Value to set (JSON-serialized if not string).
+
         """
         raw = _get_raw_redis()
         payload = orjson.dumps(value).decode() if not isinstance(value, str) else value
@@ -66,6 +67,7 @@ class RedisHash:
 
         Returns:
             Field value or None if not found.
+
         """
         raw = _get_raw_redis()
         value = await raw.hget(self._key, field)
@@ -86,6 +88,7 @@ class RedisHash:
 
         Returns:
             True if deleted, False if not found.
+
         """
         raw = _get_raw_redis()
         result = await raw.hdel(self._key, field)
@@ -96,6 +99,7 @@ class RedisHash:
 
         Returns:
             Dictionary of all field-value pairs.
+
         """
         raw = _get_raw_redis()
         data = await raw.hgetall(self._key)
@@ -117,6 +121,7 @@ class RedisHash:
 
         Returns:
             True if field exists.
+
         """
         raw = _get_raw_redis()
         return bool(await raw.hexists(self._key, field))
@@ -153,6 +158,7 @@ class RedisSet:
 
         Returns:
             Number of members added.
+
         """
         raw = _get_raw_redis()
         return await raw.sadd(self._key, *members)
@@ -165,6 +171,7 @@ class RedisSet:
 
         Returns:
             Number of members removed.
+
         """
         raw = _get_raw_redis()
         return await raw.srem(self._key, *members)
@@ -174,6 +181,7 @@ class RedisSet:
 
         Returns:
             Set of member strings.
+
         """
         raw = _get_raw_redis()
         values = await raw.smembers(self._key)
@@ -189,6 +197,7 @@ class RedisSet:
 
         Returns:
             True if member is in the set.
+
         """
         raw = _get_raw_redis()
         return bool(await raw.sismember(self._key, member))
@@ -198,6 +207,7 @@ class RedisSet:
 
         Returns:
             Set size.
+
         """
         raw = _get_raw_redis()
         return int(await raw.scard(self._key) or 0)
@@ -236,6 +246,7 @@ class RedisCursor:
 
         Returns:
             Cursor value or None if not set.
+
         """
         raw = _get_raw_redis()
         value = await raw.get(self._key)
@@ -251,6 +262,7 @@ class RedisCursor:
 
         Returns:
             Current or initialized cursor value.
+
         """
         current = await self.get()
         if current is not None:
@@ -267,6 +279,7 @@ class RedisCursor:
 
         Returns:
             True if advancement occurred.
+
         """
         script = """
         local current = redis.call('get', KEYS[1])
@@ -325,6 +338,7 @@ class RedisPubSub:
 
         Returns:
             Number of subscribers that received the message.
+
         """
         raw = _get_raw_redis()
         payload = (

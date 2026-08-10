@@ -42,6 +42,7 @@ class StreamingSourcesMixin:
                 .dispatch_action("audit.persist")
                 .build()
             )
+
         """
         import importlib
 

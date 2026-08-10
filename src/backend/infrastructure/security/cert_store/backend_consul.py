@@ -42,6 +42,7 @@ class ConsulCertBackend(CertBackend):
         host: Consul host (default ``"localhost"``).
         port: Consul port (default 8500).
         token: ACL token (опционально).
+
     """
 
     name = "consul"
@@ -87,6 +88,7 @@ class ConsulCertBackend(CertBackend):
 
         Returns:
             ``CertEntry`` с PEM, fingerprint и expires_at, либо ``None``.
+
         """
         try:
             client = self._client_factory()()
@@ -146,6 +148,7 @@ class ConsulCertBackend(CertBackend):
 
         Raises:
             ConnectionError: Если Consul put не удался.
+
         """
         client = self._client_factory()()
         # Read current version to bump.
@@ -230,6 +233,7 @@ class ConsulCertBackend(CertBackend):
             ``ConsulCertBackend.save`` имеет нестандартную сигнатуру (positional
             ``fingerprint`` вместо keyword-only). Для ``set`` передаём
             ``fingerprint=None`` — backend вычислит его из ``pem``.
+
         """
         from datetime import timedelta
 
@@ -242,6 +246,7 @@ class ConsulCertBackend(CertBackend):
 
         Returns:
             ``True`` если ключ существовал.
+
         """
         try:
             client = self._client_factory()()

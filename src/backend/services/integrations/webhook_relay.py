@@ -112,6 +112,7 @@ class WebhookRelay:
 
         Returns:
             ID зарегистрированного правила (``rule.id``).
+
         """
         self._rules[rule.id] = rule
         return rule.id
@@ -124,6 +125,7 @@ class WebhookRelay:
 
         Returns:
             ``True`` если правило существовало и было удалено, иначе ``False``.
+
         """
         return self._rules.pop(rule_id, None) is not None
 

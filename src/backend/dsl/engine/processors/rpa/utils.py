@@ -20,6 +20,7 @@ def write_to_target(exchange: Exchange[Any], target: str, value: Any) -> None:
         exchange: The exchange object.
         target: Target location string.
         value: Value to write.
+
     """
     if target.startswith("property:"):
         exchange.set_property(target[len("property:") :], value)

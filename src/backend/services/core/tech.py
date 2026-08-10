@@ -32,6 +32,7 @@ class TechService:
 
         Returns:
             HTML response with link.
+
         """
         return generate_link_page(
             f"{settings.logging.host}:{settings.logging.port}", "Хранилище логов",
@@ -42,6 +43,7 @@ class TechService:
 
         Returns:
             HTML response with link.
+
         """
         return generate_link_page(
             f"{settings.storage.interface_endpoint}", "Файловое хранилище",
@@ -52,6 +54,7 @@ class TechService:
 
         Returns:
             HTML response with link.
+
         """
         return generate_link_page(settings.queue.queue_ui_url, "Мониторинг очередей")
 
@@ -60,6 +63,7 @@ class TechService:
 
         Returns:
             HTML response with link.
+
         """
         return generate_link_page(
             settings.app.langfuse_url, "LangFuse — LLM Observability",
@@ -70,6 +74,7 @@ class TechService:
 
         Returns:
             HTML response with link.
+
         """
         return generate_link_page(
             settings.app.langgraph_url, "LangGraph Studio — AI Agents",
@@ -80,6 +85,7 @@ class TechService:
 
         Returns:
             True if healthy.
+
         """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_database()
@@ -89,6 +95,7 @@ class TechService:
 
         Returns:
             True if healthy.
+
         """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_redis()
@@ -98,6 +105,7 @@ class TechService:
 
         Returns:
             True if healthy.
+
         """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_s3()
@@ -107,6 +115,7 @@ class TechService:
 
         Returns:
             True if healthy.
+
         """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_s3_bucket()
@@ -116,6 +125,7 @@ class TechService:
 
         Returns:
             True if healthy.
+
         """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_graylog()
@@ -125,6 +135,7 @@ class TechService:
 
         Returns:
             True if healthy.
+
         """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_smtp()
@@ -134,6 +145,7 @@ class TechService:
 
         Returns:
             True if healthy.
+
         """
         async with get_healthcheck_session_provider()() as health_check:
             return await health_check.check_rabbitmq()

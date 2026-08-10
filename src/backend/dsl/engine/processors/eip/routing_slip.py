@@ -131,6 +131,7 @@ class RoutingSlipProcessor(BaseProcessor):
             Если False — warning + skip.
         max_steps: защита от бесконечной цепочки (default 50).
         name: имя процессора.
+
     """
 
     def __init__(
@@ -156,6 +157,7 @@ class RoutingSlipProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен с сообщением.
             context: Контекст выполнения процессора.
+
         """
         steps = self._steps_resolver(exchange)
         if asyncio.iscoroutine(steps):

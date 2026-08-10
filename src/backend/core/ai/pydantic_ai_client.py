@@ -50,6 +50,7 @@ class LLMDependencies:
         user_id: Опциональный идентификатор пользователя (для per-user audit).
         session_id: Опциональный идентификатор сессии (для LangGraph state).
         extra: Дополнительные данные для инструментов / hooks.
+
     """
 
     tenant_id: str
@@ -77,6 +78,7 @@ class LLMResult:
             (может отличаться от primary).
         latency_ms: Полное время выполнения в миллисекундах.
         is_fallback: True если вызвана fallback-модель после primary-failure.
+
     """
 
     content: str
@@ -131,6 +133,7 @@ class PydanticAIClient:
         gateway: :class:`LiteLLMGateway` для выполнения HTTP-запросов.
         model_router: ModelRouterSpec с primary + fallback chain.
         metrics_registry: MetricsRegistry для Prometheus counters.
+
     """
 
     def __init__(
@@ -207,6 +210,7 @@ class PydanticAIClient:
             GatewayRateLimited: Rate-limit на всех моделях.
             UnsupportedOperationError → NotImplementedError: stream=True
                 пока не реализован (deadline S32 W2+). Fail-fast на входе метода.
+
         """
         if stream:
             # Fail-fast (S210 fix, REPORT.md gap #3): нельзя валиться на 100-ой
@@ -448,6 +452,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             gateway: :class:`LiteLLMGateway` для выполнения HTTP.
             model_name: primary model name (e.g. "gpt-4o", "claude-3-5-sonnet").
             provider: provider label (e.g. "openai", "anthropic", "litellm").
+
         """
 
         def __init__(

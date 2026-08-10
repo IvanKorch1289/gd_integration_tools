@@ -60,6 +60,7 @@ async def make_dedupe_store() -> DedupeStore:
     Note:
         Async — требует живой event loop для ``RedisClient.get_client()``
         (lazy init Redis-клиента per kind).
+
     """
     # Lazy import — settings и Redis client тяжёлые, не нужны в unit-tests.
     from src.backend.core.config.services.outbox import outbox_settings
@@ -86,6 +87,7 @@ async def start_all_sources(
         invoker: Singleton :class:`Invoker`.
         specs: Список ``SourceSpec`` (для извлечения action/mode/reply_channel).
         dedupe: Опциональный :class:`DedupeStore` для idempotency.
+
     """
     for spec in specs:
         try:

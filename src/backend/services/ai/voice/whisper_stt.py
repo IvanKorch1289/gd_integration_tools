@@ -43,6 +43,7 @@ class STTResult:
         duration_seconds: Длительность аудио в секундах (если известно).
         provider: Имя провайдера (``"whisper"``).
         model: Идентификатор использованной модели.
+
     """
 
     text: str
@@ -84,6 +85,7 @@ class WhisperSTTService:
         >>> if svc.is_available():
         ...     result = await svc.transcribe("audio.wav")
         ...     print(result.text)
+
     """
 
     def __init__(
@@ -201,6 +203,7 @@ class WhisperSTTService:
             VoiceServiceUnavailable: SDK не установлен / flag выключен /
                 модель не загрузилась.
             FileNotFoundError: Аудио-файл не существует.
+
         """
         path = Path(audio_path)
         if not path.exists():

@@ -63,6 +63,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
 
         Returns:
             Rendered prompt после template + budget trim + context strategy.
+
         """
         from src.backend.core.ai.context_strategy import get_context_strategy
         from src.backend.core.config.features import feature_flags
@@ -170,6 +171,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
 
         Returns:
             AIResponse с raw completion (до output guards/sanitize).
+
         """
         if (
             policy is not None

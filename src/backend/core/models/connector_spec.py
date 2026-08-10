@@ -37,6 +37,7 @@ class SecretRef:
     Args:
         ref: Ключ в SecretsBackend (``${VAR}`` или ``vault:path#key``).
         hint: Подсказка для пользователя что подставить (без значения).
+
     """
 
     ref: str
@@ -55,6 +56,7 @@ class AuthSpec:
         secret_refs: Ссылки на секреты в SecretsBackend (token/password/etc).
             Сами значения секретов в spec'е НЕ хранятся.
         scopes: OAuth2 scopes (если применимо).
+
     """
 
     kind: AuthSchemeKind = AuthSchemeKind.NONE
@@ -77,6 +79,7 @@ class EndpointSpec:
         request_schema: JSON Schema тела запроса (или ``None``).
         response_schema: JSON Schema тела ответа (или ``None``).
         tags: Теги/группы (для UI/folders Postman).
+
     """
 
     operation_id: str
@@ -106,6 +109,7 @@ class ConnectorSpec:
         source_hash: SHA256-hash исходного content (для idempotency).
         source_url: URL источника (или ``None``).
         metadata: Произвольные метаданные.
+
     """
 
     name: str

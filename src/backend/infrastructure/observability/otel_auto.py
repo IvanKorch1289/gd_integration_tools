@@ -43,6 +43,7 @@ def instrument_asyncpg_if_enabled() -> bool:
     Returns:
         True если AsyncPGInstrumentor().instrument() был вызван в этом запуске,
         False если flag OFF или пакет недоступен.
+
     """
     global _ASYNCPG_INSTRUMENTED
     if _ASYNCPG_INSTRUMENTED:

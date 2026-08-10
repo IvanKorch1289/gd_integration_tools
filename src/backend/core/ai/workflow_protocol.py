@@ -53,6 +53,7 @@ class WorkflowDescriptorProtocol(Protocol):
         output_schema: Pydantic-модель ожидаемого результата (или ``None``).
         max_attempts: Верхний предел retry-budget'а.
         tags: Кортеж произвольных тегов для каталога.
+
     """
 
     name: str
@@ -69,6 +70,7 @@ class WorkflowRegistryProtocol(Protocol):
     Methods:
         list_all: Возвращает детерминированно отсортированный список
             всех зарегистрированных descriptor'ов.
+
     """
 
     def list_all(self) -> list[WorkflowDescriptorProtocol]:

@@ -43,6 +43,7 @@ class SourcesMixin(_RouteBuilderProtocol):
                 ``mtime`` (по времени изменения) или ``size``.
             result_property: Имя property, куда будет записан результат
                 (список dict с ключами ``path``, ``name``, ``size``, ``mtime``).
+
         """
         from src.backend.dsl.engine.processors.fs_directory_scan import (
             DirectoryScanProcessor,
@@ -103,6 +104,7 @@ class SourcesMixin(_RouteBuilderProtocol):
                 .dispatch_action("orders.ack")
                 .build()
             )
+
         """
         source = f"nats_js:{stream}/{subject}?durable={durable}&url={nats_url}"
         return cls(route_id=route_id, source=source, description=description)
@@ -142,6 +144,7 @@ class SourcesMixin(_RouteBuilderProtocol):
 
         Returns:
             :class:`RouteBuilder` с source ``webdav:<route_id>``.
+
         """
         import importlib
 
@@ -215,6 +218,7 @@ class SourcesMixin(_RouteBuilderProtocol):
                 .to_nats_js("orders.created", headers={"X-Source": "api"})
                 .build()
             )
+
         """
         from src.backend.dsl.engine.processors.sink_publish import (
             GenericSinkPublishProcessor,
@@ -282,6 +286,7 @@ class SourcesMixin(_RouteBuilderProtocol):
             ``from_nats_js`` / ``from_webdav`` которые ошибочно используют
             ``def X(cls, ...)`` без декоратора). Pre-existing TD для них —
             вне scope W4.
+
         """
         import importlib
 
@@ -346,6 +351,7 @@ class SourcesMixin(_RouteBuilderProtocol):
                 .dispatch_action("orders.ack")
                 .build()
             )
+
         """
         import importlib
 

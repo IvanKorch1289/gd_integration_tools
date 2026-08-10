@@ -48,6 +48,7 @@ class StrawberryTypeRegistry:
 
         Returns:
             Класс Strawberry-type (динамически созданный).
+
         """
         cache_key = f"{model.__module__}.{model.__name__}"
         if cache_key in self._cache:
@@ -161,5 +162,6 @@ def pydantic_to_strawberry(model: type[BaseModel]) -> type:
 
     Returns:
         Strawberry-type.
+
     """
     return global_registry.get_or_create(model)

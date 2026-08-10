@@ -43,6 +43,7 @@ class RedisBackend(CacheBackend):
 
         Returns:
             Cached bytes or None if not found.
+
         """
         return await self._client.get(key)
 
@@ -53,6 +54,7 @@ class RedisBackend(CacheBackend):
             key: Cache key.
             value: Value to cache.
             ttl: Optional TTL in seconds.
+
         """
         if ttl is not None:
             await self._client.set(key, value, ex=ttl)
@@ -64,6 +66,7 @@ class RedisBackend(CacheBackend):
 
         Args:
             keys: Cache keys to delete.
+
         """
         if keys:
             await self._client.delete(*keys)
@@ -73,6 +76,7 @@ class RedisBackend(CacheBackend):
 
         Args:
             pattern: Glob pattern to match keys.
+
         """
         # SCAN вместо KEYS — безопаснее для больших keyspace.
         async for key in self._client.scan_iter(match=pattern, count=200):
@@ -86,6 +90,7 @@ class RedisBackend(CacheBackend):
 
         Returns:
             True if key exists, False otherwise.
+
         """
         return bool(await self._client.exists(key))
 
@@ -113,6 +118,7 @@ class RedisBackend(CacheBackend):
 
         Returns:
             Число удалённых ключей (без учёта DEL tag-index).
+
         """
         index_key = self._tag_index_key(tag)
         # SMEMBERS + pipeline DEL
@@ -156,6 +162,7 @@ class RedisBackend(CacheBackend):
         Raises:
             ValueError: Если ``len(keys) > _MAX_PIPELINE_BATCH`` —
                 caller должен разбить на чанки.
+
         """
         if not keys:
             return []
@@ -186,6 +193,7 @@ class RedisBackend(CacheBackend):
         Raises:
             ValueError: Если ``len(items) > _MAX_PIPELINE_BATCH`` —
                 caller должен разбить на чанки.
+
         """
         if not items:
             return

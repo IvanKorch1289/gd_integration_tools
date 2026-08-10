@@ -61,6 +61,7 @@ async def list_plugins() -> list[PluginSummary]:
 
     Raises:
         HTTPException: 503 если feature_flags.admin_marketplace_endpoints=False.
+
     """
     _check_flag_enabled()
 
@@ -98,6 +99,7 @@ async def get_plugin_manifest(name: str) -> PluginManifest:
 
     Raises:
         HTTPException: 503 если флаг выключен; 404 если плагин не найден.
+
     """
     _check_flag_enabled()
 
@@ -139,6 +141,7 @@ async def toggle_plugin(name: str, body: PluginToggleRequest) -> PluginToggleRes
 
     Raises:
         HTTPException: 503 если флаг выключен; 404 если плагин не найден.
+
     """
     _check_flag_enabled()
 

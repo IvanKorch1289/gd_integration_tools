@@ -23,6 +23,7 @@ class CapabilityVocabulary:
 
         Raises:
             ValueError: Если capability с таким именем уже есть.
+
         """
         if definition.name in self._defs:
             raise ValueError(f"Capability already registered: {definition.name!r}")
@@ -37,6 +38,7 @@ class CapabilityVocabulary:
 
         Raises:
             CapabilityNotFoundError: Если имени нет в registry.
+
         """
         try:
             return self._defs[name]
@@ -71,6 +73,7 @@ class CapabilityVocabulary:
         Raises:
             CapabilityNotFoundError: Имя отсутствует в registry.
             ValueError: ``scope_required`` нарушено.
+
         """
         definition = self.get(ref.name)
         if definition.scope_required and ref.scope is None:

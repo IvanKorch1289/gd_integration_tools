@@ -104,5 +104,6 @@ class AIPolicyEnforcer(InputGuardMixin, OutputGuardMixin, HandleMixin, SanitizeM
         в PydanticAI tool dispatch — caller должен либо
         pre-init filter (W3 approach) либо per-invoke check (W3 stub
         → call ``enforce_tool_policy(tool_name, spec)`` перед dispatch).
+
         """
         return filter_tools_by_policy(tool_names, spec)

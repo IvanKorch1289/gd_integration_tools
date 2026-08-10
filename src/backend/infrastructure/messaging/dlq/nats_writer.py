@@ -33,6 +33,7 @@ class NATSDLQWriter:
     Args:
         jetstream: pre-initialized ``nats.aio.client.JetStreamContext``.
         subject_prefix: префикс (default ``"dlq."``).
+
     """
 
     def __init__(self, *, jetstream: Any, subject_prefix: str = "dlq.") -> None:

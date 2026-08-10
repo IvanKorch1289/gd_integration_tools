@@ -26,6 +26,7 @@ class CaptionResult:
         caption: Сгенерированный текст описания.
         model: Имя HF модели, использованной для inference.
         device: Куда загрузили модель (cpu/cuda/mps).
+
     """
 
     caption: str
@@ -42,6 +43,7 @@ class BLIP2Captioner:
             вариант). Можно подставить меньший mock для CI.
         device: ``cpu`` / ``cuda`` / ``mps``. По умолчанию ``cpu`` —
             безопасный fallback. Реальные GPU-runners сами выберут cuda.
+
     """
 
     def __init__(
@@ -90,6 +92,7 @@ class BLIP2Captioner:
         Raises:
             RuntimeError: Если transformers/torch не установлены и нет
                 fallback'а для текущего окружения.
+
         """
         self._load()
 

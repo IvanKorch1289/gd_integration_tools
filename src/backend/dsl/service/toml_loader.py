@@ -32,6 +32,7 @@ class ServiceSpec:
         actions: Список dict'ов с action-определениями
             (``[{name, handler, mode, params_schema, ...}, ...]``).
         raw: Полный TOML-словарь для downstream-инструментов.
+
     """
 
     name: str
@@ -49,6 +50,7 @@ def load_service_toml(path: Path) -> ServiceSpec:
     Raises:
         FileNotFoundError: Если путь не существует.
         ValueError: Если manifest некорректен (нет name/version).
+
     """
     if not path.exists():
         raise FileNotFoundError(f"service.toml not found: {path}")

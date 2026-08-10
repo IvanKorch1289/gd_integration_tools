@@ -71,6 +71,7 @@ class ClamAVTcpBackend(AntivirusBackend):
 
         Returns:
             Результат сканирования с признаком заражения и метрикой задержки.
+
         """
         start = time.monotonic()
         try:

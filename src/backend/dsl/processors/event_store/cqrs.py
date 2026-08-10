@@ -147,6 +147,7 @@ class CQRSMixin:
             event_store: Custom store (default: module-level singleton).
             aggregate_id_field: Field name в dict → Event для aggregate_id.
             events_field: Field name в body/properties со list of events.
+
         """
         return self._add(  # type: ignore[attr-defined]
             EventStoreProcessor(

@@ -24,6 +24,7 @@ class RealClock:
 
         Returns:
             Monotonic time in seconds.
+
         """
         return _time.monotonic()
 
@@ -32,6 +33,7 @@ class RealClock:
 
         Returns:
             Current time as Unix timestamp.
+
         """
         return _time.time()
 
@@ -42,6 +44,7 @@ class FakeClock:
     Args:
         monotonic_start: Начальное значение монотонного счётчика.
         wall_start: Начальное значение wall-clock (Unix epoch seconds).
+
     """
 
     def __init__(
@@ -55,6 +58,7 @@ class FakeClock:
 
         Returns:
             Fake monotonic time in seconds.
+
         """
         return self._mono
 
@@ -63,6 +67,7 @@ class FakeClock:
 
         Returns:
             Fake Unix timestamp.
+
         """
         return self._wall
 
@@ -75,6 +80,7 @@ class FakeClock:
 
         Raises:
             ValueError: При отрицательном ``seconds`` для monotonic.
+
         """
         if seconds < 0:
             raise ValueError("monotonic не может уменьшаться")

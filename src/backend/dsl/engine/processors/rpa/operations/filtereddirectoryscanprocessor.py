@@ -37,6 +37,7 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
         max_size: Максимальный размер файла в байтах (optional).
         modified_after: Только файлы, изменённые после datetime (optional).
         to: Куда записать список (default ``"body.files"``).
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.directory.scan"

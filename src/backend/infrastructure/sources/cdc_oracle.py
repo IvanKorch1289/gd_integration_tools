@@ -64,6 +64,7 @@ class OracleCDCSource:
         tables: Tuple с именами таблиц.
         poll_interval_seconds: Интервал polling (default 5s).
         watermark_column: Колонка для tracking (default ``updated_at``).
+
     """
 
     def __init__(
@@ -92,6 +93,7 @@ class OracleCDCSource:
 
         Returns:
             Список dict'ов с новыми/изменёнными строками.
+
         """
         try:
             import oracledb  # type: ignore[import-not-found]  # lazy, optional
@@ -140,6 +142,7 @@ class OracleCDCSource:
 
         Returns:
             Combined список изменений со всех tables.
+
         """
         all_changes: list[dict[str, Any]] = []
         for table in self.tables:
@@ -157,6 +160,7 @@ class OracleCDCSource:
 
         Yields:
             Список изменений каждый poll_interval_seconds.
+
         """
         last_watermark: int | float = 0
         while True:

@@ -26,6 +26,7 @@ class DecryptProcessor(BaseProcessor):
         source: W34 — где читать encrypted input.
         target: W34 — куда писать decrypted result.
         name: имя процессора.
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.crypto.decrypt"

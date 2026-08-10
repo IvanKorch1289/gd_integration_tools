@@ -124,6 +124,7 @@ class WorkflowTemplateRegistry:
 
         Returns:
             Список ``(template, score)`` упорядоченный по убыванию score.
+
         """
         templates = self.load_all()
         if not templates or not query.strip():

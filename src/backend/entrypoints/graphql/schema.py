@@ -215,6 +215,7 @@ async def _dispatch_dsl(
 
     Returns:
         :class:`DslResult` с ``status`` и ``result`` либо ``error``.
+
     """
     try:
         dsl = get_dsl_service()
@@ -267,6 +268,7 @@ def _make_auth_from_principal(
     Returns:
         Объект с атрибутами ``principal`` (str) и ``metadata``
         (dict с ключом ``"permissions"`` — list[str]).
+
     """
     return SimpleNamespace(
         principal=principal,
@@ -338,6 +340,7 @@ async def _graphql_context_getter(request: Any) -> dict[str, Any]:
 
     Returns:
         Dict ``{"request": request, "auth": AuthContext | None}``.
+
     """
     if request is None:
         return {"request": None, "auth": None}
@@ -362,6 +365,7 @@ def _extract_auth_from_info(
 
     Returns:
         Tuple (principal, permissions). Defaults к ``("", ())``.
+
     """
     return (_principal_from_info(info), _permissions_from_info(info))
 

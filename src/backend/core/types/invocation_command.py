@@ -52,6 +52,7 @@ class InvocationOptionsSchema(_CoreBaseModel):
         mode: Способ выполнения действия.
         delay_seconds: Отложенный запуск в секундах.
         cron: Cron-выражение для планирования публикации.
+
     """
 
     mode: InvokeMode = Field(

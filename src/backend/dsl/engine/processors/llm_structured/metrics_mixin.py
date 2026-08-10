@@ -30,6 +30,7 @@ class MetricsMixin(_LLMStructuredProcessorProtocol):
 
         Returns:
             Стоимость в USD, ``None`` если оценка недоступна.
+
         """
         if raw_response is None:
             return None

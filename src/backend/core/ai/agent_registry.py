@@ -78,6 +78,7 @@ class AgentRegistry:
     Notes:
         Scaffold-методы поднимают ``NotImplementedError`` до полной
         реализации в S28 W2 (TOML loader) и S28 W4 (hot-reload).
+
     """
 
     def __init__(self) -> None:
@@ -99,6 +100,7 @@ class AgentRegistry:
         Raises:
             ValueError: TOML syntax error или missing required fields.
             NotImplementedError: S28 W2 — полная реализация.
+
         """
         import tomllib
 
@@ -185,6 +187,7 @@ class AgentRegistry:
 
         Args:
             spec: Полностью инициализированный :class:`AgentSpec`.
+
         """
         self._agents[spec.id] = spec
         logger.debug("AgentRegistry: registered agent %s v%s", spec.id, spec.version)
@@ -202,6 +205,7 @@ class AgentRegistry:
 
         Raises:
             KeyError: Агент не найден.
+
         """
         agent = self._agents.get(agent_id)
         if agent is None:
@@ -213,6 +217,7 @@ class AgentRegistry:
 
         Returns:
             Snapshot всех :class:`AgentSpec` (deterministic order по id).
+
         """
         return sorted(self._agents.values(), key=lambda a: a.id)
 
@@ -226,6 +231,7 @@ class AgentRegistry:
 
         Args:
             plugin_toml: Путь к изменённому ``plugin.toml``.
+
         """
         # ponytail: simplest implementation — just re-load and diff
         try:

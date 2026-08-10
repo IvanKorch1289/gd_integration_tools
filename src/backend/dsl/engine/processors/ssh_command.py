@@ -61,6 +61,7 @@ class SshCommandProcessor(BaseProcessor):
         continue_on_error: Если True, не бросает исключение при ненулевом
             exit_code, а записывает результат в exchange.
         name: Имя процессора для трейсов/метрик.
+
     """
 
     def __init__(
@@ -120,6 +121,7 @@ class SshCommandProcessor(BaseProcessor):
             This is intentional: many CI/test envs use ephemeral SSH
             containers without known_hosts. Production deployments MUST
             set TRANSPORT_SSH_KNOWN_HOSTS_PATH for true MITM protection.
+
         """
         import os
 
@@ -148,6 +150,7 @@ class SshCommandProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен с параметрами подключения.
             context: Контекст выполнения процессора.
+
         """
         import asyncssh
 

@@ -40,6 +40,7 @@ class BulkheadRegistry:
 
         Returns:
             AdaptiveBulkhead instance или None если не зарегистрирован.
+
         """
         return self._bulkheads.get(name)
 
@@ -52,6 +53,7 @@ class BulkheadRegistry:
 
         Note:
             Если уже зарегистрирован — перезаписывает (последний wins).
+
         """
         self._bulkheads[name] = bulkhead
         _logger.info("Bulkhead registered: %s", name)

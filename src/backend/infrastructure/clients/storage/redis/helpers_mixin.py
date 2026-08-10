@@ -71,6 +71,7 @@ class HelpersMixin(_RedisClientProtocol):
 
         Returns:
             Словарь {"keys": [...]}.
+
         """
 
         async def op(conn: Redis) -> dict[str, list[str]]:
@@ -89,6 +90,7 @@ class HelpersMixin(_RedisClientProtocol):
 
         Returns:
             Словарь {key: value}.
+
         """
         value = await self.cache_get(key)
         return {key: self.decode(value) if value is not None else None}
@@ -98,6 +100,7 @@ class HelpersMixin(_RedisClientProtocol):
 
         Returns:
             Статус операции.
+
         """
 
         async def op(conn: Redis) -> dict[str, str]:

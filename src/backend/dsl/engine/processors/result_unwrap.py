@@ -60,6 +60,7 @@ class ResultUnwrapProcessor(BaseProcessor):
         to: Куда положить unwrapped value (на Ok).
         to_err: Куда положить error (на Err при ``on_err='continue'``).
         on_err: Стратегия для Err — ``dlq`` / ``fail`` / ``continue``.
+
     """
 
     def __init__(

@@ -94,6 +94,7 @@ class AuditEventLog:
                 ``_send_to_dlq`` поднимет ``RuntimeError`` (fail-loud).
                 В dev_light / unit-tests выставляется ``False`` через
                 :meth:`set_dlq_required` или напрямую.
+
         """
         self._table = table
         # B-25 fix (cycle 1): DLQ handoff на сбое ClickHouse client.
@@ -139,6 +140,7 @@ class AuditEventLog:
 
         Args:
             event: Audit event to emit.
+
         """
         if not event.correlation_id:
             event.correlation_id = get_correlation_id()
@@ -219,6 +221,7 @@ class AuditEventLog:
 
         Raises:
             RuntimeError: только в production-mode без writer'а.
+
         """
         if self._dlq_writer is None:
             if self._dlq_required:
@@ -281,6 +284,7 @@ class AuditEventLog:
 
         Returns:
             Список envelopes; пустой список если build упал.
+
         """
         try:
             from src.backend.infrastructure.messaging.dlq_base import (

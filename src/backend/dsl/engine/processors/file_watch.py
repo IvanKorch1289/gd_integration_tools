@@ -111,6 +111,7 @@ class FileWatchProcessor(BaseProcessor):
         Raises:
             ValueError: Если не указаны ни directory, ни directories,
                 или одновременно pattern и patterns.
+
         """
         # S176 #4: validation — нужен хотя бы один pattern и одна directory.
         if pattern is not None and patterns is not None:
@@ -153,6 +154,7 @@ class FileWatchProcessor(BaseProcessor):
             exchange: Текущий exchange; результат — в свойстве
                 ``result_property`` (default: ``matched_files``).
             context: Контекст выполнения маршрута.
+
         """
         # S176 #4: support exchange-property overrides для dirs/patterns/max_results.
         prop_dir = exchange.get_property("watch_directory")
@@ -276,6 +278,7 @@ def _list_matching_files(
     Returns:
         List of (full_path, stat_result) tuples. Blocking I/O — вызывать
         через ``asyncio.to_thread``.
+
     """
     matched: list[tuple[str, os.stat_result]] = []
     for filename in os.listdir(directory):
@@ -294,6 +297,7 @@ def _walk_matching_files(
     Returns:
         List of (full_path, stat_result) tuples. Blocking I/O — вызывать
         через ``asyncio.to_thread``.
+
     """
     matched: list[tuple[str, os.stat_result]] = []
     for root, _dirs, files in os.walk(directory):

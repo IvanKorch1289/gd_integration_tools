@@ -55,6 +55,7 @@ class AuditService:
     тех же колонок (event_type, tenant_id, user_id, payload, severity).
     Расширенные поля (actor/resource/action/outcome) сериализуются в
     ``payload`` JSON для backward compat со schema.
+
     """
 
     __slots__ = ("_backend",)

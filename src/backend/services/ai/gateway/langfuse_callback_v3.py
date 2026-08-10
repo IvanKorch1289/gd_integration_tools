@@ -39,6 +39,7 @@ class LangFuseCallbackV3:
 
     Args:
         Нет публичных аргументов — конфигурация через ``langfuse_settings``.
+
     """
 
     def __init__(self) -> None:
@@ -52,6 +53,7 @@ class LangFuseCallbackV3:
         Returns:
             Экземпляр ``Langfuse`` или ``None``, если пакет недоступен
             либо LangFuse отключён в настройках.
+
         """
         if self._inited:
             return self._lf
@@ -94,6 +96,7 @@ class LangFuseCallbackV3:
             response_obj: ответ провайдера (с полями ``usage``, ``response_cost``).
             start_time: начало вызова (ISO str или datetime, опционально).
             end_time: конец вызова (опционально).
+
         """
         client = self._ensure_client()
         if client is None:
@@ -195,6 +198,7 @@ def _provider_from_model(model: str) -> str:
 
     Returns:
         Имя провайдера (``"openai"`` по умолчанию).
+
     """
     if "/" in model:
         return model.split("/", 1)[0]
@@ -210,6 +214,7 @@ def _extract_usage(response_obj: Any) -> dict[str, Any] | None:
     Returns:
         Словарь с ключами ``prompt_tokens``, ``completion_tokens``,
         ``total_tokens`` или ``None`` если usage недоступен.
+
     """
     usage = getattr(response_obj, "usage", None)
     if usage is None and isinstance(response_obj, dict):
@@ -235,6 +240,7 @@ def _to_langfuse_usage(usage: dict[str, Any] | None) -> dict[str, int] | None:
 
     Returns:
         Словарь ``{"input": N, "output": M, "total": T}`` или ``None``.
+
     """
     if usage is None:
         return None
@@ -253,6 +259,7 @@ def _extract_output(response_obj: Any) -> str | None:
 
     Returns:
         Текст содержимого или ``None``.
+
     """
     choices = getattr(response_obj, "choices", None)
     if choices is None and isinstance(response_obj, dict):
@@ -279,6 +286,7 @@ def _extract_cost(response_obj: Any) -> float:
 
     Returns:
         Стоимость в USD (0.0 если недоступна).
+
     """
     for attr in ("response_cost", "_response_cost"):
         value = getattr(response_obj, attr, None)

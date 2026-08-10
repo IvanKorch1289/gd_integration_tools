@@ -235,6 +235,7 @@ class _DSLRoutesFacade:
         Returns:
             List of dicts (TraceEvent.to_dict() output). Empty list если
             маршрут ещё не выполнялся или buffer пуст.
+
         """
         capped = max(1, min(int(limit), 1000))
         tracer = get_tracer()

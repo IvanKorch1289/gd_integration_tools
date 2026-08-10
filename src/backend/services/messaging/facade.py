@@ -36,6 +36,7 @@ class MessagingFacade:
         adapters: Словарь ``channel -> adapter`` (Email, Telegram, Webhook).
         capability_check: Опц. callback ``CapabilityGate.check``.
         plugin: Имя caller'а (для capability-event и audit).
+
     """
 
     def __init__(
@@ -82,6 +83,7 @@ class MessagingFacade:
             CapabilityDeniedError: insufficient permissions.
             ServiceError: channel error.
             ValueError: unknown channel.
+
         """
         self._assert_send(channel)
         adapter = self._adapters.get(channel)

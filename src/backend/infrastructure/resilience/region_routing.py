@@ -47,6 +47,7 @@ class Region:
     weight : int
         Traffic weight for weighted routing. Higher = more traffic.
         Defaults to 100.
+
     """
 
     code: str
@@ -167,6 +168,7 @@ class RegionRouter:
         ------
         RuntimeError
             If no regions are registered.
+
         """
         regions = list_regions()
         if not regions:

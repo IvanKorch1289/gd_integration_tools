@@ -94,6 +94,7 @@ class ExecutionBackendFactory:
         Raises:
             ValueError: unknown kind.
             ImportError: required package not installed.
+
         """
         if isinstance(kind, str):
             kind = BackendKind(kind.lower())
@@ -147,6 +148,7 @@ class ExecutionBackendFactory:
 
         Returns:
             Backend instance.
+
         """
         kind_str = os.getenv("JUPYTER_BACKEND", "hub")
         _logger.debug("Auto-detect backend: JUPYTER_BACKEND=%s", kind_str)

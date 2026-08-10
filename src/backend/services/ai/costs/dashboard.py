@@ -142,6 +142,7 @@ class AICostDashboard:
             model_filter: фильтр по модели (substring, case-insensitive).
             pipeline_filter: фильтр по pipeline/route (substring).
             top_n: лимит на размер каждой группы.
+
         """
         snapshot = DashboardSnapshot(
             generated_at=datetime.now(UTC).isoformat(),

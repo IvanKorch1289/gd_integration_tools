@@ -70,6 +70,7 @@ class ChaosConfig:
         enabled: Активен ли прямо сейчас.
         probability: Вероятность срабатывания [0.0, 1.0].
         parameters: Произвольные параметры (задержка, тип ошибки и т.д.).
+
     """
 
     name: str
@@ -128,6 +129,7 @@ class ChaosEngineering:
             name: Имя эксперимента (для логирования и lookup).
             probability: Вероятность срабатывания (override).
             max_delay_ms: Максимальная задержка в миллисекундах.
+
         """
         if not is_chaos_enabled():
             return
@@ -156,6 +158,7 @@ class ChaosEngineering:
             name: Имя эксперимента.
             probability: Вероятность срабатывания (override).
             exc: Экземпляр исключения для raise (default ``RuntimeError``).
+
         """
         if not is_chaos_enabled():
             return
@@ -184,6 +187,7 @@ class ChaosEngineering:
 
         Yields:
             None
+
         """
         if not is_chaos_enabled():
             yield
@@ -262,6 +266,7 @@ class ChaosEngineering:
         Args:
             name: Логическое имя пула из UnifiedPoolManager.
             duration_seconds: Длительность эксперимента.
+
         """
         if not is_chaos_enabled():
             yield

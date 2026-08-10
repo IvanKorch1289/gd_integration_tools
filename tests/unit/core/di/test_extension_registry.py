@@ -12,6 +12,7 @@
 Notes:
     Тесты используют cleanup-фикстуру — каждый test сбрасывает
     registry для изоляции между тестами.
+
 """
 
 from __future__ import annotations

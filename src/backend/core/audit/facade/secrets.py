@@ -42,6 +42,7 @@ def emit_secret_rotation(
 
     Returns:
         Result of ``AuditService.emit()`` (coroutine — caller awaits).
+
     """
     details: dict[str, Any] = {
         "secret_path": secret_path,
@@ -87,6 +88,7 @@ async def emit_secret_access(
         cache_status: ``"hit"`` (cache hit) / ``"miss"`` (resolved fresh).
         resolution_id: Уникальный ID резолва (только на success).
         error_class: Имя исключения при failure.
+
     """
     details: dict[str, Any] = {
         "credential_name": credential_name,

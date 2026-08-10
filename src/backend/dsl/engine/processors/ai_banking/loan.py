@@ -48,6 +48,7 @@ class LoanEligibilityProcessor(_BankingAIProcessor):
         Args:
             exchange: Текущий обмен с параметрами заявки.
             context: Контекст выполнения процессора.
+
         """
         exchange.set_property("banking_action", "ai.loan.eligibility")
         body = exchange.in_message.body

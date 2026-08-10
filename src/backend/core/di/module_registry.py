@@ -195,6 +195,7 @@ def get_module_scope(key: str) -> Scope:
     Raises
     ------
         ModuleRegistryError: Если ``key`` отсутствует в :data:`INFRA_MODULES`.
+
     """
     if key not in INFRA_MODULES:
         known = ", ".join(sorted(INFRA_MODULES)[:5])
@@ -235,6 +236,7 @@ def resolve_module(key: str) -> ModuleType:
     ------
     ModuleRegistryError
         Если ``key`` отсутствует в обоих реестрах.
+
     """
     # Extension-registered lookup (S172 M3 ARC-006 fix A-6-3):
     # extension wins over core (extensions add new modules, не

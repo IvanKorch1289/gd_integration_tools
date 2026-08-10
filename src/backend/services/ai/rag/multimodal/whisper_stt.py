@@ -28,6 +28,7 @@ class TranscriptionResult:
         language: Код языка из detect (ISO 639-1).
         segments: Список ``{start, end, text}`` фрагментов.
         model: Имя whisper модели.
+
     """
 
     text: str
@@ -44,6 +45,7 @@ class WhisperSTT:
             По умолчанию ``base`` — компромисс скорость/качество.
         language: Опционально явный язык (``ru``, ``en``, ...). Если ``None`` —
             whisper определит автоматически.
+
     """
 
     def __init__(self, model_name: str = "base", language: str | None = None) -> None:
@@ -77,6 +79,7 @@ class WhisperSTT:
 
         Returns:
             :class:`TranscriptionResult` с text/language/segments.
+
         """
         self._load()
 

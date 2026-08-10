@@ -27,6 +27,7 @@ class HashProcessor(BaseProcessor):
         target: W34 — куда писать result (``"body"`` для set_out, или
             property name для ``exchange.set_property(target, ...)``).
         name: имя процессора для observability.
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.hash.compute"

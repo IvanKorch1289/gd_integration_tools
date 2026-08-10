@@ -111,6 +111,7 @@ def build_default_patterns() -> dict[str, re.Pattern[str]]:
     Returns:
         Словарь ``{name: compiled_pattern}`` — порядок ключей соответствует
         :data:`_DEFAULT_ORDER`. Можно безопасно мутировать (это новый dict).
+
     """
     return {
         "jwt": _JWT,
@@ -149,6 +150,7 @@ class PIIMasker:
 
     Attributes:
         replacement: Строка, на которую заменяется каждый match.
+
     """
 
     def __init__(
@@ -167,6 +169,7 @@ class PIIMasker:
             order: Tuple имён patterns в порядке применения. Если ``None`` —
                 для дефолтных patterns используется :data:`_DEFAULT_ORDER`,
                 иначе берётся порядок ключей словаря ``patterns``.
+
         """
         self._patterns: dict[str, re.Pattern[str]] = (
             dict(patterns) if patterns is not None else build_default_patterns()
@@ -188,6 +191,7 @@ class PIIMasker:
 
         Returns:
             Строка с заменёнными PII-фрагментами.
+
         """
         if not text:
             return text
@@ -213,6 +217,7 @@ class PIIMasker:
 
         Returns:
             Новый словарь с маскированными значениями.
+
         """
         return self._mask_any(data, fields)
 
@@ -264,6 +269,7 @@ def default_masker() -> PIIMasker:
 
     Returns:
         Singleton с дефолтным набором patterns и replacement ``"***"``.
+
     """
     global _DEFAULT_MASKER
     if _DEFAULT_MASKER is None:

@@ -45,6 +45,7 @@ class MQSource:
             NATS — queue group).
         connect_url: URL подключения (зависит от transport).
         decode_json: Пытаться ли декодировать payload как JSON.
+
     """
 
     kind: SourceKind = SourceKind.MQ

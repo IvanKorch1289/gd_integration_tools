@@ -64,6 +64,7 @@ def build_auth_config(
 
     Returns:
         Агрегированная конфигурация авторизации.
+
     """
     if secure is None:
         from src.backend.core.config.security import secure_settings as secure

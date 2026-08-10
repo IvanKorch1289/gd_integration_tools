@@ -34,6 +34,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
             ``sqlite:///mlflow.db`` для локального hosting).
         registry_uri: Опц. отдельный URI реестра (если разделён с
             tracking).
+
     """
 
     def __init__(self, tracking_uri: str, *, registry_uri: str | None = None) -> None:

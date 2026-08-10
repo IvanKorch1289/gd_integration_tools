@@ -10,6 +10,7 @@ class InvokeMode(StrEnum):
     Attributes:
         direct: Выполнить use case напрямую в рамках HTTP-запроса.
         event: Опубликовать команду в event bus.
+
     """
 
     direct = "direct"
@@ -24,6 +25,7 @@ class BrokerKind(StrEnum):
         redis: Redis Streams.
         rabbit: RabbitMQ.
         kafka: Kafka
+
     """
 
     redis = "redis"

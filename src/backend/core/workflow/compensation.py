@@ -32,6 +32,7 @@ class CompensateWorkflowRequest(BaseModel):
         compensation_steps: Имена шагов для compensate (в обратном порядке).
         reason: Причина compensation (для логирования).
         metadata: Дополнительные данные (compensation context).
+
     """
 
     workflow_id: str

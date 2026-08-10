@@ -43,6 +43,7 @@ class DatabaseBundle:
             sync-драйвер не установлен.
         sync_session_maker (sessionmaker | None): Фабрика синхронных
             сессий; ``None`` если ``sync_engine is None``.
+
     """
 
     name: str

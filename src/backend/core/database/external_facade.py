@@ -201,6 +201,7 @@ class ExternalDBFacade:
 
         Raises:
             DatabaseError: Если профиль не зарегистрирован.
+
         """
         registry = self._get_registry()
         bundle = registry.get_bundle(profile)

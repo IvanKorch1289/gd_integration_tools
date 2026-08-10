@@ -43,6 +43,7 @@ class ImportSource:
             ``None`` если spec пришёл локальным файлом / из Streamlit upload.
         prefix: Префикс для генерируемых route_id (default ``ext``).
         metadata: Произвольные метаданные импорта (uploaded_by, batch_id...).
+
     """
 
     kind: ImportSourceKind
@@ -81,6 +82,7 @@ class ImportGateway(Protocol):
         Raises:
             ImportError: Невалидный синтаксис spec'а.
             ValueError: Невалидная семантика (нет операций, unsupported version).
+
         """
         ...
 

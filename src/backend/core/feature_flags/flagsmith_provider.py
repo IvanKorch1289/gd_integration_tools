@@ -69,6 +69,7 @@ def is_external_provider_enabled() -> bool:
 
     Returns:
         True, если ``openfeature_external=True`` в реестре flag'ов.
+
     """
     try:
         from src.backend.core.config.features import feature_flags
@@ -98,6 +99,7 @@ class FlagsmithProvider:
         >>> provider = FlagsmithProvider(environment_key="ser.abc123")
         >>> ctx = EvaluationContext(tenant_id="acme-corp")
         >>> await provider.resolve_boolean_value("new_ui", False, ctx)
+
     """
 
     def __init__(
@@ -133,6 +135,7 @@ class FlagsmithProvider:
 
         Returns:
             Значение flag из Flagsmith или ``default``.
+
         """
         if not self._enabled():
             return default
@@ -238,6 +241,7 @@ class FlagsmithProvider:
         Raises:
             ProviderError: При невозможности импорта httpx (sentinel — не
                 должен происходить, httpx уже в стеке проекта).
+
         """
         if self.environment_key is None:
             return None

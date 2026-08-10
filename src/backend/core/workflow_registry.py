@@ -65,6 +65,7 @@ class WorkflowRegistry:
         Raises:
             TypeError: Если класс не помечен как Temporal workflow.
             ValueError: Если workflow с таким именем уже зарегистрирован.
+
         """
         if not self._is_workflow_class(cls):
             raise TypeError(

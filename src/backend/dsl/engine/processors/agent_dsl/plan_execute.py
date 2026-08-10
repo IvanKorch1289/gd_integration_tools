@@ -77,6 +77,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
         result_property: Свойство, куда сохранить финальный результат.
         timeout_s: Таймаут на один LLM-вызов.
         name: Имя процессора.
+
     """
 
     required_capability: ClassVar[str | None] = "ai.invoke"

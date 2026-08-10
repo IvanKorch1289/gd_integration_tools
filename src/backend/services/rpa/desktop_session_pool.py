@@ -95,6 +95,7 @@ class DesktopRPASessionPool:
     S164 W2 — Circuit Breaker (shared singleton, lazy-init):
         ``acquire()`` обёрнут в CB через :func:`_get_pool_breaker`.
         healthcheck() через ``GET /health`` sidecar endpoint.
+
     """
 
     def __init__(
@@ -244,6 +245,7 @@ class DesktopRPASessionPool:
 
         Returns:
             ``True`` если sidecar отвечает 200 OK, ``False`` при любой ошибке.
+
         """
         async with self.acquire(app_name) as client:
             try:

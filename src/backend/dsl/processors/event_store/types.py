@@ -47,6 +47,7 @@ class Event:
         version: Aggregate version (для optimistic concurrency).
         timestamp: Unix timestamp (sec).
         metadata: Audit info (user_id, tenant_id, causation_id, ...).
+
     """
 
     aggregate_id: str

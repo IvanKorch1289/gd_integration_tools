@@ -46,6 +46,7 @@ def make_dispatch_context(
 
     Returns:
         Заполненный :class:`DispatchContext`.
+
     """
     return DispatchContext(
         correlation_id=correlation_id or uuid4().hex,

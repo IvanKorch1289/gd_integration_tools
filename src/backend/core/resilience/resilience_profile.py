@@ -69,6 +69,7 @@ class ResilienceProfile:
         ...     retry=RetryPolicySpec(max_attempts=5),
         ...     circuit_breaker=CircuitBreakerPolicy(failure_threshold=10),
         ... )
+
     """
 
     name: str
@@ -82,6 +83,7 @@ class ResilienceProfile:
 
         Returns:
             Dictionary representation of the profile.
+
         """
         from dataclasses import asdict
 
@@ -123,6 +125,7 @@ class ResilienceProfileStore(Protocol):
 
         Returns:
             Profile if found, None otherwise.
+
         """
         ...
 
@@ -134,6 +137,7 @@ class ResilienceProfileStore(Protocol):
 
         Returns:
             List of profiles.
+
         """
         ...
 
@@ -148,6 +152,7 @@ class ResilienceProfileStore(Protocol):
 
         Returns:
             Upserted profile.
+
         """
         ...
 
@@ -160,5 +165,6 @@ class ResilienceProfileStore(Protocol):
 
         Returns:
             True if deleted, False if not found.
+
         """
         ...

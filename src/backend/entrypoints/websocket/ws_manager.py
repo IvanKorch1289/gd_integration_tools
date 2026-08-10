@@ -57,6 +57,7 @@ class ConnectionManager:
 
         Returns:
             Количество активных WS-соединений, привязанных к этому action.
+
         """
         return len(self._connections_by_action.get(action_id, set()))
 
@@ -65,6 +66,7 @@ class ConnectionManager:
 
         Returns:
             Dict ``{action_id: current_count}``.
+
         """
         return {
             action_id: len(clients)
@@ -87,6 +89,7 @@ class ConnectionManager:
             action_id: S163 W25-A — route_id, к которому привязано это
                 соединение (из query params ``?action_id=xxx``). ``None``
                 или отсутствие → :data:`DEFAULT_ACTION_ID` pool.
+
         """
         await websocket.accept()
         self._connections[client_id] = websocket
@@ -112,6 +115,7 @@ class ConnectionManager:
             action_id: S163 W25-A — action_id, к которому был привязан
                 клиент. ``None`` → попытка удалить из всех pools (safe
                 fallback если caller не помнит action_id).
+
         """
         self._connections.pop(client_id, None)
 
@@ -142,6 +146,7 @@ class ConnectionManager:
         Args:
             client_id: Идентификатор клиента.
             data: Данные для отправки.
+
         """
         ws = self._connections.get(client_id)
         if ws and ws.client_state == WebSocketState.CONNECTED:
@@ -155,6 +160,7 @@ class ConnectionManager:
         Args:
             data: Данные для рассылки.
             group: Имя группы (если ``None`` — всем).
+
         """
         if group is not None:
             target_ids = self._groups.get(group, set())

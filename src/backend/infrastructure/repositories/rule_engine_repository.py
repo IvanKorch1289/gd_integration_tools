@@ -33,6 +33,7 @@ class SQLRuleEngineRepository(RuleEngineRepository):
         session: Активная :class:`AsyncSession`. Транзакционность —
             ответственность вызывающего (registry открывает сессию
             на каждый запрос; commit на upsert/delete).
+
     """
 
     def __init__(self, session: AsyncSession) -> None:

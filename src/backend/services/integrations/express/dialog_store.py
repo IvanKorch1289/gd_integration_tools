@@ -43,6 +43,7 @@ class ExpressDialogStore(Protocol):
             sync_id: Optional sync ID.
             bubble: Optional bubble data.
             keyboard: Optional keyboard data.
+
         """
         ...
 
@@ -54,6 +55,7 @@ class ExpressDialogStore(Protocol):
 
         Returns:
             ExpressDialog or None if not found.
+
         """
         ...
 
@@ -68,6 +70,7 @@ class ExpressDialogStore(Protocol):
 
         Returns:
             List of ExpressDialog objects.
+
         """
         ...
 
@@ -79,6 +82,7 @@ class ExpressDialogStore(Protocol):
         Args:
             session_id: Session identifier.
             context_delta: Context fields to update.
+
         """
         ...
 

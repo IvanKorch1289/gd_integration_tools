@@ -112,6 +112,7 @@ class AgentGraphProcessor(BaseAIProcessor):
         result_property: Exchange property for the result dict.
             Default ``"agent_graph_result"``.
         name: Processor name.
+
     """
 
     feature_flag_name: ClassVar[str | None] = "ai_agent_dsl_enabled"
@@ -317,6 +318,7 @@ class AgentGraphProcessor(BaseAIProcessor):
 
         Returns:
             Список tools, для которых ``policy.check(tool) == "allow"``.
+
         """
         import os
         fail_open_env = os.environ.get("AGENT_TOOL_POLICY_FAIL_OPEN", "").lower() in (

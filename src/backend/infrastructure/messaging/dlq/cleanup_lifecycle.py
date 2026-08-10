@@ -57,6 +57,7 @@ class DLQCleanupScheduler:
         registry: :class:`DLQPolicyRegistry` с retention policies
             (default — built-in 3 policies: financial/analytics/operational).
         table_name: имя DLQ-таблицы в ClickHouse (default ``dlq_events``).
+
     """
 
     def __init__(
@@ -157,6 +158,7 @@ async def start_dlq_cleanup(
         ch_client: ClickHouse client.
         interval_hours: период cleanup (default 24h).
         table_name: имя DLQ-таблицы (default ``dlq_events``).
+
     """
     global default_scheduler
     if default_scheduler is not None and default_scheduler.is_running:

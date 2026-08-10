@@ -37,6 +37,7 @@ class RateLimitResult:
         remaining: Оставшееся количество запросов в окне.
         reset_at: Unix-timestamp когда окно сбросится (если применимо).
         backend: Какой backend использовался (``"redis"`` / ``"memory"`` / ``"distributed"``).
+
     """
 
     allowed: bool
@@ -71,6 +72,7 @@ class UnifiedRateLimiter:
 
         Returns:
             RateLimitResult с информацией о результате.
+
         """
         try:
             from src.backend.core.di.providers.infrastructure_locator import (

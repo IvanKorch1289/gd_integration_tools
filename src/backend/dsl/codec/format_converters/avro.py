@@ -23,6 +23,7 @@ class AvroEncodeProcessor(BaseProcessor):
         schema: Avro-схема в виде dict (parsed JSON Schema). Схема
             будет передана в ``fastavro.parse_schema``.
         name: Опциональное имя процессора.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -54,6 +55,7 @@ class AvroDecodeProcessor(BaseProcessor):
     Args:
         schema: Avro-схема для reader (writer-схема считывается из
             самого container-файла).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

@@ -39,6 +39,7 @@ class SlaPolicy(BaseModel):
         escalation_email: куда отправлять email на soft breach.
         escalation_slack: Slack channel для notification.
         breach_action: ``alert`` (default), ``cancel``, ``none``.
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -61,6 +62,7 @@ class MemoryScope(BaseModel):
         write: Кортеж имён memory resources для записи.
         mode: Стратегия изоляции (``none`` / ``scoped`` / ``inherited`` / ``shared``).
         write_strategy: Стратегия записи (``hot_path`` / ``background`` / ``manual``).
+
     """
 
     model_config = ConfigDict(extra="forbid")

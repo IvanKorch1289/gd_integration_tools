@@ -210,6 +210,7 @@ class ProcessPoolAgentSandbox:
     Args:
         max_workers: Размер пула spawn-воркеров. Default ``1`` — агенты
             CPU/GPU-bound, параллелить внутри одного пула нецелесообразно.
+
     """
 
     def __init__(self, max_workers: int = 1) -> None:
@@ -235,6 +236,7 @@ class ProcessPoolAgentSandbox:
                 При превышении — ``asyncio.TimeoutError`` → AgentSandboxResult
                 с success=False, error="wall_time_exceeded".
                 Pер per AgentLimits.max_wall_time_s spec (S28 W3).
+
         """
         if self._closed:
             raise RuntimeError("ProcessPoolAgentSandbox already shut down")
@@ -316,6 +318,7 @@ class E2BAgentSandbox:
         * Latency 100-500ms per cell — не для low-latency workloads.
         * E2B quota/API costs → explicit :class:`TokenBudget` (M4)
           рекомендуется.
+
     """
 
     def __init__(
@@ -358,6 +361,7 @@ class E2BAgentSandbox:
             AgentSandboxConfigError: если API key не настроен.
             AgentSandboxTimeoutError: при превышении timeout.
             AgentSandboxExecutionError: на E2B SDK errors.
+
         """
         timeout = max_wall_time_s if max_wall_time_s is not None else self._timeout
         if self._closed:
@@ -506,6 +510,7 @@ class AgentSandboxSelector:
     Args:
         default_kind: ``"in_process"`` / ``"process_pool"`` / ``"e2b"``.
         e2b_api_key: explicit API key для ``"e2b"`` backend (optional).
+
     """
 
     def __init__(
@@ -562,6 +567,7 @@ def resolve_agent_sandbox(
     Returns:
         Singleton AgentSandbox instance (если ``process_pool``) или новый
         instance (если ``in_process`` / ``e2b``).
+
     """
     if default_kind is None and use_settings_default:
         try:

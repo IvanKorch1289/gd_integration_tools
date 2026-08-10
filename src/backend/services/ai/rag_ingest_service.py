@@ -203,6 +203,7 @@ def _maybe_mask_pii(content_text: str) -> tuple[str, dict[str, Any]]:
     Returns:
         Кортеж (masked_text, pii_metadata_dict). При выключенном флаге —
         ``(content_text, {"pii_masked": False})``.
+
     """
     try:
         from src.backend.core.config.ai_stack import rag_ingest_settings

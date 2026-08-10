@@ -85,6 +85,7 @@ class LineageNode:
         type: Тип узла (dataset/pipeline/model/output/chunk).
         name: Human-readable имя.
         attributes: Метаданные (URI, version, schema, model_id, ...).
+
     """
 
     id: str
@@ -105,6 +106,7 @@ class LineageEvent:
         parent_ids: IDs узлов-источников (откуда данные пришли).
         timestamp: Unix timestamp (sec).
         payload: Полезные данные (chunk_ids, model_id, scores, ...).
+
     """
 
     event_id: str
@@ -297,6 +299,7 @@ class DataLineageMixin:
 
         Returns:
             :class:`RouteBuilder` для fluent-chaining.
+
         """
         return self._add(  # type: ignore[attr-defined]
             DataLineageProcessor(

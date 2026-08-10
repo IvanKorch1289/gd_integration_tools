@@ -48,6 +48,7 @@ class WsdlImportGateway:
         Raises:
             ImportError: Если WSDL невалиден или zeep не смог его распарсить.
             ValueError: Если в WSDL нет service или operations.
+
         """
         from zeep import Client
         from zeep.exceptions import XMLParseError

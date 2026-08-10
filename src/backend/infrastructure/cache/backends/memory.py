@@ -34,6 +34,7 @@ class MemoryBackend(CacheBackend):
 
         Returns:
             Cached bytes or None if not found.
+
         """
         async with self._lock:
             return self._cache.get(key)
@@ -45,6 +46,7 @@ class MemoryBackend(CacheBackend):
             key: Cache key.
             value: Value to cache.
             ttl: TTL in seconds (ignored, uses global default_ttl).
+
         """
         async with self._lock:
             # cachetools задаёт TTL глобально на cache; для индивидуального
@@ -58,6 +60,7 @@ class MemoryBackend(CacheBackend):
 
         Args:
             keys: Cache keys to delete.
+
         """
         async with self._lock:
             for key in keys:
@@ -68,6 +71,7 @@ class MemoryBackend(CacheBackend):
 
         Args:
             pattern: Glob pattern to match keys.
+
         """
         async with self._lock:
             for key in [k for k in self._cache if fnmatch.fnmatch(k, pattern)]:
@@ -81,6 +85,7 @@ class MemoryBackend(CacheBackend):
 
         Returns:
             True if key exists, False otherwise.
+
         """
         async with self._lock:
             return key in self._cache

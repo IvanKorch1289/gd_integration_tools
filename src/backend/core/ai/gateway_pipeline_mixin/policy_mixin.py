@@ -62,6 +62,7 @@ class PolicyMixin(_PipelineStepsProtocol):
         Raises:
             PolicyNotResolvedError: при ``ai_policy_enforce=True`` и
                 отсутствии политики с ``required=True``.
+
         """
         if self._policy_resolver is None:
             return None
@@ -90,6 +91,7 @@ class PolicyMixin(_PipelineStepsProtocol):
         Raises:
             CapabilityDeniedError: Если capability ``ai.invoke.<workflow_id>``
                 не выдана текущему контексту вызова.
+
         """
         if self._capability_gate is None:
             return

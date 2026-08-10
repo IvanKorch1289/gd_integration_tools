@@ -267,6 +267,7 @@ class _AdminWorkflowsFacade:
         Raises:
             HTTPException: 404 если workflow не найден; 422 при невалидном payload;
                 500 при отсутствии route_id binding.
+
         """
         descriptor = workflow_registry.get(workflow_name)
         if descriptor is None:

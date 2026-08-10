@@ -145,6 +145,7 @@ async def receive_webhook(event_type: str, request: Request) -> dict[str, Any]:
         event_type: Тип события (используется как route_id
             с префиксом ``webhook.``).
         request: HTTP-запрос с JSON body.
+
     """
     client_ip = request.client.host if request.client else "unknown"
     await _check_rate_limit(f"inbound:{client_ip}", limit=100, window=60)
@@ -214,6 +215,7 @@ async def send_webhook_event(
 
     Returns:
         Список результатов отправки.
+
     """
     # A4 (ADR-009): aiohttp → httpx.
     # S3 К2 W1: httpx.AsyncClient → OutboundHttpClient (WAF coverage).

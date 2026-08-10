@@ -51,6 +51,7 @@ class TenantCacheBackend(CacheBackend):
             По умолчанию — :func:`current_tenant` из ContextVar.
         unscoped_prefix: префикс при отсутствии tenant. По умолчанию
             ``tenant:_unscoped_:`` — изолированный namespace.
+
     """
 
     def __init__(
@@ -96,6 +97,7 @@ class TenantCacheBackend(CacheBackend):
 
         Returns:
             Cached bytes or None if not found.
+
         """
         return await self._wrapped.get(self._scoped(key))
 
@@ -106,6 +108,7 @@ class TenantCacheBackend(CacheBackend):
             key: Cache key (will be prefixed with tenant).
             value: Value to cache.
             ttl: Optional TTL in seconds.
+
         """
         await self._wrapped.set(self._scoped(key), value, ttl=ttl)
 
@@ -114,6 +117,7 @@ class TenantCacheBackend(CacheBackend):
 
         Args:
             keys: Cache keys to delete.
+
         """
         if not keys:
             return
@@ -125,6 +129,7 @@ class TenantCacheBackend(CacheBackend):
 
         Args:
             pattern: Glob pattern to match keys.
+
         """
         await self._wrapped.delete_pattern(self._scoped_pattern(pattern))
 
@@ -136,6 +141,7 @@ class TenantCacheBackend(CacheBackend):
 
         Returns:
             True if key exists, False otherwise.
+
         """
         return await self._wrapped.exists(self._scoped(key))
 

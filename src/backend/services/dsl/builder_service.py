@@ -61,6 +61,7 @@ class DSLBuilderService:
             ``settings.dsl.routes_dir``).
         environment: Текущая среда (override для тестов). По умолчанию —
             ``settings.app.environment``.
+
     """
 
     def __init__(
@@ -122,6 +123,7 @@ class DSLBuilderService:
         Raises:
             KeyError: Если route_id не зарегистрирован.
             PermissionError: Если environment != "development".
+
         """
         pipeline = self.get_pipeline(route_id)
         if pipeline is None:

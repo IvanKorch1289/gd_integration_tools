@@ -34,6 +34,7 @@ def webhook_relay(
 
     Returns:
         Pipeline: Готовый relay pipeline.
+
     """
     builder = RouteBuilder.from_(
         route_id, source=source, description=description or f"Relay: {route_id}",

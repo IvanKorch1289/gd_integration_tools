@@ -129,6 +129,7 @@ class AgentMetricsService:
             provider: Фактически использованный LLM-провайдер.
             duration_seconds: Длительность вызова в секундах.
             status: ``success`` / ``error`` / ``timeout``.
+
         """
         if self._histogram is None or self._calls is None:
             return
@@ -152,6 +153,7 @@ class AgentMetricsService:
             model: Имя модели.
             input_tokens: Количество входных токенов.
             output_tokens: Количество выходных токенов.
+
         """
         if self._tokens is None:
             return
@@ -170,6 +172,7 @@ class AgentMetricsService:
         Args:
             agent_id: Идентификатор агента.
             tool: Имя вызванного инструмента.
+
         """
         if self._tool is None:
             return
@@ -182,6 +185,7 @@ class AgentMetricsService:
             provider: LLM-провайдер.
             model: Имя модели.
             cost_usd: Стоимость вызова (из usage-поля ответа).
+
         """
         if self._cost is None or cost_usd <= 0:
             return
@@ -193,6 +197,7 @@ class AgentMetricsService:
         Args:
             agent_id: Идентификатор агента, чей ответ оценили.
             label: ``positive`` / ``negative`` / ``skip``.
+
         """
         if self._feedback is None:
             return
@@ -218,6 +223,7 @@ class AgentMetricsService:
                 result = await agent.run(...)
                 ctx["provider"] = result["provider"]
                 ctx["status"] = "success" if result["success"] else "error"
+
         """
         start = time.perf_counter()
         ctx = {"provider": provider, "status": "success"}

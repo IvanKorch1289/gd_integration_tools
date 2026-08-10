@@ -24,6 +24,7 @@ def _make_service(*, enabled: bool) -> MultimodalRAGService:
 
     Returns:
         Новый экземпляр MultimodalRAGService.
+
     """
     svc = MultimodalRAGService()
     svc._is_enabled = lambda: enabled  # type: ignore[method-assign]

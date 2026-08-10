@@ -50,6 +50,7 @@ class InvocationSpec:
         include_invocation_in_service_call: Передавать ли invoke в service method.
         invocation_argument_name: Имя аргумента invocation в service method.
         event: Спецификация публикации в broker.
+
     """
 
     model: type[InvocationOptionsSchema] = InvocationOptionsSchema

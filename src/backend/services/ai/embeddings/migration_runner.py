@@ -36,6 +36,7 @@ class EmbeddingMigrationRunner:
         target_store: backend с методом ``async upsert(collection, doc)``.
         embedder: объект с ``async embed(texts: list[str]) -> list[list[float]]``.
         batch_size: размер одного batch'а (default 1000).
+
     """
 
     def __init__(

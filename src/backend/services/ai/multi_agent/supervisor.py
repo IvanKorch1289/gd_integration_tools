@@ -70,6 +70,7 @@ class AgentSpec:
             возвращающая ``{"agent": name, "stub": True}``.
         max_iterations: Максимальное число вызовов агента в одной сессии
             (защита от циклов handoff). default=3.
+
     """
 
     name: str
@@ -126,6 +127,7 @@ class MultiAgentSupervisor:
 
     Raises:
         ValueError: при пустом списке агентов или дубликате имён.
+
     """
 
     def __init__(
@@ -201,6 +203,7 @@ class MultiAgentSupervisor:
 
         Returns:
             Сериализованный :class:`SupervisorResult` (dict).
+
         """
         result = SupervisorResult(supervisor=self._name, prompt=prompt)
         if not self.enabled:
@@ -309,6 +312,7 @@ class MultiAgentSupervisor:
 
         Raises:
             MultiAgentSupervisorUnavailable: при отсутствии langgraph / langchain-core.
+
         """
         if self._compiled is not None:
             return self._compiled
@@ -442,6 +446,7 @@ def get_credit_pipeline_supervisor(
 
     Returns:
         :class:`MultiAgentSupervisor` с именем ``credit_orchestrator``.
+
     """
     return MultiAgentSupervisor(
         name="credit_orchestrator",

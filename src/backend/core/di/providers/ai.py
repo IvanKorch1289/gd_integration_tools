@@ -227,6 +227,7 @@ def get_skill_registry() -> Any:
 
     Returns:
         :class:`SkillRegistry` или ``None`` если singleton не зарегистрирован.
+
     """
     try:
         from src.backend.core.di import app_state_singleton
@@ -307,6 +308,7 @@ def _build_ai_gateway_singleton() -> Any:
 
     Returns:
         :class:`AIGateway` instance с полным DI.
+
     """
     from src.backend.core.ai.gateway import AIGateway
     from src.backend.core.ai.policy.resolver import PolicyResolver
@@ -332,6 +334,7 @@ def get_ai_gateway_provider() -> Any:
     Returns:
         :class:`AIGateway` instance с инжектированными
         ``policy_resolver``, ``capability_gate``, ``token_budget``.
+
     """
     if "ai_gateway" in _overrides:
         return _overrides["ai_gateway"]
@@ -345,6 +348,7 @@ def set_ai_gateway_provider(impl: Any) -> None:
         impl: :class:`AIGateway` instance для тестового инжекта;
             ``None`` сбрасывает override (lru-cache сбрасывается
             отдельно через :func:`_build_ai_gateway_singleton.cache_clear`).
+
     """
     if impl is None:
         _overrides.pop("ai_gateway", None)

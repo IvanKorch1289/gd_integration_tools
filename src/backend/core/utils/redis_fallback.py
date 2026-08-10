@@ -101,6 +101,7 @@ class FallbackCache:
             primary: Основной Redis-like backend.
             fallback_maxsize: Размер локального TTLCache.
             fallback_ttl: TTL записей в локальном кэше (секунды).
+
         """
         self._primary = primary
         self._fallback: TTLCache[str, Any] = TTLCache(

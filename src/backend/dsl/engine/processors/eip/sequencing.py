@@ -45,6 +45,7 @@ class ResequencerProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен с сообщением.
             context: Контекст выполнения процессора.
+
         """
         key = self._corr_key(exchange)
         body = exchange.in_message.body

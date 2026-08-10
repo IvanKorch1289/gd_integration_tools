@@ -26,6 +26,7 @@ class FeedbackTrainResult:
         prompt_version: Версия сохранённого prompt в Langfuse (``v{N}``).
         backend: ``dspy`` или ``noop`` (если dspy-ai не установлен).
         elapsed_seconds: Время обучения.
+
     """
 
     examples_used: int
@@ -42,6 +43,7 @@ class FeedbackTrainer:
         prompt_storage: Любой объект с методом
             ``async save(name, content, metadata) -> str`` —
             LangfusePromptStorage в production / dict-mock в тестах.
+
     """
 
     def __init__(self, dataset_builder: Any, prompt_storage: Any) -> None:
@@ -125,6 +127,7 @@ class DSPyFeedbackTrainer:
 
         Returns:
             {'total': int, 'correct': int, 'accuracy': float}
+
         """
         total = len(items)
         correct = sum(1 for it in items if it.get("score", 0) >= 1.0)
@@ -143,6 +146,7 @@ class DSPyFeedbackTrainer:
         Returns:
             dict с результатом: status, examples, prompt_version, backend, elapsed.
             ``{"status": "noop", "reason": "..."}`` если trainer не сконфигурирован.
+
         """
         if self._inner is None:
             return {"status": "noop", "reason": "no inner trainer configured"}

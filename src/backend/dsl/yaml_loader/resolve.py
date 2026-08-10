@@ -43,6 +43,7 @@ def _resolve_include_extends(
 
     Raises:
         RuntimeError: If a cycle is detected in include/extends chain.
+
     """
     if _visited is None:
         _visited = set()

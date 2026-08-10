@@ -115,6 +115,7 @@ class AgentMemoryService:
 
         Returns:
             List of message dicts.
+
         """
         client = self._client()
         docs = await client.find(
@@ -147,6 +148,7 @@ class AgentMemoryService:
 
         Raises:
             TypeError: при отсутствии ``tenant_id`` (kw-only, no default).
+
         """
         client = self._client()
         doc = {
@@ -173,6 +175,7 @@ class AgentMemoryService:
             session_id: Session identifier.
             tenant_id: Tenant identifier (cycle-6/D-AUDIT-606: фильтруем trim
                 только в рамках tenant, чтобы не удалить чужие сообщения).
+
         """
         async with self._trim_lock:
             client = self._client()
@@ -199,6 +202,7 @@ class AgentMemoryService:
 
         Args:
             session_id: Session identifier.
+
         """
         client = self._client()
         await client.collection(_MESSAGES).delete_many({"session_id": session_id})
@@ -211,6 +215,7 @@ class AgentMemoryService:
 
         Returns:
             Scratchpad content string.
+
         """
         client = self._client()
         doc = await client.find_one(_SCRATCHPAD, {"session_id": session_id})
@@ -222,6 +227,7 @@ class AgentMemoryService:
         Args:
             session_id: Session identifier.
             content: Scratchpad content.
+
         """
         client = self._client()
         await client.update_one(
@@ -243,6 +249,7 @@ class AgentMemoryService:
 
         Returns:
             Dict mapping fact keys to values.
+
         """
         client = self._client()
         docs = await client.find(

@@ -49,6 +49,7 @@ def set_correlation_context(
         correlation_id: Optional correlation ID.
         request_id: Optional request ID.
         tenant_id: Optional tenant ID.
+
     """
     bind: dict[str, str] = {}
     if correlation_id:
@@ -69,6 +70,7 @@ def get_correlation_id() -> str:
 
     Returns:
         Correlation ID string.
+
     """
     return correlation_id_var.get()
 
@@ -78,6 +80,7 @@ def get_request_id() -> str:
 
     Returns:
         Request ID string.
+
     """
     return request_id_var.get()
 
@@ -87,6 +90,7 @@ def get_tenant_id() -> str:
 
     Returns:
         Tenant ID string.
+
     """
     return tenant_id_var.get()
 
@@ -96,6 +100,7 @@ def new_correlation_id() -> str:
 
     Returns:
         New correlation ID string.
+
     """
     cid = uuid.uuid4().hex[:16]
     correlation_id_var.set(cid)
@@ -112,6 +117,7 @@ def set_correlation_id(correlation_id: str) -> None:
 
     Args:
         correlation_id: Correlation ID (UUID либо hex-string).
+
     """
     set_correlation_context(correlation_id=correlation_id)
 
@@ -143,6 +149,7 @@ def start_span(name: str, attributes: dict[str, Any] | None = None) -> Any:
     See Also:
         - Sprint 36 sham-fix commit ``fb16f5d4`` (reverted-only-via-test).
         - Sprint 182 retrospective: ``docs/compose/reports/2026-08-05-s182-...``
+
     """
     try:
         from opentelemetry import trace

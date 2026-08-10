@@ -56,6 +56,7 @@ class ResponseValidatorProcessor(BaseProcessor):
         on_error: ``fail`` | ``dlq`` | ``warn``.
         source: Откуда брать тело: ``out_body`` (default — ``out_message.body``
             если есть, иначе ``in_message.body``) или ``in_body``.
+
     """
 
     def __init__(

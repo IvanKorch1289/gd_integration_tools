@@ -81,6 +81,7 @@ class BlueprintSpec:
         steps: list ``steps[]`` из YAML.
         destination: dict ``to`` из YAML.
         path: Путь до исходного YAML-файла.
+
     """
 
     name: str
@@ -109,6 +110,7 @@ def load_blueprint(path: Path) -> BlueprintSpec:
 
     Raises:
         ValueError: Manifest невалиден (нет ``blueprint``/``steps``).
+
     """
     with path.open("r", encoding="utf-8") as fh:
         raw = yaml.safe_load(fh)
@@ -152,6 +154,7 @@ def discover_blueprints(
 
     Returns:
         Список ``BlueprintSpec``, отсортированный по имени.
+
     """
     directory = directory or DEFAULT_BLUEPRINTS_DIR
     if not directory.is_dir():

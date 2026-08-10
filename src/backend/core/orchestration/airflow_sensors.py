@@ -59,6 +59,7 @@ class FileSensor:
         pattern: optional — match against glob pattern (default: exact path).
         recursive: watch recursively (default False).
         poll_interval_s: minimum interval between events (default 1.0).
+
     """
 
     def __init__(
@@ -133,6 +134,7 @@ class SqlSensor:
         predicate: optional JMESPath expression evaluated against query result.
             Если задан — match when truthy. Default: match when any row returned.
         poll_interval_s: interval between polls (default 5.0).
+
     """
 
     def __init__(
@@ -169,6 +171,7 @@ class SqlSensor:
 
         Returns:
             ``True`` при совпадении, ``False`` при timeout.
+
         """
         start = time.monotonic()
         timeout_s = trigger.timeout.total_seconds() if trigger.timeout else None
@@ -230,6 +233,7 @@ class HttpSensor:
         body_match: optional JMESPath/JSONPath applied to response body.
             If provided, match requires both status AND body_match truthy.
         poll_interval_s: interval between polls (default 10.0).
+
     """
 
     def __init__(
@@ -271,6 +275,7 @@ class HttpSensor:
 
         Returns:
             ``True`` при совпадении, ``False`` при timeout.
+
         """
         start = time.monotonic()
         timeout_s = trigger.timeout.total_seconds() if trigger.timeout else None
@@ -348,6 +353,7 @@ class S3Sensor:
     Raises:
         ImportError: если ``aioboto3`` не установлен.
             Установка: ``uv pip install aioboto3``.
+
     """
 
     def __init__(
@@ -396,6 +402,7 @@ class S3Sensor:
 
         Returns:
             ``True`` при появлении объекта, ``False`` при timeout.
+
         """
         import aioboto3
 

@@ -47,6 +47,7 @@ class MLModelLoaderProtocol(Protocol):
 
         Raises:
             RuntimeError: Если библиотека не установлена или тип неизвестен.
+
         """
         ...
 

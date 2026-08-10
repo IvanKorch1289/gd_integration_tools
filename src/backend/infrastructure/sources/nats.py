@@ -51,6 +51,7 @@ class NatsMessage:
         data: Сырые байты payload.
         reply: Reply-subject (для request/reply).
         timestamp: Время получения.
+
     """
 
     subject: str
@@ -75,6 +76,7 @@ class NatsSource:
             (0 = infinite). Default: 5.
         reconnect_delay_seconds: Задержка между попытками reconnect.
             Default: 1.0.
+
     """
 
     kind: SourceKind = SourceKind.MQ
@@ -120,6 +122,7 @@ class NatsSource:
         Raises:
             ImportError: ``nats-py`` не установлен.
             RuntimeError: max reconnect attempts exhausted.
+
         """
         try:
             import nats  # type: ignore[import-not-found]
@@ -224,6 +227,7 @@ class NatsSource:
 
         Args:
             on_event: Async-callback, вызываемый на каждое событие.
+
         """
         async for nats_msg in self.stream():
             event = SourceEvent(

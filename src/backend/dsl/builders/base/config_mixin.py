@@ -56,6 +56,7 @@ class ConfigMixin(_RouteBuilderProtocol):
         Example::
 
             builder.http_call("https://api.example.com").with_timeout(10.0)
+
         """
         last = self._last_processor_or_raise()
         if self._set_first_attr(last, ("_timeout", "timeout"), float(seconds)) is None:
@@ -81,6 +82,7 @@ class ConfigMixin(_RouteBuilderProtocol):
 
         Raises:
             ValueError: если предыдущий processor не поддерживает retries.
+
         """
         last = self._last_processor_or_raise()
         applied = self._set_first_attr(
@@ -122,6 +124,7 @@ class ConfigMixin(_RouteBuilderProtocol):
             builder.http_call("https://api.example.com").with_circuit_breaker(
                 "external_api", failure_threshold=3, recovery_timeout=60.0
             )
+
         """
         # P9 fix: import via importlib to break circular chain
         # (breaker → core.logging → infrastructure.logging → core.interfaces → breaker).
@@ -157,6 +160,7 @@ class ConfigMixin(_RouteBuilderProtocol):
         Raises:
             ValueError: если mode не ``merge``/``replace`` или processor не
                 поддерживает атрибут headers.
+
         """
         if mode not in ("merge", "replace"):
             raise ValueError(
@@ -196,6 +200,7 @@ class ConfigMixin(_RouteBuilderProtocol):
         Raises:
             ValueError: если указано не ровно одно из значений или processor
                 не поддерживает соответствующий атрибут.
+
         """
         provided = [v for v in (token, api_key, mtls_cert) if v is not None]
         if len(provided) != 1:
@@ -253,6 +258,7 @@ class ConfigMixin(_RouteBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         if not isinstance(n, int) or n < 1:
             raise ValueError(f"with_pool_size: n должен быть int ≥ 1, получено {n!r}")
@@ -271,6 +277,7 @@ class ConfigMixin(_RouteBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         if not isinstance(bytes_, int) or bytes_ < 1:
             raise ValueError(
@@ -289,6 +296,7 @@ class ConfigMixin(_RouteBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         if not isinstance(seconds, (int, float)) or seconds <= 0:
             raise ValueError(
@@ -306,6 +314,7 @@ class ConfigMixin(_RouteBuilderProtocol):
 
         Returns:
             Значение override или default.
+
         """
         return self._route_overrides.get(key, default)
 
@@ -329,6 +338,7 @@ class ConfigMixin(_RouteBuilderProtocol):
             builder.from_("http://api.example.com")
                 .with_connection_pool(min_size=5, max_size=50, timeout=10.0)
                 .proxy(...)
+
         """
         if not isinstance(min_size, int) or min_size < 0:
             raise ValueError(
@@ -370,6 +380,7 @@ class ConfigMixin(_RouteBuilderProtocol):
             builder.from_("ws://stream.example.com")
                 .with_reconnection(max_attempts=5, delay=2.0, backoff=1.5)
                 .websocket(...)
+
         """
         if not isinstance(max_attempts, int) or max_attempts < 1:
             raise ValueError(

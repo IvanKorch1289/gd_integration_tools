@@ -29,6 +29,7 @@ class ExpressReplyProcessor(BaseProcessor):
         body: Статический текст ответа.
         body_from: Выражение извлечения текста ответа.
         result_property: Имя property для записи sync_id ответа.
+
     """
 
     def __init__(

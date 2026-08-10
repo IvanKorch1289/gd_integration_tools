@@ -20,6 +20,7 @@ def extract_tenant_id(auth: Any) -> str | None:
 
     Returns:
         Tenant ID string или ``None`` если отсутствует / пустой.
+
     """
     metadata = getattr(auth, "metadata", None)
     if not isinstance(metadata, dict):
@@ -38,6 +39,7 @@ def extract_user_groups(auth: Any) -> list[str]:
 
     Returns:
         Список IdP groups (пустой список если отсутствуют).
+
     """
     metadata = getattr(auth, "metadata", None)
     if not isinstance(metadata, dict):
@@ -62,6 +64,7 @@ def extract_user_permissions(auth: Any) -> tuple[str, ...]:
         Кортеж строк-permissions. Пустой кортеж если отсутствуют.
         Нормализация: ``"read:users" → "scope:read:users"`` для
         совместимости с :class:`AuthorizationGateway` API.
+
     """
     metadata = getattr(auth, "metadata", None)
     if not isinstance(metadata, dict):

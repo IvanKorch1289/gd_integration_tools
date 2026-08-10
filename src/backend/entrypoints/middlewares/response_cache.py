@@ -42,6 +42,7 @@ class ResponseCacheMiddleware:
     Args:
         app: ASGI-приложение.
         max_age: TTL в секундах для Cache-Control.
+
     """
 
     def __init__(self, app: ASGIApp, max_age: int = 60) -> None:
@@ -50,6 +51,7 @@ class ResponseCacheMiddleware:
         Args:
             app: ASGI-приложение.
             max_age: TTL в секундах для Cache-Control.
+
         """
         self.app = app
         self._max_age = max_age
@@ -61,6 +63,7 @@ class ResponseCacheMiddleware:
             scope: ASGI scope.
             receive: ASGI receive callable.
             send: ASGI send callable.
+
         """
         if scope["type"] != "http":
             await self.app(scope, receive, send)

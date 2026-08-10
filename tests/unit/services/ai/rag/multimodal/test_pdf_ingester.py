@@ -29,6 +29,7 @@ def _make_minimal_pdf(text: str = "Hello multimodal RAG world") -> bytes:
 
     Returns:
         Сырые bytes PDF.
+
     """
     try:
         from pypdf import PdfWriter

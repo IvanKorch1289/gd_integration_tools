@@ -40,6 +40,7 @@ class FtpUploadProcessor(BaseProcessor):
         password: Password.
         local_path: Source file.
         remote_path: Destination path на FTP.
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.ftp.upload"

@@ -85,6 +85,7 @@ class TransformCdcEventProcessor(BaseProcessor):
         builder.from_cdc_capture("orders.changes", "oracle_prod", ["orders"]) \\
             .cdc_transform(operations=["INSERT", "UPDATE"], project=["id", "table"]) \\
             .dispatch_action("analytics.process_changes")
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -117,6 +118,7 @@ class TransformCdcEventProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен с CDC-событиями (или одиночным событием).
             context: Контекст выполнения процессора.
+
         """
         body = exchange.in_message.body
         if body is None:

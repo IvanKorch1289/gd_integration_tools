@@ -77,6 +77,7 @@ class TokenRegistryProtocol(Protocol):
             key: Storage key.
             token_map: Token map to store.
             ttl_s: Time-to-live in seconds.
+
         """
         ...
 
@@ -88,6 +89,7 @@ class TokenRegistryProtocol(Protocol):
 
         Returns:
             TokenMap or None if not found/expired.
+
         """
         ...
 
@@ -96,6 +98,7 @@ class TokenRegistryProtocol(Protocol):
 
         Args:
             key: Storage key.
+
         """
         ...
 
@@ -104,6 +107,7 @@ class TokenRegistryProtocol(Protocol):
 
         Returns:
             Number of deleted entries.
+
         """
         ...
 
@@ -115,6 +119,7 @@ class TokenRegistryProtocol(Protocol):
 
         Returns:
             EncryptedValue with ciphertext and metadata.
+
         """
         ...
 
@@ -126,6 +131,7 @@ class TokenRegistryProtocol(Protocol):
 
         Returns:
             Decrypted plaintext or None if decryption fails.
+
         """
         ...
 
@@ -256,6 +262,7 @@ class RedisTokenRegistry:
 
         Raises:
             RuntimeError: ``key_provider`` не отдал ключ текущей версии.
+
         """
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
@@ -316,6 +323,7 @@ class RedisTokenRegistry:
                 ``f"{tenant_id}:{correlation_id}"``).
             token_map: :class:`TokenMap` для сохранения.
             ttl_s: TTL в секундах (Redis ``EX``).
+
         """
         redis_key = self._build_key(key)
         payload = self._serialize(token_map)

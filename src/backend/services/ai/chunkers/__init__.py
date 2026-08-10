@@ -51,6 +51,7 @@ def get_chunker(
 
     Raises:
         ValueError: Неизвестная стратегия или невалидные параметры.
+
     """
     if chunk_size <= 0:
         raise ValueError(f"chunk_size must be > 0, got {chunk_size}")

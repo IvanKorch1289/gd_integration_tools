@@ -39,6 +39,7 @@ async def run_workflow_by_id(
 
     Returns:
         Результат workflow (dict).
+
     """
     from src.backend.dsl.workflow.launcher import WorkflowLauncher
 
@@ -81,6 +82,7 @@ class WorkflowSubprocessProcessor(BaseProcessor):
         input_from: Путь к входным данным в exchange (default ``"body"``).
         to: Куда записать результат (default ``"body.subprocess_result"``).
         timeout: Таймаут в секундах (default 60).
+
     """
 
     required_capability: ClassVar[str | None] = "workflow.subprocess.invoke"

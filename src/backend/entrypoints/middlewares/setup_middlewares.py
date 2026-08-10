@@ -289,6 +289,7 @@ def setup_middlewares(app: FastAPI) -> None:
 
     Raises:
         RuntimeError: При несовместимых типах для middleware.
+
     """
     registry = build_default_registry()
     try:

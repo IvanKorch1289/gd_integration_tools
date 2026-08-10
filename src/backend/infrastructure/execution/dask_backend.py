@@ -39,6 +39,7 @@ class DaskBackend:
             Если ``None`` — поднимается :class:`LocalCluster`.
         n_workers: Число воркеров для LocalCluster (default 4).
         threads_per_worker: Потоков на воркер (default 2).
+
     """
 
     def __init__(
@@ -70,6 +71,7 @@ class DaskBackend:
 
         Returns:
             ``distributed.Client`` готовый к ``submit`` / ``compute``.
+
         """
         if self._client is not None:
             return self._client
@@ -112,6 +114,7 @@ class DaskBackend:
 
         Returns:
             ``distributed.Future`` — caller вызывает ``.result()`` / await.
+
         """
         client = self.ensure_started()
         return client.submit(fn, *args, **kwargs)

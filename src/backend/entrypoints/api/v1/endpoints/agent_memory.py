@@ -55,6 +55,7 @@ def _current_tenant_id() -> str:
 
     Raises:
         HTTPException: 403 если tenant_id отсутствует.
+
     """
     ctx = RequestContext.current()
     tenant_id = ctx.tenant_id if ctx is not None else None

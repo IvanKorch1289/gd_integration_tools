@@ -57,6 +57,7 @@ class WaitMixin(_WorkflowBuilderProtocol):
             timeout_s: hard timeout (default 1h).
             output_key: ключ в workflow state для payload решения
                 (approve/reject + комментарий).
+
         """
         self._steps.append(
             SignalWaitDeclaration(

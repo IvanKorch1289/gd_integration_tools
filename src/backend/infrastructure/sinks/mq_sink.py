@@ -46,6 +46,7 @@ class MqSink(Sink):
         topic: Topic / exchange / stream / subject — куда публикуем.
         extra: Доп.параметры для конкретного broker'а (routing_key,
             partition, headers).
+
     """
 
     sink_id: str

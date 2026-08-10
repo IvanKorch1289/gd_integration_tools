@@ -256,6 +256,7 @@ async def verify_request(
     Returns:
         :class:`AuthContext` при успехе (первый match), ``None`` если
         ни один verifier не вернул контекст.
+
     """
     if methods is None:
         methods_list = list(_VERIFIERS.keys())
@@ -290,6 +291,7 @@ def require_auth(
 
     Returns:
         Async dependency возвращающий AuthContext.
+
     """
     effective = methods if methods is not None else _default_auth
 

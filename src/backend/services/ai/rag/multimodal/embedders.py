@@ -38,6 +38,7 @@ class CLIPEmbedder:
         embedding_kind: Идентификатор реализации (``clip``).
         model_name: Имя модели sentence-transformers.
         device: Целевое устройство (``cpu`` / ``cuda``).
+
     """
 
     embedding_kind = "clip"
@@ -50,6 +51,7 @@ class CLIPEmbedder:
         Args:
             model_name: Имя модели sentence-transformers.
             device: Устройство — ``cpu`` или ``cuda``.
+
         """
         self.model_name = model_name
         self.device = device
@@ -67,6 +69,7 @@ class CLIPEmbedder:
         Raises:
             LazyImportError: Если sentence-transformers/PIL/torch не установлены.
             ValueError: Если content имеет неподдерживаемый тип.
+
         """
         model = await self._get_model()
         return await asyncio.to_thread(self._encode_sync, model, content)
@@ -101,6 +104,7 @@ class CLIPEmbedder:
 
         Raises:
             ValueError: Если bytes не парсятся как изображение.
+
         """
         if isinstance(content, str):
             vec = model.encode(content, convert_to_numpy=True)
@@ -138,6 +142,7 @@ class ColpaliEmbedder:
     Attributes:
         embedding_kind: Идентификатор реализации (``colpali``).
         model_name: Имя модели colpali.
+
     """
 
     embedding_kind = "colpali"
@@ -147,6 +152,7 @@ class ColpaliEmbedder:
 
         Args:
             model_name: Имя модели colpali_engine.
+
         """
         self.model_name = model_name
         self._model: Any | None = None
@@ -162,6 +168,7 @@ class ColpaliEmbedder:
 
         Raises:
             LazyImportError: Если colpali_engine не установлен.
+
         """
         try:
             import colpali_engine  # type: ignore[import-not-found]  # noqa: F401 — availability probe

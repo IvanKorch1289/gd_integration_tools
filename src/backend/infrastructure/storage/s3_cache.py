@@ -54,6 +54,7 @@ class S3ClientProtocol(Protocol):
 
         Returns:
             Object bytes or None if not found.
+
         """
         ...
 
@@ -66,6 +67,7 @@ class S3ClientProtocol(Protocol):
             key: Object key.
             data: Object bytes.
             content_type: Optional MIME type.
+
         """
         ...
 
@@ -74,6 +76,7 @@ class S3ClientProtocol(Protocol):
 
         Args:
             key: Object key.
+
         """
         ...
 
@@ -93,6 +96,7 @@ class CacheClientProtocol(Protocol):
 
         Returns:
             Cached bytes or None if not found.
+
         """
         ...
 
@@ -106,6 +110,7 @@ class CacheClientProtocol(Protocol):
 
         Returns:
             Redis response.
+
         """
         ...
 
@@ -117,6 +122,7 @@ class CacheClientProtocol(Protocol):
 
         Returns:
             Redis response.
+
         """
         ...
 
@@ -158,6 +164,7 @@ class S3CacheAdapter:
                 будут проигнорированы: адаптер выведет предупреждение и
                 отключит кэширование.
             key_prefix: Префикс ключей в Redis.
+
         """
         self.s3 = s3
         self.cache = cache
@@ -210,6 +217,7 @@ class S3CacheAdapter:
 
         Returns:
             Содержимое объекта либо ``None`` если объект отсутствует в S3.
+
         """
         cache_key = self._cache_key(key)
 
@@ -238,6 +246,7 @@ class S3CacheAdapter:
             key: Ключ объекта в S3.
             data: Байтовое содержимое.
             content_type: MIME-тип (опционально).
+
         """
         await self.s3.put_object(key, data, content_type=content_type)
         if not self._cache_disabled:
@@ -252,6 +261,7 @@ class S3CacheAdapter:
 
         Args:
             key: Ключ объекта в S3.
+
         """
         await self.s3.delete_object(key)
         if not self._cache_disabled:

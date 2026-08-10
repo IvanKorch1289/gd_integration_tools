@@ -85,6 +85,7 @@ class CredentialProvider:
         Raises:
             KeyError: spec не зарегистрирован или env var отсутствует.
             ValueError: неподдерживаемый формат ``secret_ref``.
+
         """
         from src.backend.core.audit.facade.secrets import emit_secret_access
 

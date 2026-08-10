@@ -35,6 +35,7 @@ class AdDirectoryClient:
           и feature-flag ``saml_ad_login_enabled``.
         * Для тестов можно инжектировать ``connection_factory`` —
           фабрика, возвращающая mock connection (см. tests/unit).
+
     """
 
     def __init__(
@@ -49,9 +50,10 @@ class AdDirectoryClient:
 
         Returns:
             True если LDAP client доступен; False иначе.
+
         """
         try:
-            import ldap3
+            import ldap3  # noqa: F401 — availability probe
 
             return True
         except ImportError:
@@ -69,6 +71,7 @@ class AdDirectoryClient:
 
         Raises:
             AdAuthError: при недоступности LDAP-client'а или сервера.
+
         """
         if not self.is_available():
             raise AdAuthError("ldap3 не установлен")
@@ -122,6 +125,7 @@ class AdDirectoryClient:
 
         Raises:
             AdAuthError: при ошибке service-bind или search.
+
         """
         if not self.is_available():
             raise AdAuthError("ldap3 не установлен")
@@ -222,6 +226,7 @@ class AdDirectoryClient:
 
         Raises:
             AdAuthError: при ошибке service-bind или search.
+
         """
         if not self.is_available():
             raise AdAuthError("ldap3 не установлен")

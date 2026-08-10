@@ -66,6 +66,7 @@ async def serve_http3(
         config: параметры HTTP/3 сервера (TLS, порт, idle timeout).
         stop_event: внешнее событие отмены; если ``None`` — сервер
             работает до ``CancelledError``.
+
     """
     from aioquic.asyncio import serve
 

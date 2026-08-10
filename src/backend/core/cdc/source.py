@@ -44,6 +44,7 @@ class CDCCursor(BaseModel):
     Note:
         ``topic`` опционален для backward-compat — старые cursor'ы без
         ``topic`` будут работать через fallback (S179+ можно удалить).
+
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")

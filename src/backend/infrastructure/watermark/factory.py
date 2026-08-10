@@ -39,6 +39,7 @@ def create_watermark_store(
 
     Raises:
         RuntimeError: при ``backend="postgres"`` без ``session_manager``.
+
     """
     match settings.backend:
         case "memory":

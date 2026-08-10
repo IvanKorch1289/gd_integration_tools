@@ -89,6 +89,7 @@ class NoOpBillingFacade:
         Raises:
             NotImplementedError: Если :data:`BILLING_ENABLED` истинно —
                 реальный backend не интегрирован.
+
         """
         _ensure_disabled_or_raise()
         await _emit_quota_check_skipped(tenant_id, method="consume_request")
@@ -110,6 +111,7 @@ class NoOpBillingFacade:
 
         Raises:
             NotImplementedError: Если :data:`BILLING_ENABLED` истинно.
+
         """
         _ensure_disabled_or_raise()
         await _emit_quota_check_skipped(

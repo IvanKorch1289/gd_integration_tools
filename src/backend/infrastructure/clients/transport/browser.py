@@ -90,6 +90,7 @@ class BrowserClient:
 
         Returns:
             Playwright browser context.
+
         """
         ctx_kwargs: dict[str, Any] = {
             "viewport": {
@@ -116,6 +117,7 @@ class BrowserClient:
         Args:
             min_ms: Minimum delay in milliseconds.
             max_ms: Maximum delay in milliseconds.
+
         """
         if self._human_delays:
             await asyncio.sleep(
@@ -133,6 +135,7 @@ class BrowserClient:
 
         Returns:
             Dict with url, status, title.
+
         """
         async with self._breaker.guard():
             ctx = await self._new_context()
@@ -159,6 +162,7 @@ class BrowserClient:
 
         Returns:
             List of text content from matching elements.
+
         """
         async with self._breaker.guard():
             ctx = await self._new_context()
@@ -183,6 +187,7 @@ class BrowserClient:
 
         Returns:
             List of row dicts with header keys.
+
         """
         async with self._breaker.guard():
             ctx = await self._new_context()
@@ -218,6 +223,7 @@ class BrowserClient:
 
         Returns:
             Dict with final url and title.
+
         """
         async with self._breaker.guard():
             ctx = await self._new_context()
@@ -246,6 +252,7 @@ class BrowserClient:
 
         Returns:
             Dict with final url and title.
+
         """
         async with self._breaker.guard():
             ctx = await self._new_context()
@@ -270,6 +277,7 @@ class BrowserClient:
 
         Returns:
             Screenshot bytes (PNG).
+
         """
         async with self._breaker.guard():
             ctx = await self._new_context()

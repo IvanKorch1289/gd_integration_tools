@@ -103,6 +103,7 @@ class ManagedAsyncClient[T](ABC):
 
         Returns:
             {"name": str, "status": "ok"|"error", "latency_ms": float, "error": str|None}
+
         """
         import time
 

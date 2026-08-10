@@ -43,6 +43,7 @@ class RetryBudget:
         min_retries_per_sec: Гарантированный минимум (anti-starvation),
             обеспечивает что даже при отсутствии трафика хотя бы N retry
             в секунду доступны. ``0.0`` отключает.
+
     """
 
     def __init__(
@@ -107,6 +108,7 @@ class RetryBudget:
 
         Returns:
             Dict with name, total_in_window, retries_in_window, ratio, max_ratio.
+
         """
         return {
             "name": self.name,

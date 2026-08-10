@@ -55,6 +55,7 @@ class EmailMessage:
         body: Текстовое тело письма (plain/html, приоритет plain).
         received_at: Время приёма на клиенте (UTC).
         headers: Словарь всех заголовков письма.
+
     """
 
     uid: str
@@ -74,6 +75,7 @@ def _parse_raw_email(raw: bytes) -> dict[str, str]:
 
     Returns:
         Словарь с ключами subject, from, to, body и всеми заголовками.
+
     """
     msg = email.message_from_bytes(raw, policy=email.policy.default)
     headers: dict[str, str] = {k.lower(): str(v) for k, v in msg.items()}
@@ -127,6 +129,7 @@ class EmailIMAPSource:
         use_ssl: Использовать IMAPS (default True).
         idle_timeout: Таймаут одной IDLE-сессии в секундах (RFC 2177 ≤ 29 мин).
         reconnect_delay: Пауза между попытками переподключения (секунды).
+
     """
 
     def __init__(
@@ -165,6 +168,7 @@ class EmailIMAPSource:
 
         Yields:
             :class:`EmailMessage` для каждого нового письма, прошедшего фильтры.
+
         """
         try:
             import aioimaplib
@@ -189,6 +193,7 @@ class EmailIMAPSource:
 
         Returns:
             Настроенный :class:`ssl.SSLContext`.
+
         """
         ctx = ssl.create_default_context()
         # Явная проверка: запрещено CERT_NONE / check_hostname=False (V1)
@@ -201,6 +206,7 @@ class EmailIMAPSource:
 
         Returns:
             Авторизованный IMAP-клиент (``aioimaplib.IMAP4_SSL`` или ``IMAP4``).
+
         """
         from aioimaplib import IMAP4, IMAP4_SSL
 
@@ -224,6 +230,7 @@ class EmailIMAPSource:
 
         Returns:
             True если письмо проходит все фильтры.
+
         """
         if self._subject_filter is not None:
             if self._subject_filter.lower() not in parsed.get("subject", "").lower():
@@ -241,6 +248,7 @@ class EmailIMAPSource:
 
         Returns:
             Список новых :class:`EmailMessage`.
+
         """
         try:
             response = await client.uid_search("UNSEEN")
@@ -312,6 +320,7 @@ class EmailIMAPSource:
 
         Yields:
             :class:`EmailMessage` для каждого нового письма.
+
         """
         while True:
             try:

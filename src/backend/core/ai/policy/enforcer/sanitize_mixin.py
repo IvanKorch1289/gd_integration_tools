@@ -35,6 +35,7 @@ class SanitizeMixin:
 
         Returns:
             Sanitized prompt-строку (PII заменён на placeholder'ы).
+
         """
         prompt = (
             getattr(request, "prompt_inline", None)
@@ -71,6 +72,7 @@ class SanitizeMixin:
 
         Returns:
             AIResponse с sanitized content + ``pii_detected=True``.
+
         """
         if not getattr(response, "content", None) or self._pii_tokenizer is None:
             return response

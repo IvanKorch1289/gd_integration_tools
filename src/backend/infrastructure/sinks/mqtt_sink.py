@@ -61,6 +61,7 @@ class MqttSink(Sink):
         client_cert_path: Путь к клиентскому сертификату (для mTLS).
         client_key_path: Путь к клиентскому ключу (для mTLS).
         timeout: Таймаут операции connect/publish, секунды.
+
     """
 
     sink_id: str
@@ -84,6 +85,7 @@ class MqttSink(Sink):
 
         Returns:
             Контекст или ``None``, если TLS отключён.
+
         """
         if not self.tls_enabled:
             return None

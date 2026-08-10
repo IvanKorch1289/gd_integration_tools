@@ -51,6 +51,7 @@ class HyDEResult(TypedDict):
         score: Similarity score [0..1].
         hypothetical_document: Сгенерированный гипотетический документ
             (для отладки и trace).
+
     """
 
     chunk_id: str
@@ -73,6 +74,7 @@ class HyDEConfig:
             документа. ``{query}`` заменяется на реальный запрос.
         include_hypothetical_in_result: Включать гипотетический документ
             в результат (для debug/traces).
+
     """
 
     max_tokens: int = DEFAULT_MAX_TOKENS_HYPOTHETICAL
@@ -99,6 +101,7 @@ class HyDERetriever:
             ``(prompt: str, max_tokens: int, temperature: float) -> str``.
             LLM для генерации гипотетического документа.
         config: HyDEConfig с настройками.
+
     """
 
     def __init__(
@@ -132,6 +135,7 @@ class HyDERetriever:
 
         Returns:
             Список HyDEResult длиной ≤ top_k.
+
         """
         if not query.strip():
             return []

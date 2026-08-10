@@ -89,6 +89,7 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
         RuntimeError: Если ``temporalio`` SDK не установлен.
         TypeError: Если в декларации есть step неизвестного типа
           (новый WorkflowStep добавлен без обновления step_compilers).
+
     """
     try:
         from temporalio import workflow as temporal_workflow
@@ -191,6 +192,7 @@ def compile_workflows(
     Raises:
         RuntimeError: Если после компиляции хотя бы один класс не попал в
             :data:`workflow_registry` (replay будет сломан).
+
     """
     out = [compile_workflow(decl) for decl in declarations]
 

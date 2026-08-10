@@ -31,6 +31,7 @@ References:
 * OWASP Password Storage Cheat Sheet (2026) — Argon2id default.
 * RFC 9106 — Argon2 Memory-Hard Function.
 * PHC string format: ``$argon2id$v=19$m=65536,t=2,p=2$<salt>$<hash>``.
+
 """
 
 from __future__ import annotations
@@ -54,6 +55,7 @@ def is_argon2_hash(stored_hash: str) -> bool:
 
     Returns:
         ``True`` если строка начинается с ``$argon2id$``.
+
     """
     return stored_hash.startswith("$argon2id$")
 
@@ -68,6 +70,7 @@ def needs_argon2_upgrade(stored_hash: str) -> bool:
         ``True`` если hash не Argon2 или time_cost/memory_cost ниже
         target. Используется в :meth:`APIKeyAuth.verify` для сигнала
         миграции на следующий login (transparent upgrade).
+
     """
     if not is_argon2_hash(stored_hash):
         return True
@@ -98,6 +101,7 @@ class APIKeyAuth:
             Default ``True`` для dual-verify; миграционный script
             (``migrate_api_keys_to_argon2.py``) пропускает постепенный
             rollout → после full migration выставить ``False``.
+
     """
 
     prefix: str = "apikey:"
@@ -157,6 +161,7 @@ class APIKeyAuth:
         Raises:
             argon2.exceptions.HashingError: если системный random
                 недоступен (rare, фатальная для production).
+
         """
         if not self.enable_argon2:
             return self._legacy_sha256_hash(raw)
@@ -185,6 +190,7 @@ class APIKeyAuth:
             entropy estimate через unique-chars + length. NOT a full
             password-strength library (no zxcvbn). Sufficient для
             pre-creation gate.
+
         """
         return _evaluate_strength(raw)
 
@@ -213,6 +219,7 @@ class APIKeyAuth:
 
         Returns:
             ``True`` если raw matches expected_hash, иначе ``False``.
+
         """
         if not raw or not expected_hash:
             return False

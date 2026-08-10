@@ -62,6 +62,7 @@ class FallbackObjectStorage(ObjectStorage):
             exception теряется (logged as warning). Это даёт более
             релевантный error в observability (текущее состояние
             secondary обычно показательнее).
+
     """
 
     def __init__(

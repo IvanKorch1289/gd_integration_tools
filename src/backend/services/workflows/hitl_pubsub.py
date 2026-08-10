@@ -67,6 +67,7 @@ async def publish_hitl_resolved(
         Exception: Caller-facing error если Redis недоступен. Caller
             должен catch и log (pub/sub failure НЕ должна ломать
             resolve flow).
+
     """
     channel = _channel_name(tenant_id)
     message_body = json.dumps(

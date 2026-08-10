@@ -61,6 +61,7 @@ class FileSourcesMixin:
                 .dispatch_action("config.reload")
                 .build()
             )
+
         """
         import importlib
 
@@ -110,6 +111,7 @@ class FileSourcesMixin:
             pattern: Glob pattern (e.g. ``"*.csv"``).
             result_property: Property name for matched files list.
             include_subdirs: Recurse into subdirectories.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.file_watch",

@@ -45,6 +45,7 @@ def validate_path(path: str) -> str:
     Raises:
         PathTraversalError: При попытке path traversal или выхода
             за пределы allowed префиксов.
+
     """
     if not isinstance(path, str) or not path:
         raise PathTraversalError("Path must be a non-empty string")

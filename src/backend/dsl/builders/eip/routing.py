@@ -99,6 +99,7 @@ class RoutingEIPsMixin(EIPMixinBase):
 
             # From header
             .routing_slip(steps=[], header="processing_pipeline")
+
         """
         from src.backend.dsl.engine.processors.eip.routing_slip import (
             ProcessorRegistry,
@@ -253,6 +254,7 @@ class RoutingEIPsMixin(EIPMixinBase):
             strategy: ``all`` — выполнить все; ``first_success`` — остановить после первого.
             on_error: ``fail`` | ``continue`` — поведение при ошибке.
             timeout: Таймаут каждого маршрута в секундах.
+
         """
         from src.backend.dsl.engine.processors.eip.routing import (
             MulticastRoutesProcessor,

@@ -79,6 +79,7 @@ class LangFuseReader:
             window: окно (от now-window до now).
             group_by: ключ группировки.
             top_n: размер топа.
+
         """
         client = self._ensure_client()
         if client is None:

@@ -49,6 +49,7 @@ class WorkspaceHandle:
         session_id: Уникальный session-id (UUID4).
         path: Абсолютный путь каталога workspace'а.
         created_at: Unix-timestamp создания.
+
     """
 
     tenant: str
@@ -73,6 +74,7 @@ class AIWorkspaceManager:
             одного тенанта.
         cleanup_interval_seconds: Период cleanup-loop (отдельный
             ``asyncio.Task``).
+
     """
 
     def __init__(
@@ -110,6 +112,7 @@ class AIWorkspaceManager:
         Raises:
             WorkspaceQuotaExceededError: Tenant превысил per-tenant
                 quota суммой размеров живых workspaces.
+
         """
         async with self._lock:
             if self._closed:
@@ -150,6 +153,7 @@ class AIWorkspaceManager:
         Raises:
             WorkspaceTTLExpiredError: TTL истёк — caller обязан запросить
                 новый workspace через :meth:`create_new`.
+
         """
         age = time.time() - handle.created_at
         if age > self._ttl:
@@ -170,6 +174,7 @@ class AIWorkspaceManager:
 
         Returns:
             Число удалённых workspaces.
+
         """
         removed = 0
         now = time.time()
@@ -209,6 +214,7 @@ class AIWorkspaceManager:
                 ``task_factory(coro, *, name)``. При ``None`` (default)
                 используется singleton :class:`TaskRegistry`
                 (R-V15-11 leak prevention).
+
         """
         if self._cleanup_task is not None and not self._cleanup_task.done():
             return

@@ -79,6 +79,7 @@ class ConnectionMixin(_RedisClientProtocol):
 
         Returns:
             Экземпляр redis.asyncio.Redis.
+
         """
         client = self._clients[kind]
         if client is not None and not force_reconnect:
@@ -129,6 +130,7 @@ class ConnectionMixin(_RedisClientProtocol):
 
         Returns:
             True если ping успешен, иначе False.
+
         """
         try:
             client = await self.get_client(kind)

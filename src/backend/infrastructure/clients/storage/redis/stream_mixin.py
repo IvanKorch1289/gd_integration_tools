@@ -30,6 +30,7 @@ class StreamMixin(_RedisClientProtocol):
 
         Returns:
             True if stream exists.
+
         """
 
         async def op(conn: Redis) -> bool:
@@ -64,6 +65,7 @@ class StreamMixin(_RedisClientProtocol):
 
         Args:
             stream_name: Stream name to initialize.
+
         """
 
         async def op(conn: Redis) -> None:
@@ -101,6 +103,7 @@ class StreamMixin(_RedisClientProtocol):
 
         Returns:
             ID добавленного события.
+
         """
 
         async def op(conn: Redis) -> str:
@@ -128,6 +131,7 @@ class StreamMixin(_RedisClientProtocol):
             dest_stream: целевой стрим.
             event_id: ID события.
             additional_data: дополнительные поля к событию.
+
         """
 
         async def op(conn: Redis) -> None:
@@ -220,6 +224,7 @@ class StreamMixin(_RedisClientProtocol):
 
         Returns:
             Словарь с length, last_events, first_event, groups.
+
         """
 
         async def op(conn: Redis) -> dict[str, Any]:
@@ -255,6 +260,7 @@ class StreamMixin(_RedisClientProtocol):
 
         Returns:
             True если retry разрешён, False если лимит исчерпан.
+
         """
 
         async def op(conn: Redis) -> bool:

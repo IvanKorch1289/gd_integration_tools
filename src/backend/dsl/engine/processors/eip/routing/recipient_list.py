@@ -53,6 +53,7 @@ class RecipientListProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен с сообщением-источником.
             context: Контекст выполнения процессора.
+
         """
         recipients = self._expr(exchange)
         if not recipients:

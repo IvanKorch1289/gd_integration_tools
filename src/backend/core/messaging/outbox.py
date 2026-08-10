@@ -43,6 +43,7 @@ class OutboxEventStatus(StrEnum):
         DELIVERED: успешно доставлено.
         DLQ: попало в Dead-Letter Queue после max_attempts.
         RESOLVED: оператор разрешил вручную (manual replay/edit).
+
     """
 
     PENDING = "pending"
@@ -68,6 +69,7 @@ class OutboxEvent(BaseModel):
         correlation_id: трассировка через [services/observability/tracing].
         created_at: время создания события.
         updated_at: время последнего обновления статуса.
+
     """
 
     model_config = ConfigDict(frozen=False, extra="forbid")
@@ -103,6 +105,7 @@ class OutboxBackend(Protocol):
 
         Returns:
             event_id поставленного события.
+
         """
 
     async def list_dlq(
@@ -127,6 +130,7 @@ class OutboxBackend(Protocol):
 
         Returns:
             последовательность событий, отсортированных по created_at desc.
+
         """
 
     async def replay(
@@ -145,6 +149,7 @@ class OutboxBackend(Protocol):
 
         Returns:
             количество событий, переведённых в PENDING (или прошедших dry-run).
+
         """
 
     async def mark_resolved(
@@ -163,6 +168,7 @@ class OutboxBackend(Protocol):
 
         Returns:
             количество переведённых событий.
+
         """
 
 
@@ -279,6 +285,7 @@ class FakeOutbox:
 
         Returns:
             True если событие найдено и переведено, иначе False.
+
         """
         async with self._lock:
             event = self._events.get(event_id)

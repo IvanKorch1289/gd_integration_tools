@@ -35,6 +35,7 @@ class BatchInferenceClient(Protocol):
 
         Returns:
             Список completions в исходном порядке.
+
         """
         ...
 
@@ -49,5 +50,6 @@ class BatchInferenceClient(Protocol):
 
         Returns:
             Список векторов в исходном порядке.
+
         """
         ...

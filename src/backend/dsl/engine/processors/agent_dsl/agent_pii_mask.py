@@ -128,6 +128,7 @@ class AgentDictPIIMaskProcessor(BaseAIProcessor):
 
         - agent_pii_mask: for_tools
         - agent_pii_mask: for_actions
+
     """
 
     _CAPABILITY_FOR_TOOLS: ClassVar[str] = "pii.tokenize.reversible.agent_tools"

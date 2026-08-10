@@ -54,6 +54,7 @@ class WorkflowContinueAsNewProcessor(BaseProcessor):
         same_workflow_id: Сохранить тот же workflow_id (по умолчанию True).
         same_input: Сохранить тот же input (по умолчанию False).
         search_attributes: Атрибуты для поиска (по умолчанию None).
+
     """
 
     required_capability: ClassVar[str | None] = "workflow.continue_as_new.request"

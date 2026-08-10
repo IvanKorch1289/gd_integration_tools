@@ -96,6 +96,7 @@ class SchedulerDLQEntry:
 
         Returns:
             Dictionary representation of the entry.
+
         """
         return {
             "id": self.id,
@@ -118,6 +119,7 @@ class SchedulerDLQStore:
 
     Args:
         capacity: максимум хранимых записей (default 256).
+
     """
 
     def __init__(self, capacity: int = 256) -> None:
@@ -150,6 +152,7 @@ class SchedulerDLQStore:
 
         Returns:
             SchedulerDLQEntry or None if not found.
+
         """
         with self._lock:
             return self._entries.get(entry_id)
@@ -162,6 +165,7 @@ class SchedulerDLQStore:
 
         Returns:
             True if deleted, False if not found.
+
         """
         with self._lock:
             return self._entries.pop(entry_id, None) is not None
@@ -171,6 +175,7 @@ class SchedulerDLQStore:
 
         Returns:
             Entry count.
+
         """
         with self._lock:
             return len(self._entries)
@@ -208,6 +213,7 @@ def attach_scheduler_dlq(
 
     Returns:
         Подключённый store (или None если feature-flag OFF).
+
     """
     if not feature_flags.scheduler_dlq_enabled:
         _logger.debug("scheduler_dlq disabled by feature-flag — no-op")

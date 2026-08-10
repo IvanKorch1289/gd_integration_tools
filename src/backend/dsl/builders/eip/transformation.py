@@ -88,6 +88,7 @@ class TransformationEIPsMixin(EIPMixinBase):
             store: "redis" | "s3" | "auto" (auto = S3 если payload >= threshold).
             ttl_seconds: Время жизни токена.
             threshold_bytes: Порог в байтах для переключения на S3 (по умолчанию 256 KB).
+
         """
         return cast(
             "RouteBuilder",

@@ -53,6 +53,7 @@ class ExposeProxyProcessor(BaseProcessor):
         methods: HTTP-методы (только для ``http``). None = все.
         header_policy: Политика header-map-а на inbound-стороне.
         name: Имя процессора в трассе.
+
     """
 
     def __init__(

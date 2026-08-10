@@ -75,6 +75,7 @@ class AgentOrchestrationMixin:
             Ответ LLM с восстановленными PII. Дополнительно в ответ
             добавляется ``feedback_id`` — идентификатор записи
             в ``AIFeedbackService`` (для кнопок ✅/❌ на стороне UI).
+
         """
         # Block 1.5 (gap-ai-1.5, ADR-0072): AuthorizationGateway policy gate
         # выполняется ПЕРВЫМ — до RAG retrieval и sanitize. Fail-closed: любая
@@ -207,6 +208,7 @@ class AgentOrchestrationMixin:
             metadata: Дополнительные поля в feedback.
             durable: При True — включает LangGraph PostgresCheckpointer
                 для stateful-сессий (resume после interruption).
+
         """
         sanitized = self._sanitizer.sanitize_text(prompt)
 
@@ -258,6 +260,7 @@ class AgentOrchestrationMixin:
 
         Returns:
             ``feedback_id`` записи либо ``None`` при ошибке.
+
         """
         try:
             from src.backend.services.ai.feedback import get_ai_feedback_service

@@ -37,6 +37,7 @@ class TelegramMentionProcessor(BaseProcessor):
             (по умолчанию ``telegram_mention``). Каждый вызов перезаписывает.
         append: Если True — конкатенирует с пробелом к существующему
             значению property вместо перезаписи.
+
     """
 
     def __init__(

@@ -68,6 +68,7 @@ class ZipArchiveProcessor(BaseProcessor):
         source: Откуда читать данные (``body``, ``body.<field>``, ``properties.<name>``).
         to: Куда положить результат.
         compression: Уровень компрессии (``zipfile.ZIP_DEFLATED`` = 8).
+
     """
 
     def __init__(

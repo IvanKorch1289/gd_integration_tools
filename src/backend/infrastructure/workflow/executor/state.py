@@ -119,6 +119,7 @@ class DurableWorkflowProcessor:
 
         Returns:
             Workflow specification.
+
         """
         return self._spec
 

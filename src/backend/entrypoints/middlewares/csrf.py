@@ -82,6 +82,7 @@ class CSRFMiddleware:
             cookie_name: Имя cookie.
             header_name: Имя header.
             body_field: Имя field в body.
+
         """
         self.app = app
         self._enabled = enabled
@@ -245,6 +246,7 @@ class CSRFMiddleware:
 
         Returns:
             Cookie value или пустая строка.
+
         """
         for header_name, header_value in scope.get("headers", []):
             if header_name == b"cookie":

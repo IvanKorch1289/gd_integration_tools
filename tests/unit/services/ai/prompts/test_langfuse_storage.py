@@ -33,6 +33,7 @@ def _make_storage(langfuse_flag: bool = False) -> LangfusePromptStorage:
 
     Returns:
         Новый экземпляр LangfusePromptStorage.
+
     """
     import src.backend.services.ai.prompts.langfuse_storage as mod
 

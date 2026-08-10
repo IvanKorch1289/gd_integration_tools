@@ -46,6 +46,7 @@ class SearchResult:
         namespace: ``core`` / ``extensions/<plugin>``.
         score: 0.0..1.0 — relevance.
         description: текстовое описание (из docstring или meta).
+
     """
 
     processor_name: str
@@ -60,6 +61,7 @@ class ProcessorSearch:
 
     Attributes:
         documents: list[(fqn, tokens, full_description, namespace, short_name)]
+
     """
 
     documents: list[tuple[str, set[str], str, str, str]]
@@ -110,6 +112,7 @@ class ProcessorSearch:
 
         Returns:
             Список SearchResult, отсортированный по score desc.
+
         """
         if not query.strip():
             return []

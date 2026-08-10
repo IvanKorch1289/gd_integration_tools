@@ -36,6 +36,7 @@ class TenantContext:
             и data-residency). По умолчанию ``ru``.
         rate_limit: Лимит запросов в минуту для тенанта; используется
             middleware и quota tracker'ом.
+
     """
 
     tenant_id: str
@@ -53,6 +54,7 @@ def current_tenant() -> TenantContext | None:
     Returns:
         ``TenantContext``, установленный в текущем ``ContextVar``, или
         ``None``, если ``set_tenant`` ещё не вызывался в текущей задаче.
+
     """
     return _current.get()
 
@@ -63,6 +65,7 @@ def set_tenant(ctx: TenantContext) -> None:
     Args:
         ctx: Иммутабельный snapshot тенанта, который будет доступен через
             ``current_tenant()`` до выхода из ``tenant_scope``/задачи.
+
     """
     _current.set(ctx)
 

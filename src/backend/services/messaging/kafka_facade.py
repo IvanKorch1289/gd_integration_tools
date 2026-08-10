@@ -45,6 +45,7 @@ class KafkaFacade:
         plugin: Имя caller'а (для capability-event и audit).
         bootstrap_servers: Список Kafka bootstrap servers.
         default_topic: Topic по умолчанию (если не указан в publish).
+
     """
 
     def __init__(
@@ -145,6 +146,7 @@ class KafkaFacade:
 
         Returns:
             True если опубликовано, False при ошибке.
+
         """
         target_topic = topic or self._default_topic
         if target_topic is None:
@@ -194,6 +196,7 @@ class KafkaFacade:
 
         Returns:
             Количество успешно опубликованных сообщений.
+
         """
         success_count = 0
         for msg in messages:
@@ -212,6 +215,7 @@ class KafkaFacade:
 
         Returns:
             True если producer может быть создан (lazy check).
+
         """
         try:
             self._get_producer()

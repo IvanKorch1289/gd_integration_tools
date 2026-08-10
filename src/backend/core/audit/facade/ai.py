@@ -26,6 +26,7 @@ def emit_ai_workspace(event: dict[str, object]) -> Any:
 
     Returns:
         Result of ``AuditService.emit()``.
+
     """
     event_name = str(event.get("event", "ai_workspace.event"))
     details: dict[str, Any] = {

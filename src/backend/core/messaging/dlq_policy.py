@@ -36,6 +36,7 @@ class DLQPolicy:
         retention_days: Сколько дней хранить до cleanup'а.
         max_replays: Максимальное число replays (-1 = unlimited).
         auto_archive_after_days: Перевод в cold storage через N дней.
+
     """
 
     class_name: str

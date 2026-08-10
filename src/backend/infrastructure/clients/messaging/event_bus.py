@@ -181,6 +181,7 @@ class EventBus:
         Raises:
             EventSchemaValidationError: If schema validation fails.
             QuotaExceeded: S182 — если rate limit exceeded (1000 msg/min per channel).
+
         """
         # S182: rate limit check
         quota_result = await self._quota.consume(
@@ -222,6 +223,7 @@ class EventBus:
             order_id: Order ID.
             action: Order action.
             payload: Optional event payload.
+
         """
         await self.publish(
             "events.orders",
@@ -242,6 +244,7 @@ class EventBus:
             status_: Pipeline status.
             correlation_id: Correlation ID.
             duration_ms: Optional duration in milliseconds.
+
         """
         await self.publish(
             "events.pipeline",
@@ -259,6 +262,7 @@ class EventBus:
         Args:
             name: Feature flag name.
             enabled: New flag state.
+
         """
         await self.publish("events.flags", FlagEvent(name=name, enabled=enabled))
 
@@ -277,6 +281,7 @@ class EventBus:
 
         Returns:
             SubscriptionHandle (FastStream subscriber descriptor) или ``None``.
+
         """
         if not self._broker or not self._started:
             logger.warning(

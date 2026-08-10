@@ -69,6 +69,7 @@ class CompatViolation:
             ``"<core>"`` для конфликтов с версией ядра).
         kind: Тип нарушения (см. :data:`ConflictKind`).
         reason: Человекочитаемая причина с подробностями.
+
     """
 
     plugin: str
@@ -219,6 +220,7 @@ def check_compatibility(
 
     Returns:
         Кортеж нарушений (пустой при отсутствии конфликтов).
+
     """
     materialised = tuple(manifests)
     by_name: dict[str, PluginManifest] = {m.name: m for m in materialised}

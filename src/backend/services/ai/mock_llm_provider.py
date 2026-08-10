@@ -41,6 +41,7 @@ class MockLLMProvider:
         name: "mock-llm".
         canned_response: явный текст ответа (если None — генерится из prompt).
         tool_arguments: предзаданные args для tool_use (если tools=…).
+
     """
 
     name = "mock-llm"
@@ -59,6 +60,7 @@ class MockLLMProvider:
                 иначе текст детерминированно генерится из prompt-hash.
             tool_arguments: args для первого tool_use (если в payload tools=…).
             embedding_dim: размерность ноль-вектора для embeddings (default 1024).
+
         """
         self.canned_response = canned_response
         self.tool_arguments = tool_arguments or {}
@@ -103,6 +105,7 @@ class MockLLMProvider:
 
         Returns:
             Dict с ключами ``id``, ``content``, ``model``, ``usage``.
+
         """
         digest = self._digest(messages)
         if tools:

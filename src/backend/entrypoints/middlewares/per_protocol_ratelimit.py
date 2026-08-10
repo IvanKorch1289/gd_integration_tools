@@ -49,6 +49,7 @@ def ws_identifier(scope: dict[str, Any]) -> str:
 
     Returns:
         Идентификатор формата ``ws:<tenant|user|ip>:<host>``.
+
     """
     headers = dict(scope.get("headers") or ())
     tenant = _decode_header(headers, b"x-tenant-id")
@@ -73,6 +74,7 @@ def sse_identifier(scope: dict[str, Any]) -> str:
 
     Returns:
         Идентификатор формата ``sse:<tenant|user|ip>:<path>``.
+
     """
     headers = dict(scope.get("headers") or ())
     tenant = _decode_header(headers, b"x-tenant-id")
@@ -100,6 +102,7 @@ def mqtt_topic_identifier(topic: str, client_id: str | None = None) -> str:
     Returns:
         Идентификатор формата ``mqtt:topic:<topic>`` или
         ``mqtt:client:<client_id>:<topic>`` если client_id задан.
+
     """
     if client_id:
         return f"mqtt:client:{client_id}:{topic}"
@@ -121,6 +124,7 @@ def grpc_call_identifier(
 
     Returns:
         Идентификатор формата ``grpc:<tenant|global>:<service>/<method>``.
+
     """
     if tenant_id:
         return f"grpc:tenant:{tenant_id}:{service}/{method}"

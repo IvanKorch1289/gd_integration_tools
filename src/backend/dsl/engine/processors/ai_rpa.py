@@ -72,6 +72,7 @@ class AIRpaProcessor(BaseProcessor):
 
     S202 audit fix: required_capability + auth_check для enforce gating
     (AI-driven RPA = sensitive, требует capability).
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.ai.decide"

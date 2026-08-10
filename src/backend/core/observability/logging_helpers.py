@@ -68,6 +68,7 @@ def log_with_context(
         * ``extra={...}`` в stdlib-logging — passthrough через
           structlog processor chain.
         * НЕ бросает — caller responsibility for retry/catch.
+
     """
     extra: dict[str, Any] = dict(fields)
     if correlation_id is not None:
@@ -116,6 +117,7 @@ def log_audit_event_lite(
 
     Use case: services которые не хотят подключать ``core.audit.facade``
     (lazy dependency), но хотят consistent structured logging.
+
     """
     level = _SEVERITY_TO_LEVEL.get(severity, logging.INFO)
     msg = message or event

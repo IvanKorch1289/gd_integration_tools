@@ -67,6 +67,7 @@ async def list_expiring_certs(
 
     Returns:
         Список истекающих сертификатов + метаданные.
+
     """
     if cert_store is None:
         from src.backend.core.config.cert_store import cert_store_settings

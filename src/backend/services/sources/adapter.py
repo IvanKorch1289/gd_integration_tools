@@ -45,6 +45,7 @@ class SourceToInvokerAdapter:
             (``InvocationMode != SYNC``).
         payload_mapper: Опциональная функция трансформации
             ``event.payload`` перед передачей в Invoker.
+
     """
 
     def __init__(
@@ -70,6 +71,7 @@ class SourceToInvokerAdapter:
         Returns:
             ``InvocationResponse`` от Invoker; ``None`` если событие
             отброшено как дубль.
+
         """
         if self._dedupe is not None:
             namespace = f"{event.kind.value}:{event.source_id}"

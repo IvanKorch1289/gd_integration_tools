@@ -197,6 +197,7 @@ def sync_pg_to_sqlite(
         Любое исключение SQLAlchemy. Вызывающая сторона (планировщик
         или ``run_snapshot_now``) обязана обработать его и
         инкрементировать ``snapshot_sync_errors_total``.
+
     """
     # Импорт моделей для side-effect: они регистрируются в metadata.tables.
     # Без этого metadata.create_all вернёт пустую структуру.
@@ -404,6 +405,7 @@ class SnapshotJob:
 
         Returns:
             dict[table_name, row_count] для replicated tables.
+
         """
         with self._lock:
             result = run_snapshot_now()
@@ -421,6 +423,7 @@ def get_snapshot_job() -> SnapshotJob:
 
     Returns:
         module-level singleton (lazy-initialized).
+
     """
     global _snapshot_job_singleton
     if _snapshot_job_singleton is None:

@@ -52,6 +52,7 @@ class RateLimitMiddleware:
             ``async check(identifier, RateLimit)``. По умолчанию —
             ленивый импорт ``core.di.providers.get_rate_limiter_provider``,
             что позволяет тестам не поднимать Redis.
+
     """
 
     def __init__(

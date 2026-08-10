@@ -105,6 +105,7 @@ async def parse_document(
     Raises:
         ValueError: если MIME не поддерживается, или markitdown упал
             на формате без legacy-fallback (PPTX/XLSX/CSV/JSON).
+
     """
     effective_mime = sniff_mime(filename, mime)
     warnings: list[str] = []

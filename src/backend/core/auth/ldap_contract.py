@@ -22,6 +22,7 @@ class AdServerConfig:
         timeout_seconds: Таймаут подключения в секундах.
         user_id_attribute: Атрибут идентификатора пользователя.
         group_attribute: Атрибут групп пользователя.
+
     """
 
     server_uri: str

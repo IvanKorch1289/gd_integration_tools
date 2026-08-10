@@ -41,6 +41,7 @@ class AuditLogMiddleware:
 
         Args:
             app: ASGI-приложение.
+
         """
         # Wave 6.5a: app_logger — через DI provider.
         from src.backend.core.di.providers import get_app_logger_provider

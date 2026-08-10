@@ -210,6 +210,7 @@ class ControlFlowMixin:
                 .dispatch_action("order.fulfill")
                 .build()
             )
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip",
@@ -312,6 +313,7 @@ class ControlFlowMixin:
             processors: Sub-processors to run for each item.
             copy_exchange: If True, each iteration gets a copy of the exchange.
             max_iterations: Maximum number of items to process.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip",
@@ -403,6 +405,7 @@ class ControlFlowMixin:
                 .dispatch_action("loan.execute")
                 .build()
             )
+
         """
         return self._add(  # type: ignore[attr-defined]
             HitlApprovalProcessor(
@@ -431,6 +434,7 @@ class ControlFlowMixin:
             to: Destination for unwrapped value (on Ok).
             to_err: Destination for error (on Err with on_err="continue").
             on_err: Error handling: ``"dlq"``, ``"fail"``, or ``"continue"``.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.result_unwrap",
@@ -467,6 +471,7 @@ class ControlFlowMixin:
                     health_check_interval=15.0,
                 )
                 .proxy(...)
+
         """
         self._route_overrides["region_routing"] = {
             "primary": primary,
@@ -493,6 +498,7 @@ class ControlFlowMixin:
             builder.from_("ws://stream.example.com")
                 .supervisor(max_restarts=5, timeout=120.0, backoff=1.5)
                 .websocket(...)
+
         """
         self._route_overrides["supervisor"] = {
             "max_restarts": max_restarts,

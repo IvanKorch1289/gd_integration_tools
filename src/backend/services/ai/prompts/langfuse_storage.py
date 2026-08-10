@@ -45,6 +45,7 @@ class PromptEntry:
         content: Содержимое промпта (шаблон).
         metadata: Произвольные метаданные (labels, owner, tags и т.д.).
         created_at: Момент создания записи (UTC).
+
     """
 
     name: str
@@ -125,6 +126,7 @@ class LangfusePromptStorage:
 
         Raises:
             KeyError: Если промпт не найден ни в Langfuse, ни в in-memory.
+
         """
         if self._langfuse_available and self._langfuse is not None:
             try:
@@ -171,6 +173,7 @@ class LangfusePromptStorage:
 
         Raises:
             KeyError: Если промпт отсутствует в store.
+
         """
         versions = self._store.get(name)
         if not versions:
@@ -204,6 +207,7 @@ class LangfusePromptStorage:
             name: Имя промпта.
             content: Содержимое шаблона.
             metadata: Метаданные (owner, tags, labels и т.д.).
+
         """
         version = str(metadata.get("version", "1"))
         entry = PromptEntry(
@@ -234,6 +238,7 @@ class LangfusePromptStorage:
 
         Returns:
             Список уникальных имён промптов.
+
         """
         return list(self._store.keys())
 
@@ -246,6 +251,7 @@ def get_prompt_storage() -> LangfusePromptStorage:
 
     Returns:
         Глобальный экземпляр LangfusePromptStorage.
+
     """
     global _instance
     if _instance is None:

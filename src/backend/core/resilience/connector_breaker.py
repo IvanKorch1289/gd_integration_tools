@@ -49,6 +49,7 @@ def with_breaker(
         name: Имя breaker'а (например ``"http_sink_main"`` или ``"kafka_consumer"``).
         failure_threshold: Число failures для перехода в ``open``.
         recovery_seconds: Время до повторной попытки (``half_open``).
+
     """
     spec = BreakerSpec(
         name=name,

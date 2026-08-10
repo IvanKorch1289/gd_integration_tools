@@ -51,6 +51,7 @@ class RouteTimeoutSpec:
         Frozen dataclass — безопасно использовать в pydantic-моделях
         (RouteManifest) и DSL builders без риска мутации.
         ``slots=True`` снижает memory overhead для большого числа routes.
+
     """
 
     connect: float | None = None

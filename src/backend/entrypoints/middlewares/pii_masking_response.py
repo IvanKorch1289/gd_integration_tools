@@ -50,6 +50,7 @@ class PIIMaskingResponseMiddleware:
     Notes:
         Feature-flag ``pii_response_middleware_enabled`` (S18 W3 backbone)
         проверяется внутри :meth:`dispatch` lazy-импортом.
+
     """
 
     def __init__(
@@ -60,6 +61,7 @@ class PIIMaskingResponseMiddleware:
         Args:
             app: ASGI-приложение.
             path_patterns: Список regex для путей маскировки.
+
         """
         self.app = app
         self._path_patterns: tuple[re.Pattern[str], ...] = tuple(
@@ -73,6 +75,7 @@ class PIIMaskingResponseMiddleware:
             scope: ASGI scope.
             receive: ASGI receive callable.
             send: ASGI send callable.
+
         """
         if scope["type"] != "http":
             await self.app(scope, receive, send)

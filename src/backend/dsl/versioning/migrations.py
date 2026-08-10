@@ -92,6 +92,7 @@ class MigrationRegistry:
 
         Raises:
             MigrationError: Если путь не найден.
+
         """
         if src == dst:
             return []
@@ -136,6 +137,7 @@ def apply_migrations(
 
     Raises:
         MigrationError: Если путь не найден.
+
     """
     registry = registry or default_registry()
     src_version = spec.get("apiVersion") or DEFAULT_LEGACY_VERSION

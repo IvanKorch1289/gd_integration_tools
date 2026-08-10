@@ -44,6 +44,7 @@ class GraphQLEvent:
         data: Данные события (словарь из ``data``-поля ответа).
         subscription_id: Уникальный идентификатор подписки (UUID).
         timestamp: Unix-время получения события (float, секунды).
+
     """
 
     data: dict
@@ -81,6 +82,7 @@ class GraphQLSubscriptionSource:
         )
         async for event in source.stream():
             process(event.data)
+
     """
 
     def __init__(
@@ -110,6 +112,7 @@ class GraphQLSubscriptionSource:
                 не установлены в окружении.
             PermissionError: Если ``graphql.read`` capability denied.
             Exception: Сетевые ошибки пробрасываются без подавления.
+
         """
         try:
             import gql

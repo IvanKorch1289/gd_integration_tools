@@ -48,6 +48,7 @@ class WorkflowConvertProcessor(BaseProcessor):
         to_format: Целевой формат.
         source_property: Dotted path к данным в exchange (default ``"body"``).
         to: Куда записать результат (default ``"body.converted"``).
+
     """
 
     required_capability: ClassVar[str | None] = "workflow.convert.format"
@@ -88,6 +89,7 @@ class WorkflowConvertProcessor(BaseProcessor):
         Args:
             exchange: Текущий exchange; source — из source_property.
             context: Контекст выполнения маршрута.
+
         """
         if not await self.auth_check(exchange, action="convert"):
             return

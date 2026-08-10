@@ -29,6 +29,7 @@ class BatchMixin:
             table: Имя таблицы.
             items: Список dict для вставки. ``None`` — берётся из ``body``.
             profile: Имя профиля внешней БД.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.batch",
@@ -53,6 +54,7 @@ class BatchMixin:
             items: Список dict для обновления. ``None`` — берётся из ``body``.
             key_field: Поле для WHERE-clause.
             profile: Имя профиля внешней БД.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.batch",
@@ -78,6 +80,7 @@ class BatchMixin:
             ids: Список ID для удаления. ``None`` — берётся из ``body``.
             key_field: Поле для WHERE-clause.
             profile: Имя профиля внешней БД.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.batch",

@@ -25,6 +25,7 @@ class RAGCitation:
         namespace: namespace источника (для multi-tenant retrieval).
         freshness: метка свежести (fresh/stale/expired).
         ingested_at: ISO timestamp ingest'а чанка.
+
     """
 
     source_doc: str

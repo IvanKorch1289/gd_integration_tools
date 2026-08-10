@@ -54,6 +54,7 @@ class FeatureFlagChange:
         new_value: Новое значение.
         actor: Кто изменил (``"user:<id>"`` / ``"system"``).
         timestamp: UTC timestamp изменения.
+
     """
 
     flag: str
@@ -92,6 +93,7 @@ class RuntimeFeatureFlagOverrides:
 
         Returns:
             Значение из override или ``default``.
+
         """
         with self._lock:
             if tenant_id is not None:
@@ -129,6 +131,7 @@ class RuntimeFeatureFlagOverrides:
 
         Returns:
             :class:`FeatureFlagChange` с old/new для audit-event.
+
         """
         with self._lock:
             if tenant_id is None:
@@ -162,6 +165,7 @@ class RuntimeFeatureFlagOverrides:
         Returns:
             :class:`FeatureFlagChange` если override был; ``None`` если
             override не существовал.
+
         """
         with self._lock:
             if tenant_id is None:
@@ -190,6 +194,7 @@ class RuntimeFeatureFlagOverrides:
 
         Returns:
             ``{"global": {...}, "per_tenant": {tenant_id: {...}}}``.
+
         """
         with self._lock:
             return {

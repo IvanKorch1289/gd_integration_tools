@@ -80,6 +80,7 @@ class WorkflowInstance(BaseModel, TenantMixin):
         tenant_id: Мульти-тенантная изоляция (через :class:`TenantMixin`).
         input_payload: Immutable входной payload (копия из запроса API).
         finished_at: Время финального перехода в terminal-статус.
+
     """
 
     __tablename__ = "workflow_instances"

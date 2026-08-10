@@ -117,6 +117,7 @@ class CdcPostgresLogicalSource:
         publication: Имя publication (по умолчанию ``pub_<table>``).
         cursor_store: ``CdcCursorStore`` для персистентного ack-cursor (опц.).
         plugin: ``pgoutput`` (default) / ``wal2json``.
+
     """
 
     kind: SourceKind = SourceKind.CDC
@@ -159,6 +160,7 @@ class CdcPostgresLogicalSource:
         Args:
             conn_executor: callable(sql_str)→awaitable для выполнения DDL.
                 Обычно — ``async with engine.begin() as conn: await conn.execute(...)``.
+
         """
         try:
             await conn_executor(

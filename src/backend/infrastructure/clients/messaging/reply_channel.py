@@ -110,6 +110,7 @@ class ReplyChannel:
 
         Raises:
             ReplyTimeoutError: Если reply не пришёл за ``timeout``.
+
         """
         cid = correlation_id or str(uuid.uuid4())
         reply_channel = f"{REPLY_CHANNEL_PREFIX}{cid}"
@@ -140,6 +141,7 @@ class ReplyChannel:
         Returns:
             ``True`` — reply доставлен; ``False`` — нет pending-request
             с таким ``correlation_id`` (stale reply, игнорируется).
+
         """
         cid = reply.get("correlation_id")
         if not cid:

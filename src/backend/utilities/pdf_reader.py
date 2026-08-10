@@ -49,6 +49,7 @@ def _read_pypdfium2(path: str) -> str:
 
     Returns:
         Конкатенация текста страниц через ``\\n\\n``.
+
     """
     import pypdfium2 as pdfium  # type: ignore[import-not-found]
 
@@ -75,6 +76,7 @@ def _read_pypdf(path: str) -> str:
 
     Returns:
         Конкатенация текста страниц через ``\\n\\n``.
+
     """
     from pypdf import PdfReader
 
@@ -106,6 +108,7 @@ def read_pdf(path: Path | str | bytes) -> str:
     Raises:
         PdfReaderUnavailable: Если ни один backend не установлен.
         FileNotFoundError: Если файл не существует.
+
     """
     if isinstance(path, bytes):
         try:

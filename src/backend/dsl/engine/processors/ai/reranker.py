@@ -58,6 +58,7 @@ class RerankerProcessor(BaseProcessor):
             Default: ``question``.
         top_k: Number of top results to return after reranking. Default: 5.
         name: Optional processor name for logging.
+
     """
 
     def __init__(

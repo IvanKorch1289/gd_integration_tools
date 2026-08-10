@@ -50,6 +50,7 @@ class AgentDefinitionLoadError(ValueError):
     Attributes:
         source: Путь к файлу либо ``"<inline>"`` для inline-YAML.
         reason: Текст исходной ошибки.
+
     """
 
     def __init__(self, source: str | Path, reason: str) -> None:
@@ -58,6 +59,7 @@ class AgentDefinitionLoadError(ValueError):
         Args:
             source: Источник YAML (путь к файлу или ``"<inline>"``).
             reason: Описание ошибки из yaml / pydantic.
+
         """
         super().__init__(f"Не удалось загрузить агента из {source}: {reason}")
         self.source = source
@@ -76,6 +78,7 @@ def load_agent_yaml(yaml_text: str) -> AgentDefinition:
     Raises:
         AgentDefinitionLoadError: При невалидном YAML или несоответствии
             Pydantic-схеме.
+
     """
     try:
         raw: Any = yaml.safe_load(yaml_text)
@@ -108,6 +111,7 @@ def load_agent_yaml_file(path: str | Path) -> AgentDefinition:
     Raises:
         AgentDefinitionLoadError: При невалидном YAML, ошибке чтения файла
             или несоответствии Pydantic-схеме.
+
     """
     p = Path(path)
     try:
@@ -142,6 +146,7 @@ def load_agents_from_directory(
     Raises:
         AgentDefinitionLoadError: При невалидном файле; ошибка содержит
             конкретный путь.
+
     """
     base = Path(root)
     if not base.exists() or not base.is_dir():
@@ -158,5 +163,6 @@ def _iter_agent_files(base: Path, suffix: str) -> Iterator[Path]:
 
     Yields:
         Пути к файлам в лексикографическом порядке.
+
     """
     yield from sorted(p for p in base.rglob(f"*{suffix}") if p.is_file())

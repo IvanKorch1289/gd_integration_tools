@@ -59,6 +59,7 @@ class RouteAnalyzer:
             рекомендуется retry-tuning.
         high_error_rate: error_rate, выше которого триггерит
             circuit-breaker рекомендацию.
+
     """
 
     def __init__(

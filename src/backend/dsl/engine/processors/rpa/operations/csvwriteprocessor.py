@@ -26,6 +26,7 @@ class CsvWriteProcessor(BaseProcessor):
         dst: Path для output CSV.
         rows: List of dicts (header = keys первого dict).
         delimiter: CSV delimiter (default ``","``).
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.file.csv.write"

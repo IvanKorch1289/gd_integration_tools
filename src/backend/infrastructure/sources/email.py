@@ -64,6 +64,7 @@ class EmailSourceConfig:
         from_filter: Substring для From-заголовка. ``None`` — без фильтра.
         since_uid: Нижняя граница UID — фильтрует уже обработанные письма
             при перезапуске Source.
+
     """
 
     host: str

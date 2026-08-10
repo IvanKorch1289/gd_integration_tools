@@ -96,6 +96,7 @@ def load_templates_from_dir(
 
     Returns:
         Список зарегистрированных ключей.
+
     """
     base = Path(directory) if directory else DEFAULT_TEMPLATES_DIR
     if not base.exists():

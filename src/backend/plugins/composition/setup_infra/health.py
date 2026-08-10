@@ -195,6 +195,7 @@ def _make_kind_health(
         Async-функция для ``aggregator.register(name, ...)``.
         Семантика возврата: dict с ``status`` (``ok`` / ``failed`` / ``skipped``)
         и ``latency_ms`` — как и остальные проверки в этом файле.
+
     """
 
     async def _check() -> dict[str, Any]:

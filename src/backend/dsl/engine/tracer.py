@@ -48,6 +48,7 @@ class TraceEvent:
         Returns:
             JSON-safe dict с rounded duration (2 знака после запятой).
             Используется endpoint'ом ``GET /admin/dsl-routes/{id}/traces``.
+
         """
         return {
             "route_id": self.route_id,
@@ -74,6 +75,7 @@ class ExecutionTracer:
         Args:
             storage: TraceStorage impl (default InMemoryTraceStorage).
                 Production: pass JsonFileTraceStorage / Redis (S47+ D).
+
         """
         self._subscribers: dict[str, list[asyncio.Queue[TraceEvent]]] = {}
         self._storage: TraceStorage = storage or InMemoryTraceStorage()
@@ -197,6 +199,7 @@ class ExecutionTracer:
             - InMemory: post-restart loses data.
             - JsonFile / Redis / Postgres: persistent.
             - Используется endpoint ``GET /admin/dsl-routes/{route_id}/traces``.
+
         """
         return await self._storage.read_recent(route_id, limit)
 

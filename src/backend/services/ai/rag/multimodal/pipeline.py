@@ -38,6 +38,7 @@ class CrossModalQueryResult:
         modal: Модальность исходника.
         score: cosine similarity или provider-зависимая метрика.
         metadata: Источник, sha256, tenant, freshness и т.д.
+
     """
 
     chunk_id: str
@@ -54,6 +55,7 @@ class MultimodalPipeline:
         service: :class:`MultimodalRAGService` для PDF/image/text ingest.
         captioner: опц. кастомный BLIP2Captioner (по умолчанию из service).
         whisper: опц. кастомный WhisperSTT (по умолчанию из service).
+
     """
 
     def __init__(
@@ -79,6 +81,7 @@ class MultimodalPipeline:
 
         Returns:
             chunk_id первого чанка (для tracking).
+
         """
         meta = dict(metadata or {})
         meta.setdefault("modal", modal)

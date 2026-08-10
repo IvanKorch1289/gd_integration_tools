@@ -33,6 +33,7 @@ def read_csv(path: str, **kwargs: Any) -> pl.DataFrame:
 
     Example:
         >>> df = read_csv("data.csv", separator=";")
+
     """
     return pl.read_csv(path, **kwargs)
 
@@ -48,6 +49,7 @@ def read_excel(path: str, **kwargs: Any) -> pl.DataFrame:
 
     Returns:
         pl.DataFrame с распарсенными данными.
+
     """
     return pl.read_excel(path, **kwargs)
 
@@ -62,5 +64,6 @@ def write_parquet(df: pl.DataFrame, path: str, **kwargs: Any) -> None:
         path: Целевой путь (локальный, S3, etc. — per polars docs).
         **kwargs: Передаются в ``write_parquet`` (compression, compression_level,
             statistics, row_group_size, etc.).
+
     """
     df.write_parquet(path, **kwargs)

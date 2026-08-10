@@ -35,6 +35,7 @@ def _write_toml(tmp_path: Path, content: str) -> Path:
 
     Returns:
         Путь к созданному plugin.toml.
+
     """
     toml_file = tmp_path / "plugin.toml"
     toml_file.write_text(textwrap.dedent(content), encoding="utf-8")

@@ -26,6 +26,7 @@ class Clock(Protocol):
             от изменений wall-clock. Используется для измерения интервалов.
         time: Wall-clock время (Unix epoch seconds). Может откатываться
             при ручной коррекции системных часов или NTP.
+
     """
 
     def monotonic(self) -> float:

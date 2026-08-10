@@ -42,6 +42,7 @@ def scrape_and_store(
 
     Returns:
         Pipeline: Готовый scraping pipeline.
+
     """
     builder = RouteBuilder.from_(
         route_id, source=f"scrape:{url}", description=description or f"Scrape: {url}",

@@ -87,6 +87,7 @@ class _HostBucket:
         Args:
             latency_ms: Задержка в миллисекундах.
             status_code: HTTP-статус ответа; <=0 означает сетевую ошибку.
+
         """
         self.latencies.append(latency_ms)
         self.request_count += 1
@@ -99,6 +100,7 @@ class _HostBucket:
 
         Returns:
             Снимок текущей статистики хоста.
+
         """
         if not self.latencies:
             return HostStats(
@@ -133,6 +135,7 @@ def _percentile(sorted_data: list[float], n: int, q: float) -> float:
 
     Returns:
         Значение персентиля.
+
     """
     if n == 1:
         return sorted_data[0]
@@ -155,6 +158,7 @@ class PerHostMeter:
 
     Args:
         enabled: Если ``False`` — все операции являются no-op (default-OFF).
+
     """
 
     def __init__(self, *, enabled: bool = False) -> None:
@@ -162,6 +166,7 @@ class PerHostMeter:
 
         Args:
             enabled: Активировать запись метрик.
+
         """
         self._enabled: bool = enabled
         self._buckets: dict[str, _HostBucket] = {}
@@ -175,6 +180,7 @@ class PerHostMeter:
             host: Имя или IP хоста (без схемы и порта).
             latency_ms: Задержка ответа в миллисекундах.
             status_code: HTTP-статус ответа; <=0 для сетевых ошибок.
+
         """
         if not self._enabled:
             return
@@ -191,6 +197,7 @@ class PerHostMeter:
         Returns:
             :class:`HostStats` или ``None``, если хост не наблюдался или
             флаг выключен.
+
         """
         if not self._enabled:
             return None
@@ -204,6 +211,7 @@ class PerHostMeter:
 
         Returns:
             Словарь ``host → HostStats``; пустой при выключенном флаге.
+
         """
         if not self._enabled:
             return {}
@@ -230,6 +238,7 @@ def get_per_host_meter() -> PerHostMeter:
 
     Returns:
         Глобальный экземпляр :class:`PerHostMeter`.
+
     """
     global _meter_instance
     if _meter_instance is None:
@@ -263,6 +272,7 @@ def to_prometheus_metrics(meter: PerHostMeter | None = None) -> str:
     Returns:
         Многострочная строка с метриками в формате ``name{labels} value``.
         Пустая строка, если флаг выключен или данных нет.
+
     """
     if meter is None:
         meter = get_per_host_meter()

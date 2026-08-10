@@ -112,6 +112,7 @@ def check_tool_with_policy(
         ...     policy=policy,
         ... )
         # OK: capability declared + in whitelist
+
     """
     # Layer 1: CapabilityGate (S36/S54)
     try:
@@ -185,6 +186,7 @@ def filter_tools_with_gate(
         ...     scope=None, policy=policy,
         ... )
         ['db.read.orders']  # ai.invoke.credit_check dropped (not in whitelist)
+
     """
     allowed: list[str] = []
     for tool_name in tool_names:

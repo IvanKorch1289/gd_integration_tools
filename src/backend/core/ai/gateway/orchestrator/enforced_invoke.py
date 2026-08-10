@@ -86,6 +86,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             P0 security (cycle 30): tool_name mandatory для restricted policies.
             No fallback на workflow_id — это позволяло бы обойти whitelist
             реального инструмента.
+
         """
         if policy is None:
             return
@@ -154,6 +155,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
               без DI) — return ``None``, no-op backward-compat.
             * Если ``request.tenant_id`` пустой — return ``None``
               (tenant-less invocation budget-bypass, как pre-M4).
+
         """
         budget = getattr(self, "_token_budget", None)
         if budget is None:
@@ -250,6 +252,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         Returns:
             Updated BudgetSnapshot или ``None`` если budget disabled /
             tenant-less / пропаgated.
+
         """
         budget = getattr(self, "_token_budget", None)
         if budget is None:
@@ -308,6 +311,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
 
         Returns:
             AIResponse после прохождения всех 9 шагов.
+
         """
         # Собираем контекст для аудита
         ctx = _AuditContext(request=request, audit_service=self._audit_service)

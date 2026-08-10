@@ -57,6 +57,7 @@ class HitlAction:
 
         Returns:
             Tuple of action type strings.
+
         """
         return (cls.APPROVE, cls.REJECT, cls.REQUEST_INFO)
 
@@ -77,6 +78,7 @@ class HitlPendingSignal:
         resolved_at: timestamp разрешения (None если pending).
         resolved_action: :class:`HitlAction` или None.
         resolved_by: имя оператора, который разрешил.
+
     """
 
     signal_id: str
@@ -97,6 +99,7 @@ class HitlPendingSignal:
 
         Returns:
             True if resolved, False if pending.
+
         """
         return self.resolved_at is not None
 
@@ -105,6 +108,7 @@ class HitlPendingSignal:
 
         Returns:
             Dictionary representation.
+
         """
         return {
             "signal_id": self.signal_id,
@@ -130,6 +134,7 @@ class HitlPendingSignal:
 
         Returns:
             Новый :class:`HitlPendingSignal` инстанс.
+
         """
         from datetime import datetime as _dt
 
@@ -161,6 +166,7 @@ class HitlSignalStore(Protocol):
 
         Args:
             signal: Signal to store.
+
         """
         ...
 
@@ -172,6 +178,7 @@ class HitlSignalStore(Protocol):
 
         Returns:
             Signal if found, None otherwise.
+
         """
         ...
 
@@ -185,6 +192,7 @@ class HitlSignalStore(Protocol):
 
         Returns:
             List of pending signals.
+
         """
         ...
 
@@ -200,6 +208,7 @@ class HitlSignalStore(Protocol):
 
         Returns:
             Updated signal.
+
         """
         ...
 
@@ -212,6 +221,7 @@ class HitlSignalStore(Protocol):
 
         Returns:
             True if resolved, False if timeout.
+
         """
         ...
 
@@ -229,6 +239,7 @@ class InMemoryHitlSignalStore:
 
         Args:
             signal: Signal to store.
+
         """
         async with self._lock:
             self._store[signal.signal_id] = signal
@@ -242,6 +253,7 @@ class InMemoryHitlSignalStore:
 
         Returns:
             Signal if found, None otherwise.
+
         """
         async with self._lock:
             return self._store.get(signal_id)
@@ -256,6 +268,7 @@ class InMemoryHitlSignalStore:
 
         Returns:
             List of pending signals.
+
         """
         async with self._lock:
             items = [s for s in self._store.values() if not s.is_resolved]
@@ -279,6 +292,7 @@ class InMemoryHitlSignalStore:
         Raises:
             KeyError: If signal not found.
             ValueError: If signal already resolved.
+
         """
         async with self._lock:
             signal = self._store.get(signal_id)
@@ -323,6 +337,7 @@ class HitlService:
         workflow_facade: опц. :class:`WorkflowFacade`. Если None — signal
             не отправляется (используется в e2e-тестах с фейковым backend'ом).
         caller_name: используется как ``caller`` для CapabilityGate.
+
     """
 
     def __init__(
@@ -341,6 +356,7 @@ class HitlService:
 
         Args:
             signal: Pending signal to register.
+
         """
         await self._store.put(signal)
 
@@ -354,6 +370,7 @@ class HitlService:
 
         Returns:
             List of pending signals.
+
         """
         return await self._store.list_pending(tenant_id=tenant_id)
 
@@ -365,6 +382,7 @@ class HitlService:
 
         Returns:
             Signal if found, None otherwise.
+
         """
         return await self._store.get(signal_id)
 
@@ -377,6 +395,7 @@ class HitlService:
 
         Returns:
             True if resolved, False if timeout.
+
         """
         return await self._store.wait_for(signal_id, timeout=timeout)
 
@@ -401,6 +420,7 @@ class HitlService:
 
         Raises:
             ValueError: If invalid action or signal already resolved.
+
         """
         if action not in HitlAction.all():
             raise ValueError(f"Invalid action {action!r}; allowed: {HitlAction.all()}")

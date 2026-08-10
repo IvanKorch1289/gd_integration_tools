@@ -237,6 +237,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         Returns:
             ``True`` если плагин был в реестре и shutdown выполнен.
             ``False`` если плагин не найден (no-op).
+
         """
         entry = self._loaded.get(plugin_name)
         if entry is None:

@@ -351,6 +351,7 @@ class CircuitBreakerProcessor(BaseProcessor):
         Args:
             exchange: Текущий exchange; route_id используется для breaker-name.
             context: Контекст выполнения маршрута.
+
         """
         from src.backend.core.resilience.breaker import (
             BreakerSpec,

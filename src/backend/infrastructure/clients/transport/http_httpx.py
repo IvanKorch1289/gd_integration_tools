@@ -68,6 +68,7 @@ def is_httpx_retries_available() -> bool:
 
     Returns:
         ``True`` если ``httpx_retries`` импортируется без ошибок.
+
     """
     try:
         import httpx_retries  # noqa: F401 — availability probe
@@ -116,6 +117,7 @@ def build_unified_transport(
     Note:
         Lazy-import: оба пакета (``httpx-retries`` + ``hishel``) опциональны.
         При их отсутствии возвращается чистый ``httpx.AsyncHTTPTransport``.
+
     """
     base: httpx.AsyncBaseTransport = httpx.AsyncHTTPTransport(http2=True)
 
@@ -203,6 +205,7 @@ class HttpxClient:
 
         Returns:
             ``True`` если flag активирован в текущем окружении.
+
         """
         try:
             from src.backend.core.config.features import feature_flags

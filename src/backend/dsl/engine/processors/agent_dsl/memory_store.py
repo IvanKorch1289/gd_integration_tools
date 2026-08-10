@@ -63,6 +63,7 @@ class MemoryStoreProcessor(BaseAIProcessor):
             ``"agent_result"`` (результат :class:`AgentRunProcessor`).
         ttl_s: Опц. TTL в секундах (``86400`` = 1 день).
         name: Имя процессора.
+
     """
 
     required_capability: ClassVar[str | None] = "ai.memory.write"

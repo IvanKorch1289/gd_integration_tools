@@ -35,6 +35,7 @@ class InMemoryResilienceProfileStore:
 
         Returns:
             Profile if found, None otherwise.
+
         """
         async with self._lock:
             if tenant_id is not None:
@@ -51,6 +52,7 @@ class InMemoryResilienceProfileStore:
 
         Returns:
             List of profiles.
+
         """
         async with self._lock:
             # effective: tenant override (если есть) перекрывает global.
@@ -75,6 +77,7 @@ class InMemoryResilienceProfileStore:
 
         Returns:
             Upserted profile.
+
         """
         async with self._lock:
             self._data[(tenant_id, profile.name)] = profile
@@ -89,6 +92,7 @@ class InMemoryResilienceProfileStore:
 
         Returns:
             True if deleted, False if not found.
+
         """
         async with self._lock:
             return self._data.pop((tenant_id, name), None) is not None

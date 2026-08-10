@@ -60,6 +60,7 @@ class CapabilityFacade:
 
         Raises:
             CapabilityDeniedError: S-2 fix — fail-closed на deny.
+
         """
         try:
             self.gate.check(plugin, capability, scope)
@@ -115,6 +116,7 @@ class CapabilityFacade:
 
         Returns:
             True если route's caps are subset of plugins + core_public.
+
         """
         try:
             from src.backend.core.security.capabilities import (
@@ -148,6 +150,7 @@ class CapabilityFacade:
         Args:
             plugin: Plugin name.
             capabilities: List of capability names to declare.
+
         """
         try:
             from src.backend.core.security.capabilities import CapabilityRef
@@ -199,6 +202,7 @@ class CapabilityFacade:
 
         Raises:
             CapabilityDeniedError: если check fails (S-2 fix).
+
         """
         from src.backend.core.security.capabilities import CapabilityDeniedError
 

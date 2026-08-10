@@ -52,6 +52,7 @@ class BulkWriterStats:
             (callback raise + requeue fail). Мониторим через
             prometheus; >0 → алёрт.
         last_flush_at: timestamp последнего flush'а (UTC seconds).
+
     """
 
     def __init__(self) -> None:
@@ -75,6 +76,7 @@ class ClickHouseBulkWriter:
         flush_interval_seconds: timer-flush период (default 1.0s).
         queue_max_size: capacity ``asyncio.Queue`` (default 10000).
         on_failure: опц. callback при flush failure (envelope → DLQ).
+
     """
 
     def __init__(

@@ -100,6 +100,7 @@ class XmlDataFormat(DataFormat):
         Args:
             root_tag: Tag для корневого элемента (default ``"root"``).
             pretty: Indent XML для human-readability.
+
         """
         self._root_tag = root_tag
         self._pretty = pretty
@@ -155,6 +156,7 @@ class CsvDataFormat(DataFormat):
         Args:
             headers: Explicit headers (если None — auto-detect из первой row).
             delimiter: Field delimiter (default ``","``).
+
         """
         self._headers = headers
         self._delimiter = delimiter
@@ -241,6 +243,7 @@ class PickleDataFormat(DataFormat):
 
         Args:
             protocol: Pickle protocol version (default = current stdlib default).
+
         """
         self._protocol = protocol
 

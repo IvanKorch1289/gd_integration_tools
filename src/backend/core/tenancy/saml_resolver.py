@@ -31,6 +31,7 @@ class SamlTenantResolveResult:
             не настроен / fail-open).
         already_breached_soft: ``True`` если на момент логина soft уже
             пробит — caller может показать предупреждение.
+
     """
 
     tenant: TenantContext
@@ -44,6 +45,7 @@ class SamlTenantHandoff:
     Args:
         budget: опц. :class:`TokenBudget` для пред-проверки;
             если None — handoff просто создаёт TenantContext.
+
     """
 
     def __init__(self, *, budget: TokenBudget | None = None) -> None:

@@ -22,6 +22,7 @@ Strict-mode (под feature flag ``workflow_versioning_strict``):
 References:
     * temporalio Python SDK: https://docs.temporal.io/develop/python/versioning
     * Plan V15 R-V15-9 (AI-функции через Workflow DSL), Sprint 7 K3.
+
 """
 
 from __future__ import annotations
@@ -56,6 +57,7 @@ class WorkflowVersion:
         patch: Patch-версия (bug-fix).
         default_version: Является ли версия default для workflow_id.
             При lookup без явного указания версии возвращается default.
+
     """
 
     workflow_id: str
@@ -88,6 +90,7 @@ class WorkflowVersion:
 
         Raises:
             ValueError: Если ``version`` не соответствует semver-формату.
+
         """
         m = _SEMVER_RE.match(version)
         if m is None:
@@ -121,6 +124,7 @@ class WorkflowVersionRegistry:
 
     Attributes:
         versions: Список всех зарегистрированных версий.
+
     """
 
     versions: list[WorkflowVersion] = field(default_factory=list)
@@ -137,6 +141,7 @@ class WorkflowVersionRegistry:
 
         Raises:
             ValueError: В strict-mode при конфликте major-default.
+
         """
         if version.default_version:
             try:
@@ -223,6 +228,7 @@ class WorkflowVersionRegistry:
 
         Raises:
             ValueError: если версия не найдена в registry.
+
         """
         history = self.history(workflow_id)
         target = next((v for v in history if v.semver == semver), None)
@@ -320,6 +326,7 @@ def workflow_versioned(
 
     Returns:
         Декоратор, не модифицирующий поведение функции (только метаданные).
+
     """
 
     def decorator(func: F) -> F:
@@ -361,6 +368,7 @@ def patched(patch_id: str) -> bool:
     Returns:
         ``True`` если Temporal-runtime знает этот патч (новая ветка
         кода), ``False`` если запущена legacy-версия (replay).
+
     """
     try:
         from temporalio import workflow as temporal_workflow

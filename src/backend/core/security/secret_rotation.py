@@ -58,6 +58,7 @@ class RotationResult:
         rotated_at: Время завершения rotation в UTC.
         new_version: Новый номер версии в Vault KV v2 (если backend
             поддерживает versioning); ``None`` при недоступности метаданных.
+
     """
 
     secret_path: str
@@ -79,6 +80,7 @@ class RotationAuditEvent:
         actor: Кто инициировал (system/cron/user@id).
         outcome: ``success`` | ``failure``.
         error_class: Имя класса исключения при failure (или None).
+
     """
 
     event_id: str
@@ -124,6 +126,7 @@ class SecretRotator(Protocol):
         Raises:
             Произвольное исключение от backend — caller отвечает за
             обработку; audit_sink уже получил event с outcome=failure.
+
         """
 
 
@@ -158,6 +161,7 @@ class AuditableRotator:
             audit_sink: Async-callable для записи RotationAuditEvent.
             feature_enabled: Lambda, возвращающая текущий статус
                 feature-flag ``secrets_rotation_enabled``. None = always on.
+
         """
         self._inner = inner
         self._audit_sink = audit_sink
@@ -183,6 +187,7 @@ class AuditableRotator:
         Raises:
             RuntimeError: при выключенном feature-flag (rotation_disabled).
             Exception: пробрасывает исключения inner-rotator (после audit).
+
         """
         if not self._feature_enabled():
             _logger.warning(

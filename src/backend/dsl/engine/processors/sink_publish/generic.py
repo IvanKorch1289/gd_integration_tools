@@ -34,6 +34,7 @@ class GenericSinkPublishProcessor(BaseProcessor):
             ``kind`` — они выставляются автоматически).
         payload_property: Откуда брать payload (None → ``in_message.body``).
         result_property: Куда писать результат публикации.
+
     """
 
     def __init__(
@@ -95,6 +96,7 @@ class _OutSpec:
     Attributes:
         result_property: Имя property в ``exchange.properties``.
         set_out: Записать результат также в ``exchange.out_message`` (default).
+
     """
 
     result_property: str

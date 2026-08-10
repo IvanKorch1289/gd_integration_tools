@@ -98,6 +98,7 @@ class WorkflowAuditSink:
         writer: уже запущенный :class:`ClickHouseBulkWriter` (метод
             ``add(dict) -> None`` + ``aclose()``); таблица — обычно
             ``"workflow_audit"``.
+
     """
 
     def __init__(self, writer: Any) -> None:
@@ -142,6 +143,7 @@ class WorkflowAuditSink:
             duration_ms: длительность для terminal events (S12 K2 W1 SLA).
             parent_workflow_id: child-workflow / saga compensation tree
                 (S12 K3 W6).
+
         """
         row = {
             "event_id": event_id or str(uuid.uuid4()),
@@ -173,6 +175,7 @@ class WorkflowAuditSink:
 
         Args:
             events: список словарей-событий.
+
         """
         if not events:
             return

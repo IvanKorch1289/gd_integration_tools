@@ -171,6 +171,7 @@ async def compile_activity_step(decl: ActivityDeclaration, ctx: dict[str, Any]) 
 
     Returns:
         Результат выполнения activity (Any).
+
     """
     # Cycle 33 restore: BPMN gateway markers (XOR/AND/OR) приходят как
     # ActivityDeclaration с args["gateway"] = GatewaySpec (live or dict).
@@ -377,6 +378,7 @@ async def compile_sleep_step(decl: SleepDeclaration, ctx: dict[str, Any]) -> Any
     Args:
         decl: Декларация sleep-шага.
         ctx: Не используется (зарезервирован для consistency).
+
     """
     from temporalio import workflow
 
@@ -482,6 +484,7 @@ async def compile_agent_invoke_step(
     Args:
         decl: Декларация agent_invoke шага.
         ctx: Рантайм-контекст workflow (содержит ``_input`` и ``_outputs``).
+
     """
 
     # Resolve input context
@@ -600,6 +603,7 @@ async def compile_reflect_step(decl: ReflectDeclaration, ctx: dict[str, Any]) ->
 
     Returns:
         ``True`` если reflect успешно запущен.
+
     """
     from temporalio import workflow
 
@@ -639,6 +643,7 @@ async def compile_checkpoint_step(
 
     Returns:
         ``checkpoint_id`` (auto-generated UUID если не задан).
+
     """
     import uuid as _uuid
 
@@ -691,6 +696,7 @@ async def compile_guardrail_step(
 
     Returns:
         ``{"rule": str, "value": float, "exceeded": bool}``.
+
     """
     outputs = ctx.get("_outputs", {})
     target = decl.target
@@ -771,6 +777,7 @@ async def compile_escalate_step(decl: EscalateDeclaration, ctx: dict[str, Any]) 
 
     Returns:
         ``{"to_agent": str | None, "to_model": str | None, "reason": str | None}``.
+
     """
     if decl.to_agent is not None:
         ctx["_active_agent"] = decl.to_agent
@@ -822,6 +829,7 @@ async def dispatch_step_compile(step: WorkflowStep, ctx: dict[str, Any]) -> Any:
     Raises:
         TypeError: Если тип ``step`` неизвестен (новый step добавлен,
             но компилятор не зарегистрирован).
+
     """
     compiler = _STEP_DISPATCH.get(type(step))
     if compiler is None:

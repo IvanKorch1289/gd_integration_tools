@@ -53,6 +53,7 @@ class FeedbackDomainService:
 
         Raises:
             ValueError: При попытке разметить ``None``-документ.
+
         """
         if doc is None:  # pragma: no cover — defensive
             raise ValueError("Cannot label a None document")
@@ -73,6 +74,7 @@ class FeedbackDomainService:
 
         Returns:
             Обновлённый документ.
+
         """
         doc.indexed_in_rag = True
         doc.rag_doc_id = rag_doc_id

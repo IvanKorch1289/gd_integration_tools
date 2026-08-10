@@ -19,6 +19,7 @@ class QuotaExceeded(Exception):
         QuotaExceeded: при попытке consume сверх установленного лимита.
             Сообщение содержит ``tenant_id``, ``resource`` и текущие
             ``current/limit`` для observability.
+
     """
 
 
@@ -29,6 +30,7 @@ class QuotaTracker:
     Attributes:
         prefix: Префикс ключей в Redis; используется для namespacing
             разных окружений (например ``quota:`` или ``quota_staging:``).
+
     """
 
     prefix: str = "quota:"
@@ -61,6 +63,7 @@ class QuotaTracker:
 
         Raises:
             QuotaExceeded: если после инкремента счётчик превысил ``limit``.
+
         """
         # S162 W4: use module-attr lookup (not local binding) so that
         # monkeypatching storage.redis.get_redis_client in tests takes

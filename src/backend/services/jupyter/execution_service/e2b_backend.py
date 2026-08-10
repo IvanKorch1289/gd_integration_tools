@@ -81,6 +81,7 @@ class E2BExecutionBackend:
             e2b_code_interpreter MVP).
         timeout: per-cell execution timeout (seconds).
         template: E2B template ID (default: ``code-interpreter``).
+
     """
 
     def __init__(
@@ -130,6 +131,7 @@ class E2BExecutionBackend:
             E2BExecutionError: API key not set, e2b_code_interpreter
                 not installed, или cell execution failed.
             FileNotFoundError: notebook_path не существует.
+
         """
         if not self._api_key:
             raise E2BExecutionError(
@@ -217,6 +219,7 @@ class E2BExecutionBackend:
 
         Raises:
             E2BExecutionError: sandbox creation failed, cell failed.
+
         """
         # Lazy-import e2b (opt-in dep)
         try:
@@ -296,6 +299,7 @@ class E2BExecutionBackend:
 
         Returns:
             New source с parameter assignment lines appended.
+
         """
         lines = [source, "", "# S75 W1: injected parameters"]
         for key, value in parameters.items():

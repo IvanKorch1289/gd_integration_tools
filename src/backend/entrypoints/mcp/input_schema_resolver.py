@@ -47,6 +47,7 @@ class ResolvedToolSchema:
             Пустой dict ``{}`` если у action нет Pydantic params model.
         output_schema: JSON-Schema ответа (из Pydantic response model).
             Пустой dict ``{}`` если у action нет response model.
+
     """
 
     name: str
@@ -63,6 +64,7 @@ def _extract_json_schema(model: type[Any] | None) -> dict[str, Any]:
 
     Returns:
         JSON-Schema dict или пустой dict если модель не задана / не Pydantic.
+
     """
     if model is None:
         return {}
@@ -103,6 +105,7 @@ def resolve_input_schema(action_spec: Any) -> ResolvedToolSchema:
 
     Raises:
         AttributeError: Если ``action_spec`` не имеет поля ``name``.
+
     """
     # Имя action: action_id > name (аналогично spec_to_metadata.py)
     action_name: str = getattr(action_spec, "action_id", None) or action_spec.name
@@ -164,6 +167,7 @@ def validate_input_schema(
             не прошла. В non-strict режиме ошибки возвращаются как (False, msg).
         ImportError: Если jsonschema не установлен (маловероятно — он
             в project deps через openapi-core/fastapi).
+
     """
     # Пустая схема — пропускаем валидацию
     if not schema:

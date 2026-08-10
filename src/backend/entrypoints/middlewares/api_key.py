@@ -49,6 +49,7 @@ class APIKeyMiddleware:
 
         Args:
             app: ASGI-приложение.
+
         """
         self.app = app
         # Компилируем шаблоны исключений из настроек.

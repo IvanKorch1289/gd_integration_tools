@@ -63,6 +63,7 @@ class ParallelProcessor(BaseProcessor):
     Args:
         branches: Словарь {имя: [процессоры]}.
         strategy: ``"all"`` — ждать все; ``"first"`` — первый успех.
+
     """
 
     def __init__(
@@ -118,6 +119,7 @@ class ParallelProcessor(BaseProcessor):
         Args:
             exchange: Текущий exchange; body+headers копируются в каждую ветку.
             context: Контекст выполнения маршрута.
+
         """
         body = exchange.in_message.body
         headers = exchange.in_message.headers
@@ -167,6 +169,7 @@ class ParallelProcessor(BaseProcessor):
 
         Returns:
             ``{"parallel": {branches: {name: [...]}, strategy}}`` или ``None``.
+
         """
         branches_spec: dict[str, list[dict[str, Any]]] = {}
         for name, procs in self._branches.items():

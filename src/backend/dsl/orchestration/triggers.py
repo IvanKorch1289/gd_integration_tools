@@ -121,6 +121,7 @@ class IntervalTrigger:
         interval_s: interval в секундах.
         start_immediately: запустить сразу или после первого interval.
         payload: factory для payload (может быть static dict или callable).
+
     """
 
     def __init__(
@@ -230,6 +231,7 @@ class CronTrigger:
         cron_expr: 5-field cron expression (e.g. ``"*/5 * * * *"``).
         timezone_name: IANA timezone name (default UTC).
         payload: factory для payload.
+
     """
 
     def __init__(
@@ -335,6 +337,7 @@ class WebhookTrigger:
         path: URL path (e.g., "/webhooks/orders").
         method: HTTP method (default POST).
         app: FastAPI app instance (если None — берётся из app context).
+
     """
 
     def __init__(

@@ -48,6 +48,7 @@ class CostTrackingCallback:
             response_obj: ответ провайдера (с ``usage`` / ``response_cost``).
             start_time: начало вызова (не используется, оставлено для API).
             end_time: конец вызова.
+
         """
         metrics = self._ensure_metrics()
         if metrics in (None, False):
@@ -164,6 +165,7 @@ class FallbackTrackingCallback:
             exception: Исключение от провайдера (timeout / 5xx / rate-limit).
             start_time: Начало вызова.
             end_time: Конец вызова.
+
         """
         counter = self._ensure_counter()
         if counter in (None, False):

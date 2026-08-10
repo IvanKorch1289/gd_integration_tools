@@ -45,6 +45,7 @@ class AuditProcessor(BaseProcessor):
         outcome_from: Альтернативно — выражение из exchange.
         metadata_from: Выражение, возвращающее dict с метаданными.
         result_property: Имя exchange-property для записи ``event_hash``.
+
     """
 
     def __init__(

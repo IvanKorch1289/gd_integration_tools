@@ -72,6 +72,7 @@ class ClientCircuitBreaker:
 
         Returns:
             True if breaker is open (failing fast).
+
         """
         return self._breaker.is_open
 

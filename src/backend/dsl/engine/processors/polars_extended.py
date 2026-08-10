@@ -77,6 +77,7 @@ class PolarsQueryProcessor(BaseProcessor):
         with_columns: Словарь ``new_col -> sql_expr`` для расчётных колонок.
         sort_by: Список колонок для сортировки (опционально).
         descending: Сортировка по убыванию (default ``False``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -144,6 +145,7 @@ class PolarsJoinProcessor(BaseProcessor):
         other_path: Путь к таблице-партнёру (header-key или dotted-path).
         on: Колонки для join (одна или список).
         how: Стратегия join (``inner`` / ``left`` / ``outer`` / ...).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -202,6 +204,7 @@ class PolarsAggregateProcessor(BaseProcessor):
     Args:
         group_by: Колонки группировки (одна или список).
         aggregations: ``alias -> agg_expr`` (например, ``{"total": "sum(amount)"}``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -247,6 +250,7 @@ class PolarsPivotProcessor(BaseProcessor):
         columns: Колонка, чьи значения становятся новыми колонками.
         values: Колонка с агрегированным значением.
         aggregate_function: Агрегат-функция (``"sum"`` / ``"mean"`` / ...).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -301,6 +305,7 @@ class PolarsWindowProcessor(BaseProcessor):
         order_by: Опциональный список колонок для упорядочивания внутри окна.
         windowed_columns: ``new_col -> sql_expr`` (например,
             ``{"rank": "rank()"}`` или ``{"running_total": "sum(amount)"}``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

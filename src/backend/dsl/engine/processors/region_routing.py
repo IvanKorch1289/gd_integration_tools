@@ -30,6 +30,7 @@ class RegionRoutingProcessor(BaseProcessor):
         primary: Primary region name (e.g., "eu-west-1").
         fallback: Fallback region name (e.g., "eu-central-1"). If None, no fallback.
         health_check_interval: Seconds between health checks (default 30).
+
     """
 
     side_effect = SideEffectKind.PURE

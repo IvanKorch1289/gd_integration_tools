@@ -44,6 +44,7 @@ class AIRequest:
             при restricted tool policy (непустой whitelist/blacklist); fail-closed
             ``ToolPolicyViolationError`` если не передан. Workflow-level
             enforcement (без tool restriction) использует ``allow_all_tools=True``.
+
     """
 
     workflow_id: str
@@ -73,6 +74,7 @@ class AIResponse:
             на стадии input/output sanitizers.
         guardrails_verdict: ``{"input": "safe", "output": "safe|blocked|warn"}``
             от input/output guards (NeMo + Llama Guard).
+
     """
 
     content: str

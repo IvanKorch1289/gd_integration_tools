@@ -26,6 +26,7 @@ class WireTapProcessor(BaseProcessor):
 
     Args:
         tap_processors: Процессоры, обрабатывающие копию Exchange.
+
     """
 
     def __init__(

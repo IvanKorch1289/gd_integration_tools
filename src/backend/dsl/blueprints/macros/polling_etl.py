@@ -39,6 +39,7 @@ def polling_etl(
 
     Returns:
         Pipeline: Готовый polling ETL pipeline.
+
     """
     builder = (
         RouteBuilder.from_(

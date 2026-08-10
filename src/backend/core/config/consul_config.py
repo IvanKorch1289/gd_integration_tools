@@ -35,6 +35,7 @@ class ConsulConfigStore:
         port: Порт HTTP API (default 8500).
         scheme: ``http`` или ``https``.
         token: ACL-токен (опционально).
+
     """
 
     def __init__(
@@ -114,6 +115,7 @@ class ConsulConfigStore:
 
         Returns:
             ``True`` если запись успешна, иначе ``False``.
+
         """
         try:
             client = self._get_client()
@@ -138,6 +140,7 @@ class ConsulConfigStore:
         Note:
             Метод блокирующий; запускать в отдельном asyncio-task
             или thread при использовании в async-контексте.
+
         """
         try:
             client = self._get_client()

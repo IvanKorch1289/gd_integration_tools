@@ -65,6 +65,7 @@ def require_capability(
 
     Raises:
         ConnectorAuthError: Если capability check failed (fail-closed).
+
     """
     if not capability or not isinstance(capability, str):
         raise ValueError("capability must be non-empty string")
@@ -178,6 +179,7 @@ async def check_source_capability(
 
     Note:
         При недоступности AuthorizationFacade — fail-closed (returns False).
+
     """
     try:
         from src.backend.services.authorization.facade import get_authorization_facade

@@ -72,6 +72,7 @@ class MongoFeedbackRepository:
 
         Returns:
             Saved document.
+
         """
         await self._client().insert_one(_COLLECTION, _model_to_doc(doc))
         return doc
@@ -84,6 +85,7 @@ class MongoFeedbackRepository:
 
         Returns:
             Document or None if not found.
+
         """
         raw = await self._client().find_one(_COLLECTION, {"_id": doc_id})
         return _doc_to_model(raw) if raw else None
@@ -96,6 +98,7 @@ class MongoFeedbackRepository:
 
         Returns:
             Updated document.
+
         """
         payload = _model_to_doc(doc)
         modified = await self._client().update_one(

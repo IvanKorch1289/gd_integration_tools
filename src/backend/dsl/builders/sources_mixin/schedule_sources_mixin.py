@@ -41,6 +41,7 @@ class ScheduleSourcesMixin:
                 .dispatch_action("reports.generate_daily")
                 .build()
             )
+
         """
         builder: RouteBuilder = cls(route_id=route_id, source=f"schedule:{cron_expr}")
         # Сохраняем cron и kwargs для последующей регистрации в APScheduler

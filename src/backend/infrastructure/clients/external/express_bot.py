@@ -304,6 +304,7 @@ class ExpressBotClient:
 
         Returns:
             sync_id — UUID отправленного сообщения.
+
         """
         path = (
             "/api/v4/botx/notifications/direct/sync"
@@ -322,6 +323,7 @@ class ExpressBotClient:
 
         Returns:
             sync_id ответного сообщения.
+
         """
         payload = reply.to_payload()
         payload["source_sync_id"] = source_sync_id
@@ -337,6 +339,7 @@ class ExpressBotClient:
         Args:
             sync_id: UUID редактируемого сообщения.
             **fields: body, keyboard, bubble, mentions, file, status.
+
         """
         payload: dict[str, Any] = {"sync_id": sync_id, "result": {}}
         for key in ("body", "keyboard", "bubble", "mentions", "status"):
@@ -369,6 +372,7 @@ class ExpressBotClient:
         Returns:
             ``{group_chat_id, sent_to, read_by [{user_huid, read_at}],
             received_by [{user_huid, received_at}]}``.
+
         """
         return await self._get(
             "/api/v3/botx/events/event_status", params={"sync_id": sync_id},
@@ -389,6 +393,7 @@ class ExpressBotClient:
 
         Returns:
             sync_id.
+
         """
         payload: dict[str, Any] = {
             "group_chat_id": group_chat_id,
@@ -407,6 +412,7 @@ class ExpressBotClient:
 
         Returns:
             ``{file_id, file_url}`` для использования в сообщениях.
+
         """
         files = {"content": (file_name, file_data)}
         data = {"meta": f'{{"group_chat_id":"{group_chat_id}"}}'}
@@ -440,6 +446,7 @@ class ExpressBotClient:
 
         Returns:
             Профиль пользователя или None если не найден.
+
         """
         if not email and not huid:
             raise ValueError("search_user: укажите email или huid")

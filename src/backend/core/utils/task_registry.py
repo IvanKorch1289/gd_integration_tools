@@ -71,6 +71,7 @@ class TaskRegistry:
 
         Raises:
             RuntimeError: при попытке создать задачу после shutdown.
+
         """
         if self._closed:
             raise RuntimeError(
@@ -143,6 +144,7 @@ class TaskRegistry:
 
         Args:
             timeout: общий timeout на graceful shutdown в секундах.
+
         """
         self._closed = True
         live = [t for t in self._tasks if not t.done()]

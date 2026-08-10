@@ -50,6 +50,7 @@ class RoutingResult:
             в routing rule).
         memory_scope: Memory scope для этого вызова (из rule или agent).
         matched_rule: Индекс matched routing rule (для audit).
+
     """
 
     target_agent: AgentSpec
@@ -74,6 +75,7 @@ class OrchestratorEngine:
 
         Args:
             registry: Ссылка на :class:`AgentRegistry` для lookup агентов.
+
         """
         self._registry = registry
 
@@ -97,6 +99,7 @@ class OrchestratorEngine:
             KeyError: Агент не найден в registry.
             ValueError: Ни одно правило не сработало и ``default_agent``
                 не задан.
+
         """
         # Feature-flag check (default-OFF)
         if not self._is_orchestrator_enabled():
@@ -150,6 +153,7 @@ class OrchestratorEngine:
 
         Returns:
             True если enabled, False если disabled (default-OFF).
+
         """
         try:
             from src.backend.core.config.features import feature_flags
@@ -167,6 +171,7 @@ class OrchestratorEngine:
 
         Returns:
             True если результат truthy, False otherwise.
+
         """
         try:
             import jmespath

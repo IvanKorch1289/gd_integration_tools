@@ -79,6 +79,7 @@ class ExternalSourcesMixin:
                 .dispatch_action("market.process_tick")
                 .build()
             )
+
         """
         mod = importlib.import_module("src.backend.infrastructure.sources.grpc")
         GrpcSource = mod.GrpcSource

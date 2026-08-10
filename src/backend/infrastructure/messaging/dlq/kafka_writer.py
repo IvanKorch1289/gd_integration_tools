@@ -47,6 +47,7 @@ class KafkaDLQWriter:
         topic_prefix: префикс topic'а (default ``"dlq."``).
         serializer: Опц. кастомный сериализатор (default — JSON через
             ``encode_json`` после ``model_dump(mode='json')``).
+
     """
 
     def __init__(

@@ -79,6 +79,7 @@ class BatchInsertProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен со списком записей для вставки.
             context: Контекст выполнения процессора.
+
         """
         items = self._items if self._items is not None else exchange.in_message.body
         if not isinstance(items, list) or not items:
@@ -169,6 +170,7 @@ class BatchUpdateProcessor(BaseProcessor):
         Note:
             Количество затронутых строк — в ``batch_update_result.affected``.
             Исходные items передаются в ``out_message`` без изменений.
+
         """
         items = self._items if self._items is not None else exchange.in_message.body
         if not isinstance(items, list) or not items:
@@ -259,6 +261,7 @@ class BatchDeleteProcessor(BaseProcessor):
             exchange: Текущий exchange; ids — из ``self._ids`` или body.
                 Результат — в свойстве ``batch_delete_result``.
             context: Контекст выполнения маршрута.
+
         """
         ids = self._ids if self._ids is not None else exchange.in_message.body
         if not isinstance(ids, list) or not ids:

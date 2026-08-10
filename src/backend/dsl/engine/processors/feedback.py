@@ -54,6 +54,7 @@ class FeedbackProcessor(BaseProcessor):
         route_run_id_from: выражение для извлечения route_run_id.
         agent_id: ID агента (default "route_feedback").
         result_property: куда положить id сохранённого feedback-doc.
+
     """
 
     def __init__(

@@ -22,6 +22,7 @@ class ProtobufEncodeProcessor(BaseProcessor):
     Args:
         message_class: Полный путь к protobuf-классу в формате
             ``"my.proto.module:OrderMessage"``.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -60,6 +61,7 @@ class ProtobufDecodeProcessor(BaseProcessor):
 
     Args:
         message_class: Полный путь к protobuf-классу.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

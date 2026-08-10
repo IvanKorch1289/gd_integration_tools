@@ -32,6 +32,7 @@ class WebSocketSource:
         url: ``ws://`` или ``wss://`` endpoint.
         decode_json: Декодировать ли входящие текстовые сообщения как JSON.
         reconnect_delay_seconds: Задержка перед попыткой реконнекта.
+
     """
 
     kind: SourceKind = SourceKind.WEBSOCKET

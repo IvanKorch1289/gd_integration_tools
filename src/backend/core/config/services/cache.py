@@ -230,6 +230,7 @@ class RedisSettings(BaseSettingsWithLoader):
         Returns:
             Список classes-исключений; пустой список, если ничего не
             удалось резолвить.
+
         """
         import importlib
 
@@ -309,6 +310,7 @@ class RedisSettings(BaseSettingsWithLoader):
 
         Returns:
             Имя stream'а (``self.streams[i]["name"]``) или ``None``.
+
         """
         stream = next(
             (

@@ -40,6 +40,7 @@ def pytest_collection_modifyitems(
     Args:
         config: pytest config (не используется).
         items: список собранных тестовых items.
+
     """
     skip_chaos = pytest.mark.skip(reason="ENABLE_CHAOS_TESTS=0")
     disabled = os.environ.get("ENABLE_CHAOS_TESTS", "1") == "0"

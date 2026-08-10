@@ -93,6 +93,7 @@ def _resolve_gateway() -> Any:
 
     Raises:
         RuntimeError: Если gateway не инициализирован (lifespan не поднят).
+
     """
     try:
         from src.backend.services.ai.gateway.client import get_litellm_gateway
@@ -121,6 +122,7 @@ async def _execute_llm_call(
 
     Returns:
         :class:`LLMActivityOutput` с content/tokens/cost.
+
     """
     gateway = _resolve_gateway()
 
@@ -205,6 +207,7 @@ async def llm_activity(input_: LLMActivityInput) -> LLMActivityOutput:
 
     Returns:
         :class:`LLMActivityOutput`.
+
     """
     heartbeat = None
     try:
@@ -243,6 +246,7 @@ def register_llm_activity(worker: Any) -> bool:
 
     Returns:
         True если activity зарегистрирована; False — если flag выключен.
+
     """
     try:
         from src.backend.core.config.features import feature_flags

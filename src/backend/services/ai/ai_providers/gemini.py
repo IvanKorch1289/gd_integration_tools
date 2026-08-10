@@ -65,6 +65,7 @@ class GeminiProvider:
         Raises:
             RuntimeError: Если ``GEMINI_API_KEY`` не задан или
                 ответ Gemini не содержит поле ``embedding.values``.
+
         """
         if not self.api_key:
             raise RuntimeError("GEMINI_API_KEY not set")

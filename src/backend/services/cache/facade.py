@@ -26,6 +26,7 @@ class CacheResult:
         value: Значение или None при miss.
         hit: True если значение найдено.
         backend: Имя backend'а, откуда пришло значение.
+
     """
 
     value: bytes | None
@@ -42,6 +43,7 @@ class UnifiedCacheFacade:
         disk_fallback: L3 disk fallback (DiskCacheBackend).
         capability_check: Опц. callback ``CapabilityGate.check``.
         plugin: Имя caller'а для capability-event.
+
     """
 
     def __init__(

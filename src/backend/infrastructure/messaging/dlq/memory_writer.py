@@ -16,6 +16,7 @@ class InMemoryDLQWriter:
 
     Attributes:
         records: список накопленных envelope'ов.
+
     """
 
     def __init__(self) -> None:

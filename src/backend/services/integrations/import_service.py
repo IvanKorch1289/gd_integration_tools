@@ -60,6 +60,7 @@ class ImportService:
 
         Raises:
             ValueError: Невалидный payload.
+
         """
         from src.backend.core.interfaces.import_gateway import ImportSourceKind
 
@@ -125,6 +126,7 @@ class ImportService:
         Returns:
             dict со статусом:
             ``{status, connector, version, endpoints, secret_refs_required, removed_orphans}``.
+
         """
         from src.backend.core.di.providers import get_import_gateway_factory_provider
 

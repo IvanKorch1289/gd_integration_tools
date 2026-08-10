@@ -49,6 +49,7 @@ def repository_hook(
         class AuditPlugin(BasePlugin):
             @repository_hook("orders", event="before_create")
             async def add_audit(self, repo, entity): ...
+
     """
 
     def decorator(fn: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
@@ -66,6 +67,7 @@ def override_method(
     Args:
         repo_name: Имя репозитория.
         method: Имя метода, который заменяется.
+
     """
 
     def decorator(fn: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
@@ -82,6 +84,7 @@ def collect_hook_methods(
 
     Returns:
         Tuple из `(repo_name, event, bound_method)`.
+
     """
     items: list[tuple[str, str, Callable[..., Any]]] = []
     for attr_name in dir(obj):

@@ -68,6 +68,7 @@ def configure_logging(backend: str = "structlog", **settings: Any) -> BaseLogger
         binding). Stdlib остаётся fallback если structlog не установлен.
         Compat shim в :class:`StructlogLogger` обеспечивает обратную
         совместимость со stdlib-style ``logger.warning("msg %s", arg)``.
+
     """
     global _backend
 
@@ -98,6 +99,7 @@ def get_logger(name: str) -> LoggerProtocol:
 
     Returns:
         Логгер, совместимый с LoggerProtocol.
+
     """
     global _backend
 

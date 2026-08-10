@@ -62,6 +62,7 @@ class OrchestrationMixin:
                 timeout_s=120,
                 max_retries=3,
             )
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.agent_run import (
             AgentRunProcessor,
@@ -129,6 +130,7 @@ class OrchestrationMixin:
                 },
                 default=[DispatchActionProcessor("credit.review_manual")],
             )
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.agent_branch import (
             AgentBranchProcessor,
@@ -166,6 +168,7 @@ class OrchestrationMixin:
                 stop_condition_property="agent_result.structured.done",
                 budget_cost_usd=0.50,
             )
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.agent_loop import (
             AgentLoopProcessor,
@@ -206,6 +209,7 @@ class OrchestrationMixin:
                 ],
                 timeout_s=30.0,
             )
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (
             AgentParallelProcessor,
@@ -254,6 +258,7 @@ class OrchestrationMixin:
                 verifier_workflow_id="verify_step",
                 max_replans=3,
             )
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (
             PlanExecuteProcessor,
@@ -309,6 +314,7 @@ class OrchestrationMixin:
                 refiner_workflow_id="refine",
                 max_iterations=3,
             )
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.reflection_loop import (
             ReflectionLoopProcessor,
@@ -356,6 +362,7 @@ class OrchestrationMixin:
                 approvers=["manager@bank.ru"],
                 timeout_seconds=3600,
             )
+
         """
         from src.backend.dsl.engine.processors.hitl_approval import (
             HitlApprovalProcessor,

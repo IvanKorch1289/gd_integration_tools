@@ -37,6 +37,7 @@ def _get_outbox_dlq_session_factory() -> Any:
     Returns:
         Callable ``() -> AsyncContextManager[AsyncSession]`` — подходит
         под signature ``InboxDLQWriter(session_factory=...)``.
+
     """
     from src.backend.infrastructure.database.session_manager import (
         get_main_session_manager,

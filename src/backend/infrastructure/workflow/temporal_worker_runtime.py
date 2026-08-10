@@ -106,6 +106,7 @@ class TemporalWorkerRuntime:
         Raises:
             RuntimeError: если worker уже запущен (idempotency: сначала ``stop()``).
             ImportError: если ``temporalio`` SDK не установлен.
+
         """
         async with self._lock:
             if self.is_running:
@@ -163,6 +164,7 @@ class TemporalWorkerRuntime:
 
         Args:
             timeout: секунд ждать завершения ``worker.shutdown()``.
+
         """
         async with self._lock:
             worker = self._worker
@@ -232,6 +234,7 @@ async def start_temporal_worker_runtime(
 
     Raises:
         RuntimeError: если feature-flag выключен или SDK не установлен.
+
     """
     from src.backend.core.config.features import FeatureFlags
 

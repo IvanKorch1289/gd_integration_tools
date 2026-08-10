@@ -71,6 +71,7 @@ class RepositoryRegistryProtocol(Protocol):
             repo_name: Имя репозитория (`"orders"`, `"users"` и т.д.).
             event: Событие (`"before_create"`, `"after_query"`, ...).
             callback: Async-callable, получает `(repo, *args, **kwargs)`.
+
         """
         ...
 
@@ -103,6 +104,7 @@ class PluginContext:
         repositories: Реестр репозиториев (hooks + override).
         processors: Реестр DSL-процессоров.
         config: Произвольный dict с настройками плагина (из plugin.yaml).
+
     """
 
     __slots__ = ("actions", "config", "plugin_name", "processors", "repositories")

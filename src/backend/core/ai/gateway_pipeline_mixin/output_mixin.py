@@ -65,6 +65,7 @@ class OutputMixin(_PipelineStepsProtocol):
 
         Returns:
             Список :class:`GuardResult` от каждого guard'а.
+
         """
         if self._policy_enforcer is None or policy is None:
             return []
@@ -97,6 +98,7 @@ class OutputMixin(_PipelineStepsProtocol):
 
         Returns:
             AIResponse с sanitized.content + ``pii_detected`` метаданными.
+
         """
         if not response.content:
             return response

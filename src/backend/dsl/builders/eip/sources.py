@@ -48,6 +48,7 @@ def _create_or_defer_sensor_task(
     Returns:
         Either asyncio.Task or a deferred-task descriptor with a
         ``.start()`` method that creates the actual task on demand.
+
     """
     try:
         loop = asyncio.get_running_loop()
@@ -102,6 +103,7 @@ class SourcesEIPsMixin(EIPMixinBase):
             interval_s: interval в секундах.
             start_immediately: запустить сразу (default — после первого interval).
             payload: static dict для payload.
+
         """
         from src.backend.dsl.orchestration.triggers import (
             IntervalTrigger,
@@ -140,6 +142,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         Example::
 
             builder.from_cron("*/5 * * * *", timezone_name="Europe/Moscow")
+
         """
         from src.backend.dsl.orchestration.triggers import (
             CronTrigger,

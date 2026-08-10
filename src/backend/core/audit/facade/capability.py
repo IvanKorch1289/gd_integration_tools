@@ -44,6 +44,7 @@ def emit_capability_check(
 
     Returns:
         Result of ``AuditService.emit()``.
+
     """
     details: dict[str, Any] = {
         "plugin": plugin,

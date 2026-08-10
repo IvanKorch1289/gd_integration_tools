@@ -132,6 +132,7 @@ class CDCClient:
 
         Returns:
             ID подписки.
+
         """
         if strategy not in self._STRATEGIES:
             raise ValueError(

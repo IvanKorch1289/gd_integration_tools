@@ -72,6 +72,7 @@ class AnalyticsAgent:
 
         Returns:
             Словарь ``{success, tool, result|error}``.
+
         """
         self._ensure_tools()
         tools = self._registry.list()

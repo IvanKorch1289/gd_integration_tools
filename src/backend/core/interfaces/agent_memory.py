@@ -40,6 +40,7 @@ class MemoryMessage:
         content: Текст сообщения.
         ts: Unix timestamp seconds (UTC).
         metadata: Произвольные поля (model, provider, cost_usd, …).
+
     """
 
     role: str
@@ -57,6 +58,7 @@ class MemoryFact:
         confidence: Уверенность в факте [0..1].
         source_session_id: Источник (session, в которой факт извлечён).
         tags: Категории факта (e.g. ``("preference", "language")``).
+
     """
 
     content: str
@@ -81,6 +83,7 @@ class AgentMemoryGateway(Protocol):
 
         Returns:
             Список ``MemoryMessage`` от старых к новым.
+
         """
 
     async def save_message(
@@ -96,6 +99,7 @@ class AgentMemoryGateway(Protocol):
 
         Returns:
             ``message_id`` (UUID или backend-specific id).
+
         """
 
     async def get_facts(
@@ -120,6 +124,7 @@ class AgentMemoryGateway(Protocol):
 
         Returns:
             ``fact_id``.
+
         """
 
     async def recall_semantic(
@@ -142,4 +147,5 @@ class AgentMemoryGateway(Protocol):
 
         Returns:
             Количество новых facts, добавленных в semantic store.
+
         """

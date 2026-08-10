@@ -82,6 +82,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
         При недоступности :class:`LLMGuardClient` (lazy-import упал или
         runtime ``None``) — silent pass-through + WARNING лог. Это нужно
         чтобы CI/dev окружения без llm-guard не падали на DSL-routes.
+
     """
 
     audit_event: ClassVar[str | None] = "ai.guardrails.apply"

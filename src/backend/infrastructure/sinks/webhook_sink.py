@@ -39,6 +39,7 @@ class WebhookSink(Sink):
             ``hmac.sha256(secret, body)`` ставится в ``X-Webhook-Signature``.
         timeout: Таймаут в секундах.
         extra_headers: Дополнительные заголовки.
+
     """
 
     sink_id: str

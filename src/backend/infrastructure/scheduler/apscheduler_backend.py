@@ -23,6 +23,7 @@ class APSchedulerBackend:
     Args:
         manager: Опциональный экземпляр SchedulerManager. По умолчанию
             используется глобальный singleton из ``scheduler_manager``.
+
     """
 
     def __init__(self, manager: Any | None = None) -> None:
@@ -30,6 +31,7 @@ class APSchedulerBackend:
 
         Args:
             manager: Опциональная инстанция SchedulerManager (для тестов).
+
         """
         if manager is None:
             from src.backend.infrastructure.scheduler.scheduler_manager import (

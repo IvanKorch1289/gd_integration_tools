@@ -47,6 +47,7 @@ class PDFIngester:
         max_chunk_chars: Максимум символов в text-чанке.
         overlap_chars: Перекрытие между соседними чанками.
         extract_images: Если False — изображения пропускаются (только текст).
+
     """
 
     def __init__(
@@ -62,6 +63,7 @@ class PDFIngester:
             max_chunk_chars: Верхняя граница chunk-а текста в символах.
             overlap_chars: Размер overlap между соседними чанками.
             extract_images: Извлекать ли embedded images.
+
         """
         if max_chunk_chars <= 0:
             raise ValueError("max_chunk_chars должен быть > 0")
@@ -81,6 +83,7 @@ class PDFIngester:
         Returns:
             Список ChunkDoc с text/image чанками. Empty list при ошибке
             парсинга (warning в логе).
+
         """
         result = await self.ingest_document(pdf_path)
         return result.chunks
@@ -93,6 +96,7 @@ class PDFIngester:
 
         Returns:
             IngestResult с заполненными chunks, metadata, warnings.
+
         """
         if isinstance(pdf_path, Path):
             content = await asyncio.to_thread(pdf_path.read_bytes)
@@ -177,6 +181,7 @@ class PDFIngester:
             * text_pages — список текстов по страницам.
             * image_blobs — список ``{bytes, page_num, index, mime}``.
             * meta — ``{title, author, page_count, engine}``.
+
         """
         try:
             return self._parse_pypdfium2(content)
@@ -275,6 +280,7 @@ class PDFIngester:
 
         Returns:
             Список chunk-ов длиной ≤ ``max_chunk_chars`` с overlap'ом.
+
         """
         if len(text) <= self.max_chunk_chars:
             return [text]

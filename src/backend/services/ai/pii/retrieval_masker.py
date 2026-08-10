@@ -61,6 +61,7 @@ def mask_retrieval_documents(
     Returns:
         Новый список dict'ов с замаскированным ``content``.
         Остальные поля копируются как есть.
+
     """
     out: list[dict[str, Any]] = []
     for doc in documents:

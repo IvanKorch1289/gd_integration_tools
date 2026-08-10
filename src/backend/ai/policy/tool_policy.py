@@ -35,6 +35,7 @@ class AgentToolPolicy(BaseModel):
             а не ALLOW (для логирования).
         max_tool_calls_per_run: Максимальное число вызовов tool за один run.
             При превышении — последний вызов получает DENY.
+
     """
 
     agent_id: str = Field(..., description="Уникальный ID агента")
@@ -66,6 +67,7 @@ class AgentToolPolicy(BaseModel):
             ToolPermission.DENY — запрещён явно или не в allowed.
             ToolPermission.ALLOW — разрешён (и не audit_all).
             ToolPermission.AUDIT — разрешён + audit_all=True.
+
         """
         if tool_name in self.denied_tools:
             return ToolPermission.DENY

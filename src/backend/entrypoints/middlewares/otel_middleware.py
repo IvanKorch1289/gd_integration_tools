@@ -45,6 +45,7 @@ class OtelMiddleware:
 
     Args:
         app: ASGI-приложение.
+
     """
 
     def __init__(self, app: ASGIApp) -> None:
@@ -52,6 +53,7 @@ class OtelMiddleware:
 
         Args:
             app: ASGI-приложение.
+
         """
         self.app = app
         self._tracer = self._load_tracer()
@@ -94,6 +96,7 @@ class OtelMiddleware:
             scope: ASGI scope.
             receive: ASGI receive callable.
             send: ASGI send callable.
+
         """
         if scope["type"] != "http":
             await self.app(scope, receive, send)

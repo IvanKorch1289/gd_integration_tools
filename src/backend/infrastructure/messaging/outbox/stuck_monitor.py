@@ -79,6 +79,7 @@ class OutboxStuckMonitorSettings:
         threshold_seconds: Минимальный возраст "застрявшего" сообщения.
             Default 300с (5 мин). Рекомендация: ``2 * dispatcher_poll_interval``.
         sample_interval_seconds: Как часто обновлять gauge. Default 60с.
+
     """
 
     enabled: bool = False
@@ -92,6 +93,7 @@ class OutboxStuckMonitor:
     Args:
         threshold_seconds: см. :class:`OutboxStuckMonitorSettings`.
         sample_interval_seconds: см. :class:`OutboxStuckMonitorSettings`.
+
     """
 
     def __init__(

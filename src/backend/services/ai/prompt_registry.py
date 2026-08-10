@@ -102,6 +102,7 @@ class PromptRegistry:
 
         Returns:
             PromptVersion с compiled-строкой.
+
         """
         variables = variables or {}
 

@@ -30,6 +30,7 @@ class AdaptiveBulkhead:
         max_concurrent: Максимум одновременных слотов.
         initial_concurrent: Стартовое значение.
         adjust_step: Шаг изменения.
+
     """
 
     def __init__(
@@ -70,6 +71,7 @@ class AdaptiveBulkhead:
 
         Returns:
             True если слот захвачен; False при timeout.
+
         """
         try:
             if timeout is None:
@@ -99,6 +101,7 @@ class AdaptiveBulkhead:
 
         Returns:
             Новое значение current_concurrent.
+
         """
         new_value = min(self._max, self._current + self._adjust_step)
         if new_value > self._current:
@@ -117,6 +120,7 @@ class AdaptiveBulkhead:
 
         Returns:
             Новое значение current_concurrent.
+
         """
         new_value = max(self._min, self._current - self._adjust_step)
         if new_value < self._current:

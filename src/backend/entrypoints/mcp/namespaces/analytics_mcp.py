@@ -18,6 +18,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
 
     Args:
         mcp: Экземпляр FastMCP.
+
     """
     from src.backend.dsl.commands.registry import action_handler_registry
 

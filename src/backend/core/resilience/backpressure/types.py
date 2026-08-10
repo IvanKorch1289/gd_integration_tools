@@ -41,6 +41,7 @@ class BackpressureState:
         queue_limit: Максимально допустимый размер очереди.
         is_paused: Текущее состояние pause/resume.
         last_state_change_at: Время последнего изменения is_paused (monotonic).
+
     """
 
     queue_size: int = 0

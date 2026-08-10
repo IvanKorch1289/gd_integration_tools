@@ -54,6 +54,7 @@ class ConnectorRotator:
 
         Returns:
             Число успешно перезагруженных коннекторов.
+
         """
         subs = self._subscriptions.get(vault_path, [])
         ok_count = 0

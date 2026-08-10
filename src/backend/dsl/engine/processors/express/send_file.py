@@ -45,6 +45,7 @@ class ExpressSendFileProcessor(BaseProcessor):
         body: Подпись к файлу (опционально).
         body_from: Выражение извлечения подписи.
         result_property: Имя exchange-property для записи sync_id.
+
     """
 
     def __init__(

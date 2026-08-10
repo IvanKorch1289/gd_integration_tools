@@ -71,6 +71,7 @@ class PdfTemplateProcessor(BaseProcessor):
         page_size: ``A4`` (default) / ``LETTER`` / ``A3`` / ``A5``.
         font_size: Размер шрифта (default 12).
         context_from: ``body`` / ``properties`` / ``merged``.
+
     """
 
     def __init__(
@@ -143,6 +144,7 @@ class PdfTemplateProcessor(BaseProcessor):
                 собираются из exchange. Результат — в target (default:
                 ``body.pdf_bytes``).
             context: Контекст выполнения маршрута.
+
         """
         try:
             from src.backend.core.config.features import feature_flags

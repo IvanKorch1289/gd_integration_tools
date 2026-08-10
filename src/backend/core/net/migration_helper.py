@@ -67,6 +67,7 @@ def make_http_client(
 
         async with make_http_client(timeout=30) as client:
             resp = await client.post(url, json=payload)
+
     """
     if _flag_enabled():
         # OutboundHttpClient импортирует tomы зависимостей (WAF + capability);

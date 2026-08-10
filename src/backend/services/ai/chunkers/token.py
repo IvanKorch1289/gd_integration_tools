@@ -25,6 +25,7 @@ class TokenChunker:
         chunk_size: Размер чанка в токенах (символах при fallback).
         chunk_overlap: Пересечение в токенах (символах при fallback).
         encoding_name: tiktoken encoding (например, ``cl100k_base``).
+
     """
 
     def __init__(

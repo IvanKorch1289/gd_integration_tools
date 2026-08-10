@@ -51,6 +51,7 @@ class PersistenceMixin:
                 .db_call_procedure("oracle_prod", "recalc_credit_score")
                 .build()
             )
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.db_call_procedure",
@@ -95,6 +96,7 @@ class PersistenceMixin:
             RouteBuilder.from_("orders.create", source="http:/orders")
                 .db_insert("orders", {"id": "${body.id}", "status": "new"})
                 .build()
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.db_crud",
@@ -132,6 +134,7 @@ class PersistenceMixin:
             RouteBuilder.from_("orders.ship", source="http:/orders/ship")
                 .db_update("orders", {"status": "shipped"}, {"id": "${body.id}"})
                 .build()
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.db_crud",
@@ -168,6 +171,7 @@ class PersistenceMixin:
                     conflict_keys=["id"],
                 )
                 .build()
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.db_crud",
@@ -224,6 +228,7 @@ class PersistenceMixin:
                 .execute_dml("UPSERT", "users", dialect="mysql",
                              data={"id": 1, "name": "x"}, conflict_keys=["id"])
                 .build()
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.db_crud",
@@ -258,6 +263,7 @@ class PersistenceMixin:
             RouteBuilder.from_("orders.purge", source="timer:1d")
                 .db_delete("orders", {"created_at_lt": "${now-30d}"})
                 .build()
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.db_crud",
@@ -378,6 +384,7 @@ class PersistenceMixin:
             params_from: Source of bind-parameters — ``"body"`` (default) /
                 ``"properties"`` / ``"headers"`` / ``"none"``.
             result_property: Exchange property key for the result.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.jdbc_query",
@@ -409,6 +416,7 @@ class PersistenceMixin:
         Example::
 
             builder.from_http("/users").lookup("user_id", target="user")
+
         """
         # Используем существующий DataStoreGetProcessor (data_store_get).
         # key_from — property с ключом, target — deprecated (для future
@@ -444,6 +452,7 @@ class PersistenceMixin:
         Example::
 
             builder.lookup("user_id").merge("user", target_property="body")
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.dict_ops",

@@ -64,6 +64,7 @@ class MemoryScope:
             * ``"hot_path"`` — писать сразу после каждого turn;
             * ``"background"`` — batch consolidation в фоне;
             * ``"manual"`` — только явный ``reflect`` step.
+
     """
 
     read: tuple[str, ...] = ()
@@ -88,6 +89,7 @@ class HandoffPolicy:
         escalation_on_max_handoffs: ``agent_id`` агента для escalation
             при достижении ``max_handoffs``. Если ``None`` — workflow
             завершается с ошибкой.
+
     """
 
     max_handoffs: int = 5
@@ -151,6 +153,7 @@ class AgentSpec:
     -----
     Все поля immutable (frozen=True). Для runtime mutation
     используется registry pattern с перерегистрацией.
+
     """
 
     id: str

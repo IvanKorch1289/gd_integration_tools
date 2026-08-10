@@ -88,6 +88,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             security gap где over-permissive policy случайно разрешала все tools.
             Backward-compat: pre-S209 policies с пустыми списками должны явно
             указать ``allow_all_tools=True``.
+
         """
         if policy is None:
             return
@@ -159,6 +160,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
               без DI) — return ``None``, no-op backward-compat.
             * Если ``request.tenant_id`` пустой — return ``None``
               (tenant-less invocation budget-bypass, как pre-M4).
+
         """
         budget = getattr(self, "_token_budget", None)
         if budget is None:
@@ -254,6 +256,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         Returns:
             Updated BudgetSnapshot или ``None`` если budget disabled /
             tenant-less / пропаgated.
+
         """
         budget = getattr(self, "_token_budget", None)
         if budget is None:
@@ -312,6 +315,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
 
         Returns:
             AIResponse после прохождения всех 9 шагов.
+
         """
         # Собираем контекст для аудита
         ctx = _AuditContext(request=request, audit_service=self._audit_service)

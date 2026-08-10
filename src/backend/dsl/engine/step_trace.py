@@ -57,6 +57,7 @@ class StepTrace:
         duration_ms: длительность в миллисекундах.
         error_context: текст исключения (если есть).
         otel_attrs: dict атрибутов для OTel-span.
+
     """
 
     processor_name: str

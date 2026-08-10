@@ -90,6 +90,7 @@ class SinksMixin:
             mode: ``"append"`` (NDJSON) или ``"write"`` (атомарный rewrite).
             encoding: Кодировка для текстовых payload (UTF-8 default).
             ensure_dir: Создавать parent dir если отсутствует.
+
         """
         from src.backend.dsl.engine.processors.sink_publish import (
             GenericSinkPublishProcessor,
@@ -133,6 +134,7 @@ class SinksMixin:
             timeout: Дедлайн вызова в секундах.
             payload_property: Имя property с payload (None → ``in_message.body``).
             result_property: Имя property для результата публикации.
+
         """
         from src.backend.dsl.engine.processors.sink_publish import GrpcCallProcessor
 
@@ -201,6 +203,7 @@ class SinksMixin:
             url: Broker URL.
             topic: Топик / exchange / stream / subject.
             extra: Доп. параметры publish (routing_key, partition, headers).
+
         """
         from src.backend.dsl.engine.processors.sink_publish import MqPublishProcessor
 
@@ -401,6 +404,7 @@ class SinksMixin:
             timeout: Command timeout in seconds.
             result_property: Property name for result ``{stdout, stderr, exit_code}``.
             continue_on_error: If True, non-zero exit_code won't fail the route.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ssh_command",
@@ -436,6 +440,7 @@ class SinksMixin:
             remote_path: Remote path on server.
             source: Source for upload data.
             to: Destination for download/list results.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.webdav_io",

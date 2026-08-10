@@ -47,6 +47,7 @@ class MessagingSourcesMixin:
                 .dispatch_action("payments.process")
                 .build()
             )
+
         """
         import importlib
 
@@ -93,6 +94,7 @@ class MessagingSourcesMixin:
                 .dispatch_action("notifications.process")
                 .build()
             )
+
         """
         import importlib
 
@@ -138,6 +140,7 @@ class MessagingSourcesMixin:
                 .dispatch_action("sensors.store_reading")
                 .build()
             )
+
         """
         # MQTT Source-класса пока нет в infrastructure/sources/
         # — используем строковый DSN; source_instance = None (будущее расширение)

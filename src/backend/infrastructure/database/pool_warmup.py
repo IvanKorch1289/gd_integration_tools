@@ -136,6 +136,7 @@ class WarmupResult:
         duration_seconds: общее время прогрева.
         warmed_pools: какие пулы успешно прогреты ("pg", "redis", "ch").
         failed_pools: пулы, которые упали с exception (degraded mode).
+
     """
 
     duration_seconds: float = 0.0
@@ -152,6 +153,7 @@ class PoolWarmup:
         clickhouse_client: optional ClickHouse client с .execute("SELECT 1").
         min_connections: целевое число соединений per pool (default 3).
         timeout_seconds: max time на warmup (default 5s).
+
     """
 
     def __init__(
@@ -177,6 +179,7 @@ class PoolWarmup:
         Returns:
             :class:`WarmupResult` с метриками. Никогда не raise — если
             пул упал, информация в ``failed_pools``.
+
         """
         start = time.monotonic()
         result = WarmupResult()
@@ -289,6 +292,7 @@ class PoolWarmup:
             target_url: URL для прогрева (рекомендуется ``/health`` целевого сервиса).
             min_connections: Целевое число одновременных соединений (default 3).
             timeout_seconds: Max time на прогрев.
+
         """
         start = time.monotonic()
         result = WarmupResult()
@@ -324,6 +328,7 @@ class PoolWarmup:
                 ``async def emit({"_keepalive": True})``.
             ping_count: Сколько keepalive-сообщений отправить.
             timeout_seconds: Max time на прогрев.
+
         """
         start = time.monotonic()
         result = WarmupResult()
@@ -360,6 +365,7 @@ class PoolReconnectMonitor:
             async и возвращать True (healthy) / False (unhealthy).
         on_reconnect: Async callback, вызывается при disconnect detection.
         interval_seconds: Период между проверками (default 30s).
+
     """
 
     def __init__(

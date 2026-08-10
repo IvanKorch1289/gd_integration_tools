@@ -84,6 +84,7 @@ class AgentParallelProcessor(BaseAIProcessor):
             ``{"error": str}`` в результирующем dict, остальные продолжают.
             При ``False`` — exception всплывает и останавливает Exchange.
         name: Имя процессора.
+
     """
 
     audit_event: ClassVar[str | None] = "ai.agent.parallel"

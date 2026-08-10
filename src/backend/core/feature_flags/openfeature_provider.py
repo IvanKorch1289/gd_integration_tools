@@ -53,6 +53,7 @@ class EvaluationContext:
     Attributes:
         tenant_id: Идентификатор tenant (Flagsmith identity).
         traits: Per-tenant атрибуты (plan, region и т.п.).
+
     """
 
     tenant_id: str | None = None
@@ -114,6 +115,7 @@ class InMemoryProvider:
         Args:
             overrides: dict ``{flag_key: value}`` — приоритет над локальным
                 реестром (используется в unit-тестах).
+
         """
         self._overrides: dict[str, Any] = dict(overrides or {})
 
@@ -204,6 +206,7 @@ class FlagsmithBackend:
         request_timeout_seconds: Таймаут одного REST-запроса.
         fallback: backend для случаев, когда FlagsmithProvider возвращает
             default — позволяет cascade (Flagsmith → InMemory → default).
+
     """
 
     def __init__(
@@ -367,6 +370,7 @@ def _coerce_ctx(ctx: EvaluationContext | None, provider_cls: type[Any]) -> Any:
 
     Returns:
         Экземпляр provider_cls с теми же полями.
+
     """
     if ctx is None:
         return None
@@ -382,6 +386,7 @@ def _read_local_flag(flag_key: str, default: bool) -> bool:
 
     Returns:
         Значение flag или default.
+
     """
     try:
         from src.backend.core.config.features import feature_flags
@@ -398,6 +403,7 @@ def is_flagsmith_backend_enabled() -> bool:
     Returns:
         True, если ENV ``FEATURE_FLAG_BACKEND=flagsmith`` И локальный
         feature_flag ``openfeature_flagsmith_backend`` установлен в True.
+
     """
     if os.environ.get(_ENV_BACKEND, "").lower() != _FLAGSMITH_BACKEND_VALUE:
         return False
@@ -428,6 +434,7 @@ def get_openfeature_backend(
 
     Returns:
         Реализация [OpenFeatureBackend].
+
     """
     if is_flagsmith_backend_enabled():
         return FlagsmithBackend(

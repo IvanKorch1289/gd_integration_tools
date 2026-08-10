@@ -29,6 +29,7 @@ Note:
     endpoints. Полный перевод всех 12+ endpoints — S165+ multi-sprint
     effort. Текущая версия — building block (per master prompt
     "Single-Entry per Concern").
+
 """
 
 from __future__ import annotations
@@ -55,6 +56,7 @@ class AuthResult:
         groups: Список групп пользователя (None если отсутствуют).
         capabilities: Список capabilities (None если RBAC не настроен).
         metadata: Дополнительные данные (raw claims / roles).
+
     """
 
     is_authenticated: bool
@@ -123,6 +125,7 @@ class AuthFacade:
 
         Returns:
             :class:`AuthResult` с decoded claims или ``is_authenticated=False``.
+
         """
         try:
             if method == "jwt":
@@ -166,6 +169,7 @@ class AuthFacade:
 
         Returns:
             AuthResult с subject/tenant_id если валидна.
+
         """
         try:
             from src.backend.core.auth.api_key_backend import APIKeyAuth
@@ -222,6 +226,7 @@ class AuthFacade:
 
         Returns:
             AuthResult с NameID/subject.
+
         """
         # SAML verification requires the canonical ACS flow: configured
         # SamlBackend, InResponseTo and an injected signature validator.  A raw
@@ -252,6 +257,7 @@ class AuthFacade:
         Returns:
             AuthResult с CN/subject, or ``is_authenticated=False`` if cert is
             empty/invalid.
+
         """
         # SECURITY: certificate chain validation is performed by the TLS
         # terminator (uvicorn/nginx).
@@ -291,6 +297,7 @@ class AuthFacade:
         S202 audit fix: использует :class:`SecurityFacade` singleton вместо
         создания нового ``RedisJwtBlacklist`` на каждый вызов
         (был performance hit + inconsistent state).
+
         """
         try:
             from src.backend.services.security.facade import get_security_facade
@@ -313,6 +320,7 @@ class AuthFacade:
 
         Returns:
             ``True`` if subject has capability OR has SUPER_ADMIN role.
+
         """
         if not auth.is_authenticated:
             return False
@@ -395,6 +403,7 @@ class AuthFacade:
         Raises:
             ValueError: If ``subject`` is empty.
             RuntimeError: If JWT encode fails (e.g., missing secret).
+
         """
         if not subject:
             raise ValueError("issue_token: subject must be non-empty")
@@ -434,6 +443,7 @@ class AuthFacade:
         Raises:
             ValueError: If ``jti`` is empty.
             RuntimeError: On blacklist layer failure (fail-closed).
+
         """
         if not jti:
             raise ValueError("revoke_token: jti must be non-empty")
@@ -468,6 +478,7 @@ class AuthFacade:
         Returns:
             :class:`AuthResult` with NameID if verified, else
             ``is_authenticated=False``.
+
         """
         # SAML requires ACS flow; fail-closed unless dev_mode flag is on.
         dev_mode = False
@@ -567,6 +578,7 @@ class AuthFacade:
 
         Returns:
             :class:`AuthResult` with ``is_authenticated`` status.
+
         """
         if not username or not password:
             return AuthResult(
@@ -608,6 +620,7 @@ def get_auth_facade() -> AuthFacade:
 
     Returns:
         Module-level :class:`AuthFacade` instance.
+
     """
     global _auth_facade
     if _auth_facade is None:

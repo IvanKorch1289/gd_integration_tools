@@ -76,6 +76,7 @@ class AgentTool:
 
         Returns:
             Словарь без ``callable`` (его нельзя сериализовать).
+
         """
         return {
             "id": self.id,
@@ -109,6 +110,7 @@ def agent_tool(
         async def add(a: int, b: int) -> int:
             \"\"\"Складывает два числа.\"\"\"
             return a + b
+
     """
 
     def _wrap(fn: Callable[..., Any]) -> Callable[..., Any]:
@@ -126,6 +128,7 @@ def _snake_case(name: str) -> str:
 
     Returns:
         Имя в snake_case.
+
     """
     s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
     return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
@@ -139,6 +142,7 @@ def _json_type(annotation: Any) -> str:
 
     Returns:
         Строковое имя JSON-schema типа (по умолчанию ``string``).
+
     """
     origin = getattr(annotation, "__origin__", annotation)
     if origin in _SIMPLE_TYPES:
@@ -159,6 +163,7 @@ def _build_parameters(fn: Callable[..., Any]) -> dict[str, Any]:
 
     Returns:
         JSON-schema вида ``{"type": "object", "properties": {...}, "required": [...]}``.
+
     """
     sig = inspect.signature(fn)
     properties: dict[str, dict[str, Any]] = {}
@@ -188,6 +193,7 @@ def _extract_description(fn: Callable[..., Any]) -> str:
 
     Returns:
         Краткое описание или пустая строка, если docstring нет.
+
     """
     doc = inspect.getdoc(fn) or ""
     for line in doc.splitlines():
@@ -206,6 +212,7 @@ def _is_public_method(name: str, obj: Any) -> bool:
 
     Returns:
         ``True`` если это публичная async/sync функция.
+
     """
     if name.startswith("_"):
         return False
@@ -220,6 +227,7 @@ def _ensure_awaitable(fn: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
 
     Returns:
         Awaitable-обёртка.
+
     """
     if inspect.iscoroutinefunction(fn):
         return fn
@@ -255,6 +263,7 @@ class ToolRegistry:
 
         Returns:
             Зарегистрированный инструмент.
+
         """
         self._tools[tool.id] = tool
         logger.debug("agent_tool_registered: %s", tool.id)
@@ -268,6 +277,7 @@ class ToolRegistry:
 
         Returns:
             Зарегистрированный инструмент или ``None``.
+
         """
         return self._tools.get(tool_id)
 
@@ -276,6 +286,7 @@ class ToolRegistry:
 
         Returns:
             Отсортированный по ``id`` список.
+
         """
         return sorted(self._tools.values(), key=lambda t: t.id)
 
@@ -319,6 +330,7 @@ class ToolRegistry:
 
             reg.from_service(OrderService, methods=["get", "list"])
             # → order_service.get, order_service.list
+
         """
         instance = service_cls if not inspect.isclass(service_cls) else service_cls()
         cls = instance.__class__
@@ -384,6 +396,7 @@ class ToolRegistry:
         Raises:
             FileNotFoundError: Плагин-файл не существует.
             ImportError: Не удалось импортировать файл.
+
         """
         file_path = Path(path).resolve()
         if not file_path.is_file():

@@ -63,6 +63,7 @@ class ExpressionResolver:
         Raises:
             ExpressionResolutionError: If an expression cannot be
                 resolved and no default is provided.
+
         """
         if "${" not in value:
             return value  # Fast path: no expressions.

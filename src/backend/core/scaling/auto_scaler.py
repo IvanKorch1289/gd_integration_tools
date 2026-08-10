@@ -37,6 +37,7 @@ class AutoScaler:
         bulkhead_scaler: Опц. :class:`BulkheadScaler`. None — уровень пропущен.
         hpa_exporter: Опц. K8sHpaExporter (Prometheus metrics).
         tick_interval_s: Период `_run_loop` в секундах (default 10).
+
     """
 
     def __init__(
@@ -99,6 +100,7 @@ class AutoScaler:
         Returns:
             Сводный dict ``{"bulkhead": {...}, "process_workers": int|None,
             "hpa_exported": bool}``.
+
         """
         result: dict[str, Any] = {
             "bulkhead": {},
@@ -149,6 +151,7 @@ class TemporalWorkerScaler:
         max_workers: максимум (default 20).
         target_tasks_per_worker: 10 (см. K8s HPA target).
         cooldown_seconds: между scale events (default 30s).
+
     """
 
     def __init__(

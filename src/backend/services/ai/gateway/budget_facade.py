@@ -42,6 +42,7 @@ class LiteLLMBudgetFacade:
         gateway: реальный :class:`LiteLLMGateway` (с acompletion).
         budget: :class:`TokenBudget`.
         enabled: feature-flag (если False — proxy без enforcement).
+
     """
 
     def __init__(
@@ -67,6 +68,7 @@ class LiteLLMBudgetFacade:
 
         Raises:
             BudgetEnforcementError: hard_limit превышен (caller → 429).
+
         """
         if not self._enabled:
             response = await self._gateway.acompletion(messages, **kwargs)

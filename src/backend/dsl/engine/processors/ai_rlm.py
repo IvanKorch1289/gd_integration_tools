@@ -58,6 +58,7 @@ class RLMConfig:
             Default True.
         context_threshold: Token count threshold for triggering RLM mode.
             Default 10000.
+
     """
 
     def __init__(
@@ -112,6 +113,7 @@ class AIRLMProcessor(BaseProcessor):
             config: RLM configuration.
             prompt_template: Custom prompt template with {context} and {query}.
             result_property: Exchange property to store result.
+
         """
         super().__init__(name=name or "ai_rlm")
         self.model = model
@@ -139,6 +141,7 @@ class AIRLMProcessor(BaseProcessor):
         The exchange body should contain:
             - context: The large context document/data
             - query: The question to answer about the context
+
         """
         body = exchange.in_message.body or {}
         ctx = body.get("context", "")

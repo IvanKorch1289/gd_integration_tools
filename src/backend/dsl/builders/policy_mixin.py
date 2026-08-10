@@ -121,6 +121,7 @@ class PolicyChain:
 
         Returns:
             ``RouteBuilder`` для chaining.
+
         """
         if seconds is not None and total is not None:
             raise ValueError(
@@ -189,6 +190,7 @@ class PolicyChain:
                 .dispatch_action("slow.execute")
                 .build()
             )
+
         """
         return self._add_policy_processor(
             "adaptive_timeout",
@@ -212,6 +214,7 @@ class PolicyChain:
 
         Returns:
             ``RouteBuilder`` для chaining дальше.
+
         """
         try:
             from src.backend.core.config.features import feature_flags

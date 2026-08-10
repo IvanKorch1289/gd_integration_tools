@@ -47,6 +47,7 @@ class S3Sink(Sink):
         key: S3-key назначения (например, ``"audit/2026/05/event.json"``).
         content_type: HTTP ``Content-Type`` (``application/json`` для
             JSON-нагрузок, ``application/octet-stream`` для бинарных).
+
     """
 
     sink_id: str

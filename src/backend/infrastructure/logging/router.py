@@ -196,6 +196,7 @@ def configure_router(
     Returns:
         :class:`SinkRouter` либо :class:`BatchingSinkRouter` (зависит от
         ``batching``).
+
     """
     global _router
     with _router_lock:

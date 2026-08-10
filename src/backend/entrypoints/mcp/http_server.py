@@ -61,6 +61,7 @@ def create_mcp_http_app() -> Any:
     Raises:
         ImportError: если ``fastmcp`` не установлен.
         RuntimeError: если HTTP transport недоступен в текущей версии.
+
     """
     from src.backend.entrypoints.mcp.auth_middleware import McpAuthMiddleware
 
@@ -84,6 +85,7 @@ def _is_namespaces_enabled() -> bool:
 
     Returns:
         True если namespaces enabled и FastMCP version compatible.
+
     """
     try:
         from src.backend.core.config.features import feature_flags

@@ -43,6 +43,7 @@ class AntivirusBackend(ABC):
         Raises:
             ConnectionError: бэкенд недоступен (вызывающая сторона решает,
                 использовать fallback или эскалировать ошибку).
+
         """
 
     @abstractmethod

@@ -37,6 +37,7 @@ def _install_fake_sentence_transformers(
 
     Returns:
         Mock-инстанс модели для assert'ов.
+
     """
     model_instance = MagicMock()
     fake_array = SimpleNamespace(

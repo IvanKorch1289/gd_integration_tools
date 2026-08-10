@@ -46,6 +46,7 @@ class ParsedClientCert:
         not_after: Unix-timestamp истечения.
         fingerprint_sha256: SHA-256 fingerprint в hex.
         issuer_cn: CN issuer'а (для CA-pin'а).
+
     """
 
     subject_cn: str
@@ -71,6 +72,7 @@ class MtlsConfig:
         require_pem_body: Если ``True`` — обязательный PEM в
             ``X-Client-Cert`` (full validation); иначе допустимы только
             headers subject+fingerprint.
+
     """
 
     allowed_fingerprints: frozenset[str] = field(default_factory=frozenset)
@@ -83,6 +85,7 @@ class MtlsVerificationError(Exception):
 
     Attributes:
         reason: Human-readable причина (для audit-log).
+
     """
 
     def __init__(self, *, reason: str) -> None:
@@ -107,6 +110,7 @@ class MtlsBackend:
             (lazy-import); при отсутствии библиотеки — невозможно
             валидировать PEM body.
         current_time: Источник времени (sec). По умолчанию ``time.time``.
+
     """
 
     def __init__(
@@ -131,6 +135,7 @@ class MtlsBackend:
         Raises:
             MtlsVerificationError: cert передан, но не прошёл проверку
                 (expired, not-yet-valid, fingerprint mismatch, etc.).
+
         """
         headers = request.headers
         fingerprint = (headers.get("X-Client-Cert-Fingerprint") or "").lower()
@@ -191,6 +196,7 @@ def default_cryptography_parser() -> CertParser:
     Raises:
         RuntimeError: Если библиотека не установлена. Caller должен
             ловить и оставаться в headers-only режиме.
+
     """
     try:
         from cryptography import x509

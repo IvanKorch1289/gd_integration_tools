@@ -34,6 +34,7 @@ class RequestReplyMixin:
             timeout: Секунд ожидания reply (по умолчанию 30).
             correlation_id: Внешний correlation ID. ``None`` — uuid4.
             result_property: Имя property для записи reply-payload.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.request_reply",
@@ -60,6 +61,7 @@ class RequestReplyMixin:
             payload: Тело reply. ``None`` — берётся из ``body``.
             correlation_id: Correlation ID. ``None`` — берётся из
                 ``properties.correlation_id`` или headers.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.request_reply",

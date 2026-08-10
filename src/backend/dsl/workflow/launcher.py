@@ -43,6 +43,7 @@ class WorkflowLauncher:
     Args:
         installed_workflows: Mapping of workflow_name → installed version.
         registry: Optional WorkflowRegistry for additional lookup.
+
     """
 
     def __init__(
@@ -67,6 +68,7 @@ class WorkflowLauncher:
         Raises:
             WorkflowResolutionError: If workflow not found or no version
                 matches the spec.
+
         """
         if spec is None:
             # No spec provided - just return installed version if available
@@ -134,6 +136,7 @@ class WorkflowLauncher:
 
         Raises:
             WorkflowResolutionError: If no version matches the spec.
+
         """
         if available_versions is None:
             # Use single installed version
@@ -175,6 +178,7 @@ class WorkflowLauncher:
 
         Returns:
             True if installed version matches the spec, False otherwise.
+
         """
         try:
             self.resolve(workflow_name, spec)
@@ -190,6 +194,7 @@ class WorkflowLauncher:
 
         Returns:
             Installed version string or None if not found.
+
         """
         return self._installed.get(workflow_name)
 
@@ -199,6 +204,7 @@ class WorkflowLauncher:
         Args:
             workflow_name: Name of the workflow.
             version: Version string.
+
         """
         self._installed[workflow_name] = version
 

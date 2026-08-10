@@ -54,6 +54,7 @@ class AdminAuditMiddleware:
 
         Args:
             app: ASGI-приложение.
+
         """
         self.app = app
 

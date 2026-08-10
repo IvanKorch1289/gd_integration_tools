@@ -49,6 +49,7 @@ def register_workflow_tools(mcp: Any) -> None:
 
     Args:
         mcp: Экземпляр :class:`fastmcp.FastMCP`.
+
     """
     descriptors = workflow_registry.list_all()
     for descriptor in descriptors:

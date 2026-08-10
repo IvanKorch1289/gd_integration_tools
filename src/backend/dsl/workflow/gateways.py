@@ -52,6 +52,7 @@ class BranchSpec:
             ``None`` означает «default» — ветка без условия (только для XOR).
         steps: Список шагов, выполняемых при активации ветки.
             Каждый шаг — произвольный dict (activity, saga и др.).
+
     """
 
     name: str
@@ -66,6 +67,7 @@ class GatewaySpec:
     Args:
         kind: Тип gateway: ``"xor"`` | ``"and"`` | ``"or"``.
         branches: Список веток для данного gateway.
+
     """
 
     kind: Literal["xor", "and", "or"]
@@ -97,6 +99,7 @@ class GatewayCompiler:
 
         Returns:
             IR-dict с ключами ``type``, ``strategy``, ``branches``.
+
         """
         return {
             "type": "gateway",
@@ -128,6 +131,7 @@ class GatewayCompiler:
 
         Returns:
             IR-dict с ключами ``type``, ``strategy``, ``join``, ``branches``.
+
         """
         return {
             "type": "gateway",
@@ -160,6 +164,7 @@ class GatewayCompiler:
 
         Returns:
             IR-dict с ключами ``type``, ``strategy``, ``join``, ``branches``.
+
         """
         return {
             "type": "gateway",
@@ -194,6 +199,7 @@ def process_gateway(
 
     Raises:
         ValueError: Если ``spec.kind`` неизвестен (защита от будущих расширений).
+
     """
     match spec.kind:
         case "xor":

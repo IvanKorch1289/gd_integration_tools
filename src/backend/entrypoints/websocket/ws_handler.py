@@ -78,6 +78,7 @@ def _resolve_pool_limit(action_id: str | None) -> int | None:
         ``pool_size`` override из ``DslService.get_route_overrides()``
         если задан, иначе ``None`` (нет лимита на per-action уровне —
         только global ``ws_settings.max_connections``).
+
     """
     if not action_id or action_id == DEFAULT_ACTION_ID:
         return None
@@ -99,6 +100,7 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
 
     Returns:
         ``True`` если аутентификация успешна, ``False`` если закрыт.
+
     """
     # Accept уже вызван снаружи? Не вызываем здесь — caller решает accept/reject.
     try:

@@ -97,6 +97,7 @@ class VaultSettingsSource:
             Кортеж ``(value, field_name, is_complex)``: ``value`` равен
             ``None`` если ключ отсутствует; ``is_complex`` всегда ``False``
             (Vault source не помечает поля как complex).
+
         """
         data = self._load()
         if field_name in data:
@@ -159,6 +160,7 @@ class AwsSecretsManagerSource:
             Кортеж ``(value, field_name, is_complex)``: ``value`` равен
             ``None`` если ключ отсутствует в секрете; ``is_complex`` всегда
             ``False``.
+
         """
         data = self._load()
         if field_name in data:

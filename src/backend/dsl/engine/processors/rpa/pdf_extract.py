@@ -25,6 +25,7 @@ class PdfExtractProcessor:
 
         Returns:
             Извлеченный текст или None (если не PDF или pypdf нет).
+
         """
         try:
             from pypdf import PdfReader

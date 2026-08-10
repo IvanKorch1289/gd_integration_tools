@@ -21,6 +21,7 @@ class BatchAggregatorProcessor:
         window_type: "tumbling" | "sliding" | "session".
         window_size_seconds: Размер окна в секундах.
         aggregation_type: "sum" | "count" | "avg" | "min" | "max" (default sum).
+
     """
 
     def __init__(
@@ -57,6 +58,7 @@ class BatchAggregatorProcessor:
 
         Returns:
             list[{key, window_start, window_end, sum, count, ...}]
+
         """
         if not events:
             return []

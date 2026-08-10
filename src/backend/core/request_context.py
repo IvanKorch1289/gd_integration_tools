@@ -66,6 +66,7 @@ class RequestContext:
         client_id: Идентификатор клиента (API key / mTLS CN).
         method: HTTP метод (``GET`` / ``POST`` / ...).
         path: Path запроса (без query).
+
     """
 
     correlation_id: str
@@ -98,6 +99,7 @@ def bind_request_context(ctx: RequestContext) -> object:
 
     Returns:
         Token для :func:`clear_request_context`.
+
     """
     return REQUEST_CONTEXT_VAR.set(ctx)
 
@@ -107,5 +109,6 @@ def clear_request_context(token: object) -> None:
 
     Args:
         token: Token, возвращённый :func:`bind_request_context`.
+
     """
     REQUEST_CONTEXT_VAR.reset(token)

@@ -39,6 +39,7 @@ class SecretValue:
         name: Полный путь секрета (``secret/data/db/postgres``).
         value: Strint-значение (для KV — поле ``value`` или весь dict).
         version: Версия (KV v2); 0 если backend versioning не поддерживает.
+
     """
 
     name: str
@@ -98,6 +99,7 @@ class SecretBrokerImpl:
             ``get_secret(name)`` валидируется как
             ``(plugin, "secrets.read", name)``.
         plugin: Имя caller'а (для capability-event'а).
+
     """
 
     def __init__(
@@ -123,6 +125,7 @@ class SecretBrokerImpl:
 
         Raises:
             CapabilityDenied: If capability check fails.
+
         """
         if self._check is not None:
             self._check(self._plugin, "secrets.read", name)
@@ -140,6 +143,7 @@ class SecretBrokerImpl:
 
         Raises:
             CapabilityDenied: If capability check fails.
+
         """
         if self._check is not None:
             self._check(self._plugin, "secrets.read", name)
@@ -151,6 +155,7 @@ class SecretBrokerImpl:
         Args:
             name: Secret name to watch.
             callback: Callback to invoke on rotation.
+
         """
         self._subscribers.setdefault(name, []).append(callback)
 
@@ -160,6 +165,7 @@ class SecretBrokerImpl:
         Args:
             name: Secret name.
             callback: Callback to remove.
+
         """
         if name in self._subscribers:
             try:

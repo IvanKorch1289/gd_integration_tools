@@ -49,6 +49,7 @@ class WebhookRegistry:
 
         Returns:
             Зарегистрированная подписка.
+
         """
         self._subscriptions[sub.id] = sub
         logger.info(
@@ -64,6 +65,7 @@ class WebhookRegistry:
 
         Raises:
             KeyError: Если подписка не найдена.
+
         """
         if sub_id not in self._subscriptions:
             raise KeyError(f"Подписка {sub_id} не найдена")
@@ -77,6 +79,7 @@ class WebhookRegistry:
 
         Returns:
             Список активных подписок.
+
         """
         return [
             sub

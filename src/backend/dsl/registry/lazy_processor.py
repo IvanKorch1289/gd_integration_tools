@@ -45,6 +45,7 @@ class LazyProcessorRef:
         namespace: namespace ("core" / plugin name).
         module_path: ``module.path:ClassName`` для importlib.
         capabilities: кортеж capability-литералов (для policy без import).
+
     """
 
     name: str
@@ -68,6 +69,7 @@ def load_processor_class(module_path: str) -> type:
     Raises:
         ImportError: модуль не найден.
         AttributeError: атрибут отсутствует в модуле.
+
     """
     module_name, _, attr = module_path.partition(":")
     if not module_name or not attr:
@@ -81,6 +83,7 @@ class LazyProcessorRegistry:
 
     Args:
         base: реальный :class:`ProcessorRegistry` (для backward-compat).
+
     """
 
     def __init__(self, *, base: Any) -> None:
@@ -140,6 +143,7 @@ class LazyProcessorRegistry:
 
         Raises:
             ProcessorNotFoundError: нет ни в base, ни в lazy_refs.
+
         """
         # Сначала проверим, может быть уже в base
         try:

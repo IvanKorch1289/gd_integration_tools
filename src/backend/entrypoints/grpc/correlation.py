@@ -34,6 +34,7 @@ def extract_correlation_id_from_grpc_context(context: Any) -> str:
 
     Returns:
         Значение ``x-correlation-id`` или ``""``, если не найдено.
+
     """
     if context is None:
         return ""

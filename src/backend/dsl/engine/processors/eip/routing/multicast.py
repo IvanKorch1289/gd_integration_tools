@@ -133,6 +133,7 @@ class MulticastRoutesProcessor(BaseProcessor):
         on_error: ``fail`` — прерваться при ошибке; ``continue`` — продолжить.
         timeout: Таймаут ожидания результата каждого маршрута (секунды).
         name: Имя процессора в трассе.
+
     """
 
     def __init__(

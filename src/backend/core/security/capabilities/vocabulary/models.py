@@ -24,6 +24,7 @@ class CapabilityDef:
         public: Если ``True`` — capability доступна route'у даже
             без явной декларации в плагине (например, общий
             ``net.outbound`` к публичным API).
+
     """
 
     name: str

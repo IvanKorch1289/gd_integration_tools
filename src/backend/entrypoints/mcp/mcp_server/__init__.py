@@ -60,6 +60,7 @@ def create_mcp_server() -> Any:
 
     Raises:
         ImportError: Если fastmcp не установлен.
+
     """
     from fastmcp import FastMCP
 
@@ -104,6 +105,7 @@ def register_mcp_tools(mcp: Any) -> None:
 
     Args:
         mcp: Экземпляр FastMCP.
+
     """
     from src.backend.dsl.commands.registry import action_handler_registry
 

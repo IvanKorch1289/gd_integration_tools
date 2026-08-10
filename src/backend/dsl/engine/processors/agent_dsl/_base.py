@@ -83,6 +83,7 @@ class BaseAIProcessor(BaseProcessor):
 
         Raises:
             NotImplementedError: если наследник не переопределил.
+
         """
         del exchange, context
         raise NotImplementedError(
@@ -149,6 +150,7 @@ class BaseAIProcessor(BaseProcessor):
 
         Returns:
             ``True`` если flag не задан или ``flag=True``; ``False`` иначе.
+
         """
         if self.feature_flag_name is None:
             return True
@@ -172,6 +174,7 @@ class BaseAIProcessor(BaseProcessor):
 
         Raises:
             CapabilityDeniedError: если capability не выдана плагину.
+
         """
         if self.required_capability is None:
             return

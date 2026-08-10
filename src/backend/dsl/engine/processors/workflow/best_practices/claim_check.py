@@ -72,6 +72,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         max_size_bytes: Порог размера (по умолчанию 1MB; payload меньше — не сохраняем).
         to: Куда записать claim token (по умолчанию "body.payload_claim").
         ttl_seconds: TTL для redis backend (default 3600).
+
     """
 
     required_capability: ClassVar[str | None] = "workflow.claim_check.store"
@@ -111,6 +112,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен с сообщением.
             context: Контекст выполнения процессора.
+
         """
         if not await self.auth_check(exchange, action="store"):
             return
@@ -162,6 +164,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         Args:
             claim_id: Уникальный идентификатор claim'а.
             data: Сериализованный payload (bytes).
+
         """
         if self.storage_backend == "local":
             await asyncio.to_thread(self._store_local, claim_id, data)
@@ -190,6 +193,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
 
         Raises:
             ConnectionError: при недоступности Redis (propagated to caller).
+
         """
         from src.backend.infrastructure.clients.storage.redis import redis_client
 
@@ -204,6 +208,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
 
         Raises:
             Exception: при ошибке S3 (propagated to caller).
+
         """
         from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
 
@@ -222,6 +227,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
 
         Returns:
             Сериализованный payload (bytes) или ``None`` если не найден/expired.
+
         """
         if self.storage_backend == "local":
             return await asyncio.to_thread(self._load_local, claim_id)

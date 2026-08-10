@@ -32,6 +32,7 @@ class VersioningMixin(_BaseServiceProtocol):
 
         Returns:
             Список версий в виде схем.
+
         """
         async with self._service_error_boundary():
             versions = await self.repo.get_all_versions(
@@ -59,6 +60,7 @@ class VersioningMixin(_BaseServiceProtocol):
 
         Returns:
             Последняя версия или ``None``.
+
         """
         async with self._service_error_boundary():
             version = await self.repo.get_latest_version(object_id=object_id)
@@ -75,6 +77,7 @@ class VersioningMixin(_BaseServiceProtocol):
 
         Returns:
             Восстановленный объект или ``None``.
+
         """
         async with self._service_error_boundary():
             restored_object = await self.repo.restore_to_version(
@@ -90,6 +93,7 @@ class VersioningMixin(_BaseServiceProtocol):
 
         Returns:
             Список изменений между версиями.
+
         """
         async with self._service_error_boundary():
             versions = await self.get_all_object_versions(object_id=object_id)

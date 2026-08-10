@@ -57,6 +57,7 @@ class LangGraphPostgresSaverWrapper:
         _dsn: PostgreSQL connection string.
         _saver: Кешированный AsyncPostgresSaver (после первой инициализации).
         _enabled: Snapshot feature_flag на момент создания.
+
     """
 
     def __init__(self, *, dsn: str | None = None, enabled: bool | None = None) -> None:
@@ -67,6 +68,7 @@ class LangGraphPostgresSaverWrapper:
                 Если None — берётся из settings.database.dsn.
             enabled: Override feature-flag (для тестов). При None —
                 читается из feature_flags.langgraph_postgres_checkpoint.
+
         """
         self._dsn = dsn
         self._saver: Any = None
@@ -120,6 +122,7 @@ class LangGraphPostgresSaverWrapper:
         Raises:
             LangGraphPostgresSaverUnavailable: при отключённом flag, отсутствии
                 extra ai-memory или ошибке инициализации.
+
         """
         if not self.enabled:
             raise LangGraphPostgresSaverUnavailable(
@@ -209,6 +212,7 @@ async def get_langgraph_postgres_saver() -> Any | None:
     Returns:
         Экземпляр AsyncPostgresSaver либо None если flag выключен,
         пакет отсутствует или соединение не установлено.
+
     """
     wrapper = _factory()
     if not wrapper.enabled:

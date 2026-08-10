@@ -39,6 +39,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         from src.backend.dsl.workflow.spec import ReflectDeclaration
 
@@ -76,6 +77,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         from src.backend.dsl.workflow.spec import CheckpointDeclaration
 
@@ -113,6 +115,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         from src.backend.dsl.workflow.spec import GuardrailDeclaration
 
@@ -137,6 +140,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         self._steps.append(PauseDeclaration(output_key=output_key))
         return self
@@ -151,6 +155,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         self._steps.append(ResumeDeclaration())
         return self
@@ -176,6 +181,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         from src.backend.dsl.workflow.spec import EscalateDeclaration
 

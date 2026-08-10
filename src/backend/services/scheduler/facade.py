@@ -21,6 +21,7 @@ class SchedulerFacade:
     Args:
         capability_check: Опц. callback ``CapabilityGate.check``.
         plugin: Имя caller'а (для capability-event и audit).
+
     """
 
     def __init__(
@@ -43,6 +44,7 @@ class SchedulerFacade:
             func: Callable для выполнения.
             trigger: Тип триггера (cron/interval/date).
             **trigger_kwargs: Аргументы триггера (e.g., hour=9, minute=0).
+
         """
         self._assert("scheduler.add_job", job_id)
         try:
@@ -59,6 +61,7 @@ class SchedulerFacade:
 
         Args:
             job_id: ID задачи для удаления.
+
         """
         self._assert("scheduler.remove_job", job_id)
         try:

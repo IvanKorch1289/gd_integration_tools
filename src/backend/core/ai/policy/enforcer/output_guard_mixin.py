@@ -32,6 +32,7 @@ class OutputGuardMixin:
 
         Raises:
             GuardrailViolationError: При ``on_block="fail"``.
+
         """
         if not policy.output_guards or not response.content:
             return []

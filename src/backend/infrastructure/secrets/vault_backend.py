@@ -33,6 +33,7 @@ class VaultConfig:
         secret_id: AppRole secret_id.
         mount_point: KV v2 mount-point (по умолчанию ``secret``).
         namespace: Опц. Vault Enterprise namespace.
+
     """
 
     url: str
@@ -68,6 +69,7 @@ class VaultBackend:
 
     Авторизация выбирается приоритетно: token → AppRole. Если ни один
     не задан — :class:`RuntimeError` при первом запросе.
+
     """
 
     def __init__(self, *, config: VaultConfig, client: Any | None = None) -> None:
@@ -80,6 +82,7 @@ class VaultBackend:
         Note:
             When called from async context, use ``_ensure_client_async`` instead
             to avoid blocking the event loop on hvac.auth.approle.login().
+
         """
         if self._client is not None:
             return self._client

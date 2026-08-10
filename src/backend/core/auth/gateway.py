@@ -78,6 +78,7 @@ class AuthGateway:
 
         Returns:
             AuthContext при успехе, None если ни один verifier не сработал.
+
         """
         effective = methods if methods is not None else self._default_method
         return await verify_request(request, methods=effective)

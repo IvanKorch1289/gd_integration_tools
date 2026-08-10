@@ -92,6 +92,7 @@ class PluginEndpoint(BaseModel):
             MCP tool path (``mcp.<plugin>.<tool>``).
         method: HTTP method (для REST): ``"GET"``/``"POST"``/``"PUT"``/
             ``"DELETE"``/``"PATCH"``. Empty для GraphQL/gRPC/MCP.
+
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -122,6 +123,7 @@ class PluginCompatibility(BaseModel):
             дополнительных ограничений.
         requires_plugins: Mapping ``plugin_name → PEP-440 spec`` —
             обязательные плагины, без которых текущий не загрузится.
+
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -176,6 +178,7 @@ class PluginSandbox(BaseModel):
         max_cpu_seconds: Лимит CPU-времени на одно исполнение.
         allow_imports: Whitelist модулей, импорт которых разрешён в
             sandbox. Пустой кортеж — стандартный набор e2b.
+
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -207,6 +210,7 @@ class PluginTenantDecl(BaseModel):
             :data:`SYSTEM_TENANT_ID`).
         capabilities: Имена capabilities (только ``<resource>.<verb>``,
             без scope).
+
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -249,6 +253,7 @@ class PluginManifest(BaseModel):
         capabilities: Декларация runtime-gate (см. ADR-044).
         provides: Декларативный inventory (см. :class:`PluginProvides`).
         config: Произвольный dict — передаётся в ``ctx.config``.
+
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -360,6 +365,7 @@ def load_plugin_manifest(path: Path | str) -> PluginManifest:
     Raises:
         PluginManifestError: Файл не найден, TOML невалиден или
             модель не прошла pydantic-валидацию.
+
     """
     file_path = Path(path)
     if not file_path.is_file():

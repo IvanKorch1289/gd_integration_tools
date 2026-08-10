@@ -107,6 +107,7 @@ class NotificationGateway:
 
         Returns:
             NotificationGateway singleton.
+
         """
         if cls._instance is None:
             cls._instance = cls()
@@ -157,6 +158,7 @@ class NotificationGateway:
 
         Returns:
             Sorted list of channel kind identifiers.
+
         """
         return sorted(self._channels.keys())
 

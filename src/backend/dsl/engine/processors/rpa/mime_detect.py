@@ -52,6 +52,7 @@ class MimeDetectProcessor:
 
         Returns:
             MIME-type string (default: application/octet-stream).
+
         """
         if not data:
             return "application/octet-stream"

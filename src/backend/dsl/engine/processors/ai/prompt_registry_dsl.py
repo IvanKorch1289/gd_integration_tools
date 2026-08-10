@@ -29,6 +29,7 @@ class PromptGetProcessor(BaseProcessor):
 
     Example:
         >>> p = PromptGetProcessor(name="osint_report", version="v2")
+
     """
 
     def __init__(

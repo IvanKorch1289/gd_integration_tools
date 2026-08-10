@@ -9,6 +9,7 @@ References:
 * ADR-0187 (S103 closure)
 * ``docs/migration/audit-emit-deprecation.md`` (Path A/B/C/D guide)
 * ``tools/check_audit_deprecation.py`` (S105 W2 regression guard)
+
 """
 
 from __future__ import annotations
@@ -46,6 +47,7 @@ def emit_audit(
 
     Returns:
         Результат ``AuditService.emit()`` (None или coroutine в async ctx).
+
     """
     svc = get_unified_audit_service()
     return svc.emit(  # type: ignore[no-untyped-call]
@@ -84,6 +86,7 @@ def emit_audit_safe(
 
     Returns:
         None (always, even on emit failure) или coroutine.
+
     """
     merged_details: dict[str, Any] = dict(details or {})
     if severity is not None:

@@ -30,6 +30,7 @@ class LakeraResult:
         score: Числовая оценка [0..1]; больше — выше уверенность detector'а.
         categories: Категории срабатывания (``prompt_injection``, ``pii``,
             ``hate_speech``, ...) — список dict'ов из ответа API.
+
     """
 
     flagged: bool
@@ -45,6 +46,7 @@ class LakeraClient:
             ``LAKERA_API_KEY``; при отсутствии — клиент в no-op режиме.
         base_url: URL API; default ``https://api.lakera.ai/v2``.
         timeout: HTTP timeout (sec); default 5.
+
     """
 
     def __init__(
@@ -68,6 +70,7 @@ class LakeraClient:
         Returns:
             :class:`LakeraResult`. Если ``api_key`` отсутствует — возвращает
             no-op (``flagged=False, score=0.0, categories=[]``).
+
         """
         if not self._api_key:
             return LakeraResult(flagged=False, score=0.0, categories=[])

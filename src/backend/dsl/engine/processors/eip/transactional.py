@@ -85,6 +85,7 @@ class TransactionalClientProcessor(BaseProcessor):
         :class:`src.backend.infrastructure.messaging.outbox.dispatcher.OutboxDispatcher`
         для background polling/delivery. TransactionalClient — для
         synchronous в-execution-flow enqueue.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING
@@ -166,6 +167,7 @@ class ProcessManagerProcessor(SagaProcessor):
         :class:`src.backend.dsl.workflow.builder.WorkflowBuilder` + Temporal
         backend (``LiteTemporalBackend``). Этот processor — DSL-фасад для
         inline orchestration в route, без external state-machine.
+
     """
 
     def __init__(

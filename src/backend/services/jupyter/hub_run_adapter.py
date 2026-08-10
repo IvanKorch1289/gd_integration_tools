@@ -47,6 +47,7 @@ async def run(
 
     Returns:
         :class:`HubRunResult` как dict.
+
     """
     content: bytes | None = notebook_content
     if notebook_content_b64 is not None and isinstance(notebook_content_b64, str):

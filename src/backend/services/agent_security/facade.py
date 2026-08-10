@@ -56,6 +56,7 @@ class AgentSecurityFacade:
             policy: AgentSecurityPolicy instance.
             workflow_id: Workflow ID для override (ключует override в dict,
                 не мутирует global framework policy).
+
         """
         if not workflow_id:
             raise ValueError("workflow_id is required for set_policy_for_workflow")
@@ -75,6 +76,7 @@ class AgentSecurityFacade:
         Returns:
             Workflow-specific policy если задан, иначе ``None`` (caller
             использует framework default).
+
         """
         if workflow_id and workflow_id in self._workflow_policies:
             return self._workflow_policies[workflow_id]
@@ -85,6 +87,7 @@ class AgentSecurityFacade:
 
         Returns:
             ``True`` если override был, ``False`` иначе.
+
         """
         return self._workflow_policies.pop(workflow_id, None) is not None
 
@@ -96,6 +99,7 @@ class AgentSecurityFacade:
         Args:
             prompt: Prompt text.
             workflow_id: Опциональный workflow ID для per-workflow policy.
+
         """
         policy = self.get_policy_for_workflow(workflow_id)
         ctx = dict(kwargs)
@@ -111,6 +115,7 @@ class AgentSecurityFacade:
         Args:
             command: Shell command text.
             workflow_id: Опциональный workflow ID для per-workflow policy.
+
         """
         policy = self.get_policy_for_workflow(workflow_id)
         ctx = dict(kwargs)
@@ -136,6 +141,7 @@ class AgentSecurityFacade:
             NotImplementedError: Если задан per-workflow policy override.
                 Caller должен либо очистить override (``clear_workflow_policy``),
                 либо реализовать ``AgentSecurityFramework.validate_sql(..., policy=)``.
+
         """
         policy = self.get_policy_for_workflow(workflow_id)
         if policy is not None:
@@ -167,6 +173,7 @@ class AgentSecurityFacade:
             file_path: Путь к файлу.
             file_size_bytes: Размер в байтах.
             workflow_id: Опциональный workflow ID для per-workflow policy.
+
         """
         policy = self.get_policy_for_workflow(workflow_id)
         ctx = dict(kwargs)
@@ -184,6 +191,7 @@ class AgentSecurityFacade:
         Args:
             output: Output text.
             workflow_id: Опциональный workflow ID для per-workflow policy.
+
         """
         policy = self.get_policy_for_workflow(workflow_id)
         ctx = dict(kwargs)
@@ -198,6 +206,7 @@ class AgentSecurityFacade:
             name: Hook name.
             trigger: ``"pre_tool"`` / ``"post_tool"`` / ``"pre_llm"`` / ``"post_llm"``.
             check_fn: Security check function (subject: str, context: dict) -> SecurityDecision.
+
         """
         hook = SecurityHook(name=name, trigger=trigger, check_fn=check_fn)
         self.framework.register_hook(hook)

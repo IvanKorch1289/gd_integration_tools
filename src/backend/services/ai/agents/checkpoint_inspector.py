@@ -31,6 +31,7 @@ class SessionInfo:
         last_checkpoint_id: ID последнего чекпоинта.
         updated_at: ISO-8601 timestamp.
         checkpoint_count: Кол-во чекпоинтов в этой сессии.
+
     """
 
     session_id: str
@@ -56,6 +57,7 @@ class CheckpointInspector:
     Args:
         saver_wrapper: :class:`LangGraphPostgresSaverWrapper` или None
             (тогда все методы возвращают пустые результаты).
+
     """
 
     def __init__(self, saver_wrapper: Any | None = None) -> None:

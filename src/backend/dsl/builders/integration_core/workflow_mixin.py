@@ -52,6 +52,7 @@ class WorkflowOpsMixin:
             reply_timeout_seconds: Таймаут для ``async-reply`` (default 60s).
                 При timeout result_property получает ``{"status": "timeout",
                 "workflow_id": ..., "timeout_seconds": ...}``.
+
         """
         from src.backend.dsl.engine.processors.invoke_workflow import (
             InvokeWorkflowProcessor,
@@ -88,6 +89,7 @@ class WorkflowOpsMixin:
             namespace: Workflow namespace (Temporal).
             result_property: Куда писать результат
                 (``{"cancelled": True, "workflow_id": ..., "reason": ...}``).
+
         """
         from src.backend.dsl.engine.processors.cancel_workflow import (
             CancelWorkflowProcessor,
@@ -195,6 +197,7 @@ class WorkflowOpsMixin:
 
         Returns:
             RouteBuilder с добавленным ``SubWorkflowProcessor``.
+
         """
         from src.backend.dsl.engine.processors.sub_workflow import SubWorkflowProcessor
 
@@ -258,6 +261,7 @@ class WorkflowOpsMixin:
         S103 W2 scope: DSL skeleton + processor class. Real Temporal
         Schedule-to-Close wiring — S103+ W3+ (требует apscheduler adapter +
         Temporal Schedule client, multi-wave scope).
+
         """
         from src.backend.dsl.engine.processors.cron_schedule import (
             CronScheduleProcessor,

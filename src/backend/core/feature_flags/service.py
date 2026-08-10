@@ -26,6 +26,7 @@ class FeatureFlagService:
     Attributes:
         _overrides: Runtime overrides singleton.
         _static: Pydantic-settings based static registry.
+
     """
 
     __slots__ = ("_overrides", "_static")

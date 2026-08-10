@@ -94,6 +94,7 @@ class UnifiedAISink:
             audit_service: AuditBackend для ClickHouse writes.
             langfuse_callback: LangfuseCallbackBackend для Langfuse writes.
             enabled: True = unified path active, False = no-op.
+
         """
         self._audit = audit_service
         self._langfuse = langfuse_callback
@@ -104,6 +105,7 @@ class UnifiedAISink:
 
         Args:
             event: AIInvocationEvent с заполненными полями.
+
         """
         if not self._enabled:
             return
@@ -117,6 +119,7 @@ class UnifiedAISink:
 
         Args:
             events: Список AIInvocationEvent в порядке следования.
+
         """
         if not self._enabled:
             return

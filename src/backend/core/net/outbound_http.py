@@ -67,6 +67,7 @@ class OutboundHttpClient:
             клиента (используется К1 mTLS-test).
         plugin: Имя caller'а (плагин/route) для audit-event'а.
             На уровне ядра — строка ``"core"``.
+
     """
 
     def __init__(
@@ -128,6 +129,7 @@ class OutboundHttpClient:
             WafBypassError: WAF заблокировал запрос.
             CapabilityDeniedError: Caller не имеет capability
                 ``net.outbound:<host>`` (если ``capability_check`` задан).
+
         """
         # Sprint 16 Wave 6 (B-3 finale): если в policy задан
         # async_payload_scanner — используем evaluate_async для не-блокирующей
@@ -197,6 +199,7 @@ class OutboundHttpClient:
             WafBypassError: WAF заблокировал запрос.
             CapabilityDeniedError: Caller не имеет capability
                 ``net.outbound:<host>`` (если ``capability_check`` задан).
+
         """
         # WAF-evaluate до открытия stream (без payload).
         decision = self._policy.evaluate(url, payload=None)

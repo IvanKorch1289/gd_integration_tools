@@ -44,6 +44,7 @@ class EnvSecretsBackend(SecretsBackend):
 
         Returns:
             Secret value or None if not found.
+
         """
         if key in self._cache:
             return self._cache[key]
@@ -55,6 +56,7 @@ class EnvSecretsBackend(SecretsBackend):
         Args:
             key: Secret key.
             value: Secret value.
+
         """
         self._cache[key] = value
         os.environ[key] = value
@@ -68,6 +70,7 @@ class EnvSecretsBackend(SecretsBackend):
 
         Returns:
             True if secret existed, False otherwise.
+
         """
         existed = key in self._cache or key in os.environ
         self._cache.pop(key, None)
@@ -83,6 +86,7 @@ class EnvSecretsBackend(SecretsBackend):
 
         Returns:
             Sorted list of matching keys.
+
         """
         keys = set(self._cache) | set(os.environ)
         if prefix is not None:

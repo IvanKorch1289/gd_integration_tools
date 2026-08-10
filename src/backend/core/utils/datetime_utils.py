@@ -85,6 +85,7 @@ def parse_dt(value: Any) -> datetime:
         parse_dt(1736935200)
         parse_dt(1736935200000)  # ms
         parse_dt(datetime(2025, 1, 15))  # naive → UTC applied
+
     """
     if value is None:
         return utc_now()
@@ -116,6 +117,7 @@ def ensure_utc(dt: datetime) -> datetime:
 
         ensure_utc(datetime(2025, 1, 15, 10, 0))  # naive → UTC assumed
         ensure_utc(parse("2025-01-15T10:00:00+05:00"))  # +05:00 → UTC
+
     """
     if dt.tzinfo is None:
         # Naive datetime — assume UTC (no local-tz surprise).
@@ -141,6 +143,7 @@ def humanize_delta(
 
         past = utc_now().replace(hour=utc_now().hour - 3)
         humanize_delta(past)  # "3 hours ago"
+
     """
     if other is None:
         other = utc_now()

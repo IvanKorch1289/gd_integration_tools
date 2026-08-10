@@ -31,6 +31,7 @@ class NotebookRepository(Protocol):
 
         Returns:
             Created notebook.
+
         """
         ...
 
@@ -42,6 +43,7 @@ class NotebookRepository(Protocol):
 
         Returns:
             Notebook or None if not found.
+
         """
         ...
 
@@ -62,6 +64,7 @@ class NotebookRepository(Protocol):
 
         Returns:
             Updated notebook or None if not found.
+
         """
         ...
 
@@ -77,6 +80,7 @@ class NotebookRepository(Protocol):
 
         Returns:
             Updated notebook or None if not found.
+
         """
         ...
 
@@ -98,6 +102,7 @@ class NotebookRepository(Protocol):
 
         Returns:
             List of notebooks.
+
         """
         ...
 
@@ -109,6 +114,7 @@ class NotebookRepository(Protocol):
 
         Returns:
             True if deleted, False if not found.
+
         """
         ...
 
@@ -136,6 +142,7 @@ class InMemoryNotebookRepository:
 
         Returns:
             Created notebook (deep copy).
+
         """
         async with self._lock:
             self._docs[notebook.id] = notebook.model_copy(deep=True)
@@ -149,6 +156,7 @@ class InMemoryNotebookRepository:
 
         Returns:
             Notebook (deep copy) or None if not found.
+
         """
         async with self._lock:
             doc = self._docs.get(notebook_id)
@@ -171,6 +179,7 @@ class InMemoryNotebookRepository:
 
         Returns:
             Updated notebook or None if not found/deleted.
+
         """
         async with self._lock:
             doc = self._docs.get(notebook_id)

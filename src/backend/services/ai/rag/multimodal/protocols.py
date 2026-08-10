@@ -39,6 +39,7 @@ class EmbedderProtocol(Protocol):
 
         Raises:
             LazyImportError: Если ML-зависимости не установлены.
+
         """
         ...
 
@@ -60,6 +61,7 @@ class IngesterProtocol(Protocol):
 
         Returns:
             Список ChunkDoc — один или несколько чанков с метаданными.
+
         """
         ...
 

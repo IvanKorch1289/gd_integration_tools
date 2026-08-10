@@ -53,6 +53,7 @@ class AutoServicerBundle:
         pb2_grpc: Импортированный модуль ``<service>_pb2_grpc``.
         servicer_cls: Динамически собранный Servicer-класс.
         add_to_server: Функция ``add_<Service>AutoServiceServicer_to_server``.
+
     """
 
     __slots__ = ("add_to_server", "pb2", "pb2_grpc", "service", "servicer_cls")
@@ -264,6 +265,7 @@ def register_auto_servicers(grpc_server: Any) -> int:
 
     Returns:
         Количество зарегистрированных сервисов.
+
     """
     bundles = build_auto_servicers()
     for bundle in bundles:

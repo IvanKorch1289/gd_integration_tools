@@ -41,6 +41,7 @@ class IPRestrictionMixin(_RouteBuilderProtocol):
             .ip_restriction(["10.0.0.0/8", "127.0.0.1"])
             .dispatch_action("payments.process")
             .build()
+
         """
         pattern = path_pattern or f"/api/v1/auto/{self.route_id}"
         get_ip_restriction_store().set_route_rule(

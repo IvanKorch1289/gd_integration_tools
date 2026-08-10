@@ -55,6 +55,7 @@ class UtilsMixin:
             ref: ``module.path:fn_name``.
             payload_from: ``body`` | ``body.<field>`` | ``properties.<name>``.
             result_property: Имя property для результата.
+
         """
         from src.backend.dsl.engine.processors.function_call import (
             CallFunctionProcessor,
@@ -80,6 +81,7 @@ class UtilsMixin:
             path: Точечный путь (``skb.api_url``, ``ai.openai.model``).
             to: ``body.<field>`` | ``properties.<name>``.
             default: Значение по умолчанию если путь отсутствует.
+
         """
         from src.backend.dsl.engine.processors.get_setting import GetSettingProcessor
 
@@ -103,6 +105,7 @@ class UtilsMixin:
                 YAML-loader).
             on_error: ``fail`` | ``dlq`` | ``warn``.
             source: ``out_body`` (default) | ``in_body``.
+
         """
         from src.backend.dsl.engine.processors.validate_response import (
             ResponseValidatorProcessor,
@@ -129,6 +132,7 @@ class UtilsMixin:
             context_from: dotted-path в ``exchange.body`` к словарю
                 подстановок. ``None`` — весь body.
             output_to: dotted-path для записи пути созданного файла.
+
         """
         from src.backend.dsl.engine.processors.documents import (
             RenderDocxParams,
@@ -162,6 +166,7 @@ class UtilsMixin:
             output_to: dotted-path для пути результата.
             mode: ``replace`` — подстановка ``{{key}}``; ``append_table`` —
                 добавление list[dict] как таблицы.
+
         """
         from src.backend.dsl.engine.processors.documents import (
             RenderXlsxParams,
@@ -197,6 +202,7 @@ class UtilsMixin:
             context_from: dotted-path к словарю переменных.
             decision_to: dotted-path для записи решения.
             default_decision: Значение, если ни одно правило не сработало.
+
         """
         from src.backend.dsl.engine.processors.rule_engine import (
             EvaluateRulesParams,
@@ -227,6 +233,7 @@ class UtilsMixin:
             expr: JMESPath expression (e.g. ``users[*].name``).
             to: Destination dotted-path.
             mode: ``all`` (list), ``first`` (single), ``scalar`` (value or None).
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.jq_query",
@@ -249,6 +256,7 @@ class UtilsMixin:
             sql: SQL query referencing ``body`` and ``sources.*`` aliases.
             sources: ``alias -> dotted_path_in_headers`` for lookup tables.
             persistent_path: Path to DuckDB file (None = in-memory).
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.duckdb_query",
@@ -273,6 +281,7 @@ class UtilsMixin:
             files_from: dotted-path to list of file paths.
             archive_to: Destination for archive path.
             password: Optional password for encrypted archives.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.zip_archive",
@@ -298,6 +307,7 @@ class UtilsMixin:
             file_path_from: dotted-path to read path from.
             content_type: MIME type (auto-detected if None).
             chunk_size: Read chunk size in bytes.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ingest_file",
@@ -325,6 +335,7 @@ class UtilsMixin:
             to: Destination dotted-path.
             mode: ``"all"``, ``"first"``, ``"first_named"``, ``"all_named"``, ``"groups"``.
             flags: ``re`` flags (e.g. ``re.IGNORECASE``).
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.regex_extractor",
@@ -351,6 +362,7 @@ class UtilsMixin:
             to: Destination dotted-path.
             mode: ``"all"`` (list), ``"first"`` (single), ``"scalar"`` (value).
             default: Default value if no match.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.jsonpath_query",
@@ -370,6 +382,7 @@ class UtilsMixin:
             mode: ``"parse"`` (ICS bytes → events) or ``"render"`` (events → ICS bytes).
             source: Source dotted-path.
             to: Destination dotted-path.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ics_calendar",
@@ -399,6 +412,7 @@ class UtilsMixin:
 
         Example:
             >>> .send_via_sink("alerts.http", payload_from="body.alert")
+
         """
         from src.backend.dsl.engine.processors.integration_send import (
             IntegrationSendProcessor,
@@ -427,6 +441,7 @@ class UtilsMixin:
         Example:
             >>> .facade_get_health("sink_http")
             >>> .facade_get_health("source_webhook", to="body.webhook_health")
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.facade_get_health",

@@ -39,6 +39,7 @@ class JwtBlacklistProtocol(Protocol):
         S18 W4. В :class:`JwtBackend.decode` вызов :meth:`is_iat_revoked`
         защищён ``hasattr``-guard для backward-compat с реализациями,
         которые ещё не реализуют batch-revoke.
+
     """
 
     async def is_revoked(self, jti: str) -> bool:
@@ -64,6 +65,7 @@ class RedisJwtBlacklist:
     Args:
         redis: redis.asyncio.Redis клиент (или совместимый proxy).
         key_prefix: Префикс ключей (по умолчанию ``blacklist:jwt:``).
+
     """
 
     _REVOKE_BEFORE_SUFFIX = "revoke_before"
@@ -119,6 +121,7 @@ class RedisJwtBlacklist:
               с меньшим — fail-closed (advisor pt 3): новый threshold всегда
               применяется как ``MAX(current, new)`` чтобы избежать accidental
               rotation rollback.
+
         """
         try:
             current_raw = await self._redis.get(self._revoke_before_key())
@@ -146,6 +149,7 @@ class RedisJwtBlacklist:
               (defensive — corrupted barrier не должен блокировать всё);
             * При ошибке Redis — исключение пробрасывается (fail-closed,
               см. :meth:`is_revoked`).
+
         """
         if iat is None:
             return False

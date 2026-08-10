@@ -43,6 +43,7 @@ def default_tenant_extractor(scope: Scope) -> str | None:
 
     Returns:
         Значение X-Tenant-Id или None, если заголовок отсутствует.
+
     """
     if scope.get("type") != "http":
         return None
@@ -65,6 +66,7 @@ class QuotaPolicy:
         tenant_extractor: callable(scope) → tenant_id (или None).
         skip_paths: Список path-префиксов, для которых проверка пропускается
             (health/metrics).
+
     """
 
     service: QuotasBackend
@@ -79,6 +81,7 @@ class QuotaPolicy:
 
         Returns:
             True если запрос исключён из проверки квоты.
+
         """
         path = scope.get("path", "") or ""
         return any(path.startswith(prefix) for prefix in self.skip_paths)
@@ -91,6 +94,7 @@ class QuotaPolicy:
 
         Returns:
             QuotaCheckResult.
+
         """
         return await self.service.consume_request(tenant_id)
 
@@ -108,6 +112,7 @@ class QuotaCheckMiddleware:
         - tenant_id отсутствует → passthrough (auth-middleware обязан был
           его проставить раньше);
         - QuotaCheckResult.allowed=False → ответ 429 без вызова app.
+
     """
 
     def __init__(self, app: ASGIApp, policy: QuotaPolicy) -> None:

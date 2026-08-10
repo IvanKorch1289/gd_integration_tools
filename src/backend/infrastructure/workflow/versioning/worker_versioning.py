@@ -38,6 +38,7 @@ def parse_build_id(raw: str) -> tuple[str, str]:
 
     Returns:
         Кортеж (kind, normalized_value).
+
     """
     raw = raw.strip()
     if _SEMVER_RE.match(raw):
@@ -57,6 +58,7 @@ class VersioningPolicy:
         build_id: Build ID новой версии (semver/git/custom).
         ramp_percentage: Процент трафика на новой версии (0-100).
         auto_upgrade: Автоматически upgrade pinned workflows (если True).
+
     """
 
     deployment_name: str
@@ -80,6 +82,7 @@ class WorkerVersioningHelper:
         build_id: Build ID этой версии worker.
         use_versioning: Включить Worker Versioning (default: False).
         policy: Стратегия rollout (default: 100% на этой версии).
+
     """
 
     def __init__(
@@ -112,6 +115,7 @@ class WorkerVersioningHelper:
 
         Returns:
             Dict с ключами ``build_id`` и опционально ``deployment_config``.
+
         """
         kwargs: dict[str, Any] = {"build_id": self.build_id}
         if self.use_versioning:
@@ -150,6 +154,7 @@ class WorkerVersioningHelper:
 
         Returns:
             True если Execution должен идти на эту версию.
+
         """
         if self.policy.ramp_percentage >= 100:
             return True

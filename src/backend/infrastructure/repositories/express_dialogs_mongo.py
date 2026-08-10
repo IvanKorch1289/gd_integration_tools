@@ -82,6 +82,7 @@ class MongoExpressDialogStore:
             sync_id: Идентификатор синхронизации (опционально).
             bubble: Структура bubble-сообщения (опционально).
             keyboard: Структура клавиатуры (опционально).
+
         """
         message = ExpressMessage(
             role=role, body=body, sync_id=sync_id, bubble=bubble, keyboard=keyboard,

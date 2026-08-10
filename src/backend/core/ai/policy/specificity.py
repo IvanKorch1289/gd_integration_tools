@@ -75,6 +75,7 @@ def compute_specificity(pattern: str, value: str) -> int:
 
     Returns:
         Specificity score (int, -1 if no match).
+
     """
     if not fnmatch.fnmatchcase(value, pattern):
         return -1  # No match
@@ -111,6 +112,7 @@ def find_specific_match(
 
     Returns:
         Most specific :class:`AIPolicySpec` or ``None`` if no match.
+
     """
     best: tuple[int, int, int, AIPolicySpec] | None = None
     for idx, policy in enumerate(policies):

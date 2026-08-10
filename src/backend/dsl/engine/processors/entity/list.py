@@ -27,6 +27,7 @@ class EntityListProcessor(_BaseEntityProcessor):
         page_from: Альтернативно — выражение из exchange.
         size_from: Альтернативно — выражение из exchange.
         result_property: Имя property для записи результата.
+
     """
 
     _verb = "list"

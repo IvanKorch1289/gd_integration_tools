@@ -40,6 +40,7 @@ class IOMixin(_NotebookExecutionProtocol):
 
         Returns:
             Бинарное содержимое экспортированного файла.
+
         """
         timeout = timeout_seconds or self._settings.timeout_seconds
 
@@ -83,6 +84,7 @@ class IOMixin(_NotebookExecutionProtocol):
 
         Returns:
             Словарь ``{"outputs": [...], "export_data": bytes | None, "format": str | None}``.
+
         """
         import os
 

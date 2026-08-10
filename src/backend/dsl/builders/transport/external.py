@@ -51,6 +51,7 @@ class ExternalMixin:
             timeout: Request timeout в секундах (default 30.0).
             result_property: Имя property для записи результата.
                 Если ``None`` — результат пишется в ``out_message.body``.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.graphql_query",
@@ -110,6 +111,7 @@ class ExternalMixin:
 
         Returns:
             ``RouteBuilder`` для chain-продолжения.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web_search",
@@ -147,6 +149,7 @@ class ExternalMixin:
             use_ssl: Use LDAPS.
             timeout: Query timeout in seconds.
             result_property: Property name for search results.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.ldap_query",
@@ -180,6 +183,7 @@ class ExternalMixin:
             point_a: First coordinate ``(lat, lon)`` for distance mode.
             point_b: Second coordinate ``(lat, lon)`` for distance mode.
             to: Destination dotted-path.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.geo",

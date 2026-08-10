@@ -26,6 +26,7 @@ class EnvBackend:
 
     Args:
         prefix: Опц. префикс для env-имени (``app__``).
+
     """
 
     def __init__(self, *, prefix: str = "") -> None:
@@ -42,6 +43,7 @@ class EnvBackend:
 
         Raises:
             KeyError: If secret not found in environment.
+
         """
         env_name = self._env_name(name)
         value = os.environ.get(env_name)
@@ -58,6 +60,7 @@ class EnvBackend:
 
         Returns:
             SecretValue with current value.
+
         """
         # Env не version-aware; вернуть текущий снимок.
         return self.get(name)

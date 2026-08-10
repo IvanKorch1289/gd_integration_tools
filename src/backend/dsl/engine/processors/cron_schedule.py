@@ -31,6 +31,7 @@ class CronScheduleProcessor:
         result_property: Куда писать handle в DSL message.
         timezone: Timezone для cron evaluation.
         metadata: Доп. metadata для audit log.
+
     """
 
     name: str

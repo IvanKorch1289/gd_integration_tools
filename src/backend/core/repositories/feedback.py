@@ -31,6 +31,7 @@ class FeedbackRepository(Protocol):
 
         Raises:
             KeyError: Если документ с ``doc.id`` отсутствует.
+
         """
         ...
 
@@ -58,5 +59,6 @@ class FeedbackRepository(Protocol):
         Returns:
             Словарь с ключами ``pending``, ``positive``, ``negative``,
             ``skip``, ``indexed``.
+
         """
         ...

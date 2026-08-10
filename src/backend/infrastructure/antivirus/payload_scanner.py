@@ -62,6 +62,7 @@ class ClamAVPayloadScanner:
 
         scanner = ClamAVPayloadScanner(ClamAVTcpBackend())
         policy = WafPolicy(strict=True, async_payload_scanner=scanner)
+
     """
 
     __slots__ = ("_backend", "_fail_open")
@@ -75,6 +76,7 @@ class ClamAVPayloadScanner:
 
         Returns:
             ``None`` если payload чист (или не задан); иначе строка-причина.
+
         """
         if payload is None or len(payload) == 0:
             return None

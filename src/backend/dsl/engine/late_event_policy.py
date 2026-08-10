@@ -45,6 +45,7 @@ async def apply_late_policy(
 
     Returns:
         ``True`` если exchange нужно продолжать, ``False`` если drop.
+
     """
     state.late_events_total += 1
     match policy:

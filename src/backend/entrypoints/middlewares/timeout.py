@@ -50,6 +50,7 @@ class TimeoutMiddleware:
         Feature-flag ``per_route_timeout_enabled`` (default-OFF) гейтит
         registry lookup. При OFF behaviour идентичен legacy S0+
         (single global timeout).
+
     """
 
     def __init__(
@@ -60,6 +61,7 @@ class TimeoutMiddleware:
         Args:
             app: ASGI-приложение.
             route_timeouts: Опциональный registry per-route timeouts.
+
         """
         self.app = app
         # Сортируем по убыванию длины для longest-prefix-match.
@@ -76,6 +78,7 @@ class TimeoutMiddleware:
             scope: ASGI scope.
             receive: ASGI receive callable.
             send: ASGI send callable.
+
         """
         if scope["type"] != "http":
             await self.app(scope, receive, send)

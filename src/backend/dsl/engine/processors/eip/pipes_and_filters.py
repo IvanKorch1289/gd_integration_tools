@@ -86,6 +86,7 @@ class PipesAndFiltersProcessor(BaseProcessor):
             return ex.in_message.body
 
         PipesAndFiltersProcessor(steps=[parse_xml, validate])
+
     """
 
     def __init__(

@@ -62,6 +62,7 @@ class RuleEngineRegistry:
         feature_flags: Реестр feature flag'ов проекта.
         clock: Опц. callable, возвращающий ``datetime`` (для тестов
             детерминистично заменяет ``datetime.now(UTC)``).
+
     """
 
     def __init__(
@@ -102,6 +103,7 @@ class RuleEngineRegistry:
         Returns:
             Распарсенный YAML-dict или ``None``, если запись не найдена /
             disabled.
+
         """
         key = self._key(name, tenant_id)
         cached = self._cache.get(key)
@@ -140,6 +142,7 @@ class RuleEngineRegistry:
 
         Returns:
             Количество удалённых записей.
+
         """
         if name is None:
             count = len(self._cache)

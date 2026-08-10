@@ -47,6 +47,7 @@ class VariableResolveResult:
         resolved_count: Number of ``${var('...')}`` expressions resolved.
         unresolved_keys: Keys that couldn't be resolved (no default).
         scope: The scope used for resolution.
+
     """
 
     resolved_count: int
@@ -75,6 +76,7 @@ class VariableResolveProcessor(BaseProcessor):
     Example::
 
         builder.variable_resolve(scope="tenant:acme", fail_on_unresolved=False)
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -103,6 +105,7 @@ class VariableResolveProcessor(BaseProcessor):
             exchange: Текущий exchange; body (dict) обходит и обновляется in-place.
                 Результат резолва — в свойстве ``_variable_resolve_result``.
             context: Контекст выполнения маршрута (для scope-резолва).
+
         """
         body = exchange.in_message.body
         if not isinstance(body, dict):

@@ -59,6 +59,7 @@ class JsonPathProcessor(BaseProcessor):
             значение или None), ``scalar`` (единственное значение, иначе
             None / default).
         default: Значение по умолчанию для ``first``/``scalar``, если матча нет.
+
     """
 
     def __init__(

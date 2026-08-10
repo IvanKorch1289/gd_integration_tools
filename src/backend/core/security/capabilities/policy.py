@@ -59,6 +59,7 @@ class CapabilityRule:
         principal: Имя principal/plugin или ``"*"`` для всех.
         priority: Целое число; правила с большим priority оцениваются
             первыми. Tie-break при равных priority: deny > allow.
+
     """
 
     effect: Effect
@@ -92,6 +93,7 @@ class PolicyDecision:
     Args:
         effect: Итоговый ``allow`` / ``deny`` / ``no_match``.
         rule: Победившее правило (``None`` если ``no_match``).
+
     """
 
     effect: Literal["allow", "deny", "no_match"]
@@ -107,6 +109,7 @@ class CapabilityPolicy:
 
     Args:
         rules: Iterable правил.
+
     """
 
     def __init__(self, rules: list[CapabilityRule]) -> None:
@@ -135,6 +138,7 @@ class CapabilityPolicy:
         Returns:
             :class:`PolicyDecision` с ``effect`` и победившим ``rule``.
             Если ни одно правило не сматчилось — ``effect="no_match"``.
+
         """
         for rule in self._rules:
             if rule.matches(

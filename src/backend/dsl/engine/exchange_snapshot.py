@@ -129,6 +129,7 @@ def to_dict_fast(obj: Any, *, use_msgspec: bool = True) -> dict[str, Any]:
 
     Raises:
         TypeError: если ``obj`` не сериализуем ни одним из бэкендов.
+
     """
     if use_msgspec and _HAS_MSGSPEC and _msgspec is not None:
         try:
@@ -154,6 +155,7 @@ def from_dict_fast[T](cls: type[T], data: dict[str, Any]) -> T:
 
     Returns:
         Экземпляр ``cls``, заполненный из ``data``.
+
     """
     if _HAS_MSGSPEC and _msgspec is not None:
         try:

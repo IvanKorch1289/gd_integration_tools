@@ -58,6 +58,7 @@ class SagaProcessor(BaseProcessor):
         Note:
             В отличие от :class:`SagaLRAProcessor`, не использует БД-checkpointing
             (pure in-memory). При падении процесса состояние теряется.
+
         """
         completed_steps: list[SagaStep] = []
         saga_workflow_id = (
@@ -161,6 +162,7 @@ def _serialize_sub(procs: list[BaseProcessor]) -> list[dict[str, Any]] | None:
 
     Returns:
         Список dict-spec'ов либо ``None``.
+
     """
     out: list[dict[str, Any]] = []
     for p in procs:

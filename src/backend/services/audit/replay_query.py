@@ -38,6 +38,7 @@ async def list_audit_records(
 
     Returns:
         List of audit records (пустой список если Redis недоступен).
+
     """
     try:
         from src.backend.core.di.providers import get_redis_stream_client_provider
@@ -60,6 +61,7 @@ async def replay_audit_record(record_id: str) -> dict[str, Any]:
 
     Returns:
         ``{"status": "replayed", "record_id": ..., "new_response": {...}}``.
+
     """
     try:
         from src.backend.core.di.providers import get_redis_stream_client_provider

@@ -55,6 +55,7 @@ class PlaywrightBrowserPool:
             отладки. Cycle 40: defaults to ``rpa_settings.browser_headless``.
         viewport: Размер viewport ``{"width": ..., "height": ...}``;
             ``None`` — default 1280×720.
+
     """
 
     def __init__(

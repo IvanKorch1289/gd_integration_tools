@@ -51,6 +51,7 @@ async def check_route_permission(
 
     Raises:
         RuntimeError: Если AuthorizationGateway недоступен (fail-closed).
+
     """
     if not permissions:
         return True, "no_permissions_required"
@@ -118,6 +119,7 @@ def _resolve_authz_gateway() -> AuthorizationGateway | None:
 
     Returns:
         AuthorizationGateway instance или None если не зарегистрирован.
+
     """
     # Pattern from ai_agent.py::_resolve_authz_gateway
     try:

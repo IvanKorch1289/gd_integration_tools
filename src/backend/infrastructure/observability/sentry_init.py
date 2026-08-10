@@ -38,6 +38,7 @@ def init_sentry(
 
     Returns:
         True если Sentry инициализирован, False при отсутствии DSN/библиотеки.
+
     """
     dsn = dsn or os.environ.get("SENTRY_DSN")
     if not dsn:

@@ -75,6 +75,7 @@ class CapabilityContext:
         scope: Опц. scope, по умолчанию подставляемый в check
             (``None`` если capability не требует scope).
         audit: Опц. дополнительный audit-callback для событий guard'а.
+
     """
 
     __slots__ = ("audit", "gate", "plugin_name", "scope")
@@ -102,6 +103,7 @@ def get_active_capability_context() -> CapabilityContext | None:
     Returns:
         Установленный :class:`CapabilityContext` или ``None``, если
         runtime-инициализация не была выполнена (legacy / unit-test).
+
     """
     return _active_context
 
@@ -111,6 +113,7 @@ def set_active_capability_context(context: CapabilityContext | None) -> None:
 
     Args:
         context: Новый :class:`CapabilityContext` или ``None`` для сброса.
+
     """
     global _active_context
     _active_context = context
@@ -122,6 +125,7 @@ def _is_gate_enabled() -> bool:
     Returns:
         ``True`` если ``feature_flags.activity_capability_gate_enabled``
         включён. При ошибке импорта возвращается ``False`` (NoOp).
+
     """
     try:
         from src.backend.core.config.features import feature_flags
@@ -204,6 +208,7 @@ def capability_guarded_activity(capabilities: tuple[str, ...]) -> Callable[[F], 
           При :class:`CapabilityDeniedError` событие денай-аудита
           уже было записано gate'ом; guard дополнительно пишет
           ``"event": "activity.capability.denied"``.
+
     """
     if not capabilities:
         # Пустой кортеж — возвращаем identity-декоратор.

@@ -69,6 +69,7 @@ class BatchWindowProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен с сообщением.
             context: Контекст выполнения процессора.
+
         """
         group = self._resolve_group(exchange)
         async with self._lock:

@@ -27,6 +27,7 @@ class FileListProcessor(BaseProcessor):
         pattern: Glob-паттерн (например ``"/tmp/*.txt"``).
         recursive: ``**`` для рекурсивного поиска (default False).
         to: Куда записать список (default ``"body.files"``).
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.file.list"

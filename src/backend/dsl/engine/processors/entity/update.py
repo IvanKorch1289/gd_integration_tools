@@ -24,6 +24,7 @@ class EntityUpdateProcessor(_BaseEntityProcessor):
         id_from: Выражение извлечения id.
         payload_from: Выражение извлечения payload (default ``body``).
         result_property: Имя property для записи обновлённой сущности.
+
     """
 
     _verb = "update"

@@ -102,6 +102,7 @@ def build_asyncapi_spec(
         ``Specification`` (``to_yaml`` / ``to_json`` / ``to_jsonable``) при
         наличии хотя бы одного broker'а; ``None`` если broker'ов нет —
         тогда вызывающий должен использовать :func:`_empty_spec_dict`.
+
     """
     from faststream.specification import AsyncAPI
 

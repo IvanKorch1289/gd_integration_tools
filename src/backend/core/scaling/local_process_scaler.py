@@ -33,6 +33,7 @@ class LocalProcessScaler:
         min_workers: Минимальное число workers (защита от scale-down ниже).
         max_workers: Максимальное число workers.
         master_pid_file: Путь к pid-файлу Granian master-процесса.
+
     """
 
     def __init__(
@@ -55,6 +56,7 @@ class LocalProcessScaler:
 
         Returns:
             pid (int) или None, если файл не существует / невалиден.
+
         """
         if not self.master_pid_file.exists():
             return None
@@ -71,6 +73,7 @@ class LocalProcessScaler:
 
         Returns:
             True если SIGUSR1 отправлен; False — fallback NoOp.
+
         """
         master_pid = self._read_master_pid()
         if master_pid is None:
@@ -96,6 +99,7 @@ class LocalProcessScaler:
 
         Returns:
             True если SIGUSR2 отправлен; False — fallback NoOp.
+
         """
         master_pid = self._read_master_pid()
         if master_pid is None:
@@ -115,6 +119,7 @@ class LocalProcessScaler:
 
         Returns:
             Число workers через psutil, или ``min_workers`` при недоступности.
+
         """
         try:
             import psutil

@@ -52,6 +52,7 @@ class TemporalSchedulerBackend:
             умолчанию используется singleton из
             ``infrastructure.workflow.temporal_client``.
         namespace: Temporal namespace (default ``"default"``).
+
     """
 
     def __init__(
@@ -62,6 +63,7 @@ class TemporalSchedulerBackend:
         Args:
             client_factory: Опциональная фабрика (для тестов).
             namespace: Temporal namespace.
+
         """
         if client_factory is None:
             from src.backend.infrastructure.workflow.temporal_client import (
@@ -109,6 +111,7 @@ class TemporalSchedulerBackend:
 
         Raises:
             TypeError: ``callable_ref`` — не str/tuple нужной формы.
+
         """
         if isinstance(callable_ref, str):
             return callable_ref, [], {}
@@ -161,6 +164,7 @@ class TemporalSchedulerBackend:
             TypeError: ``callable_ref`` — не str/tuple.
             ImportError: temporalio не установлен.
             RuntimeError: ошибка Temporal API.
+
         """
         # Валидация ДО импорта temporalio (быстрый fail на bad input).
         workflow, args, kwargs = self._validate_callable_ref(callable_ref)
@@ -231,6 +235,7 @@ class TemporalSchedulerBackend:
         Raises:
             TypeError: ``callable_ref`` — не str/tuple.
             ImportError: temporalio не установлен.
+
         """
         # Валидация ДО импорта temporalio.
         workflow, args, kwargs = self._validate_callable_ref(callable_ref)
@@ -270,6 +275,7 @@ class TemporalSchedulerBackend:
 
         Raises:
             ImportError: temporalio не установлен.
+
         """
         client = await self._factory.get_client(self._namespace)
         try:
@@ -312,6 +318,7 @@ class TemporalSchedulerBackend:
 
         Raises:
             ImportError: temporalio не установлен.
+
         """
         client = await self._factory.get_client(self._namespace)
 
@@ -379,6 +386,7 @@ class TemporalSchedulerBackend:
         Raises:
             ImportError: temporalio не установлен.
             ValueError: invalid cron expression.
+
         """
         try:
             from temporalio.client import ScheduleSpec

@@ -50,6 +50,7 @@ class GetSettingProcessor(BaseProcessor):
         path: Точечный путь в конфиге (``skb.api_url``, ``ai.openai.model``).
         to: Куда положить значение: ``body.<field>`` или ``properties.<name>``.
         default: Значение по умолчанию если settings-ключ отсутствует.
+
     """
 
     def __init__(

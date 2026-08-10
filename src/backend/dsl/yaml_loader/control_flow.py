@@ -28,6 +28,7 @@ def _materialize_control_flow_params(
     Returns:
         Новый dict kwargs с подставленными ``BaseProcessor`` / ``ChoiceBranch``
         / ``SagaStep`` объектами.
+
     """
     from src.backend.dsl.engine.processors import ChoiceBranch, SagaStep
     from src.backend.dsl.yaml_loader.build import _build_sub

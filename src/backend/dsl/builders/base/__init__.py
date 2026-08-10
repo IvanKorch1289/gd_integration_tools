@@ -173,6 +173,7 @@ class RouteBuilder(  # type: ignore[misc]
                 .dispatch_action("analytics.insert_batch")
                 .build()
             )
+
         """
         return cls(route_id=route_id, source=source, description=description)
 
@@ -197,6 +198,7 @@ class RouteBuilder(  # type: ignore[misc]
                 .dispatch_action("analytics.insert_batch")
                 .build()
             )
+
         """
         return cls(
             route_id=route_id, source=f"source:{source_id}", description=description,
@@ -231,6 +233,7 @@ class RouteBuilder(  # type: ignore[misc]
             validate_actions: Если True (default), проверяет что все
                 dispatch_action имена зарегистрированы в ActionHandlerRegistry.
                 Raises ValueError с подсказкой схожих имён при опечатке.
+
         """
         if validate_actions:
             self._validate_action_names()

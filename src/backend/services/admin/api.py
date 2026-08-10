@@ -50,6 +50,7 @@ class AdminService:
                                   ``core.security.authorization_gateway``.
             audit_callback: Не используется напрямую — audit идёт через
                            ``emit_admin_action``.
+
         """
         self._authz = authorization_gateway
         self._audit_cb = audit_callback
@@ -98,6 +99,7 @@ class AdminService:
 
         Raises:
             AdminAuthorizationError: если AuthZ deny (fail-closed).
+
         """
         authz = self._get_authz()
         if authz is None:

@@ -69,6 +69,7 @@ class DaskComputeProcessor(BaseProcessor):
             ],
             output_to="body",
         )
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

@@ -35,6 +35,7 @@ def default_cpu_pool() -> ProcessPoolExecutor:
 
     Returns:
         ProcessPoolExecutor с ``max_workers=cpu_count - 1``.
+
     """
     global _default_pool
     if _default_pool is None:
@@ -62,6 +63,7 @@ async def run_cpu_bound[T](
 
     Example:
         result = await run_cpu_bound(_merge_pdfs, pdf_bytes_list)
+
     """
     if use_process_pool:
         # ProcessPoolExecutor requires picklable top-level functions.

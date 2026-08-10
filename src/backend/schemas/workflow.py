@@ -56,6 +56,7 @@ class WorkflowEventSchemaOut(BaseSchema):
         payload: JSON-payload события — схема зависит от ``event_type``.
         step_name: Имя DSL-шага (``None`` для instance-level событий).
         occurred_at: Время записи события.
+
     """
 
     seq: int = Field(description="Глобальный seq события (BIGSERIAL).")
@@ -99,6 +100,7 @@ class WorkflowInstanceSchemaOut(BaseSchema):
             (``None`` для активных инстансов).
         last_error: Последняя ошибка (из ``snapshot_state.last_error``)
             — для быстрого отображения в UI без чтения event log'а.
+
     """
 
     id: UUID
@@ -129,6 +131,7 @@ class WorkflowInstanceDetailSchemaOut(WorkflowInstanceSchemaOut):
         snapshot_state: Кэшированный snapshot :class:`WorkflowState`
             (``None`` если snapshot ещё не создан).
         events: Полный event log инстанса (ordered by seq ASC).
+
     """
 
     snapshot_state: dict[str, Any] | None = None
@@ -152,6 +155,7 @@ class WorkflowInstanceRef(BaseSchema):
             ``wait=True`` и успешном завершении до timeout).
         error: Опциональный текст ошибки (при ``wait=True`` и
             terminal failure).
+
     """
 
     id: UUID = Field(description="UUID созданного инстанса workflow.")

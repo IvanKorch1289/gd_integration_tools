@@ -103,6 +103,7 @@ class AgentRunProcessor(BaseAIProcessor):
         ``{"content": str, "structured": Any | None, "tokens_prompt": int,
           "tokens_completion": int, "cost_usd": float, "model_used": str,
           "pii_detected": bool, "guardrails_verdict": dict}``.
+
     """
 
     required_capability: ClassVar[str | None] = "ai.invoke"

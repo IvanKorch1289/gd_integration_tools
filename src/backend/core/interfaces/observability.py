@@ -142,6 +142,7 @@ class CircuitBreakerMetricsRecorder(Protocol):
             client: Имя breaker'а.
             host: Хост/endpoint.
             state: Нормализованное состояние ``closed`` / ``open`` / ``half_open``.
+
         """
         ...
 

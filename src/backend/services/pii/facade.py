@@ -65,6 +65,7 @@ class PIIFacade:
         Raises:
             PIIFailClosedError: cycle-4/D-AUDIT-109 — при sanitizer failure.
                 Caller НЕ ДОЛЖЕН пробрасывать raw PII downstream.
+
         """
         try:
             result = self.masker.mask_text(text)
@@ -85,6 +86,7 @@ class PIIFacade:
 
         Returns:
             Same structure с masked strings.
+
         """
         try:
             return self.masker.mask_dict(obj)
@@ -101,6 +103,7 @@ class PIIFacade:
 
         Raises:
             PIIFailClosedError: cycle-4/D-AUDIT-109 — при sanitizer failure.
+
         """
         try:
             result = self.masker.mask_text(text)
@@ -150,6 +153,7 @@ class PIIFacade:
             name: Pattern name (e.g., ``"card_pan"``).
             pattern: Regex pattern.
             replacement: Ignored for regex-based masker (patterns are dict[str, re.Pattern]).
+
         """
         try:
             if not hasattr(self.masker, "_patterns"):

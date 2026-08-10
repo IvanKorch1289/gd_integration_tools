@@ -49,6 +49,7 @@ class RpaPolicyMiddleware:
 
     Example:
         >>> mw = RpaPolicyMiddleware(app, rpa_path_prefix="/api/v1/rpa")
+
     """
 
     def __init__(
@@ -64,6 +65,7 @@ class RpaPolicyMiddleware:
             app: ASGI-приложение.
             rpa_path_prefix: Префикс RPA endpoints.
             required_role: Требуемая роль в auth context.
+
         """
         self.app = app
         self.rpa_path_prefix = rpa_path_prefix

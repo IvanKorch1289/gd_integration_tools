@@ -50,6 +50,7 @@ class ResilienceFacade:
     Args:
         capability_check: Опц. callback ``CapabilityGate.check``.
         plugin: Имя caller'а (для capability-event и audit).
+
     """
 
     def __init__(
@@ -82,6 +83,7 @@ class ResilienceFacade:
         Returns:
             True если разрешено, False если превышен лимит или
             fail_mode="closed" при ошибке limiter'а.
+
         """
         self._assert("resilience.rate_limit", identifier)
         try:
@@ -131,6 +133,7 @@ class ResilienceFacade:
 
         Returns:
             Breaker instance.
+
         """
         self._assert("resilience.breaker", name)
         try:
@@ -176,6 +179,7 @@ class ResilienceFacade:
 
         Raises:
             ServiceError: Если не удалось получить/создать bulkhead.
+
         """
         self._assert("resilience.bulkhead", name)
         try:
@@ -231,6 +235,7 @@ class ResilienceFacade:
 
         Returns:
             ``with_retry`` decorator function.
+
         """
         self._assert("resilience.retry", "default")
         try:

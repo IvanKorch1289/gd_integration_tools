@@ -232,6 +232,7 @@ class S3ObjectStorage(ObjectStorage):
 
         Returns:
             S3 object key.
+
         """
         full_key = self._safe_key(key)
         params: dict[str, Any] = {"Bucket": self._bucket, "Key": full_key, "Body": data}
@@ -373,6 +374,7 @@ class S3ObjectStorage(ObjectStorage):
 
         Raises:
             FileNotFoundError: If object not found.
+
         """
         full_key = self._safe_key(key)
         async with self._open() as s3:
@@ -393,6 +395,7 @@ class S3ObjectStorage(ObjectStorage):
 
         Args:
             key: Object key.
+
         """
         full_key = self._safe_key(key)
         async with self._open() as s3:
@@ -412,6 +415,7 @@ class S3ObjectStorage(ObjectStorage):
 
         Returns:
             True if object exists, False otherwise.
+
         """
         full_key = self._safe_key(key)
         async with self._open() as s3:
@@ -434,6 +438,7 @@ class S3ObjectStorage(ObjectStorage):
 
         Returns:
             Sorted list of matching keys.
+
         """
         full_prefix = self._safe_key(prefix) if prefix else (self._prefix or "")
         keys: list[str] = []
@@ -463,6 +468,7 @@ class S3ObjectStorage(ObjectStorage):
 
         Returns:
             Presigned URL string.
+
         """
         full_key = self._safe_key(key)
         async with self._open() as s3:
@@ -487,6 +493,7 @@ class S3ObjectStorage(ObjectStorage):
 
         Returns:
             True for S3, False for LocalFS.
+
         """
         return True
 

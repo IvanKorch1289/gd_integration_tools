@@ -40,6 +40,7 @@ def load_pipeline_from_yaml(yaml_str: str, base_path: Path | None = None) -> Pip
     Raises:
         ValueError: Неверный формат YAML или неизвестный процессор.
         RuntimeError: Цикл в include:/extends: цепочке.
+
     """
     try:
         import yaml
@@ -75,6 +76,7 @@ def load_pipeline_from_file(path: str | Path) -> Pipeline:
 
     Returns:
         Готовый Pipeline.
+
     """
     file_path = Path(path)
     yaml_str = file_path.read_text(encoding="utf-8")

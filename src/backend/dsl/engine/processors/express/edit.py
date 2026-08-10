@@ -32,6 +32,7 @@ class ExpressEditProcessor(BaseProcessor):
         bubble: Новые bubble-кнопки (опционально, ``[]`` → очистить).
         keyboard: Новые keyboard-кнопки (опционально).
         status: Новый статус ``ok|error``.
+
     """
 
     def __init__(

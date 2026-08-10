@@ -81,6 +81,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
         history_property: Свойство, куда сохранить историю итераций.
         timeout_s: Таймаут на один LLM-вызов.
         name: Имя процессора.
+
     """
 
     required_capability: ClassVar[str | None] = "ai.invoke"

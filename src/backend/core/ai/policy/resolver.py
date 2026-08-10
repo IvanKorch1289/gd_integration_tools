@@ -31,6 +31,7 @@ class PolicyNotResolvedError(LookupError):
     Attributes:
         workflow_id: workflow для которого не нашли policy.
         tenant_id: tenant_id.
+
     """
 
     def __init__(self, workflow_id: str, tenant_id: str) -> None:
@@ -39,6 +40,7 @@ class PolicyNotResolvedError(LookupError):
         Args:
             workflow_id: Запрошенный workflow_id.
             tenant_id: Запрошенный tenant_id.
+
         """
         super().__init__(
             f"AIPolicySpec не найден для workflow_id={workflow_id!r}, "
@@ -57,6 +59,7 @@ class PolicyLoadError(ValueError):
     Attributes:
         path: Путь к проблемному файлу.
         reason: Текст ошибки из yaml/pydantic.
+
     """
 
     def __init__(self, path: Path, reason: str) -> None:
@@ -65,6 +68,7 @@ class PolicyLoadError(ValueError):
         Args:
             path: Путь к проблемному файлу.
             reason: Текст ошибки.
+
         """
         super().__init__(f"Не удалось загрузить {path}: {reason}")
         self.path = path
@@ -99,6 +103,7 @@ class PolicyResolver:
             roots=[Path("extensions/credit/ai_policies"), Path("ai_policies")]
         )
         policy = await resolver.resolve("credit_check", "credit_premium")
+
     """
 
     def __init__(self, roots: list[Path] | None = None) -> None:
@@ -107,6 +112,7 @@ class PolicyResolver:
         Args:
             roots: Список корней для сканирования ``*.policy.yaml``.
                 Default: пустой; реальные пути инжектируются composition root'ом.
+
         """
         self._roots: list[Path] = roots or []
         self._cache: dict[tuple[str, str], AIPolicySpec] = {}
@@ -125,6 +131,7 @@ class PolicyResolver:
             политика не найдена. Caller (обычно :class:`AIGateway`) при
             ``ai_policy_enforce=True`` поднимает
             :class:`PolicyNotResolvedError`.
+
         """
         cache_key = (workflow_id, tenant_id)
         if cache_key in self._cache:
@@ -169,6 +176,7 @@ class PolicyResolver:
             Uses SEPARATE cache (``_specific_cache``) чтобы не
             conflict с :meth:`resolve` cache (callers могут
             использовать оба в разных contexts).
+
         """
         cache_key = (workflow_id, tenant_id)
         if hasattr(self, "_specific_cache") and cache_key in self._specific_cache:
@@ -199,6 +207,7 @@ class PolicyResolver:
 
         Returns:
             Snapshot загруженных :class:`AIPolicySpec` в порядке roots.
+
         """
         if self._policies is None:
             self._policies = list(self._load_all())
@@ -214,6 +223,7 @@ class PolicyResolver:
 
         Returns:
             ``True`` если ``value`` подходит под ``pattern``.
+
         """
         return fnmatch.fnmatchcase(value, pattern)
 
@@ -225,6 +235,7 @@ class PolicyResolver:
 
         Raises:
             PolicyLoadError: При невалидном YAML или несоответствии схеме.
+
         """
         for root in self._roots:
             if not root.exists() or not root.is_dir():
@@ -243,6 +254,7 @@ class PolicyResolver:
 
         Raises:
             PolicyLoadError: При ошибке парсинга YAML или Pydantic validation.
+
         """
         try:
             raw = yaml.safe_load(path.read_text(encoding="utf-8"))

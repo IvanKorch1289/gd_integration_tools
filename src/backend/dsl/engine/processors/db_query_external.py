@@ -54,6 +54,7 @@ class ExternalDbQueryProcessor(BaseProcessor):
             ``"scalar"`` — скалярное значение.
         commit: Если ``True`` — выполнить ``session.commit()`` после запроса
             (для INSERT/UPDATE/DELETE/CALL). Default ``False``.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL

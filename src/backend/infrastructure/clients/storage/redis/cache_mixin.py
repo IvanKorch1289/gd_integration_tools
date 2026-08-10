@@ -37,6 +37,7 @@ class CacheMixin(_RedisClientProtocol):
 
         Returns:
             Декодированное значение той же структуры.
+
         """
         if _depth > 50:
             return value
@@ -72,6 +73,7 @@ class CacheMixin(_RedisClientProtocol):
 
         Returns:
             Значение или None.
+
         """
         return await self.execute("cache", lambda conn: conn.get(key))
 
@@ -82,6 +84,7 @@ class CacheMixin(_RedisClientProtocol):
             key: ключ.
             value: значение.
             expire: TTL в секундах.
+
         """
         await self.execute("cache", lambda conn: conn.setex(key, expire, value))
 
@@ -93,6 +96,7 @@ class CacheMixin(_RedisClientProtocol):
 
         Returns:
             Число удалённых ключей.
+
         """
         if not keys:
             return 0
@@ -118,6 +122,7 @@ class CacheMixin(_RedisClientProtocol):
 
         Raises:
             ValueError: если ``len(keys) > _MAX_BATCH_LIMIT``.
+
         """
         if not keys:
             return []
@@ -153,6 +158,7 @@ class CacheMixin(_RedisClientProtocol):
 
         Raises:
             ValueError: если ``len(items) > _MAX_BATCH_LIMIT``.
+
         """
         if not items:
             return
@@ -182,6 +188,7 @@ class CacheMixin(_RedisClientProtocol):
 
         Returns:
             Число удалённых ключей.
+
         """
 
         async def op(conn: Redis) -> int:

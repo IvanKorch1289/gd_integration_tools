@@ -44,6 +44,7 @@ class IngestStateStore(Protocol):
         Args:
             task_id: Task identifier.
             payload: Initial task data.
+
         """
         ...
 
@@ -53,6 +54,7 @@ class IngestStateStore(Protocol):
         Args:
             task_id: Task identifier.
             **fields: Fields to update.
+
         """
         ...
 
@@ -64,6 +66,7 @@ class IngestStateStore(Protocol):
 
         Returns:
             Task data or None if not found.
+
         """
         ...
 
@@ -75,6 +78,7 @@ class IngestStateStore(Protocol):
 
         Returns:
             List of recent task data.
+
         """
         ...
 
@@ -93,6 +97,7 @@ class InMemoryIngestStateStore:
         Args:
             task_id: Task identifier.
             payload: Initial task data.
+
         """
         async with self._lock:
             self._tasks[task_id] = dict(payload)
@@ -104,6 +109,7 @@ class InMemoryIngestStateStore:
         Args:
             task_id: Task identifier.
             **fields: Fields to update.
+
         """
         async with self._lock:
             entry = self._tasks.get(task_id)
@@ -119,6 +125,7 @@ class InMemoryIngestStateStore:
 
         Returns:
             Task data or None if not found.
+
         """
         entry = self._tasks.get(task_id)
         return dict(entry) if entry is not None else None
@@ -131,6 +138,7 @@ class InMemoryIngestStateStore:
 
         Returns:
             List of recent task data.
+
         """
         recent_ids = list(reversed(self._order))[: max(int(limit), 0)]
         return [dict(self._tasks[tid]) for tid in recent_ids if tid in self._tasks]
@@ -177,6 +185,7 @@ class RedisIngestStateStore:
         Args:
             task_id: Task identifier.
             payload: Initial task data.
+
         """
         client = self._ensure_client()
         raw = orjson.dumps(payload)
@@ -200,6 +209,7 @@ class RedisIngestStateStore:
         Args:
             task_id: Task identifier.
             **fields: Fields to update.
+
         """
         snapshot = await self.get(task_id)
         if snapshot is None:
@@ -222,6 +232,7 @@ class RedisIngestStateStore:
 
         Returns:
             Task data or None if not found.
+
         """
         client = self._ensure_client()
         try:
@@ -246,6 +257,7 @@ class RedisIngestStateStore:
 
         Returns:
             List of recent task data.
+
         """
         client = self._ensure_client()
         limit = max(int(limit), 0)

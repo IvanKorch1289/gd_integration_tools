@@ -83,6 +83,7 @@ class MemoryProtocol(Protocol):
             отсортированный backend'ом по релевантности. Пустой список
             при отсутствии совпадений или недоступности backend'а
             (не должен поднимать исключение).
+
         """
         ...
 
@@ -97,6 +98,7 @@ class MemoryProtocol(Protocol):
             value: Произвольный сериализуемый объект; backend
                 сам решает формат (JSON / pickle / embeddings).
             ttl_s: Опц. TTL в секундах; ``None`` — без expiration.
+
         """
         ...
 
@@ -110,5 +112,6 @@ class MemoryProtocol(Protocol):
         Notes:
             Используется для GDPR / 152-ФЗ user-erasure
             (capability ``ai.memory.delete``).
+
         """
         ...

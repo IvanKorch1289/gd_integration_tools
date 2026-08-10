@@ -21,6 +21,7 @@ References:
 * ADR-0187 (S103 closure)
 * ``docs/migration/audit-emit-deprecation.md`` (Path A/B/C/D guide)
 * ``tools/check_audit_deprecation.py`` (S105 W2 regression guard)
+
 """
 
 from __future__ import annotations
@@ -62,6 +63,7 @@ def get_jsonl_backend(path: str | Path) -> JsonlAuditBackend:
 
     Returns:
         Готовый ``JsonlAuditBackend`` instance для DLQ-fallback.
+
     """
     # Lazy import: infrastructure → core facade import разрешён layer-rules.
     from src.backend.infrastructure.audit.jsonl_audit import JsonlAuditBackend

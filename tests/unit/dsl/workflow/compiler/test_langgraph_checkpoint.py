@@ -211,6 +211,7 @@ def _make_fake_temporal(
         execute_activity_handler: optional callable ``(name, *args, **kwargs)``
             invoked for each ``execute_activity`` call. If None, default returns
             ``None`` (caller can introspect ``recorder``).
+
     """
     recorder: list[dict[str, Any]] = []
 

@@ -132,6 +132,7 @@ class RequestReplyBackend:
         Raises:
             ValueError: Дубликат ``correlation_id``.
             RequestReplyTimeoutError: Reply не пришёл за ``timeout``.
+
         """
         cid = correlation_id or str(uuid.uuid4())
         reply_ch = self.reply_channel(cid)

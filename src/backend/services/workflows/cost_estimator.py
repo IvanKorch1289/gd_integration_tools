@@ -65,6 +65,7 @@ class WorkflowCostEstimator:
     Args:
         clickhouse_client_factory: async-фабрика ClickHouse-клиента.
             При ``None`` используется ``clickhouse_connect.get_async_client``.
+
     """
 
     def __init__(self, clickhouse_client_factory: Any | None = None) -> None:

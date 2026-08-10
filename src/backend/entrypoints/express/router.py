@@ -82,6 +82,7 @@ async def health() -> dict[str, str]:
 
     Returns:
         {"status": "ok"}
+
     """
     return {"status": "ok"}
 
@@ -96,6 +97,7 @@ async def receive_command(request: Request) -> JSONResponse:
 
     Returns:
         Ответ для BotX (status=ok|error).
+
     """
     try:
         payload = await request.json()
@@ -192,6 +194,7 @@ async def _dispatch_to_route(
 
     Returns:
         Сериализуемый dict ответа для BotX.
+
     """
     from src.backend.entrypoints._action_bridge import dispatch_action_or_dsl
 

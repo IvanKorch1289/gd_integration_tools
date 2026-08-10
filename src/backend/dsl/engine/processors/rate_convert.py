@@ -72,6 +72,7 @@ class RateConvertProcessor(BaseProcessor):
             взять сумму (если ``amount=None``).
         provider: ``er-api`` (default) / ``exchangerate-host``.
         to: Куда положить результат (``body.<field>`` / ``properties.<name>``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL

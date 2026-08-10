@@ -89,6 +89,7 @@ async def bulk_upsert(
 
     Returns:
         Количество затронутых строк.
+
     """
     if not rows:
         return 0
@@ -128,6 +129,7 @@ async def soft_delete(repo: Any, key: str, value: Any) -> bool:
 
     Returns:
         True если строка была обновлена.
+
     """
     model = getattr(repo, "model", None)
     if model is None:

@@ -68,6 +68,7 @@ class InputMixin(_PipelineStepsProtocol):
         Returns:
             Sanitized prompt-строка (placeholders типа ``[PHONE_1]`` вместо
             оригинальных PII-данных).
+
         """
         prompt = request.prompt_inline or request.prompt_ref or ""
         if not prompt:
@@ -106,6 +107,7 @@ class InputMixin(_PipelineStepsProtocol):
 
         Returns:
             Список :class:`GuardResult` от каждого guard'а.
+
         """
         if self._policy_enforcer is None or policy is None:
             return []

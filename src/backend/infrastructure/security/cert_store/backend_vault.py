@@ -81,6 +81,7 @@ class VaultCertBackend(CertBackend):
             kubernetes_role: K8s auth role (D255 NEW, для Vault Agent sidecar).
 
         Приоритет: kubernetes_role > role_id/secret_id > token.
+
         """
         self._base = base_path.rstrip("/")
         self._vault_url = vault_url
@@ -141,6 +142,7 @@ class VaultCertBackend(CertBackend):
 
         Returns:
             CertEntry or None if not found.
+
         """
         try:
             client = self._client()
@@ -183,6 +185,7 @@ class VaultCertBackend(CertBackend):
 
         Returns:
             Saved CertEntry with incremented version.
+
         """
         prev = await self.get(service_id)
         version = (prev.version + 1) if prev else 1
@@ -232,6 +235,7 @@ class VaultCertBackend(CertBackend):
         Returns:
             ``True`` если запись существовала (``get`` вернул не None
             до удаления).
+
         """
         prev = await self.get(service_id)
         if prev is None:

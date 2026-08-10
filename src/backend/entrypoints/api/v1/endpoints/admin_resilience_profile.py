@@ -117,6 +117,7 @@ async def list_profiles(
 
     Returns:
         Dict with profiles list.
+
     """
     profiles = await store.list(tenant_id=tenant_id)
     return {"profiles": [p.to_dict() for p in profiles]}
@@ -154,6 +155,7 @@ async def get_profile(
 
     Raises:
         HTTPException: If profile not found.
+
     """
     profile = await store.get(name, tenant_id=tenant_id)
     if profile is None:
@@ -197,6 +199,7 @@ async def upsert_profile(
 
     Returns:
         Saved profile dict.
+
     """
     profile = _profile_from_payload(name, payload)
     saved = await store.upsert(profile, tenant_id=tenant_id)
@@ -232,6 +235,7 @@ async def delete_profile(
 
     Returns:
         Dict with deleted status.
+
     """
     deleted = await store.delete(name, tenant_id=tenant_id)
     return {"deleted": deleted}

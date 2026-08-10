@@ -34,6 +34,7 @@ class AdminRoleMapping:
         jwt_claim_name: Название claim в JWT с ролями (default ``admin_roles``).
         saml_group_to_role: SAML group → AdminRole.
         mtls_cn_to_role: x509 CN → AdminRole.
+
     """
 
     jwt_claim_name: str = "admin_roles"

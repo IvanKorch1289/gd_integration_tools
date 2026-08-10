@@ -42,6 +42,7 @@ class GrpcSource:
         secure: Использовать ли TLS (default ``True``; для plaintext
             нужен явный ``secure=False`` — устаревший небезопасный режим).
         reconnect_delay_seconds: Задержка перед реконнектом.
+
     """
 
     kind: SourceKind = SourceKind.GRPC

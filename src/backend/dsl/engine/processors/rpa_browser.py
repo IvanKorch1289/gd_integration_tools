@@ -104,6 +104,7 @@ class BrowserLaunchProcessor(BaseProcessor):
             При ``browser_cookies_redis_persist=True``: cookie_store сохраняется в
             exchange.properties для последующего использования в NavigateProcessor.
             Actual restore происходит в NavigateProcessor (lazy — по domain из URL).
+
     """
 
     name = "browser_launch"
@@ -174,6 +175,7 @@ class NavigateProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен с контекстом RPA-сессии.
             context: Контекст выполнения процессора.
+
         """
         try:
             page = _get_or_create_page(exchange)
@@ -272,6 +274,7 @@ class ExtractProcessor(BaseProcessor):
         attribute: Если задан — берётся атрибут (``href``, ``value``); иначе
             ``inner_text()``.
         to: ``body.<field>`` / ``property:<name>`` куда положить.
+
     """
 
     name = "rpa_extract"
@@ -333,6 +336,7 @@ class WaitForProcessor(BaseProcessor):
         state: ``"load"`` / ``"domcontentloaded"`` / ``"networkidle"`` —
             если ``selector`` не задан, ждём load state.
         timeout: Секунд (default 30).
+
     """
 
     name = "rpa_wait_for"

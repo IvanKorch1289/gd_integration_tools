@@ -146,6 +146,7 @@ class ImapMonitor:
 
         Returns:
             Готовый IMAP-клиент. Вызывающий обязан вызвать ``logout()``.
+
         """
         from aioimaplib import IMAP4, IMAP4_SSL
 

@@ -30,6 +30,7 @@ class SpInitiatedLoginResult:
             ``InResponseTo`` (replay-defence).
         relay_state: RelayState — будет вернут IdP клиенту, используется
             для пост-логин redirect на изначальную страницу.
+
     """
 
     redirect_url: str
@@ -47,6 +48,7 @@ class SamlSpHandler:
         backend: Низкоуровневый :class:`SamlBackend`.
         default_post_login_url: куда редиректить если RelayState пуст
             (default ``"/"``).
+
     """
 
     def __init__(
@@ -64,6 +66,7 @@ class SamlSpHandler:
 
         Returns:
             :class:`SpInitiatedLoginResult`.
+
         """
         relay_state = return_to or self._default_post_login
         url, request_id = self._backend.build_login_redirect_url(
@@ -88,6 +91,7 @@ class SamlSpHandler:
         Raises:
             SamlError: при replay-attack, expired token, или невалидной
                 подписи.
+
         """
         return self._backend.process_saml_response(
             request_id=request_id, validator=validator_factory,

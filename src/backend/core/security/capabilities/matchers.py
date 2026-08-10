@@ -56,6 +56,7 @@ class SegmentedGlobMatcher:
 
     Args:
         sep: Один символ-разделитель (``"."``, ``"/"``, ``":"``).
+
     """
 
     def __init__(self, sep: str) -> None:

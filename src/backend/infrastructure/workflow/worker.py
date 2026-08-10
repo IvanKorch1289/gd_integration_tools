@@ -124,6 +124,7 @@ class NoOpStepExecutor:
 
         Returns:
             ``StepResult(outcome=StepOutcome.DONE, events=[], output_state=None)``.
+
         """
         # Импорт отложен чтобы CLI --help не тянул БД/модели.
         from src.backend.infrastructure.workflow.runner import StepOutcome, StepResult

@@ -31,6 +31,7 @@ class DenseResult(TypedDict):
         document: Текстовое содержание чанка.
         metadata: Метаданные (source, page, etc.).
         score: Similarity score [0..1].
+
     """
 
     chunk_id: str
@@ -57,6 +58,7 @@ class DenseRetriever:
         chunk_id_field: Название поля в result dict для извлечения chunk_id.
             Default: ``"id"``. Также проверяется ``metadata.id``.
         default_score: Score используется если vector store не возвращает score.
+
     """
 
     def __init__(
@@ -86,6 +88,7 @@ class DenseRetriever:
 
         Returns:
             Список DenseResult длиной ≤ top_k.
+
         """
         if not query.strip():
             return []

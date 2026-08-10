@@ -70,6 +70,7 @@ class JwksCache:
 
     Attrs:
         url: URL JWKS endpoint'а.
+
     """
 
     def __init__(
@@ -117,6 +118,7 @@ class JwksCache:
 
         Returns:
             Словарь JWK или ``None`` если ключ не найден.
+
         """
         jwks = await self.get_keys()
         for key in jwks.get("keys", []):

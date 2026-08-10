@@ -55,6 +55,7 @@ class WebhookSource:
             включается timestamp-window check против replay.
         timestamp_window_seconds: Допустимое отклонение timestamp от
             ``time.time()`` (default 300с).
+
     """
 
     kind: SourceKind = SourceKind.WEBHOOK
@@ -166,6 +167,7 @@ class WebhookSource:
             raw_body: Сырое тело запроса (для HMAC).
             headers: HTTP headers (case-insensitive ожидается у вызывающего).
             payload: Распарсенный payload (если уже декодирован вызывающим).
+
         """
         if self._on_event is None:
             raise RuntimeError(

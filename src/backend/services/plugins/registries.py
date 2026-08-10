@@ -91,6 +91,7 @@ class RepositoryHookRegistry:
                 кастомное (для нестандартных репозиториев).
             callback: Async-callable, вызывается как
                 ``await callback(repo, *args, **kwargs)``.
+
         """
         if event not in KNOWN_REPO_EVENTS:
             logger.warning(

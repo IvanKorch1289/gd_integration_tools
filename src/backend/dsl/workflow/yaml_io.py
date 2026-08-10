@@ -63,6 +63,7 @@ def _make_yaml() -> YAML:
         ``ruamel.yaml.YAML`` (``typ="rt"``), сохраняющий порядок ключей,
         с отключённым flow-style по умолчанию и шириной 120 для
         читаемости diff-снапшотов.
+
     """
     yaml = YAML(typ="rt")
     yaml.default_flow_style = False
@@ -84,6 +85,7 @@ def _make_safe_yaml() -> YAML:
     Returns:
         ``ruamel.yaml.YAML`` (``typ="safe"``), отвергающий unsafe-теги
         с :class:`ruamel.yaml.constructor.ConstructorError`.
+
     """
     return YAML(typ="safe")
 
@@ -101,6 +103,7 @@ def to_yaml(decl: WorkflowDeclaration) -> str:
     Returns:
         YAML-строка с UTF-8 контентом, готовая к записи в
         ``workflows/<name>.workflow.yaml``.
+
     """
     payload = decl.model_dump(mode="json")
     yaml = _make_yaml()
@@ -126,6 +129,7 @@ def from_yaml(yaml_text: str) -> WorkflowDeclaration:
         FeatureDisabledError: Если ``workflow_yaml_round_trip`` выключен.
         pydantic.ValidationError: Если YAML не соответствует схеме
             декларации (неизвестный ``type``, пустой ``steps`` и т. п.).
+
     """
     from src.backend.core.config.features import feature_flags
 
@@ -155,6 +159,7 @@ class WorkflowDiff(BaseModel):
             но различающимся содержимым (args/timeout/retry/etc).
         version_changed: ``(old_version, new_version)`` либо ``None``,
             если ``decl_a.version == decl_b.version``.
+
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -187,6 +192,7 @@ def _step_identity(step: Any) -> str:
 
     Returns:
         Строковый идентификатор формата ``<type>:<name>``.
+
     """
     step_type = step.type
     match step_type:
@@ -222,6 +228,7 @@ def diff(decl_a: WorkflowDeclaration, decl_b: WorkflowDeclaration) -> WorkflowDi
 
     Returns:
         Иммутабельный :class:`WorkflowDiff` с tuple-полями.
+
     """
     a_ids = {_step_identity(s): s for s in decl_a.steps}
     b_ids = {_step_identity(s): s for s in decl_b.steps}
@@ -271,6 +278,7 @@ def load_workflow_from_yaml(yaml_text: str) -> WorkflowDeclaration:
     Raises:
         FeatureDisabledError: Если feature flag выключен.
         pydantic.ValidationError: Если YAML не соответствует схеме.
+
     """
     return from_yaml(yaml_text)
 
@@ -288,6 +296,7 @@ def load_workflow_from_file(path: str | Path) -> WorkflowDeclaration:
         FileNotFoundError: Если файла нет.
         FeatureDisabledError: Если feature flag выключен.
         pydantic.ValidationError: Если YAML невалиден.
+
     """
     file_path = Path(path)
     if not file_path.is_file():
@@ -310,6 +319,7 @@ def load_all_workflows_from_directory(
 
     Returns:
         Список :class:`WorkflowDeclaration` (успешно загруженных).
+
     """
     dir_path = Path(directory)
     if not dir_path.is_dir():

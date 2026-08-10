@@ -57,6 +57,7 @@ class DepsMixin(_RouteBuilderProtocol):
             builder.call_function("my.module:handler").depends(
                 "db", ("logger", "logging.logger")
             )
+
         """
         last = self._last_processor_or_raise()
         if not hasattr(last, "_inject"):

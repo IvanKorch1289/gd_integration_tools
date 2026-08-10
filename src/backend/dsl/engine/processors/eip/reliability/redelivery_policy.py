@@ -92,6 +92,7 @@ class RedeliveryPolicyProcessor(BaseProcessor):
 
     Это meta-processor: не выполняет downstream pipeline, только
     обновляет headers + применяет delay/dispatch решения.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL

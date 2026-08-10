@@ -12,6 +12,7 @@ def get_v1_routers() -> APIRouter:
 
     Returns:
         Единый ``APIRouter`` со всеми v1-маршрутами, готовый к ``app.include_router``.
+
     """
     from src.backend.entrypoints.api.v1.endpoints.actions_inventory import (
         router as actions_inventory_router,

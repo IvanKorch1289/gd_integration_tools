@@ -44,6 +44,7 @@ class AuditEvent:
 
         Returns:
             Словарь, совместимый с колонками таблицы ``audit_events``.
+
         """
         return {
             "event_id": self.event_id,

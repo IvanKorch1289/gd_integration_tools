@@ -31,6 +31,7 @@ class ExpressStatusProcessor(BaseProcessor):
         sync_id_from: Выражение извлечения sync_id из exchange.
         result_property: Имя exchange-property для записи структуры
             ``{group_chat_id, sent_to, read_by, received_by}``.
+
     """
 
     def __init__(

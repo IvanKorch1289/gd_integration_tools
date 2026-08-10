@@ -22,6 +22,7 @@ class EntityGetProcessor(_BaseEntityProcessor):
         entity: Имя сущности.
         id_from: Выражение извлечения id (default ``body.id``).
         result_property: Имя property для записи объекта.
+
     """
 
     _verb = "get"

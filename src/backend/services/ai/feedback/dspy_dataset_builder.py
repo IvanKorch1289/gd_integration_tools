@@ -26,6 +26,7 @@ class DSPyExampleRecord:
         completion: Эталонный ответ (labeled).
         label: ``positive``/``negative`` для bootstrap-фильтрации.
         metadata: tenant_id, session_id, source feedback_id.
+
     """
 
     prompt: str
@@ -39,6 +40,7 @@ class DSPyDatasetBuilder:
 
     Args:
         feedback_service: :class:`AIFeedbackService` instance.
+
     """
 
     def __init__(self, feedback_service: Any) -> None:
@@ -60,6 +62,7 @@ class DSPyDatasetBuilder:
 
         Returns:
             List of :class:`DSPyExampleRecord`.
+
         """
         labeled = await self._service.list_labeled(tenant_id=tenant_id, limit=limit)
         out: list[DSPyExampleRecord] = []

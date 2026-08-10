@@ -28,6 +28,7 @@ class FileCertBackend(CertBackend):
 
     Args:
         path: Директория с .pem/.crt файлами (cert_id = filename без расширения).
+
     """
 
     def __init__(self, path: Path) -> None:

@@ -27,6 +27,7 @@ class DiskCacheBackend(CacheBackend):
 
     Args:
         base_path: Корневой каталог для файлов кэша.
+
     """
 
     def __init__(self, base_path: str | Path) -> None:
@@ -47,6 +48,7 @@ class DiskCacheBackend(CacheBackend):
 
         Returns:
             Cached bytes or None if not found.
+
         """
         path = self._safe_path(key)
         try:
@@ -65,6 +67,7 @@ class DiskCacheBackend(CacheBackend):
             key: Cache key.
             value: Value to cache.
             ttl: Ignored (disk backend has no per-key TTL).
+
         """
         del ttl  # disk backend ignores per-key TTL
         path = self._safe_path(key)
@@ -82,6 +85,7 @@ class DiskCacheBackend(CacheBackend):
 
         Args:
             keys: Cache keys to delete.
+
         """
         for key in keys:
             path = self._safe_path(key)
@@ -97,6 +101,7 @@ class DiskCacheBackend(CacheBackend):
 
         Args:
             pattern: Glob pattern (ignored, disk cache doesn't support pattern delete).
+
         """
 
         def _sync() -> None:
@@ -117,6 +122,7 @@ class DiskCacheBackend(CacheBackend):
 
         Returns:
             True if key exists, False otherwise.
+
         """
         path = self._safe_path(key)
         try:

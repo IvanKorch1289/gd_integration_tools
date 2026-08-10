@@ -63,6 +63,7 @@ class LocalFSModelRegistry(ModelRegistryAdapter):
         workspace_path: Путь к ``${AI_WORKSPACE}`` (default из env ``AI_WORKSPACE``
             или ``/tmp/ai_workspace``). Должен содержать подкаталог ``models/``.
         models_subdir: Имя подкаталога моделей внутри workspace (default ``models``).
+
     """
 
     def __init__(

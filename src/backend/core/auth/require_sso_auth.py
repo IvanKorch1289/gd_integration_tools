@@ -75,6 +75,7 @@ async def _resolve_user_capabilities(registry: SsoRegistry, auth: Any) -> list[s
     Raises:
         RequireSsoAuthError: tenant_id missing, IdP config not found.
         SsoRegistryError: Vault/schema error (propagated).
+
     """
     tenant_id = extract_tenant_id(auth)
     if tenant_id is None:
@@ -111,6 +112,7 @@ def require_sso_auth(registry: SsoRegistry) -> Callable[[_F], _F]:
     Raises:
         RequireSsoAuthError: SSO validation failed.
         SsoRegistryError: Vault/schema error (propagated).
+
     """
 
     def decorator(func: _F) -> _F:
@@ -153,6 +155,7 @@ def require_sso_capability(
     Raises:
         RequireSsoAuthError: SSO validation failed or capability missing.
         SsoRegistryError: Vault/schema error (propagated).
+
     """
 
     def decorator(func: _F) -> _F:
@@ -195,6 +198,7 @@ def _extract_auth_from_args(
 
     Returns:
         AuthContext-like object или ``None`` если не найден.
+
     """
     # 1) Keyword «auth» (canonical).
     if "auth" in kwargs:

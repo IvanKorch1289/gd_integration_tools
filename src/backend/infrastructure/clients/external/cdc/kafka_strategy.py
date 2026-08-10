@@ -46,6 +46,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
         bootstrap_servers: Kafka broker (e.g. "broker:9092").
         group_id: Consumer group для offset tracking.
         auto_offset_reset: "earliest" / "latest".
+
     """
 
     def __init__(

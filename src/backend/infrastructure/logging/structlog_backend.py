@@ -56,6 +56,7 @@ class StructlogLogger(LoggerProtocol):
 
         Returns:
             (formatted_message, merged_kwargs) — готово к передаче в structlog.
+
         """
         if not args:
             return msg, kwargs
@@ -74,6 +75,7 @@ class StructlogLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.debug(formatted, **merged)
@@ -85,6 +87,7 @@ class StructlogLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.info(formatted, **merged)
@@ -96,6 +99,7 @@ class StructlogLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.warning(formatted, **merged)
@@ -107,6 +111,7 @@ class StructlogLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.error(formatted, **merged)
@@ -118,6 +123,7 @@ class StructlogLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         formatted, merged = self._format(msg, args, kwargs)
         # stdlib-семантика: exception() по умолчанию exc_info=True
@@ -131,6 +137,7 @@ class StructlogLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.critical(formatted, **merged)
@@ -143,6 +150,7 @@ class StructlogLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.log(level, formatted, **merged)

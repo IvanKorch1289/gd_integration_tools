@@ -153,6 +153,7 @@ class WorkflowBackend(Protocol):
 
         Returns:
             Payload сигнала (dict). При таймауте: ``{"timed_out": True}``.
+
         """
         ...
 
@@ -191,5 +192,6 @@ class WorkflowBackend(Protocol):
         Returns:
             Дескриптор child workflow. Namespace наследуется от parent.
             При cancel parent — child тоже отменяется.
+
         """
         ...

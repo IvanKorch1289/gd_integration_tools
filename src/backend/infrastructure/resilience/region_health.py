@@ -49,6 +49,7 @@ class RegionHealthChecker:
             Seconds to wait for a region health probe response.
         unhealth_threshold
             Consecutive failures before marking a region UNHEALTHY.
+
         """
         self._timeout = timeout
         self._threshold = unhealth_threshold

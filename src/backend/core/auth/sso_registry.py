@@ -99,6 +99,7 @@ class VaultClientProtocol(Protocol):
 
         Raises:
             Exception: Любая ошибка Vault (connection, auth, missing).
+
         """
         ...
 
@@ -164,6 +165,7 @@ class SsoRegistry:
         idp_config = await registry.get("acme")
         if idp_config is None:
             raise HTTPException(503, "IdP config not available")
+
     """
 
     def __init__(
@@ -213,6 +215,7 @@ class SsoRegistry:
             SsoRegistrySchemaError: Pydantic validation error ИЛИ
                 missing required field (propagates — schema error значит
                 config некорректен, нужно fix в Vault).
+
         """
         path = self._path_for(tenant)
         raw = self._vault.read_secret(path)
@@ -235,6 +238,7 @@ class SsoRegistry:
 
         Raises:
             SsoRegistrySchemaError: Pydantic validation error (propagates).
+
         """
         if self._is_fresh(tenant):
             return self._cache[tenant]
@@ -304,6 +308,7 @@ def _parse_idp_config(raw: dict[str, Any]) -> IdpConfig:
             ``sso_url``, ``x509_cert``). Caller (``_load``) ловит и
             оборачивает в :class:`SsoRegistrySchemaError`.
         ValidationError: Если типы полей некорректны.
+
     """
     groups_to_caps_raw = raw.get(GROUPS_TO_CAPABILITIES_KEY, {}) or {}
     return IdpConfig(

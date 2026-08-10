@@ -52,6 +52,7 @@ class SlaBreachRecord:
         hard_limit: настройка SLA.
         breach_action: что было выполнено (``alert``/``cancel``/``none``).
         detected_at: timestamp обнаружения.
+
     """
 
     workflow_id: str
@@ -67,6 +68,7 @@ class SlaBreachRecord:
 
         Returns:
             Dictionary representation.
+
         """
         return {
             "workflow_id": self.workflow_id,
@@ -105,6 +107,7 @@ class InMemorySlaAlertDispatcher:
             breach: Запись о breach (SLA violation record).
             email: Email получателя (или ``None``).
             slack: Slack channel (или ``None``).
+
         """
         self.sent.append({"breach": breach.to_dict(), "email": email, "slack": slack})
 
@@ -125,6 +128,7 @@ def evaluate_sla(
 
     Returns:
         :class:`SlaBreachRecord` с ``level=NONE`` если в пределах SLA.
+
     """
     if elapsed_seconds >= hard_limit_seconds:
         level = SlaBreachLevel.HARD
@@ -201,6 +205,7 @@ class SlaTracker:
         dispatcher: реализация :class:`SlaAlertDispatcher`.
         check_interval_seconds: период проверки (default 10s).
         on_hard_breach: опц. callback для cancel-action.
+
     """
 
     def __init__(

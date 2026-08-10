@@ -43,6 +43,7 @@ class StreamingEIPsMixin(EIPMixinBase):
             key_prefix: Пространство имён Redis-ключей.
             window_seconds: Длительность окна в секундах.
             mode: Режим — ``first`` | ``last`` | ``unique``.
+
         """
         from src.backend.dsl.engine.processors.eip.windowed_dedup import (
             WindowedDedupProcessor,
@@ -69,6 +70,7 @@ class StreamingEIPsMixin(EIPMixinBase):
             size: Максимальный размер батча перед flush'ем.
             timeout_ms: Таймаут окна в миллисекундах.
             group_by: Опциональный путь группировки. Без значения — общий буфер.
+
         """
         from src.backend.dsl.engine.processors.patterns import BatchWindowProcessor
 
@@ -98,6 +100,7 @@ class StreamingEIPsMixin(EIPMixinBase):
             window_seconds: Длительность окна в секундах.
             dedup_mode: ``first`` | ``last`` — какое значение сохранять.
             inject_as: Имя exchange-свойства для инжекции батча.
+
         """
         from src.backend.dsl.engine.processors.eip.windowed_dedup import (
             WindowedCollectProcessor,

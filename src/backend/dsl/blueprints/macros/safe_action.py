@@ -41,6 +41,7 @@ def safe_action(
 
     Returns:
         Pipeline: Готовый pipeline с resilience-паттернами.
+
     """
     builder = RouteBuilder.from_(
         route_id,

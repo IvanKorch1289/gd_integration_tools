@@ -18,6 +18,7 @@ class MailService:
 
         Args:
             mail_client (SmtpClient): Клиент для работы с SMTP-сервером.
+
         """
         from src.backend.core.logging import get_logger
 
@@ -43,6 +44,7 @@ class MailService:
         Raises:
             ValueError: Если не удалось сформировать сообщение.
             RuntimeError: Если не удалось отправить письмо.
+
         """
         try:
             msg = self._prepare_message(
@@ -73,6 +75,7 @@ class MailService:
 
         Returns:
             MIMEMultipart|MIMEText: Сформированное сообщение.
+
         """
         from email.header import Header
         from email.mime.multipart import MIMEMultipart
@@ -124,6 +127,7 @@ class MailService:
             ValueError: Если папка с шаблонами не настроена.
             FileNotFoundError: Если файл шаблона не найден.
             RuntimeError: Если произошла ошибка при обработке шаблона.
+
         """
         from aiofiles import open
 
@@ -162,6 +166,7 @@ async def get_mail_service() -> AsyncGenerator[MailService]:
 
     Yields:
         MailService: Экземпляр сервиса для работы с электронной почтой.
+
     """
     mail_service = MailService(mail_client=smtp_client)
     try:

@@ -57,6 +57,7 @@ def _count_httpx_calls(client: BaseAPIClient, path: str, side_effect: Any) -> in
 
     Returns:
         Количество фактических HTTP-запросов.
+
     """
     mock_client = MagicMock()
     mock_client.request.return_value = side_effect

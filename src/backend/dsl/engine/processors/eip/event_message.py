@@ -150,6 +150,7 @@ class EventMessageProcessor(BaseProcessor):
         name: имя процессора.
 
     Side effects (если producer задан): публикация в external channel.
+
     """
 
     # Классифицируется как SIDE_EFFECTING при наличии producer (публикация в Kafka/RabbitMQ/NATS).
@@ -197,6 +198,7 @@ class EventMessageProcessor(BaseProcessor):
         Args:
             exchange: Текущий exchange; envelope — в свойстве ``event.envelope``.
             context: Контекст выполнения маршрута.
+
         """
         # Resolve event_id: explicit header > generated.
         existing_id = exchange.in_message.get_header(HEADER_EVENT_ID)

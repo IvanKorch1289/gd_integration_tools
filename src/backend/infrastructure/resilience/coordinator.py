@@ -310,6 +310,7 @@ class ResilienceCoordinator:
             )
             async def fetch_quote(req: dict) -> dict:
                 ...
+
         """
         import functools
 

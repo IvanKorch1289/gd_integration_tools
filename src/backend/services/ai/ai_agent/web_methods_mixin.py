@@ -42,6 +42,7 @@ class WebMethodsMixin:
 
         Returns:
             Результат поиска с восстановленными данными.
+
         """
         sanitized = self._sanitizer.sanitize_text(query)
         messages = [{"role": "user", "content": sanitized.sanitized}]

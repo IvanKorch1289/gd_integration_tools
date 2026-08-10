@@ -83,6 +83,7 @@ class ThreeTierRagCache:
             chunks: List of chunk dictionaries.
             tenant: Optional tenant scope (изоляция между tenant'ами).
             namespace: Optional namespace scope.
+
         """
         if self._l3_enabled:
             await self._l3.set(query, chunks, tenant=tenant, namespace=namespace)

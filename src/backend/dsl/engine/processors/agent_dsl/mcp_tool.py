@@ -79,6 +79,7 @@ class MCPToolProcessor(BaseAIProcessor):
             Default ``mcp_result``.
         timeout_s: Timeout на вызов в секундах. Default ``30``.
         name: Имя процессора.
+
     """
 
     required_capability: ClassVar[str | None] = "mcp.call"
@@ -145,6 +146,7 @@ class MCPToolProcessor(BaseAIProcessor):
 
         Returns:
             dict с аргументами или None если path невалиден.
+
         """
         path = self.arguments_property
         if path == "body":

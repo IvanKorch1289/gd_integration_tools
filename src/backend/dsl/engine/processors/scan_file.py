@@ -51,6 +51,7 @@ class ScanFileProcessor(BaseProcessor):
         on_threat: ``fail`` (default) | ``warn`` — поведение при угрозе.
         result_property: Имя property для записи структуры
             ``{clean, signature, backend, latency_ms}``.
+
     """
 
     def __init__(

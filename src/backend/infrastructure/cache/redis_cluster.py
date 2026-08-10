@@ -48,6 +48,7 @@ class RedisClusterAdapter:
             в секундах (redis-py 5.x: ``health_check_interval``).
         password: опц. пароль кластера.
         decode_responses: если ``True`` — возвращает ``str`` вместо bytes.
+
     """
 
     def __init__(
@@ -83,6 +84,7 @@ class RedisClusterAdapter:
         Returns:
             ``True`` если кластер отвечает; ``False`` при любой ошибке
             (логируется в WARNING).
+
         """
         try:
             result = await self._cluster.ping()
@@ -126,6 +128,7 @@ class RedisClusterAdapter:
 
         Args:
             routing_key: Ключ для определения shard'а (default: автоматически).
+
         """
         return self._cluster.pipeline()
 
@@ -140,6 +143,7 @@ class RedisClusterAdapter:
 
         Returns:
             Значения в исходном порядке (``None`` для отсутствующих).
+
         """
         if not keys:
             return []
@@ -161,6 +165,7 @@ class RedisClusterAdapter:
 
         Args:
             mapping: ``{key: value}`` для записи.
+
         """
         if not mapping:
             return
@@ -184,6 +189,7 @@ class RedisClusterAdapter:
 
         Yields:
             Списки keys по ``batch_size`` штук.
+
         """
         async for key in self._cluster.scan_iter(match=pattern, count=batch_size):
             yield [key]

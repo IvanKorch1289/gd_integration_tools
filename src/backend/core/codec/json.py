@@ -39,6 +39,7 @@ def to_jsonable(value: Any) -> Any:
 
     Returns:
         JSON-serializable представление (dict / list / scalar).
+
     """
     if isinstance(value, BaseModel):
         return {
@@ -128,6 +129,7 @@ def dumps_bytes(value: Any, *, sort_keys: bool = False, indent: bool = False) ->
         value: Значение для сериализации.
         sort_keys: Включить ``OPT_SORT_KEYS`` (детерминированный порядок).
         indent: Включить ``OPT_INDENT_2`` (читаемый формат).
+
     """
     options = 0
     if sort_keys:
@@ -175,6 +177,7 @@ def canonical_json_bytes(value: Any) -> bytes:
 
     Returns:
         UTF-8 bytes, byte-stable между процессами / запусками / архитектурами.
+
     """
     return _stdjson.dumps(
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str,

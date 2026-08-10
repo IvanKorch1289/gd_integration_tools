@@ -148,6 +148,7 @@ class StreamingLLMProcessor(BaseProcessor):
             exchange: Текущий exchange; prompt — из ``prompt_property`` или body.
                 Результат — в ``in_message.body``.
             context: Контекст выполнения маршрута.
+
         """
         prompt = exchange.properties.get(self._prompt_property)
         if prompt is None:

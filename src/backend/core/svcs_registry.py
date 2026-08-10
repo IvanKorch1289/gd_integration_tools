@@ -60,6 +60,7 @@ def register_factory(key: Hashable, factory: Callable[[], Any]) -> None:
 
     Повторная регистрация сбрасывает закешированный синглтон (чтобы
     ``register_factory`` можно было использовать для override в тестах).
+
     """
     with _lock:
         _factories[key] = factory
@@ -93,6 +94,7 @@ def get_service[T](key: Hashable | type[T]) -> T | Any:
 
     Raises:
         KeyError: если ``key`` не зарегистрирован.
+
     """
     with _lock:
         if key in _singletons:

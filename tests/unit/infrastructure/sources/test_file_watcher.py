@@ -42,6 +42,7 @@ async def _collect_one(source: FileWatcherSource, timeout: float = 3.0) -> FileE
 
     Raises:
         TimeoutError: Если за ``timeout`` секунд событие не поступило.
+
     """
 
     async def _inner() -> FileEvent:

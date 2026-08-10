@@ -80,6 +80,7 @@ class CancelWorkflowProcessor(BaseProcessor):
         backend: Опциональный backend (DI/тесты); если ``None`` —
             ленивая фабрика ``create_workflow_backend("auto")``.
         backend_factory: Опциональная async-фабрика backend.
+
     """
 
     def __init__(

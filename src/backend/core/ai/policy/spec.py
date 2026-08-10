@@ -60,6 +60,7 @@ class ModelRouterSpec(BaseModel):
             ``"openai/gpt-4o-mini"`` vs ``"openai/gpt-4o"``,
             ``"anthropic/claude-3-haiku"`` vs ``"anthropic/claude-3.5-sonnet"``).
             Если None — strategy degrades to ``"failover"`` behaviour.
+
     """
 
     model_config = _STRICT_CONFIG
@@ -84,6 +85,7 @@ class SanitizerRef(BaseModel):
             ``"fail"`` — поднять исключение;
             ``"warn"`` — логировать и продолжить;
             ``"skip"`` — обойти sanitizer без логирования.
+
     """
 
     model_config = _STRICT_CONFIG
@@ -106,6 +108,7 @@ class GuardRef(BaseModel):
             ``"fail"`` — поднять :exc:`GuardrailViolationError`;
             ``"warn"`` — логировать и продолжить;
             ``"dlq"`` — отправить запрос в Dead Letter Queue.
+
     """
 
     model_config = _STRICT_CONFIG
@@ -133,6 +136,7 @@ class BackendSpec(BaseModel):
         namespace: Шаблон namespace с подстановками
             (``"credit:short:{tenant_id}:{session_id}"``).
         ttl: TTL в секундах (если применимо).
+
     """
 
     model_config = _STRICT_CONFIG
@@ -156,6 +160,7 @@ class MemorySpec(BaseModel):
             ``tenant_id``; cross-tenant утечки заблокированы.
         encryption: Если ``True`` — payload шифруется через
             ``infrastructure/secrets/`` ключами Vault.
+
     """
 
     model_config = _STRICT_CONFIG
@@ -180,6 +185,7 @@ class BudgetSpec(BaseModel):
         context_strategy: Стратегия управления conversation history
             (``rolling_window`` | ``map_reduce`` | ``hierarchical``).
             gap-ai-8.
+
     """
 
     model_config = _STRICT_CONFIG
@@ -199,6 +205,7 @@ class AuditSpec(BaseModel):
             событий (например, ``{"compliance": "152-FZ"}``).
             Добавляются в payload через ``AuditService`` (S17/K3).
         schema_version: Версия audit-схемы. Используется при breaking-changes.
+
     """
 
     model_config = _STRICT_CONFIG
@@ -247,6 +254,7 @@ class ToolsSpec(BaseModel):
           blacklist: ["fs.write", "shell.execute", "network.open_socket"]
           on_violation: "fail"
         ```
+
     """
 
     model_config = _STRICT_CONFIG
@@ -290,6 +298,7 @@ class AIPolicySpec(BaseModel):
         required: Если ``True`` — :class:`AIGateway` падает с
             :exc:`PolicyNotResolvedError` если resolver не нашёл подходящую
             политику. ``False`` — fallback default-pass-through.
+
     """
 
     model_config = _STRICT_CONFIG
@@ -333,6 +342,7 @@ class AIPolicySpec(BaseModel):
             * tools.whitelist и tools.blacklist не пересекаются.
             * budget.max_tokens_prompt ≥ max_tokens_completion.
             * model_router.primary непустой.
+
         """
         tool_set = set(self.tools.whitelist)
         blacklist_set = set(self.tools.blacklist)

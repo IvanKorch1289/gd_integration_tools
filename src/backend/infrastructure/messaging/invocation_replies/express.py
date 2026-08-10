@@ -54,6 +54,7 @@ class ExpressReplyChannel(InvocationReplyChannel):
             оператора).
         default_bot: Имя бота по умолчанию (передаётся в
             :class:`ExpressAdapter`).
+
     """
 
     def __init__(

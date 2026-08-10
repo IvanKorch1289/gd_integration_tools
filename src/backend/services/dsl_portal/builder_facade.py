@@ -41,6 +41,7 @@ def list_workflow_templates() -> list[Any]:
 
     Returns:
         Список :class:`WorkflowTemplate` (отсортирован по ``registry.load_all()``).
+
     """
     registry = get_template_registry()
     return list(registry.load_all())

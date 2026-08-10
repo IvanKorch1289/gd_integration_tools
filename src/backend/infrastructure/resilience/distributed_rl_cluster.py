@@ -81,6 +81,7 @@ class DistributedRedisRateLimiter:
         refill_per_second: Скорость пополнения (tokens / sec).
         key_prefix: Префикс ключей в Redis. Hashtag ``{tenant_id}``
             обеспечивает hash-slot routing на один узел.
+
     """
 
     def __init__(
@@ -116,6 +117,7 @@ class DistributedRedisRateLimiter:
         Returns:
             :class:`TokenBucketResult` с allowed/remaining/retry_after_ms.
             При недоступности Redis — fail-open (allowed=True, remaining=0).
+
         """
         now_ms = int(time.time() * 1000)
         key = self._key(tenant_id)

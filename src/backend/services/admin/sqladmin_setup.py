@@ -57,6 +57,7 @@ def register_admin(
         Базовый ``setup_admin`` уже монтирует ``/admin``-маршрут на
         ``async_engine`` приложения. Этот фасад нужен прежде всего для
         расширения набора ``ModelView`` без правки legacy-кода.
+
     """
     try:
         from src.backend.utilities.admin_panel.setup_admin import setup_admin

@@ -45,6 +45,7 @@ class RoutingRule(BaseModel):
         use_agent: agent_id для использования при выполнении условия.
         use_model: Опц. переопределение модели (``provider:model``).
         memory_scope: Опц. переопределение memory scope для этого правила.
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -106,6 +107,7 @@ class OrchestratorSpec(BaseModel):
         default_agent: agent_id агента по умолчанию (если ни одно
             правило не сработало и ``fallback_agent`` не задан).
         fallback_agent: agent_id для критических ошибок / escalation.
+
     """
 
     model_config = ConfigDict(extra="forbid")

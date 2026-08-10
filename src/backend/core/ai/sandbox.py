@@ -28,6 +28,7 @@ class BudgetExceededError(Exception):
         budget_type: Type of budget exceeded (``token`` or ``cost``).
         limit: The budget limit that was exceeded.
         consumed: Actual consumption that triggered the error.
+
     """
 
     def __init__(self, *, budget_type: str, limit: float, consumed: float) -> None:
@@ -52,6 +53,7 @@ class SandboxResult:
         artifacts: Сгенерированные файлы как ``{relative_path: bytes}``.
             Caller ответственен за их сохранение через
             :class:`AIFsFacade.create_new` в выданный workspace.
+
     """
 
     stdout: str
@@ -94,6 +96,7 @@ class CodeSandbox(Protocol):
             BudgetExceededError: Превышен token или cost budget.
             CapabilityDeniedError: Caller не задекларировал ``code.execute``.
             RuntimeError: Sandbox-провайдер недоступен (NoOp).
+
         """
         ...
 
@@ -133,6 +136,7 @@ class NoOpSandbox:
 
         Raises:
             RuntimeError: Всегда, если не подключён реальный провайдер.
+
         """
         raise RuntimeError(
             "CodeSandbox не сконфигурирован: установите e2b-code-interpreter "

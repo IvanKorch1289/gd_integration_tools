@@ -77,6 +77,7 @@ class SmartSessionManager:
             игнорируется до снижения lag ниже budget.
         lag_check_interval_seconds: интервал проверки lag в секундах
             (K2 S19 W1, default 5.0).
+
     """
 
     def __init__(
@@ -102,6 +103,7 @@ class SmartSessionManager:
             use_breaker_facade: S173 — если True, использовать
                 :class:`ReplicaFailoverBreaker` из unified facade.
                 Если False — legacy manual counter (backward-compat).
+
         """
         self._primary = primary_sessionmaker
         self._replica = replica_sessionmaker
@@ -173,6 +175,7 @@ class SmartSessionManager:
         Yields:
             ``AsyncSession`` с открытой транзакцией (в зависимости от
             sessionmaker конфигурации).
+
         """
         sessionmaker, on_replica = await self._pick_sessionmaker(mode)
         session = sessionmaker()
@@ -195,6 +198,7 @@ class SmartSessionManager:
 
         Returns:
             Кортеж ``(sessionmaker, использует_replica?)``.
+
         """
         if mode == "write":
             return self._primary, False
@@ -224,6 +228,7 @@ class SmartSessionManager:
         Returns:
             True если ``multi_replica_failover`` активен и интервал
             между проверками истёк.
+
         """
         try:
             from src.backend.core.config.features import feature_flags

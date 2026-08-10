@@ -26,6 +26,7 @@ def _make_default_event_id() -> str:
 
     Returns:
         Строковое представление UUID4.
+
     """
     return str(uuid.uuid4())
 
@@ -35,6 +36,7 @@ def _make_default_timestamp() -> datetime:
 
     Returns:
         Текущая временная метка в timezone-aware формате UTC.
+
     """
     return datetime.now(UTC)
 
@@ -64,6 +66,7 @@ def make_audit_event(
 
     Returns:
         Заполненный экземпляр :class:`AuditEvent`.
+
     """
     return AuditEvent(
         event_id=event_id or _make_default_event_id(),
@@ -84,6 +87,7 @@ def get_audit_service() -> ClickHouseAuditService:
 
     Returns:
         Единственный экземпляр :class:`ClickHouseAuditService`.
+
     """
     # Late import: избегаем circular (service.py не импортирует helpers).
     from src.backend.services.audit.clickhouse_audit_service.service import (

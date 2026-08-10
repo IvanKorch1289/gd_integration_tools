@@ -47,6 +47,7 @@ class ImageResult:
         size: Размер изображения (например ``"1024x1024"``).
         n: Сколько изображений запрашивалось.
         cost_usd: Оценочная стоимость вызова (из LiteLLM, если доступна).
+
     """
 
     urls: list[str] = field(default_factory=list)
@@ -92,6 +93,7 @@ class LiteLLMImageGenerationService:
         >>> if svc.is_available():
         ...     result = await svc.generate("кот в шапке", size="1024x1024")
         ...     print(result.urls)
+
     """
 
     def __init__(
@@ -232,6 +234,7 @@ class LiteLLMImageGenerationService:
         Raises:
             ImageGenerationUnavailable: litellm не установлен / flag выключен.
             ValueError: пустой prompt.
+
         """
         if not prompt or not prompt.strip():
             raise ValueError("LiteLLMImageGenerationService.generate: пустой prompt")

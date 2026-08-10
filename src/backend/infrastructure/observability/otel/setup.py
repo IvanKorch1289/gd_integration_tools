@@ -58,6 +58,7 @@ def configure_otel(
     Returns:
         Сконфигурированный :class:`TracerProvider` или ``None``, если
         OTel SDK не установлен / уже инициализирован другим вызовом.
+
     """
     try:
         from opentelemetry import propagate, trace
@@ -181,6 +182,7 @@ def setup_otel_metrics(
     Returns:
         Сконфигурированный :class:`MeterProvider` или ``None``, если
         OTel SDK не установлен / уже инициализирован другим вызовом.
+
     """
     global _meter_provider_ref
 
@@ -259,6 +261,7 @@ def _register_base_meters(meter_provider: Any) -> None:
 
     Args:
         meter_provider: сконфигурированный :class:`MeterProvider`.
+
     """
     try:
         from opentelemetry import metrics
@@ -308,6 +311,7 @@ def shutdown_otel_metrics(timeout_millis: int = 30000) -> None:
 
     Args:
         timeout_millis: таймаут shutdown в миллисекундах.
+
     """
     global _meter_provider_ref
 

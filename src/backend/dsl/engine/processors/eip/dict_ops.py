@@ -79,6 +79,7 @@ class PydashGetProcessor(BaseProcessor):
 
         PydashGetProcessor(path="customer.email", default="anonymous")
         # body = {"customer": {"email": "a@b.com"}} → property "extracted_value" = "a@b.com"
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -140,6 +141,7 @@ class PydashSetProcessor(BaseProcessor):
             path="metadata.processed_at",
             value=lambda ex: ex.get_property("timestamp"),
         )
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -193,6 +195,7 @@ class PydashOmitProcessor(BaseProcessor):
         PydashOmitProcessor(fields=["password", "ssn", "card_number"])
         # body = {"name": "alice", "password": "x", "ssn": "123"} →
         # body = {"name": "alice"}
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -260,6 +263,7 @@ class PydashPickProcessor(BaseProcessor):
         PydashPickProcessor(fields=["id", "name", "email"])
         # body = {"id": 1, "name": "a", "email": "a@b", "password": "x"} →
         # body = {"id": 1, "name": "a", "email": "a@b"}
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -307,6 +311,7 @@ class PydashMergeProcessor(BaseProcessor):
         })
         # body = {"audit": {"version": 2}} →
         # body = {"audit": {"version": 2, "source": "api_v2"}, "metadata": {"retries": 0}}
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

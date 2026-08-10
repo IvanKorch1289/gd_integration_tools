@@ -56,6 +56,7 @@ class OCRProcessor(Protocol):
 
         Returns:
             Распознанный текст (пустая строка при сбое или NoOp).
+
         """
         ...  # type: ignore[empty-body]
 
@@ -99,6 +100,7 @@ class PytesseractOCRProcessor:
 
         S164 W3: pytesseract.image_to_string — sync, offloaded в thread pool
         через asyncio.to_thread (не блокирует event loop).
+
         """
         try:
             import pytesseract
@@ -155,6 +157,7 @@ def from_environment() -> OCRProcessor:
         Factory — sync (создаёт объект, не вызывает recognize).
         S164 W3: ``is_available`` check — sync wrapper для async method
         (для сохранения sync factory API). Production code use async.
+
     """
     try:
         from src.backend.core.config.features import feature_flags

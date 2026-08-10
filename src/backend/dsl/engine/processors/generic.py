@@ -60,6 +60,7 @@ class ShadowModeProcessor(BaseProcessor):
         Notes:
             Nested processors, поддерживающие shadow flag, должны пропускать
             side effects и только логировать попытки.
+
         """
         was_shadow = exchange.get_property("shadow_mode", False)
         exchange.set_property("shadow_mode", True)

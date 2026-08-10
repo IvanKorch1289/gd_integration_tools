@@ -80,6 +80,7 @@ class TenantFeatureFlagResolver:
         >>> # Внутри request-context с tenant_id="acme":
         >>> await resolver.is_enabled("new_ui", default=False)
         # → Flagsmith.resolve_boolean_value("new_ui", False, ctx=acme)
+
     """
 
     __slots__ = ("_local_features", "provider")
@@ -111,6 +112,7 @@ class TenantFeatureFlagResolver:
 
         Returns:
             Значение flag.
+
         """
         # Сначала пробуем external provider (если включён глобальный gate).
         if self.provider is not None and self._external_enabled():
@@ -133,6 +135,7 @@ class TenantFeatureFlagResolver:
 
         Returns:
             Строковое значение flag.
+
         """
         if self.provider is not None and self._external_enabled():
             try:

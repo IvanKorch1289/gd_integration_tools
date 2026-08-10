@@ -36,6 +36,7 @@ class StdlibLogger(LoggerProtocol):
 
         Returns:
             Logger name string.
+
         """
         return self._inner.name
 
@@ -45,6 +46,7 @@ class StdlibLogger(LoggerProtocol):
 
         Returns:
             Logger level as integer.
+
         """
         return self._inner.level
 
@@ -54,6 +56,7 @@ class StdlibLogger(LoggerProtocol):
 
         Returns:
             List of handlers.
+
         """
         return self._inner.handlers
 
@@ -63,6 +66,7 @@ class StdlibLogger(LoggerProtocol):
 
         Returns:
             Parent logger or None.
+
         """
         return self._inner.parent
 
@@ -71,6 +75,7 @@ class StdlibLogger(LoggerProtocol):
 
         Args:
             level: Logging level.
+
         """
         self._inner.setLevel(level)
 
@@ -79,6 +84,7 @@ class StdlibLogger(LoggerProtocol):
 
         Args:
             handler: Handler to add.
+
         """
         self._inner.addHandler(handler)
 
@@ -87,6 +93,7 @@ class StdlibLogger(LoggerProtocol):
 
         Args:
             handler: Handler to remove.
+
         """
         self._inner.removeHandler(handler)
 
@@ -97,6 +104,7 @@ class StdlibLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         self._inner.debug(msg, *args, **kwargs)
 
@@ -107,6 +115,7 @@ class StdlibLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         self._inner.info(msg, *args, **kwargs)
 
@@ -117,6 +126,7 @@ class StdlibLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         self._inner.warning(msg, *args, **kwargs)
 
@@ -127,6 +137,7 @@ class StdlibLogger(LoggerProtocol):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         self._inner.error(msg, *args, **kwargs)
 

@@ -39,5 +39,6 @@ class AuthBackend(Protocol):
         Returns:
             :class:`AuthContext` при успехе или ``None`` если credentials
             отсутствуют или невалидны.
+
         """
         ...

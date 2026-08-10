@@ -51,6 +51,7 @@ class JdbcQueryProcessor(BaseProcessor):
         result_property: Exchange property key where the result is stored.
             For SELECT: list[dict]. For INSERT/UPDATE/DELETE: int (affected count).
         name: Optional processor name for logging/debugging.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL

@@ -26,6 +26,7 @@ class OfficeExtractProcessor:
 
         Returns:
             'docx' / 'xlsx' / 'unknown'.
+
         """
         try:
             with zipfile.ZipFile(BytesIO(data)) as z:
@@ -47,6 +48,7 @@ class OfficeExtractProcessor:
 
         Returns:
             Извлеченный текст или None.
+
         """
         fmt = self.detect_format(data)
         if fmt == "docx":

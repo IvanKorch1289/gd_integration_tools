@@ -182,6 +182,7 @@ class APISource:
         transform_fn: ``(response: Any) -> Any`` — post-process response.
         fallback_value: Возвращается при error/timeout вместо raising.
         cache_ttl_seconds: TTL для in-memory cache. 0 = no cache.
+
     """
 
     name: str
@@ -262,6 +263,7 @@ class APICompositionProcessor(BaseProcessor):
             exchange: Текущий exchange; результаты — в свойстве
                 ``composition_results``, ошибки — в ``composition_errors``.
             context: Контекст выполнения маршрута.
+
         """
         tasks = [self._fetch_source(s) for s in self._sources]
         raw_results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -369,6 +371,7 @@ class APICompositionMixin:
             merge_strategy: MERGE_DICTS / LIST / CUSTOM.
             custom_merger: Required if merge_strategy=CUSTOM.
             timeout_seconds: Overall timeout (per-source = total / N).
+
         """
         return self._add(  # type: ignore[attr-defined]
             APICompositionProcessor(

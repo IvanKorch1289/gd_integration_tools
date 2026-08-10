@@ -33,6 +33,7 @@ class FileEvent:
         path: Абсолютный путь к изменённому файлу.
         change_type: Тип изменения: ``added``, ``modified`` или ``deleted``.
         timestamp: Unix-время момента обнаружения события (float, секунды).
+
     """
 
     path: Path
@@ -66,6 +67,7 @@ class FileWatcherSource:
 
             async for event in FileWatcherSource("fw1", Path("/data")).stream():
                 print(event.path, event.change_type)
+
     """
 
     kind: SourceKind = SourceKind.FILE_WATCHER
@@ -269,6 +271,7 @@ class FileWatcherSource:
 
         Raises:
             asyncio.CancelledError: При отмене задачи (propagates наружу).
+
         """
         from watchfiles import awatch as _awatch
 

@@ -36,6 +36,7 @@ def get_quotas_backend_provider() -> Any:
 
     Raises:
         NotImplementedError: Если ``BILLING_ENABLED=True`` и не задан override.
+
     """
     if "quotas_backend" in _overrides:
         return _overrides["quotas_backend"]

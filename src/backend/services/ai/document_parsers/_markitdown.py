@@ -58,6 +58,7 @@ class MarkitdownEngine:
         max_bytes: Максимальный размер документа в байтах.
         network_enabled: ``True`` — разрешить outbound (через WAF, future),
             ``False`` — silent-skip (default).
+
     """
 
     def __init__(
@@ -113,6 +114,7 @@ class MarkitdownEngine:
             MarkitdownUnavailableError: пакет/инстанс недоступен.
             ValueError: размер превышает ``max_bytes``.
             asyncio.TimeoutError: конвертация дольше ``timeout_s``.
+
         """
         if len(content) > self._max_bytes:
             raise ValueError(

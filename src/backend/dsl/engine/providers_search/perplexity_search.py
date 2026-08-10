@@ -32,6 +32,7 @@ class PerplexitySearchProcessor(BaseProcessor):
         max_tokens: Максимум токенов в ответе (default 1000).
         temperature: 0.0-1.0 (default 0.2 — факты).
         to: Куда положить результат (default "body.perplexity_result").
+
     """
 
     required_capability: ClassVar[str | None] = "web_search.perplexity.invoke"

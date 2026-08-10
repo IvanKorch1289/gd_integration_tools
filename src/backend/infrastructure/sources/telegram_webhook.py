@@ -43,6 +43,7 @@ class TelegramUpdate:
         message: incoming message text (если есть).
         callback_query: callback query data (если есть).
         raw: полный JSON payload.
+
     """
 
     update_id: int
@@ -79,6 +80,7 @@ class TelegramWebhookSource:
 
         Returns:
             ``True`` если валидно (header matches configured secret_token).
+
         """
         if self.secret_token is None:
             return True  # No secret configured — accept all
@@ -118,6 +120,7 @@ class TelegramWebhookSource:
 
         Returns:
             Полный webhook URL для setWebhook API call.
+
         """
         return f"{public_base_url.rstrip('/')}/api/v1/telegram/{self.bot_token}"
 

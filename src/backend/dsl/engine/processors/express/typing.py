@@ -25,6 +25,7 @@ class ExpressTypingProcessor(BaseProcessor):
         bot: Имя бота.
         chat_id_from: Выражение извлечения chat_id.
         action: ``start`` (показать typing) | ``stop`` (скрыть).
+
     """
 
     def __init__(

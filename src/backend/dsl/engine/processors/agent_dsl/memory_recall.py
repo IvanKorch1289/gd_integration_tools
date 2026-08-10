@@ -71,6 +71,7 @@ class MemoryRecallProcessor(BaseAIProcessor):
         result_property: Свойство exchange для результата. Default
             ``"memory_recall"``.
         name: Имя процессора.
+
     """
 
     required_capability: ClassVar[str | None] = "ai.memory.read"

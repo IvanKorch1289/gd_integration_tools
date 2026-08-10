@@ -57,6 +57,7 @@ class RagMixin:
         Returns:
             (use_flag, messages) — флаг включения RAG и потенциально
             модифицированный список сообщений.
+
         """
         if not namespace:
             return False, messages
@@ -113,6 +114,7 @@ class RagMixin:
 
         Returns:
             ``RAGService`` либо ``None``.
+
         """
         try:
             from src.backend.services.ai.rag_service import get_rag_service

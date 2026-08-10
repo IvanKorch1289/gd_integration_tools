@@ -76,6 +76,7 @@ class RegexExtractorProcessor(BaseProcessor):
             * ``all_named`` — list[dict] групп всех matcher'ов (re.finditer);
             * ``groups`` — tuple групп первого matcher.
         flags: Флаги ``re`` (e.g. ``re.IGNORECASE | re.MULTILINE``).
+
     """
 
     def __init__(

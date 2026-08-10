@@ -128,6 +128,7 @@ class InspectRunner:
             ``artifacts/inspect-ai``).
         suites: Список suite-модулей; если ``None`` — используются
             ``REFERENCE_SUITES``.
+
     """
 
     def __init__(

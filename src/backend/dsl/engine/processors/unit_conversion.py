@@ -62,6 +62,7 @@ class UnitConversionProcessor(BaseProcessor):
         from_value_source: ``body.<field>`` / ``properties.<name>`` —
             откуда взять значение (если ``value=None``).
         to: Куда положить результат.
+
     """
 
     def __init__(

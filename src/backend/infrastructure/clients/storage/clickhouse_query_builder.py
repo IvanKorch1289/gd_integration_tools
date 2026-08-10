@@ -80,6 +80,7 @@ class Condition:
 
         Returns:
             :class:`Condition` with raw expression.
+
         """
         return cls(expression, tuple(params))
 
@@ -136,6 +137,7 @@ class ClickHouseQueryBuilder:
 
         Returns:
             Self for chaining.
+
         """
         if not values:
             # WHERE col IN () — заведомо false; используем 1=0.
@@ -155,6 +157,7 @@ class ClickHouseQueryBuilder:
 
         Returns:
             Self for chaining.
+
         """
         self._wheres.append(Condition(f"{col} BETWEEN %s AND %s", (start, end)))
         return self
@@ -167,6 +170,7 @@ class ClickHouseQueryBuilder:
 
         Returns:
             Self for chaining.
+
         """
         self._group_by.extend(cols)
         return self
@@ -179,6 +183,7 @@ class ClickHouseQueryBuilder:
 
         Returns:
             Self for chaining.
+
         """
         for c in conditions:
             if isinstance(c, str):
@@ -196,6 +201,7 @@ class ClickHouseQueryBuilder:
 
         Returns:
             Self for chaining.
+
         """
         for c in cols:
             self._order_by.append((c, desc))
@@ -210,6 +216,7 @@ class ClickHouseQueryBuilder:
 
         Returns:
             Self for chaining.
+
         """
         self._limit = n
         self._offset = offset
@@ -233,6 +240,7 @@ class ClickHouseQueryBuilder:
         Returns:
             (sql, params) tuple. ``params`` — позиционные значения для
             ``client.execute(sql, params=params)``.
+
         """
         if not self._from:
             raise ValueError("FROM clause is required")
@@ -299,6 +307,7 @@ class ClickHouseQueryBuilder:
         Args:
             client: объект с ``execute(sql, params=...)`` методом
                 (например, ClickHouseClient или clickhouse-connect AsyncClient).
+
         """
         sql, params = self.build()
         # ClickHouse params формат: %(name)s — но мы используем %s; передаём кортежем.

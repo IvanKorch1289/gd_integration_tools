@@ -53,6 +53,7 @@ class SemanticRouterProcessor(BaseProcessor):
                 intent и score в свойствах ``semantic_route_intent`` /
                 ``semantic_route_score``.
             context: Контекст выполнения маршрута.
+
         """
         body = exchange.in_message.body
         query = body.get(self._query_field, "") if isinstance(body, dict) else str(body)

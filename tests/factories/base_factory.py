@@ -38,6 +38,7 @@ class BaseFactory:
 
         Returns:
             Словарь field → default_value.
+
         """
         return {}
 
@@ -53,6 +54,7 @@ class BaseFactory:
 
         Raises:
             TypeError: Если model задана, но не поддерживает **kwargs.
+
         """
         data = {**cls.defaults(), **overrides}
         if cls.model is not None:
@@ -69,5 +71,6 @@ class BaseFactory:
 
         Returns:
             Список экземпляров модели.
+
         """
         return [cls.build(**overrides) for _ in range(count)]

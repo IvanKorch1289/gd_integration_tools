@@ -218,6 +218,7 @@ class CachingDecorator:
 
             Returns:
                 Результат функции или значение из кэша.
+
             """
             key = self.key_builder(func, args, kwargs)
 

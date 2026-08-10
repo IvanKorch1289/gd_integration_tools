@@ -40,6 +40,7 @@ def validate_module_whitelist(
         PermissionError: Если модуль запрещён или пустой whitelist требует
             ``PermissionError``.
         ValueError: Если пустой whitelist требует ``ValueError``.
+
     """
     whitelist_set = set(whitelist)
     if not whitelist_set:

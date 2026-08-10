@@ -42,6 +42,7 @@ class AppriseNotificationService:
 
     Атрибуты:
         _channel_urls: Словарь ``{имя_канала: url_apprise}``.
+
     """
 
     def __init__(self, default_channels: list[str] | None = None) -> None:
@@ -49,6 +50,7 @@ class AppriseNotificationService:
 
         Args:
             default_channels: Имена каналов по умолчанию для :meth:`notify`.
+
         """
         self._default_channels: list[str] = default_channels or []
         self._channel_urls: dict[str, str] = {}
@@ -59,6 +61,7 @@ class AppriseNotificationService:
         Args:
             channel: Логическое имя канала (e.g. ``"slack"``, ``"telegram"``).
             url: Apprise-совместимый URL (e.g. ``slack://token/channel``).
+
         """
         self._channel_urls[channel] = url
         _log.debug("Канал уведомлений зарегистрирован: %s -> %s", channel, url)
@@ -84,6 +87,7 @@ class AppriseNotificationService:
 
         Returns:
             ``True`` если уведомление отправлено успешно, ``False`` иначе.
+
         """
         from src.backend.core.config.features import feature_flags
 
@@ -145,6 +149,7 @@ class AppriseNotificationService:
 
         Returns:
             Словарь ``{channel: success}`` с результатом для каждого канала.
+
         """
         import asyncio
 
@@ -163,6 +168,7 @@ def get_notification_service() -> AppriseNotificationService:
 
     Returns:
         Экземпляр :class:`AppriseNotificationService`.
+
     """
     global _instance
     if _instance is None:

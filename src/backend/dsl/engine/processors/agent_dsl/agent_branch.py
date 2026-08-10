@@ -76,6 +76,7 @@ class AgentBranchProcessor(BaseAIProcessor):
         default: Опц. ветка fallback при отсутствии verdict в ``branches``.
             При ``None`` — silent skip (логируется warning).
         name: Имя процессора.
+
     """
 
     audit_event: ClassVar[str | None] = "ai.agent.branch"

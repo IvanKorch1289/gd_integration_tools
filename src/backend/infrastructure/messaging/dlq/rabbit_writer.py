@@ -42,6 +42,7 @@ class RabbitDLQWriter:
         channel: pre-initialized ``aio_pika.Channel`` (DI).
         exchange_name: Имя exchange'а (``""`` = default exchange).
         queue_prefix: префикс queue (default ``"dlq."``).
+
     """
 
     def __init__(

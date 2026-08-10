@@ -66,6 +66,7 @@ class StreamingSSEMixin:
                 .dispatch_action("orders.process")
                 .build()
             )
+
         """
         import importlib
 
@@ -144,6 +145,7 @@ class StreamingSSEMixin:
                 .dispatch_action("events.process")
                 .build()
             )
+
         """
         if not urls:
             raise ValueError("from_sse_multi: urls must be non-empty list")

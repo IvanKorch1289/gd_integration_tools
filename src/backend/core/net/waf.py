@@ -41,6 +41,7 @@ class WafDecision:
         allowed: ``True`` — запрос разрешён, ``False`` — заблокирован.
         reason: Человекочитаемое объяснение (для audit-log/DLQ).
         host: Хост запроса (для метки Prometheus).
+
     """
 
     allowed: bool
@@ -53,6 +54,7 @@ class WafBypassError(RuntimeError):
 
     Attributes:
         decision: Полное решение (``WafDecision``) для audit-event'а.
+
     """
 
     def __init__(self, decision: WafDecision) -> None:
@@ -96,6 +98,7 @@ class WafPolicy:
     осознанное решение (мы не хотим заблокировать всё ядро при пустом
     конфиге). Default-deny включается через :func:`build_default_policy`
     с явным ``strict=True``.
+
     """
 
     allow_hosts: frozenset[str] = field(default_factory=frozenset)

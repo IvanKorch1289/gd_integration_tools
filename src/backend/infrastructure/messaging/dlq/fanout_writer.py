@@ -30,6 +30,7 @@ class FanoutDLQWriter:
         writers: список реализаций :class:`DLQWriter`.
         require_all: если ``True`` — exception при любой failure;
             если ``False`` (default) — успешно если хотя бы один записал.
+
     """
 
     def __init__(self, *, writers: list[Any], require_all: bool = False) -> None:

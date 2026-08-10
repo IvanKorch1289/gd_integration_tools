@@ -43,6 +43,7 @@ class TTSResult:
         provider: Имя провайдера (``"coqui"``).
         model: Идентификатор использованной модели.
         sample_rate: Частота дискретизации (Hz), если известна.
+
     """
 
     output_path: Path
@@ -80,6 +81,7 @@ class CoquiTTSService:
         >>> if svc.is_available():
         ...     result = await svc.synthesize("Привет, мир", lang="ru")
         ...     print(result.output_path)
+
     """
 
     def __init__(
@@ -193,6 +195,7 @@ class CoquiTTSService:
         Raises:
             VoiceServiceUnavailable: SDK не установлен / flag выключен.
             ValueError: пустой ``text``.
+
         """
         if not text or not text.strip():
             raise ValueError("CoquiTTSService.synthesize: пустой текст")

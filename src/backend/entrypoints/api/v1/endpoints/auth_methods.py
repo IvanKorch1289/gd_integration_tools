@@ -84,6 +84,7 @@ async def get_auth_methods() -> AuthMethodsResponse:
 
     Returns:
         AuthMethodsResponse с актуальным состоянием.
+
     """
     from src.backend.core.auth.ldap_client_factory import get_ad_client
     from src.backend.core.config.services.ldap import ldap_settings

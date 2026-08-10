@@ -42,6 +42,7 @@ class Message[T](BaseModel):
         watermark: Wall-clock секунды (Unix epoch); граница "не позже"
             для оконных процессоров (W14.3). ``None`` = watermark не
             эмитился источником.
+
     """
 
     headers: dict[str, Any] = Field(default_factory=dict)
@@ -59,6 +60,7 @@ class Message[T](BaseModel):
 
         Returns:
             Any: Значение заголовка или default.
+
         """
         return self.headers.get(key, default)
 
@@ -69,6 +71,7 @@ class Message[T](BaseModel):
         Args:
             key: Имя заголовка.
             value: Значение заголовка.
+
         """
         self.headers[key] = value
 
@@ -90,6 +93,7 @@ class ExchangeMeta(BaseModel):
         tenant_id: Идентификатор тенанта (K-ARCH-4, S17). Устанавливается
             ExecutionEngine для pipeline'ов с ``tenant_aware=True`` из
             RequestContext или TenantContext.
+
     """
 
     exchange_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -131,6 +135,7 @@ class Exchange[T](BaseModel):
 
         Returns:
             Any: Значение свойства или default.
+
         """
         return self.properties.get(key, default)
 
@@ -141,6 +146,7 @@ class Exchange[T](BaseModel):
         Args:
             key: Ключ свойства.
             value: Значение свойства.
+
         """
         self.properties[key] = value
 
@@ -151,6 +157,7 @@ class Exchange[T](BaseModel):
         Args:
             body: Результирующее тело.
             headers: Результирующие заголовки.
+
         """
         self.out_message = Message(body=body, headers=headers or {})
 
@@ -161,6 +168,7 @@ class Exchange[T](BaseModel):
         Args:
             body: Результирующее тело.
             headers: Результирующие заголовки.
+
         """
         self.set_out(body=body, headers=headers)
         self.status = ExchangeStatus.completed
@@ -172,6 +180,7 @@ class Exchange[T](BaseModel):
 
         Args:
             reason: Текст ошибки.
+
         """
         self.status = ExchangeStatus.failed
         self.error = reason
@@ -197,6 +206,7 @@ class Exchange[T](BaseModel):
         Args:
             fn: Колбэк без аргументов. Может быть coroutine-function; если
                 возвращает awaitable — он ожидается.
+
         """
         self.properties.setdefault("_finalizers", []).append(fn)
 

@@ -44,6 +44,7 @@ def _schema_filename(spec: ProcessorSpec) -> str:
 
     Returns:
         Строка имени файла без пути.
+
     """
 
     if spec.namespace == "core":
@@ -69,6 +70,7 @@ def export_processors_schema(output_dir: Path) -> int:
 
     Raises:
         OSError: При проблемах с созданием директории или записью файлов.
+
     """
 
     output_dir.mkdir(parents=True, exist_ok=True)

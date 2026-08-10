@@ -216,6 +216,7 @@ def record_ai_token_usage(provider: str, model: str, kind: str, tokens: int) -> 
         model: имя модели.
         kind: ``prompt`` | ``completion``.
         tokens: количество токенов.
+
     """
     _ai_tokens_counter.labels(provider=provider, model=model, kind=kind).inc(tokens)
 

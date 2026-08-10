@@ -45,6 +45,7 @@ class InfraMixin:
         Example::
 
             builder.guardrails_apply(stage="output", on_block="fail")
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.guardrails_apply import (
             GuardrailsApplyProcessor,
@@ -78,6 +79,7 @@ class InfraMixin:
         Example::
 
             builder.pii_mask(scope="banking")
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.pii_mask import (
             PIIMaskProcessor,
@@ -113,6 +115,7 @@ class InfraMixin:
         Example::
 
             builder.pii_unmask(source_property="agent_result.content", strict=True)
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.pii_unmask import (
             PIIUnmaskProcessor,
@@ -192,6 +195,7 @@ class InfraMixin:
                 ``subprocess.run`` в плагинах запрещён; код исполняется
                 в e2b/pyodide-sandbox». Для pre-S3 поведения (in-process)
                 передавайте ``isolated=False`` явно.
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.agent_graph import (
             AgentGraphProcessor,
@@ -265,6 +269,7 @@ class InfraMixin:
         Example::
 
             builder.skill_invoke(skill_id="credit.score.calculate")
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.skill_invoke import (
             SkillInvokeProcessor,
@@ -304,6 +309,7 @@ class InfraMixin:
                 query_property="body.user_input",
                 k=3,
             )
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.memory_recall import (
             MemoryRecallProcessor,
@@ -345,6 +351,7 @@ class InfraMixin:
                 key_property="meta.exchange_id",
                 ttl_s=86400,
             )
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.memory_store import (
             MemoryStoreProcessor,
@@ -392,6 +399,7 @@ class InfraMixin:
                 task="Нажми кнопку 'Подтвердить' в диалоговом окне",
                 ui_context={"screenshot": "${rpa.screenshot}"},
             )
+
         """
         from src.backend.dsl.engine.processors.ai_rpa import AIRpaProcessor
 
@@ -440,6 +448,7 @@ class InfraMixin:
                 arguments_property="body.query_params",
                 result_property="mcp_result",
             )
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import (
             MCPToolProcessor,
@@ -503,6 +512,7 @@ class InfraMixin:
             S106 W4 = skeleton: DSL method + validation + capability gate
             + audit emit. Real LLM-wiring (AIGateway.invoke + JSON-parse
             + auto-dispatch) — S106+ W5+ (multi-wave scope).
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.ai_tool_dispatch import (
             AIToolDispatchProcessor,
@@ -545,6 +555,7 @@ class InfraMixin:
                 prompt_name="credit_scoring_v2",
                 limit=500,
             )
+
         """
         from src.backend.dsl.engine.processors.agent_dsl.optimize_prompt import (
             OptimizePromptProcessor,

@@ -37,6 +37,7 @@ class SoapSource:
         params: Аргументы вызова операции (kwargs для service-method).
         interval_seconds: Интервал между опросами.
         emit_first: Эмитить ли первый успешный ответ (default ``True``).
+
     """
 
     kind: SourceKind = SourceKind.SOAP

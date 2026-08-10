@@ -55,6 +55,7 @@ class WorkflowDescriptor:
         tags: Произвольные теги ("banking", "ai", "saga", ...). Не
             влияют на runtime, используются только для фильтрации в
             каталоге workflows.
+
     """
 
     name: str
@@ -103,6 +104,7 @@ class WorkflowRegistry:
 
         Raises:
             ValueError: Если workflow с таким именем уже зарегистрирован.
+
         """
         if not descriptor.name:
             raise ValueError("WorkflowDescriptor.name не может быть пустым")

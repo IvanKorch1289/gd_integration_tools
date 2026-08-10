@@ -40,6 +40,7 @@ class ExpressMentionProcessor(BaseProcessor):
         name_from: Выражение, возвращающее отображаемое имя.
         property_name: Имя exchange-property, в которое добавляется упоминание
             (по умолчанию ``express_mentions``).
+
     """
 
     def __init__(

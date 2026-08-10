@@ -42,6 +42,7 @@ class ReloadEvent:
         change_kind: ``"added"`` / ``"modified"`` / ``"removed"``.
         success: True если reload прошёл; False — старая версия осталась.
         error: текст ошибки если success=False.
+
     """
 
     __slots__ = ("change_kind", "error", "route_name", "success")
@@ -69,6 +70,7 @@ class RouteHotReloader:
         enabled: feature-flag (default False).
         debounce_seconds: окно объединения событий (default 0.5).
         on_event: опц. callback (``ReloadEvent``) для audit/UI.
+
     """
 
     def __init__(

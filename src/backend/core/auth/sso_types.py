@@ -72,6 +72,7 @@ class GroupsToCapabilities(BaseModel):
         Returns:
             Дедуплицированный список capability-scope'ов (порядок
             сохраняется — дедупликация first-seen).
+
         """
         resolved: list[str] = []
         seen: set[str] = set()
@@ -93,6 +94,7 @@ class IdpConfig(BaseModel):
         allow_create_user: Автопровижинг нового пользователя.
         slo_url: Single Logout URL (опционально).
         groups_to_capabilities: IdP groups → capability-scope'ы mapping.
+
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")

@@ -54,6 +54,7 @@ def _make_action_tool(action_name: str) -> Any:
     Returns:
         :class:`StructuredTool` обёртка, диспетчеризующая в
         ``action_handler_registry.dispatch``.
+
     """
     from langchain_core.tools import StructuredTool
 
@@ -104,6 +105,7 @@ def build_chat_model(
     Raises:
         ImportError: Если ни ``langchain_litellm``, ни
             ``langchain_community`` не установлены.
+
     """
     from src.backend.services.ai.gateway import get_litellm_gateway
 
@@ -170,6 +172,7 @@ async def build_and_run_agent(
     Returns:
         Результат работы агента: словарь с ``prompt``, ``tools_used``,
         ``response``, ``message_count`` либо ``error``.
+
     """
     try:
         from langgraph.prebuilt import create_react_agent

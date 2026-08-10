@@ -55,6 +55,7 @@ class FeatureFlagCheckProcessor(BaseProcessor):
 
     Body contract: не используется.
     Output: ``exchange.properties[output_field] = bool`` (всегда).
+
     """
 
     side_effect: ClassVar[Any] = "READ"

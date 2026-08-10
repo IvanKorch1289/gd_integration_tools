@@ -41,6 +41,7 @@ class ReflectionResult:
             по записи на каждый critic-вызов.
         iterations: Сколько critic-вызовов было сделано.
         duration_ms: Длительность всего цикла.
+
     """
 
     final_output: Any
@@ -222,6 +223,7 @@ class ReflectionLoopMixin:
 
         Returns:
             :class:`RouteBuilder` для fluent-chaining.
+
         """
         return self._add(  # type: ignore[attr-defined]
             ReflectionLoopProcessor(

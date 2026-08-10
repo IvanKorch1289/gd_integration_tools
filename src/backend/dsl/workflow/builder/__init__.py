@@ -108,6 +108,7 @@ class WorkflowBuilder(
 
         Returns:
             Self для fluent chaining.
+
         """
         self._steps.append(step)
         return self

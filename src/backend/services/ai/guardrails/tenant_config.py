@@ -18,6 +18,7 @@ class GuardrailsThresholds:
         rebuff_threshold: [DEPRECATED S172] Аналогично для Rebuff prompt-injection
             detector (archived 2026); порог сохранён для backward-compat
             tenant-settings. research/agent-framework/REPORT.md F4.2.
+
     """
 
     lakera_threshold: float = 0.5
@@ -36,6 +37,7 @@ class GuardrailsConfig:
         thresholds: Численные пороги.
         block_on_failure: ``True`` — при ошибке/timeout провайдера запрос
             блокируется fail-closed; ``False`` — fail-open (для warn-only).
+
     """
 
     enabled_providers: frozenset[str] = field(

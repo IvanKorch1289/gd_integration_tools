@@ -53,6 +53,7 @@ def dumps_str(
 
         dumps_str({"name": "alice", "id": 42})  # '{"name":"alice","id":42}'
         dumps_str({"x": 1}, indent=True)  # '{\n  "x": 1\n}'
+
     """
     options = _BASE_OPTIONS | (orjson.OPT_INDENT_2 if indent else 0)
     return orjson.dumps(obj, default=default, option=options).decode("utf-8")
@@ -74,6 +75,7 @@ def dumps_bytes(
     Example::
 
         dumps_bytes({"hello": "world"})  # b'{"hello":"world"}'
+
     """
     options = _BASE_OPTIONS | (orjson.OPT_INDENT_2 if indent else 0)
     return orjson.dumps(obj, default=default, option=options)
@@ -95,6 +97,7 @@ def loads(data: bytes | str | bytearray | memoryview) -> Any:
 
         loads(b'{"x": 1}')  # {'x': 1}
         loads('{"x": 1}')  # {'x': 1}
+
     """
     if isinstance(data, str):
         data = data.encode("utf-8")

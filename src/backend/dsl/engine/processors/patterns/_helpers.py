@@ -18,6 +18,7 @@ class _SafeDict(dict):
         >>> template = "Hello {name}, age {age}"
         >>> template.format_map(_SafeDict({"name": "Alice"}))
         'Hello Alice, age {age}'
+
     """
 
     def __missing__(self, key: str) -> str:

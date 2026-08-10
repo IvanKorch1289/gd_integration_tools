@@ -55,6 +55,7 @@ class DaskMixin:
 
         Raises:
             ValueError: Пустой graph или step без ``op``.
+
         """
         if not graph:
             raise ValueError("DaskMixin.dask_compute: пустой graph")
@@ -94,6 +95,7 @@ class DaskMixin:
             fn: Dotted path к callable (``module.path:function``).
             output_to: Куда писать результат.
             **kwargs: Доп. kwargs для ``dask_compute``.
+
         """
         return cls.dask_compute(
             route_id=route_id,

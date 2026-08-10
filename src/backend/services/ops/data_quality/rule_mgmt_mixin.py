@@ -44,6 +44,7 @@ class RuleManagementMixin(_DataQualityProtocol):
 
         Args:
             rules: List of DQRule objects to add.
+
         """
         self._rules.extend(rules)
 
@@ -84,6 +85,7 @@ class RuleManagementMixin(_DataQualityProtocol):
         Returns:
             DQRemediationResult с remediated data, list of detected violations,
             и counter применённых fixes.
+
         """
         from src.backend.services.ops.data_quality import DQRemediationResult
         from src.backend.services.ops.dq_remediation import build_remediator

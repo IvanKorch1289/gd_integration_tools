@@ -133,6 +133,7 @@ def with_retry(
 
         Returns:
             Wrapped function with retry capability.
+
         """
 
         @functools.wraps(func)

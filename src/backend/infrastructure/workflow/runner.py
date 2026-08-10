@@ -117,6 +117,7 @@ class StepExecutor(Protocol):
 
         Returns:
             StepResult with events to append.
+
         """
         ...
 

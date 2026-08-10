@@ -69,6 +69,7 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
     Raises:
         RuntimeError: для бэкенда ``memcached`` без установленной
             зависимости ``aiomcache``.
+
     """
     cfg = settings or cache_settings
     backend: CacheBackend

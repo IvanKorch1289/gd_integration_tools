@@ -77,6 +77,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
         invocation_id_property: Куда писать ``workflow_id``.
         backend: Опциональный backend (для DI/тестов). При ``None`` —
             создаётся через :func:`create_workflow_backend` (``auto``).
+
     """
 
     def __init__(

@@ -122,6 +122,7 @@ def _configure_business_routers(app: FastAPI) -> None:
 
         Returns:
             Redirect response to /api/v1/admin/{path}.
+
         """
         # Защита от open redirect: валидируем что path только относительный
         from urllib.parse import urlparse

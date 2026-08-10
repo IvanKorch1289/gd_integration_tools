@@ -49,6 +49,7 @@ class CapabilityAuditEvent:
         timestamp: UTC момент решения в ISO-8601.
         extra: Произвольный словарь с дополнительным контекстом
             (например, route_id, action_id).
+
     """
 
     plugin: str

@@ -114,6 +114,7 @@ class ServiceSchemaRegistry:
             при :meth:`register` (поднимает ``ValueError``).
         metrics: Опциональный :class:`MetricsRegistry` для счётчиков
             операций реестра.
+
     """
 
     __slots__ = ("_by_kind", "_metrics", "_schema_view", "_strict_validation")
@@ -129,6 +130,7 @@ class ServiceSchemaRegistry:
 
         Lazy import ``typed_adapter`` чтобы избежать circular import
         (typed_adapter → registry). Singleton per registry.
+
         """
         view = getattr(self, "_schema_view", None)
         if view is None:
@@ -160,6 +162,7 @@ class ServiceSchemaRegistry:
 
         Raises:
             ValueError: Если ``strict_validation=True`` и схема невалидна.
+
         """
         if self._strict_validation:
             self._validate_entry(entry)
@@ -276,6 +279,7 @@ class ServiceSchemaRegistry:
             для последующего восстановления через :meth:`from_snapshot`.
             Для type-safe (de)serialization см. :attr:`schema_view` →
             :class:`SnapshotView` (D-AUDIT-A5-01 fix, cycle 1).
+
         """
         entries: list[dict[str, Any]] = []
         for kind in SchemaKind:
@@ -303,6 +307,7 @@ class ServiceSchemaRegistry:
         Raises:
             pydantic.ValidationError: Если payload не проходит validation.
             ValueError: Если version невалиден или ``kind`` не в :class:`SchemaKind`.
+
         """
         validated_snapshot = self.schema_view.validate_snapshot(data)
 

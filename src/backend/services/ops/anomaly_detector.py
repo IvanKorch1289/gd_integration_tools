@@ -58,6 +58,7 @@ class AnomalyDetector:
 
         Returns:
             Anomaly если обнаружена, иначе None.
+
         """
         if metric not in self._series:
             self._series[metric] = deque(maxlen=self._window)

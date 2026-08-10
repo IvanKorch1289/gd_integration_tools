@@ -64,6 +64,7 @@ class BudgetBackendUnavailable(Exception):
     Attributes:
         backend: Name of the unavailable backend (e.g. "token_budget").
         tenant_id: Tenant whose budget check failed.
+
     """
 
     def __init__(self, *, backend: str, tenant_id: str) -> None:
@@ -86,6 +87,7 @@ class BudgetEnforcementError(Exception):
     Attributes:
         body: JSON-ready payload (см. :func:`render_429` в
         ``core.tenancy.budget_enforcer``).
+
     """
 
     def __init__(self, *, body: dict[str, Any]) -> None:
@@ -124,6 +126,7 @@ class BudgetSnapshot:
         remaining: hard_limit - used (>=0).
         soft_breached: used >= soft_limit.
         hard_breached: used >= hard_limit.
+
     """
 
     tenant_id: str
@@ -138,6 +141,7 @@ class BudgetSnapshot:
 
         Returns:
             ``max(0, hard_limit - used)`` — не уходит в минус при over-usage.
+
         """
         return max(0, self.hard_limit - self.used)
 
@@ -147,6 +151,7 @@ class BudgetSnapshot:
 
         Returns:
             ``True`` если ``used >= soft_limit`` (тенант близок к исчерпанию).
+
         """
         return self.used >= self.soft_limit
 
@@ -156,6 +161,7 @@ class BudgetSnapshot:
 
         Returns:
             ``True`` если ``used >= hard_limit`` (запросы должны быть отвергнуты).
+
         """
         return self.used >= self.hard_limit
 
@@ -194,6 +200,7 @@ class InMemoryTokenBudgetBackend:
 
         Returns:
             Новое значение счётчика после инкремента.
+
         """
         del ttl_seconds  # in-memory не поддерживает TTL
         self._store[key] = self._store.get(key, 0) + amount
@@ -207,6 +214,7 @@ class InMemoryTokenBudgetBackend:
 
         Returns:
             Текущее значение; ``0`` если ключ отсутствует.
+
         """
         return self._store.get(key, 0)
 
@@ -215,6 +223,7 @@ class InMemoryTokenBudgetBackend:
 
         Args:
             key: Ключ счётчика.
+
         """
         self._store.pop(key, None)
 
@@ -230,6 +239,7 @@ class TokenBudgetConfig:
         fail_mode: Что делать при Redis-outage:
             ``open`` (default) — пропускать запросы без учёта;
             ``closed`` — блокировать запросы (fail-safe).
+
     """
 
     soft_limit: int
@@ -251,6 +261,7 @@ class TokenBudget:
     per-tenant fail_mode in production. Default OFF preserves dev/test
     behavior. Operators MUST enable this flag in production to prevent
     unbounded LLM spend when Redis is unavailable.
+
     """
 
     def __init__(
@@ -309,6 +320,7 @@ class TokenBudget:
             BudgetExceeded: если used >= hard_limit.
             BudgetBackendUnavailable: при Redis-outage + fail_mode='closed'
                 или feature_flags.token_budget_fail_closed=True.
+
         """
         config = self._config_for(tenant_id)
         effective_fail_mode = self._effective_fail_mode(config)

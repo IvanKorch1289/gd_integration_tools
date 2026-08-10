@@ -40,6 +40,7 @@ class NotifyMixin:
             locale: Локаль шаблона.
             context_property: Имя property с контекстом для рендера.
             result_property: Имя property для ``SendResult``.
+
         """
         from src.backend.dsl.engine.processors.notify import NotifyProcessor
 
@@ -79,6 +80,7 @@ class NotifyMixin:
             body: Тело уведомления.
             body_format: Формат тела: ``text`` | ``html`` | ``markdown``.
             result_property: Имя property для результата (``True``/``False``).
+
         """
         from src.backend.dsl.engine.processors.notify.apprise_notify import (
             AppriseNotifyProcessor,
@@ -115,6 +117,7 @@ class NotifyMixin:
             body: Тело уведомления.
             body_format: Формат тела: ``text`` | ``html`` | ``markdown``.
             result_property: Имя property для словаря результатов.
+
         """
         from src.backend.dsl.engine.processors.base import CallableProcessor
 
@@ -212,6 +215,7 @@ class NotifyMixin:
                 .dispatch_action("invoices.process")
                 .build()
             )
+
         """
         from src.backend.dsl.engine.processors.email_trigger import (
             EmailTriggerProcessor,
@@ -279,6 +283,7 @@ class NotifyMixin:
                 )
                 .build()
             )
+
         """
         from src.backend.dsl.engine.processors.ssh_command import SshCommandProcessor
 
@@ -312,6 +317,7 @@ class NotifyMixin:
             recipient_path: dotted-path to recipient identifier.
             subject: Notification subject.
             body_path: dotted-path to message body.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.notify_cascade",

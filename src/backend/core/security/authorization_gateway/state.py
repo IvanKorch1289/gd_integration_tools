@@ -25,6 +25,7 @@ class AuthorizationDecision:
         principal: Кто запрашивает (plugin id / user / service).
         resource: Имя ресурса (capability / endpoint / table).
         action: Запрашиваемое действие (read / write / call).
+
     """
 
     allowed: bool

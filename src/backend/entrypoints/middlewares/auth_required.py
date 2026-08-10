@@ -93,6 +93,7 @@ class AuthRequiredMiddleware:
         app: ASGI-приложение.
         public_prefixes: Префиксы путей, для которых auth не требуется.
         accepted_methods: Какие auth-методы пробовать (по умолчанию все).
+
     """
 
     def __init__(
@@ -108,6 +109,7 @@ class AuthRequiredMiddleware:
             app: ASGI-приложение.
             public_prefixes: Префиксы путей, для которых auth не требуется.
             accepted_methods: Какие auth-методы пробовать (по умолчанию все).
+
         """
         self.app = app
         self.public_prefixes = tuple(public_prefixes)

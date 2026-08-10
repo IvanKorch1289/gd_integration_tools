@@ -63,6 +63,7 @@ class ContinueAsNewHandler:
         Returns:
             Dict с ключами ``input`` и ``search_attributes``
             для передачи в ``temporalio.workflow.continue_as_new(**kwargs)``.
+
         """
         if marker.get("same_input") and current_input is not None:
             input_data: Any = current_input

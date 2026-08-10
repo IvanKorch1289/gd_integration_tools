@@ -55,6 +55,7 @@ class IDPResult:
         needs_hitl: ``True`` if HITL is required.
         auto_processed: ``True`` if high-confidence + validation passed.
         stage_reached: Last successfully reached stage label.
+
     """
 
     doc_type: str

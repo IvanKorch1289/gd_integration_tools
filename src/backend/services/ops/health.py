@@ -50,6 +50,7 @@ class ProcessorHealthResult:
         reason: Краткое описание (для UI / Grafana / alert).
         latency_ms: Время выполнения проверки (мс).
         processor_name: Логическое имя backend-сервиса.
+
     """
 
     processor_name: str
@@ -74,6 +75,7 @@ async def _http_get(url: str, timeout: float = 5.0) -> tuple[int, str]:
 
     Returns:
         Tuple of (status_code, response_text).
+
     """
     from src.backend.core.net.outbound_http import OutboundHttpClient
 
@@ -100,6 +102,7 @@ class ProcessorHealthService:
 
     Args:
         timeout_per_check_s: Таймаут на каждую отдельную проверку (default 5s).
+
     """
 
     def __init__(self, *, timeout_per_check_s: float = 5.0) -> None:
@@ -123,6 +126,7 @@ class ProcessorHealthService:
                 ``"temporal"``, ``"vault"``).
             check: Async-callable () → ProcessorHealthResult. Должен
                 быть idempotent (не зависит от глобального state).
+
         """
         self._checks[name] = check
         logger.debug("ProcessorHealthService: check '%s' зарегистрирован", name)
@@ -144,6 +148,7 @@ class ProcessorHealthService:
 
         Returns:
             Список ProcessorHealthResult в порядке registered_names().
+
         """
         if not self._checks:
             return []
@@ -204,6 +209,7 @@ class ProcessorHealthService:
 
         Returns:
             Dict с агрегированной матрицей для JSON-сериализации.
+
         """
         results = await self.check_all()
         failed = [r for r in results if not r.ok]

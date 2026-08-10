@@ -46,6 +46,7 @@ class ReturnAddressProcessor(BaseProcessor):
         .process(SendToProcessor(endpoint="kafka:customer-requests"))
 
     Downstream consumer читает ``return_address`` header для callback routing.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

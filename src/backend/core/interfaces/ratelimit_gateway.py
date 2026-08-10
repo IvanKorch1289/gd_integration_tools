@@ -22,6 +22,7 @@ class RateLimitConfig:
     Attributes:
         max_per_window: Maximum requests allowed per window.
         window_seconds: Duration of the rate-limit window in seconds.
+
     """
 
     max_per_window: int
@@ -46,6 +47,7 @@ class RateLimitChecker(Protocol):
         Returns:
             (allowed, remaining, retry_after_seconds). Если allowed=False —
             ``retry_after_seconds`` указывает через сколько сек повторить.
+
         """
 
     async def check_route_override(self, route: str) -> RateLimitConfig | None:
@@ -57,6 +59,7 @@ class RateLimitChecker(Protocol):
         Returns:
             :class:`RateLimitConfig` если есть override для route,
             иначе ``None``.
+
         """
 
 

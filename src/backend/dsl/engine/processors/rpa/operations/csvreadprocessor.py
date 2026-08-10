@@ -28,6 +28,7 @@ class CsvReadProcessor(BaseProcessor):
         content: Inline CSV string (альтернатива src).
         delimiter: CSV delimiter (default ``","``).
         to: Куда записать rows (default ``"body.rows"``).
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.file.csv.read"

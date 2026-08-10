@@ -59,6 +59,7 @@ class VaultSecretProcessor(BaseProcessor):
     Attributes:
         version: Конкретная версия секрета (0 = current).
         name: Опциональное имя процессора для трассировки.
+
     """
 
     required_capability: ClassVar[str | None] = "secret.read"

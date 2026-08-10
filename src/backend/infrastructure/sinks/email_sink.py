@@ -46,6 +46,7 @@ class EmailSink(Sink):
         ``{"to": "alice@x", "subject": "...", "body": "...",
         "cc": [...], "bcc": [...], "html": false}``
     либо строку — будет отправлена как plain-text на ``default_to``.
+
     """
 
     sink_id: str

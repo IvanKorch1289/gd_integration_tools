@@ -47,6 +47,7 @@ class WatermarkState:
             детекции stall-партиций.
         late_events_total: Счётчик отброшенных/перенаправленных late
             events с момента старта процесса (для Prometheus gauge/counter).
+
     """
 
     current: float = float("-inf")
@@ -63,6 +64,7 @@ class WatermarkState:
         Returns:
             ``True`` если watermark продвинулся, ``False`` если
             ``new_value <= current`` (монотонность).
+
         """
         if new_value <= self.current:
             return False
@@ -79,5 +81,6 @@ class WatermarkState:
 
         Returns:
             ``True`` если ``event_time + allowed_lateness < current``.
+
         """
         return (event_time + allowed_lateness) < self.current

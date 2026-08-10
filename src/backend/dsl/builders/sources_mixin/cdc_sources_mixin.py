@@ -50,6 +50,7 @@ class CdcSourcesMixin:
                 .dispatch_action("analytics.insert_batch")
                 .build()
             )
+
         """
         import importlib
 
@@ -100,6 +101,7 @@ class CdcSourcesMixin:
                 .dispatch_action("analytics.insert_batch")
                 .build()
             )
+
         """
         from src.backend.core.cdc.registry import get_cdc_source
 
@@ -140,6 +142,7 @@ class CdcSourcesMixin:
 
         Returns:
             ``RouteBuilder`` с ``source = cdc-logical:<table>``.
+
         """
         import importlib
 
@@ -212,6 +215,7 @@ class CdcSourcesMixin:
                 .dispatch_action("analytics.process_changes")
                 .build()
             )
+
         """
         builder: RouteBuilder = cls(
             route_id=route_id, source=f"cdc-capture:{profile}:{','.join(tables)}",
@@ -252,6 +256,7 @@ class CdcSourcesMixin:
             include_new: Include ``new`` payload.
             timestamp_field: Name of timestamp field in output.
             drop_unknown: Drop events without operation or table.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.cdc_transform",

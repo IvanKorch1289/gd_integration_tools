@@ -54,6 +54,7 @@ class CoreMixin(_NotebookExecutionProtocol):
                     },
                     ...
                 ]
+
         """
         timeout = timeout_seconds or self._settings.timeout_seconds
 

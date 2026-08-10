@@ -86,6 +86,7 @@ class LocalFSStorage(ObjectStorage):
 
         Returns:
             Path к корню tenant'а (создаётся при первом обращении).
+
         """
         # Cycle-16 (D-AUDIT-1601): slug validation через shared helper.
         if tenant_id is not None and not _is_safe_tenant_segment(tenant_id):
@@ -115,6 +116,7 @@ class LocalFSStorage(ObjectStorage):
 
         Returns:
             Absolute path to uploaded file.
+
         """
         path = self._safe_path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -132,6 +134,7 @@ class LocalFSStorage(ObjectStorage):
 
         Returns:
             File contents as bytes.
+
         """
         path = self._safe_path(key)
         async with aiofiles.open(path, "rb") as fh:
@@ -142,6 +145,7 @@ class LocalFSStorage(ObjectStorage):
 
         Args:
             key: Object key (relative path).
+
         """
         path = self._safe_path(key)
         try:
@@ -157,6 +161,7 @@ class LocalFSStorage(ObjectStorage):
 
         Returns:
             True if object exists, False otherwise.
+
         """
         path = self._safe_path(key)
         return await aiofiles.os.path.exists(str(path))
@@ -169,6 +174,7 @@ class LocalFSStorage(ObjectStorage):
 
         Returns:
             Sorted list of matching keys.
+
         """
         return await asyncio.to_thread(self._list_sync, prefix)
 
@@ -193,6 +199,7 @@ class LocalFSStorage(ObjectStorage):
 
         Returns:
             File URI string.
+
         """
         path = self._safe_path(key)
         return path.as_uri()

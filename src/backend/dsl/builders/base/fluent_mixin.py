@@ -67,6 +67,7 @@ class FluentMixin(_RouteBuilderProtocol):
 
         Raises:
             ValueError: если pipeline пуст — модификатор вызван до первого step.
+
         """
         if not self._processors:
             raise ValueError(

@@ -18,6 +18,7 @@ def get_storage_facade(*, plugin: str = "extension") -> StorageFacade:
 
     Raises:
         RuntimeError: если ``StorageFacade`` не зарегистрирован в svcs.
+
     """
     from src.backend.core.svcs_registry import get_service, has_service
 

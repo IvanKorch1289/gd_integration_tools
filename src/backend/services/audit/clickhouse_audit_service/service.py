@@ -74,6 +74,7 @@ class ClickHouseAuditService:
             dlq_writer: [S180 P1-#1] Канонический DLQWriter через Protocol.
                 Приоритет над ``dlq_path``. Если None — setter можно
                 использовать post-init (см. :meth:`set_dlq_writer`).
+
         """
         self._client: Any | None = client
         self._lock = threading.Lock()
@@ -102,6 +103,7 @@ class ClickHouseAuditService:
 
         Raises:
             RuntimeError: Если feature-flag выключен и клиент не предоставлен.
+
         """
         if self._client is not None:
             return self._client
@@ -181,6 +183,7 @@ class ClickHouseAuditService:
             error: исключение от ClickHouse.
             reason: high-level причина (идёт в ``metadata.dlq_reason``).
             action: high-level действие (legacy JSONL только).
+
         """
         targets = events if events is not None else ([event] if event is not None else [])
         if not targets:
@@ -282,6 +285,7 @@ class ClickHouseAuditService:
 
         Args:
             event: Событие для записи.
+
         """
         from src.backend.core.config.features import feature_flags
 
@@ -336,6 +340,7 @@ class ClickHouseAuditService:
 
         Args:
             events: Список событий для batch-вставки.
+
         """
         from src.backend.core.config.features import feature_flags
 

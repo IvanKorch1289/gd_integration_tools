@@ -69,6 +69,7 @@ def load_plugin_manifests_for_migrations(
         ``asyncio.run`` / sync context, async-IO здесь излишен.
         Парсинг одного TOML-файла — disk-bound операция; обычно
         5-15 плагинов × ~1 ms = 5-15 ms total. Допустимо для Alembic.
+
     """
     if not extensions_dir.is_dir():
         _logger.info(

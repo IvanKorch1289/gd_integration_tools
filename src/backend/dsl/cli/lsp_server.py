@@ -100,6 +100,7 @@ def create_server() -> Any:
 
     Raises:
         ImportError: Если ``pygls`` не установлен.
+
     """
     from lsprotocol import types as lsp_types
     from pygls.lsp.server import LanguageServer

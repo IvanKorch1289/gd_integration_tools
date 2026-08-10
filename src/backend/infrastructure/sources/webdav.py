@@ -40,6 +40,7 @@ class WebDAVSourceConfig:
         username/password: HTTP basic auth (или mTLS через webdav4 config).
         processed_marker_path: Путь на сервере для записи списка обработанных.
         marker_dedup: Если True — пишет marker на сервере (defense против restart).
+
     """
 
     url: str
@@ -123,6 +124,7 @@ class WebDAVSource:
         Yields:
             :class:`FileEvent` со ``change_type='added'`` для каждого
             файла, отсутствующего в ``_processed_files``.
+
         """
         from pathlib import PurePosixPath
 

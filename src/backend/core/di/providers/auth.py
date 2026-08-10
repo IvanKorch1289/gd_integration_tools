@@ -183,6 +183,7 @@ def get_ad_directory_client_provider() -> Any:
 
     Raises:
         RuntimeError: Если composition-слой не зарегистрировал factory.
+
     """
     if "ad_directory_client_factory" in _overrides:
         return _overrides["ad_directory_client_factory"]

@@ -41,6 +41,7 @@ class PollingSource:
         emit_first: Эмитить ли первый успешный ответ (default ``True``);
             ``False`` — эмитить только начиная со второго (когда есть
             baseline для diff).
+
     """
 
     kind: SourceKind = SourceKind.POLLING

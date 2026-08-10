@@ -89,6 +89,7 @@ class WindowedDedupProcessor(BaseProcessor):
                  хранимое состояние («latest»), но останавливается.
                  ``get_latest(key, prefix)`` возвращает финальное значение.
         unique — дедупликация по содержимому тела; повторные — стоп.
+
     """
 
     def __init__(
@@ -197,6 +198,7 @@ class WindowedDedupProcessor(BaseProcessor):
 
         Returns:
             Десериализованное тело последнего сообщения или None.
+
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import redis_client
@@ -237,6 +239,7 @@ class WindowedCollectProcessor(BaseProcessor):
         dedup_mode: ``first`` | ``last`` — какое значение сохранять при дедупликации.
         inject_as: Имя exchange-свойства для инжекции батча.
         name: Имя процессора в трассе.
+
     """
 
     def __init__(
@@ -361,6 +364,7 @@ class WindowedCollectProcessor(BaseProcessor):
 
         Returns:
             Список дедублицированных тел сообщений.
+
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import redis_client

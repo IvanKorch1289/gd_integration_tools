@@ -45,6 +45,7 @@ class YAMLStore:
     Args:
         store_dir: Путь к директории хранилища.
             Создаётся автоматически при необходимости.
+
     """
 
     def __init__(self, store_dir: str | Path) -> None:
@@ -62,6 +63,7 @@ class YAMLStore:
 
         Raises:
             ValueError: Если у Pipeline нет сериализуемых процессоров.
+
         """
         filename = _route_to_filename(pipeline.route_id)
         path = self._dir / filename
@@ -81,6 +83,7 @@ class YAMLStore:
         Raises:
             FileNotFoundError: Если файл не найден.
             ValueError: Если YAML некорректен.
+
         """
         from src.backend.dsl.yaml_loader import load_pipeline_from_yaml
 
@@ -101,6 +104,7 @@ class YAMLStore:
 
         Returns:
             True если файл был удалён, False если не существовал.
+
         """
         path = self._dir / _route_to_filename(route_id)
         if path.exists():
@@ -114,6 +118,7 @@ class YAMLStore:
 
         Returns:
             Отсортированный список route_id.
+
         """
         return sorted(_filename_to_route(p.name) for p in self._dir.glob("*.yaml"))
 
@@ -130,6 +135,7 @@ class YAMLStore:
 
         Returns:
             Строка unified-diff (пустая если изменений нет).
+
         """
         yaml_a = pipeline_a.to_yaml().splitlines(keepends=True)
         yaml_b = pipeline_b.to_yaml().splitlines(keepends=True)
@@ -147,6 +153,7 @@ class YAMLStore:
 
         Returns:
             Список Pipeline (ошибочные файлы пропускаются с предупреждением).
+
         """
         from src.backend.dsl.yaml_loader import load_pipeline_from_file
 

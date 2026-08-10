@@ -31,6 +31,7 @@ class SoapAdapter(BaseProtocolAdapter):
 
         Returns:
             Подготовленный Exchange.
+
         """
         operation = raw_input.get("operation", "")
         payload = raw_input.get("payload", {})
@@ -65,6 +66,7 @@ class SoapAdapter(BaseProtocolAdapter):
 
         Returns:
             Тело выходного сообщения.
+
         """
         if exchange.out_message:
             return exchange.out_message.body

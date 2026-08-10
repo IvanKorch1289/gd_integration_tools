@@ -63,6 +63,7 @@ class ImportedActionService:
         Args:
             action: Action-name (``connector.{spec_name}.{operation_id_short}``).
             endpoint: Исходный :class:`EndpointSpec` из ``ConnectorSpec``.
+
         """
         self._endpoints[action] = EndpointMeta.from_spec(endpoint)
 
@@ -90,6 +91,7 @@ class ImportedActionService:
 
         Raises:
             KeyError: Если action не зарегистрирован.
+
         """
         meta = self._endpoints[action]
         return {

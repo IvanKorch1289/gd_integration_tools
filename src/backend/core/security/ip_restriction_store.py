@@ -37,6 +37,7 @@ class IPRestrictionStore:
     Args:
         admin_ips: Множество разрешённых IP/сетей для admin-маршрутов.
         admin_routes: Список glob-паттернов административных маршрутов.
+
     """
 
     _instance: IPRestrictionStore | None = None
@@ -115,6 +116,7 @@ class IPRestrictionStore:
 
         Returns:
             True если файл прочитан, False если файл отсутствует.
+
         """
         file_path = Path(path)
         if not file_path.is_file():

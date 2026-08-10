@@ -130,6 +130,7 @@ class ProcessMixin(_LLMStructuredProcessorProtocol):
 
         Returns:
             Tuple ``(parsed_obj, raw_response_or_None)``.
+
         """
         # Прямой call() → результат валидации (Pydantic-объект). Raw
         # response недоступен: instructor.from_litellm обёртывает acompletion

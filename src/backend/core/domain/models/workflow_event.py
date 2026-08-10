@@ -89,6 +89,7 @@ class WorkflowEvent(BaseModel, TenantMixin):
     S101 W4 (V2 P0 #6): TenantMixin добавлен для multi-tenant replay
     isolation. ``tenant_id`` backfilled к ``"default"`` для existing rows
     через Alembic migration ``a1b2c3d4e5f6`` (2026-06-13 12:00).
+
     """
 
     __tablename__ = "workflow_events"

@@ -46,6 +46,7 @@ class WorkflowFacade:
         audit_sink: опц. :class:`WorkflowAuditSink`. Если ``None`` —
             audit-emit пропускается (no-op). emit-фейлы поглощаются
             ``try/except logger.warning``.
+
     """
 
     def __init__(

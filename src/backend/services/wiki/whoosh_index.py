@@ -202,6 +202,7 @@ class WhooshIndex:
             category: Опц. фильтр по Diátaxis-квадранту
                 (``tutorial`` / ``how-to`` / ``reference`` / ``explanation`` /
                 ``runbook`` / ``dsl`` / ``other``). ``None`` — без фильтра.
+
         """
         from whoosh import qparser
 

@@ -63,6 +63,7 @@ class TelegramAdapter:
             upstream_name: Имя HTTP upstream-профиля (зарезервировано
                 для совместимости IL2.2; в W15.3 не используется).
             parse_mode: Режим разметки текста по умолчанию.
+
         """
         self._bot_token_provider = bot_token_provider
         self._default_bot = default_bot
@@ -84,6 +85,7 @@ class TelegramAdapter:
         Raises:
             RuntimeError: Если Telegram отключён или токен пуст.
             httpx.HTTPStatusError: При HTTP-ошибке Bot API.
+
         """
         from src.backend.infrastructure.clients.external.telegram_bot import (
             TelegramBotClient,

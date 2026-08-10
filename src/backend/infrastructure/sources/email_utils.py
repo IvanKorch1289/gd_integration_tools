@@ -23,6 +23,7 @@ def parse_email(raw: bytes) -> dict[str, Any]:
 
     Returns:
         dict с ключами: message_id, from, to, subject, date, body.
+
     """
     msg: Message = email.message_from_bytes(raw)
     body = ""

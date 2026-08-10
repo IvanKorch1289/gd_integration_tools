@@ -37,6 +37,7 @@ Note:
     ``PromptValidator`` объявлен в ``agent_security.__all__`` (S187 scaffold),
     но concrete class ещё не реализован — намеренно НЕ реэкспортируется здесь.
     Когда появится, добавить в этот facade + ``__all__``.
+
 """
 
 from src.backend.core.ai.security.agent_security import (

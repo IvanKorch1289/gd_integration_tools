@@ -32,6 +32,7 @@ class UsageStats:
         prompt_tokens: входные токены (запрос).
         completion_tokens: выходные токены (ответ).
         total_tokens: ``prompt + completion``.
+
     """
 
     prompt_tokens: int
@@ -52,6 +53,7 @@ def extract_usage(response: Any) -> UsageStats:
 
     Returns:
         :class:`UsageStats` с обнулёнными полями если usage не найден.
+
     """
     usage = (
         response.get("usage")
@@ -85,6 +87,7 @@ def estimate_tokens(
         messages: chat-completion messages.
         model: имя модели для выбора encoding (fallback → cl100k_base).
         factor: множитель для запаса (default 1.3).
+
     """
     try:
         tiktoken = _get_tiktoken()

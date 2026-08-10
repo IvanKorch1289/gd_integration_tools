@@ -22,6 +22,7 @@ async def graceful_cancel(task: asyncio.Task[object] | None, *, source_id: str) 
     Args:
         task: Задача (или None — no-op).
         source_id: Имя источника для лога ошибок.
+
     """
     if task is None or task.done():
         return

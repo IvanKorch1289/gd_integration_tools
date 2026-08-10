@@ -36,6 +36,7 @@ def is_hishel_available() -> bool:
 
     Returns:
         ``True`` если ``hishel`` импортируется без ошибок.
+
     """
     try:
         import hishel
@@ -71,6 +72,7 @@ def build_cache_transport(
     Note:
         При ``None`` caller должен использовать ``inner_transport`` напрямую —
         graceful fallback на чистый httpx без cache.
+
     """
     try:
         import hishel

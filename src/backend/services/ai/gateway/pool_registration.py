@@ -65,6 +65,7 @@ async def _litellm_ping(gateway: LiteLLMGateway) -> bool:
         Workaround: query ``litellm.models`` (static registry, no API
         call) для verify SDK loaded. Для external provider health
         check требуется separate provider-specific call (deferred).
+
     """
     try:
         # Lazy-import litellm (opt-in dep, [ai] extra)
@@ -103,6 +104,7 @@ def register_litellm_pool(
     Side effects:
         * Registers pool в :func:`get_pool_monitor`.
         * Returns immediately (ping runs в background task).
+
     """
     if monitor is None:
         monitor = get_pool_monitor()

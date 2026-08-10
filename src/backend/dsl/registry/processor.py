@@ -128,6 +128,7 @@ class ProcessorRegistry:
                 ``replaces=None``.
             ProcessorNotFoundError: ``replaces=...`` указан, но указанная
                 запись не зарегистрирована.
+
         """
 
         with self._lock:
@@ -196,6 +197,7 @@ class ProcessorRegistry:
 
         Returns:
             Копия списка всех зарегистрированных спецификаций.
+
         """
 
         return self.list_specs()
@@ -212,6 +214,7 @@ class ProcessorRegistry:
 
         Returns:
             Словарь ``{fqn: schema_dict}``, где ``fqn = namespace:name``.
+
         """
 
         result: dict[str, dict[str, Any]] = {}
@@ -232,6 +235,7 @@ class ProcessorRegistry:
 
         Returns:
             Словарь JSON-Schema.
+
         """
 
         base_id = (
@@ -342,6 +346,7 @@ def processor(
         ...
         ... @processor("log", model=LogParams, tags=["core", "observability"])
         ... class LogProcessor(BaseProcessor): ...
+
     """
 
     def decorator(cls: type[BaseProcessor]) -> type[BaseProcessor]:

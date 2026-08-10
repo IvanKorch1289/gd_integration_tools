@@ -52,6 +52,7 @@ class FileWatchProcessor(BaseProcessor):
         pattern: Glob-фильтр (например ``"*.txt"``).
         timeout: Сколько секунд ждать (default 5.0).
         to: Куда записать список изменений (default ``"body.changes"``).
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.file.watch"

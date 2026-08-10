@@ -67,6 +67,7 @@ def export_aipolicy_json_schema() -> dict[str, Any]:
     Returns:
         JSON-Schema dict (Pydantic default format — compatible с
         jsonschema library, ajv, etc.).
+
     """
     return AIPolicySpec.model_json_schema()
 
@@ -87,6 +88,7 @@ def validate_aipolicy_dict(data: dict[str, Any]) -> AIPolicySpec:
 
     Raises:
         pydantic.ValidationError: если dict не соответствует schema.
+
     """
     return AIPolicySpec.model_validate(data)
 
@@ -125,6 +127,7 @@ def export_default_policy_yaml() -> str:
           on_violation: fail
         required: true
         ```
+
     """
     return """name: my_workflow_policy
 version: 1

@@ -21,6 +21,7 @@ class AgentSandboxResult:
         data: Словарь-результат (формат ``build_and_run_agent``) либо
             ``{"error": str}`` при ``success=False``.
         backend: Имя backend'а, который произвёл выполнение.
+
     """
 
     success: bool

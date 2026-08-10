@@ -102,6 +102,7 @@ def action_spec_to_metadata(spec: Any) -> ActionMetadata:
     Raises:
         AttributeError: Если у ``spec`` нет поля ``name`` —
             это обязательный признак ``ActionSpec``.
+
     """
     # action_id (если задан) — приоритетнее name. Это позволяет HTTP-роуту
     # с собственным OpenAPI-именем делегировать в handler, зарегистрированный

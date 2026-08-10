@@ -29,6 +29,7 @@ class WebAutomationService:
 
         Returns:
             Navigation result dict.
+
         """
         return await self._client.navigate(url)
 
@@ -41,6 +42,7 @@ class WebAutomationService:
 
         Returns:
             Click result dict.
+
         """
         return await self._client.click(url, selector)
 
@@ -56,6 +58,7 @@ class WebAutomationService:
 
         Returns:
             Form result dict.
+
         """
         return await self._client.fill_form(url, fields, submit)
 
@@ -68,6 +71,7 @@ class WebAutomationService:
 
         Returns:
             List of text content.
+
         """
         return await self._client.extract_text(url, selector)
 
@@ -80,6 +84,7 @@ class WebAutomationService:
 
         Returns:
             List of row dicts.
+
         """
         return await self._client.extract_table(url, selector)
 

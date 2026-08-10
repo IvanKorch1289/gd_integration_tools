@@ -49,6 +49,7 @@ class AiOpsMixin:
             to: Путь записи результата (``body.<field>`` / ``body`` /
                 ``property:<name>``).
             name: Имя процессора в трейсах/метриках.
+
         """
         from src.backend.dsl.engine.processors.llm_structured import (
             LLMStructuredProcessor,
@@ -91,6 +92,7 @@ class AiOpsMixin:
             output_property: Куда положить результат инференса.
             model_type: Явный тип модели (default — по расширению файла).
             name: Имя процессора в трейсах.
+
         """
         from src.backend.dsl.engine.processors.ml_predict import MLPredictProcessor
 

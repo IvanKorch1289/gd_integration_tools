@@ -72,6 +72,7 @@ def serialize_change(change: FeatureFlagChange) -> bytes:
 
     Returns:
         orjson-сериализованный payload с ``source_replica`` для echo-detection.
+
     """
     payload = {
         "flag": change.flag,
@@ -114,6 +115,7 @@ class RedisFeatureFlagBroadcaster:
         * ``start()`` — запускает subscriber loop через TaskRegistry.
         * ``stop()`` — останавливает subscriber, отписывается от channel.
         * ``publish(change)`` — публикует один FeatureFlagChange.
+
     """
 
     def __init__(
@@ -146,6 +148,7 @@ class RedisFeatureFlagBroadcaster:
 
         Returns:
             ``True`` если publish успешен, ``False`` при ошибке Redis.
+
         """
         try:
             await self._redis.publish(self._channel, serialize_change(change))
@@ -168,6 +171,7 @@ class RedisFeatureFlagBroadcaster:
         Args:
             task_factory: Optional фабрика для тестов. По умолчанию
                 используется ``get_task_registry().create_task``.
+
         """
         if self._task is not None and not self._task.done():
             return
@@ -271,6 +275,7 @@ async def maybe_start_broadcaster(
 
     Returns:
         Запущенный broadcaster или ``None`` (flag выключен / Redis недоступен).
+
     """
     try:
         from src.backend.core.config.features import feature_flags

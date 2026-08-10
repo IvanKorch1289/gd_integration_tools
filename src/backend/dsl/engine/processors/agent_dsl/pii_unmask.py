@@ -58,6 +58,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
         strict: При ``True`` — raise если ``token_map`` отсутствует.
             При ``False`` — silent pass-through.
         name: Имя процессора.
+
     """
 
     required_capability: ClassVar[str | None] = "pii.tokenize.reversible"

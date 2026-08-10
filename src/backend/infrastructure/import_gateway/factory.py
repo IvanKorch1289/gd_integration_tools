@@ -21,6 +21,7 @@ def build_import_gateway(kind: ImportSourceKind) -> ImportGateway:
 
     Returns:
         Backend, удовлетворяющий Protocol :class:`ImportGateway`.
+
     """
     match kind:
         case ImportSourceKind.POSTMAN:

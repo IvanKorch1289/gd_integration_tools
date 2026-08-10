@@ -156,6 +156,7 @@ def to_graphviz(decl: WorkflowDeclaration, *, color_map: ColorMap | None = None)
 
     Returns:
         DOT-syntax строка, готовая к рендеру через ``graphviz.Source(...)``.
+
     """
     color_map = color_map or {}
     lines: list[str] = [
@@ -195,6 +196,7 @@ def to_mermaid(decl: WorkflowDeclaration, *, color_map: ColorMap | None = None) 
     Returns:
         Mermaid ``graph TD`` string, готовый к
         ``streamlit_mermaid.st_mermaid(...)``.
+
     """
     color_map = color_map or {}
     lines: list[str] = ["graph TD"]
@@ -243,6 +245,7 @@ def compute_step_diff(
           removed=red, modified=orange, unchanged=default.
         * ``color_map_b`` — раскраска для отображения decl_b:
           added=green, modified=orange, unchanged=default.
+
     """
     a_ids = {_step_identity(s): s for s in decl_a.steps}
     b_ids = {_step_identity(s): s for s in decl_b.steps}

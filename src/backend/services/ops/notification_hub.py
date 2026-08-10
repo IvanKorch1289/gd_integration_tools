@@ -272,6 +272,7 @@ def _slug(text: str, max_len: int = 32) -> str:
         'kd-12345'
         >>> _slug("Hello, World!")
         'hello-world'
+
     """
     import re
 

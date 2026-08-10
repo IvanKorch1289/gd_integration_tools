@@ -21,6 +21,7 @@ class SemanticMemory:
             points=[...])``. ``None`` → :meth:`add` поднимает RuntimeError.
         embedder: Источник эмбеддингов с методом ``embed(texts)``.
         collection: Имя коллекции в Qdrant (default ``langmem_semantic``).
+
     """
 
     def __init__(

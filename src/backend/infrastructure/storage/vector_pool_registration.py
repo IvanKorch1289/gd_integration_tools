@@ -30,6 +30,7 @@ def _async_ping(backend: str) -> Awaitable[bool]:
         ``VectorStoreClient`` переименован в ``BaseVectorStore`` + factory
         ``get_vector_store(backend=...)`` (``is_available()`` отсутствует
         в новом интерфейсе). ``count()`` — каноничный liveness probe.
+
     """
 
     async def _probe() -> bool:
@@ -77,6 +78,7 @@ def register_vector_pool_if_available(
 
     Returns:
         True если pool зарегистрирован, False если vector store недоступен.
+
     """
     try:
         ping_fn = qdrant_ping_fn if backend == "qdrant" else chroma_ping_fn

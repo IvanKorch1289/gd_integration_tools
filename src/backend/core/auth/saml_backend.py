@@ -51,6 +51,7 @@ class SamlConfig:
         idp_slo_url: SLO URL у IdP (опц.).
         idp_x509_cert: PEM-encoded IdP cert (для signature-validation).
         replay_window_seconds: TTL InResponseTo-токенов (default 5 мин).
+
     """
 
     sp_entity_id: str
@@ -73,6 +74,7 @@ class SamlAuthResult:
         principal: NameID или primary attribute (email/sub).
         attributes: Полный набор атрибутов от IdP.
         session_index: ``SessionIndex`` для последующего SLO.
+
     """
 
     principal: str
@@ -93,6 +95,7 @@ class IdpMetadata:
         sso_url: URL SingleSignOnService с HTTP-Redirect/POST binding.
         slo_url: URL SingleLogoutService (опц.).
         x509_cert: PEM-encoded X509 cert IdP (signing-credential).
+
     """
 
     entity_id: str
@@ -108,6 +111,7 @@ class SamlBackend:
         config: Параметры SP/IdP.
         clock: Источник времени (sec). По умолчанию ``time.time``.
         nonce_factory: Опц. фабрика nonce'ов (override для тестов).
+
     """
 
     def __init__(
@@ -148,6 +152,7 @@ class SamlBackend:
 
         URL-composition не требует ``python3-saml`` — реальная подпись
         XML выполняется внутри validator'а в :meth:`process_saml_response`.
+
         """
         request_id = self._nonce()
         self._issued[request_id] = self._clock()
@@ -178,6 +183,7 @@ class SamlBackend:
         Raises:
             SamlError: Replay (повторное использование), expired
                 request_id, или validation failure.
+
         """
         issued_at = self._issued.pop(request_id, None)
         if issued_at is None:

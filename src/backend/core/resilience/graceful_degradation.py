@@ -94,6 +94,7 @@ class DegradationFeature:
         recovery_threshold: error rate (0..1), при котором происходит
             переход DEGRADED → RECOVERING (default 0.05).
         window_size: размер sliding-window outcomes (default 100).
+
     """
 
     name: str
@@ -136,6 +137,7 @@ class GracefulDegradationRegistry:
 
         Args:
             feature: декларация :class:`DegradationFeature`.
+
         """
         self._features[feature.name] = _FeatureRuntime(
             feature=feature, outcomes=deque(maxlen=feature.window_size),
@@ -161,6 +163,7 @@ class GracefulDegradationRegistry:
             full_handler если state ∈ ``{HEALTHY, RECOVERING}`` или
             degraded_handler если ``state == DEGRADED``. Если feature
             не зарегистрирован — ``None``.
+
         """
         runtime = self._features.get(name)
         if runtime is None:
@@ -186,6 +189,7 @@ class GracefulDegradationRegistry:
         Returns:
             Актуальный state после пересчёта. Если feature не
             зарегистрирован — :attr:`FeatureState.HEALTHY` (fallback).
+
         """
         async with self._lock:
             runtime = self._features.get(name)
@@ -251,6 +255,7 @@ class GracefulDegradationRegistry:
 
         Args:
             name: имя feature.
+
         """
         runtime = self._features.get(name)
         if runtime is None:

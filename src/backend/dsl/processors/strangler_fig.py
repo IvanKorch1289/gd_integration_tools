@@ -72,6 +72,7 @@ class StranglerFigStats:
         routed_to_new: Count of requests routed to new system.
         old_errors: Errors from old system.
         new_errors: Errors from new system.
+
     """
 
     routed_to_old: int = 0
@@ -205,6 +206,7 @@ class StranglerFigProcessor(BaseProcessor):
     4. If error в new AND on_new_error=True → fallback to old, record error
     5. Update stats
     6. Store chosen target в exchange.properties['strangler_target']
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING
@@ -251,6 +253,7 @@ class StranglerFigProcessor(BaseProcessor):
         Args:
             exchange: Текущий обмен с телом запроса.
             context: Контекст выполнения процессора.
+
         """
         body = exchange.in_message.body
         # 1. Check rollback
@@ -323,6 +326,7 @@ class MigrationMixin:
             traffic_split_pct: % трафика на new (0-100). 0 = safe mode.
             deterministic_seed: Seeded random для deterministic routing.
             on_new_error: Auto-fallback to old on new system error.
+
         """
         return self._add(  # type: ignore[attr-defined]
             StranglerFigProcessor(

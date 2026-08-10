@@ -36,6 +36,7 @@ def install_signal_handlers() -> asyncio.Event:
     * Running under pytest (``PYTEST_CURRENT_TEST`` env var set).
     * Current platform doesn't expose SIGTERM (Windows).
     * Already installed (``signal.getsignal`` returns our handler).
+
     """
     shutdown_event = asyncio.Event()
 

@@ -314,6 +314,7 @@ class ClickHouseClient:
 
         S176: sync ``Path.read_text`` обёрнут в ``asyncio.to_thread`` чтобы не
         блокировать event loop при больших DDL-файлах (>100KB).
+
         """
         import asyncio
         from pathlib import Path as _Path

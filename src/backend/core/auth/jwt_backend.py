@@ -74,6 +74,7 @@ def encode(
 
     Raises:
         ValueError: Если ни ``secret``, ни ``private_key`` не переданы.
+
     """
     import time as _time
 
@@ -128,6 +129,7 @@ def decode(
 
     Raises:
         JwtVerificationError: При ошибке подписи или декодирования.
+
     """
     try:
         header_raw = _parse_header_unsafe(token)
@@ -182,6 +184,7 @@ class JwtBackend:
         issuer: Ожидаемый ``iss`` (str / None).
         leeway: Допустимое отклонение времени в секундах для exp/nbf.
         blacklist: Опциональный blacklist (jti revocation).
+
     """
 
     method: AuthMethod = AuthMethod.JWT
@@ -249,6 +252,7 @@ class JwtBackend:
 
         Raises:
             JwtVerificationError: При любой ошибке валидации.
+
         """
         header = _parse_header_unsafe(token)
         alg = header.get("alg")
@@ -338,6 +342,7 @@ class JwtBackend:
         Returns:
             ``AuthContext`` при успехе; ``None`` если header отсутствует или
             токен невалиден (детали в логе).
+
         """
         auth = request.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):

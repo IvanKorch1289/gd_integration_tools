@@ -186,6 +186,7 @@ class PostgresCertBackend(CertBackend):
 
         Returns:
             ``True`` если запись существовала.
+
         """
         from sqlalchemy import delete as sql_delete
 

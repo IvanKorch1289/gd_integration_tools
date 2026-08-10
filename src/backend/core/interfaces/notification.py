@@ -46,6 +46,7 @@ class NotificationAdapter(ABC):
         Raises:
             ConnectionError: канал недоступен — вызывающая сторона может
                 инициировать fallback на другой канал.
+
         """
 
     @abstractmethod

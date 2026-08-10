@@ -52,6 +52,7 @@ def install_rls_tenant_listener(async_engine: AsyncEngine) -> None:
     Args:
         async_engine: AsyncEngine, к sync_engine которого будет привязан
             listener. Для других engines listener не активируется.
+
     """
     if not feature_flags.rls_postgres_enforce:
         return

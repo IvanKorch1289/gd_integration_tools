@@ -45,6 +45,7 @@ class FileSink(Sink):
             ``"write"`` (атомарная замена через write-temp+rename).
         encoding: Кодировка текста (``"utf-8"`` по умолчанию).
         ensure_dir: Создавать ли parent dir если отсутствует.
+
     """
 
     sink_id: str
@@ -60,6 +61,7 @@ class FileSink(Sink):
 
         Raises:
             ValueError: Если path выходит за пределы base_dir или содержит ``..``.
+
         """
         if ".." in target.parts:
             raise ValueError(f"Path traversal detected: {target!r}")

@@ -70,6 +70,7 @@ class DLQHandler(Protocol):
         Args:
             event: исходное событие, доставка которого не удалась.
             reason: финальное исключение, вызвавшее переход в DLQ.
+
         """
 
 
@@ -161,6 +162,7 @@ class OutboxDispatcher:
             retry_backoff_seconds: начальный backoff между retry-попытками.
             enabled: feature-flag; ``False`` → ``start`` no-op.
             task_registry: реестр фоновых задач; ``None`` → singleton.
+
         """
         self._backend = backend
         self._pending_source = pending_source
@@ -216,6 +218,7 @@ class OutboxDispatcher:
         Args:
             timeout: общий timeout на ожидание завершения текущей
                 итерации; при превышении — task.cancel().
+
         """
         if not self._running:
             return

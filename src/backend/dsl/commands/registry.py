@@ -41,6 +41,7 @@ class RouteRegistry:
 
         Raises:
             ValueError: Если route_id пустой.
+
         """
         route_id = pipeline.route_id.strip()
         if not route_id:
@@ -60,6 +61,7 @@ class RouteRegistry:
 
         Raises:
             KeyError: Если маршрут не зарегистрирован.
+
         """
         return self._routes[route_id]
 
@@ -72,6 +74,7 @@ class RouteRegistry:
 
         Returns:
             Pipeline | None: Найденный маршрут или None.
+
         """
         return self._routes.get(route_id)
 
@@ -84,6 +87,7 @@ class RouteRegistry:
 
         Returns:
             bool: Признак регистрации.
+
         """
         return route_id in self._routes
 
@@ -98,6 +102,7 @@ class RouteRegistry:
 
         Returns:
             Dict с override values или пустой dict если маршрут не найден.
+
         """
         pipeline = self._routes.get(route_id)
         if pipeline is None:
@@ -110,6 +115,7 @@ class RouteRegistry:
 
         Returns:
             tuple[str, ...]: Отсортированный список route_id.
+
         """
         return tuple(sorted(self._routes.keys()))
 
@@ -122,6 +128,7 @@ class RouteRegistry:
 
         Returns:
             tuple[str, ...]: Отсортированный список route_id.
+
         """
         return tuple(
             sorted(
@@ -138,6 +145,7 @@ class RouteRegistry:
 
         Returns:
             tuple[str, ...]: Отсортированный список route_id.
+
         """
         return tuple(
             sorted(
@@ -155,6 +163,7 @@ class RouteRegistry:
 
         Returns:
             dict[str, str]: {route_id: feature_flag_name}.
+
         """
         return {
             rid: pipeline.feature_flag
@@ -171,6 +180,7 @@ class RouteRegistry:
             flag_name: Имя feature-флага.
             enable: ``True`` — маршруты с этим флагом доступны;
                 ``False`` — заблокированы.
+
         """
         if enable:
             disabled_feature_flags.discard(flag_name)
@@ -193,6 +203,7 @@ class RouteRegistry:
 
         Returns:
             bool: ``True`` если маршрут был удалён, ``False`` если не найден.
+
         """
         return self._routes.pop(route_id, None) is not None
 
@@ -205,6 +216,7 @@ class RouteRegistry:
 
         Returns:
             dict[str, Pipeline]: Поверхностная копия ``route_id -> Pipeline``.
+
         """
         return dict(self._routes)
 
@@ -213,6 +225,7 @@ class RouteRegistry:
 
         Args:
             snapshot: Словарь, ранее полученный из :meth:`snapshot_state`.
+
         """
         self._routes = dict(snapshot)
 

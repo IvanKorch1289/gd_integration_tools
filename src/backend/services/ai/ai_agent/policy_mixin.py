@@ -141,6 +141,7 @@ class PolicyMixin:
         Returns:
             Экземпляр gateway либо ``None`` (provider не зарегистрирован).
             Не бросает исключения — все ошибки идут в caller (fail-closed).
+
         """
         try:
             from src.backend.core.di.app_state import get_app_ref

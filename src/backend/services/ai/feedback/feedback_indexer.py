@@ -54,6 +54,7 @@ class FeedbackIndexResult:
 
         Returns:
             Словарь с полями-счётчиками.
+
         """
         return {
             "indexed_positive": self.indexed_positive,
@@ -82,6 +83,7 @@ class FeedbackIndexer:
 
         Args:
             repository: Репозиторий feedback. ``None`` → singleton.
+
         """
         self._repo = repository or get_feedback_repository()
 
@@ -100,6 +102,7 @@ class FeedbackIndexer:
 
         Returns:
             Результат индексации (счётчики по исходу).
+
         """
         docs = await self._repo.list_labeled(
             agent_id=agent_id, indexed_in_rag=False, limit=limit,
@@ -148,6 +151,7 @@ class FeedbackIndexer:
 
         Returns:
             Идентификатор документа в RAG (``rag_doc_id``).
+
         """
         content = f"Q: {doc.query}\nA: {doc.response}"
         metadata = {
@@ -171,6 +175,7 @@ class FeedbackIndexer:
 
         Returns:
             Singleton ``RAGService`` из ``app.services.ai.rag_service``.
+
         """
         from src.backend.services.ai.rag_service import get_rag_service
 

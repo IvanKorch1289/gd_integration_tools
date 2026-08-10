@@ -31,6 +31,7 @@ class LoggerProtocol(ABC):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         ...
 
@@ -42,6 +43,7 @@ class LoggerProtocol(ABC):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         ...
 
@@ -53,6 +55,7 @@ class LoggerProtocol(ABC):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         ...
 
@@ -64,6 +67,7 @@ class LoggerProtocol(ABC):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         ...
 
@@ -75,6 +79,7 @@ class LoggerProtocol(ABC):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         ...
 
@@ -86,6 +91,7 @@ class LoggerProtocol(ABC):
             msg: Message format string.
             *args: Format arguments.
             **kwargs: Additional keyword arguments.
+
         """
         ...
 
@@ -98,6 +104,7 @@ class LoggerProtocol(ABC):
 
         Returns:
             Logger with bound context.
+
         """
         ...
 

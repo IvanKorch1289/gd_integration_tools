@@ -101,6 +101,7 @@ class VariableScope:
             ValueError: если ``raw`` имеет неизвестный формат (например,
                 `"hello-world"` без `:`). Pre-fix: silently fall back к
                 global scope, что могло замаскировать misconfig в YAML.
+
         """
         if raw == "global":
             return cls.global_scope()

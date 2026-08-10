@@ -38,6 +38,7 @@ class CertRotationWatcher:
         rotation_threshold_days: Порог в днях — если cert истекает
             раньше, помечается как expiring.
         prometheus_exporter: Optional exporter для record_rotation metrics.
+
     """
 
     def __init__(

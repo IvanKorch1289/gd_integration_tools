@@ -23,6 +23,7 @@ Spec (YAML)::
 Note:
     Production deployment требует integration с PCI-DSS vault.
     Этот DSL — contract-level реализация с format-preserving stubs.
+
 """
 
 from __future__ import annotations
@@ -59,6 +60,7 @@ class CardTokenResult:
         last_four: Last 4 digits (для UI display).
         method: Tokenization method (``"fpe"`` или ``"vault"``).
         token_id: Token ID для detokenization lookup.
+
     """
 
     token: str
@@ -107,6 +109,7 @@ class CardTokenizeProcessor(BaseProcessor):
             method: ``"fpe"`` (format-preserving) или ``"vault"`` (PCI vault).
             bin_preserve: Сохранять первые 6 цифр (BIN) для routing.
             name: Имя процессора.
+
         """
         super().__init__(name=name or f"card_tokenize[{source_property}]")
         self._source_property = source_property
@@ -254,6 +257,7 @@ class CardTokenizeProcessor(BaseProcessor):
             token_id: UUID-идентификатор токена.
             pan: Оригинальный PAN (PII — нужен encryption at rest).
             token: FPE-токен для round-trip lookup.
+
         """
         from src.backend.core.security.pii_tokenizer import EncryptedValue, TokenMap
         from src.backend.infrastructure.security.token_registry import (

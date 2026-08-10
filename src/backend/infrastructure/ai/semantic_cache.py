@@ -106,6 +106,7 @@ class SemanticCache:
 
         Returns:
             Cached value or None if not found.
+
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import (
@@ -128,6 +129,7 @@ class SemanticCache:
         Args:
             query: Query string.
             value: Value to cache.
+
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import (
@@ -173,6 +175,7 @@ class TierRouter:
           tier остаётся управляемым отдельным embed-pipeline.
         * Per-tier метрики ``(tier, op)`` — для расчёта hit-rate и
           диагностики "холодных" tier'ов.
+
     """
 
     def __init__(
@@ -213,6 +216,7 @@ class TierRouter:
 
         Returns:
             Сохранённое значение либо ``None`` если miss во всех tier'ах.
+
         """
         # L1
         value = await self._l1.get(key)
@@ -264,6 +268,7 @@ class TierRouter:
             semantic_key: Если задан — параллельно пишется в L3 как
                 semantic-index (обычно сырая query, чтобы L3 мог
                 считать embedding и хранить vector).
+
         """
         await self._l1.set(key, value, ttl=ttl)
         _record("l1", "set")

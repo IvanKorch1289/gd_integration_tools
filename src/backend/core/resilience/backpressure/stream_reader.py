@@ -31,6 +31,7 @@ class AdaptiveStreamReader:
         adjust_factor: Множитель изменения (default 1.5).
         adjust_high_threshold: Порог уменьшения (default 0.7 utilization).
         adjust_low_threshold: Порог увеличения (default 0.3 utilization).
+
     """
 
     def __init__(
@@ -68,6 +69,7 @@ class AdaptiveStreamReader:
 
         Returns:
             Новый batch size после корректировки.
+
         """
         if utilization >= self._adjust_high:
             # Backpressure — уменьшить batch

@@ -29,6 +29,7 @@ class TelegramStatusProcessor(BaseProcessor):
         bot: Имя бота.
         result_property: Имя exchange-property для записи ответа
             (структура ``{id, is_bot, first_name, username, ...}``).
+
     """
 
     def __init__(

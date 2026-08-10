@@ -32,6 +32,7 @@ class TieredCacheBackend(CacheBackend):
         l1: local CacheBackend (e.g. MemoryBackend).
         l2: remote CacheBackend (e.g. RedisBackend).
         promote_ttl: TTL при promote из L2 в L1 (default 60s).
+
     """
 
     def __init__(
@@ -50,6 +51,7 @@ class TieredCacheBackend(CacheBackend):
 
         Returns:
             Cached bytes or None if not found.
+
         """
         # L1 first
         val = await self._l1.get(key)
@@ -73,6 +75,7 @@ class TieredCacheBackend(CacheBackend):
             key: Cache key.
             value: Value to cache.
             ttl: Optional TTL in seconds.
+
         """
         # Set both (L1 best-effort)
         try:
@@ -87,6 +90,7 @@ class TieredCacheBackend(CacheBackend):
 
         Args:
             keys: Cache keys to delete.
+
         """
         async with asyncio.TaskGroup() as tg:
             tg.create_task(self._l1.delete(*keys))
@@ -97,6 +101,7 @@ class TieredCacheBackend(CacheBackend):
 
         Args:
             pattern: Glob pattern to match keys.
+
         """
         async with asyncio.TaskGroup() as tg:
             tg.create_task(self._l1.delete_pattern(pattern))
@@ -110,5 +115,6 @@ class TieredCacheBackend(CacheBackend):
 
         Returns:
             True if key exists in L1 or L2, False otherwise.
+
         """
         return await self._l1.exists(key) or await self._l2.exists(key)

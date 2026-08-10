@@ -71,6 +71,7 @@ class LdapQueryProcessor(BaseProcessor):
         attributes: Список атрибутов для возврата (None → все).
         to: Куда положить list[dict] результатов.
         use_ssl: Включить LDAPS.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL

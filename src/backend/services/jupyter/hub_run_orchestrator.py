@@ -90,6 +90,7 @@ class HubRunResult:
         duration_seconds: Время выполнения.
         cells_executed: Число выполненных code-ячеек.
         errors: Список error-сообщений (пустой при успехе).
+
     """
 
     notebook_name: str
@@ -140,6 +141,7 @@ async def run_hub_notebook(
         NotebookParameterError: parameters не прошли валидацию.
         JupyterExecutionError: ошибка выполнения на Hub.
         JupyterHubError: ошибка API клиента.
+
     """
     import time
 
@@ -324,6 +326,7 @@ async def _save_inline_notebook(
 
     Returns:
         Путь к сохранённому файлу.
+
     """
     import json
     import os

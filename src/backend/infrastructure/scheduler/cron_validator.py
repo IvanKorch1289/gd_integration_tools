@@ -59,6 +59,7 @@ def validate_cron_expression(
 
     Returns:
         :class:`CronValidationResult` с ``is_valid`` + ``next_executions``.
+
     """
     preview_count = max(1, min(preview_count, 50))
 

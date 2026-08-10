@@ -44,6 +44,7 @@ def _load_wizard():
 
     Returns:
         Модуль ``plugin_wizard_mod``.
+
     """
     src = _ROOT / "tools" / "wizards" / "plugin_wizard.py"
     spec = importlib.util.spec_from_file_location("plugin_wizard_mod", src)
@@ -63,6 +64,7 @@ def isolated_extensions_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     Yields:
         Временная директория, в которую ``_write_scaffold`` пишет scaffold.
+
     """
     monkeypatch.setattr(_wizard, "EXTENSIONS_DIR", tmp_path)
     return tmp_path

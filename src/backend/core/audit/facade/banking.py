@@ -36,6 +36,7 @@ def emit_banking_audit(
 
     Returns:
         Result of ``AuditService.emit()``.
+
     """
     details: dict[str, Any] = {"processor": processor, "params": params}
     if result is not None:

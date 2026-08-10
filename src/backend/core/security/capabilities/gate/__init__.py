@@ -123,6 +123,7 @@ def check_capabilities_subset(
     Raises:
         CapabilitySupersetError: Хотя бы одна capability route'а не
             покрывается объединением источников.
+
     """
     available: list[CapabilityRef] = []
     for caps in plugin_caps_by_name.values():

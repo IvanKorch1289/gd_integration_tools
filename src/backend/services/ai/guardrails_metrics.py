@@ -59,6 +59,7 @@ class GuardrailMetrics:
         redact: пропущенных с redaction (PII masking).
         by_reason: ``reason → count``.
         false_positives: manual-labeled FP (после operator review).
+
     """
 
     tenant_id: str
@@ -75,6 +76,7 @@ class GuardrailMetrics:
 
         Returns:
             Block rate (0.0 to 1.0).
+
         """
         return self.block / self.total if self.total else 0.0
 
@@ -84,6 +86,7 @@ class GuardrailMetrics:
 
         Returns:
             False positive rate (0.0 to 1.0).
+
         """
         return self.false_positives / self.block if self.block else 0.0
 
@@ -92,6 +95,7 @@ class GuardrailMetrics:
 
         Returns:
             Dictionary representation.
+
         """
         return {
             "tenant_id": self.tenant_id,
@@ -192,6 +196,7 @@ class GuardrailsMetricsService:
         Args:
             tenant_id: Tenant identifier.
             count: Number of false positives.
+
         """
         async with self._lock:
             metrics = self._by_tenant.setdefault(
@@ -207,6 +212,7 @@ class GuardrailsMetricsService:
 
         Returns:
             GuardrailMetrics for the tenant.
+
         """
         async with self._lock:
             return self._by_tenant.get(tenant_id, GuardrailMetrics(tenant_id=tenant_id))
@@ -216,6 +222,7 @@ class GuardrailsMetricsService:
 
         Returns:
             List of GuardrailMetrics sorted by tenant_id.
+
         """
         async with self._lock:
             return sorted(self._by_tenant.values(), key=lambda m: m.tenant_id)

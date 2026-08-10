@@ -79,6 +79,7 @@ async def get_invocation(
     Returns:
         404, если результат ещё не опубликован (или TTL истёк) либо
         invocation_id не существовал. Клиент должен ретраить.
+
     """
     channel = registry.get("api")
     if channel is None:

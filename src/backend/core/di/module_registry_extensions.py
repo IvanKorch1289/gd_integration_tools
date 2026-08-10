@@ -103,6 +103,7 @@ def is_extension_path(dotted_path: str) -> bool:
         только разрешённые символы (lowercase letters / digits /
         dot / underscore). Hyphens, spaces и спец-символы запрещены
         (defense against typo-импортов вроде ``extensions.foo-bar``).
+
     """
     if not isinstance(dotted_path, str) or not dotted_path:
         return False
@@ -159,6 +160,7 @@ def register_extension_module(key: str, dotted_path: str) -> bool:
         * Thread-safe.
         * Safe by default: extension не может зарегистрировать модуль
           вне ``extensions.`` prefix.
+
     """
     if not isinstance(key, str) or not key:
         raise TypeError(f"key must be non-empty str, got {type(key).__name__}")
@@ -204,6 +206,7 @@ def unregister_extension_module(key: str) -> bool:
     Returns:
         ``True`` если registration удалена, ``False`` если ``key``
         не был зарегистрирован.
+
     """
     with _extension_modules_lock:
         if key not in _extension_modules:
@@ -226,6 +229,7 @@ def clear_extension_modules() -> int:
         M3.2 review O-6-3 fix: повышенный лог-уровень при bulk-clear
         (>10 entries) → warning, чтобы случайный global clear был
         виден в monitoring.
+
     """
     with _extension_modules_lock:
         count = len(_extension_modules)
@@ -249,6 +253,7 @@ def list_extension_modules() -> dict[str, str]:
     Returns:
         Copy of ``{key: dotted_path}`` registry. Mutating возвращённый
         dict не влияет на внутреннее состояние.
+
     """
     with _extension_modules_lock:
         return dict(_extension_modules)

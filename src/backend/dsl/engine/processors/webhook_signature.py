@@ -68,6 +68,7 @@ class WebhookSignatureProcessor(BaseProcessor):
         msg_id_header: Заголовок с идентификатором сообщения (для standardwebhooks).
         timestamp_header: Заголовок с timestamp (для standardwebhooks).
         on_error: ``fail`` / ``dlq`` / ``warn``.
+
     """
 
     def __init__(

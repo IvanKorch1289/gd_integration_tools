@@ -32,6 +32,7 @@ def build_model_parameters(
 
     Returns:
         List of FastAPI Parameters.
+
     """
     if model_cls is None:
         return []
@@ -70,6 +71,7 @@ def build_invocation_parameters(spec: InvocationSpec) -> list[Parameter]:
 
     Returns:
         List of FastAPI Parameters.
+
     """
     fields = set(spec.source_fields)
     parameters: list[Parameter] = []
@@ -118,6 +120,7 @@ def request_parameter() -> Parameter:
 
     Returns:
         FastAPI Request parameter.
+
     """
     from fastapi import Request
 
@@ -136,6 +139,7 @@ def path_parameter(name: str, annotation: Any, description: str) -> Parameter:
 
     Returns:
         FastAPI Path parameter.
+
     """
     return Parameter(
         name=name,
@@ -158,6 +162,7 @@ def query_parameter(
 
     Returns:
         FastAPI Query parameter.
+
     """
     return Parameter(
         name=name,

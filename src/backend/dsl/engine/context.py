@@ -27,6 +27,7 @@ class ExecutionContext:
             (для route-wide permission enforcement через :class:`AuthorizationGateway`).
         permissions: Sprint 1 — кортеж строк-permissions principal'а для
             авторизации.
+
     """
 
     action_registry: ActionHandlerRegistry = action_handler_registry
@@ -58,6 +59,7 @@ class ExecutionContext:
 
         Returns:
             ``ExecutionContext`` с заполненными ``principal`` и ``permissions``.
+
         """
         from src.backend.core.auth.auth_context_helpers import extract_user_permissions
 
@@ -84,6 +86,7 @@ class ExecutionContext:
 
         Returns:
             Any: Найденное значение или default.
+
         """
         return self.state.get(key, default)
 
@@ -94,5 +97,6 @@ class ExecutionContext:
         Args:
             key: Ключ.
             value: Значение.
+
         """
         self.state[key] = value

@@ -35,6 +35,7 @@ class BaseSearchProvider(ABC):
 
         Returns:
             List of search results.
+
         """
         ...
 
@@ -47,6 +48,7 @@ class BaseSearchProvider(ABC):
 
         Returns:
             Research results.
+
         """
         ...
 
@@ -69,6 +71,7 @@ class PerplexityProvider(BaseSearchProvider):
 
         Returns:
             List of search results with content and citations.
+
         """
         from src.backend.core.net.migration_helper import make_http_client
 
@@ -96,6 +99,7 @@ class PerplexityProvider(BaseSearchProvider):
 
         Returns:
             Research results with query and provider info.
+
         """
         results = await self.search(query, max_results=10)
         return {"query": query, "results": results, "provider": self.name}
@@ -118,6 +122,7 @@ class TavilyProvider(BaseSearchProvider):
 
         Returns:
             List of search results.
+
         """
         from src.backend.core.net.migration_helper import make_http_client
 
@@ -152,6 +157,7 @@ class TavilyProvider(BaseSearchProvider):
 
         Returns:
             Research results with query and provider info.
+
         """
         from src.backend.core.net.migration_helper import make_http_client
 
@@ -180,6 +186,7 @@ class SearXNGProvider(BaseSearchProvider):
         base_url: SearXNG instance URL.
         engines: Search engines to use.
         timeout: HTTP timeout in seconds.
+
     """
 
     name = "searxng"
@@ -200,6 +207,7 @@ class SearXNGProvider(BaseSearchProvider):
 
         Returns:
             List of search results.
+
         """
         from src.backend.core.net.migration_helper import make_http_client
 
@@ -239,6 +247,7 @@ class WebSearchService:
 
         Args:
             provider: Provider to add.
+
         """
         self._providers.append(provider)
         self._providers.append(provider)
@@ -258,6 +267,7 @@ class WebSearchService:
 
         Raises:
             ValueError: If specified provider not found.
+
         """
         if provider:
             for p in self._providers:
@@ -288,6 +298,7 @@ class WebSearchService:
 
         Returns:
             Research results.
+
         """
         if provider:
             for p in self._providers:

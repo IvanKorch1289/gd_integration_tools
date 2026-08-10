@@ -54,6 +54,7 @@ class AuthMethodHeaderMiddleware:
             app: ASGI-приложение.
             header_name: Имя response header.
             enabled: Включить emit header (default: False для security).
+
         """
         self.app = app
         self._header_name = header_name

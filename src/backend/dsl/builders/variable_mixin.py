@@ -54,6 +54,7 @@ class VariableMixin:
 
         Returns:
             self (chainable).
+
         """
         return self.variable_resolve(  # type: ignore[attr-defined,return-value]
             scope=scope, fail_on_unresolved=False, name=name or f"variable:{key}",
@@ -75,6 +76,7 @@ class VariableMixin:
 
         Returns:
             self (chainable).
+
         """
         return self._add_lazy(  # type: ignore[attr-defined,return-value]
             "src.backend.dsl.engine.processors.variable_resolve",

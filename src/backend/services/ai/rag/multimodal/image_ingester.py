@@ -50,6 +50,7 @@ class ImageIngester:
         caption_provider: Опциональный async-callable ``(bytes) -> str`` для
             генерации caption (VLM/Vision LLM). Если задан — caption пишется
             в metadata["caption"].
+
     """
 
     def __init__(
@@ -61,6 +62,7 @@ class ImageIngester:
             extract_exif: Извлекать EXIF-метаданные.
             caption_provider: Async-вызываемый объект для VLM caption
                 (опционально).
+
         """
         self.extract_exif = extract_exif
         self.caption_provider = caption_provider
@@ -73,6 +75,7 @@ class ImageIngester:
 
         Returns:
             ChunkDoc(kind="image") с заполненными metadata.
+
         """
         if isinstance(source, Path):
             content = await asyncio.to_thread(source.read_bytes)
@@ -121,6 +124,7 @@ class ImageIngester:
 
         Returns:
             ``{format, mime, width, height, mode, exif?}``.
+
         """
         from PIL import Image  # lazy-import (Pillow в base deps)
 

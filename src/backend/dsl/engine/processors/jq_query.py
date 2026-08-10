@@ -56,6 +56,7 @@ class JqProcessor(BaseProcessor):
         to: Куда положить результат (``body.<field>`` / ``properties.<name>``).
         mode: ``all`` (default — list всех результатов), ``first`` (первый),
             ``scalar`` (одно значение, иначе None).
+
     """
 
     def __init__(

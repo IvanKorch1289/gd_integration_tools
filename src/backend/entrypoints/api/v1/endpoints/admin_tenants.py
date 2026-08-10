@@ -121,6 +121,7 @@ async def list_tenants(limit: int = _DEFAULT_AUDIT_LIMIT) -> dict[str, Any]:
     Args:
         limit: Глубина выборки audit-events для агрегации
             (clamped 1..10000 в audit_log.query).
+
     """
     safe_limit = max(1, min(int(limit), 10000))
     rows = await _query_audit_safe(limit=safe_limit)

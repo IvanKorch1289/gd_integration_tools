@@ -122,6 +122,7 @@ class BaseError(Exception):
         Returns:
             Словарь с полями ``message``, ``status_code``
             и опционально ``error_type``.
+
         """
         result: dict[str, Any] = {
             "message": self.message,

@@ -85,6 +85,7 @@ class MissingBaggageError(RuntimeError):
 
     Args:
         missing: Список имён отсутствующих ключей.
+
     """
 
     def __init__(self, missing: list[str]) -> None:
@@ -92,6 +93,7 @@ class MissingBaggageError(RuntimeError):
 
         Args:
             missing: Список имён отсутствующих ключей baggage.
+
         """
         self.missing = missing
         super().__init__(
@@ -125,6 +127,7 @@ def set_baggage(
             business_op="credit.score.calculate",
             correlation_id="req-abc123",
         )
+
     """
     from opentelemetry import baggage as otel_baggage  # lazy-import
     from opentelemetry import context as otel_context  # lazy-import
@@ -165,6 +168,7 @@ def get_baggage() -> dict[str, str]:
     Example:
         bag = get_baggage()
         # -> {"route_name": "credit_check_v2", "tenant_id": "bank_alpha", ...}
+
     """
     from opentelemetry import baggage as otel_baggage  # lazy-import
 
@@ -206,6 +210,7 @@ async def with_baggage(
             bag = get_baggage()
             assert bag["route_name"] == "health_check"
         # после выхода из блока — предыдущий baggage восстановлен
+
     """
     from opentelemetry import context as otel_context  # lazy-import
 
@@ -229,6 +234,7 @@ def _get_feature_flags() -> Any:
 
     Returns:
         Объект FeatureFlags с текущими значениями флагов.
+
     """
     from src.backend.core.config.features import feature_flags  # lazy-import
 
@@ -253,6 +259,7 @@ def ensure_required_baggage() -> None:
         # В middleware/entrypoint — вызвать после set_baggage()
         ensure_required_baggage()
         # Если strict=True и baggage неполный — получим MissingBaggageError
+
     """
     flags = _get_feature_flags()
     if not flags.tracing_baggage_strict:

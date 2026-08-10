@@ -38,6 +38,7 @@ class NATSMessage:
         headers: Заголовки сообщения (опционально).
         reply: Reply-subject (для request/reply паттерна).
         timestamp: Время получения сообщения.
+
     """
 
     subject: str
@@ -59,6 +60,7 @@ class NATSJetStreamSource:
         stream: Имя JetStream stream.
         durable: Имя durable consumer (гарантирует возобновляемость).
         nats_url: URL NATS-сервера (default: ``nats://localhost:4222``).
+
     """
 
     kind: SourceKind = SourceKind.MQ
@@ -87,6 +89,7 @@ class NATSJetStreamSource:
 
         Yields:
             :class:`NATSMessage` для каждого входящего сообщения.
+
         """
         try:
             import nats
@@ -177,6 +180,7 @@ class NATSJetStreamSource:
 
         Args:
             on_event: Async-callback, вызываемый на каждое событие.
+
         """
         async for nats_msg in self.stream():
             event = SourceEvent(

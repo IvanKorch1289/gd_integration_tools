@@ -55,6 +55,7 @@ class L3RetrievalCache:
 
         Returns:
             Полный Redis-ключ с sha256-digest.
+
         """
         digest = hashlib.sha256(query.encode("utf-8")).hexdigest()
         tenant_part = tenant if tenant else _UNSCOPED_TENANT
@@ -81,6 +82,7 @@ class L3RetrievalCache:
 
         Returns:
             List of cached chunks or None if not found.
+
         """
         client = self._ensure_client()
         try:
@@ -117,6 +119,7 @@ class L3RetrievalCache:
             chunks: List of chunk dictionaries.
             tenant: Optional tenant scope (изоляция между tenant'ами).
             namespace: Optional namespace scope.
+
         """
         client = self._ensure_client()
         try:
@@ -137,6 +140,7 @@ class L3RetrievalCache:
             query: Query string.
             tenant: Optional tenant scope (invalidate только указанного).
             namespace: Optional namespace scope.
+
         """
         client = self._ensure_client()
         try:
@@ -154,6 +158,7 @@ class L3RetrievalCache:
 
         Returns:
             Number of deleted entries.
+
         """
         client = self._ensure_client()
         try:

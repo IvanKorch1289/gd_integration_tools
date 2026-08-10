@@ -66,6 +66,7 @@ class ProtoField:
         repeated: Признак ``repeated`` (для ``list[T]``).
         optional: Признак ``optional`` (для ``Optional[T]`` в proto3).
         comment: Комментарий, попадает в ``.proto`` как ``// comment``.
+
     """
 
     name: str
@@ -84,6 +85,7 @@ class ProtoMessage:
         name: Имя сообщения (CamelCase).
         fields: Список :class:`ProtoField`.
         comment: Описание сообщения (попадает в ``.proto``).
+
     """
 
     name: str
@@ -100,6 +102,7 @@ class ProtoServiceRpc:
         request_message: Имя input-message.
         response_message: Имя output-message.
         comment: Описание метода.
+
     """
 
     name: str
@@ -116,6 +119,7 @@ class ProtoService:
         name: Имя сервиса (например ``OrdersService``).
         rpcs: Список RPC-методов.
         comment: Описание сервиса.
+
     """
 
     name: str
@@ -134,6 +138,7 @@ class ProtoFile:
         imports: Дополнительные ``import "..."`` (для ``Any`` — google/protobuf/any.proto).
         warnings: Предупреждения, накопленные при конвертации
             (например, fallback на ``google.protobuf.Any``).
+
     """
 
     package: str
@@ -179,6 +184,7 @@ class PydanticToProtoConverter:
 
         Returns:
             Имя сгенерированной message (CamelCase, совпадает с именем класса).
+
         """
         message_name = model.__name__
         if message_name in self._messages:

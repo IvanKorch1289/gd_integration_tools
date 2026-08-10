@@ -80,6 +80,7 @@ class DLQEnvelope(BaseModel):
         last_failed_at: Timestamp последней failure (UTC).
         metadata: Произвольные пары ключ-значение для debug-контекста
             (request_id, upstream_url, response_code, и т.п.).
+
     """
 
     dlq_id: str = Field(default_factory=lambda: str(uuid4()))

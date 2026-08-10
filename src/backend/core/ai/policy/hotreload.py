@@ -63,6 +63,7 @@ class PolicyReloadEvent:
     Attributes:
         path: абсолютный path к изменившемуся файлу.
         action: тип change (ADDED / MODIFIED / DELETED).
+
     """
 
     path: Path
@@ -104,6 +105,7 @@ async def watch_policy_files(
         >>> resolver = PolicyResolver(roots=[Path("ai_policies")])
         >>> async for event in watch_policy_files(resolver):
         ...     _logger.info("Policy %s: %s", event.action, event.path)
+
     """
     try:
         from watchfiles import Change, awatch  # type: ignore[import-not-found]

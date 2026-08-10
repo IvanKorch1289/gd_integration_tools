@@ -62,6 +62,7 @@ class MemoryEntry:
         metadata: Произвольные метаданные (JSON-совместимый dict).
         timestamp: Время создания записи (UTC).
         embedding: Вектор эмбеддинга (только для semantic; None иначе).
+
     """
 
     entry_id: str
@@ -113,6 +114,7 @@ class LangMemService:
         qdrant_collection: Имя коллекции Qdrant.
         use_inmemory: Принудительно использовать inMemory (для тестов).
         enabled: Явное включение/выключение. Если ``None`` — берётся из feature_flags.
+
     """
 
     def __init__(
@@ -257,6 +259,7 @@ class LangMemService:
         Returns:
             MemoryEntry с заполненными entry_id и timestamp. При отключённом
             флаге — пустой MemoryEntry без сохранения.
+
         """
         if not self._enabled:
             return _new_entry(
@@ -285,6 +288,7 @@ class LangMemService:
 
         Returns:
             MemoryEntry с embedding. При отключённом флаге — пустой MemoryEntry.
+
         """
         if not self._enabled:
             return _new_entry(
@@ -345,6 +349,7 @@ class LangMemService:
         Returns:
             MemoryEntry с content=name и metadata={'steps': steps}.
             При отключённом флаге — пустой MemoryEntry.
+
         """
         if not self._enabled:
             return _new_entry(
@@ -374,6 +379,7 @@ class LangMemService:
         Returns:
             Список MemoryEntry, отсортированный по timestamp убыванию.
             При отключённом флаге — пустой список.
+
         """
         if not self._enabled:
             return []
@@ -440,6 +446,7 @@ class LangMemService:
         Returns:
             Dict с keys: ``episodic_processed``, ``semantic_created``,
             ``duration_s``, ``started_at``, ``finished_at``.
+
         """
         if not self._enabled:
             raise LangMemDisabled(
@@ -474,6 +481,7 @@ class LangMemService:
         Returns:
             Dict с counts по типам памяти (``episodic_count``,
             ``semantic_count``, ``procedural_count``, ``total``).
+
         """
         if not self._enabled:
             raise LangMemDisabled(
@@ -517,6 +525,7 @@ def get_langmem_service() -> LangMemService:
 
     Returns:
         Инициализированный :class:`LangMemService`.
+
     """
     global _singleton
     if _singleton is None:

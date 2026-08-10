@@ -262,6 +262,7 @@ class TelegramBotClient:
 
         Returns:
             ``message_id`` отправленного сообщения.
+
         """
         result = await self._call("sendMessage", message.to_payload())
         return int(result.get("message_id", 0))
@@ -275,6 +276,7 @@ class TelegramBotClient:
 
         Returns:
             ``message_id`` ответного сообщения.
+
         """
         payload = reply.to_payload()
         payload["reply_to_message_id"] = source_message_id
@@ -298,6 +300,7 @@ class TelegramBotClient:
             text: Новый текст. Если None — изменяется только разметка.
             parse_mode: HTML / MarkdownV2 / Markdown.
             inline_keyboard: Новые inline-кнопки. ``[]`` → очистить.
+
         """
         if text is not None:
             payload: dict[str, Any] = {
@@ -362,6 +365,7 @@ class TelegramBotClient:
 
         Returns:
             ``message_id`` отправленного сообщения.
+
         """
         files = {"document": (file_name, file_data)}
         data: dict[str, Any] = {"chat_id": chat_id}
@@ -390,6 +394,7 @@ class TelegramBotClient:
         Args:
             commands: ``[{"command": "start", "description": "Запуск"}]``.
             language_code: BCP 47 (ru / en / …). None → default.
+
         """
         payload: dict[str, Any] = {"commands": commands}
         if language_code:

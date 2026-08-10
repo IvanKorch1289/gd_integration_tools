@@ -91,6 +91,7 @@ async def _langgraph_checkpoint_get_activity(thread_id: str) -> dict[str, Any] |
         Возвращает ``None`` также если saver недоступен (flag OFF или
         langchain_postgres не установлен) — caller ОБРАБАТЫВАЕТ None как
         "первый запуск, нет prior state".
+
     """
     from src.backend.services.ai.agents.langgraph_postgres_saver import (
         get_langgraph_postgres_saver,
@@ -128,6 +129,7 @@ async def _langgraph_checkpoint_put_activity(state: dict[str, Any]) -> bool:
 
     Returns:
         ``True`` если checkpoint успешно записан, ``False`` иначе.
+
     """
     from src.backend.services.ai.agents.langgraph_postgres_saver import (
         get_langgraph_postgres_saver,
@@ -164,6 +166,7 @@ def register_langgraph_checkpoint_activities(bridge: ActivityBridge) -> None:
     Args:
         bridge: ActivityBridge, в который добавляются 2 checkpoint
             activity-обёртки.
+
     """
     bridge.get(LANGGRAPH_CHECKPOINT_GET_ACTIVITY)
     bridge.get(LANGGRAPH_CHECKPOINT_PUT_ACTIVITY)
@@ -195,6 +198,7 @@ def bridge_action_handler(
     Raises:
         Не raise на этапе регистрации — отсутствие handler проявится
         в runtime ``KeyError`` при первом вызове activity.
+
     """
 
     async def _activity_impl(payload: dict[str, Any]) -> Any:
@@ -239,6 +243,7 @@ class ActivityBridge:
             required_capabilities: Capability'и, требуемые активности.
                 Применяется только при создании новой обёртки —
                 cache-hit возвращает уже зарегистрированную callable.
+
         """
         wrapper = self._cache.get(action_id)
         if wrapper is None:
@@ -271,6 +276,7 @@ class ActivityBridge:
         Returns:
             Список activity-callable в порядке появления action_id
             (без дубликатов).
+
         """
         seen: set[str] = set()
         result: list[Callable[..., Awaitable[Any]]] = []
@@ -323,6 +329,7 @@ def _iter_activity_specs(step: WorkflowStep) -> list[tuple[str, tuple[str, ...]]
     Returns:
         Список пар ``(action_id, capabilities-tuple)`` в порядке
         декларации (forward → compensate для saga).
+
     """
     if isinstance(step, ActivityDeclaration):
         return [(step.name, tuple(step.required_capabilities))]
@@ -351,6 +358,7 @@ def get_activity_callables(
     Returns:
         Список callable, готовых к декорированию ``@activity.defn``
         (через :meth:`ActivityBridge.decorate`).
+
     """
     bridge = bridge or ActivityBridge()
     return bridge.collect_activities(declarations)

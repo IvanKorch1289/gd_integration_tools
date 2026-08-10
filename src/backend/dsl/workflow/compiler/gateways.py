@@ -136,6 +136,7 @@ async def compile_xor(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
     Returns:
         Имя выполненной ветки (``branch.name``), либо ``None`` если
         ни одна ветка не matched и нет default.
+
     """
     spec = _resolve_gateway_spec(decl)
     default_branch: BranchSpec | None = None
@@ -170,6 +171,7 @@ async def compile_and(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
 
     Returns:
         Список результатов всех веток (в порядке объявления).
+
     """
     spec = _resolve_gateway_spec(decl)
     if not spec.branches:
@@ -192,6 +194,7 @@ async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
 
     Returns:
         Результат первой завершённой ветки, либо ``None`` если веток нет.
+
     """
     spec = _resolve_gateway_spec(decl)
     if not spec.branches:

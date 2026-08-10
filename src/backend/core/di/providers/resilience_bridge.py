@@ -57,6 +57,7 @@ def get_bulkhead_attr(name: str) -> Any:
 
     Args:
         name: имя атрибута.
+
     """
     from src.backend.infrastructure.resilience import bulkhead
 
@@ -77,6 +78,7 @@ def get_unified_rate_limiter_attr(name: str) -> Any:
 
     Args:
         name: имя атрибута (например ``"RateLimit"``).
+
     """
     from src.backend.infrastructure.resilience import unified_rate_limiter
 

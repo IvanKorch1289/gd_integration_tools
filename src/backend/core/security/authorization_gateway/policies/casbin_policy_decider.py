@@ -36,6 +36,7 @@ def build_casbin_policy_decider(
     Returns:
         :data:`PolicyDecider` callable, ready-to-use в
         ``AuthorizationGateway(..., policies=(...,))``.
+
     """
     # B-12 fix (cycle 37): composition root delegating к existing фабрике.
     return AuthorizationGateway.casbin_step(casbin_enforcer)

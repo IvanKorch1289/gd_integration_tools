@@ -43,6 +43,7 @@ def _make_recorder_temporal(
     Returns:
         (fake_workflow_module, recorder), где recorder — упорядоченный
         список вызванных activity names.
+
     """
     recorder: list[str] = []
     fail_on = fail_on or set()

@@ -43,6 +43,7 @@ class TelegramSendFileProcessor(BaseProcessor):
         parse_mode: Разметка caption.
         disable_notification: Без звука.
         result_property: Имя property для записи message_id.
+
     """
 
     def __init__(

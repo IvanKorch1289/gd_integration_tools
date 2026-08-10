@@ -63,6 +63,7 @@ def render_macros(
 
     Returns:
         Чистый YAML (Jinja-конструкции раскрыты).
+
     """
     if not has_jinja_syntax(yaml_text):
         return yaml_text

@@ -54,6 +54,7 @@ class SmsSink(Sink):
         from_name: Имя отправителя (регистрируется в личном кабинете).
         default_to: Номер по умолчанию (E.164, например ``"+79991234567"``).
         timeout_s: HTTP timeout (default 10).
+
     """
 
     # Валидные провайдеры — class-level чтобы enum-style без жёсткого import.

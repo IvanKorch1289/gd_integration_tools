@@ -47,6 +47,7 @@ class NotebookSpec(BaseModel):
         default_parameters: Defaults для параметров.
         timeout_seconds: Таймаут на выполнение.
         kernel: Имя kernel (e.g., ``"python3"``).
+
     """
 
     name: str = Field(..., min_length=1, max_length=200)
@@ -135,6 +136,7 @@ class NotebookRegistry:
 
         Returns:
             Количество зарегистрированных notebooks.
+
         """
         dir_path = Path(notebooks_dir)
         if not dir_path.is_dir():

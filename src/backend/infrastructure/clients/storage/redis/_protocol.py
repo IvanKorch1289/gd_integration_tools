@@ -30,6 +30,7 @@ class _RedisClientProtocol(Protocol):
 
         Returns:
             List of exception types to retry on.
+
         """
         ...
 
@@ -38,6 +39,7 @@ class _RedisClientProtocol(Protocol):
 
         Returns:
             Redis URL string.
+
         """
         ...
 
@@ -49,6 +51,7 @@ class _RedisClientProtocol(Protocol):
 
         Returns:
             Database number.
+
         """
         ...
 
@@ -60,6 +63,7 @@ class _RedisClientProtocol(Protocol):
 
         Returns:
             Redis client instance.
+
         """
         ...
 
@@ -72,6 +76,7 @@ class _RedisClientProtocol(Protocol):
 
         Returns:
             Redis client instance.
+
         """
         ...
 
@@ -80,6 +85,7 @@ class _RedisClientProtocol(Protocol):
 
         Args:
             kind: Redis kind identifier.
+
         """
         ...
 
@@ -99,6 +105,7 @@ class _RedisClientProtocol(Protocol):
 
         Returns:
             True if connected.
+
         """
         ...
 
@@ -113,6 +120,7 @@ class _RedisClientProtocol(Protocol):
 
         Returns:
             Operation result.
+
         """
         ...
 

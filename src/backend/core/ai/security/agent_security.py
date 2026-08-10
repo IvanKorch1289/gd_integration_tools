@@ -30,6 +30,7 @@ References:
 - OWASP LLM Top 10 (LLM01: Prompt Injection, LLM06: Sensitive Info Disclosure)
 - NIST AI Risk Management Framework
 - Master Prompt §9.3 (AI Safety)
+
 """
 
 from __future__ import annotations
@@ -86,6 +87,7 @@ class SecurityDecision:
         matched_pattern: Какое правило сработало (для diagnostics).
         hook_results: Результаты hooks.
         masked_input: Sanitized input (после masking).
+
     """
 
     allowed: bool
@@ -203,6 +205,7 @@ class DangerousCommandDetector:
 
         Returns:
             Tuple (threat_level, description).
+
         """
         for pattern, desc in self._shell_patterns:
             if pattern.search(command):
@@ -253,6 +256,7 @@ class FileModificationPolicy:
         forbidden_paths: Blacklist paths (higher priority).
         max_file_size_bytes: Максимальный размер файла для изменения.
         require_confirmation: Требовать ли user confirmation для изменений.
+
     """
 
     allowed_paths: tuple[str, ...] = ()
@@ -265,6 +269,7 @@ class FileModificationPolicy:
 
         Returns:
             True если path allowed.
+
         """
         # Forbidden имеет приоритет
         for forbidden in self.forbidden_paths:
@@ -296,6 +301,7 @@ class AgentSecurityPolicy:
         enable_workflow_hooks: Enable pre/post workflow hooks.
         strict_mode: Если True — все violations = block.
         file_policy: File modification policy.
+
     """
 
     enable_prompt_validation: bool = True
@@ -359,6 +365,7 @@ class SecurityHook:
         name: Hook name.
         trigger: ``"pre_tool"`` / ``"post_tool"`` / ``"pre_llm"`` / ``"post_llm"``.
         check_fn: Async function (subject: str, context: dict) -> SecurityDecision.
+
     """
 
     name: str
@@ -394,6 +401,7 @@ class AgentSecurityFramework:
         Args:
             policy: Security policy (default: strict).
             detector: Detector instance (default: built-in patterns).
+
         """
         self._policy = policy or AgentSecurityPolicy.strict()
         self._detector = detector or DangerousCommandDetector()
@@ -413,6 +421,7 @@ class AgentSecurityFramework:
 
         Args:
             hook: :class:`SecurityHook` instance.
+
         """
         self._hooks.append(hook)
         _logger.info(
@@ -437,6 +446,7 @@ class AgentSecurityFramework:
 
         Returns:
             SecurityDecision с allowed, threat_level, reason.
+
         """
         if not self._policy.enable_prompt_validation:
             return SecurityDecision(allowed=True)
@@ -473,6 +483,7 @@ class AgentSecurityFramework:
 
         Returns:
             SecurityDecision.
+
         """
         if not self._policy.enable_command_validation:
             return SecurityDecision(allowed=True)
@@ -513,6 +524,7 @@ class AgentSecurityFramework:
 
         Returns:
             SecurityDecision.
+
         """
         if not self._policy.enable_file_validation:
             return SecurityDecision(allowed=True)
@@ -574,6 +586,7 @@ class AgentSecurityFramework:
 
         Returns:
             SecurityDecision.
+
         """
         threat_level, desc = self._detector.detect_sql(query)
         if threat_level != ThreatLevel.NONE:
@@ -594,6 +607,7 @@ class AgentSecurityFramework:
 
         Returns:
             SecurityDecision с masked_input.
+
         """
         if not self._policy.enable_output_masking:
             return SecurityDecision(allowed=True, masked_input=output)
@@ -639,6 +653,7 @@ class AgentSecurityFramework:
 
         S202 audit fix: ранее результаты hooks игнорировались — pre-made
         decision возвращался без проверки hook denials.
+
         """
         if not self._policy.enable_workflow_hooks:
             return None

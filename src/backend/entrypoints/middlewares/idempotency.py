@@ -107,6 +107,7 @@ class RedisNxBackend(Backend):
 
         Returns:
             Stored JSONResponse or None if not found.
+
         """
         body_key, status_key = self._response_keys(idempotency_key)
         payload = await self._redis.get(body_key)
@@ -125,6 +126,7 @@ class RedisNxBackend(Backend):
             idempotency_key: Idempotency key.
             payload: Response body.
             status_code: HTTP status code.
+
         """
         body_key, status_key = self._response_keys(idempotency_key)
         body_bytes = encode_json(payload)
@@ -137,6 +139,7 @@ class RedisNxBackend(Backend):
         Returns:
             ``True`` если ключ уже существовал (запрос pending или дубль),
             ``False`` если успешно зарезервирован для текущего запроса.
+
         """
         reserved = await self._redis.set(
             self._pending_key(idempotency_key), b"1", nx=True, ex=self._pending_ttl,
@@ -148,6 +151,7 @@ class RedisNxBackend(Backend):
 
         Args:
             idempotency_key: Idempotency key.
+
         """
         await self._redis.delete(self._pending_key(idempotency_key))
 

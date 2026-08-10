@@ -71,6 +71,7 @@ class SpecialistAgent:
         capability: Машинно-читаемая категория (e.g. ``"billing"``).
         description: Human-readable описание для LLM.
         handler: ``async (input: Any) -> Any`` — фактический agent callable.
+
     """
 
     name: str
@@ -100,6 +101,7 @@ class RoutingDecision:
         alternatives: ``[(specialist_name, score), ...]`` для observability.
         fallback_used: ``True`` если выбран fallback (confidence < threshold
             или unknown name). Устанавливается процессором.
+
     """
 
     chosen_agent: str
@@ -154,6 +156,7 @@ class RouterSpecialistProcessor(BaseProcessor):
             ValueError: Пустые specialists, некорректный min_confidence,
                 или fallback_specialist не найден среди specialists.
             TypeError: ``llm_router`` не callable.
+
         """
         if not callable(llm_router):
             raise TypeError("llm_router должен быть callable")
@@ -332,6 +335,7 @@ class RouterSpecialistMixin:
 
         Returns:
             :class:`RouteBuilder` для fluent-chaining.
+
         """
         return self._add(  # type: ignore[attr-defined]
             RouterSpecialistProcessor(

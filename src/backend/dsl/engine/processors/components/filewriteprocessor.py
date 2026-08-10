@@ -48,6 +48,7 @@ class FileWriteProcessor(BaseProcessor):
                 Результат — в свойстве ``file_written``, путь — в заголовке
                 ``CamelFileName``.
             context: Контекст выполнения маршрута.
+
         """
         import aiofiles
 

@@ -194,6 +194,7 @@ class MongoCertBackend(CertBackend):
 
         Returns:
             ``True`` если запись существовала.
+
         """
         db = self._db()
         cert_result = await db[self._collection_name].delete_one({"_id": service_id})

@@ -74,6 +74,7 @@ def _quote_identifier(name: str) -> str:
 
     Raises:
         ValueError: Если identifier содержит unsafe characters.
+
     """
     if not _IDENTIFIER_RE.fullmatch(name):
         raise ValueError(
@@ -92,6 +93,7 @@ def build_insert_sql(table: str, data: dict[str, Any]) -> tuple[str, dict[str, A
 
     Raises:
         ValueError: Если data пуст или table/keys содержат unsafe chars.
+
     """
     if not data:
         raise ValueError("db_insert: data cannot be empty")
@@ -119,6 +121,7 @@ def build_upsert_sql(
     Returns:
         (sql, params) — sql: ``INSERT INTO "t" (...) VALUES (...) ON CONFLICT
         (k1, k2) DO UPDATE SET c1 = EXCLUDED.c1, ...``.
+
     """
     if not data:
         raise ValueError("db_upsert: data cannot be empty")
@@ -154,6 +157,7 @@ def build_delete_sql(table: str, where: dict[str, Any]) -> tuple[str, dict[str, 
 
     Returns:
         (sql, params) — sql: ``DELETE FROM "t" WHERE "c1" = :c1 AND "c2" = :c2``.
+
     """
     if not where:
         raise ValueError(
@@ -183,6 +187,7 @@ def build_update_sql(
 
     Raises:
         ValueError: Если data или where пусты, или identifiers содержат unsafe chars.
+
     """
     if not data:
         raise ValueError("db_update: data cannot be empty")
@@ -334,6 +339,7 @@ class DbCrudProcessor(BaseProcessor):
         dialect: SQL dialect (P3 unified DML). Default ``postgresql``.
             Affects UPSERT syntax only; INSERT/DELETE are ANSI-compatible.
         result_property: Куда положить result.
+
     """
 
     __slots__ = (

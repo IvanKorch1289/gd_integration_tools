@@ -73,6 +73,7 @@ def inject_into_headers(headers: dict[str, str]) -> None:
         * No-op если OTel недоступен (lazy import + ImportError fallback).
         * Если нет активного span — propagator вернёт пустой carrier
           (no-op behaviour).
+
     """
     try:
         from opentelemetry.propagate import inject
@@ -99,6 +100,7 @@ def extract_from_headers(headers: Mapping[str, Any]) -> Any:
 
     Notes:
         No-op fallback (empty context) при отсутствии OTel или ошибке.
+
     """
     try:
         from opentelemetry.propagate import extract

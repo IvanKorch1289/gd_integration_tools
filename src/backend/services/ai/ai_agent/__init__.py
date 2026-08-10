@@ -100,6 +100,7 @@ class AIAgentService(
 
         Returns:
             Текст ответа для сохранения в feedback.
+
         """
         if isinstance(result, dict):
             return str(result.get("response") or result.get("data") or result)

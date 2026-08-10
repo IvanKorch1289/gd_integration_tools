@@ -65,6 +65,7 @@ def _build_registry_with_routes(route_specs: dict[str, list[BaseProcessor]]) -> 
 
     Returns:
         Готовый RouteRegistry с зарегистрированными pipelines.
+
     """
     registry = RouteRegistry()
     for rid, procs in route_specs.items():

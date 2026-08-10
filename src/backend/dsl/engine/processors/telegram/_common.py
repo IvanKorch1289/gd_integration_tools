@@ -32,6 +32,7 @@ def get_telegram_client(bot_name: str = "main_bot") -> TelegramBotClient:
 
     Raises:
         RuntimeError: Если Telegram отключён или бот не найден.
+
     """
     from src.backend.core.config.telegram import telegram_bot_settings
     from src.backend.infrastructure.clients.external.telegram_bot import (

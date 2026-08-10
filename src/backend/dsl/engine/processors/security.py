@@ -123,6 +123,7 @@ class AuthValidateProcessor(BaseProcessor):
             exchange: Текущий exchange; request — из свойства ``request``.
                 AuthContext — в свойстве ``result_property``.
             context: Контекст выполнения маршрута.
+
         """
         request = exchange.get_property("request") or getattr(context, "request", None)
 

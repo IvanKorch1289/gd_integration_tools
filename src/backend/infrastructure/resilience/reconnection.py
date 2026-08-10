@@ -146,6 +146,7 @@ class ReconnectN(ReconnectionStrategy):
 
         Raises:
             ReconnectionError: Если все попытки исчерпаны.
+
         """
         delay = self.initial_delay
         last_exc: BaseException | None = None

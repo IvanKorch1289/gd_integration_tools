@@ -55,6 +55,7 @@ def set_app_ref(app: FastAPI, *, allow_replace: bool = False) -> None:
             (для тестов с повторным ``create_app()``). При ``False`` (default)
             — логирует warning, если предыдущая ссылка ещё не сброшена через
             ``reset_app_state()``.
+
     """
     global _app_ref
     if _app_ref is not None and not allow_replace:
@@ -79,6 +80,7 @@ def require_app_ref() -> FastAPI:
 
     Raises:
         RuntimeError: Если ``set_app_ref()`` ещё не вызывался.
+
     """
     if _app_ref is None:
         raise RuntimeError(
@@ -115,6 +117,7 @@ def get_three_tier_rag_cache_from_state() -> Any:
         Экземпляр ``ThreeTierRagCache`` или ``None``, если ещё не зарегистрирован
         (``app.state.three_tier_rag_cache`` отсутствует или ``set_app_ref``
         не вызывался).
+
     """
     try:
         app = get_app_ref()
@@ -142,6 +145,7 @@ def _get_from_app_state(attr: str) -> Any | None:
     Returns:
         Значение атрибута либо ``None``, если app ещё не инициализирован
         или атрибут отсутствует.
+
     """
     if _app_ref is not None:
         return getattr(_app_ref.state, attr, None)
@@ -167,6 +171,7 @@ def app_state_singleton[T](
 
     Returns:
         Декоратор, превращающий функцию-заглушку в accessor singleton'а.
+
     """
     _cache: dict[str, Any] = {}
     _DECORATOR_CACHES.append(_cache)

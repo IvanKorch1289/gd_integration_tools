@@ -33,6 +33,7 @@ def _resolve_event_bus_facade() -> Any:
     Returns:
         Экземпляр facade или ``None`` если DI-provider не зарегистрирован
         (dev_light / unit-tests без DI).
+
     """
     try:
         from src.backend.core.di.providers.infrastructure_locator import (
@@ -139,6 +140,7 @@ class EventBusPublishProcessor:
 
         Returns:
             Dict-ready event для facade.
+
         """
         return {
             "topic": self.topic,
@@ -263,6 +265,7 @@ def _make_eventbus_handler(
 
     Returns:
         Async handler ``async (event) -> None``.
+
     """
     async def _handler(event: Any) -> None:
         events = list(exchange.properties.get("_eventbus_received") or [])
@@ -297,6 +300,7 @@ class EventBusMixin:
             payload_ref: Источник payload (``"body"`` или
                 ``"property:<name>"``). Default — ``body``.
             name: Имя процессора в трейсах.
+
         """
         return self._add(  # type: ignore[attr-defined]
             EventBusPublishProcessor(topic=topic, payload_ref=payload_ref, name=name),
@@ -313,6 +317,7 @@ class EventBusMixin:
             ack_mode: ``"auto"`` (autoack) или ``"manual"`` (требует
                 .ack() в pipeline).
             name: Имя процессора в трейсах.
+
         """
         return self._add(  # type: ignore[attr-defined]
             EventBusSubscribeProcessor(

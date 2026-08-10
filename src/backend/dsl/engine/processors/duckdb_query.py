@@ -57,6 +57,7 @@ class DuckDbQueryProcessor(BaseProcessor):
             ''',
             sources={"customers": "lookup.customers"},
         )
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

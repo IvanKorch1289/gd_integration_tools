@@ -95,6 +95,7 @@ class RedisRateLimiter:
 
         Returns:
             {"remaining": int, "reset_at": int, "limit": int}
+
         """
         try:
             from src.backend.infrastructure.clients.storage.redis import (
@@ -148,6 +149,7 @@ def get_rate_limiter() -> RedisRateLimiter:
 
     Returns:
         RedisRateLimiter singleton.
+
     """
     global _instance
     if _instance is None:
@@ -179,6 +181,7 @@ class RateLimiterPolicy:
 
         Returns:
             RateLimit instance.
+
         """
         return RateLimit(
             limit=self.limit,
@@ -218,6 +221,7 @@ class ResourceRateLimiter:
         Args:
             resource: Resource identifier.
             policy: Rate limit policy.
+
         """
         self._presets[resource] = policy
 
@@ -233,6 +237,7 @@ class ResourceRateLimiter:
 
         Raises:
             KeyError: If resource not found.
+
         """
         policy = self._presets.get(resource)
         if policy is None:

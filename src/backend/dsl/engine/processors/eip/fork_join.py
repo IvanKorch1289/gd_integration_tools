@@ -29,6 +29,7 @@ class ForkJoinProcessor(BaseProcessor):
         branches: Map имя → процессоры (аналог ``parallel``).
         aggregation: ``collect`` | ``merge`` | ``first``.
         timeout_seconds: Опциональный таймаут для ``asyncio.gather``.
+
     """
 
     __slots__ = ("_aggregation", "_branches", "_timeout_seconds")
@@ -68,6 +69,7 @@ class ForkJoinProcessor(BaseProcessor):
             exchange: Текущий exchange; результаты — в свойстве
                 ``fork_join_results`` и ``in_message.body``.
             context: Контекст выполнения маршрута.
+
         """
         # Делегируем выполнение в ParallelProcessor (battle-tested).
         # Run inline — повторяет логику ParallelProcessor._run_branch,

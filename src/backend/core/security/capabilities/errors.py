@@ -36,6 +36,7 @@ class CapabilityError(Exception):
         Returns:
             ``dict`` с полями ``error_type``, ``message``, ``correlation_id``
             и (для подклассов) своими специфичными полями.
+
         """
         return {
             "error_type": type(self).__name__,
@@ -56,6 +57,7 @@ class CapabilityDeniedError(CapabilityError):
         tenant: Tenant-id (для tenant-aware вызовов; ``"_system"`` по умолчанию).
         principal: Principal-id (имя плагина/route'а) для audit-контекста.
         correlation_id: Request correlation_id (опц.).
+
     """
 
     def __init__(
@@ -90,6 +92,7 @@ class CapabilityDeniedError(CapabilityError):
             ``dict`` с полями: ``error_type``, ``capability``, ``tenant``,
             ``principal``, ``plugin``, ``scope``, ``declared_scope``,
             ``message``, ``correlation_id``.
+
         """
         return {
             "error_type": self.__class__.__name__,
@@ -110,6 +113,7 @@ class CapabilityNotFoundError(CapabilityError):
     Attributes:
         name: Имя capability, которое не найдено.
         correlation_id: Request correlation_id (опц.).
+
     """
 
     def __init__(self, *, name: str, correlation_id: str | None = None) -> None:
@@ -123,6 +127,7 @@ class CapabilityNotFoundError(CapabilityError):
         Returns:
             ``dict`` с полями: ``error_type``, ``capability`` (== ``name``),
             ``message``, ``correlation_id``.
+
         """
         return {
             "error_type": self.__class__.__name__,
@@ -154,6 +159,7 @@ class CapabilitySupersetError(CapabilityError):
         Returns:
             ``dict`` с полями: ``error_type``, ``route``, ``offending`` (список
             ``{"name": ..., "scope": ...}``), ``message``, ``correlation_id``.
+
         """
         return {
             "error_type": self.__class__.__name__,

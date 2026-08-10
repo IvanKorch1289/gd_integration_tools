@@ -51,6 +51,7 @@ class RegexPiiRecognizer(PatternRecognizer):
         LANGUAGE: ClassVar[str] — Presidio language code.
         PATTERNS: ClassVar[list[Pattern]] — detection patterns.
         CONTEXT: ClassVar[list[str]] — context-boost keywords.
+
     """
 
     SUPPORTED_ENTITY: ClassVar[str] = ""

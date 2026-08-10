@@ -38,6 +38,7 @@ class NotebookMixin:
 
         Returns:
             ``RouteBuilder`` для chaining.
+
         """
         from src.backend.dsl.engine.processors.notebook_dsl import NotebookDSLProcessor
 
@@ -67,6 +68,7 @@ class NotebookMixin:
 
         Returns:
             ``RouteBuilder`` для chaining.
+
         """
         from src.backend.dsl.engine.processors.notebook_execute import (
             NotebookExecuteProcessor,
@@ -98,6 +100,7 @@ class NotebookMixin:
 
         Returns:
             ``RouteBuilder`` для chaining.
+
         """
         from src.backend.dsl.engine.processors.notebook_export import (
             NotebookExportProcessor,

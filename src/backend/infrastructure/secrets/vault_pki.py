@@ -54,6 +54,7 @@ class VaultPkiClient:
         vault_token: токен (если ``None`` — из env ``VAULT_TOKEN``).
         pki_mount: путь к PKI engine (default ``pki``).
         renew_buffer_seconds: renew за N секунд до not_after (default 3600).
+
     """
 
     def __init__(

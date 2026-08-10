@@ -43,6 +43,7 @@ class EmailTriggerParams(BaseModel):
             процессором напрямую — задаётся на уровне source).
         subject_filter: Substring-фильтр по теме (case-insensitive).
         from_filter: Substring-фильтр по отправителю (case-insensitive).
+
     """
 
     folder: str = Field(default="INBOX", description="IMAP-папка источника")
@@ -75,6 +76,7 @@ class EmailTriggerProcessor(BaseProcessor):
             ``message_id`` из payload в headers (``x-email-subject`` и т. д.)
             для удобства последующих шагов.
         name: Опциональное имя процессора для логов / observability.
+
     """
 
     def __init__(

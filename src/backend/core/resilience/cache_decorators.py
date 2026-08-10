@@ -94,6 +94,7 @@ def cached(
 
     Returns:
         Декоратор для async-функции.
+
     """
 
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
@@ -104,6 +105,7 @@ def cached(
 
         Returns:
             Cached version of the function.
+
         """
         if not inspect.iscoroutinefunction(func):
             raise TypeError("@cached поддерживает только async-функции")
@@ -156,6 +158,7 @@ def invalidate(
 
     Returns:
         Декоратор для async-функции.
+
     """
 
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
@@ -205,6 +208,7 @@ def multi_cached(
         Декоратор. Для простоты текущая реализация использует **минимальный**
         TTL из ``ttls`` (стандартный multi-layer fallback). Полная per-slot
         семантика — follow-up в S2 K2.
+
     """
     if not ttls:
         raise ValueError("@multi_cached требует непустого ttls")

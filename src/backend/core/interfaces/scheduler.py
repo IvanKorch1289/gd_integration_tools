@@ -36,6 +36,7 @@ class ScheduledJob:
         next_run_time: ISO-строка следующего запуска (None если paused).
         trigger: Текстовое описание триггера (``cron[...]`` / ``date[...]``).
         paused: True если job приостановлен.
+
     """
 
     __slots__ = ("id", "name", "next_run_time", "paused", "trigger")
@@ -57,6 +58,7 @@ class ScheduledJob:
             next_run_time: ISO-строка следующего запуска (None если paused).
             trigger: Текстовое описание триггера.
             paused: True если job приостановлен.
+
         """
         self.id = id
         self.name = name
@@ -110,6 +112,7 @@ class SchedulerBackend(Protocol):
 
         Returns:
             ``job_id`` зарегистрированной задачи.
+
         """
 
     def schedule_oneshot(
@@ -131,6 +134,7 @@ class SchedulerBackend(Protocol):
 
         Returns:
             ``job_id`` зарегистрированной задачи.
+
         """
 
     def cancel(self, job_id: str) -> bool:
@@ -141,6 +145,7 @@ class SchedulerBackend(Protocol):
 
         Returns:
             True если job был найден и удалён, иначе False.
+
         """
 
     def list_jobs(self) -> list[dict[str, Any]]:
@@ -148,4 +153,5 @@ class SchedulerBackend(Protocol):
 
         Returns:
             Список dict-DTO с полями id/name/next_run_time/trigger/paused.
+
         """

@@ -27,6 +27,7 @@ async def root_page() -> HTMLResponse:
 
     Returns:
         ``HTMLResponse`` с главной страницей.
+
     """
     html_path = _STATIC_DIR / "index.html"
 

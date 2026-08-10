@@ -57,6 +57,7 @@ class QueueReplyChannel(InvocationReplyChannel):
             задан. ``None`` — пропускать доставку.
         default_backend: Используется при lazy-резолве :class:`StreamClient`,
             если ``metadata['queue_backend']`` не задан.
+
     """
 
     def __init__(

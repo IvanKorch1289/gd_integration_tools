@@ -63,6 +63,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
 
         Returns:
             ``InvokerInvokeResponse`` с status, result_json, error.
+
         """
         from src.backend.core.interfaces.invoker import (
             InvocationMode,

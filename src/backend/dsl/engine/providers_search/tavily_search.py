@@ -34,6 +34,7 @@ class TavilySearchProcessor(BaseProcessor):
         include_answer: Включить "answer" в результат (default True).
         include_raw_content: Включить raw content (default False).
         to: Куда положить результат (default "body.tavily_result").
+
     """
 
     required_capability: ClassVar[str | None] = "web_search.tavily.invoke"

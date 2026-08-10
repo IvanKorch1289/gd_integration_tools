@@ -60,6 +60,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         * conversation operations → short_term (Mongo TTL).
         * semantic operations → long_term (Qdrant с embedding).
         * consolidate триггерит long_term.consolidate() если доступен.
+
     """
 
     def __init__(
@@ -211,6 +212,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
 
         Returns:
             Список MemoryFact из mem0 или [] при отсутствии бэкенда.
+
         """
         if self._mem0 is None:
             return []

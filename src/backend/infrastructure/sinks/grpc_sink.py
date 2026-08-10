@@ -46,6 +46,7 @@ class GrpcSink(Sink):
         читать JSON-binary; для строго типизированных proto
         используйте codegen-обёртку (Wave 1.3) и не унары через
         этот sink.
+
     """
 
     sink_id: str

@@ -126,6 +126,7 @@ class RouteLoader:
         installed_plugins: Mapping ``name → InstalledPlugin``.
         pipeline_registrar: Callback регистрации YAML-pipeline'а в DSL-engine.
         feature_flag_resolver: Резолвер строкового feature_flag (ENV / DI).
+
     """
 
     def __init__(
@@ -480,6 +481,7 @@ class RouteLoader:
 
         Returns:
             None если все валидны; str с описанием первой ошибки иначе.
+
         """
         for perm in permissions:
             if not any(perm.startswith(prefix) for prefix in self.PERMISSION_PREFIXES):

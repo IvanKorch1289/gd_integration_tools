@@ -50,6 +50,7 @@ class DQCheckProcessor(BaseProcessor):
             Exception: Любая ошибка DQ-проверки пробрасывается через
                 ``handle_processor_error`` decorator (автоматический
                 ``exchange.fail()`` + логирование).
+
         """
         from src.backend.services.ops.data_quality import get_dq_monitor
 

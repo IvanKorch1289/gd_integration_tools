@@ -68,6 +68,7 @@ def build_temporal_data_converter() -> Any:
 
             Returns:
                 Temporal Payload or None.
+
             """
             return Payload(
                 metadata={"encoding": self.encoding.encode("utf-8")},
@@ -83,6 +84,7 @@ def build_temporal_data_converter() -> Any:
 
             Returns:
                 Decoded Python value.
+
             """
             import orjson  # lazy — orjson быстрее на decode
 
@@ -319,6 +321,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
             ``workflow_registry.register(cls)`` в
             :mod:`dsl.workflow.compiler.emitter`. Без этого fix'а
             ``get(name)`` всегда возвращал ``None``.
+
         """
         if not workflow_name:
             return workflow_registry.all()

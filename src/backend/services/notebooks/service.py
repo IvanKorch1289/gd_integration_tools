@@ -52,6 +52,7 @@ class NotebookService:
 
         Returns:
             Created notebook.
+
         """
         notebook = Notebook(
             title=title,
@@ -76,6 +77,7 @@ class NotebookService:
 
         Returns:
             Notebook or None if not found.
+
         """
         return await self._repo.get(notebook_id)
 
@@ -90,6 +92,7 @@ class NotebookService:
 
         Returns:
             NotebookVersion or None if not found.
+
         """
         notebook = await self._repo.get(notebook_id)
         if notebook is None:
@@ -104,6 +107,7 @@ class NotebookService:
 
         Returns:
             List of NotebookVersion objects.
+
         """
         notebook = await self._repo.get(notebook_id)
         if notebook is None:
@@ -123,6 +127,7 @@ class NotebookService:
 
         Returns:
             Updated notebook or None if not found.
+
         """
         notebook = await self._repo.append_version(notebook_id, content, user, summary)
         if notebook is not None:

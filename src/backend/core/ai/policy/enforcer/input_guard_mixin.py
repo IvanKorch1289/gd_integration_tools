@@ -37,6 +37,7 @@ class InputGuardMixin:
 
         Raises:
             GuardrailViolationError: При ``on_block="fail"``.
+
         """
         if not policy.input_guards:
             return []

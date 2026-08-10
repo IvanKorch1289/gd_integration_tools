@@ -41,6 +41,7 @@ class BatchingSinkRouter:
         queue_maxsize: Лимит очереди (защита от unbounded memory growth).
             При переполнении новые records отбрасываются с warning'ом
             (не блокируем логгер).
+
     """
 
     def __init__(

@@ -61,6 +61,7 @@ class SourceEvent:
         event_time: Время события (если backend не знает — wall-clock).
         event_id: Глобально-уникальный id; используется для idempotency.
         metadata: headers/offset/correlation-id и пр. — зависит от backend.
+
     """
 
     source_id: str
@@ -103,6 +104,7 @@ class Source(Protocol):
             on_event: Async-callback, вызываемый на каждое входящее
                 событие. Source обязан ловить исключения callback и не
                 ронять собственный loop.
+
         """
         ...
 
@@ -115,5 +117,6 @@ class Source(Protocol):
 
         Args:
             mode: ``"fast"`` (<100ms PING) или ``"deep"`` (<2s smoke-test).
+
         """
         ...

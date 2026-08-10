@@ -70,6 +70,7 @@ class L1ExactCache:
             query: Query string.
             value: Value to cache.
             tenant: Optional tenant scope.
+
         """
         client = self._ensure_client()
         try:
@@ -85,6 +86,7 @@ class L1ExactCache:
         Args:
             query: Query string.
             tenant: Optional tenant scope.
+
         """
         client = self._ensure_client()
         try:

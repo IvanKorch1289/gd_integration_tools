@@ -43,6 +43,7 @@ def get_event_bus_facade() -> EventBusFacade:
     Notes:
         Не thread-safe singleton — caller ответственен за вызов из одного
         места. Для FastAPI lifespan рекомендуется ``register_event_bus_facade``.
+
     """
     from src.backend.infrastructure.clients.messaging.event_bus import get_event_bus
 
@@ -66,6 +67,7 @@ class EventBusFacade:
         event_bus: Backend-agnostic :class:`EventBus` (обычно из ``get_event_bus()``).
         capability_check: Опц. callback ``CapabilityGate.check``.
         plugin: Имя caller'а (для capability-event и audit).
+
     """
 
     def __init__(
@@ -94,6 +96,7 @@ class EventBusFacade:
         Raises:
             CapabilityDeniedError: недостаточно прав.
             ServiceError: ошибка backend'а.
+
         """
         self._assert_publish(channel)
         try:
@@ -106,6 +109,7 @@ class EventBusFacade:
 
         Returns:
             Subscription token (для unsubscribe).
+
         """
         self._assert_subscribe(channel)
         return await self._bus.subscribe(channel, handler)
@@ -128,6 +132,7 @@ class EventBusFacade:
 
         Raises:
             CapabilityDeniedError: недостаточно прав.
+
         """
         self._assert_subscribe(channel)
         await self._bus.subscribe(channel, handler)
@@ -174,6 +179,7 @@ class EventBusFacade:
 
         Raises:
             asyncio.TimeoutError: При превышении ``timeout``.
+
         """
         self._assert_publish(channel)
         return await self._bus.request(
@@ -195,6 +201,7 @@ class EventBusFacade:
             event: Pre-built event object (должен иметь ``.channel`` attribute
                 если ``channel`` не передан явно).
             channel: Explicit channel override.
+
         """
         target_channel = channel or getattr(event, "channel", None)
         if target_channel is None:

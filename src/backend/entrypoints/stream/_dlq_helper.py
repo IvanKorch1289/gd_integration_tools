@@ -62,6 +62,7 @@ async def enqueue_mq_poison_message(
         correlation_id: OpenTelemetry/клиентский correlation id.
         tenant_id: tenant id (если извлекается из body/meta).
         logger: stream_logger (для fallback warning/error logs).
+
     """
     writer = get_stream_dlq_writer_provider()
     if writer is None:

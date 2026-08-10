@@ -45,6 +45,7 @@ def run_workflow_dryrun(
             * ``state_transitions`` — list[dict] переходов;
             * ``ts`` — timestamp запуска;
             * ``input`` — переданные input_data.
+
     """
     activities: list[dict[str, Any]] = []
     signals: list[dict[str, Any]] = []

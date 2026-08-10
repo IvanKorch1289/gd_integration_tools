@@ -52,6 +52,7 @@ def register_workflow_declarations(
     Returns:
         Список свежих :class:`CompiledWorkflow` (бывшие записи с теми
         же именами замещаются — bulk_register идемпотентен по name).
+
     """
 
     return workflow_compiler_registry.bulk_register(declarations)
@@ -72,6 +73,7 @@ async def start_workflow_runtime(app: Any) -> None:
 
     Args:
         app: FastAPI-приложение (с атрибутом ``state``).
+
     """
 
     state = getattr(app, "state", None)

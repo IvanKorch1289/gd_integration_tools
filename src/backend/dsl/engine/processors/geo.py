@@ -66,6 +66,7 @@ class GeoProcessor(BaseProcessor):
         point_b: Координаты (lat, lon) второй точки (только для distance).
         to: Куда положить результат.
         user_agent: User-Agent для Nominatim (best-practice: уникальный).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL

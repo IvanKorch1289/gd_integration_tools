@@ -29,6 +29,7 @@ class RAGSearchProcessor(BaseProcessor):
 
     Example:
         >>> p = RAGSearchProcessor(query="OSINT INN", namespace="tenant1")
+
     """
 
     def __init__(

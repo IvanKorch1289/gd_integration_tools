@@ -67,6 +67,7 @@ class MetricsRegistry:
         Concurrent-safe через ``threading.Lock`` (используется только
         в момент регистрации; runtime-вызовы ``.inc()`` / ``.observe()``
         thread-safe внутри prometheus_client).
+
     """
 
     def __init__(

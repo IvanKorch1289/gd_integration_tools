@@ -101,6 +101,7 @@ class QdrantVectorStore(BaseVectorStore):
         Note:
             ``client = await self._ensure_collection()`` создаёт
             collection при первом обращении.
+
         """
         from qdrant_client.models import PointStruct
 
@@ -134,6 +135,7 @@ class QdrantVectorStore(BaseVectorStore):
         Returns:
             list[dict] с полями ``id``, ``document``, ``metadata``,
             ``distance`` (1.0 - similarity).
+
         """
         from qdrant_client.models import FieldCondition, Filter, MatchValue
 
@@ -188,6 +190,7 @@ class QdrantVectorStore(BaseVectorStore):
 
         Returns:
             int count удалённых vectors.
+
         """
         from qdrant_client.models import (
             FieldCondition,
@@ -222,6 +225,7 @@ class QdrantVectorStore(BaseVectorStore):
 
         Returns:
             int count.
+
         """
         from qdrant_client.models import FieldCondition, Filter, MatchValue
 
@@ -342,6 +346,7 @@ class ChromaVectorStore(BaseVectorStore):
 
         Returns:
             list[dict] с ``id``, ``document``, ``metadata``, ``distance``.
+
         """
 
         collection = await self._ensure_collection()
@@ -392,6 +397,7 @@ class ChromaVectorStore(BaseVectorStore):
 
         Returns:
             int count удалённых vectors (``before - after``).
+
         """
 
         collection = await self._ensure_collection()
@@ -408,6 +414,7 @@ class ChromaVectorStore(BaseVectorStore):
 
         Returns:
             int count (через ``collection.get(where=...)``).
+
         """
 
         collection = await self._ensure_collection()

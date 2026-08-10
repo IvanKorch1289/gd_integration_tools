@@ -39,6 +39,7 @@ def crud_with_audit(
 
     Returns:
         list[Pipeline]: Три pipeline (create, update, delete).
+
     """
     pipelines = []
 

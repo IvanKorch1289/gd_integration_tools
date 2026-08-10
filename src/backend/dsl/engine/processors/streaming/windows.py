@@ -63,6 +63,7 @@ class _BaseWindow(BaseProcessor):
             ``watermark_store`` для уникальности ключа в store.
         persist_min_interval: Минимальный интервал между сохранениями в
             store (секунды wall-clock). Дебаунс защищает горячий путь.
+
     """
 
     def __init__(
@@ -134,6 +135,7 @@ class _BaseWindow(BaseProcessor):
         Returns:
             ``True`` если событие отброшено (engine должен прекратить
             обработку), ``False`` если можно класть в bucket.
+
         """
         await self._ensure_loaded()
         msg_watermark = exchange.in_message.watermark

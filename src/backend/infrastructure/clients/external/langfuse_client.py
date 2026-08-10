@@ -55,6 +55,7 @@ class LangFuseClient:
 
         Returns:
             ID трассировки или None.
+
         """
         self._ensure_initialized()
         if self._client is None:
@@ -76,6 +77,7 @@ class LangFuseClient:
             trace_id: ID трассировки.
             name: Имя метрики.
             value: Значение (0.0-1.0).
+
         """
         self._ensure_initialized()
         if self._client is None:

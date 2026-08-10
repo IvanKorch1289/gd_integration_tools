@@ -60,6 +60,7 @@ async def with_timeout[T](
     Raises:
         TimeoutError: Если таймаут истёк до завершения ``coro``
             (в Python 3.11+ ``asyncio.TimeoutError`` ≡ ``builtins.TimeoutError``).
+
     """
     start = time.monotonic()
     try:

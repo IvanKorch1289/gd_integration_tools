@@ -49,6 +49,7 @@ class OpaMixin:
             ...     capability_gateway=gate,
             ...     policies=(AuthorizationGateway.opa_step(opa, "authz/default"),),
             ... )
+
         """
 
         async def _step(

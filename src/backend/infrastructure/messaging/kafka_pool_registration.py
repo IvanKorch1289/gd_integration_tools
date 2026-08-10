@@ -34,6 +34,7 @@ async def kafka_ping_fn() -> bool:
 
     Returns:
         True если Kafka producer доступен, False иначе.
+
     """
     try:
         from src.backend.infrastructure.messaging.kafka_producer import KafkaProducer
@@ -68,6 +69,7 @@ def register_kafka_pool_if_available(
 
     Returns:
         True если pool зарегистрирован, False если Kafka недоступен.
+
     """
     try:
         from src.backend.infrastructure.messaging.kafka_producer import KafkaProducer

@@ -40,6 +40,7 @@ class WatermarkStore(Protocol):
 
         Returns:
             ``WatermarkState`` или ``None``, если записи нет.
+
         """
         ...
 
@@ -52,5 +53,6 @@ class WatermarkStore(Protocol):
             route_id: Идентификатор маршрута.
             processor_name: Имя процессора.
             state: Снимок ``WatermarkState`` для сохранения.
+
         """
         ...

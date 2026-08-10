@@ -30,6 +30,7 @@ def generate_openapi(pipeline: Pipeline) -> dict[str, Any]:
         >>> spec = generate_openapi(pipeline)
         >>> spec["openapi"]
         '3.0.3'
+
     """
 
     route_id = pipeline.route_id

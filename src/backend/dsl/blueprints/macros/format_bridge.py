@@ -33,6 +33,7 @@ def format_bridge(
 
     Returns:
         Pipeline: Готовый конвертирующий pipeline.
+
     """
     return (
         RouteBuilder.from_(

@@ -58,6 +58,7 @@ class WorkflowState:
         Raises:
             ValueError: Если передан пустой список или первое событие
                 без snapshot'а не ``created``.
+
         """
         if not events:
             raise ValueError("cannot replay empty event list")

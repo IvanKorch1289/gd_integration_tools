@@ -28,6 +28,7 @@ def emit_waf_evaluation(*, decision: Any, plugin: str, method: str, url: str) ->
 
     Returns:
         Result of ``AuditService.emit()``.
+
     """
     details: dict[str, Any] = {
         "plugin": plugin,

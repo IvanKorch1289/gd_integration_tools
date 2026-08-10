@@ -41,6 +41,7 @@ class VaultSecretMixin:
 
         Returns:
             ``RouteBuilder`` для chaining.
+
         """
         from src.backend.dsl.engine.processors.vault_secret import VaultSecretProcessor
 

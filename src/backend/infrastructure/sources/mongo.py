@@ -49,6 +49,7 @@ class MongoChangeEvent:
         resume_token: ``_id`` change-stream документа (для resume при
             реконнекте).
         timestamp: Время события.
+
     """
 
     operation_type: str
@@ -78,6 +79,7 @@ class MongoSourceConfig:
             (0 = infinite). Default: 5.
         reconnect_delay_seconds: Задержка между попытками reconnect.
             Default: 1.0.
+
     """
 
     connection_url: str
@@ -107,6 +109,7 @@ class MongoSource:
 
     Raises:
         ValueError: При пустой ``connection_url`` или ``database``.
+
     """
 
     kind: SourceKind = SourceKind.CDC
@@ -158,6 +161,7 @@ class MongoSource:
         Raises:
             ImportError: ``motor`` не установлен.
             RuntimeError: max reconnect attempts exhausted.
+
         """
         try:
             import motor.motor_asyncio  # type: ignore[import-not-found]
@@ -294,6 +298,7 @@ class MongoSource:
 
         Args:
             on_event: Async-callback, вызываемый на каждое событие.
+
         """
         async for change in self.stream():
             event = SourceEvent(

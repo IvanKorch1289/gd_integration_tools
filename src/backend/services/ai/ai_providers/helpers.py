@@ -22,6 +22,7 @@ def register_extended_providers(agent: Any) -> int:
 
     Returns:
         Количество успешно зарегистрированных провайдеров.
+
     """
     registered = 0
 

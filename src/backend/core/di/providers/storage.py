@@ -59,6 +59,7 @@ def get_storage_facade_provider(
 
     Returns:
         :class:`StorageFacade` (или ``None`` если storage не сконфигурирован).
+
     """
     if "storage_facade" in _overrides:
         return _overrides["storage_facade"]

@@ -79,6 +79,7 @@ def get_authorization_gateway() -> AuthorizationGateway | None:
 
     Returns:
         :class:`AuthorizationGateway` singleton или ``None``.
+
     """
     try:
         from src.backend.core.di.app_state import get_app_ref
@@ -139,6 +140,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
 
         Returns:
             AuthorizationDecision с reason-chain.
+
         """
         ctx = dict(context or {})
         correlation_id = str(ctx.get("correlation_id") or uuid.uuid4())
@@ -276,6 +278,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
 
         Returns:
             True если any matching policy allows.
+
         """
         # 1. In-memory fallback
         key = (subject, action, resource)
@@ -333,6 +336,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
 
         Returns:
             True если policy добавлен.
+
         """
         try:
             allowed = effect.lower() == "allow"
@@ -360,6 +364,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
 
         Returns:
             True если policy удалён.
+
         """
         try:
             key = (subject, action, resource)

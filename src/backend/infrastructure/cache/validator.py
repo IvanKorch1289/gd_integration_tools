@@ -102,6 +102,7 @@ class CacheConfigRegistry:
             entity: Имя сущности.
             layer: ``service`` или ``repository``.
             enabled: True, если кэш включён.
+
         """
         self.entries.append(
             CacheConfigEntry(entity=entity, layer=layer, enabled=enabled),
@@ -129,6 +130,7 @@ class CacheLayerValidator:
 
     Raises:
         CacheDuplicationError: Если обнаружен конфликт кэша.
+
     """
 
     def validate(self, registry: CacheConfigRegistry) -> None:
@@ -140,6 +142,7 @@ class CacheLayerValidator:
 
         Raises:
             CacheDuplicationError: Обнаружен двойной кэш хотя бы у одной сущности.
+
         """
         service_entities = registry.entities_with_cache_on("service")
         repository_entities = registry.entities_with_cache_on("repository")

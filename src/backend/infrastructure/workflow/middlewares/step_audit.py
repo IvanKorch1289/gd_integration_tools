@@ -92,6 +92,7 @@ class StepAuditEvent:
 
         Returns:
             Dictionary representation of the audit event.
+
         """
         return {
             "event_id": self.event_id,
@@ -138,6 +139,7 @@ class StepAuditMiddleware:
             Если ``None`` — middleware работает в no-op режиме (логирует только).
         flush_interval_s: Интервал автоматического flush в CH (default 2s).
         batch_size: Максимальный размер batch перед flush (default 100).
+
     """
 
     def __init__(

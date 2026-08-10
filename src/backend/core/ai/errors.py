@@ -30,6 +30,7 @@ class GuardResult:
         guard_name: Идентификатор (``"llama_guard:safe_v3"``, ``"nemo:prompt_injection"``, etc.).
         verdict: Вердикт (``"passed"``, ``"blocked"``, ``"warned"``).
         categories: Сработавшие категории при блокировке.
+
     """
 
     guard_name: str
@@ -46,6 +47,7 @@ class GuardrailViolationError(Exception):
             (``["hate", "violence"]``).
         on_block: Поведение при блокировке (``"fail"`` | ``"dlq"`` | ``"warn"``).
         content: Заблокированный контент (не хранить raw PII).
+
     """
 
     def __init__(
@@ -77,6 +79,7 @@ class WorkspaceQuotaExceededError(AIWorkspaceError):
         tenant: Идентификатор тенанта.
         used_bytes: Текущее потребление.
         quota_bytes: Лимит из конфигурации.
+
     """
 
     def __init__(self, *, tenant: str, used_bytes: int, quota_bytes: int) -> None:
@@ -96,6 +99,7 @@ class WorkspaceTTLExpiredError(AIWorkspaceError):
         session_id: Идентификатор session-workspace'а.
         age_seconds: Возраст в секундах.
         ttl_seconds: Лимит TTL.
+
     """
 
     def __init__(
@@ -122,6 +126,7 @@ class MCPToolError(Exception):
 
         Returns:
             ``{"error": message}`` — минимальный dict-формат для клиента.
+
         """
         return {"error": self.message}
 

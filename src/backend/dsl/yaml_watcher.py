@@ -75,6 +75,7 @@ class DSLYamlWatcher:
             :func:`src.dsl.yaml_loader.load_pipeline_from_file`.
         debounce_ms: Окно агрегирования file-event'ов (мс).
             Передаётся напрямую в ``watchfiles.awatch(debounce=...)``.
+
     """
 
     def __init__(
@@ -272,6 +273,7 @@ class DSLYamlWatcher:
         Raises:
             Exception: При ошибке загрузки любого файла — поднимается
             наверх, caller откатит снапшот.
+
         """
         current_files = sorted(self._iter_yaml_files())
         new_yaml_ids: dict[Path, str] = {}

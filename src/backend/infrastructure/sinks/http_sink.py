@@ -35,6 +35,7 @@ class HttpSink(Sink):
           details={"status_code": ..., "elapsed_ms": ...})``.
         * При HTTP 4xx/5xx или сетевой ошибке —
           ``SinkResult(ok=False, details={"error": ..., "status_code": ...})``.
+
     """
 
     sink_id: str

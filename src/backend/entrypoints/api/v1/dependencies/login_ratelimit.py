@@ -108,6 +108,7 @@ async def _check_rate_limit(
     Returns:
         (True, remaining) если OK;
         (False, retry_after) если exceeded.
+
     """
     from src.backend.core.resilience import (
         RateLimit,
@@ -156,6 +157,7 @@ async def check_ip_rate_limit(request: Request) -> None:
     Raises:
         LoginRateLimitExceeded: 429 + Retry-After.
         HTTPException: 503 если Redis недоступен (fail-secure).
+
     """
     client_ip = await _extract_client_ip(request)
     is_ok, value = await _check_rate_limit(
@@ -182,6 +184,7 @@ async def check_username_rate_limit(username: str) -> None:
     Raises:
         LoginRateLimitExceeded: 429 + Retry-After.
         HTTPException: 503 если Redis недоступен (fail-secure).
+
     """
     if not username:
         # Без username — per-username check не имеет смысла

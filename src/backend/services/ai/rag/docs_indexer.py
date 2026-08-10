@@ -49,6 +49,7 @@ def _embed_offline(text: str, dim: int = _EMBED_DIM) -> list[float]:
 
     Returns:
         Embedding vector.
+
     """
     vec = [0.0] * dim
     for tok in re.findall(r"\w+", (text or "").lower()):
@@ -66,6 +67,7 @@ def _cosine(a: list[float], b: list[float]) -> float:
 
     Returns:
         Cosine similarity (0.0 to 1.0).
+
     """
     if not a or not b or len(a) != len(b):
         return 0.0
@@ -93,6 +95,7 @@ class InMemoryQdrantFallback:
 
         Raises:
             ValueError: If collection not found.
+
         """
         if name not in self._coll:
             raise ValueError(f"collection {name!r} not found")
@@ -103,6 +106,7 @@ class InMemoryQdrantFallback:
 
         Args:
             name: Collection name.
+
         """
         self._coll.setdefault(name, {})
         self._vec.setdefault(name, {})
@@ -113,6 +117,7 @@ class InMemoryQdrantFallback:
         Args:
             collection_name: Collection name.
             points: Points to upsert.
+
         """
         coll = self._coll.setdefault(collection_name, {})
         vecs = self._vec.setdefault(collection_name, {})

@@ -42,6 +42,7 @@ class MiddlewareMixin(_RouteBuilderProtocol):
             .middleware("metrics")
             .dispatch_action("orders.process")
             .build()
+
         """
         if isinstance(middleware, str):
             instance = self._build_middleware(middleware, kwargs)

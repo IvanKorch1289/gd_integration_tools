@@ -32,6 +32,7 @@ async def get_service_for_model(model: type[DBModelProtocol]) -> Any:
 
     Raises:
         ValueError: Если сервис для модели не найден.
+
     """
     from importlib import import_module
 

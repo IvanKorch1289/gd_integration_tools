@@ -81,6 +81,7 @@ class RLMFeedbackProcessor:
 
         Returns:
             :class:`RLMSignal` с новыми значениями счётчиков.
+
         """
         langmem = self._ensure_langmem()
         client = getattr(langmem, "_client", None)

@@ -26,6 +26,7 @@ class TransportSettings(BaseSettings):
             профиль ``dev_light``, проверка пропускается (``known_hosts=()``).
             В production ``None`` приводит к ``ValueError`` (V1 запрещает
             ``CERT_NONE`` / отключение проверок без явной декларации).
+
     """
 
     model_config = SettingsConfigDict(env_prefix="TRANSPORT_", extra="ignore")

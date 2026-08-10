@@ -42,6 +42,7 @@ class DedupeStore(Protocol):
 
         Returns:
             ``True`` если событие уже видели (дубль), иначе ``False``.
+
         """
         ...
 

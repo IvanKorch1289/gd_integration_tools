@@ -43,6 +43,7 @@ def _dummy_embedding(source: bytes | str) -> list[float]:
 
     Returns:
         Список из 384 float в диапазоне [-1, 1].
+
     """
     raw: bytes = source.encode("utf-8") if isinstance(source, str) else source
     digest = hashlib.sha256(raw).digest()
@@ -60,6 +61,7 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
 
     Returns:
         Значение cosine similarity в диапазоне [-1, 1].
+
     """
     dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(x * x for x in a))
@@ -80,6 +82,7 @@ class MultimodalEntry:
         embedding: Векторное представление (384-dim placeholder).
         metadata: Произвольные метаданные (namespace, source, tenant и др.).
         timestamp: Время создания записи (UTC).
+
     """
 
     entry_id: str
@@ -110,6 +113,7 @@ class MultimodalRAGService:
 
     Attributes:
         _store: Словарь entry_id → MultimodalEntry.
+
     """
 
     def __init__(self) -> None:
@@ -121,6 +125,7 @@ class MultimodalRAGService:
 
         Returns:
             True, если сервис разрешён в текущем окружении.
+
         """
         from src.backend.core.config.features import feature_flags
 
@@ -147,6 +152,7 @@ class MultimodalRAGService:
 
         Returns:
             MultimodalEntry с заполненным embedding.
+
         """
         meta = dict(metadata or {})
         if tenant_id:
@@ -184,6 +190,7 @@ class MultimodalRAGService:
 
         Returns:
             MultimodalEntry с заполненным dummy embedding.
+
         """
         meta = dict(metadata or {})
         if tenant_id:
@@ -221,6 +228,7 @@ class MultimodalRAGService:
 
         Returns:
             MultimodalEntry с заполненным dummy embedding.
+
         """
         meta = dict(metadata or {})
         if tenant_id:
@@ -261,6 +269,7 @@ class MultimodalRAGService:
 
         Returns:
             Список MultimodalEntry, упорядоченный по убыванию cosine similarity.
+
         """
         if not self._is_enabled():
             return []

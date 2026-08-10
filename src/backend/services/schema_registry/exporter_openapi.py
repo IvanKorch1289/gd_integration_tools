@@ -42,6 +42,7 @@ def export_openapi(
     Returns:
         Словарь с ключами ``openapi``, ``info``, ``components`` —
         готов к слиянию с основным OpenAPI документом приложения.
+
     """
     kinds_to_export = [kind] if kind is not None else list(SchemaKind)
     schemas: dict[str, Any] = {}

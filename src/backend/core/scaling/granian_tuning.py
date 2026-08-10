@@ -48,6 +48,7 @@ class GranianTuning(BaseSettingsWithLoader):
 
     See Also:
         :doc:`/docs/adr/0059-granian-rsgi-production` — ADR-0059.
+
     """
 
     yaml_group: ClassVar[str] = "granian"
@@ -165,6 +166,7 @@ class GranianTuning(BaseSettingsWithLoader):
 
         Returns:
             str: ``"rsgi"`` или ``"asgi"``.
+
         """
         try:
             from src.backend.core.config.features import feature_flags
@@ -194,6 +196,7 @@ class GranianTuning(BaseSettingsWithLoader):
 
         Returns:
             Список аргументов для ``subprocess.run``.
+
         """
         cmd: list[str] = [
             granian_cmd,

@@ -132,6 +132,7 @@ class LoginStepUpMiddleware:
         app: Inner ASGI-приложение (FastAPI/Starlette).
         rate_limit_factory: Callable → ``RateLimitChecker``.
             Default — :func:`_default_rate_limit_factory`.
+
     """
 
     def __init__(
@@ -145,6 +146,7 @@ class LoginStepUpMiddleware:
         Args:
             app: ASGI-приложение.
             rate_limit_factory: Фабрика rate-limit checker'а.
+
         """
         self.app = app
         factory = rate_limit_factory or DEFAULT_RATE_LIMIT_FACTORY

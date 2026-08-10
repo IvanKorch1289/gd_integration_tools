@@ -43,6 +43,7 @@ def build_sink(spec: Mapping[str, Any]) -> Sink:
 
     Raises:
         ValueError: Если ``kind`` неизвестен или ``sink_id`` отсутствует.
+
     """
     sink_id = spec.get("sink_id")
     if not sink_id:

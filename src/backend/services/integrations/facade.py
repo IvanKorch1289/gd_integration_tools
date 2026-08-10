@@ -48,6 +48,7 @@ class IntegrationFacade:
         check_sink_health: ping одного Sink.
         check_source_health: ping одного Source.
         list_sinks / list_sources: introspection.
+
     """
 
     def __init__(self) -> None:
@@ -79,6 +80,7 @@ class IntegrationFacade:
 
         Returns:
             True если allowed, False иначе.
+
         """
         try:
             from src.backend.services.authorization.facade import (
@@ -119,6 +121,7 @@ class IntegrationFacade:
         Raises:
             KeyError: Sink не найден.
             CapabilityDeniedError: Нет capability ``sink.send.<kind>``.
+
         """
         sink = self.sinks.get(sink_id)  # KeyError если не найден
         capability = f"sink.send.{sink.kind.value}"
@@ -160,6 +163,7 @@ class IntegrationFacade:
 
         Raises:
             KeyError: Sink не найден.
+
         """
         sink = self.sinks.get(sink_id)
         result = await sink.health(mode="fast")
@@ -186,6 +190,7 @@ class IntegrationFacade:
 
         Raises:
             KeyError: Source не найден.
+
         """
         source = self.sources.get(source_id)
         result = await source.health(mode="fast")

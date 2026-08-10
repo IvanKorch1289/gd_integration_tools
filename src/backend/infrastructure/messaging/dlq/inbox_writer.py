@@ -37,6 +37,7 @@ class InboxDLQWriter:
     Args:
         session_factory: async ``sessionmaker`` (DI).
         table_name: имя таблицы (default ``"dlq_inbox"``).
+
     """
 
     def __init__(self, *, session_factory: Any, table_name: str = "dlq_inbox") -> None:

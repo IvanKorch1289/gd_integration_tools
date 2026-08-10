@@ -67,6 +67,7 @@ def _resolve_known_hosts() -> tuple[()] | str:
 
     Raises:
         ValueError: путь не задан в non-dev_light-профиле.
+
     """
     # Локальный импорт settings — избегает циклов на старте модуля.
     from src.backend.core.config.settings import settings
@@ -147,6 +148,7 @@ class SftpClient(BaseSftpClient):
         Args:
             local_path: Путь к локальному файлу.
             remote_path: Путь на удалённом сервере.
+
         """
         async with self._breaker.guard():
             await self._do_upload(local_path, remote_path)
@@ -175,6 +177,7 @@ class SftpClient(BaseSftpClient):
         Args:
             remote_path: Путь на удалённом сервере.
             local_path: Путь для сохранения локально.
+
         """
         async with self._breaker.guard():
             await self._do_download(remote_path, local_path)
@@ -188,6 +191,7 @@ class SftpClient(BaseSftpClient):
 
         Returns:
             Список словарей с информацией о файлах.
+
         """
         import asyncssh
 
@@ -240,6 +244,7 @@ class SftpClient(BaseSftpClient):
 
         Returns:
             Содержимое файла.
+
         """
         async with self._breaker.guard():
             return await self._do_download_bytes(remote_path)
@@ -258,5 +263,6 @@ def get_sftp_client(
 
     Returns:
         Экземпляр ``SftpClient``.
+
     """
     return SftpClient(host=host, port=port, username=username, password=password)

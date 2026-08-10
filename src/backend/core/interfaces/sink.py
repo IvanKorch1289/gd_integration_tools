@@ -56,6 +56,7 @@ class SinkResult:
         ok: Успех отправки (HTTP 2xx / publish-ack / SMTP-OK).
         external_id: Идентификатор сообщения у получателя (если есть).
         details: backend-специфичные поля (status_code, queue_offset, ...).
+
     """
 
     ok: bool
@@ -86,6 +87,7 @@ class Sink(Protocol):
 
         Returns:
             ``SinkResult`` с флагом успеха и метаданными доставки.
+
         """
         ...
 
@@ -94,5 +96,6 @@ class Sink(Protocol):
 
         Args:
             mode: ``"fast"`` (<100ms PING) или ``"deep"`` (<2s smoke-test).
+
         """
         ...

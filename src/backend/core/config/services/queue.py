@@ -145,6 +145,7 @@ class QueueSettings(BaseSettingsWithLoader):
 
         Returns:
             Имя queue (``self.queues[i]["name"]``) или ``None``.
+
         """
         # Оптимизированный поиск с использованием генератора
         queue = next(

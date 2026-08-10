@@ -47,6 +47,7 @@ class ExpressAdapter:
 
         Raises:
             RuntimeError: Если Express отключён или BotX недоступен.
+
         """
         from src.backend.dsl.engine.processors.express._common import get_express_client
         from src.backend.infrastructure.clients.external.express_bot import (

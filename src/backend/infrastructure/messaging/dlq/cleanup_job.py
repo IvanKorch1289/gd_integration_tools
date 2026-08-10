@@ -68,6 +68,7 @@ class DLQCleanupJob:
         registry: :class:`DLQPolicyRegistry` с зарегистрированными policy.
         table_name: имя DLQ-таблицы (default ``dlq_events``).
         clock: функция текущего времени (для тестов).
+
     """
 
     def __init__(

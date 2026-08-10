@@ -59,6 +59,7 @@ class CDCCaptureProcessor(BaseProcessor):
         batch_size: Макс. событий за итерацию (default 100).
         channel: Имя PostgreSQL-канала для listen_notify (default ``cdc_<table>``).
         include_schema: Включать схему таблицы в события (default ``True``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL

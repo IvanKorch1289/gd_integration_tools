@@ -63,6 +63,7 @@ class LLMCallProcessor(BaseProcessor):
     Args:
         max_retries: Количество повторов при transient ошибках (default 2).
         retry_delay: Базовая задержка между retry (сек).
+
     """
 
     def __init__(
@@ -120,6 +121,7 @@ class LLMCallProcessor(BaseProcessor):
             Результат (content, usage, model) записывается в ``in_message.body``.
             Метрики токенов и стоимости — в свойствах ``llm.tokens_used``,
             ``llm.cost_usd``, ``llm.model``, ``llm.provider``.
+
         """
         prompt = exchange.properties.get(self._prompt_property)
         if prompt is None:

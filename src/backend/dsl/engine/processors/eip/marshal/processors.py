@@ -44,6 +44,7 @@ class MarshalProcessor(BaseProcessor):
         name: имя процессора.
 
     Body in: ``Any``. Body out: ``bytes`` (или ``str`` для XML pretty).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -108,6 +109,7 @@ class UnmarshalProcessor(BaseProcessor):
         name: имя процессора.
 
     Body in: ``bytes`` / ``str``. Body out: ``Any``.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

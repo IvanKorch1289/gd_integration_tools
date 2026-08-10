@@ -31,6 +31,7 @@ class SlaMixin(_WorkflowBuilderProtocol):
             escalation_email: email для notification на soft breach.
             escalation_slack: Slack channel для notification.
             breach_action: ``alert`` (default) | ``cancel`` | ``none``.
+
         """
         from src.backend.dsl.workflow.spec import SlaPolicy
 

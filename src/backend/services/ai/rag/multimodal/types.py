@@ -32,6 +32,7 @@ class ChunkDoc:
         embedding_kind: Идентификатор embedder'а (``clip``, ``colpali``,
             ``sentence-transformers`` и т.п.). ``None`` до вызова embed.
         timestamp: Время создания чанка (UTC).
+
     """
 
     chunk_id: str
@@ -52,6 +53,7 @@ class IngestResult:
         chunks: Список созданных ChunkDoc.
         metadata: Метаданные документа (title, author, page_count, mime).
         warnings: Не-критичные предупреждения (например, провал OCR на странице).
+
     """
 
     document_id: str
@@ -67,6 +69,7 @@ class SearchResult:
     Attributes:
         chunk: Найденный ChunkDoc.
         score: Cosine similarity (или другой метрики) в диапазоне [-1, 1].
+
     """
 
     chunk: ChunkDoc

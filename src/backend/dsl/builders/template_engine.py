@@ -34,6 +34,7 @@ class TemplateEngineChainMixin:
             context_from: Источник контекста — ``"body"`` (dict) |
                 ``"body.field"`` | ``"properties.name"``.
             result_property: Имя property для записи результата.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.template_engine",
@@ -57,6 +58,7 @@ class TemplateEngineChainMixin:
             context_from: Источник контекста — ``"body"`` | ``"body.field"`` |
                 ``"properties.name"``.
             result_property: Имя property для записи результата.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.template_engine",

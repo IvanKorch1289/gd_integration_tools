@@ -99,6 +99,7 @@ class DQCheckResult:
 
         Returns:
             True if no violations.
+
         """
         return len(self.violations) == 0
 
@@ -111,6 +112,7 @@ class DQRemediationResult:
         data: remediated data (same shape as input: dict или list of dicts).
         violations: list of violations detected (до remediation).
         fixes_applied: number of values that were actually changed.
+
     """
 
     data: Any
@@ -180,6 +182,7 @@ class DataQualityMonitor(RuleManagementMixin, CheckMixin, SchemaMixin, ApplyMixi
 
         Args:
             rule: DQRule to add.
+
         """
         self._rules.append(rule)
 

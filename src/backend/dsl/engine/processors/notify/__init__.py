@@ -35,6 +35,7 @@ class NotifyProcessor(BaseProcessor):
         context_property: Имя property с контекстом для рендера. Если None
             — используется ``exchange.body`` как dict.
         result_property: Имя property для ``SendResult``.
+
     """
 
     def __init__(

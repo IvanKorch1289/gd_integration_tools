@@ -88,6 +88,7 @@ class BaseService[
             version_schema: Схема для версий объекта.
             table_name: Опциональное имя таблицы для table-based cache invalidation.
                 Если задано, генерируется дополнительный тег ``table:<table_name>``.
+
         """
         self.repo = repo
         self.response_schema = response_schema

@@ -70,6 +70,7 @@ class VaultClientConfig:
         reconnect_max_delay: Maximum delay for exponential backoff (default 60.0s).
         rotation_interval_seconds: How often to check for secret version changes
             (default 300s).
+
     """
 
     drift_tolerance_seconds: float = _DEFAULT_DRIFT_TOLERANCE
@@ -92,6 +93,7 @@ class _SecretEntry:
         active_secret_data: Currently active secret data.
         failed_version: Version that failed validation (for repeated failure detection).
         failed_version_timestamp: When the failed version was recorded.
+
     """
 
     path: str
@@ -137,6 +139,7 @@ class VaultClient:
             config: Zero-downtime rotation config (defaults to VaultClientConfig).
             vault_config: Vault connection config (defaults to VaultConfig.from_env()).
             backend: Optional VaultBackend for dependency injection in tests.
+
         """
         self._config = config or VaultClientConfig()
         self._vault_config = vault_config or VaultConfig.from_env()
@@ -166,6 +169,7 @@ class VaultClient:
             reconnect_base_delay: Override default reconnect base delay.
             reconnect_max_delay: Override default reconnect max delay.
             rotation_interval_seconds: Override default rotation check interval.
+
         """
         config = VaultClientConfig(
             drift_tolerance_seconds=(
@@ -195,6 +199,7 @@ class VaultClient:
             validator: If provided, called with new secret data before activation.
                 Must return True for activation to proceed. If False, the old
                 secret remains active and the new one is kept for later retry.
+
         """
         entry = _SecretEntry(path=path, callback=callback, validator=validator)
         self._entries[path] = entry
@@ -213,6 +218,7 @@ class VaultClient:
 
         Returns:
             Secret data dict, or None if path not registered.
+
         """
         entry = self._entries.get(path)
         if entry is None:
@@ -383,6 +389,7 @@ class VaultClient:
 
         Returns:
             Authenticated hvac.Client instance.
+
         """
         import hvac
 
@@ -433,6 +440,7 @@ class VaultClient:
             client: Authenticated hvac.Client.
             threshold_seconds: Renew if remaining TTL below this value
                 (default 7 days = 604,800s).
+
         """
         try:
             # lookup_self() is sync hvac — run in executor.

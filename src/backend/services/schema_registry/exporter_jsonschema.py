@@ -35,6 +35,7 @@ def export_jsonschema(
     Returns:
         Словарь ``{$schema, version, kinds: {<kind>: [entries]}}`` для
         прямой сериализации в JSON.
+
     """
     kinds_to_export = [kind] if kind is not None else list(SchemaKind)
     payload: dict[str, Any] = {

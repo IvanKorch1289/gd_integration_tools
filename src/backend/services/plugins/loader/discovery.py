@@ -117,6 +117,7 @@ class DiscoveryMixin:
             плагинов. Если граф валит resolver, возвращается пустой
             кортеж и ``cycle_blocked`` пополняется именами участников
             цикла (или всеми не-blocked, если SDK не передал детали).
+
         """
         non_blocked = [m for m in parsed_manifests if m.name not in compat_blocked]
         if not non_blocked:
@@ -160,6 +161,7 @@ class DiscoveryMixin:
             По валидации ADR-042 имя каталога ``extensions/<name>/``
             совпадает с ``manifest.name``; поэтому ``parent.name``
             пути — стабильный ключ сопоставления.
+
         """
         if not sorted_names:
             return list(manifest_paths)

@@ -40,6 +40,7 @@ class WebhookSourcesMixin:
                 .dispatch_action("ci.trigger_build")
                 .build()
             )
+
         """
         import importlib
 

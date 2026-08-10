@@ -48,6 +48,7 @@ class FlagsmithFlag:
         name: Имя feature-flag (``feature.name``).
         enabled: Включён ли flag (``enabled``).
         value: Полезная нагрузка ``feature_state_value`` (str / int / dict).
+
     """
 
     name: str
@@ -72,6 +73,7 @@ class FlagsmithClient:
         >>> flags = await client.get_identity_flags(tenant_id="acme-corp")
         >>> for f in flags:
         ...     print(f.name, f.enabled, f.value)
+
     """
 
     def __init__(
@@ -93,6 +95,7 @@ class FlagsmithClient:
 
         Returns:
             Список [FlagsmithFlag]; пустой при отсутствии environment_key.
+
         """
         if self.environment_key is None:
             return []
@@ -125,6 +128,7 @@ class FlagsmithClient:
 
         Returns:
             Список [FlagsmithFlag] для identity.
+
         """
         if self.environment_key is None:
             return []
@@ -168,6 +172,7 @@ class FlagsmithClient:
 
         Returns:
             Live HTTP-клиент с заголовком ``X-Environment-Key``.
+
         """
         if self._client is not None:
             return self._client
@@ -190,6 +195,7 @@ def _parse_flag(item: dict[str, Any]) -> FlagsmithFlag:
 
     Returns:
         [FlagsmithFlag] с name/enabled/value.
+
     """
     feature = item.get("feature", {}) if isinstance(item, dict) else {}
     return FlagsmithFlag(

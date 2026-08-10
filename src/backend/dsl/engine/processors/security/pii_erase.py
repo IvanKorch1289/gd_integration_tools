@@ -28,6 +28,7 @@ Note:
     Production deployment требует дополнительной интеграции с
     конкретными storage backends. Этот DSL — contract-level реализация
     через capability checks и audit emission.
+
 """
 
 from __future__ import annotations
@@ -79,6 +80,7 @@ class ErasureResult:
         records_anonymized: Кол-во anonymized DB records.
         audit_id: Audit event ID для tracking.
         duration_ms: Длительность операции.
+
     """
 
     erasure_id: str
@@ -130,6 +132,7 @@ class PiiEraseProcessor(BaseProcessor):
             reason: Причина erasure (``"gdpr_request"``, ``"user_request"``, etc.).
             hard_delete: True для full deletion, False для soft anonymize.
             name: Имя процессора в трейсах.
+
         """
         super().__init__(name=name or f"pii_erase[{scope}]")
         self._scope = scope
@@ -265,6 +268,7 @@ class PiiEraseProcessor(BaseProcessor):
 
         Returns:
             Количество удалённых vectors (Qdrant возвращает int).
+
         """
         try:
             from src.backend.infrastructure.clients.storage.vector_store import (
@@ -310,6 +314,7 @@ class PiiEraseProcessor(BaseProcessor):
 
         Returns:
             Количество affected records.
+
         """
         try:
             if ":" not in self._scope:

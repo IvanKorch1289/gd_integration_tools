@@ -33,6 +33,7 @@ def test_db():
 
     Yields:
         SQLAlchemy async engine с подключением к тестовой БД.
+
     """
     try:
         from testcontainers.postgres import PostgresContainer
@@ -49,6 +50,7 @@ def test_cache():
 
     Yields:
         URL подключения к тестовому Redis.
+
     """
     try:
         from testcontainers.redis import RedisContainer
@@ -68,6 +70,7 @@ def pg_engine_with_alembic() -> Iterator[AsyncEngine]:
 
     Yields:
         SQLAlchemy ``AsyncEngine`` поверх ``asyncpg``-URL.
+
     """
     try:
         from testcontainers.postgres import PostgresContainer

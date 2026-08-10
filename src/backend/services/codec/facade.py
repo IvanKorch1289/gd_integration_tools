@@ -55,6 +55,7 @@ class CodecFacade:
         Raises:
             ValueError: Unsupported format.
             ServiceError: Encoding error.
+
         """
         self._check_format(fmt)
         try:
@@ -82,6 +83,7 @@ class CodecFacade:
         Raises:
             ValueError: Unsupported format.
             ServiceError: Decoding error.
+
         """
         self._check_format(fmt)
         try:

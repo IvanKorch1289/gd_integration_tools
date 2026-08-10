@@ -72,6 +72,7 @@ def adapt_capability_gate(gate: Any) -> Any:
 
     Raises:
         CapabilityDeniedError: пробрасывается из gate без модификации.
+
     """
     return _CapabilityGateAdapter(gate)
 
@@ -110,6 +111,7 @@ def get_ai_gateway() -> AIGateway:
 
     Returns:
         :class:`AIGateway` с заполненными DI.
+
     """
     try:
         from src.backend.core.di.app_state import get_app_ref
@@ -220,6 +222,7 @@ async def invoke_via_gateway(
             недокомплектованной установке).
         Любые исключения, поднятые ``legacy_callable`` или
         :meth:`AIGateway.invoke`.
+
     """
     from src.backend.core.config.features import feature_flags
 
@@ -261,6 +264,7 @@ class AIGatewayAdapter:
     Args:
         gateway: :class:`AIGateway` instance с подключёнными зависимостями
             (policy_resolver / capability_gate / audit_service / ...).
+
     """
 
     def __init__(self, gateway: AIGateway) -> None:
@@ -268,6 +272,7 @@ class AIGatewayAdapter:
 
         Args:
             gateway: Инжектированный :class:`AIGateway` instance.
+
         """
         self._gateway = gateway
 
@@ -297,6 +302,7 @@ class AIGatewayAdapter:
 
         Returns:
             См. :func:`invoke_via_gateway`.
+
         """
         return await invoke_via_gateway(
             workflow_id=workflow_id,

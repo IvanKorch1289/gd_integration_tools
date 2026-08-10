@@ -53,6 +53,7 @@ def _is_safe_return_to(url: str, allowed_host: str | None) -> bool:
         url: URL из ?return_to=...
         allowed_host: текущий host (request.url.hostname). Если None,
             считаем безопасным любой относительный путь.
+
     """
     if not url:
         return False
@@ -136,6 +137,7 @@ async def saml_acs(request: Request, response: Response) -> dict:
 
     Raises:
         HTTPException 401: replay, signature invalid, expired.
+
     """
     handler = _get_handler(request)
     form = await request.form()

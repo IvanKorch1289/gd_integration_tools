@@ -74,6 +74,7 @@ def check_tool_allowed(tool_name: str, spec: ToolsSpec) -> bool:
         False
         >>> check_tool_allowed("any", ToolsSpec())  # default empty = allow
         True
+
     """
     # Blacklist — explicit denylist (glob-матчинг), applied regardless of whitelist
     if spec.blacklist and any(
@@ -106,6 +107,7 @@ def enforce_tool_policy(tool_name: str, spec: ToolsSpec) -> None:
         * "warn": logs warning, allows invocation.
         * "block": silent drop (no log, no exception).
         * "fail": raises ToolPolicyViolationError.
+
     """
     if check_tool_allowed(tool_name, spec):
         return  # Tool allowed, no action
@@ -166,5 +168,6 @@ def filter_tools_by_policy(tool_names: Iterable[str], spec: ToolsSpec) -> list[s
         >>> filter_tools_by_policy(["db.read", "fs.write", "ai.invoke"],
         ...                        ToolsSpec(blacklist=["fs.*"]))
         ['db.read', 'ai.invoke']
+
     """
     return [name for name in tool_names if check_tool_allowed(name, spec)]

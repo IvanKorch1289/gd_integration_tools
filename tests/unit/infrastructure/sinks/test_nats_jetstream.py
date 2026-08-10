@@ -59,6 +59,7 @@ def _install_fake_nats(
 
     Returns:
         Fake nc (connection) mock для дополнительных assertions.
+
     """
     js = MagicMock()
     if raise_on_publish is not None:

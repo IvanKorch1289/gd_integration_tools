@@ -38,6 +38,7 @@ async def enforce_pre_call(
 
     Raises:
         BudgetExceeded: если hard_limit превышен.
+
     """
     return await budget.reserve(tenant_id=tenant_id, tokens=estimated_tokens)
 
@@ -96,6 +97,7 @@ def tenant_from_saml_attributes(
 
     Raises:
         ValueError: если ``tenant_id`` отсутствует.
+
     """
 
     def _unwrap(val: Any) -> str | None:

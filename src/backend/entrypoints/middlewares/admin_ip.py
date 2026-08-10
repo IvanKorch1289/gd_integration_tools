@@ -43,6 +43,7 @@ class IPRestrictionMiddleware:
 
         Args:
             app: ASGI-приложение.
+
         """
         self.app = app
         self._store = get_ip_restriction_store()

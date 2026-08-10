@@ -73,6 +73,7 @@ class CallFunctionProcessor(BaseProcessor):
             ``exchange.in_message.body``. Поддерживается JMESPath-подобный
             путь ``body.<field>`` или ``properties.<name>``.
         result_property: Имя property для результата.
+
     """
 
     def __init__(

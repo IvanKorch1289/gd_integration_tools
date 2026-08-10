@@ -182,6 +182,7 @@ class S3Client(BaseS3Client):
 
         Returns:
             True, если соединение успешно.
+
         """
         try:
             result = await self.check_bucket_exists()
@@ -199,6 +200,7 @@ class S3Client(BaseS3Client):
 
         Returns:
             True, если бакет существует.
+
         """
         async with self.client_context() as client:
             try:
@@ -318,6 +320,7 @@ class S3Client(BaseS3Client):
 
         Returns:
             ETag загруженного объекта.
+
         """
         # Минимальный part_size S3 — 5MB (кроме последнего part'а).
         part_size = max(part_size, 5 * 1024 * 1024)

@@ -24,6 +24,7 @@ class MaskingEvent:
         type: Тип замаскированной сущности (EMAIL/PHONE/INN/...).
         count: Количество замаскированных вхождений данного типа.
         timestamp: Unix-timestamp события.
+
     """
 
     type: str
@@ -39,6 +40,7 @@ class SanitizationResult:
         sanitized_text: Текст после маскирования (placeholder'ы вместо PII).
         replacements: Mapping ``placeholder -> original`` для restore.
         audit_events: Список событий маскирования для audit-pipeline.
+
     """
 
     sanitized_text: str

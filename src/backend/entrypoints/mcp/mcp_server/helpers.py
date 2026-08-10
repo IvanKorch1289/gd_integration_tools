@@ -144,6 +144,7 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
 
     Returns:
         Причина деная (str) либо None.
+
     """
     try:
         from src.backend.core.config.ai_stack import mcp_settings

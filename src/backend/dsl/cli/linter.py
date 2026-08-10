@@ -82,6 +82,7 @@ class DSLLinter:
 
         Args:
             strict: При True warnings становятся errors (для CI gate).
+
         """
         self._strict = strict
 
@@ -94,6 +95,7 @@ class DSLLinter:
 
         Returns:
             Список проблем (пустой → all green).
+
         """
         issues: list[LintIssue] = []
 
@@ -141,6 +143,7 @@ class DSLLinter:
 
         Returns:
             Список проблем.
+
         """
         if not yaml_path.is_file():
             return [
@@ -401,6 +404,7 @@ def lint_path(path: Path, *, strict: bool = False) -> list[LintIssue]:
 
     Returns:
         Список проблем.
+
     """
     linter = DSLLinter(strict=strict)
     if path.is_dir():
@@ -435,6 +439,7 @@ def main(argv: list[str] | None = None) -> int:
             path: Каталог или ``*.dsl.yaml`` файл для проверки.
             strict: Strict-режим: warnings → errors.
             as_json: Вывод в JSON формате.
+
         """
         if not path.exists():
             console.print(f"[red]ERROR: путь не найден: {path}[/red]")

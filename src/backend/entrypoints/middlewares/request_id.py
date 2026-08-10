@@ -44,6 +44,7 @@ class RequestIDMiddleware:
 
     Args:
         app: Inner ASGI-приложение.
+
     """
 
     def __init__(self, app: ASGIApp) -> None:
@@ -81,6 +82,7 @@ def _get_header(scope: Scope, name: bytes) -> str | None:
 
     Returns:
         Header value (str) или None если не найден.
+
     """
     for header_name, header_value in scope.get("headers", []):
         if header_name == name:

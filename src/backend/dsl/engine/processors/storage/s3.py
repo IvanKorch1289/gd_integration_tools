@@ -90,6 +90,7 @@ class ToS3Processor(BaseProcessor):
         content_type_from: выражение для ContentType (опционально).
         result_property: имя property для записи фактического ключа
             (с применённым prefix, default ``"s3_key"``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING
@@ -182,6 +183,7 @@ class FromS3Processor(BaseProcessor):
     Args:
         key_from: выражение для S3-ключа (default ``"s3_key"``).
         result_property: имя property для записи ``bytes`` (default ``"body"``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL
@@ -239,6 +241,7 @@ class S3PresignProcessor(BaseProcessor):
         key_from: выражение для S3-ключа (default ``"s3_key"``).
         expires_in: TTL URL в секундах (default 3600).
         result_property: имя property для записи URL (default ``"download_url"``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -301,6 +304,7 @@ class S3DeleteProcessor(BaseProcessor):
 
     Args:
         key_from: выражение для S3-ключа (default ``"s3_key"``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING
@@ -343,6 +347,7 @@ class S3ListProcessor(BaseProcessor):
         prefix_from: выражение для префикса (опционально).
         result_property: имя property для записи ``list[str]``
             (default ``"s3_keys"``).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL

@@ -126,6 +126,7 @@ def import_bpmn(
             ``check_feature_flag=True``.
         BpmnImportError: Если XML невалидный, отсутствует
             ``<bpmn:process>`` или structure-граф некорректен.
+
     """
     if check_feature_flag:
         _ensure_feature_enabled()
@@ -280,6 +281,7 @@ def _topological_order(
     Raises:
         BpmnImportError: Отсутствует или более одного startEvent, либо
             граф sequence-flow содержит цикл.
+
     """
     starts = [
         node_id for node_id, el in elements.items() if _strip_ns(el.tag) == "startEvent"

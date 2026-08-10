@@ -56,6 +56,7 @@ class AdaptiveTimeoutConfig:
         min_timeout: нижняя граница таймаута в секундах (default 2.0).
         max_timeout: верхняя граница таймаута в секундах (default 60.0).
         window_size: размер rolling-window замеров (default 100).
+
     """
 
     multiplier: float = 1.5
@@ -80,6 +81,7 @@ class AdaptiveTimeoutPolicy:
     Args:
         config: параметры расчёта (multiplier/min/max/window). Если
             None — используются дефолты :class:`AdaptiveTimeoutConfig`.
+
     """
 
     def __init__(self, config: AdaptiveTimeoutConfig | None = None) -> None:
@@ -103,6 +105,7 @@ class AdaptiveTimeoutPolicy:
             endpoint: путь или logical-name endpoint'а (``/v1/users`` или
                 ``users.list``).
             latency_ms: измеренная latency в миллисекундах.
+
         """
         if not math.isfinite(latency_ms) or latency_ms < 0:
             return
@@ -130,6 +133,7 @@ class AdaptiveTimeoutPolicy:
 
         Returns:
             Таймаут в секундах в диапазоне ``[min_timeout, max_timeout]``.
+
         """
         bucket = self._buckets.get((host, endpoint))
         if bucket is None or len(bucket.samples) < _MIN_SAMPLES_FOR_P99:
@@ -148,6 +152,7 @@ class AdaptiveTimeoutPolicy:
         Args:
             host: host для точечного сброса (требует ``endpoint``).
             endpoint: endpoint для точечного сброса (требует ``host``).
+
         """
         if host is not None and endpoint is not None:
             self._buckets.pop((host, endpoint), None)
@@ -196,6 +201,7 @@ def _percentile(samples: Iterable[float], *, percent: float) -> float:
 
     Returns:
         Значение перцентиля или ``0.0`` для пустой выборки.
+
     """
     sorted_samples = sorted(samples)
     if not sorted_samples:

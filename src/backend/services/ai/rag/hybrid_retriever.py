@@ -57,6 +57,7 @@ class HybridRetriever:
             ``corpus`` игнорируется и BM25-индекс перестраивается при каждом
             вызове ``reload()`` из corpus_loader. Используйте для загрузки
             corpus из Redis (shared across instances) в multi-instance deployment.
+
     """
 
     def __init__(
@@ -134,6 +135,7 @@ class HybridRetriever:
 
         Returns:
             Список :class:`HybridResult` длиной ≤ top_k.
+
         """
         # Получить dense выборку (×2 для diversity при RRF-merge).
         try:
@@ -204,6 +206,7 @@ def rrf_merge(
     Returns:
         Список ``(chunk_id, rrf_score, sources_tuple)`` отсортированный
         по убыванию rrf_score.
+
     """
     scores: dict[str, float] = {}
     provenance: dict[str, set[str]] = {}

@@ -89,6 +89,7 @@ class GlomExtractProcessor(BaseProcessor):
         # body = {"customer": {"email": "a@b.com"}} → "a@b.com"
         # body = {"user": {"email": "u@x.com"}} → "u@x.com"
         # body = {} → "anonymous"
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -161,6 +162,7 @@ class GlomTransformProcessor(BaseProcessor):
         # body = {"id": 1, "profile": {"full_name": "Alice"}, "metadata": {"tags": ["x"]},
         #        "password": "secret"}
         # → {"user_id": 1, "name": "Alice", "tags": ["x"]}
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
@@ -240,6 +242,7 @@ class GlomFlattenProcessor(BaseProcessor):
         GlomFlattenProcessor(separator="_", max_depth=1)
         # body = {"a": {"b": {"c": 1}}}
         # → {"a": {"b": {"c": 1}}} (max_depth=1: root not recursed)
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE

@@ -74,6 +74,7 @@ class MongoNotebookRepository:
 
         Returns:
             Created notebook.
+
         """
         await self._client().insert_one(_COLLECTION, _notebook_to_doc(notebook))
         return notebook
@@ -86,6 +87,7 @@ class MongoNotebookRepository:
 
         Returns:
             Notebook or None if not found.
+
         """
         doc = await self._client().find_one(_COLLECTION, {"_id": notebook_id})
         return _doc_to_notebook(doc) if doc else None
@@ -107,6 +109,7 @@ class MongoNotebookRepository:
 
         Returns:
             Updated notebook or None if not found.
+
         """
         client = self._client()
         existing = await client.find_one(

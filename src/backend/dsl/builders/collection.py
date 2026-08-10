@@ -33,6 +33,7 @@ class CollectionMixin:
         Args:
             field: Имя ключа (dict) или атрибута (object) для извлечения.
             key_fn: Функция ``item -> value``; имеет приоритет над ``field``.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -55,6 +56,7 @@ class CollectionMixin:
             predicate: Функция ``item -> bool``; имеет приоритет над ``condition``.
             condition: Строковое выражение SimpleEval (например, ``"age > 18"``).
                 Контекст — ``it`` для не-dict элементов, либо ключи dict.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -73,6 +75,7 @@ class CollectionMixin:
         Args:
             field: Имя ключа/атрибута для группировки.
             key_fn: Функция ``item -> key``; имеет приоритет над ``field``.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -88,6 +91,7 @@ class CollectionMixin:
 
         Args:
             default: Значение, заменяющее ``None``, ``""``, ``[]`` или ``{}``.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -114,6 +118,7 @@ class CollectionMixin:
         Returns:
             ``RouteBuilder`` с процессором, который заменяет body на
             ``[matching, non_matching]``.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -130,6 +135,7 @@ class CollectionMixin:
         Args:
             field: Имя поля для уникальности (по значению поля).
             key_fn: Функция ``item -> key``; имеет приоритет над ``field``.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -143,6 +149,7 @@ class CollectionMixin:
 
         Args:
             depth: Глубина расплющивания (default 1).
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -155,6 +162,7 @@ class CollectionMixin:
 
         Args:
             other: Список для пересечения.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -167,6 +175,7 @@ class CollectionMixin:
 
         Args:
             other: Список для вычитания.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -179,6 +188,7 @@ class CollectionMixin:
 
         Args:
             field: Имя числового поля.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -191,6 +201,7 @@ class CollectionMixin:
 
         Args:
             field: Имя поля для сравнения.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -203,6 +214,7 @@ class CollectionMixin:
 
         Args:
             field: Имя поля для сравнения.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",
@@ -216,6 +228,7 @@ class CollectionMixin:
         Args:
             field: Имя поля для сортировки.
             reverse: Обратный порядок.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.eip.collection",

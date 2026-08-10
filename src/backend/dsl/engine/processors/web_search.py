@@ -73,6 +73,7 @@ class WebSearchProcessor(BaseProcessor):
         max_results: Максимум результатов.
         to: Куда положить результат.
         deep_research: Использовать deep_research() вместо search().
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL

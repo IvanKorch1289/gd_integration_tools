@@ -304,6 +304,7 @@ def get_stream_dlq_writer_provider() -> Any:
     Returns:
         ``None`` если composition root не установил writer — MQ handlers
         log warning и drop poison message (fail-loud signal).
+
     """
     return _overrides.get("stream_dlq_writer")
 

@@ -66,6 +66,7 @@ class RedirectProcessor(BaseProcessor):
         allowed_hosts: Белый список хостов (проверка для ``url_source=query_param``).
             ``None`` — без ограничений.
         name: Имя процессора в трассе.
+
     """
 
     def __init__(

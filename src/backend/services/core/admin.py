@@ -35,6 +35,7 @@ class AdminService:
 
         Returns:
             dict[str, Any]: Конфигурация приложения в виде словаря.
+
         """
         return settings.model_dump()
 
@@ -54,6 +55,7 @@ class AdminService:
 
         Raises:
             HTTPException: Если маршрут с указанным путём не найден.
+
         """
         from src.backend.core.state.runtime import blocked_routes
 
@@ -77,6 +79,7 @@ class AdminService:
 
         Returns:
             Any: Список ключей или совместимый с ним тип ответа.
+
         """
         return await get_admin_cache_storage_provider().list_cache_keys(pattern)
 
@@ -89,6 +92,7 @@ class AdminService:
 
         Returns:
             Any: Значение, сохранённое по ключу.
+
         """
         return await get_admin_cache_storage_provider().get_cache_value(key)
 
@@ -98,6 +102,7 @@ class AdminService:
 
         Returns:
             Any: Результат операции очистки кэша.
+
         """
         return await get_admin_cache_storage_provider().invalidate_cache()
 
@@ -110,6 +115,7 @@ class AdminService:
 
         Returns:
             dict с количеством удалённых ключей.
+
         """
         from src.backend.core.di.providers import get_cache_invalidator_provider
 
@@ -126,6 +132,7 @@ class AdminService:
 
         Returns:
             dict с количеством удалённых ключей.
+
         """
         from src.backend.core.di.providers import get_cache_invalidator_provider
 
@@ -141,6 +148,7 @@ class AdminService:
 
         Returns:
             dict с количеством удалённых ключей.
+
         """
         from src.backend.core.di.providers import get_cache_invalidator_provider
 
@@ -197,6 +205,7 @@ class AdminService:
 
         Returns:
             dict с результатом операции.
+
         """
         route_registry.toggle_feature_flag(flag_name, enable=enable)
         affected = [
@@ -229,5 +238,6 @@ def get_admin_service() -> AdminService:
 
     Returns:
         AdminRouteService: Экземпляр сервиса admin-роутов.
+
     """
     raise NotImplementedError  # заменяется декоратором

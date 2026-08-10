@@ -85,6 +85,7 @@ class RedisHitlSignalStore:
           instance'ы могут одновременно сделать resolved → lost update.
         * wait_for — subscribe на ``hitl:resolved:{tenant_id}`` канал с
           фильтром по ``signal_id`` (через payload JSON).
+
     """
 
     def __init__(
@@ -101,6 +102,7 @@ class RedisHitlSignalStore:
             max_watch_retries: D-A8-11 fix (cycle 1): max retries для WATCH
                 conflict в _mark_resolved_transactional. Persistent
                 contention → HITLWatchContentionError.
+
         """
         self._client = redis_client
         self._owns_client = redis_client is None
@@ -125,6 +127,7 @@ class RedisHitlSignalStore:
 
         Args:
             signal: Signal для сохранения.
+
         """
         client = await self._get_client()
         await client.hset(_HASH_KEY, signal.signal_id, json.dumps(signal.to_dict()))
@@ -137,6 +140,7 @@ class RedisHitlSignalStore:
 
         Returns:
             Signal или None если не найден.
+
         """
         from src.backend.services.workflows.hitl_service import HitlPendingSignal
 
@@ -163,6 +167,7 @@ class RedisHitlSignalStore:
 
         Returns:
             Sorted список unresolved signals.
+
         """
         from src.backend.services.workflows.hitl_service import HitlPendingSignal
 
@@ -199,6 +204,7 @@ class RedisHitlSignalStore:
         Raises:
             KeyError: Signal не найден.
             ValueError: Signal уже resolved.
+
         """
         from src.backend.services.workflows.hitl_service import HitlPendingSignal
 
@@ -309,6 +315,7 @@ class RedisHitlSignalStore:
 
         Returns:
             True если resolved, False при timeout.
+
         """
         client = await self._get_client()
         # Сначала проверяем текущее состояние (resolved до подписки).

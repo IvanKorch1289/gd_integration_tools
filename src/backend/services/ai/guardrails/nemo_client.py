@@ -65,6 +65,7 @@ class NeMoGuardrailsConfig:
             (timeout, import, runtime). При False — логирует и пропускает.
         max_latency_ms: Максимальная допустимая latency в ms.
             При превышении — блок или warn в зависимости от fail_closed.
+
     """
 
     colang_flows_dir: str | None = None
@@ -78,6 +79,7 @@ def has_gpu() -> bool:
 
     Returns:
         True если хотя бы один CUDA device обнаружен.
+
     """
     try:
         import torch
@@ -103,6 +105,7 @@ def _check_dependencies() -> None:
 
     Raises:
         NeMoGuardrailsUnavailable: если пакет не установлен.
+
     """
     import importlib.util
 
@@ -122,6 +125,7 @@ class NeMoGuardrailsRuntime:
         config: Конфигурация runtime.
         gpu_available: Был ли GPU при старте.
         rails: Инициализированный LLMRails инстанс или None.
+
     """
 
     def __init__(self, config: NeMoGuardrailsConfig | None = None) -> None:
@@ -181,6 +185,7 @@ class NeMoGuardrailsRuntime:
         Raises:
             NeMoGuardrailsUnavailable: если fail_closed=True и
                 инициализация не удалась.
+
         """
         try:
             # synchronous blocking call — run in thread pool to avoid
@@ -230,6 +235,7 @@ class NeMoGuardrailsRuntime:
 
         Returns:
             Словарь с ``safe``, ``reason``, ``rail``.
+
         """
         # NeMo output rails: factuality check + refusal patterns
         try:
@@ -290,6 +296,7 @@ async def get_nemo_guardrails_runtime(
 
         Иначе — ``None``. Caller должен обработать None и
         перейти к следующему guardrail в цепочке.
+
     """
     global _runtime
 

@@ -52,6 +52,7 @@ class SmtpClient(BaseSmtpClient):
 
         Raises:
             ValueError: Если настройки недействительны (отсутствуют хост или порт).
+
         """
         from src.backend.core.logging import get_logger
 
@@ -79,6 +80,7 @@ class SmtpClient(BaseSmtpClient):
 
         Returns:
             SmtpClient: Экземпляр SMTP-клиента.
+
         """
         await self.initialize_pool()
         return self
@@ -95,6 +97,7 @@ class SmtpClient(BaseSmtpClient):
 
         Raises:
             RuntimeError: Если инициализация пула не удалась.
+
         """
         if self._connection_pool:
             self.logger.info("SMTP-пул уже инициализирован")
@@ -137,6 +140,7 @@ class SmtpClient(BaseSmtpClient):
         Raises:
             ConnectionError: Если соединение не удалось после нескольких попыток.
             TimeoutError: Если превышено время ожидания соединения.
+
         """
         # A2: async-timeout deprecated; используем нативный asyncio.timeout()
         # доступный с Python 3.11+ (проект требует 3.14).
@@ -181,6 +185,7 @@ class SmtpClient(BaseSmtpClient):
 
         Raises:
             ConnectionError: Если сработал Circuit Breaker или соединение не удалось.
+
         """
         connection: SMTP | None = None
         temporary = False
@@ -228,6 +233,7 @@ class SmtpClient(BaseSmtpClient):
 
         Raises:
             ConnectionError: Если все попытки соединения исчерпаны.
+
         """
         from src.backend.core.resilience.retry import make_async_retry
 
@@ -280,6 +286,7 @@ class SmtpClient(BaseSmtpClient):
 
         Returns:
             dict[str, Any]: Словарь с метриками пула и состоянием Circuit Breaker.
+
         """
         return {
             "pool_capacity": f"{self._connection_pool.qsize()}/{self._pool_size}",
@@ -304,6 +311,7 @@ class SmtpClient(BaseSmtpClient):
             body: Содержимое письма.
             from_address: Адрес отправителя.
             html: Если True, body интерпретируется как HTML.
+
         """
         from email.message import EmailMessage
 
@@ -325,6 +333,7 @@ class SmtpClient(BaseSmtpClient):
 
         Returns:
             bool: True, если тестовое сообщение было принято сервером.
+
         """
         from email.message import EmailMessage
 

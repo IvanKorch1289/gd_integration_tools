@@ -79,6 +79,7 @@ class ActionError:
         message: Человекочитаемое сообщение.
         details: Дополнительные данные (поля валидации, traceback id и т.п.).
         recoverable: Разрешён ли retry на стороне клиента/middleware.
+
     """
 
     code: str
@@ -103,6 +104,7 @@ class ActionResult:
         error: Структура ошибки (заполняется при ``success=False``).
         metadata: Служебные метаданные (latency_ms, transport, retries,
             cached, и т.п.) — расширяемое поле без строгой схемы.
+
     """
 
     success: bool
@@ -131,6 +133,7 @@ class DispatchContext:
             tracing.
         attributes: Расширяемая мапа произвольных атрибутов (request_path,
             client_ip, headers-allowlist, и т.п.).
+
     """
 
     correlation_id: str | None = None
@@ -179,6 +182,7 @@ class ActionMetadata:
         error_types: Список известных кодов ошибок, которые может
             вернуть action (для документации и контрактных тестов).
         tags: Произвольные теги для группировки/фильтрации.
+
     """
 
     action: str
@@ -316,6 +320,7 @@ class ActionGatewayDispatcher(Protocol):
 
         Returns:
             Отсортированный кортеж имён.
+
         """
         ...
 

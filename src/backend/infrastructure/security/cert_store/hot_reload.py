@@ -40,6 +40,7 @@ class CertFileWatcher:
         path: Директория для наблюдения.
         store: :class:`CertStore` для обновления.
         extensions: Расширения файлов для обработки (default: .pem, .crt).
+
     """
 
     DEFAULT_EXTENSIONS: tuple[str, ...] = (".pem", ".crt")

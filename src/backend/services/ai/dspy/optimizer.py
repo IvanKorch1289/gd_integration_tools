@@ -95,6 +95,7 @@ class CompileReport:
 
         Returns:
             ``(optimized − baseline) / baseline`` или 0.0 если baseline=0.
+
         """
         if self.baseline_score <= 0:
             return 0.0
@@ -120,6 +121,7 @@ class DSPyOptimizer:
             (pipeline, train) и возвращающий новую callable(example)->str.
             При None — используется ``_default_bootstrap`` (least-squares
             подбор top-N examples по metric()).
+
     """
 
     def __init__(

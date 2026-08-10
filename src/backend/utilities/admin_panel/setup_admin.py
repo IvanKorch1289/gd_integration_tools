@@ -19,6 +19,7 @@ def setup_admin(app: FastAPI) -> None:
 
     Args:
         app: FastAPI app instance.
+
     """
     admin = Admin(app, get_db_initializer().async_engine)
     admin.add_view(UserAdmin)

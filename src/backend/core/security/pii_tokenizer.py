@@ -67,6 +67,7 @@ class EncryptedValue:
         nonce: AES-GCM nonce (12 bytes).
         tag: AES-GCM authentication tag (16 bytes).
         key_version: Версия ключа из Vault (для rotation).
+
     """
 
     ciphertext: bytes
@@ -88,6 +89,7 @@ class TokenMap:
         policy_name: Имя :class:`PIIPolicy`, использованной при ``mask``.
         created_at: UTC timestamp создания.
         ttl_s: TTL в секундах.
+
     """
 
     tokens: dict[str, EncryptedValue]
@@ -111,6 +113,7 @@ class PIIPolicy:
             placeholders generic (``"<PERSON>"``) для audit-only.
         ttl_s: TTL TokenMap в Redis (только при ``reversible=True``).
         scope: Capability scope (``"banking"``, ``"hr"``).
+
     """
 
     name: str
@@ -192,6 +195,7 @@ class PIITokenizer:
             presidio_analyzer: :class:`PresidioSanitizerAdapter` (S24 W1).
                 Обязателен для ``mask_*`` методов; при ``None`` они поднимают
                 ``RuntimeError``.
+
         """
         self._token_registry = token_registry
         self._audit = audit
@@ -228,6 +232,7 @@ class PIITokenizer:
 
         Raises:
             RuntimeError: при отсутствии ``presidio_analyzer`` в DI.
+
         """
         if not text:
             return text, TokenMap(
@@ -318,6 +323,7 @@ class PIITokenizer:
 
         Raises:
             RuntimeError: при отсутствии ``presidio_analyzer`` в DI.
+
         """
         if not text:
             return text
@@ -359,6 +365,7 @@ class PIITokenizer:
         Returns:
             Восстановленный исходный текст. Placeholders, для которых
             decrypt не удался, остаются на месте.
+
         """
         if not token_map.tokens:
             return masked_text
@@ -398,6 +405,7 @@ class PIITokenizer:
 
         Returns:
             Число живых записей под prefix (0 если registry не задан).
+
         """
         del ttl_s
         if self._token_registry is None:
@@ -458,6 +466,7 @@ class PIITokenizer:
 
         Returns:
             Sequence названий PII entity (PERSON, PHONE_NUMBER, ...).
+
         """
         ru_specific = ("INN", "SNILS", "PASSPORT_RF", "CONTRACT")
         common = ("PERSON", "PHONE_NUMBER", "EMAIL_ADDRESS", "IP_ADDRESS")

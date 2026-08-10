@@ -93,6 +93,7 @@ class MongoDBClient:
 
         Raises:
             RuntimeError: If client not started.
+
         """
         if self._db is None:
             raise RuntimeError("MongoDBClient not started")
@@ -106,6 +107,7 @@ class MongoDBClient:
 
         Returns:
             Collection instance.
+
         """
         return self.db[name]
 
@@ -134,6 +136,7 @@ class MongoDBClient:
 
         Note:
             S181: Circuit Breaker "mongodb_find" + 3 retry attempts.
+
         """
         cursor = self.db[collection].find(query or {}, projection)
         if sort:
@@ -153,6 +156,7 @@ class MongoDBClient:
 
         Returns:
             Document or None if not found.
+
         """
         return await self.db[collection].find_one(query)
 
@@ -166,6 +170,7 @@ class MongoDBClient:
 
         Returns:
             Inserted document ID.
+
         """
         result = await self.db[collection].insert_one(document)
         return str(result.inserted_id)
@@ -195,6 +200,7 @@ class MongoDBClient:
 
         Note:
             Circuit Breaker "mongodb_insert_many" + 3 retry attempts.
+
         """
         if not documents:
             return []
@@ -234,6 +240,7 @@ class MongoDBClient:
 
         Note:
             Circuit Breaker "mongodb_update_many" + 3 retry attempts.
+
         """
         result = await self.db[collection].update_many(query, update)
         return result.modified_count
@@ -252,6 +259,7 @@ class MongoDBClient:
 
         Returns:
             Number of deleted documents.
+
         """
         result = await self.db[collection].delete_many(query)
         return result.deleted_count
@@ -273,6 +281,7 @@ class MongoDBClient:
 
         Returns:
             Number of modified documents.
+
         """
         result = await self.db[collection].update_one(
             query, {"$set": update}, upsert=upsert,
@@ -288,6 +297,7 @@ class MongoDBClient:
 
         Returns:
             Number of deleted documents.
+
         """
         result = await self.db[collection].delete_one(query)
         return result.deleted_count
@@ -303,6 +313,7 @@ class MongoDBClient:
 
         Returns:
             List of aggregation results.
+
         """
         cursor = self.db[collection].aggregate(pipeline)
         return [doc async for doc in cursor]
@@ -316,6 +327,7 @@ class MongoDBClient:
 
         Returns:
             Document count.
+
         """
         return await self.db[collection].count_documents(query or {})
 
@@ -324,6 +336,7 @@ class MongoDBClient:
 
         Returns:
             True if connected.
+
         """
         try:
             if self._client is None:

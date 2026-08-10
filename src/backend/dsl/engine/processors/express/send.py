@@ -35,6 +35,7 @@ class ExpressSendProcessor(BaseProcessor):
         silent_response: Скрывать ввод пользователя до ответа бота.
         sync: True → синхронный endpoint /direct/sync.
         result_property: Имя exchange-property для записи sync_id.
+
     """
 
     def __init__(

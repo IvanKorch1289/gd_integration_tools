@@ -65,6 +65,7 @@ class CheckMixin(_CapabilityGateProtocol):
             rebuild the dict) cannot raise ``RuntimeError: dictionary
             changed size during iteration``. The remaining mutation goes
             through ``_cache_granted`` which already holds the lock.
+
         """
         cache_key = (plugin, capability, requested_scope)
         with self._lock:  # D-AUDIT-98 fix (S183 W1.1)
@@ -214,6 +215,7 @@ class CheckMixin(_CapabilityGateProtocol):
             ``_tenant_cache_granted`` (already locked) or are wrapped
             explicitly to prevent concurrent ``_invalidate_tenant`` from
             racing with the assignment.
+
         """
         cache_key = (tenant, principal, capability, scope)
         with self._lock:  # D-AUDIT-98 fix (S183 W1.1)

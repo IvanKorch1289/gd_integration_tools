@@ -82,6 +82,7 @@ class SubWorkflowProcessor(BaseProcessor):
             ``correlation_id`` родителя.
         backend: Опциональный backend (DI/тесты).
         backend_factory: Опциональный factory (DI/тесты).
+
     """
 
     def __init__(

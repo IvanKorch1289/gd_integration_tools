@@ -74,6 +74,7 @@ class TransactionalOutboxEnqueuer(Protocol):
 
         Returns:
             Созданная модель ``OutboxMessage`` (id заполнится после flush).
+
         """
 
 
@@ -91,6 +92,7 @@ class OutboxRepository:
         Args:
             session: AsyncSession в открытой транзакции; commit/rollback
                 остаётся ответственностью caller'а.
+
         """
         self._session = session
 

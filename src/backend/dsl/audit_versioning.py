@@ -123,6 +123,7 @@ class Versioning:
         Raises:
             VersioningError: Если ``model`` не versioned (``ClassNotVersioned``
                 от continuum → re-raised как ``VersioningError``).
+
         """
         VersionModel = Versioning._version_model_or_raise(model)
         return list(
@@ -143,6 +144,7 @@ class Versioning:
             model: Versioned-модель.
             entity_id: PK значение.
             transaction_id: Continuum transaction ID (per-INSERT/UPDATE/DELETE).
+
         """
         VersionModel = Versioning._version_model_or_raise(model)
         return (
@@ -173,6 +175,7 @@ class Versioning:
         Raises:
             VersioningError: Если ``entity_id`` не найден или ``transaction_id``
                 не существует.
+
         """
         original = session.get(model, entity_id)
         if original is None:
@@ -222,6 +225,7 @@ class Versioning:
 
         Raises:
             VersioningError: Если любая из версий не найдена.
+
         """
         v1 = Versioning.get_version(session, model, entity_id, tx_id_1)
         v2 = Versioning.get_version(session, model, entity_id, tx_id_2)
@@ -292,6 +296,7 @@ class Versioning:
 
         Raises:
             VersioningError: При ``retention_days <= 0`` или DB errors.
+
         """
         if retention_days <= 0:
             raise VersioningError(

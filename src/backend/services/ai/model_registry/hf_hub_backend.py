@@ -32,6 +32,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         token: HF API token (``HF_TOKEN`` env). Анонимный режим (None) —
             только read public models.
         organization: Опц. фильтр по namespace ``<org>/...``.
+
     """
 
     def __init__(

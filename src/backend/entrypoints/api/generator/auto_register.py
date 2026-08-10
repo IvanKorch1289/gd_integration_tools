@@ -165,6 +165,7 @@ def auto_register_unrouted_actions(
 
     Returns:
         Число вновь добавленных роутов.
+
     """
     reg = registry if registry is not None else action_handler_registry
     existing_names = _collect_existing_route_names(app)

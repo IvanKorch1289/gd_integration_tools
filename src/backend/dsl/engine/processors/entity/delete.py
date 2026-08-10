@@ -22,6 +22,7 @@ class EntityDeleteProcessor(_BaseEntityProcessor):
         entity: Имя сущности.
         id_from: Выражение извлечения id.
         result_property: Имя property для записи результата (обычно ``True``/``None``).
+
     """
 
     _verb = "delete"

@@ -51,6 +51,7 @@ class TemporalClientFactory:
         target_host: ``host:port`` Temporal frontend (default ``localhost:7233``).
         tls: dict с TLS config (cert/key/ca) или None.
         recycle_seconds: TTL client'а; после превышения — reconnect.
+
     """
 
     def __init__(
@@ -80,6 +81,7 @@ class TemporalClientFactory:
                 (см. core.config.features.temporal_worker_versioning_enabled).
                 Default False — backward-compat; опт-ин через explicit
                 factory-args или settings.
+
         """
         self._target = target_host
         self._tls = tls
@@ -101,6 +103,7 @@ class TemporalClientFactory:
 
         Raises:
             ImportError: если temporalio не установлен.
+
         """
         now = time.monotonic()
         async with self._lock:
@@ -232,6 +235,7 @@ class TemporalWorkerPool:
     Args:
         factory: :class:`TemporalClientFactory`.
         namespace: namespace, в котором живут все workers пула.
+
     """
 
     def __init__(self, *, factory: TemporalClientFactory, namespace: str) -> None:
@@ -329,6 +333,7 @@ class ActivityHeartbeatStats:
         tracked: число активностей под наблюдением.
         missed_heartbeats: накопленное число missed beats.
         stale_activities: число активностей в текущий момент с stale beat.
+
     """
 
     tracked: int = 0
@@ -347,6 +352,7 @@ class ActivityHeartbeatMonitor:
     Args:
         check_interval_seconds: период проверки (default 30s).
         stale_threshold_seconds: после какого idle отметить stale (default 120s).
+
     """
 
     def __init__(

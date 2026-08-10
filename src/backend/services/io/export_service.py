@@ -47,6 +47,7 @@ class CsvExporter:
 
         Returns:
             File extension string.
+
         """
         return "csv"
 
@@ -61,6 +62,7 @@ class CsvExporter:
 
         Returns:
             CSV bytes.
+
         """
         if not data:
             return b""
@@ -91,6 +93,7 @@ class ExcelExporter:
 
         Returns:
             File extension string.
+
         """
         return "xlsx"
 
@@ -105,6 +108,7 @@ class ExcelExporter:
 
         Returns:
             Excel bytes.
+
         """
         if not data:
             return b""
@@ -153,6 +157,7 @@ class PdfExporter:
 
         Returns:
             File extension string.
+
         """
         return "pdf"
 
@@ -167,6 +172,7 @@ class PdfExporter:
 
         Returns:
             PDF bytes.
+
         """
         if not data:
             return b""
@@ -229,6 +235,7 @@ class JsonExporter:
 
         Returns:
             File extension string.
+
         """
         return "json"
 
@@ -243,6 +250,7 @@ class JsonExporter:
 
         Returns:
             JSON bytes.
+
         """
         opts = options or {}
         indent = opts.get("indent", 2)
@@ -263,6 +271,7 @@ class ParquetExporter:
 
         Returns:
             File extension string.
+
         """
         return "parquet"
 
@@ -277,6 +286,7 @@ class ParquetExporter:
 
         Returns:
             Parquet bytes.
+
         """
         if not data:
             return b""
@@ -338,6 +348,7 @@ class ExportFacade:
 
         Returns:
             CSV bytes.
+
         """
         return _EXPORTERS["csv"].export(
             rows, options={"delimiter": delimiter, "encoding": encoding},
@@ -354,6 +365,7 @@ class ExportFacade:
 
         Returns:
             Excel bytes.
+
         """
         return _EXPORTERS["xlsx"].export(rows, options={"sheet_name": sheet_name})
 
@@ -368,6 +380,7 @@ class ExportFacade:
 
         Returns:
             PDF bytes.
+
         """
         return _EXPORTERS["pdf"].export(rows, options={"title": title})
 
@@ -380,6 +393,7 @@ class ExportFacade:
 
         Returns:
             JSON bytes.
+
         """
         return _EXPORTERS["json"].export(rows, options={"indent": indent})
 
@@ -391,6 +405,7 @@ class ExportFacade:
 
         Returns:
             Parquet bytes.
+
         """
         return _EXPORTERS["parquet"].export(rows)
 

@@ -43,6 +43,7 @@ class CacheEnvelope:
 
         Returns:
             Deadline or None if no duration.
+
         """
         if seconds is None or seconds <= 0:
             return None
@@ -61,6 +62,7 @@ class CacheEnvelope:
 
         Returns:
             New CacheEnvelope instance.
+
         """
         now = time.monotonic()
         fresh_until = cls._calc_deadline(ttl_seconds, now)
@@ -83,6 +85,7 @@ class CacheEnvelope:
 
         Returns:
             New CacheEnvelope with fresh timestamps.
+
         """
         return self.create(
             value=self.value,
@@ -98,6 +101,7 @@ class CacheEnvelope:
 
         Returns:
             True if fresh.
+
         """
         current = time.monotonic() if now is None else now
         return self.fresh_until is None or self.fresh_until > current
@@ -110,6 +114,7 @@ class CacheEnvelope:
 
         Returns:
             True if alive.
+
         """
         current = time.monotonic() if now is None else now
         return self.stale_until is None or self.stale_until > current
@@ -122,6 +127,7 @@ class CacheEnvelope:
 
         Returns:
             True if stale.
+
         """
         current = time.monotonic() if now is None else now
         return self.is_alive(current) and not self.is_fresh(current)
@@ -131,6 +137,7 @@ class CacheEnvelope:
 
         Returns:
             Dictionary representation.
+
         """
         return {
             "__cache_envelope__": True,

@@ -51,6 +51,7 @@ class PostgresWatermarkStore:
 
     Args:
         session_manager: ``DatabaseSessionManager`` (как правило, главный).
+
     """
 
     def __init__(self, session_manager: DatabaseSessionManager) -> None:

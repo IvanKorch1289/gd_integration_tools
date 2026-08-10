@@ -60,6 +60,7 @@ def get_cache_metrics_snapshot() -> dict[str, Any]:
 
     Returns:
         dict with aggregated metrics from all cache tiers.
+
     """
     # Get RAG metrics
     rag_metrics = get_rag_metrics_snapshot()

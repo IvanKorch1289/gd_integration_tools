@@ -199,6 +199,7 @@ async def _build_temporal_activities() -> list[Any]:
         list при недоступности ``temporalio`` SDK или ``activity_bridge``
         модуля (graceful degradation — Worker всё равно стартует, но
         checkpoint activities не зарегистрированы).
+
     """
     try:
         from src.backend.dsl.workflow.compiler.activity_bridge import (

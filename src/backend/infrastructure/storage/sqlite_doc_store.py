@@ -50,6 +50,7 @@ class SqliteDocStore(DocStoreBackend):
 
         Returns:
             Document ID.
+
         """
         table = await self._ensure_namespace(namespace)
         if doc_id is None:
@@ -74,6 +75,7 @@ class SqliteDocStore(DocStoreBackend):
 
         Returns:
             Document dict or None if not found.
+
         """
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
@@ -94,6 +96,7 @@ class SqliteDocStore(DocStoreBackend):
 
         Returns:
             True if updated, False if not found.
+
         """
         existing = await self.get(namespace, doc_id)
         if existing is None:
@@ -111,6 +114,7 @@ class SqliteDocStore(DocStoreBackend):
 
         Returns:
             True if deleted, False if not found.
+
         """
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
@@ -143,6 +147,7 @@ class SqliteDocStore(DocStoreBackend):
 
         Returns:
             List of matching documents.
+
         """
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
@@ -171,6 +176,7 @@ class SqliteDocStore(DocStoreBackend):
 
         Returns:
             Document count.
+
         """
         if filters is None:
             table = await self._ensure_namespace(namespace)

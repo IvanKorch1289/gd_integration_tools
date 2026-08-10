@@ -39,6 +39,7 @@ class InnerRequestLoggingMiddleware:
 
     Args:
         app: ASGI-приложение.
+
     """
 
     def __init__(self, app: ASGIApp) -> None:
@@ -46,6 +47,7 @@ class InnerRequestLoggingMiddleware:
 
         Args:
             app: ASGI-приложение.
+
         """
         # Wave 6.5a: app_logger — через DI provider.
         self.log_body = settings.logging.log_requests
@@ -60,6 +62,7 @@ class InnerRequestLoggingMiddleware:
             scope: ASGI scope.
             receive: ASGI receive callable.
             send: ASGI send callable.
+
         """
         if scope["type"] != "http":
             await self.app(scope, receive, send)
@@ -126,6 +129,7 @@ class InnerRequestLoggingMiddleware:
 
         Returns:
             Тело запроса в bytes (или placeholder если > max_body_size).
+
         """
         # Cached body из state (cycle 52 RequestBodyCache pattern).
         state = scope.get("state", {}) if "state" in scope else {}
@@ -166,6 +170,7 @@ class InnerRequestLoggingMiddleware:
         Args:
             chunks: Captured body chunks from send_wrapper.
             scope: ASGI scope (для content-type detection).
+
         """
         from gzip import GzipFile
         from io import BytesIO

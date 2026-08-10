@@ -80,6 +80,7 @@ class AgentLoopProcessor(BaseAIProcessor):
             ``properties["agent_result"]["cost_usd"]`` по итерациям).
         budget_tokens: Опц. суммарный лимит prompt_tokens + completion_tokens.
         name: Имя процессора.
+
     """
 
     audit_event: ClassVar[str | None] = "ai.agent.loop"

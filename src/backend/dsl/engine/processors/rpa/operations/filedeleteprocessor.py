@@ -26,6 +26,7 @@ class FileDeleteProcessor(BaseProcessor):
         path: Путь к файлу/директории.
         missing_ok: Не raise если path не существует (default True).
         to: Куда записать результат (default ``"body"``).
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.file.delete"

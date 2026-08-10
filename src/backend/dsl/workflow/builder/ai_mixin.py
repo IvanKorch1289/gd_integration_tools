@@ -58,6 +58,7 @@ class AiAgentMixin(_WorkflowBuilderProtocol):
 
         Returns:
             Self для chain.
+
         """
         from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
 

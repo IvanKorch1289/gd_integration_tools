@@ -97,6 +97,7 @@ class DesktopRpaClient:
         api_key: Опц. API-key для аутентификации (header
             ``X-API-Key``).
         timeout: Connect+read timeout HTTP-запроса.
+
     """
 
     def __init__(
@@ -118,6 +119,7 @@ class DesktopRpaClient:
 
         Raises:
             DesktopRpaError: Невалидный action / HTTP-ошибка / sidecar 503.
+
         """
         if action not in SUPPORTED_ACTIONS:
             raise DesktopRpaError(

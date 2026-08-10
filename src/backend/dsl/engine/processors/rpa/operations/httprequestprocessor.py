@@ -30,6 +30,7 @@ class HttpRequestProcessor(BaseProcessor):
         body: Request body (dict → JSON, str → raw).
         timeout: Request timeout seconds (default 30).
         to: Куда записать ``{status, headers, data}``.
+
     """
 
     required_capability: ClassVar[str | None] = "rpa.http.request"

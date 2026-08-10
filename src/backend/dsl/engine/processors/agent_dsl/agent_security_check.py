@@ -110,6 +110,7 @@ class AgentSecurityCheckProcessor(BaseProcessor):
             on_violation: Поведение при нарушении (``"block"`` / ``"warn"`` / ``"allow"``).
             file_size_bytes: Размер файла (для ``check="file"``).
             name: Имя процессора.
+
         """
         super().__init__(name=name or f"agent_security_check[{check}]")
         self._check = check

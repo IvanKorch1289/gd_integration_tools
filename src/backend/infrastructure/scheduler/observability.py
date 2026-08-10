@@ -107,6 +107,7 @@ def attach_scheduler_metrics(scheduler: AsyncIOScheduler) -> None:
     EVENT_JOB_ERROR | EVENT_JOB_MISSED` и эмитирует counter
     ``scheduler_job_executions_total`` с label ``status`` равным
     ``success``/``error``/``missed`` соответственно.
+
     """
     counter, _ = _ensure_metrics()
     if counter is None:
@@ -185,6 +186,7 @@ def report_jobstore_type(*, is_memory: bool, is_production: bool) -> None:
     Args:
         is_memory: ``True`` если default-jobstore — MemoryJobStore.
         is_production: ``True`` если ``APP_ENVIRONMENT=production``.
+
     """
     _, gauge = _ensure_metrics()
     backend_type = "memory" if is_memory else "sqlalchemy"

@@ -87,6 +87,7 @@ async def test_schedule_cron_happy_path() -> None:
     Note:
         temporalio ≥1.27 переименовал ``ScheduleCronSpec`` → ``ScheduleSpec``
         (per-field kwargs → ``cron_expressions=[cron], time_zone_name=tz``).
+
     """
     factory = _make_factory_with_client()
     backend = TemporalSchedulerBackend(factory)
@@ -448,6 +449,7 @@ def test_parse_cron_5_fields() -> None:
     Note:
         temporalio ≥1.27: ``ScheduleCronSpec(minute=..., ..., timezone=...)``
         → ``ScheduleSpec(cron_expressions=[cron], time_zone_name=tz)``.
+
     """
     fake_spec_cls = MagicMock()
     fake_client_module = MagicMock()

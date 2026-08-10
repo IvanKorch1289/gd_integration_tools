@@ -48,6 +48,7 @@ def _utilization(bulkhead: Bulkhead) -> float:
 
     Returns:
         Float [0.0..1.0]; 0.0 если bulkhead ещё не активирован.
+
     """
     sem = bulkhead._sem
     if sem is None:
@@ -77,6 +78,7 @@ class BulkheadScaler:
         adjust_step: Размер шага изменения max_concurrent (>=1).
         min_capacity: Минимум max_concurrent (защита от 0).
         max_capacity: Максимум max_concurrent.
+
     """
 
     def __init__(
@@ -105,6 +107,7 @@ class BulkheadScaler:
 
         Returns:
             ``{bulkhead_name: new_max_concurrent}`` после tick'а.
+
         """
         results: dict[str, int] = {}
         names = self._registry.list_names()

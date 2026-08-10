@@ -47,6 +47,7 @@ class PromptCacheConfig:
             Anthropic limit).
         apply_to_user_content: Инжектить cache_control в user content
             (default True — самый простой path).
+
     """
 
     enabled: bool = True
@@ -67,6 +68,7 @@ def is_anthropic_cacheable(model: str) -> bool:
 
     Note: ``claude-3-haiku`` и старые модели — НЕ поддерживают
     prompt caching (Anthropic docs, 2024-08).
+
     """
     if not model or not model.startswith("anthropic/"):
         return False
@@ -100,6 +102,7 @@ def is_openai_cacheable(model: str) -> bool:
 
     Returns:
         True если ``model.startswith("openai/")`` И содержит cacheable variant.
+
     """
     if not model or not model.startswith("openai/"):
         return False
@@ -127,6 +130,7 @@ def inject_prompt_cache(
     Returns:
         Новый messages list с cache_control injection (или original
         если model не cacheable или config disabled).
+
     """
     cfg = config or _DEFAULT_CONFIG
     if not cfg.enabled:
@@ -203,6 +207,7 @@ def inject_openai_prompt_cache(
         Dict с kwargs для merge в LiteLLM ``acompletion`` call:
         ``{"prompt_cache_key": "...", "prompt_cache_retention": "in-memory"}``.
         Empty dict если model не cacheable или config disabled.
+
     """
     cfg = config or _DEFAULT_CONFIG
     if not cfg.enabled:

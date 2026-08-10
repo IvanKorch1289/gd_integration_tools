@@ -35,6 +35,7 @@ class AIFsFacade:
         workspace_manager: Менеджер выданных workspaces.
         capability_check: Опц. callback ``CapabilityGate.check``.
         plugin: Имя caller'а (для capability-event).
+
     """
 
     def __init__(
@@ -60,6 +61,7 @@ class AIFsFacade:
                 для этого пути.
             FileNotFoundError: Файл не найден.
             IsADirectoryError: Путь указывает на каталог.
+
         """
         target = Path(path)
         scope = target.as_posix()
@@ -90,6 +92,7 @@ class AIFsFacade:
         Raises:
             CapabilityDeniedError: caller не задекларировал capabilities.
             ValueError: MIME не поддерживается.
+
         """
         import importlib
 
@@ -127,6 +130,7 @@ class AIFsFacade:
 
         Returns:
             Абсолютный путь созданного файла.
+
         """
         self._wm.assert_alive(handle)
 

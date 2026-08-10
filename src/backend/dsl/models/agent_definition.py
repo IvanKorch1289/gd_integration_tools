@@ -69,6 +69,7 @@ class ModelRouterSpec(BaseModel):
             :class:`ModelRouter` пробует их при ошибке primary.
         timeout_s: Per-call таймаут в секундах.
         retry_attempts: Количество повторов primary до перехода на fallback.
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -99,6 +100,7 @@ class MemoryLayerSpec(BaseModel):
         ttl_hours: TTL записей в часах; ``None`` — без ограничения.
         namespace: Шаблон namespace с подстановками (``"agent:{tenant_id}"``).
         encryption: При ``True`` payload шифруется ключами Vault.
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -131,6 +133,7 @@ class MemorySpec(BaseModel):
         scratch: Краткосрочный scratchpad.
         episodic: Эпизодическая память (история взаимодействий).
         semantic: Долгосрочная семантическая память (RAG-like).
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -165,6 +168,7 @@ class ToolSpec(BaseModel):
     Attributes:
         name: Идентификатор tool'а в :class:`ToolRegistry`.
         config: Параметры tool'а (произвольный dict).
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -186,6 +190,7 @@ class SupervisorSpec(BaseModel):
             один уровень, ``"router"`` — pure-router без планирования).
         max_iterations: Максимум итераций цикла supervisor → agent → supervisor.
         agents: Список имён sub-agents, доступных supervisor'у.
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -214,6 +219,7 @@ class StopConditionSpec(BaseModel):
         max_tokens: Hard-cap на total tokens (prompt + completion).
         max_cost_usd: Hard-cap на стоимость инвокации (USD).
         max_wall_time_s: Hard-cap на wall-clock время (секунды).
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -244,6 +250,7 @@ class RLMSpec(BaseModel):
         threshold: Порог penalty, при котором запись попадает в consolidation.
         consolidation_batch_size: Размер batch'а для periodic consolidation.
         reindex_interval_hours: Интервал автоматического re-index'а памяти.
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -290,6 +297,7 @@ class AgentDefinition(BaseModel):
             (LangGraph runtime).
         stop_condition: :class:`StopConditionSpec` — anti-loop / budget-cap.
         rlm: :class:`RLMSpec` — RL-memory loop (опционально).
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -349,6 +357,7 @@ class AgentDefinition(BaseModel):
 
         Returns:
             Нормализованный список dict-ов, готовых к Pydantic-валидации.
+
         """
         if raw is None:
             return []
@@ -384,6 +393,7 @@ class AgentDefinition(BaseModel):
 
         Raises:
             ValueError: При supervisor + non-langgraph runtime.
+
         """
         if self.supervisor is not None and self.runtime != "langgraph":
             raise ValueError(

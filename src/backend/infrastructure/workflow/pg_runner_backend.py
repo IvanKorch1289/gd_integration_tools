@@ -227,6 +227,7 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
 
         Raises:
             NotImplementedError: всегда (pg-runner не реализует replay API).
+
         """
         raise NotImplementedError(
             "pg-runner does not implement Temporal-compatible replay; "
@@ -256,6 +257,7 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
 
         Returns:
             Payload сигнала (dict). При таймауте: ``{"timed_out": True}``.
+
         """
         instance_id = self._uuid_from_handle(handle)
         deadline: float | None = None
@@ -323,6 +325,7 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
 
         Returns:
             :class:`WorkflowHandle` нового child instance.
+
         """
         tenant_id = (
             "default" if parent_handle.namespace == "global" else parent_handle.namespace

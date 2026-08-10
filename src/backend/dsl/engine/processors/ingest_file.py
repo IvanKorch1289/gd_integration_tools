@@ -57,6 +57,7 @@ class IngestFileProcessor(BaseProcessor):
             форсирует markitdown (fail на провале); ``legacy`` — только
             legacy (через disabled markitdown). Sprint S5: ``auto``
             покрывает 95% случаев.
+
     """
 
     def __init__(

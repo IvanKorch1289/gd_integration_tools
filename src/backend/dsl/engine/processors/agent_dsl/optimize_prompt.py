@@ -36,6 +36,7 @@ class OptimizePromptProcessor(BaseProcessor):
         tenant_id: Tenant scope (None = global).
         limit: Максимум examples из feedback.
         result_property: Куда сохранить результат.
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING

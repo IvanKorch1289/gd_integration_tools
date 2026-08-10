@@ -63,6 +63,7 @@ class ContentBasedRouter(BaseProcessor):
             (lambda ex: ex.in_message.body.get("priority") == "high", "high_priority_route"),
             (lambda ex: ex.in_message.body.get("country") == "ru", "ru_route"),
         ], default_endpoint="default_route")
+
     """
 
     def __init__(
@@ -153,6 +154,7 @@ class SamplingProcessor(BaseProcessor):
 
         # 5 per second
         SamplingProcessor(time_window_ms=1000, max_in_window=5)
+
     """
 
     def __init__(

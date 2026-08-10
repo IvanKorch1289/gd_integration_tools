@@ -126,6 +126,7 @@ class AIDataSanitizer:
         Returns:
             SanitizationResult с замаскированным текстом,
             маппингом для восстановления и audit events.
+
         """
         import time as _time
 
@@ -201,6 +202,7 @@ class AIDataSanitizer:
 
         Returns:
             Кортеж (замаскированный словарь, маппинг для восстановления).
+
         """
         full_mapping: dict[str, str] = {}
         sanitized = self._sanitize_value(data, full_mapping)
@@ -239,6 +241,7 @@ class AIDataSanitizer:
 
         Returns:
             Кортеж (замаскированные сообщения, маппинг).
+
         """
         full_mapping: dict[str, str] = {}
         sanitized: list[dict[str, str]] = []

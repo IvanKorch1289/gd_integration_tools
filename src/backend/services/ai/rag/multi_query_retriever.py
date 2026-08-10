@@ -52,6 +52,7 @@ class MultiQueryResult(TypedDict):
         score: RRF score после объединения.
         sources: Список запросов, которые вернули этот документ
             (для отладки).
+
     """
 
     chunk_id: str
@@ -73,6 +74,7 @@ class MultiQueryConfig:
             ``{query}`` заменяется на оригинальный запрос,
             ``{n}`` заменяется на num_reformulations.
         parallel: Выполнять retrieval параллельно (default True).
+
     """
 
     num_reformulations: int = DEFAULT_NUM_REFORMULATIONS
@@ -100,6 +102,7 @@ class MultiQueryRetriever:
             ``(query: str, num: int) -> list[str]``.
             Генерирует альтернативные формулировки запроса.
         config: MultiQueryConfig с настройками.
+
     """
 
     def __init__(
@@ -132,6 +135,7 @@ class MultiQueryRetriever:
 
         Returns:
             Список MultiQueryResult длиной ≤ top_k.
+
         """
         if not query.strip():
             return []

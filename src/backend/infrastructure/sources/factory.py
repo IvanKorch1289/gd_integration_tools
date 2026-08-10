@@ -38,6 +38,7 @@ def build_source(spec: SourceSpec) -> Source:
     Raises:
         ValueError: при неизвестном ``kind`` (защитный код — schema
             обычно ловит это раньше).
+
     """
     match spec.kind:
         case SourceKind.WEBHOOK:

@@ -32,6 +32,7 @@ class FallbackCertBackend(CertBackend):
         primary: Primary backend (например VaultCertBackend).
         secondary: Fallback backend (например FileCertBackend).
         tertiary: Terminal fallback (например EnvInlineCertBackend). Optional.
+
     """
 
     def __init__(

@@ -31,6 +31,7 @@ class EmbeddingABRouter:
     Args:
         primary_collection: Имя collection v1 (``docs_bge_m3``).
         secondary_collection: Имя collection v2 (``docs_bge_m3_v2``).
+
     """
 
     def __init__(

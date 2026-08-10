@@ -54,6 +54,7 @@ class RedisLockProcessor(BaseProcessor):
 
     Body contract: не используется.
     Output: ``exchange.properties["_lock_acquired"] = bool`` (всегда).
+
     """
 
     side_effect: ClassVar[Any] = "READ"

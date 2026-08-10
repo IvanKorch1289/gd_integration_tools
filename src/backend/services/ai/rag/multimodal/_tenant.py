@@ -30,6 +30,7 @@ def _resolve_effective_tenant_id(tenant_id: str | None) -> str | None:
 
     Returns:
         Эффективный tenant_id или ``None`` для legacy passthrough.
+
     """
     if tenant_id is not None:
         return tenant_id or None

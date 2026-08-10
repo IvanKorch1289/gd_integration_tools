@@ -89,6 +89,7 @@ class QuotaConfig:
         max_files: Максимальное количество объектов (0 = unlimited).
         max_bytes: Максимальный суммарный объём в bytes (0 = unlimited).
         enabled: Включён ли quota check (False = bypass с logging).
+
     """
 
     max_files: int = DEFAULT_MAX_FILES
@@ -118,6 +119,7 @@ class QuotaCheckResult:
         current_bytes: Текущий объём (для diagnostics).
         limit_files: Лимит files (для diagnostics).
         limit_bytes: Лимит bytes (для diagnostics).
+
     """
 
     allowed: bool
@@ -167,6 +169,7 @@ class TenantFileQuotaManager:
                 quota check bypass с warning (fail-OPEN).
             config: Глобальная конфигурация квот. Per-tenant overrides
                 могут быть добавлены через :attr:`tenant_configs`.
+
         """
         self._redis = redis_client
         self._config = config or QuotaConfig()
@@ -194,6 +197,7 @@ class TenantFileQuotaManager:
         Returns:
             :class:`QuotaCheckResult` с allowed/reason и текущими
             counter values (для diagnostics в logging).
+
         """
         # System uploads bypass quota (no tenant_id).
         if not tenant_id:
@@ -256,6 +260,7 @@ class TenantFileQuotaManager:
 
         Returns:
             True если записано успешно (Redis available + tenant_id valid).
+
         """
         if not tenant_id or self._redis is None:
             return False
@@ -286,6 +291,7 @@ class TenantFileQuotaManager:
 
         Returns:
             True если записано успешно.
+
         """
         if not tenant_id or self._redis is None:
             return False
@@ -321,6 +327,7 @@ class TenantFileQuotaManager:
         Returns:
             dict с keys ``files`` (int), ``bytes`` (int). Defaults 0
             для отсутствующих ключей.
+
         """
         if self._redis is None or not self._is_safe_tenant_id(tenant_id):
             return {"files": 0, "bytes": 0}
@@ -344,6 +351,7 @@ class TenantFileQuotaManager:
 
         Returns:
             True если удалено успешно.
+
         """
         if self._redis is None or not self._is_safe_tenant_id(tenant_id):
             return False

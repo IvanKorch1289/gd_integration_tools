@@ -104,6 +104,7 @@ class GraphQLQueryProcessor(BaseProcessor):
             exchange: Текущий exchange; результат (data) — в ``out_message``
                 или свойстве ``result_property``.
             context: Контекст выполнения маршрута.
+
         """
         from src.backend.infrastructure.clients.transport.http_httpx import (
             get_httpx_client,

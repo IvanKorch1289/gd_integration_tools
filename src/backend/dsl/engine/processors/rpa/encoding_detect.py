@@ -19,6 +19,7 @@ class EncodingDetectProcessor:
 
         Returns:
             Encoding string (default: utf-8 для валидного).
+
         """
         if not data:
             return "utf-8"

@@ -58,6 +58,7 @@ class DataMaskingMiddleware:
 
         Args:
             app: ASGI-приложение.
+
         """
         self.app = app
 
@@ -68,6 +69,7 @@ class DataMaskingMiddleware:
             scope: ASGI scope.
             receive: ASGI receive callable.
             send: ASGI send callable.
+
         """
         if scope["type"] != "http":
             await self.app(scope, receive, send)

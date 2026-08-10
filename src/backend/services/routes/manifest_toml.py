@@ -158,6 +158,7 @@ class RouteManifest(BaseModel):
             K3 S19 W3: route_authz_requires_permission feature flag
             активирует проверку permissions через AuthorizationGateway.
         timeout: Конфигурация таймаутов (connect / read / write / total).
+
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -226,6 +227,7 @@ class RouteManifest(BaseModel):
         Returns:
             ``{plugin_name: required_spec}`` для отсутствующих или
             не подходящих по spec'у плагинов.
+
         """
         missing: dict[str, str] = {}
         for plugin_name, spec in self.requires_plugins.items():
@@ -243,6 +245,7 @@ class RouteManifest(BaseModel):
         Returns:
             ``{workflow_name: required_spec}`` для отсутствующих или
             не подходящих по spec'у workflows.
+
         """
         missing: dict[str, str] = {}
         for workflow_name, spec in self.requires_workflows.items():
@@ -264,6 +267,7 @@ def load_route_manifest(path: Path | str) -> RouteManifest:
     Raises:
         RouteManifestError: Файл не найден, TOML невалиден или
             модель не прошла pydantic-валидацию.
+
     """
     file_path = Path(path)
     if not file_path.is_file():

@@ -48,6 +48,7 @@ def _cosine(a: list[float], b: list[float]) -> float:
 
     Returns:
         Значение cosine similarity в диапазоне [-1, 1]; 0 при нулевой норме.
+
     """
     if not a or not b:
         return 0.0
@@ -79,6 +80,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
         _embedder: Активный embedder (``EmbedderProtocol`` или None).
         _pdf_ingester: Дефолтный PDFIngester (lazy-init).
         _image_ingester: Дефолтный ImageIngester (lazy-init).
+
     """
 
     def __init__(self) -> None:
@@ -97,6 +99,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
         Args:
             embedder: Объект с ``async embed(content) -> list[float]`` и
                 атрибутом ``embedding_kind: str``.
+
         """
         self._embedder = embedder
 
@@ -164,6 +167,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
 
         Raises:
             ValueError: Если MIME не поддерживается или не определён.
+
         """
         effective_mime = self._resolve_mime(path, mime)
 
@@ -229,6 +233,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
 
         Returns:
             Отсортированный по score список SearchResult.
+
         """
         if not self._is_enabled():
             return []
@@ -263,6 +268,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
 
         Returns:
             Число удалённых ChunkDoc; 0 если коллекция отсутствовала.
+
         """
         bucket = self._collections.pop(collection, {})
         return len(bucket)
@@ -275,6 +281,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
 
         Returns:
             Список float — реальный embedding или sha-based dummy.
+
         """
         if self._embedder is None:
             return _dummy_embedding(content)
@@ -299,6 +306,7 @@ class MultimodalRAGService(_LegacyMultimodalRAGService):
 
         Raises:
             ValueError: Если source — bytes и override не задан.
+
         """
         if override:
             return override.lower()
@@ -328,4 +336,5 @@ def get_multimodal_rag() -> MultimodalRAGService:  # type: ignore[empty-body]
 
     Returns:
         Экземпляр MultimodalRAGService, зарегистрированный в app_state.
+
     """

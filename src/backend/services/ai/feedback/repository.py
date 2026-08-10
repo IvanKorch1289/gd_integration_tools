@@ -31,6 +31,7 @@ def _utc_now() -> datetime:
 
     Returns:
         Текущее UTC-время.
+
     """
     return datetime.now(UTC)
 
@@ -52,6 +53,7 @@ class FeedbackRepository(Protocol):
 
         Returns:
             Документ, фактически записанный в хранилище.
+
         """
         ...
 
@@ -63,6 +65,7 @@ class FeedbackRepository(Protocol):
 
         Returns:
             Документ либо ``None``, если не найден.
+
         """
         ...
 
@@ -77,6 +80,7 @@ class FeedbackRepository(Protocol):
 
         Raises:
             KeyError: Если документ с ``doc.id`` отсутствует.
+
         """
         ...
 
@@ -92,6 +96,7 @@ class FeedbackRepository(Protocol):
 
         Returns:
             Отсортированный по ``created_at`` DESC список.
+
         """
         ...
 
@@ -115,6 +120,7 @@ class FeedbackRepository(Protocol):
 
         Returns:
             Отсортированный по ``labeled_at`` DESC список.
+
         """
         ...
 
@@ -124,6 +130,7 @@ class FeedbackRepository(Protocol):
         Returns:
             Словарь с ключами: ``pending``, ``positive``, ``negative``,
             ``skip``, ``indexed``.
+
         """
         ...
 
@@ -154,6 +161,7 @@ class InMemoryFeedbackRepository:
 
         Returns:
             Сохранённая копия документа.
+
         """
         async with self._lock:
             self._docs[doc.id] = doc.model_copy(deep=True)
@@ -167,6 +175,7 @@ class InMemoryFeedbackRepository:
 
         Returns:
             Копия документа либо ``None``.
+
         """
         async with self._lock:
             doc = self._docs.get(doc_id)
@@ -183,6 +192,7 @@ class InMemoryFeedbackRepository:
 
         Raises:
             KeyError: Если документ с ``doc.id`` отсутствует.
+
         """
         async with self._lock:
             if doc.id not in self._docs:

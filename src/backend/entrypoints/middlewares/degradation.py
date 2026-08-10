@@ -100,6 +100,7 @@ class DegradationMiddleware:
         Args:
             app: ASGI-приложение.
             retry_after: TTL для Retry-After header (в секундах).
+
         """
         self.app = app
         self._retry_after = retry_after

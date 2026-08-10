@@ -53,6 +53,7 @@ def raise_pii_fail_closed(
 
     Raises:
         PIIFailClosedError: Всегда — caller видит fail-CLOSED contract.
+
     """
     # cycle-4/D-AUDIT-109 — fail-CLOSED: logger.error (НЕ warning) +
     # audit event. Никакого silent return raw PII.

@@ -57,6 +57,7 @@ class CapabilityGatewayProtocol(Protocol):
         реального scope проверяется через ``ScopeMatcher`` (см.
         :mod:`capabilities.scope`). Сам Protocol не определяет
         конкретный формат scope — это контракт реализации.
+
     """
 
     def check(self, plugin: str, capability: str, scope: str | None = None) -> None:

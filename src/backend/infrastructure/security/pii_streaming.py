@@ -59,6 +59,7 @@ class PiiStreamPolicy:
         window_chars: Размер хвостового буфера. Default 4096.
             Уменьшайте только в low-latency сценариях, понимая риск
             split-PII через границу chunk-а.
+
     """
 
     entities: tuple[str, ...] | None = None
@@ -100,6 +101,7 @@ async def stream_filter(
         Если sanitizer выдаёт ошибку — chunk прокидывается без
         изменений (best-effort streaming, чтобы не убить SSE-stream
         из-за временной деградации NER).
+
     """
     pol = policy or PiiStreamPolicy()
     san = sanitizer or get_presidio_sanitizer(language=pol.language)
@@ -145,6 +147,7 @@ async def _safe_sanitize(
     Returns:
         Маскированный текст; при ошибке sanitizer-а — оригинал
         (caller предпочтёт «протекание» PII над разрывом SSE-stream'а).
+
     """
     try:
         result = await sanitizer.sanitize(

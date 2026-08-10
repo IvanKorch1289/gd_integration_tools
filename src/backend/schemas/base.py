@@ -57,6 +57,7 @@ class BaseSchema(BaseModel):
 
         Returns:
             Словарь с данными модели.
+
         """
         return self.model_dump(by_alias=by_alias, mode="python")
 

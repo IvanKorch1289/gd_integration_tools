@@ -73,6 +73,7 @@ class SchemaTypedAdapter:
         Raises:
             pydantic.ValidationError: Если ``data`` не проходит validation.
             ValueError: Если ``kind`` отсутствует в :class:`SchemaKind`.
+
         """
         validated: dict[str, Any] = _DICT_ADAPTER.validate_python(data)
         kind_raw: Any = validated.get("kind")
@@ -160,6 +161,7 @@ class SchemaEntryView:
         Raises:
             pydantic.ValidationError: Если ``data`` не проходит validation.
             ValueError: Если ``kind`` невалиден или обязательные поля отсутствуют.
+
         """
         validated = _DICT_ADAPTER.validate_python(data)
         kind_raw: Any = validated.get("kind")
@@ -215,6 +217,7 @@ class SnapshotView:
         Raises:
             pydantic.ValidationError: Если ``data`` не проходит validation.
             ValueError: Если version невалиден или ``entries`` — не list.
+
         """
         validated = _DICT_ADAPTER.validate_python(data)
         version_raw: Any = validated.get("version")

@@ -44,6 +44,7 @@ class TelegramTypingProcessor(BaseProcessor):
         bot: Имя бота.
         chat_id_from: Выражение извлечения chat_id.
         action: Тип действия (``typing`` / ``upload_photo`` / …).
+
     """
 
     def __init__(

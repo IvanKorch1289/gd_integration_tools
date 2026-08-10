@@ -35,6 +35,7 @@ class MemcachedBackend(CacheBackend):
 
     Raises:
         RuntimeError: Если пакет ``aiomcache`` не установлен.
+
     """
 
     def __init__(
@@ -64,6 +65,7 @@ class MemcachedBackend(CacheBackend):
 
         Returns:
             Cached bytes or None if not found.
+
         """
         return await self._client.get(self._to_bytes(key))
 
@@ -74,6 +76,7 @@ class MemcachedBackend(CacheBackend):
             key: Cache key.
             value: Value to cache.
             ttl: TTL in seconds (uses default_ttl if None).
+
         """
         await self._client.set(
             self._to_bytes(key),
@@ -86,6 +89,7 @@ class MemcachedBackend(CacheBackend):
 
         Args:
             keys: Cache keys to delete.
+
         """
         for key in keys:
             await self._client.delete(self._to_bytes(key))
@@ -106,6 +110,7 @@ class MemcachedBackend(CacheBackend):
 
         Raises:
             NotImplementedError: always — Memcached structurally не может.
+
         """
         raise NotImplementedError(
             "Memcached protocol не поддерживает pattern-delete "
@@ -120,6 +125,7 @@ class MemcachedBackend(CacheBackend):
 
         Returns:
             True if key exists, False otherwise.
+
         """
         return (await self._client.get(self._to_bytes(key))) is not None
 
@@ -128,5 +134,6 @@ class MemcachedBackend(CacheBackend):
 
         Returns:
             Close response.
+
         """
         return await self._client.close()

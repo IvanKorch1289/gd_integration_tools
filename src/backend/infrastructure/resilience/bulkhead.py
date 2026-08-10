@@ -94,6 +94,7 @@ class BulkheadDefaults:
         low_watermark: LowWatermark — рекомендуемая загрузка, при которой
             пул считается "здоровым" (для adaptive scaling).
         wait_timeout: Таймаут ожидания свободного слота (секунды).
+
     """
 
     max_concurrent: int
@@ -150,6 +151,7 @@ class BulkheadRegistry:
 
         Raises:
             KeyError: Неизвестное имя preset'а.
+
         """
         if preset is not None:
             defaults = BULKHEAD_DEFAULTS[preset]
@@ -169,6 +171,7 @@ class BulkheadRegistry:
 
         Returns:
             Sorted list of bulkhead names.
+
         """
         return sorted(self._items.keys())
 
@@ -190,6 +193,7 @@ async def get_default_bulkhead(preset: str) -> Bulkhead:
 
     Returns:
         Bulkhead с дефолтами по preset'у.
+
     """
     registry = get_bulkhead_registry()
     return await registry.get_or_create(preset, preset=preset)

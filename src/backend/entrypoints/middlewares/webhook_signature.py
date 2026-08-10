@@ -78,6 +78,7 @@ class WebhookSignatureMiddleware:
         signature_header: Имя header'а с подписью (default ``X-Webhook-Signature``).
         timestamp_header: Имя header'а с timestamp (default ``X-Webhook-Timestamp``).
         timestamp_window: Окно валидности timestamp (default 300с).
+
     """
 
     def __init__(
@@ -99,6 +100,7 @@ class WebhookSignatureMiddleware:
             signature_header: Имя header'а с подписью.
             timestamp_header: Имя header'а с timestamp.
             timestamp_window: Окно валидности timestamp.
+
         """
         self.app = app
         self._prefixes = tuple(path_prefixes)

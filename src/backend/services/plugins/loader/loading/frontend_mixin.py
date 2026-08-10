@@ -28,6 +28,7 @@ class FrontendMixin(_LoadingProtocol):
         Returns:
             Количество смонтированных файлов (0 если папка отсутствует
             или streamlit_pages_dir не сконфигурирован).
+
         """
         if self._streamlit_pages_dir is None:
             return 0

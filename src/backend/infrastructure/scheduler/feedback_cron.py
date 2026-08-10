@@ -29,6 +29,7 @@ def register_feedback_cron(
 
     Returns:
         ID зарегистрированного job'а (``ai_feedback_dspy_nightly``).
+
     """
     from apscheduler.triggers.cron import CronTrigger
 

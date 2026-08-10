@@ -93,6 +93,7 @@ class FastMCPserver:
         asgi_app: Returns the ASGI Starlette application (mount in FastAPI).
         start: No-op for this class — lifecycle is managed by the caller.
         stop: No-op for this class.
+
     """
 
     def __init__(

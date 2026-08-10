@@ -61,6 +61,7 @@ class AIToolWhitelistMiddleware:
             enabled: Включить/выключить enforcement (для тестов).
             on_tool_check: Optional callback ``(tenant_id, tool_name) -> bool``.
                 Если None — используется ``_default_whitelist_check``.
+
         """
         self.app = app
         self._enabled = enabled
@@ -231,6 +232,7 @@ def _default_whitelist_check(tenant_id: str, tool_name: str) -> bool:
     Note:
         S183: простая implementation через CapabilityGate.
         Production может использовать более сложный policy resolver.
+
     """
     try:
         from src.backend.core.security.capabilities import CapabilityGate

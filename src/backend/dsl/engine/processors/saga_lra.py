@@ -85,6 +85,7 @@ class SagaLRAProcessor(BaseProcessor):
         * При успехе — state ``"completed"``.
         * Если БД недоступна на старте — fallback к in-memory поведению
           (как :class:`SagaProcessor`).
+
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING
@@ -121,6 +122,7 @@ class SagaLRAProcessor(BaseProcessor):
         Note:
             При неудаче exchange переводится в ``failed`` с указанием номера
             шага. При успехе устанавливается свойство ``saga_completed = True``.
+
         """
         wf_id_str = (
             self._workflow_id

@@ -33,6 +33,7 @@ class AdSearchEntry:
         dn: Distinguished Name пользователя.
         attributes: Атрибуты пользователя (mail/displayName/department/...).
         groups: DN всех групп пользователя (resolve'нные через memberOf).
+
     """
 
     dn: str

@@ -56,6 +56,7 @@ class CommandRegistryProtocol(Protocol):
 
         Returns:
             Результат выполнения (type зависит от команды).
+
         """
         ...
 
@@ -65,6 +66,7 @@ class CommandRegistryProtocol(Protocol):
         Args:
             name: Имя команды.
             handler: Callable handler.
+
         """
         ...
 
@@ -86,6 +88,7 @@ class PipelineProtocol(Protocol):
 
         Returns:
             Выходные данные pipeline.
+
         """
         ...
 
@@ -105,6 +108,7 @@ class ExecutionEngineProtocol(Protocol):
 
         Returns:
             Результат выполнения.
+
         """
         ...
 

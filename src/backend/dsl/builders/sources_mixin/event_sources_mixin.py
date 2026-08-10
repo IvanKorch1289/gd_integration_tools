@@ -80,6 +80,7 @@ class EventSourcesMixin:
           события распределяются между consumers в группе.
         - Фильтрация на стороне consumer'а (post-receive) — для
           server-side filtering нужен отдельный ``filter()`` processor.
+
         """
         if not channel:
             raise ValueError("from_event_subscribe: channel is required")

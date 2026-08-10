@@ -46,6 +46,7 @@ def register_provider(category: str, name: str, instance: Any) -> None:
         instance: Объект-реализация, соответствующий Protocol категории.
 
     Идемпотентна — повторная регистрация перезаписывает предыдущее значение.
+
     """
     _registry.setdefault(category, {})[name] = instance
 
@@ -55,6 +56,7 @@ def get_provider(category: str, name: str) -> Any:
 
     Raises:
         KeyError: Если категория или имя не найдены.
+
     """
     if category not in _registry or name not in _registry[category]:
         raise KeyError(f"Provider '{name}' не зарегистрирован в категории '{category}'")

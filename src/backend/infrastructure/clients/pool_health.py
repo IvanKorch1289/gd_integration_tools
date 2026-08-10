@@ -60,6 +60,7 @@ class PoolEntry:
         idle_timeout: Минимальное время простоя (секунды), после которого
             выполняется ping. По умолчанию 60 секунд.
         last_ping_at: Метка времени последнего успешного/попытного пинга.
+
     """
 
     name: str
@@ -99,6 +100,7 @@ class PoolHealthMonitor:
         _pools: Словарь зарегистрированных пулов по имени.
         _task: Ссылка на background-asyncio.Task (или None).
         _running: Флаг активности monitor-loop.
+
     """
 
     def __init__(self, tick_interval: float = 30.0) -> None:
@@ -106,6 +108,7 @@ class PoolHealthMonitor:
 
         Args:
             tick_interval: Период между итерациями monitor-loop (сек).
+
         """
         self.tick_interval = tick_interval
         self._pools: dict[str, PoolEntry] = {}
@@ -135,6 +138,7 @@ class PoolHealthMonitor:
             ping_callable: Async-callable без аргументов; должен подключаться
                 к backend и возвращать любое значение (или raise при ошибке).
             idle_timeout: Порог idle-времени (сек) перед очередным пингом.
+
         """
         self._pools[name] = PoolEntry(
             name=name, pool=pool, ping_callable=ping_callable, idle_timeout=idle_timeout,
@@ -231,6 +235,7 @@ class PoolHealthMonitor:
         Args:
             entry: Запись зарегистрированного пула.
             now: Текущее время (monotonic) для обновления last_ping_at.
+
         """
         try:
             await entry.ping_callable()
@@ -262,6 +267,7 @@ def _is_flag_enabled() -> bool:
 
     Returns:
         bool: True если флаг включён, иначе False.
+
     """
     try:
         from src.backend.core.config.features import feature_flags
@@ -287,6 +293,7 @@ def get_pool_monitor() -> PoolHealthMonitor:
 
     Returns:
         PoolHealthMonitor: Единственный экземпляр в рамках процесса.
+
     """
     global _monitor_instance
     if _monitor_instance is None:
