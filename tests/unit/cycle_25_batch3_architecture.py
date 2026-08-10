@@ -39,7 +39,7 @@ class TestLayerCheckAllowlist:
         if not os.path.exists(path):
             return
         with open(path) as f:
-            lines = [l for l in f if l.strip() and not l.startswith("#")]
+            lines = [line for line in f if line.strip() and not line.startswith("#")]
         assert len(lines) >= 100, (
             f"Allowlist should have 100+ entries, got {len(lines)}"
         )

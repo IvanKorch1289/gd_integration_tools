@@ -43,9 +43,9 @@ class TestMetricsRegistrySingleSource:
                     content = fp.read()
                 # Strip docstrings/comments
                 lines = [
-                    l for l in content.split("\n")
-                    if not l.strip().startswith(("#", '"', "'", "*", ".."))
-                    and '"""' not in l and "'''" not in l
+                    line for line in content.split("\n")
+                    if not line.strip().startswith(("#", '"', "'", "*", ".."))
+                    and '"""' not in line and "'''" not in line
                 ]
                 code = "\n".join(lines)
                 if removed in code:

@@ -149,8 +149,14 @@ class GeoProcessor(BaseProcessor):
             if not feature_flags.proc_geo:
                 exchange.set_property("geo_status", "skipped")
                 return
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1713: narrow exceptions + observability (mirror
+            # D-AUDIT-1706..1712).
+            import logging
+            logging.getLogger(__name__).debug(
+                "geo.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         try:
             result = await asyncio.to_thread(self._exec_sync)
