@@ -213,7 +213,20 @@ class ChaosEngineering:
                         attr_name = attr
                         pool_target = target
                         break
-                    except Exception:
+                    except (AttributeError, TypeError) as attr_probe_exc:  # noqa: BLE001
+                        # cycle-9/D-AUDIT-917: narrow exceptions + observability.
+                        # AttributeError — descriptor/protocol mismatch,
+                        # TypeError — property raised on access. Bare
+                        # `except Exception` маскировал unrelated runtime errors.
+                        import logging
+                        logging.getLogger(__name__).debug(
+                            "chaos_probes.attr_probe_failed",
+                            extra={
+                                "target_type": type(target).__name__,
+                                "attr": attr,
+                                "error": str(attr_probe_exc),
+                            },
+                        )
                         pass
             if attr_name:
                 break
