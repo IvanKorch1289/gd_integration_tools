@@ -359,7 +359,16 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
                 del self._in_memory_policies[key]
                 return True
             return False
-        except Exception:
+        except (KeyError, AttributeError, TypeError) as rm_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-999: narrow exceptions + observability (mirror
+            # D-AUDIT-990 для add_policy).
+            # KeyError — key not in dict (rare race), AttributeError —
+            # _in_memory_policies API change, TypeError — wrong key type.
+            import logging
+            logging.getLogger(__name__).debug(
+                "authorization_gateway.remove_policy_failed",
+                extra={"error": str(rm_exc)},
+            )
             return False
 
     def _casbin_check(
