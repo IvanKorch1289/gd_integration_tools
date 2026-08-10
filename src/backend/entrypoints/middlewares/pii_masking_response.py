@@ -181,7 +181,15 @@ class PIIMaskingResponseMiddleware:
             return bool(
                 getattr(feature_flags, "pii_response_middleware_enabled", False)
             )
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1002: narrow exceptions + observability.
+            # ImportError — features module missing, AttributeError —
+            # config not initialized, RuntimeError — feature_flags unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "pii_masking_response.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
             return False
 
     def _path_matches(self, path: str) -> bool:
