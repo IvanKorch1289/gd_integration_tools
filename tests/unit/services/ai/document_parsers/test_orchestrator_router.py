@@ -59,7 +59,8 @@ class TestMarkitdownEngine:
 
 class TestMarkitdownFailureFallback:
     """При провале markitdown — legacy fallback для PDF/DOCX/HTML;
-    PPTX/XLSX/CSV/JSON → ValueError (нет legacy)."""
+    PPTX/XLSX/CSV/JSON → ValueError (нет legacy).
+    """
 
     async def test_pdf_falls_back_to_legacy_on_markitdown_failure(self) -> None:
         with patch(

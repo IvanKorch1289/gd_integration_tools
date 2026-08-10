@@ -1,5 +1,6 @@
 """S80 W4 — tests для LiteLLM pool registration в PoolHealthMonitor
-(FINAL_REPORT_V2 P1 #6 closure: 'Добавить connection pool для LiteLLM Gateway')."""
+(FINAL_REPORT_V2 P1 #6 closure: 'Добавить connection pool для LiteLLM Gateway').
+"""
 
 from __future__ import annotations
 

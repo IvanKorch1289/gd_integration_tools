@@ -38,7 +38,8 @@ class TestAdminAuthZFailClosed:
         self, admin_service_no_authz: AdminService, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """D-AUDIT-A3-01 fix: AuthZ unavailable + ADMIN_AUTHZ_FAIL_OPEN не выставлен
-        → raise AdminAuthorizationError (fail-CLOSED, было silent fail-OPEN)."""
+        → raise AdminAuthorizationError (fail-CLOSED, было silent fail-OPEN).
+        """
         monkeypatch.delenv("ADMIN_AUTHZ_FAIL_OPEN", raising=False)
 
         with pytest.raises(AdminAuthorizationError) as exc_info:

@@ -263,7 +263,8 @@ class TestProcessManagerInit:
 
 class TestProcessManagerAliasing:
     """ProcessManager = SagaProcessor + persist_state. Базовое поведение
-    идентично SagaProcessor при persist_state=False."""
+    идентично SagaProcessor при persist_state=False.
+    """
 
     async def test_succeeds_without_persist(self) -> None:
         pm = ProcessManagerProcessor(steps=[])  # пустой — no-op saga

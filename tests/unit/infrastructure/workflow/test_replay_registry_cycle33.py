@@ -159,7 +159,8 @@ def test_workflow_registry_singleton_is_module_level() -> None:
 
 def test_register_uses_decorator_name_when_present() -> None:
     """Если marker ``__temporal_workflow_definition__`` имеет ``name`` —
-    registry использует его, а не ``cls.__name__``."""
+    registry использует его, а не ``cls.__name__``.
+    """
 
     class _Renamed:
         __temporal_workflow_definition__ = _DefnMarker(name="ExplicitName")
@@ -234,7 +235,8 @@ def patch_replayer(monkeypatch: pytest.MonkeyPatch) -> type[_RecordingReplayer]:
 @pytest.fixture
 def backend() -> Any:
     """TemporalWorkflowBackend с фейковым client (нам нужен только
-    метод ``replay``, client игнорируется)."""
+    метод ``replay``, client игнорируется).
+    """
     from src.backend.infrastructure.workflow.temporal_backend import (
         TemporalWorkflowBackend,
     )
@@ -306,7 +308,8 @@ async def test_replay_detects_workflow_non_determinism(
     patch_replayer: type[_RecordingReplayer],
 ) -> None:
     """Если workflow в history не совпадает с зарегистрированным —
-    Replayer бросает ``WorkflowNonDeterminismError`` (наш stub это эмулирует)."""
+    Replayer бросает ``WorkflowNonDeterminismError`` (наш stub это эмулирует).
+    """
     workflow_registry.register(_RealWorkflowStub)
     history = (
         b'{"events":[],"workflow_id":"OtherWorkflow",'

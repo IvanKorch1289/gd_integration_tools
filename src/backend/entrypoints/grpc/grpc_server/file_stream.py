@@ -83,7 +83,8 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
     ) -> None:
         """Инициализирует middleware.
 
-:param config: значение config."""
+:param config: значение config.
+        """
         super().__init__()
         self._config = config or FileStreamConfig()
         self._get_storage = get_storage

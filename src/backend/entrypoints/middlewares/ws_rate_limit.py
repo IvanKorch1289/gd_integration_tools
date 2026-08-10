@@ -24,7 +24,8 @@ class WebSocketRateLimitMiddleware:
     def __init__(self, app: Any, *, enabled: bool = True) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
+:param app: значение app.
+        """
         self._app = app
         self._enabled = enabled
         self._limiter = get_rate_limiter()

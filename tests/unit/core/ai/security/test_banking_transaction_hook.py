@@ -123,7 +123,8 @@ class TestBankingHookCommands:
 
 class TestBankingHookHappyPath:
     """No context data → allowed (banking workflows don't always have
-    file_path / sql_query / command in every call)."""
+    file_path / sql_query / command in every call).
+    """
 
     def test_banking_workflow_minimal_context(self) -> None:
         result = banking_transaction_hook(

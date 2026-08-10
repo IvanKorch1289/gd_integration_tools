@@ -1,5 +1,6 @@
 """S74 W4 — tests для PapermillExecutionBackend + ExecutionBackendFactory
-+ WebSocket heartbeat (FINAL_REPORT_V2 направление #1 closure)."""
++ WebSocket heartbeat (FINAL_REPORT_V2 направление #1 closure).
+"""
 
 from __future__ import annotations
 

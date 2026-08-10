@@ -37,7 +37,8 @@ def _make_exchange(body: Any = None) -> Exchange[Any]:
 @pytest.fixture(autouse=True)
 def _bypass_auth_check(monkeypatch: pytest.MonkeyPatch) -> None:
     """ArchiveProcessor имеет required_capability=rpa.archive.execute; в unit-тестах
-    capability-facade stub возвращает denied. Подменяем auth_check на no-op."""
+    capability-facade stub возвращает denied. Подменяем auth_check на no-op.
+    """
     monkeypatch.setattr(
         "src.backend.dsl.engine.processors.rpa.operations.archiveprocessor."
         "ArchiveProcessor.auth_check",

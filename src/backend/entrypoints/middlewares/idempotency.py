@@ -83,7 +83,8 @@ class RedisNxBackend(Backend):
     ) -> None:
         """Инициализирует middleware.
 
-:param redis: значение redis."""
+:param redis: значение redis.
+        """
         self._redis = redis
         self._pending_ttl = pending_ttl
         self._response_ttl = response_ttl
@@ -195,7 +196,8 @@ class _LazyRedisProxy:
     def __init__(self, resolver: Any) -> None:
         """Инициализирует middleware.
 
-:param resolver: значение resolver."""
+:param resolver: значение resolver.
+        """
         self._resolver = resolver
 
     def _client(self) -> Any:

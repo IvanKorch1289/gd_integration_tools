@@ -67,7 +67,8 @@ class RequestContextMiddleware:
     def __init__(self, app: Any) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
+:param app: значение app.
+        """
         self.app = app
 
     async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:

@@ -25,7 +25,8 @@ PATTERN = re.compile(
 
 def _scan_for_legacy_except(root: Path) -> list[tuple[str, int, str]]:
     """Возвращает список (path, line, match) для каждого legacy
-    ``except A, B:`` pattern в *.py файлах под root."""
+    ``except A, B:`` pattern в *.py файлах под root.
+    """
     findings: list[tuple[str, int, str]] = []
     for py_file in root.rglob("*.py"):
         # Skip __pycache__ and venv

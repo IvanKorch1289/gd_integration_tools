@@ -17,7 +17,8 @@ import pytest
 
 def test_yandexgpt_instantiation_with_defaults() -> None:
     """YandexGPTProvider() — api_key может быть пустой (settings default),
-    но model + base_url populated."""
+    но model + base_url populated.
+    """
     from src.backend.services.ai.ai_providers.russian import YandexGPTProvider
 
     p = YandexGPTProvider()
@@ -118,7 +119,8 @@ async def test_yandexgpt_chat_raises_without_api_key(monkeypatch: pytest.MonkeyP
 
 def test_provider_litellm_prefix() -> None:
     """YandexGPT + SaluteSpeech используют ``openai/`` prefix (OpenAI-compat);
-    GigaChat — ``gigachat/`` (NOT OpenAI-compat)."""
+    GigaChat — ``gigachat/`` (NOT OpenAI-compat).
+    """
     from src.backend.services.ai.ai_providers.russian import (
         GigaChatProvider,
         SaluteSpeechProvider,

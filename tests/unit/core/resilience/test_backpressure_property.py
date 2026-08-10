@@ -24,7 +24,8 @@ from src.backend.core.resilience.backpressure import (
 @settings(max_examples=50)
 def test_utilization_in_range(queue_size: int, queue_limit: int) -> None:
     """For any non-negative queue_size and positive queue_limit:
-    utilization is in [0, infinity)."""
+    utilization is in [0, infinity).
+    """
     state = BackpressureState(queue_size=queue_size, queue_limit=queue_limit)
     util = state.utilization
     assert util >= 0.0

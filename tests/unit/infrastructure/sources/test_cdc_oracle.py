@@ -119,7 +119,8 @@ class TestOracleCDCSourceIdentifierValidation:
 
     def test_sync_fetch_uses_validated_identifiers(self) -> None:
         """Constructor itself rejects unsafe watermark columns —
-        ``_sync_fetch`` must never be reached for them."""
+        ``_sync_fetch`` must never be reached for them.
+        """
         from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
 
         with pytest.raises(ValueError):

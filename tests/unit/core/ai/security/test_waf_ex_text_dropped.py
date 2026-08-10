@@ -21,7 +21,8 @@ class TestWafExTextRegression:
     ) -> None:
         """After the ``ex_text`` dead variable was removed, the
         ``block`` branch must still terminate the exchange via
-        ``exchange.stop()`` and emit the decision."""
+        ``exchange.stop()`` and emit the decision.
+        """
         p = WafCheckProcessor(
             source_property="body.text",
             action="block",

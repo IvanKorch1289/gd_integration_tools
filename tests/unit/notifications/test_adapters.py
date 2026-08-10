@@ -90,7 +90,8 @@ def test_webhook_adapter_conforms_to_protocol() -> None:
 def test_all_adapters_have_unique_kinds() -> None:
     """Каждый адаптер имеет уникальный ``kind`` — это гарантирует
     корректную маршрутизацию в ``PriorityRouter`` и идентификацию
-    в логах / метриках."""
+    в логах / метриках.
+    """
     from src.backend.infrastructure.notifications.adapters.email import EmailAdapter
     from src.backend.infrastructure.notifications.adapters.slack import SlackAdapter
     from src.backend.infrastructure.notifications.adapters.sms import SMSAdapter

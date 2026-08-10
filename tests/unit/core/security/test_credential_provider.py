@@ -78,7 +78,8 @@ async def test_invalidate(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.unit
 async def test_get_unknown_spec_raises_keyerror() -> None:
     """Cycle 59 fix: cache-hit path no longer crashes with KeyError on
-    unknown spec; raises clear KeyError listing available specs."""
+    unknown spec; raises clear KeyError listing available specs.
+    """
     provider = CredentialProvider()
     with pytest.raises(KeyError, match="not registered"):
         await provider.get("nonexistent")
@@ -87,7 +88,8 @@ async def test_get_unknown_spec_raises_keyerror() -> None:
 @pytest.mark.unit
 async def test_resolve_unsupported_ref_format_raises_value_error() -> None:
     """Cycle 59 fix: unknown secret_ref format now raises ValueError
-    (was silently returning {} → connectors connected with no auth)."""
+    (was silently returning {} → connectors connected with no auth).
+    """
     provider = CredentialProvider()
     provider.register_spec(
         CredentialSpec(name="bad", secret_ref="file:/etc/passwd"),

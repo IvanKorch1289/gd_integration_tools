@@ -165,7 +165,8 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         """Инициализирует middleware.
 
 :param app: значение app.
-:param config: значение config."""
+:param config: значение config.
+        """
         super().__init__(app)
         self.config = config or ObservabilityConfig()
 

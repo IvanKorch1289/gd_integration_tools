@@ -38,7 +38,8 @@ class MqttHandler:
     def __init__(self, settings: MqttSettings) -> None:
         """Инициализирует middleware.
 
-:param settings: значение settings."""
+:param settings: значение settings.
+        """
         self._settings = settings
         self._running = False
         self._task: asyncio.Task | None = None

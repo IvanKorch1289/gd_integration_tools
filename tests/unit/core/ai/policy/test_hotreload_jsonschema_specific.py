@@ -1,5 +1,6 @@
 """S77 W4 — tests для hot-reload + JSON-Schema + specificity-based resolution
-(FINAL_REPORT_V2 P0-C closure, ADR-0067)."""
+(FINAL_REPORT_V2 P0-C closure, ADR-0067).
+"""
 
 from __future__ import annotations
 

@@ -101,7 +101,8 @@ async def test_insert_fails_fast_on_oversized_batch() -> None:
 @pytest.mark.asyncio
 async def test_insert_accepts_exactly_max_insert_rows() -> None:
     """Граничный кейс: ровно MAX_INSERT_ROWS — должно пройти (без вызова POST
-    мокаем с max_batch_size=MAX_INSERT_ROWS, чтобы получить 1 chunk)."""
+    мокаем с max_batch_size=MAX_INSERT_ROWS, чтобы получить 1 chunk).
+    """
     client = ClickHouseClient(max_batch_size=MAX_INSERT_ROWS)
     fake_http = AsyncMock()
     fake_http.post = AsyncMock(return_value=MagicMock(status_code=200))

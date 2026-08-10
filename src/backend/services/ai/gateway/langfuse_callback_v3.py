@@ -13,7 +13,8 @@
 
 Использование:
     Фабрика ``get_langfuse_callback()`` импортируется из этого модуля
-    (client.py -> langfuse_callback_v3)."""
+    (client.py -> langfuse_callback_v3).
+"""
 
 from __future__ import annotations
 

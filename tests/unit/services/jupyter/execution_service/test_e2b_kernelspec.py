@@ -1,5 +1,6 @@
 """S75 W4 — tests для E2BExecutionBackend + KernelSpecDiscovery
-(FINAL_REPORT_V2 #2 + направление #1 multi-kernels closure)."""
+(FINAL_REPORT_V2 #2 + направление #1 multi-kernels closure).
+"""
 
 from __future__ import annotations
 

@@ -1,6 +1,7 @@
 """Regression: ``core/auth/facade.py`` had ``key_id = f"{parts[0]}_{parts[1]}"``
 unused (F841). The fix removes the local. We verify the API key path
-still authenticates correctly via the underlying manager."""
+still authenticates correctly via the underlying manager.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -40,7 +40,8 @@ async def _wait_until(
 @pytest.mark.asyncio
 async def test_yaml_hot_reload_lifecycle(tmp_path: Path) -> None:
     """E2E: создать → ждать register; модифицировать → ждать reload;
-    удалить → ждать unregister."""
+    удалить → ждать unregister.
+    """
     registry = RouteRegistry()
     load_calls: list[Path] = []
 

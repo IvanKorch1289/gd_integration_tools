@@ -61,7 +61,8 @@ def test_chained_three_policies() -> None:
 @pytest.mark.asyncio
 async def test_resilience_coordinator_register_attempted() -> None:
     """Убедиться, что process() пытается интегрироваться с ResilienceCoordinator
-    без падения при его отсутствии."""
+    без падения при его отсутствии.
+    """
 
     from src.backend.dsl.engine.exchange import Exchange, Message
 

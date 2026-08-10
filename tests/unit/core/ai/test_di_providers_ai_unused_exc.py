@@ -1,7 +1,8 @@
 """Regression: ``core/di/providers/ai.py`` ``get_skill_registry`` had
 ``except Exception as exc:`` with ``exc`` unused (F841). The fix drops
 the name. This test ensures the provider still returns ``None`` when
-``app_state_singleton`` raises — that was the only side effect."""
+``app_state_singleton`` raises — that was the only side effect.
+"""
 from __future__ import annotations
 
 import sys

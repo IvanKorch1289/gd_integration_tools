@@ -164,7 +164,8 @@ class WorkflowRegistry:
 
     def clear(self) -> None:
         """Очищает реестр (используется в тестовых окружениях и
-        при полном hot-reload spec'ов)."""
+        при полном hot-reload spec'ов).
+        """
         with self._lock:
             self._descriptors.clear()
             self._route_ids.clear()

@@ -157,7 +157,8 @@ class RedisRateLimitChecker:
     ) -> None:
         """Инициализирует middleware.
 
-:param redis: значение redis."""
+:param redis: значение redis.
+        """
         self._redis = redis
         self._max = max_per_window
         self._window = window_seconds
@@ -262,7 +263,8 @@ class _LazyRedisProxy:
     def __init__(self, resolver: Callable[[], Any]) -> None:
         """Инициализирует middleware.
 
-:param resolver: значение resolver."""
+:param resolver: значение resolver.
+        """
         self._resolver = resolver
 
     def _client(self) -> Any:
@@ -344,7 +346,8 @@ class GlobalRateLimitMiddleware:
     ) -> None:
         """Инициализирует middleware.
 
-:param app: значение app."""
+:param app: значение app.
+        """
         self._app = app
         self._checker = checker
         self._feature_enabled = feature_enabled or self._default_feature_enabled

@@ -93,7 +93,8 @@ async def test_claim_pending_propagates_claimed_columns(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Per-row claim: OutboxMessage ORM objects должны иметь
-    claimed_by/claimed_at/claimed_until set (S72 W2 new behavior)."""
+    claimed_by/claimed_at/claimed_until set (S72 W2 new behavior).
+    """
     fake_row = _make_fake_outbox_row(row_id=42, claimed_by="worker-A")
 
     fake_session = MagicMock()

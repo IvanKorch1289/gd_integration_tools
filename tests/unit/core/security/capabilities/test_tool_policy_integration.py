@@ -1,6 +1,7 @@
 """S79 W4 — tests для check_tool_with_policy + filter_tools_with_gate
 (FINAL_REPORT_V2 направление #4 closure: CapabilityGate + AIPolicySpec.tools
-two-layer enforcement)."""
+two-layer enforcement).
+"""
 
 from __future__ import annotations
 

@@ -121,7 +121,8 @@ async def test_tenant_middleware_uses_state() -> None:
 def test_tenant_middleware_does_not_break_on_init() -> None:
     """TenantMiddleware __init__ не ломается без app.
 
-    Cycle 38: middleware больше не имеет .dispatch (pure ASGI)."""
+    Cycle 38: middleware больше не имеет .dispatch (pure ASGI).
+    """
     middleware = TenantMiddleware(app=AsyncMock(), default_tenant="default")
     assert middleware._default == "default"
     # Pure ASGI: __call__ — точка входа (а не .dispatch).

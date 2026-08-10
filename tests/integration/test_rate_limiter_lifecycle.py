@@ -1,5 +1,6 @@
 """Integration-тесты pyrate_limiter shutdown + BoundedInMemoryBucket
-(Sprint 1 V16 Single-Entry, Step 3.4)."""
+(Sprint 1 V16 Single-Entry, Step 3.4).
+"""
 
 
 from __future__ import annotations

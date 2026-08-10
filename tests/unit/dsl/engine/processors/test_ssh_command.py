@@ -93,7 +93,8 @@ class TestSshCommandProcessor:
     @pytest.mark.asyncio
     async def test_ssh_command_raises_on_nonzero_exit(self) -> None:
         """При ненулевом exit_code и continue_on_error=False процессор
-        устанавливает exchange в статус failed."""
+        устанавливает exchange в статус failed.
+        """
         proc = SshCommandProcessor(
             host="192.168.1.10", command="exit 1", continue_on_error=False,
         )
@@ -200,7 +201,8 @@ class TestSshCommandProcessor:
     @pytest.mark.asyncio
     async def test_ssh_command_continue_on_error(self) -> None:
         """При continue_on_error=True даже ненулевой exit_code
-        не вызывает exchange.fail."""
+        не вызывает exchange.fail.
+        """
         proc = SshCommandProcessor(
             host="192.168.1.10", command="exit 1", continue_on_error=True,
         )

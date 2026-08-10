@@ -245,7 +245,8 @@ class RouteHotReloader:
 
     async def _unload_one(self, route_name: str) -> None:
         """Unload единственного route. Если RouteLoader не поддерживает
-        per-route unload, делает full reload-cycle."""
+        per-route unload, делает full reload-cycle.
+        """
         unload_method = getattr(self._loader, "unload_one", None)
         if callable(unload_method):
             await unload_method(route_name)

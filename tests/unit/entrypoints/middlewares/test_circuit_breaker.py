@@ -1,7 +1,8 @@
 """S81 W4 — tests для CircuitBreakerMiddleware (P1 направление #16 closure).
 
 FINAL_REPORT_V2 P1 #8 closure: 'Вернуть CircuitBreakerMiddleware'.
-S81 W1 design: per-route state, sliding window, BreakerPolicy config."""
+S81 W1 design: per-route state, sliding window, BreakerPolicy config.
+"""
 
 from __future__ import annotations
 

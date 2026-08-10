@@ -196,7 +196,8 @@ class TestFormatConvertProcessorFailsClosed:
         self, hide_msgpack: None,
     ) -> None:
         """End-to-end: pickle-payload через FormatConvertProcessor.process
-        → exchange.fail (не RCE)."""
+        → exchange.fail (не RCE).
+        """
         import os
 
         class _RcePayload:

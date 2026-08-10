@@ -16,7 +16,8 @@ from src.backend.services.ai.pii.retrieval_masker import (
 @pytest.fixture(autouse=True)
 def _disable_presidio(monkeypatch: pytest.MonkeyPatch) -> None:
     """Legacy regex-маскер для воспроизводимости тестов — Presidio + ru NER даёт
-    ложные срабатывания на коротких строках (``Без PII`` → ``Без [ORGANIZATION_1]``)."""
+    ложные срабатывания на коротких строках (``Без PII`` → ``Без [ORGANIZATION_1]``).
+    """
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "presidio_pii_enabled", False)

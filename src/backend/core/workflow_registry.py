@@ -110,7 +110,8 @@ class WorkflowRegistry:
     @staticmethod
     def _is_workflow_class(cls: Any) -> bool:
         """``True`` если класс помечен temporalio ``@workflow.defn`` или
-        явным fallback-флагом ``_is_workflow``."""
+        явным fallback-флагом ``_is_workflow``.
+        """
         if not isinstance(cls, type):
             return False
         if hasattr(cls, _TEMPORAL_DEFN_MARKER):
@@ -120,7 +121,8 @@ class WorkflowRegistry:
     @staticmethod
     def _extract_name(cls: type) -> str:
         """Имя workflow'а: ``__temporal_workflow_definition__.name`` если
-        temporalio decorator проставил ``name=...``, иначе ``cls.__name__``."""
+        temporalio decorator проставил ``name=...``, иначе ``cls.__name__``.
+        """
         defn = getattr(cls, _TEMPORAL_DEFN_MARKER, None)
         name = getattr(defn, "name", None) if defn is not None else None
         return name or cls.__name__

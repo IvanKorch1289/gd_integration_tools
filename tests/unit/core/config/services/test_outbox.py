@@ -147,7 +147,8 @@ class TestOutboxSettingsDefaults:
     def test_global_instance_is_default(self) -> None:
         """The module-level ``outbox_settings`` instance must be loadable
         and have the documented defaults (so a missing YAML section is a
-        no-op, not a crash)."""
+        no-op, not a crash).
+        """
         assert isinstance(outbox_settings, OutboxSettings)
         assert outbox_settings.enabled is True  # default=True per code (S171 M9 sync)  # default-OFF feature flag
         assert outbox_settings.batch_size == 100
@@ -501,7 +502,8 @@ class TestOutboxLifecycle:
 
     def test_idempotency_same_payload_publishes_once(self) -> None:
         """Same payload twice → two distinct entries, but ``published``
-        dedupes by id (a downstream consumer would dedupe by payload hash)."""
+        dedupes by id (a downstream consumer would dedupe by payload hash).
+        """
         sm = self._sm()
         a = sm.enqueue("a", {"order_id": 1})
         b = sm.enqueue("a", {"order_id": 1})
@@ -528,7 +530,8 @@ class TestOutboxLifecycle:
 
         Simulate: enqueue, mark one in_flight, crash → on restart, the
         in_flight entry is still in the table and ``pick_pending`` does
-        not lose it (status is not 'published' / 'dead_letter')."""
+        not lose it (status is not 'published' / 'dead_letter').
+        """
         sm = self._sm()
         e1 = sm.enqueue("a", {"i": 0})
         e2 = sm.enqueue("a", {"i": 1})
@@ -566,7 +569,8 @@ class TestOutboxLifecycle:
 class TestShutdownBudget:
     """Sum of backoff delays for ``max_retries`` attempts must fit in the
     shutdown budget — otherwise the dispatcher may cancel mid-retry and
-    violate at-least-once."""
+    violate at-least-once.
+    """
 
     def test_backoff_sum_fits_shutdown_default(self) -> None:
         s = OutboxSettings()
@@ -613,7 +617,8 @@ class TestSettingsSafetyContract:
     """The dispatcher reads ``outbox_settings`` once at boot; mutation after
     boot is a footgun. We don't freeze the model (Pydantic v2 BaseSettings
     is mutable by default), but we assert the documented fields exist
-    exactly once on the class."""
+    exactly once on the class.
+    """
 
     def test_field_count(self) -> None:
         assert len(OutboxSettings.model_fields) == 7

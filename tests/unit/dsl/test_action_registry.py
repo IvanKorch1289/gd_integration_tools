@@ -82,7 +82,8 @@ class _AsyncEchoService:
 
 class TestDispatchEmptyPayloadValidation:
     """``dispatch()`` обязан валидировать payload через ``payload_model``
-    даже при ``command.payload == {}``."""
+    даже при ``command.payload == {}``.
+    """
 
     async def test_empty_payload_with_required_field_raises_validation_error(
         self,
@@ -192,7 +193,8 @@ class TestDispatchEmptyPayloadValidation:
 class TestAtomicConflictReregistration:
     """``register_with_metadata()`` обязан отказывать в записи при
     конфликте payload_model между handler и metadata, не мутируя
-    состояние реестра."""
+    состояние реестра.
+    """
 
     def test_conflicting_handler_payload_and_metadata_input_raises(self) -> None:
         """handler.payload_model ≠ metadata.input_model → ValueError."""
@@ -216,7 +218,8 @@ class TestAtomicConflictReregistration:
 
     def test_conflicting_metadata_only_reregistration_raises(self) -> None:
         """metadata-only re-registration (handler=None) с input_model,
-        отличным от existing handler.payload_model, → ValueError."""
+        отличным от existing handler.payload_model, → ValueError.
+        """
         registry = ActionHandlerRegistry()
         # Сначала регистрируем handler с payload_model=_StrictPayload.
         registry.register(
@@ -304,7 +307,8 @@ class TestAtomicConflictReregistration:
 
     def test_register_after_metadata_only_succeeds_with_matching_model(self) -> None:
         """Backward compat: ``register_with_metadata(handler=None)`` →
-        ``register(payload_model=same)`` — рабочий паттерн (как в CRUD)."""
+        ``register(payload_model=same)`` — рабочий паттерн (как в CRUD).
+        """
         registry = ActionHandlerRegistry()
         metadata = ActionMetadata(
             action="dsl.crud.pattern", input_model=_StrictPayload, transports=("http",),
@@ -348,7 +352,8 @@ class TestAtomicConflictReregistration:
 
     def test_no_conflict_when_handler_payload_model_is_none(self) -> None:
         """handler.payload_model=None + metadata.input_model=X — не конфликт
-        (None означает «без валидации»)."""
+        (None означает «без валидации»).
+        """
         registry = ActionHandlerRegistry()
         spec = ActionHandlerSpec(
             action="dsl.handler.optional",
@@ -387,7 +392,8 @@ class TestAtomicConflictReregistration:
 
     def test_conflict_with_no_existing_handler_is_skipped(self) -> None:
         """handler=None + metadata.input_model=X, нет existing handler —
-        конфликта нет, регистрация проходит."""
+        конфликта нет, регистрация проходит.
+        """
         registry = ActionHandlerRegistry()
         metadata = ActionMetadata(
             action="dsl.fresh.metadata_only", input_model=_StrictPayload,
@@ -402,7 +408,8 @@ class TestAtomicConflictReregistration:
 
     def test_metadata_only_reregistration_with_existing_handler_no_model(self) -> None:
         """metadata-only re-registration, existing handler без payload_model
-        → не конфликт (existing не декларирует модель)."""
+        → не конфликт (existing не декларирует модель).
+        """
         registry = ActionHandlerRegistry()
         # Существующий handler без payload_model.
         spec = ActionHandlerSpec(

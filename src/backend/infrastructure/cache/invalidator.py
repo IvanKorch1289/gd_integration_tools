@@ -92,7 +92,8 @@ class InMemoryCacheBackend:
 
     def bind_key_to_tag(self, tag: str, key: str) -> None:
         """Регистрирует ключ в группе тега (используется тестами и
-        кэширующим декоратором при записи)."""
+        кэширующим декоратором при записи).
+        """
         self._tag_to_keys.setdefault(tag, set()).add(key)
         self._keys.add(key)
 

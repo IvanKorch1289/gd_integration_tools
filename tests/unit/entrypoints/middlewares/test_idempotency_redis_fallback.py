@@ -221,7 +221,8 @@ async def test_get_stored_response_returns_none_when_redis_down(
     backend_broken_connection: RedisNxBackend,
 ) -> None:
     """D-AUDIT-103: ``get_stored_response`` возвращает None (cache miss),
-    запрос проходит как первый, а не 5xx."""
+    запрос проходит как первый, а не 5xx.
+    """
     result = await backend_broken_connection.get_stored_response("abc")
 
     assert result is None
@@ -329,7 +330,8 @@ async def test_get_stored_response_falls_back_to_none_then_redis(
 @pytest.mark.asyncio
 async def test_get_non_transport_exception_is_propagated() -> None:
     """D-AUDIT-103: только транспортные ошибки глушатся; баги (TypeError)
-    пробрасываются — иначе скрыли бы регрессию."""
+    пробрасываются — иначе скрыли бы регрессию.
+    """
     proxy = _LazyRedisProxy(resolver=lambda: _RaisingGetClient())
 
     with pytest.raises(TypeError, match="bug"):

@@ -138,7 +138,8 @@ def test_action_input_schema_json_unknown_action_returns_none_property(
     action_name: str,
 ) -> None:
     """For any random action_name, when registry.get_metadata → None,
-    _action_input_schema_json must return None (no exception, no schema)."""
+    _action_input_schema_json must return None (no exception, no schema).
+    """
     mock_registry = MagicMock()
     mock_registry.get_metadata.return_value = None
     with patch(

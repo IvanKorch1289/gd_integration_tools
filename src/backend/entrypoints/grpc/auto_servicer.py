@@ -72,7 +72,8 @@ class AutoServicerBundle:
 :param pb2: значение pb2.
 :param pb2_grpc: значение pb2_grpc.
 :param servicer_cls: значение servicer_cls.
-:param add_to_server: значение add_to_server."""
+:param add_to_server: значение add_to_server.
+        """
         self.service = service
         self.pb2 = pb2
         self.pb2_grpc = pb2_grpc

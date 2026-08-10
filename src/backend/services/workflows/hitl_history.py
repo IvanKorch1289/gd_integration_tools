@@ -45,7 +45,8 @@ class HitlHistoryService:
 
     def _log_ch_failure(self, event: str, exc: BaseException) -> None:
         """Cycle 65 L4: DRY — общий helper для ClickHouse failure logging
-        (S176 M11.1 structured log pattern)."""
+        (S176 M11.1 structured log pattern).
+        """
         log_audit_event_lite(
             _logger,
             severity="warning",

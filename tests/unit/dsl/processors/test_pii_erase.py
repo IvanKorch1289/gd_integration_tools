@@ -93,7 +93,8 @@ class TestDeleteVectorsFailClosed:
     async def test_process_vector_failure_marks_exchange_failed(self) -> None:
         """Full ``process()`` flow: vector backend down → exception
         propagates через ``@handle_processor_error`` → exchange.error
-        установлен + exchange.stopped = True (НЕ silent success)."""
+        установлен + exchange.stopped = True (НЕ silent success).
+        """
         mod = _load_pii_erase_module()
         proc = mod.PiiEraseProcessor(scope="user:42", hard_delete=True)
         exchange = _make_exchange()
@@ -129,7 +130,8 @@ class TestAnonymizeDbFailClosed:
     @pytest.mark.asyncio
     async def test_db_backend_failure_raises_not_silent(self) -> None:
         """Mock exception в DB backend → ``_anonymize_db`` propagate
-        (НЕ silent return 0)."""
+        (НЕ silent return 0).
+        """
         mod = _load_pii_erase_module()
         proc = mod.PiiEraseProcessor(scope="user:42", hard_delete=True)
 
@@ -196,7 +198,8 @@ class TestDqWriteEnqueue:
     @pytest.mark.asyncio
     async def test_enqueue_writes_envelope_to_dlq(self) -> None:
         """Failure path → ``InMemoryDLQWriter`` получает envelope с
-        erasure_id / step / error_class."""
+        erasure_id / step / error_class.
+        """
         mod = _load_pii_erase_module()
         proc = mod.PiiEraseProcessor(scope="user:42", hard_delete=True)
 
@@ -232,7 +235,8 @@ class TestDqWriteEnqueue:
     @pytest.mark.asyncio
     async def test_enqueue_swallows_dlq_own_failure(self) -> None:
         """DLQ сам недоступен → log error, НО не raise
-        (outer process() уже re-raise основную ошибку)."""
+        (outer process() уже re-raise основную ошибку).
+        """
         mod = _load_pii_erase_module()
         proc = mod.PiiEraseProcessor(scope="user:42", hard_delete=True)
 

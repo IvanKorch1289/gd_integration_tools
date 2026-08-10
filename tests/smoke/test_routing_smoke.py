@@ -25,7 +25,8 @@ def test_route_builder_creates_pipeline() -> None:
 
 def test_pipeline_compiler_caches_repeated_compilations() -> None:
     """PipelineCompiler.compile() возвращает идентичный результат
-    для повторных вызовов (LRU-кеш работает)."""
+    для повторных вызовов (LRU-кеш работает).
+    """
     compiler = PipelineCompiler()
     builder = RouteBuilder.from_("smoke.routing.cache", source="test")
     pipeline = builder.log(level="info").build()

@@ -49,7 +49,8 @@ def fresh_builder() -> RouteBuilder:
 
 class TestInternalHelpers:
     """Тесты для module-private утилит (``_validate_cron_expression``,
-    ``_coerce_timestamp``)."""
+    ``_coerce_timestamp``).
+    """
 
     def test_validate_cron_5_fields(self) -> None:
         assert _validate_cron_expression("0 * * * *") == "0 * * * *"

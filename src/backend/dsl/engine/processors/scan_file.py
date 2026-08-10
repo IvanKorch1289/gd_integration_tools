@@ -161,7 +161,8 @@ class ScanFileProcessor(BaseProcessor):
     @staticmethod
     def _record_metric(*, threat: bool) -> None:
         """Best-effort метрика; ``infrastructure.observability.metrics``
-        может быть недоступен в тестах."""
+        может быть недоступен в тестах.
+        """
         try:
             from src.backend.infrastructure.observability.metrics import (
                 record_antivirus_scan,

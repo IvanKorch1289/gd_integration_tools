@@ -29,7 +29,8 @@ class AuthInterceptor:
     def __init__(self, expected_key: str) -> None:
         """Инициализирует middleware.
 
-:param expected_key: значение expected_key."""
+:param expected_key: значение expected_key.
+        """
         self._expected_key = expected_key
 
     async def intercept_service(

@@ -196,7 +196,8 @@ def test_compile_workflows_post_step_guard_would_raise_if_registry_broken(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Post-step guard в ``compile_workflows`` ловит regression
-    (если register() сломан — bulk-компиляция падает с RuntimeError)."""
+    (если register() сломан — bulk-компиляция падает с RuntimeError).
+    """
     from src.backend.core import workflow_registry as registry_module
     from src.backend.dsl.workflow.builder import WorkflowBuilder
 
@@ -226,7 +227,8 @@ def test_compile_workflows_post_step_guard_would_raise_if_registry_broken(
 def test_workflow_registry_singleton_is_global() -> None:
     """Реестр, который заполняет emitter, — это тот же singleton,
     который читает temporal_backend (модульный singleton в
-    ``core.workflow_registry``)."""
+    ``core.workflow_registry``).
+    """
     from src.backend.core import workflow_registry as other_mod
     from src.backend.core.workflow_registry import workflow_registry
     from src.backend.dsl.workflow.builder import WorkflowBuilder

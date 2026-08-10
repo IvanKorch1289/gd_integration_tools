@@ -236,7 +236,8 @@ class TestWebsocketInvocations:
 
     async def test_handler_registers_ws_in_channel_before_invoke(self) -> None:
         """Handler регистрирует сокет в :class:`WsReplyChannel` ДО invoke,
-        чтобы streaming-task не терял ранние chunks."""
+        чтобы streaming-task не терял ранние chunks.
+        """
         registry, ws_channel = _registry_with_ws()
         register_calls: list[tuple[str, Any]] = []
 

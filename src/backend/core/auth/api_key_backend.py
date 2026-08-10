@@ -143,7 +143,8 @@ class APIKeyAuth:
     @staticmethod
     def _legacy_sha256_hash(raw: str) -> str:
         """Legacy SHA-256 без соли (S-7 tech debt). Используется только
-        для backward-compat verification — НЕ для новых ключей."""
+        для backward-compat verification — НЕ для новых ключей.
+        """
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     def hash_key(self, raw: str) -> str:

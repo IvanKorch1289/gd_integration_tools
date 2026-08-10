@@ -97,7 +97,8 @@ class Backfill:
 @dataclass(slots=True)
 class DryRun:
     """Dry-run — исполнение route с флагом `_dry_run: True`; все
-    сторонние side-effect-процессоры должны учитывать этот флаг."""
+    сторонние side-effect-процессоры должны учитывать этот флаг.
+    """
 
     route_id: str
 

@@ -27,7 +27,8 @@ class _FakeBackend:
 class _FakeBackendWithBrokenVerify:
     """verify возвращает неправильный тип — structural mismatch по сигнатуре не
     ловится isinstance (Protocol — duck typing), но isinstance всё равно True
-    если есть атрибут verify. Это документирующее поведение."""
+    если есть атрибут verify. Это документирующее поведение.
+    """
 
     method = AuthMethod.MTLS
 
@@ -67,7 +68,8 @@ class TestAuthBackendProtocol:
 
     def test_isinstance_runtime_checkable_attribute(self) -> None:
         """AuthBackend помечен @runtime_checkable — hasattr `_runtime_checkable` или
-        флаг в __class__/_is_runtime_protocol. Проверяем через isinstance success."""
+        флаг в __class__/_is_runtime_protocol. Проверяем через isinstance success.
+        """
         # Альтернативная проверка: вызвать isinstance() на произвольном объекте
         # не должно бросать TypeError.
         for obj in [_FakeBackend(), _NoVerify(), object()]:

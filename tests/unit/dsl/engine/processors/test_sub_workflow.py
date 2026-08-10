@@ -178,7 +178,8 @@ async def test_sub_workflow_injects_parent_ids_into_args() -> None:
 @pytest.mark.asyncio
 async def test_sub_workflow_preserves_explicit_parent_in_args() -> None:
     """``process()`` — если user явно задал ``_parent_workflow_id`` в args,
-    auto-injection НЕ перезаписывает (явное > неявное)."""
+    auto-injection НЕ перезаписывает (явное > неявное).
+    """
     backend = MagicMock()
     backend.start_workflow = AsyncMock(return_value=MagicMock(workflow_id="child-1"))
 
