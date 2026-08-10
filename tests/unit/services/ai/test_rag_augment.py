@@ -18,21 +18,21 @@ def _now() -> datetime:
 
 def test_compute_freshness_fresh() -> None:
     label = compute_freshness(
-        ingested_at=_now() - timedelta(hours=1), soft_hours=72, hard_hours=168
+        ingested_at=_now() - timedelta(hours=1), soft_hours=72, hard_hours=168,
     )
     assert label is FreshnessLabel.FRESH
 
 
 def test_compute_freshness_stale() -> None:
     label = compute_freshness(
-        ingested_at=_now() - timedelta(hours=100), soft_hours=72, hard_hours=168
+        ingested_at=_now() - timedelta(hours=100), soft_hours=72, hard_hours=168,
     )
     assert label is FreshnessLabel.STALE
 
 
 def test_compute_freshness_expired() -> None:
     label = compute_freshness(
-        ingested_at=_now() - timedelta(hours=200), soft_hours=72, hard_hours=168
+        ingested_at=_now() - timedelta(hours=200), soft_hours=72, hard_hours=168,
     )
     assert label is FreshnessLabel.EXPIRED
 
@@ -57,7 +57,7 @@ def test_build_augment_result_basic() -> None:
             },
             "score": 0.9,
             "document": "text",
-        }
+        },
     ]
     result = build_augment_result(prompt="P", raw_results=raw, namespace="ns", top_k=5)
     assert result.used_results == 1
@@ -86,7 +86,7 @@ def test_build_augment_result_skips_expired_via_max_staleness() -> None:
         },
     ]
     result = build_augment_result(
-        prompt="P", raw_results=raw, namespace=None, top_k=5, max_staleness_hours=72.0
+        prompt="P", raw_results=raw, namespace=None, top_k=5, max_staleness_hours=72.0,
     )
     assert result.used_results == 1
     assert result.skipped_expired == 1
@@ -100,21 +100,21 @@ def test_build_augment_result_tracks_distribution() -> None:
                 "doc_id": "fresh",
                 "chunk_idx": 0,
                 "ingested_at": (_now() - timedelta(hours=1)).isoformat(),
-            }
+            },
         },
         {
             "metadata": {
                 "doc_id": "stale",
                 "chunk_idx": 0,
                 "ingested_at": (_now() - timedelta(hours=100)).isoformat(),
-            }
+            },
         },
         {
             "metadata": {
                 "doc_id": "expired",
                 "chunk_idx": 0,
                 "ingested_at": (_now() - timedelta(hours=200)).isoformat(),
-            }
+            },
         },
     ]
     result = build_augment_result(prompt="P", raw_results=raw, namespace=None, top_k=5)

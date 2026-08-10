@@ -29,7 +29,7 @@ class TestTavilySearchProcessor:
             TavilySearchProcessor,
         )
         proc = TavilySearchProcessor(
-            query="x", search_depth="advanced", max_results=20
+            query="x", search_depth="advanced", max_results=20,
         )
         assert proc.search_depth == "advanced"
         assert proc.max_results == 20
@@ -41,7 +41,7 @@ class TestTavilySearchProcessor:
             TavilySearchProcessor,
         )
         proc = TavilySearchProcessor(
-            query="test", to="body.search"
+            query="test", to="body.search",
         )
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -53,14 +53,14 @@ class TestTavilySearchProcessor:
         mock_response = {
             "answer": "AI news 2026",
             "results": [
-                {"title": "Article 1", "url": "https://a.com", "content": "..."}
+                {"title": "Article 1", "url": "https://a.com", "content": "..."},
             ],
         }
         with patch(
-            "src.backend.dsl.engine.providers_search.tavily_search.get_tavily_provider_class"
+            "src.backend.dsl.engine.providers_search.tavily_search.get_tavily_provider_class",
         ) as mock_get:
             mock_get.return_value = lambda: AsyncMock(
-                search=AsyncMock(return_value=mock_response)
+                search=AsyncMock(return_value=mock_response),
             )
             await proc.process(ex, MagicMock())
         assert ex.set_property.called
@@ -88,7 +88,7 @@ class TestPerplexitySearchProcessor:
             PerplexitySearchProcessor,
         )
         proc = PerplexitySearchProcessor(
-            query="test", to="body.answer"
+            query="test", to="body.answer",
         )
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -101,10 +101,10 @@ class TestPerplexitySearchProcessor:
             "citations": ["https://source.com"],
         }
         with patch(
-            "src.backend.dsl.engine.providers_search.perplexity_search.get_perplexity_provider_class"
+            "src.backend.dsl.engine.providers_search.perplexity_search.get_perplexity_provider_class",
         ) as mock_get:
             mock_get.return_value = lambda: AsyncMock(
-                search=AsyncMock(return_value=mock_response)
+                search=AsyncMock(return_value=mock_response),
             )
             await proc.process(ex, MagicMock())
         assert ex.set_property.called

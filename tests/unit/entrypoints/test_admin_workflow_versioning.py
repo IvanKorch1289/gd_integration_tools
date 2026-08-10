@@ -37,7 +37,7 @@ def test_history_lists_versions(client: TestClient) -> None:
     reg = get_global_registry()
     reg.register(WorkflowVersion(workflow_id="wf-1", major=1, minor=0))
     reg.register(
-        WorkflowVersion(workflow_id="wf-1", major=1, minor=1, default_version=True)
+        WorkflowVersion(workflow_id="wf-1", major=1, minor=1, default_version=True),
     )
 
     response = client.get("/admin/workflow-versioning/wf-1/history")
@@ -51,14 +51,14 @@ def test_history_lists_versions(client: TestClient) -> None:
 
 def test_pin_invalid_semver_returns_400(client: TestClient) -> None:
     response = client.post(
-        "/admin/workflow-versioning/wf/pin", params={"semver": "not-a-version"}
+        "/admin/workflow-versioning/wf/pin", params={"semver": "not-a-version"},
     )
     assert response.status_code == 400
 
 
 def test_pin_unknown_workflow_returns_404(client: TestClient) -> None:
     response = client.post(
-        "/admin/workflow-versioning/wf/pin", params={"semver": "1.0"}
+        "/admin/workflow-versioning/wf/pin", params={"semver": "1.0"},
     )
     assert response.status_code == 404
 
@@ -66,13 +66,13 @@ def test_pin_unknown_workflow_returns_404(client: TestClient) -> None:
 def test_pin_changes_default(client: TestClient) -> None:
     reg = get_global_registry()
     reg.register(
-        WorkflowVersion(workflow_id="wf", major=1, minor=0, default_version=True)
+        WorkflowVersion(workflow_id="wf", major=1, minor=0, default_version=True),
     )
     reg.register(WorkflowVersion(workflow_id="wf", major=1, minor=1))
 
     target_semver = reg.history("wf")[1].semver
     response = client.post(
-        "/admin/workflow-versioning/wf/pin", params={"semver": target_semver}
+        "/admin/workflow-versioning/wf/pin", params={"semver": target_semver},
     )
     assert response.status_code == 200
     body = response.json()
@@ -84,7 +84,7 @@ def test_rollback_to_previous(client: TestClient) -> None:
     reg = get_global_registry()
     reg.register(WorkflowVersion(workflow_id="wf", major=1, minor=0))
     reg.register(
-        WorkflowVersion(workflow_id="wf", major=1, minor=1, default_version=True)
+        WorkflowVersion(workflow_id="wf", major=1, minor=1, default_version=True),
     )
 
     previous_semver = reg.history("wf")[0].semver
@@ -98,7 +98,7 @@ def test_rollback_to_previous(client: TestClient) -> None:
 def test_rollback_no_previous_returns_400(client: TestClient) -> None:
     reg = get_global_registry()
     reg.register(
-        WorkflowVersion(workflow_id="wf-solo", major=1, minor=0, default_version=True)
+        WorkflowVersion(workflow_id="wf-solo", major=1, minor=0, default_version=True),
     )
 
     response = client.post("/admin/workflow-versioning/wf-solo/rollback")

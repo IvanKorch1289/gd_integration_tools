@@ -71,14 +71,14 @@ class MarshalProcessor(BaseProcessor):
         encoded = self._data_format.marshal(exchange.in_message.body)
         exchange.in_message.body = encoded
         exchange.in_message.set_header(
-            self._content_type_header, self._data_format.content_type
+            self._content_type_header, self._data_format.content_type,
         )
         if isinstance(encoded, bytes):
             exchange.in_message.set_header(self._encoding_header, "utf-8")
         with self._lock:
             self._count += 1
         _log.debug(
-            "Marshal[%s]: encoded %d bytes", self._data_format.name, len(encoded)
+            "Marshal[%s]: encoded %d bytes", self._data_format.name, len(encoded),
         )
 
     def stats(self) -> dict[str, int]:

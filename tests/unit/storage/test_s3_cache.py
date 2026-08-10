@@ -35,7 +35,7 @@ class _FakeS3:
         return self._store.get(key)
 
     async def put_object(
-        self, key: str, data: bytes, content_type: str | None = None
+        self, key: str, data: bytes, content_type: str | None = None,
     ) -> None:
         self.put_calls += 1
         self._store[key] = data

@@ -46,7 +46,7 @@ def _make_long_mock() -> AsyncMock:
 async def test_tenant_id_required() -> None:
     """Все методы поднимают ValueError при пустом tenant_id."""
     gw = UnifiedMemoryGateway(
-        short_term=_make_short_mock(), long_term=_make_long_mock()
+        short_term=_make_short_mock(), long_term=_make_long_mock(),
     )
     with pytest.raises(ValueError, match="tenant_id обязателен"):
         await gw.get_messages(tenant_id="", session_id="s1")
@@ -64,7 +64,7 @@ async def test_get_messages_returns_typed() -> None:
         return_value=[
             {"role": "user", "content": "hi", "ts": 1.0, "metadata": {"x": 1}},
             {"role": "assistant", "content": "ok", "ts": 2.0},
-        ]
+        ],
     )
     gw = UnifiedMemoryGateway(short_term=short)
     messages = await gw.get_messages(tenant_id="t1", session_id="s1", limit=10)
@@ -118,7 +118,7 @@ async def test_get_facts_without_session_uses_long_term() -> None:
         return_value=[
             {"content": "fact1", "confidence": 0.9},
             {"content": "fact2", "confidence": 0.7},
-        ]
+        ],
     )
     gw = UnifiedMemoryGateway(short_term=short, long_term=long_)
     facts = await gw.get_facts(tenant_id="t1")
@@ -152,7 +152,7 @@ async def test_save_fact_uses_long_term() -> None:
     long_ = _make_long_mock()
     gw = UnifiedMemoryGateway(short_term=_make_short_mock(), long_term=long_)
     fact_id = await gw.save_fact(
-        tenant_id="t1", content="x", confidence=0.8, tags=("preference",)
+        tenant_id="t1", content="x", confidence=0.8, tags=("preference",),
     )
     assert fact_id == "fact-id-123"
     long_.add_semantic.assert_awaited_once()

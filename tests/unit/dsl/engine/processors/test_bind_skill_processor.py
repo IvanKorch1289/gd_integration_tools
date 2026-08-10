@@ -37,7 +37,7 @@ class TestBindSkillProcessor:
 
     @pytest.mark.asyncio
     async def test_no_registry_logs_warning(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Without skill_registry in context, processor logs and returns."""
         proc = BindSkillProcessor(pack_id="pk1")
@@ -48,7 +48,7 @@ class TestBindSkillProcessor:
 
     @pytest.mark.asyncio
     async def test_pack_not_found_logs_warning(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """When pack is not found, processor logs and returns."""
         proc = BindSkillProcessor(pack_id="pk1")

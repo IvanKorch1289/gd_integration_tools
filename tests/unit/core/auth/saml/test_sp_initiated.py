@@ -60,14 +60,14 @@ def test_consume_acs_replay_defence(handler: SamlSpHandler) -> None:
 
     # Первый ACS-вызов проходит
     out = handler.consume_acs(
-        request_id=login.request_id, validator_factory=lambda: auth_result
+        request_id=login.request_id, validator_factory=lambda: auth_result,
     )
     assert out.principal == "user@bank.local"
 
     # Повторное использование того же request_id отклоняется
     with pytest.raises(SamlError, match="replay"):
         handler.consume_acs(
-            request_id=login.request_id, validator_factory=lambda: auth_result
+            request_id=login.request_id, validator_factory=lambda: auth_result,
         )
 
 
@@ -76,7 +76,7 @@ def test_consume_acs_unknown_request_id_rejected(handler: SamlSpHandler) -> None
         handler.consume_acs(
             request_id="never-issued",
             validator_factory=lambda: SamlAuthResult(
-                principal="x", attributes={}, session_index=None
+                principal="x", attributes={}, session_index=None,
             ),
         )
 
@@ -95,7 +95,7 @@ def test_consume_acs_expired_window(config: SamlConfig) -> None:
         backend.process_saml_response(
             request_id=request_id,
             validator=lambda: SamlAuthResult(
-                principal="x", attributes={}, session_index=None
+                principal="x", attributes={}, session_index=None,
             ),
         )
 
@@ -108,7 +108,7 @@ def test_validator_exception_wrapped_as_saml_error(handler: SamlSpHandler) -> No
 
     with pytest.raises(SamlError, match="validation failed"):
         handler.consume_acs(
-            request_id=login.request_id, validator_factory=_bad_validator
+            request_id=login.request_id, validator_factory=_bad_validator,
         )
 
 

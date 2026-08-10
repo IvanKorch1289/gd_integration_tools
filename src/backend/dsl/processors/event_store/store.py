@@ -45,7 +45,7 @@ class EventStore(Protocol):
         ...
 
     def replay(
-        self, projection: Projection, *, since_timestamp: float | None = None
+        self, projection: Projection, *, since_timestamp: float | None = None,
     ) -> None:
         """Replay events через projection (для rebuild read model с optional since_timestamp)."""
         ...
@@ -74,7 +74,7 @@ class InMemoryEventStore:
             if existing and event.version <= existing[-1].version:
                 raise ValueError(
                     f"version conflict for aggregate {event.aggregate_id!r}: "
-                    f"got {event.version}, last is {existing[-1].version}"
+                    f"got {event.version}, last is {existing[-1].version}",
                 )
             self._events.append(event)
             self._by_aggregate.setdefault(event.aggregate_id, []).append(event)
@@ -103,7 +103,7 @@ class InMemoryEventStore:
             return list(self._events)
 
     def replay(
-        self, projection: Projection, *, since_timestamp: float | None = None
+        self, projection: Projection, *, since_timestamp: float | None = None,
     ) -> None:
         """Replay all events через projection (для rebuild read model)."""
         with self._lock:

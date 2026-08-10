@@ -40,7 +40,7 @@ class CacheWriteProcessor(BaseProcessor):
             return
 
         key = exchange.properties.get(
-            "_cache_key", f"dsl:cache:{self._key_fn(exchange)}"
+            "_cache_key", f"dsl:cache:{self._key_fn(exchange)}",
         )
         body = (
             exchange.out_message.body

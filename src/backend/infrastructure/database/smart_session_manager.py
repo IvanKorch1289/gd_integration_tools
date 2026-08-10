@@ -261,8 +261,8 @@ class SmartSessionManager:
                             0
                         )::bigint AS replay_lag_bytes
                         FROM pg_stat_replication
-                        """
-                    )
+                        """,
+                    ),
                 )
                 row = result.fetchone()
                 if row is not None:

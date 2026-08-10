@@ -80,8 +80,8 @@ class TestVectorSearchProcessor:
 
     def test_to_spec_custom(self) -> None:
         proc = VectorSearchProcessor(
-            query_field="q", top_k=10, namespace="n", output_property="out"
+            query_field="q", top_k=10, namespace="n", output_property="out",
         )
         assert proc.to_spec() == {
-            "rag_search": {"query_field": "q", "top_k": 10, "namespace": "n"}
+            "rag_search": {"query_field": "q", "top_k": 10, "namespace": "n"},
         }

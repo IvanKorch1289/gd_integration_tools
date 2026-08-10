@@ -81,7 +81,7 @@ async def websocket_invocations(websocket: WebSocket) -> None:
     ws_channel = registry.get("ws")
     if ws_channel is None:
         await websocket.send_json(
-            {"type": "error", "error": "WS reply channel is not configured"}
+            {"type": "error", "error": "WS reply channel is not configured"},
         )
         await websocket.close()
         return
@@ -95,28 +95,28 @@ async def websocket_invocations(websocket: WebSocket) -> None:
             data = await websocket.receive_json()
             if not isinstance(data, dict):
                 await websocket.send_json(
-                    {"type": "error", "error": "expected JSON object"}
+                    {"type": "error", "error": "expected JSON object"},
                 )
                 continue
 
             msg_type = data.get("type")
             if msg_type != "invoke":
                 await websocket.send_json(
-                    {"type": "error", "error": f"unknown type '{msg_type}'"}
+                    {"type": "error", "error": f"unknown type '{msg_type}'"},
                 )
                 continue
 
             action = data.get("action")
             if not isinstance(action, str) or not action:
                 await websocket.send_json(
-                    {"type": "error", "error": "'action' must be non-empty string"}
+                    {"type": "error", "error": "'action' must be non-empty string"},
                 )
                 continue
 
             mode = _coerce_mode(data.get("mode", "streaming"))
             if mode is None:
                 await websocket.send_json(
-                    {"type": "error", "error": f"invalid mode '{data.get('mode')}'"}
+                    {"type": "error", "error": f"invalid mode '{data.get('mode')}'"},
                 )
                 continue
 
@@ -129,10 +129,10 @@ async def websocket_invocations(websocket: WebSocket) -> None:
             # и стримим токены напрямую через LLMStreamingService.
             if action == "llm.stream":
                 await websocket.send_json(
-                    {"type": "ack", "invocation_id": invocation_id}
+                    {"type": "ack", "invocation_id": invocation_id},
                 )
                 await _stream_llm_to_ws(
-                    websocket=websocket, invocation_id=invocation_id, payload=data
+                    websocket=websocket, invocation_id=invocation_id, payload=data,
                 )
                 continue
 
@@ -195,7 +195,7 @@ def _response_payload(response: Any) -> dict[str, Any]:
 
 
 async def _stream_llm_to_ws(
-    *, websocket: WebSocket, invocation_id: str, payload: dict[str, Any]
+    *, websocket: WebSocket, invocation_id: str, payload: dict[str, Any],
 ) -> None:
     """Wave D.3: token-level LLM streaming через WS channel."""
     from src.backend.services.ai.streaming_service import get_llm_streaming_service
@@ -207,7 +207,7 @@ async def _stream_llm_to_ws(
                 "type": "error",
                 "invocation_id": invocation_id,
                 "error": "'messages' must be non-empty list",
-            }
+            },
         )
         return
 
@@ -229,7 +229,7 @@ async def _stream_llm_to_ws(
                         "type": "token",
                         "invocation_id": invocation_id,
                         "delta": chunk.delta,
-                    }
+                    },
                 )
             if chunk.usage:
                 usage = chunk.usage
@@ -242,12 +242,12 @@ async def _stream_llm_to_ws(
                 "invocation_id": invocation_id,
                 "finish_reason": finish_reason or "stop",
                 "usage": usage or {},
-            }
+            },
         )
     except WebSocketDisconnect:
         raise
     except Exception as exc:
         logger.warning("llm.stream over WS failed: %s", exc)
         await websocket.send_json(
-            {"type": "error", "invocation_id": invocation_id, "error": str(exc)}
+            {"type": "error", "invocation_id": invocation_id, "error": str(exc)},
         )

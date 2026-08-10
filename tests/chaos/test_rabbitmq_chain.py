@@ -19,7 +19,7 @@ def test_rabbitmq_latency(toxiproxy_rabbitmq: ChaosTarget) -> None:
     """500ms latency на RabbitMQ AMQP-порте."""
     apply_latency(toxiproxy_rabbitmq, latency_ms=500)
     elapsed = measure_latency_ms(
-        toxiproxy_rabbitmq.proxy_host, toxiproxy_rabbitmq.proxy_port
+        toxiproxy_rabbitmq.proxy_host, toxiproxy_rabbitmq.proxy_port,
     )
     assert elapsed < 0 or elapsed >= 400
 
@@ -28,7 +28,7 @@ def test_rabbitmq_disconnect(toxiproxy_rabbitmq: ChaosTarget) -> None:
     """disconnect: RabbitMQ недоступен."""
     apply_disconnect(toxiproxy_rabbitmq)
     assert assert_connection_fails(
-        toxiproxy_rabbitmq.proxy_host, toxiproxy_rabbitmq.proxy_port
+        toxiproxy_rabbitmq.proxy_host, toxiproxy_rabbitmq.proxy_port,
     )
 
 
@@ -36,7 +36,7 @@ def test_rabbitmq_data_corruption(toxiproxy_rabbitmq: ChaosTarget) -> None:
     """data-corruption: slicer на RabbitMQ."""
     apply_random_drop(toxiproxy_rabbitmq, toxicity=0.3)
     assert smoke_open_socket(
-        toxiproxy_rabbitmq.proxy_host, toxiproxy_rabbitmq.proxy_port, timeout=2.0
+        toxiproxy_rabbitmq.proxy_host, toxiproxy_rabbitmq.proxy_port, timeout=2.0,
     ) or assert_connection_fails(
-        toxiproxy_rabbitmq.proxy_host, toxiproxy_rabbitmq.proxy_port
+        toxiproxy_rabbitmq.proxy_host, toxiproxy_rabbitmq.proxy_port,
     )

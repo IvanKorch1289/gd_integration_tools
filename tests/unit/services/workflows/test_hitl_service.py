@@ -50,7 +50,7 @@ async def test_resolve_approve_with_facade_calls_signal() -> None:
 
     class _FakeFacade:
         async def signal(
-            self, *, caller: str, handle, signal_name: str, payload: dict
+            self, *, caller: str, handle, signal_name: str, payload: dict,
         ) -> None:
             calls.append(
                 {
@@ -58,7 +58,7 @@ async def test_resolve_approve_with_facade_calls_signal() -> None:
                     "handle": handle.workflow_id,
                     "signal_name": signal_name,
                     "payload": payload,
-                }
+                },
             )
 
     svc = HitlService(store=InMemoryHitlSignalStore(), workflow_facade=_FakeFacade())
@@ -97,7 +97,7 @@ async def test_resolve_unknown_raises_key_error() -> None:
     svc = HitlService(store=InMemoryHitlSignalStore())
     with pytest.raises(KeyError):
         await svc.resolve(
-            signal_id="ghost", action=HitlAction.APPROVE, resolved_by="op"
+            signal_id="ghost", action=HitlAction.APPROVE, resolved_by="op",
         )
 
 

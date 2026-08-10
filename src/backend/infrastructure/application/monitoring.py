@@ -89,7 +89,7 @@ class PrometheusMiddleware:
             _requests_in_progress.labels(**labels).dec()
             duration = time.perf_counter() - start
             _request_count.labels(
-                method=method, path=path, status_code=status_code
+                method=method, path=path, status_code=status_code,
             ).inc()
             _request_latency.labels(method=method, path=path).observe(duration)
 
@@ -115,7 +115,7 @@ async def metrics_endpoint(scope: Scope, receive: Receive, send: Send) -> None:
             "type": "http.response.start",
             "status": 200,
             "headers": [(b"content-type", CONTENT_TYPE_LATEST.encode())],
-        }
+        },
     )
     await send({"type": "http.response.body", "body": generate_latest()})
 

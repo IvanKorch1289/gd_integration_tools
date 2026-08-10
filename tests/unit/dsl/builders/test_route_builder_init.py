@@ -42,7 +42,7 @@ def test_from_creates_builder() -> None:
     from src.backend.dsl.builders.base import RouteBuilder
 
     b = RouteBuilder.from_(
-        "etl.import", source="timer:300s", description="Periodic ETL"
+        "etl.import", source="timer:300s", description="Periodic ETL",
     )
     assert b.route_id == "etl.import"
     assert b.source == "timer:300s"
@@ -63,7 +63,7 @@ def test_from_sse_instantiates() -> None:
     from src.backend.dsl.builders.base import RouteBuilder
 
     b = RouteBuilder.from_sse(
-        "test.stream", "https://example.com/events", parse_json=False
+        "test.stream", "https://example.com/events", parse_json=False,
     )
     assert b.route_id == "test.stream"
     assert b.source == "sse:test.stream"

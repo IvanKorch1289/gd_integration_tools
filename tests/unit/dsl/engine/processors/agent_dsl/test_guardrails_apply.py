@@ -28,7 +28,7 @@ class _FakeRuntime:
         self.calls: list[tuple[str, list[str] | None]] = []
 
     async def classify(
-        self, text: str, categories: list[str] | None = None
+        self, text: str, categories: list[str] | None = None,
     ) -> _FakeGuardResult:
         self.calls.append((text, categories))
         return self.result
@@ -58,14 +58,14 @@ def test_default_source_depends_on_stage() -> None:
 
 @pytest.mark.asyncio
 async def test_safe_text_passes(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     rt = _FakeRuntime(_FakeGuardResult(safe=True))
     monkeypatch.setattr(
-        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: rt)
+        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: rt),
     )
 
     ex: Exchange[Any] = Exchange(in_message=Message(body="hello world"))
@@ -74,7 +74,7 @@ async def test_safe_text_passes(
 
     verdict = ex.get_property("guardrails_verdict")
     assert verdict == {
-        "input": {"safe": True, "flagged_categories": [], "stage": "input"}
+        "input": {"safe": True, "flagged_categories": [], "stage": "input"},
     }
     assert ex.error is None
     assert not ex.stopped
@@ -82,14 +82,14 @@ async def test_safe_text_passes(
 
 @pytest.mark.asyncio
 async def test_unsafe_on_block_fail_stops(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     rt = _FakeRuntime(_FakeGuardResult(safe=False, flagged_categories=["hate"]))
     monkeypatch.setattr(
-        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: rt)
+        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: rt),
     )
 
     ex: Exchange[Any] = Exchange(in_message=Message(body="bad text"))
@@ -103,14 +103,14 @@ async def test_unsafe_on_block_fail_stops(
 
 @pytest.mark.asyncio
 async def test_unsafe_on_block_dlq(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     rt = _FakeRuntime(_FakeGuardResult(safe=False, flagged_categories=["violence"]))
     monkeypatch.setattr(
-        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: rt)
+        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: rt),
     )
 
     ex: Exchange[Any] = Exchange(in_message=Message(body="bad"))
@@ -125,14 +125,14 @@ async def test_unsafe_on_block_dlq(
 
 @pytest.mark.asyncio
 async def test_unsafe_on_block_warn_continues(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     rt = _FakeRuntime(_FakeGuardResult(safe=False, flagged_categories=["unsafe"]))
     monkeypatch.setattr(
-        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: rt)
+        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: rt),
     )
 
     ex: Exchange[Any] = Exchange(in_message=Message(body="warn-only"))
@@ -147,13 +147,13 @@ async def test_unsafe_on_block_warn_continues(
 
 @pytest.mark.asyncio
 async def test_runtime_unavailable_is_pass_through(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     monkeypatch.setattr(
-        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: None)
+        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: None),
     )
 
     ex: Exchange[Any] = Exchange(in_message=Message(body="hello"))
@@ -166,14 +166,14 @@ async def test_runtime_unavailable_is_pass_through(
 
 @pytest.mark.asyncio
 async def test_output_stage_reads_from_agent_result(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     rt = _FakeRuntime(_FakeGuardResult(safe=True))
     monkeypatch.setattr(
-        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: rt)
+        GuardrailsApplyProcessor, "_resolve_runtime", staticmethod(lambda: rt),
     )
 
     ex: Exchange[Any] = Exchange()
@@ -186,7 +186,7 @@ async def test_output_stage_reads_from_agent_result(
 
 @pytest.mark.asyncio
 async def test_feature_flag_off_is_pass_through(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -213,7 +213,7 @@ def test_resolve_runtime_returns_none_when_provider_unavailable(
 
     # Гарантируем, что override пуст (предыдущие тесты не должны влиять).
     monkeypatch.setattr(
-        providers_ai, "_overrides", dict(providers_ai._overrides)
+        providers_ai, "_overrides", dict(providers_ai._overrides),
     )
     providers_ai._overrides.pop("llm_guard_runtime", None)
 
@@ -244,7 +244,7 @@ def test_resolve_runtime_not_none_when_provider_set(
 
 @pytest.mark.asyncio
 async def test_run_uses_provider_runtime_without_monkeypatch(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     """cycle-6/D-AUDIT-605: end-to-end без monkeypatch на ``_resolve_runtime``.
 
@@ -268,7 +268,7 @@ async def test_run_uses_provider_runtime_without_monkeypatch(
         assert fake_runtime.calls == [("hello", None)]
         verdict = ex.get_property("guardrails_verdict")
         assert verdict == {
-            "input": {"safe": True, "flagged_categories": [], "stage": "input"}
+            "input": {"safe": True, "flagged_categories": [], "stage": "input"},
         }
         assert ex.error is None
     finally:
@@ -289,7 +289,7 @@ def test_to_spec_round_trip() -> None:
             "on_block": "fail",
             "source_property": "agent_result.structured.reasoning",
             "categories": ["hate", "violence"],
-        }
+        },
     }
 
 

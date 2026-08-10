@@ -115,7 +115,7 @@ class CDCClientProtocol(Protocol):
     """
 
     async def subscribe(
-        self, *, profile: str, tables: list[str], target_action: str | None = None
+        self, *, profile: str, tables: list[str], target_action: str | None = None,
     ) -> str:
         """Выполнить операцию subscribe."""
         ...

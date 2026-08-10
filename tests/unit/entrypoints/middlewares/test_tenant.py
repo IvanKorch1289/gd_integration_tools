@@ -17,7 +17,7 @@ class TestTenantMiddleware:
         return TenantMiddleware(AsyncMock(), default_tenant="default")
 
     def _make_downstream(
-        self, tenant_id_to_set: str | None = None, *, with_state_tenant: str | None = None
+        self, tenant_id_to_set: str | None = None, *, with_state_tenant: str | None = None,
     ):
         """Создаёт downstream app, возвращающий 200 + empty body.
 
@@ -28,7 +28,7 @@ class TestTenantMiddleware:
             if with_state_tenant is not None:
                 scope.setdefault("state", {})["tenant_id"] = with_state_tenant
             await send(
-                {"type": "http.response.start", "status": 200, "headers": []}
+                {"type": "http.response.start", "status": 200, "headers": []},
             )
             await send({"type": "http.response.body", "body": b"ok"})
 

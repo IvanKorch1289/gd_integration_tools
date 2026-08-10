@@ -58,7 +58,7 @@ async def _get_clickhouse_client(factory: Any | None = None) -> Any:
 
 
 async def get_saga_history(
-    workflow_id: str, *, limit: int = 50, client_factory: Any | None = None
+    workflow_id: str, *, limit: int = 50, client_factory: Any | None = None,
 ) -> list[SagaHistoryRecord]:
     """Возвращает timeline saga events для конкретного workflow_id."""
     import json
@@ -82,7 +82,7 @@ async def get_saga_history(
     )
     try:
         result = await client.query(
-            sql, parameters={"workflow_id": workflow_id, "limit": limit}
+            sql, parameters={"workflow_id": workflow_id, "limit": limit},
         )
     except Exception as exc:
         _logger.warning("CH query failed: %s", exc)
@@ -103,7 +103,7 @@ async def get_saga_history(
                 payload=payload,
                 created_at=row[5],
                 duration_ms=row[6],
-            )
+            ),
         )
     return records
 

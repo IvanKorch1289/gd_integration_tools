@@ -37,7 +37,7 @@ def test_mask_idempotent(text: str) -> None:
         ),
         min_size=0,
         max_size=5,
-    )
+    ),
 )
 def test_emails_are_masked(emails: list[str]) -> None:
     """All RFC-compatible emails in text are masked (no raw @ remains after masking)."""
@@ -62,7 +62,7 @@ def test_emails_are_masked(emails: list[str]) -> None:
         ),
         min_size=0,
         max_size=10,
-    )
+    ),
 )
 def test_mask_dict_no_mutation(data: dict) -> None:
     """mask_dict must not mutate the input dictionary."""

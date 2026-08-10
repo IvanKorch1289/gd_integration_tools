@@ -169,7 +169,7 @@ class Sprints1821Flags(BaseSettings):
 
     multi_tenant_rate_limit_enabled: bool = Field(
         default_factory=lambda: Sprints1821Flags._env_aware_default(
-            env_var_name="FEATURE_MULTI_TENANT_RATE_LIMIT_ENABLED", prod_value=True
+            env_var_name="FEATURE_MULTI_TENANT_RATE_LIMIT_ENABLED", prod_value=True,
         ),
         title="K5 S18 W1: global rate-limit middleware (fastapi-limiter + per-tenant)",
         description=(

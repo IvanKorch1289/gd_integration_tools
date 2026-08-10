@@ -20,7 +20,7 @@ import pytest
 otel_sdk = pytest.importorskip("opentelemetry.sdk.trace")
 trace_api = pytest.importorskip("opentelemetry.trace")
 in_memory_exporter_mod = pytest.importorskip(
-    "opentelemetry.sdk.trace.export.in_memory_span_exporter"
+    "opentelemetry.sdk.trace.export.in_memory_span_exporter",
 )
 
 from opentelemetry import trace

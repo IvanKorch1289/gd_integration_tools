@@ -149,7 +149,7 @@ class TestInvokeProcessor:
         )
         invoker = _make_invoker(response)
         proc = InvokeProcessor(
-            action="orders.process", mode="background", invoker=invoker
+            action="orders.process", mode="background", invoker=invoker,
         )
         exchange = _make_exchange(body={"order_id": 42})
         context = MagicMock()
@@ -172,7 +172,7 @@ class TestInvokeProcessor:
         )
         invoker = _make_invoker(response)
         proc = InvokeProcessor(
-            action="x.y", payload_factory=lambda exch: {"forced": True}, invoker=invoker
+            action="x.y", payload_factory=lambda exch: {"forced": True}, invoker=invoker,
         )
         exchange = _make_exchange(body={"will-be": "ignored"})
         context = MagicMock()
@@ -185,7 +185,7 @@ class TestInvokeProcessor:
     async def test_non_dict_body_becomes_empty_payload(self) -> None:
         """Если body не dict, payload по умолчанию пустой dict."""
         response = InvocationResponse(
-            invocation_id="x", status=InvocationStatus.OK, mode=InvocationMode.SYNC
+            invocation_id="x", status=InvocationStatus.OK, mode=InvocationMode.SYNC,
         )
         invoker = _make_invoker(response)
         proc = InvokeProcessor(action="x.y", invoker=invoker)
@@ -218,5 +218,5 @@ class TestInvokeProcessor:
                 "reply_channel": "api",
                 "result_property": "custom",
                 "invocation_id_property": "ticket",
-            }
+            },
         }

@@ -119,7 +119,7 @@ class AgentSecurityCheckProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Выполнить security check.
 
@@ -156,7 +156,7 @@ class AgentSecurityCheckProcessor(BaseProcessor):
                 decision = facade.validate_sql(self._value)
             elif self._check == "file":
                 decision = facade.validate_file_modification(
-                    self._value, file_size_bytes=self._file_size_bytes
+                    self._value, file_size_bytes=self._file_size_bytes,
                 )
             else:
                 decision = SecurityDecision(
@@ -178,7 +178,7 @@ class AgentSecurityCheckProcessor(BaseProcessor):
 
                 if self._on_violation == "block":
                     exchange.fail(
-                        f"agent_security.{self._check}_blocked: {decision.reason}"
+                        f"agent_security.{self._check}_blocked: {decision.reason}",
                     )
                 elif self._on_violation == "warn":
                     _logger.warning(

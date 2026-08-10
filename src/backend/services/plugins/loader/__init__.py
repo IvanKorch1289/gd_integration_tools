@@ -48,7 +48,7 @@ from src.backend.services.plugins.loader.validation import (
 )
 
 _logger = get_logger(
-    "services.plugins.loader"
+    "services.plugins.loader",
 )  # S52 W3: re-defined for backward compat
 
 __all__ = (
@@ -167,7 +167,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         violations: tuple[CompatViolation, ...] = ()
         if parsed_manifests:
             violations = check_compatibility(
-                parsed_manifests, core_version=self._core_version
+                parsed_manifests, core_version=self._core_version,
             )
             for violation in violations:
                 compat_blocked.add(violation.plugin)
@@ -180,7 +180,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         cycle_blocked: set[str] = set()
         cycle_reason: str | None = None
         sorted_names = self._topo_sort_non_blocked(
-            parsed_manifests, compat_blocked, cycle_blocked
+            parsed_manifests, compat_blocked, cycle_blocked,
         )
         if cycle_blocked:
             cycle_reason = (
@@ -188,7 +188,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
             )
 
         ordered_paths = self._reorder_manifest_paths(
-            manifest_paths=manifest_paths, sorted_names=sorted_names
+            manifest_paths=manifest_paths, sorted_names=sorted_names,
         )
 
         parse_failures_map = dict(parse_failures)
@@ -328,7 +328,7 @@ def _empty_plugin_loader_factory() -> PluginLoader:
         "PluginLoader требует explicit DI. Use PluginLoader("
         "extensions_dir=..., capability_gate=..., action_registry=..., "
         "repository_registry=..., processor_registry=..., core_version=..."
-        ") constructor или set app.state.plugin_loader в startup."
+        ") constructor или set app.state.plugin_loader в startup.",
     )
 
 

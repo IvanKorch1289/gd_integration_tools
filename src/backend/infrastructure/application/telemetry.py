@@ -30,12 +30,12 @@ def setup_tracing(app: FastAPI):
             "service.name": settings.app.title,
             "service.version": settings.app.version,
             "deployment.environment": settings.app.environment,
-        }
+        },
     )
 
     tracer_provider = TracerProvider(resource=resource)
     span_exporter = OTLPSpanExporter(
-        endpoint=settings.app.opentelemetry_endpoint, insecure=True
+        endpoint=settings.app.opentelemetry_endpoint, insecure=True,
     )
     tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))
 

@@ -63,7 +63,7 @@ class RepositoryRegistryProtocol(Protocol):
     """
 
     def register_hook(
-        self, repo_name: str, event: str, callback: Callable[..., Awaitable[Any]]
+        self, repo_name: str, event: str, callback: Callable[..., Awaitable[Any]],
     ) -> None:
         """Зарегистрировать hook на событие репозитория.
 
@@ -75,7 +75,7 @@ class RepositoryRegistryProtocol(Protocol):
         ...
 
     def override_method(
-        self, repo_name: str, method: str, replacement: Callable[..., Awaitable[Any]]
+        self, repo_name: str, method: str, replacement: Callable[..., Awaitable[Any]],
     ) -> None:
         """Подменить метод репозитория целиком."""
         ...
@@ -203,7 +203,7 @@ class BasePlugin(ABC):
         """Регистрация HTTP/CLI/RPC actions через `registry.register(...)`."""
 
     async def on_register_repositories(
-        self, registry: RepositoryRegistryProtocol
+        self, registry: RepositoryRegistryProtocol,
     ) -> None:
         """Регистрация repository-hooks и override-методов."""
 

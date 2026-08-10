@@ -21,7 +21,7 @@ class TestGetUserModels:
     def test_returns_empty_dict_when_no_mappers(self) -> None:
         """Returns empty dict when mapper_registry has no mappers."""
         with patch(
-            "src.backend.infrastructure.database.model_registry.mapper_registry"
+            "src.backend.infrastructure.database.model_registry.mapper_registry",
         ) as mock_registry:
             mock_registry.mappers = []
             result = get_user_models()
@@ -34,7 +34,7 @@ class TestGetUserModels:
         mock_mapper.class_ = BaseModel
 
         with patch(
-            "src.backend.infrastructure.database.model_registry.mapper_registry"
+            "src.backend.infrastructure.database.model_registry.mapper_registry",
         ) as mock_registry:
             mock_registry.mappers = [mock_mapper]
             result = get_user_models()
@@ -51,7 +51,7 @@ class TestGetUserModels:
         mock_mapper.class_ = FakeModel
 
         with patch(
-            "src.backend.infrastructure.database.model_registry.mapper_registry"
+            "src.backend.infrastructure.database.model_registry.mapper_registry",
         ) as mock_registry:
             mock_registry.mappers = [mock_mapper]
             result = get_user_models()
@@ -69,7 +69,7 @@ class TestGetUserModels:
         mock_mapper.class_ = NotAModel
 
         with patch(
-            "src.backend.infrastructure.database.model_registry.mapper_registry"
+            "src.backend.infrastructure.database.model_registry.mapper_registry",
         ) as mock_registry:
             mock_registry.mappers = [mock_mapper]
             result = get_user_models()
@@ -82,7 +82,7 @@ class TestGetUserModels:
         mock_mapper.class_ = "not_a_class"
 
         with patch(
-            "src.backend.infrastructure.database.model_registry.mapper_registry"
+            "src.backend.infrastructure.database.model_registry.mapper_registry",
         ) as mock_registry:
             mock_registry.mappers = [mock_mapper]
             result = get_user_models()
@@ -104,7 +104,7 @@ class TestGetUserModels:
         mock_mapper_b.class_ = ModelB
 
         with patch(
-            "src.backend.infrastructure.database.model_registry.mapper_registry"
+            "src.backend.infrastructure.database.model_registry.mapper_registry",
         ) as mock_registry:
             mock_registry.mappers = [mock_mapper_a, mock_mapper_b]
             result = get_user_models()
@@ -120,7 +120,7 @@ class TestGetModelEnum:
     def test_returns_enum_class(self) -> None:
         """Returns an Enum subclass."""
         with patch(
-            "src.backend.infrastructure.database.model_registry.mapper_registry"
+            "src.backend.infrastructure.database.model_registry.mapper_registry",
         ) as mock_registry:
             mock_registry.mappers = []
             result = get_model_enum()
@@ -137,7 +137,7 @@ class TestGetModelEnum:
         mock_mapper.class_ = TestModel
 
         with patch(
-            "src.backend.infrastructure.database.model_registry.mapper_registry"
+            "src.backend.infrastructure.database.model_registry.mapper_registry",
         ) as mock_registry:
             mock_registry.mappers = [mock_mapper]
             ModelEnum = get_model_enum()

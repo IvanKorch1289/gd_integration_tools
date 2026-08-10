@@ -72,7 +72,7 @@ class LLMStreamingService:
     """Высокоуровневый адаптер над LiteLLMGateway.astream_completion."""
 
     def __init__(
-        self, gateway: Any | None = None, *, chunk_size: int | None = None
+        self, gateway: Any | None = None, *, chunk_size: int | None = None,
     ) -> None:
         self._gateway = gateway
         from src.backend.core.config.ai_stack import streaming_llm_settings
@@ -90,7 +90,7 @@ class LLMStreamingService:
         return self._gateway
 
     async def astream(
-        self, messages: list[dict[str, Any]], *, model: str | None = None, **kwargs: Any
+        self, messages: list[dict[str, Any]], *, model: str | None = None, **kwargs: Any,
     ) -> AsyncIterator[StreamChunk]:
         """Возвращает асинхронный поток ``StreamChunk``.
 
@@ -102,15 +102,15 @@ class LLMStreamingService:
         gateway = self._ensure_gateway()
         try:
             stream = await gateway.acompletion(
-                messages=messages, model=model, stream=True, **kwargs
+                messages=messages, model=model, stream=True, **kwargs,
             )
         except Exception as exc:
             if _is_bad_request(exc):
                 logger.warning(
-                    "Stream not supported, falling back to non-stream: %s", exc
+                    "Stream not supported, falling back to non-stream: %s", exc,
                 )
                 async for chunk in self._fallback_nonstream(
-                    messages, model=model, **kwargs
+                    messages, model=model, **kwargs,
                 ):
                     yield chunk
                 return
@@ -141,12 +141,12 @@ class LLMStreamingService:
             raise
 
     async def _fallback_nonstream(
-        self, messages: list[dict[str, Any]], *, model: str | None, **kwargs: Any
+        self, messages: list[dict[str, Any]], *, model: str | None, **kwargs: Any,
     ) -> AsyncIterator[StreamChunk]:
         gateway = self._ensure_gateway()
         kwargs.pop("stream", None)
         result = await gateway.acompletion(
-            messages=messages, model=model, stream=False, **kwargs
+            messages=messages, model=model, stream=False, **kwargs,
         )
         content = _extract_full_text(result)
         usage = _extract_usage(result)

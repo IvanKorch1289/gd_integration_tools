@@ -87,7 +87,7 @@ class AgentTool:
 
 
 def agent_tool(
-    *, name: str | None = None, description: str | None = None
+    *, name: str | None = None, description: str | None = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Декоратор для пометки функции как AI-инструмента.
 
@@ -364,7 +364,7 @@ class ToolRegistry:
             self.register(tool)
             registered.append(tool)
         logger.info(
-            "tool_registry_from_service: %s → %d tools", cls.__name__, len(registered)
+            "tool_registry_from_service: %s → %d tools", cls.__name__, len(registered),
         )
         return registered
 
@@ -419,7 +419,7 @@ class ToolRegistry:
             self.register(tool)
             registered.append(tool)
         logger.info(
-            "tool_registry_from_plugin_file: %s → %d tools", file_path, len(registered)
+            "tool_registry_from_plugin_file: %s → %d tools", file_path, len(registered),
         )
         return registered
 

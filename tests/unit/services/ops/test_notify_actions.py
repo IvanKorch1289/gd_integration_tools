@@ -48,7 +48,7 @@ async def test_email_channel(actions: NotifyGatewayActions) -> None:
         mock_get_provider.return_value = gateway
         await actions.email(subject="hi", body="hello")
         gateway.send.assert_awaited_once_with(
-            channel="email", subject="hi", body="hello"
+            channel="email", subject="hi", body="hello",
         )
 
 

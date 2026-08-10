@@ -45,7 +45,7 @@ class TestRegistryBasic:
         assert cls is not None
         # Strawberry type должен иметь имя "_SimpleStrawType".
         assert cls.__name__ == "_SimpleStrawType" or hasattr(
-            cls, "__strawberry_definition__"
+            cls, "__strawberry_definition__",
         )
 
     def test_cache_returns_same_class(self):

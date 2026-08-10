@@ -21,7 +21,7 @@ __all__ = ("router",)
 
 # S202 audit fix: IP-restriction CRUD — security-critical, require SUPER_ADMIN.
 _IP_RESTRICTION_GUARD = Depends(
-    require_admin((AdminRole.SUPER_ADMIN, AdminRole.TENANT_ADMIN))
+    require_admin((AdminRole.SUPER_ADMIN, AdminRole.TENANT_ADMIN)),
 )
 router = APIRouter(
     prefix="/ip-restriction",
@@ -47,7 +47,7 @@ class _RouteIPRestrictionSchema(BaseModel):
     """Схема per-route IP-ограничения."""
 
     allowed_ips: list[str] = Field(
-        default_factory=list, description="Разрешённые IP/CIDR для маршрута."
+        default_factory=list, description="Разрешённые IP/CIDR для маршрута.",
     )
     enabled: bool = Field(default=True, description="Включено ли правило.")
 
@@ -74,7 +74,7 @@ async def _get_ip_restrictions() -> dict[str, Any]:
 )
 async def _put_ip_restrictions(body: _AdminIPRestrictionSchema) -> dict[str, Any]:
     get_ip_restriction_store().update_admin(
-        admin_ips=set(body.admin_ips), admin_routes=body.admin_routes
+        admin_ips=set(body.admin_ips), admin_routes=body.admin_routes,
     )
     return {"status": "ok"}
 
@@ -85,16 +85,16 @@ async def _put_ip_restrictions(body: _AdminIPRestrictionSchema) -> dict[str, Any
     description="Добавляет/обновляет правило для конкретного path-pattern.",
 )
 async def _put_route_rule(
-    path_pattern: str, body: _RouteIPRestrictionSchema
+    path_pattern: str, body: _RouteIPRestrictionSchema,
 ) -> dict[str, str]:
     get_ip_restriction_store().set_route_rule(
-        path_pattern=path_pattern, allowed_ips=body.allowed_ips, enabled=body.enabled
+        path_pattern=path_pattern, allowed_ips=body.allowed_ips, enabled=body.enabled,
     )
     return {"status": "ok"}
 
 
 @router.delete(
-    "/routes/{path_pattern:path}", summary="Удалить per-route IP-ограничение"
+    "/routes/{path_pattern:path}", summary="Удалить per-route IP-ограничение",
 )
 async def _delete_route_rule(path_pattern: str) -> dict[str, str]:
     get_ip_restriction_store().remove_route_rule(path_pattern)

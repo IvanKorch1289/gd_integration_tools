@@ -70,7 +70,7 @@ async def test_emit_cancel_event(sink: WorkflowAuditSink, writer_mock: Any) -> N
 
 @pytest.mark.asyncio
 async def test_emit_complete_with_duration(
-    sink: WorkflowAuditSink, writer_mock: Any
+    sink: WorkflowAuditSink, writer_mock: Any,
 ) -> None:
     await sink.emit(
         event_type="workflow.complete",
@@ -86,7 +86,7 @@ async def test_emit_complete_with_duration(
 
 @pytest.mark.asyncio
 async def test_emit_compensation_events(
-    sink: WorkflowAuditSink, writer_mock: Any
+    sink: WorkflowAuditSink, writer_mock: Any,
 ) -> None:
     for ev_type in (
         "workflow.compensation_start",
@@ -126,7 +126,7 @@ async def test_emit_hitl_events(sink: WorkflowAuditSink, writer_mock: Any) -> No
 
 @pytest.mark.asyncio
 async def test_emit_with_explicit_event_id_and_created_at(
-    sink: WorkflowAuditSink, writer_mock: Any
+    sink: WorkflowAuditSink, writer_mock: Any,
 ) -> None:
     explicit_ts = datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
     await sink.emit(
@@ -143,7 +143,7 @@ async def test_emit_with_explicit_event_id_and_created_at(
 
 @pytest.mark.asyncio
 async def test_emit_batch_preserves_extended_fields(
-    sink: WorkflowAuditSink, writer_mock: Any
+    sink: WorkflowAuditSink, writer_mock: Any,
 ) -> None:
     events = [
         {"event_type": "workflow.start", "workflow_id": "wf-1", "tenant_id": "t1"},
@@ -159,7 +159,7 @@ async def test_emit_batch_preserves_extended_fields(
 
 @pytest.mark.asyncio
 async def test_emit_handles_empty_payload(
-    sink: WorkflowAuditSink, writer_mock: Any
+    sink: WorkflowAuditSink, writer_mock: Any,
 ) -> None:
     await sink.emit(event_type="workflow.fail", workflow_id="wf-fail", tenant_id=None)
     row = writer_mock.add.await_args.args[0]

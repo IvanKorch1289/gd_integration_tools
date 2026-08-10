@@ -110,7 +110,7 @@ class TemporalWorkerRuntime:
         async with self._lock:
             if self.is_running:
                 raise RuntimeError(
-                    "TemporalWorkerRuntime уже запущен — сначала stop()"
+                    "TemporalWorkerRuntime уже запущен — сначала stop()",
                 )
 
             if workflow_classes is None:

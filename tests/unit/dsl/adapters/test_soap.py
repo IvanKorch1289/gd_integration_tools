@@ -73,7 +73,7 @@ class TestCreateExchange:
         adapter = SoapAdapter()
 
         exchange = await adapter.create_exchange(
-            {"operation": "Ping", "payload": {"x": 1}}
+            {"operation": "Ping", "payload": {"x": 1}},
         )
 
         assert exchange.in_message.body == {"x": 1}

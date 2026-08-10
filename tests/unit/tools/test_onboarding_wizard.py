@@ -56,7 +56,7 @@ class TestInstallDeps:
     def test_non_interactive_dry_run(self, monkeypatch: pytest.MonkeyPatch) -> None:
         commands: list[list[str]] = []
         monkeypatch.setattr(
-            _wizard, "_run", lambda cmd, **kwargs: commands.append(cmd) or 0
+            _wizard, "_run", lambda cmd, **kwargs: commands.append(cmd) or 0,
         )
         _wizard._install_deps(non_interactive=True, dry_run=True)
         assert commands == [["uv", "sync", "--all-extras"]]
@@ -66,7 +66,7 @@ class TestSamplePlugin:
     def test_non_interactive_skipped(self, monkeypatch: pytest.MonkeyPatch) -> None:
         commands: list[list[str]] = []
         monkeypatch.setattr(
-            _wizard, "_run", lambda cmd, **kwargs: commands.append(cmd) or 0
+            _wizard, "_run", lambda cmd, **kwargs: commands.append(cmd) or 0,
         )
         _wizard._sample_plugin(non_interactive=True, dry_run=False)
         assert commands == []
@@ -74,11 +74,11 @@ class TestSamplePlugin:
 
 class TestMain:
     def test_non_interactive_dry_run(
-        self, all_tools_available, monkeypatch: pytest.MonkeyPatch
+        self, all_tools_available, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         commands: list[list[str]] = []
         monkeypatch.setattr(
-            _wizard, "_run", lambda cmd, **kwargs: commands.append(cmd) or 0
+            _wizard, "_run", lambda cmd, **kwargs: commands.append(cmd) or 0,
         )
         _wizard.main(["--non-interactive", "--dry-run"])
         assert ["uv", "sync", "--all-extras"] in commands

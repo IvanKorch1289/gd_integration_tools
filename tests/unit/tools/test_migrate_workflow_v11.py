@@ -98,7 +98,7 @@ class TestScanFile:
 
 class TestMainCli:
     def test_strict_mode_returns_1_when_findings(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
     ) -> None:
         from migrate_workflow_v11 import main
 
@@ -116,7 +116,7 @@ class TestMainCli:
         assert "random.random" in captured.out
 
     def test_no_findings_returns_0(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
     ) -> None:
         from migrate_workflow_v11 import main
 
@@ -125,7 +125,7 @@ class TestMainCli:
         assert rc == 0
 
     def test_json_emits_structured_report(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
     ) -> None:
         import json as _json
 

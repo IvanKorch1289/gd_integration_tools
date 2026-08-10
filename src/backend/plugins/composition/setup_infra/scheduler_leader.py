@@ -76,7 +76,7 @@ async def _start_scheduler_with_leader_election() -> None:
     from src.backend.infrastructure.clients.storage.redis_lock import RedisLock
 
     lock = RedisLock(
-        _SCHEDULER_LEADER_LOCK_KEY, ttl_seconds=_SCHEDULER_LEADER_LOCK_TTL_S
+        _SCHEDULER_LEADER_LOCK_KEY, ttl_seconds=_SCHEDULER_LEADER_LOCK_TTL_S,
     )
     acquired = await lock.acquire(blocking_timeout=0)
     if not acquired:
@@ -107,7 +107,7 @@ async def _start_scheduler_with_leader_election() -> None:
     # S71 W3: start heartbeat BEFORE scheduler, чтобы lock не expired
     # до того, как scheduler начнёт работать.
     _scheduler_heartbeat_task = asyncio.create_task(
-        _scheduler_heartbeat_loop(), name="scheduler-leader-heartbeat"
+        _scheduler_heartbeat_loop(), name="scheduler-leader-heartbeat",
     )
     await get_scheduler_manager().start()
 
@@ -139,13 +139,13 @@ async def _scheduler_heartbeat_loop() -> None:
                 break
             try:
                 extended = await _scheduler_lock_handle.extend(
-                    additional_seconds=_SCHEDULER_LEADER_LOCK_TTL_S
+                    additional_seconds=_SCHEDULER_LEADER_LOCK_TTL_S,
                 )
                 if not extended:
                     app_logger.error(
                         "Scheduler heartbeat: extend returned False — lock "
                         "NO LONGER owned by this instance! Shutting down "
-                        "scheduler to avoid duplicate cron execution."
+                        "scheduler to avoid duplicate cron execution.",
                     )
                     # Mark leader status как потерянный, чтобы
                     # _stop_scheduler_if_leader сразу понял.
@@ -159,7 +159,7 @@ async def _scheduler_heartbeat_loop() -> None:
                 # Transient Redis error — log + retry next tick.
                 # До 4 consecutive failures tolerated.
                 app_logger.warning(
-                    "Scheduler heartbeat: extend failed (will retry): %s", exc
+                    "Scheduler heartbeat: extend failed (will retry): %s", exc,
                 )
     except asyncio.CancelledError:
         app_logger.info("Scheduler heartbeat loop cancelled (shutdown)")
@@ -193,7 +193,7 @@ async def _stop_scheduler_if_leader() -> None:
     if not _scheduler_leader_acquired:
         app_logger.info(
             "Scheduler leader election: this instance was NOT leader — "
-            "skipping scheduler.stop()."
+            "skipping scheduler.stop().",
         )
         _scheduler_lock_handle = None
         return

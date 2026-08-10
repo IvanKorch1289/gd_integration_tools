@@ -18,7 +18,7 @@ class _Message:
 
 class _Exchange:
     def __init__(
-        self, body: Any = None, properties: dict[str, Any] | None = None
+        self, body: Any = None, properties: dict[str, Any] | None = None,
     ) -> None:
         self.in_message = _Message(body=body)
         self.properties: dict[str, Any] = properties or {}
@@ -78,8 +78,8 @@ class TestPromptComposerProcessor:
 
     def test_to_spec_custom(self) -> None:
         proc = PromptComposerProcessor(
-            template="T", context_property="ctx", output_property="out"
+            template="T", context_property="ctx", output_property="out",
         )
         assert proc.to_spec() == {
-            "compose_prompt": {"template": "T", "context_property": "ctx"}
+            "compose_prompt": {"template": "T", "context_property": "ctx"},
         }

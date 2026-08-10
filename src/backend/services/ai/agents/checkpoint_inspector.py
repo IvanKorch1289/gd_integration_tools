@@ -62,7 +62,7 @@ class CheckpointInspector:
         self._wrapper = saver_wrapper
 
     async def list_sessions(
-        self, *, limit: int = 50, offset: int = 0
+        self, *, limit: int = 50, offset: int = 0,
     ) -> list[SessionInfo]:
         """Перечислить активные session-id'ы.
 
@@ -92,11 +92,11 @@ class CheckpointInspector:
                     SessionInfo(
                         session_id=sid,
                         last_checkpoint_id=last_cfg.get("configurable", {}).get(
-                            "checkpoint_id", ""
+                            "checkpoint_id", "",
                         ),
                         updated_at=str(getattr(last, "checkpoint", {}).get("ts", "")),
                         checkpoint_count=len(ckpts),
-                    )
+                    ),
                 )
         except Exception as exc:
             logger.warning("CheckpointInspector list_sessions failed: %s", exc)
@@ -145,8 +145,8 @@ class CheckpointInspector:
                     "configurable": {
                         "thread_id": session_id,
                         "checkpoint_id": checkpoint_id,
-                    }
-                }
+                    },
+                },
             )
         except Exception as exc:
             logger.warning("restore failed: %s", exc)

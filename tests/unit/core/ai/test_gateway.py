@@ -46,14 +46,14 @@ class _FakeSanitizer:
     """
 
     def __init__(
-        self, *, raise_runtime: bool = False, raise_unexpected: bool = False
+        self, *, raise_runtime: bool = False, raise_unexpected: bool = False,
     ) -> None:
         self.calls: list[tuple[str, str | None]] = []
         self._raise_runtime = raise_runtime
         self._raise_unexpected = raise_unexpected
 
     async def sanitize_async(
-        self, text: str, *, language: str | None = None
+        self, text: str, *, language: str | None = None,
     ) -> _FakeSanitizerResult:
         self.calls.append((text, language))
         if self._raise_runtime:
@@ -69,7 +69,7 @@ class _FakeSanitizer:
 
 
 def _make_policy(
-    *, sanitizer_language: str | None = None, audit_extra: dict[str, str] | None = None
+    *, sanitizer_language: str | None = None, audit_extra: dict[str, str] | None = None,
 ) -> AIPolicySpec:
     """Удобный конструктор минимально-валидной AIPolicySpec."""
     input_sanitizers: list[SanitizerRef] = []
@@ -165,7 +165,7 @@ async def test_input_sanitizers_handles_unexpected_exception_gracefully() -> Non
     sanitizer = _FakeSanitizer(raise_unexpected=True)
     gateway = AIGateway(sanitizer=sanitizer)
     request = AIRequest(
-        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="any"
+        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="any",
     )
 
     result = await gateway._apply_input_sanitizers(request, policy=None)
@@ -179,7 +179,7 @@ async def test_input_sanitizers_uses_language_from_policy() -> None:
     gateway = AIGateway(sanitizer=sanitizer)
     policy = _make_policy(sanitizer_language="en")
     request = AIRequest(
-        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="hello"
+        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="hello",
     )
 
     await gateway._apply_input_sanitizers(request, policy=policy)
@@ -286,7 +286,7 @@ async def test_audit_emit_uses_injected_service() -> None:
     audit.emit = AsyncMock()
     gateway = AIGateway(audit_service=audit)
     request = AIRequest(
-        workflow_id="credit_check", tenant_id="t-premium", correlation_id="req-xyz"
+        workflow_id="credit_check", tenant_id="t-premium", correlation_id="req-xyz",
     )
     response = AIResponse(
         content="ok",

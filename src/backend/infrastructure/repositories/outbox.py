@@ -46,7 +46,7 @@ __all__ = (
 #: "other" — fallback для existing rows (pre-migration) и unknown transports.
 #: Adding a new transport: extend this set + add OutboxBackend writer для него.
 ALLOWED_TRANSPORTS: frozenset[str] = frozenset(
-    {"kafka", "rabbitmq", "nats", "clickhouse", "s3", "webhook", "other"}
+    {"kafka", "rabbitmq", "nats", "clickhouse", "s3", "webhook", "other"},
 )
 
 
@@ -73,7 +73,7 @@ def validate_transport(transport: str) -> str:
         raise ValueError(
             f"Unknown transport: {transport!r}. "
             f"Allowed: {sorted(ALLOWED_TRANSPORTS)}. "
-            f"Add to ALLOWED_TRANSPORTS если нужен новый transport."
+            f"Add to ALLOWED_TRANSPORTS если нужен новый transport.",
         )
     return transport
 
@@ -103,7 +103,7 @@ async def write_within_session(
     """
     transport = validate_transport(transport)
     msg = OutboxMessage(
-        topic=topic, payload=payload, headers=headers or {}, transport=transport
+        topic=topic, payload=payload, headers=headers or {}, transport=transport,
     )
     session.add(msg)
     await session.flush()  # чтобы получить id без commit
@@ -124,7 +124,7 @@ async def write(
     async with main_session_manager.create_session() as session:
         async with main_session_manager.transaction(session):
             return await write_within_session(
-                session, topic=topic, payload=payload, headers=headers, transport=transport
+                session, topic=topic, payload=payload, headers=headers, transport=transport,
             )
 
 
@@ -168,7 +168,7 @@ def _advisory_lock_key(worker_id: str) -> int:
 
 
 async def claim_pending(
-    limit: int = 100, *, worker_id: str, lease_seconds: int = 300
+    limit: int = 100, *, worker_id: str, lease_seconds: int = 300,
 ) -> list[OutboxMessage]:
     """Multi-instance safe атомарный claim batch pending outbox-сообщений.
 
@@ -238,9 +238,9 @@ async def claim_pending(
             got_lock = bool(
                 (
                     await session.execute(
-                        text("SELECT pg_try_advisory_xact_lock(:k)"), {"k": lock_key}
+                        text("SELECT pg_try_advisory_xact_lock(:k)"), {"k": lock_key},
                     )
-                ).scalar()
+                ).scalar(),
             )
             if not got_lock:
                 return []
@@ -270,7 +270,7 @@ async def claim_pending(
                               last_error, transport, published_at, next_attempt_at,
                               created_at, updated_at,
                               claimed_by, claimed_at, claimed_until
-                    """
+                    """,
                 ),
                 {
                     "worker_id": worker_id,
@@ -304,7 +304,7 @@ async def claim_pending(
 
 
 async def reset_stuck_processing(
-    *, threshold_seconds: int = 300, limit: int = 1000
+    *, threshold_seconds: int = 300, limit: int = 1000,
 ) -> int:
     """S72 W3 — TD-S64-W1 closure, sweeper job (ADR-0087).
 
@@ -371,7 +371,7 @@ async def reset_stuck_processing(
                         LIMIT :limit
                     )
                     RETURNING id
-                    """
+                    """,
                 ),
                 {"cutoff": cutoff, "limit": limit},
             )
@@ -380,7 +380,7 @@ async def reset_stuck_processing(
 
 
 async def fetch_stuck_pending(
-    *, threshold_seconds: int, limit: int = 100
+    *, threshold_seconds: int, limit: int = 100,
 ) -> list[OutboxMessage]:
     """Возвращает pending-сообщения, которые "застряли" дольше threshold.
 
@@ -488,12 +488,12 @@ async def mark_sent(message_id: int) -> None:
                     claimed_by=None,
                     claimed_at=None,
                     claimed_until=None,
-                )
+                ),
             )
 
 
 async def mark_failed(
-    message_id: int, error: str, *, max_retries: int = 5, backoff_seconds: int = 60
+    message_id: int, error: str, *, max_retries: int = 5, backoff_seconds: int = 60,
 ) -> None:
     """Инкрементирует retry_count, либо переводит в ``failed`` при исчерпании лимита.
 
@@ -506,7 +506,7 @@ async def mark_failed(
     async with main_session_manager.create_session() as session:
         async with main_session_manager.transaction(session):
             result = await session.execute(
-                select(OutboxMessage).where(OutboxMessage.id == message_id)
+                select(OutboxMessage).where(OutboxMessage.id == message_id),
             )
             msg = result.scalar_one_or_none()
             if msg is None:

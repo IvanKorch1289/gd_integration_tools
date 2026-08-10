@@ -27,7 +27,7 @@ class InputGuardMixin:
         _protocol_self: _AIPolicyEnforcerProtocol
 
     async def guard_input(
-        self: _AIPolicyEnforcerProtocol, prompt: str, policy: AIPolicySpec
+        self: _AIPolicyEnforcerProtocol, prompt: str, policy: AIPolicySpec,
     ) -> list[GuardResult]:
         """Применить :attr:`AIPolicySpec.input_guards` к sanitized prompt.
 
@@ -49,7 +49,7 @@ class InputGuardMixin:
         return results
 
     async def _guard_input_one(
-        self: _AIPolicyEnforcerProtocol, prompt: str, ref: GuardRef
+        self: _AIPolicyEnforcerProtocol, prompt: str, ref: GuardRef,
     ) -> GuardResult | None:
         """Apply single input guard ref.
 
@@ -85,7 +85,7 @@ class InputGuardMixin:
                     content=prompt,
                 )
             return GuardResult(
-                guard_name=ref.name, verdict="warned", categories=["llm_guard_archived"]
+                guard_name=ref.name, verdict="warned", categories=["llm_guard_archived"],
             )
 
         # S172 audit: Rebuff archived 2026-07-16 (upstream gone).
@@ -104,7 +104,7 @@ class InputGuardMixin:
                     content=prompt,
                 )
             return GuardResult(
-                guard_name=ref.name, verdict="warned", categories=["rebuff_archived"]
+                guard_name=ref.name, verdict="warned", categories=["rebuff_archived"],
             )
 
         # Lakera
@@ -115,7 +115,7 @@ class InputGuardMixin:
         return None
 
     async def _guard_input_lakera(
-        self: _AIPolicyEnforcerProtocol, prompt: str, ref: GuardRef, on_block: str
+        self: _AIPolicyEnforcerProtocol, prompt: str, ref: GuardRef, on_block: str,
     ) -> GuardResult:
         """Lakera input guard check."""
         try:

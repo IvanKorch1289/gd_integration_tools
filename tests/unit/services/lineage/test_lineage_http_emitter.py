@@ -199,7 +199,7 @@ class TestOpenLineageHttpEmitter:
 
     def test_auth_token_in_header(self) -> None:
         cfg = OpenLineageHttpConfig(
-            "http://marquez:5000", auth_token="secret-123", batch_size=1
+            "http://marquez:5000", auth_token="secret-123", batch_size=1,
         )
         em = OpenLineageHttpEmitter(cfg)
 

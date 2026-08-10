@@ -74,7 +74,7 @@ def test_to_dspy_examples_falls_back_to_dict_when_no_dspy() -> None:
     """Без dspy-ai to_dspy_examples возвращает dict-list."""
     builder = DSPyDatasetBuilder(feedback_service=None)
     records = [
-        DSPyExampleRecord(prompt="p", completion="c", label="positive", metadata={})
+        DSPyExampleRecord(prompt="p", completion="c", label="positive", metadata={}),
     ]
     # При отсутствии dspy функция отдаёт dict-объекты — это работает на любом окружении.
     # (В CI dspy-ai может быть, тогда метод вернёт настоящие Example — обе ветки валидны.)
@@ -94,8 +94,8 @@ async def test_feedback_trainer_noop_when_no_dspy() -> None:
                 "label": "positive",
                 "id": 1,
                 "tenant_id": "t",
-            }
-        ]
+            },
+        ],
     )
     storage = AsyncMock()
     storage.save = AsyncMock(return_value="v1")

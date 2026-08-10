@@ -42,7 +42,7 @@ class TestAuthValidateProcessor:
         exchange = _ex({})
         exchange.set_property("request", MagicMock())
         with patch(
-            "src.backend.dsl.engine.processors.security._load_verifiers"
+            "src.backend.dsl.engine.processors.security._load_verifiers",
         ) as mock_load:
             verifier = AsyncMock(return_value=AuthContext(AuthMethod.JWT, "user1"))
             mock_load.return_value = {AuthMethod.JWT: verifier}
@@ -55,7 +55,7 @@ class TestAuthValidateProcessor:
         exchange = _ex({})
         exchange.set_property("request", MagicMock())
         with patch(
-            "src.backend.dsl.engine.processors.security._load_verifiers"
+            "src.backend.dsl.engine.processors.security._load_verifiers",
         ) as mock_load:
             mock_load.return_value = {}
             await proc.process(exchange, None)  # type: ignore[arg-type]
@@ -78,5 +78,5 @@ class TestAuthValidateProcessor:
                 "methods": ["jwt", "api_key"],
                 "result_property": "auth_ctx",
                 "required": True,
-            }
+            },
         }

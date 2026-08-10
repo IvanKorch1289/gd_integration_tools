@@ -97,7 +97,7 @@ class TestInjectPromptCache:
                     {"type": "text", "text": "block 1"},
                     {"type": "text", "text": "block 2"},
                 ],
-            }
+            },
         ]
         result = inject_prompt_cache(messages, "anthropic/claude-3-5-sonnet-20241022")
         last_block = result[0]["content"][-1]
@@ -110,7 +110,7 @@ class TestInjectPromptCache:
         messages = [{"role": "user", "content": "Hello"}]
         config = PromptCacheConfig(enabled=False)
         result = inject_prompt_cache(
-            messages, "anthropic/claude-3-5-sonnet-20241022", config=config
+            messages, "anthropic/claude-3-5-sonnet-20241022", config=config,
         )
         assert result == messages
 
@@ -118,7 +118,7 @@ class TestInjectPromptCache:
         messages = [{"role": "user", "content": "Hello"}]
         config = PromptCacheConfig(ttl_seconds=600)
         result = inject_prompt_cache(
-            messages, "anthropic/claude-3-5-sonnet-20241022", config=config
+            messages, "anthropic/claude-3-5-sonnet-20241022", config=config,
         )
         cache_control = result[0]["content"][0]["cache_control"]
         assert cache_control["ttl"] == 600
@@ -131,7 +131,7 @@ class TestInjectPromptCache:
         ]
         config = PromptCacheConfig(apply_to_user_content=False)
         result = inject_prompt_cache(
-            messages, "anthropic/claude-3-5-sonnet-20241022", config=config
+            messages, "anthropic/claude-3-5-sonnet-20241022", config=config,
         )
         # System has cache_control.
         assert "cache_control" in result[0]["content"][0]
@@ -213,7 +213,7 @@ class TestIsOpenAICacheable:
         assert is_openai_cacheable(model) is False
 
     @pytest.mark.parametrize(
-        "model", ["", "anthropic/claude-3-5-sonnet", "gemini/gemini-pro", "gpt-4o"]
+        "model", ["", "anthropic/claude-3-5-sonnet", "gemini/gemini-pro", "gpt-4o"],
     )
     def test_non_openai_returns_false(self, model: str) -> None:
         from src.backend.infrastructure.ai.prompt_cache_middleware import (
@@ -266,7 +266,7 @@ class TestInjectOpenAIPromptCache:
 
         cfg = PromptCacheConfig(enabled=False)
         kwargs = inject_openai_prompt_cache(
-            [{"role": "user", "content": "Hi"}], "openai/gpt-4o-mini", cfg
+            [{"role": "user", "content": "Hi"}], "openai/gpt-4o-mini", cfg,
         )
         assert kwargs == {}
 

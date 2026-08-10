@@ -63,7 +63,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
         self._breaker = get_breaker_registry().get_or_create(
             "cdc-kafka-debezium",
             BreakerSpec(
-                name="cdc-kafka-debezium", failure_threshold=5, recovery_timeout=30.0
+                name="cdc-kafka-debezium", failure_threshold=5, recovery_timeout=30.0,
             ),
         )
 
@@ -111,7 +111,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
         consumer.subscribe(topics)
 
         logger.info(
-            "CDC Kafka consumer started: topics=%s, group=%s", topics, self._group_id
+            "CDC Kafka consumer started: topics=%s, group=%s", topics, self._group_id,
         )
 
         try:
@@ -119,7 +119,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                 try:
                     # 1-second timeout to check sub.active
                     msg_batch = await asyncio.wait_for(
-                        consumer.getmany(timeout_ms=1000, max_records=100), timeout=2.0
+                        consumer.getmany(timeout_ms=1000, max_records=100), timeout=2.0,
                     )
                 except TimeoutError:
                     continue
@@ -154,18 +154,18 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                     if last_successful_offset is not None:
                         try:
                             await consumer.commit(
-                                {tp: last_successful_offset + 1}
+                                {tp: last_successful_offset + 1},
                             )
                         except Exception as commit_exc:
                             logger.warning(
-                                "CDC Kafka offset commit failed: %s", commit_exc
+                                "CDC Kafka offset commit failed: %s", commit_exc,
                             )
         finally:
             await consumer.stop()
             self._consumer = None
 
     def _parse_debezium_event(
-        self, payload: dict[str, Any], *, table: str, profile: str
+        self, payload: dict[str, Any], *, table: str, profile: str,
     ) -> CDCEvent | None:
         """Parse Debezium ChangeEvent → CDCEvent.
 
@@ -188,7 +188,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
                 old=payload.get("before"),
                 new=payload.get("after"),
                 timestamp=datetime.fromtimestamp(
-                    payload.get("ts_ms", 0) / 1000, tz=UTC
+                    payload.get("ts_ms", 0) / 1000, tz=UTC,
                 ),
             )
         except Exception as exc:

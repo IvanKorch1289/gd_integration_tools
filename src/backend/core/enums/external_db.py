@@ -183,7 +183,7 @@ class ExternalDBObjectMeta(BaseModel):
                 "SELECT report_date, total_amount "
                 "FROM public.daily_report "
                 "WHERE report_date = :report_date"
-            )
+            ),
         ],
     )
 
@@ -251,7 +251,7 @@ class ExternalDBObjectMeta(BaseModel):
             and not self.parameters
         ):
             raise ValueError(
-                "Для function/procedure необходимо явно описать parameters"
+                "Для function/procedure необходимо явно описать parameters",
             )
 
         if (
@@ -369,7 +369,7 @@ class ExternalDBObjectChoices(Enum):
         parameter_mode=ExternalDBParameterModeChoices.named,
         parameters=[
             ExternalDBParameterMeta(
-                body_field="report_date", db_name="report_date", bind_name="report_date"
+                body_field="report_date", db_name="report_date", bind_name="report_date",
             ),
             ExternalDBParameterMeta(
                 body_field="limit",

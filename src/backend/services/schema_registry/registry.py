@@ -141,7 +141,7 @@ class ServiceSchemaRegistry:
         return view
 
     def __init__(
-        self, *, strict_validation: bool = False, metrics: MetricsRegistry | None = None
+        self, *, strict_validation: bool = False, metrics: MetricsRegistry | None = None,
     ) -> None:
         self._by_kind: dict[SchemaKind, dict[str, SchemaEntry]] = {
             kind: {} for kind in SchemaKind
@@ -196,7 +196,7 @@ class ServiceSchemaRegistry:
                     "Total schema lookups",
                     labels=("kind", "hit"),
                 ).labels(
-                    kind=kind.value, hit="true" if result is not None else "false"
+                    kind=kind.value, hit="true" if result is not None else "false",
                 ).inc()
             except (AttributeError, TypeError, ValueError) as counter_exc:  # pragma: no cover - metrics best-effort
                 # cycle-9/D-AUDIT-938: см. выше — тот же narrow для get path.
@@ -287,7 +287,7 @@ class ServiceSchemaRegistry:
                         "spec_schema": entry.spec_schema,
                         "output_schema": entry.output_schema,
                         "meta": dict(entry.meta),
-                    }
+                    },
                 )
         return {"version": CURRENT_SNAPSHOT_VERSION, "entries": entries}
 

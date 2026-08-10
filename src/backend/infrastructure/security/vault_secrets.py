@@ -87,7 +87,7 @@ class VaultSecretsBackend(SecretsBackend):
         # Ponytail (Layer 2 Cycle 2): ручной dict + tuple(now, value) +
         # time.time() expiry-check → TTLCache(maxsize, ttl).
         self._cache: TTLCache[str, str | None] = TTLCache(
-            maxsize=10_000, ttl=cache_ttl_s
+            maxsize=10_000, ttl=cache_ttl_s,
         )
         self._lock = asyncio.Lock()
 
@@ -152,7 +152,7 @@ class VaultSecretsBackend(SecretsBackend):
 
     def _do_read(self, client: hvac.Client, path: str, field: str | None) -> str | None:
         response = client.secrets.kv.v2.read_secret_version(
-            path=path, mount_point=self._mount
+            path=path, mount_point=self._mount,
         )
         data: dict[str, Any] = response.get("data", {}).get("data", {})
         if field is not None:
@@ -193,13 +193,13 @@ class VaultSecretsBackend(SecretsBackend):
         client = self._get_client()
         try:
             client.secrets.kv.v2.create_or_update_secret(
-                path=path, secret=secret, mount_point=self._mount
+                path=path, secret=secret, mount_point=self._mount,
             )
         except Exception as exc:
             if self._is_auth_error(exc):
                 client = self._reauth()
                 client.secrets.kv.v2.create_or_update_secret(
-                    path=path, secret=secret, mount_point=self._mount
+                    path=path, secret=secret, mount_point=self._mount,
                 )
             else:
                 raise
@@ -217,7 +217,7 @@ class VaultSecretsBackend(SecretsBackend):
         client = self._get_client()
         try:
             client.secrets.kv.v2.delete_metadata_and_all_versions(
-                path=path, mount_point=self._mount
+                path=path, mount_point=self._mount,
             )
             return True
         except Exception as exc:
@@ -225,7 +225,7 @@ class VaultSecretsBackend(SecretsBackend):
                 client = self._reauth()
                 try:
                     client.secrets.kv.v2.delete_metadata_and_all_versions(
-                        path=path, mount_point=self._mount
+                        path=path, mount_point=self._mount,
                     )
                     return True
                 except Exception as _:
@@ -244,14 +244,14 @@ class VaultSecretsBackend(SecretsBackend):
         client = self._get_client()
         try:
             response = client.secrets.kv.v2.list_secrets(
-                path=base, mount_point=self._mount
+                path=base, mount_point=self._mount,
             )
         except Exception as exc:
             if self._is_auth_error(exc):
                 client = self._reauth()
                 try:
                     response = client.secrets.kv.v2.list_secrets(
-                        path=base, mount_point=self._mount
+                        path=base, mount_point=self._mount,
                     )
                 except Exception as _:
                     return []

@@ -92,7 +92,7 @@ class MqttSink(Sink):
         ctx.verify_mode = ssl.CERT_REQUIRED
         if self.client_cert_path and self.client_key_path:
             ctx.load_cert_chain(
-                certfile=self.client_cert_path, keyfile=self.client_key_path
+                certfile=self.client_cert_path, keyfile=self.client_key_path,
             )
         return ctx
 
@@ -134,11 +134,11 @@ class MqttSink(Sink):
                 timeout=self.timeout,
             ) as client:
                 await client.publish(
-                    self.topic, payload=body, qos=self.qos, retain=self.retain
+                    self.topic, payload=body, qos=self.qos, retain=self.retain,
                 )
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
+                ok=False, details={"error": str(exc) or exc.__class__.__name__},
             )
 
         return SinkResult(
@@ -172,7 +172,7 @@ class MqttSink(Sink):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )
         latency_ms = (time.perf_counter() - start) * 1000.0
         return HealthResult.ok(latency_ms=latency_ms, mode=mode)

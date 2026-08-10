@@ -136,7 +136,7 @@ class TestSendMessage:
 
         client = _make_client(bot_config, handler)
         message_id = await client.send_message(
-            TelegramMessage(chat_id="@chan", text="hello")
+            TelegramMessage(chat_id="@chan", text="hello"),
         )
         assert message_id == 42
         assert captured["method"] == "POST"
@@ -148,7 +148,7 @@ class TestSendMessage:
         }
 
     async def test_send_message_with_inline_keyboard(
-        self, bot_config: TelegramBotConfig
+        self, bot_config: TelegramBotConfig,
     ) -> None:
         """Inline keyboard передаётся в reply_markup."""
         captured: dict[str, Any] = {}
@@ -163,20 +163,20 @@ class TestSendMessage:
                 chat_id="c1",
                 text="x",
                 inline_keyboard=[[TelegramButton(text="Y", callback_data="y")]],
-            )
+            ),
         )
         assert captured["json"]["reply_markup"]["inline_keyboard"] == [
-            [{"text": "Y", "callback_data": "y"}]
+            [{"text": "Y", "callback_data": "y"}],
         ]
 
     async def test_send_message_telegram_error(
-        self, bot_config: TelegramBotConfig
+        self, bot_config: TelegramBotConfig,
     ) -> None:
         """``ok=false`` → ``HTTPStatusError`` с описанием."""
 
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(
-                200, json={"ok": False, "description": "chat not found"}
+                200, json={"ok": False, "description": "chat not found"},
             )
 
         client = _make_client(bot_config, handler)
@@ -188,7 +188,7 @@ class TestSendMessage:
 
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(
-                401, json={"ok": False, "description": "unauthorized"}
+                401, json={"ok": False, "description": "unauthorized"},
             )
 
         client = _make_client(bot_config, handler)
@@ -203,7 +203,7 @@ class TestReplyEditDelete:
     """Reply, edit, delete сообщений."""
 
     async def test_reply_includes_reply_to_message_id(
-        self, bot_config: TelegramBotConfig
+        self, bot_config: TelegramBotConfig,
     ) -> None:
         """Reply payload содержит ``reply_to_message_id``."""
         captured: dict[str, Any] = {}
@@ -232,7 +232,7 @@ class TestReplyEditDelete:
         assert captured["json"]["text"] == "new"
 
     async def test_edit_message_only_keyboard(
-        self, bot_config: TelegramBotConfig
+        self, bot_config: TelegramBotConfig,
     ) -> None:
         """edit_message без text → POST /editMessageReplyMarkup."""
         captured: dict[str, Any] = {}
@@ -296,7 +296,7 @@ class TestExtra:
 
         client = _make_client(bot_config, handler)
         msg_id = await client.send_document(
-            chat_id="c1", file_data=b"hello", file_name="x.txt", caption="cap"
+            chat_id="c1", file_data=b"hello", file_name="x.txt", caption="cap",
         )
         assert msg_id == 333
         assert captured["path"] == "/bot12345:ABCDEF/sendDocument"
@@ -327,7 +327,7 @@ class TestContextManager:
     """Async with open/close семантика."""
 
     async def test_context_manager_lifecycle(
-        self, bot_config: TelegramBotConfig
+        self, bot_config: TelegramBotConfig,
     ) -> None:
         """``async with`` создаёт и закрывает HTTP-клиент."""
         client = TelegramBotClient(bot_config)

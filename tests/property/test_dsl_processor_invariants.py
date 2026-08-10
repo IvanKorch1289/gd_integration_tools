@@ -42,7 +42,7 @@ st_processor_name: st.SearchStrategy[str] = st.sampled_from(
         "CacheProcessor",
         "GuardrailsProcessor",
         "SemanticRouterProcessor",
-    ]
+    ],
 )
 
 
@@ -54,10 +54,10 @@ class TestProcessorIdempotency:
 
     @settings(max_examples=50, deadline=None)
     @given(
-        processor_name=st_processor_name, context=st_execution_context, kwargs=st_kwargs
+        processor_name=st_processor_name, context=st_execution_context, kwargs=st_kwargs,
     )
     def test_processor_twice_same_as_once(
-        self, processor_name: str, context: object, kwargs: dict
+        self, processor_name: str, context: object, kwargs: dict,
     ) -> None:
         """Applying any processor twice should yield same result as applying once."""
         # Import here to avoid import errors at collection time for processors
@@ -99,10 +99,10 @@ class TestProcessorIdempotency:
             result2 = processor.process(exc, context)
             # Result should be consistent
             assert result1 is None or isinstance(
-                result1, (dict, bool, str, int, type(None))
+                result1, (dict, bool, str, int, type(None)),
             )
             assert result2 is None or isinstance(
-                result2, (dict, bool, str, int, type(None))
+                result2, (dict, bool, str, int, type(None)),
             )
         except Exception as exc:
             # Some processors require specific exchange setup
@@ -115,12 +115,12 @@ class TestProcessorDeterminism:
     @settings(max_examples=30, deadline=None)
     @given(
         processor_name=st.sampled_from(
-            ["TokenBudgetProcessor", "VectorSearchProcessor", "PromptComposerProcessor"]
+            ["TokenBudgetProcessor", "VectorSearchProcessor", "PromptComposerProcessor"],
         ),
         context=st_execution_context,
     )
     def test_same_processor_same_context_same_result(
-        self, processor_name: str, context: object
+        self, processor_name: str, context: object,
     ) -> None:
         """Two calls with same inputs should produce identical outputs."""
         from importlib import import_module
@@ -169,7 +169,7 @@ class TestExchangeRoundTrip:
                 st.floats(allow_nan=False, allow_infinity=False),
             ),
             max_size=16,
-        )
+        ),
     )
     def test_exchange_payload_clone_roundtrip(self, data: dict) -> None:
         """Cloning exchange payload preserves all values (no silent data loss)."""

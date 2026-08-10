@@ -234,7 +234,7 @@ class TestCheckMixinRaceAsync:
             i = 0
             while not stop.is_set():
                 gate._tenant_cache_granted(
-                    (f"t{i % 2}", "plug", "db.read", f"s{i % 32}")
+                    (f"t{i % 2}", "plug", "db.read", f"s{i % 32}"),
                 )
                 i += 1
                 await asyncio.sleep(0)
@@ -278,7 +278,7 @@ class TestCheckMixinRaceAsync:
             try:
                 while not stop.is_set():
                     gate._tenant_cache_granted(
-                        ("tenant_a", "plug", "db.read", f"s{i % 32}")
+                        ("tenant_a", "plug", "db.read", f"s{i % 32}"),
                     )
                     if i % 5 == 0:
                         gate._invalidate_tenant("tenant_a", "plug")

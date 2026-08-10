@@ -141,7 +141,7 @@ class PipesAndFiltersProcessor(BaseProcessor):
                 # else: log + continue
             if exchange.stopped:
                 _log.debug(
-                    "PipesAndFilters: pipeline stopped at step %d/%d", idx + 1, total
+                    "PipesAndFilters: pipeline stopped at step %d/%d", idx + 1, total,
                 )
                 break
 

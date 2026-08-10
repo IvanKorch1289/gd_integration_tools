@@ -74,7 +74,7 @@ class PIIFacade:
             from src.backend.core.policy.pii_fail_closed import raise_pii_fail_closed
 
             raise_pii_fail_closed(
-                source="pii.facade.mask", payload_size=len(text), exc=exc
+                source="pii.facade.mask", payload_size=len(text), exc=exc,
             )
 
     def mask_struct(self, obj: Any) -> Any:
@@ -110,7 +110,7 @@ class PIIFacade:
             from src.backend.core.policy.pii_fail_closed import raise_pii_fail_closed
 
             raise_pii_fail_closed(
-                source="pii.facade.tokenize", payload_size=len(text), exc=exc
+                source="pii.facade.tokenize", payload_size=len(text), exc=exc,
             )
 
     def detokenize(self, text: str) -> str:

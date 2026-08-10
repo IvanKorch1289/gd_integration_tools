@@ -153,14 +153,14 @@ class AuthorizationFacade:
 
         if required_capability:
             cap_decision = await self._check_capability(
-                subject, required_capability, tenant_id
+                subject, required_capability, tenant_id,
             )
             if not cap_decision.allowed:
                 return cap_decision
 
         if required_action and required_resource:
             policy_decision = self.check(
-                subject, required_action, required_resource, context
+                subject, required_action, required_resource, context,
             )
             if not policy_decision:
                 return AuthDecision(
@@ -286,7 +286,7 @@ class AuthorizationFacade:
     ) -> AuthDecision:
         try:
             result = await self.auth_facade.verify_request(
-                api_key, method="api_key"
+                api_key, method="api_key",
             )
 
             if not result.is_authenticated:
@@ -298,7 +298,7 @@ class AuthorizationFacade:
 
             if required_capability:
                 cap_decision = await self._check_capability(
-                    result.subject, required_capability, result.tenant_id
+                    result.subject, required_capability, result.tenant_id,
                 )
                 if not cap_decision.allowed:
                     return cap_decision
@@ -325,7 +325,7 @@ class AuthorizationFacade:
     ) -> AuthDecision:
         try:
             result = await self.auth_facade.verify_request(
-                jwt_token, method="jwt"
+                jwt_token, method="jwt",
             )
 
             if not result.is_authenticated:
@@ -337,7 +337,7 @@ class AuthorizationFacade:
 
             if required_capability:
                 cap_decision = await self._check_capability(
-                    result.subject, required_capability, result.tenant_id
+                    result.subject, required_capability, result.tenant_id,
                 )
                 if not cap_decision.allowed:
                     return cap_decision
@@ -431,7 +431,7 @@ class AuthorizationFacade:
 
             if tenant_id:
                 allowed = cap_facade.check_tenant(
-                    capability, tenant_id, principal_id=subject
+                    capability, tenant_id, principal_id=subject,
                 )
             else:
                 allowed = cap_facade.check(subject, capability)

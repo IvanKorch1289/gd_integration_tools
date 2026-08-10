@@ -107,7 +107,7 @@ class CorrelationIdProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, *, header: str = "x-correlation-id", name: str | None = None
+        self, *, header: str = "x-correlation-id", name: str | None = None,
     ) -> None:
         super().__init__(name=name or "correlation-id")
         self._header = header
@@ -131,7 +131,7 @@ class SchemaRegistryValidator(BaseProcessor):
     _cache: ClassVar[dict[str, Any]] = {}
 
     def __init__(
-        self, *, subject: str, schema_loader: Any = None, name: str | None = None
+        self, *, subject: str, schema_loader: Any = None, name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"schema:{subject}")
         self._subject = subject

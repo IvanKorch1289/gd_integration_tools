@@ -75,7 +75,7 @@ class TestSamlLogin:
         resp = await saml_mod.saml_login(request, return_to="https://evil.com")
         assert resp.status_code == 302
         request.app.state.saml_sp_handler.initiate_login.assert_called_once_with(
-            return_to=None
+            return_to=None,
         )
 
 

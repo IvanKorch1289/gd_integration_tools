@@ -117,7 +117,7 @@ def test_keydb_backend_with_active_replica(cfg_keydb: CacheSettings) -> None:
     ):
         result = create_cache_backend(cfg_keydb)
         mock_keydb.assert_called_once_with(
-            client=fake_redis_client, active_replica=True
+            client=fake_redis_client, active_replica=True,
         )
         # B-03: возвращённый backend обёрнут в TenantCacheBackend.
         assert isinstance(result, TenantCacheBackend)
@@ -135,7 +135,7 @@ def test_keydb_backend_without_active_replica(
     ):
         create_cache_backend(cfg_keydb_no_replica)
         mock_keydb.assert_called_once_with(
-            client=fake_redis_client, active_replica=False
+            client=fake_redis_client, active_replica=False,
         )
 
 
@@ -194,7 +194,7 @@ def test_redis_client_uses_raw_client_attribute() -> None:
     fake_singleton = MagicMock(spec=["_raw_client"])
     fake_singleton._raw_client = fake_raw
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.get_redis_client", return_value=fake_singleton
+        "src.backend.infrastructure.clients.storage.redis.get_redis_client", return_value=fake_singleton,
     ):
         result = factory._redis_client()
     assert result is fake_raw
@@ -207,7 +207,7 @@ def test_redis_client_falls_back_to_client_attribute() -> None:
     fake_singleton._raw_client = None  # first lookup yields None
     fake_singleton.client = fake_raw
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.get_redis_client", return_value=fake_singleton
+        "src.backend.infrastructure.clients.storage.redis.get_redis_client", return_value=fake_singleton,
     ):
         result = factory._redis_client()
     assert result is fake_raw
@@ -217,7 +217,7 @@ def test_redis_client_raises_if_not_initialized() -> None:
     """_redis_client raises RuntimeError if neither _raw_client nor client set."""
     fake_singleton = MagicMock(spec=[])  # no attributes
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.get_redis_client", return_value=fake_singleton
+        "src.backend.infrastructure.clients.storage.redis.get_redis_client", return_value=fake_singleton,
     ):
         with pytest.raises(RuntimeError, match="redis_client не инициализирован"):
             factory._redis_client()
@@ -318,7 +318,7 @@ def test_wrapped_backend_uses_unscoped_prefix_when_flag_off_and_no_tenant(
 
 
 def test_wrapped_backend_uses_tenant_prefix_when_flag_on_and_tenant_set(
-    monkeypatch: pytest.MonkeyPatch, cfg_memory: CacheSettings
+    monkeypatch: pytest.MonkeyPatch, cfg_memory: CacheSettings,
 ) -> None:
     """B-03: при flag=ON + tenant в ContextVar → префикс ``tenant:{id}:``."""
     from src.backend.core.config.features import feature_flags
@@ -339,7 +339,7 @@ def test_wrapped_backend_uses_tenant_prefix_when_flag_on_and_tenant_set(
 
 
 def test_wrapped_backend_uses_unscoped_prefix_when_flag_on_but_no_tenant(
-    monkeypatch: pytest.MonkeyPatch, cfg_memory: CacheSettings
+    monkeypatch: pytest.MonkeyPatch, cfg_memory: CacheSettings,
 ) -> None:
     """B-03: при flag=ON без tenant → ``tenant:_unscoped_:`` (изоляция).
 

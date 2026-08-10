@@ -50,7 +50,7 @@ class TestAdminClientFlagsDelegation:
     def test_get_flags_delegates(self, admin_client: AdminClient) -> None:
         expected = [{"name": "f1", "enabled": True}]
         with patch.object(
-            admin_client._flags, "get_flags", return_value=expected
+            admin_client._flags, "get_flags", return_value=expected,
         ) as mock:
             result = admin_client.get_flags()
         assert result == expected
@@ -58,27 +58,27 @@ class TestAdminClientFlagsDelegation:
 
     def test_toggle_flag_delegates(self, admin_client: AdminClient) -> None:
         with patch.object(
-            admin_client._flags, "toggle_flag", return_value=True
+            admin_client._flags, "toggle_flag", return_value=True,
         ) as mock:
             result = admin_client.toggle_flag("f1", True)
         assert result is True
         mock.assert_called_once_with("f1", True)
 
     def test_set_override_delegates_with_kwargs(
-        self, admin_client: AdminClient
+        self, admin_client: AdminClient,
     ) -> None:
         with patch.object(
-            admin_client._flags, "set_override", return_value={"ok": True}
+            admin_client._flags, "set_override", return_value={"ok": True},
         ) as mock:
             result = admin_client.set_override("f1", "v", tenant_id="t1", actor="a1")
         assert result == {"ok": True}
         mock.assert_called_once_with("f1", "v", tenant_id="t1", actor="a1")
 
     def test_clear_override_delegates_with_kwargs(
-        self, admin_client: AdminClient
+        self, admin_client: AdminClient,
     ) -> None:
         with patch.object(
-            admin_client._flags, "clear_override", return_value={"ok": True}
+            admin_client._flags, "clear_override", return_value={"ok": True},
         ) as mock:
             result = admin_client.clear_override("f1", tenant_id="t1")
         assert result == {"ok": True}
@@ -91,7 +91,7 @@ class TestAdminClientMetricsDelegation:
 
     def test_get_metrics_delegates(self, admin_client: AdminClient) -> None:
         with patch.object(
-            admin_client._metrics, "get_metrics", return_value={"orders": 42}
+            admin_client._metrics, "get_metrics", return_value={"orders": 42},
         ) as mock:
             result = admin_client.get_metrics()
         assert result == {"orders": 42}
@@ -99,7 +99,7 @@ class TestAdminClientMetricsDelegation:
 
     def test_get_health_delegates(self, admin_client: AdminClient) -> None:
         with patch.object(
-            admin_client._metrics, "get_health", return_value={"status": "ok"}
+            admin_client._metrics, "get_health", return_value={"status": "ok"},
         ) as mock:
             result = admin_client.get_health()
         assert result == {"status": "ok"}
@@ -111,17 +111,17 @@ class TestAdminClientConfigDelegation:
 
     def test_get_config_delegates(self, admin_client: AdminClient) -> None:
         with patch.object(
-            admin_client._config, "get_config", return_value={"version": "1.0"}
+            admin_client._config, "get_config", return_value={"version": "1.0"},
         ) as mock:
             result = admin_client.get_config()
         assert result == {"version": "1.0"}
         mock.assert_called_once_with()
 
     def test_get_trace_logs_delegates_with_limit(
-        self, admin_client: AdminClient
+        self, admin_client: AdminClient,
     ) -> None:
         with patch.object(
-            admin_client._config, "get_trace_logs", return_value=[{"trace": "x"}]
+            admin_client._config, "get_trace_logs", return_value=[{"trace": "x"}],
         ) as mock:
             result = admin_client.get_trace_logs(limit=50)
         assert result == [{"trace": "x"}]
@@ -152,16 +152,16 @@ class TestAdminClientAdminOnlyMethods:
         assert "boom" in result["error"]
 
     def test_get_processor_catalog_no_namespace(
-        self, admin_client: AdminClient
+        self, admin_client: AdminClient,
     ) -> None:
         with patch.object(admin_client, "get", return_value={"items": []}) as get:
             admin_client.get_processor_catalog(query="q", limit=10)
         get.assert_called_once_with(
-            "/api/v1/dsl/processors/search", params={"q": "q", "limit": 10}
+            "/api/v1/dsl/processors/search", params={"q": "q", "limit": 10},
         )
 
     def test_get_processor_catalog_with_namespace(
-        self, admin_client: AdminClient
+        self, admin_client: AdminClient,
     ) -> None:
         with patch.object(admin_client, "get", return_value={"items": []}) as get:
             admin_client.get_processor_catalog(query="q", namespace="ns1", limit=20)
@@ -183,12 +183,12 @@ class TestAdminClientAdminOnlyMethods:
 
     def test_get_audit_events_dict_with_events(self, admin_client: AdminClient) -> None:
         with patch.object(
-            admin_client, "get", return_value={"events": [{"event": "y"}]}
+            admin_client, "get", return_value={"events": [{"event": "y"}]},
         ):
             assert admin_client.get_audit_events() == [{"event": "y"}]
 
     def test_get_audit_events_dict_without_events(
-        self, admin_client: AdminClient
+        self, admin_client: AdminClient,
     ) -> None:
         with patch.object(admin_client, "get", return_value={"other": "key"}):
             assert admin_client.get_audit_events() == []
@@ -207,7 +207,7 @@ class TestAdminClientAdminOnlyMethods:
 
     def test_get_dependency_graph_happy(self, admin_client: AdminClient) -> None:
         with patch.object(
-            admin_client, "get", return_value={"nodes": ["a"], "edges": []}
+            admin_client, "get", return_value={"nodes": ["a"], "edges": []},
         ):
             assert admin_client.get_dependency_graph() == {"nodes": ["a"], "edges": []}
 
@@ -229,7 +229,7 @@ class TestAdminClientAdminOnlyMethods:
 
     def test_scaffold_plugin_minimal(self, admin_client: AdminClient) -> None:
         with patch.object(
-            admin_client, "post", return_value={"name": "p1", "created": True}
+            admin_client, "post", return_value={"name": "p1", "created": True},
         ) as post:
             result = admin_client.scaffold_plugin("p1")
         assert result == {"name": "p1", "created": True}
@@ -246,7 +246,7 @@ class TestAdminClientAdminOnlyMethods:
 
     def test_scaffold_plugin_full(self, admin_client: AdminClient) -> None:
         with patch.object(
-            admin_client, "post", return_value={"name": "p1", "created": False}
+            admin_client, "post", return_value={"name": "p1", "created": False},
         ) as post:
             result = admin_client.scaffold_plugin(
                 "p1",
@@ -276,12 +276,12 @@ class TestAdminClientAdminOnlyMethods:
 
     def test_get_langgraph_sessions_happy(self, admin_client: AdminClient) -> None:
         with patch.object(
-            admin_client, "get", return_value={"sessions": ["s1"], "count": 1}
+            admin_client, "get", return_value={"sessions": ["s1"], "count": 1},
         ) as get:
             result = admin_client.get_langgraph_sessions(limit=10, offset=5)
         assert result == {"sessions": ["s1"], "count": 1}
         get.assert_called_once_with(
-            "/api/v1/admin/langgraph/checkpoints", params={"limit": 10, "offset": 5}
+            "/api/v1/admin/langgraph/checkpoints", params={"limit": 10, "offset": 5},
         )
 
     def test_get_langgraph_sessions_exception(self, admin_client: AdminClient) -> None:
@@ -309,7 +309,7 @@ class TestAdminClientKwargPropagation:
 
     def test_retry_overrides_propagated(self) -> None:
         c = AdminClient(
-            base_url="http://test", retry_overrides={"/api/v1/admin/feature-flags": 7}
+            base_url="http://test", retry_overrides={"/api/v1/admin/feature-flags": 7},
         )
         assert c._flags._retry_overrides == {"/api/v1/admin/feature-flags": 7}
         assert c._metrics._retry_overrides == {"/api/v1/admin/feature-flags": 7}

@@ -188,7 +188,7 @@ def get_ad_directory_client_provider() -> Any:
         return _overrides["ad_directory_client_factory"]
     raise RuntimeError(
         "LDAP client factory is not registered by the composition layer. "
-        "Call set_ad_directory_client_provider(factory) at startup."
+        "Call set_ad_directory_client_provider(factory) at startup.",
     )
 
 

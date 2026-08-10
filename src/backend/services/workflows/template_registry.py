@@ -81,7 +81,7 @@ class WorkflowTemplateRegistry:
         results: list[WorkflowTemplate] = []
         if not self._dir.exists():
             _logger.warning(
-                "WorkflowTemplateRegistry: templates dir does not exist: %s", self._dir
+                "WorkflowTemplateRegistry: templates dir does not exist: %s", self._dir,
             )
             self._loaded = results
             return results
@@ -91,7 +91,7 @@ class WorkflowTemplateRegistry:
                 raw = _yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
             except _yaml.YAMLError as exc:
                 _logger.error(
-                    "WorkflowTemplateRegistry: invalid YAML %s: %s", yaml_path, exc
+                    "WorkflowTemplateRegistry: invalid YAML %s: %s", yaml_path, exc,
                 )
                 continue
 
@@ -118,7 +118,7 @@ class WorkflowTemplateRegistry:
         return None
 
     def search_semantic(
-        self, query: str, *, top_k: int = 5
+        self, query: str, *, top_k: int = 5,
     ) -> list[tuple[WorkflowTemplate, float]]:
         """Semantic search через BGE-M3 (если включён) или rapidfuzz fallback.
 
@@ -143,7 +143,7 @@ class WorkflowTemplateRegistry:
 
     @staticmethod
     def _score_rapidfuzz(
-        query: str, templates: Sequence[WorkflowTemplate], *, top_k: int
+        query: str, templates: Sequence[WorkflowTemplate], *, top_k: int,
     ) -> list[tuple[WorkflowTemplate, float]]:
         """Fallback fuzzy search через rapidfuzz или word-overlap."""
         try:
@@ -171,7 +171,7 @@ class WorkflowTemplateRegistry:
 
     @staticmethod
     def _score_bge_m3(
-        query: str, templates: Sequence[WorkflowTemplate]
+        query: str, templates: Sequence[WorkflowTemplate],
     ) -> list[tuple[WorkflowTemplate, float]]:
         """Semantic search через sentence-transformers BGE-M3."""
         from sentence_transformers import SentenceTransformer, util

@@ -36,7 +36,7 @@ def _load_example_rules() -> tuple[list[Rule], str]:
     rules: list[Rule] = []
     for entry in raw["rules"]:
         rules.append(
-            Rule(name=entry["id"], expr=entry["condition"], decision=entry["action"])
+            Rule(name=entry["id"], expr=entry["condition"], decision=entry["action"]),
         )
     return rules, raw.get("default_action", "approve")
 
@@ -50,10 +50,10 @@ async def test_example_decline_on_low_score() -> None:
     """score=400 + debt_ratio=0.3 → high_risk_score → decline."""
     rules, default = _load_example_rules()
     proc = EvaluateRulesProcessor(
-        EvaluateRulesParams(rules=rules, default_decision=default)
+        EvaluateRulesParams(rules=rules, default_decision=default),
     )
     exchange = _make_exchange(
-        body={"score": 400, "debt_ratio": 0.3, "income": 50000, "age": 30}
+        body={"score": 400, "debt_ratio": 0.3, "income": 50000, "age": 30},
     )
 
     await proc.process(exchange, context=AsyncMock())
@@ -67,10 +67,10 @@ async def test_example_manual_review_on_mid_score() -> None:
     """score=600 + debt_ratio=0.3 → manual_review_band → manual_review."""
     rules, default = _load_example_rules()
     proc = EvaluateRulesProcessor(
-        EvaluateRulesParams(rules=rules, default_decision=default)
+        EvaluateRulesParams(rules=rules, default_decision=default),
     )
     exchange = _make_exchange(
-        body={"score": 600, "debt_ratio": 0.3, "income": 50000, "age": 30}
+        body={"score": 600, "debt_ratio": 0.3, "income": 50000, "age": 30},
     )
 
     await proc.process(exchange, context=AsyncMock())
@@ -83,10 +83,10 @@ async def test_example_approve_on_default() -> None:
     """score=800 + debt_ratio=0.2 → ни одно правило не сработало → approve."""
     rules, default = _load_example_rules()
     proc = EvaluateRulesProcessor(
-        EvaluateRulesParams(rules=rules, default_decision=default)
+        EvaluateRulesParams(rules=rules, default_decision=default),
     )
     exchange = _make_exchange(
-        body={"score": 800, "debt_ratio": 0.2, "income": 80000, "age": 35}
+        body={"score": 800, "debt_ratio": 0.2, "income": 80000, "age": 35},
     )
 
     await proc.process(exchange, context=AsyncMock())

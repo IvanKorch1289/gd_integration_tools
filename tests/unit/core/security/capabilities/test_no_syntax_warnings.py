@@ -38,7 +38,7 @@ def test_no_syntax_warnings_in_capabilities() -> None:
                 # cfile=None → in-memory compile, не пишет .pyc файлы.
                 # Собирает AST и байт-код; SyntaxWarning поднимается на compile step.
                 py_compile.compile(
-                    str(path), doraise=True, cfile=None
+                    str(path), doraise=True, cfile=None,
                 )
             except py_compile.PyCompileError as exc:
                 pytest.fail(f"Compile error in {path}: {exc}")
@@ -61,7 +61,7 @@ def test_tool_policy_integration_docstring_renders_clean() -> None:
     import importlib
 
     mod = importlib.import_module(
-        "src.backend.core.security.capabilities.tool_policy_integration"
+        "src.backend.core.security.capabilities.tool_policy_integration",
     )
     docstring = mod.filter_tools_with_gate.__doc__ or ""
     # Legacy pattern: одиночный backslash + backtick

@@ -39,7 +39,7 @@ class AdminService:
         return settings.model_dump()
 
     async def toggle_route(
-        self, request: Request, route_path: str, enable: bool
+        self, request: Request, route_path: str, enable: bool,
     ) -> dict[str, str]:
         """
         Активирует или деактивирует указанный маршрут.
@@ -185,7 +185,7 @@ class AdminService:
                     "routes": [r for r, fl in flags.items() if fl == f],
                 }
                 for f in unique_flags
-            ]
+            ],
         }
 
     async def toggle_feature_flag(self, flag_name: str, enable: bool) -> dict[str, Any]:

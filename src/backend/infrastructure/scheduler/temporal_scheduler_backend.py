@@ -55,7 +55,7 @@ class TemporalSchedulerBackend:
     """
 
     def __init__(
-        self, client_factory: Any | None = None, *, namespace: str = "default"
+        self, client_factory: Any | None = None, *, namespace: str = "default",
     ) -> None:
         """Инициализация: lazy-bind к :class:`TemporalClientFactory`.
 
@@ -96,7 +96,7 @@ class TemporalSchedulerBackend:
     # ── schedule_cron ─────────────────────────────────────────────────
 
     def _validate_callable_ref(
-        self, callable_ref: str | tuple[str, list[Any], dict[str, Any]]
+        self, callable_ref: str | tuple[str, list[Any], dict[str, Any]],
     ) -> tuple[str, list[Any], dict[str, Any]]:
         """Валидация ``callable_ref`` (должен быть str или tuple).
 
@@ -120,17 +120,17 @@ class TemporalSchedulerBackend:
             workflow, args, kwargs = callable_ref
             if not isinstance(args, list):
                 raise TypeError(
-                    f"callable_ref[1] must be list, got {type(args).__name__}"
+                    f"callable_ref[1] must be list, got {type(args).__name__}",
                 )
             if not isinstance(kwargs, dict):
                 raise TypeError(
-                    f"callable_ref[2] must be dict, got {type(kwargs).__name__}"
+                    f"callable_ref[2] must be dict, got {type(kwargs).__name__}",
                 )
             return workflow, args, kwargs
         raise TypeError(
             "TemporalSchedulerBackend: callable_ref must be "
             "str (workflow name) or tuple[str, list, dict]. "
-            "Got: " + repr(type(callable_ref).__name__)
+            "Got: " + repr(type(callable_ref).__name__),
         )
 
     async def schedule_cron(
@@ -171,7 +171,7 @@ class TemporalSchedulerBackend:
         except ImportError as exc:
             raise ImportError(
                 "temporalio не установлен. Установите: "
-                "uv pip install 'temporalio>=1.27.0'"
+                "uv pip install 'temporalio>=1.27.0'",
             ) from exc
 
         # Если replace_existing — сначала удаляем старый schedule.
@@ -328,7 +328,7 @@ class TemporalSchedulerBackend:
                         "kind": "cron",
                         "workflow": (info.workflow_type if info else "unknown"),
                         "status": "active",
-                    }
+                    },
                 )
         except (RuntimeError, AttributeError, OSError, ConnectionError) as list_exc:
             # cycle-9/D-AUDIT-1024: narrow exceptions + observability.
@@ -351,7 +351,7 @@ class TemporalSchedulerBackend:
                     "kind": "oneshot",
                     "workflow": "unknown",  # не сохраняли workflow type
                     "status": "pending",
-                }
+                },
             )
 
         return result
@@ -385,14 +385,14 @@ class TemporalSchedulerBackend:
         except ImportError as exc:
             raise ImportError(
                 "temporalio не установлен. Установите: "
-                "uv pip install 'temporalio>=1.27.0'"
+                "uv pip install 'temporalio>=1.27.0'",
             ) from exc
 
         parts = cron_expr.split()
         if len(parts) != 5:
             raise ValueError(
                 f"cron_expr должен быть 5-field: minute hour day month day_of_week. "
-                f"Got: {cron_expr!r}"
+                f"Got: {cron_expr!r}",
             )
         # Без дополнительной валидации полей — ``ScheduleSpec`` принимает
         # cron-строки as-is и валидирует при первом запуске schedule.

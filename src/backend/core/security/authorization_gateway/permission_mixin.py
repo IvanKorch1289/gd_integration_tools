@@ -49,7 +49,7 @@ class PermissionMixin:
         """
 
         async def _step(
-            principal: str, resource: str, action: str, ctx: dict[str, Any]
+            principal: str, resource: str, action: str, ctx: dict[str, Any],
         ) -> AuthorizationReason:
             # No permissions required → always allow
             if not required_permissions:
@@ -64,7 +64,7 @@ class PermissionMixin:
                 from src.backend.core.feature_flags import get_feature_flag_service
 
                 if not get_feature_flag_service().is_enabled(
-                    "route_authz_requires_permission"
+                    "route_authz_requires_permission",
                 ):
                     return AuthorizationReason(
                         source="permission",
@@ -104,7 +104,7 @@ class PermissionMixin:
                 )
 
             return AuthorizationReason(
-                source="permission", outcome="allow", detail=None
+                source="permission", outcome="allow", detail=None,
             )
 
         _step.__name__ = "permission_step"

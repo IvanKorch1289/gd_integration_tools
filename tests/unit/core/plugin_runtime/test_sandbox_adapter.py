@@ -44,7 +44,7 @@ class TestModeValidation:
 
     @pytest.mark.asyncio
     async def test_only_e2b_mode_accepted(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         manifest = _manifest(PluginSandbox(enabled=True))
         adapter = PluginSandboxAdapter(sandbox=_StubSandbox(), manifest=manifest)
@@ -61,12 +61,12 @@ class TestIsEnabledFlag:
 
     def test_enabled_only_when_true(self) -> None:
         adapter = PluginSandboxAdapter(
-            sandbox=_StubSandbox(), manifest=_manifest(PluginSandbox(enabled=True))
+            sandbox=_StubSandbox(), manifest=_manifest(PluginSandbox(enabled=True)),
         )
         assert adapter.is_enabled is True
 
     def test_declared_but_disabled(self) -> None:
         adapter = PluginSandboxAdapter(
-            sandbox=_StubSandbox(), manifest=_manifest(PluginSandbox(enabled=False))
+            sandbox=_StubSandbox(), manifest=_manifest(PluginSandbox(enabled=False)),
         )
         assert adapter.is_enabled is False

@@ -50,10 +50,10 @@ def invoker_fixture() -> Any:
         mock_settings.queue.get_queue_name.return_value = "invocations-in"
         with (
             patch(
-                "src.backend.services.execution.invoker._deserialize_request"
+                "src.backend.services.execution.invoker._deserialize_request",
             ) as mock_deser,
             patch(
-                "src.backend.services.execution.invoker.get_invoker"
+                "src.backend.services.execution.invoker.get_invoker",
             ) as mock_get_invoker,
         ):
             import src.backend.entrypoints.stream.invoker_subscribers as invoker_subscribers
@@ -246,10 +246,10 @@ class TestInvokerSubscribersDLQWriterNotConfigured:
             mock_settings.queue.get_queue_name.return_value = "invocations-in"
             with (
                 patch(
-                    "src.backend.services.execution.invoker._deserialize_request"
+                    "src.backend.services.execution.invoker._deserialize_request",
                 ) as mock_deser,
                 patch(
-                    "src.backend.services.execution.invoker.get_invoker"
+                    "src.backend.services.execution.invoker.get_invoker",
                 ) as mock_get_invoker,
             ):
                 import src.backend.entrypoints.stream.invoker_subscribers as invoker_subscribers

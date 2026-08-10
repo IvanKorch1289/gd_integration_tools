@@ -32,7 +32,7 @@ def _ex(body: dict | None = None) -> Exchange[Any]:
 class TestInputExtraction:
     def test_extract_simple_path(self) -> None:
         proc = MLPredictProcessor(
-            model_endpoint="test_model", input_field="body.features"
+            model_endpoint="test_model", input_field="body.features",
         )
         exc = _ex({"features": [[1.0, 2.0], [3.0, 4.0]]})
         result = proc._extract_input(exc)
@@ -40,7 +40,7 @@ class TestInputExtraction:
 
     def test_extract_nested_path(self) -> None:
         proc = MLPredictProcessor(
-            model_endpoint="test_model", input_field="body.data.matrix"
+            model_endpoint="test_model", input_field="body.data.matrix",
         )
         exc = _ex({"data": {"matrix": [[1.0]]}})
         result = proc._extract_input(exc)
@@ -48,7 +48,7 @@ class TestInputExtraction:
 
     def test_extract_missing_field_returns_none(self) -> None:
         proc = MLPredictProcessor(
-            model_endpoint="test_model", input_field="body.missing"
+            model_endpoint="test_model", input_field="body.missing",
         )
         exc = _ex({"features": [1.0]})
         result = proc._extract_input(exc)

@@ -131,7 +131,7 @@ def test_extract_username_strips_upn_domain() -> None:
     from extensions.core_entities.users.services.users import _extract_username
 
     ad_user = AdSearchEntry(
-        dn="CN=alice,DC=x", attributes={"userPrincipalName": "alice@example.com"}
+        dn="CN=alice,DC=x", attributes={"userPrincipalName": "alice@example.com"},
     )
     assert _extract_username(ad_user) == "alice"
 
@@ -165,7 +165,7 @@ async def test_login_with_method_dispatches_to_password() -> None:
     service._login_password = AsyncMock(return_value="user_password_result")
 
     result = await service.login_with_method(
-        method="password", username="alice", password="pwd"
+        method="password", username="alice", password="pwd",
     )
     assert result == "user_password_result"
     service._login_password.assert_awaited_once_with(username="alice", password="pwd")
@@ -181,14 +181,14 @@ async def test_login_with_method_dispatches_to_ldap() -> None:
     service._login_ldap = AsyncMock(return_value="user_ldap_result")
 
     with patch(
-        "src.backend.core.auth.ldap_client_factory.get_ad_client", return_value=None
+        "src.backend.core.auth.ldap_client_factory.get_ad_client", return_value=None,
     ):
         result = await service.login_with_method(
-            method="ldap", username="alice@example.com", password="pwd"
+            method="ldap", username="alice@example.com", password="pwd",
         )
     assert result == "user_ldap_result"
     service._login_ldap.assert_awaited_once_with(
-        username="alice@example.com", password="pwd"
+        username="alice@example.com", password="pwd",
     )
 
 
@@ -200,7 +200,7 @@ async def test_login_with_method_unknown_raises() -> None:
     service = UserService.__new__(UserService)
     with pytest.raises(ValueError, match="Unknown auth method"):
         await service.login_with_method(
-            method="oauth", username="alice", password="pwd"
+            method="oauth", username="alice", password="pwd",
         )
 
 

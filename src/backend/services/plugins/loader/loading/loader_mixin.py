@@ -60,7 +60,7 @@ class LoaderMixin(_LoadingProtocol):
         cached_error = parse_failures.get(manifest_path)
         if cached_error is not None:
             _logger.warning(
-                "Plugin manifest invalid (%s): %s", manifest_path, cached_error
+                "Plugin manifest invalid (%s): %s", manifest_path, cached_error,
             )
             self._loaded[manifest_path.parent.name] = LoadedPlugin(
                 name=manifest_path.parent.name,
@@ -148,7 +148,7 @@ class LoaderMixin(_LoadingProtocol):
             self._gate.declare(manifest.name, manifest.capabilities)
         except (CapabilityError, ValueError) as exc:
             _logger.warning(
-                "Plugin %s capability allocation failed: %s", manifest.name, exc
+                "Plugin %s capability allocation failed: %s", manifest.name, exc,
             )
             self._loaded[manifest.name] = LoadedPlugin(
                 name=manifest.name,
@@ -185,7 +185,7 @@ class LoaderMixin(_LoadingProtocol):
                 cap_ref = CapabilityRef(name=cap_name)  # scope=None в slice 1
                 try:
                     self._gate.declare_tenant(
-                        cap_ref, tenant=tenant_decl.name, principal=manifest.name
+                        cap_ref, tenant=tenant_decl.name, principal=manifest.name,
                     )
                 except ValueError as exc:
                     # Slice 1 limitation: ``scope_required=True`` capabilities
@@ -290,7 +290,7 @@ class LoaderMixin(_LoadingProtocol):
         if not module_path or not class_name:
             raise ValueError(
                 f"entry_class must be dotted path 'module.Class', "
-                f"got {manifest.entry_class!r}"
+                f"got {manifest.entry_class!r}",
             )
         module = importlib.import_module(module_path)
         target = getattr(module, class_name)
@@ -302,10 +302,10 @@ class LoaderMixin(_LoadingProtocol):
             if not isinstance(instance, BasePlugin):
                 raise TypeError(
                     f"entry_class {manifest.entry_class!r} factory returned "
-                    f"{type(instance).__name__}, not BasePlugin"
+                    f"{type(instance).__name__}, not BasePlugin",
                 )
             return instance
         raise TypeError(
             f"entry_class {manifest.entry_class!r} is neither a BasePlugin "
-            f"subclass nor a factory callable"
+            f"subclass nor a factory callable",
         )

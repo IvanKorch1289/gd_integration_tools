@@ -26,7 +26,7 @@ class _StubPipeline:
 
 
 async def _wait_until(
-    predicate: Callable[[], bool], timeout: float = 5.0, step: float = 0.05
+    predicate: Callable[[], bool], timeout: float = 5.0, step: float = 0.05,
 ) -> bool:
     elapsed = 0.0
     while elapsed < timeout:
@@ -49,7 +49,7 @@ async def test_yaml_hot_reload_lifecycle(tmp_path: Path) -> None:
         return _StubPipeline(path.stem)
 
     watcher = DSLYamlWatcher(
-        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80
+        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80,
     )
 
     await watcher.start()
@@ -60,7 +60,7 @@ async def test_yaml_hot_reload_lifecycle(tmp_path: Path) -> None:
         new_yaml = tmp_path / "demo.yaml"
         new_yaml.write_text("route_id: demo\n", encoding="utf-8")
         registered = await _wait_until(
-            lambda: "demo" in registry.list_routes(), timeout=4.0
+            lambda: "demo" in registry.list_routes(), timeout=4.0,
         )
         assert registered, f"route не появился: {registry.list_routes()}"
 
@@ -68,14 +68,14 @@ async def test_yaml_hot_reload_lifecycle(tmp_path: Path) -> None:
         load_count_before = len(load_calls)
         new_yaml.write_text("route_id: demo\n# changed\n", encoding="utf-8")
         reloaded = await _wait_until(
-            lambda: len(load_calls) > load_count_before, timeout=4.0
+            lambda: len(load_calls) > load_count_before, timeout=4.0,
         )
         assert reloaded, "повторная загрузка не зафиксирована"
 
         # 3. Удаление YAML → unregister.
         new_yaml.unlink()
         removed = await _wait_until(
-            lambda: "demo" not in registry.list_routes(), timeout=4.0
+            lambda: "demo" not in registry.list_routes(), timeout=4.0,
         )
         assert removed, f"route не удалён: {registry.list_routes()}"
     finally:

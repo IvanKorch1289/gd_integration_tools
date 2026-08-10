@@ -38,7 +38,7 @@ def _enable_feature_flag(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.asyncio
 async def test_get_with_tenant(
-    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.cache.tenant_wrapper.current_tenant",
@@ -51,10 +51,10 @@ async def test_get_with_tenant(
 
 @pytest.mark.asyncio
 async def test_get_without_tenant(
-    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "src.backend.infrastructure.cache.tenant_wrapper.current_tenant", lambda: None
+        "src.backend.infrastructure.cache.tenant_wrapper.current_tenant", lambda: None,
     )
     wrapper = TenantCacheBackend(mock_backend)
     await wrapper.get("foo")
@@ -63,7 +63,7 @@ async def test_get_without_tenant(
 
 @pytest.mark.asyncio
 async def test_set_with_tenant(
-    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.cache.tenant_wrapper.current_tenant",
@@ -76,7 +76,7 @@ async def test_set_with_tenant(
 
 @pytest.mark.asyncio
 async def test_delete_with_tenant(
-    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.cache.tenant_wrapper.current_tenant",
@@ -96,7 +96,7 @@ async def test_delete_empty_skips(mock_backend: MagicMock) -> None:
 
 @pytest.mark.asyncio
 async def test_delete_pattern_with_tenant(
-    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.cache.tenant_wrapper.current_tenant",
@@ -109,7 +109,7 @@ async def test_delete_pattern_with_tenant(
 
 @pytest.mark.asyncio
 async def test_exists_with_tenant(
-    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.cache.tenant_wrapper.current_tenant",
@@ -121,7 +121,7 @@ async def test_exists_with_tenant(
 
 
 def test_prefix_disabled_feature_flag(
-    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_backend: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.cache.tenant_wrapper.feature_flags",

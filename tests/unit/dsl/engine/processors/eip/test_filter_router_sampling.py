@@ -38,7 +38,7 @@ class TestContentBasedRouter:
             routes=[
                 (lambda e: e.in_message.body.get("x") == 1, "route_a"),
                 (lambda e: e.in_message.body.get("x") == 2, "route_b"),
-            ]
+            ],
         )
         ex = _ex({"x": 2})
         await router.process(ex, _ctx())
@@ -51,7 +51,7 @@ class TestContentBasedRouter:
             routes=[
                 (lambda e: True, "first"),  # always matches
                 (lambda e: True, "second"),
-            ]
+            ],
         )
         ex = _ex({})
         await router.process(ex, _ctx())
@@ -83,7 +83,7 @@ class TestContentBasedRouter:
             raise ValueError("boom")
 
         router = ContentBasedRouter(
-            routes=[(bad_pred, "x")], default_endpoint="fallback"
+            routes=[(bad_pred, "x")], default_endpoint="fallback",
         )
         ex = _ex({})
         await router.process(ex, _ctx())
@@ -95,7 +95,7 @@ class TestContentBasedRouter:
 
     def test_to_spec(self) -> None:
         router = ContentBasedRouter(
-            routes=[(lambda e: True, "a"), (lambda e: False, "b")], default_endpoint="d"
+            routes=[(lambda e: True, "a"), (lambda e: False, "b")], default_endpoint="d",
         )
         spec = router.to_spec()
         assert spec == {

@@ -20,7 +20,7 @@ class TestNotificationMessage:
 
     def test_full(self) -> None:
         msg = NotificationMessage(
-            recipient="u1", subject="s", body="b", metadata={"k": "v"}
+            recipient="u1", subject="s", body="b", metadata={"k": "v"},
         )
         assert msg.metadata == {"k": "v"}
 

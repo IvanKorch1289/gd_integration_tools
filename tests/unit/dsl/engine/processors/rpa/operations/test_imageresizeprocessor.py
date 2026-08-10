@@ -119,7 +119,7 @@ def test_image_resize_to_spec_full() -> None:
     proc = ImageResizeProcessor(width=100, height=200, output_format="JPEG")
     spec = proc.to_spec()
     assert spec == {
-        "image_resize": {"width": 100, "height": 200, "output_format": "JPEG"}
+        "image_resize": {"width": 100, "height": 200, "output_format": "JPEG"},
     }
 
 
@@ -194,7 +194,7 @@ class _TrackedImage:
 
 
 def _install_tracked_pil_open(
-    monkeypatch: pytest.MonkeyPatch, tracker: list[_TrackedImage]
+    monkeypatch: pytest.MonkeyPatch, tracker: list[_TrackedImage],
 ) -> None:
     """Подменяет ``PIL.Image.open`` на factory, возвращающую _TrackedImage.
 
@@ -212,7 +212,7 @@ def _install_tracked_pil_open(
 
 
 def _install_raising_pil_open(
-    monkeypatch: pytest.MonkeyPatch, tracker: list[_TrackedImage]
+    monkeypatch: pytest.MonkeyPatch, tracker: list[_TrackedImage],
 ) -> None:
     """Версия с Image, который бросает RuntimeError на resize()."""
     from PIL import Image as _real_pil_image

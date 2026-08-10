@@ -218,7 +218,7 @@ class TestConcurrency:
 class TestSerialization:
     def test_dataclass_can_be_serialised_to_dict(self) -> None:
         ctx = make_dispatch_context(
-            "http", correlation_id="cid", tenant_id="t1", attributes={"k": "v"}
+            "http", correlation_id="cid", tenant_id="t1", attributes={"k": "v"},
         )
         d = asdict(ctx)
         assert d["source"] == "http"
@@ -245,7 +245,7 @@ class TestSerialization:
 class TestEdgeCases:
     def test_unicode_in_tenant_and_user(self) -> None:
         ctx = make_dispatch_context(
-            "http", tenant_id="арендатор-1", user_id="пользователь-7"
+            "http", tenant_id="арендатор-1", user_id="пользователь-7",
         )
         assert ctx.tenant_id == "арендатор-1"
         assert ctx.user_id == "пользователь-7"

@@ -23,11 +23,11 @@ from src.backend.services.ai.rag.hyde_retriever import HyDEConfig, HyDERetriever
 async def test_retrieve_returns_hyde_results() -> None:
     """Успешный retrieve возвращает HyDEResult."""
     generate_mock = AsyncMock(
-        return_value="Гипотетический ответ на вопрос о кредитной политике."
+        return_value="Гипотетический ответ на вопрос о кредитной политике.",
     )
     embed_mock = AsyncMock(return_value=[[0.1, 0.2, 0.3]])
     search_mock = AsyncMock(
-        return_value=[{"id": "doc1", "document": "реальный документ", "metadata": {}}]
+        return_value=[{"id": "doc1", "document": "реальный документ", "metadata": {}}],
     )
     retriever = HyDERetriever(
         embed_fn=embed_mock,
@@ -167,7 +167,7 @@ async def test_retrieve_hypothetical_included_when_configured() -> None:
     generate_mock = AsyncMock(return_value="ответ на вопрос")
     embed_mock = AsyncMock(return_value=[[0.1]])
     search_mock = AsyncMock(
-        return_value=[{"id": "doc1", "document": "документ", "metadata": {}}]
+        return_value=[{"id": "doc1", "document": "документ", "metadata": {}}],
     )
     config = HyDEConfig(include_hypothetical_in_result=True)
     retriever = HyDERetriever(
@@ -188,7 +188,7 @@ async def test_retrieve_hypothetical_excluded_when_not_configured() -> None:
     generate_mock = AsyncMock(return_value="ответ на вопрос")
     embed_mock = AsyncMock(return_value=[[0.1]])
     search_mock = AsyncMock(
-        return_value=[{"id": "doc1", "document": "документ", "metadata": {}}]
+        return_value=[{"id": "doc1", "document": "документ", "metadata": {}}],
     )
     retriever = HyDERetriever(
         embed_fn=embed_mock,

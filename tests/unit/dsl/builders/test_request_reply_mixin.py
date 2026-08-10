@@ -21,7 +21,7 @@ class TestRequest:
         pipeline = (
             RouteBuilder.from_("test.request", source="internal:test")
             .request(
-                "events.test", {"q": "hello"}, timeout=10.0, result_property="resp"
+                "events.test", {"q": "hello"}, timeout=10.0, result_property="resp",
             )
             .build()
         )
@@ -46,7 +46,7 @@ class TestRequest:
                 "timeout": 5.0,
                 "correlation_id": None,
                 "result_property": "reply",
-            }
+            },
         }
 
 
@@ -81,5 +81,5 @@ class TestReply:
                 "reply_channel": "events.replies.abc",
                 "payload": None,
                 "correlation_id": None,
-            }
+            },
         }

@@ -17,7 +17,7 @@ class TestMemoryScope:
 
     def test_custom(self) -> None:
         ms = MemoryScope(
-            read=("m1",), write=("m2",), mode="shared", write_strategy="hot_path"
+            read=("m1",), write=("m2",), mode="shared", write_strategy="hot_path",
         )
         assert ms.read == ("m1",)
         assert ms.write == ("m2",)
@@ -34,7 +34,7 @@ class TestHandoffPolicy:
 
     def test_custom(self) -> None:
         hp = HandoffPolicy(
-            max_handoffs=3, allow_revisit=True, escalation_on_max_handoffs="admin"
+            max_handoffs=3, allow_revisit=True, escalation_on_max_handoffs="admin",
         )
         assert hp.max_handoffs == 3
         assert hp.allow_revisit is True

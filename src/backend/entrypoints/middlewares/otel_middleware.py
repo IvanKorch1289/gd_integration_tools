@@ -117,7 +117,7 @@ class OtelMiddleware:
             return
 
         span_cm = self._tracer.start_as_current_span(
-            span_name, context=ctx, kind=SpanKind.SERVER, attributes=attributes
+            span_name, context=ctx, kind=SpanKind.SERVER, attributes=attributes,
         )
 
         # D-AUDIT-A2-03 fix (cycle 1): scope["state"] для per-request state
@@ -139,7 +139,7 @@ class OtelMiddleware:
                         "type": "http.response.start",
                         "status": scope["state"]["otel_response_status"],
                         "headers": new_headers,
-                    }
+                    },
                 )
             elif message["type"] == "http.response.body":
                 # Body пропускаем unchanged (не suppress, т.к. body не
@@ -157,7 +157,7 @@ class OtelMiddleware:
             raise
 
     async def _process(
-        self, scope: Scope, receive: Receive, send: Send, span: Any
+        self, scope: Scope, receive: Receive, send: Send, span: Any,
     ) -> None:
         """Выполняет call_next, помечая span при ошибке (cycle 56 helper)."""
         try:
@@ -170,7 +170,7 @@ class OtelMiddleware:
             # stored on scope['state'] — per-request, не instance attribute).
             try:
                 response_status = scope.get("state", {}).get(
-                    "otel_response_status", 200
+                    "otel_response_status", 200,
                 )
                 span.set_attribute("http.status_code", response_status)
                 if response_status >= 500:
@@ -206,7 +206,7 @@ class OtelMiddleware:
             return None
 
     def _inject_traceparent_to_headers(
-        self, headers: list[tuple[bytes, bytes]]
+        self, headers: list[tuple[bytes, bytes]],
     ) -> None:
         """Cycle 56: injects traceparent в список headers (in-place)."""
         if self._propagator is None:
@@ -236,7 +236,7 @@ class OtelMiddleware:
         method = scope.get("method", "")
         path = scope.get("path", "")
         full_url = scope.get("scheme", "http") + "://" + str(
-            scope.get("server", ("", ""))
+            scope.get("server", ("", "")),
         ) + path
         # Reconstruct full URL from scheme + server + path + query.
         scheme = scope.get("scheme", "http")

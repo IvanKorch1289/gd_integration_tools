@@ -35,14 +35,14 @@ def mock_registry() -> MagicMock:
 @pytest.fixture(autouse=True)
 def patch_registry(mock_registry: MagicMock) -> Any:
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry
+        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
     ):
         yield
 
 
 class TestRegisterSystemTools:
     def test_filters_by_prefix(
-        self, fake_mcp: FakeMcp, mock_registry: MagicMock
+        self, fake_mcp: FakeMcp, mock_registry: MagicMock,
     ) -> None:
         from src.backend.entrypoints.mcp.namespaces.system_mcp import (
             register_system_tools,
@@ -56,7 +56,7 @@ class TestRegisterSystemTools:
             "other.action",
         ]
         with patch(
-            "src.backend.entrypoints.mcp.namespaces.system_mcp._register_system_tool"
+            "src.backend.entrypoints.mcp.namespaces.system_mcp._register_system_tool",
         ) as mock_register:
             register_system_tools(fake_mcp)
         assert mock_register.call_count == 4
@@ -72,7 +72,7 @@ class TestRegisterSystemTools:
 
         mock_registry.list_actions.return_value = []
         with patch(
-            "src.backend.entrypoints.mcp.namespaces.system_mcp._register_system_tool"
+            "src.backend.entrypoints.mcp.namespaces.system_mcp._register_system_tool",
         ) as mock_register:
             register_system_tools(fake_mcp)
         assert mock_register.call_count == 0
@@ -118,7 +118,7 @@ class TestRegisterSystemTool:
         return_value="forbidden",
     )
     async def test_auth_denied(
-        self, _mock_authz: Any, _mock_schema: Any, fake_mcp: FakeMcp
+        self, _mock_authz: Any, _mock_schema: Any, fake_mcp: FakeMcp,
     ) -> None:
         from src.backend.entrypoints.mcp.namespaces.system_mcp import (
             _register_system_tool,

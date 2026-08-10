@@ -58,7 +58,7 @@ class ConsulConfigStore:
             import consul
 
             self._client = consul.Consul(
-                host=self._host, port=self._port, scheme=self._scheme, token=self._token
+                host=self._host, port=self._port, scheme=self._scheme, token=self._token,
             )
         return self._client
 

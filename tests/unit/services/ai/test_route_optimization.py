@@ -38,7 +38,7 @@ def test_slow_step_recommends_parallelization() -> None:
             p95_latency_ms=900.0,
             p99_latency_ms=1100.0,
             avg_retry_count=0.0,
-        )
+        ),
     ]
     analyzer = RouteAnalyzer(slow_step_p95_ms=500.0)
     recs = analyzer.recommendations(metrics)
@@ -56,7 +56,7 @@ def test_high_error_rate_recommends_breaker() -> None:
             p95_latency_ms=20,
             p99_latency_ms=30,
             avg_retry_count=0.0,
-        )
+        ),
     ]
     analyzer = RouteAnalyzer(high_error_rate=0.05)
     recs = analyzer.recommendations(metrics)
@@ -76,7 +76,7 @@ def test_pr_generator_renders_summary_and_table() -> None:
             p95_latency_ms=50,
             p99_latency_ms=80,
             avg_retry_count=0,
-        )
+        ),
     ]
     recs = [
         OptimizationRecommendation(
@@ -85,7 +85,7 @@ def test_pr_generator_renders_summary_and_table() -> None:
             rationale="cache static response",
             priority="P1",
             estimated_gain_ms=20.0,
-        )
+        ),
     ]
     markdown = PRGenerator.render("my-route", metrics, recs)
     assert "AI Route Optimization" in markdown

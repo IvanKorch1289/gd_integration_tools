@@ -23,7 +23,7 @@ async def test_list_training_runs() -> None:
 @pytest.mark.asyncio
 async def test_labeled_count_with_service() -> None:
     with patch(
-        "src.backend.services.ai.feedback.feedback_service.AIFeedbackService"
+        "src.backend.services.ai.feedback.feedback_service.AIFeedbackService",
     ) as mock_cls:
         svc = AsyncMock()
         svc.list_labeled.return_value = [{"id": 1}, {"id": 2}]
@@ -49,13 +49,13 @@ async def test_labeled_count_service_error() -> None:
 @pytest.mark.asyncio
 async def test_strategy_stats() -> None:
     with patch(
-        "src.backend.services.ai.rag.strategy_selector.AdaptiveStrategySelector"
+        "src.backend.services.ai.rag.strategy_selector.AdaptiveStrategySelector",
     ) as mock_cls:
         selector = MagicMock()
         selector.stats.return_value = {"dense": 5, "sparse": 3}
         mock_cls.return_value = selector
         with patch(
-            "src.backend.core.config.features.feature_flags.adaptive_rag_strategy", True
+            "src.backend.core.config.features.feature_flags.adaptive_rag_strategy", True,
         ):
             result = await rag_mod.strategy_stats()
             assert result["strategies"] == {"dense": 5, "sparse": 3}
@@ -69,7 +69,7 @@ async def test_strategy_stats() -> None:
 @pytest.mark.asyncio
 async def test_get_asyncapi_yaml() -> None:
     with patch.object(
-        asyncapi_mod, "build_asyncapi_yaml", return_value="asyncapi: 3.0"
+        asyncapi_mod, "build_asyncapi_yaml", return_value="asyncapi: 3.0",
     ):
         result = await asyncapi_mod.get_asyncapi_yaml()
         assert result.media_type == "application/yaml"
@@ -79,7 +79,7 @@ async def test_get_asyncapi_yaml() -> None:
 @pytest.mark.asyncio
 async def test_get_asyncapi_json() -> None:
     with patch.object(
-        asyncapi_mod, "build_asyncapi_json", return_value='{"asyncapi": "3.0"}'
+        asyncapi_mod, "build_asyncapi_json", return_value='{"asyncapi": "3.0"}',
     ):
         result = await asyncapi_mod.get_asyncapi_json()
         assert result.media_type == "application/json"

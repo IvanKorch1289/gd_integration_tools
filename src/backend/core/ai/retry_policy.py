@@ -66,7 +66,7 @@ class RetryPolicy(BaseModel):
         validation_alias=AliasChoices("maximum_interval_s", "max_delay_s", "max_interval"),
     )
     non_retryable_errors: tuple[str, ...] = Field(
-        default=(), description="Имена ошибок, при которых retry НЕ выполняется."
+        default=(), description="Имена ошибок, при которых retry НЕ выполняется.",
     )
     jitter: float | None = Field(
         default=None,

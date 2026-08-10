@@ -34,7 +34,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         )
 
     def dynamic_route(
-        self, route_expression: Callable[[Exchange[Any]], str]
+        self, route_expression: Callable[[Exchange[Any]], str],
     ) -> RouteBuilder:
         """Dynamic Router: runtime-вычисление route_id."""
         return cast(
@@ -57,7 +57,7 @@ class RoutingEIPsMixin(EIPMixinBase):
                     route_ids=route_ids,
                     aggregation=aggregation,
                     timeout_seconds=timeout_seconds,
-                )
+                ),
             ),
         )
 
@@ -141,7 +141,7 @@ class RoutingEIPsMixin(EIPMixinBase):
                     registry=registry,
                     strict=strict,
                     max_steps=max_steps,
-                )
+                ),
             ),
         )
 
@@ -172,7 +172,7 @@ class RoutingEIPsMixin(EIPMixinBase):
         return cast(
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
-                _CBR(routes=routes, default_endpoint=default_endpoint)
+                _CBR(routes=routes, default_endpoint=default_endpoint),
             ),
         )
 
@@ -213,7 +213,7 @@ class RoutingEIPsMixin(EIPMixinBase):
                     time_window_ms=time_window_ms,
                     max_in_window=max_in_window,
                     seed=seed,
-                )
+                ),
             ),
         )
 
@@ -234,7 +234,7 @@ class RoutingEIPsMixin(EIPMixinBase):
                     strategy=strategy,
                     weights=weights,
                     sticky_header=sticky_header,
-                )
+                ),
             ),
         )
 
@@ -266,6 +266,6 @@ class RoutingEIPsMixin(EIPMixinBase):
                     strategy=strategy,
                     on_error=on_error,
                     timeout=timeout,
-                )
+                ),
             ),
         )

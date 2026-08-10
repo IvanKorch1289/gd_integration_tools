@@ -174,7 +174,7 @@ class MqttPublishProcessor(BaseProcessor):
             import aiomqtt
         except ImportError:
             _store_result(
-                exchange, self._out, {"ok": False, "error": "aiomqtt not installed"}
+                exchange, self._out, {"ok": False, "error": "aiomqtt not installed"},
             )
             return
 
@@ -193,7 +193,7 @@ class MqttPublishProcessor(BaseProcessor):
                 password=self._password,
             ) as client:
                 await client.publish(
-                    self._topic, payload=body, qos=self._qos, retain=self._retain
+                    self._topic, payload=body, qos=self._qos, retain=self._retain,
                 )
         except Exception as exc:
             _store_result(
@@ -204,7 +204,7 @@ class MqttPublishProcessor(BaseProcessor):
             return
 
         _store_result(
-            exchange, self._out, {"ok": True, "topic": self._topic, "qos": self._qos}
+            exchange, self._out, {"ok": True, "topic": self._topic, "qos": self._qos},
         )
 
     def to_spec(self) -> dict[str, Any]:

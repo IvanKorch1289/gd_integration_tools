@@ -104,7 +104,7 @@ class InMemoryVectorStore(BaseVectorStore):
     ) -> None:
         """Upsert vectors + documents + metadata (idempotent по id)."""
         for i, (chunk_id, embedding, document) in enumerate(
-            zip(ids, embeddings, documents)
+            zip(ids, embeddings, documents),
         ):
             metadata = (metadatas or [{}] * len(documents))[i] or {}
             self._items = [it for it in self._items if it["id"] != chunk_id]
@@ -114,7 +114,7 @@ class InMemoryVectorStore(BaseVectorStore):
                     "embedding": embedding,
                     "document": document,
                     "metadata": metadata,
-                }
+                },
             )
 
     async def query(
@@ -207,9 +207,9 @@ class StubLiteLLM:
                             "Согласно retrieved контексту, кредитная ставка "
                             "определяется скорингом клиента."
                         ),
-                    }
-                }
-            ]
+                    },
+                },
+            ],
         }
 
 
@@ -309,12 +309,12 @@ async def test_text_ingest_chunk_embed_pipeline(
         * vector search «кредит» находит chunk с этим токеном.
     """
     doc_id = await rag_service.ingest(
-        _BANK_DOCUMENT, metadata={"source": "credit_policy.pdf"}, namespace="docs"
+        _BANK_DOCUMENT, metadata={"source": "credit_policy.pdf"}, namespace="docs",
     )
     assert len(doc_id) == 16, "doc_id должен быть sha256[:16]"
 
     all_chunks = await vector_store.query(
-        embedding=[0.0] * len(_TOKEN_VOCAB), top_k=100
+        embedding=[0.0] * len(_TOKEN_VOCAB), top_k=100,
     )
     assert len(all_chunks) >= 3, (
         f"RecursiveChunker должен разрезать на ≥3 chunks, got {len(all_chunks)}"
@@ -360,7 +360,7 @@ async def test_text_retrieval_rerank_llm_pipeline(
     await rag_service.ingest(_BANK_DOCUMENT, namespace="docs")
 
     raw_chunks = await rag_service.search(
-        "кредит ставка", top_k=5, namespace="docs"
+        "кредит ставка", top_k=5, namespace="docs",
     )
     assert len(raw_chunks) >= 1, "search должен вернуть ≥1 chunk"
 
@@ -373,8 +373,8 @@ async def test_text_retrieval_rerank_llm_pipeline(
     context = "\n\n".join(c.get("document", "") for c in reranked)
     response = stub_litellm.completion(
         messages=[
-            {"role": "user", "content": f"Вопрос: кредит ставка\nКонтекст:\n{context}"}
-        ]
+            {"role": "user", "content": f"Вопрос: кредит ставка\nКонтекст:\n{context}"},
+        ],
     )
     answer = response["choices"][0]["message"]["content"]
 
@@ -418,7 +418,7 @@ async def test_text_augment_prompt_includes_citations(
     )
 
     result = await rag_service.augment_prompt_with_citations(
-        query="условия кредита", system_prompt="", namespace="docs", top_k=3
+        query="условия кредита", system_prompt="", namespace="docs", top_k=3,
     )
 
     assert "Контекст из базы знаний" in result.prompt
@@ -462,7 +462,7 @@ async def test_namespace_filter_isolates_collections(
 
     docs_hits = await rag_service.search("кредит", top_k=10, namespace="docs")
     other_hits = await rag_service.search(
-        "ипотека", top_k=10, namespace="other"
+        "ипотека", top_k=10, namespace="other",
     )
 
     assert len(docs_hits) >= 1
@@ -494,7 +494,7 @@ async def test_delete_collection_clears_namespace(
         * count == 0 после удаления.
     """
     await rag_service.ingest(
-        _BANK_DOCUMENT, metadata={"source": "policy.pdf"}, namespace="docs"
+        _BANK_DOCUMENT, metadata={"source": "policy.pdf"}, namespace="docs",
     )
 
     before = await rag_service.count(collection="docs")

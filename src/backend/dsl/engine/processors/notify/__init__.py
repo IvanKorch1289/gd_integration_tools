@@ -103,7 +103,7 @@ class NotifyProcessor(BaseProcessor):
                 "locale": self.locale,
                 "context_property": self.context_property,
                 "result_property": self.result_property,
-            }
+            },
         }
 
 

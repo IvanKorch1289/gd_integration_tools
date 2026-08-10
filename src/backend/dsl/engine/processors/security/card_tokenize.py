@@ -116,7 +116,7 @@ class CardTokenizeProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Tokenize PAN из source_property.
 
@@ -242,7 +242,7 @@ class CardTokenizeProcessor(BaseProcessor):
         return self._format_preserving_token(pan, "")
 
     async def _store_mapping(
-        self, token_id: str, pan: str, token: str
+        self, token_id: str, pan: str, token: str,
     ) -> None:
         """Store token→PAN mapping (S202 audit fix).
 
@@ -312,7 +312,7 @@ class CardTokenizeProcessor(BaseProcessor):
         return value
 
     def _set_result_property(
-        self, exchange: Exchange[Any], result: CardTokenResult
+        self, exchange: Exchange[Any], result: CardTokenResult,
     ) -> None:
         """Set result в result_property."""
         parts = self._result_property.split(".")

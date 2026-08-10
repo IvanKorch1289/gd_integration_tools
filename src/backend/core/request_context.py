@@ -85,7 +85,7 @@ class RequestContext:
 
 
 REQUEST_CONTEXT_VAR: ContextVar[RequestContext | None] = ContextVar(
-    "gd_request_context", default=None
+    "gd_request_context", default=None,
 )
 """ContextVar для глобального доступа к :class:`RequestContext`."""
 

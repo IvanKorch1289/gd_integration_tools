@@ -56,7 +56,7 @@ class QdrantVectorStore(BaseVectorStore):
             from qdrant_client import AsyncQdrantClient
         except ImportError as exc:
             raise RuntimeError(
-                "qdrant-client не установлен — добавьте в зависимости проекта"
+                "qdrant-client не установлен — добавьте в зависимости проекта",
             ) from exc
         self._client = AsyncQdrantClient(url=self._url, api_key=self._api_key)
         return self._client
@@ -74,7 +74,7 @@ class QdrantVectorStore(BaseVectorStore):
             await client.create_collection(
                 collection_name=self._collection_name,
                 vectors_config=VectorParams(
-                    size=self._vector_size, distance=Distance.COSINE
+                    size=self._vector_size, distance=Distance.COSINE,
                 ),
             )
             logger.info("Qdrant collection '%s' created", self._collection_name)
@@ -144,7 +144,7 @@ class QdrantVectorStore(BaseVectorStore):
                 must=[
                     FieldCondition(key=key, match=MatchValue(value=value))
                     for key, value in where.items()
-                ]
+                ],
             )
         results = await client.search(
             collection_name=self._collection_name,
@@ -201,11 +201,11 @@ class QdrantVectorStore(BaseVectorStore):
             must=[
                 FieldCondition(key=k, match=MatchValue(value=v))
                 for k, v in where.items()
-            ]
+            ],
         )
         before = (
             await client.count(
-                collection_name=self._collection_name, count_filter=f, exact=True
+                collection_name=self._collection_name, count_filter=f, exact=True,
             )
         ).count
         await client.delete(
@@ -230,10 +230,10 @@ class QdrantVectorStore(BaseVectorStore):
             must=[
                 FieldCondition(key=k, match=MatchValue(value=v))
                 for k, v in where.items()
-            ]
+            ],
         )
         result = await client.count(
-            collection_name=self._collection_name, count_filter=f, exact=True
+            collection_name=self._collection_name, count_filter=f, exact=True,
         )
         return int(result.count)
 
@@ -259,7 +259,7 @@ class ChromaVectorStore(BaseVectorStore):
     """Vector store через Chroma DB."""
 
     def __init__(
-        self, host: str = "localhost", port: int = 8000, collection_name: str = "gd_rag"
+        self, host: str = "localhost", port: int = 8000, collection_name: str = "gd_rag",
     ) -> None:
         self._host = host
         self._port = port
@@ -292,7 +292,7 @@ class ChromaVectorStore(BaseVectorStore):
                     f"{active.value!r} due to chromadb<=1.5.9 CVE "
                     "(pre-auth code injection). Use QdrantVectorStore "
                     "or set CHROMADB_ALLOW_CVE=true to override. "
-                    "See pyproject.toml comment for CVE id."
+                    "See pyproject.toml comment for CVE id.",
                 )
         logger.warning(
             "ChromaVectorStore used in profile %s — known CVE in "
@@ -304,10 +304,10 @@ class ChromaVectorStore(BaseVectorStore):
         chromadb = importlib.import_module("chromadb")
 
         self._client = await asyncio.to_thread(
-            chromadb.HttpClient, host=self._host, port=self._port
+            chromadb.HttpClient, host=self._host, port=self._port,
         )
         self._collection = await asyncio.to_thread(
-            self._client.get_or_create_collection, self._collection_name
+            self._client.get_or_create_collection, self._collection_name,
         )
         logger.info("Chroma collection '%s' ready", self._collection_name)
         return self._collection
@@ -368,7 +368,7 @@ class ChromaVectorStore(BaseVectorStore):
                     "distance": results["distances"][0][i]
                     if results["distances"]
                     else 0.0,
-                }
+                },
             )
         return items
 
@@ -506,7 +506,7 @@ class FAISSVectorStore(BaseVectorStore):
                     "document": self._docs.get(doc_id, ""),
                     "metadata": self._metas.get(doc_id, {}),
                     "distance": float(distances[0][i]),
-                }
+                },
             )
         return results
 
@@ -573,7 +573,7 @@ def get_vector_store(backend: str | None = None, **kwargs: Any) -> BaseVectorSto
             return QdrantVectorStore(
                 url=kwargs.get("url", rag_settings.qdrant_url),
                 collection_name=kwargs.get(
-                    "collection_name", rag_settings.qdrant_collection
+                    "collection_name", rag_settings.qdrant_collection,
                 ),
                 api_key=kwargs.get("api_key", rag_settings.qdrant_api_key),
                 vector_size=kwargs.get("vector_size", 384),
@@ -583,7 +583,7 @@ def get_vector_store(backend: str | None = None, **kwargs: Any) -> BaseVectorSto
                 host=kwargs.get("host", rag_settings.chroma_host),
                 port=kwargs.get("port", rag_settings.chroma_port),
                 collection_name=kwargs.get(
-                    "collection_name", rag_settings.chroma_collection
+                    "collection_name", rag_settings.chroma_collection,
                 ),
             )
         case "faiss":
@@ -591,5 +591,5 @@ def get_vector_store(backend: str | None = None, **kwargs: Any) -> BaseVectorSto
         case _:
             raise ValueError(
                 f"Неизвестный vector_backend: {backend_name!r}. "
-                "Поддерживается: qdrant, chroma, faiss."
+                "Поддерживается: qdrant, chroma, faiss.",
             )

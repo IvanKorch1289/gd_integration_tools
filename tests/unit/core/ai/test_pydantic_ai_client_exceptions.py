@@ -33,7 +33,7 @@ def test_pydantic_ai_client_reraise_rate_limit() -> None:
     """Exc с "rate" + "limit" в message → GatewayRateLimited."""
     with pytest.raises(GatewayRateLimited) as exc_info:
         PydanticAIClient._reraise_normalized(
-            Exception("Rate limit exceeded for model gpt-4")
+            Exception("Rate limit exceeded for model gpt-4"),
         )
     assert "Rate limit exceeded" in str(exc_info.value)
 
@@ -49,7 +49,7 @@ def test_pydantic_ai_client_reraise_rate_limit_case_insensitive() -> None:
     """Case-insensitive matching: "RATE LIMIT" тоже triggers."""
     with pytest.raises(GatewayRateLimited):
         PydanticAIClient._reraise_normalized(
-            Exception("RATE LIMIT hit on primary model")
+            Exception("RATE LIMIT hit on primary model"),
         )
 
 

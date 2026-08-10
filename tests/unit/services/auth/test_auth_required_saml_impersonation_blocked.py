@@ -57,7 +57,7 @@ def _downstream_must_not_be_called() -> AsyncMock:
 
     async def downstream(scope, receive, send):  # pragma: no cover - guarded
         raise AssertionError(
-            "downstream app must NOT be called when SAML impersonation is rejected"
+            "downstream app must NOT be called when SAML impersonation is rejected",
         )
 
     return AsyncMock(side_effect=downstream)
@@ -168,7 +168,7 @@ async def test_jwt_passes_through_saml_fail_closed() -> None:
             b64(b'{"alg":"none"}'),
             b64(b'{"sub":"alice","iss":"test"}'),
             b"signature-not-validated-here",
-        ]
+        ],
     )
 
     await mw(

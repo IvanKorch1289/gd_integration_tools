@@ -62,7 +62,7 @@ def _validate_entity_type(entity_type: str) -> str:
     if not _ENTITY_TYPE_RE.fullmatch(entity_type):
         raise ValueError(
             f"pii_erase: invalid entity_type {entity_type!r} "
-            "(only [A-Za-z0-9_] allowed)"
+            "(only [A-Za-z0-9_] allowed)",
         )
     return entity_type
 
@@ -138,7 +138,7 @@ class PiiEraseProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Выполнить erasure для scope.
 
@@ -167,7 +167,7 @@ class PiiEraseProcessor(BaseProcessor):
                 vectors_deleted = await self._delete_vectors(erasure_id)
             else:
                 _logger.debug(
-                    "vector deletion skipped: capability denied"
+                    "vector deletion skipped: capability denied",
                 )
         except Exception as exc:
             # cycle-8/D-AUDIT-804: PII erasure fail-CLOSED.
@@ -282,7 +282,7 @@ class PiiEraseProcessor(BaseProcessor):
                 return 0
             entity_type, entity_id = self._scope.split(":", 1)
             return await store.delete_where(
-                {"entity_type": entity_type, "entity_id": entity_id}
+                {"entity_type": entity_type, "entity_id": entity_id},
             )
         except Exception as exc:
             # cycle-8/D-AUDIT-804: PII erasure fail-CLOSED.
@@ -330,22 +330,22 @@ class PiiEraseProcessor(BaseProcessor):
                     # ``:entity_id``.
                     sql = text(
                         f"DELETE FROM {entity_type}_pii "
-                        f"WHERE entity_id = :entity_id"
+                        f"WHERE entity_id = :entity_id",
                         # ``entity_type`` validated by regex whitelist; values bound.
                     )
                     result = await session.execute(
-                        sql, {"entity_id": entity_id}
+                        sql, {"entity_id": entity_id},
                     )
                 else:
                     sql = text(
                         f"UPDATE {entity_type}_pii "
                         f"SET name = NULL, email = NULL, phone = NULL, "
                         f"anonymized_at = NOW() "
-                        f"WHERE entity_id = :entity_id"
+                        f"WHERE entity_id = :entity_id",
                         # Same whitelist as DELETE branch above.
                     )
                     result = await session.execute(
-                        sql, {"entity_id": entity_id}
+                        sql, {"entity_id": entity_id},
                     )
                 await session.commit()
                 return int(result.rowcount or 0)

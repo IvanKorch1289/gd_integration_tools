@@ -178,7 +178,7 @@ class CircuitBreakerMiddleware:
                 window_seconds=policy.window_seconds,
             )
             self._sliding_breakers[route] = SlidingWindowBreaker(
-                name=f"route:{route}", spec=spec
+                name=f"route:{route}", spec=spec,
             )
         return self._sliding_breakers[route]
 
@@ -217,7 +217,7 @@ class CircuitBreakerMiddleware:
                 state.state = BreakerState.OPEN
                 state.last_state_change = now
                 _logger.warning(
-                    "Circuit OPEN: threshold=%d reached", policy.failure_threshold
+                    "Circuit OPEN: threshold=%d reached", policy.failure_threshold,
                 )
 
     def _record_success(self, state: RouteBreakerState) -> None:
@@ -248,7 +248,7 @@ class CircuitBreakerMiddleware:
             breaker = self._get_sliding_breaker(path, policy)
             if breaker.is_open:
                 _logger.info(
-                    "Circuit OPEN (sliding_breaker) — rejecting request for %s", path
+                    "Circuit OPEN (sliding_breaker) — rejecting request for %s", path,
                 )
                 response = JSONResponse(
                     status_code=503,

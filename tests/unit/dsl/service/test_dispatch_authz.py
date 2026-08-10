@@ -204,8 +204,8 @@ class TestDispatchAuthzEnforcement:
                 "src.backend.core.security.authorization_gateway",
                 fromlist=["AuthorizationReason"],
             ).AuthorizationReason(
-                source="permission", outcome="allow", detail="flag_off"
-            )
+                source="permission", outcome="allow", detail="flag_off",
+            ),
         )
 
         authz_instance = MagicMock()
@@ -217,10 +217,10 @@ class TestDispatchAuthzEnforcement:
                         "src.backend.core.security.authorization_gateway",
                         fromlist=["AuthorizationReason"],
                     ).AuthorizationReason(
-                        source="permission", outcome="allow", detail="flag_off"
-                    )
+                        source="permission", outcome="allow", detail="flag_off",
+                    ),
                 ],
-            )
+            ),
         )
 
         with patch(
@@ -236,7 +236,7 @@ class TestDispatchAuthzEnforcement:
                     return_value=allow_step,
                 ):
                     exchange = await DslService().dispatch(
-                        "r1", body={"x": 1}, context=ctx
+                        "r1", body={"x": 1}, context=ctx,
                     )
 
         assert exchange.error is None

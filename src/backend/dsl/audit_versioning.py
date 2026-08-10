@@ -84,12 +84,12 @@ class Versioning:
             "operation_type",
             "created_at",
             "updated_at",
-        }
+        },
     )
 
     # Columns которые ВСЕГДА показываются в diff (audit context).
     _CONTEXT_COLUMNS: ClassVar[frozenset[str]] = frozenset(
-        {"id", "transaction_id", "operation_type", "end_transaction_id"}
+        {"id", "transaction_id", "operation_type", "end_transaction_id"},
     )
 
     @staticmethod
@@ -105,7 +105,7 @@ class Versioning:
         except ClassNotVersioned as e:
             raise VersioningError(
                 f"{model.__name__} is not a versioned model "
-                f"(set __versioned__ = {{}} on the class to enable)"
+                f"(set __versioned__ = {{}} on the class to enable)",
             ) from e
 
     @staticmethod
@@ -129,12 +129,12 @@ class Versioning:
             session.query(VersionModel)
             .filter(VersionModel.id == entity_id)
             .order_by(VersionModel.transaction_id)
-            .all()
+            .all(),
         )
 
     @staticmethod
     def get_version(
-        session: Any, model: type, entity_id: int | str, transaction_id: int
+        session: Any, model: type, entity_id: int | str, transaction_id: int,
     ):
         """Возвращает конкретную версию или None.
 
@@ -153,7 +153,7 @@ class Versioning:
 
     @staticmethod
     def rollback(
-        session: Any, model: type, entity_id: int | str, transaction_id: int
+        session: Any, model: type, entity_id: int | str, transaction_id: int,
     ) -> Any:
         """Восстанавливает сущность до состояния из конкретной версии.
 
@@ -177,12 +177,12 @@ class Versioning:
         original = session.get(model, entity_id)
         if original is None:
             raise VersioningError(
-                f"{model.__name__}#{entity_id} not found in current session"
+                f"{model.__name__}#{entity_id} not found in current session",
             )
         target = Versioning.get_version(session, model, entity_id, transaction_id)
         if target is None:
             raise VersioningError(
-                f"Version tx={transaction_id} not found for {model.__name__}#{entity_id}"
+                f"Version tx={transaction_id} not found for {model.__name__}#{entity_id}",
             )
         for col in inspect(model).columns:
             if col.key in Versioning._SKIP_COLUMNS:
@@ -192,7 +192,7 @@ class Versioning:
 
     @staticmethod
     def diff(
-        session: Any, model: type, entity_id: int | str, tx_id_1: int, tx_id_2: int
+        session: Any, model: type, entity_id: int | str, tx_id_1: int, tx_id_2: int,
     ) -> dict[str, Any]:
         """Возвращает diff между двумя версиями.
 
@@ -228,7 +228,7 @@ class Versioning:
         if v1 is None or v2 is None:
             raise VersioningError(
                 f"Version tx={tx_id_1 if v1 is None else tx_id_2} not found "
-                f"for {model.__name__}#{entity_id}"
+                f"for {model.__name__}#{entity_id}",
             )
 
         changes: dict[str, dict[str, Any]] = {}
@@ -253,7 +253,7 @@ class Versioning:
     def _operation_name(op_type: int) -> str:
         """Возвращает строковое имя операции для DSL output (вместо int sentinel)."""
         return {OP_INSERT: "INSERT", OP_UPDATE: "UPDATE", OP_DELETE: "DELETE"}.get(
-            op_type, f"UNKNOWN({op_type})"
+            op_type, f"UNKNOWN({op_type})",
         )
 
     @staticmethod
@@ -295,7 +295,7 @@ class Versioning:
         """
         if retention_days <= 0:
             raise VersioningError(
-                f"retention_days должен быть > 0, получено {retention_days}"
+                f"retention_days должен быть > 0, получено {retention_days}",
             )
         if batch_size <= 0:
             raise VersioningError(f"batch_size должен быть > 0, получено {batch_size}")

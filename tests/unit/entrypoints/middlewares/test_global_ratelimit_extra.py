@@ -48,7 +48,7 @@ class TestRedisRateLimitChecker:
 
     @pytest.mark.asyncio
     async def test_allowed(
-        self, checker: RedisRateLimitChecker, redis: MagicMock
+        self, checker: RedisRateLimitChecker, redis: MagicMock,
     ) -> None:
         redis.incr.return_value = 1
         allowed, remaining, _retry = await checker.check("ip1")
@@ -58,7 +58,7 @@ class TestRedisRateLimitChecker:
 
     @pytest.mark.asyncio
     async def test_denied(
-        self, checker: RedisRateLimitChecker, redis: MagicMock
+        self, checker: RedisRateLimitChecker, redis: MagicMock,
     ) -> None:
         redis.incr.return_value = 6
         allowed, remaining, retry = await checker.check("ip1")
@@ -68,7 +68,7 @@ class TestRedisRateLimitChecker:
 
     @pytest.mark.asyncio
     async def test_fail_open(
-        self, checker: RedisRateLimitChecker, redis: MagicMock
+        self, checker: RedisRateLimitChecker, redis: MagicMock,
     ) -> None:
         redis.incr.side_effect = RuntimeError("redis down")
         allowed, remaining, _retry = await checker.check("ip1")
@@ -77,7 +77,7 @@ class TestRedisRateLimitChecker:
 
     @pytest.mark.asyncio
     async def test_route_override_found(
-        self, checker: RedisRateLimitChecker, redis: MagicMock
+        self, checker: RedisRateLimitChecker, redis: MagicMock,
     ) -> None:
         checker._route_overrides_hash = "overrides"
         redis.hgetall.return_value = {b"/api": b"10:60"}
@@ -92,7 +92,7 @@ class TestRedisRateLimitChecker:
 
     @pytest.mark.asyncio
     async def test_route_override_invalid_format(
-        self, checker: RedisRateLimitChecker, redis: MagicMock
+        self, checker: RedisRateLimitChecker, redis: MagicMock,
     ) -> None:
         checker._route_overrides_hash = "overrides"
         redis.hgetall.return_value = {b"/api": b"bad"}
@@ -100,7 +100,7 @@ class TestRedisRateLimitChecker:
 
     @pytest.mark.asyncio
     async def test_route_override_fail_open(
-        self, checker: RedisRateLimitChecker, redis: MagicMock
+        self, checker: RedisRateLimitChecker, redis: MagicMock,
     ) -> None:
         checker._route_overrides_hash = "overrides"
         redis.hgetall.side_effect = RuntimeError("redis down")

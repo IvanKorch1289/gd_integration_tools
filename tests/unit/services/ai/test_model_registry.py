@@ -42,7 +42,7 @@ def test_model_record_rejects_invalid_stage() -> None:
 
 
 def _make_mlflow_model_version(
-    name: str, version: str, stage: str = "Production"
+    name: str, version: str, stage: str = "Production",
 ) -> MagicMock:
     """MagicMock с атрибутами, имитирующий mlflow.ModelVersion."""
     mv = MagicMock()
@@ -56,7 +56,7 @@ def _make_mlflow_model_version(
 
 
 def _install_fake_mlflow(
-    monkeypatch: pytest.MonkeyPatch, client_mock: MagicMock
+    monkeypatch: pytest.MonkeyPatch, client_mock: MagicMock,
 ) -> None:
     """Подменяет ``mlflow.tracking`` модулем-заглушкой с нашим клиентом."""
     fake_mlflow = types.ModuleType("mlflow")
@@ -70,7 +70,7 @@ def _install_fake_mlflow(
 async def test_mlflow_get_model_by_version(monkeypatch: pytest.MonkeyPatch) -> None:
     client = MagicMock()
     client.get_model_version.return_value = _make_mlflow_model_version(
-        "rs", "3", "Staging"
+        "rs", "3", "Staging",
     )
     _install_fake_mlflow(monkeypatch, client)
 
@@ -88,7 +88,7 @@ async def test_mlflow_get_model_latest_production_when_no_version(
 ) -> None:
     client = MagicMock()
     client.get_latest_versions.return_value = [
-        _make_mlflow_model_version("rs", "5", "Production")
+        _make_mlflow_model_version("rs", "5", "Production"),
     ]
     _install_fake_mlflow(monkeypatch, client)
 

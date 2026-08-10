@@ -21,7 +21,7 @@ from src.backend.dsl.engine.processors.file_watch import FileWatchProcessor
 
 def _make_exchange() -> Exchange:
     return Exchange(
-        in_message=Message(body=None, headers={}), properties={}
+        in_message=Message(body=None, headers={}), properties={},
     )
 
 
@@ -95,7 +95,7 @@ class TestFileWatchUsesToThread:
             open(os.path.join(sub, "deep.csv"), "w").close()
 
             proc = FileWatchProcessor(
-                directory=tmpdir, pattern="*.csv", include_subdirs=True
+                directory=tmpdir, pattern="*.csv", include_subdirs=True,
             )
             exchange = _make_exchange()
 

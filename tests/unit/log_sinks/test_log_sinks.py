@@ -120,7 +120,7 @@ def test_graylog_udp_sends_payload(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     # Тестируем _send_udp напрямую (write() использует async drain loop).
     sink._send_udp(
-        b'\x1e\x89\x03{"version":"1.1","host":"test","short_message":"ping"}'
+        b'\x1e\x89\x03{"version":"1.1","host":"test","short_message":"ping"}',
     )
     assert captured["addr"] == ("127.0.0.1", 12201)
     assert isinstance(captured["payload"], bytes)
@@ -167,7 +167,7 @@ def test_build_sinks_dev_light() -> None:
 def test_build_sinks_dev(tmp_path: Path) -> None:
     """``dev`` → ``[Console, Disk]``."""
     sinks = build_sinks_for_profile(
-        AppProfileChoices.dev, disk_path=str(tmp_path / "app.jsonl")
+        AppProfileChoices.dev, disk_path=str(tmp_path / "app.jsonl"),
     )
     assert len(sinks) == 2
     assert isinstance(sinks[0], ConsoleJsonLogSink)

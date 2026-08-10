@@ -54,7 +54,7 @@ async def test_send_kafka_success(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_send_rabbit_success(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_broker = _install_fake_broker(monkeypatch, "rabbit")
     sink = MqSink(
-        sink_id="q2", broker="rabbit", url="amqp://guest@localhost", topic="q"
+        sink_id="q2", broker="rabbit", url="amqp://guest@localhost", topic="q",
     )
     result = await sink.send("hello")
     assert result.ok is True
@@ -93,7 +93,7 @@ async def test_send_returns_false_when_broker_missing(
 @pytest.mark.asyncio
 async def test_send_handles_publish_exception(monkeypatch: pytest.MonkeyPatch) -> None:
     _install_fake_broker(
-        monkeypatch, "kafka", raise_on_publish=RuntimeError("broker down")
+        monkeypatch, "kafka", raise_on_publish=RuntimeError("broker down"),
     )
     sink = MqSink(sink_id="q6", broker="kafka", url="k", topic="t")
     result = await sink.send({})

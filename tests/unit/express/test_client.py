@@ -54,7 +54,7 @@ def bot_config() -> BotConfig:
 
 
 def _make_client(
-    config: BotConfig, handler: httpx.MockTransport | Any
+    config: BotConfig, handler: httpx.MockTransport | Any,
 ) -> ExpressBotClient:
     """Создаёт ``ExpressBotClient`` с подменённым transport.
 
@@ -71,7 +71,7 @@ def _make_client(
         else httpx.MockTransport(handler)
     )
     client._http = httpx.AsyncClient(
-        base_url=config.base_url, timeout=config.timeout, transport=transport
+        base_url=config.base_url, timeout=config.timeout, transport=transport,
     )
     return client
 
@@ -144,7 +144,7 @@ class TestSendMessage:
 
         client = _make_client(bot_config, handler)
         sync_id = await client.send_message(
-            BotxMessage(group_chat_id="chat-1", body="hello")
+            BotxMessage(group_chat_id="chat-1", body="hello"),
         )
         assert sync_id == "sid-001"
         assert captured["method"] == "POST"
@@ -165,13 +165,13 @@ class TestSendMessage:
 
         client = _make_client(bot_config, handler)
         sync_id = await client.send_message(
-            BotxMessage(group_chat_id="chat-1", body="hi"), sync=True
+            BotxMessage(group_chat_id="chat-1", body="hi"), sync=True,
         )
         assert sync_id == "sid-sync"
         assert captured["path"] == "/api/v4/botx/notifications/direct/sync"
 
     async def test_send_message_with_buttons_and_mentions(
-        self, bot_config: BotConfig
+        self, bot_config: BotConfig,
     ) -> None:
         """Bubble/keyboard кнопки и mentions сериализуются в payload."""
         captured: dict[str, Any] = {}
@@ -188,8 +188,8 @@ class TestSendMessage:
             keyboard=[[BotxButton(command="/n", label="No")]],
             mentions=[
                 BotxMention(
-                    mention_type="user", mention_id="m1", user_huid="u1", name="Alice"
-                )
+                    mention_type="user", mention_id="m1", user_huid="u1", name="Alice",
+                ),
             ],
         )
         await client.send_message(msg)
@@ -200,7 +200,7 @@ class TestSendMessage:
         assert notif["mentions"][0]["mention_data"]["user_huid"] == "u1"
 
     async def test_send_message_raises_on_http_error(
-        self, bot_config: BotConfig
+        self, bot_config: BotConfig,
     ) -> None:
         """HTTP 4xx → ``HTTPStatusError``."""
 
@@ -229,7 +229,7 @@ class TestReplyEditDelete:
 
         client = _make_client(bot_config, handler)
         sync_id = await client.reply(
-            "src-1", BotxMessage(group_chat_id="c1", body="re: ok")
+            "src-1", BotxMessage(group_chat_id="c1", body="re: ok"),
         )
         assert sync_id == "reply-1"
         assert captured["path"] == "/api/v3/botx/events/reply_event"
@@ -246,7 +246,7 @@ class TestReplyEditDelete:
 
         client = _make_client(bot_config, handler)
         await client.edit_message(
-            "sid-1", body="updated", bubble=[], status="ok", ignored="should-not-appear"
+            "sid-1", body="updated", bubble=[], status="ok", ignored="should-not-appear",
         )
         body = captured["json"]
         assert captured["path"] == "/api/v3/botx/events/edit_event"
@@ -313,7 +313,7 @@ class TestTypingAndStatus:
             captured["path"] = request.url.path
             captured["query"] = dict(request.url.params)
             return httpx.Response(
-                200, json={"result": {"group_chat_id": "c1", "sent_to": ["u1"]}}
+                200, json={"result": {"group_chat_id": "c1", "sent_to": ["u1"]}},
             )
 
         client = _make_client(bot_config, handler)
@@ -340,7 +340,7 @@ class TestUploadFile:
             captured["content_type"] = request.headers.get("content-type", "")
             captured["body"] = request.content
             return httpx.Response(
-                200, json={"result": {"file_id": "f1", "file_url": "/files/f1"}}
+                200, json={"result": {"file_id": "f1", "file_url": "/files/f1"}},
             )
 
         client = _make_client(bot_config, handler)
@@ -371,7 +371,7 @@ class TestExtraEndpoints:
 
         client = _make_client(bot_config, handler)
         sync_id = await client.send_internal_notification(
-            "chat-1", {"k": "v"}, recipients=["bot-2"]
+            "chat-1", {"k": "v"}, recipients=["bot-2"],
         )
         assert sync_id == "int-1"
         assert captured["path"] == "/api/v4/botx/notifications/internal"
@@ -396,7 +396,7 @@ class TestExtraEndpoints:
 
         def handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(
-                200, json={"result": [{"user_huid": "u1"}, {"user_huid": "u2"}]}
+                200, json={"result": [{"user_huid": "u1"}, {"user_huid": "u2"}]},
             )
 
         client = _make_client(bot_config, handler)
@@ -411,7 +411,7 @@ class TestExtraEndpoints:
         def handler(request: httpx.Request) -> httpx.Response:
             captured["query"] = dict(request.url.params)
             return httpx.Response(
-                200, json={"result": {"user_huid": "u1", "email": "a@b"}}
+                200, json={"result": {"user_huid": "u1", "email": "a@b"}},
             )
 
         client = _make_client(bot_config, handler)
@@ -431,7 +431,7 @@ class TestExtraEndpoints:
         assert user is None
 
     async def test_search_user_requires_email_or_huid(
-        self, bot_config: BotConfig
+        self, bot_config: BotConfig,
     ) -> None:
         """Без email/huid — ``ValueError``."""
         client = ExpressBotClient(bot_config)

@@ -33,7 +33,7 @@ class _StubRag:
         namespace: str = "default",
     ) -> str:
         self.calls.append(
-            {"content": content, "metadata": metadata, "namespace": namespace}
+            {"content": content, "metadata": metadata, "namespace": namespace},
         )
         return "doc-id-42"
 
@@ -43,7 +43,7 @@ def stub_rag(monkeypatch: pytest.MonkeyPatch) -> _StubRag:
     """Подменяет get_rag_service в модуле processor'а."""
     stub = _StubRag()
     monkeypatch.setattr(
-        "src.backend.services.ai.rag_service.get_rag_service", lambda: stub
+        "src.backend.services.ai.rag_service.get_rag_service", lambda: stub,
     )
     return stub
 
@@ -66,7 +66,7 @@ async def test_ingest_calls_rag_service_with_body(stub_rag: _StubRag) -> None:
                 "pii_masker_version": "PresidioSanitizerAdapter",
             },
             "namespace": "docs",
-        }
+        },
     ]
     assert exchange.get_property("ingest_doc_id") == "doc-id-42"
 

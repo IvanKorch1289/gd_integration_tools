@@ -190,7 +190,7 @@ class HttpxClient:
                         )
                     except Exception as exc:
                         logger.warning(
-                            "unified transport build failed, fallback: %s", exc
+                            "unified transport build failed, fallback: %s", exc,
                         )
 
                 self._client = httpx.AsyncClient(**kwargs)
@@ -292,7 +292,7 @@ class HttpxClient:
         from src.backend.core.utils.task_registry import get_task_registry
 
         get_task_registry().create_task(
-            client.aclose(), name="httpx-rotate-close", deadline_seconds=30.0
+            client.aclose(), name="httpx-rotate-close", deadline_seconds=30.0,
         )
 
     def _breaker_for(self, host: str) -> Breaker:
@@ -370,7 +370,7 @@ class HttpxClient:
             wait=wait_exponential(multiplier=self._http_settings.retry_backoff_factor)
             + wait_random(0, 0.5),
             retry=retry_if_exception_type(
-                (httpx.TransportError, httpx.TimeoutException)
+                (httpx.TransportError, httpx.TimeoutException),
             ),
             before_sleep=before_sleep_log(logger, logging.DEBUG),
             reraise=True,

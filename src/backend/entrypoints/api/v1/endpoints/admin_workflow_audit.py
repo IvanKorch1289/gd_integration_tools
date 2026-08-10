@@ -43,7 +43,7 @@ class _ClickHouseClient(Protocol):
 
 # S202 audit fix: workflow audit (ClickHouse query bypass) — require admin role.
 _WORKFLOW_AUDIT_GUARD = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
 )
 router = APIRouter(
     prefix="/admin/workflow-audit",
@@ -68,7 +68,7 @@ _ALLOWED_EVENT_TYPES = frozenset(
         "hitl.requested_info",
         "activity.start",
         "activity.complete",
-    }
+    },
 )
 
 
@@ -93,7 +93,7 @@ class WorkflowAuditInventoryResponse(BaseModel):
     window_hours: int
     total_events: int
     breakdown: dict[str, int] = Field(
-        default_factory=dict, description="event_type → count"
+        default_factory=dict, description="event_type → count",
     )
 
 
@@ -158,7 +158,7 @@ async def get_audit_inventory(
         total += cnt
 
     return WorkflowAuditInventoryResponse(
-        window_hours=window_hours, total_events=total, breakdown=breakdown
+        window_hours=window_hours, total_events=total, breakdown=breakdown,
     )
 
 
@@ -233,6 +233,6 @@ async def get_audit_events(
                 actor=row[7],
                 duration_ms=row[8],
                 parent_workflow_id=row[9],
-            )
+            ),
         )
     return events

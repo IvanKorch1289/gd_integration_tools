@@ -40,7 +40,7 @@ scope = "*.cbr.ru"
 class TestRouteManifest:
     def test_minimal_valid(self) -> None:
         m = RouteManifest(
-            name="x", version="0.1.0", requires_core=">=0.1", pipelines=("p.dsl.yaml",)
+            name="x", version="0.1.0", requires_core=">=0.1", pipelines=("p.dsl.yaml",),
         )
         assert m.requires_plugins == {}
         assert m.tenant_aware is False
@@ -65,7 +65,7 @@ class TestRouteManifest:
     def test_pipelines_required_non_empty(self) -> None:
         with pytest.raises(ValidationError):
             RouteManifest(
-                name="x", version="1.0.0", requires_core=">=0.1", pipelines=()
+                name="x", version="1.0.0", requires_core=">=0.1", pipelines=(),
             )
 
     def test_invalid_route_name(self) -> None:
@@ -135,7 +135,7 @@ class TestRouteManifest:
     def test_requires_workflows_default_empty(self) -> None:
         """requires_workflows defaults to empty dict."""
         m = RouteManifest(
-            name="x", version="1.0.0", requires_core=">=0.1", pipelines=("p.dsl.yaml",)
+            name="x", version="1.0.0", requires_core=">=0.1", pipelines=("p.dsl.yaml",),
         )
         assert m.requires_workflows == {}
 
@@ -189,7 +189,7 @@ class TestRouteManifest:
                     "requires_core": ">=0.1",
                     "pipelines": ["p.dsl.yaml"],
                     "unknown": "boom",
-                }
+                },
             )
 
 
@@ -218,7 +218,7 @@ class TestLoadRouteManifest:
     def test_invalid_schema(self, tmp_path: Path) -> None:
         path = tmp_path / "route.toml"
         path.write_text(
-            'name = "x"\nversion = "1.0.0"\nrequires_core = ">=0.1"\n', encoding="utf-8"
+            'name = "x"\nversion = "1.0.0"\nrequires_core = ">=0.1"\n', encoding="utf-8",
         )
         with pytest.raises(RouteManifestError, match="validation failed"):
             load_route_manifest(path)

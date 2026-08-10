@@ -32,7 +32,7 @@ __all__ = (
 
 
 async def enforce_pre_call(
-    *, budget: TokenBudget, tenant_id: str, estimated_tokens: int
+    *, budget: TokenBudget, tenant_id: str, estimated_tokens: int,
 ) -> BudgetSnapshot:
     """Резервирует estimated_tokens.
 
@@ -43,7 +43,7 @@ async def enforce_pre_call(
 
 
 async def enforce_post_call(
-    *, budget: TokenBudget, tenant_id: str, estimated_tokens: int, actual_tokens: int
+    *, budget: TokenBudget, tenant_id: str, estimated_tokens: int, actual_tokens: int,
 ) -> BudgetSnapshot | None:
     """Корректирует разницу между estimated и actual после ответа LLM.
 
@@ -108,7 +108,7 @@ def tenant_from_saml_attributes(
     tenant_id = _unwrap(attributes.get(_SAML_TENANT_ATTR))
     if not tenant_id:
         raise ValueError(
-            f"SAML attribute {_SAML_TENANT_ATTR!r} required for TenantContext"
+            f"SAML attribute {_SAML_TENANT_ATTR!r} required for TenantContext",
         )
     plan = _unwrap(attributes.get(_SAML_PLAN_ATTR)) or default_plan
     region = _unwrap(attributes.get(_SAML_REGION_ATTR)) or default_region

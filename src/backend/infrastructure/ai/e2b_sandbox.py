@@ -89,7 +89,7 @@ class E2BSandbox(CodeSandbox):
         except ImportError as exc:
             raise RuntimeError(
                 "e2b-code-interpreter не установлен; добавьте "
-                "пакет в [ai] extra или используйте NoOpSandbox."
+                "пакет в [ai] extra или используйте NoOpSandbox.",
             ) from exc
 
         sandbox: Any = _E2BSandbox(api_key=self._api_key, timeout=int(timeout_s))
@@ -110,11 +110,11 @@ class E2BSandbox(CodeSandbox):
                         self._fs_facade.create_new(workspace, relative, content)
                     except Exception as art_exc:
                         _logger.warning(
-                            "E2B artifact write failed: %s — %s", relative, art_exc
+                            "E2B artifact write failed: %s — %s", relative, art_exc,
                         )
 
             return SandboxResult(
-                stdout=stdout, stderr=stderr, exit_code=exit_code, artifacts=artifacts
+                stdout=stdout, stderr=stderr, exit_code=exit_code, artifacts=artifacts,
             )
         finally:
             try:

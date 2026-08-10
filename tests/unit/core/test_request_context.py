@@ -15,7 +15,7 @@ class TestRequestContext:
 
     def test_bind_and_clear(self) -> None:
         ctx = RequestContext(
-            correlation_id="c1", request_id="r1", method="GET", path="/"
+            correlation_id="c1", request_id="r1", method="GET", path="/",
         )
         token = bind_request_context(ctx)
         assert RequestContext.current() is ctx

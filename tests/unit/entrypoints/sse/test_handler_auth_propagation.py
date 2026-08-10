@@ -148,7 +148,7 @@ class TestSseAuthContextPropagation:
             captured["principal"] = kwargs.get("principal")
             captured["permissions"] = kwargs.get("permissions")
             return MagicMock(
-                success=True, data={}, error=None, error_code=None
+                success=True, data={}, error=None, error_code=None,
             )
 
         with patch(
@@ -252,7 +252,7 @@ class TestSseAuthContextPropagation:
             new_callable=AsyncMock,
         ) as mock_bridge:
             mock_bridge.return_value = MagicMock(
-                success=True, data={"x": 1}, error=None, error_code=None
+                success=True, data={"x": 1}, error=None, error_code=None,
             )
             response = await sse_invoke(request, body)
             chunks = [c async for c in response.body_iterator]
@@ -279,7 +279,7 @@ class TestSseAuthContextPropagation:
         async def fake_bridge(**kwargs: Any) -> MagicMock:
             captured.update(kwargs)
             return MagicMock(
-                success=True, data={}, error=None, error_code=None
+                success=True, data={}, error=None, error_code=None,
             )
 
         with patch(
@@ -317,7 +317,7 @@ class TestSseAuthContextEdgeCases:
         async def fake_bridge(**kwargs: Any) -> MagicMock:
             captured.update(kwargs)
             return MagicMock(
-                success=True, data={}, error=None, error_code=None
+                success=True, data={}, error=None, error_code=None,
             )
 
         with patch(
@@ -345,7 +345,7 @@ class TestSseAuthContextEdgeCases:
         async def fake_bridge(**kwargs: Any) -> MagicMock:
             captured.update(kwargs)
             return MagicMock(
-                success=True, data={}, error=None, error_code=None
+                success=True, data={}, error=None, error_code=None,
             )
 
         with patch(
@@ -388,10 +388,10 @@ class TestSseAuthIntegrationNoAuth:
         app.include_router(sse_router)
 
         async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test",
         ) as ac:
             response = await ac.post(
-                "/events/invoke", json={"action": "r1", "payload": {}}
+                "/events/invoke", json={"action": "r1", "payload": {}},
             )
 
         # require_auth dependency raises HTTPException(401) → 401 ответ.

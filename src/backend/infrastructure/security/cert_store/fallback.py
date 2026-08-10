@@ -52,7 +52,7 @@ class FallbackCertBackend(CertBackend):
         ]
 
     async def save(
-        self, service_id: str, pem: str, expires_at: datetime | None = None
+        self, service_id: str, pem: str, expires_at: datetime | None = None,
     ) -> None:
         """Save через primary."""
         await self._primary.save(service_id, pem, expires_at)
@@ -75,12 +75,12 @@ class FallbackCertBackend(CertBackend):
                 if entry is not None:
                     if name != "primary":
                         _logger.info(
-                            "cert.fallback.hit chain=%s id=%s", name, service_id
+                            "cert.fallback.hit chain=%s id=%s", name, service_id,
                         )
                     return entry
             except Exception as exc:
                 _logger.warning(
-                    "cert.fallback.error chain=%s id=%s: %s", name, service_id, exc
+                    "cert.fallback.error chain=%s id=%s: %s", name, service_id, exc,
                 )
                 continue
         return None

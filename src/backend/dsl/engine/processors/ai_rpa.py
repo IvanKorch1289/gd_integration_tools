@@ -50,10 +50,10 @@ class RPAAction(BaseModel):
     """Structured output schema for AI RPA action."""
 
     action: Literal["click", "type", "screenshot", "hover", "scroll", "wait"] = Field(
-        ..., description="RPA action to perform"
+        ..., description="RPA action to perform",
     )
     params: dict[str, Any] = Field(
-        default_factory=dict, description="Action parameters"
+        default_factory=dict, description="Action parameters",
     )
     reasoning: str = Field(default="", description="LLM reasoning for the action")
 
@@ -119,7 +119,7 @@ class AIRpaProcessor(BaseProcessor):
         llm_client = self._get_llm_client(context)
         if llm_client is None:
             exchange.fail(
-                "ai_rpa: LLM client не доступен (проверьте настройки AI провайдера)"
+                "ai_rpa: LLM client не доступен (проверьте настройки AI провайдера)",
             )
             return
 
@@ -140,15 +140,15 @@ class AIRpaProcessor(BaseProcessor):
             except Exception as exc:
                 last_error = exc
                 _logger.warning(
-                    "ai_rpa attempt %s/%s failed: %s", attempt, self._max_retries, exc
+                    "ai_rpa attempt %s/%s failed: %s", attempt, self._max_retries, exc,
                 )
                 if attempt < self._max_retries:
                     await asyncio.sleep(
-                        0.5 * (2 ** (attempt - 1))
+                        0.5 * (2 ** (attempt - 1)),
                     )  # exponential backoff
 
         exchange.fail(
-            f"ai_rpa: LLM call failed after {self._max_retries} attempts: {last_error}"
+            f"ai_rpa: LLM call failed after {self._max_retries} attempts: {last_error}",
         )
 
     def _get_llm_client(self, context: ExecutionContext):
@@ -185,12 +185,12 @@ class AIRpaProcessor(BaseProcessor):
                 context_parts.append(f"{key}: {value}")
 
         context_parts.append(
-            "\nДоступные действия: click, type, screenshot, hover, scroll, wait"
+            "\nДоступные действия: click, type, screenshot, hover, scroll, wait",
         )
         context_parts.append(
             "Верни строго валидный JSON без markdown-форматирования с полями: "
             "action (string), params (object), reasoning (string). "
-            'Пример: {"action": "click", "params": {"x": 100, "y": 200}, "reasoning": "..."}'
+            'Пример: {"action": "click", "params": {"x": 100, "y": 200}, "reasoning": "..."}',
         )
 
         return "\n".join(context_parts)
@@ -250,13 +250,13 @@ class AIRpaProcessor(BaseProcessor):
             validated = RPAAction.model_validate(data)
         except ValidationError as exc:
             raise ValueError(
-                f"LLM response does not match RPAAction schema: {exc}"
+                f"LLM response does not match RPAAction schema: {exc}",
             ) from exc
 
         # Validate action against allowed set (defense in depth)
         if validated.action not in _VALID_ACTIONS:
             raise ValueError(
-                f"Invalid action '{validated.action}'; expected one of {_VALID_ACTIONS}"
+                f"Invalid action '{validated.action}'; expected one of {_VALID_ACTIONS}",
             )
 
         return validated.model_dump()

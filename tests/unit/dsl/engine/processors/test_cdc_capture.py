@@ -94,7 +94,7 @@ class TestCDCCaptureProcessorInit:
         """Processor raises ValueError for invalid strategy."""
         with pytest.raises(ValueError, match="strategy must be one of"):
             CDCCaptureProcessor(
-                profile="oracle_prod", tables=["orders"], strategy="invalid_strategy"
+                profile="oracle_prod", tables=["orders"], strategy="invalid_strategy",
             )
 
     def test_rejects_empty_tables(self) -> None:
@@ -110,7 +110,7 @@ class TestCDCCaptureProcessorInit:
     def test_name_custom(self) -> None:
         """Processor accepts custom name."""
         processor = CDCCaptureProcessor(
-            profile="oracle_prod", tables=["orders"], name="my_custom_name"
+            profile="oracle_prod", tables=["orders"], name="my_custom_name",
         )
         assert processor.name == "my_custom_name"
 
@@ -132,7 +132,7 @@ class TestCDCCaptureProcessorToSpec:
                 "profile": "oracle_prod",
                 "tables": ["orders"],
                 "strategy": "polling",
-            }
+            },
         }
 
     def test_to_spec_custom_values(self) -> None:
@@ -172,7 +172,7 @@ class TestCDCCaptureProcessorProcess:
     async def test_process_subscribes_on_first_call(self) -> None:
         """Processor creates CDC subscription on first process call."""
         processor = CDCCaptureProcessor(
-            profile="oracle_prod", tables=["orders"], strategy="polling"
+            profile="oracle_prod", tables=["orders"], strategy="polling",
         )
 
         mock_client = MagicMock()
@@ -203,7 +203,7 @@ class TestCDCCaptureProcessorProcess:
     async def test_process_does_not_resubscribe(self) -> None:
         """Processor does not create new subscription on subsequent calls."""
         processor = CDCCaptureProcessor(
-            profile="oracle_prod", tables=["orders"], strategy="polling"
+            profile="oracle_prod", tables=["orders"], strategy="polling",
         )
         processor._subscription_id = "existing_sub_456"
 
@@ -252,7 +252,7 @@ class TestCDCCaptureProcessorProcess:
     async def test_process_sets_out_message(self) -> None:
         """Processor sets out_message with status info."""
         processor = CDCCaptureProcessor(
-            profile="oracle_prod", tables=["orders"], strategy="polling"
+            profile="oracle_prod", tables=["orders"], strategy="polling",
         )
 
         mock_client = MagicMock()

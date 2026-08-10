@@ -86,7 +86,7 @@ class FeedbackIndexer:
         self._repo = repository or get_feedback_repository()
 
     async def index_batch(
-        self, *, agent_id: str | None = None, limit: int = 100
+        self, *, agent_id: str | None = None, limit: int = 100,
     ) -> FeedbackIndexResult:
         """Переводит пачку размеченных ответов в RAG-индекс.
 
@@ -102,7 +102,7 @@ class FeedbackIndexer:
             Результат индексации (счётчики по исходу).
         """
         docs = await self._repo.list_labeled(
-            agent_id=agent_id, indexed_in_rag=False, limit=limit
+            agent_id=agent_id, indexed_in_rag=False, limit=limit,
         )
         if not docs:
             return FeedbackIndexResult()
@@ -161,7 +161,7 @@ class FeedbackIndexer:
         if ingest is None:
             raise RuntimeError("RAGService.ingest недоступен")
         rag_doc_id = await ingest(
-            content=content, metadata=metadata, namespace=self._NAMESPACE
+            content=content, metadata=metadata, namespace=self._NAMESPACE,
         )
         return str(rag_doc_id)
 

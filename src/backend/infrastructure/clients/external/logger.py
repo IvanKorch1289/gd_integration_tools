@@ -50,7 +50,7 @@ class GraylogHandler:
         except ImportError:
             _logger.warning(
                 "graypy не установлен — Graylog-обработчик отключён "
-                "(установите: pip install graypy для активации)"
+                "(установите: pip install graypy для активации)",
             )
             return None
 
@@ -93,7 +93,7 @@ class GraylogHandler:
             return True
         except OSError as exc:
             raise ConnectionError(
-                f"Ошибка проверки соединения с Graylog: {exc!s}"
+                f"Ошибка проверки соединения с Graylog: {exc!s}",
             ) from exc
 
 

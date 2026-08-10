@@ -84,7 +84,7 @@ def test_check_runs_successfully() -> None:
 
     python_exe = sys.executable
     result = subprocess.run(
-        [python_exe, str(check_file)], capture_output=True, text=True, timeout=30
+        [python_exe, str(check_file)], capture_output=True, text=True, timeout=30,
     )
     assert result.returncode == 0, (
         f"check_protocol_coverage.py failed: stdout={result.stdout!r} "

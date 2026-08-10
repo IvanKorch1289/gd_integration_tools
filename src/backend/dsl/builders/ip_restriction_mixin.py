@@ -44,6 +44,6 @@ class IPRestrictionMixin(_RouteBuilderProtocol):
         """
         pattern = path_pattern or f"/api/v1/auto/{self.route_id}"
         get_ip_restriction_store().set_route_rule(
-            path_pattern=pattern, allowed_ips=allowed_ips, enabled=enabled
+            path_pattern=pattern, allowed_ips=allowed_ips, enabled=enabled,
         )
         return self

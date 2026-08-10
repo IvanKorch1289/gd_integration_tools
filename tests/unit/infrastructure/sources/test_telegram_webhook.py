@@ -81,7 +81,7 @@ def test_parse_update_callback_query() -> None:
     )
 
     source = TelegramWebhookSource(
-        bot_token="123:ABC", allowed_updates=("callback_query",)
+        bot_token="123:ABC", allowed_updates=("callback_query",),
     )
     payload = {"update_id": 101, "callback_query": {"id": "cb1", "data": "btn_yes"}}
     u = source.parse_update(payload)
@@ -97,7 +97,7 @@ def test_parse_update_filtered_out() -> None:
     )
 
     source = TelegramWebhookSource(
-        bot_token="123:ABC", allowed_updates=("callback_query",)
+        bot_token="123:ABC", allowed_updates=("callback_query",),
     )
     payload = {"update_id": 102, "message": {"message_id": 1, "text": "/start"}}
     u = source.parse_update(payload)

@@ -19,7 +19,7 @@ async def test_endpoint_returns_disabled_when_langfuse_off() -> None:
         app = FastAPI()
         app.include_router(router, prefix="/api/v1/admin")
         async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test",
         ) as ac:
             resp = await ac.get("/api/v1/admin/ai-costs?top_n=5")
         assert resp.status_code in (200, 401)
@@ -46,7 +46,7 @@ async def test_link_endpoint_returns_disabled_without_host() -> None:
         app = FastAPI()
         app.include_router(router, prefix="/api/v1/admin")
         async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test",
         ) as ac:
             resp = await ac.get("/api/v1/admin/ai-costs/link")
         if resp.status_code == 200:

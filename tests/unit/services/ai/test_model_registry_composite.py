@@ -21,7 +21,7 @@ def _make_adapter(models: list[ModelRecord]) -> AsyncMock:
                 if m.name == name and (version is None or m.version == version)
             ),
             None,
-        )
+        ),
     )
     adapter.register_model = AsyncMock(side_effect=lambda r: r)
     adapter.transition_stage = AsyncMock(side_effect=lambda n, v, s: models[0])
@@ -43,7 +43,7 @@ async def test_list_models_merges_all_backends() -> None:
         {
             "mlflow": _make_adapter(mlflow_models),
             "huggingface": _make_adapter(hf_models),
-        }
+        },
     )
 
     models = await registry.list_models()
@@ -58,7 +58,7 @@ async def test_get_model_searches_all_backends_when_no_filter() -> None:
     """Без backend-filter поиск идёт по всем."""
     only_hf = [ModelRecord(name="bge-m3", version="2.0")]
     registry = CompositeModelRegistry(
-        {"mlflow": _make_adapter([]), "huggingface": _make_adapter(only_hf)}
+        {"mlflow": _make_adapter([]), "huggingface": _make_adapter(only_hf)},
     )
     found = await registry.get_model("bge-m3")
     assert found is not None
@@ -71,7 +71,7 @@ async def test_register_model_writes_to_primary() -> None:
     mlflow_adapter = _make_adapter([])
     hf_adapter = _make_adapter([])
     registry = CompositeModelRegistry(
-        {"mlflow": mlflow_adapter, "huggingface": hf_adapter}
+        {"mlflow": mlflow_adapter, "huggingface": hf_adapter},
     )
     new = ModelRecord(name="new-model", version="1", stage="None")
     out = await registry.register_model(new)
@@ -86,7 +86,7 @@ async def test_register_with_explicit_backend() -> None:
     mlflow_adapter = _make_adapter([])
     hf_adapter = _make_adapter([])
     registry = CompositeModelRegistry(
-        {"mlflow": mlflow_adapter, "huggingface": hf_adapter}
+        {"mlflow": mlflow_adapter, "huggingface": hf_adapter},
     )
     new = ModelRecord(name="bge-m3", version="1")
     await registry.register_model(new, backend="huggingface")

@@ -61,7 +61,7 @@ class NotebookService:
         )
         if content:
             notebook.versions.append(
-                NotebookVersion(version=1, content=content, changed_by=created_by)
+                NotebookVersion(version=1, content=content, changed_by=created_by),
             )
             notebook.latest_version = 1
         await self._repo.create(notebook)
@@ -80,7 +80,7 @@ class NotebookService:
         return await self._repo.get(notebook_id)
 
     async def get_version(
-        self, notebook_id: str, version: int
+        self, notebook_id: str, version: int,
     ) -> NotebookVersion | None:
         """Get a specific version of a notebook.
 
@@ -111,7 +111,7 @@ class NotebookService:
         return list(notebook.versions)
 
     async def update_content(
-        self, *, notebook_id: str, content: str, user: str, summary: str | None = None
+        self, *, notebook_id: str, content: str, user: str, summary: str | None = None,
     ) -> Notebook | None:
         """Update notebook content (append new version).
 
@@ -130,7 +130,7 @@ class NotebookService:
         return notebook
 
     async def restore_version(
-        self, *, notebook_id: str, version: int, user: str
+        self, *, notebook_id: str, version: int, user: str,
     ) -> Notebook | None:
         """Восстановить notebook к указанной версии (versioning)."""
         return await self._repo.restore_version(notebook_id, version, user)
@@ -145,7 +145,7 @@ class NotebookService:
     ) -> list[Notebook]:
         """Список notebooks с фильтром по tag + pagination (include_deleted для soft-delete)."""
         return await self._repo.list_all(
-            tag=tag, include_deleted=include_deleted, limit=limit, offset=offset
+            tag=tag, include_deleted=include_deleted, limit=limit, offset=offset,
         )
 
     async def delete(self, notebook_id: str) -> bool:

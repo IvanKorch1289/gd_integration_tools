@@ -91,7 +91,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
             if self.strict:
                 exchange.set_error(
                     f"{self.name}: "
-                    f"token_map отсутствует в exchange.properties[{self.token_map_property!r}]"
+                    f"token_map отсутствует в exchange.properties[{self.token_map_property!r}]",
                 )
                 exchange.stop()
                 return

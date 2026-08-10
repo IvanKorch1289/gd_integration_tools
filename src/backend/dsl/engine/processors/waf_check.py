@@ -77,7 +77,7 @@ class WafCheckProcessor(BaseProcessor):
         if action not in self.ACTIONS:
             raise ValueError(
                 f"WafCheckProcessor: action {action!r} не поддерживается. "
-                f"Доступно: {self.ACTIONS}"
+                f"Доступно: {self.ACTIONS}",
             )
         super().__init__(name=name or f"waf_check:{action}")
         self.source_property = source_property
@@ -88,7 +88,7 @@ class WafCheckProcessor(BaseProcessor):
         ]
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Проверяет payload на WAF-паттерны и применяет действие (log/block/warn)."""
         if not await self.auth_check(exchange, action="check"):

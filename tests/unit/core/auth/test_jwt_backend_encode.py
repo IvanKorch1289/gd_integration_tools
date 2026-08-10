@@ -46,7 +46,7 @@ def test_encode_includes_iat_and_exp_claims() -> None:
 
     # Decode без проверки подписи (мы только в payload).
     claims = joserfc_jwt.decode(
-        token, key=OctKey.import_key(SECRET), algorithms=["HS256"]
+        token, key=OctKey.import_key(SECRET), algorithms=["HS256"],
     ).claims
 
     assert claims["sub"] == "alice"
@@ -72,10 +72,10 @@ def test_encode_with_custom_expires_in() -> None:
 def test_encode_with_issuer() -> None:
     """``encode(issuer=...)`` добавляет ``iss`` claim."""
     token, _ = encode(
-        subject="alice", claims=None, secret=SECRET, issuer="https://example.com"
+        subject="alice", claims=None, secret=SECRET, issuer="https://example.com",
     )
     claims = joserfc_jwt.decode(
-        token, key=OctKey.import_key(SECRET), algorithms=["HS256"]
+        token, key=OctKey.import_key(SECRET), algorithms=["HS256"],
     ).claims
     assert claims["iss"] == "https://example.com"
 

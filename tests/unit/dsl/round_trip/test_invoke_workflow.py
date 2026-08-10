@@ -48,7 +48,7 @@ def test_invoke_workflow_round_trip(kwargs: dict[str, Any]) -> None:
     """RouteBuilder.invoke_workflow → YAML → load_pipeline_from_yaml идемпотентен."""
 
     builder = RouteBuilder.from_(
-        f"rt.iw.{kwargs['name']}", source="test:rt"
+        f"rt.iw.{kwargs['name']}", source="test:rt",
     ).invoke_workflow(**kwargs)
 
     initial, rebuilt = _round_trip(builder)
@@ -61,7 +61,7 @@ def test_invoke_workflow_rejects_invalid_mode() -> None:
 
     with pytest.raises(ValueError, match="не поддерживается"):
         RouteBuilder.from_("rt.bad", source="test:rt").invoke_workflow(
-            "orders.create_with_payment", mode="fire-forget"
+            "orders.create_with_payment", mode="fire-forget",
         )
 
 
@@ -69,7 +69,7 @@ def test_invoke_workflow_preserves_defaults_in_spec() -> None:
     """Дефолтные значения не попадают в to_spec (минимальный YAML)."""
 
     builder = RouteBuilder.from_("rt.min", source="test:rt").invoke_workflow(
-        "orders.create_with_payment"
+        "orders.create_with_payment",
     )
     pipeline = builder.build(validate_actions=False)
     dump = pipeline.to_dict()
@@ -82,7 +82,7 @@ def test_invoke_workflow_preserves_defaults_in_spec() -> None:
 def test_invoke_workflow_async_reply_default_timeout_not_in_spec() -> None:
     """Sprint 8A K3 W11: дефолтный reply_timeout_seconds (60.0) не пишется в spec."""
     builder = RouteBuilder.from_("rt.reply", source="test:rt").invoke_workflow(
-        "orders.long", mode="async-reply"
+        "orders.long", mode="async-reply",
     )
     pipeline = builder.build(validate_actions=False)
     spec = pipeline.to_dict()["processors"][0]["invoke_workflow"]
@@ -93,7 +93,7 @@ def test_invoke_workflow_async_reply_default_timeout_not_in_spec() -> None:
 def test_invoke_workflow_async_reply_custom_timeout_in_spec() -> None:
     """Sprint 8A K3 W11: кастомный reply_timeout_seconds попадает в spec."""
     builder = RouteBuilder.from_("rt.reply2", source="test:rt").invoke_workflow(
-        "orders.long", mode="async-reply", reply_timeout_seconds=120.0
+        "orders.long", mode="async-reply", reply_timeout_seconds=120.0,
     )
     pipeline = builder.build(validate_actions=False)
     spec = pipeline.to_dict()["processors"][0]["invoke_workflow"]

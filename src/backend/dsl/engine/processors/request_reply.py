@@ -63,7 +63,7 @@ class RequestProcessor(BaseProcessor):
                 "timeout": self._timeout,
                 "correlation_id": self._correlation_id,
                 "result_property": self._result_property,
-            }
+            },
         }
 
 
@@ -134,5 +134,5 @@ class ReplyProcessor(BaseProcessor):
                 "reply_channel": self._reply_channel,
                 "payload": self._payload,
                 "correlation_id": self._correlation_id,
-            }
+            },
         }

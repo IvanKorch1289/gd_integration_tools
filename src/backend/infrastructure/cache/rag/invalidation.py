@@ -21,7 +21,7 @@ class RagInvalidationBus:
     """Тонкий wrapper над Redis pub/sub для invalidate_by_tag-событий."""
 
     def __init__(
-        self, channel: str = "rag:invalidation", redis_client: Any | None = None
+        self, channel: str = "rag:invalidation", redis_client: Any | None = None,
     ) -> None:
         self._channel = channel
         self._client = redis_client
@@ -43,8 +43,8 @@ class RagInvalidationBus:
         try:
             return int(
                 await client.execute(
-                    "queue", lambda conn: conn.publish(self._channel, payload)
-                )
+                    "queue", lambda conn: conn.publish(self._channel, payload),
+                ),
             )
         except Exception as exc:
             logger.debug("RagInvalidationBus.publish failed: %s", exc)
@@ -87,7 +87,7 @@ class RagInvalidationBus:
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
-            _listen(), name="rag-invalidation-listen"
+            _listen(), name="rag-invalidation-listen",
         )
 
     async def stop(self) -> None:

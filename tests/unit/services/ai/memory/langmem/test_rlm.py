@@ -14,7 +14,7 @@ class _FakeQdrant:
     def __init__(self, initial: dict[str, Any] | None = None) -> None:
         self.payload = initial or {}
         self.retrieve = AsyncMock(
-            return_value=[{"id": "doc-1", "payload": self.payload}]
+            return_value=[{"id": "doc-1", "payload": self.payload}],
         )
         self.set_payload = AsyncMock()
         self.upsert = AsyncMock()

@@ -16,7 +16,7 @@ def test_route_builder_from_cdc() -> None:
     from src.backend.dsl.builders.base import RouteBuilder
 
     b = RouteBuilder.from_cdc(
-        "orders.stream", table="orders", dsn="postgresql://localhost/db"
+        "orders.stream", table="orders", dsn="postgresql://localhost/db",
     )
     assert b.route_id == "orders.stream"
     assert "orders" in b.source.lower() or "cdc" in b.source.lower()
@@ -51,7 +51,7 @@ def test_route_builder_from_filewatcher() -> None:
     # NB: from_filewatcher требует source_id через **kwargs (для FileWatcherSource).
     # Source_id — required positional arg в FileWatcherSource.__init__.
     b = RouteBuilder.from_filewatcher(
-        "csv.import", path="/data/orders", recursive=True, source_id="orders_watcher"
+        "csv.import", path="/data/orders", recursive=True, source_id="orders_watcher",
     )
     assert b.route_id == "csv.import"
 
@@ -88,7 +88,7 @@ def test_all_from_builders_return_route_builder() -> None:
         (
             "from_sse_multi",
             lambda: RouteBuilder.from_sse_multi(
-                "test3m", ["https://a/sse", "https://b/sse"]
+                "test3m", ["https://a/sse", "https://b/sse"],
             ),
         ),
         (
@@ -98,19 +98,19 @@ def test_all_from_builders_return_route_builder() -> None:
         (
             "from_kafka",
             lambda: RouteBuilder.from_kafka(
-                "test5", topic="t", bootstrap_servers="kafka:9092", group_id="g1"
+                "test5", topic="t", bootstrap_servers="kafka:9092", group_id="g1",
             ),
         ),
         (
             "from_rabbit",
             lambda: RouteBuilder.from_rabbit(
-                "test6", queue="q", url="amqp://rabbit:5672"
+                "test6", queue="q", url="amqp://rabbit:5672",
             ),
         ),
         (
             "from_filewatcher",
             lambda: RouteBuilder.from_filewatcher(
-                "test7", path="/tmp/x", source_id="x_watcher"
+                "test7", path="/tmp/x", source_id="x_watcher",
             ),
         ),
     ]

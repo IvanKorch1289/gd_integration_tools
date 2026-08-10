@@ -35,7 +35,7 @@ __all__ = ("router",)
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_OPERATOR = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
 )
 
 router = APIRouter(dependencies=[_ADMIN_GUARD_OPERATOR], prefix="/admin/plugins", tags=["admin"])
@@ -65,7 +65,7 @@ class PluginManifest(BaseModel):
     tenant_aware: bool = False
     provides: list[str] = Field(default_factory=list)
     raw: dict[str, Any] = Field(
-        default_factory=dict, description="Сырое содержимое TOML"
+        default_factory=dict, description="Сырое содержимое TOML",
     )
 
 
@@ -375,7 +375,7 @@ async def list_plugin_versions(name: str) -> PluginVersionsResponse:
     summary="Sprint 14 K5 W2: diff между двумя версиями",
 )
 async def diff_plugin_versions(
-    name: str, from_version: str, to_version: str
+    name: str, from_version: str, to_version: str,
 ) -> PluginDiffResponse:
     """Diff manifest'ов между ``from_version`` и ``to_version``."""
     _check_flag_enabled()
@@ -398,7 +398,7 @@ async def diff_plugin_versions(
     summary="Sprint 14 K5 W2: rollback плагина на конкретную версию",
 )
 async def rollback_plugin(
-    name: str, body: PluginRollbackRequest
+    name: str, body: PluginRollbackRequest,
 ) -> PluginRollbackResponse:
     """Переключить активную версию плагина и выполнить hot-swap."""
     _check_flag_enabled()
@@ -454,7 +454,7 @@ async def get_dependency_graph() -> PluginDependencyGraph:
                 "id": manifest.name,
                 "version": manifest.version,
                 "tenant_aware": manifest.tenant_aware,
-            }
+            },
         )
         for required, spec in manifest.compatibility.requires_plugins.items():
             edges.append({"source": manifest.name, "target": required, "spec": spec})

@@ -40,7 +40,7 @@ class TestResilientDecorator:
         """Transient failure → retry до max_attempts."""
         # Mock: 2 failures, потом success
         mock_func = AsyncMock(
-            side_effect=[ConnectionError("fail"), ConnectionError("fail"), "ok"]
+            side_effect=[ConnectionError("fail"), ConnectionError("fail"), "ok"],
         )
 
         @resilient(name="test_retry", max_attempts=3, initial_backoff=0.01)

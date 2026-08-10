@@ -53,7 +53,7 @@ class AdminAuthorizationError(HTTPException):
     """HTTP 403 — у actor отсутствует требуемая admin-роль."""
 
     def __init__(
-        self, *, required: tuple[AdminRole, ...], actual: frozenset[AdminRole]
+        self, *, required: tuple[AdminRole, ...], actual: frozenset[AdminRole],
     ) -> None:
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,

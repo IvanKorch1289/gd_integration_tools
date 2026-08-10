@@ -21,7 +21,7 @@ class TestSendEmailFromTemplateValidation:
 
     @pytest.mark.asyncio
     async def test_rejects_dotdot_in_template_name(
-        self, mail_service: MailService
+        self, mail_service: MailService,
     ) -> None:
         with pytest.raises(ValueError, match="Недопустимое имя шаблона"):
             await mail_service.send_email_from_template(
@@ -34,7 +34,7 @@ class TestSendEmailFromTemplateValidation:
     async def test_rejects_absolute_path(self, mail_service: MailService) -> None:
         with pytest.raises(ValueError, match="Недопустимое имя шаблона"):
             await mail_service.send_email_from_template(
-                to_emails=["a@example.com"], subject="subj", template_name="/etc/passwd"
+                to_emails=["a@example.com"], subject="subj", template_name="/etc/passwd",
             )
 
     @pytest.mark.asyncio
@@ -50,27 +50,27 @@ class TestSendEmailFromTemplateValidation:
     async def test_rejects_dot_name(self, mail_service: MailService) -> None:
         with pytest.raises(ValueError, match="Недопустимое имя шаблона"):
             await mail_service.send_email_from_template(
-                to_emails=["a@example.com"], subject="subj", template_name="."
+                to_emails=["a@example.com"], subject="subj", template_name=".",
             )
 
     @pytest.mark.asyncio
     async def test_rejects_dotdot_name(self, mail_service: MailService) -> None:
         with pytest.raises(ValueError, match="Недопустимое имя шаблона"):
             await mail_service.send_email_from_template(
-                to_emails=["a@example.com"], subject="subj", template_name=".."
+                to_emails=["a@example.com"], subject="subj", template_name="..",
             )
 
     @pytest.mark.asyncio
     async def test_accepts_simple_name(
-        self, mail_service: MailService, tmp_path: Path
+        self, mail_service: MailService, tmp_path: Path,
     ) -> None:
         template_file = tmp_path / "hello.txt"
         template_file.write_text("Hello")
 
         with patch.object(
-            mail_service, "send_email", new_callable=AsyncMock
+            mail_service, "send_email", new_callable=AsyncMock,
         ) as mock_send:
             await mail_service.send_email_from_template(
-                to_emails=["a@example.com"], subject="subj", template_name="hello.txt"
+                to_emails=["a@example.com"], subject="subj", template_name="hello.txt",
             )
             mock_send.assert_awaited_once()

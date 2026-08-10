@@ -27,7 +27,7 @@ class TestFeedbackDomainService:
     def test_apply_label_updates_fields(self):
         doc = AIFeedbackDoc(query="q", response="r", agent_id="a1")
         result = FeedbackDomainService.apply_label(
-            doc, label="positive", comment="ok", operator_id="op1"
+            doc, label="positive", comment="ok", operator_id="op1",
         )
         assert result.feedback == "positive"
         assert result.feedback_comment == "ok"
@@ -50,7 +50,7 @@ class TestAIFeedbackService:
     @pytest.mark.asyncio
     async def test_save_response(self, service: AIFeedbackService):
         doc_id = await service.save_response(
-            query="hello", response="hi", agent_id="agent_1"
+            query="hello", response="hi", agent_id="agent_1",
         )
         assert doc_id
         fetched = await service.get(doc_id)
@@ -62,7 +62,7 @@ class TestAIFeedbackService:
     async def test_set_feedback(self, service: AIFeedbackService):
         doc_id = await service.save_response(query="q", response="r", agent_id="a1")
         updated = await service.set_feedback(
-            doc_id=doc_id, label="negative", comment="wrong", operator_id="op1"
+            doc_id=doc_id, label="negative", comment="wrong", operator_id="op1",
         )
         assert updated.feedback == "negative"
         assert updated.feedback_comment == "wrong"

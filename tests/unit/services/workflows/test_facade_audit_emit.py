@@ -50,7 +50,7 @@ async def test_emit_on_start(gate: CapabilityGate) -> None:
     """После успешного start() facade вызывает sink.emit(workflow.start)."""
     sink = _CapturingSink()
     facade = WorkflowFacade(
-        backend=FakeWorkflowBackend(), capability_gate=gate, audit_sink=sink
+        backend=FakeWorkflowBackend(), capability_gate=gate, audit_sink=sink,
     )
 
     await facade.start(
@@ -74,7 +74,7 @@ async def test_emit_on_signal_and_cancel(gate: CapabilityGate) -> None:
     """signal() и cancel() тоже эмитят соответствующие события."""
     sink = _CapturingSink()
     facade = WorkflowFacade(
-        backend=FakeWorkflowBackend(), capability_gate=gate, audit_sink=sink
+        backend=FakeWorkflowBackend(), capability_gate=gate, audit_sink=sink,
     )
     handle = await facade.start(
         caller="ext.demo",
@@ -85,7 +85,7 @@ async def test_emit_on_signal_and_cancel(gate: CapabilityGate) -> None:
         task_queue="q",
     )
     await facade.signal(
-        caller="ext.demo", handle=handle, signal_name="approve", payload={}
+        caller="ext.demo", handle=handle, signal_name="approve", payload={},
     )
     await facade.cancel(caller="ext.demo", handle=handle)
 
@@ -98,7 +98,7 @@ async def test_emit_failure_does_not_break_workflow(gate: CapabilityGate) -> Non
     """Если sink.emit падает — facade.start всё равно возвращает handle."""
     sink = _CapturingSink(raise_on_emit=True)
     facade = WorkflowFacade(
-        backend=FakeWorkflowBackend(), capability_gate=gate, audit_sink=sink
+        backend=FakeWorkflowBackend(), capability_gate=gate, audit_sink=sink,
     )
     handle = await facade.start(
         caller="ext.demo",
@@ -115,7 +115,7 @@ async def test_emit_failure_does_not_break_workflow(gate: CapabilityGate) -> Non
 async def test_no_sink_noop(gate: CapabilityGate) -> None:
     """audit_sink=None — facade работает в no-op режиме без ошибок."""
     facade = WorkflowFacade(
-        backend=FakeWorkflowBackend(), capability_gate=gate, audit_sink=None
+        backend=FakeWorkflowBackend(), capability_gate=gate, audit_sink=None,
     )
     handle = await facade.start(
         caller="ext.demo",

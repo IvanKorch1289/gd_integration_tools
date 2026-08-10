@@ -99,7 +99,7 @@ class UnitConversionProcessor(BaseProcessor):
             )
         if self._from_value_source.startswith("properties."):
             return exchange.properties.get(
-                self._from_value_source[len("properties.") :]
+                self._from_value_source[len("properties.") :],
             )
         return None
 

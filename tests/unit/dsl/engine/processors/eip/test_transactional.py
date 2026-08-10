@@ -115,7 +115,7 @@ class TestTransactionalClientHappyPath:
             )
 
         p = TransactionalClientProcessor(
-            action=action, outbox_backend=lambda: backend, event_factory=event_factory
+            action=action, outbox_backend=lambda: backend, event_factory=event_factory,
         )
         ex = _make_exchange({"input": 1})
         await p.process(ex, context=MagicMock())
@@ -140,7 +140,7 @@ class TestTransactionalClientHappyPath:
             return _make_event()
 
         p = TransactionalClientProcessor(
-            action=action, outbox_backend=lambda: backend, event_factory=event_factory
+            action=action, outbox_backend=lambda: backend, event_factory=event_factory,
         )
         await p.process(_make_exchange({"input": "x"}), context=MagicMock())
 
@@ -256,7 +256,7 @@ class TestProcessManagerInit:
 
     def test_init_persist_state_with_store_ok(self) -> None:
         pm = ProcessManagerProcessor(
-            steps=[], persist_state=True, saga_state_store=lambda: MagicMock()
+            steps=[], persist_state=True, saga_state_store=lambda: MagicMock(),
         )
         assert pm._persist_state is True
 
@@ -285,7 +285,7 @@ class TestProcessManagerAliasing:
                 SagaStep(forward=step1, compensate=None),
                 SagaStep(forward=step2, compensate=step2.compensate),
                 SagaStep(forward=step3, compensate=None),
-            ]
+            ],
         )
         ex = _make_exchange()
         await pm.process(ex, context=MagicMock())

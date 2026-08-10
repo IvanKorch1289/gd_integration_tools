@@ -119,7 +119,7 @@ def _collect_processors() -> list[dict[str, Any]]:
                     "description": short_doc,
                     "docstring": doc,
                     "parameters": params,
-                }
+                },
             )
 
     return sorted(results, key=lambda x: (x["category"], x["name"]))
@@ -166,7 +166,7 @@ def _collect_builder_methods() -> list[dict[str, Any]]:
                 "name": name,
                 "description": doc.split("\n", 1)[0][:200] if doc else "",
                 "parameters": params,
-            }
+            },
         )
 
     return sorted(results, key=lambda x: x["name"])
@@ -194,7 +194,7 @@ class _ProcessorsCatalogFacade:
         raise HTTPException(status_code=404, detail=f"Processor '{name}' not found")
 
     async def search(
-        self, *, q: str = "", namespace: str | None = None, limit: int = 25
+        self, *, q: str = "", namespace: str | None = None, limit: int = 25,
     ) -> dict[str, Any]:
         """Sprint 14 K3 W1 — fuzzy search через rapidfuzz.
 
@@ -237,7 +237,7 @@ class _ProcessorsCatalogFacade:
             text = f"{p['name']} {p['description']}"
             candidates[text] = p
         scored = process.extract(
-            q, list(candidates.keys()), scorer=fuzz.WRatio, limit=limit
+            q, list(candidates.keys()), scorer=fuzz.WRatio, limit=limit,
         )
         items = [
             {
@@ -302,5 +302,5 @@ builder.add_actions(
             query_model=ProcessorSearchQuery,
             tags=("DSL Catalog",),
         ),
-    ]
+    ],
 )

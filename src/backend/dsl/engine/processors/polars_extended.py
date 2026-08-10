@@ -54,7 +54,7 @@ def _ensure_dataframe(body: Any) -> Any:
         return pl.DataFrame([body])
     raise TypeError(
         f"Polars-процессор ожидает list[dict] / dict / DataFrame, "
-        f"получил {type(body).__name__}"
+        f"получил {type(body).__name__}",
     )
 
 
@@ -111,7 +111,7 @@ class PolarsQueryProcessor(BaseProcessor):
                 [
                     pl.sql_expr(expr).alias(col)
                     for col, expr in self._with_columns.items()
-                ]
+                ],
             )
         if self._select:
             df = df.select(self._select)
@@ -176,12 +176,12 @@ class PolarsJoinProcessor(BaseProcessor):
         for part in self._other_path.split("."):
             if not isinstance(node, dict):
                 raise ValueError(
-                    f"PolarsJoin: путь {self._other_path!r} прерван на {part!r}"
+                    f"PolarsJoin: путь {self._other_path!r} прерван на {part!r}",
                 )
             node = node.get(part)
             if node is None:
                 raise ValueError(
-                    f"PolarsJoin: пустой right в headers по пути {self._other_path!r}"
+                    f"PolarsJoin: пустой right в headers по пути {self._other_path!r}",
                 )
         return node
 
@@ -192,7 +192,7 @@ class PolarsJoinProcessor(BaseProcessor):
                 "other_path": self._other_path,
                 "on": self._on,
                 "how": self._how,
-            }
+            },
         }
 
 
@@ -235,7 +235,7 @@ class PolarsAggregateProcessor(BaseProcessor):
             "polars_aggregate": {
                 "group_by": self._group_by,
                 "aggregations": dict(self._aggs),
-            }
+            },
         }
 
 
@@ -286,7 +286,7 @@ class PolarsPivotProcessor(BaseProcessor):
                 "columns": self._columns,
                 "values": self._values,
                 "aggregate_function": self._agg,
-            }
+            },
         }
 
 

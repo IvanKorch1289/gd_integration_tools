@@ -83,14 +83,14 @@ def test_event_store_append_and_load() -> None:
 def test_event_store_load_stream() -> None:
     store = InMemoryEventStore()
     store.append(
-        Event(aggregate_id="o-1", event_type="order.placed", stream=EventStream.ORDER)
+        Event(aggregate_id="o-1", event_type="order.placed", stream=EventStream.ORDER),
     )
     store.append(
         Event(
             aggregate_id="p-1",
             event_type="payment.received",
             stream=EventStream.PAYMENT,
-        )
+        ),
     )
     orders = store.load_stream(EventStream.ORDER)
     payments = store.load_stream(EventStream.PAYMENT)
@@ -118,7 +118,7 @@ def test_event_store_thread_safe() -> None:
     def append_many(start: int) -> None:
         for i in range(100):
             store.append(
-                Event(aggregate_id=f"a-{start + i}", event_type="created", version=1)
+                Event(aggregate_id=f"a-{start + i}", event_type="created", version=1),
             )
 
     threads = [threading.Thread(target=append_many, args=(i * 100,)) for i in range(5)]
@@ -140,7 +140,7 @@ def test_projection_replay() -> None:
             event_type="order.placed",
             payload={"total": 100.0},
             version=1,
-        )
+        ),
     )
     store.append(
         Event(
@@ -148,7 +148,7 @@ def test_projection_replay() -> None:
             event_type="order.paid",
             payload={"amount": 100.0},
             version=2,
-        )
+        ),
     )
 
     class OrderTotalsProjection(Projection):
@@ -202,7 +202,7 @@ async def test_command_bus_dispatch() -> None:
                 event_type="order.placed",
                 stream=EventStream.ORDER,
                 payload=cmd,
-            )
+            ),
         ]
 
     bus.register("place_order", place_order_handler)
@@ -265,8 +265,8 @@ async def test_processor_appends_from_properties() -> None:
         body={},
         properties={
             "events": [
-                {"aggregate_id": "o-1", "event_type": "order.placed", "total": 100.0}
-            ]
+                {"aggregate_id": "o-1", "event_type": "order.placed", "total": 100.0},
+            ],
         },
     )
     await proc.process(exchange, None)  # type: ignore[arg-type]
@@ -290,9 +290,9 @@ async def test_processor_appends_from_body() -> None:
                     "aggregate_id": "p-1",
                     "event_type": "payment.received",
                     "amount": 50.0,
-                }
-            ]
-        }
+                },
+            ],
+        },
     )
     await proc.process(exchange, None)  # type: ignore[arg-type]
 

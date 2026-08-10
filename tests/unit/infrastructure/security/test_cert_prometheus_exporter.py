@@ -39,7 +39,7 @@ class TestCertPrometheusExporter:
         # Mock cert_store
         mock_store = MagicMock()
         mock_store._backend.list_expiring = AsyncMock(
-            return_value=[]
+            return_value=[],
         )
         # Не должно падать
         import asyncio

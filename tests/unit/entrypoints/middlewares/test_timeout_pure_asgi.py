@@ -106,7 +106,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_global_timeout_exceeded_returns_408(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Downstream sleep > global timeout → 408 через send (no-raise)."""
         from src.backend.core.config.features import feature_flags
@@ -136,7 +136,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_per_route_timeout_used_when_match(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """per_route_timeout_enabled=True + match → route-specific timeout."""
         from src.backend.core.config.features import feature_flags
@@ -164,7 +164,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_per_route_no_match_uses_global(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """per_route_enabled=True + no match → global default."""
         from src.backend.core.config.features import feature_flags
@@ -192,7 +192,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_longest_prefix_wins(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """При overlapping prefixes — longest prefix match."""
         from src.backend.core.config.features import feature_flags
@@ -223,7 +223,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_empty_registry_uses_global(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Empty registry → global default (даже при flag=ON)."""
         from src.backend.core.config.features import feature_flags
@@ -249,7 +249,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_none_registry_uses_global(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """None registry → global default."""
         from src.backend.core.config.features import feature_flags
@@ -275,7 +275,7 @@ class TestTimeoutMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_disabled_flag_ignores_registry(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """per_route_timeout_enabled=False → registry ignored, global only."""
         from src.backend.core.config.features import feature_flags

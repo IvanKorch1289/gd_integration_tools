@@ -21,7 +21,7 @@ from src.backend.dsl.engine.processors.file_watch import FileWatchProcessor
 
 def _make_exchange(properties: dict[str, Any] | None = None) -> Exchange[Any]:
     return Exchange(
-        in_message=Message(body=None, headers={}), properties=properties or {}
+        in_message=Message(body=None, headers={}), properties=properties or {},
     )
 
 
@@ -68,7 +68,7 @@ class TestFileWatchProcessor:
             open(os.path.join(sub, "nested.csv"), "w").close()
 
             proc = FileWatchProcessor(
-                directory=tmpdir, pattern="*.csv", include_subdirs=True
+                directory=tmpdir, pattern="*.csv", include_subdirs=True,
             )
             exchange = _make_exchange()
             await proc.process(exchange, MagicMock())
@@ -103,7 +103,7 @@ class TestFileWatchProcessor:
     def test_file_watch_to_spec(self) -> None:
         """Сериализация в spec."""
         proc = FileWatchProcessor(
-            directory="/data", pattern="*.csv", include_subdirs=True
+            directory="/data", pattern="*.csv", include_subdirs=True,
         )
         spec = proc.to_spec()
         assert spec == {
@@ -112,5 +112,5 @@ class TestFileWatchProcessor:
                 "pattern": "*.csv",
                 "result_property": "matched_files",
                 "include_subdirs": True,
-            }
+            },
         }

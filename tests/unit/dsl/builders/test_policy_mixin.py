@@ -66,7 +66,7 @@ async def test_resilience_coordinator_register_attempted() -> None:
     from src.backend.dsl.engine.exchange import Exchange, Message
 
     proc = PolicyMarkerProcessor(
-        policy_name="rate_limit", params={"rate": 10}, enabled=True
+        policy_name="rate_limit", params={"rate": 10}, enabled=True,
     )
     ex = Exchange(in_message=Message(body={}, headers={}))
     await proc.process(ex, AsyncMock())

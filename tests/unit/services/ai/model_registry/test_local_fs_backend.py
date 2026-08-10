@@ -35,7 +35,7 @@ def _write_manifest(root: Path, name: str, version: str = "v1", **kwargs) -> Pat
         **kwargs,
     }
     (model_dir / ".model_manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False), encoding="utf-8"
+        json.dumps(manifest, ensure_ascii=False), encoding="utf-8",
     )
     return model_dir
 
@@ -77,7 +77,7 @@ async def test_list_models_skips_malformed_manifest() -> None:
         bad_dir = Path(tmpdir) / "models" / "bad_manifest"
         bad_dir.mkdir(parents=True)
         (bad_dir / ".model_manifest.json").write_text(
-            "{invalid json}", encoding="utf-8"
+            "{invalid json}", encoding="utf-8",
         )
         _write_manifest(Path(tmpdir), "good_model", "v1")
         registry = LocalFSModelRegistry(workspace_path=tmpdir)

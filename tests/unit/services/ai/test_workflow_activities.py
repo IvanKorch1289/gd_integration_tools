@@ -64,7 +64,7 @@ def test_cost_tracking_invoked(monkeypatch: pytest.MonkeyPatch) -> None:
     """acost_estimate вызывается для каждого вызова."""
     gateway = _make_gateway(cost=0.05)
     monkeypatch.setattr(
-        "src.backend.services.ai.workflow_activities._resolve_gateway", lambda: gateway
+        "src.backend.services.ai.workflow_activities._resolve_gateway", lambda: gateway,
     )
     asyncio.run(_execute_llm_call(LLMActivityInput(prompt="x")))
     gateway.acost_estimate.assert_called_once()
@@ -146,7 +146,7 @@ def test_resolve_gateway_raises_runtime(monkeypatch: pytest.MonkeyPatch) -> None
         raise ImportError("no module")
 
     monkeypatch.setattr(
-        "src.backend.services.ai.gateway.client.get_litellm_gateway", _boom
+        "src.backend.services.ai.gateway.client.get_litellm_gateway", _boom,
     )
     with pytest.raises(RuntimeError, match="LiteLLMGateway недоступен"):
         from src.backend.services.ai.workflow_activities import _resolve_gateway
@@ -166,7 +166,7 @@ def test_heartbeat_async_exception_suppressed(monkeypatch: pytest.MonkeyPatch) -
 
     # Не должно упасть
     out = asyncio.run(
-        _execute_llm_call(LLMActivityInput(prompt="x"), heartbeat=_bad_hb)
+        _execute_llm_call(LLMActivityInput(prompt="x"), heartbeat=_bad_hb),
     )
     assert out.content == "hello"
 
@@ -176,7 +176,7 @@ def test_acost_estimate_exception_uses_zero(monkeypatch: pytest.MonkeyPatch) -> 
     gateway = _make_gateway()
     gateway.acost_estimate = AsyncMock(side_effect=RuntimeError("cost err"))
     monkeypatch.setattr(
-        "src.backend.services.ai.workflow_activities._resolve_gateway", lambda: gateway
+        "src.backend.services.ai.workflow_activities._resolve_gateway", lambda: gateway,
     )
     out = asyncio.run(_execute_llm_call(LLMActivityInput(prompt="x")))
     assert out.cost_usd == 0.0
@@ -193,7 +193,7 @@ def test_llm_activity_with_heartbeat(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_activity_mod = MagicMock()
     fake_activity_mod.heartbeat = hb_mock
     monkeypatch.setitem(
-        __import__("sys").modules, "temporalio.activity", fake_activity_mod
+        __import__("sys").modules, "temporalio.activity", fake_activity_mod,
     )
     out = asyncio.run(llm_activity(LLMActivityInput(prompt="x")))
     assert out.content == "hello"

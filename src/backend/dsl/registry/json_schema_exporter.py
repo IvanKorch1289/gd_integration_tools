@@ -97,7 +97,7 @@ def export_processors_schema(output_dir: Path) -> int:
         schema_path = output_dir / filename
 
         schema_path.write_text(
-            json.dumps(schema, ensure_ascii=False, indent=2), encoding="utf-8"
+            json.dumps(schema, ensure_ascii=False, indent=2), encoding="utf-8",
         )
         logger.debug("Записан %s → %s", fqn, schema_path)
 
@@ -110,14 +110,14 @@ def export_processors_schema(output_dir: Path) -> int:
                 "tags": list(spec.tags),
                 "file": filename,
                 "$ref": f"./{filename}",
-            }
+            },
         )
         count += 1
 
     # Запись агрегированного индекса
     index_path = output_dir / "index.json"
     index_path.write_text(
-        json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8",
     )
     logger.info("JSON-Schema export завершён: %d процессоров → %s", count, output_dir)
 

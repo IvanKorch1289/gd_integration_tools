@@ -50,7 +50,7 @@ class StructlogLogger(LoggerProtocol):
 
     @staticmethod
     def _format(
-        msg: str, args: tuple[Any, ...], kwargs: dict[str, Any]
+        msg: str, args: tuple[Any, ...], kwargs: dict[str, Any],
     ) -> tuple[str, dict[str, Any]]:
         """Compat shim: stdlib-style ``%`` formatting → structlog kwargs.
 
@@ -195,7 +195,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             import structlog
         except ImportError as exc:
             raise ImportError(
-                "structlog не установлен. Добавьте: pip install structlog"
+                "structlog не установлен. Добавьте: pip install structlog",
             ) from exc
 
         from socket import gethostname
@@ -245,7 +245,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         # Configure stdlib root logger
         log_level = getattr(logging, level.upper(), logging.INFO)
         logging.basicConfig(
-            format="%(message)s", level=log_level, handlers=handlers, force=True
+            format="%(message)s", level=log_level, handlers=handlers, force=True,
         )
 
         # Configure per-name loggers
@@ -261,7 +261,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
 
         # Correlation context injector
         def _inject_correlation(
-            logger: Any, method_name: str, event_dict: dict
+            logger: Any, method_name: str, event_dict: dict,
         ) -> dict:
             """Автоматически добавляет correlation_id/request_id/tenant_id в каждый лог."""
             try:
@@ -327,7 +327,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         # Bind default context
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(
-            environment=environment, hostname=hostname
+            environment=environment, hostname=hostname,
         )
 
         # Formatter for stdlib handlers
@@ -335,7 +335,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             processors=[
                 structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 renderer,
-            ]
+            ],
         )
         for h in handlers:
             h.setFormatter(formatter)

@@ -56,7 +56,7 @@ def _resolve_repository_cls() -> type[Any]:
     except ImportError as exc:  # pragma: no cover — uv sync не пройден
         raise AdvancedAlchemyMissing(
             "advanced-alchemy не установлен; запустите 'uv sync' "
-            "или используйте core EpisodicMemory/ProceduralMemory без bulk-API."
+            "или используйте core EpisodicMemory/ProceduralMemory без bulk-API.",
         ) from exc
     return SQLAlchemyAsyncRepository
 

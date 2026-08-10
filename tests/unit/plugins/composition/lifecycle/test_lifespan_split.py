@@ -62,7 +62,7 @@ def _stub_broken_packages() -> None:
     module_level_stubs = {
         "src.backend.core.utils.task_registry.get_task_registry": MagicMock(),
         "src.backend.infrastructure.logging.factory.get_logger": MagicMock(
-            return_value=MagicMock()
+            return_value=MagicMock(),
         ),
     }
     for full_name, stub_obj in module_level_stubs.items():
@@ -129,7 +129,7 @@ def lifespan_module(startup_module: ModuleType) -> ModuleType:
 
 
 def test_lifespan_reexports_startup_function(
-    lifespan_module: ModuleType, startup_module: ModuleType
+    lifespan_module: ModuleType, startup_module: ModuleType,
 ) -> None:
     """``lifespan._register_outbox_dispatcher`` ре-экспортируется из startup.
 

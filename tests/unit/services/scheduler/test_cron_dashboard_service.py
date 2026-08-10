@@ -120,7 +120,7 @@ async def test_list_scheduled_trigger_without_cron(scheduler_mock: Any) -> None:
             "next_run_time": None,
             "trigger": "date[2026-01-01]",
             "paused": False,
-        }
+        },
     ]
     service = CronDashboardService(clickhouse_client_factory=lambda: None)
     with patch(_PATCH_GET_SCHEDULER_MANAGER, return_value=scheduler_mock):
@@ -138,7 +138,7 @@ async def test_list_scheduled_trigger_without_timezone(scheduler_mock: Any) -> N
             "next_run_time": None,
             "trigger": "cron[0 0 * * *]",
             "paused": False,
-        }
+        },
     ]
     service = CronDashboardService(clickhouse_client_factory=lambda: None)
     with patch(_PATCH_GET_SCHEDULER_MANAGER, return_value=scheduler_mock):
@@ -174,7 +174,7 @@ async def test_get_ch_client_fallback() -> None:
             client = await service._get_ch_client()
     assert client is mock_client
     fake_ch.get_async_client.assert_awaited_once_with(
-        host="ch-host", port=9000, database="db1"
+        host="ch-host", port=9000, database="db1",
     )
 
 
@@ -191,5 +191,5 @@ async def test_get_ch_client_fallback_no_clickhouse_attr() -> None:
             client = await service._get_ch_client()
     assert client is mock_client
     fake_ch.get_async_client.assert_awaited_once_with(
-        host="localhost", port=8123, database="default"
+        host="localhost", port=8123, database="default",
     )

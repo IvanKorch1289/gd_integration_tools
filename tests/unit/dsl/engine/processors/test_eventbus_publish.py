@@ -19,10 +19,10 @@ from src.backend.dsl.engine.exchange import Exchange, Message
 
 
 def _exchange(
-    body: Any = None, properties: dict[str, Any] | None = None
+    body: Any = None, properties: dict[str, Any] | None = None,
 ) -> Exchange[Any]:
     return Exchange(
-        in_message=Message(body=body, headers={}), properties=properties or {}
+        in_message=Message(body=body, headers={}), properties=properties or {},
     )
 
 
@@ -54,7 +54,7 @@ async def test_fallback_when_bus_not_started(monkeypatch: pytest.MonkeyPatch) ->
     fake_bus._broker = None
     fake_bus._started = False
     monkeypatch.setattr(
-        "src.backend.core.messaging.event_bus.get_event_bus", lambda: fake_bus
+        "src.backend.core.messaging.event_bus.get_event_bus", lambda: fake_bus,
     )
 
     proc = EventBusPublishProcessor(topic="orders.created")
@@ -63,7 +63,7 @@ async def test_fallback_when_bus_not_started(monkeypatch: pytest.MonkeyPatch) ->
     await proc.process(ex, context=MagicMock())
 
     assert ex.properties["_eventbus_published"] == [
-        {"topic": "orders.created", "payload": {"id": 1}}
+        {"topic": "orders.created", "payload": {"id": 1}},
     ]
 
 
@@ -80,7 +80,7 @@ async def test_publish_when_bus_started(monkeypatch: pytest.MonkeyPatch) -> None
     fake_bus._started = True
     fake_bus.publish = AsyncMock()
     monkeypatch.setattr(
-        "src.backend.core.messaging.event_bus.get_event_bus", lambda: fake_bus
+        "src.backend.core.messaging.event_bus.get_event_bus", lambda: fake_bus,
     )
 
     proc = EventBusPublishProcessor(topic="orders.created")
@@ -112,11 +112,11 @@ async def test_property_payload_ref(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_bus._started = True
     fake_bus.publish = AsyncMock()
     monkeypatch.setattr(
-        "src.backend.core.messaging.event_bus.get_event_bus", lambda: fake_bus
+        "src.backend.core.messaging.event_bus.get_event_bus", lambda: fake_bus,
     )
 
     proc = EventBusPublishProcessor(
-        topic="audit.event", payload_ref="property:audit_payload"
+        topic="audit.event", payload_ref="property:audit_payload",
     )
     ex = _exchange(properties={"audit_payload": {"user": "alice"}})
 
@@ -139,7 +139,7 @@ async def test_publish_failure_fallback(monkeypatch: pytest.MonkeyPatch) -> None
     fake_bus._started = True
     fake_bus.publish = AsyncMock(side_effect=RuntimeError("broker down"))
     monkeypatch.setattr(
-        "src.backend.core.messaging.event_bus.get_event_bus", lambda: fake_bus
+        "src.backend.core.messaging.event_bus.get_event_bus", lambda: fake_bus,
     )
 
     proc = EventBusPublishProcessor(topic="orders.created")
@@ -148,5 +148,5 @@ async def test_publish_failure_fallback(monkeypatch: pytest.MonkeyPatch) -> None
     await proc.process(ex, context=MagicMock())
 
     assert ex.properties["_eventbus_published"] == [
-        {"topic": "orders.created", "payload": {"id": 1}}
+        {"topic": "orders.created", "payload": {"id": 1}},
     ]

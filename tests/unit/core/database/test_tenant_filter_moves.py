@@ -179,7 +179,7 @@ def test_shim_compat_reexports_json_b() -> None:
 
     with pytest.raises(ModuleNotFoundError):
         importlib.import_module(
-            "src.backend.infrastructure.database.migrations._compat"
+            "src.backend.infrastructure.database.migrations._compat",
         )
 
 
@@ -195,7 +195,7 @@ def test_shim_compat_reexports_uuid_t() -> None:
 
     with pytest.raises(ModuleNotFoundError):
         importlib.import_module(
-            "src.backend.infrastructure.database.migrations._compat"
+            "src.backend.infrastructure.database.migrations._compat",
         )
 
 

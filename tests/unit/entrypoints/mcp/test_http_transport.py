@@ -84,7 +84,7 @@ async def test_auth_middleware_passes_through_non_http() -> None:
 
     middleware = McpAuthMiddleware(_app)
     await middleware(
-        {"type": "lifespan"}, AsyncMock(return_value={}), AsyncMock(return_value=None)
+        {"type": "lifespan"}, AsyncMock(return_value={}), AsyncMock(return_value=None),
     )
     assert called["hit"] is True
 

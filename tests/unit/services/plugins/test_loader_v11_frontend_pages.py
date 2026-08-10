@@ -25,7 +25,7 @@ from src.backend.services.plugins.loader import PluginLoader
 
 class _FakeActions:
     def register(
-        self, action_id: str, handler: Any, *, spec: Any | None = None
+        self, action_id: str, handler: Any, *, spec: Any | None = None,
     ) -> None:
         return None
 
@@ -61,7 +61,7 @@ def _write_plugin(
             class Plugin(BasePlugin):
                 name = "{name}"
                 version = "1.0.0"
-            """
+            """,
         ),
         encoding="utf-8",
     )
@@ -73,7 +73,7 @@ def _write_plugin(
             requires_core = ">=0.2,<0.3"
             entry_class = "{name}.plugin.Plugin"
             {manifest_extra}
-            """
+            """,
         ).lstrip(),
         encoding="utf-8",
     )
@@ -81,16 +81,16 @@ def _write_plugin(
         pages = plugin_dir / "frontend" / "pages"
         pages.mkdir(parents=True)
         (pages / "01_dashboard.py").write_text(
-            "import streamlit as st\nst.write('hello')\n", encoding="utf-8"
+            "import streamlit as st\nst.write('hello')\n", encoding="utf-8",
         )
         (pages / "02_admin.py").write_text(
-            "import streamlit as st\nst.write('admin')\n", encoding="utf-8"
+            "import streamlit as st\nst.write('admin')\n", encoding="utf-8",
         )
     return plugin_dir
 
 
 def _build_loader(
-    extensions_dir: Path, streamlit_pages_dir: Path | None = None
+    extensions_dir: Path, streamlit_pages_dir: Path | None = None,
 ) -> PluginLoader:
     return PluginLoader(
         extensions_dir=extensions_dir,
@@ -116,7 +116,7 @@ def isolated_extensions(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path
 
 @pytest.mark.asyncio
 async def test_pages_mounted_after_load(
-    isolated_extensions: Path, tmp_path: Path
+    isolated_extensions: Path, tmp_path: Path,
 ) -> None:
     """При load — symlinks появляются в streamlit_pages_dir."""
     pages_dst = tmp_path / "streamlit_pages"
@@ -133,7 +133,7 @@ async def test_pages_mounted_after_load(
 
 @pytest.mark.asyncio
 async def test_pages_unmounted_on_shutdown(
-    isolated_extensions: Path, tmp_path: Path
+    isolated_extensions: Path, tmp_path: Path,
 ) -> None:
     pages_dst = tmp_path / "streamlit_pages"
     _write_plugin(isolated_extensions, name="page_plugin_off")
@@ -158,7 +158,7 @@ async def test_no_pages_dir_when_streamlit_arg_none(isolated_extensions: Path) -
 
 @pytest.mark.asyncio
 async def test_no_pages_dir_inside_plugin_returns_zero(
-    isolated_extensions: Path, tmp_path: Path
+    isolated_extensions: Path, tmp_path: Path,
 ) -> None:
     """Плагин без frontend/pages — pages_count=0, без ошибок."""
     pages_dst = tmp_path / "streamlit_pages"
@@ -170,7 +170,7 @@ async def test_no_pages_dir_inside_plugin_returns_zero(
 
 @pytest.mark.asyncio
 async def test_idempotent_remount_same_source(
-    isolated_extensions: Path, tmp_path: Path
+    isolated_extensions: Path, tmp_path: Path,
 ) -> None:
     """Повторный mount того же source не падает и не дублирует."""
     pages_dst = tmp_path / "streamlit_pages"
@@ -189,7 +189,7 @@ async def test_idempotent_remount_same_source(
 
 @pytest.mark.asyncio
 async def test_unmount_without_mount_is_noop(
-    isolated_extensions: Path, tmp_path: Path
+    isolated_extensions: Path, tmp_path: Path,
 ) -> None:
     pages_dst = tmp_path / "streamlit_pages"
     pages_dst.mkdir()

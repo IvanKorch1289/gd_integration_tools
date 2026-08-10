@@ -76,7 +76,7 @@ class WorkflowState:
             if first.event_type != WorkflowEventType.created:
                 raise ValueError(
                     "first event without snapshot must be 'created', "
-                    f"got {first.event_type!r}"
+                    f"got {first.event_type!r}",
                 )
             state = cls(
                 workflow_id=first.workflow_id,
@@ -111,7 +111,7 @@ class WorkflowState:
 
     @classmethod
     def _from_snapshot_payload(
-        cls, workflow_id: UUID, snapshot: dict[str, Any]
+        cls, workflow_id: UUID, snapshot: dict[str, Any],
     ) -> WorkflowState:
         """Восстанавливает state из результата :meth:`to_snapshot`."""
         status_raw = snapshot.get("status", WorkflowStatus.pending.value)

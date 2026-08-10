@@ -74,7 +74,7 @@ class TestPrometheusAlertManager:
         mgr = PrometheusAlertManager()
         mgr.register_alert(
             "test_alert", condition="test > 5", severity="info",
-            summary="t", description="d"
+            summary="t", description="d",
         )
         yaml_str = mgr.render_rules_yaml()
         assert "test_alert" in yaml_str

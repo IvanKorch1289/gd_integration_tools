@@ -25,7 +25,7 @@ class TestFilteredDirectoryScanProcessor:
         (tmp_path / "sub").mkdir()
         (tmp_path / "sub" / "b.txt").write_text("b")
         p = FilteredDirectoryScanProcessor(
-            directory=str(tmp_path), pattern="**/*.txt", to="body.files"
+            directory=str(tmp_path), pattern="**/*.txt", to="body.files",
         )
         p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
@@ -47,7 +47,7 @@ class TestFilteredDirectoryScanProcessor:
         (tmp_path / "small.txt").write_text("hi")
         (tmp_path / "big.txt").write_text("x" * 1000)
         p = FilteredDirectoryScanProcessor(
-            directory=str(tmp_path), pattern="*.txt", min_size=100, to="body.files"
+            directory=str(tmp_path), pattern="*.txt", min_size=100, to="body.files",
         )
         p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()

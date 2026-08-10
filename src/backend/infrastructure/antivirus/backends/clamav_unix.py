@@ -34,7 +34,7 @@ class ClamAVUnixBackend(AntivirusBackend):
     name = "clamav_unix"
 
     def __init__(
-        self, socket_path: str = "/var/run/clamav/clamd.ctl", timeout: float = 30.0
+        self, socket_path: str = "/var/run/clamav/clamd.ctl", timeout: float = 30.0,
     ) -> None:
         self._socket_path = socket_path
         self._timeout = timeout
@@ -45,7 +45,7 @@ class ClamAVUnixBackend(AntivirusBackend):
             return False
         try:
             reader, writer = await asyncio.wait_for(
-                asyncio.open_unix_connection(self._socket_path), timeout=2.0
+                asyncio.open_unix_connection(self._socket_path), timeout=2.0,
             )
         except (TimeoutError, OSError):
             return False
@@ -74,7 +74,7 @@ class ClamAVUnixBackend(AntivirusBackend):
         start = time.monotonic()
         try:
             reader, writer = await asyncio.wait_for(
-                asyncio.open_unix_connection(self._socket_path), timeout=self._timeout
+                asyncio.open_unix_connection(self._socket_path), timeout=self._timeout,
             )
         except (TimeoutError, OSError) as exc:
             raise ConnectionError(f"ClamAV unix socket недоступен: {exc}") from exc
@@ -102,21 +102,21 @@ class ClamAVUnixBackend(AntivirusBackend):
 
         latency_ms = (time.monotonic() - start) * 1000
         return _parse_clamav_response(
-            response, backend=self.name, latency_ms=latency_ms
+            response, backend=self.name, latency_ms=latency_ms,
         )
 
 
 def _parse_clamav_response(
-    response: bytes, *, backend: str, latency_ms: float
+    response: bytes, *, backend: str, latency_ms: float,
 ) -> AntivirusScanResult:
     text = response.rstrip(b"\0").decode("utf-8", errors="replace").strip()
     if text.endswith("OK"):
         return AntivirusScanResult(
-            clean=True, signature=None, backend=backend, latency_ms=latency_ms
+            clean=True, signature=None, backend=backend, latency_ms=latency_ms,
         )
     if text.endswith(" FOUND"):
         sig = text.split(":", 1)[1].strip().rsplit(" FOUND", 1)[0].strip()
         return AntivirusScanResult(
-            clean=False, signature=sig, backend=backend, latency_ms=latency_ms
+            clean=False, signature=sig, backend=backend, latency_ms=latency_ms,
         )
     raise RuntimeError(f"ClamAV unexpected response: {text!r}")

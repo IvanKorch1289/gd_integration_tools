@@ -80,7 +80,7 @@ class AgentOrchestrationMixin:
         # выполняется ПЕРВЫМ — до RAG retrieval и sanitize. Fail-closed: любая
         # ошибка резолва / authorize → deny + audit-event без LLM-вызова.
         gate_denial = await self._policy_gate(
-            model=model, tenant_id=tenant_id, route_id=route_id, metadata=metadata
+            model=model, tenant_id=tenant_id, route_id=route_id, metadata=metadata,
         )
         if gate_denial is not None:
             return gate_denial
@@ -139,7 +139,7 @@ class AgentOrchestrationMixin:
                     cost = float(usage.get("cost_usd", 0.0) or 0.0)
                     if cost:
                         metrics.record_cost(
-                            provider=prov_name, model=model, cost_usd=cost
+                            provider=prov_name, model=model, cost_usd=cost,
                         )
 
                 feedback_meta: dict[str, Any] = {
@@ -214,7 +214,7 @@ class AgentOrchestrationMixin:
             from src.backend.services.ai.ai_graph import build_and_run_agent
 
             result = await build_and_run_agent(
-                prompt=sanitized.sanitized, tool_actions=tools or [], durable=durable
+                prompt=sanitized.sanitized, tool_actions=tools or [], durable=durable,
             )
 
             if isinstance(result, str):

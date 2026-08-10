@@ -45,7 +45,7 @@ class FakeClock:
     """
 
     def __init__(
-        self, *, monotonic_start: float = 0.0, wall_start: float = 0.0
+        self, *, monotonic_start: float = 0.0, wall_start: float = 0.0,
     ) -> None:
         self._mono = monotonic_start
         self._wall = wall_start

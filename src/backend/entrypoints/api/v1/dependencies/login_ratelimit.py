@@ -101,7 +101,7 @@ async def _extract_client_ip(request: Request) -> str:
 
 
 async def _check_rate_limit(
-    identifier: str, limit: int, window_seconds: int
+    identifier: str, limit: int, window_seconds: int,
 ) -> tuple[bool, int]:
     """Возвращает (is_ok, remaining_or_retry_after).
 
@@ -159,7 +159,7 @@ async def check_ip_rate_limit(request: Request) -> None:
     """
     client_ip = await _extract_client_ip(request)
     is_ok, value = await _check_rate_limit(
-        identifier=f"ip:{client_ip}", limit=IP_LIMIT, window_seconds=IP_WINDOW_SECONDS
+        identifier=f"ip:{client_ip}", limit=IP_LIMIT, window_seconds=IP_WINDOW_SECONDS,
     )
 
     if not is_ok:

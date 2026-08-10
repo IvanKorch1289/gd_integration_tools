@@ -33,7 +33,7 @@ def test_failure_callback_increments_counter(monkeypatch: pytest.MonkeyPatch) ->
     )
 
     fake_counter.labels.assert_called_once_with(
-        model="openai/gpt-4o-mini", reason="TimeoutError"
+        model="openai/gpt-4o-mini", reason="TimeoutError",
     )
     fake_labeled.inc.assert_called_once_with()
 

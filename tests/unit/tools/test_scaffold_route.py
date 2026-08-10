@@ -25,7 +25,7 @@ mod = _load_module()
 
 def test_build_dsl_yaml_minimal_route() -> None:
     text = mod.build_dsl_yaml(
-        source="http", sink="http", ai=False, retry=False, name="demo"
+        source="http", sink="http", ai=False, retry=False, name="demo",
     )
     data = yaml.safe_load(text)
     assert data["route_id"] == "demo"
@@ -36,7 +36,7 @@ def test_build_dsl_yaml_minimal_route() -> None:
 
 def test_build_dsl_yaml_with_ai_and_retry() -> None:
     text = mod.build_dsl_yaml(
-        source="kafka", sink="db", ai=True, retry=True, name="demo"
+        source="kafka", sink="db", ai=True, retry=True, name="demo",
     )
     data = yaml.safe_load(text)
     types = [next(iter(step.keys())) for step in data["steps"]]

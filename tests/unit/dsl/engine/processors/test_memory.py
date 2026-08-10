@@ -98,7 +98,7 @@ class TestLangMemServiceRecallStore:
         await svc.remember_episode("agent-1", "first event", {})
         await svc.remember_episode("agent-1", "second event", {})
         await svc.remember_episode(
-            "agent-2", "other agent event", {}
+            "agent-2", "other agent event", {},
         )  # different agent
 
         results = await svc.recall("agent-1", "episodic", top_k=10)

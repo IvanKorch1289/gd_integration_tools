@@ -17,7 +17,7 @@ class TestRAGSettings:
 
     def test_custom(self) -> None:
         s = RAGSettings(
-            vector_backend="chroma", enabled=True, chunk_size=1024, top_k=10
+            vector_backend="chroma", enabled=True, chunk_size=1024, top_k=10,
         )
         assert s.vector_backend == "chroma"
         assert s.enabled is True

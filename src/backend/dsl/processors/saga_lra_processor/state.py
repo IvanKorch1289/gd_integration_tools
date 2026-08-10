@@ -48,7 +48,7 @@ _VALID_STATES = frozenset(
         STATE_COMPENSATING,
         STATE_COMPENSATED,
         STATE_FAILED,
-    }
+    },
 )
 
 

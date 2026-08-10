@@ -46,7 +46,7 @@ def _src(**overrides: object) -> EmailSource:
     ],
 )
 def test_subject_filter(
-    subject_pattern: str | None, subject: str, expected: bool
+    subject_pattern: str | None, subject: str, expected: bool,
 ) -> None:
     src = _src(subject_pattern=subject_pattern)
     assert src.matches({"subject": subject, "from": "x@y"}) is expected
@@ -135,7 +135,7 @@ async def test_email_trigger_stops_when_body_not_dict() -> None:
 
 def test_email_trigger_to_spec_round_trip() -> None:
     proc = EmailTriggerProcessor(
-        subject_pattern="INVOICE", from_filter="acme.com", propagate_metadata=False
+        subject_pattern="INVOICE", from_filter="acme.com", propagate_metadata=False,
     )
     spec = proc.to_spec()
     assert spec == {
@@ -143,7 +143,7 @@ def test_email_trigger_to_spec_round_trip() -> None:
             "subject_pattern": "INVOICE",
             "from_filter": "acme.com",
             "propagate_metadata": False,
-        }
+        },
     }
 
 

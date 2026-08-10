@@ -140,7 +140,7 @@ class RuntimeFeatureFlagOverrides:
                 per_tenant[flag] = value
 
         change = FeatureFlagChange(
-            flag=flag, tenant_id=tenant_id, old_value=old, new_value=value, actor=actor
+            flag=flag, tenant_id=tenant_id, old_value=old, new_value=value, actor=actor,
         )
         _logger.info(
             "feature_flag.override.set",
@@ -155,7 +155,7 @@ class RuntimeFeatureFlagOverrides:
         return change
 
     def clear(
-        self, flag: str, *, tenant_id: str | None = None
+        self, flag: str, *, tenant_id: str | None = None,
     ) -> FeatureFlagChange | None:
         """Снять override (вернуть к static-default).
 
@@ -177,7 +177,7 @@ class RuntimeFeatureFlagOverrides:
                 new = None
 
         change = FeatureFlagChange(
-            flag=flag, tenant_id=tenant_id, old_value=old, new_value=new, actor="system"
+            flag=flag, tenant_id=tenant_id, old_value=old, new_value=new, actor="system",
         )
         _logger.info(
             "feature_flag.override.clear",

@@ -35,14 +35,14 @@ def mock_registry() -> MagicMock:
 @pytest.fixture(autouse=True)
 def patch_registry(mock_registry: MagicMock) -> Any:
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry
+        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
     ):
         yield
 
 
 class TestRegisterAnalyticsTools:
     def test_filters_by_prefix(
-        self, fake_mcp: FakeMcp, mock_registry: MagicMock
+        self, fake_mcp: FakeMcp, mock_registry: MagicMock,
     ) -> None:
         from src.backend.entrypoints.mcp.namespaces.analytics_mcp import (
             register_analytics_tools,
@@ -54,7 +54,7 @@ class TestRegisterAnalyticsTools:
             "other.action",
         ]
         with patch(
-            "src.backend.entrypoints.mcp.namespaces.analytics_mcp._register_analytics_tool"
+            "src.backend.entrypoints.mcp.namespaces.analytics_mcp._register_analytics_tool",
         ) as mock_register:
             register_analytics_tools(fake_mcp)
         assert mock_register.call_count == 2
@@ -70,7 +70,7 @@ class TestRegisterAnalyticsTools:
 
         mock_registry.list_actions.return_value = []
         with patch(
-            "src.backend.entrypoints.mcp.namespaces.analytics_mcp._register_analytics_tool"
+            "src.backend.entrypoints.mcp.namespaces.analytics_mcp._register_analytics_tool",
         ) as mock_register:
             register_analytics_tools(fake_mcp)
         assert mock_register.call_count == 0
@@ -116,7 +116,7 @@ class TestRegisterAnalyticsTool:
         return_value="denied",
     )
     async def test_auth_denied(
-        self, _mock_authz: Any, _mock_schema: Any, fake_mcp: FakeMcp
+        self, _mock_authz: Any, _mock_schema: Any, fake_mcp: FakeMcp,
     ) -> None:
         from src.backend.entrypoints.mcp.namespaces.analytics_mcp import (
             _register_analytics_tool,

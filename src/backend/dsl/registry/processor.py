@@ -134,12 +134,12 @@ class ProcessorRegistry:
             if spec.fqn in self._by_fqn and spec.replaces != spec.fqn:
                 raise ProcessorConflictError(
                     f"Processor {spec.fqn!r} already registered. "
-                    f"Pass replaces={spec.fqn!r} to override explicitly."
+                    f"Pass replaces={spec.fqn!r} to override explicitly.",
                 )
 
             if spec.replaces is not None and spec.replaces not in self._by_fqn:
                 raise ProcessorNotFoundError(
-                    f"replaces={spec.replaces!r} but no such processor registered."
+                    f"replaces={spec.replaces!r} but no such processor registered.",
                 )
 
             self._by_fqn[spec.fqn] = spec
@@ -161,7 +161,7 @@ class ProcessorRegistry:
             return spec
 
     def get_by_short(
-        self, name: str, *, prefer_namespace: str = "core"
+        self, name: str, *, prefer_namespace: str = "core",
     ) -> ProcessorSpec:
         """Поиск по короткому имени.
 
@@ -181,7 +181,7 @@ class ProcessorRegistry:
             )
             if not candidates:
                 raise ProcessorNotFoundError(
-                    f"Processor with short name {name!r} not registered."
+                    f"Processor with short name {name!r} not registered.",
                 )
             return candidates[0]
 

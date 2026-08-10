@@ -28,7 +28,7 @@ async def test_single_check_returns_result() -> None:
 
     async def my_check() -> ProcessorHealthResult:
         return ProcessorHealthResult(
-            processor_name="my_processor", ok=True, reason="test ok", latency_ms=1.0
+            processor_name="my_processor", ok=True, reason="test ok", latency_ms=1.0,
         )
 
     service = ProcessorHealthService()

@@ -69,7 +69,7 @@ class TestAdminIPRestriction:
         assert response.status_code == 200
         snapshot = get_ip_restriction_store().snapshot()
         assert snapshot["route_rules"]["/api/v1/auto/bar"]["allowed_ips"] == [
-            "127.0.0.1"
+            "127.0.0.1",
         ]
 
     def test_delete_route_rule(self, client) -> None:
@@ -102,5 +102,5 @@ routes:
         assert data["loaded"] is True
         assert data["snapshot"]["admin_ips"] == ["10.0.0.0/8"]
         assert data["snapshot"]["route_rules"]["/api/v1/auto/x"]["allowed_ips"] == [
-            "127.0.0.1"
+            "127.0.0.1",
         ]

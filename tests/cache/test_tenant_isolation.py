@@ -151,7 +151,7 @@ async def test_custom_tenant_provider() -> None:
         return TenantContext(tenant_id=holder["tenant_id"])
 
     backend = TenantCacheBackend(
-        MemoryBackend(maxsize=8, default_ttl=60), tenant_provider=_provider
+        MemoryBackend(maxsize=8, default_ttl=60), tenant_provider=_provider,
     )
     await backend.set("k", b"v-x")
     holder["tenant_id"] = "bank_y"

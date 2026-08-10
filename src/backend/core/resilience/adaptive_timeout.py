@@ -114,7 +114,7 @@ class AdaptiveTimeoutPolicy:
         bucket.samples.append(float(latency_ms))
 
     def get_timeout(
-        self, host: str, endpoint: str, default_seconds: float = 10.0
+        self, host: str, endpoint: str, default_seconds: float = 10.0,
     ) -> float:
         """Возвращает рекомендуемый таймаут в секундах.
 

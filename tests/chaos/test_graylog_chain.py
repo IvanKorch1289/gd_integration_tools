@@ -19,7 +19,7 @@ def test_graylog_latency(toxiproxy_graylog: ChaosTarget) -> None:
     """500ms latency на Graylog GELF TCP-input."""
     apply_latency(toxiproxy_graylog, latency_ms=500)
     elapsed = measure_latency_ms(
-        toxiproxy_graylog.proxy_host, toxiproxy_graylog.proxy_port
+        toxiproxy_graylog.proxy_host, toxiproxy_graylog.proxy_port,
     )
     assert elapsed < 0 or elapsed >= 400
 
@@ -28,7 +28,7 @@ def test_graylog_disconnect(toxiproxy_graylog: ChaosTarget) -> None:
     """disconnect: Graylog недоступен."""
     apply_disconnect(toxiproxy_graylog)
     assert assert_connection_fails(
-        toxiproxy_graylog.proxy_host, toxiproxy_graylog.proxy_port
+        toxiproxy_graylog.proxy_host, toxiproxy_graylog.proxy_port,
     )
 
 
@@ -36,7 +36,7 @@ def test_graylog_data_corruption(toxiproxy_graylog: ChaosTarget) -> None:
     """data-corruption: slicer на Graylog."""
     apply_random_drop(toxiproxy_graylog, toxicity=0.3)
     assert smoke_open_socket(
-        toxiproxy_graylog.proxy_host, toxiproxy_graylog.proxy_port, timeout=2.0
+        toxiproxy_graylog.proxy_host, toxiproxy_graylog.proxy_port, timeout=2.0,
     ) or assert_connection_fails(
-        toxiproxy_graylog.proxy_host, toxiproxy_graylog.proxy_port
+        toxiproxy_graylog.proxy_host, toxiproxy_graylog.proxy_port,
     )

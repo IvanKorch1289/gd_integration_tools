@@ -76,7 +76,7 @@ def decode_as(fmt: str, raw: bytes | str) -> Any:
         import orjson
 
         return orjson.loads(
-            raw if isinstance(raw, (bytes, bytearray)) else raw.encode()
+            raw if isinstance(raw, (bytes, bytearray)) else raw.encode(),
         )
     if fmt == "yaml":
         import yaml
@@ -90,7 +90,7 @@ def decode_as(fmt: str, raw: bytes | str) -> Any:
         import msgpack
 
         return msgpack.unpackb(
-            raw if isinstance(raw, (bytes, bytearray)) else raw.encode(), raw=False
+            raw if isinstance(raw, (bytes, bytearray)) else raw.encode(), raw=False,
         )
     if fmt in _BANKING_FORMATS:
         return _decode_banking(fmt, raw)
@@ -126,7 +126,7 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
             from swiftmt import parser  # type: ignore[import-not-found]
         except ImportError:
             raise RuntimeError(
-                "swiftmt не установлен — установите gdi[banking]"
+                "swiftmt не установлен — установите gdi[banking]",
             ) from None
         return parser.parse(raw if isinstance(raw, str) else raw.decode("utf-8"))
     if fmt == "hl7":
@@ -134,19 +134,19 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
             import hl7apy.parser  # type: ignore[import-not-found]
         except ImportError:
             raise RuntimeError(
-                "hl7apy не установлен — установите gdi[banking]"
+                "hl7apy не установлен — установите gdi[banking]",
             ) from None
         return hl7apy.parser.parse_message(
-            raw if isinstance(raw, str) else raw.decode("utf-8")
+            raw if isinstance(raw, str) else raw.decode("utf-8"),
         )
     if fmt == "iso8583":
         try:
             import iso8583  # type: ignore[import-not-found]
         except ImportError:
             raise RuntimeError(
-                "iso8583 не установлен — установите gdi[banking]"
+                "iso8583 не установлен — установите gdi[banking]",
             ) from None
         return iso8583.decode(
-            raw if isinstance(raw, (bytes, bytearray)) else raw.encode()
+            raw if isinstance(raw, (bytes, bytearray)) else raw.encode(),
         )
     raise RuntimeError(f"Banking format '{fmt}' decode — реализация в follow-up")

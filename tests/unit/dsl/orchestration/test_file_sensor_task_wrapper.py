@@ -35,7 +35,7 @@ class TestFileSensorTaskWrapperInit:
 
     def test_uses_custom_name(self) -> None:
         wrapper = FileSensorTaskWrapper(
-            task=MagicMock(), name="custom:file:sensor"
+            task=MagicMock(), name="custom:file:sensor",
         )
         assert wrapper.name == "custom:file:sensor"
 

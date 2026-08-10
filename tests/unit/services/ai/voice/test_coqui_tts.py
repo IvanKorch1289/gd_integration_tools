@@ -61,7 +61,7 @@ async def test_synthesize_raises_when_tts_missing(
 
 @pytest.mark.asyncio
 async def test_synthesize_writes_wav_via_mock_engine(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any,
 ) -> None:
     """synthesize() с mock TTS-engine создаёт WAV-файл и возвращает TTSResult."""
     output = tmp_path / "out.wav"
@@ -89,7 +89,7 @@ async def test_synthesize_writes_wav_via_mock_engine(
     )
 
     result = await svc.synthesize(
-        "Привет, мир", lang="ru", output_path=output, speaker_wav=tmp_path / "ref.wav"
+        "Привет, мир", lang="ru", output_path=output, speaker_wav=tmp_path / "ref.wav",
     )
 
     assert isinstance(result, TTSResult)

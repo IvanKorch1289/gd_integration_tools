@@ -32,7 +32,7 @@ class TestIPRestrictionMixin:
 
     def test_explicit_path_pattern(self) -> None:
         RouteBuilder.from_("orders.create", source="timer:60s").ip_restriction(
-            ["192.168.0.0/16"], path_pattern="/api/v1/custom/orders"
+            ["192.168.0.0/16"], path_pattern="/api/v1/custom/orders",
         )
         snapshot = get_ip_restriction_store().snapshot()
         rule = snapshot["route_rules"]["/api/v1/custom/orders"]
@@ -40,7 +40,7 @@ class TestIPRestrictionMixin:
 
     def test_disabled_rule(self) -> None:
         RouteBuilder.from_("shipments.track", source="timer:60s").ip_restriction(
-            ["10.0.0.0/8"], enabled=False
+            ["10.0.0.0/8"], enabled=False,
         )
         snapshot = get_ip_restriction_store().snapshot()
         rule = snapshot["route_rules"]["/api/v1/auto/shipments.track"]

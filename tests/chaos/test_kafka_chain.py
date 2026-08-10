@@ -26,7 +26,7 @@ def test_kafka_disconnect(toxiproxy_kafka: ChaosTarget) -> None:
     """disconnect: Kafka недоступен."""
     apply_disconnect(toxiproxy_kafka)
     assert assert_connection_fails(
-        toxiproxy_kafka.proxy_host, toxiproxy_kafka.proxy_port
+        toxiproxy_kafka.proxy_host, toxiproxy_kafka.proxy_port,
     )
 
 
@@ -34,5 +34,5 @@ def test_kafka_data_corruption(toxiproxy_kafka: ChaosTarget) -> None:
     """data-corruption: slicer на Kafka."""
     apply_random_drop(toxiproxy_kafka, toxicity=0.3)
     assert smoke_open_socket(
-        toxiproxy_kafka.proxy_host, toxiproxy_kafka.proxy_port, timeout=2.0
+        toxiproxy_kafka.proxy_host, toxiproxy_kafka.proxy_port, timeout=2.0,
     ) or assert_connection_fails(toxiproxy_kafka.proxy_host, toxiproxy_kafka.proxy_port)

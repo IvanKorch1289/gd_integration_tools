@@ -35,8 +35,8 @@ def test_no_violation_when_workflow_safe(tmp_py_file: Path) -> None:
                     decl.name, payload, start_to_close_timeout=...
                 )
                 return result
-            """
-        )
+            """,
+        ),
     )
     assert scan_file(tmp_py_file) == []
 
@@ -49,8 +49,8 @@ def test_violation_direct_gateway_invoke(tmp_py_file: Path) -> None:
             async def compile_agent_step(decl, ctx):
                 result = await gateway.invoke({"prompt": "hi"})
                 return result
-            """
-        )
+            """,
+        ),
     )
     violations = scan_file(tmp_py_file)
     assert len(violations) == 1
@@ -67,8 +67,8 @@ def test_violation_asyncio_sleep(tmp_py_file: Path) -> None:
                 import asyncio
                 await asyncio.sleep(5)
                 return None
-            """
-        )
+            """,
+        ),
     )
     violations = scan_file(tmp_py_file)
     assert len(violations) == 1
@@ -85,8 +85,8 @@ def test_violation_time_now(tmp_py_file: Path) -> None:
                 import time
                 now = time.time()
                 return now
-            """
-        )
+            """,
+        ),
     )
     violations = scan_file(tmp_py_file)
     assert len(violations) == 1
@@ -103,8 +103,8 @@ def test_no_violation_outside_compile_step(tmp_py_file: Path) -> None:
                 # This runs as Temporal ACTIVITY, not workflow — direct I/O OK.
                 result = await gateway.invoke(request)
                 return result
-            """
-        )
+            """,
+        ),
     )
     assert scan_file(tmp_py_file) == []
 
@@ -118,8 +118,8 @@ def test_workflow_sleep_allowed(tmp_py_file: Path) -> None:
                 from temporalio import workflow
                 await workflow.sleep(timedelta(seconds=decl.duration_s))
                 return None
-            """
-        )
+            """,
+        ),
     )
     assert scan_file(tmp_py_file) == []
 
@@ -136,8 +136,8 @@ def test_multiple_violations_same_function(tmp_py_file: Path) -> None:
                 await asyncio.sleep(5)
                 now = time.time()
                 return now
-            """
-        )
+            """,
+        ),
     )
     violations = scan_file(tmp_py_file)
     assert len(violations) == 3

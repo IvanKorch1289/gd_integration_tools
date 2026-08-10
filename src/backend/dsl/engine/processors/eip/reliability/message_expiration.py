@@ -73,7 +73,7 @@ class MessageExpirationProcessor(BaseProcessor):
     ) -> None:
         if ttl_seconds is None and expiration_resolver is None:
             raise ValueError(
-                "MessageExpirationProcessor: either ttl_seconds or expiration_resolver required"
+                "MessageExpirationProcessor: either ttl_seconds or expiration_resolver required",
             )
         if ttl_seconds is not None and ttl_seconds < 0:
             raise ValueError("ttl_seconds must be >= 0")

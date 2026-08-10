@@ -32,7 +32,7 @@ class TestSmsSinkConstruction:
     def test_extract_dict_payload(self) -> None:
         s = SmsSink(sink_id="t", provider="smsru", default_to="+7000")
         to, body, sender = s._extract_payload(
-            {"to": "+7111", "body": "hi", "from": "X"}
+            {"to": "+7111", "body": "hi", "from": "X"},
         )
         assert to == "+7111"
         assert body == "hi"

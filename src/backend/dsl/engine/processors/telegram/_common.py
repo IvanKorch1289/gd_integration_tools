@@ -41,12 +41,12 @@ def get_telegram_client(bot_name: str = "main_bot") -> TelegramBotClient:
 
     if not telegram_bot_settings.enabled:
         raise RuntimeError(
-            "Telegram интеграция отключена (telegram_bot_settings.enabled=False)"
+            "Telegram интеграция отключена (telegram_bot_settings.enabled=False)",
         )
 
     if bot_name != "main_bot":
         raise RuntimeError(
-            f"Telegram бот {bot_name!r} не найден. Multi-bot пока не реализован."
+            f"Telegram бот {bot_name!r} не найден. Multi-bot пока не реализован.",
         )
 
     config = TelegramBotConfig(

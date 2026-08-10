@@ -148,7 +148,7 @@ class TestSchedulerDLQStore:
                     traceback_text="t",
                     scheduled_at=None,
                     failed_at=datetime.now(UTC),
-                )
+                ),
             )
         assert len(store.list(limit=2)) == 2
 
@@ -226,7 +226,7 @@ class TestAttachSchedulerDLQ:
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True,
             ):
                 store = SchedulerDLQStore()
                 result = attach_scheduler_dlq(scheduler, store=store)
@@ -240,7 +240,7 @@ class TestAttachSchedulerDLQ:
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True,
             ):
                 store = SchedulerDLQStore()
                 attach_scheduler_dlq(scheduler, store=store)
@@ -261,7 +261,7 @@ class TestAttachSchedulerDLQ:
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True,
             ):
                 store = SchedulerDLQStore()
                 attach_scheduler_dlq(scheduler, store=store)
@@ -285,9 +285,9 @@ class TestAttachSchedulerDLQ:
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True,
             ), patch(
-                "src.backend.core.utils.task_registry.get_task_registry"
+                "src.backend.core.utils.task_registry.get_task_registry",
             ) as mock_get_tr:
                 tr = MagicMock()
                 mock_get_tr.return_value = tr
@@ -309,7 +309,7 @@ class TestAttachSchedulerDLQ:
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True,
             ):
                 store = SchedulerDLQStore()
                 with caplog.at_level("WARNING"):
@@ -325,13 +325,13 @@ class TestAttachSchedulerDLQ:
         assert "no running loop" in caplog.text
 
     def test_listener_exception_in_handler(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         scheduler = MagicMock()
         with patch("src.backend.infrastructure.scheduler.dlq.feature_flags") as ff:
             ff.scheduler_dlq_enabled = True
             with patch(
-                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True
+                "src.backend.infrastructure.scheduler.dlq.EVENT_JOB_ERROR", create=True,
             ):
                 store = SchedulerDLQStore()
                 attach_scheduler_dlq(scheduler, store=store)
@@ -339,7 +339,7 @@ class TestAttachSchedulerDLQ:
         event = MagicMock()
         # Force getattr to blow up
         type(event).job_id = property(
-            lambda self: (_ for _ in ()).throw(RuntimeError("kaboom"))
+            lambda self: (_ for _ in ()).throw(RuntimeError("kaboom")),
         )
         with caplog.at_level("ERROR"):
             handler(event)
@@ -368,13 +368,13 @@ class TestSchedulerManagerDLQAttach:
         manager._default_jobstore_is_memory = True
 
         with patch(
-            "src.backend.infrastructure.scheduler.observability.attach_scheduler_metrics"
+            "src.backend.infrastructure.scheduler.observability.attach_scheduler_metrics",
         ):
             with patch(
-                "src.backend.infrastructure.scheduler.observability.report_jobstore_type"
+                "src.backend.infrastructure.scheduler.observability.report_jobstore_type",
             ):
                 with patch(
-                    "src.backend.infrastructure.scheduler.dlq.attach_scheduler_dlq"
+                    "src.backend.infrastructure.scheduler.dlq.attach_scheduler_dlq",
                 ) as mock_attach:
                     await manager.start()
 

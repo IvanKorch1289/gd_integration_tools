@@ -92,7 +92,7 @@ def _get_header(scope: Scope, name: bytes) -> str | None:
 
 
 def _make_send_wrapper(
-    send: Send, request_id: str, correlation_id: str
+    send: Send, request_id: str, correlation_id: str,
 ) -> Send:
     """Создаёт обёртку вокруг ``send``, инжектирующую tracing headers.
 

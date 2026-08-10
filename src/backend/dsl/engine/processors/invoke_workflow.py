@@ -113,7 +113,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
             allowed = ", ".join(sorted(_ALLOWED_MODES))
             raise ValueError(
                 f"invoke_workflow[{workflow_name}]: mode={value!r} не поддерживается. "
-                f"Допустимо: {allowed}."
+                f"Допустимо: {allowed}.",
             )
         return value
 
@@ -181,7 +181,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
 
         if self.mode == "async-api":
             exchange.set_property(
-                self.result_property, {"accepted": True, "workflow_id": workflow_id}
+                self.result_property, {"accepted": True, "workflow_id": workflow_id},
             )
             return
 
@@ -204,7 +204,7 @@ class InvokeWorkflowProcessor(BaseProcessor):
                 return
             exchange.set_property(self.result_property, result.output)
             exchange.set_out(
-                body=result.output, headers=dict(exchange.in_message.headers)
+                body=result.output, headers=dict(exchange.in_message.headers),
             )
             return
 

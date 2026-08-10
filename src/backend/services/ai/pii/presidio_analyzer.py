@@ -65,7 +65,7 @@ class PresidioSanitizerAdapter:
     """
 
     def __init__(
-        self, *, default_language: str = "ru", legacy_fallback: Any | None = None
+        self, *, default_language: str = "ru", legacy_fallback: Any | None = None,
     ) -> None:
         self._default_language = default_language
         # Lazy fallback: legacy AIDataSanitizer резолвится при первом
@@ -103,7 +103,7 @@ class PresidioSanitizerAdapter:
             from presidio_anonymizer import AnonymizerEngine
         except ImportError as exc:
             logger.warning(
-                "Presidio/spaCy недоступны, fallback на AIDataSanitizer: %s", exc
+                "Presidio/spaCy недоступны, fallback на AIDataSanitizer: %s", exc,
             )
             _record_presidio_fallback(reason="import_error")
             self._available = False
@@ -117,11 +117,11 @@ class PresidioSanitizerAdapter:
                         {"lang_code": "ru", "model_name": "ru_core_news_lg"},
                         {"lang_code": "en", "model_name": "en_core_web_lg"},
                     ],
-                }
+                },
             )
             nlp_engine = provider.create_engine()
             analyzer = AnalyzerEngine(
-                nlp_engine=nlp_engine, supported_languages=["ru", "en"]
+                nlp_engine=nlp_engine, supported_languages=["ru", "en"],
             )
             for recognizer in self._build_custom_recognizers():
                 analyzer.registry.add_recognizer(recognizer)
@@ -135,7 +135,7 @@ class PresidioSanitizerAdapter:
             return True
         except Exception as exc:
             logger.warning(
-                "Presidio init failed (%s), fallback на AIDataSanitizer", exc
+                "Presidio init failed (%s), fallback на AIDataSanitizer", exc,
             )
             _record_presidio_fallback(reason="init_error")
             self._available = False
@@ -185,7 +185,7 @@ class PresidioSanitizerAdapter:
         return self._presidio_sanitize_sync(text, language=self._default_language)
 
     def sanitize_messages(
-        self, messages: list[dict[str, str]]
+        self, messages: list[dict[str, str]],
     ) -> tuple[list[dict[str, str]], dict[str, str]]:
         """Маскирует list[{role, content}] и возвращает кумулятивный mapping."""
         if not self._ensure_initialized():
@@ -196,7 +196,7 @@ class PresidioSanitizerAdapter:
         for msg in messages:
             content = msg.get("content", "")
             result = self._presidio_sanitize_sync(
-                content, language=self._default_language
+                content, language=self._default_language,
             )
             full_mapping.update(result.replacements)
             sanitized.append({**msg, "content": result.sanitized_text})
@@ -213,7 +213,7 @@ class PresidioSanitizerAdapter:
     # ─── async API (AsyncPIISanitizerProtocol) ────────────────────────────
 
     async def sanitize_async(
-        self, text: str, *, language: str | None = None
+        self, text: str, *, language: str | None = None,
     ) -> SanitizationResult:
         """Async-маскирование через Presidio.
 
@@ -229,7 +229,7 @@ class PresidioSanitizerAdapter:
             raise RuntimeError(
                 "PresidioSanitizerAdapter.sanitize_async вызван, но Presidio "
                 "недоступен. Установите extra `[ai-safety]` и выполните "
-                "`make pii-bootstrap` (загрузка ru_core_news_lg)."
+                "`make pii-bootstrap` (загрузка ru_core_news_lg).",
             )
         return await asyncio.to_thread(
             self._presidio_sanitize_sync,
@@ -238,7 +238,7 @@ class PresidioSanitizerAdapter:
         )
 
     async def sanitize_messages_async(
-        self, messages: list[dict[str, str]]
+        self, messages: list[dict[str, str]],
     ) -> tuple[list[dict[str, str]], dict[str, str]]:
         """Async-версия sanitize_messages.
 
@@ -248,14 +248,14 @@ class PresidioSanitizerAdapter:
         if not self._ensure_initialized():
             raise RuntimeError(
                 "PresidioSanitizerAdapter.sanitize_messages_async требует "
-                "доступный Presidio. См. `make pii-bootstrap`."
+                "доступный Presidio. См. `make pii-bootstrap`.",
             )
         full_mapping: dict[str, str] = {}
         sanitized: list[dict[str, str]] = []
         for msg in messages:
             content = msg.get("content", "")
             result = await asyncio.to_thread(
-                self._presidio_sanitize_sync, content, language=self._default_language
+                self._presidio_sanitize_sync, content, language=self._default_language,
             )
             full_mapping.update(result.replacements)
             sanitized.append({**msg, "content": result.sanitized_text})
@@ -264,7 +264,7 @@ class PresidioSanitizerAdapter:
     # ─── presidio internal ────────────────────────────────────────────────
 
     def _presidio_sanitize_sync(
-        self, text: str, *, language: str
+        self, text: str, *, language: str,
     ) -> SanitizationResult:
         """Внутренняя sync-операция: analyze + anonymize + mapping для restore.
 
@@ -283,7 +283,7 @@ class PresidioSanitizerAdapter:
             analyzer_results = analyzer.analyze(text=text, language=language)
         except Exception as exc:
             logger.warning(
-                "Presidio analyze failed (%s), fallback на legacy regex", exc
+                "Presidio analyze failed (%s), fallback на legacy regex", exc,
             )
             return self._legacy.sanitize_text(text)
 
@@ -310,7 +310,7 @@ _instance: PresidioSanitizerAdapter | None = None
 
 
 def get_presidio_sanitizer_adapter(
-    *, default_language: str = "ru"
+    *, default_language: str = "ru",
 ) -> PresidioSanitizerAdapter:
     """Singleton-фабрика PresidioSanitizerAdapter для DI providers.
 

@@ -86,5 +86,5 @@ class TestGetSettingProcessor:
         proc = GetSettingProcessor("app.name", to="body.x", default="n/a")
         spec = proc.to_spec()
         assert spec == {
-            "get_setting": {"path": "app.name", "to": "body.x", "default": "n/a"}
+            "get_setting": {"path": "app.name", "to": "body.x", "default": "n/a"},
         }

@@ -76,7 +76,7 @@ class TestEventSchemaValidationError:
 class TestEventBusLifecycle:
     @pytest.mark.asyncio
     async def test_start_sets_broker_and_started(
-        self, fake_redis_broker_module: Any
+        self, fake_redis_broker_module: Any,
     ) -> None:
         bus = EventBus()
         await bus.start("redis://localhost:6379")
@@ -102,14 +102,14 @@ class TestEventBusLifecycle:
 class TestEventBusPublish:
     @pytest.mark.asyncio
     async def test_publish_when_not_started_raises(
-        self, caplog: Any
+        self, caplog: Any,
     ) -> None:
         # M2 security fix: previously logged warning + dropped event,
         # silently masking config bugs. Now raises ``EventBusNotStartedError``.
         bus = EventBus()
         with caplog.at_level("WARNING"), pytest.raises(EventBusNotStartedError) as exc_info:
             await bus.publish(
-                "events.orders", OrderEvent(order_id=1, action="created")
+                "events.orders", OrderEvent(order_id=1, action="created"),
             )
         assert "events.orders" in str(exc_info.value)
         # Quota check happens before the broker check, so no warning is
@@ -123,7 +123,7 @@ class TestEventBusPublish:
         event = OrderEvent(order_id=1, action="created")
         await bus.publish("events.orders", event)
         bus._broker.publish.assert_awaited_once_with(  # type: ignore[attr-defined]
-            event.model_dump(), channel="events.orders"
+            event.model_dump(), channel="events.orders",
         )
 
     @pytest.mark.asyncio
@@ -141,7 +141,7 @@ class TestEventBusPublish:
         bus = EventBus()
         await bus.start()
         await bus.publish_pipeline_event(
-            route_id="r1", status_="done", correlation_id="c1", duration_ms=12.5
+            route_id="r1", status_="done", correlation_id="c1", duration_ms=12.5,
         )
         call_args = bus._broker.publish.call_args  # type: ignore[attr-defined]
         assert call_args.kwargs["channel"] == "events.pipeline"
@@ -193,7 +193,7 @@ class TestEventBusSubscribe:
 
     @pytest.mark.asyncio
     async def test_subscribe_exception_returns_none(
-        self, fake_redis_broker_module: Any
+        self, fake_redis_broker_module: Any,
     ) -> None:
         bus = EventBus()
         await bus.start()
@@ -214,7 +214,7 @@ class TestEventBusRequest:
         fake_reply_channel.instance = MagicMock(return_value=fake_instance)
 
         fake_mod = type(sys)(
-            "src.backend.infrastructure.clients.messaging.reply_channel"
+            "src.backend.infrastructure.clients.messaging.reply_channel",
         )
         fake_mod.ReplyChannel = fake_reply_channel  # type: ignore[attr-defined]
 
@@ -223,7 +223,7 @@ class TestEventBusRequest:
             {"src.backend.infrastructure.clients.messaging.reply_channel": fake_mod},
         ):
             result = await bus.request(
-                "target", {"data": 1}, timeout=5.0, correlation_id="cid"
+                "target", {"data": 1}, timeout=5.0, correlation_id="cid",
             )
 
         assert result == {"ok": True}

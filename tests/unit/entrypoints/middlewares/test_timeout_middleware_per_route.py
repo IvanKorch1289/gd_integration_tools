@@ -36,7 +36,7 @@ def _cancel_pending_asyncio_tasks():
 
 
 def _build_app(
-    *, route_timeouts: dict[str, float] | None = None, sleep_seconds: float = 0.0
+    *, route_timeouts: dict[str, float] | None = None, sleep_seconds: float = 0.0,
 ) -> FastAPI:
     """FastAPI с TimeoutMiddleware и endpoints с регулируемым sleep."""
     app = FastAPI()
@@ -70,7 +70,7 @@ class TestFeatureFlagDisabled:
     """default-OFF: single global timeout, registry игнорируется."""
 
     def test_pass_through_with_global_timeout(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "per_route_timeout_enabled", False)
         monkeypatch.setattr(settings.secure, "request_timeout", 5.0)
@@ -89,7 +89,7 @@ class TestPerRouteLookup:
     """Flag ON: per-route registry применяется через longest-prefix-match."""
 
     def test_match_applies_per_route_total(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "per_route_timeout_enabled", True)
         monkeypatch.setattr(settings.secure, "request_timeout", 5.0)
@@ -101,7 +101,7 @@ class TestPerRouteLookup:
         assert "Превышено" in resp.json()["detail"]
 
     def test_no_match_falls_back_to_global(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "per_route_timeout_enabled", True)
         monkeypatch.setattr(settings.secure, "request_timeout", 5.0)
@@ -118,7 +118,7 @@ class TestPerRouteLookup:
         # Два prefix'а: общий /api (5.0s) и специфичный /api/v1/heavy (0.05s).
         # Endpoint /api/v1/heavy/process должен match'нуть /api/v1/heavy.
         app = _build_app(
-            route_timeouts={"/api": 5.0, "/api/v1/heavy": 0.05}, sleep_seconds=0.5
+            route_timeouts={"/api": 5.0, "/api/v1/heavy": 0.05}, sleep_seconds=0.5,
         )
         client = TestClient(app)
         resp = client.get("/api/v1/heavy/process")
@@ -149,7 +149,7 @@ class TestTimeoutExceededResponse:
     """Превышение лимита → 408 JSON."""
 
     def test_global_timeout_exceeded_returns_408(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "per_route_timeout_enabled", False)
         monkeypatch.setattr(settings.secure, "request_timeout", 0.05)

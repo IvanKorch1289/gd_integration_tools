@@ -150,7 +150,7 @@ class WebhookSignatureMiddleware:
             # ``APP_ENVIRONMENT=dev`` + ``WEBHOOK_ALLOW_MISSING_SECRET=true``.
             matched_prefix = self._matched_path_prefix(path)
             webhook_signature_missing_secret_total.labels(
-                path_prefix=matched_prefix
+                path_prefix=matched_prefix,
             ).inc()
             if self._is_dev_escape_allowed():
                 _logger.warning(
@@ -203,7 +203,7 @@ class WebhookSignatureMiddleware:
         body = b"".join(body_chunks)
 
         if not verify_signature(
-            body, sig_value, timestamp, secret, window_seconds=self._window
+            body, sig_value, timestamp, secret, window_seconds=self._window,
         ):
             await self._send_401(send, detail="Webhook signature invalid")
             return
@@ -245,7 +245,7 @@ class WebhookSignatureMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -260,7 +260,7 @@ class WebhookSignatureMiddleware:
         ``body["error"]`` для legacy clients.
         """
         body = build_error_envelope(
-            code="webhook_not_configured", detail=detail, scope=scope
+            code="webhook_not_configured", detail=detail, scope=scope,
         )
         body["error"] = body["code"]  # backward-compat alias для legacy clients
         body_bytes = json.dumps(body).encode("utf-8")
@@ -272,7 +272,7 @@ class WebhookSignatureMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body_bytes})
 

@@ -164,7 +164,7 @@ def redis_facade(redis_backend: _StubRedisBackend) -> RedisCacheFacade:
 
 @pytest.mark.asyncio
 async def test_redis_facade_get_set_roundtrip(
-    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend
+    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend,
 ) -> None:
     await redis_facade.set("k", b"value")
     assert await redis_facade.get("k") == b"value"
@@ -185,7 +185,7 @@ async def test_redis_facade_ttl_passed_to_backend(
 
 @pytest.mark.asyncio
 async def test_redis_facade_tags_bind_to_index(
-    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend
+    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend,
 ) -> None:
     await redis_facade.set("user:1", b"u1", tags=["tenant:a", "user:1"])
     await redis_facade.set("user:2", b"u2", tags=["tenant:a"])
@@ -207,7 +207,7 @@ async def test_redis_facade_delete_by_tag(
 
 @pytest.mark.asyncio
 async def test_redis_facade_healthcheck(
-    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend
+    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend,
 ) -> None:
     assert await redis_facade.healthcheck() is True
     assert redis_backend.healthcheck_called == 1
@@ -219,7 +219,7 @@ async def test_redis_facade_healthcheck(
 
 @pytest.mark.asyncio
 async def test_redis_facade_backend_errors_raise_cache_error(
-    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend
+    redis_facade: RedisCacheFacade, redis_backend: _StubRedisBackend,
 ) -> None:
     """Backend exception → CacheError (консьюмер может перехватить через FallbackCacheFacade)."""
     redis_backend.store = None  # type: ignore[assignment]

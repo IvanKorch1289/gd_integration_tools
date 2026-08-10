@@ -118,7 +118,7 @@ async def test_retrieve_filters_by_modality() -> None:
 
     text_entry = await svc.ingest_text("документ о кредитах", {}, tenant_id="test")
     await svc.ingest_image(
-        b"\xff\xd8\xff" + b"\x00" * 16, {}, tenant_id="test"
+        b"\xff\xd8\xff" + b"\x00" * 16, {}, tenant_id="test",
     )  # jpeg-имитация
     await svc.ingest_audio(b"\x00" * 32, {}, tenant_id="test")
 

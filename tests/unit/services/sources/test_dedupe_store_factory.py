@@ -22,7 +22,7 @@ async def test_make_dedupe_store_default_returns_memory() -> None:
     fake_settings = MagicMock()
     fake_settings.use_redis_dedupe = False
     with patch(
-        "src.backend.core.config.services.outbox.outbox_settings", new=fake_settings
+        "src.backend.core.config.services.outbox.outbox_settings", new=fake_settings,
     ):
         store = await make_dedupe_store()
     assert isinstance(store, MemoryDedupeStore)
@@ -38,7 +38,7 @@ async def test_make_dedupe_store_redis_returns_redis_store() -> None:
     fake_redis_client_singleton.get_client = AsyncMock(return_value=fake_redis_instance)
     with (
         patch(
-            "src.backend.core.config.services.outbox.outbox_settings", new=fake_settings
+            "src.backend.core.config.services.outbox.outbox_settings", new=fake_settings,
         ),
         patch(
             "src.backend.core.storage.redis.get_redis_client",
@@ -64,15 +64,15 @@ async def test_make_dedupe_store_propagates_redis_get_client_error() -> None:
     fake_settings.use_redis_dedupe = True
     fake_redis_client_singleton = MagicMock()
     fake_redis_client_singleton.get_client = AsyncMock(
-        side_effect=ConnectionError("redis down")
+        side_effect=ConnectionError("redis down"),
     )
     with (
         patch(
-            "src.backend.core.config.services.outbox.outbox_settings", new=fake_settings
+            "src.backend.core.config.services.outbox.outbox_settings", new=fake_settings,
         ),
         patch(
             "src.backend.core.storage.redis.get_redis_client",
             return_value=fake_redis_client_singleton,
-        ),pytest.raises(ConnectionError, match="redis down")
+        ),pytest.raises(ConnectionError, match="redis down"),
     ):
         await make_dedupe_store()

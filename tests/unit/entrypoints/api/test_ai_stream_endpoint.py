@@ -26,7 +26,7 @@ async def test_sse_endpoint_returns_503_when_disabled() -> None:
         return_value=lambda: None,
     ):
         async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test",
         ) as ac:
             resp = await ac.post(
                 "/api/v1/ai/llm/stream",
@@ -41,7 +41,7 @@ async def test_sse_generates_events_when_enabled() -> None:
 
     class _FakeService:
         async def astream(
-            self, messages: list[dict[str, Any]], **kwargs: Any
+            self, messages: list[dict[str, Any]], **kwargs: Any,
         ) -> AsyncIterator[StreamChunk]:
             yield StreamChunk(delta="Hello", finish_reason=None)
             yield StreamChunk(delta=" world", finish_reason=None)
@@ -66,7 +66,7 @@ async def test_sse_generates_events_when_enabled() -> None:
                 # обходим auth
                 app.dependency_overrides = {}
                 async with AsyncClient(
-                    transport=ASGITransport(app=app), base_url="http://test"
+                    transport=ASGITransport(app=app), base_url="http://test",
                 ) as ac:
                     resp = await ac.post(
                         "/api/v1/ai/llm/stream",

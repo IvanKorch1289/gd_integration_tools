@@ -202,7 +202,7 @@ class TestConvertProcessorProcess:
     async def test_convert_preserves_headers(self) -> None:
         proc = ConvertProcessor(from_format="json", to_format="yaml")
         ex = Exchange(
-            in_message=Message(body={"key": "value"}, headers={"X-Custom": "header"})
+            in_message=Message(body={"key": "value"}, headers={"X-Custom": "header"}),
         )
         await proc.process(ex, MagicMock())
         assert ex.out_message.headers.get("X-Custom") == "header"

@@ -66,7 +66,7 @@ async def _generate(request: Request, payload: StreamRequest) -> AsyncIterator[b
     usage: dict[str, Any] | None = None
     try:
         async for chunk in service.astream(
-            payload.messages, model=payload.model, **kwargs
+            payload.messages, model=payload.model, **kwargs,
         ):
             if await request.is_disconnected():
                 logger.info("ai/llm/stream: client disconnected — закрываем upstream")
@@ -82,7 +82,7 @@ async def _generate(request: Request, payload: StreamRequest) -> AsyncIterator[b
                 finish_reason = chunk.finish_reason
                 break
         yield _sse_event(
-            "done", {"finish_reason": finish_reason or "stop", "usage": usage or {}}
+            "done", {"finish_reason": finish_reason or "stop", "usage": usage or {}},
         )
     except asyncio.CancelledError:
         yield _sse_event("error", {"error": "cancelled"})
@@ -108,7 +108,7 @@ async def llm_stream(request: Request, payload: StreamRequest) -> StreamingRespo
 
     if not litellm_gateway_settings.enabled:
         raise HTTPException(
-            status_code=503, detail="LiteLLMGateway disabled (LITELLM_ENABLED=false)."
+            status_code=503, detail="LiteLLMGateway disabled (LITELLM_ENABLED=false).",
         )
     headers = {
         "Cache-Control": "no-cache",
@@ -116,5 +116,5 @@ async def llm_stream(request: Request, payload: StreamRequest) -> StreamingRespo
         "X-Accel-Buffering": "no",
     }
     return StreamingResponse(
-        _generate(request, payload), media_type="text/event-stream", headers=headers
+        _generate(request, payload), media_type="text/event-stream", headers=headers,
     )

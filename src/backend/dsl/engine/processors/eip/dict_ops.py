@@ -198,7 +198,7 @@ class PydashOmitProcessor(BaseProcessor):
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
 
     def __init__(
-        self, fields: Sequence[str], *, deep: bool = False, name: str | None = None
+        self, fields: Sequence[str], *, deep: bool = False, name: str | None = None,
     ) -> None:
         if not fields:
             raise ValueError("PydashOmitProcessor: fields must be non-empty")
@@ -223,7 +223,7 @@ class PydashOmitProcessor(BaseProcessor):
             new_body = pydash.objects.omit(new_body, self._fields)
         exchange.set_out(body=new_body, headers=dict(exchange.in_message.headers))
         _log.debug(
-            "PydashOmit: removed %d fields (deep=%s)", len(self._fields), self._deep
+            "PydashOmit: removed %d fields (deep=%s)", len(self._fields), self._deep,
         )
 
     def to_spec(self) -> dict[str, Any] | None:
@@ -332,12 +332,12 @@ class PydashMergeProcessor(BaseProcessor):
             new_body = copy.deepcopy(self._defaults)
         elif self._overwrite:
             new_body = pydash.objects.merge(
-                copy.deepcopy(body), copy.deepcopy(self._defaults)
+                copy.deepcopy(body), copy.deepcopy(self._defaults),
             )
         else:
             # body wins over defaults (defaults заполняют только отсутствующие ключи).
             new_body = pydash.objects.merge(
-                copy.deepcopy(self._defaults), copy.deepcopy(body)
+                copy.deepcopy(self._defaults), copy.deepcopy(body),
             )
         exchange.set_out(body=new_body, headers=dict(exchange.in_message.headers))
         _log.debug("PydashMerge: applied defaults (overwrite=%s)", self._overwrite)

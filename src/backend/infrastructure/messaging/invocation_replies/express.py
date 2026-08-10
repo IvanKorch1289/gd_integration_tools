@@ -37,7 +37,7 @@ class ExpressNotifier(Protocol):
     """
 
     async def send(
-        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any],
     ) -> None:
         """Метод send (см. signature)."""
         ...

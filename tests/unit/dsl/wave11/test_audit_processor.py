@@ -19,7 +19,7 @@ from src.backend.dsl.engine.processors.audit import AuditProcessor
 
 
 def _make_exchange(
-    body: Any | None = None, properties: dict[str, Any] | None = None
+    body: Any | None = None, properties: dict[str, Any] | None = None,
 ) -> Exchange[Any]:
     """Создаёт ``Exchange`` с заданным body и properties."""
     exchange: Exchange[Any] = Exchange(in_message=Message(body=body))
@@ -45,7 +45,7 @@ def test_audit_accepts_valid_outcomes(outcome: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "outcome", ["pending", "ok", "fail", "rejected", "", "Success"]
+    "outcome", ["pending", "ok", "fail", "rejected", "", "Success"],
 )
 def test_audit_rejects_invalid_outcome(outcome: str) -> None:
     """Невалидный outcome -> ValueError."""
@@ -127,7 +127,7 @@ async def test_audit_resolves_actor_resource_metadata_from_expressions() -> None
             "meta": {"amount": 100},
             "tenant": "t-1",
             "corr": "c-1",
-        }
+        },
     )
 
     with patch.object(AuditProcessor, "_build_store", return_value=fake_store):
@@ -147,7 +147,7 @@ async def test_audit_wraps_non_dict_metadata() -> None:
     fake_store.append = AsyncMock(return_value="h3")
 
     proc = AuditProcessor(
-        action="x", metadata_from="properties.payload", outcome="success"
+        action="x", metadata_from="properties.payload", outcome="success",
     )
     exchange = _make_exchange(properties={"payload": "raw-string"})
 
@@ -164,7 +164,7 @@ async def test_audit_outcome_from_expression_overrides_static() -> None:
     fake_store.append = AsyncMock(return_value="h4")
 
     proc = AuditProcessor(
-        action="order.processed", outcome="success", outcome_from="properties.outcome"
+        action="order.processed", outcome="success", outcome_from="properties.outcome",
     )
     exchange = _make_exchange(properties={"outcome": "failure"})
 
@@ -180,7 +180,7 @@ async def test_audit_outcome_from_invalid_falls_back_to_error() -> None:
     fake_store.append = AsyncMock(return_value="h5")
 
     proc = AuditProcessor(
-        action="x", outcome="success", outcome_from="properties.outcome"
+        action="x", outcome="success", outcome_from="properties.outcome",
     )
     exchange = _make_exchange(properties={"outcome": "weird-value"})
 
@@ -229,7 +229,7 @@ async def test_audit_uses_custom_result_property() -> None:
     fake_store.append = AsyncMock(return_value="hash-x")
 
     proc = AuditProcessor(
-        action="x", outcome="success", result_property="my_audit_hash"
+        action="x", outcome="success", result_property="my_audit_hash",
     )
     exchange = _make_exchange()
 

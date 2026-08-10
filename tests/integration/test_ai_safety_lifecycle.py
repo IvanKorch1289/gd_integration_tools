@@ -25,11 +25,11 @@ def patched_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     from src.backend.core.config import ai as ai_config
 
     monkeypatch.setattr(
-        ai_config.ai_workspace_settings, "workspace_root", tmp_path / "ai_ws"
+        ai_config.ai_workspace_settings, "workspace_root", tmp_path / "ai_ws",
     )
     monkeypatch.setattr(ai_config.ai_workspace_settings, "workspace_ttl_seconds", 0.05)
     monkeypatch.setattr(
-        ai_config.ai_workspace_settings, "workspace_cleanup_interval_s", 0.05
+        ai_config.ai_workspace_settings, "workspace_cleanup_interval_s", 0.05,
     )
     return ai_config.ai_workspace_settings
 

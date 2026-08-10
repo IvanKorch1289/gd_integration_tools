@@ -62,7 +62,7 @@ async def test_registry_preset_overrides_custom_values() -> None:
     """preset в get_or_create перекрывает кастомные max_concurrent / wait_timeout."""
     registry = BulkheadRegistry()
     bh = await registry.get_or_create(
-        "db_test_preset", max_concurrent=1, wait_timeout=0.1, preset="db"
+        "db_test_preset", max_concurrent=1, wait_timeout=0.1, preset="db",
     )
     assert bh.max_concurrent == 50
     assert bh.wait_timeout == 5.0

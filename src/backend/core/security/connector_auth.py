@@ -83,7 +83,7 @@ def require_capability(
                     exc,
                 )
                 raise ConnectorAuthError(
-                    f"Capability '{capability}' denied: facade unavailable"
+                    f"Capability '{capability}' denied: facade unavailable",
                 ) from exc
 
             principal = kwargs.pop("_principal", "anonymous")
@@ -128,7 +128,7 @@ def require_capability(
                     exc,
                 )
                 raise ConnectorAuthError(
-                    f"Capability '{capability}' denied: facade error: {exc}"
+                    f"Capability '{capability}' denied: facade error: {exc}",
                 ) from exc
 
             if not decision.allowed:
@@ -143,7 +143,7 @@ def require_capability(
                 )
                 raise ConnectorAuthError(
                     f"Capability '{capability}' denied for {principal}: "
-                    f"{decision.reason or 'policy denied'}"
+                    f"{decision.reason or 'policy denied'}",
                 )
 
             return await func(*args, **kwargs)
@@ -183,7 +183,7 @@ async def check_source_capability(
         from src.backend.services.authorization.facade import get_authorization_facade
     except Exception as exc:  # pragma: no cover
         _logger.debug(
-            "authorization_facade_unavailable: %s; failing closed", exc
+            "authorization_facade_unavailable: %s; failing closed", exc,
         )
         return False
 

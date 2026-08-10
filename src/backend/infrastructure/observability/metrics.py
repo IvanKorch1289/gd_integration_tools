@@ -57,7 +57,7 @@ _processor_histogram = metrics_registry.histogram(
     buckets=(0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 30.0),
 )
 _pipeline_counter = metrics_registry.counter(
-    "dsl_pipeline_total", "DSL pipeline executions", labels=("route_id", "status")
+    "dsl_pipeline_total", "DSL pipeline executions", labels=("route_id", "status"),
 )
 
 # ── Resilience / pools ──────────────────────────────────────────────────
@@ -74,15 +74,15 @@ _pool_gauge = metrics_registry.gauge(
 
 # ── Cache ───────────────────────────────────────────────────────────────
 _cache_hits_counter = metrics_registry.counter(
-    "cache_hits_total", "Cache hits", labels=("backend", "key_prefix")
+    "cache_hits_total", "Cache hits", labels=("backend", "key_prefix"),
 )
 _cache_misses_counter = metrics_registry.counter(
-    "cache_misses_total", "Cache misses", labels=("backend", "key_prefix")
+    "cache_misses_total", "Cache misses", labels=("backend", "key_prefix"),
 )
 
 # ── Express ─────────────────────────────────────────────────────────────
 _express_sent_counter = metrics_registry.counter(
-    "express_messages_sent_total", "Express messages sent", labels=("bot", "status")
+    "express_messages_sent_total", "Express messages sent", labels=("bot", "status"),
 )
 _express_received_counter = metrics_registry.counter(
     "express_commands_received_total",
@@ -103,10 +103,10 @@ _ai_tokens_counter = metrics_registry.counter(
     labels=("provider", "model", "kind"),  # kind = prompt|completion
 )
 _ai_semantic_hits_counter = metrics_registry.counter(
-    "ai_semantic_cache_hits_total", "AI semantic cache hits", labels=("model",)
+    "ai_semantic_cache_hits_total", "AI semantic cache hits", labels=("model",),
 )
 _ai_semantic_misses_counter = metrics_registry.counter(
-    "ai_semantic_cache_misses_total", "AI semantic cache misses", labels=("model",)
+    "ai_semantic_cache_misses_total", "AI semantic cache misses", labels=("model",),
 )
 
 # ── Antivirus ───────────────────────────────────────────────────────────
@@ -117,10 +117,10 @@ _antivirus_scan_histogram = metrics_registry.histogram(
     buckets=(0.001, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0),
 )
 _antivirus_hits_counter = metrics_registry.counter(
-    "antivirus_cache_hits_total", "Antivirus hash-cache hits"
+    "antivirus_cache_hits_total", "Antivirus hash-cache hits",
 )
 _antivirus_misses_counter = metrics_registry.counter(
-    "antivirus_cache_misses_total", "Antivirus hash-cache misses"
+    "antivirus_cache_misses_total", "Antivirus hash-cache misses",
 )
 
 # ── Queue ───────────────────────────────────────────────────────────────
@@ -130,7 +130,7 @@ _queue_lag_gauge = metrics_registry.gauge(
     labels=("queue", "consumer_group"),
 )
 _queue_dlq_gauge = metrics_registry.gauge(
-    "queue_dlq_depth", "Dead letter queue depth", labels=("queue",)
+    "queue_dlq_depth", "Dead letter queue depth", labels=("queue",),
 )
 
 
@@ -148,7 +148,7 @@ class PrometheusMetricsMiddleware(ProcessorMiddleware):
     """Отправляет метрики DSL-процессоров в Prometheus."""
 
     async def before(
-        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
+        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Pre-execution hook: метрики регистрируются at-import, no-op."""
         # Метрики уже зарегистрированы при импорте модуля — no-op hook.
@@ -164,7 +164,7 @@ class PrometheusMetricsMiddleware(ProcessorMiddleware):
     ) -> None:
         """Post-execution hook: наблюдает latency в ``_processor_histogram``."""
         _processor_histogram.labels(
-            route_id=context.route_id or "unknown", processor_type=processor_name
+            route_id=context.route_id or "unknown", processor_type=processor_name,
         ).observe(duration_ms / 1000.0)
 
 

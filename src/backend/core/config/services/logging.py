@@ -53,7 +53,7 @@ class LogStorageSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": "INFO"},
     )
     name_log_file: str = Field(
-        ..., description="Путь к файлу логов", json_schema_extra={"example": "app.log"}
+        ..., description="Путь к файлу логов", json_schema_extra={"example": "app.log"},
     )
     dir_log_name: str = Field(
         ...,
@@ -85,7 +85,7 @@ class LogStorageSettings(BaseSettingsWithLoader):
         min_length=1,
         description="Конфигурация логгеров",
         json_schema_extra={
-            "example": [{"name": "application", "facility": "application"}]
+            "example": [{"name": "application", "facility": "application"}],
         },
     )
 

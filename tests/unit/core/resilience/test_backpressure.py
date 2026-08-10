@@ -169,7 +169,7 @@ async def test_adaptive_bulkhead_scale_up_down() -> None:
     from src.backend.core.resilience.backpressure import AdaptiveBulkhead
 
     bulkhead = AdaptiveBulkhead(
-        min_concurrent=2, max_concurrent=10, initial_concurrent=5, adjust_step=2
+        min_concurrent=2, max_concurrent=10, initial_concurrent=5, adjust_step=2,
     )
 
     new = bulkhead.scale_up()

@@ -77,7 +77,7 @@ class TestActionSpecToMetadata:
 
     def test_explicit_side_effect_and_idempotent(self) -> None:
         spec = SimpleNamespace(
-            name="act1", method="POST", side_effect="read", idempotent=True
+            name="act1", method="POST", side_effect="read", idempotent=True,
         )
         meta = action_spec_to_metadata(spec)
         assert meta.side_effect == "read"

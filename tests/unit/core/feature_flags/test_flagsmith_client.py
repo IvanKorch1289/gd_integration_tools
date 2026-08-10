@@ -21,7 +21,7 @@ from src.backend.core.feature_flags.flagsmith_client import (
 
 
 def _make_response(
-    status_code: int = 200, json_data: object = None, text: str = ""
+    status_code: int = 200, json_data: object = None, text: str = "",
 ) -> MagicMock:
     """Создаёт mock httpx.Response."""
     resp = MagicMock()
@@ -106,7 +106,7 @@ class TestGetEnvironmentFlags:
                         "feature_state_value": None,
                     },
                 ],
-            )
+            ),
         )
         c._client = client
 
@@ -127,7 +127,7 @@ class TestGetEnvironmentFlags:
         c._client = client
 
         with patch(
-            "src.backend.core.feature_flags.flagsmith_client._logger"
+            "src.backend.core.feature_flags.flagsmith_client._logger",
         ) as mock_logger:
             with pytest.raises(FlagsmithUnavailableError, match="net-err"):
                 await c.get_environment_flags()
@@ -138,7 +138,7 @@ class TestGetEnvironmentFlags:
         c = FlagsmithClient(environment_key="k")
         client = AsyncMock()
         client.get = AsyncMock(
-            return_value=_make_response(status_code=500, text="internal error")
+            return_value=_make_response(status_code=500, text="internal error"),
         )
         c._client = client
 
@@ -167,10 +167,10 @@ class TestGetIdentityFlags:
                             "feature": {"name": "f1"},
                             "enabled": True,
                             "feature_state_value": "v1",
-                        }
-                    ]
+                        },
+                    ],
                 },
-            )
+            ),
         )
         c._client = client
 
@@ -188,7 +188,7 @@ class TestGetIdentityFlags:
         c = FlagsmithClient(environment_key="k")
         client = AsyncMock()
         client.get = AsyncMock(
-            return_value=_make_response(status_code=200, json_data=[{"flags": []}])
+            return_value=_make_response(status_code=200, json_data=[{"flags": []}]),
         )
         c._client = client
 
@@ -220,7 +220,7 @@ class TestGetIdentityFlags:
         c = FlagsmithClient(environment_key="k")
         client = AsyncMock()
         client.get = AsyncMock(
-            return_value=_make_response(status_code=200, json_data={"flags": []})
+            return_value=_make_response(status_code=200, json_data={"flags": []}),
         )
         c._client = client
 
@@ -254,7 +254,7 @@ class TestAclose:
         c._client = http
 
         with patch(
-            "src.backend.core.feature_flags.flagsmith_client._logger"
+            "src.backend.core.feature_flags.flagsmith_client._logger",
         ) as mock_logger:
             await c.aclose()  # No raise
             assert mock_logger.exception.called

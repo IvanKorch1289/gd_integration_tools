@@ -33,7 +33,7 @@ class SchemaMixin(_DataQualityProtocol):
     __slots__ = ()
 
     async def schema_infer(
-        self, data: dict[str, Any] | list[dict[str, Any]], dataset: str = "default"
+        self, data: dict[str, Any] | list[dict[str, Any]], dataset: str = "default",
     ) -> dict[str, Any]:
         """Инферит схему из данных."""
         records = data if isinstance(data, list) else [data]

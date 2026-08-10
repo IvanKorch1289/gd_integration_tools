@@ -45,7 +45,7 @@ class TestConfigClient:
         with patch.object(c, "_request", return_value=[{"trace": "x"}]) as req:
             assert c.get_trace_logs() == [{"trace": "x"}]
         req.assert_called_once_with(
-            "GET", "/api/v1/admin/trace-logs", params={"limit": 100}
+            "GET", "/api/v1/admin/trace-logs", params={"limit": 100},
         )
 
     def test_get_trace_logs_custom_limit(self) -> None:
@@ -55,7 +55,7 @@ class TestConfigClient:
         with patch.object(c, "_request", return_value=[]) as req:
             c.get_trace_logs(limit=50)
         req.assert_called_once_with(
-            "GET", "/api/v1/admin/trace-logs", params={"limit": 50}
+            "GET", "/api/v1/admin/trace-logs", params={"limit": 50},
         )
 
     def test_get_trace_logs_exception_returns_empty_list(self) -> None:
@@ -79,7 +79,7 @@ class TestInventoryClient:
 
         c = InventoryClient()
         with patch.object(
-            c, "_request", return_value={"enabled": True, "plugins": ["p1"]}
+            c, "_request", return_value={"enabled": True, "plugins": ["p1"]},
         ) as req:
             result = c.get_plugins_inventory()
         assert result == {"enabled": True, "plugins": ["p1"]}
@@ -100,7 +100,7 @@ class TestInventoryClient:
 
         c = InventoryClient()
         with patch.object(
-            c, "_request", return_value={"enabled": True, "routes": ["r1"]}
+            c, "_request", return_value={"enabled": True, "routes": ["r1"]},
         ) as req:
             result = c.get_routes_inventory()
         assert result == {"enabled": True, "routes": ["r1"]}
@@ -133,7 +133,7 @@ class TestOrdersClient:
             result = c.get_orders()
         assert result == {"items": []}
         req.assert_called_once_with(
-            "GET", "/api/v1/orders/all/", params={"page": 1, "size": 50}
+            "GET", "/api/v1/orders/all/", params={"page": 1, "size": 50},
         )
 
     def test_get_orders_custom_pagination(self) -> None:
@@ -143,7 +143,7 @@ class TestOrdersClient:
         with patch.object(c, "_request", return_value={}) as req:
             c.get_orders(page=3, size=100)
         req.assert_called_once_with(
-            "GET", "/api/v1/orders/all/", params={"page": 3, "size": 100}
+            "GET", "/api/v1/orders/all/", params={"page": 3, "size": 100},
         )
 
     def test_create_order(self) -> None:
@@ -162,7 +162,7 @@ class TestOrdersClient:
         c = OrdersClient()
         data = {"name": "Updated"}
         with patch.object(
-            c, "_request", return_value={"id": 1, "name": "Updated"}
+            c, "_request", return_value={"id": 1, "name": "Updated"},
         ) as req:
             result = c.update_order(42, data)
         assert result == {"id": 1, "name": "Updated"}
@@ -191,7 +191,7 @@ class TestChatClient:
 
         c = ChatClient()
         with patch.object(
-            c, "_request", return_value={"response": "Hello!", "session_id": "s1"}
+            c, "_request", return_value={"response": "Hello!", "session_id": "s1"},
         ):
             assert c.chat("hi") == "Hello!"
 
@@ -232,7 +232,7 @@ class TestChatClient:
         with patch.object(c, "_request", return_value={}) as req:
             c.chat("hi")
         req.assert_called_once_with(
-            "POST", "/api/v1/ai/chat", json={"message": "hi", "session_id": "default"}
+            "POST", "/api/v1/ai/chat", json={"message": "hi", "session_id": "default"},
         )
 
 
@@ -290,7 +290,7 @@ class TestTenantsClient:
 
         c = TenantsClient()
         with patch.object(
-            c, "_request", return_value={"tenants": ["t1"], "total": 1}
+            c, "_request", return_value={"tenants": ["t1"], "total": 1},
         ) as req:
             result = c.get_tenants()
         assert result == {"tenants": ["t1"], "total": 1}

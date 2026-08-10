@@ -39,7 +39,7 @@ from src.backend.dsl.processors.reflection_loop_processor import (
 
 
 def _make_exchange(
-    body: Any = "hello", headers: dict[str, Any] | None = None
+    body: Any = "hello", headers: dict[str, Any] | None = None,
 ) -> Exchange:
     msg = Message(body=body, headers=headers or {})
     return Exchange(in_message=msg, out_message=msg)
@@ -222,7 +222,7 @@ async def test_init_invalid_max_refinements() -> None:
     """max_refinements < 0 → ValueError."""
     with pytest.raises(ValueError, match="max_refinements"):
         ReflectionLoopProcessor(
-            generator=AsyncMock(), critic=AsyncMock(), max_refinements=-1
+            generator=AsyncMock(), critic=AsyncMock(), max_refinements=-1,
         )
 
 
@@ -230,7 +230,7 @@ async def test_init_invalid_threshold() -> None:
     """score_threshold вне [0, 1] → ValueError."""
     with pytest.raises(ValueError, match="score_threshold"):
         ReflectionLoopProcessor(
-            generator=AsyncMock(), critic=AsyncMock(), score_threshold=1.5
+            generator=AsyncMock(), critic=AsyncMock(), score_threshold=1.5,
         )
 
 
@@ -290,7 +290,7 @@ async def test_reflection_result_in_properties() -> None:
 async def test_to_spec() -> None:
     """to_spec возвращает reflection_loop config dict."""
     p = ReflectionLoopProcessor(
-        generator=AsyncMock(), critic=AsyncMock(), max_refinements=2
+        generator=AsyncMock(), critic=AsyncMock(), max_refinements=2,
     )
     spec = p.to_spec()
     assert spec is not None

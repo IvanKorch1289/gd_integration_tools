@@ -41,7 +41,7 @@ class _StubInvoker:
     async def invoke(self, request: InvocationRequest) -> InvocationResponse:
         self.calls.append(request)
         return InvocationResponse(
-            invocation_id=request.invocation_id, status=InvocationStatus.OK
+            invocation_id=request.invocation_id, status=InvocationStatus.OK,
         )
 
 
@@ -65,7 +65,7 @@ async def test_start_then_stop_all() -> None:
     # Триггерим событие через адаптер первого source.
     assert src1.received_cb is not None
     await src1.received_cb(
-        SourceEvent(source_id="s1", kind=SourceKind.WEBHOOK, payload={"x": 1})
+        SourceEvent(source_id="s1", kind=SourceKind.WEBHOOK, payload={"x": 1}),
     )
     assert len(invoker.calls) == 1
     assert invoker.calls[0].action == "a1"
@@ -84,11 +84,11 @@ async def test_idempotency_skipped_when_disabled() -> None:
     spec = SourceSpec(id="s", kind="webhook", action="a", idempotency=False)
 
     await start_all_sources(
-        registry=registry, invoker=invoker, specs=[spec], dedupe=MemoryDedupeStore()
+        registry=registry, invoker=invoker, specs=[spec], dedupe=MemoryDedupeStore(),
     )
     assert src.received_cb is not None
     ev = SourceEvent(
-        source_id="s", kind=SourceKind.WEBHOOK, payload={"x": 1}, event_id="dup"
+        source_id="s", kind=SourceKind.WEBHOOK, payload={"x": 1}, event_id="dup",
     )
     await src.received_cb(ev)
     await src.received_cb(ev)  # обычно был бы дубль, но idempotency=False

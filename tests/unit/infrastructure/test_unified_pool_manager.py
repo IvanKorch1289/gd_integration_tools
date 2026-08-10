@@ -29,7 +29,7 @@ class TestUnifiedPoolManager:
         mgr = UnifiedPoolManager()
         ping = AsyncMock()
         mgr.register(
-            "db_main", MagicMock(), ping_fn=ping, kind="sqlalchemy", max_size=10
+            "db_main", MagicMock(), ping_fn=ping, kind="sqlalchemy", max_size=10,
         )
         assert mgr.list_pools() == ["db_main"]
         reg = mgr._pools["db_main"]

@@ -36,10 +36,10 @@ __all__ = ("ComposedMessageProcessor",)
 
 
 SplitterCallable = Callable[
-    [Exchange[Any]], "list[Exchange[Any]] | Awaitable[list[Exchange[Any]]]"
+    [Exchange[Any]], "list[Exchange[Any]] | Awaitable[list[Exchange[Any]]]",
 ]
 AggregatorCallable = Callable[
-    [list[Exchange[Any]]], "Exchange[Any] | Awaitable[Exchange[Any]]"
+    [list[Exchange[Any]]], "Exchange[Any] | Awaitable[Exchange[Any]]",
 ]
 
 
@@ -101,8 +101,8 @@ class ComposedMessageProcessor(BaseProcessor):
                 # Допускаем частичную совместимость — оборачиваем dict/str/etc как body.
                 part = Exchange(
                     in_message=Message(
-                        body=part, headers=dict(exchange.in_message.headers)
-                    )
+                        body=part, headers=dict(exchange.in_message.headers),
+                    ),
                 )
 
             if part.status == ExchangeStatus.pending:

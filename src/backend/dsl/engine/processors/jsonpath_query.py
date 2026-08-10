@@ -75,7 +75,7 @@ class JsonPathProcessor(BaseProcessor):
             raise ValueError("jsonpath: expr must be non-empty")
         if mode not in {"all", "first", "scalar"}:
             raise ValueError(
-                f"jsonpath: mode must be 'all'|'first'|'scalar', got {mode!r}"
+                f"jsonpath: mode must be 'all'|'first'|'scalar', got {mode!r}",
             )
         self._expr_source = expr
         self._target = to

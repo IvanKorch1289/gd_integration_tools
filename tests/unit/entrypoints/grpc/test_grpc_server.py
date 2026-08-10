@@ -142,12 +142,12 @@ def test_load_tls_credentials_disabled_returns_none(grpc_server_module) -> None:
 @hyp_settings(
     max_examples=50,
     suppress_health_check=[
-        __import__("hypothesis").HealthCheck.function_scoped_fixture
+        __import__("hypothesis").HealthCheck.function_scoped_fixture,
     ],
 )
 @pytest.mark.unit
 def test_safe_error_base_error_preserves_message_property(
-    grpc_server_module, message: str
+    grpc_server_module, message: str,
 ) -> None:
     """For any string message, _safe_error returns it unchanged for BaseError.
 

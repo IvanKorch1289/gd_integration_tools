@@ -70,7 +70,7 @@ class TestTokenBudgetFeatureFlagOverride:
 
     @pytest.mark.asyncio
     async def test_flag_off_preserves_per_tenant_fail_open(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """flag=False: per-tenant fail_mode='open' still swallows errors."""
         monkeypatch.setattr(feature_flags, "token_budget_fail_closed", False)
@@ -81,7 +81,7 @@ class TestTokenBudgetFeatureFlagOverride:
 
     @pytest.mark.asyncio
     async def test_flag_on_overrides_fail_open_to_fail_closed(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """flag=True overrides per-tenant fail_mode='open' → raises BudgetBackendUnavailable.
 
@@ -96,7 +96,7 @@ class TestTokenBudgetFeatureFlagOverride:
 
     @pytest.mark.asyncio
     async def test_flag_on_idempotent_with_explicit_fail_closed(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """flag=True + per-tenant fail_mode='closed' → still raises (no double-raise)."""
         monkeypatch.setattr(feature_flags, "token_budget_fail_closed", True)
@@ -107,7 +107,7 @@ class TestTokenBudgetFeatureFlagOverride:
 
     @pytest.mark.asyncio
     async def test_flag_on_does_not_break_happy_path(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """flag=True with working backend: no raise, normal budget tracking."""
         monkeypatch.setattr(feature_flags, "token_budget_fail_closed", True)

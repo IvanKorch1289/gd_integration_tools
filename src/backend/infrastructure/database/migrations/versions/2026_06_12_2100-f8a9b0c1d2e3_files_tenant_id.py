@@ -64,21 +64,21 @@ def upgrade() -> None:
         """
         ALTER TABLE files
         ADD COLUMN tenant_id VARCHAR(64) NOT NULL DEFAULT 'default'
-        """
+        """,
     )
 
     # 2. Index для tenant filter performance.
     op.execute(
         """
         CREATE INDEX ix_files_tenant_id ON files (tenant_id)
-        """
+        """,
     )
 
     # 3. Verify backfill.
     op.execute(
         """
         UPDATE files SET tenant_id = 'default' WHERE tenant_id IS NULL
-        """
+        """,
     )
 
 

@@ -59,7 +59,7 @@ class SQLRuleEngineRepository(RuleEngineRepository):
         )
 
     async def get(
-        self, name: str, *, version: str | None = None, tenant_id: str | None = None
+        self, name: str, *, version: str | None = None, tenant_id: str | None = None,
     ) -> RulesetDoc | None:
         """Вернуть включённый ruleset по имени.
 
@@ -67,7 +67,7 @@ class SQLRuleEngineRepository(RuleEngineRepository):
         ``version`` (лексикографическая сортировка по убыванию).
         """
         stmt = select(RuleEngineRulesetORM).where(
-            RuleEngineRulesetORM.name == name, RuleEngineRulesetORM.enabled.is_(True)
+            RuleEngineRulesetORM.name == name, RuleEngineRulesetORM.enabled.is_(True),
         )
         if tenant_id is None:
             stmt = stmt.where(RuleEngineRulesetORM.tenant_id.is_(None))
@@ -86,12 +86,12 @@ class SQLRuleEngineRepository(RuleEngineRepository):
     async def list_active(self, *, tenant_id: str | None = None) -> list[RulesetDoc]:
         """Список всех включённых ruleset'ов; опц. фильтр по tenant'у."""
         stmt = select(RuleEngineRulesetORM).where(
-            RuleEngineRulesetORM.enabled.is_(True)
+            RuleEngineRulesetORM.enabled.is_(True),
         )
         if tenant_id is not None:
             stmt = stmt.where(RuleEngineRulesetORM.tenant_id == tenant_id)
         stmt = stmt.order_by(
-            RuleEngineRulesetORM.name, RuleEngineRulesetORM.version.desc()
+            RuleEngineRulesetORM.name, RuleEngineRulesetORM.version.desc(),
         )
         result = await self._session.execute(stmt)
         return [self._to_doc(orm) for orm in result.scalars().all()]
@@ -128,11 +128,11 @@ class SQLRuleEngineRepository(RuleEngineRepository):
         return self._to_doc(orm)
 
     async def delete(
-        self, name: str, version: str, *, tenant_id: str | None = None
+        self, name: str, version: str, *, tenant_id: str | None = None,
     ) -> bool:
         """Удалить запись по составному ключу."""
         stmt = delete(RuleEngineRulesetORM).where(
-            RuleEngineRulesetORM.name == name, RuleEngineRulesetORM.version == version
+            RuleEngineRulesetORM.name == name, RuleEngineRulesetORM.version == version,
         )
         if tenant_id is None:
             stmt = stmt.where(RuleEngineRulesetORM.tenant_id.is_(None))

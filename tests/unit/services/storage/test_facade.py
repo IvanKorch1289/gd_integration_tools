@@ -27,7 +27,7 @@ class _FakeStorage(ObjectStorage):
         self._store: dict[str, bytes] = {}
 
     async def upload(
-        self, key: str, data: bytes, content_type: str | None = None
+        self, key: str, data: bytes, content_type: str | None = None,
     ) -> str:
         self.calls.append({"op": "upload", "key": key, "content_type": content_type})
         self._store[key] = data
@@ -68,7 +68,7 @@ async def test_upload_delegates_and_checks_write_capability() -> None:
     )
 
     loc = await facade.upload(
-        "docs/report.pdf", b"data", content_type="application/pdf"
+        "docs/report.pdf", b"data", content_type="application/pdf",
     )
 
     assert loc == "loc://docs/report.pdf"

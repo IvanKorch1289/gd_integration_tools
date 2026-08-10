@@ -39,7 +39,7 @@ class TracingMiddleware(ProcessorMiddleware):
         self._spans: dict[str, Any] = {}
 
     async def before(
-        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
+        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Метод before (см. signature)."""
         tracer = get_tracer()
@@ -80,7 +80,7 @@ class TracingMiddleware(ProcessorMiddleware):
                 span.set_attribute("error.message", str(error)[:500])
                 span.set_status(
                     __import__(
-                        "opentelemetry.trace", fromlist=["StatusCode"]
+                        "opentelemetry.trace", fromlist=["StatusCode"],
                     ).StatusCode.ERROR,
                     str(error)[:200],
                 )

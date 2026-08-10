@@ -133,7 +133,7 @@ class AuditReplayMiddleware:
         # Async audit record (non-blocking — exceptions НЕ пробрасываются).
         try:
             await self._audit(
-                scope, request_body_bytes, response_status["status"], duration_ms
+                scope, request_body_bytes, response_status["status"], duration_ms,
             )
         except Exception as exc:
             logger.warning("Audit record failed: %s", exc)
@@ -190,7 +190,7 @@ class AuditReplayMiddleware:
             "status_code": status_code,
             "duration_ms": duration_ms,
             "request_body": request_body[:_MAX_BODY_SIZE].decode(
-                "utf-8", errors="replace"
+                "utf-8", errors="replace",
             ),
         }
 
@@ -201,7 +201,7 @@ class AuditReplayMiddleware:
 
 
 async def list_audit_records(
-    *, count: int = 100, start_id: str = "-"
+    *, count: int = 100, start_id: str = "-",
 ) -> list[dict[str, Any]]:
     """Читает последние записи из audit stream для Replay UI."""
     try:
@@ -209,7 +209,7 @@ async def list_audit_records(
 
         redis_client = get_redis_stream_client_provider()
         records = await redis_client.read_stream(
-            stream_name=_STREAM_NAME, count=count, start_id=start_id
+            stream_name=_STREAM_NAME, count=count, start_id=start_id,
         )
         return records or []
     except Exception as exc:
@@ -227,7 +227,7 @@ async def replay_audit_record(record_id: str) -> dict[str, Any]:
 
         redis_client = get_redis_stream_client_provider()
         records = await redis_client.read_stream(
-            stream_name=_STREAM_NAME, count=1, start_id=record_id
+            stream_name=_STREAM_NAME, count=1, start_id=record_id,
         )
     except Exception as exc:
         return {"status": "error", "error": str(exc)}

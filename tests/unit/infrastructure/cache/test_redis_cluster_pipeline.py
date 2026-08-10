@@ -31,7 +31,7 @@ def adapter_with_mock_cluster(monkeypatch: pytest.MonkeyPatch) -> tuple:
     import redis.asyncio.cluster as rcluster_mod
 
     monkeypatch.setattr(
-        rcluster_mod, "RedisCluster", MagicMock(return_value=fake_cluster)
+        rcluster_mod, "RedisCluster", MagicMock(return_value=fake_cluster),
     )
 
     adapter = RedisClusterAdapter(startup_nodes=[])
@@ -83,7 +83,7 @@ async def test_eval_script_lua(adapter_with_mock_cluster) -> None:
     adapter, fake = adapter_with_mock_cluster
     fake.eval = AsyncMock(return_value=1)
     result = await adapter.eval_script(
-        "return KEYS[1]", keys=["{user:42}:lock"], args=["30"]
+        "return KEYS[1]", keys=["{user:42}:lock"], args=["30"],
     )
     fake.eval.assert_awaited_once()
     assert result == 1

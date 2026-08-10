@@ -41,7 +41,7 @@ class TestTenantIdInDefaultLabels:
             counter.labels(status="200")
         # С полным набором — OK.
         counter.labels(
-            tenant_id="acme", route_id="r1", component="api", env="test", status="200"
+            tenant_id="acme", route_id="r1", component="api", env="test", status="200",
         ).inc()
 
 

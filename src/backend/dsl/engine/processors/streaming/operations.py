@@ -62,7 +62,7 @@ class ChannelPurgerProcessor(BaseProcessor):
         """Метод process (см. signature)."""
         if self._dry_run:
             logger.warning(
-                "ChannelPurger DRY-RUN для %s (ничего не удалено)", self._channel
+                "ChannelPurger DRY-RUN для %s (ничего не удалено)", self._channel,
             )
             exchange.out_message.body = {
                 "purged": False,

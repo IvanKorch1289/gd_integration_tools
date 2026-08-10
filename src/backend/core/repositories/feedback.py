@@ -35,7 +35,7 @@ class FeedbackRepository(Protocol):
         ...
 
     async def list_pending(
-        self, *, agent_id: str | None = None, limit: int = 50, offset: int = 0
+        self, *, agent_id: str | None = None, limit: int = 50, offset: int = 0,
     ) -> list[AIFeedbackDoc]:
         """Возвращает ответы, ожидающие разметки."""
         ...

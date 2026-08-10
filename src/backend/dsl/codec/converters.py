@@ -35,13 +35,13 @@ def convert_pattern(pattern: str) -> str:
 
 
 def transfer_model_to_schema(
-    instance: Any, schema: type[BaseModel], from_attributes: bool = False
+    instance: Any, schema: type[BaseModel], from_attributes: bool = False,
 ) -> BaseModel:
     """ORM/dict → pydantic-схема через `model_validate`."""
     try:
         return schema.model_validate(instance, from_attributes=from_attributes)
     except Exception as exc:
         app_logger.error(
-            "Ошибка преобразования модели в схему: %s", str(exc), exc_info=True
+            "Ошибка преобразования модели в схему: %s", str(exc), exc_info=True,
         )
         raise ValueError("Ошибка преобразования модели в схему") from exc

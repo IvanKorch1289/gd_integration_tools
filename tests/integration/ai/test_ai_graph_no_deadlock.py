@@ -44,7 +44,7 @@ def langchain_core_available() -> bool:
 
 
 def test_make_action_tool_returns_async_only_tool(
-    monkeypatch: pytest.MonkeyPatch, langchain_core_available: bool
+    monkeypatch: pytest.MonkeyPatch, langchain_core_available: bool,
 ) -> None:
     """``_make_action_tool`` возвращает StructuredTool с coroutine, без sync-func deadlock-pattern."""
     if not langchain_core_available:
@@ -80,7 +80,7 @@ def test_make_action_tool_returns_async_only_tool(
 
 @pytest.mark.asyncio
 async def test_action_tool_ainvoke_in_running_loop(
-    monkeypatch: pytest.MonkeyPatch, langchain_core_available: bool
+    monkeypatch: pytest.MonkeyPatch, langchain_core_available: bool,
 ) -> None:
     """tool.ainvoke работает внутри running event loop без RuntimeError."""
     if not langchain_core_available:
@@ -100,7 +100,7 @@ async def test_action_tool_ainvoke_in_running_loop(
 
 @pytest.mark.asyncio
 async def test_no_deadlock_under_parallel_load(
-    monkeypatch: pytest.MonkeyPatch, langchain_core_available: bool
+    monkeypatch: pytest.MonkeyPatch, langchain_core_available: bool,
 ) -> None:
     """20 parallel tool.ainvoke завершаются без RuntimeError / deadlock."""
     if not langchain_core_available:
@@ -120,7 +120,7 @@ async def test_no_deadlock_under_parallel_load(
 
     tool = _make_action_tool("test.parallel")
     results = await asyncio.wait_for(
-        asyncio.gather(*[tool.ainvoke({"i": i}) for i in range(20)]), timeout=10.0
+        asyncio.gather(*[tool.ainvoke({"i": i}) for i in range(20)]), timeout=10.0,
     )
     assert len(results) == 20
     assert counter["n"] == 20

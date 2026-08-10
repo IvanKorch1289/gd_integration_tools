@@ -33,7 +33,7 @@ class TestAuditBackend:
                 pass
 
             async def query(
-                self, *, limit: int = 100, filters: dict[str, object] | None = None
+                self, *, limit: int = 100, filters: dict[str, object] | None = None,
             ) -> list[AuditRecord]:
                 return []
 

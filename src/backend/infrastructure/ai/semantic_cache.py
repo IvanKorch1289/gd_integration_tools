@@ -283,7 +283,7 @@ class TierRouter:
             if backend is None:
                 continue
             delete = getattr(backend, "delete", None) or getattr(
-                backend, "invalidate", None
+                backend, "invalidate", None,
             )
             if delete is None:
                 continue

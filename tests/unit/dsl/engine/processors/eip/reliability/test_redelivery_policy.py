@@ -155,7 +155,7 @@ def test_constructor_validation() -> None:
 def test_to_spec_serialization() -> None:
     """``to_spec()`` возвращает JSON-Schema spec с retry/backoff параметрами."""
     op = RedeliveryPolicyProcessor(
-        max_attempts=5, initial_delay_s=2.0, backoff_multiplier=1.5, max_delay_s=30.0
+        max_attempts=5, initial_delay_s=2.0, backoff_multiplier=1.5, max_delay_s=30.0,
     )
     assert op.to_spec() == {
         "type": "redelivery_policy",

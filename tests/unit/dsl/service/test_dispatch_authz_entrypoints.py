@@ -280,7 +280,7 @@ class TestSoapHandlerAuthContextPropagation:
         captured_context: dict[str, Any] = {}
 
         async def fake_dispatch(
-            *, route_id: str, body: Any, headers: Any, context: Any
+            *, route_id: str, body: Any, headers: Any, context: Any,
         ) -> Any:
             captured_context["principal"] = context.principal
             captured_context["permissions"] = context.permissions
@@ -292,14 +292,14 @@ class TestSoapHandlerAuthContextPropagation:
             "is_registered",
             return_value=False,
         ), patch(
-            "src.backend.entrypoints.soap.soap_handler.get_dsl_service"
+            "src.backend.entrypoints.soap.soap_handler.get_dsl_service",
         ) as mock_get_dsl:
             mock_dsl = MagicMock()
             mock_dsl.dispatch = AsyncMock(side_effect=fake_dispatch)
             mock_get_dsl.return_value = mock_dsl
 
             with patch.object(
-                soap_handler, "_build_soap_response", return_value="<ok/>"
+                soap_handler, "_build_soap_response", return_value="<ok/>",
             ):
                 response = await soap_handler.handle_soap_request(mock_request)
 
@@ -338,7 +338,7 @@ class TestSoapHandlerAuthContextPropagation:
             "src.backend.services.routes.route_authz.check_route_permission",
             new=AsyncMock(return_value=(False, "missing_permissions:role:admin")),
         ) as mock_check, patch.object(
-            soap_handler, "_build_soap_fault", return_value="<fault/>"
+            soap_handler, "_build_soap_fault", return_value="<fault/>",
         ):
             response = await soap_handler.handle_soap_request(mock_request)
 
@@ -362,14 +362,14 @@ class TestGraphQlDispatchAuthContextPropagation:
         captured_context: dict[str, Any] = {}
 
         async def fake_dispatch(
-            *, route_id: str, body: Any, headers: Any, context: Any
+            *, route_id: str, body: Any, headers: Any, context: Any,
         ) -> Any:
             captured_context["principal"] = context.principal
             captured_context["permissions"] = context.permissions
             return _ok_exchange(body)
 
         with patch(
-            "src.backend.entrypoints.graphql.schema.get_dsl_service"
+            "src.backend.entrypoints.graphql.schema.get_dsl_service",
         ) as mock_get_dsl:
             mock_dsl = MagicMock()
             mock_dsl.dispatch = AsyncMock(side_effect=fake_dispatch)
@@ -399,7 +399,7 @@ class TestGraphQlDispatchAuthContextPropagation:
             new=AsyncMock(return_value=(False, "missing_permissions:role:admin")),
         ) as mock_check:
             result = await graphql_schema._dispatch_dsl(
-                "r1", {"k": "v"}, principal="", permissions=()
+                "r1", {"k": "v"}, principal="", permissions=(),
             )
 
         assert result.status == "failed"

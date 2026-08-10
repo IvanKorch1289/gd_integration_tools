@@ -68,7 +68,7 @@ def mock_aiokafka(monkeypatch: pytest.MonkeyPatch) -> Any:
             self.seeks.append((tp, offset))
 
         async def getmany(
-            self, timeout_ms: int = 1000, max_records: int = 100
+            self, timeout_ms: int = 1000, max_records: int = 100,
         ) -> dict[Any, list[Any]]:
             # Первая порция — preloaded messages; вторая — пусто (test завершает)
             if self._message_idx >= len(self._messages):
@@ -172,10 +172,10 @@ async def test_subscribe_yields_events(mock_aiokafka: Any, fake_message: Any) ->
 
 @pytest.mark.asyncio
 async def test_subscribe_filters_topics_with_prefix(
-    mock_aiokafka: Any, fake_message: Any
+    mock_aiokafka: Any, fake_message: Any,
 ) -> None:
     backend = DebeziumEventsCDCBackend(
-        bootstrap_servers="localhost:9092", topic_prefix="custom_prefix"
+        bootstrap_servers="localhost:9092", topic_prefix="custom_prefix",
     )
     mock_aiokafka.set_test_messages([fake_message])
 
@@ -276,7 +276,7 @@ async def test_close_stops_consumer(mock_aiokafka: Any, fake_message: Any) -> No
 
 @pytest.mark.asyncio
 async def test_subscribe_with_start_cursor_calls_seek(
-    mock_aiokafka: Any, fake_message: Any
+    mock_aiokafka: Any, fake_message: Any,
 ) -> None:
     backend = DebeziumEventsCDCBackend(bootstrap_servers="localhost:9092")
     mock_aiokafka.set_test_messages([fake_message])

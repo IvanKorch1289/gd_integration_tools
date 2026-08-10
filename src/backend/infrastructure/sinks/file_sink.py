@@ -96,7 +96,7 @@ class FileSink(Sink):
             written = await asyncio.to_thread(self._write_sync, target, text)
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
+                ok=False, details={"error": str(exc) or exc.__class__.__name__},
             )
 
         return SinkResult(
@@ -134,7 +134,7 @@ class FileSink(Sink):
         except ValueError as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )
         parent = target.parent
         if self.ensure_dir:
@@ -143,11 +143,11 @@ class FileSink(Sink):
             except OSError as exc:
                 latency_ms = (time.perf_counter() - start) * 1000.0
                 return HealthResult.failed(
-                    error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                    error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
                 )
         latency_ms = (time.perf_counter() - start) * 1000.0
         if parent.is_dir() and os.access(parent, os.W_OK):
             return HealthResult.ok(latency_ms=latency_ms, mode=mode)
         return HealthResult.failed(
-            error=f"parent dir not writable: {parent}", mode=mode, latency_ms=latency_ms
+            error=f"parent dir not writable: {parent}", mode=mode, latency_ms=latency_ms,
         )

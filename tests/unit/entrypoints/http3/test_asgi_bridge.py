@@ -73,10 +73,10 @@ async def test_handler_send_response_pipeline() -> None:
         send_data=sink.send_data,
     )
     await handler.send(
-        {"type": "http.response.start", "status": 201, "headers": [(b"x-app", b"gd")]}
+        {"type": "http.response.start", "status": 201, "headers": [(b"x-app", b"gd")]},
     )
     await handler.send(
-        {"type": "http.response.body", "body": b"hello", "more_body": False}
+        {"type": "http.response.body", "body": b"hello", "more_body": False},
     )
 
     assert sink.headers == [[(b":status", b"201"), (b"x-app", b"gd")]]
@@ -95,7 +95,7 @@ async def test_handler_rejects_double_start() -> None:
     await handler.send({"type": "http.response.start", "status": 200, "headers": []})
     with pytest.raises(RuntimeError, match="response.start"):
         await handler.send(
-            {"type": "http.response.start", "status": 200, "headers": []}
+            {"type": "http.response.start", "status": 200, "headers": []},
         )
 
 

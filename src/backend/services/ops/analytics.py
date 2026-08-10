@@ -25,7 +25,7 @@ class AnalyticsService:
         return await self._client.insert(table, events)
 
     async def query(
-        self, sql: str, params: dict[str, Any] | None = None
+        self, sql: str, params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Произвольный SELECT-запрос."""
         return await self._client.query(sql, params)
@@ -47,7 +47,7 @@ class AnalyticsService:
     ) -> list[dict[str, Any]]:
         """Агрегация: count, sum, avg, min, max."""
         return await self._client.aggregate(
-            table, agg_func, column, group_by=group_by, where=where
+            table, agg_func, column, group_by=group_by, where=where,
         )
 
     async def health(self) -> bool:
@@ -63,6 +63,6 @@ def get_analytics_service() -> AnalyticsService:
     global _analytics_service_instance
     if _analytics_service_instance is None:
         _analytics_service_instance = AnalyticsService(
-            client=get_clickhouse_client_provider()
+            client=get_clickhouse_client_provider(),
         )
     return _analytics_service_instance

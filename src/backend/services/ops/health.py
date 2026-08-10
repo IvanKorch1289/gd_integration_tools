@@ -85,7 +85,7 @@ async def _http_get(url: str, timeout: float = 5.0) -> tuple[int, str]:
 async def _tcp_connect(host: str, port: int, timeout: float = 5.0) -> None:
     """Установить TCP-соединение и сразу закрыть."""
     _, writer = await asyncio.wait_for(
-        asyncio.open_connection(host, port), timeout=timeout
+        asyncio.open_connection(host, port), timeout=timeout,
     )
     writer.close()
     await writer.wait_closed()
@@ -112,7 +112,7 @@ class ProcessorHealthService:
     # ------------------------------------------------------------------
 
     def register_check(
-        self, name: str, check: Callable[[], Awaitable[ProcessorHealthResult]]
+        self, name: str, check: Callable[[], Awaitable[ProcessorHealthResult]],
     ) -> None:
         """Зарегистрировать async-check под именем processor'а.
 
@@ -149,13 +149,13 @@ class ProcessorHealthService:
             return []
 
         async def _run_one(
-            name: str, check: Callable[[], Awaitable[ProcessorHealthResult]]
+            name: str, check: Callable[[], Awaitable[ProcessorHealthResult]],
         ) -> ProcessorHealthResult:
             """Выполнить один check с timeout."""
             start = time.monotonic()
             try:
                 result = await asyncio.wait_for(
-                    check(), timeout=self._timeout_per_check_s
+                    check(), timeout=self._timeout_per_check_s,
                 )
                 return result
             except TimeoutError:
@@ -248,7 +248,7 @@ async def _check_kafka_schema_registry() -> ProcessorHealthResult:
                 latency_ms=(time.monotonic() - start) * 1000,
             )
         code, _ = await asyncio.wait_for(
-            _http_get(f"{registry_url.rstrip('/')}/subjects"), timeout=5.0
+            _http_get(f"{registry_url.rstrip('/')}/subjects"), timeout=5.0,
         )
         if code >= 300:
             return ProcessorHealthResult(
@@ -331,7 +331,7 @@ async def _check_vault_sealed() -> ProcessorHealthResult:
                 latency_ms=(time.monotonic() - start) * 1000,
             )
         code, text = await asyncio.wait_for(
-            _http_get(f"{addr.rstrip('/')}/v1/sys/seal-status"), timeout=5.0
+            _http_get(f"{addr.rstrip('/')}/v1/sys/seal-status"), timeout=5.0,
         )
         if code != 200:
             return ProcessorHealthResult(
@@ -389,7 +389,7 @@ async def _check_clickhouse() -> ProcessorHealthResult:
                 latency_ms=(time.monotonic() - start) * 1000,
             )
         code, text = await asyncio.wait_for(
-            _http_get(f"http://{host}:{port}/ping"), timeout=5.0
+            _http_get(f"http://{host}:{port}/ping"), timeout=5.0,
         )
         if code != 200 or text.strip() != "Ok.":
             return ProcessorHealthResult(
@@ -442,7 +442,7 @@ async def _check_redis_cluster() -> ProcessorHealthResult:
             host=host,
             port=port,
             socket_connect_timeout=min(
-                5.0, getattr(redis, "socket_connect_timeout", None) or 5.0
+                5.0, getattr(redis, "socket_connect_timeout", None) or 5.0,
             ),
         )
         await asyncio.wait_for(r.ping(), timeout=5.0)
@@ -537,7 +537,7 @@ async def _check_graylog() -> ProcessorHealthResult:
             scheme = "https" if use_tls else "http"
             base_url = f"{scheme}://{host}:{port}"
         code, _ = await asyncio.wait_for(
-            _http_get(f"{base_url.rstrip('/')}/api/system"), timeout=5.0
+            _http_get(f"{base_url.rstrip('/')}/api/system"), timeout=5.0,
         )
         if code >= 300:
             return ProcessorHealthResult(
@@ -588,7 +588,7 @@ def get_processor_health_service() -> ProcessorHealthService:
     if _service_instance is None:
         _service_instance = ProcessorHealthService()
         _service_instance.register_check(
-            "kafka_schema_registry", _check_kafka_schema_registry
+            "kafka_schema_registry", _check_kafka_schema_registry,
         )
         _service_instance.register_check("temporal_server", _check_temporal_server)
         _service_instance.register_check("vault", _check_vault_sealed)

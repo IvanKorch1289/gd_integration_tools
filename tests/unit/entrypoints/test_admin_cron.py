@@ -57,7 +57,7 @@ def scheduler_mock() -> Any:
             "next_run_time": "2026-05-20T12:00:00+00:00",
             "trigger": "cron[0 12 * * *]",
             "paused": False,
-        }
+        },
     ]
     manager.schedule_cron.return_value = "job-new"
     manager.pause_job.return_value = True
@@ -131,7 +131,7 @@ def test_pause_resume_cron_job(client_app: TestClient, scheduler_mock: Any) -> N
 
 
 def test_pause_missing_job_returns_404(
-    client_app: TestClient, scheduler_mock: Any
+    client_app: TestClient, scheduler_mock: Any,
 ) -> None:
     scheduler_mock.pause_job.return_value = False
     with patch(

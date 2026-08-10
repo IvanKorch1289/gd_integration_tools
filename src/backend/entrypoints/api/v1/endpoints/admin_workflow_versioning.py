@@ -23,12 +23,12 @@ __all__ = ("router",)
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_READ = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
 )
 
 router = APIRouter(
     dependencies=[_ADMIN_GUARD_READ],
-    prefix="/admin/workflow-versioning", tags=["admin", "workflow", "versioning"]
+    prefix="/admin/workflow-versioning", tags=["admin", "workflow", "versioning"],
 )
 
 
@@ -108,7 +108,7 @@ async def get_workflow_history(workflow_id: str) -> list[WorkflowVersionResponse
     },
 )
 async def pin_workflow_version(
-    workflow_id: str, semver: str = Query(..., min_length=3, max_length=20)
+    workflow_id: str, semver: str = Query(..., min_length=3, max_length=20),
 ) -> WorkflowVersionResponse:
     """Pin указанную версию как default для workflow."""
     if not _SEMVER_RE.match(semver):
@@ -123,7 +123,7 @@ async def pin_workflow_version(
         updated = get_global_registry().pin_default(workflow_id, semver=semver)
     except ValueError as exc:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc),
         ) from exc
     return _to_response(updated)
 

@@ -32,5 +32,5 @@ def test_elasticsearch_data_corruption(toxiproxy_es: ChaosTarget) -> None:
     """data-corruption: slicer на ES."""
     apply_random_drop(toxiproxy_es, toxicity=0.3)
     assert smoke_open_socket(
-        toxiproxy_es.proxy_host, toxiproxy_es.proxy_port, timeout=2.0
+        toxiproxy_es.proxy_host, toxiproxy_es.proxy_port, timeout=2.0,
     ) or assert_connection_fails(toxiproxy_es.proxy_host, toxiproxy_es.proxy_port)

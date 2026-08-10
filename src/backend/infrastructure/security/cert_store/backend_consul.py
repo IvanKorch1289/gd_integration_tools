@@ -67,7 +67,7 @@ class ConsulCertBackend(CertBackend):
                 import consul
 
                 self._client = consul.Consul(
-                    host=self._host, port=self._port, token=self._token
+                    host=self._host, port=self._port, token=self._token,
                 )
             return self._client
 
@@ -234,7 +234,7 @@ class ConsulCertBackend(CertBackend):
         from datetime import timedelta
 
         await self.save(
-            service_id, pem, None, datetime.now(tz=UTC) + timedelta(days=365)
+            service_id, pem, None, datetime.now(tz=UTC) + timedelta(days=365),
         )
 
     async def delete(self, service_id: str) -> bool:

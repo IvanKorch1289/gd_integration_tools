@@ -142,7 +142,7 @@ async def test_get_saga_history_without_factory(
     records = await get_saga_history("wf-no-factory")
     assert records == []
     fake_ch_mod.get_async_client.assert_awaited_once_with(
-        host="ch-host", port=9000, database="analytics"
+        host="ch-host", port=9000, database="analytics",
     )
 
 

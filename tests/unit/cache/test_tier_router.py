@@ -127,7 +127,7 @@ async def test_invalidate_clears_all_tiers() -> None:
     l1 = LruMemoryCache(scope="tr-inv")
     router = TierRouter(l1=l1, l2=l2, l3=l3)
     await router.set(
-        "k", "v", semantic_key="k"
+        "k", "v", semantic_key="k",
     )  # semantic_key=k чтобы L3 заполнился под "k"
 
     await router.invalidate("k")

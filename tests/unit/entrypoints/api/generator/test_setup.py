@@ -88,7 +88,7 @@ def setup_module(monkeypatch: pytest.MonkeyPatch) -> Any:
 
 @pytest.fixture
 def isolated_registry(
-    setup_module: Any, monkeypatch: pytest.MonkeyPatch
+    setup_module: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> ActionHandlerRegistry:
     """Чистый реестр и сброшенный флаг _is_registered для каждого теста."""
     registry = ActionHandlerRegistry()
@@ -100,7 +100,7 @@ def isolated_registry(
 @pytest.mark.unit
 class TestRegisterActionHandlers:
     def test_register_action_handlers_first_call_registers_all_actions(
-        self, setup_module: Any, isolated_registry: ActionHandlerRegistry
+        self, setup_module: Any, isolated_registry: ActionHandlerRegistry,
     ) -> None:
         setup_module.register_action_handlers()
 
@@ -133,7 +133,7 @@ class TestRegisterActionHandlers:
         assert len(isolated_registry.list_actions()) == 6
 
     def test_register_action_handlers_sets_flag(
-        self, setup_module: Any, isolated_registry: ActionHandlerRegistry
+        self, setup_module: Any, isolated_registry: ActionHandlerRegistry,
     ) -> None:
         assert setup_module._is_registered is False
         setup_module.register_action_handlers()

@@ -88,7 +88,7 @@ def test_get_cdc_source_listen_notify_constructs() -> None:
 def test_get_cdc_source_debezium_constructs() -> None:
     """``get_cdc_source("debezium", ...)`` — construction OK (без Kafka connect)."""
     src = get_cdc_source(
-        "debezium", bootstrap_servers="localhost:9092", group_id="test_grp"
+        "debezium", bootstrap_servers="localhost:9092", group_id="test_grp",
     )
     assert isinstance(src, CDCSource)
 

@@ -158,5 +158,5 @@ class TestRagQueryProcessor:
                 "max_staleness_hours": 1.0,
                 "system_prompt": "sys",
                 "output_property": "out",
-            }
+            },
         }

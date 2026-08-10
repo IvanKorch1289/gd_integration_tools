@@ -40,7 +40,7 @@ class TestExpressJwtConfig:
 
     def test_custom_values(self) -> None:
         cfg = ExpressJwtConfig(
-            bot_id="b1", secret_key="sk", botx_host="host.example", enabled=True
+            bot_id="b1", secret_key="sk", botx_host="host.example", enabled=True,
         )
         assert cfg.bot_id == "b1"
         assert cfg.secret_key == "sk"

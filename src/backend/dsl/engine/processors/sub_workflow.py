@@ -102,7 +102,7 @@ class SubWorkflowProcessor(BaseProcessor):
             raise ValueError(
                 f"sub_workflow[{name!r}]: args обязательны (sub-workflow "
                 f"должен иметь явные входные данные; используйте "
-                f"invoke_workflow если нужен fallback на in_message.body)."
+                f"invoke_workflow если нужен fallback на in_message.body).",
             )
         super().__init__(name=f"sub_workflow:{name}")
         self.workflow_name = name

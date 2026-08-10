@@ -47,7 +47,7 @@ class TestRequireApiKey:
         manager.validate_key.return_value = _KeyInfo()
 
         result = await auth_module.require_api_key(
-            x_api_key="valid-secret", manager=manager
+            x_api_key="valid-secret", manager=manager,
         )
 
         assert result == "client-42"
@@ -60,7 +60,7 @@ class TestRequireApiKey:
 
         with pytest.raises(HTTPException) as exc_info:
             await auth_module.require_api_key(
-                x_api_key="invalid-secret", manager=manager
+                x_api_key="invalid-secret", manager=manager,
             )
 
         assert exc_info.value.status_code == 401

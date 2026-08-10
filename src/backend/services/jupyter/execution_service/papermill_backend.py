@@ -121,7 +121,7 @@ class PapermillExecutionBackend:
 
             raise JupyterExecutionError(
                 "papermill required для parameterized execution. "
-                "Install: uv sync --extra jupyter"
+                "Install: uv sync --extra jupyter",
             ) from exc
 
         # Default output path
@@ -151,7 +151,7 @@ class PapermillExecutionBackend:
             )
         except PMError as exc:
             raise JupyterExecutionError(
-                f"Papermill execution failed для {notebook_path}: {exc}"
+                f"Papermill execution failed для {notebook_path}: {exc}",
             ) from exc
         duration = time.monotonic() - start
 

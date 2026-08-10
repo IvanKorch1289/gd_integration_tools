@@ -139,7 +139,7 @@ class CancelWorkflowProcessor(BaseProcessor):
         wf_id = self._resolve_ref(self.workflow_id_spec, exchange)
         if not wf_id:
             raise ValueError(
-                f"cancel_workflow: пустой workflow_id (spec={self.workflow_id_spec!r})"
+                f"cancel_workflow: пустой workflow_id (spec={self.workflow_id_spec!r})",
             )
 
         backend = await self._resolve_backend()
@@ -148,7 +148,7 @@ class CancelWorkflowProcessor(BaseProcessor):
         # workflow_id vs run_id. С run_id=wf_id cancel может fail при
         # workflow с retry/replay → stale run_id.
         handle = WorkflowHandle(
-            workflow_id=wf_id, run_id=None, namespace=self.namespace_name
+            workflow_id=wf_id, run_id=None, namespace=self.namespace_name,
         )
         await backend.cancel_workflow(handle=handle)
 

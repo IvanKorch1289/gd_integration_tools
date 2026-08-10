@@ -42,5 +42,5 @@ def test_postgresql_data_corruption(toxiproxy_pg: ChaosTarget) -> None:
     # Хотя slicer ломает payload, TCP-handshake обычно проходит.
     # Полная проверка корректного fallback'а — в integration-suite.
     assert smoke_open_socket(
-        toxiproxy_pg.proxy_host, toxiproxy_pg.proxy_port, timeout=2.0
+        toxiproxy_pg.proxy_host, toxiproxy_pg.proxy_port, timeout=2.0,
     ) or assert_connection_fails(toxiproxy_pg.proxy_host, toxiproxy_pg.proxy_port)

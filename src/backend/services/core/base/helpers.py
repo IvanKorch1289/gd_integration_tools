@@ -42,7 +42,7 @@ async def get_service_for_model(model: type[DBModelProtocol]) -> Any:
         return getattr(service_module, service_name)
     except (ImportError, AttributeError) as exc:
         raise ValueError(
-            f"Сервис для модели {model.__name__} не найден: {exc}"
+            f"Сервис для модели {model.__name__} не найден: {exc}",
         ) from exc
 
 

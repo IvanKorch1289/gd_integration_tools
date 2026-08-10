@@ -144,7 +144,7 @@ def with_retry(
 
             effective_retry = retry_if_exception_type(final_policy.retry_on)
             effective_retry = effective_retry & retry_if_not_exception_type(
-                RetryBudgetExhausted
+                RetryBudgetExhausted,
             )
             retrying = AsyncRetrying(
                 stop=stop_after_attempt(final_policy.max_attempts),
@@ -249,7 +249,7 @@ def make_async_retry(
                 with attempt:
                     return await fn(*args, **kwargs)
             raise RuntimeError(
-                f"make_async_retry: {fn.__name__} exited without result"
+                f"make_async_retry: {fn.__name__} exited without result",
             )
 
         return wrapper

@@ -54,8 +54,8 @@ async def repo() -> AsyncIterator[SQLAlchemyRepository[_TestItem]]:
     async with engine.begin() as conn:
         await conn.run_sync(
             lambda sync_conn: BaseModel.metadata.create_all(
-                sync_conn, tables=_TEST_TABLES
-            )
+                sync_conn, tables=_TEST_TABLES,
+            ),
         )
 
     factory = async_sessionmaker(engine, expire_on_commit=False)
@@ -153,7 +153,7 @@ async def test_update(repo: SQLAlchemyRepository[_TestItem]) -> None:
     created = await repo.add(data={"name": "old", "value": 10})
 
     updated = await repo.update(
-        key="id", value=created.id, data={"name": "new", "value": 20}
+        key="id", value=created.id, data={"name": "new", "value": 20},
     )
 
     assert updated.name == "new"
@@ -235,7 +235,7 @@ async def test_update_returned_object_attrs_accessible(
     obj_id = created.id
 
     updated = await repo.update(
-        key="id", value=obj_id, data={"name": "after", "value": 42}
+        key="id", value=obj_id, data={"name": "after", "value": 42},
     )
 
     # Это и есть регрессия — раньше obj.name = DetachedInstanceError

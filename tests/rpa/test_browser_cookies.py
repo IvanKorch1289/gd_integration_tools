@@ -56,10 +56,10 @@ async def test_save_and_restore_round_trip(
         {"name": "csrf", "value": "xyz", "domain": "example.com"},
     ]
     await s.save_cookies(
-        tenant_id="bank_a", user_id="u42", domain="example.com", cookies=cookies
+        tenant_id="bank_a", user_id="u42", domain="example.com", cookies=cookies,
     )
     restored = await s.restore_cookies(
-        tenant_id="bank_a", user_id="u42", domain="example.com"
+        tenant_id="bank_a", user_id="u42", domain="example.com",
     )
     assert restored == cookies
 
@@ -69,7 +69,7 @@ async def test_restore_empty_when_no_session(
 ) -> None:
     s, _ = store
     result = await s.restore_cookies(
-        tenant_id="bank_a", user_id="u42", domain="example.com"
+        tenant_id="bank_a", user_id="u42", domain="example.com",
     )
     assert result == []
 
@@ -98,10 +98,10 @@ async def test_multi_tenant_isolation(
     """Tenant A не видит cookies tenant B."""
     s, _ = store
     await s.save_cookies(
-        tenant_id="bank_a", user_id="u", domain="d.com", cookies=[{"name": "tok_a"}]
+        tenant_id="bank_a", user_id="u", domain="d.com", cookies=[{"name": "tok_a"}],
     )
     await s.save_cookies(
-        tenant_id="bank_b", user_id="u", domain="d.com", cookies=[{"name": "tok_b"}]
+        tenant_id="bank_b", user_id="u", domain="d.com", cookies=[{"name": "tok_b"}],
     )
     a = await s.restore_cookies(tenant_id="bank_a", user_id="u", domain="d.com")
     b = await s.restore_cookies(tenant_id="bank_b", user_id="u", domain="d.com")
@@ -114,7 +114,7 @@ async def test_clear_deletes_session(
 ) -> None:
     s, _ = store
     await s.save_cookies(
-        tenant_id="t", user_id="u", domain="d.com", cookies=[{"name": "x"}]
+        tenant_id="t", user_id="u", domain="d.com", cookies=[{"name": "x"}],
     )
     await s.clear(tenant_id="t", user_id="u", domain="d.com")
     restored = await s.restore_cookies(tenant_id="t", user_id="u", domain="d.com")
@@ -126,7 +126,7 @@ async def test_ttl_passed_to_redis(
 ) -> None:
     s, redis = store
     await s.save_cookies(
-        tenant_id="t", user_id="u", domain="d.com", cookies=[{"name": "x"}]
+        tenant_id="t", user_id="u", domain="d.com", cookies=[{"name": "x"}],
     )
     key = next(iter(redis._store))
     assert redis._ttls[key] == 86400  # 24h default

@@ -174,7 +174,7 @@ def to_graphviz(decl: WorkflowDeclaration, *, color_map: ColorMap | None = None)
         shape = _graphviz_shape(step.type)
         color = color_map.get(identity, "black")
         lines.append(
-            f'  {node_id} [label="{_escape_dot(label)}", shape={shape}, color={color}];'
+            f'  {node_id} [label="{_escape_dot(label)}", shape={shape}, color={color}];',
         )
 
     for prev, nxt in itertools.pairwise(node_ids):
@@ -226,7 +226,7 @@ def to_mermaid(decl: WorkflowDeclaration, *, color_map: ColorMap | None = None) 
 
 
 def compute_step_diff(
-    decl_a: WorkflowDeclaration, decl_b: WorkflowDeclaration
+    decl_a: WorkflowDeclaration, decl_b: WorkflowDeclaration,
 ) -> tuple[list[StepDiffResult], ColorMap, ColorMap]:
     """Структурный diff с готовыми color-map для A и B графов.
 

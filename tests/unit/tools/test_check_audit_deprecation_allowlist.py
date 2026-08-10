@@ -25,7 +25,7 @@ _TOOL_PATH = _REPO_ROOT / "tools" / "check_audit_deprecation.py"
 
 def _load_module():
     spec = importlib.util.spec_from_file_location(
-        "_check_audit_deprecation_w3", _TOOL_PATH
+        "_check_audit_deprecation_w3", _TOOL_PATH,
     )
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)

@@ -98,7 +98,7 @@ async def _upload_excel(
     content = await file.read()
     try:
         return await service.upload_excel_for_mass_create(
-            file_bytes=content, table_name=table_name, model_enum=model_enum
+            file_bytes=content, table_name=table_name, model_enum=model_enum,
         )
     except ValueError as exc:
         return JSONResponse(status_code=404, content={"error": str(exc)})
@@ -233,8 +233,8 @@ builder.add_actions(
                     broker=BrokerKind.redis,
                     destination=settings.redis.get_stream_name("email"),
                     payload_factory=default_payload_factory,
-                )
+                ),
             ),
         ),
-    ]
+    ],
 )

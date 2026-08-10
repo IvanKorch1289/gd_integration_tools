@@ -23,7 +23,7 @@ def _start_message(send: AsyncMock):
 def _downstream_ok(status_code: int = 200, body: bytes = b"ok"):
     async def downstream(scope, receive, send):
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []}
+            {"type": "http.response.start", "status": status_code, "headers": []},
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -67,7 +67,7 @@ class TestInnerRequestLoggingMiddleware:
 
     @pytest.mark.asyncio
     async def test_logs_request_and_response(
-        self, middleware: InnerRequestLoggingMiddleware
+        self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
         """Логирует method/path и response status."""
         app = AsyncMock()
@@ -94,7 +94,7 @@ class TestInnerRequestLoggingMiddleware:
 
     @pytest.mark.asyncio
     async def test_logs_post_body_when_enabled(
-        self, middleware: InnerRequestLoggingMiddleware
+        self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
         """log_body=True + POST → логирует body."""
         middleware.log_body = True
@@ -121,7 +121,7 @@ class TestInnerRequestLoggingMiddleware:
 
     @pytest.mark.asyncio
     async def test_logs_error_on_exception(
-        self, middleware: InnerRequestLoggingMiddleware
+        self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
         """Exception → logger.error + re-raise (cycle 51 invariant)."""
         app = AsyncMock()
@@ -144,7 +144,7 @@ class TestInnerRequestLoggingMiddleware:
 
     @pytest.mark.asyncio
     async def test_get_request_body_from_cache(
-        self, middleware: InnerRequestLoggingMiddleware
+        self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
         """_get_request_body использует cached body из state (cycle 52 pattern)."""
         middleware.log_body = True  # Enable body logging.
@@ -167,7 +167,7 @@ class TestInnerRequestLoggingMiddleware:
 
     @pytest.mark.asyncio
     async def test_get_request_body_too_large(
-        self, middleware: InnerRequestLoggingMiddleware
+        self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
         """Body > max → placeholder."""
         middleware.log_body = True  # Enable body logging.
@@ -190,7 +190,7 @@ class TestInnerRequestLoggingMiddleware:
 
     @pytest.mark.asyncio
     async def test_capture_response_body(
-        self, middleware: InnerRequestLoggingMiddleware
+        self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
         """log_body=True → captures response body chunks через send_wrapper."""
         middleware.log_body = True
@@ -231,7 +231,7 @@ class TestInnerRequestLoggingMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_passes_through_non_http_scope(
-        self, middleware: InnerRequestLoggingMiddleware
+        self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
         """Non-HTTP scope (websocket) пробрасывается без логирования."""
         app = AsyncMock()
@@ -256,7 +256,7 @@ class TestInnerRequestLoggingMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_response_status_captured(
-        self, middleware: InnerRequestLoggingMiddleware
+        self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
         """Response status captured через send_wrapper (cycle 53 invariant)."""
         app = AsyncMock()
@@ -278,7 +278,7 @@ class TestInnerRequestLoggingMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_duration_logged(
-        self, middleware: InnerRequestLoggingMiddleware
+        self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
         """Duration в ms logged в response line."""
         app = AsyncMock()
@@ -305,7 +305,7 @@ class TestInnerRequestLoggingMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_skip_body_logging_when_disabled(
-        self, middleware: InnerRequestLoggingMiddleware
+        self, middleware: InnerRequestLoggingMiddleware,
     ) -> None:
         """log_body=False → no body logging (ни request, ни response)."""
         middleware.log_body = False

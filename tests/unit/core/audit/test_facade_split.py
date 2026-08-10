@@ -155,7 +155,7 @@ def test_capability_check_helper_delegates_to_emit_audit() -> None:
     from src.backend.core.audit.facade import emit_capability_check
 
     with patch(
-        "src.backend.core.audit.facade._base.get_unified_audit_service"
+        "src.backend.core.audit.facade._base.get_unified_audit_service",
     ) as mock_svc:
         mock_audit = MagicMock()
         mock_svc.return_value = mock_audit
@@ -198,12 +198,12 @@ def test_authorization_decision_helper_translates_dataclass() -> None:
         evaluated_at = "2026-06-13T12:00:00Z"
 
     with patch(
-        "src.backend.core.audit.facade._base.get_unified_audit_service"
+        "src.backend.core.audit.facade._base.get_unified_audit_service",
     ) as mock_svc:
         mock_audit = MagicMock()
         mock_svc.return_value = mock_audit
         emit_authorization_decision(
-            decision=FakeDecision(), principal="user:alice", resource="orders"
+            decision=FakeDecision(), principal="user:alice", resource="orders",
         )
 
     call_kwargs = mock_audit.emit.call_args.kwargs
@@ -232,7 +232,7 @@ def test_ai_workspace_helper_passes_event_dict_through() -> None:
     from src.backend.core.audit.facade import emit_ai_workspace
 
     with patch(
-        "src.backend.core.audit.facade._base.get_unified_audit_service"
+        "src.backend.core.audit.facade._base.get_unified_audit_service",
     ) as mock_svc:
         mock_audit = MagicMock()
         mock_svc.return_value = mock_audit
@@ -242,7 +242,7 @@ def test_ai_workspace_helper_passes_event_dict_through() -> None:
                 "actor": "user:bob",
                 "resource": "ws-1",
                 "custom_field": "preserved",
-            }
+            },
         )
 
     call_kwargs = mock_audit.emit.call_args.kwargs
@@ -257,7 +257,7 @@ def test_banking_audit_helper_maps_error_to_outcome() -> None:
     from src.backend.core.audit.facade import emit_banking_audit
 
     with patch(
-        "src.backend.core.audit.facade._base.get_unified_audit_service"
+        "src.backend.core.audit.facade._base.get_unified_audit_service",
     ) as mock_svc:
         mock_audit = MagicMock()
         mock_svc.return_value = mock_audit

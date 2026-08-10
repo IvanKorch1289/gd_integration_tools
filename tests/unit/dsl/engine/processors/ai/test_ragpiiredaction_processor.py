@@ -73,7 +73,7 @@ class TestRagPIIRedactionProcessor:
         with (
             patch("src.backend.core.config.features.feature_flags") as mock_flags,
             patch(
-                "src.backend.services.ai.pii.retrieval_masker.mask_augment_result"
+                "src.backend.services.ai.pii.retrieval_masker.mask_augment_result",
             ) as mock_mask,
         ):
             mock_flags.rag_pii_retrieval_mask = True
@@ -87,7 +87,7 @@ class TestRagPIIRedactionProcessor:
         exchange = _Exchange()
         exchange.set_property("in_prop", {"data": 1})
         proc = RagPIIRedactionProcessor(
-            input_property="in_prop", output_property="out_prop"
+            input_property="in_prop", output_property="out_prop",
         )
 
         with (
@@ -110,5 +110,5 @@ class TestRagPIIRedactionProcessor:
     def test_to_spec_custom(self) -> None:
         proc = RagPIIRedactionProcessor(input_property="in", output_property="out")
         assert proc.to_spec() == {
-            "rag_pii_redact": {"input_property": "in", "output_property": "out"}
+            "rag_pii_redact": {"input_property": "in", "output_property": "out"},
         }

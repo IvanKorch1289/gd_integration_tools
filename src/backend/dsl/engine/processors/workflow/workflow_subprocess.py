@@ -25,7 +25,7 @@ __all__ = ("WorkflowSubprocessProcessor", "run_workflow_by_id")
 
 
 async def run_workflow_by_id(
-    workflow_id: str, *, input_data: dict[str, Any], timeout: float = 60.0
+    workflow_id: str, *, input_data: dict[str, Any], timeout: float = 60.0,
 ) -> dict[str, Any]:
     """Запустить workflow по его ID (sub-workflow entry point).
 
@@ -45,7 +45,7 @@ async def run_workflow_by_id(
     launcher = WorkflowLauncher(installed_workflows={workflow_id: "1.0.0"})
     resolved = launcher.resolve(workflow_id, ">=1.0,<2.0")
     _logger.info(
-        "subworkflow run id=%s resolved=%s", workflow_id, resolved
+        "subworkflow run id=%s resolved=%s", workflow_id, resolved,
     )
     # Minimal contract: возвращаем marker + input echo для testing
     return {
@@ -102,7 +102,7 @@ class WorkflowSubprocessProcessor(BaseProcessor):
         self.timeout = timeout
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="invoke"):
@@ -122,6 +122,6 @@ class WorkflowSubprocessProcessor(BaseProcessor):
             self.workflow_id, self.timeout,
         )
         result = await run_workflow_by_id(
-            self.workflow_id, input_data=input_data, timeout=self.timeout
+            self.workflow_id, input_data=input_data, timeout=self.timeout,
         )
         self.set_result(exchange, self.target, result)

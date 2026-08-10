@@ -78,10 +78,10 @@ class RenderDocxParams(BaseModel):
 
     template: str = Field(..., description="Путь к .docx шаблону")
     context_from: str | None = Field(
-        default=None, description="dotted-path к dict в exchange.in_message.body"
+        default=None, description="dotted-path к dict в exchange.in_message.body",
     )
     output_to: str = Field(
-        default="docx_path", description="Куда положить путь к результату"
+        default="docx_path", description="Куда положить путь к результату",
     )
 
 
@@ -191,7 +191,7 @@ class RenderDocxProcessor(BaseProcessor):
                 "template": self.params.template,
                 "context_from": self.params.context_from,
                 "output_to": self.params.output_to,
-            }
+            },
         }
 
 
@@ -264,5 +264,5 @@ class RenderXlsxProcessor(BaseProcessor):
                 "context_from": self.params.context_from,
                 "output_to": self.params.output_to,
                 "mode": self.params.mode,
-            }
+            },
         }

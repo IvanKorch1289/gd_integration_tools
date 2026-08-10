@@ -167,7 +167,7 @@ async def test_per_tenant_isolation() -> None:
         {
             "secret/data/sso/acme/idp": _valid_payload("acme"),
             "secret/data/sso/bank1/idp": _valid_payload("bank1"),
-        }
+        },
     )
     registry = SsoRegistry(vault_client=fake)
     acme_config = await registry.get("acme")
@@ -235,7 +235,7 @@ async def test_invalidate_does_not_affect_other_tenants() -> None:
         {
             "secret/data/sso/acme/idp": _valid_payload("acme"),
             "secret/data/sso/bank1/idp": _valid_payload("bank1"),
-        }
+        },
     )
     registry = SsoRegistry(vault_client=fake)
     await registry.get("acme")
@@ -252,7 +252,7 @@ async def test_invalidate_all_clears_everything() -> None:
         {
             "secret/data/sso/acme/idp": _valid_payload("acme"),
             "secret/data/sso/bank1/idp": _valid_payload("bank1"),
-        }
+        },
     )
     registry = SsoRegistry(vault_client=fake)
     await registry.get("acme")
@@ -315,7 +315,7 @@ def test_groups_to_capabilities_resolve_union() -> None:
         mappings={
             "admins": ["admin.feature_flag:write", "admin.tenants:read"],
             "users": ["user.profile:read"],
-        }
+        },
     )
     caps = g2c.resolve(["admins", "users"])
     assert caps == [
@@ -328,7 +328,7 @@ def test_groups_to_capabilities_resolve_union() -> None:
 def test_groups_to_capabilities_resolve_dedup() -> None:
     """Дубликаты cap-scope'ов из разных groups → дедупликация first-seen."""
     g2c = GroupsToCapabilities(
-        mappings={"group_a": ["x:read", "y:write"], "group_b": ["y:write", "z:delete"]}
+        mappings={"group_a": ["x:read", "y:write"], "group_b": ["y:write", "z:delete"]},
     )
     caps = g2c.resolve(["group_a", "group_b"])
     assert caps == ["x:read", "y:write", "z:delete"]

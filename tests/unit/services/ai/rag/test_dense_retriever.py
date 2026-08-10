@@ -27,7 +27,7 @@ async def test_retrieve_returns_dense_results() -> None:
         return_value=[
             {"id": "doc1", "document": "текст 1", "metadata": {"source": "a"}},
             {"id": "doc2", "document": "текст 2", "metadata": {"source": "b"}},
-        ]
+        ],
     )
     retriever = DenseRetriever(embed_fn=embed_mock, search_vectors=search_mock)
 
@@ -90,7 +90,7 @@ async def test_retrieve_correct_args_passed() -> None:
         return [[0.1]]
 
     async def capture_search(
-        embeddings: list[list[float]], top_k: int
+        embeddings: list[list[float]], top_k: int,
     ) -> list[dict[str, Any]]:
         captured_top_k.append(top_k)
         return []
@@ -122,7 +122,7 @@ async def test_retrieve_top_k_limits_results() -> None:
         return_value=[
             {"id": f"doc{i}", "document": f"текст {i}", "metadata": {}}
             for i in range(10)
-        ]
+        ],
     )
     retriever = DenseRetriever(embed_fn=embed_mock, search_vectors=search_mock)
 
@@ -136,7 +136,7 @@ async def test_retrieve_handles_metadata_id() -> None:
     """Chunk ID из metadata.id если нет id."""
     embed_mock = AsyncMock(return_value=[[0.1]])
     search_mock = AsyncMock(
-        return_value=[{"document": "текст", "metadata": {"id": "meta_id_123"}}]
+        return_value=[{"document": "текст", "metadata": {"id": "meta_id_123"}}],
     )
     retriever = DenseRetriever(embed_fn=embed_mock, search_vectors=search_mock)
 
@@ -164,7 +164,7 @@ async def test_retrieve_text_field_instead_of_document() -> None:
     """Результат может содержать 'text' вместо 'document'."""
     embed_mock = AsyncMock(return_value=[[0.1]])
     search_mock = AsyncMock(
-        return_value=[{"id": "doc1", "text": "текст из поля text", "metadata": {}}]
+        return_value=[{"id": "doc1", "text": "текст из поля text", "metadata": {}}],
     )
     retriever = DenseRetriever(embed_fn=embed_mock, search_vectors=search_mock)
 

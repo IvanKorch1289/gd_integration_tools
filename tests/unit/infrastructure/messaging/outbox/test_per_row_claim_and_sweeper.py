@@ -60,7 +60,7 @@ from src.backend.infrastructure.repositories.outbox import (
 
 
 def _make_fake_outbox_row(
-    row_id: int = 1, status: str = "processing", claimed_by: str | None = "worker-A"
+    row_id: int = 1, status: str = "processing", claimed_by: str | None = "worker-A",
 ) -> MagicMock:
     """Создаёт MagicMock, имитирующий row из SQL UPDATE RETURNING."""
     now = datetime.now(UTC)

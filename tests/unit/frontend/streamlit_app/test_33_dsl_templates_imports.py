@@ -69,10 +69,10 @@ def test_dsl_imports_top_level() -> None:
 
     # Проверяем, что dsl импорт идёт ДО frontend imports (sectioned)
     dsl_idx = top_section.find(
-        "from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid"
+        "from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid",
     )
     frontend_idx = top_section.find(
-        "from src.frontend.streamlit_app.api_clients import get_api_client"
+        "from src.frontend.streamlit_app.api_clients import get_api_client",
     )
     assert 0 <= dsl_idx < frontend_idx, (
         f"dsl imports должны быть ПЕРЕД frontend imports (got dsl={dsl_idx}, "
@@ -297,7 +297,7 @@ def test_workflow_declaration_model_validate_smoke() -> None:
     pytest.skip(
         "WorkflowDeclaration requires full dsl.workflow.spec module "
         "context (model_rebuild needed for WorkflowStep forward ref). "
-        "Out of S70 W2 scope (style cleanup, not behavioral test)."
+        "Out of S70 W2 scope (style cleanup, not behavioral test).",
     )
 
 

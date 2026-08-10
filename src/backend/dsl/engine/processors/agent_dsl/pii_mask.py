@@ -115,7 +115,7 @@ class PIIMaskProcessor(BaseAIProcessor):
         tokenizer = self._resolve_tokenizer()
         if tokenizer is None:
             _logger.warning(
-                "%s: PIITokenizer недоступен — pass-through (без mask)", self.name
+                "%s: PIITokenizer недоступен — pass-through (без mask)", self.name,
             )
             exchange.set_property("pii_detected", False)
             return
@@ -124,7 +124,7 @@ class PIIMaskProcessor(BaseAIProcessor):
             result = await tokenizer.mask_reversible(text, language=self.language)
         except Exception as exc:
             _logger.warning(
-                "%s: mask_reversible failed (%s) — pass-through", self.name, exc
+                "%s: mask_reversible failed (%s) — pass-through", self.name, exc,
             )
             exchange.set_property("pii_detected", False)
             return

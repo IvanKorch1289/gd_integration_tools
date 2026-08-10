@@ -29,11 +29,11 @@ class WafSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="WAF_", extra="ignore")
 
     allow_hosts: tuple[str, ...] = Field(
-        default=(), description="Whitelist хостов (пусто — allow-all при strict=False)."
+        default=(), description="Whitelist хостов (пусто — allow-all при strict=False).",
     )
 
     deny_hosts: tuple[str, ...] = Field(
-        default=(), description="Blacklist хостов; имеет приоритет над allow."
+        default=(), description="Blacklist хостов; имеет приоритет над allow.",
     )
 
     strict: bool = Field(
@@ -74,7 +74,7 @@ class WafSettings(BaseSettingsWithLoader):
     )
 
     clamav_port: int = Field(
-        default=3310, ge=1, le=65535, description="TCP-порт clamd (стандартный — 3310)."
+        default=3310, ge=1, le=65535, description="TCP-порт clamd (стандартный — 3310).",
     )
 
     clamav_timeout: float = Field(

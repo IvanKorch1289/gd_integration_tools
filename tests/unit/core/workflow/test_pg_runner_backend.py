@@ -92,7 +92,7 @@ class _FakeStateStore:
                 "route_id": route_id,
                 "input_payload": dict(input_payload),
                 "tenant_id": tenant_id,
-            }
+            },
         )
         instance_id = uuid4()
         self._rows[instance_id] = self._make_row(
@@ -252,7 +252,7 @@ class TestSignalWorkflow:
             task_queue="q",
         )
         await backend.signal_workflow(
-            handle=handle, signal_name="approve", payload={"by": "ops"}
+            handle=handle, signal_name="approve", payload={"by": "ops"},
         )
         assert len(events.appended) == 1
         instance_id, event_type, payload, step_name = events.appended[0]
@@ -262,7 +262,7 @@ class TestSignalWorkflow:
         assert step_name is None
 
     async def test_invalid_run_id_raises(
-        self, backend: PgRunnerWorkflowBackend
+        self, backend: PgRunnerWorkflowBackend,
     ) -> None:
         bad = WorkflowHandle(workflow_id="x", run_id="not-a-uuid", namespace="t")
         with pytest.raises(ValueError):
@@ -326,7 +326,7 @@ class TestQueryWorkflow:
         assert result == {"value": 0.91}
 
     async def test_unknown_handle_raises(
-        self, backend: PgRunnerWorkflowBackend
+        self, backend: PgRunnerWorkflowBackend,
     ) -> None:
         ghost = WorkflowHandle(workflow_id="x", run_id=uuid4().hex, namespace="t")
         with pytest.raises(KeyError):
@@ -419,7 +419,7 @@ class TestAwaitCompletion:
             task_queue="q",
         )
         result = await backend.await_completion(
-            handle=handle, timeout=timedelta(milliseconds=20)
+            handle=handle, timeout=timedelta(milliseconds=20),
         )
         assert result.status == "timed_out"
         assert result.failure is not None
@@ -436,20 +436,20 @@ class TestReplay:
     """
 
     async def test_replay_raises_not_implemented(
-        self, backend: PgRunnerWorkflowBackend
+        self, backend: PgRunnerWorkflowBackend,
     ) -> None:
         """Regression (Cycle 29 P2): silent no-op больше не допустим."""
         with pytest.raises(NotImplementedError, match="pg-runner does not implement"):
             await backend.replay(workflow_name="wf", history=b"any-bytes")
 
     async def test_replay_raises_for_empty_history(
-        self, backend: PgRunnerWorkflowBackend
+        self, backend: PgRunnerWorkflowBackend,
     ) -> None:
         with pytest.raises(NotImplementedError):
             await backend.replay(workflow_name="wf", history=b"")
 
     async def test_replay_raises_for_temporal_format_history(
-        self, backend: PgRunnerWorkflowBackend
+        self, backend: PgRunnerWorkflowBackend,
     ) -> None:
         """Temporal ``WorkflowHistory.from_json`` bytes НЕ должны silent skip'аться."""
         with pytest.raises(NotImplementedError):

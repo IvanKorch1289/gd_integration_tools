@@ -30,7 +30,7 @@ class _StubSanitizer:
         cleaned = re.sub(r"\d{3,}", "[REDACTED]", text)
         replacements = {"[REDACTED]": "***"} if cleaned != text else {}
         return _StubSanitizationResult(
-            sanitized_text=cleaned, replacements=replacements
+            sanitized_text=cleaned, replacements=replacements,
         )
 
 
@@ -42,7 +42,7 @@ def test_callback_is_no_op_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> Non
     )
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", False, raising=True
+        features.feature_flags, "presidio_pii_enabled", False, raising=True,
     )
     cb = LangfusePIICallback()
     event = {
@@ -64,7 +64,7 @@ def test_callback_anonymizes_when_flag_on(monkeypatch: pytest.MonkeyPatch) -> No
     )
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", True, raising=True
+        features.feature_flags, "presidio_pii_enabled", True, raising=True,
     )
     providers.set_ai_sanitizer_provider(_StubSanitizer())
     try:
@@ -90,7 +90,7 @@ def test_anonymize_trace_payload_walks_nested(monkeypatch: pytest.MonkeyPatch) -
     )
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", True, raising=True
+        features.feature_flags, "presidio_pii_enabled", True, raising=True,
     )
     providers.set_ai_sanitizer_provider(_StubSanitizer())
     try:

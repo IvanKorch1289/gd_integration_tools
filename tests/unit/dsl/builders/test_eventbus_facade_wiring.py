@@ -90,7 +90,7 @@ class TestResolveEventBusFacade:
 class TestEventBusPublishProcessorFacadeWiring:
     @pytest.mark.asyncio
     async def test_publishes_via_facade_when_available(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """S173 M-2: EventBusFacade.publish вызывается с правильным event."""
         facade = MagicMock()
@@ -122,7 +122,7 @@ class TestEventBusPublishProcessorFacadeWiring:
 
     @pytest.mark.asyncio
     async def test_falls_back_on_facade_failure(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Если facade.publish raises — fallback к metadata ``_eventbus_published``.
 
@@ -152,7 +152,7 @@ class TestEventBusPublishProcessorFacadeWiring:
 
     @pytest.mark.asyncio
     async def test_no_op_when_flag_disabled(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """eventbus_dsl_enabled=False → no-op, facade НЕ вызывается."""
         facade = MagicMock()
@@ -178,7 +178,7 @@ class TestEventBusPublishProcessorFacadeWiring:
 class TestEventBusSubscribeProcessorFacadeWiring:
     @pytest.mark.asyncio
     async def test_subscribes_via_facade_when_available(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """S173 M-2: subscribe_with_lifecycle вызывается с handler."""
         facade = MagicMock()
@@ -214,7 +214,7 @@ class TestEventBusSubscribeProcessorFacadeWiring:
 
     @pytest.mark.asyncio
     async def test_metadata_only_when_no_facade(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Без facade — только metadata-декларация (backward compat)."""
         monkeypatch.setattr(

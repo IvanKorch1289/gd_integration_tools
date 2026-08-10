@@ -28,7 +28,7 @@ def test_make_stream_arg_no_group_returns_topic_string() -> None:
 def test_make_stream_arg_group_returns_stream_sub() -> None:
     """Group-mode возвращает StreamSub (а не dict, который ронял faststream)."""
     src = MQSource(
-        "orders_in", transport="redis_streams", topic="orders.stream", group="g1"
+        "orders_in", transport="redis_streams", topic="orders.stream", group="g1",
     )
     arg = src._make_stream_arg()
     assert isinstance(arg, StreamSub)
@@ -49,7 +49,7 @@ async def test_mq_source_redis_streams_e2e_dispatches_event(
 
     real_broker = RedisBroker("redis://localhost:6379/0")
     src = MQSource(
-        "orders_in", transport="redis_streams", topic="orders.stream", group="gd-orders"
+        "orders_in", transport="redis_streams", topic="orders.stream", group="gd-orders",
     )
 
     monkeypatch.setattr(src, "_build_broker", lambda: real_broker)
@@ -58,7 +58,7 @@ async def test_mq_source_redis_streams_e2e_dispatches_event(
         await src.start(cb)
         try:
             await real_broker.publish(
-                {"order_id": 7, "status": "new"}, stream="orders.stream"
+                {"order_id": 7, "status": "new"}, stream="orders.stream",
             )
             await asyncio.sleep(0.05)
         finally:

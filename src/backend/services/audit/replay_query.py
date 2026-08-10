@@ -28,7 +28,7 @@ _STREAM_NAME = "audit:events"
 
 
 async def list_audit_records(
-    *, count: int = 100, start_id: str = "-"
+    *, count: int = 100, start_id: str = "-",
 ) -> list[dict[str, Any]]:
     """Читает последние записи из audit stream для Replay UI.
 
@@ -44,7 +44,7 @@ async def list_audit_records(
 
         redis_client = get_redis_stream_client_provider()
         records = await redis_client.read_stream(
-            stream_name=_STREAM_NAME, count=count, start_id=start_id
+            stream_name=_STREAM_NAME, count=count, start_id=start_id,
         )
         return records or []
     except Exception as exc:
@@ -66,7 +66,7 @@ async def replay_audit_record(record_id: str) -> dict[str, Any]:
 
         redis_client = get_redis_stream_client_provider()
         records = await redis_client.read_stream(
-            stream_name=_STREAM_NAME, count=1, start_id=record_id
+            stream_name=_STREAM_NAME, count=1, start_id=record_id,
         )
         if not records:
             return {"status": "not_found", "record_id": record_id}

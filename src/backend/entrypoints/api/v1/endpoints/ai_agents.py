@@ -138,5 +138,5 @@ builder.add_actions(
             response_model=AgentToolsResponse,
             tags=common_tags,
         ),
-    ]
+    ],
 )

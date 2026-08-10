@@ -116,7 +116,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
         self._token_budget = token_budget
 
     async def get_policy(
-        self, workflow_id: str, tenant_id: str | None = None
+        self, workflow_id: str, tenant_id: str | None = None,
     ) -> AIPolicySpec | None:
         """Возвращает resolved :class:`AIPolicySpec` для заданного workflow.
 
@@ -141,7 +141,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
         if self._policy_resolver is None:
             return None
         return await self._policy_resolver.resolve(
-            workflow_id=workflow_id, tenant_id=tenant_id
+            workflow_id=workflow_id, tenant_id=tenant_id,
         )
 
     def _enforce_production_wiring(self) -> None:
@@ -213,7 +213,7 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
 
             raise AIGatewayEnforcementRequiredError(
                 "ai_gateway_enforce=False is no longer supported (S85). "
-                "Set feature_flags.ai_gateway_enforce=True."
+                "Set feature_flags.ai_gateway_enforce=True.",
             )
         return await self._enforced_invoke(request)
 

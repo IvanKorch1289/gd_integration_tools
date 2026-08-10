@@ -145,7 +145,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             ]
 
         async def _execute_stmt(
-            self, session: AsyncSession, stmt: Insert | Update
+            self, session: AsyncSession, stmt: Insert | Update,
         ) -> ConcreteTable | None:  # type: ignore
             """
             Выполняет SQL-запрос (INSERT или UPDATE) и возвращает созданный или обновленный объект.
@@ -190,12 +190,12 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             return result.scalars().all()
 
     def __init__(
-        self, model: type[ConcreteTable] | None = None, load_joined_models: bool = False
+        self, model: type[ConcreteTable] | None = None, load_joined_models: bool = False,
     ):
         self.model = model
         self.load_joined_models = load_joined_models
         self.helper = self.HelperMethods(
-            model=model, load_joined_models=load_joined_models, main_class=self
+            model=model, load_joined_models=load_joined_models, main_class=self,
         )
 
     @main_session_manager.connection(commit=False)
@@ -253,7 +253,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             is_return_list = True
 
         return await self.helper._get_loaded_object(
-            session=session, query_or_object=query, is_return_list=is_return_list
+            session=session, query_or_object=query, is_return_list=is_return_list,
         )
 
     @main_session_manager.connection(commit=False)
@@ -285,16 +285,16 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         paginated_query = query
         if pagination:
             paginated_query = query.limit(pagination.size).offset(
-                (pagination.page - 1) * pagination.size
+                (pagination.page - 1) * pagination.size,
             )
 
         items = await self.helper._get_loaded_object(
-            session=session, query_or_object=paginated_query, is_return_list=True
+            session=session, query_or_object=paginated_query, is_return_list=True,
         )
 
         # Считаем общее количество (оптимизированный запрос)
         count_query = query.with_only_columns(
-            func.count(), maintain_column_froms=True
+            func.count(), maintain_column_froms=True,
         ).order_by(None)
         total = await session.scalar(count_query)
 
@@ -317,7 +317,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
     @main_session_manager.connection(commit=False)
     async def first_or_last(
-        self, session: AsyncSession, limit: int = 1, by: str = "id", order: str = "asc"
+        self, session: AsyncSession, limit: int = 1, by: str = "id", order: str = "asc",
     ) -> list[ConcreteTable]:
         """
         Получить первый/-е или последний/-е объект в таблице, отсортированный по указанному полю.
@@ -334,7 +334,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
         query = select(self.model).order_by(order_by).limit(limit)  # Создаем запрос
         return await self.helper._get_loaded_object(  # type: ignore
-            session=session, query_or_object=query, is_return_list=True
+            session=session, query_or_object=query, is_return_list=True,
         )
 
     @main_session_manager.connection()
@@ -399,7 +399,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         result = await session.execute(
             delete(self.model)
             .where(getattr(self.model, key) == value)
-            .returning(self.model.id)
+            .returning(self.model.id),
         )
         await session.flush()
         row = result.scalar_one_or_none()
@@ -407,30 +407,30 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
     @main_session_manager.connection(commit=False)
     async def get_all_versions(
-        self, session: AsyncSession, object_id: int, order: str
+        self, session: AsyncSession, object_id: int, order: str,
     ) -> Sequence[Any]:
         """
         Получить все версии объекта.
         """
         return await self.helper._get_versions_query(
-            session=session, object_id=object_id, order=order
+            session=session, object_id=object_id, order=order,
         )
 
     @main_session_manager.connection(commit=False)
     async def get_latest_version(
-        self, session: AsyncSession, object_id: int
+        self, session: AsyncSession, object_id: int,
     ) -> dict[str, Any] | None:
         """
         Получить последнюю версию объекта.
         """
         versions = await self.helper._get_versions_query(
-            session=session, object_id=object_id, order="desc", limit=1
+            session=session, object_id=object_id, order="desc", limit=1,
         )
         return versions[0] if versions else None
 
     @main_session_manager.connection()
     async def restore_to_version(
-        self, session: AsyncSession, object_id: int, transaction_id: int
+        self, session: AsyncSession, object_id: int, transaction_id: int,
     ) -> dict[str, Any]:
         """
         Восстановить объект до указанной версии и вернуть информацию о транзакции.
@@ -445,13 +445,13 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             select(version_model).filter(
                 version_model.id == object_id,
                 version_model.transaction_id == transaction_id,
-            )
+            ),
         )
         target_version = target_version.scalars().first()
 
         if not target_version:
             raise NotFoundError(
-                message=f"Version with transaction_id={transaction_id} not found"
+                message=f"Version with transaction_id={transaction_id} not found",
             )
 
         # Преобразуем версию в словарь данных для обновления

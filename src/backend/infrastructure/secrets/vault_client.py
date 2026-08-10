@@ -199,7 +199,7 @@ class VaultClient:
         entry = _SecretEntry(path=path, callback=callback, validator=validator)
         self._entries[path] = entry
         logger.debug(
-            "vault_client.registered", path=path, has_validator=validator is not None
+            "vault_client.registered", path=path, has_validator=validator is not None,
         )
 
     def get_active_secret(self, path: str) -> dict[str, Any] | None:
@@ -232,7 +232,7 @@ class VaultClient:
 
         self._running = True
         self._rotation_task = get_task_registry().create_task(
-            self._rotation_loop(), name="vault-client-rotation"
+            self._rotation_loop(), name="vault-client-rotation",
         )
         logger.info(
             "vault_client.started",
@@ -275,7 +275,7 @@ class VaultClient:
         for path, entry in list(self._entries.items()):
             try:
                 response = self._client.secrets.kv.v2.read_secret_version(
-                    path=path, mount_point=self._vault_config.mount_point
+                    path=path, mount_point=self._vault_config.mount_point,
                 )
                 new_version: int = response["data"]["metadata"]["version"]
                 new_data: dict[str, Any] = response["data"]["data"]
@@ -365,7 +365,7 @@ class VaultClient:
                         entry.callback(new_data)
                 else:
                     logger.debug(
-                        "vault_client.unchanged", path=path, version=new_version
+                        "vault_client.unchanged", path=path, version=new_version,
                     )
 
             except Exception as exc:
@@ -387,7 +387,7 @@ class VaultClient:
         import hvac
 
         client = hvac.Client(
-            url=self._vault_config.url, namespace=self._vault_config.namespace
+            url=self._vault_config.url, namespace=self._vault_config.namespace,
         )
 
         if self._vault_config.token:
@@ -406,7 +406,7 @@ class VaultClient:
         else:
             raise RuntimeError(
                 "Vault auth not configured: set VAULT_TOKEN or "
-                "VAULT_ROLE_ID + VAULT_SECRET_ID"
+                "VAULT_ROLE_ID + VAULT_SECRET_ID",
             )
 
         # Cycle 38: schedule token renewal if TTL is short.
@@ -417,7 +417,7 @@ class VaultClient:
         return client
 
     async def _maybe_renew_token(
-        self, client: Any, *, threshold_seconds: int = 86400 * 7
+        self, client: Any, *, threshold_seconds: int = 86400 * 7,
     ) -> None:
         """Cycle 38: auto-renew Vault token if TTL below threshold.
 
@@ -438,7 +438,7 @@ class VaultClient:
             # lookup_self() is sync hvac — run in executor.
             loop = asyncio.get_running_loop()
             token_info = await loop.run_in_executor(
-                None, lambda: client.auth.token.lookup_self()
+                None, lambda: client.auth.token.lookup_self(),
             )
             # hvac returns dict with 'data' key containing TTL.
             data = token_info.get("data", {}) if isinstance(token_info, dict) else {}
@@ -448,12 +448,12 @@ class VaultClient:
                 # No TTL info available — token may be root or non-expiring.
                 # Skip silently; downstream operations will surface real errors.
                 logger.debug(
-                    "vault_client.token_renew_skipped", reason="no_ttl_info"
+                    "vault_client.token_renew_skipped", reason="no_ttl_info",
                 )
                 return
             if ttl < threshold_seconds and renewable:
                 await loop.run_in_executor(
-                    None, lambda: client.auth.token.renew_self()
+                    None, lambda: client.auth.token.renew_self(),
                 )
                 logger.info(
                     "vault_client.token_renewed",

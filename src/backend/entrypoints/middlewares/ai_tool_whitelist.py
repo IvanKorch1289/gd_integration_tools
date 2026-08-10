@@ -186,7 +186,7 @@ class AIToolWhitelistMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body_bytes})
 
@@ -202,7 +202,7 @@ class AIToolWhitelistMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body_bytes})
 

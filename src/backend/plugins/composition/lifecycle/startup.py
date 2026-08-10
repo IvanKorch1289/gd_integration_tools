@@ -135,7 +135,7 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
                 для последующего ack (OutboxEvent не имеет ``id``/``headers``).
                 """
                 msgs = await outbox_repo.claim_pending(
-                    limit=limit, worker_id=_worker_id
+                    limit=limit, worker_id=_worker_id,
                 )
                 result: list[OutboxEvent] = []
                 for m in msgs:
@@ -150,7 +150,7 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
                             action=m.topic,
                             payload=m.payload,
                             correlation_id=cid,
-                        )
+                        ),
                     )
                 return result
 
@@ -198,7 +198,7 @@ async def _register_outbox_dispatcher(app: FastAPI) -> None:
             start_outbox_worker(interval_seconds=5, batch_size=100)
             _logger.info(
                 "Legacy outbox worker registered "
-                "(outbox_settings.enabled=False, S64 W3 cutover not active)."
+                "(outbox_settings.enabled=False, S64 W3 cutover not active).",
             )
     except Exception as exc:
         # Outbox-worker не критичен для базовой работоспособности
@@ -267,7 +267,7 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
                     or None
                 ),
                 export_interval_seconds=int(
-                    os.environ.get("OTLP_METRICS_EXPORT_INTERVAL_SECONDS", "60")
+                    os.environ.get("OTLP_METRICS_EXPORT_INTERVAL_SECONDS", "60"),
                 ),
                 environment=os.environ.get("APP_ENVIRONMENT", "development"),
                 insecure=(
@@ -351,7 +351,7 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
             nodes_env = os.environ.get("REDIS_CLUSTER_NODES", "").strip()
             if not nodes_env:
                 _logger.warning(
-                    "REDIS_CLUSTER_ENABLED=true, но REDIS_CLUSTER_NODES пуст — пропуск"
+                    "REDIS_CLUSTER_ENABLED=true, но REDIS_CLUSTER_NODES пуст — пропуск",
                 )
             else:
                 from redis.asyncio.cluster import ClusterNode
@@ -371,17 +371,17 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
                 adapter = RedisClusterAdapter(
                     startup_nodes=parsed_nodes,
                     max_connections=int(
-                        os.environ.get("REDIS_CLUSTER_MAX_CONNECTIONS", "50")
+                        os.environ.get("REDIS_CLUSTER_MAX_CONNECTIONS", "50"),
                     ),
                     socket_keepalive=True,
                     health_check_interval=int(
-                        os.environ.get("REDIS_CLUSTER_HEALTH_CHECK_INTERVAL", "30")
+                        os.environ.get("REDIS_CLUSTER_HEALTH_CHECK_INTERVAL", "30"),
                     ),
                     password=cluster_password,
                 )
                 app.state.redis_cluster_adapter = adapter
                 _logger.info(
-                    "RedisClusterAdapter зарегистрирован: nodes=%d", len(parsed_nodes)
+                    "RedisClusterAdapter зарегистрирован: nodes=%d", len(parsed_nodes),
                 )
         except Exception as rc_exc:
             _logger.warning(
@@ -454,13 +454,13 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
 
         if getattr(feature_flags, "stuck_monitor_enabled", False):
             threshold = int(
-                getattr(feature_flags, "stuck_monitor_threshold_seconds", 300)
+                getattr(feature_flags, "stuck_monitor_threshold_seconds", 300),
             )
             sample_interval = int(
-                getattr(feature_flags, "stuck_monitor_sample_interval_seconds", 60)
+                getattr(feature_flags, "stuck_monitor_sample_interval_seconds", 60),
             )
             await start_outbox_stuck_monitor(
-                threshold_seconds=threshold, sample_interval_seconds=sample_interval
+                threshold_seconds=threshold, sample_interval_seconds=sample_interval,
             )
             _logger.info(
                 "OutboxStuckMonitor started (threshold=%ds, sample=%ds)",
@@ -512,7 +512,7 @@ async def run_startup(app: FastAPI, task_registry: object) -> None:
 
         redis_kv = getattr(get_redis_client(), "client", None)
         broadcaster = await maybe_start_broadcaster(
-            redis_client=redis_kv, overrides=get_runtime_overrides()
+            redis_client=redis_kv, overrides=get_runtime_overrides(),
         )
         if broadcaster is not None:
             app.state.feature_flag_broadcaster = broadcaster

@@ -57,7 +57,7 @@ class PartitionProcessor(BaseProcessor):
             (matched if ok else unmatched).append(item)
 
         exchange.set_out(
-            body=[matched, unmatched], headers=dict(exchange.in_message.headers)
+            body=[matched, unmatched], headers=dict(exchange.in_message.headers),
         )
 
     def to_spec(self) -> dict[str, Any] | None:
@@ -66,7 +66,7 @@ class PartitionProcessor(BaseProcessor):
             "partition": {
                 "field": self._field,
                 "predicate": self._predicate.__name__ if self._predicate else None,
-            }
+            },
         }
 
 
@@ -90,7 +90,7 @@ class OrElseProcessor(BaseProcessor):
         body = exchange.in_message.body
         if body is None or body == "" or body == [] or body == {}:
             exchange.set_out(
-                body=self._default, headers=dict(exchange.in_message.headers)
+                body=self._default, headers=dict(exchange.in_message.headers),
             )
         else:
             exchange.set_out(body=body, headers=dict(exchange.in_message.headers))
@@ -130,7 +130,7 @@ class FlattenProcessor(BaseProcessor):
             return result
 
         exchange.set_out(
-            body=_flatten(body, self._depth), headers=dict(exchange.in_message.headers)
+            body=_flatten(body, self._depth), headers=dict(exchange.in_message.headers),
         )
 
     def to_spec(self) -> dict[str, Any] | None:
@@ -186,5 +186,5 @@ class UniqueProcessor(BaseProcessor):
             "unique": {
                 "field": self._field,
                 "key_fn": self._key_fn.__name__ if self._key_fn else None,
-            }
+            },
         }

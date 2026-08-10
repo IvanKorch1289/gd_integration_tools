@@ -69,7 +69,7 @@ class DeferredMixin:
     def _invoke_streaming(self, request: InvocationRequest) -> InvocationResponse:
         """Запускает streaming action; каждый yield пушится в WS-канал."""
         channel = self._resolve_channel(
-            request.reply_channel or ReplyChannelKind.WS.value
+            request.reply_channel or ReplyChannelKind.WS.value,
         )
         if channel is None:
             return InvocationResponse(

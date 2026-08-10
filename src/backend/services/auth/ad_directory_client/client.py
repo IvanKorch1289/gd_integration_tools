@@ -38,7 +38,7 @@ class AdDirectoryClient:
     """
 
     def __init__(
-        self, *, config: AdServerConfig, connection_factory: Any | None = None
+        self, *, config: AdServerConfig, connection_factory: Any | None = None,
     ) -> None:
         """Инициализация client с config и опциональной mock-factory."""
         self._config = config
@@ -146,12 +146,12 @@ class AdDirectoryClient:
             raise AdAuthError(f"AD search failure: {exc}") from exc
 
     def _search_sync(
-        self, search_filter: str, attributes: Sequence[str]
+        self, search_filter: str, attributes: Sequence[str],
     ) -> AdSearchEntry | None:
         """Sync search через ldap3 (для use через ``asyncio.to_thread``)."""
         if self._connection_factory is not None:
             conn = self._connection_factory(
-                user_dn=self._config.bind_dn, password=self._config.bind_password
+                user_dn=self._config.bind_dn, password=self._config.bind_password,
             )
         else:
             from ldap3 import Connection, Server

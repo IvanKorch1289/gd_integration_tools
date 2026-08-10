@@ -77,7 +77,7 @@ class FakeWorkflowBackend(WorkflowBackend):
         """Зарегистрировать новый fake-инстанс и вернуть дескриптор."""
         run_id = uuid4().hex
         handle = WorkflowHandle(
-            workflow_id=workflow_id, run_id=run_id, namespace=namespace
+            workflow_id=workflow_id, run_id=run_id, namespace=namespace,
         )
         self._instances[run_id] = _Instance(
             handle=handle,
@@ -89,7 +89,7 @@ class FakeWorkflowBackend(WorkflowBackend):
         return handle
 
     async def signal_workflow(
-        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any]
+        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any],
     ) -> None:
         """Записать сигнал в журнал инстанса."""
         instance = self._require(handle)
@@ -113,7 +113,7 @@ class FakeWorkflowBackend(WorkflowBackend):
         instance.result = WorkflowResult(status="cancelled")
 
     async def await_completion(
-        self, *, handle: WorkflowHandle, timeout: timedelta | None = None
+        self, *, handle: WorkflowHandle, timeout: timedelta | None = None,
     ) -> WorkflowResult:
         """Вернуть сохранённый результат либо `default_result`."""
         instance = self._require(handle)
@@ -200,6 +200,6 @@ class FakeWorkflowBackend(WorkflowBackend):
         if instance.handle != handle:
             raise ValueError(
                 f"Handle mismatch for run_id={handle.run_id!r}: "
-                f"stored={instance.handle!r}, given={handle!r}"
+                f"stored={instance.handle!r}, given={handle!r}",
             )
         return instance

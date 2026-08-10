@@ -68,7 +68,7 @@ def _register_system_tool(mcp: FastMCP, action_name: str) -> None:
         deny_reason = _check_mcp_tool_authz(_action)
         if deny_reason is not None:
             return orjson.dumps(
-                {"error": "mcp.tool.denied", "action": _action, "reason": deny_reason}
+                {"error": "mcp.tool.denied", "action": _action, "reason": deny_reason},
             ).decode()
 
         try:

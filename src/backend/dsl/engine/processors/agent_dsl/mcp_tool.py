@@ -104,7 +104,7 @@ class MCPToolProcessor(BaseAIProcessor):
         if tool_uri.startswith("file:"):
             raise ValueError(
                 "MCPToolProcessor: file:// transport denied (RCE surface); "
-                "use http(s):// only"
+                "use http(s):// only",
             )
         super().__init__(name=name or f"mcp_tool:{tool_name}")
         self.tool_uri = tool_uri
@@ -127,7 +127,7 @@ class MCPToolProcessor(BaseAIProcessor):
         if arguments is None:
             exchange.fail(
                 f"{self.name}: arguments из '{self.arguments_property}' "
-                f"не найдены или не являются dict"
+                f"не найдены или не являются dict",
             )
             return
 
@@ -188,7 +188,7 @@ class MCPToolProcessor(BaseAIProcessor):
 
         client = await self._ensure_connected()
         return await client.call_tool(
-            self.tool_name, arguments=arguments, timeout=self.timeout_s
+            self.tool_name, arguments=arguments, timeout=self.timeout_s,
         )
 
     async def close(self) -> None:

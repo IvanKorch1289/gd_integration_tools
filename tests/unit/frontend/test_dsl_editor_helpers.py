@@ -157,7 +157,7 @@ def test_yaml_to_steps_dict_processor_non_dict_value() -> None:
 def test_build_yaml_from_steps_minimal() -> None:
     """Минимальный case: только route_id + steps."""
     yaml_str = build_yaml_from_steps(
-        {"route_id": "my.route"}, [{"type": "log", "params": {}}]
+        {"route_id": "my.route"}, [{"type": "log", "params": {}}],
     )
     assert "route_id: my.route" in yaml_str
     assert "processors:" in yaml_str
@@ -167,7 +167,7 @@ def test_build_yaml_from_steps_minimal() -> None:
 def test_build_yaml_from_steps_empty_steps_omits_processors() -> None:
     """Пустой steps → ``processors:`` НЕ появляется в YAML."""
     yaml_str = build_yaml_from_steps(
-        {"route_id": "my.route", "source": "internal:my"}, []
+        {"route_id": "my.route", "source": "internal:my"}, [],
     )
     assert "processors" not in yaml_str
     assert "route_id: my.route" in yaml_str
@@ -183,7 +183,7 @@ def test_build_yaml_from_steps_default_route_id_when_empty() -> None:
 def test_build_yaml_from_steps_unicode_support() -> None:
     """Unicode в description сохраняется (``allow_unicode=True``)."""
     yaml_str = build_yaml_from_steps(
-        {"route_id": "x", "description": "Тестовый маршрут"}, []
+        {"route_id": "x", "description": "Тестовый маршрут"}, [],
     )
     assert "Тестовый маршрут" in yaml_str
 
@@ -206,7 +206,7 @@ def test_build_yaml_from_steps_unicode_support() -> None:
     ],
 )
 def test_build_yaml_from_steps_parametrized(
-    meta: dict, steps: list[dict], expected_substrings: list[str]
+    meta: dict, steps: list[dict], expected_substrings: list[str],
 ) -> None:
     """Параметризованный test: различные комбинации meta/steps."""
     yaml_str = build_yaml_from_steps(meta, steps)

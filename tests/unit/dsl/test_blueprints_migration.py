@@ -85,7 +85,7 @@ class TestLegacyShim:
         assert set(legacy_macros.__all__) == set(new_macros.__all__)
 
     def test_shim_deprecation_warning_under_feature_flag(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Если feature_flag активен, импорт shim должен выдавать DeprecationWarning."""
         import importlib

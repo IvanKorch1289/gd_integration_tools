@@ -67,7 +67,7 @@ class TransactionContext:
                 self._in_transaction = False
 
     async def query(
-        self, sql: str, params: dict[str, Any] | None = None
+        self, sql: str, params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Run SELECT внутри transaction."""
         if not self._in_transaction:
@@ -81,7 +81,7 @@ class TransactionContext:
         return await _execute_impl(self._bundle, sql, params or {})
 
     async def call_procedure(
-        self, name: str, params: dict[str, Any] | None = None
+        self, name: str, params: dict[str, Any] | None = None,
     ) -> Any:
         """Call stored procedure внутри transaction."""
         if not self._in_transaction:
@@ -95,7 +95,7 @@ class TransactionContext:
 
 
 async def _query_impl(
-    bundle: Any, sql: str, params: dict[str, Any]
+    bundle: Any, sql: str, params: dict[str, Any],
 ) -> list[dict[str, Any]]:
     """SELECT → list[dict]."""
     # DatabaseBundle exposes ``session`` (SQLAlchemy AsyncSession).
@@ -124,14 +124,14 @@ async def _call_procedure_impl(bundle: Any, name: str, params: dict[str, Any]) -
     """Call stored procedure via existing call_procedure helper."""
     # Look up call_procedure on bundle or session.
     fn = getattr(bundle, "call_procedure", None) or getattr(
-        bundle, "_call_procedure", None
+        bundle, "_call_procedure", None,
     )
     if fn is None:
         # Fallback: route through the existing db_call_procedure processor path
         # or just raise — implementation depends on dialect.
         raise NotImplementedError(
             "call_procedure not supported on this bundle (dialect-specific). "
-            "Use 'db_call_procedure' DSL step or dialect-specific driver directly."
+            "Use 'db_call_procedure' DSL step or dialect-specific driver directly.",
         )
     if inspect.iscoroutinefunction(fn):
         return await fn(name, **params)
@@ -187,7 +187,7 @@ class ExternalDBFacade:
     # --- Public API ---
 
     async def query(
-        self, profile: str, sql: str, params: dict[str, Any] | None = None
+        self, profile: str, sql: str, params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """SELECT через профиль внешней БД.
 
@@ -207,7 +207,7 @@ class ExternalDBFacade:
         return await _query_impl(bundle, sql, params or {})
 
     async def execute(
-        self, profile: str, sql: str, params: dict[str, Any] | None = None
+        self, profile: str, sql: str, params: dict[str, Any] | None = None,
     ) -> int:
         """INSERT / UPDATE / DELETE → rowcount."""
         registry = self._get_registry()
@@ -215,7 +215,7 @@ class ExternalDBFacade:
         return await _execute_impl(bundle, sql, params or {})
 
     async def call_procedure(
-        self, profile: str, name: str, params: dict[str, Any] | None = None
+        self, profile: str, name: str, params: dict[str, Any] | None = None,
     ) -> Any:
         """Call stored procedure через профиль внешней БД."""
         registry = self._get_registry()

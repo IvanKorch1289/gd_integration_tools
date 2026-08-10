@@ -38,8 +38,8 @@ class _FakeStreamCM:
 def _make_chunk(content: str = "", finish: str | None = None) -> dict[str, Any]:
     return {
         "choices": [
-            {"delta": {"content": content} if content else {}, "finish_reason": finish}
-        ]
+            {"delta": {"content": content} if content else {}, "finish_reason": finish},
+        ],
     }
 
 

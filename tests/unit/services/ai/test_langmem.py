@@ -78,7 +78,7 @@ async def test_semantic_add_upserts_via_qdrant() -> None:
     client.upsert = AsyncMock(return_value=None)
 
     mem = SemanticMemory(
-        qdrant_client=client, embedder=embedder, collection="langmem_semantic"
+        qdrant_client=client, embedder=embedder, collection="langmem_semantic",
     )
     assert mem.is_configured is True
 

@@ -43,7 +43,7 @@ class _FakeProvider:
         self.last_eval_context: Any = None
 
     async def resolve_boolean_value(
-        self, flag_key: str, default: bool, evaluation_context: Any | None = None
+        self, flag_key: str, default: bool, evaluation_context: Any | None = None,
     ) -> bool:
         self.last_eval_context = evaluation_context
         if self.raise_on_resolve:
@@ -51,7 +51,7 @@ class _FakeProvider:
         return self.boolean_return
 
     async def resolve_string_value(
-        self, flag_key: str, default: str, evaluation_context: Any | None = None
+        self, flag_key: str, default: str, evaluation_context: Any | None = None,
     ) -> str:
         self.last_eval_context = evaluation_context
         if self.raise_on_resolve:

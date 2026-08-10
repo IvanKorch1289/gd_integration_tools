@@ -60,7 +60,7 @@ def _resolve_gateway_spec(decl: ActivityDeclaration) -> GatewaySpec:
         )
     raise TypeError(
         f"Unsupported gateway payload type: {type(gw_raw)!r}; "
-        "expected GatewaySpec or dict"
+        "expected GatewaySpec or dict",
     )
 
 
@@ -92,7 +92,7 @@ def _eval_condition(condition: str | None, ctx: dict[str, Any]) -> bool:
 
 
 async def _run_branch_steps(
-    branch: BranchSpec, ctx: dict[str, Any]
+    branch: BranchSpec, ctx: dict[str, Any],
 ) -> Any:
     """Выполнить шаги одной ветки последовательно.
 
@@ -203,7 +203,7 @@ async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
     ]
 
     done, pending = await asyncio.wait(
-        tasks, return_when=asyncio.FIRST_COMPLETED
+        tasks, return_when=asyncio.FIRST_COMPLETED,
     )
 
     for task in pending:

@@ -78,7 +78,7 @@ class TestExceptionHandlerMiddleware:
 
     @pytest.mark.asyncio
     async def test_no_exception_passes_through(
-        self, middleware: ExceptionHandlerMiddleware
+        self, middleware: ExceptionHandlerMiddleware,
     ) -> None:
         """Normal response от downstream пробрасывается unchanged."""
         app = AsyncMock()
@@ -99,7 +99,7 @@ class TestExceptionHandlerMiddleware:
 
     @pytest.mark.asyncio
     async def test_base_error_handled(
-        self, middleware: ExceptionHandlerMiddleware
+        self, middleware: ExceptionHandlerMiddleware,
     ) -> None:
         """BaseError subclasses → structured response с custom status."""
         app = AsyncMock()
@@ -126,7 +126,7 @@ class TestExceptionHandlerMiddleware:
 
     @pytest.mark.asyncio
     async def test_generic_error_500(
-        self, middleware: ExceptionHandlerMiddleware
+        self, middleware: ExceptionHandlerMiddleware,
     ) -> None:
         """Generic exceptions → 500 JSON через send (no-raise)."""
         app = AsyncMock()
@@ -156,7 +156,7 @@ class TestExceptionHandlerMiddleware:
 
     @pytest.mark.asyncio
     async def test_correlation_and_request_id_injected(
-        self, middleware: ExceptionHandlerMiddleware
+        self, middleware: ExceptionHandlerMiddleware,
     ) -> None:
         """correlation_id и request_id добавляются в error payload."""
         app = AsyncMock()
@@ -181,7 +181,7 @@ class TestExceptionHandlerMiddleware:
 
     @pytest.mark.asyncio
     async def test_logs_on_generic_error(
-        self, middleware: ExceptionHandlerMiddleware
+        self, middleware: ExceptionHandlerMiddleware,
     ) -> None:
         """logger.error и logger.exception вызываются для generic exceptions."""
         app = AsyncMock()
@@ -193,7 +193,7 @@ class TestExceptionHandlerMiddleware:
         middleware.app = app
 
         with patch(
-            "src.backend.entrypoints.middlewares.exception_handler.logger"
+            "src.backend.entrypoints.middlewares.exception_handler.logger",
         ) as mock_logger:
             send = AsyncMock()
             await middleware(
@@ -207,7 +207,7 @@ class TestExceptionHandlerMiddleware:
 
     @pytest.mark.asyncio
     async def test_passes_through_non_http_scope(
-        self, middleware: ExceptionHandlerMiddleware
+        self, middleware: ExceptionHandlerMiddleware,
     ) -> None:
         """Non-HTTP scope (websocket) пробрасывается без exception catch."""
         app = AsyncMock()
@@ -230,7 +230,7 @@ class TestExceptionHandlerMiddleware:
 
     @pytest.mark.asyncio
     async def test_does_not_call_downstream_after_exception(
-        self, middleware: ExceptionHandlerMiddleware
+        self, middleware: ExceptionHandlerMiddleware,
     ) -> None:
         """Cycle 51 invariant: после exception downstream НЕ вызывается повторно.
 
@@ -264,7 +264,7 @@ class TestExceptionHandlerMiddleware:
 
     @pytest.mark.asyncio
     async def test_websocket_exception_propagates(
-        self, middleware: ExceptionHandlerMiddleware
+        self, middleware: ExceptionHandlerMiddleware,
     ) -> None:
         """Non-HTTP scope exceptions НЕ ловятся (ASGI protocol: пробрасываются)."""
         app = AsyncMock()
@@ -286,7 +286,7 @@ class TestExceptionHandlerMiddleware:
 
     @pytest.mark.asyncio
     async def test_does_not_modify_normal_response(
-        self, middleware: ExceptionHandlerMiddleware
+        self, middleware: ExceptionHandlerMiddleware,
     ) -> None:
         """Cycle 51 invariant: normal response пробрасывается без modification."""
         app = AsyncMock()
@@ -297,7 +297,7 @@ class TestExceptionHandlerMiddleware:
                     "type": "http.response.start",
                     "status": 201,
                     "headers": [(b"x-custom", b"value")],
-                }
+                },
             )
             await send({"type": "http.response.body", "body": b"created"})
 

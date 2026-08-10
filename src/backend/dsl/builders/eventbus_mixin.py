@@ -57,7 +57,7 @@ class EventBusPublishProcessor:
     compensatable: bool = False
 
     def __init__(
-        self, *, topic: str, payload_ref: str = "body", name: str | None = None
+        self, *, topic: str, payload_ref: str = "body", name: str | None = None,
     ) -> None:
         self.name = name or f"eventbus.publish({topic})"
         self.topic = topic
@@ -122,7 +122,7 @@ class EventBusPublishProcessor:
             from src.backend.core.logging import get_logger
 
             get_logger(__name__).warning(
-                "EventBus publish failed for topic=%s: %s", self.topic, exc
+                "EventBus publish failed for topic=%s: %s", self.topic, exc,
             )
             self._mark_published(exchange, payload)
 
@@ -161,7 +161,7 @@ class EventBusPublishProcessor:
     def to_spec(self) -> dict[str, Any] | None:
         """Метод to_spec (см. signature)."""
         return {
-            "eventbus_publish": {"topic": self.topic, "payload_ref": self.payload_ref}
+            "eventbus_publish": {"topic": self.topic, "payload_ref": self.payload_ref},
         }
 
 
@@ -177,7 +177,7 @@ class EventBusSubscribeProcessor:
     compensatable: bool = True
 
     def __init__(
-        self, *, topic_pattern: str, ack_mode: str = "auto", name: str | None = None
+        self, *, topic_pattern: str, ack_mode: str = "auto", name: str | None = None,
     ) -> None:
         self.name = name or f"eventbus.subscribe({topic_pattern})"
         self.topic_pattern = topic_pattern
@@ -201,7 +201,7 @@ class EventBusSubscribeProcessor:
         # Всегда пишем декларацию в metadata для трейсинга.
         subscriptions = list(exchange.properties.get("_eventbus_subscribed") or [])
         subscriptions.append(
-            {"topic_pattern": self.topic_pattern, "ack_mode": self.ack_mode}
+            {"topic_pattern": self.topic_pattern, "ack_mode": self.ack_mode},
         )
         exchange.set_property("_eventbus_subscribed", subscriptions)
 
@@ -238,7 +238,7 @@ class EventBusSubscribeProcessor:
             "eventbus_subscribe": {
                 "topic_pattern": self.topic_pattern,
                 "ack_mode": self.ack_mode,
-            }
+            },
         }
 
 
@@ -271,7 +271,7 @@ def _make_eventbus_handler(
                 "topic_pattern": topic_pattern,
                 "ack_mode": ack_mode,
                 "event": event,
-            }
+            },
         )
         exchange.set_property("_eventbus_received", events)
 
@@ -288,7 +288,7 @@ class EventBusMixin:
     __slots__ = ()
 
     def to_eventbus(
-        self, topic: str, *, payload_ref: str = "body", name: str | None = None
+        self, topic: str, *, payload_ref: str = "body", name: str | None = None,
     ) -> RouteBuilder:
         """Publish текущий exchange в EventBus topic (V22 NEW).
 
@@ -299,11 +299,11 @@ class EventBusMixin:
             name: Имя процессора в трейсах.
         """
         return self._add(  # type: ignore[attr-defined]
-            EventBusPublishProcessor(topic=topic, payload_ref=payload_ref, name=name)
+            EventBusPublishProcessor(topic=topic, payload_ref=payload_ref, name=name),
         )
 
     def from_eventbus(
-        self, topic_pattern: str, *, ack_mode: str = "auto", name: str | None = None
+        self, topic_pattern: str, *, ack_mode: str = "auto", name: str | None = None,
     ) -> RouteBuilder:
         """Subscribe маршрут на EventBus topic_pattern (V22 NEW).
 
@@ -316,6 +316,6 @@ class EventBusMixin:
         """
         return self._add(  # type: ignore[attr-defined]
             EventBusSubscribeProcessor(
-                topic_pattern=topic_pattern, ack_mode=ack_mode, name=name
-            )
+                topic_pattern=topic_pattern, ack_mode=ack_mode, name=name,
+            ),
         )

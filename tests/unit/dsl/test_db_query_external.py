@@ -27,7 +27,7 @@ def _ctx() -> ExecutionContext:
 
 
 def _make_session_mock(
-    *, rows: list[dict[str, Any]] | None = None, scalar: Any = None
+    *, rows: list[dict[str, Any]] | None = None, scalar: Any = None,
 ) -> tuple[MagicMock, AsyncMock]:
     """Создаёт mock-сессию SQLAlchemy с асинхронными методами execute/commit."""
     result = MagicMock()
@@ -79,7 +79,7 @@ async def test_db_query_external_fetch_all_from_body(patch_provider: Any) -> Non
     holder = patch_provider(rows=[{"id": 1, "name": "X"}, {"id": 2, "name": "Y"}])
 
     proc = ExternalDbQueryProcessor(
-        profile="oracle_prod", sql="SELECT * FROM users WHERE active = :active"
+        profile="oracle_prod", sql="SELECT * FROM users WHERE active = :active",
     )
     ex = Exchange(in_message=Message(body={"active": True}, headers={}))
     await proc.process(ex, _ctx())
@@ -100,7 +100,7 @@ async def test_db_query_external_fetch_all_from_body(patch_provider: Any) -> Non
 async def test_db_query_external_fetch_one(patch_provider: Any) -> None:
     holder = patch_provider(rows=[{"id": 42}])
     proc = ExternalDbQueryProcessor(
-        profile="oracle_prod", sql="SELECT id FROM users WHERE id = :id", fetch="one"
+        profile="oracle_prod", sql="SELECT id FROM users WHERE id = :id", fetch="one",
     )
     ex = Exchange(in_message=Message(body={"id": 42}, headers={}))
     await proc.process(ex, _ctx())
@@ -141,7 +141,7 @@ async def test_db_query_external_commit_on_write(patch_provider: Any) -> None:
 async def test_db_query_external_params_from_properties(patch_provider: Any) -> None:
     holder = patch_provider(rows=[])
     proc = ExternalDbQueryProcessor(
-        profile="oracle_prod", sql="SELECT 1", params_from="properties"
+        profile="oracle_prod", sql="SELECT 1", params_from="properties",
     )
     ex = Exchange(in_message=Message(body={}, headers={}))
     ex.properties["custom"] = "value"
@@ -174,7 +174,7 @@ def test_db_query_external_to_spec_full() -> None:
             "result_property": "custom",
             "fetch": "one",
             "commit": True,
-        }
+        },
     }
 
 

@@ -56,7 +56,7 @@ class HotSwapError(RuntimeError):
     """Hot-swap не удался — причина в ``reason`` и ``cause``."""
 
     def __init__(
-        self, plugin_name: str, reason: str, *, cause: Exception | None = None
+        self, plugin_name: str, reason: str, *, cause: Exception | None = None,
     ) -> None:
         self.plugin_name = plugin_name
         self.reason = reason

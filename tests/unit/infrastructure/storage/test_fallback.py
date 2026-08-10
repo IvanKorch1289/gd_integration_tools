@@ -51,7 +51,7 @@ def _make_storage(
 
     # Helper: configure AsyncMock with either return_value or side_effect=Exception
     def _configure(
-        mock: AsyncMock, return_value: Any, raises: BaseException | None
+        mock: AsyncMock, return_value: Any, raises: BaseException | None,
     ) -> None:
         if raises is not None:
             mock.side_effect = raises
@@ -93,7 +93,7 @@ def _make_storage(
         health_mock = AsyncMock(side_effect=healthcheck_raises)
     elif healthcheck_return is True:
         health_mock = AsyncMock(
-            return_value=HealthResult.ok(latency_ms=0.0, mode="fast")
+            return_value=HealthResult.ok(latency_ms=0.0, mode="fast"),
         )
     else:
         health_mock = AsyncMock(
@@ -101,7 +101,7 @@ def _make_storage(
                 error="primary failed",
                 latency_ms=0.0,
                 mode="fast",
-            )
+            ),
         )
     s.health = health_mock
     return s
@@ -264,7 +264,7 @@ async def test_fallback_exceptions_filter_excludes_keyerror() -> None:
     primary = _make_storage(download_raises=KeyError("missing"))
     secondary = _make_storage(download_return=b"should_not_be_used")
     fb = FallbackObjectStorage(
-        primary, secondary, fallback_exceptions=(ConnectionError, OSError)
+        primary, secondary, fallback_exceptions=(ConnectionError, OSError),
     )
 
     with pytest.raises(KeyError):
@@ -279,7 +279,7 @@ async def test_fallback_exceptions_filter_includes_connectionerror() -> None:
     primary = _make_storage(download_raises=ConnectionError("S3"))
     secondary = _make_storage(download_return=b"sec")
     fb = FallbackObjectStorage(
-        primary, secondary, fallback_exceptions=(ConnectionError,)
+        primary, secondary, fallback_exceptions=(ConnectionError,),
     )
 
     result = await fb.download("key1")

@@ -52,7 +52,7 @@ class OutputMixin(_PipelineStepsProtocol):
     _llm_gateway: Any
 
     async def _apply_output_guards(
-        self, response: AIResponse, policy: AIPolicySpec | None
+        self, response: AIResponse, policy: AIPolicySpec | None,
     ) -> list[GuardResult]:
         """Шаг 7: output guards (Llama Guard 3).
 
@@ -78,12 +78,12 @@ class OutputMixin(_PipelineStepsProtocol):
             return results if results is not None else []
         except NotImplementedError:
             logger.debug(
-                "AIGateway: output guards не реализованы (Wave S24 W2 deferred)"
+                "AIGateway: output guards не реализованы (Wave S24 W2 deferred)",
             )
             return []
 
     async def _apply_output_sanitizers(
-        self, response: AIResponse, policy: AIPolicySpec | None
+        self, response: AIResponse, policy: AIPolicySpec | None,
     ) -> AIResponse:
         """Шаг 8: output sanitizers (Presidio + JSONSchema через Outlines).
 
@@ -118,7 +118,7 @@ class OutputMixin(_PipelineStepsProtocol):
         replacements = getattr(result, "replacements", {}) or {}
         sanitized_text = getattr(result, "sanitized_text", response.content)
         pii_detected = bool(replacements) or getattr(
-            self, "_last_input_pii_detected", False
+            self, "_last_input_pii_detected", False,
         )
         return AIResponse(
             content=sanitized_text,

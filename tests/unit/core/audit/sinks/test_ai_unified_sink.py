@@ -51,7 +51,7 @@ class TestUnifiedAISinkDisabled:
         audit = AsyncMock()
         langfuse = AsyncMock()
         sink = UnifiedAISink(
-            audit_service=audit, langfuse_callback=langfuse, enabled=False
+            audit_service=audit, langfuse_callback=langfuse, enabled=False,
         )
         await sink.emit_event(_event())
 
@@ -96,7 +96,7 @@ class TestUnifiedAISinkEnabled:
         langfuse._generation_id = "gen-123"
         langfuse.flush = MagicMock()
         sink = UnifiedAISink(
-            audit_service=audit, langfuse_callback=langfuse, enabled=True
+            audit_service=audit, langfuse_callback=langfuse, enabled=True,
         )
 
         import sys
@@ -125,7 +125,7 @@ class TestUnifiedAISinkEnabled:
             del langfuse._generation_id
         langfuse.flush = MagicMock()
         sink = UnifiedAISink(
-            audit_service=audit, langfuse_callback=langfuse, enabled=True
+            audit_service=audit, langfuse_callback=langfuse, enabled=True,
         )
 
         import sys
@@ -168,7 +168,7 @@ class TestUnifiedAISinkFailClosed:
 
         mock_pii_module = MagicMock()
         mock_pii_module.PIITokenizer.side_effect = ImportError(
-            "tokenizer broken"
+            "tokenizer broken",
         )
         with patch.dict(
             sys.modules,
@@ -188,7 +188,7 @@ class TestUnifiedAISinkFailClosed:
 
         mock_pii_instance = MagicMock()
         mock_pii_instance.mask_irreversible = MagicMock(
-            side_effect=RuntimeError("mask failed")
+            side_effect=RuntimeError("mask failed"),
         )
 
         # Mock the class instantiation to return our configured instance.

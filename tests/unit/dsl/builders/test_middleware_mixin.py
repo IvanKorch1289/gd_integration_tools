@@ -106,7 +106,7 @@ def test_middleware_bad_type_raises() -> None:
 def test_execution_engine_builds_chain_with_route_override() -> None:
     """ExecutionEngine заменяет default TimeoutMiddleware route-specific."""
     default_chain = MiddlewareChain(
-        [TimeoutMiddleware(default_timeout=30.0), ErrorNormalizerMiddleware()]
+        [TimeoutMiddleware(default_timeout=30.0), ErrorNormalizerMiddleware()],
     )
     engine = ExecutionEngine(middleware=default_chain, validate_before_execute=False)
 
@@ -130,7 +130,7 @@ def test_execution_engine_builds_chain_with_route_override() -> None:
 async def test_execution_engine_uses_route_timeout() -> None:
     """Route-specific timeout применяется к процессору."""
     default_chain = MiddlewareChain(
-        [TimeoutMiddleware(default_timeout=30.0), ErrorNormalizerMiddleware()]
+        [TimeoutMiddleware(default_timeout=30.0), ErrorNormalizerMiddleware()],
     )
     engine = ExecutionEngine(middleware=default_chain, validate_before_execute=False)
 
@@ -154,7 +154,7 @@ def test_build_chain_without_route_middleware_uses_defaults() -> None:
     engine = ExecutionEngine(middleware=default_chain, validate_before_execute=False)
 
     pipeline = RouteBuilder.from_("route.10", source="internal:test").build(
-        validate_actions=False
+        validate_actions=False,
     )
 
     chain = engine._build_chain(pipeline)

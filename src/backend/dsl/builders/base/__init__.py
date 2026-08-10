@@ -126,7 +126,7 @@ class RouteBuilder(  # type: ignore[misc]
     )
 
     def __init__(
-        self, route_id: str = "", source: str = "", description: str | None = None
+        self, route_id: str = "", source: str = "", description: str | None = None,
     ) -> None:
         """S97 W1: explicit __init__ чтобы ``cls(route_id=..., ...)`` работал.
 
@@ -154,7 +154,7 @@ class RouteBuilder(  # type: ignore[misc]
 
     @classmethod
     def from_(
-        cls, route_id: str, source: str, *, description: str | None = None
+        cls, route_id: str, source: str, *, description: str | None = None,
     ) -> RouteBuilder:
         """Точка входа: создаёт новый RouteBuilder.
         Args:
@@ -176,7 +176,7 @@ class RouteBuilder(  # type: ignore[misc]
 
     @classmethod
     def from_registered_source(
-        cls, route_id: str, source_id: str, *, description: str | None = None
+        cls, route_id: str, source_id: str, *, description: str | None = None,
     ) -> RouteBuilder:
         """Точка входа W23: маршрут запитывается от зарегистрированного Source.
         Связь Source → DSL делается на уровне ``services.sources.lifecycle``
@@ -196,7 +196,7 @@ class RouteBuilder(  # type: ignore[misc]
             )
         """
         return cls(
-            route_id=route_id, source=f"source:{source_id}", description=description
+            route_id=route_id, source=f"source:{source_id}", description=description,
         )
 
     def _add(self, processor: BaseProcessor) -> RouteBuilder:
@@ -204,7 +204,7 @@ class RouteBuilder(  # type: ignore[misc]
         return self
 
     def _add_lazy(
-        self, import_path: str, class_name: str, **kwargs: Any
+        self, import_path: str, class_name: str, **kwargs: Any,
     ) -> RouteBuilder:
         """Lazy import + создание процессора. Для AI/Web/Export/Integration."""
         import importlib

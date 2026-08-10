@@ -78,13 +78,13 @@ class GrpcSink(Sink):
         try:
             if self.secure:
                 channel = grpc_aio.secure_channel(
-                    self.target, ssl_channel_credentials()
+                    self.target, ssl_channel_credentials(),
                 )
             else:
                 channel = grpc_aio.insecure_channel(self.target)
             try:
                 response = await channel.unary_unary(self.full_method)(
-                    body, timeout=self.timeout, metadata=self.metadata or None
+                    body, timeout=self.timeout, metadata=self.metadata or None,
                 )
             finally:
                 await channel.close()
@@ -115,7 +115,7 @@ class GrpcSink(Sink):
         try:
             if self.secure:
                 channel = grpc_aio.secure_channel(
-                    self.target, ssl_channel_credentials()
+                    self.target, ssl_channel_credentials(),
                 )
             else:
                 channel = grpc_aio.insecure_channel(self.target)
@@ -126,7 +126,7 @@ class GrpcSink(Sink):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )
         latency_ms = (time.perf_counter() - start) * 1000.0
         return HealthResult.ok(latency_ms=latency_ms, mode=mode)

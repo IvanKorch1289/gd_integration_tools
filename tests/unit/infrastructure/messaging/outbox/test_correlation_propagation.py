@@ -58,7 +58,7 @@ async def test_enqueue_explicit_header_overrides_context(_session: MagicMock) ->
 
     repo = OutboxRepository(_session)
     msg = await repo.enqueue(
-        topic="orders.created", payload={}, headers={"correlation_id": "explicit-cid"}
+        topic="orders.created", payload={}, headers={"correlation_id": "explicit-cid"},
     )
 
     assert msg.headers["correlation_id"] == "explicit-cid"

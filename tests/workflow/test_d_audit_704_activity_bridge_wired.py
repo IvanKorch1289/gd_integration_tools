@@ -119,7 +119,7 @@ class TestBuildTemporalActivities:
         fake_bridge = MagicMock()
         fake_bridge._cache = {LANGGRAPH_CHECKPOINT_GET_ACTIVITY: MagicMock()}
         fake_bridge.decorate = MagicMock(
-            side_effect=RuntimeError("temporalio SDK not installed")
+            side_effect=RuntimeError("temporalio SDK not installed"),
         )
 
         with patch(
@@ -137,7 +137,7 @@ class TestBuildTemporalActivities:
 
         # Hide the import → ImportError
         with patch.dict("sys.modules", {"temporalio": MagicMock()}), patch(
-            "src.backend.plugins.composition.setup_infra.lifecycle.app_logger"
+            "src.backend.plugins.composition.setup_infra.lifecycle.app_logger",
         ):
             # Force ImportError by patching builtins.__import__
             import builtins

@@ -22,7 +22,7 @@ class TestLoggingLevel:
     """Backend failures логируются на WARNING (production-visible)."""
 
     def test_get_rag_cache_stats_logs_warning(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         c = K4APIClient()
         with caplog.at_level(logging.WARNING):
@@ -36,7 +36,7 @@ class TestLoggingLevel:
         )
 
     def test_flush_rag_cache_tier_logs_warning_with_tier(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         c = K4APIClient()
         with caplog.at_level(logging.WARNING):
@@ -50,7 +50,7 @@ class TestLoggingLevel:
         )
 
     def test_litellm_gateway_stats_logs_warning(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         c = K4APIClient()
         with caplog.at_level(logging.WARNING):
@@ -62,7 +62,7 @@ class TestLoggingLevel:
         )
 
     def test_rag_ingest_status_logs_warning_with_task_id(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         c = K4APIClient()
         with caplog.at_level(logging.WARNING):
@@ -74,7 +74,7 @@ class TestLoggingLevel:
         )
 
     def test_bulk_rag_ingest_logs_warning_with_doc_count(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         c = K4APIClient()
         with caplog.at_level(logging.WARNING):
@@ -88,7 +88,7 @@ class TestLoggingLevel:
         )
 
     def test_rag_ingest_start_logs_warning_with_collection(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         c = K4APIClient()
         f = BytesIO(b"data")

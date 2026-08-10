@@ -160,7 +160,7 @@ class CSRFMiddleware:
         await self.app(scope, receive, send)
 
     async def _process_safe(
-        self, scope: Scope, receive: Receive, send: Send
+        self, scope: Scope, receive: Receive, send: Send,
     ) -> None:
         """Обработка safe method (cycle 57 helper)."""
         # Cycle 57 critical: collect body chunks через send-wrapper
@@ -195,7 +195,7 @@ class CSRFMiddleware:
                                 f"HttpOnly; SameSite=strict"
                                 + ("; Secure" if is_production else "")
                             ).encode("latin-1"),
-                        )
+                        ),
                     )
                 response_headers.clear()
                 response_headers.extend(headers)
@@ -206,7 +206,7 @@ class CSRFMiddleware:
                         "type": "http.response.start",
                         "status": response_status["status"],
                         "headers": headers,
-                    }
+                    },
                 )
             elif message["type"] == "http.response.body":
                 # Пропускаем body (cycle 57: только headers модифицируются).
@@ -291,7 +291,7 @@ class CSRFMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body_bytes})
 

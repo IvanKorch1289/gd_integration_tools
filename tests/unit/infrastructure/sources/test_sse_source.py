@@ -81,7 +81,7 @@ async def test_sse_parses_simple_event() -> None:
 async def test_sse_parses_named_event_with_id() -> None:
     """Event с event_type + event_id."""
     _FakeAsyncClient._shared_resp = _make_sse_response(
-        ["event: order.created", "id: evt-42", 'data: {"order_id": 1}', "", ""]
+        ["event: order.created", "id: evt-42", 'data: {"order_id": 1}', "", ""],
     )
     with (
         patch("httpx.AsyncClient", _FakeAsyncClient),
@@ -91,7 +91,7 @@ async def test_sse_parses_named_event_with_id() -> None:
         ),
     ):
         source = SSESource(
-            url="https://example.com/events", parse_json=True, reconnect_max_retries=0
+            url="https://example.com/events", parse_json=True, reconnect_max_retries=0,
         )
         events: list[SSEEvent] = []
         async for evt in source.stream():
@@ -111,7 +111,7 @@ async def test_sse_parses_named_event_with_id() -> None:
 async def test_sse_multi_line_data() -> None:
     """Multi-line data: объединяется в одну строку с \\n."""
     _FakeAsyncClient._shared_resp = _make_sse_response(
-        ["data: line1", "data: line2", "data: line3", "", ""]
+        ["data: line1", "data: line2", "data: line3", "", ""],
     )
     with (
         patch("httpx.AsyncClient", _FakeAsyncClient),
@@ -121,7 +121,7 @@ async def test_sse_multi_line_data() -> None:
         ),
     ):
         source = SSESource(
-            url="https://example.com/events", parse_json=False, reconnect_max_retries=0
+            url="https://example.com/events", parse_json=False, reconnect_max_retries=0,
         )
         events: list[SSEEvent] = []
         async for evt in source.stream():
@@ -137,7 +137,7 @@ async def test_sse_multi_line_data() -> None:
 async def test_sse_handles_keep_alive_comments() -> None:
     """SSE comments (``: ping``) — пропускаются."""
     _FakeAsyncClient._shared_resp = _make_sse_response(
-        [": this is a comment", "data: real-event", "", ""]
+        [": this is a comment", "data: real-event", "", ""],
     )
     with (
         patch("httpx.AsyncClient", _FakeAsyncClient),
@@ -147,7 +147,7 @@ async def test_sse_handles_keep_alive_comments() -> None:
         ),
     ):
         source = SSESource(
-            url="https://example.com/events", parse_json=False, reconnect_max_retries=0
+            url="https://example.com/events", parse_json=False, reconnect_max_retries=0,
         )
         events: list[SSEEvent] = []
         async for evt in source.stream():

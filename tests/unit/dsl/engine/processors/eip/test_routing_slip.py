@@ -86,7 +86,7 @@ class TestRoutingSlip:
 
         ex = _exchange("start")
         slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: ["a", "b", "c"], registry=reg
+            steps_resolver=lambda e: ["a", "b", "c"], registry=reg,
         )
         await slip.process(ex, _ctx())
         # Last processor wins
@@ -107,7 +107,7 @@ class TestRoutingSlip:
         reg = SimpleRegistry()
         reg.register("a", _TagProcessor("a"))  # 'a' present, 'missing' absent
         slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: ["a", "missing"], registry=reg, strict=True
+            steps_resolver=lambda e: ["a", "missing"], registry=reg, strict=True,
         )
         ex = _exchange()
         await slip.process(ex, _ctx())
@@ -119,7 +119,7 @@ class TestRoutingSlip:
         reg = SimpleRegistry()
         reg.register("a", _TagProcessor("a"))
         slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: ["a", "missing", "a"], registry=reg, strict=False
+            steps_resolver=lambda e: ["a", "missing", "a"], registry=reg, strict=False,
         )
         ex = _exchange()
         await slip.process(ex, _ctx())
@@ -130,7 +130,7 @@ class TestRoutingSlip:
     async def test_max_steps_exceeded(self) -> None:
         reg = SimpleRegistry()
         slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: ["a"] * 100, registry=reg, max_steps=50
+            steps_resolver=lambda e: ["a"] * 100, registry=reg, max_steps=50,
         )
         ex = _exchange()
         await slip.process(ex, _ctx())
@@ -170,7 +170,7 @@ class TestRoutingSlip:
         for t in ["a", "b", "c"]:
             reg.register(t, _TagProcessor(t))
         slip = RoutingSlipProcessor(
-            steps_resolver=lambda e: ["a", "b", "c"], registry=reg
+            steps_resolver=lambda e: ["a", "b", "c"], registry=reg,
         )
         ex = _exchange()
         await slip.process(ex, _ctx())

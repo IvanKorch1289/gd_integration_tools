@@ -74,7 +74,7 @@ class WorkflowLauncher:
             if version is None:
                 raise WorkflowResolutionError(
                     f"Workflow '{workflow_name}' not found in installed workflows. "
-                    f"Available: {list(self._installed.keys())}"
+                    f"Available: {list(self._installed.keys())}",
                 )
             return ResolvedWorkflow(name=workflow_name, version=version, spec="*")
 
@@ -84,14 +84,14 @@ class WorkflowLauncher:
         except InvalidSpecifier as exc:
             raise WorkflowResolutionError(
                 f"Invalid SemVer spec for workflow '{workflow_name}': {spec!r}. "
-                f"Error: {exc}"
+                f"Error: {exc}",
             ) from exc
 
         installed_version_str = self._installed.get(workflow_name)
         if installed_version_str is None:
             raise WorkflowResolutionError(
                 f"Workflow '{workflow_name}' not found in installed workflows. "
-                f"Available: {list(self._installed.keys())}"
+                f"Available: {list(self._installed.keys())}",
             )
 
         # Check if installed version matches the spec
@@ -100,23 +100,23 @@ class WorkflowLauncher:
         except Exception as exc:
             raise WorkflowResolutionError(
                 f"Invalid version string for workflow '{workflow_name}': "
-                f"{installed_version_str!r}. Error: {exc}"
+                f"{installed_version_str!r}. Error: {exc}",
             ) from exc
 
         if installed_version in spec_set:
             return ResolvedWorkflow(
-                name=workflow_name, version=installed_version_str, spec=spec
+                name=workflow_name, version=installed_version_str, spec=spec,
             )
 
         # Find best matching version if multiple versions were available
         # In practice, we only have one installed version, so check if it matches
         raise WorkflowResolutionError(
             f"Installed version '{installed_version_str}' of workflow "
-            f"'{workflow_name}' does not match spec '{spec}'"
+            f"'{workflow_name}' does not match spec '{spec}'",
         )
 
     def resolve_best_match(
-        self, workflow_name: str, spec: str, available_versions: list[str] | None = None
+        self, workflow_name: str, spec: str, available_versions: list[str] | None = None,
     ) -> ResolvedWorkflow:
         """Resolve to best matching version from available versions.
 
@@ -143,7 +143,7 @@ class WorkflowLauncher:
             spec_set = SpecifierSet(spec)
         except InvalidSpecifier as exc:
             raise WorkflowResolutionError(
-                f"Invalid SemVer spec: {spec!r}. Error: {exc}"
+                f"Invalid SemVer spec: {spec!r}. Error: {exc}",
             ) from exc
 
         matching: list[tuple[Version, str]] = []
@@ -158,7 +158,7 @@ class WorkflowLauncher:
         if not matching:
             raise WorkflowResolutionError(
                 f"No version of workflow '{workflow_name}' matches spec '{spec}'. "
-                f"Available versions: {available_versions}"
+                f"Available versions: {available_versions}",
             )
 
         # Sort by version and return highest

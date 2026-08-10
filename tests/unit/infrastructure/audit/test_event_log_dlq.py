@@ -29,7 +29,7 @@ from src.backend.infrastructure.messaging.dlq_base import DLQEnvelope
 def fresh_audit_log(monkeypatch: pytest.MonkeyPatch) -> AuditEventLog:
     """Return a fresh AuditEventLog instance and reset global singleton."""
     monkeypatch.setattr(
-        "src.backend.infrastructure.audit.event_log._audit_log", None, raising=False
+        "src.backend.infrastructure.audit.event_log._audit_log", None, raising=False,
     )
     return AuditEventLog(table="audit_events", batch_size=2)
 
@@ -44,7 +44,7 @@ def fake_clickhouse(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     fake_mod = types.ModuleType("clickhouse_stub")
     fake_mod.get_clickhouse_client = lambda: fake_client
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.clients.storage.clickhouse", fake_mod
+        sys.modules, "src.backend.infrastructure.clients.storage.clickhouse", fake_mod,
     )
     return fake_client
 
@@ -57,7 +57,7 @@ def fake_correlation(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda: "cid-123",
     )
     monkeypatch.setattr(
-        "src.backend.infrastructure.audit.event_log.get_tenant_id", lambda: "tenant-42"
+        "src.backend.infrastructure.audit.event_log.get_tenant_id", lambda: "tenant-42",
     )
 
 

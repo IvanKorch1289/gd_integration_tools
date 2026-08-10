@@ -18,7 +18,7 @@ import pytest
 
 
 def _make_downstream(
-    state_tenant: str | None = None, response_tenant: str | None = None
+    state_tenant: str | None = None, response_tenant: str | None = None,
 ):
     """Создаёт downstream app, возвращающий 200 + optional tenant.
 
@@ -40,7 +40,7 @@ def _make_downstream(
                 "type": "http.response.start",
                 "status": 200,
                 "headers": response_headers,
-            }
+            },
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -152,7 +152,7 @@ async def test_overrides_downstream_x_tenant_id_header() -> None:
     app = AsyncMock()
     # Downstream посылает свой X-Tenant-ID — мы должны перезаписать.
     app.side_effect = _make_downstream(
-        state_tenant="correct-tenant", response_tenant="stale-downstream-value"
+        state_tenant="correct-tenant", response_tenant="stale-downstream-value",
     )
 
     with patch(

@@ -67,7 +67,7 @@ class OpenAPIImportGateway:
         else:
             raise ValueError(
                 f"OpenAPI: неподдерживаемая версия {version_str!r} "
-                "(ожидается 3.0.x или 3.1.x)"
+                "(ожидается 3.0.x или 3.1.x)",
             )
 
         try:
@@ -154,7 +154,7 @@ class OpenAPIImportGateway:
         )
 
     def _build_endpoint(
-        self, *, prefix: str, method: str, path: str, operation: Any
+        self, *, prefix: str, method: str, path: str, operation: Any,
     ) -> EndpointSpec:
         op_id = operation.operationId or f"{method}_{path.replace('/', '_').strip('_')}"
         operation_id = f"{prefix}.{op_id}"
@@ -249,7 +249,7 @@ class OpenAPIImportGateway:
                         "token": SecretRef(
                             ref=f"${{OPENAPI_{scheme_name.upper()}_TOKEN}}",
                             hint=f"Bearer-токен для security scheme '{scheme_name}'",
-                        )
+                        ),
                     },
                 )
             if http_scheme == "basic":
@@ -275,7 +275,7 @@ class OpenAPIImportGateway:
                     "value": SecretRef(
                         ref=f"${{OPENAPI_{scheme_name.upper()}_VALUE}}",
                         hint=f"API-key value для '{scheme_name}'",
-                    )
+                    ),
                 },
             )
         if scheme_type == "oauth2":
@@ -298,7 +298,7 @@ class OpenAPIImportGateway:
                     "access_token": SecretRef(
                         ref=f"${{OPENAPI_{scheme_name.upper()}_ACCESS_TOKEN}}",
                         hint=f"OAuth2 access token для '{scheme_name}'",
-                    )
+                    ),
                 },
                 scopes=scopes,
             )

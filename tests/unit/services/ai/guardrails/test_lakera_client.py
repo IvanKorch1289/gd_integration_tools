@@ -50,7 +50,7 @@ async def test_lakera_flagged_response_parsed() -> None:
                 "score": 0.92,
                 "breakdown": [{"category": "prompt_injection", "score": 0.92}],
             },
-        )
+        ),
     )
     client = LakeraClient(api_key="test-token")
     result = await client.screen("rm -rf /")
@@ -65,7 +65,7 @@ async def test_lakera_flagged_response_parsed() -> None:
 async def test_lakera_non_flagged_returns_safe() -> None:
     """Безопасный prompt → flagged=False даже при наличии score."""
     respx.post("https://api.lakera.ai/v2/guard").mock(
-        return_value=Response(200, json={"flagged": False, "score": 0.05})
+        return_value=Response(200, json={"flagged": False, "score": 0.05}),
     )
     client = LakeraClient(api_key="test-token")
     result = await client.screen("Привет, как дела?")

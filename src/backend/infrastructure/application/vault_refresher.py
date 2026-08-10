@@ -84,7 +84,7 @@ class VaultSecretRefresher:
 
         self._running = True
         self._task = get_task_registry().create_task(
-            self._refresh_loop(), name="vault-secret-refresher"
+            self._refresh_loop(), name="vault-secret-refresher",
         )
         logger.info("Vault secret refresher started (interval=%ds)", self._interval)
 
@@ -200,11 +200,11 @@ class VaultSecretRefresher:
                 self._tracked_paths[path] = current_version
             except Exception as exc:
                 logger.error(
-                    "vault path check failed", extra={"path": path, "error": str(exc)}
+                    "vault path check failed", extra={"path": path, "error": str(exc)},
                 )
 
     async def _notify_path_callbacks(
-        self, path: str, new_secrets: dict[str, Any]
+        self, path: str, new_secrets: dict[str, Any],
     ) -> None:
         for cb in self._path_callbacks.get(path, []):
             try:
@@ -222,7 +222,7 @@ class VaultSecretRefresher:
         await self._fan_out_to_connectors(path, new_secrets)
 
     async def _fan_out_to_connectors(
-        self, path: str, new_secrets: dict[str, Any]
+        self, path: str, new_secrets: dict[str, Any],
     ) -> None:
         """Прокидывает ротацию в ConnectorRotator (lazy import)."""
         try:

@@ -138,21 +138,21 @@ class TestAPIKeyManagerArgon2DualVerify:
 
     @pytest.mark.asyncio
     async def test_legacy_sha_hash_validates_via_dual_verify(
-        self, raw_key: str, legacy_stored_hash: str
+        self, raw_key: str, legacy_stored_hash: str,
     ) -> None:
         auth = APIKeyAuth(allow_legacy_sha256=True)
         assert auth.verify(raw_key, legacy_stored_hash) is True
 
     @pytest.mark.asyncio
     async def test_argon2_hash_validates_via_primary_path(
-        self, raw_key: str, argon2_stored_hash: str
+        self, raw_key: str, argon2_stored_hash: str,
     ) -> None:
         auth = APIKeyAuth()
         assert auth.verify(raw_key, argon2_stored_hash) is True
 
     @pytest.mark.asyncio
     async def test_legacy_disabled_blocks_sha_only(
-        self, raw_key: str, legacy_stored_hash: str
+        self, raw_key: str, legacy_stored_hash: str,
     ) -> None:
         auth = APIKeyAuth(allow_legacy_sha256=False)
         assert auth.verify(raw_key, legacy_stored_hash) is False
@@ -207,7 +207,7 @@ class TestWSAuthenticateViaFacade:
         ):
             auth = WSAuthenticator()
             cred = WSCredential(
-                token=wrong_raw, method="api_key", source="subprotocol"
+                token=wrong_raw, method="api_key", source="subprotocol",
             )
             with pytest.raises(Exception):
                 # WSAuthError или generic — оба OK.

@@ -164,13 +164,13 @@ def register_extension_module(key: str, dotted_path: str) -> bool:
         raise TypeError(f"key must be non-empty str, got {type(key).__name__}")
     if not isinstance(dotted_path, str):
         raise TypeError(
-            f"dotted_path must be str, got {type(dotted_path).__name__}"
+            f"dotted_path must be str, got {type(dotted_path).__name__}",
         )
     if not is_extension_path(dotted_path):
         raise ExtensionRegistrationError(
             f"dotted_path must start with '{EXTENSION_PATH_PREFIX}' "
             f"and contain only [a-z0-9._] characters; "
-            f"got {dotted_path!r}"
+            f"got {dotted_path!r}",
         )
 
     with _extension_modules_lock:
@@ -184,7 +184,7 @@ def register_extension_module(key: str, dotted_path: str) -> bool:
                 return False
             raise ExtensionRegistrationError(
                 f"key={key!r} уже зарегистрирован с другим path "
-                f"({_extension_modules[key]!r}); unregister первый"
+                f"({_extension_modules[key]!r}); unregister первый",
             )
         _extension_modules[key] = dotted_path
         _logger.info(
@@ -238,7 +238,7 @@ def clear_extension_modules() -> int:
             )
         elif count:
             _logger.info(
-                "clear_extension_modules: cleared %d entries", count
+                "clear_extension_modules: cleared %d entries", count,
             )
         return count
 

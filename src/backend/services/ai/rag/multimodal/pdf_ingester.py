@@ -109,14 +109,14 @@ class PDFIngester:
 
         try:
             text_pages, image_blobs, doc_meta = await asyncio.to_thread(
-                self._parse_pdf, content
+                self._parse_pdf, content,
             )
             meta.update(doc_meta)
         except Exception as exc:
             warnings.append(f"pdf parse failed: {exc}")
             logger.warning("PDFIngester: парсинг PDF упал: %s", exc)
             return IngestResult(
-                document_id=document_id, chunks=chunks, metadata=meta, warnings=warnings
+                document_id=document_id, chunks=chunks, metadata=meta, warnings=warnings,
             )
 
         # Текстовые чанки (per-page → sliding window)
@@ -135,7 +135,7 @@ class PDFIngester:
                             "chunk_index": chunk_idx,
                             "document_id": document_id,
                         },
-                    )
+                    ),
                 )
 
         # Image чанки
@@ -153,15 +153,15 @@ class PDFIngester:
                             "mime": img.get("mime", "image/png"),
                             "document_id": document_id,
                         },
-                    )
+                    ),
                 )
 
         return IngestResult(
-            document_id=document_id, chunks=chunks, metadata=meta, warnings=warnings
+            document_id=document_id, chunks=chunks, metadata=meta, warnings=warnings,
         )
 
     def _parse_pdf(
-        self, content: bytes
+        self, content: bytes,
     ) -> tuple[list[str], list[dict[str, Any]], dict[str, Any]]:
         """Парсит PDF (sync): возвращает per-page text + images + meta.
 
@@ -182,7 +182,7 @@ class PDFIngester:
             return self._parse_pypdfium2(content)
         except ImportError as exc:
             logger.info(
-                "PDFIngester: pypdfium2 недоступен (%s) — fallback на pypdf", exc
+                "PDFIngester: pypdfium2 недоступен (%s) — fallback на pypdf", exc,
             )
             return self._parse_pypdf(content)
 
@@ -208,7 +208,7 @@ class PDFIngester:
 
                 # Извлечение изображений (через page objects)
                 for obj_idx, obj in enumerate(
-                    page.get_objects(filter=(3,))
+                    page.get_objects(filter=(3,)),
                 ):  # type=3=image
                     try:
                         bitmap = obj.get_bitmap(render=False)
@@ -221,7 +221,7 @@ class PDFIngester:
                                 "page_num": page_idx,
                                 "index": obj_idx,
                                 "mime": "image/png",
-                            }
+                            },
                         )
                     except Exception as exc:
                         logger.debug(

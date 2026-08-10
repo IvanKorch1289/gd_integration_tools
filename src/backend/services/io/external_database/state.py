@@ -16,7 +16,7 @@ from typing import Any, Final
 # Формат identifier-а: `name` или `schema.name` или `db.schema.name`, где
 # каждый сегмент — обычный SQL identifier без кавычек.
 _IDENT_RE: Final = re.compile(
-    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$"
+    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$",
 )
 
 # Bind-имена (после ":") должны быть простыми — без точек, без спецсимволов.

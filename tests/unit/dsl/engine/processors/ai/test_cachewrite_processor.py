@@ -42,7 +42,7 @@ class TestCacheWriteProcessor:
         proc = CacheWriteProcessor(key_fn=lambda e: "key")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.set_if_not_exists = AsyncMock()
             await proc.process(exchange, _Context())
@@ -57,7 +57,7 @@ class TestCacheWriteProcessor:
         proc = CacheWriteProcessor(key_fn=lambda e: "fallback", ttl_seconds=1800)
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.set_if_not_exists = AsyncMock()
             await proc.process(exchange, _Context())
@@ -77,7 +77,7 @@ class TestCacheWriteProcessor:
         proc = CacheWriteProcessor(key_fn=lambda e: "key")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.set_if_not_exists = AsyncMock()
             await proc.process(exchange, _Context())
@@ -92,7 +92,7 @@ class TestCacheWriteProcessor:
         proc = CacheWriteProcessor(key_fn=lambda e: "fallback-key")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.set_if_not_exists = AsyncMock()
             await proc.process(exchange, _Context())
@@ -107,10 +107,10 @@ class TestCacheWriteProcessor:
         proc = CacheWriteProcessor(key_fn=lambda e: "key")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.set_if_not_exists = AsyncMock(
-                side_effect=ConnectionError("down")
+                side_effect=ConnectionError("down"),
             )
             await proc.process(exchange, _Context())
 
@@ -121,7 +121,7 @@ class TestCacheWriteProcessor:
         proc = CacheWriteProcessor(key_fn=lambda e: "key")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.set_if_not_exists = AsyncMock(side_effect=TimeoutError("slow"))
             await proc.process(exchange, _Context())

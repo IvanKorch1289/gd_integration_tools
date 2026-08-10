@@ -137,7 +137,7 @@ class _RagRerankerPipeline:
                     reverse=True,
                 )
                 return json.dumps(
-                    [doc.get("id") for doc, _ in ranked], ensure_ascii=False
+                    [doc.get("id") for doc, _ in ranked], ensure_ascii=False,
                 )
             except Exception as exc:
                 logger.warning(

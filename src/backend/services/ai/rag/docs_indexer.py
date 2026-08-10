@@ -266,7 +266,7 @@ class DocsIndexer:
                             "chunk_index": idx,
                             "hash": _h(piece),
                         },
-                    }
+                    },
                 )
                 idx += 1
             offset += step
@@ -281,7 +281,7 @@ class DocsIndexer:
         return list(r)
 
     def _build_points(
-        self, chunks: list[dict[str, Any]], vecs: list[list[float]]
+        self, chunks: list[dict[str, Any]], vecs: list[list[float]],
     ) -> list[Any]:
         """PointStruct → Qdrant, dict fallback → in-memory substitute."""
         try:
@@ -336,7 +336,7 @@ class DocsIndexer:
                         "file": path.name,
                         "file_hash": _h(raw),
                     },
-                )
+                ),
             )
         if not all_chunks:
             return 0
@@ -380,6 +380,6 @@ class DocsIndexer:
                     "metadata": {
                         k: v for k, v in (payload or {}).items() if k != "document"
                     },
-                }
+                },
             )
         return out

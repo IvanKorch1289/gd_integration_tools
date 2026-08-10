@@ -32,7 +32,7 @@ from src.backend.schemas.base import BaseSchema
 # (`Any`), поэтому ниже Pydantic-поля используют ``Any`` — runtime
 # валидация enum'а делегируется самому Pydantic.
 WorkflowEventType: Any = resolve_module(
-    "database.models.workflow_event"
+    "database.models.workflow_event",
 ).WorkflowEventType
 WorkflowStatus: Any = resolve_module("database.models.workflow_instance").WorkflowStatus
 
@@ -62,10 +62,10 @@ class WorkflowEventSchemaOut(BaseSchema):
     workflow_id: UUID = Field(description="UUID инстанса workflow.")
     event_type: WorkflowEventType = Field(description="Тип события.")
     payload: dict[str, Any] = Field(
-        default_factory=dict, description="Произвольный JSON-payload события."
+        default_factory=dict, description="Произвольный JSON-payload события.",
     )
     step_name: str | None = Field(
-        default=None, description="Имя DSL-шага (для step-level событий)."
+        default=None, description="Имя DSL-шага (для step-level событий).",
     )
     occurred_at: datetime = Field(description="Время записи события.")
 
@@ -159,10 +159,10 @@ class WorkflowInstanceRef(BaseSchema):
     status: WorkflowStatus = Field(description="Текущий статус инстанса.")
     created_at: datetime = Field(description="Время создания.")
     result: dict[str, Any] | None = Field(
-        default=None, description="Результат (только при wait=True и succeeded)."
+        default=None, description="Результат (только при wait=True и succeeded).",
     )
     error: str | None = Field(
-        default=None, description="Текст ошибки (при wait=True и terminal failure)."
+        default=None, description="Текст ошибки (при wait=True и terminal failure).",
     )
 
 
@@ -175,14 +175,14 @@ class WorkflowTriggerRequest(BaseSchema):
     """
 
     payload: dict[str, Any] = Field(
-        default_factory=dict, description="Входной payload для workflow."
+        default_factory=dict, description="Входной payload для workflow.",
     )
     tenant_id: str | None = Field(
         default=None,
         description="Override tenant scope (по умолчанию — из контекста запроса).",
     )
     correlation_id: str | None = Field(
-        default=None, description="Корреляционный ID (если не задан — генерируется)."
+        default=None, description="Корреляционный ID (если не задан — генерируется).",
     )
 
 

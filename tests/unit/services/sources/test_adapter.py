@@ -36,8 +36,8 @@ class TestHandle:
         invoker = AsyncMock()
         invoker.invoke = AsyncMock(
             return_value=InvocationResponse(
-                invocation_id="i1", status=InvocationStatus.OK
-            )
+                invocation_id="i1", status=InvocationStatus.OK,
+            ),
         )
         adapter = SourceToInvokerAdapter(invoker, "orders.pay")
         event = _make_event()
@@ -72,8 +72,8 @@ class TestHandle:
         invoker = AsyncMock()
         invoker.invoke = AsyncMock(
             return_value=InvocationResponse(
-                invocation_id="i1", status=InvocationStatus.OK
-            )
+                invocation_id="i1", status=InvocationStatus.OK,
+            ),
         )
         dedupe = AsyncMock()
         dedupe.is_duplicate = AsyncMock(return_value=False)
@@ -86,8 +86,8 @@ class TestHandle:
         invoker = AsyncMock()
         invoker.invoke = AsyncMock(
             return_value=InvocationResponse(
-                invocation_id="i1", status=InvocationStatus.OK
-            )
+                invocation_id="i1", status=InvocationStatus.OK,
+            ),
         )
 
         def mapper(event: SourceEvent) -> dict[str, object]:
@@ -111,11 +111,11 @@ class TestHandle:
         invoker = AsyncMock()
         invoker.invoke = AsyncMock(
             return_value=InvocationResponse(
-                invocation_id="i1", status=InvocationStatus.OK
-            )
+                invocation_id="i1", status=InvocationStatus.OK,
+            ),
         )
         adapter = SourceToInvokerAdapter(
-            invoker, "orders.pay", mode=InvocationMode.ASYNC_QUEUE, reply_channel="q1"
+            invoker, "orders.pay", mode=InvocationMode.ASYNC_QUEUE, reply_channel="q1",
         )
         event = _make_event()
         await adapter.handle(event)

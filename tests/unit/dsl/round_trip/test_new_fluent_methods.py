@@ -50,7 +50,7 @@ def test_crud_create_alias() -> None:
 
 def test_crud_read_alias() -> None:
     builder = RouteBuilder.from_("rt.crud.read", source="test").crud_read(
-        "orders", id_from="body.order_id"
+        "orders", id_from="body.order_id",
     )
     pipeline = builder.build(validate_actions=False)
     assert isinstance(pipeline.processors[0], EntityGetProcessor)
@@ -70,7 +70,7 @@ def test_crud_delete_alias() -> None:
 
 def test_crud_list_alias() -> None:
     builder = RouteBuilder.from_("rt.crud.list", source="test").crud_list(
-        "orders", page=1, size=10
+        "orders", page=1, size=10,
     )
     pipeline = builder.build(validate_actions=False)
     assert isinstance(pipeline.processors[0], EntityListProcessor)
@@ -81,7 +81,7 @@ def test_crud_list_alias() -> None:
 
 def test_call_function_builder_adds_processor() -> None:
     builder = RouteBuilder.from_("rt.fn", source="test").call_function(
-        "src.backend.dsl.builder:RouteBuilder"
+        "src.backend.dsl.builder:RouteBuilder",
     )
     pipeline = builder.build(validate_actions=False)
     assert isinstance(pipeline.processors[0], CallFunctionProcessor)
@@ -99,7 +99,7 @@ def test_call_function_rejects_invalid_ref() -> None:
 
 def test_get_setting_builder_adds_processor() -> None:
     builder = RouteBuilder.from_("rt.gs", source="test").get_setting(
-        "ai.openai.model", to="body.model_name", default="gpt-4"
+        "ai.openai.model", to="body.model_name", default="gpt-4",
     )
     pipeline = builder.build(validate_actions=False)
     proc = pipeline.processors[0]
@@ -116,7 +116,7 @@ def test_get_setting_requires_non_empty_path() -> None:
 
 def test_validate_response_builder_adds_processor() -> None:
     builder = RouteBuilder.from_("rt.vr", source="test").validate_response(
-        on_error="dlq", source="out_body"
+        on_error="dlq", source="out_body",
     )
     pipeline = builder.build(validate_actions=False)
     proc = pipeline.processors[0]
@@ -131,7 +131,7 @@ def test_validate_response_rejects_invalid_on_error() -> None:
 
 def test_invoke_workflow_builder_adds_processor() -> None:
     builder = RouteBuilder.from_("rt.wf", source="test").invoke_workflow(
-        "credit_assessment_ai", mode="async-api"
+        "credit_assessment_ai", mode="async-api",
     )
     pipeline = builder.build(validate_actions=False)
     proc = pipeline.processors[0]
@@ -150,7 +150,7 @@ def test_invoke_workflow_rejects_invalid_mode() -> None:
 
 def test_get_setting_round_trip_yaml() -> None:
     builder = RouteBuilder.from_("rt.gs.rt", source="test").get_setting(
-        "skb.api_url", to="body.api_url"
+        "skb.api_url", to="body.api_url",
     )
     dump, rebuilt = _round_trip(builder)
     assert dump == rebuilt
@@ -158,7 +158,7 @@ def test_get_setting_round_trip_yaml() -> None:
 
 def test_invoke_workflow_round_trip_yaml() -> None:
     builder = RouteBuilder.from_("rt.wf.rt", source="test").invoke_workflow(
-        "credit_assessment_ai", mode="sync"
+        "credit_assessment_ai", mode="sync",
     )
     dump, rebuilt = _round_trip(builder)
     assert dump == rebuilt

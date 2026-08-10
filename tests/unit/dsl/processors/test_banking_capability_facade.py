@@ -38,7 +38,7 @@ class TestCheckCapabilityViaFacade:
         exchange = MagicMock()
 
         with patch(
-            "src.backend.services.capabilities.facade.get_capability_facade"
+            "src.backend.services.capabilities.facade.get_capability_facade",
         ) as mock_get:
             mock_facade = MagicMock()
             mock_facade.check_or_raise.return_value = True
@@ -56,7 +56,7 @@ class TestCheckCapabilityViaFacade:
         exchange = MagicMock()
 
         with patch(
-            "src.backend.services.capabilities.facade.get_capability_facade"
+            "src.backend.services.capabilities.facade.get_capability_facade",
         ) as mock_get:
             mock_facade = MagicMock()
             mock_facade.check_or_raise.side_effect = (
@@ -82,7 +82,7 @@ class TestCheckCapabilityViaFacade:
         exchange = MagicMock()
 
         with patch(
-            "src.backend.services.capabilities.facade.get_capability_facade"
+            "src.backend.services.capabilities.facade.get_capability_facade",
         ) as mock_get:
             mock_facade = MagicMock()
             mock_facade.check_or_raise.side_effect = RuntimeError("boom")
@@ -101,7 +101,7 @@ class TestCheckCapabilityViaFacade:
         exchange = MagicMock()
 
         with patch(
-            "src.backend.services.capabilities.facade.get_capability_facade"
+            "src.backend.services.capabilities.facade.get_capability_facade",
         ) as mock_get:
             mock_facade = MagicMock()
             mock_facade.check_or_raise.return_value = True
@@ -134,7 +134,7 @@ class TestIdentityMigration:
         exchange = MagicMock()
 
         with patch(
-            "src.backend.services.capabilities.facade.get_capability_facade"
+            "src.backend.services.capabilities.facade.get_capability_facade",
         ) as mock_get:
             mock_facade = MagicMock()
             mock_facade.check_or_raise.return_value = True

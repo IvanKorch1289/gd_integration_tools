@@ -218,7 +218,7 @@ class TestFacadeLayerBoundariesCycle59:
                         if isinstance(node, ast.ImportFrom):
                             mod = node.module or ""
                             if mod.startswith(
-                                ("src.backend.services.", "src.backend.infrastructure.")
+                                ("src.backend.services.", "src.backend.infrastructure."),
                             ):
                                 violations.append((f_path, mod))
                 except (SyntaxError, UnicodeDecodeError):
@@ -228,5 +228,5 @@ class TestFacadeLayerBoundariesCycle59:
         if len(violations) > 3:
             pytest.fail(
                 f"Found {len(violations)} extensions violations (> 3 known). "
-                f"New violations: {violations}"
+                f"New violations: {violations}",
             )

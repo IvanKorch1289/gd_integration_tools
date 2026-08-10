@@ -85,7 +85,7 @@ class EventSourcesMixin:
             raise ValueError("from_event_subscribe: channel is required")
 
         builder: RouteBuilder = cls(
-            route_id=route_id, source=f"event_subscribe:{channel}"
+            route_id=route_id, source=f"event_subscribe:{channel}",
         )
         # Сохраняем конфиг для последующей регистрации в
         # ``infrastructure.clients.messaging.event_bus.subscribe()``

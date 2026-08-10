@@ -68,7 +68,7 @@ class TestContinueAsNewHandler:
         exchange = MagicMock()
         exchange.in_message = MagicMock()
         exchange.in_message.body = {
-            "continue_as_new_requested": {"requested": True, "same_workflow_id": True}
+            "continue_as_new_requested": {"requested": True, "same_workflow_id": True},
         }
         assert h.should_continue(exchange) is True
 

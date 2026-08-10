@@ -47,7 +47,7 @@ class NotebookListQuery(BaseModel):
 
     tag: str | None = Field(default=None, description="Фильтр по тегу.")
     include_deleted: bool = Field(
-        default=False, description="Включить soft-deleted notebooks."
+        default=False, description="Включить soft-deleted notebooks.",
     )
     limit: int = Field(default=50, ge=1, le=500, description="Размер страницы.")
     offset: int = Field(default=0, ge=0, description="Смещение для пагинации.")
@@ -130,18 +130,18 @@ def _require_notebook(result: Notebook | None, _: dict[str, Any]) -> Notebook:
 
 
 def _require_version(
-    result: NotebookVersion | None, kwargs: dict[str, Any]
+    result: NotebookVersion | None, kwargs: dict[str, Any],
 ) -> NotebookVersion:
     if result is None:
         version = kwargs.get("version")
         raise HTTPException(
-            status_code=404, detail=f"Notebook или версия {version} не найдены"
+            status_code=404, detail=f"Notebook или версия {version} не найдены",
         )
     return result
 
 
 async def _list_versions_handler(
-    result: list[NotebookVersion], kwargs: dict[str, Any]
+    result: list[NotebookVersion], kwargs: dict[str, Any],
 ) -> list[NotebookVersion]:
     """Если версий нет — проверяем существование самого notebook'а.
 
@@ -169,7 +169,7 @@ def _restore_handler(result: Notebook | None, kwargs: dict[str, Any]) -> Noteboo
     if result is None:
         version = kwargs.get("version")
         raise HTTPException(
-            status_code=404, detail=f"Notebook или версия {version} не найдены"
+            status_code=404, detail=f"Notebook или версия {version} не найдены",
         )
     return result
 
@@ -287,5 +287,5 @@ builder.add_actions(
             response_handler=_delete_handler,
             tags=common_tags,
         ),
-    ]
+    ],
 )

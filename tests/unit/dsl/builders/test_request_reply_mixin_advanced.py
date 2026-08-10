@@ -84,7 +84,7 @@ async def test_backend_request_reply_round_trip() -> None:
 
     asyncio.create_task(replier())
     result = await backend.request(
-        "endpoint", {"action": "test"}, correlation_id="cid-123"
+        "endpoint", {"action": "test"}, correlation_id="cid-123",
     )
 
     assert result == {"result": "ok"}
@@ -122,7 +122,7 @@ async def test_backend_duplicate_correlation_id_request() -> None:
 
     # Block first request so cid stays pending
     task = asyncio.create_task(
-        backend.request("endpoint", {"a": 1}, correlation_id="dup", timeout=10.0)
+        backend.request("endpoint", {"a": 1}, correlation_id="dup", timeout=10.0),
     )
     await asyncio.sleep(0)  # let request acquire lock and register pending
 

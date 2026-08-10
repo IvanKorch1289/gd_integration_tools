@@ -71,7 +71,7 @@ class TestScriptRunnerProcessor:
         exchange = _make_exchange()
 
         with patch(
-            "src.backend.dsl.engine.processors.script_runner._logger"
+            "src.backend.dsl.engine.processors.script_runner._logger",
         ) as mock_logger:
             with pytest.raises(NotImplementedError):
                 await proc.process(exchange, MagicMock())
@@ -124,7 +124,7 @@ class TestScriptRunnerProcessor:
     async def test_language_not_in_whitelist_also_rejected(self) -> None:
         """language не в whitelist тоже reject (whitelist check недостижим, но безопасно)."""
         proc = ScriptRunnerProcessor(
-            language="ruby", code="puts 'hi'", allowed_languages=["python", "node"]
+            language="ruby", code="puts 'hi'", allowed_languages=["python", "node"],
         )
         exchange = _make_exchange()
         with pytest.raises(NotImplementedError):
@@ -147,7 +147,7 @@ class TestScriptRunnerProcessor:
                 "timeout_seconds": 60.0,
                 "allowed_languages": ["node", "python"],
                 "env": {"FOO": "bar"},
-            }
+            },
         }
 
     def test_to_spec_omits_defaults(self) -> None:

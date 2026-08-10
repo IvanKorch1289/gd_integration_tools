@@ -55,7 +55,7 @@ def test_processor_validates_duplicate_names() -> None:
             sources=[
                 APISource(name="dup", url="https://a.com"),
                 APISource(name="dup", url="https://b.com"),
-            ]
+            ],
         )
 
 
@@ -84,7 +84,7 @@ async def test_merge_dicts_strategy() -> None:
         sources=[
             APISource(name="user", url="https://api/users", transform_fn=lambda r: r),
             APISource(
-                name="orders", url="https://api/orders", transform_fn=lambda r: r
+                name="orders", url="https://api/orders", transform_fn=lambda r: r,
             ),
         ],
         http_fetcher=fetcher,
@@ -157,7 +157,7 @@ async def test_transform_fn_applied() -> None:
                 name="x",
                 url="https://api/x",
                 transform_fn=lambda r: {"wrapped": r["raw"]},
-            )
+            ),
         ],
         http_fetcher=fetcher,
     )
@@ -232,7 +232,7 @@ async def test_fallback_value_on_error() -> None:
         sources=[
             APISource(name="ok", url="https://api/ok"),
             APISource(
-                name="fail", url="https://api/fail", fallback_value={"degraded": True}
+                name="fail", url="https://api/fail", fallback_value={"degraded": True},
             ),
         ],
         http_fetcher=fetcher,
@@ -282,7 +282,7 @@ async def test_path_and_query_params() -> None:
                 url="https://api/users/{user_id}",
                 path_params={"user_id": "u-1"},
                 query_params={"include": "orders", "limit": 10},
-            )
+            ),
         ],
         http_fetcher=fetcher,
     )

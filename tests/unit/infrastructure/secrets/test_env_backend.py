@@ -25,7 +25,7 @@ class TestEnvBackendEnvName:
 @pytest.mark.unit
 class TestEnvBackendGet:
     def test_get_returns_secret_value_when_env_set(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("DB__POSTGRES", "pg-password")
         backend = EnvBackend()
@@ -43,7 +43,7 @@ class TestEnvBackendGet:
 @pytest.mark.unit
 class TestEnvBackendGetVersioned:
     def test_get_versioned_ignores_version_and_returns_current(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("API_KEY", "current-key")
         backend = EnvBackend()

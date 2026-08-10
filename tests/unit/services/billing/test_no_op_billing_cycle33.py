@@ -161,7 +161,7 @@ class TestNoOpBillingFacadeRejectsWhenBillingEnabled:
 
     @pytest.mark.asyncio
     async def test_consume_request_raises_when_enabled(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         from src.backend.services.billing import no_op_billing
 
@@ -172,7 +172,7 @@ class TestNoOpBillingFacadeRejectsWhenBillingEnabled:
 
     @pytest.mark.asyncio
     async def test_check_tokens_raises_when_enabled(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         from src.backend.services.billing import no_op_billing
 
@@ -245,7 +245,7 @@ class TestBillingProvider:
         assert isinstance(provider, NoOpBillingFacade)
 
     def test_billing_enabled_raises_not_implemented(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         from src.backend.core.di.providers import billing
         from src.backend.services.billing import no_op_billing

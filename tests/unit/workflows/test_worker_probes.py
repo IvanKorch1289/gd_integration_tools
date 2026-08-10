@@ -33,7 +33,7 @@ def _isolate_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
         wp,
         "WORKER_QUEUE_DEPTH",
         temp_metrics.gauge(
-            "workflow_worker_queue_depth", "Queue depth.", labels=("worker_id",)
+            "workflow_worker_queue_depth", "Queue depth.", labels=("worker_id",),
         ),
     )
     monkeypatch.setattr(
@@ -71,7 +71,7 @@ def _make_client(
             Route("/healthz", server._handle_healthz),
             Route("/readyz", server._handle_readyz),
             Route("/metrics", server._handle_metrics),
-        ]
+        ],
     )
     return TestClient(app), server
 
@@ -97,7 +97,7 @@ def test_readyz_ready() -> None:
     runner = MagicMock()
     runner._running = True
     client, _ = _make_client(
-        runner=runner, readiness_check=AsyncMock(return_value=True)
+        runner=runner, readiness_check=AsyncMock(return_value=True),
     )
     response = client.get("/readyz")
     assert response.status_code == 200
@@ -120,7 +120,7 @@ def test_readyz_not_ready_check() -> None:
     runner = MagicMock()
     runner._running = True
     client, _ = _make_client(
-        runner=runner, readiness_check=AsyncMock(return_value=False)
+        runner=runner, readiness_check=AsyncMock(return_value=False),
     )
     response = client.get("/readyz")
     assert response.status_code == 503
@@ -133,7 +133,7 @@ def test_readyz_draining() -> None:
     runner = MagicMock()
     runner._running = True
     client, _ = _make_client(
-        runner=runner, readiness_check=AsyncMock(return_value=True), draining=True
+        runner=runner, readiness_check=AsyncMock(return_value=True), draining=True,
     )
     response = client.get("/readyz")
     assert response.status_code == 503
@@ -146,7 +146,7 @@ def test_readyz_check_error() -> None:
     runner = MagicMock()
     runner._running = True
     client, _ = _make_client(
-        runner=runner, readiness_check=AsyncMock(side_effect=RuntimeError("boom"))
+        runner=runner, readiness_check=AsyncMock(side_effect=RuntimeError("boom")),
     )
     response = client.get("/readyz")
     assert response.status_code == 503

@@ -108,8 +108,8 @@ class PytesseractOCRProcessor:
         try:
             return str(
                 await asyncio.to_thread(
-                    pytesseract.image_to_string, str(image_path), lang=lang
-                )
+                    pytesseract.image_to_string, str(image_path), lang=lang,
+                ),
             )
         except Exception as exc:  # tesseract error, env error, etc.
             _logger.warning("pytesseract recognize failed: %s", exc)

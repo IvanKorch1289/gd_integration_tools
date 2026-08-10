@@ -187,7 +187,7 @@ class DataFormatsMixin:
             import pyarrow.parquet as pq
         except ImportError as exc:
             raise ImportError(
-                "to_parquet requires 'pyarrow' (pip install pyarrow)"
+                "to_parquet requires 'pyarrow' (pip install pyarrow)",
             ) from exc
         rows = list(data) if data else []
         if rows and not isinstance(rows[0], dict):
@@ -202,7 +202,7 @@ class DataFormatsMixin:
             import pyarrow.parquet as pq
         except ImportError as exc:
             raise ImportError(
-                "from_parquet requires 'pyarrow' (pip install pyarrow)"
+                "from_parquet requires 'pyarrow' (pip install pyarrow)",
             ) from exc
         if isinstance(data, (bytes, bytearray)):
             table = pq.read_table(io.BytesIO(bytes(data)))
@@ -222,7 +222,7 @@ class DataFormatsMixin:
             import msgpack
         except ImportError as exc:
             raise ImportError(
-                "to_msgpack requires 'msgpack' (pip install msgpack)"
+                "to_msgpack requires 'msgpack' (pip install msgpack)",
             ) from exc
         return msgpack.packb(data, use_bin_type=True)
 
@@ -241,7 +241,7 @@ class DataFormatsMixin:
             import msgpack
         except ImportError as exc:
             raise ImportError(
-                "from_msgpack requires 'msgpack' (pip install msgpack)"
+                "from_msgpack requires 'msgpack' (pip install msgpack)",
             ) from exc
         return msgpack.unpackb(raw, raw=False)
 
@@ -254,7 +254,7 @@ class DataFormatsMixin:
             return tomli_w.dumps(data)
         except ImportError as exc:
             raise ImportError(
-                "to_toml requires 'tomli_w' (pip install tomli_w)"
+                "to_toml requires 'tomli_w' (pip install tomli_w)",
             ) from exc
 
     def _from_toml(self, data: Any) -> dict[str, Any]:
@@ -268,7 +268,7 @@ class DataFormatsMixin:
                 import tomli as tomllib  # type: ignore[import-untyped,no-redef]  # type: ignore  # type: ignore[unused-ignore]
             except ImportError as exc:
                 raise ImportError(
-                    "from_toml requires 'tomllib' (stdlib 3.11+) or 'tomli'"
+                    "from_toml requires 'tomllib' (stdlib 3.11+) or 'tomli'",
                 ) from exc
         return tomllib.loads(text)
 

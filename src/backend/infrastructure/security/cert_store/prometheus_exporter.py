@@ -46,7 +46,7 @@ class CertPrometheusExporter:
             )
         except ImportError as exc:
             raise ImportError(
-                "prometheus_client не установлен. pip install prometheus-client"
+                "prometheus_client не установлен. pip install prometheus-client",
             ) from exc
 
         # Изолированный registry — не загрязняет global

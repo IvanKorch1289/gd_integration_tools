@@ -26,7 +26,7 @@ class HelpersMixin(_RedisClientProtocol):
     __slots__ = ()
 
     async def execute(
-        self, kind: RedisKind, operation: Callable[[Redis], Awaitable[Any]]
+        self, kind: RedisKind, operation: Callable[[Redis], Awaitable[Any]],
     ) -> Any:
         """Выполнить Redis-операцию с retry и CB (IL1.4).
 
@@ -44,7 +44,7 @@ class HelpersMixin(_RedisClientProtocol):
                     return await operation(client)
                 except (RedisConnectionError, RedisTimeoutError, RedisError) as exc:
                     self.logger.warning(
-                        "Redis kind=%s недоступен, reconnect: %s", kind, str(exc)
+                        "Redis kind=%s недоступен, reconnect: %s", kind, str(exc),
                     )
                     await self.reset_client(kind)
                     client = await self.get_client(kind, force_reconnect=True)

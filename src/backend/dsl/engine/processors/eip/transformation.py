@@ -29,7 +29,7 @@ class MessageTranslatorProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, from_format: str, to_format: str, *, name: str | None = None
+        self, from_format: str, to_format: str, *, name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"translate:{from_format}→{to_format}")
         self._from = from_format
@@ -164,7 +164,7 @@ class SplitterProcessor(BaseProcessor):
         results: list[Any] = []
         for item in items:
             sub_exchange = Exchange(
-                in_message=Message(body=item, headers=dict(exchange.in_message.headers))
+                in_message=Message(body=item, headers=dict(exchange.in_message.headers)),
             )
             sub_exchange.status = ExchangeStatus.processing
 
@@ -258,7 +258,7 @@ class ClaimCheckProcessor(BaseProcessor):
 
                     s3 = get_s3_client()
                     await s3.put_object(
-                        key=token, body=body_bytes, metadata={"ttl": str(self._ttl)}
+                        key=token, body=body_bytes, metadata={"ttl": str(self._ttl)},
                     )
                 except Exception as exc:
                     _camel_logger.warning("Claim check S3 store failed: %s", exc)
@@ -271,7 +271,7 @@ class ClaimCheckProcessor(BaseProcessor):
                     )
 
                     await redis_client.set_if_not_exists(
-                        key=token, value=body_bytes.decode(), ttl=self._ttl
+                        key=token, value=body_bytes.decode(), ttl=self._ttl,
                     )
                 except (ConnectionError, TimeoutError, OSError) as exc:
                     _camel_logger.warning("Claim check Redis store failed: %s", exc)
@@ -279,7 +279,7 @@ class ClaimCheckProcessor(BaseProcessor):
 
             exchange.set_property("_claim_token", token)
             exchange.set_out(
-                body={"_claim_token": token}, headers=dict(exchange.in_message.headers)
+                body={"_claim_token": token}, headers=dict(exchange.in_message.headers),
             )
 
         elif self._mode == "retrieve":
@@ -316,7 +316,7 @@ class ClaimCheckProcessor(BaseProcessor):
                         return
                     restored = orjson.loads(raw)
                 exchange.set_out(
-                    body=restored, headers=dict(exchange.in_message.headers)
+                    body=restored, headers=dict(exchange.in_message.headers),
                 )
             except (ConnectionError, TimeoutError, OSError) as exc:
                 exchange.fail(f"Claim check retrieve failed: {exc}")
@@ -332,7 +332,7 @@ class NormalizerProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, target_schema: type[BaseModel] | None = None, *, name: str | None = None
+        self, target_schema: type[BaseModel] | None = None, *, name: str | None = None,
     ) -> None:
         super().__init__(name=name or "normalizer")
         self._schema = target_schema

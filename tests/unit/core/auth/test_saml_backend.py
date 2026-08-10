@@ -44,7 +44,7 @@ def _backend(*, now: list[float] | None = None) -> SamlBackend:
 
     nonces = iter(["req-1", "req-2", "req-3"])
     return SamlBackend(
-        config=_config(), clock=clock, nonce_factory=lambda: next(nonces)
+        config=_config(), clock=clock, nonce_factory=lambda: next(nonces),
     )
 
 
@@ -123,7 +123,7 @@ def test_validator_failure_wrapped_in_saml_error() -> None:
 def test_logout_url_composition() -> None:
     backend = _backend()
     url = backend.build_logout_redirect_url(
-        session_index="sess-99", name_id="alice@example.com"
+        session_index="sess-99", name_id="alice@example.com",
     )
     assert url.startswith("https://idp.example.com/slo")
     assert "SessionIndex=sess-99" in url

@@ -205,7 +205,7 @@ class ClickHouseInsertProcessor(_InfraOp):
         if rows is None:
             exchange.fail(
                 f"clickhouse_insert: rows_from={rows_from!r} "
-                "missing or not a list of dicts"
+                "missing or not a list of dicts",
             )
             return
 
@@ -214,7 +214,7 @@ class ClickHouseInsertProcessor(_InfraOp):
             exchange.fail(
                 f"clickhouse_insert: refusing oversized batch "
                 f"({len(rows)} > MAX_INSERT_ROWS={MAX_INSERT_ROWS}); "
-                "split caller-side before insert()"
+                "split caller-side before insert()",
             )
             return
 
@@ -399,11 +399,11 @@ class InfrastructureDSL:
     # ── Redis (3) ──
 
     def redis_set(
-        self, key: str, value: str, *, ttl_seconds: int | None = None
+        self, key: str, value: str, *, ttl_seconds: int | None = None,
     ) -> RouteBuilder:
         """``SET key value [EX ttl]`` в Redis. ``ttl_seconds=None`` = бессрочно."""
         return self._add(  # type: ignore[attr-defined]
-            RedisSetProcessor(key=key, value=value, ttl_seconds=ttl_seconds)
+            RedisSetProcessor(key=key, value=value, ttl_seconds=ttl_seconds),
         )
 
     # NOTE: redis_get DELETED (S175 #5) — use InfraRedisGetProcessor.
@@ -411,7 +411,7 @@ class InfrastructureDSL:
     def redis_delete(self, key: str) -> RouteBuilder:
         """``DEL key`` в Redis."""
         return self._add(  # type: ignore[attr-defined]
-            RedisDeleteProcessor(key=key)
+            RedisDeleteProcessor(key=key),
         )
 
     # ── ClickHouse (2) ──
@@ -434,8 +434,8 @@ class InfrastructureDSL:
         """
         return self._add(  # type: ignore[attr-defined]
             ClickHouseInsertProcessor(
-                table=table, batch_size=batch_size, rows_from=rows_from
-            )
+                table=table, batch_size=batch_size, rows_from=rows_from,
+            ),
         )
 
     # NOTE: clickhouse_query DELETED (S175 #5) — use InfraClickHouseQueryProcessor.
@@ -448,33 +448,33 @@ class InfrastructureDSL:
         ``doc_id_from=None`` → ES auto-generates ``_id``.
         """
         return self._add(  # type: ignore[attr-defined]
-            ElasticsearchIndexProcessor(index=index, doc_id_from=doc_id_from)
+            ElasticsearchIndexProcessor(index=index, doc_id_from=doc_id_from),
         )
 
     def es_search(self, index: str, query: dict, *, size: int = 10) -> RouteBuilder:
         """Поиск в ES; hits в ``exchange.properties["_es_hits"]``."""
         return self._add(  # type: ignore[attr-defined]
-            ElasticsearchSearchProcessor(index=index, query=query, size=size)
+            ElasticsearchSearchProcessor(index=index, query=query, size=size),
         )
 
     # ── MongoDB (2) ──
 
     def mongo_insert(
-        self, collection: str, *, document_from: str = "body"
+        self, collection: str, *, document_from: str = "body",
     ) -> RouteBuilder:
         """INSERT документа в Mongo ``collection``."""
         return self._add(  # type: ignore[attr-defined]
-            MongoInsertProcessor(collection=collection, document_from=document_from)
+            MongoInsertProcessor(collection=collection, document_from=document_from),
         )
 
     def mongo_find(
-        self, collection: str, query: dict, *, to_property: str = "docs"
+        self, collection: str, query: dict, *, to_property: str = "docs",
     ) -> RouteBuilder:
         """FIND документов в Mongo; результат в ``exchange.properties[to_property]``."""
         return self._add(  # type: ignore[attr-defined]
             MongoFindProcessor(
-                collection=collection, query=query, to_property=to_property
-            )
+                collection=collection, query=query, to_property=to_property,
+            ),
         )
 
     # ── S3 DELETED (S175 #5) — use ToS3Processor/FromS3Processor/S3PresignProcessor/ ──
@@ -517,7 +517,7 @@ class InfrastructureDSL:
                 key_file=key_file,
                 timeout=timeout,
                 result_property=result_property,
-            )
+            ),
         )
 
     def sftp_put(
@@ -557,7 +557,7 @@ class InfrastructureDSL:
                 key_file=key_file,
                 timeout=timeout,
                 result_property=result_property,
-            )
+            ),
         )
 
     # ── SQL (1) ──

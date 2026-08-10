@@ -44,7 +44,7 @@ class L3RetrievalCache:
         self._prefix = prefix or self.PREFIX
 
     def _key(
-        self, query: str, *, tenant: str | None = None, namespace: str | None = None
+        self, query: str, *, tenant: str | None = None, namespace: str | None = None,
     ) -> str:
         """Строит tenant-aware ключ: ``{prefix}tenant:{t}:{ns}:{digest}``.
 
@@ -70,7 +70,7 @@ class L3RetrievalCache:
         return self._client
 
     async def get(
-        self, query: str, *, tenant: str | None = None, namespace: str | None = None
+        self, query: str, *, tenant: str | None = None, namespace: str | None = None,
     ) -> list[dict[str, Any]] | None:
         """Get cached retrieval results.
 
@@ -85,7 +85,7 @@ class L3RetrievalCache:
         client = self._ensure_client()
         try:
             raw = await client.cache_get(
-                self._key(query, tenant=tenant, namespace=namespace)
+                self._key(query, tenant=tenant, namespace=namespace),
             )
         except Exception as exc:
             logger.debug("L3 cache get failed: %s", exc)
@@ -129,7 +129,7 @@ class L3RetrievalCache:
             logger.debug("L3 cache set failed: %s", exc)
 
     async def invalidate(
-        self, query: str, *, tenant: str | None = None, namespace: str | None = None
+        self, query: str, *, tenant: str | None = None, namespace: str | None = None,
     ) -> None:
         """Invalidate cache entry.
 
@@ -141,7 +141,7 @@ class L3RetrievalCache:
         client = self._ensure_client()
         try:
             await client.cache_delete(
-                self._key(query, tenant=tenant, namespace=namespace)
+                self._key(query, tenant=tenant, namespace=namespace),
             )
         except Exception as exc:
             logger.debug("L3 cache invalidate failed: %s", exc)

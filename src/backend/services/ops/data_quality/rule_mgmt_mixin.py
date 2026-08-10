@@ -61,7 +61,7 @@ class RuleManagementMixin(_DataQualityProtocol):
         ]
 
     def remediate(
-        self, data: dict[str, Any] | list[dict[str, Any]], *, dataset: str = "default"
+        self, data: dict[str, Any] | list[dict[str, Any]], *, dataset: str = "default",
     ) -> DQRemediationResult:
         """Detect violations и apply auto-remediation per configured rules.
 
@@ -136,5 +136,5 @@ class RuleManagementMixin(_DataQualityProtocol):
             remediated_records if isinstance(data, list) else remediated_records[0]
         )
         return DQRemediationResult(  # type: ignore[arg-type]
-            data=result_data, violations=all_violations, fixes_applied=total_fixes
+            data=result_data, violations=all_violations, fixes_applied=total_fixes,
         )

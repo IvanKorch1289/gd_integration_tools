@@ -68,7 +68,7 @@ def _make_mock_session_factory(rows: list[Any]) -> Any:
             # stmt is a select() — return rows ordered.
             # Sort by occurred_at desc (default ordering).
             sorted_rows = sorted(
-                self._rows, key=lambda r: r.occurred_at, reverse=True
+                self._rows, key=lambda r: r.occurred_at, reverse=True,
             )
             # Apply limit.
             # Find limit() call result.
@@ -303,7 +303,7 @@ class TestEpisodicMemoryRecall:
 
         ts = datetime(2024, 6, 15, 14, 30, 0)
         row = LangMemEpisodic(
-            id=1, session_id="s", role="u", content="test", occurred_at=ts
+            id=1, session_id="s", role="u", content="test", occurred_at=ts,
         )
         factory = _make_mock_session_factory([row])
         mem = EpisodicMemory(session_factory=factory)
@@ -323,7 +323,7 @@ class TestEpisodicMemoryRecall:
 
         # Row with None occurred_at.
         row = LangMemEpisodic(
-            id=1, session_id="s", role="u", content="test", occurred_at=None
+            id=1, session_id="s", role="u", content="test", occurred_at=None,
         )
         factory = _make_mock_session_factory([row])
         mem = EpisodicMemory(session_factory=factory)

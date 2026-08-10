@@ -104,7 +104,7 @@ class HealthAggregator:
         return "mode" in sig.parameters
 
     async def _safe_check(
-        self, name: str, fn: HealthCheckFn, *, mode: HealthMode = "fast"
+        self, name: str, fn: HealthCheckFn, *, mode: HealthMode = "fast",
     ) -> dict[str, Any]:
         """Выполняет один health-check с timeout."""
         timeout = _TIMEOUT_BY_MODE.get(mode, self._timeout)
@@ -139,7 +139,7 @@ class HealthAggregator:
             }
 
     async def _collect_registry_components(
-        self, mode: HealthMode
+        self, mode: HealthMode,
     ) -> dict[str, dict[str, Any]]:
         """Собрать health-отчёты из ConnectorRegistry (если включено).
 
@@ -228,7 +228,7 @@ class HealthAggregator:
         }
 
     async def _maybe_publish_transition(
-        self, current: str, components: dict[str, dict[str, Any]]
+        self, current: str, components: dict[str, dict[str, Any]],
     ) -> None:
         """Публикует событие при смене overall-статуса (ok ↔ degraded ↔ down)."""
         previous = self._last_overall
@@ -243,14 +243,14 @@ class HealthAggregator:
 
             bus = get_event_bus()
             event = HealthTransitionEvent(
-                previous_status=previous, current_status=current, components=components
+                previous_status=previous, current_status=current, components=components,
             )
             await bus.publish("events.health", event)
         except Exception as exc:
             logger.debug("Health transition publish skipped: %s", exc)
 
     async def check_single(
-        self, name: str, *, mode: HealthMode = "fast"
+        self, name: str, *, mode: HealthMode = "fast",
     ) -> dict[str, Any]:
         """Проверка одного компонента по имени."""
         fn = self._checks.get(name)

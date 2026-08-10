@@ -110,7 +110,7 @@ class InnerRequestLoggingMiddleware:
         process_time = (time() - start_time) * 1000
         self.logger.info(
             f"Ответ: {response_status['status']} | {method} {path} "
-            f"обработан за {process_time:.2f} мс"
+            f"обработан за {process_time:.2f} мс",
         )
 
     async def _get_request_body(self, scope: Scope, receive: Receive) -> bytes:
@@ -146,7 +146,7 @@ class InnerRequestLoggingMiddleware:
 
         if len(body) > self.max_body_size:
             self.logger.debug(
-                f"Тело запроса слишком велико для логирования ({len(body)} > {self.max_body_size})"
+                f"Тело запроса слишком велико для логирования ({len(body)} > {self.max_body_size})",
             )
             return "<тело запроса слишком велико для логирования>".encode()
 
@@ -154,12 +154,12 @@ class InnerRequestLoggingMiddleware:
             self.logger.debug(f"Тело запроса: {body.decode('utf-8')}")
         except UnicodeDecodeError:
             self.logger.warning(
-                "Тело запроса содержит бинарные данные, логирование пропущено"
+                "Тело запроса содержит бинарные данные, логирование пропущено",
             )
         return body
 
     def _log_response_body_chunks(
-        self, chunks: list[bytes], scope: Scope
+        self, chunks: list[bytes], scope: Scope,
     ) -> None:
         """Логирование тела ответа из captured chunks (cycle 53 helper).
 
@@ -187,7 +187,7 @@ class InnerRequestLoggingMiddleware:
                 # (zlib.error raised internally не экспортирован, OSError
                 #  covers both gzip and underlying zlib errors.)
                 self.logger.debug(
-                    "Не удалось распаковать gzip response body: %s", gzip_exc
+                    "Не удалось распаковать gzip response body: %s", gzip_exc,
                 )
 
         if len(body) > self.max_body_size:

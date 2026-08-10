@@ -92,7 +92,7 @@ class ScriptRunnerProcessor(BaseProcessor):
             "ScriptRunnerProcessor disabled (cycle-6/D-AUDIT-602): "
             "arbitrary subprocess execution exposes RCE on production routes. "
             "Move shell/python scripts to extensions/<name>/ with "
-            "explicit capability 'script_runner.execute' and audit-event."
+            "explicit capability 'script_runner.execute' and audit-event.",
         )
 
     def to_spec(self) -> dict[str, Any] | None:

@@ -77,7 +77,7 @@ async def test_update_content_appends_new_version(service: NotebookService) -> N
     """``update_content`` создаёт новую версию и инкрементирует latest_version."""
     nb = await service.create(title="t", content="v1", created_by="u")
     updated = await service.update_content(
-        notebook_id=nb.id, content="v2", user="bob", summary="second"
+        notebook_id=nb.id, content="v2", user="bob", summary="second",
     )
     assert updated is not None
     assert updated.latest_version == 2

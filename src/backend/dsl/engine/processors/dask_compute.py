@@ -92,7 +92,7 @@ class DaskComputeProcessor(BaseProcessor):
         self._graph = graph
         self._output_to = output_to
         self._backend = get_dask_backend(
-            scheduler_address=scheduler_address, n_workers=n_workers
+            scheduler_address=scheduler_address, n_workers=n_workers,
         )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -148,11 +148,11 @@ class DaskComputeProcessor(BaseProcessor):
             exchange.in_message.headers[key] = result
             return
         raise ValueError(
-            f"DaskCompute: невалидный output_to={self._output_to!r} (ожидается 'body' или 'headers.<key>')"
+            f"DaskCompute: невалидный output_to={self._output_to!r} (ожидается 'body' или 'headers.<key>')",
         )
 
     def to_spec(self) -> dict[str, Any]:
         """YAML-spec round-trip."""
         return {
-            "dask_compute": {"graph": list(self._graph), "output_to": self._output_to}
+            "dask_compute": {"graph": list(self._graph), "output_to": self._output_to},
         }

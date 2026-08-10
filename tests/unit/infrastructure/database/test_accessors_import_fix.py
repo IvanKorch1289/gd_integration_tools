@@ -79,7 +79,7 @@ def test_get_db_initializer_no_nameerror() -> None:
     # реальный SQLAlchemy engine (нужен живой PostgreSQL).
     fake_instance = MagicMock()
     with patch.object(
-        accessors, "DatabaseInitializer", return_value=fake_instance, create=True
+        accessors, "DatabaseInitializer", return_value=fake_instance, create=True,
     ):
         accessors.get_db_initializer.cache_clear()
         try:
@@ -87,7 +87,7 @@ def test_get_db_initializer_no_nameerror() -> None:
         except NameError as exc:
             pytest.fail(
                 f"S67 W3: NameError не устранён: {exc}. "
-                f"accessors.py должен импортировать DatabaseInitializer."
+                f"accessors.py должен импортировать DatabaseInitializer.",
             )
         # Если прошло без NameError — fix работает
         assert result is fake_instance
@@ -120,7 +120,7 @@ def test_get_external_db_registry_no_nameerror() -> None:
         except NameError as exc:
             pytest.fail(
                 f"S67 W3: NameError не устранён: {exc}. "
-                f"accessors.py должен импортировать ExternalDatabaseRegistry."
+                f"accessors.py должен импортировать ExternalDatabaseRegistry.",
             )
         assert result is fake_instance
 

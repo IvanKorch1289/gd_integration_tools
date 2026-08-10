@@ -49,7 +49,7 @@ class TestFileSensor:
             asyncio.create_task(create_after_delay())
             # awatch needs short debounce to be reactive
             with patch(
-                "src.backend.core.orchestration.airflow_sensors.awatch"
+                "src.backend.core.orchestration.airflow_sensors.awatch",
             ) as mock_awatch:
 
                 async def fake_awatch(*paths, **kwargs):  # type: ignore[no-untyped-def]
@@ -77,17 +77,17 @@ class TestSqlSensor:
     @pytest.mark.asyncio
     async def test_match_on_any_row(self) -> None:
         sensor = SqlSensor(
-            dsn="postgresql://localhost/test", query="SELECT 1", poll_interval_s=0.01
+            dsn="postgresql://localhost/test", query="SELECT 1", poll_interval_s=0.01,
         )
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.asyncpg.connect"
+            "src.backend.core.orchestration.airflow_sensors.asyncpg.connect",
         ) as mock_connect:
             mock_conn = AsyncMock()
             mock_conn.fetch = AsyncMock(return_value=[{"count": 5}])
             mock_conn.close = AsyncMock()
             mock_connect.return_value = mock_conn
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
+                trigger=_trigger(timeout_s=2.0, poll=0.5), input={},
             )
         assert result is True
         mock_connect.assert_awaited_once()
@@ -96,17 +96,17 @@ class TestSqlSensor:
     @pytest.mark.asyncio
     async def test_no_match_returns_false_on_timeout(self) -> None:
         sensor = SqlSensor(
-            dsn="postgresql://localhost/test", query="SELECT 1", poll_interval_s=0.01
+            dsn="postgresql://localhost/test", query="SELECT 1", poll_interval_s=0.01,
         )
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.asyncpg.connect"
+            "src.backend.core.orchestration.airflow_sensors.asyncpg.connect",
         ) as mock_connect:
             mock_conn = AsyncMock()
             mock_conn.fetch = AsyncMock(return_value=[])  # empty rows
             mock_conn.close = AsyncMock()
             mock_connect.return_value = mock_conn
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
+                trigger=_trigger(timeout_s=0.1, poll=0.5), input={},
             )
         assert result is False
         assert (
@@ -123,14 +123,14 @@ class TestSqlSensor:
             poll_interval_s=0.01,
         )
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.asyncpg.connect"
+            "src.backend.core.orchestration.airflow_sensors.asyncpg.connect",
         ) as mock_connect:
             mock_conn = AsyncMock()
             mock_conn.fetch = AsyncMock(return_value=[{"id": 1}, {"id": 2}])
             mock_conn.close = AsyncMock()
             mock_connect.return_value = mock_conn
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
+                trigger=_trigger(timeout_s=2.0, poll=0.5), input={},
             )
         assert result is True
         mock_connect.assert_awaited_once()
@@ -138,14 +138,14 @@ class TestSqlSensor:
     @pytest.mark.asyncio
     async def test_connection_error_retries(self) -> None:
         sensor = SqlSensor(
-            dsn="postgresql://localhost/test", query="SELECT 1", poll_interval_s=0.01
+            dsn="postgresql://localhost/test", query="SELECT 1", poll_interval_s=0.01,
         )
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.asyncpg.connect"
+            "src.backend.core.orchestration.airflow_sensors.asyncpg.connect",
         ) as mock_connect:
             mock_connect.side_effect = OSError("connection refused")
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
+                trigger=_trigger(timeout_s=0.1, poll=0.5), input={},
             )
         # Should timeout, not crash
         assert result is False
@@ -164,7 +164,7 @@ class TestHttpSensor:
     async def test_match_on_status_200(self) -> None:
         sensor = HttpSensor("http://api.example.com/health", poll_interval_s=0.01)
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient"
+            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient",
         ) as MockClient:
             mock_client = AsyncMock()
             mock_response = MagicMock()
@@ -174,7 +174,7 @@ class TestHttpSensor:
             mock_client.__aexit__ = AsyncMock(return_value=None)
             MockClient.return_value = mock_client
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
+                trigger=_trigger(timeout_s=2.0, poll=0.5), input={},
             )
         assert result is True
         MockClient.assert_called_once()
@@ -189,7 +189,7 @@ class TestHttpSensor:
             poll_interval_s=0.01,
         )
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient"
+            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient",
         ) as MockClient:
             mock_client = AsyncMock()
             mock_response = MagicMock()
@@ -199,7 +199,7 @@ class TestHttpSensor:
             mock_client.__aexit__ = AsyncMock(return_value=None)
             MockClient.return_value = mock_client
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
+                trigger=_trigger(timeout_s=2.0, poll=0.5), input={},
             )
         assert result is True
         # Verify method
@@ -216,7 +216,7 @@ class TestHttpSensor:
             poll_interval_s=0.01,
         )
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient"
+            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient",
         ) as MockClient:
             mock_client = AsyncMock()
             mock_response = MagicMock()
@@ -227,7 +227,7 @@ class TestHttpSensor:
             mock_client.__aexit__ = AsyncMock(return_value=None)
             MockClient.return_value = mock_client
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
+                trigger=_trigger(timeout_s=2.0, poll=0.5), input={},
             )
         assert result is True
         MockClient.assert_called_once()
@@ -236,10 +236,10 @@ class TestHttpSensor:
     @pytest.mark.asyncio
     async def test_wrong_status_timeout(self) -> None:
         sensor = HttpSensor(
-            "http://api.example.com/health", expected_status=204, poll_interval_s=0.01
+            "http://api.example.com/health", expected_status=204, poll_interval_s=0.01,
         )
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient"
+            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient",
         ) as MockClient:
             mock_client = AsyncMock()
             mock_response = MagicMock()
@@ -249,7 +249,7 @@ class TestHttpSensor:
             mock_client.__aexit__ = AsyncMock(return_value=None)
             MockClient.return_value = mock_client
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
+                trigger=_trigger(timeout_s=0.1, poll=0.5), input={},
             )
         assert result is False
         assert (
@@ -261,7 +261,7 @@ class TestHttpSensor:
     async def test_request_error_retries(self) -> None:
         sensor = HttpSensor("http://api.example.com/health", poll_interval_s=0.01)
         with patch(
-            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient"
+            "src.backend.core.orchestration.airflow_sensors.OutboundHttpClient",
         ) as MockClient:
             mock_client = AsyncMock()
             mock_client.request = AsyncMock(side_effect=Exception("connect failed"))
@@ -269,7 +269,7 @@ class TestHttpSensor:
             mock_client.__aexit__ = AsyncMock(return_value=None)
             MockClient.return_value = mock_client
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
+                trigger=_trigger(timeout_s=0.1, poll=0.5), input={},
             )
         assert result is False
         assert MockClient.call_count >= 1  # S153 W4d: retry-loop
@@ -329,7 +329,7 @@ class TestS3Sensor:
 
         with patch.dict("sys.modules", {"aioboto3": fake_mod}):
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
+                trigger=_trigger(timeout_s=2.0, poll=0.5), input={},
             )
         assert result is True
 
@@ -360,6 +360,6 @@ class TestS3Sensor:
 
         with patch.dict("sys.modules", {"aioboto3": fake_mod}):
             result = await sensor.watch(
-                trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
+                trigger=_trigger(timeout_s=0.1, poll=0.5), input={},
             )
         assert result is False

@@ -102,13 +102,13 @@ class RouteAnalyzer:
                     p95_latency_ms=self._percentile(latencies, 0.95),
                     p99_latency_ms=self._percentile(latencies, 0.99),
                     avg_retry_count=(sum(retries) / len(retries) if retries else 0.0),
-                )
+                ),
             )
         out.sort(key=lambda m: m.p95_latency_ms, reverse=True)
         return out
 
     def recommendations(
-        self, metrics: list[RouteMetrics]
+        self, metrics: list[RouteMetrics],
     ) -> list[OptimizationRecommendation]:
         """Сгенерировать рекомендации на основе метрик."""
         recs: list[OptimizationRecommendation] = []
@@ -127,7 +127,7 @@ class RouteAnalyzer:
                         if m.p95_latency_ms < 2 * self._slow_p95
                         else "P0",
                         estimated_gain_ms=m.p95_latency_ms * 0.4,
-                    )
+                    ),
                 )
             if m.error_rate >= self._error_thresh:
                 recs.append(
@@ -140,7 +140,7 @@ class RouteAnalyzer:
                             ".breaker(name=...) обёртка."
                         ),
                         priority="P0",
-                    )
+                    ),
                 )
             if m.avg_retry_count >= self._retry_thresh:
                 recs.append(
@@ -153,6 +153,6 @@ class RouteAnalyzer:
                             "max_attempts; рассмотреть кеширование."
                         ),
                         priority="P2",
-                    )
+                    ),
                 )
         return recs

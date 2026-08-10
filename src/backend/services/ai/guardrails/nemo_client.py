@@ -108,7 +108,7 @@ def _check_dependencies() -> None:
 
     if importlib.util.find_spec("nemoguardrails") is None:
         raise NeMoGuardrailsUnavailable(
-            "nemoguardrails не установлен. Установите: pip install nemoguardrails>=0.10"
+            "nemoguardrails не установлен. Установите: pip install nemoguardrails>=0.10",
         )
 
 
@@ -153,7 +153,7 @@ class NeMoGuardrailsRuntime:
             raise NeMoGuardrailsUnavailable(
                 f"Colang flows not found at {flows_path}. "
                 "Create colang_flows/banking_topics.co or set "
-                "config.colang_flows_dir."
+                "config.colang_flows_dir.",
             )
 
         try:
@@ -161,7 +161,7 @@ class NeMoGuardrailsRuntime:
             self._rails = LLMRails(config)
         except Exception as exc:
             raise NeMoGuardrailsUnavailable(
-                f"NeMo Guardrails initialization failed: {exc}"
+                f"NeMo Guardrails initialization failed: {exc}",
             ) from exc
 
         return self._rails
@@ -243,7 +243,7 @@ class NeMoGuardrailsRuntime:
                 try:
                     # Output rails receive (prompt, completion) tuple
                     result = self.rails.generate(
-                        prompt=f"Input: {prompt}\nOutput: {completion}"
+                        prompt=f"Input: {prompt}\nOutput: {completion}",
                     )
                     return {"safe": True, "response": result}
                 except Exception as exc:

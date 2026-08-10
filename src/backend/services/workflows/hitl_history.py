@@ -157,6 +157,6 @@ class HitlHistoryService:
                     resolved_at=row[5],
                     duration_ms=row[6],
                     comment=payload.get("comment"),
-                )
+                ),
             )
         return records

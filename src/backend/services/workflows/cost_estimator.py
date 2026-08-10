@@ -113,7 +113,7 @@ class WorkflowCostEstimator:
             client = await self._get_client()
         except Exception as exc:
             _logger.warning(
-                "WorkflowCostEstimator: CH unavailable (%s), returning defaults", exc
+                "WorkflowCostEstimator: CH unavailable (%s), returning defaults", exc,
             )
             return CostEstimate(
                 workflow_id=workflow_id,
@@ -232,5 +232,5 @@ class WorkflowCostEstimator:
 
         total_usd = sum(per_model.values(), Decimal("0"))
         return LLMCostBreakdown(
-            per_model=per_model, total_usd=total_usd, total_tokens=total_tokens
+            per_model=per_model, total_usd=total_usd, total_tokens=total_tokens,
         )

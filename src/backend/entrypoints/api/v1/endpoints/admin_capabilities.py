@@ -26,7 +26,7 @@ logger = get_logger("entrypoints.admin_capabilities")
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_READ = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
 )
 
 router = APIRouter(dependencies=[_ADMIN_GUARD_READ])
@@ -59,7 +59,7 @@ async def list_capabilities() -> dict[str, Any]:
                 "scope_required": cap.scope_required,
                 "public": cap.public,
                 "aliases": list(cap.aliases),
-            }
+            },
         )
     catalog = [{"name": str(c)} for c in (DEFAULT_CAPABILITY_CATALOG or [])]
     return {"vocabulary": items, "catalog": catalog, "stub": False}
@@ -147,14 +147,14 @@ async def get_capability_graph() -> dict[str, Any]:
             resource = cap.name.split(".", 1)[0]
             res_node_id = f"res:{resource}"
             nodes.setdefault(
-                res_node_id, {"id": res_node_id, "kind": "resource", "label": resource}
+                res_node_id, {"id": res_node_id, "kind": "resource", "label": resource},
             )
             edges.append(
                 {
                     "source": plugin_node_id,
                     "target": cap_node_id,
                     "label": cap.scope or "*",
-                }
+                },
             )
             edges.append({"source": cap_node_id, "target": res_node_id, "label": ""})
 

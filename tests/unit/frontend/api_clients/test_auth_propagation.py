@@ -28,7 +28,7 @@ def test_login_token_reaches_facade_domain_request(
             "access_token": "jwt_after_login",
             "auth_method": "password",
             "username": "user",
-        }
+        },
     )
     monkeypatch.setattr(auth_state, "_client", lambda: auth_client)
     auth_state.login(username="user", password="password")

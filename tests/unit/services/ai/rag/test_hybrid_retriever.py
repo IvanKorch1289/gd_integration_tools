@@ -58,7 +58,7 @@ async def test_retrieve_passthrough_when_no_corpus() -> None:
         return_value=[
             {"id": "a", "document": "doc a", "metadata": {}},
             {"id": "b", "document": "doc b", "metadata": {}},
-        ]
+        ],
     )
     retriever = HybridRetriever(dense_search=dense_mock, corpus=[])
     results = await retriever.retrieve(query="x", top_k=2)
@@ -77,7 +77,7 @@ async def test_retrieve_combines_dense_and_bm25(
         return_value=[
             {"id": "doc_both", "document": "общий документ", "metadata": {}},
             {"id": "doc_dense", "document": "семантика", "metadata": {}},
-        ]
+        ],
     )
 
     # Mock BM25 через подмену _ensure_bm25.
@@ -89,7 +89,7 @@ async def test_retrieve_combines_dense_and_bm25(
 
     class _FakeBM25:
         def get_top_n(
-            self, query_tokens: list[str], docs: list[dict], n: int
+            self, query_tokens: list[str], docs: list[dict], n: int,
         ) -> list[dict]:
             # BM25 ранжирует doc_bm25 первым.
             return [docs[0], docs[1]][:n]
@@ -118,7 +118,7 @@ async def test_retrieve_graceful_on_dense_failure(
 
     class _FakeBM25:
         def get_top_n(
-            self, query_tokens: list[str], docs: list[dict], n: int
+            self, query_tokens: list[str], docs: list[dict], n: int,
         ) -> list[dict]:
             return docs[:n]
 
@@ -150,7 +150,7 @@ async def test_retrieve_dense_search_kwargs_signature() -> None:
 def test_hybrid_result_dataclass_immutable() -> None:
     """HybridResult — frozen dataclass."""
     res = HybridResult(
-        chunk_id="x", document="doc", metadata={}, rrf_score=1.0, sources=("dense",)
+        chunk_id="x", document="doc", metadata={}, rrf_score=1.0, sources=("dense",),
     )
     with pytest.raises((AttributeError, Exception)):
         res.chunk_id = "y"  # type: ignore[misc]

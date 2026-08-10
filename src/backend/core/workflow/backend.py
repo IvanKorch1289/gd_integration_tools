@@ -84,7 +84,7 @@ class WorkflowBackend(Protocol):
         ...
 
     async def signal_workflow(
-        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any]
+        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any],
     ) -> None:
         """Отправить сигнал работающему workflow."""
         ...
@@ -104,7 +104,7 @@ class WorkflowBackend(Protocol):
         ...
 
     async def await_completion(
-        self, *, handle: WorkflowHandle, timeout: timedelta | None = None
+        self, *, handle: WorkflowHandle, timeout: timedelta | None = None,
     ) -> WorkflowResult:
         """Дождаться финального состояния workflow."""
         ...

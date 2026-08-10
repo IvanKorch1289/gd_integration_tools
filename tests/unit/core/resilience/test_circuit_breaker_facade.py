@@ -245,7 +245,7 @@ class TestSlidingWindowBreaker:
 
         async def run_test() -> None:
             spec = BreakerSpec(
-                failure_threshold=2, excluded_exceptions=(KeyError,)
+                failure_threshold=2, excluded_exceptions=(KeyError,),
             )
             breaker = SlidingWindowBreaker(name="test_route", spec=spec)
 

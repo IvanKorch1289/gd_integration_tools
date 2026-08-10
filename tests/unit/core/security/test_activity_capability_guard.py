@@ -26,7 +26,7 @@ def _reset_context() -> Any:
 
 
 def _build_context(
-    *, deny: tuple[str, ...] = (), audit: Any = None
+    *, deny: tuple[str, ...] = (), audit: Any = None,
 ) -> CapabilityContext:
     """Сконструировать тестовый CapabilityContext с mock-gate.
 
@@ -45,7 +45,7 @@ def _build_context(
 
     gate.check.side_effect = _check
     return CapabilityContext(
-        plugin_name="test-plugin", gate=gate, scope=None, audit=audit
+        plugin_name="test-plugin", gate=gate, scope=None, audit=audit,
     )
 
 
@@ -90,7 +90,7 @@ def test_audit_event_emitted_on_deny(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     audit_events: list[dict[str, object]] = []
     set_active_capability_context(
-        _build_context(deny=("net.outbound.x",), audit=audit_events.append)
+        _build_context(deny=("net.outbound.x",), audit=audit_events.append),
     )
 
     @capability_guarded_activity(("net.outbound.x",))
@@ -197,7 +197,7 @@ def test_dual_emit_calls_both_callback_and_facade(
                 "action": action,
                 "outcome": outcome,
                 "details": details,
-            }
+            },
         )
 
     monkeypatch.setattr("src.backend.core.audit.facade.emit_audit", fake_emit_audit)

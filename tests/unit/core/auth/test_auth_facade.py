@@ -194,7 +194,7 @@ class TestAuthFacadeHelpers:
         facade = AuthFacade()
 
         with patch(
-            "src.backend.services.security.facade.get_security_facade"
+            "src.backend.services.security.facade.get_security_facade",
         ) as mock_get_facade:
             mock_facade = MagicMock()
             mock_facade.is_token_blacklisted = AsyncMock(return_value=True)
@@ -276,11 +276,11 @@ class TestAuthFacadeTokenIssuance:
         """revoke_token → SecurityFacade.blacklist_token."""
         facade = AuthFacade()
         with patch(
-            "src.backend.services.security.facade.get_security_facade"
+            "src.backend.services.security.facade.get_security_facade",
         ) as mock_get_facade:
             mock_sec_facade = MagicMock()
             mock_sec_facade.blacklist_token = MagicMock(
-                return_value=None  # sync — could be sync or async
+                return_value=None,  # sync — could be sync or async
             )
             # Make it return a coroutine to support await
             async def _awaitable_blacklist(jti: str) -> bool:

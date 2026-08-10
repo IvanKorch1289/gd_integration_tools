@@ -54,7 +54,7 @@ class FileSensorTaskWrapper:
     ) -> None:
         if task is None and task_factory is None:
             raise ValueError(
-                "FileSensorTaskWrapper: either `task` or `task_factory` required"
+                "FileSensorTaskWrapper: either `task` or `task_factory` required",
             )
         self.name = name or f"sensor_task_{id(task) if task else id(object())}"
         self._task = task
@@ -192,7 +192,7 @@ class IntervalTrigger:
         body = self._payload() if callable(self._payload) else self._payload
         try:
             await get_dsl_service().dispatch(
-                route_id=self.route_id, body=body, headers={"x-trigger": self.name}
+                route_id=self.route_id, body=body, headers={"x-trigger": self.name},
             )
         except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as dispatch_exc:
             # cycle-9/D-AUDIT-968: narrow exceptions + observability.
@@ -308,7 +308,7 @@ class CronTrigger:
         body = self._payload() if callable(self._payload) else self._payload
         try:
             await get_dsl_service().dispatch(
-                route_id=self.route_id, body=body, headers={"x-trigger": self.name}
+                route_id=self.route_id, body=body, headers={"x-trigger": self.name},
             )
         except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as dispatch_exc:
             # cycle-9/D-AUDIT-969: narrow exceptions + observability (mirror
@@ -398,7 +398,7 @@ class WebhookTrigger:
                 return {"status": "error", "error": str(dispatch_exc)}
 
         app.add_api_route(
-            self.path, _handler, methods=[self.method], name=f"webhook_{self.name}"
+            self.path, _handler, methods=[self.method], name=f"webhook_{self.name}",
         )
         self._route_added = True
         _log.info(

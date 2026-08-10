@@ -29,7 +29,7 @@ class TestFixExceptClause:
                     do()
                 except (ValueError, TypeError):
                     pass
-            """
+            """,
         ).lstrip()
         result = transform_source(source)
         assert "except (ValueError, TypeError):" in result
@@ -44,7 +44,7 @@ class TestFixExceptClause:
                     do()
                 except (orjson.JSONDecodeError, TypeError):
                     pass
-            """
+            """,
         ).lstrip()
         result = transform_source(source)
         assert "except (orjson.JSONDecodeError, TypeError):" in result
@@ -62,7 +62,7 @@ class TestFixExceptClause:
                     do2()
                 except (A, B, C, D):
                     pass
-            """
+            """,
         ).lstrip()
         result = transform_source(source)
         assert "except (A, B, C):" in result
@@ -77,7 +77,7 @@ class TestFixExceptClause:
                     do()
                 except (ValueError, TypeError):
                     pass
-            """
+            """,
         ).lstrip()
         result = transform_source(source)
         assert result == source
@@ -91,7 +91,7 @@ class TestFixExceptClause:
                     do()
                 except (ValueError, TypeError):  # noqa: PERF203
                     pass
-            """
+            """,
         ).lstrip()
         result = transform_source(source)
         assert "except (ValueError, TypeError):  # noqa: PERF203" in result

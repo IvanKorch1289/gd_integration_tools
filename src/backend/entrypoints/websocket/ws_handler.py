@@ -46,7 +46,7 @@ logger = get_logger(__name__)
 
 
 async def _ws_heartbeat_loop(
-    websocket: WebSocket, *, client_id: str, interval_s: float
+    websocket: WebSocket, *, client_id: str, interval_s: float,
 ) -> None:
     """S163 W16: периодический ping для keepalive WS connection.
 
@@ -64,7 +64,7 @@ async def _ws_heartbeat_loop(
                 await websocket.send_json({"action": "ping"})
             except Exception as exc:  # connection closed
                 logger.debug(
-                    "WS heartbeat stopped client_id=%s reason=%s", client_id, exc
+                    "WS heartbeat stopped client_id=%s reason=%s", client_id, exc,
                 )
                 return
     except asyncio.CancelledError:
@@ -241,7 +241,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         current = ws_manager.action_count(bound_action)
         if current >= pool_limit:
             await websocket.close(
-                code=1008, reason=f"route pool full ({pool_limit} concurrent)"
+                code=1008, reason=f"route pool full ({pool_limit} concurrent)",
             )
             logger.warning(
                 "WS rejected: route pool full action_id=%s limit=%d",
@@ -263,7 +263,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 websocket=websocket,
                 client_id=client_id,
                 interval_s=ws_settings.heartbeat_interval_s,
-            )
+            ),
         )
 
     try:
@@ -272,7 +272,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
             try:
                 data = await asyncio.wait_for(
-                    websocket.receive_json(), timeout=ws_settings.message_timeout_s
+                    websocket.receive_json(), timeout=ws_settings.message_timeout_s,
                 )
             except TimeoutError:
                 logger.warning(
@@ -330,7 +330,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             except Exception as exc:
                 logger.exception("WS ошибка обработки action=%s: %s", action, exc)
                 await ws_manager.send_json(
-                    client_id, {"action": action, "result": None, "error": str(exc)}
+                    client_id, {"action": action, "result": None, "error": str(exc)},
                 )
 
     except WebSocketDisconnect:

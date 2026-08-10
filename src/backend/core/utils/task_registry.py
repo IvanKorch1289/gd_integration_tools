@@ -74,7 +74,7 @@ class TaskRegistry:
         """
         if self._closed:
             raise RuntimeError(
-                "TaskRegistry уже закрыт — нельзя создавать новые задачи"
+                "TaskRegistry уже закрыт — нельзя создавать новые задачи",
             )
 
         ctx = contextvars.copy_context()
@@ -93,7 +93,7 @@ class TaskRegistry:
         # обёртки raw create_task; CI-gate orphan-create-task здесь не
         # применим (мы уже регистрируем task в self._tasks ниже).
         task: asyncio.Task[_T] = loop.create_task(
-            self._with_context(ctx, wrapped), name=name
+            self._with_context(ctx, wrapped), name=name,
         )
         self._tasks.add(task)
         self._named[name] = task
@@ -102,7 +102,7 @@ class TaskRegistry:
 
     @staticmethod
     async def _with_context(
-        ctx: contextvars.Context, coro: Coroutine[Any, Any, _T] | Awaitable[_T]
+        ctx: contextvars.Context, coro: Coroutine[Any, Any, _T] | Awaitable[_T],
     ) -> _T:
         """Выполняет ``coro`` в копии context'а вызывающего."""
         # ``ctx.run`` — для синхронного кода; для async используем
@@ -152,7 +152,7 @@ class TaskRegistry:
             return
         try:
             await asyncio.wait_for(
-                asyncio.gather(*live, return_exceptions=True), timeout=timeout
+                asyncio.gather(*live, return_exceptions=True), timeout=timeout,
             )
         except TimeoutError:
             _logger.warning(

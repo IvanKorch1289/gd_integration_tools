@@ -85,15 +85,15 @@ class TestExecutionTracer:
 
     @pytest.mark.asyncio
     async def test_emit_drops_oldest_on_backpressure(
-        self, tracer: ExecutionTracer
+        self, tracer: ExecutionTracer,
     ) -> None:
         q: asyncio.Queue = asyncio.Queue(maxsize=1)
         tracer._subscribers["r1"] = [q]
         ev1 = TraceEvent(
-            route_id="r1", processor_name="p1", processor_type="T", phase="start"
+            route_id="r1", processor_name="p1", processor_type="T", phase="start",
         )
         ev2 = TraceEvent(
-            route_id="r1", processor_name="p1", processor_type="T", phase="end"
+            route_id="r1", processor_name="p1", processor_type="T", phase="end",
         )
         await tracer._emit("r1", ev1)
         await tracer._emit("r1", ev2)

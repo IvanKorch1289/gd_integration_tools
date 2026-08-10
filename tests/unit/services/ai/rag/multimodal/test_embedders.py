@@ -27,7 +27,7 @@ from src.backend.services.ai.rag.multimodal.protocols import EmbedderProtocol
 
 
 def _install_fake_sentence_transformers(
-    monkeypatch: pytest.MonkeyPatch, encode_return: list[float]
+    monkeypatch: pytest.MonkeyPatch, encode_return: list[float],
 ) -> MagicMock:
     """Подменяет sentence_transformers.SentenceTransformer на mock.
 
@@ -40,7 +40,7 @@ def _install_fake_sentence_transformers(
     """
     model_instance = MagicMock()
     fake_array = SimpleNamespace(
-        flatten=lambda: SimpleNamespace(tolist=lambda: encode_return)
+        flatten=lambda: SimpleNamespace(tolist=lambda: encode_return),
     )
     model_instance.encode.return_value = fake_array
 

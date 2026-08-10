@@ -82,7 +82,7 @@ async def test_tenant_middleware_uses_header() -> None:
     ):
         send = AsyncMock()
         await middleware(
-            _make_scope({"X-Tenant-ID": "acme-corp"}), AsyncMock(), send
+            _make_scope({"X-Tenant-ID": "acme-corp"}), AsyncMock(), send,
         )
 
     headers = _start_headers(send)

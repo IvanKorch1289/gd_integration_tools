@@ -90,7 +90,7 @@ class WebDavProcessor(BaseProcessor):
         super().__init__(name=name or f"webdav_io:{mode}")
         if mode not in _ALLOWED_MODES:
             raise ValueError(
-                f"webdav_io: mode must be one of {sorted(_ALLOWED_MODES)}, got {mode!r}"
+                f"webdav_io: mode must be one of {sorted(_ALLOWED_MODES)}, got {mode!r}",
             )
         if not url:
             raise ValueError("webdav_io: url must be non-empty")
@@ -148,7 +148,7 @@ class WebDavProcessor(BaseProcessor):
                 if isinstance(src_value, str):
                     src_value = src_value.encode("utf-8")
                 buf = io.BytesIO(
-                    src_value if isinstance(src_value, bytes) else bytes(src_value)
+                    src_value if isinstance(src_value, bytes) else bytes(src_value),
                 )
                 client.upload_fileobj(buf, self._remote_path)
                 return {"path": self._remote_path, "bytes": len(buf.getvalue())}

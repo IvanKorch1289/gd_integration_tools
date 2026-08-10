@@ -52,7 +52,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_public_path_passes_through_without_auth(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Public path (e.g. /health) → пробрасывается downstream без auth."""
         app = AsyncMock()
@@ -75,7 +75,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_options_preflight_bypasses_auth(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """OPTIONS preflight (CORS) → пробрасывается downstream без auth."""
         app = AsyncMock()
@@ -97,7 +97,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_non_public_without_credentials_returns_401(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Non-public path + no credentials → 401 JSON через send (no-raise)."""
         app = AsyncMock()
@@ -135,7 +135,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_non_public_with_valid_credentials_passes_through(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Non-public + valid AuthContext → пробрасывает downstream.
 
@@ -154,7 +154,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
         # Patch'уем оба пути (core.auth + deps.auth_selector).
         monkeypatch.setattr(
-            "src.backend.core.auth.auth_selector.verify_request", mock_verify
+            "src.backend.core.auth.auth_selector.verify_request", mock_verify,
         )
         monkeypatch.setattr(
             "src.backend.entrypoints.api.dependencies.auth_selector.verify_request",
@@ -198,7 +198,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_does_not_call_downstream_when_unauthenticated(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """При 401 downstream НЕ вызывается (cycle 43 invariant)."""
         app = AsyncMock()
@@ -228,7 +228,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_401_response_includes_www_authenticate_header(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """401 response содержит WWW-Authenticate header (RFC 7235)."""
         app = AsyncMock()
@@ -260,7 +260,7 @@ class TestAuthRequiredMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_accepted_methods_passed_to_verify_request(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """accepted_methods constructor arg → пробрасывается в verify_request.
 
@@ -275,7 +275,7 @@ class TestAuthRequiredMiddlewarePureASGI:
         app = AsyncMock()
         app.side_effect = _downstream_ok()
         mw = AuthRequiredMiddleware(
-            app=app, accepted_methods=[AuthMethod.API_KEY, AuthMethod.JWT]
+            app=app, accepted_methods=[AuthMethod.API_KEY, AuthMethod.JWT],
         )
 
         # Direct AsyncMock (без сохранения в переменную) — patcher

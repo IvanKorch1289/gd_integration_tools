@@ -156,7 +156,7 @@ def test_dlq_inbox_insert_and_idempotent_write() -> None:
         conn.execute(
             text(
                 "INSERT INTO dlq_inbox (dlq_id, transport, error_class, error_message) "
-                "VALUES (:id, 'cdc:test', 'TestError', 'first')"
+                "VALUES (:id, 'cdc:test', 'TestError', 'first')",
             ),
             {"id": "fixed-uuid-1"},
         )
@@ -168,7 +168,7 @@ def test_dlq_inbox_insert_and_idempotent_write() -> None:
                 text(
                     "INSERT OR IGNORE INTO dlq_inbox (dlq_id, transport, "
                     "error_class, error_message) VALUES "
-                    "(:id, 'cdc:test', 'TestError', 'second')"
+                    "(:id, 'cdc:test', 'TestError', 'second')",
                 ),
                 {"id": "fixed-uuid-1"},
             )

@@ -56,12 +56,12 @@ class ExpressMentionProcessor(BaseProcessor):
         if mention_type not in _VALID_TYPES:
             raise ValueError(
                 f"ExpressMentionProcessor: неверный mention_type={mention_type!r}; "
-                f"допустимы {sorted(_VALID_TYPES)}."
+                f"допустимы {sorted(_VALID_TYPES)}.",
             )
         if mention_type != "all" and not target_from:
             raise ValueError(
                 "ExpressMentionProcessor: target_from обязателен для типа "
-                f"{mention_type!r}."
+                f"{mention_type!r}.",
             )
         self._mention_type = mention_type
         self._target_from = target_from
@@ -78,7 +78,7 @@ class ExpressMentionProcessor(BaseProcessor):
         )
         if self._mention_type != "all" and not target:
             _logger.debug(
-                "ExpressMention: пустой target для %s — пропуск", self._mention_type
+                "ExpressMention: пустой target для %s — пропуск", self._mention_type,
             )
             return
 

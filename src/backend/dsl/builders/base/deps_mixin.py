@@ -62,7 +62,7 @@ class DepsMixin(_RouteBuilderProtocol):
         if not hasattr(last, "_inject"):
             raise ValueError(
                 f"depends: processor {type(last).__name__} "
-                f"не поддерживает DI-инъекцию (_inject)"
+                f"не поддерживает DI-инъекцию (_inject)",
             )
         flat: list[str | tuple[str, str]] = []
         for dep in deps:
@@ -76,7 +76,7 @@ class DepsMixin(_RouteBuilderProtocol):
                 flat.append(tuple(dep))
             else:
                 raise TypeError(
-                    f"depends: ожидается str или tuple[str, str], получено {dep!r}"
+                    f"depends: ожидается str или tuple[str, str], получено {dep!r}",
                 )
         if last._inject is None:
             last._inject = flat

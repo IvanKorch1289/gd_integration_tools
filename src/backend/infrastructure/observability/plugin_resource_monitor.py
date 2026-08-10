@@ -96,7 +96,7 @@ class PluginResourceMonitor:
     """
 
     def __init__(
-        self, plugins: Iterable[str] = (), *, interval_seconds: float = 30.0
+        self, plugins: Iterable[str] = (), *, interval_seconds: float = 30.0,
     ) -> None:
         self._plugins = tuple(plugins)
         self._interval = interval_seconds

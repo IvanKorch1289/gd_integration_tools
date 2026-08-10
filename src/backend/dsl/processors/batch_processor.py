@@ -60,7 +60,7 @@ class BatchProcessor(BaseProcessor):
     ) -> None:
         if mode not in ("insert", "update", "delete"):
             raise ValueError(
-                f"mode должен быть insert/update/delete, получено {mode!r}"
+                f"mode должен быть insert/update/delete, получено {mode!r}",
             )
         if batch_size <= 0:
             raise ValueError(f"batch_size должен быть > 0, получено {batch_size}")
@@ -149,5 +149,5 @@ class BatchProcessor(BaseProcessor):
                 "model": getattr(self._model, "__name__", str(self._model)),
                 "batch_size": self._batch_size,
                 "source_field": self._source_field,
-            }
+            },
         }

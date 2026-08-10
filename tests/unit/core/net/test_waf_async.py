@@ -15,7 +15,7 @@ async def test_evaluate_async_clean_payload_returns_allowed() -> None:
     """Чистый payload без scanner'а → allowed=True."""
     policy = WafPolicy(allow_hosts=frozenset({"api.example.com"}), strict=True)
     decision = await policy.evaluate_async(
-        "https://api.example.com/v1/x", payload=b"hello"
+        "https://api.example.com/v1/x", payload=b"hello",
     )
     assert decision.allowed is True
     assert decision.host == "api.example.com"
@@ -30,7 +30,7 @@ async def test_evaluate_async_invokes_async_scanner_and_blocks() -> None:
 
     policy = WafPolicy(async_payload_scanner=virus_scanner)
     decision = await policy.evaluate_async(
-        "https://api.example.com/x", payload=b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR"
+        "https://api.example.com/x", payload=b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR",
     )
     assert decision.allowed is False
     assert "Eicar" in decision.reason
@@ -73,7 +73,7 @@ async def test_evaluate_async_deny_list_short_circuits_scanner() -> None:
         return None
 
     policy = WafPolicy(
-        deny_hosts=frozenset({"evil.example.com"}), async_payload_scanner=should_not_run
+        deny_hosts=frozenset({"evil.example.com"}), async_payload_scanner=should_not_run,
     )
     decision = await policy.evaluate_async("https://evil.example.com/x", payload=b"any")
     assert decision.allowed is False
@@ -96,7 +96,7 @@ async def test_evaluate_async_strict_blocks_unknown_host() -> None:
         async_payload_scanner=should_not_run,
     )
     decision = await policy.evaluate_async(
-        "https://random.example.com/x", payload=b"any"
+        "https://random.example.com/x", payload=b"any",
     )
     assert decision.allowed is False
     assert "allow_hosts" in decision.reason
@@ -115,7 +115,7 @@ async def test_evaluate_async_payload_limit_blocks_before_scanner() -> None:
 
     policy = WafPolicy(max_payload_bytes=10, async_payload_scanner=should_not_run)
     decision = await policy.evaluate_async(
-        "https://api.example.com/x", payload=b"more than ten bytes here"
+        "https://api.example.com/x", payload=b"more than ten bytes here",
     )
     assert decision.allowed is False
     assert "exceeds limit" in decision.reason
@@ -136,7 +136,7 @@ async def test_evaluate_async_sync_scanner_runs_before_async() -> None:
         return None
 
     policy = WafPolicy(
-        payload_scanner=sync_scanner, async_payload_scanner=async_scanner
+        payload_scanner=sync_scanner, async_payload_scanner=async_scanner,
     )
     await policy.evaluate_async("https://api.example.com/x", payload=b"x")
     assert invoked == ["sync", "async"]

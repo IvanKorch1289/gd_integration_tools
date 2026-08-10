@@ -52,7 +52,7 @@ async def test_request_merges_api_key(service: APISKBService) -> None:
     from src.backend.services.core.base_external_api import BaseExternalAPIClient
 
     with patch.object(
-        BaseExternalAPIClient, "_request", new_callable=AsyncMock
+        BaseExternalAPIClient, "_request", new_callable=AsyncMock,
     ) as mock_base:
         await service.get_request_kinds()
         call_kwargs = mock_base.await_args.kwargs
@@ -107,7 +107,7 @@ async def test_get_response_by_order_returns_json_by_default(
     with patch.object(service, "_request", new_callable=AsyncMock) as mock_req:
         mock_req.return_value = {"data": {"status": "ok"}}
         result = await service.get_response_by_order(
-            UUID("12345678-1234-5678-1234-567812345678")
+            UUID("12345678-1234-5678-1234-567812345678"),
         )
         assert result == {"data": {"status": "ok"}}
         assert mock_req.await_args.kwargs["response_type"] == "json"
@@ -121,7 +121,7 @@ async def test_get_response_by_order_returns_bytes_for_pdf(
     with patch.object(service, "_request", new_callable=AsyncMock) as mock_req:
         mock_req.return_value = {"data": b"pdf-content"}
         result = await service.get_response_by_order(
-            UUID("12345678-1234-5678-1234-567812345678"), response_type_str="PDF"
+            UUID("12345678-1234-5678-1234-567812345678"), response_type_str="PDF",
         )
         assert result == b"pdf-content"
         assert mock_req.await_args.kwargs["response_type"] == "bytes"

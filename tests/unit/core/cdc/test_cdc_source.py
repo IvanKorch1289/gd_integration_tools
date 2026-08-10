@@ -12,7 +12,7 @@ from src.backend.infrastructure.cdc.debezium_events_backend import parse_debeziu
 
 
 def _ev(
-    table: str, op: str = "UPSERT", cursor_value: str = "1", payload: int = 0
+    table: str, op: str = "UPSERT", cursor_value: str = "1", payload: int = 0,
 ) -> CDCEvent:
     return CDCEvent(
         operation=op,  # type: ignore[arg-type]
@@ -84,7 +84,7 @@ class TestFakeCDCSourceBehavior:
         source = FakeCDCSource(events=events)
         seen = []
         async for ev in source.subscribe(
-            tables=["orders"], start_cursor=CDCCursor(value="1", backend="fake")
+            tables=["orders"], start_cursor=CDCCursor(value="1", backend="fake"),
         ):
             seen.append(ev)
         # Пропустили "1", получили "2" и "3".

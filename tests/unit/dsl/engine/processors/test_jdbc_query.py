@@ -12,7 +12,7 @@ from src.backend.dsl.engine.processors.jdbc_query import JdbcQueryProcessor
 
 
 def _make_exchange(
-    body: Any = None, headers: dict[str, Any] | None = None
+    body: Any = None, headers: dict[str, Any] | None = None,
 ) -> Exchange[Any]:
     return Exchange(in_message=Message(body=body, headers=headers or {}))
 
@@ -54,19 +54,19 @@ class TestJdbcQueryProcessorSqlValidation:
         """Semicolon-separated statements are rejected."""
         with pytest.raises(ValueError, match="Multi-statement"):
             JdbcQueryProcessor._validate_sql(
-                "SELECT * FROM users; SELECT * FROM orders"
+                "SELECT * FROM users; SELECT * FROM orders",
             )
 
     def test_jdbc_query_accepts_valid_select(self) -> None:
         """Valid SELECT is accepted and doesn't raise."""
         JdbcQueryProcessor._validate_sql(
-            "SELECT id, name FROM users WHERE status = :status"
+            "SELECT id, name FROM users WHERE status = :status",
         )
 
     def test_jdbc_query_accepts_valid_insert(self) -> None:
         """Valid INSERT is accepted (not in forbidden list)."""
         JdbcQueryProcessor._validate_sql(
-            "INSERT INTO users (name, email) VALUES (:name, :email)"
+            "INSERT INTO users (name, email) VALUES (:name, :email)",
         )
 
     def test_jdbc_query_accepts_select_with_leading_whitespace(self) -> None:
@@ -292,7 +292,7 @@ class TestJdbcQueryProcessorParamsFrom:
 
         mock_result = MagicMock()
         mock_result.fetchall.return_value = [
-            MagicMock(_mapping={"id": 42, "name": "Alice"})
+            MagicMock(_mapping={"id": 42, "name": "Alice"}),
         ]
 
         mock_session = AsyncMock()
@@ -360,13 +360,13 @@ class TestJdbcQueryProcessorToSpec:
         proc = JdbcQueryProcessor(sql="SELECT * FROM users", profile="test_profile")
         spec = proc.to_spec()
         assert spec == {
-            "jdbc_query": {"profile": "test_profile", "sql": "SELECT * FROM users"}
+            "jdbc_query": {"profile": "test_profile", "sql": "SELECT * FROM users"},
         }
 
     def test_to_spec_custom_params_from(self) -> None:
         """Non-default params_from appears in spec."""
         proc = JdbcQueryProcessor(
-            sql="SELECT * FROM users", profile="test_profile", params_from="properties"
+            sql="SELECT * FROM users", profile="test_profile", params_from="properties",
         )
         spec = proc.to_spec()
         assert spec["jdbc_query"]["params_from"] == "properties"

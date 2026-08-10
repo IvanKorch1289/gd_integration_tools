@@ -27,7 +27,7 @@ class TestMCPDSLFileURIDeny:
         if tool_uri.startswith("file:"):
             raise ValueError(
                 "MCPToolProcessor: file:// transport denied (RCE surface); "
-                "use http(s):// only"
+                "use http(s):// only",
             )
 
     def test_file_uri_rejected(self):

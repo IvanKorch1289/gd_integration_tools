@@ -47,7 +47,7 @@ class ActionResult:
 
 
 async def dispatch_action(
-    action: str, payload: dict[str, Any] | None = None
+    action: str, payload: dict[str, Any] | None = None,
 ) -> ActionResult:
     """S168 W12 P2-4: extracted _dispatch_action → public dispatch_action.
 
@@ -60,7 +60,7 @@ async def dispatch_action(
 
     try:
         result = await _unified_dispatch(
-            action=action, payload=payload, source="graphql"
+            action=action, payload=payload, source="graphql",
         )
         data = result
         if hasattr(result, "model_dump"):
@@ -70,9 +70,9 @@ async def dispatch_action(
         return ActionResult(action=action, success=True, data=data)
     except KeyError:
         return ActionResult(
-            action=action, success=False, error=f"Action '{action}' не зарегистрирован"
+            action=action, success=False, error=f"Action '{action}' не зарегистрирован",
         )
     except Exception as exc:
         return ActionResult(
-            action=action, success=False, error=f"Action '{action}' упал: {exc}"
+            action=action, success=False, error=f"Action '{action}' упал: {exc}",
         )

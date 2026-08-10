@@ -16,7 +16,7 @@ async def test_run_agent_code_uses_attached_sandbox() -> None:
 
     mock_sandbox = AsyncMock()
     mock_sandbox.run = AsyncMock(
-        return_value=SandboxResult(stdout="ok", stderr="", exit_code=0, artifacts={})
+        return_value=SandboxResult(stdout="ok", stderr="", exit_code=0, artifacts={}),
     )
     gateway = AIGateway()
     gateway.attach_sandbox(mock_sandbox)

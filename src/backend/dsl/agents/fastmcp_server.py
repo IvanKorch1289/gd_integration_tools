@@ -51,7 +51,7 @@ def _build_workflow_prompt_fn(wf: WorkflowDescriptorProtocol) -> Any:
     """Build an async prompt function that returns workflow catalogue information."""
 
     async def prompt_fn(
-        payload: str = "{}", wait: bool = False, timeout_s: int = 300
+        payload: str = "{}", wait: bool = False, timeout_s: int = 300,
     ) -> str:
         """Return workflow catalogue information (read-only)."""
         return json.dumps(
@@ -138,13 +138,13 @@ class FastMCPserver:
     async def start(self) -> None:
         """No-op. Server is managed by the ASGI host (uvicorn/FastAPI)."""
         logger.debug(
-            "FastMCPserver.start() called — ASGI app lifecycle managed by caller"
+            "FastMCPserver.start() called — ASGI app lifecycle managed by caller",
         )
 
     async def stop(self) -> None:
         """No-op. Server is managed by the ASGI host (uvicorn/FastAPI)."""
         logger.debug(
-            "FastMCPserver.stop() called — ASGI app lifecycle managed by caller"
+            "FastMCPserver.stop() called — ASGI app lifecycle managed by caller",
         )
 
     # ── Internal ─────────────────────────────────────────────────────────────
@@ -176,7 +176,7 @@ class FastMCPserver:
             tool_name = skill.id.replace(".", "_").replace("-", "_")
             self._mcp.add_tool(
                 _build_tool_callback(
-                    skill, self._skill_registry, self._module_whitelist
+                    skill, self._skill_registry, self._module_whitelist,
                 ),
                 name=tool_name,
                 description=skill.description or f"Skill: {skill.id}",
@@ -236,7 +236,7 @@ class FastMCPserver:
 
 
 def _build_tool_callback(
-    skill: SkillSpec, registry: SkillRegistry, module_whitelist: list[str] | None = None
+    skill: SkillSpec, registry: SkillRegistry, module_whitelist: list[str] | None = None,
 ) -> Any:
     """Build an async tool callback for a given SkillSpec."""
 

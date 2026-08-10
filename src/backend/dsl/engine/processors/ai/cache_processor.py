@@ -46,7 +46,7 @@ class CacheProcessor(BaseProcessor):
             cached = await redis_client.get(key)
             if cached is not None:
                 exchange.set_out(
-                    body=orjson.loads(cached), headers=dict(exchange.in_message.headers)
+                    body=orjson.loads(cached), headers=dict(exchange.in_message.headers),
                 )
                 exchange.set_property("cached", True)
                 return

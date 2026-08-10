@@ -56,7 +56,7 @@ class TestExecuteParallelTimeout:
         processors = [_FastProcessor("fast"), _HangingProcessor("hang")]
 
         result = await engine.execute_parallel(
-            processors, body={"x": 1}, timeout=0.05
+            processors, body={"x": 1}, timeout=0.05,
         )
 
         assert result.status == ExchangeStatus.failed
@@ -93,7 +93,7 @@ class TestExecuteParallelTimeout:
         ]
 
         result = await engine.execute_parallel(
-            processors, body={"x": 1}, timeout=0.05
+            processors, body={"x": 1}, timeout=0.05,
         )
 
         assert result.status == ExchangeStatus.failed
@@ -111,7 +111,7 @@ class TestExecuteParallelTimeout:
         ]
 
         result = await engine.execute_parallel(
-            processors, body={"x": 1}, timeout=1.0
+            processors, body={"x": 1}, timeout=1.0,
         )
 
         assert result.status == ExchangeStatus.completed

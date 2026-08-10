@@ -172,7 +172,7 @@ class StepAuditMiddleware:
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._flusher_task = get_task_registry().create_task(
-            self._flusher_loop(), name="step-audit-flusher"
+            self._flusher_loop(), name="step-audit-flusher",
         )
 
     async def stop(self) -> None:
@@ -260,7 +260,7 @@ class StepAuditMiddleware:
                 output_schema_hash=ctx.output_schema_hash,
             )
             self._set_otel_attrs(
-                step_name=step_name, duration_ms=duration_ms, status=status
+                step_name=step_name, duration_ms=duration_ms, status=status,
             )
             async with self._lock:
                 self._buffer.append(event)
@@ -269,7 +269,7 @@ class StepAuditMiddleware:
                     from src.backend.core.utils.task_registry import get_task_registry
 
                     get_task_registry().create_task(
-                        self.flush(), name="step-audit-immediate-flush"
+                        self.flush(), name="step-audit-immediate-flush",
                     )
 
     def _set_otel_attrs(
@@ -301,7 +301,7 @@ class StepAuditMiddleware:
         while not self._stop_event.is_set():
             try:
                 await asyncio.wait_for(
-                    self._stop_event.wait(), timeout=self._flush_interval_s
+                    self._stop_event.wait(), timeout=self._flush_interval_s,
                 )
             except TimeoutError:
                 pass

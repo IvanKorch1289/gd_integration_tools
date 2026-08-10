@@ -84,7 +84,7 @@ class TestGraphQLQueryProcessor:
     def test_init_defaults(self) -> None:
         """Optional parameters have correct defaults."""
         processor = GraphQLQueryProcessor(
-            endpoint="https://api.example.com/graphql", query="{ users { id } }"
+            endpoint="https://api.example.com/graphql", query="{ users { id } }",
         )
         assert processor._variables == {}
         assert processor._operation_name is None
@@ -105,7 +105,7 @@ class TestGraphQLQueryProcessor:
         mock_response.text = '{"data": {"user": {"name": "Alice"}}}'
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(return_value=mock_response)
@@ -133,7 +133,7 @@ class TestGraphQLQueryProcessor:
         mock_response.text = '{"data": {"products": [{"id": 1}, {"id": 2}]}}'
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(return_value=mock_response)
@@ -147,10 +147,10 @@ class TestGraphQLQueryProcessor:
             await processor.process(exchange, _Context())
 
         assert exchange.properties["graphql_data"] == {
-            "data": {"products": [{"id": 1}, {"id": 2}]}
+            "data": {"products": [{"id": 1}, {"id": 2}]},
         }
         assert exchange.out_message.body == {
-            "data": {"products": [{"id": 1}, {"id": 2}]}
+            "data": {"products": [{"id": 1}, {"id": 2}]},
         }
 
     @pytest.mark.asyncio
@@ -163,7 +163,7 @@ class TestGraphQLQueryProcessor:
         mock_response.text = '{"errors": [{"message": "User not found"}]}'
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(return_value=mock_response)
@@ -188,14 +188,14 @@ class TestGraphQLQueryProcessor:
         mock_response.text = "Internal Server Error"
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             processor = GraphQLQueryProcessor(
-                endpoint="https://api.example.com/graphql", query="{ users { id } }"
+                endpoint="https://api.example.com/graphql", query="{ users { id } }",
             )
             await processor.process(exchange, _Context())
 
@@ -212,14 +212,14 @@ class TestGraphQLQueryProcessor:
         mock_response.text = "not json at all"
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(return_value=mock_response)
             mock_get_client.return_value = mock_client
 
             processor = GraphQLQueryProcessor(
-                endpoint="https://api.example.com/graphql", query="{ users { id } }"
+                endpoint="https://api.example.com/graphql", query="{ users { id } }",
             )
             await processor.process(exchange, _Context())
 
@@ -232,16 +232,16 @@ class TestGraphQLQueryProcessor:
         exchange = _Exchange()
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(
-                side_effect=ConnectionError("network failure")
+                side_effect=ConnectionError("network failure"),
             )
             mock_get_client.return_value = mock_client
 
             processor = GraphQLQueryProcessor(
-                endpoint="https://api.example.com/graphql", query="{ users { id } }"
+                endpoint="https://api.example.com/graphql", query="{ users { id } }",
             )
             await processor.process(exchange, _Context())
 
@@ -258,7 +258,7 @@ class TestGraphQLQueryProcessor:
         mock_response.text = '{"data": {}}'
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(return_value=mock_response)
@@ -285,7 +285,7 @@ class TestGraphQLQueryProcessor:
         mock_response.text = '{"data": {}}'
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(return_value=mock_response)
@@ -313,7 +313,7 @@ class TestGraphQLQueryProcessor:
         mock_response.text = '{"data": {}}'
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(return_value=mock_response)
@@ -340,7 +340,7 @@ class TestGraphQLQueryProcessor:
         mock_response.text = '{"data": {}}'
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(return_value=mock_response)
@@ -373,7 +373,7 @@ class TestGraphQLQueryProcessor:
         mock_response.text = '{"data": {"createUser": {"id": 999, "name": "Bob"}}}'
 
         with patch(
-            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client"
+            "src.backend.infrastructure.clients.transport.http_httpx.get_httpx_client",
         ) as mock_get_client:
             mock_client = MagicMock()
             mock_client.request = AsyncMock(return_value=mock_response)
@@ -388,7 +388,7 @@ class TestGraphQLQueryProcessor:
 
             assert exchange.out_message is not None
             assert exchange.out_message.body == {
-                "data": {"createUser": {"id": 999, "name": "Bob"}}
+                "data": {"createUser": {"id": 999, "name": "Bob"}},
             }
 
     def test_to_spec_returns_graphql_query_dict(self) -> None:
@@ -419,7 +419,7 @@ class TestGraphQLQueryProcessor:
     def test_to_spec_omits_optional_defaults(self) -> None:
         """to_spec omits parameters that are at default values."""
         processor = GraphQLQueryProcessor(
-            endpoint="https://api.example.com/graphql", query="{ users { id } }"
+            endpoint="https://api.example.com/graphql", query="{ users { id } }",
         )
         spec = processor.to_spec()
         gql_spec = spec["graphql_query"]

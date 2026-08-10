@@ -208,7 +208,7 @@ class ActionMetadata:
 # Тип "следующего" обработчика в middleware-цепочке. Принимает уже
 # подготовленный ``payload`` и ``context`` и возвращает :class:`ActionResult`.
 MiddlewareNextHandler = Callable[
-    [str, Mapping[str, Any], DispatchContext], Awaitable["ActionResult"]
+    [str, Mapping[str, Any], DispatchContext], Awaitable["ActionResult"],
 ]
 
 
@@ -297,7 +297,7 @@ class ActionGatewayDispatcher(Protocol):
     """
 
     async def dispatch(
-        self, action: str, payload: Mapping[str, Any], context: DispatchContext
+        self, action: str, payload: Mapping[str, Any], context: DispatchContext,
     ) -> ActionResult:
         """Выполнить action и вернуть :class:`ActionResult` envelope."""
         ...
@@ -320,7 +320,7 @@ class ActionGatewayDispatcher(Protocol):
         ...
 
     def list_metadata(
-        self, transport: TransportName | None = None
+        self, transport: TransportName | None = None,
     ) -> tuple[ActionMetadata, ...]:
         """Список метаданных, опционально отфильтрованный по транспорту."""
         ...

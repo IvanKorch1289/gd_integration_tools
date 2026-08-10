@@ -22,13 +22,13 @@ class TestAuditMiddleware:
     @pytest.fixture
     def dispatch_context(self) -> DispatchContext:
         return DispatchContext(
-            correlation_id="corr-1", tenant_id="tenant-1", source="test"
+            correlation_id="corr-1", tenant_id="tenant-1", source="test",
         )
 
     @pytest.fixture
     def next_handler(self) -> AsyncMock:
         async def _handler(
-            action: str, payload: Any, ctx: DispatchContext
+            action: str, payload: Any, ctx: DispatchContext,
         ) -> ActionResult:
             return ActionResult(success=True, data={"ok": True})
 
@@ -42,7 +42,7 @@ class TestAuditMiddleware:
         dispatch_context: DispatchContext,
     ) -> None:
         with patch(
-            "src.backend.services.execution.middlewares.audit_middleware._logger"
+            "src.backend.services.execution.middlewares.audit_middleware._logger",
         ) as mock_logger:
             result = await middleware("test_action", {}, dispatch_context, next_handler)
             assert result.success is True
@@ -55,15 +55,15 @@ class TestAuditMiddleware:
 
     @pytest.mark.asyncio
     async def test_logs_error_on_exception(
-        self, middleware: AuditMiddleware, dispatch_context: DispatchContext
+        self, middleware: AuditMiddleware, dispatch_context: DispatchContext,
     ) -> None:
         async def failing_handler(
-            action: str, payload: Any, ctx: DispatchContext
+            action: str, payload: Any, ctx: DispatchContext,
         ) -> ActionResult:
             raise ValueError("boom")
 
         with patch(
-            "src.backend.services.execution.middlewares.audit_middleware._logger"
+            "src.backend.services.execution.middlewares.audit_middleware._logger",
         ) as mock_logger:
             with pytest.raises(ValueError, match="boom"):
                 await middleware("test_action", {}, dispatch_context, failing_handler)
@@ -80,7 +80,7 @@ class TestAuditMiddleware:
         dispatch_context: DispatchContext,
     ) -> None:
         with patch(
-            "src.backend.services.execution.middlewares.audit_middleware._logger"
+            "src.backend.services.execution.middlewares.audit_middleware._logger",
         ) as mock_logger:
             await middleware("test_action", {}, dispatch_context, next_handler)
             end_call = mock_logger.info.call_args_list[1]
@@ -91,19 +91,19 @@ class TestAuditMiddleware:
 
     @pytest.mark.asyncio
     async def test_end_log_includes_error_code_on_failure(
-        self, middleware: AuditMiddleware, dispatch_context: DispatchContext
+        self, middleware: AuditMiddleware, dispatch_context: DispatchContext,
     ) -> None:
         from src.backend.core.interfaces.action_dispatcher import ActionError
 
         async def failing_result(
-            action: str, payload: Any, ctx: DispatchContext
+            action: str, payload: Any, ctx: DispatchContext,
         ) -> ActionResult:
             return ActionResult(
-                success=False, error=ActionError(code="ERR_1", message="oops")
+                success=False, error=ActionError(code="ERR_1", message="oops"),
             )
 
         with patch(
-            "src.backend.services.execution.middlewares.audit_middleware._logger"
+            "src.backend.services.execution.middlewares.audit_middleware._logger",
         ) as mock_logger:
             await middleware("test_action", {}, dispatch_context, failing_result)
             end_call = mock_logger.info.call_args_list[1]
@@ -119,5 +119,5 @@ class TestAuditMiddleware:
     ) -> None:
         await middleware("my_action", {"key": "val"}, dispatch_context, next_handler)
         next_handler.assert_awaited_once_with(
-            "my_action", {"key": "val"}, dispatch_context
+            "my_action", {"key": "val"}, dispatch_context,
         )

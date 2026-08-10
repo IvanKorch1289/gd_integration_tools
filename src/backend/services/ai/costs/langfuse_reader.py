@@ -85,7 +85,7 @@ class LangFuseReader:
             return []
         try:
             traces = client.fetch_traces(
-                from_timestamp=(datetime.now(UTC) - window).isoformat()
+                from_timestamp=(datetime.now(UTC) - window).isoformat(),
             )
         except Exception as exc:
             logger.warning("LangFuse fetch_traces failed: %s", exc)

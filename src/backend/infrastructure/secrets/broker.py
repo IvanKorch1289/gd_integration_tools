@@ -183,5 +183,5 @@ class SecretBrokerImpl:
                 callback(snapshot)
             except Exception as exc:
                 _logger.warning(
-                    "secret_broker.subscriber_failed name=%s err=%s", snapshot.name, exc
+                    "secret_broker.subscriber_failed name=%s err=%s", snapshot.name, exc,
                 )

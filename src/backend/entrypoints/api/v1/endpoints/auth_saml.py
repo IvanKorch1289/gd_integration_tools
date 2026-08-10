@@ -81,7 +81,7 @@ def _is_safe_return_to(url: str, allowed_host: str | None) -> bool:
     },
 )
 async def saml_login(
-    request: Request, return_to: str | None = None
+    request: Request, return_to: str | None = None,
 ) -> RedirectResponse:
     """Инициировать SP-initiated SSO.
 
@@ -160,7 +160,7 @@ async def saml_acs(request: Request, response: Response) -> dict:
 
     try:
         auth_result = handler.consume_acs(
-            request_id=str(request_id), validator_factory=_validator
+            request_id=str(request_id), validator_factory=_validator,
         )
     except SamlError as exc:
         logger.warning("saml.acs.rejected", extra={"reason": str(exc)})

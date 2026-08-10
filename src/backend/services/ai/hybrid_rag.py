@@ -117,7 +117,7 @@ class HybridRAGSearch:
         rag = self._get_rag()
 
         vector_results = await rag.search(
-            query=query, top_k=top_k * 3, namespace=namespace
+            query=query, top_k=top_k * 3, namespace=namespace,
         )
 
         bm25_results: list[dict[str, Any]] = []
@@ -144,7 +144,7 @@ class HybridRAGSearch:
         return combined[:top_k]
 
     def _combine_scores(
-        self, vector: list[dict[str, Any]], bm25: list[dict[str, Any]], *, alpha: float
+        self, vector: list[dict[str, Any]], bm25: list[dict[str, Any]], *, alpha: float,
     ) -> list[dict[str, Any]]:
         """Merge по document text с weighted scoring."""
         merged: dict[str, dict[str, Any]] = {}
@@ -165,7 +165,7 @@ class HybridRAGSearch:
         return sorted(merged.values(), key=lambda x: x.get("score", 0), reverse=True)
 
     def _rerank(
-        self, query: str, candidates: list[dict[str, Any]]
+        self, query: str, candidates: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
         """Cross-encoder rerank: BGE FlagReranker (preferred) или token-overlap fallback.
 
@@ -189,7 +189,7 @@ class HybridRAGSearch:
                 for doc, score in zip(candidates, scores):
                     doc["rerank_score"] = float(score)
                 return sorted(
-                    candidates, key=lambda x: x.get("rerank_score", 0), reverse=True
+                    candidates, key=lambda x: x.get("rerank_score", 0), reverse=True,
                 )
         except Exception as exc:
             logger.debug("BGE FlagReranker rerank failed: %s", exc)

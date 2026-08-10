@@ -50,7 +50,7 @@ def subscribers_fixture() -> Any:
         mock_settings.redis.get_stream_name.return_value = "dsl-events"
         mock_settings.queue.get_queue_name.return_value = "dsl-actions"
         with patch(
-            "src.backend.entrypoints.stream.subscribers.action_handler_registry"
+            "src.backend.entrypoints.stream.subscribers.action_handler_registry",
         ) as mock_registry:
             import src.backend.entrypoints.stream.subscribers as subscribers
 
@@ -80,7 +80,7 @@ class TestHandleUniversalRedisAction:
         fake_redis = MagicMock()
 
         await redis_handler(
-            body={"action": "test.a", "payload": {}}, msg=fake_msg, redis=fake_redis
+            body={"action": "test.a", "payload": {}}, msg=fake_msg, redis=fake_redis,
         )
 
         registry.dispatch.assert_awaited_once()
@@ -115,7 +115,7 @@ class TestHandleUniversalRedisAction:
 
     @pytest.mark.asyncio
     async def test_dispatch_exception_enqueues_dlq(
-        self, subscribers_fixture: Any
+        self, subscribers_fixture: Any,
     ) -> None:
         """cycle-5/D-AUDIT-504: dispatch exception → DLQ poison message."""
         redis_handler = subscribers_fixture["redis_router"].handlers[0][1]
@@ -127,7 +127,7 @@ class TestHandleUniversalRedisAction:
         fake_redis = MagicMock()
 
         await redis_handler(
-            body={"action": "test.b", "payload": {}}, msg=fake_msg, redis=fake_redis
+            body={"action": "test.b", "payload": {}}, msg=fake_msg, redis=fake_redis,
         )
 
         subscribers_fixture["logger"].error.assert_called()
@@ -141,7 +141,7 @@ class TestHandleUniversalRedisAction:
 
     @pytest.mark.asyncio
     async def test_dispatch_exception_correlation_id_none(
-        self, subscribers_fixture: Any
+        self, subscribers_fixture: Any,
     ) -> None:
         """cycle-5/D-AUDIT-504: correlation_id=None не падает, DLQ записан."""
         redis_handler = subscribers_fixture["redis_router"].handlers[0][1]
@@ -153,7 +153,7 @@ class TestHandleUniversalRedisAction:
         fake_redis = MagicMock()
 
         await redis_handler(
-            body={"action": "test.x", "payload": {}}, msg=fake_msg, redis=fake_redis
+            body={"action": "test.x", "payload": {}}, msg=fake_msg, redis=fake_redis,
         )
 
         dlq = subscribers_fixture["dlq"]
@@ -200,7 +200,7 @@ class TestHandleUniversalRabbitAction:
 
     @pytest.mark.asyncio
     async def test_dispatch_exception_enqueues_dlq(
-        self, subscribers_fixture: Any
+        self, subscribers_fixture: Any,
     ) -> None:
         """cycle-5/D-AUDIT-504: dispatch exception → DLQ poison message (rabbit)."""
         rabbit_handler = subscribers_fixture["rabbit_router"].handlers[0][1]
@@ -245,7 +245,7 @@ class TestSubscribersDLQWriterNotConfigured:
             mock_settings.redis.get_stream_name.return_value = "dsl-events"
             mock_settings.queue.get_queue_name.return_value = "dsl-actions"
             with patch(
-                "src.backend.entrypoints.stream.subscribers.action_handler_registry"
+                "src.backend.entrypoints.stream.subscribers.action_handler_registry",
             ) as mock_registry:
                 import src.backend.entrypoints.stream.subscribers as subscribers
 
@@ -273,7 +273,7 @@ class TestSubscribersDLQWriterNotConfigured:
         fake_redis = MagicMock()
 
         await redis_handler(
-            body={"action": "test.z", "payload": {}}, msg=fake_msg, redis=fake_redis
+            body={"action": "test.z", "payload": {}}, msg=fake_msg, redis=fake_redis,
         )
 
         no_dlq_fixture["logger"].warning.assert_called()

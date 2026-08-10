@@ -168,7 +168,7 @@ async def test_process_rlm_mode_large_context(monkeypatch: pytest.MonkeyPatch) -
     # Mock LiteLLMGateway чтобы RLM loop выполнил хотя бы 1 iteration.
     fake_gateway = MagicMock()
     fake_gateway.acompletion = AsyncMock(
-        return_value={"choices": [{"message": {"content": '{"relevant": true, "reasoning": "yes"}'}}]}
+        return_value={"choices": [{"message": {"content": '{"relevant": true, "reasoning": "yes"}'}}]},
     )
     monkeypatch.setattr(
         "src.backend.services.ai.gateway.client.get_litellm_gateway",
@@ -245,7 +245,7 @@ class TestToSpec:
 @pytest.mark.asyncio
 async def test_process_with_custom_prompt_template() -> None:
     proc = AIRLMProcessor(
-        prompt_template="Context: {context}\nQuestion: {query}\nAnswer:"
+        prompt_template="Context: {context}\nQuestion: {query}\nAnswer:",
     )
     exc = _make_exchange({"context": "test ctx", "query": "test?"})
     ctx = MagicMock()

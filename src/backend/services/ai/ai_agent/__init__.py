@@ -42,7 +42,7 @@ __all__ = ("AIAgentService", "get_ai_agent_service")
 
 
 class AIAgentService(
-    HttpProvidersMixin, WebMethodsMixin, AgentOrchestrationMixin, RagMixin, PolicyMixin
+    HttpProvidersMixin, WebMethodsMixin, AgentOrchestrationMixin, RagMixin, PolicyMixin,
 ):
     """AI Agent Service (5 mixins = 16 methods + 3 core)."""
 

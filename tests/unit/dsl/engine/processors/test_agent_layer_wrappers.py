@@ -20,7 +20,7 @@ def _bypass_auth() -> None:
     )
 
     LangGraphAgentProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
-        return_value=True
+        return_value=True,
     )
 
 

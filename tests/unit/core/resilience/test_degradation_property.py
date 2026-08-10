@@ -45,7 +45,7 @@ def test_reflexivity(m: DegradationMode) -> None:
 @given(a=st_mode, b=st_mode, c=st_mode)
 @settings(max_examples=50)
 def test_transitivity(
-    a: DegradationMode, b: DegradationMode, c: DegradationMode
+    a: DegradationMode, b: DegradationMode, c: DegradationMode,
 ) -> None:
     """If a≥b and b≥c, then a≥c (partial order property)."""
     if mode_at_least(a, b) and mode_at_least(b, c):
@@ -130,7 +130,7 @@ def test_maintenance_not_strictly_below_any_other() -> None:
     ],
 )
 def test_aliases_bidirectional(
-    alias: DegradationMode, original: DegradationMode
+    alias: DegradationMode, original: DegradationMode,
 ) -> None:
     """Backward-compat aliases have identical strictness (bidirectional ≥)."""
     assert mode_at_least(alias, original) is True

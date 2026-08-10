@@ -164,14 +164,14 @@ class MongoSource:
         except ImportError as exc:
             raise ImportError(
                 "motor not installed. Add 'motor>=3.3' to dependencies "
-                "(S3 Wave 3 cutover). For now: pip install motor."
+                "(S3 Wave 3 cutover). For now: pip install motor.",
             ) from exc
 
         async with self._lock:
             if self._client is not None:
                 raise RuntimeError(
                     f"MongoSource(database={self._config.database!r}, "
-                    f"collection={self._config.collection!r}) уже запущен"
+                    f"collection={self._config.collection!r}) уже запущен",
                 )
             self._client = None
             self._running = True
@@ -181,7 +181,7 @@ class MongoSource:
             while self._running:
                 try:
                     client = motor.motor_asyncio.AsyncIOMotorClient(  # type: ignore[attr-defined]
-                        self._config.connection_url
+                        self._config.connection_url,
                     )
                     db = client[self._config.database]
                     async with self._lock:
@@ -206,7 +206,7 @@ class MongoSource:
 
                     if self._config.collection:
                         change_stream = db[self._config.collection].watch(
-                            **watch_kwargs
+                            **watch_kwargs,
                         )
                     else:
                         change_stream = db.watch(**watch_kwargs)
@@ -241,7 +241,7 @@ class MongoSource:
                                 operation_type=change.get("operationType", "unknown"),
                                 database=self._config.database,
                                 collection=change.get("ns", {}).get(
-                                    "coll", self._config.collection
+                                    "coll", self._config.collection,
                                 )
                                 or "",
                                 document_key=change.get("documentKey"),
@@ -254,7 +254,7 @@ class MongoSource:
                             await change_stream.close()
                         except Exception as exc:
                             logger.debug(
-                                "MongoSource: change_stream.close error: %s", exc
+                                "MongoSource: change_stream.close error: %s", exc,
                             )
 
                     # Reset attempts на успешном завершении цикла.
@@ -275,7 +275,7 @@ class MongoSource:
                         raise RuntimeError(
                             f"MongoSource: max reconnect attempts "
                             f"({self._config.max_reconnect_attempts}) "
-                            f"exhausted"
+                            f"exhausted",
                         ) from conn_exc
                     reconnect_attempts += 1
                     await asyncio.sleep(self._config.reconnect_delay_seconds)
@@ -337,7 +337,7 @@ class MongoSource:
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )
 
     async def _close(self) -> None:

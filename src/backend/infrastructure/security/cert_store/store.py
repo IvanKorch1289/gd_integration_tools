@@ -209,7 +209,7 @@ class CertStore:
             List of expiring CertEntry objects.
         """
         deadline = datetime.now(tz=UTC) + timedelta(
-            days=self._settings.expire_warn_days
+            days=self._settings.expire_warn_days,
         )
         return await self._backend.list_expiring(deadline)
 
@@ -218,7 +218,7 @@ class CertStore:
         self._cache.pop(service_id, None)
 
     def subscribe_updates(
-        self, listener: Callable[[str], Awaitable[None] | None]
+        self, listener: Callable[[str], Awaitable[None] | None],
     ) -> None:
         """Подписаться на событие ``cert:updated`` (получит ``service_id``)."""
         self._listeners.append(listener)

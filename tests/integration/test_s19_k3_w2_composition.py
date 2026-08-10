@@ -44,7 +44,7 @@ class TestS19CompositionSmoke:
             return_value=True,
         ):
             pipeline = load_pipeline_from_file(
-                Path("routes/composition_demo/main.dsl.yaml")
+                Path("routes/composition_demo/main.dsl.yaml"),
             )
             assert pipeline.route_id == "composition.demo"
             # Steps: 2 from shared_steps + 2 from base_transforms + 4 from main

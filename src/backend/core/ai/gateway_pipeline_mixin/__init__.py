@@ -67,7 +67,7 @@ __all__ = ("PipelineStepsMixin",)
 
 
 class PipelineStepsMixin(
-    PolicyMixin, InputMixin, LlmInvocationMixin, OutputMixin, ObservabilityMixin
+    PolicyMixin, InputMixin, LlmInvocationMixin, OutputMixin, ObservabilityMixin,
 ):
     """AI Gateway Pipeline Steps (5 mixins = 15 methods)."""
 

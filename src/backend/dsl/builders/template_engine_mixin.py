@@ -48,14 +48,14 @@ class TemplateEngineMixin:
         return env
 
     def register_filter(  # type: ignore
-        self: RouteBuilder, name: str, fn: Callable[..., Any]
+        self: RouteBuilder, name: str, fn: Callable[..., Any],
     ) -> RouteBuilder:
         """Register custom Jinja2 filter (chainable)."""
         self._get_env().filters[name] = fn  # type: ignore
         return self
 
     def template_render_str(  # type: ignore
-        self: RouteBuilder, template_str: str, context: Context | None = None
+        self: RouteBuilder, template_str: str, context: Context | None = None,
     ) -> str:
         """Render Jinja2 template из строки. Returns rendered string.
 
@@ -70,7 +70,7 @@ class TemplateEngineMixin:
         return self._get_env().from_string(template_str).render(**context)  # type: ignore
 
     def render_file(  # type: ignore
-        self: RouteBuilder, template_path: PathLike, context: Context | None = None
+        self: RouteBuilder, template_path: PathLike, context: Context | None = None,
     ) -> str:
         """Render Jinja2 template из файла (str | Path)."""
         if context is None:

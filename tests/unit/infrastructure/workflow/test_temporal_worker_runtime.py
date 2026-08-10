@@ -70,7 +70,7 @@ class TestTemporalWorkerRuntimeCreation:
             },
         ):
             await runtime.start(
-                client=client, task_queue="test-queue", workflow_classes=[wf_cls]
+                client=client, task_queue="test-queue", workflow_classes=[wf_cls],
             )
 
         assert runtime.is_running is True

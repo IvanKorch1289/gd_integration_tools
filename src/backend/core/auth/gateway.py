@@ -61,7 +61,7 @@ class AuthGateway:
     __slots__ = ("_default_method",)
 
     def __init__(
-        self, default_method: AuthMethod | list[AuthMethod] = AuthMethod.API_KEY
+        self, default_method: AuthMethod | list[AuthMethod] = AuthMethod.API_KEY,
     ) -> None:
         self._default_method = default_method
 
@@ -83,7 +83,7 @@ class AuthGateway:
         return await verify_request(request, methods=effective)
 
     def require(
-        self, methods: AuthMethod | list[AuthMethod] | None = None
+        self, methods: AuthMethod | list[AuthMethod] | None = None,
     ) -> Callable[..., Any]:
         """Factory для FastAPI dependency (overrides default).
 

@@ -27,7 +27,7 @@ from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanproce
 def _bypass_auth() -> None:
     """FilteredDirectoryScanProcessor требует capability=rpa.directory.scan — bypass."""
     FilteredDirectoryScanProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
-        return_value=True
+        return_value=True,
     )
 
 
@@ -93,7 +93,7 @@ async def test_directory_scan_respects_max_files() -> None:
     tmp, _created = _tmpdir([f"file_{i}.txt" for i in range(10)])
     try:
         proc = DirectoryScanProcessor(
-            path=tmp, pattern="*.txt", recursive=False, max_files=3
+            path=tmp, pattern="*.txt", recursive=False, max_files=3,
         )
         ctx = AsyncMock()
         e = _ex()
@@ -137,7 +137,7 @@ async def test_directory_scan_sort_by_mtime() -> None:
         os.utime(new_path, (1e9, 1e9))  # recent
 
         proc = DirectoryScanProcessor(
-            path=tmp, pattern="*.txt", recursive=False, sort_by="mtime"
+            path=tmp, pattern="*.txt", recursive=False, sort_by="mtime",
         )
         ctx = AsyncMock()
         e = _ex()
@@ -165,7 +165,7 @@ async def test_directory_scan_sort_by_size() -> None:
             f.write("x" * 200)
 
         proc = DirectoryScanProcessor(
-            path=tmp, pattern="*.txt", recursive=False, sort_by="size"
+            path=tmp, pattern="*.txt", recursive=False, sort_by="size",
         )
         ctx = AsyncMock()
         e = _ex()

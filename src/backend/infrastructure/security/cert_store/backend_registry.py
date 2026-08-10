@@ -78,7 +78,7 @@ class CertBackendRegistry:
         if backend_id not in self._backends:
             raise KeyError(
                 f"CertBackend {backend_id!r} не зарегистрирован. "
-                f"Доступные: {sorted(self._backends.keys())}"
+                f"Доступные: {sorted(self._backends.keys())}",
             )
         return self._backends[backend_id]
 

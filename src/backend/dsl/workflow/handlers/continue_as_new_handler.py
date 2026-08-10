@@ -92,7 +92,7 @@ class ContinueAsNewHandler:
                 extra={"hint": "pip install temporalio"},
             )
             raise ImportError(
-                "temporalio не установлен — ContinueAsNew недоступен"
+                "temporalio не установлен — ContinueAsNew недоступен",
             ) from exc
 
         args = self.build_continue_args(marker, current_input=current_input)

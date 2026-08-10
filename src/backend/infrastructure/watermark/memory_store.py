@@ -33,7 +33,7 @@ class MemoryWatermarkStore:
             return replace(stored) if stored is not None else None
 
     async def save(
-        self, route_id: str, processor_name: str, state: WatermarkState
+        self, route_id: str, processor_name: str, state: WatermarkState,
     ) -> None:
         """Метод save (см. signature)."""
         async with self._lock:

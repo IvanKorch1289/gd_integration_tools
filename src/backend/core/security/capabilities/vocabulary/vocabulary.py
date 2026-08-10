@@ -75,5 +75,5 @@ class CapabilityVocabulary:
         definition = self.get(ref.name)
         if definition.scope_required and ref.scope is None:
             raise ValueError(
-                f"Capability {ref.name!r} requires explicit scope (scope_required=True)"
+                f"Capability {ref.name!r} requires explicit scope (scope_required=True)",
             )

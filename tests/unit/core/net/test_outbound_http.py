@@ -32,7 +32,7 @@ def _make_client(
 ) -> OutboundHttpClient:
     """Тестовая фабрика; подменяет transport напрямую."""
     client = OutboundHttpClient(
-        policy=policy, capability_check=capability_check, audit=audit
+        policy=policy, capability_check=capability_check, audit=audit,
     )
     # Подменяем нижележащий httpx.AsyncClient на MockTransport-вариант.
     client._client._transport = transport  # type: ignore[attr-defined]
@@ -121,7 +121,7 @@ async def test_async_context_manager(transport: httpx.MockTransport) -> None:
 
 @pytest.mark.asyncio
 async def test_dual_emit_calls_both_callback_and_facade(
-    transport: httpx.MockTransport, monkeypatch: pytest.MonkeyPatch
+    transport: httpx.MockTransport, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """S109 W1: dual-emit — callback + emit_waf_evaluation (canonical).
 
@@ -137,14 +137,14 @@ async def test_dual_emit_calls_both_callback_and_facade(
     facade_calls: list[dict[str, object]] = []
 
     def fake_emit_waf_evaluation(
-        *, decision: Any, plugin: str, method: str, url: str
+        *, decision: Any, plugin: str, method: str, url: str,
     ) -> None:
         facade_calls.append(
-            {"decision": decision, "plugin": plugin, "method": method, "url": url}
+            {"decision": decision, "plugin": plugin, "method": method, "url": url},
         )
 
     monkeypatch.setattr(
-        "src.backend.core.audit.facade.emit_waf_evaluation", fake_emit_waf_evaluation
+        "src.backend.core.audit.facade.emit_waf_evaluation", fake_emit_waf_evaluation,
     )
 
     client = _make_client(transport=transport, audit=audit)

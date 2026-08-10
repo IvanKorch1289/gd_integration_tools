@@ -44,10 +44,10 @@ def test_chained_pipeline_all_11_methods() -> None:
         RouteBuilder.from_("ai_demo", source="internal:test")
         .agent_run(workflow_id="step1", prompt_inline="p1")
         .agent_branch(
-            source_property="agent_result.content", branches={"approve": []}, default=[]
+            source_property="agent_result.content", branches={"approve": []}, default=[],
         )
         .agent_loop(
-            processors=[]  # пустые processors через _add fails; чтобы пройти init validation:
+            processors=[],  # пустые processors через _add fails; чтобы пройти init validation:
         )
         if False
         else RouteBuilder.from_("ai_demo", source="internal:test")
@@ -118,7 +118,7 @@ def test_chained_pipeline_all_11_methods() -> None:
     ],
 )
 def test_each_method_adds_correct_processor(
-    method: str, kwargs: dict[str, Any], expected_class_name: str
+    method: str, kwargs: dict[str, Any], expected_class_name: str,
 ) -> None:
     """Каждый fluent method добавляет правильный processor в pipeline."""
     b = RouteBuilder.from_("test", source="internal:t")
@@ -176,13 +176,13 @@ def test_yaml_round_trip_all_processors_have_to_spec() -> None:
         ),
         (
             AgentLoopProcessor(
-                processors=[AgentRunProcessor(workflow_id="x", prompt_inline="y")]
+                processors=[AgentRunProcessor(workflow_id="x", prompt_inline="y")],
             ),
             "agent_loop",
         ),
         (
             AgentParallelProcessor(
-                agents=[{"key": "a", "workflow_id": "x", "prompt_inline": "p"}]
+                agents=[{"key": "a", "workflow_id": "x", "prompt_inline": "p"}],
             ),
             "agent_parallel",
         ),

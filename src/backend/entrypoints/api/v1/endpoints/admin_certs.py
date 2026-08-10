@@ -28,7 +28,7 @@ __all__ = (
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_READ = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN))
+    require_admin((AdminRole.OPERATOR, AdminRole.READ_ONLY, AdminRole.SUPER_ADMIN)),
 )
 
 router = APIRouter(dependencies=[_ADMIN_GUARD_READ], prefix="/admin/certs", tags=["admin", "certs"])
@@ -92,7 +92,7 @@ async def list_expiring_certs(
                 cert_id=sid if sid is not None else "",
                 expires_at=exp,
                 days_remaining=days_remaining,
-            )
+            ),
         )
 
     items.sort(key=lambda x: x.days_remaining)

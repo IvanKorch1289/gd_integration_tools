@@ -17,10 +17,10 @@ from hypothesis import strategies as st
 from src.backend.services.ai.pii.recognizers.inn_recognizer import _inn_checksum_valid
 
 PROP = settings(
-    max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 PROP20 = settings(
-    max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 
 # Real valid INN (Сбербанк): known-valid 10-digit ФНС checksum

@@ -35,7 +35,7 @@ class TestDefaultActionDispatcher:
 
     @pytest.mark.asyncio
     async def test_dispatch_with_schema_no_context(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         registry.dispatch = AsyncMock(return_value={"data": 123})
         command = ActionCommandSchema(action="test", payload={})
@@ -45,7 +45,7 @@ class TestDefaultActionDispatcher:
 
     @pytest.mark.asyncio
     async def test_dispatch_with_schema_and_context_success(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         registry.dispatch = AsyncMock(return_value={"data": 123})
         command = ActionCommandSchema(action="test", payload={})
@@ -55,7 +55,7 @@ class TestDefaultActionDispatcher:
 
     @pytest.mark.asyncio
     async def test_dispatch_with_schema_and_context_action_not_found(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         async def _dispatch(cmd: ActionCommandSchema) -> Any:
             raise KeyError(cmd.action)
@@ -68,7 +68,7 @@ class TestDefaultActionDispatcher:
 
     @pytest.mark.asyncio
     async def test_dispatch_with_schema_and_context_dispatch_failed(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         async def _dispatch(cmd: ActionCommandSchema) -> Any:
             raise RuntimeError("broken")
@@ -81,7 +81,7 @@ class TestDefaultActionDispatcher:
 
     @pytest.mark.asyncio
     async def test_dispatch_action_gateway_not_registered(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         registry.is_registered.return_value = False
         result = await dispatcher.dispatch_action("missing", {}, DispatchContext())
@@ -91,7 +91,7 @@ class TestDefaultActionDispatcher:
 
     @pytest.mark.asyncio
     async def test_dispatch_action_success(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         registry.dispatch = AsyncMock(return_value={"ok": True})
         result = await dispatcher.dispatch_action("test", {}, DispatchContext())
@@ -100,7 +100,7 @@ class TestDefaultActionDispatcher:
 
     @pytest.mark.asyncio
     async def test_dispatch_action_keyerror_in_terminal(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         async def _dispatch(cmd: ActionCommandSchema) -> Any:
             raise KeyError(cmd.action)
@@ -112,7 +112,7 @@ class TestDefaultActionDispatcher:
 
     @pytest.mark.asyncio
     async def test_dispatch_action_exception_in_terminal(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         async def _dispatch(cmd: ActionCommandSchema) -> Any:
             raise ValueError("boom")
@@ -123,19 +123,19 @@ class TestDefaultActionDispatcher:
         assert result.error.code == "dispatch_failed"
 
     def test_is_registered(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         registry.is_registered.return_value = True
         assert dispatcher.is_registered("test") is True
 
     def test_list_actions(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         registry.list_actions.return_value = ("a", "b")
         assert dispatcher.list_actions() == ("a", "b")
 
     def test_list_actions_by_transport(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         meta = MagicMock()
         meta.action = "a"
@@ -143,20 +143,20 @@ class TestDefaultActionDispatcher:
         assert dispatcher.list_actions("rest") == ("a",)
 
     def test_list_metadata(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         registry.list_metadata.return_value = ()
         assert dispatcher.list_metadata() == ()
 
     def test_register_middleware(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         mw = MagicMock()
         dispatcher.register_middleware(mw)
         registry.register_middleware.assert_called_once_with(mw)
 
     def test_get_metadata(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         meta = MagicMock()
         registry.get_metadata.return_value = meta
@@ -164,7 +164,7 @@ class TestDefaultActionDispatcher:
 
     @pytest.mark.asyncio
     async def test_middleware_chain_executed(
-        self, dispatcher: DefaultActionDispatcher, registry: MagicMock
+        self, dispatcher: DefaultActionDispatcher, registry: MagicMock,
     ) -> None:
         calls: list[str] = []
 
@@ -173,7 +173,7 @@ class TestDefaultActionDispatcher:
                 self.name = name
 
             async def __call__(
-                self, action: str, payload: Any, ctx: DispatchContext, next_handler: Any
+                self, action: str, payload: Any, ctx: DispatchContext, next_handler: Any,
             ) -> ActionResult:
                 calls.append(f"before_{self.name}")
                 result = await next_handler(action, payload, ctx)

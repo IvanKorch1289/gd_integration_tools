@@ -39,7 +39,7 @@ class TestGlomExtract:
     async def test_first_path_match(self) -> None:
         """First matching path wins (Coalesce semantics)."""
         op = GlomExtractProcessor(
-            paths=["customer.email", "user.email"], default="unknown"
+            paths=["customer.email", "user.email"], default="unknown",
         )
         ex = _exchange({"customer": {"email": "a@b.com"}})
         await op.process(ex, _ctx())
@@ -49,7 +49,7 @@ class TestGlomExtract:
     async def test_fallback_to_second_path(self) -> None:
         """If first path miss → try second."""
         op = GlomExtractProcessor(
-            paths=["customer.email", "user.email"], default="unknown"
+            paths=["customer.email", "user.email"], default="unknown",
         )
         ex = _exchange({"user": {"email": "u@x.com"}})
         await op.process(ex, _ctx())
@@ -59,7 +59,7 @@ class TestGlomExtract:
     async def test_default_when_all_paths_miss(self) -> None:
         """All paths miss → default value."""
         op = GlomExtractProcessor(
-            paths=["customer.email", "user.email"], default="anonymous@example.com"
+            paths=["customer.email", "user.email"], default="anonymous@example.com",
         )
         ex = _exchange({})
         await op.process(ex, _ctx())
@@ -69,7 +69,7 @@ class TestGlomExtract:
     async def test_programmatic_path(self) -> None:
         """Path instance вместо string."""
         op = GlomExtractProcessor(
-            paths=[Path("customer", "email"), Path("user", "email")], default="x"
+            paths=[Path("customer", "email"), Path("user", "email")], default="x",
         )
         ex = _exchange({"customer": {"email": "a@b"}})
         await op.process(ex, _ctx())
@@ -79,7 +79,7 @@ class TestGlomExtract:
     async def test_write_back(self) -> None:
         """write_back=True → out_message body = extracted value."""
         op = GlomExtractProcessor(
-            paths=["customer.email"], default="x", write_back=True
+            paths=["customer.email"], default="x", write_back=True,
         )
         ex = _exchange({"customer": {"email": "a@b"}})
         await op.process(ex, _ctx())
@@ -101,7 +101,7 @@ class TestGlomTransform:
     async def test_basic_reshape(self) -> None:
         """Body reshaped according to spec mapping."""
         op = GlomTransformProcessor(
-            spec={"user_id": "id", "name": "profile.full_name", "tags": "metadata.tags"}
+            spec={"user_id": "id", "name": "profile.full_name", "tags": "metadata.tags"},
         )
         ex = _exchange(
             {
@@ -109,7 +109,7 @@ class TestGlomTransform:
                 "profile": {"full_name": "Alice"},
                 "metadata": {"tags": ["x", "y"]},
                 "password": "secret",  # not in spec → excluded
-            }
+            },
         )
         await op.process(ex, _ctx())
         assert ex.out_message is not None
@@ -123,7 +123,7 @@ class TestGlomTransform:
     async def test_missing_path_with_skip(self) -> None:
         """skip_missing=True (default) → missing source → default value."""
         op = GlomTransformProcessor(
-            spec={"name": "profile.full_name", "age": "profile.age"}, default=None
+            spec={"name": "profile.full_name", "age": "profile.age"}, default=None,
         )
         ex = _exchange({"profile": {"full_name": "Alice"}})
         await op.process(ex, _ctx())
@@ -136,7 +136,7 @@ class TestGlomTransform:
         # NOTE: чтобы действительно "skip" missing, default НЕ передаём
         # (glom raises Miss → continue).
         op = GlomTransformProcessor(
-            spec={"name": "profile.full_name", "age": "profile.age"}, skip_missing=False
+            spec={"name": "profile.full_name", "age": "profile.age"}, skip_missing=False,
         )
         ex = _exchange({"profile": {"full_name": "Alice"}})
         await op.process(ex, _ctx())

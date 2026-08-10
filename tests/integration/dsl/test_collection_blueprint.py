@@ -26,7 +26,7 @@ steps:
     pipeline = load_pipeline_from_yaml(yaml_text)
     engine = ExecutionEngine()
     exchange = await engine.execute(
-        pipeline, body=[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+        pipeline, body=[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}],
     )
     assert exchange.out_message.body == ["Alice", "Bob"]
 

@@ -28,7 +28,7 @@ def inner_app() -> AsyncMock:
                 "type": "http.response.start",
                 "status": 200,
                 "headers": [(b"content-type", b"application/json")],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": b'{"key": "value"}' * 50})
 
@@ -87,7 +87,7 @@ class TestBrotliCompressionMiddleware:
                     "type": "http.response.start",
                     "status": 200,
                     "headers": [(b"content-type", b"application/json")],
-                }
+                },
             )
             await send({"type": "http.response.body", "body": b'{"key": "value"}' * 50})
 
@@ -110,7 +110,7 @@ class TestBrotliCompressionMiddleware:
                     "type": "http.response.start",
                     "status": 200,
                     "headers": [(b"content-type", b"application/json")],
-                }
+                },
             )
             await send({"type": "http.response.body", "body": b'{"k": 1}'})
 

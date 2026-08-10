@@ -53,12 +53,12 @@ def safe_action(
     if dlq_action:
         builder = builder.do_try(
             try_processors=[
-                RetryProcessor(processors=[action_processor], max_attempts=max_retries)
+                RetryProcessor(processors=[action_processor], max_attempts=max_retries),
             ],
             catch_processors=[
                 LogProcessor(level="error"),
                 DeadLetterProcessor(
-                    processors=[DispatchActionProcessor(action=dlq_action)]
+                    processors=[DispatchActionProcessor(action=dlq_action)],
                 ),
             ],
         )

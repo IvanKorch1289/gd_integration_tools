@@ -109,7 +109,7 @@ class ExecutionBackendFactory:
 
             if settings is None:
                 raise ValueError(
-                    "HUB backend требует JupyterHubSettings (settings=...)"
+                    "HUB backend требует JupyterHubSettings (settings=...)",
                 )
             return NotebookExecutionService(settings)
         elif kind == BackendKind.PAPERMILL:
@@ -136,7 +136,7 @@ class ExecutionBackendFactory:
             raise ValueError(f"Unknown backend kind: {kind!r}")
 
     def from_config(
-        self, *, settings: JupyterHubSettings | None = None, **kwargs: Any
+        self, *, settings: JupyterHubSettings | None = None, **kwargs: Any,
     ) -> Any:
         """Auto-detect backend from environment (JUPYTER_BACKEND).
 

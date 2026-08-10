@@ -170,7 +170,7 @@ class DataQualityMonitor(RuleManagementMixin, CheckMixin, SchemaMixin, ApplyMixi
         self._rules: list[DQRule] = []
         self._inferred_schemas: dict[str, dict[str, str]] = {}
         self._stats: dict[str, dict[str, Any]] = defaultdict(
-            lambda: {"checks": 0, "violations": 0}
+            lambda: {"checks": 0, "violations": 0},
         )
         self._seen_keys: dict[str, set[str]] = defaultdict(set)
         self._numeric_history: dict[str, list[float]] = defaultdict(list)

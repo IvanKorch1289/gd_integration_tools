@@ -160,7 +160,7 @@ def set_llm_judge_metrics_provider(recorder: Any) -> None:
 
 
 def _noop_llm_judge_metrics(
-    *, model: str, hallucination: float, relevance: float, toxicity: float
+    *, model: str, hallucination: float, relevance: float, toxicity: float,
 ) -> None:
     """Заглушка, если backend метрик недоступен."""
     return

@@ -74,7 +74,7 @@ class TestRowsFromBody:
             return_value=mock_client,
         ):
             proc = ClickHouseInsertProcessor(
-                table="events", batch_size=5, rows_from="body.rows"
+                table="events", batch_size=5, rows_from="body.rows",
             )
             await proc.process(exchange, _Context())
         call_args = mock_client.insert.await_args
@@ -163,7 +163,7 @@ class TestFailFastOnBadPath:
             return_value=mock_client,
         ):
             proc = ClickHouseInsertProcessor(
-                table="events", batch_size=10, rows_from="body.rows"
+                table="events", batch_size=10, rows_from="body.rows",
             )
             await proc.process(exchange, _Context())
         assert exchange._error is not None

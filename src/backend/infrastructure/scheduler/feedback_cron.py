@@ -16,7 +16,7 @@ logger = get_logger("infra.scheduler.feedback_cron")
 
 
 def register_feedback_cron(
-    scheduler: Any, *, trainer_factory: Any, cron: str = "0 3 * * *"
+    scheduler: Any, *, trainer_factory: Any, cron: str = "0 3 * * *",
 ) -> str:
     """Зарегистрировать nightly feedback-train job в APScheduler.
 
@@ -47,7 +47,7 @@ def register_feedback_cron(
 
     job_id = "ai_feedback_dspy_nightly"
     scheduler.add_job(
-        _job, trigger=CronTrigger.from_crontab(cron), id=job_id, replace_existing=True
+        _job, trigger=CronTrigger.from_crontab(cron), id=job_id, replace_existing=True,
     )
     logger.info("registered feedback cron %s (cron=%s)", job_id, cron)
     return job_id

@@ -94,10 +94,10 @@ def build_temporal_data_converter() -> Any:
             (CompositePayloadConverter,),
             {
                 "__init__": lambda self: CompositePayloadConverter.__init__(
-                    self, _CanonicalJSONPayloadConverter()
-                )
+                    self, _CanonicalJSONPayloadConverter(),
+                ),
             },
-        )
+        ),
     )
 
 
@@ -118,7 +118,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
     """`WorkflowBackend` поверх ``temporalio.client.Client``."""
 
     def __init__(
-        self, *, client: TemporalClient, default_task_queue: str = "default"
+        self, *, client: TemporalClient, default_task_queue: str = "default",
     ) -> None:
         """Параметры:
 
@@ -148,7 +148,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
             from temporalio.client import Client
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
-                "temporalio SDK not installed. Install via `uv sync --extra workflow`."
+                "temporalio SDK not installed. Install via `uv sync --extra workflow`.",
             ) from exc
 
         client = await Client.connect(
@@ -189,7 +189,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
                 f"(client={client_namespace}, requested={target_namespace}) — "
                 f"refusing to route workflow to wrong tenant namespace. "
                 f"Создайте отдельный client per namespace (R3 multi-tenant "
-                f"ADR-045 §opens)."
+                f"ADR-045 §opens).",
             )
         handle = await self._client.start_workflow(
             workflow_name,
@@ -199,18 +199,18 @@ class TemporalWorkflowBackend(WorkflowBackend):
             execution_timeout=execution_timeout,
         )
         run_id = getattr(handle, "result_run_id", None) or getattr(
-            handle, "first_execution_run_id", None
+            handle, "first_execution_run_id", None,
         )
         if not run_id:
             raise RuntimeError(
-                f"Temporal start_workflow returned handle without run_id: {handle!r}"
+                f"Temporal start_workflow returned handle without run_id: {handle!r}",
             )
         return WorkflowHandle(
-            workflow_id=workflow_id, run_id=run_id, namespace=namespace
+            workflow_id=workflow_id, run_id=run_id, namespace=namespace,
         )
 
     async def signal_workflow(
-        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any]
+        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any],
     ) -> None:
         """Typed signal через ``client.get_workflow_handle``."""
         wf = self._client.get_workflow_handle(handle.workflow_id, run_id=handle.run_id)
@@ -236,7 +236,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
         await wf.cancel()
 
     async def await_completion(
-        self, *, handle: WorkflowHandle, timeout: timedelta | None = None
+        self, *, handle: WorkflowHandle, timeout: timedelta | None = None,
     ) -> WorkflowResult:
         """Дождаться completion через ``handle.result()``.
 
@@ -254,7 +254,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
                 import asyncio
 
                 output = await asyncio.wait_for(
-                    wf.result(), timeout=timeout.total_seconds()
+                    wf.result(), timeout=timeout.total_seconds(),
                 )
             else:
                 output = await wf.result()
@@ -328,7 +328,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
                 f"Workflow '{workflow_name}' не зарегистрирован в "
                 "WorkflowRegistry — replay() не может построить Replayer. "
                 "Зарегистрируйте класс через @workflow.defn + "
-                "workflow_registry.register(...)"
+                "workflow_registry.register(...)",
             )
         return [wf_cls]
 

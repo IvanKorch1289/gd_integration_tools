@@ -33,7 +33,7 @@ class BatchAggregatorProcessor:
         if window_type not in VALID_WINDOWS:
             raise ValueError(
                 f"window_type должен быть одним из {VALID_WINDOWS}, "
-                f"получено {window_type!r}"
+                f"получено {window_type!r}",
             )
         self._window_type = window_type
         self._window_size = window_size_seconds

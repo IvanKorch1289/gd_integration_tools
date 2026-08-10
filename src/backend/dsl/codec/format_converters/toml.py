@@ -118,7 +118,7 @@ def _toml_encode_table(data: dict[str, Any], *, prefix: str) -> str:
             for sub_key, sub_value in item.items():
                 if isinstance(sub_value, dict):
                     raise ValueError(
-                        f"TOML encoder: nested dict внутри array-of-tables '{name}' не поддерживается"
+                        f"TOML encoder: nested dict внутри array-of-tables '{name}' не поддерживается",
                     )
                 if sub_value is None:
                     continue

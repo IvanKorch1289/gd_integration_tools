@@ -188,7 +188,7 @@ def test_check_unknown_capability_raises() -> None:
 
 @pytest.mark.unit
 def test_check_tenant_lru_cache_granted(
-    gate: CapabilityGate, audit_events: list[dict[str, Any]]
+    gate: CapabilityGate, audit_events: list[dict[str, Any]],
 ) -> None:
     """Granted результат кэшируется: повторный check не падает."""
     gate.declare_tenant(

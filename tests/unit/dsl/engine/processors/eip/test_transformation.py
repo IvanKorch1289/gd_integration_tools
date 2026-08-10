@@ -52,7 +52,7 @@ def mock_redis(monkeypatch):
     client.set_if_not_exists = AsyncMock(return_value=True)
     client.get = AsyncMock(return_value=None)
     monkeypatch.setattr(
-        "src.backend.infrastructure.clients.storage.redis.redis_client", client
+        "src.backend.infrastructure.clients.storage.redis.redis_client", client,
     )
     return client
 
@@ -309,7 +309,7 @@ async def test_claim_check_capability_invoked_with_mode(monkeypatch, mock_redis)
 
 @pytest.mark.asyncio
 async def test_claim_check_capability_uses_tenant_from_exchange(
-    monkeypatch, mock_redis
+    monkeypatch, mock_redis,
 ) -> None:
     """tenant_id из exchange.meta пробрасывается в capability-check context."""
     captured_extra: dict[str, Any] = {}

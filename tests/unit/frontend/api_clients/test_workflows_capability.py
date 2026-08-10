@@ -40,7 +40,7 @@ class TestWorkflowsClient:
         with patch("httpx.Client") as patched:
             patched.return_value.__enter__.return_value.request.return_value = mock
             workflows_client.list_workflows(
-                status="ok", workflow_name="x", tenant_id="t1", limit=5
+                status="ok", workflow_name="x", tenant_id="t1", limit=5,
             )
             call = patched.return_value.__enter__.return_value.request.call_args
             assert call.kwargs["params"]["status"] == "ok"
@@ -85,7 +85,7 @@ class TestWorkflowsClient:
         with patch("httpx.Client") as patched:
             patched.return_value.__enter__.return_value.request.return_value = mock
             result = workflows_client.trigger_workflow(
-                "test_wf", {"key": "val"}, wait=False
+                "test_wf", {"key": "val"}, wait=False,
             )
             assert result["instance_id"] == "wf-new"
 
@@ -137,7 +137,7 @@ class TestCapabilityClient:
         with patch("httpx.Client") as patched:
             patched.return_value.__enter__.return_value.request.return_value = mock
             capability_client.get_processor_catalog(
-                query="x", namespace="routing", limit=10
+                query="x", namespace="routing", limit=10,
             )
             call = patched.return_value.__enter__.return_value.request.call_args
             assert call.kwargs["params"]["namespace"] == "routing"

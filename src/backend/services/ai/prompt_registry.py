@@ -108,7 +108,7 @@ class PromptRegistry:
         if self._langfuse is not None:
             try:
                 lf_prompt = self._langfuse.get_prompt(
-                    name, label=label, version=version
+                    name, label=label, version=version,
                 )
                 compiled = (
                     lf_prompt.compile(**variables)
@@ -144,7 +144,7 @@ class PromptRegistry:
             template=template,
             compiled=compiled,
             labels=self._labels.get(
-                f"{name}:{resolved_version}", {"source": "fallback"}
+                f"{name}:{resolved_version}", {"source": "fallback"},
             ),
         )
 

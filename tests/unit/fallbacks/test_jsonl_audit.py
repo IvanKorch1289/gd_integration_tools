@@ -23,7 +23,7 @@ async def test_append_then_query_returns_record(tmp_path):
 async def test_append_preserves_explicit_timestamp(tmp_path):
     backend = JsonlAuditBackend(tmp_path / "audit.jsonl")
     await backend.append(
-        AuditRecord({"event": "x", "timestamp": "2026-01-01T00:00:00+00:00"})
+        AuditRecord({"event": "x", "timestamp": "2026-01-01T00:00:00+00:00"}),
     )
     records = await backend.query()
     assert records[0]["timestamp"] == "2026-01-01T00:00:00+00:00"

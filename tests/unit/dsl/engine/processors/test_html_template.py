@@ -35,7 +35,7 @@ async def test_renders_template_into_body() -> None:
 @pytest.mark.asyncio
 async def test_renders_into_properties() -> None:
     proc = HtmlTemplateProcessor(
-        "Total: {{ total }}", to="properties.summary", context_from="merged"
+        "Total: {{ total }}", to="properties.summary", context_from="merged",
     )
     exchange = _ex({"total": 42})
 

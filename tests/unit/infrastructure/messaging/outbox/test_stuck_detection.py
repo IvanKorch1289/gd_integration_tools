@@ -63,7 +63,7 @@ async def _insert(
     if backdate:
         values["created_at"] = backdate
     result = await session.execute(
-        sa_insert(OutboxMessage).values(**values).returning(OutboxMessage.id)
+        sa_insert(OutboxMessage).values(**values).returning(OutboxMessage.id),
     )
     inserted_id = result.scalar_one()
     await session.commit()

@@ -34,7 +34,7 @@ async def test_scale_up_on_high_depth() -> None:
     pool = _make_pool(initial_workers=2)
     pool.get_queue_depth = AsyncMock(return_value={"default": 50})
     scaler = TemporalWorkerScaler(
-        worker_pool=pool, min_workers=2, max_workers=20, cooldown_seconds=0
+        worker_pool=pool, min_workers=2, max_workers=20, cooldown_seconds=0,
     )
     result = await scaler.tick()
     assert result["action"] == "up"
@@ -46,7 +46,7 @@ async def test_scale_down_on_idle() -> None:
     pool = _make_pool(initial_workers=10)
     pool.get_queue_depth = AsyncMock(return_value={"default": 5})
     scaler = TemporalWorkerScaler(
-        worker_pool=pool, min_workers=2, max_workers=20, cooldown_seconds=0
+        worker_pool=pool, min_workers=2, max_workers=20, cooldown_seconds=0,
     )
     result = await scaler.tick()
     assert result["action"] == "down"
@@ -58,7 +58,7 @@ async def test_max_workers_cap_respected() -> None:
     pool = _make_pool(initial_workers=2)
     pool.get_queue_depth = AsyncMock(return_value={"default": 10000})
     scaler = TemporalWorkerScaler(
-        worker_pool=pool, min_workers=2, max_workers=8, cooldown_seconds=0
+        worker_pool=pool, min_workers=2, max_workers=8, cooldown_seconds=0,
     )
     await scaler.tick()
     assert pool._state["workers"] == 8
@@ -70,7 +70,7 @@ async def test_cooldown_blocks_consecutive_scales() -> None:
     queue_depths = [{"default": 50}, {"default": 100}]
     pool.get_queue_depth = AsyncMock(side_effect=queue_depths)
     scaler = TemporalWorkerScaler(
-        worker_pool=pool, min_workers=2, max_workers=20, cooldown_seconds=10
+        worker_pool=pool, min_workers=2, max_workers=20, cooldown_seconds=10,
     )
     r1 = await scaler.tick()
     r2 = await scaler.tick()

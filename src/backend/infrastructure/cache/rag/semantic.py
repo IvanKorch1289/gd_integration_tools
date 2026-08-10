@@ -99,7 +99,7 @@ class L2SemanticRagCache:
                 record_miss("l2")
                 return None
             hits = await search(
-                collection=self._collection, vector=vector, limit=1, tenant=tenant
+                collection=self._collection, vector=vector, limit=1, tenant=tenant,
             )
         except Exception as exc:
             logger.debug("L2 search failed: %s", exc)
@@ -152,7 +152,7 @@ class L2SemanticRagCache:
             await upsert(
                 collection=self._collection,
                 points=[
-                    {"id": str(uuid.uuid4()), "vector": vector, "payload": payload}
+                    {"id": str(uuid.uuid4()), "vector": vector, "payload": payload},
                 ],
             )
         except Exception as exc:

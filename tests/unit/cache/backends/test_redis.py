@@ -49,7 +49,7 @@ def backend(client: AsyncMock) -> RedisBackend:
 
 
 async def test_get_delegates_to_client(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """``get`` вызывает ``client.get(key)`` и возвращает результат."""
     client.get.return_value = b"value"
@@ -59,7 +59,7 @@ async def test_get_delegates_to_client(
 
 
 async def test_get_missing_returns_none(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """Если client.get возвращает None, backend возвращает None."""
     client.get.return_value = None
@@ -79,7 +79,7 @@ async def test_set_with_ttl(backend: RedisBackend, client: AsyncMock) -> None:
 
 
 async def test_set_with_zero_ttl_treated_as_value(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """ttl=0 не None — должно прокинуться как ex=0 (контракт backend'а)."""
     await backend.set("k", b"v", ttl=0)
@@ -99,7 +99,7 @@ async def test_delete_multiple_keys(backend: RedisBackend, client: AsyncMock) ->
 
 
 async def test_delete_no_keys_skips_call(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """``delete`` без ключей — не вызывает client (избегаем DEL ()))."""
     await backend.delete()
@@ -107,7 +107,7 @@ async def test_delete_no_keys_skips_call(
 
 
 async def test_delete_pattern_uses_scan_iter(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """``delete_pattern`` итерирует через ``scan_iter`` и удаляет каждый ключ."""
     client.scan_iter.return_value = _AsyncIterator([b"a", b"b", b"c"])
@@ -118,7 +118,7 @@ async def test_delete_pattern_uses_scan_iter(
 
 
 async def test_delete_pattern_empty_iterator(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """Пустой scan_iter не вызывает client.delete."""
     client.scan_iter.return_value = _AsyncIterator([])
@@ -143,7 +143,7 @@ async def test_exists_false(backend: RedisBackend, client: AsyncMock) -> None:
 
 
 async def test_bind_key_to_tag_adds_to_set(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """``bind_key_to_tag`` вызывает SADD __cache_tag:{tag} {key}."""
     await backend.bind_key_to_tag("entity:orders", "orders:42")
@@ -151,7 +151,7 @@ async def test_bind_key_to_tag_adds_to_set(
 
 
 async def test_delete_by_tag_removes_all_tagged_keys(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """``delete_by_tag`` удаляет все ключи из SET и сам SET-индекс."""
     # SMEMBERS возвращает bytes-ключи → декодируются в str перед DEL
@@ -176,7 +176,7 @@ async def test_delete_by_tag_removes_all_tagged_keys(
 
 
 async def test_delete_by_tag_empty_returns_zero(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """Пустой tag-index → возвращает 0, DEL не вызывается."""
     client.smembers.return_value = set()
@@ -187,7 +187,7 @@ async def test_delete_by_tag_empty_returns_zero(
 
 
 async def test_delete_by_tag_decodes_bytes_keys(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """Ключи из SMEMBERS декодируются из bytes в str перед DEL."""
     client.smembers.return_value = {b"cache:key:1", b"cache:key:2"}
@@ -205,7 +205,7 @@ async def test_delete_by_tag_decodes_bytes_keys(
 
 
 async def test_delete_by_pattern_returns_count(
-    backend: RedisBackend, client: AsyncMock
+    backend: RedisBackend, client: AsyncMock,
 ) -> None:
     """``delete_by_pattern`` (новый, возвращающий int) считает удалённые ключи."""
     client.scan_iter.return_value = _AsyncIterator([b"a", b"b"])

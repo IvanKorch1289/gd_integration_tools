@@ -21,7 +21,7 @@ def _start_message(send: AsyncMock):
 def _downstream_ok(status_code: int = 200):
     async def downstream(scope, receive, send):
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []}
+            {"type": "http.response.start", "status": status_code, "headers": []},
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -74,7 +74,7 @@ class TestOtelMiddleware:
 
     @pytest.mark.asyncio
     async def test_no_tracer_passes_through(
-        self, middleware_no_tracer: OtelMiddleware
+        self, middleware_no_tracer: OtelMiddleware,
     ) -> None:
         """Without tracer middleware is no-op."""
         app = AsyncMock()
@@ -98,7 +98,7 @@ class TestOtelMiddleware:
 
     @pytest.mark.asyncio
     async def test_tracer_creates_span(
-        self, middleware_with_tracer: OtelMiddleware
+        self, middleware_with_tracer: OtelMiddleware,
     ) -> None:
         """Tracer creates span and injects traceparent."""
         app = AsyncMock()
@@ -135,7 +135,7 @@ class TestOtelMiddleware:
 
     @pytest.mark.asyncio
     async def test_exception_marks_span_and_raises(
-        self, middleware_with_tracer: OtelMiddleware
+        self, middleware_with_tracer: OtelMiddleware,
     ) -> None:
         """Exception in call_next marks span and re-raises."""
         app = AsyncMock()
@@ -173,7 +173,7 @@ class TestOtelMiddleware:
 
     @pytest.mark.asyncio
     async def test_5xx_response_marks_error(
-        self, middleware_with_tracer: OtelMiddleware
+        self, middleware_with_tracer: OtelMiddleware,
     ) -> None:
         """5xx responses mark span as error."""
         app = AsyncMock()
@@ -237,7 +237,7 @@ class TestOtelMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_passes_through_non_http_scope(
-        self, middleware_with_tracer: OtelMiddleware
+        self, middleware_with_tracer: OtelMiddleware,
     ) -> None:
         """Non-HTTP scope (websocket) пробрасывается без span creation."""
         app = AsyncMock()
@@ -262,7 +262,7 @@ class TestOtelMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_traceparent_in_response_headers(
-        self, middleware_with_tracer: OtelMiddleware
+        self, middleware_with_tracer: OtelMiddleware,
     ) -> None:
         """traceparent injected в response headers (cycle 56 invariant)."""
         app = AsyncMock()
@@ -300,7 +300,7 @@ class TestOtelMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_does_not_call_downstream_after_exception(
-        self, middleware_with_tracer: OtelMiddleware
+        self, middleware_with_tracer: OtelMiddleware,
     ) -> None:
         """Cycle 56 invariant: downstream вызван ОДИН раз даже при exception."""
         call_count = 0
@@ -340,7 +340,7 @@ class TestOtelMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_attribute_collection_from_state(
-        self, middleware_with_tracer: OtelMiddleware
+        self, middleware_with_tracer: OtelMiddleware,
     ) -> None:
         """correlation.id и request.id извлекаются из scope['state'] (cycle 52)."""
         app = AsyncMock()

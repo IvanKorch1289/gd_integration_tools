@@ -71,7 +71,7 @@ class TestWorkflowHandle:
     def test_extra_forbidden(self) -> None:
         with pytest.raises(ValidationError):
             WorkflowHandle(
-                workflow_id="wf-1", run_id="r-1", namespace="ns-1", extra_field="no"
+                workflow_id="wf-1", run_id="r-1", namespace="ns-1", extra_field="no",
             )
 
 
@@ -140,7 +140,7 @@ class TestWorkflowBackendProtocol:
             async def cancel_workflow(self, *, handle: WorkflowHandle) -> None: ...
 
             async def await_completion(
-                self, *, handle: WorkflowHandle, timeout: timedelta | None = None
+                self, *, handle: WorkflowHandle, timeout: timedelta | None = None,
             ) -> WorkflowResult: ...
 
             async def replay(self, *, workflow_name: str, history: bytes) -> None: ...

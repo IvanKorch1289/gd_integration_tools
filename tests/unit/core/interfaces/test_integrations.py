@@ -48,7 +48,7 @@ class _FakeBrowser:
         return {"url": url, "selector": selector, "clicked": True}
 
     async def fill_form(
-        self, url: str, fields: dict[str, str], submit: str | None = None
+        self, url: str, fields: dict[str, str], submit: str | None = None,
     ) -> dict[str, Any]:
         return {"url": url, "fields": fields, "submit": submit}
 
@@ -72,7 +72,7 @@ class _FakeClickHouse:
         self.calls: list[tuple[str, ...]] = []
 
     async def query(
-        self, sql: str, params: dict[str, Any] | None = None
+        self, sql: str, params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         self.calls.append(("query", sql[:16], str(params)))
         return [{"x": 1}]
@@ -135,7 +135,7 @@ class _FakeExpress:
         return {"user_huid": user_huid, "echo": text}
 
     async def send_notification(
-        self, group_chat_ids: list[str], text: str
+        self, group_chat_ids: list[str], text: str,
     ) -> dict[str, Any]:
         return {"delivered_to": group_chat_ids, "text": text}
 
@@ -162,7 +162,7 @@ class _FakeRedisKV:
         self.calls: list[tuple[str, ...]] = []
 
     async def set(
-        self, key: str, value: Any, ex: int | None = None, **kwargs: Any
+        self, key: str, value: Any, ex: int | None = None, **kwargs: Any,
     ) -> Any:
         self.calls.append(("set", key))
         self.store[key] = value
@@ -216,7 +216,7 @@ class _FakeExternalSession:
 
 
 def _fake_signature(
-    payload: dict[str, Any] | bytes | str, secret: str
+    payload: dict[str, Any] | bytes | str, secret: str,
 ) -> dict[str, str]:
     return {"X-Sig": f"hmac:{len(str(payload))}:{len(secret)}"}
 
@@ -417,7 +417,7 @@ async def test_smtp_send_email_records_message() -> None:
     """``send_email`` records the message; ``test_connection`` returns True."""
     smtp = _FakeSmtp()
     result = await smtp.send_email(
-        to=["a@example.com"], subject="hi", body="hello", content_type="text/html"
+        to=["a@example.com"], subject="hi", body="hello", content_type="text/html",
     )
     assert result["msg_id"] == "smtp-1"
     assert smtp.sent[0]["subject"] == "hi"
@@ -434,7 +434,7 @@ async def test_express_send_and_create() -> None:
     assert out["echo"] == "ping"
 
     chat = await express.create_chat(
-        name="dev", members=["u1", "u2"], description="team chat"
+        name="dev", members=["u1", "u2"], description="team chat",
     )
     assert chat["name"] == "dev"
     assert chat["members"] == ["u1", "u2"]

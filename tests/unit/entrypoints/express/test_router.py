@@ -150,7 +150,7 @@ async def test_dispatch_to_route_success() -> None:
         return_value=mock_bridge,
     ) as mock_dispatch:
         result = await mod._dispatch_to_route(
-            "express.command.test", "express.command.default", {"body": "x"}, "sync-1"
+            "express.command.test", "express.command.default", {"body": "x"}, "sync-1",
         )
 
     assert result["status"] == "ok"
@@ -173,7 +173,7 @@ async def test_dispatch_to_route_fallback() -> None:
         side_effect=[primary, fallback],
     ) as mock_dispatch:
         result = await mod._dispatch_to_route(
-            "express.command.test", "express.command.default", {"body": "x"}, "sync-1"
+            "express.command.test", "express.command.default", {"body": "x"}, "sync-1",
         )
 
     assert result["status"] == "ok"
@@ -192,7 +192,7 @@ async def test_dispatch_to_route_no_fallback() -> None:
         side_effect=[primary, primary],
     ):
         result = await mod._dispatch_to_route(
-            "express.command.test", "express.command.default", {"body": "x"}, "sync-1"
+            "express.command.test", "express.command.default", {"body": "x"}, "sync-1",
         )
 
     assert result["status"] == "ok"
@@ -211,7 +211,7 @@ async def test_dispatch_to_route_no_fallback_id() -> None:
         return_value=primary,
     ):
         result = await mod._dispatch_to_route(
-            "express.command.test", None, {"body": "x"}, "sync-1"
+            "express.command.test", None, {"body": "x"}, "sync-1",
         )
 
     assert result["status"] == "ok"
@@ -231,7 +231,7 @@ async def test_dispatch_to_route_error() -> None:
         return_value=mock_bridge,
     ):
         result = await mod._dispatch_to_route(
-            "express.command.test", None, {"body": "x"}, "sync-1"
+            "express.command.test", None, {"body": "x"}, "sync-1",
         )
 
     assert result["status"] == "error"

@@ -48,7 +48,7 @@ class GatewayMixin(_WorkflowBuilderProtocol):
             ActivityDeclaration(
                 name=f"__gateway__xor_{len(self._steps)}",
                 args={"gateway": spec},
-            )
+            ),
         )
         return self
 
@@ -73,7 +73,7 @@ class GatewayMixin(_WorkflowBuilderProtocol):
             ActivityDeclaration(
                 name=f"__gateway__and_{len(self._steps)}",
                 args={"gateway": spec},
-            )
+            ),
         )
         return self
 
@@ -97,6 +97,6 @@ class GatewayMixin(_WorkflowBuilderProtocol):
             ActivityDeclaration(
                 name=f"__gateway__or_{len(self._steps)}",
                 args={"gateway": spec},
-            )
+            ),
         )
         return self

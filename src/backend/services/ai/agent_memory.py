@@ -75,19 +75,19 @@ class AgentMemoryService:
         try:
             client = self._client()
             await client.collection(_MESSAGES).create_index(
-                "ts", expireAfterSeconds=self._short_ttl, name="ttl_ts"
+                "ts", expireAfterSeconds=self._short_ttl, name="ttl_ts",
             )
             await client.collection(_MESSAGES).create_index(
-                [("session_id", 1), ("ts", 1)], name="session_ts"
+                [("session_id", 1), ("ts", 1)], name="session_ts",
             )
             await client.collection(_SCRATCHPAD).create_index(
-                "updated_at", expireAfterSeconds=self._long_ttl, name="ttl_updated_at"
+                "updated_at", expireAfterSeconds=self._long_ttl, name="ttl_updated_at",
             )
             await client.collection(_SCRATCHPAD).create_index(
-                "session_id", unique=True, name="session_id_unique"
+                "session_id", unique=True, name="session_id_unique",
             )
             await client.collection(_FACTS).create_index(
-                "updated_at", expireAfterSeconds=self._long_ttl, name="ttl_updated_at"
+                "updated_at", expireAfterSeconds=self._long_ttl, name="ttl_updated_at",
             )
             await client.collection(_FACTS).create_index(
                 [("session_id", 1), ("fact_key", 1)],
@@ -165,7 +165,7 @@ class AgentMemoryService:
             self._trim_counter = 0
 
     async def _trim_messages(
-        self, session_id: str, *, tenant_id: str
+        self, session_id: str, *, tenant_id: str,
     ) -> None:
         """Trim messages to keep only max_messages most recent.
 
@@ -191,7 +191,7 @@ class AgentMemoryService:
                         "session_id": session_id,
                         "tenant_id": tenant_id,
                         "ts": {"$lt": cutoff},
-                    }
+                    },
                 )
 
     async def clear_conversation(self, session_id: str) -> None:
@@ -272,7 +272,7 @@ class AgentMemoryService:
         """Метод delete_fact (см. signature)."""
         client = self._client()
         await client.delete_one(
-            _FACTS, {"session_id": session_id, "fact_key": fact_key}
+            _FACTS, {"session_id": session_id, "fact_key": fact_key},
         )
 
     async def load_memory(self, session_id: str) -> dict[str, Any]:

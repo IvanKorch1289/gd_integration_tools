@@ -66,7 +66,7 @@ class CollectProcessor(BaseProcessor):
             "collect": {
                 "field": self._field,
                 "key_fn": self._key_fn.__name__ if self._key_fn else None,
-            }
+            },
         }
 
 
@@ -133,7 +133,7 @@ class FindAllProcessor(BaseProcessor):
             "find_all": {
                 "predicate": self._predicate.__name__ if self._predicate else None,
                 "condition": self._condition,
-            }
+            },
         }
 
 
@@ -188,7 +188,7 @@ class GroupByProcessor(BaseProcessor):
             "group_by": {
                 "field": self._field,
                 "key_fn": self._key_fn.__name__ if self._key_fn else None,
-            }
+            },
         }
 
 

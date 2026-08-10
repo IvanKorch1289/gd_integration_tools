@@ -29,7 +29,7 @@ class TextOpsMixin:
     # --- text operations (regex, templates, hashing, encryption) ---
 
     def regex(
-        self, pattern: str, *, action: str = "extract", replacement: str = ""
+        self, pattern: str, *, action: str = "extract", replacement: str = "",
     ) -> RouteBuilder:
         """Извлечь или заменить текст по регулярному выражению.
 
@@ -72,7 +72,7 @@ class TextOpsMixin:
         key: Base64-encoded AES-ключ (16, 24 или 32 байта).
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa", "EncryptProcessor", key=key
+            "src.backend.dsl.engine.processors.rpa", "EncryptProcessor", key=key,
         )
 
     def decrypt(self, key: str) -> RouteBuilder:
@@ -81,5 +81,5 @@ class TextOpsMixin:
         key: тот же ключ, что использовался для encrypt.
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa", "DecryptProcessor", key=key
+            "src.backend.dsl.engine.processors.rpa", "DecryptProcessor", key=key,
         )

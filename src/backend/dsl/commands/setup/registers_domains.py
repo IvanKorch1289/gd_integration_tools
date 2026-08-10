@@ -62,7 +62,7 @@ def _register_orders() -> None:
                 service_method="send_order_data",
                 payload_model=OrderIdQuerySchema,
             ),
-        ]
+        ],
     )
 
 
@@ -112,7 +112,7 @@ def _register_skb_api() -> None:
                 service_method="get_objects_by_address",
                 payload_model=SKBObjectsByAddressQuerySchema,
             ),
-        ]
+        ],
     )
 
 
@@ -160,7 +160,7 @@ def _register_tech() -> None:
                 service_method="send_email",
                 payload_model=EmailSchema,
             ),
-        ]
+        ],
     )
 
 
@@ -204,7 +204,7 @@ def _register_admin() -> None:
                 service_getter=get_admin_service,
                 service_method="invalidate_table",
             ),
-        ]
+        ],
     )
 
 
@@ -221,5 +221,5 @@ def _register_servicedsl_auto_register() -> None:
             "src.backend.services",
             "src.backend.entrypoints.webhook",
             "src.backend.services.integrations",
-        ]
+        ],
     )

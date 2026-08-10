@@ -140,5 +140,5 @@ class OptimizePromptProcessor(BaseProcessor):
                 "tenant_id": self._tenant_id,
                 "limit": self._limit,
                 "result_property": self._result_property,
-            }
+            },
         }

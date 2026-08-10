@@ -144,7 +144,7 @@ class AdminAuditMiddleware:
                 "audit_admin": True,
                 "actor_principal": principal,
                 "actor_auth_method": getattr(
-                    method_kind, "value", str(method_kind) if method_kind else "none"
+                    method_kind, "value", str(method_kind) if method_kind else "none",
                 ),
                 "actor_admin_roles": admin_roles,
                 "endpoint": path,

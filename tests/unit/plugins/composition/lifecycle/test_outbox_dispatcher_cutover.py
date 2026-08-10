@@ -72,7 +72,7 @@ def _load_lifespan_isolated() -> ModuleType:
     module_level_stubs: dict[str, object] = {
         "src.backend.core.utils.task_registry.get_task_registry": MagicMock(),
         "src.backend.infrastructure.logging.factory.get_logger": MagicMock(
-            return_value=MagicMock()
+            return_value=MagicMock(),
         ),
         "src.backend.plugins.composition.lifecycle.bootstrap.bootstrap_resilience_coordinator": AsyncMock(),
         "src.backend.plugins.composition.lifecycle.bootstrap.bootstrap_snapshot_job": AsyncMock(),
@@ -89,7 +89,7 @@ def _load_lifespan_isolated() -> ModuleType:
     # 3. Stub function-local imports (lazy, в ``_register_outbox_dispatcher``)
     lazy_stubs: dict[str, object] = {
         "src.backend.core.config.services.outbox.outbox_settings": MagicMock(
-            enabled=False
+            enabled=False,
         ),
         "src.backend.infrastructure.workflow.outbox_worker.start_outbox_worker": MagicMock(),
         "src.backend.infrastructure.workflow.outbox_worker._publish": AsyncMock(),
@@ -97,7 +97,7 @@ def _load_lifespan_isolated() -> ModuleType:
         "src.backend.core.messaging.outbox.FakeOutbox": MagicMock(),
         "src.backend.core.messaging.outbox.OutboxEvent": MagicMock(),
         "src.backend.infrastructure.repositories.outbox.claim_pending": AsyncMock(
-            return_value=[]
+            return_value=[],
         ),
         "src.backend.infrastructure.repositories.outbox.mark_sent": AsyncMock(),
     }
@@ -128,7 +128,7 @@ def _load_lifespan_isolated() -> ModuleType:
     # 4a. Pre-load outbox_setup.py (startup.py imports register_outbox_dispatcher from it).
     outbox_setup_path = lifecycle_dir / "outbox_setup.py"
     outbox_spec = importlib.util.spec_from_file_location(
-        "src.backend.plugins.composition.lifecycle.outbox_setup", outbox_setup_path
+        "src.backend.plugins.composition.lifecycle.outbox_setup", outbox_setup_path,
     )
     assert outbox_spec is not None and outbox_spec.loader is not None
     outbox_module = importlib.util.module_from_spec(outbox_spec)
@@ -200,7 +200,7 @@ def enable_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
     """Включает ``outbox_settings.enabled = True`` (для теста new path)."""
     settings = MagicMock(enabled=True)
     monkeypatch.setattr(
-        "src.backend.core.config.services.outbox.outbox_settings", settings
+        "src.backend.core.config.services.outbox.outbox_settings", settings,
     )
 
 
@@ -209,17 +209,17 @@ def disable_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
     """Оставляет ``outbox_settings.enabled = False`` (для теста legacy path)."""
     settings = MagicMock(enabled=False)
     monkeypatch.setattr(
-        "src.backend.core.config.services.outbox.outbox_settings", settings
+        "src.backend.core.config.services.outbox.outbox_settings", settings,
     )
 
 
 @pytest.mark.asyncio
 async def test_cutover_legacy_path_when_disabled(
-    fresh_app: MagicMock, disable_dispatcher: None, mock_lifespan_logger: MagicMock
+    fresh_app: MagicMock, disable_dispatcher: None, mock_lifespan_logger: MagicMock,
 ) -> None:
     """``enabled=False`` → ``start_outbox_worker`` (legacy)."""
     with patch(
-        "src.backend.infrastructure.workflow.outbox_worker.start_outbox_worker"
+        "src.backend.infrastructure.workflow.outbox_worker.start_outbox_worker",
     ) as mock_legacy:
         await _lifespan._register_outbox_dispatcher(fresh_app)
         mock_legacy.assert_called_once_with(interval_seconds=5, batch_size=100)
@@ -227,7 +227,7 @@ async def test_cutover_legacy_path_when_disabled(
 
 @pytest.mark.asyncio
 async def test_cutover_dispatcher_path_when_enabled(
-    fresh_app: MagicMock, enable_dispatcher: None, mock_lifespan_logger: MagicMock
+    fresh_app: MagicMock, enable_dispatcher: None, mock_lifespan_logger: MagicMock,
 ) -> None:
     """``enabled=True`` → ``start_outbox_dispatcher`` (S64 W1+W3 path)."""
     # Verify fixture applied
@@ -255,7 +255,7 @@ async def test_cutover_dispatcher_path_when_enabled(
 
 @pytest.mark.asyncio
 async def test_cutover_legacy_worker_exception_does_not_raise(
-    fresh_app: MagicMock, disable_dispatcher: None, mock_lifespan_logger: MagicMock
+    fresh_app: MagicMock, disable_dispatcher: None, mock_lifespan_logger: MagicMock,
 ) -> None:
     """``start_outbox_worker()`` raises → log warning, не raise.
 
@@ -271,7 +271,7 @@ async def test_cutover_legacy_worker_exception_does_not_raise(
 
 @pytest.mark.asyncio
 async def test_cutover_dispatcher_exception_does_not_raise(
-    fresh_app: MagicMock, enable_dispatcher: None, mock_lifespan_logger: MagicMock
+    fresh_app: MagicMock, enable_dispatcher: None, mock_lifespan_logger: MagicMock,
 ) -> None:
     """``start_outbox_dispatcher()`` raises → log warning, не raise.
 

@@ -26,7 +26,7 @@ router = APIRouter()
     ),
     response_class=Response,
     responses={
-        200: {"content": {"application/yaml": {}}, "description": "AsyncAPI 3.0 YAML"}
+        200: {"content": {"application/yaml": {}}, "description": "AsyncAPI 3.0 YAML"},
     },
 )
 async def get_asyncapi_yaml() -> Response:
@@ -41,7 +41,7 @@ async def get_asyncapi_yaml() -> Response:
     description="JSON-вариант AsyncAPI 3.0 спецификации.",
     response_class=Response,
     responses={
-        200: {"content": {"application/json": {}}, "description": "AsyncAPI 3.0 JSON"}
+        200: {"content": {"application/json": {}}, "description": "AsyncAPI 3.0 JSON"},
     },
 )
 async def get_asyncapi_json() -> Response:

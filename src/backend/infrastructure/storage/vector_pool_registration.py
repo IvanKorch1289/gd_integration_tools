@@ -66,7 +66,7 @@ def chroma_ping_fn() -> Awaitable[bool]:
 
 
 def register_vector_pool_if_available(
-    manager: UnifiedPoolManager, *, name: str = "vector_main", backend: str = "qdrant"
+    manager: UnifiedPoolManager, *, name: str = "vector_main", backend: str = "qdrant",
 ) -> bool:
     """Регистрирует vector store pool если доступен.
 

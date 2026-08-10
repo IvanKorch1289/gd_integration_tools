@@ -36,7 +36,7 @@ class TestScriptRunnerRCERejection:
     async def test_rm_rf_payload_rejected(self) -> None:
         """rm -rf payload → reject ДО выполнения."""
         proc = ScriptRunnerProcessor(
-            language="python", code="import os; os.system('rm -rf /')"
+            language="python", code="import os; os.system('rm -rf /')",
         )
         exchange = _make_exchange()
 
@@ -70,7 +70,7 @@ class TestScriptRunnerRCERejection:
     async def test_eval_exec_payload_rejected(self) -> None:
         """eval/exec payload → reject."""
         proc = ScriptRunnerProcessor(
-            language="python", code="eval('__import__(\"os\").system(\"id\")')"
+            language="python", code="eval('__import__(\"os\").system(\"id\")')",
         )
         exchange = _make_exchange()
 
@@ -115,7 +115,7 @@ class TestScriptRunnerRCERejection:
         exchange = _make_exchange()
 
         with patch(
-            "src.backend.dsl.engine.processors.script_runner._logger"
+            "src.backend.dsl.engine.processors.script_runner._logger",
         ) as mock_logger:
             with pytest.raises(NotImplementedError):
                 await proc.process(exchange, MagicMock())

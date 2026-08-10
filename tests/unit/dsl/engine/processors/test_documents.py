@@ -64,8 +64,8 @@ def xlsx_template(tmp_path: Path) -> Path:
 async def test_render_docx_substitutes_placeholders(docx_template: Path) -> None:
     proc = RenderDocxProcessor(
         RenderDocxParams(
-            template=str(docx_template), context_from=None, output_to="docx_path"
-        )
+            template=str(docx_template), context_from=None, output_to="docx_path",
+        ),
     )
     exchange = _make_exchange(body={"name": "Иван", "amount": 1500})
 
@@ -93,7 +93,7 @@ async def test_render_xlsx_replace_mode(xlsx_template: Path) -> None:
             context_from=None,
             output_to="xlsx_path",
             mode="replace",
-        )
+        ),
     )
     exchange = _make_exchange(body={"name": "Анна", "age": 30})
 
@@ -116,10 +116,10 @@ async def test_render_xlsx_append_table_mode() -> None:
             context_from="rows",
             output_to="xlsx_path",
             mode="append_table",
-        )
+        ),
     )
     exchange = _make_exchange(
-        body={"rows": [{"id": 1, "name": "A"}, {"id": 2, "name": "B"}]}
+        body={"rows": [{"id": 1, "name": "A"}, {"id": 2, "name": "B"}]},
     )
 
     await proc.process(exchange, context=AsyncMock())
@@ -139,8 +139,8 @@ async def test_render_docx_output_path_via_dotted(docx_template: Path) -> None:
     """``output_to`` поддерживает dotted-path внутри dict."""
     proc = RenderDocxProcessor(
         RenderDocxParams(
-            template=str(docx_template), context_from="payload", output_to="result.path"
-        )
+            template=str(docx_template), context_from="payload", output_to="result.path",
+        ),
     )
     exchange = _make_exchange(body={"payload": {"name": "X", "amount": 0}})
 

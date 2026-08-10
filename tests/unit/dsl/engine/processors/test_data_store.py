@@ -40,7 +40,7 @@ async def test_data_store_get_existing() -> None:
 async def test_data_store_get_default() -> None:
     exchange = _ex({})
     proc = DataStoreGetProcessor(
-        key="missing", default="fallback", result_property="out"
+        key="missing", default="fallback", result_property="out",
     )
     await proc.process(exchange, None)  # type: ignore[arg-type]
     assert exchange.properties["out"] == "fallback"

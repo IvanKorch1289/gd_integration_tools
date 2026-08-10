@@ -74,10 +74,10 @@ class CompensatingDriverWorker:
             return
         self._stopping.clear()
         self._task = asyncio.create_task(
-            self._run(), name="compensating-driver-worker"
+            self._run(), name="compensating-driver-worker",
         )
         _logger.info(
-            "CompensatingDriverWorker started (interval=%.1fs)", self._interval
+            "CompensatingDriverWorker started (interval=%.1fs)", self._interval,
         )
 
     async def stop(self) -> None:
@@ -100,12 +100,12 @@ class CompensatingDriverWorker:
                     await self._scan_once()
                 except Exception as exc:  # narrow: per task boundary
                     _logger.exception(
-                        "compensating-driver scan failed: %s", exc
+                        "compensating-driver scan failed: %s", exc,
                     )
                 # Wait with cancellation support
                 try:
                     await asyncio.wait_for(
-                        self._stopping.wait(), timeout=self._interval
+                        self._stopping.wait(), timeout=self._interval,
                     )
                 except TimeoutError:
                     pass  # normal: tick
@@ -125,7 +125,7 @@ class CompensatingDriverWorker:
             if not stuck:
                 return
             _logger.info(
-                "compensating-driver: found %d stuck saga(s)", len(stuck)
+                "compensating-driver: found %d stuck saga(s)", len(stuck),
             )
             for saga in stuck:
                 try:

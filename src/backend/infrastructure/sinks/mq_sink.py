@@ -71,7 +71,7 @@ class MqSink(Sink):
         broker = await self._build_broker()
         if broker is None:
             return SinkResult(
-                ok=False, details={"error": f"faststream/{self.broker} not installed"}
+                ok=False, details={"error": f"faststream/{self.broker} not installed"},
             )
 
         body = payload if isinstance(payload, (bytes, str)) else dumps_str(payload)
@@ -84,7 +84,7 @@ class MqSink(Sink):
                 await broker.close()
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
+                ok=False, details={"error": str(exc) or exc.__class__.__name__},
             )
 
         return SinkResult(ok=True, details={"broker": self.broker, "topic": self.topic})
@@ -94,7 +94,7 @@ class MqSink(Sink):
         broker = await self._build_broker()
         if broker is None:
             return HealthResult.failed(
-                error=f"faststream/{self.broker} not installed", mode=mode
+                error=f"faststream/{self.broker} not installed", mode=mode,
             )
         start = time.perf_counter()
         try:
@@ -103,7 +103,7 @@ class MqSink(Sink):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )
         latency_ms = (time.perf_counter() - start) * 1000.0
         return HealthResult.ok(latency_ms=latency_ms, mode=mode)

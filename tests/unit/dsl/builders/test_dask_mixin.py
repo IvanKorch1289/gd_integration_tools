@@ -16,13 +16,13 @@ from src.backend.dsl.engine.processors.dask_compute import DaskComputeProcessor
 class TestDaskComputeMethod:
     def test_returns_route_builder(self) -> None:
         result = DaskMixin.dask_compute(
-            "test.route", graph=[{"op": "map", "fn": "os.path:join"}]
+            "test.route", graph=[{"op": "map", "fn": "os.path:join"}],
         )
         assert isinstance(result, RouteBuilder)
 
     def test_adds_dask_processor(self) -> None:
         result = DaskMixin.dask_compute(
-            "test.route", graph=[{"op": "map", "fn": "os.path:join"}]
+            "test.route", graph=[{"op": "map", "fn": "os.path:join"}],
         )
         assert len(result._processors) == 1
         assert isinstance(result._processors[0], DaskComputeProcessor)
@@ -69,7 +69,7 @@ class TestDaskComputeMethod:
 
     def test_n_workers_default(self) -> None:
         result = DaskMixin.dask_compute(
-            "test.route", graph=[{"op": "map", "fn": "os.path:join"}]
+            "test.route", graph=[{"op": "map", "fn": "os.path:join"}],
         )
         proc = result._processors[0]
         # n_workers передаётся в _backend, не сохраняется в instance attr

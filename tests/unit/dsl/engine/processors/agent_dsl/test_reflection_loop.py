@@ -22,7 +22,7 @@ def _make_exchange(body: Any = None) -> Exchange[Any]:
 
 
 def _mock_response(
-    *, content: str = "", structured: dict[str, Any] | None = None
+    *, content: str = "", structured: dict[str, Any] | None = None,
 ) -> Any:
     """Минимальный mock AIResponse."""
     resp: Any = type("_Resp", (), {})()
@@ -34,7 +34,7 @@ def _mock_response(
 class TestReflectionLoopInit:
     def test_init_minimal(self) -> None:
         proc = ReflectionLoopProcessor(
-            generator_workflow_id="gen", reflector_workflow_id="ref"
+            generator_workflow_id="gen", reflector_workflow_id="ref",
         )
         assert proc.generator_workflow_id == "gen"
         assert proc.reflector_workflow_id == "ref"
@@ -67,13 +67,13 @@ class TestReflectionLoopInit:
     def test_init_missing_generator_raises(self) -> None:
         with pytest.raises(ValueError, match="generator_workflow_id"):
             ReflectionLoopProcessor(
-                generator_workflow_id="", reflector_workflow_id="ref"
+                generator_workflow_id="", reflector_workflow_id="ref",
             )
 
     def test_init_missing_reflector_raises(self) -> None:
         with pytest.raises(ValueError, match="reflector_workflow_id"):
             ReflectionLoopProcessor(
-                generator_workflow_id="gen", reflector_workflow_id=""
+                generator_workflow_id="gen", reflector_workflow_id="",
             )
 
 
@@ -83,7 +83,7 @@ class TestReflectionLoopSuccess:
     async def test_single_iteration_stop_verdict(self) -> None:
         exchange = _make_exchange()
         proc = ReflectionLoopProcessor(
-            generator_workflow_id="gen", reflector_workflow_id="ref"
+            generator_workflow_id="gen", reflector_workflow_id="ref",
         )
 
         gateway = AsyncMock()
@@ -143,7 +143,7 @@ class TestReflectionLoopMaxIterations:
     async def test_max_iterations_reached(self) -> None:
         exchange = _make_exchange()
         proc = ReflectionLoopProcessor(
-            generator_workflow_id="gen", reflector_workflow_id="ref", max_iterations=2
+            generator_workflow_id="gen", reflector_workflow_id="ref", max_iterations=2,
         )
 
         gateway = AsyncMock()
@@ -169,7 +169,7 @@ class TestReflectionLoopEdgeCases:
     async def test_no_gateway_sets_error(self) -> None:
         exchange = _make_exchange()
         proc = ReflectionLoopProcessor(
-            generator_workflow_id="gen", reflector_workflow_id="ref"
+            generator_workflow_id="gen", reflector_workflow_id="ref",
         )
         with patch.object(proc, "_resolve_gateway", return_value=None):
             await proc._run(exchange, AsyncMock())
@@ -182,7 +182,7 @@ class TestReflectionLoopEdgeCases:
     async def test_generator_returns_none(self) -> None:
         exchange = _make_exchange()
         proc = ReflectionLoopProcessor(
-            generator_workflow_id="gen", reflector_workflow_id="ref"
+            generator_workflow_id="gen", reflector_workflow_id="ref",
         )
         gateway = AsyncMock()
         gateway.invoke.return_value = None
@@ -198,7 +198,7 @@ class TestReflectionLoopEdgeCases:
     async def test_reflector_returns_non_json_content(self) -> None:
         exchange = _make_exchange()
         proc = ReflectionLoopProcessor(
-            generator_workflow_id="gen", reflector_workflow_id="ref", max_iterations=1
+            generator_workflow_id="gen", reflector_workflow_id="ref", max_iterations=1,
         )
         gateway = AsyncMock()
         gateway.invoke.side_effect = [
@@ -218,7 +218,7 @@ class TestReflectionLoopEdgeCases:
     async def test_reflection_fails_returns_none(self) -> None:
         exchange = _make_exchange()
         proc = ReflectionLoopProcessor(
-            generator_workflow_id="gen", reflector_workflow_id="ref"
+            generator_workflow_id="gen", reflector_workflow_id="ref",
         )
         gateway = AsyncMock()
         gateway.invoke.side_effect = [
@@ -237,7 +237,7 @@ class TestReflectionLoopEdgeCases:
     async def test_refine_fails_returns_none(self) -> None:
         exchange = _make_exchange()
         proc = ReflectionLoopProcessor(
-            generator_workflow_id="gen", reflector_workflow_id="ref", max_iterations=2
+            generator_workflow_id="gen", reflector_workflow_id="ref", max_iterations=2,
         )
         gateway = AsyncMock()
         gateway.invoke.side_effect = [
@@ -256,13 +256,13 @@ class TestReflectionLoopEdgeCases:
 class TestReflectionLoopToSpec:
     def test_to_spec_defaults(self) -> None:
         proc = ReflectionLoopProcessor(
-            generator_workflow_id="gen", reflector_workflow_id="ref"
+            generator_workflow_id="gen", reflector_workflow_id="ref",
         )
         assert proc.to_spec() == {
             "reflection_loop": {
                 "generator_workflow_id": "gen",
                 "reflector_workflow_id": "ref",
-            }
+            },
         }
 
     def test_to_spec_full(self) -> None:

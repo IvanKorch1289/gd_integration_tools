@@ -53,7 +53,7 @@ __all__ = ("CallFunctionProcessor",)
                             "minItems": 2,
                             "maxItems": 2,
                         },
-                    ]
+                    ],
                 },
             },
         },
@@ -89,7 +89,7 @@ class CallFunctionProcessor(BaseProcessor):
         module_name, fn_name = ref.split(":", 1)
         if not module_name or not fn_name:
             raise ValueError(
-                f"call_function ref must be non-empty 'module:fn', got {ref!r}"
+                f"call_function ref must be non-empty 'module:fn', got {ref!r}",
             )
         self.ref = ref
         self.module_name = module_name
@@ -226,13 +226,13 @@ class CallFunctionProcessor(BaseProcessor):
             module = importlib.import_module(self.module_name)
         except ImportError as exc:
             raise PermissionError(
-                f"call_function: cannot import {self.module_name!r}: {exc}"
+                f"call_function: cannot import {self.module_name!r}: {exc}",
             ) from exc
 
         fn = getattr(module, self.fn_name, None)
         if fn is None or not callable(fn):
             raise PermissionError(
-                f"call_function: {self.ref!r} not found or not callable"
+                f"call_function: {self.ref!r} not found or not callable",
             )
 
         payload = self._resolve_payload(exchange)

@@ -107,7 +107,7 @@ class RedisLockProcessor(BaseProcessor):
             if self._fail_on_contention:
                 exchange.fail(
                     f"redis_lock: could not acquire lock for {self._key!r} "
-                    f"(ttl={self._ttl}s, blocking={self._blocking_timeout})"
+                    f"(ttl={self._ttl}s, blocking={self._blocking_timeout})",
                 )
             return
 
@@ -117,7 +117,7 @@ class RedisLockProcessor(BaseProcessor):
         # падает, lock истечёт по TTL — self-healing semantics.
         self._lock = lock
         _logger.debug(
-            "redis_lock: acquired", extra={"key": self._key, "ttl": self._ttl}
+            "redis_lock: acquired", extra={"key": self._key, "ttl": self._ttl},
         )
 
     def to_spec(self) -> dict[str, Any] | None:

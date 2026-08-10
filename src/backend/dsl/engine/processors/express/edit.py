@@ -60,7 +60,7 @@ class ExpressEditProcessor(BaseProcessor):
         sync_id = resolve_value(exchange, self._sync_id_from)
         if not sync_id:
             exchange.fail(
-                f"ExpressEditProcessor: sync_id отсутствует ({self._sync_id_from!r})"
+                f"ExpressEditProcessor: sync_id отсутствует ({self._sync_id_from!r})",
             )
             return
 

@@ -71,7 +71,7 @@ class DSPyDatasetBuilder:
             completion = str(
                 getattr(item, "expected_answer", None)
                 or item.get("expected_answer", "")
-                or ""
+                or "",
             )
             if not prompt or not completion:
                 continue
@@ -82,11 +82,11 @@ class DSPyDatasetBuilder:
                     label=label or "unknown",
                     metadata={
                         "tenant_id": getattr(
-                            item, "tenant_id", item.get("tenant_id", "")
+                            item, "tenant_id", item.get("tenant_id", ""),
                         ),
                         "feedback_id": str(getattr(item, "id", item.get("id", ""))),
                     },
-                )
+                ),
             )
         return out
 

@@ -115,7 +115,7 @@ class TestFallbackChain:
             failing_vault.get = AsyncMock(return_value=None)
             file_backend = FileCertBackend(path=tmp_path)
             fallback = FallbackCertBackend(
-                primary=failing_vault, secondary=file_backend
+                primary=failing_vault, secondary=file_backend,
             )
             result = await fallback.get("skb_api")
         assert result is not None
@@ -137,7 +137,7 @@ class TestFallbackChain:
                 empty_file = FileCertBackend(path=Path(tmp))
                 empty_env = EnvInlineCertBackend()
                 fallback = FallbackCertBackend(
-                    primary=empty_file, secondary=empty_env
+                    primary=empty_file, secondary=empty_env,
                 )
                 result = await fallback.get("fallback")
         assert result is not None

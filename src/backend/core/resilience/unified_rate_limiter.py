@@ -94,7 +94,7 @@ class UnifiedRateLimiter:
             )
         except Exception as exc:
             _logger.warning(
-                "UnifiedRateLimiter.check failed for %s: %s", identifier, exc
+                "UnifiedRateLimiter.check failed for %s: %s", identifier, exc,
             )
             return RateLimitResult(
                 allowed=True,

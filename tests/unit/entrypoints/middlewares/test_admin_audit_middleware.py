@@ -62,7 +62,7 @@ def test_patch_admin_path_emits_audit(caplog_audit: pytest.LogCaptureFixture) ->
     app = _make_app_with_ctx(ctx)
     client = TestClient(app)
     r = client.patch(
-        "/tech/degradation/level", json={"mode": "READ_ONLY", "reason": "test"}
+        "/tech/degradation/level", json={"mode": "READ_ONLY", "reason": "test"},
     )
     assert r.status_code == 200
     records = [rec for rec in caplog_audit.records if rec.name == "audit_log.admin"]
@@ -102,7 +102,7 @@ def test_post_admin_path_emits_audit(caplog_audit: pytest.LogCaptureFixture) -> 
     app = _make_app_with_ctx(ctx)
     client = TestClient(app)
     r = client.post(
-        "/api/v1/admin/resilience-profiles/foo", json={"name": "foo", "retry": {}}
+        "/api/v1/admin/resilience-profiles/foo", json={"name": "foo", "retry": {}},
     )
     assert r.status_code == 200
     records = [rec for rec in caplog_audit.records if rec.name == "audit_log.admin"]

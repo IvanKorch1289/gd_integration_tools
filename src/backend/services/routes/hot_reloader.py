@@ -109,7 +109,7 @@ class RouteHotReloader:
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
-            self._run(), name="route-hot-reloader"
+            self._run(), name="route-hot-reloader",
         )
         _logger.info("hot_reloader.started", extra={"root": str(self._root)})
 
@@ -189,11 +189,11 @@ class RouteHotReloader:
                 await self._unload_one(route_name)
                 self._content_hashes.pop(route_name, None)
                 return ReloadEvent(
-                    route_name=route_name, change_kind="removed", success=True
+                    route_name=route_name, change_kind="removed", success=True,
                 )
             except Exception as exc:
                 _logger.exception(
-                    "hot_reloader.unload_failed", extra={"route_name": route_name}
+                    "hot_reloader.unload_failed", extra={"route_name": route_name},
                 )
                 return ReloadEvent(
                     route_name=route_name,
@@ -225,14 +225,14 @@ class RouteHotReloader:
             if content_hash:
                 self._content_hashes[route_name] = content_hash
             _logger.info(
-                "hot_reloader.route_reloaded", extra={"route_name": route_name}
+                "hot_reloader.route_reloaded", extra={"route_name": route_name},
             )
             return ReloadEvent(
-                route_name=route_name, change_kind="modified", success=True
+                route_name=route_name, change_kind="modified", success=True,
             )
         except Exception as exc:
             _logger.exception(
-                "hot_reloader.reload_failed", extra={"route_name": route_name}
+                "hot_reloader.reload_failed", extra={"route_name": route_name},
             )
             return ReloadEvent(
                 route_name=route_name,

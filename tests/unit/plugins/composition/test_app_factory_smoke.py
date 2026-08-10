@@ -160,7 +160,7 @@ def test_configure_root_endpoint_readiness_unhealthy_returns_503() -> None:
 
     fake_agg = MagicMock()
     fake_agg.check_all = AsyncMock(
-        return_value={"status": "degraded", "failures": ["x"]}
+        return_value={"status": "degraded", "failures": ["x"]},
     )
 
     with patch(
@@ -195,10 +195,10 @@ def _patched_business_routers() -> Any:
             return_value=MagicMock(),
         ):
             with patch(
-                "src.backend.plugins.composition.app_factory._configure_auto_registered_actions"
+                "src.backend.plugins.composition.app_factory._configure_auto_registered_actions",
             ):
                 with patch(
-                    "src.backend.plugins.composition.app_factory._configure_auto_graphql_schema"
+                    "src.backend.plugins.composition.app_factory._configure_auto_graphql_schema",
                 ):
                     yield
 
@@ -264,7 +264,7 @@ def test_configure_auto_registered_actions_calls_helper(
     )
     # Регистрация action-handlers может бросить — но обёрнута в try/except.
     monkeypatch.setattr(
-        "src.backend.dsl.commands.setup.register_action_handlers", lambda: None
+        "src.backend.dsl.commands.setup.register_action_handlers", lambda: None,
     )
 
     app_factory._configure_auto_registered_actions(fake_app)
@@ -285,7 +285,7 @@ def test_configure_auto_registered_actions_swallows_exceptions(
         _explode,
     )
     monkeypatch.setattr(
-        "src.backend.dsl.commands.setup.register_action_handlers", lambda: None
+        "src.backend.dsl.commands.setup.register_action_handlers", lambda: None,
     )
 
     # Не должно бросить.
@@ -310,7 +310,7 @@ def test_configure_auto_registered_actions_survives_register_failure(
         _fake_auto,
     )
     monkeypatch.setattr(
-        "src.backend.dsl.commands.setup.register_action_handlers", _explode
+        "src.backend.dsl.commands.setup.register_action_handlers", _explode,
     )
 
     app_factory._configure_auto_registered_actions(MagicMock())
@@ -400,7 +400,7 @@ def test_configure_application_components_tracing_failure_is_swallowed(
         raise ConnectionError("OTLP collector unavailable")
 
     monkeypatch.setattr(
-        "src.backend.plugins.composition.app_factory.setup_tracing", _explode_tracing
+        "src.backend.plugins.composition.app_factory.setup_tracing", _explode_tracing,
     )
 
     # Не должно бросить.
@@ -423,7 +423,7 @@ def test_configure_application_components_calls_admin_when_enabled(
         calls["admin"] += 1
 
     monkeypatch.setattr(
-        "src.backend.plugins.composition.app_factory.setup_admin", _fake_admin
+        "src.backend.plugins.composition.app_factory.setup_admin", _fake_admin,
     )
 
     app_factory._configure_application_components(MagicMock())
@@ -446,7 +446,7 @@ def test_configure_application_components_skips_admin_when_disabled(
         calls["admin"] += 1
 
     monkeypatch.setattr(
-        "src.backend.plugins.composition.app_factory.setup_admin", _fake_admin
+        "src.backend.plugins.composition.app_factory.setup_admin", _fake_admin,
     )
 
     app_factory._configure_application_components(MagicMock())
@@ -469,7 +469,7 @@ def test_configure_application_components_calls_monitoring_when_enabled(
         calls["monitoring"] += 1
 
     monkeypatch.setattr(
-        "src.backend.plugins.composition.app_factory.setup_monitoring", _fake_monitoring
+        "src.backend.plugins.composition.app_factory.setup_monitoring", _fake_monitoring,
     )
 
     app_factory._configure_application_components(MagicMock())

@@ -82,7 +82,7 @@ class TestFeatureFlagEnabled:
     """flag=ON: маскировка применяется по path/Content-Type правилам."""
 
     def test_masks_email_and_phone_on_matching_path(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
         app = _build_app(path_patterns=[r"^/api/users(/.*)?$"])
@@ -106,7 +106,7 @@ class TestFeatureFlagEnabled:
         assert resp.json() == {"status": "ok"}
 
     def test_empty_patterns_applies_to_all_paths(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """path_patterns=None / [] → middleware применяется ко всем JSON-путям."""
         monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
@@ -120,7 +120,7 @@ class TestFeatureFlagEnabled:
         assert all(it["email"] == "***" for it in items)
 
     def test_non_json_content_type_is_skipped(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
         app = _build_app(path_patterns=None)
@@ -131,7 +131,7 @@ class TestFeatureFlagEnabled:
         assert resp.text == "contact: alice@example.com"
 
     def test_top_level_json_list_is_masked_recursively(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """JSON array на top-level — все элементы рекурсивно маскируются."""
         monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)
@@ -147,7 +147,7 @@ class TestDoDIntegration:
     """DoD S18 #6: PII не утекает на configured paths."""
 
     def test_dod_pii_does_not_leak_on_configured_path(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """E2E: configurable path → no PII leakage в response body."""
         monkeypatch.setattr(feature_flags, "pii_response_middleware_enabled", True)

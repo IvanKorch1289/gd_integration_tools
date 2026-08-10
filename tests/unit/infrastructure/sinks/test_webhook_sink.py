@@ -27,7 +27,7 @@ class _FakeResponse:
 
 
 def _fake_client(
-    resp: _FakeResponse | None = None, side_effect: Exception | None = None
+    resp: _FakeResponse | None = None, side_effect: Exception | None = None,
 ) -> AsyncMock:
     client = AsyncMock()
     if side_effect is not None:
@@ -70,7 +70,7 @@ async def test_send_with_secret_signature() -> None:
 
     with patch("src.backend.core.net.OutboundHttpClient", return_value=client):
         sink = WebhookSink(
-            sink_id="w2", url="http://hook.test", event="pay", secret="shh"
+            sink_id="w2", url="http://hook.test", event="pay", secret="shh",
         )
         payload = {"amount": 100}
         result = await sink.send(payload)
@@ -162,7 +162,7 @@ async def test_send_with_rpa_policy_enabled(monkeypatch: pytest.MonkeyPatch) -> 
     fake_flags = MagicMock()
     fake_flags.webhook_resilience_policy_enabled = True
     monkeypatch.setitem(
-        sys.modules, "src.backend.core.config.features", types.ModuleType("features")
+        sys.modules, "src.backend.core.config.features", types.ModuleType("features"),
     )
     import src.backend.core.config.features as _features_mod
 

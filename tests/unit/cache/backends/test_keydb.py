@@ -65,7 +65,7 @@ def test_active_replica_can_be_enabled(client: AsyncMock) -> None:
 
 
 async def test_get_delegates_to_client(
-    backend: KeyDBBackend, client: AsyncMock
+    backend: KeyDBBackend, client: AsyncMock,
 ) -> None:
     """``get`` делегирует в client (унаследовано из RedisBackend)."""
     client.get.return_value = b"value"
@@ -98,7 +98,7 @@ async def test_delete_no_keys(backend: KeyDBBackend, client: AsyncMock) -> None:
 
 
 async def test_delete_pattern_via_scan_iter(
-    backend: KeyDBBackend, client: AsyncMock
+    backend: KeyDBBackend, client: AsyncMock,
 ) -> None:
     """``delete_pattern`` использует scan_iter (наследовано)."""
     client.scan_iter.return_value = _AsyncIterator([b"x", b"y"])

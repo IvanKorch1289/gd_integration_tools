@@ -49,7 +49,7 @@ class TestIsExtensionPath:
 
     def test_valid_extension_path_with_underscore(self) -> None:
         assert is_extension_path(
-            "extensions.skill_plugin.adapters.banking_metrics"
+            "extensions.skill_plugin.adapters.banking_metrics",
         )
 
     @pytest.mark.parametrize(
@@ -86,13 +86,13 @@ class TestRegisterExtensionModule:
             "extensions.my_ext.infrastructure.metrics",
         )
         assert list_extension_modules() == {
-            "my_ext.metrics": "extensions.my_ext.infrastructure.metrics"
+            "my_ext.metrics": "extensions.my_ext.infrastructure.metrics",
         }
 
     def test_register_returns_true_on_new(self) -> None:
         assert (
             register_extension_module(
-                "k1", "extensions.k1.infra.foo"
+                "k1", "extensions.k1.infra.foo",
             )
             is True
         )
@@ -104,7 +104,7 @@ class TestRegisterExtensionModule:
             is False
         )
         assert list_extension_modules() == {
-            "k1": "extensions.k1.infra.foo"
+            "k1": "extensions.k1.infra.foo",
         }
 
     def test_register_duplicate_with_different_path_raises(self) -> None:
@@ -237,7 +237,7 @@ class TestThreadSafety:
 
         def _register(idx: int) -> None:
             register_extension_module(
-                f"key_{idx}", f"extensions.thread_{idx}.infra.foo"
+                f"key_{idx}", f"extensions.thread_{idx}.infra.foo",
             )
 
         threads = [

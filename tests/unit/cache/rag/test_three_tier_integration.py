@@ -28,14 +28,14 @@ class _FakeStore:
                 "document": "ctx-1",
                 "score": 0.9,
                 "metadata": {"doc_id": "d1", "chunk_idx": 0},
-            }
+            },
         ]
         self.upsert = AsyncMock()
         self.delete = AsyncMock()
         self.delete_where = AsyncMock(return_value=1)
 
     async def query(
-        self, *, embedding: list[float], top_k: int, where: dict | None = None
+        self, *, embedding: list[float], top_k: int, where: dict | None = None,
     ) -> list[dict[str, Any]]:
         return self.query_result
 
@@ -48,14 +48,14 @@ class _FakeEmbedder:
 
 
 def _make_cache(
-    *, l1_answer: Any = None, l3_chunks: list[dict[str, Any]] | None = None
+    *, l1_answer: Any = None, l3_chunks: list[dict[str, Any]] | None = None,
 ) -> Any:
     cache = type("C", (), {})()
     cache.lookup_answer = AsyncMock(
-        return_value=(l1_answer, "l1" if l1_answer is not None else None)
+        return_value=(l1_answer, "l1" if l1_answer is not None else None),
     )
     cache.lookup_chunks = AsyncMock(
-        return_value=(l3_chunks, "l3" if l3_chunks is not None else None)
+        return_value=(l3_chunks, "l3" if l3_chunks is not None else None),
     )
     cache.store_answer = AsyncMock()
     cache.store_chunks = AsyncMock()
@@ -104,7 +104,7 @@ async def test_augment_prompt_miss_stores_to_cache() -> None:
     cache = _make_cache()
     service = RAGService(store=_FakeStore(), embedder=_FakeEmbedder(), cache=cache)
     result = await service.augment_prompt(
-        "новый вопрос", system_prompt="SP", top_k=3, namespace="ns"
+        "новый вопрос", system_prompt="SP", top_k=3, namespace="ns",
     )
     assert "новый вопрос" in result
     cache.store_chunks.assert_awaited_once()

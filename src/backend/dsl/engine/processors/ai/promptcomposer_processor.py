@@ -43,7 +43,7 @@ class PromptComposerProcessor(BaseProcessor):
         except KeyError:
             # Extract variable names from template using regex
             vars_in_template = re.findall(
-                r"\{([A-Za-z_][A-Za-z0-9_]*)\}", self._template
+                r"\{([A-Za-z_][A-Za-z0-9_]*)\}", self._template,
             )
             # Fill missing template vars with empty string (setdefault keeps real values)
             fill = {**variables}

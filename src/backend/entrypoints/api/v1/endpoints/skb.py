@@ -81,7 +81,7 @@ builder.add_actions(
                         "application/octet-stream": {},
                     },
                     "description": "Возвращает результат в формате JSON или PDF.",
-                }
+                },
             },
         ),
         ActionSpec(
@@ -106,5 +106,5 @@ builder.add_actions(
             dependencies=[Depends(require_api_key)],
             tags=("SKB",),
         ),
-    ]
+    ],
 )

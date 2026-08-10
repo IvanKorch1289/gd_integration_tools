@@ -29,7 +29,7 @@ class DataStoreSetProcessor(BaseProcessor):
         store: dict[str, Any] = exchange.properties.setdefault(_DATA_STORE_KEY, {})
         store[self._key] = self._value
         exchange.set_out(
-            body=exchange.in_message.body, headers=dict(exchange.in_message.headers)
+            body=exchange.in_message.body, headers=dict(exchange.in_message.headers),
         )
 
     def to_spec(self) -> dict[str, Any] | None:
@@ -59,7 +59,7 @@ class DataStoreGetProcessor(BaseProcessor):
         result = store.get(self._key, self._default)
         exchange.set_property(self._result_property, result)
         exchange.set_out(
-            body=exchange.in_message.body, headers=dict(exchange.in_message.headers)
+            body=exchange.in_message.body, headers=dict(exchange.in_message.headers),
         )
 
     def to_spec(self) -> dict[str, Any] | None:
@@ -69,7 +69,7 @@ class DataStoreGetProcessor(BaseProcessor):
                 "key": self._key,
                 "default": self._default,
                 "result_property": self._result_property,
-            }
+            },
         }
 
 
@@ -85,7 +85,7 @@ class DataStoreDeleteProcessor(BaseProcessor):
         store: dict[str, Any] = exchange.properties.get(_DATA_STORE_KEY, {})
         store.pop(self._key, None)
         exchange.set_out(
-            body=exchange.in_message.body, headers=dict(exchange.in_message.headers)
+            body=exchange.in_message.body, headers=dict(exchange.in_message.headers),
         )
 
     def to_spec(self) -> dict[str, Any] | None:

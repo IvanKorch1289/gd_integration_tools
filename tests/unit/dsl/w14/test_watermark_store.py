@@ -31,7 +31,7 @@ from src.backend.infrastructure.watermark.memory_store import MemoryWatermarkSto
 
 
 def _make_exchange(
-    body: Any, *, watermark: float | None = None, event_time: float | None = None
+    body: Any, *, watermark: float | None = None, event_time: float | None = None,
 ) -> Exchange[Any]:
     headers: dict[str, Any] = {}
     if event_time is not None:
@@ -274,7 +274,7 @@ class TestWatermarkFactoryAndBuilder:
         try:
             set_app_ref(fake_app)  # type: ignore[arg-type]
             route = RouteBuilder.from_("r-tw", source="internal:t").tumbling_window(
-                sink=lambda b: None
+                sink=lambda b: None,
             )
             proc = route._processors[-1]
             assert proc._store is store
@@ -290,7 +290,7 @@ class TestWatermarkFactoryAndBuilder:
         # Гарантируем чистое состояние app_ref (другие тесты могли его менять).
         set_app_ref(None)  # type: ignore[arg-type]
         route = RouteBuilder.from_("r-sl", source="internal:t").sliding_window(
-            sink=lambda b: None
+            sink=lambda b: None,
         )
         proc = route._processors[-1]
         assert proc._store is None

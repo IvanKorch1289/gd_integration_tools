@@ -58,7 +58,7 @@ AIRAG_DEFAULT_TRUE = frozenset(
         "workflow_template_streamlit_enabled",
         "hitl_history_enabled",
         "workflow_cron_dashboard_enabled",
-    }
+    },
 )
 AIRAG_INT_FIELDS = frozenset({"embedding_v2_traffic"})
 EXPECTED_AIRAG_FIELD_COUNT = 28

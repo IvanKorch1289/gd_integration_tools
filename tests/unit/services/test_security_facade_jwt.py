@@ -15,7 +15,7 @@ class TestJWTBlacklistFallback:
     def test_redis_blacklist_used_when_available(self) -> None:
         """При доступности Redis используется RedisJwtBlacklist."""
         with patch(
-            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist"
+            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist",
         ) as mock_redis_cls:
             mock_blacklist = mock_redis_cls.return_value
 
@@ -38,7 +38,7 @@ class TestJWTBlacklistFallback:
     def test_blacklist_token_with_redis(self) -> None:
         """blacklist_token добавляет через Redis."""
         with patch(
-            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist"
+            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist",
         ):
 
             facade = SecurityFacade()
@@ -60,7 +60,7 @@ class TestJWTBlacklistFallback:
     def test_unblacklist_token(self) -> None:
         """unblacklist_token удаляет токен."""
         with patch(
-            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist"
+            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist",
         ):
 
             facade = SecurityFacade()
@@ -73,7 +73,7 @@ class TestJWTBlacklistFallback:
     def test_clear_blacklist_with_redis(self) -> None:
         """clear_blacklist очищает Redis blacklist."""
         with patch(
-            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist"
+            "src.backend.core.auth.jwt_blacklist.RedisJwtBlacklist",
         ):
 
             facade = SecurityFacade()

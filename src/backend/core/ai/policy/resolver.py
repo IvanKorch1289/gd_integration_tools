@@ -42,7 +42,7 @@ class PolicyNotResolvedError(LookupError):
         """
         super().__init__(
             f"AIPolicySpec не найден для workflow_id={workflow_id!r}, "
-            f"tenant_id={tenant_id!r}"
+            f"tenant_id={tenant_id!r}",
         )
         self.workflow_id = workflow_id
         self.tenant_id = tenant_id
@@ -135,14 +135,14 @@ class PolicyResolver:
 
         for policy in self._policies:
             if self._matches(policy.workflow_pattern, workflow_id) and self._matches(
-                policy.tenant_pattern, tenant_id
+                policy.tenant_pattern, tenant_id,
             ):
                 self._cache[cache_key] = policy
                 return policy
         return None
 
     async def resolve_specific(
-        self, workflow_id: str, tenant_id: str
+        self, workflow_id: str, tenant_id: str,
     ) -> AIPolicySpec | None:
         """S77 W3 — specificity-based resolver (P0-C improvement).
 
@@ -252,5 +252,5 @@ class PolicyResolver:
             return AIPolicySpec.model_validate(raw)
         except (TypeError, ValueError) as exc:
             raise PolicyLoadError(
-                path, f"AIPolicySpec validation error: {exc}"
+                path, f"AIPolicySpec validation error: {exc}",
             ) from exc

@@ -76,7 +76,7 @@ class EnrichEIPProcessor(BaseProcessor):
         if self.strategy == "http":
             assert self.source, "http strategy requires source URL"
             with urllib.request.urlopen(
-                _resolve(self.source, exchange), timeout=5
+                _resolve(self.source, exchange), timeout=5,
             ) as r:
                 raw = r.read().decode("utf-8")
             try:
@@ -139,8 +139,8 @@ class EIPContentMixin:
         """
         return self._add(  # type: ignore[attr-defined]
             EnrichEIPProcessor(
-                strategy=strategy, field=field, source=source, value=value, name=name
-            )
+                strategy=strategy, field=field, source=source, value=value, name=name,
+            ),
         )
 
     # NOTE (cycle 45): wire_tap, multicast, recipient_list methods were

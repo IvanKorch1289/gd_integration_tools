@@ -34,7 +34,7 @@ async def test_wsdl_invalid_xml_raises() -> None:
     """Невалидный/неполный WSDL → ImportError или ValueError (зависит от того,
     отвалится ли zeep на парсинге или мы сами бросим на отсутствии <service>)."""
     src = ImportSource(
-        kind=ImportSourceKind.WSDL, content=b"<not-wsdl>broken</not-wsdl>", prefix="x"
+        kind=ImportSourceKind.WSDL, content=b"<not-wsdl>broken</not-wsdl>", prefix="x",
     )
     with pytest.raises((ImportError, ValueError)):
         await WsdlImportGateway().import_spec(src)

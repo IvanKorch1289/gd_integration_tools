@@ -28,7 +28,7 @@ def _downstream_ok(status_code: int = 200, body: bytes = b"ok"):
                 break
             more_body = msg.get("more_body", False)
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []}
+            {"type": "http.response.start", "status": status_code, "headers": []},
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -72,7 +72,7 @@ class TestAuditLogMiddleware:
 
     @pytest.mark.asyncio
     async def test_logs_and_returns_response(
-        self, middleware: AuditLogMiddleware
+        self, middleware: AuditLogMiddleware,
     ) -> None:
         """Happy path: logs audit event and returns response."""
         app = AsyncMock()
@@ -154,12 +154,12 @@ class TestAuditLogMiddleware:
         # payload_hash из cached body (не из receive).
         from src.backend.entrypoints.middlewares import _body_hash
         assert audit_event["payload_hash"] == _body_hash.payload_hash(
-            b"cached", prefix_len=16
+            b"cached", prefix_len=16,
         )
 
     @pytest.mark.asyncio
     async def test_body_read_failure_graceful(
-        self, middleware: AuditLogMiddleware
+        self, middleware: AuditLogMiddleware,
     ) -> None:
         """Pure ASGI: graceful fallback когда body read fails (http.disconnect)."""
         app = AsyncMock()
@@ -226,7 +226,7 @@ class TestAuditLogMiddleware:
 
     @pytest.mark.asyncio
     async def test_clickhouse_failure_ignored(
-        self, middleware: AuditLogMiddleware
+        self, middleware: AuditLogMiddleware,
     ) -> None:
         """ClickHouse insert error is silently ignored."""
         app = AsyncMock()

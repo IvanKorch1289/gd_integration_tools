@@ -21,7 +21,7 @@ from src.backend.dsl.service_dsl import (
 class TestServiceMeta:
     def test_defaults(self) -> None:
         meta = ServiceMeta(
-            name="orders", service_cls=MagicMock, service_getter=lambda: None
+            name="orders", service_cls=MagicMock, service_getter=lambda: None,
         )
         assert meta.crud is True
         assert meta.protocols == ("all",)
@@ -35,17 +35,17 @@ class TestServiceDSLRegistry:
 
     def test_register_and_get(self, registry: ServiceDSLRegistry) -> None:
         meta = ServiceMeta(
-            name="orders", service_cls=MagicMock, service_getter=lambda: None
+            name="orders", service_cls=MagicMock, service_getter=lambda: None,
         )
         registry.register(meta)
         assert registry.get("orders") is meta
 
     def test_list_services(self, registry: ServiceDSLRegistry) -> None:
         meta1 = ServiceMeta(
-            name="a", service_cls=MagicMock, service_getter=lambda: None
+            name="a", service_cls=MagicMock, service_getter=lambda: None,
         )
         meta2 = ServiceMeta(
-            name="b", service_cls=MagicMock, service_getter=lambda: None
+            name="b", service_cls=MagicMock, service_getter=lambda: None,
         )
         registry.register(meta1)
         registry.register(meta2)
@@ -65,7 +65,7 @@ class TestServiceDSLRegistry:
         )
         registry.register(meta)
         with patch(
-            "src.backend.dsl.commands.registry.action_handler_registry"
+            "src.backend.dsl.commands.registry.action_handler_registry",
         ) as mock_reg:
             registry.register_all_actions()
             assert mock_reg.register.call_count == 2  # add, custom
@@ -90,7 +90,7 @@ class TestServiceDSL:
             x: int
 
         @service_dsl(
-            name="test", schema_in=In, protocols=["rest"], crud=False, methods=["run"]
+            name="test", schema_in=In, protocols=["rest"], crud=False, methods=["run"],
         )
         class TestService:
             def run(self) -> None: ...

@@ -20,10 +20,10 @@ def _bypass_auth() -> None:
     )
 
     WorkflowSubprocessProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
-        return_value=True
+        return_value=True,
     )
     WorkflowConvertProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
-        return_value=True
+        return_value=True,
     )
 
 
@@ -33,7 +33,7 @@ class TestWorkflowSubprocessProcessor:
             WorkflowSubprocessProcessor,
         )
         p = WorkflowSubprocessProcessor(
-            workflow_id="child_wf", input_from="body", to="body.subprocess_result"
+            workflow_id="child_wf", input_from="body", to="body.subprocess_result",
         )
         assert p.workflow_id == "child_wf"
         assert p.input_from == "body"
@@ -44,7 +44,7 @@ class TestWorkflowSubprocessProcessor:
             WorkflowSubprocessProcessor,
         )
         p = WorkflowSubprocessProcessor(
-            workflow_id="child_wf", input_from="body", to="body.subprocess_result"
+            workflow_id="child_wf", input_from="body", to="body.subprocess_result",
         )
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -96,7 +96,7 @@ class TestWorkflowConvertProcessor:
             WorkflowConvertProcessor,
         )
         p = WorkflowConvertProcessor(
-            from_format="json", to_format="yaml", source_property="body.a"
+            from_format="json", to_format="yaml", source_property="body.a",
         )
         assert p.from_format == "json"
         assert p.to_format == "yaml"
@@ -107,7 +107,7 @@ class TestWorkflowConvertProcessor:
             WorkflowConvertProcessor,
         )
         p = WorkflowConvertProcessor(
-            from_format="json", to_format="yaml", source_property="body"
+            from_format="json", to_format="yaml", source_property="body",
         )
         ex = MagicMock()
         ex.in_message = MagicMock()

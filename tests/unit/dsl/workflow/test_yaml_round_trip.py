@@ -85,7 +85,7 @@ class TestRoundTripSemantics:
                 "steps": [
                     {"name": "step1", "type": "log", "params": {"message": "hello"}},
                 ],
-            }
+            },
         }
         # Simulate YAML round-trip: serialize → parse → equal
         # This is what to_yaml + from_yaml do conceptually

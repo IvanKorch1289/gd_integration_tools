@@ -22,7 +22,7 @@ class TestRetryBudget:
 
         # Exhaust the budget so try_retry returns False
         budget = RetryBudget(
-            name="test_budget", ratio=0.0
+            name="test_budget", ratio=0.0,
         )  # ratio=0 means no retries allowed
 
         call_count = 0

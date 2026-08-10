@@ -82,7 +82,7 @@ class StreamingSSEMixin:
         # S97 W1: RouteBuilder.__init__ теперь принимает (route_id, source, description).
         # Bind source через object.__setattr__ (slot declaration в __slots__).
         builder = cls.from_(
-            route_id, source=f"sse:{route_id}", description=f"SSE stream: {url}"
+            route_id, source=f"sse:{route_id}", description=f"SSE stream: {url}",
         )
         object.__setattr__(builder, "_sse_source", source)
         return builder
@@ -150,7 +150,7 @@ class StreamingSSEMixin:
         if merge_strategy not in ("interleave", "concat", "first"):
             raise ValueError(
                 f"from_sse_multi: invalid merge_strategy={merge_strategy!r} "
-                f"(expected: interleave, concat, first)"
+                f"(expected: interleave, concat, first)",
             )
 
         import importlib

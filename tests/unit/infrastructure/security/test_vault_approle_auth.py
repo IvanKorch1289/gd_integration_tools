@@ -79,8 +79,8 @@ class TestVaultCertBackendAppRole:
                     "description": "test",
                     "version": 1,
                     "uploaded_by": "admin",
-                }
-            }
+                },
+            },
         }
         mock_client.secrets.kv.v2.read_secret_version.return_value = mock_response
         entry = backend.get("skb_api")

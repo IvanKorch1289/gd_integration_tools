@@ -57,7 +57,7 @@ def dlq() -> _InMemoryDLQ:
 
 
 def _make_policy(
-    dlq: DLQWriter | None, *, max_attempts: int = 3, backoff: float = 0.001
+    dlq: DLQWriter | None, *, max_attempts: int = 3, backoff: float = 0.001,
 ) -> RPACallPolicy:
     return RPACallPolicy(
         name="test",
@@ -148,7 +148,7 @@ async def test_http_5xx_burst_recovers(dlq: _InMemoryDLQ) -> None:
 
 
 async def test_feature_flag_off_passes_through(
-    dlq: _InMemoryDLQ, monkeypatch: pytest.MonkeyPatch
+    dlq: _InMemoryDLQ, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Bonus: при выключенном feature-flag — coro вызывается без обёртки."""
     from src.backend.core.config import features as features_module

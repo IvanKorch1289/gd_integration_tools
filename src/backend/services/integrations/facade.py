@@ -69,7 +69,7 @@ class IntegrationFacade:
         return self._sources
 
     async def _check_capability(
-        self, capability: str, *, context: dict[str, Any] | None = None
+        self, capability: str, *, context: dict[str, Any] | None = None,
     ) -> bool:
         """S203 W4: проверка capability через AuthorizationFacade.
 
@@ -93,7 +93,7 @@ class IntegrationFacade:
         except Exception as exc:
             # Fail-closed: если authz слой недоступен, запрещаем доступ.
             _logger.warning(
-                "authz unavailable for capability=%s, denying: %s", capability, exc
+                "authz unavailable for capability=%s, denying: %s", capability, exc,
             )
             return False
 
@@ -148,7 +148,7 @@ class IntegrationFacade:
         return await sink.send(payload)
 
     async def check_sink_health(
-        self, sink_id: str
+        self, sink_id: str,
     ) -> dict[str, Any]:
         """Ping одного Sink. Не требует capability (read-only).
 
@@ -174,7 +174,7 @@ class IntegrationFacade:
         return {"status": "ok"}
 
     async def check_source_health(
-        self, source_id: str
+        self, source_id: str,
     ) -> dict[str, Any]:
         """Ping одного Source. Не требует capability (read-only).
 

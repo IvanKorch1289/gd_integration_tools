@@ -33,7 +33,7 @@ def stub_settings() -> SimpleNamespace:
 
 @pytest.mark.asyncio
 async def test_request_uses_facade_when_flag_enabled(
-    stub_settings: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    stub_settings: SimpleNamespace, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Phase-2: при выставленном флаге _request делегирует OutboundHttpClient."""
     from src.backend.services.core.base_external_api import BaseExternalAPIClient
@@ -53,7 +53,7 @@ async def test_request_uses_facade_when_flag_enabled(
 
 @pytest.mark.asyncio
 async def test_request_falls_back_to_legacy_when_flag_off(
-    stub_settings: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    stub_settings: SimpleNamespace, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Phase-1 (флаг по умолчанию False): прежнее поведение без facade."""
     from src.backend.services.core.base_external_api import BaseExternalAPIClient
@@ -79,7 +79,7 @@ async def test_request_text_response_from_facade(
 
     client = BaseExternalAPIClient(settings=stub_settings, outbound_http_client=facade)
     result = await client._request(
-        "GET", "https://api.example.com/items", response_type="text"
+        "GET", "https://api.example.com/items", response_type="text",
     )
     assert result == "stub"
 
@@ -94,8 +94,8 @@ async def test_request_facade_propagates_exception(
     facade = MagicMock()
     facade.request = AsyncMock(
         side_effect=WafBypassError(
-            WafDecision(False, "host in deny_hosts", host="bad.example.com")
-        )
+            WafDecision(False, "host in deny_hosts", host="bad.example.com"),
+        ),
     )
 
     client = BaseExternalAPIClient(settings=stub_settings, outbound_http_client=facade)

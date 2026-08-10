@@ -207,7 +207,7 @@ class TestWebhookSignatureMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_protected_prefix_without_secret_returns_503(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """B-02 fix: path protected, но secret не сконфигурирован → 503 fail-closed.
 
@@ -222,7 +222,7 @@ class TestWebhookSignatureMiddlewarePureASGI:
 
         async def downstream(scope, receive, send):
             raise AssertionError(
-                "downstream НЕ должен быть вызван при missing secret"
+                "downstream НЕ должен быть вызван при missing secret",
             )
 
         app = AsyncMock()

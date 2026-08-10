@@ -23,7 +23,7 @@ from src.backend.core.errors import DatabaseError
 # Формат identifier-а: `name` или `schema.name` или `db.schema.name`, где
 # каждый сегмент — обычный SQL identifier без кавычек.
 _IDENT_RE: Final = re.compile(
-    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$"
+    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$",
 )
 
 # Bind-имена (после ":") должны быть простыми — без точек, без спецсимволов.
@@ -57,7 +57,7 @@ class ValidationMixin(_ExternalDatabaseProtocol):
                     f"Недопустимый SQL identifier в контексте '{context}': "
                     f"{value!r}. Ожидается name / schema.name / db.schema.name "
                     "без кавычек и спецсимволов."
-                )
+                ),
             )
         return value
 
@@ -69,7 +69,7 @@ class ValidationMixin(_ExternalDatabaseProtocol):
                 message=(
                     f"Недопустимый bind-параметр в '{context}': {value!r}. "
                     "Ожидается [A-Za-z_][A-Za-z0-9_]*."
-                )
+                ),
             )
         return value
 

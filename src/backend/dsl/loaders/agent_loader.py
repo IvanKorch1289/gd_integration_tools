@@ -92,7 +92,7 @@ def load_agent_yaml(yaml_text: str) -> AgentDefinition:
         return AgentDefinition.model_validate(raw)
     except (TypeError, ValueError) as exc:
         raise AgentDefinitionLoadError(
-            "<inline>", f"AgentDefinition validation error: {exc}"
+            "<inline>", f"AgentDefinition validation error: {exc}",
         ) from exc
 
 
@@ -122,7 +122,7 @@ def load_agent_yaml_file(path: str | Path) -> AgentDefinition:
 
 
 def load_agents_from_directory(
-    root: str | Path, *, suffix: str = ".agent.yaml"
+    root: str | Path, *, suffix: str = ".agent.yaml",
 ) -> list[AgentDefinition]:
     """Загрузить все декларации агентов из указанного каталога.
 

@@ -60,12 +60,12 @@ def temp_source_tree(tmp_path: Path) -> Path:
         "        return x\n"
         "\n"
         "    def _emit_audit_safe(self, x):\n"
-        "        return x\n"
+        "        return x\n",
     )
 
     # 3. Tests (должны быть excluded).
     (src / "tests/test_app.py").write_text(
-        "def test_emit():\n    _emit_audit()  # noqa\n"
+        "def test_emit():\n    _emit_audit()  # noqa\n",
     )
 
     # 4. Testkit (должен быть excluded).

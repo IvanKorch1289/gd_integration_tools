@@ -68,7 +68,7 @@ class WorkflowConvertProcessor(BaseProcessor):
             raise ValueError(
                 f"WorkflowConvertProcessor: unsupported format "
                 f"({from_format!r}→{to_format!r}). "
-                f"Supported: {self.SUPPORTED}"
+                f"Supported: {self.SUPPORTED}",
             )
         super().__init__(name=name or f"convert:{from_format}_to_{to_format}")
         self.from_format = from_format
@@ -77,7 +77,7 @@ class WorkflowConvertProcessor(BaseProcessor):
         self.target = to
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Конвертирует данные между форматами (JSON/YAML/string/dict).
 

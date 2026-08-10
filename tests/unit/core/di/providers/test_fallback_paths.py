@@ -35,7 +35,7 @@ class TestCacheFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.get_cache_invalidator = MagicMock(return_value="fallback_invalidator")
         with patch(
-            "src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod,
         ):
             result = cache.get_cache_invalidator_provider()
         assert result == "fallback_invalidator"
@@ -47,7 +47,7 @@ class TestCacheFallbackPaths:
         mock_redis.client = "kv_client"
         mock_mod.redis_client = mock_redis
         with patch(
-            "src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod,
         ):
             result = cache.get_redis_kv_client_provider()
         assert result == "kv_client"
@@ -57,7 +57,7 @@ class TestCacheFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.redis_client = "admin_storage_redis"
         with patch(
-            "src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.cache.resolve_module", return_value=mock_mod,
         ):
             result = cache.get_admin_cache_storage_provider()
         assert result == "admin_storage_redis"
@@ -72,7 +72,7 @@ class TestDbFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.get_clickhouse_client = MagicMock(return_value="clickhouse_inst")
         with patch(
-            "src.backend.core.di.providers.db.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.db.resolve_module", return_value=mock_mod,
         ):
             result = db.get_clickhouse_client_provider()
         assert result == "clickhouse_inst"
@@ -82,7 +82,7 @@ class TestDbFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.get_mongo_client = "mongo_factory"
         with patch(
-            "src.backend.core.di.providers.db.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.db.resolve_module", return_value=mock_mod,
         ):
             result = db.get_mongo_client_provider()
         assert result == "mongo_factory"
@@ -92,7 +92,7 @@ class TestDbFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.ConnectorRegistry.instance = MagicMock(return_value="registry_inst")
         with patch(
-            "src.backend.core.di.providers.db.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.db.resolve_module", return_value=mock_mod,
         ):
             result = db.get_connector_registry_provider()
         assert result == "registry_inst"
@@ -107,7 +107,7 @@ class TestHttpFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.get_http_client_dependency = MagicMock(return_value="http_client_inst")
         with patch(
-            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod,
         ):
             result = http.get_http_client_provider()
         assert result == "http_client_inst"
@@ -117,7 +117,7 @@ class TestHttpFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.smtp_client = "smtp_inst"
         with patch(
-            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod,
         ):
             result = http.get_smtp_client_provider()
         assert result == "smtp_inst"
@@ -127,7 +127,7 @@ class TestHttpFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.get_browser_client = MagicMock(return_value="browser_inst")
         with patch(
-            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod,
         ):
             result = http.get_browser_client_provider()
         assert result == "browser_inst"
@@ -137,7 +137,7 @@ class TestHttpFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.RedisHash = "RedisHash_class"
         with patch(
-            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.http.resolve_module", return_value=mock_mod,
         ):
             result = http.get_redis_hash_factory_provider()
         assert result == "RedisHash_class"
@@ -152,7 +152,7 @@ class TestAiFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.get_model_enum = "model_enum_func"
         with patch(
-            "src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod,
         ):
             result = ai.get_model_enum_provider()
         assert result == "model_enum_func"
@@ -162,7 +162,7 @@ class TestAiFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.VaultSecretRefresher.get = MagicMock(return_value="vault_inst")
         with patch(
-            "src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod,
         ):
             result = ai.get_vault_refresher_provider()
         assert result == "vault_inst"
@@ -172,7 +172,7 @@ class TestAiFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.get_antivirus_service_dependency = MagicMock(return_value="av_inst")
         with patch(
-            "src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.ai.resolve_module", return_value=mock_mod,
         ):
             result = ai.get_antivirus_service_provider()
         assert result == "av_inst"
@@ -187,7 +187,7 @@ class TestAuthFallbackPaths:
         mock_mod = MagicMock()
         mock_mod.get_api_key_manager = MagicMock(return_value="apikey_inst")
         with patch(
-            "src.backend.core.di.providers.auth.resolve_module", return_value=mock_mod
+            "src.backend.core.di.providers.auth.resolve_module", return_value=mock_mod,
         ):
             result = auth.get_api_key_manager_provider()
         assert result == "apikey_inst"

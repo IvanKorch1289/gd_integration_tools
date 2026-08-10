@@ -26,7 +26,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "app"
     model_config = SettingsConfigDict(
-        env_prefix="APP_", extra="forbid", validate_default=True
+        env_prefix="APP_", extra="forbid", validate_default=True,
     )
 
     # Режимы работы системы
@@ -268,7 +268,7 @@ class AppBaseSettings(BaseSettingsWithLoader):
         examples=[500, 1000],
     )
     gzip_compresslevel: int = Field(
-        ..., title="Уровень сжатия GZIP", ge=1, le=9, description="Уровень сжатия GZIP"
+        ..., title="Уровень сжатия GZIP", ge=1, le=9, description="Уровень сжатия GZIP",
     )
 
     # Параметры Brotli (Sprint 10 K2 W2)

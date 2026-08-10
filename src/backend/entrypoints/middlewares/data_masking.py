@@ -46,7 +46,7 @@ _SENSITIVE_KEYS = frozenset(
         "access_token",
         "refresh_token",
         "authorization",
-    }
+    },
 )
 
 
@@ -88,7 +88,7 @@ class DataMaskingMiddleware:
                     original_headers.append((k, v))
                     if k.lower() == b"content-type":
                         content_type["value"] = v.decode(
-                            "latin-1", errors="replace"
+                            "latin-1", errors="replace",
                         )
                 # Suppress original — отправим свой с masked body
                 # (cycle 58 invariant: suppress всегда для content-length update).
@@ -140,7 +140,7 @@ class DataMaskingMiddleware:
                 "type": "http.response.start",
                 "status": response_status["status"],
                 "headers": new_headers,
-            }
+            },
         )
         await send({"type": "http.response.body", "body": masked})
 

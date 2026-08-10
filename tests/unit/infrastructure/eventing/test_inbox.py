@@ -26,7 +26,7 @@ def fake_redis_client_module(monkeypatch: pytest.MonkeyPatch) -> Any:
     fake_module = type(sys)("src.backend.infrastructure.clients.storage.redis")
     fake_module.redis_client = _FakeRedis()  # type: ignore[attr-defined]
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.clients.storage.redis", fake_module
+        sys.modules, "src.backend.infrastructure.clients.storage.redis", fake_module,
     )
     return fake_module
 
@@ -45,12 +45,12 @@ async def test_inbox_fail_open_when_redis_missing(
     """fail_mode=open: ImportError redis → возвращает False (новое событие)."""
     # Удаляем модуль из sys.modules, чтобы импорт упал
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.clients.storage.redis", None
+        sys.modules, "src.backend.infrastructure.clients.storage.redis", None,
     )
     inbox = Inbox(fail_mode="open")
     # Подменяем __import__ чтобы он бросал ImportError
     with patch.dict(
-        sys.modules, {"src.backend.infrastructure.clients.storage.redis": None}
+        sys.modules, {"src.backend.infrastructure.clients.storage.redis": None},
     ), patch("src.backend.infrastructure.eventing.inbox.logger.debug"):
         result = await inbox.seen_or_mark("event-1")
     # При ImportError возвращает False (не дубликат)
@@ -63,7 +63,7 @@ async def test_inbox_fail_closed_raises_on_redis_setnx_error(
 ) -> None:
     """fail_mode=closed: Redis SETNX exception → InboxUnavailableError."""
     fake_redis_client_module.redis_client.set = AsyncMock(
-        side_effect=ConnectionError("redis down")
+        side_effect=ConnectionError("redis down"),
     )
     inbox = Inbox(fail_mode="closed")
     with pytest.raises(InboxUnavailableError, match="Redis SETNX failed"):
@@ -76,7 +76,7 @@ async def test_inbox_fail_open_logs_on_setnx_error(
 ) -> None:
     """fail_mode=open: Redis SETNX exception → log warning + return False."""
     fake_redis_client_module.redis_client.set = AsyncMock(
-        side_effect=ConnectionError("redis down")
+        side_effect=ConnectionError("redis down"),
     )
     inbox = Inbox(fail_mode="open")
     result = await inbox.seen_or_mark("event-1")

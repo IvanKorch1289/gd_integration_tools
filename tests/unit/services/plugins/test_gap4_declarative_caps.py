@@ -74,7 +74,7 @@ def _build_vocab_with_optional_scope() -> CapabilityVocabulary:
             matcher=GlobScopeMatcher(),
             scope_required=False,
             description="Test-only capability without scope (slice 1).",
-        )
+        ),
     )
     return vocab
 
@@ -89,7 +89,7 @@ def _build_loader_with_custom_vocab(
     repos = _FakeRepos()
     processors = _FakeProcessors()
     gate = CapabilityGate(
-        vocabulary=vocab if vocab is not None else _build_vocab_with_optional_scope()
+        vocabulary=vocab if vocab is not None else _build_vocab_with_optional_scope(),
     )
     loader = PluginLoader(
         extensions_dir=tmp_path,
@@ -116,7 +116,7 @@ class TestPluginTenantDecl:
 
     def test_with_capabilities(self) -> None:
         decl = PluginTenantDecl(
-            name="tenant_a", capabilities=("mq.publish", "net.outbound")
+            name="tenant_a", capabilities=("mq.publish", "net.outbound"),
         )
         assert decl.capabilities == ("mq.publish", "net.outbound")
 
@@ -137,7 +137,7 @@ class TestPluginTenantDecl:
     def test_extra_forbidden(self) -> None:
         with pytest.raises(ValidationError):
             PluginTenantDecl.model_validate(
-                {"name": "t1", "capabilities": [], "bogus": "x"}
+                {"name": "t1", "capabilities": [], "bogus": "x"},
             )
 
 
@@ -150,7 +150,7 @@ class TestPluginManifestTenants:
 
     def test_default_empty(self) -> None:
         m = PluginManifest(
-            name="x", version="0.1.0", requires_core=">=0.1", entry_class="ext.x.Plugin"
+            name="x", version="0.1.0", requires_core=">=0.1", entry_class="ext.x.Plugin",
         )
         assert m.tenants == ()
 
@@ -165,7 +165,7 @@ class TestPluginManifestTenants:
                     {"name": "tenant_a", "capabilities": ["mq.publish"]},
                     {"name": "tenant_b", "capabilities": []},
                 ],
-            }
+            },
         )
         assert len(m.tenants) == 2
         assert m.tenants[0].name == "tenant_a"
@@ -183,9 +183,9 @@ class TestPluginManifestTenants:
                     "requires_core": ">=0.1",
                     "entry_class": "ext.x.Plugin",
                     "tenants": [
-                        {"name": "t1", "capabilities": ["mq.publish", "totally.fake"]}
+                        {"name": "t1", "capabilities": ["mq.publish", "totally.fake"]},
                     ],
-                }
+                },
             )
         # Error wraps the model validator; check that "unknown capability" is in message.
         assert "unknown capability" in str(exc_info.value)
@@ -201,7 +201,7 @@ class TestPluginManifestTenants:
                     "requires_core": ">=0.1",
                     "entry_class": "ext.x.Plugin",
                     "tenants": [{"name": "t1", "capabilities": ["BAD"]}],
-                }
+                },
             )
         # Грамматика не пройдёт — сообщение про "<resource>.<verb>".
         assert (
@@ -218,7 +218,7 @@ class TestPluginManifestTenants:
                 "requires_core": ">=0.1",
                 "entry_class": "ext.x.Plugin",
                 "tenants": [],
-            }
+            },
         )
         assert m.tenants == ()
 
@@ -232,7 +232,7 @@ class TestPluginManifestTenants:
                 "requires_core": ">=0.1",
                 "entry_class": "ext.x.Plugin",
                 "tenants": [{"name": "t1", "capabilities": [cap_name]}],
-            }
+            },
         )
         assert m.tenants[0].capabilities == (cap_name,)
 
@@ -262,7 +262,7 @@ class TestLoadPluginManifestTenants:
                 [[tenants]]
                 name = "tenant_b"
                 capabilities = ["cache.read"]
-                """
+                """,
             ).lstrip(),
             encoding="utf-8",
         )
@@ -288,7 +288,7 @@ class TestLoadPluginManifestTenants:
                 [[tenants]]
                 name = "tenant_a"
                 capabilities = ["mq.publish", "unknown.thing"]
-                """
+                """,
             ).lstrip(),
             encoding="utf-8",
         )
@@ -305,7 +305,7 @@ class TestLoadPluginManifestTenants:
                 version = "1.0.0"
                 requires_core = ">=0.1"
                 entry_class = "ext.plain.Plugin"
-                """
+                """,
             ).lstrip(),
             encoding="utf-8",
         )
@@ -318,7 +318,7 @@ class TestLoadPluginManifestTenants:
 
 @pytest.mark.skip(
     reason="PluginLoader API changed — load() now returns loader, not tuple. "
-    "Requires S180+ rewrite of gap4 declarative tenant tests."
+    "Requires S180+ rewrite of gap4 declarative tenant tests.",
 )
 @pytest.mark.unit
 class TestPluginLoaderTenantsIntegration:
@@ -333,7 +333,7 @@ class TestPluginLoaderTenantsIntegration:
     """
 
     async def test_declare_tenant_called_for_each_capability(
-        self, isolated_extensions_dir: Path, caplog: pytest.LogCaptureFixture
+        self, isolated_extensions_dir: Path, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Slice 1: default vocab (все caps ``scope_required=True``) →
         loader skip'ает declare_tenant(scope=None) с warning для каждой
@@ -351,7 +351,7 @@ class TestPluginLoaderTenantsIntegration:
             [[tenants]]
             name = "tenant_a"
             capabilities = ["mq.publish", "net.outbound"]
-            """
+            """,
         )
         _write_extension(
             isolated_extensions_dir,
@@ -380,7 +380,7 @@ class TestPluginLoaderTenantsIntegration:
         )
 
     async def test_declare_tenant_skipped_for_scope_required_default(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         """Slice 1: default vocab (все caps ``scope_required=True``) →
         ``declare_tenant(scope=None)`` skip'ится loader'ом с warning.
@@ -393,7 +393,7 @@ class TestPluginLoaderTenantsIntegration:
             [[tenants]]
             name = "tenant_a"
             capabilities = ["mq.publish", "net.outbound"]
-            """
+            """,
         )
         _write_extension(
             isolated_extensions_dir,
@@ -415,7 +415,7 @@ class TestPluginLoaderTenantsIntegration:
         assert gate.list_allocated_tenant("tenant_a") == ()
 
     async def test_list_allocated_tenant_reflects_manifest(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         """Slice 1: default vocab, ``[[tenants]]`` парсится но declare
         skip'ается → ``gate.list_allocated_tenant(t)`` возвращает
@@ -430,10 +430,10 @@ class TestPluginLoaderTenantsIntegration:
             [[tenants]]
             name = "tenant_a"
             capabilities = ["mq.publish", "net.outbound"]
-            """
+            """,
         )
         _write_extension(
-            isolated_extensions_dir, name="dummy_alloc", manifest_extra=manifest_extra
+            isolated_extensions_dir, name="dummy_alloc", manifest_extra=manifest_extra,
         )
         loader, *_ = _build_loader(isolated_extensions_dir)
         await loader.discover_and_load()
@@ -443,7 +443,7 @@ class TestPluginLoaderTenantsIntegration:
         assert gate.list_allocated_tenant("tenant_a") == ()
 
     async def test_no_tenants_backward_compat(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         """Без [[tenants]] плагин грузится успешно (status='loaded')."""
         _write_extension(isolated_extensions_dir, name="dummy_no_tenants")
@@ -454,12 +454,12 @@ class TestPluginLoaderTenantsIntegration:
         assert loaded[0].manifest.tenants == ()
 
     async def test_tenant_aware_true_without_tenants_emits_warning(
-        self, isolated_extensions_dir: Path, caplog: pytest.LogCaptureFixture
+        self, isolated_extensions_dir: Path, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """``tenant_aware=true`` + пустой tenants → warning в логе."""
         manifest_extra = "tenant_aware = true\n"
         _write_extension(
-            isolated_extensions_dir, name="dummy_orphan", manifest_extra=manifest_extra
+            isolated_extensions_dir, name="dummy_orphan", manifest_extra=manifest_extra,
         )
         loader, *_ = _build_loader(isolated_extensions_dir)
         with caplog.at_level(logging.WARNING, logger="services.plugins.loader"):
@@ -471,7 +471,7 @@ class TestPluginLoaderTenantsIntegration:
         ), f"No expected warning. Captured: {[r.message for r in warnings]}"
 
     async def test_tenant_aware_false_without_tenants_no_warning(
-        self, isolated_extensions_dir: Path, caplog: pytest.LogCaptureFixture
+        self, isolated_extensions_dir: Path, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """``tenant_aware=false`` + пустой tenants → НЕ warning (backward compat)."""
         _write_extension(isolated_extensions_dir, name="dummy_default")
@@ -486,7 +486,7 @@ class TestPluginLoaderTenantsIntegration:
         )
 
     async def test_loaded_plugin_to_dict_contains_tenants(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         """``LoadedPlugin.to_dict()`` содержит секцию ``tenants``."""
         manifest_extra = textwrap.dedent(
@@ -494,7 +494,7 @@ class TestPluginLoaderTenantsIntegration:
             [[tenants]]
             name = "tenant_a"
             capabilities = ["mq.publish"]
-            """
+            """,
         )
         _write_extension(
             isolated_extensions_dir,

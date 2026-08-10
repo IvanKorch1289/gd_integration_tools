@@ -113,7 +113,7 @@ class TestDeprecationMiddleware:
                     version="v1",
                     deprecated=True,
                     migration_url="https://example.com/v2",
-                )
+                ),
             },
         )
 
@@ -129,7 +129,7 @@ class TestDeprecationMiddleware:
     async def test_ignores_other_paths(self) -> None:
         app = FastAPI()
         mw = DeprecationMiddleware(
-            app, {"v1": APIVersion(version="v1", deprecated=True)}
+            app, {"v1": APIVersion(version="v1", deprecated=True)},
         )
 
         async def call_next(request: Request) -> Response:

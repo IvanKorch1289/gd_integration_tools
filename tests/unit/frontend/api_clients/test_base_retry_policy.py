@@ -30,7 +30,7 @@ def _make_503_response() -> MagicMock:
     resp.headers = {"content-type": "application/json"}
     resp.json.return_value = {"error": "service unavailable"}
     resp.raise_for_status.side_effect = httpx.HTTPStatusError(
-        "503", request=MagicMock(), response=resp
+        "503", request=MagicMock(), response=resp,
     )
     return resp
 
@@ -126,7 +126,7 @@ class TestGetMaxRetriesForPath:
 
     def test_override_path_used(self) -> None:
         c = BaseAPIClient(
-            max_retries=3, retry_overrides={"/api/v1/admin/feature-flags": 7}
+            max_retries=3, retry_overrides={"/api/v1/admin/feature-flags": 7},
         )
         assert c._get_max_retries_for_path("/api/v1/admin/feature-flags") == 7
 
@@ -136,7 +136,7 @@ class TestGetMaxRetriesForPath:
 
     def test_override_does_not_apply_to_unrelated_path(self) -> None:
         c = BaseAPIClient(
-            max_retries=3, retry_overrides={"/api/v1/admin/feature-flags": 7}
+            max_retries=3, retry_overrides={"/api/v1/admin/feature-flags": 7},
         )
         # /metrics not in overrides → fallthrough to default
         assert c._get_max_retries_for_path("/api/v1/admin/metrics") == 3
@@ -244,7 +244,7 @@ class TestRetryBehaviorWithPathPolicy:
         resp_429.headers = {"content-type": "application/json"}
         resp_429.json.return_value = {"error": "rate limited"}
         resp_429.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "429", request=MagicMock(), response=resp_429
+            "429", request=MagicMock(), response=resp_429,
         )
         mock_client = _make_context_mock(resp_429)
         with patch.object(httpx, "Client", return_value=mock_client):
@@ -261,7 +261,7 @@ class TestRetryBehaviorWithPathPolicy:
         resp_408.status_code = 408
         resp_408.headers = {"content-type": "application/json"}
         resp_408.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "408", request=MagicMock(), response=resp_408
+            "408", request=MagicMock(), response=resp_408,
         )
         mock_client = _make_context_mock(resp_408)
         with patch.object(httpx, "Client", return_value=mock_client):
@@ -277,7 +277,7 @@ class TestRetryBehaviorWithPathPolicy:
         resp_404.status_code = 404
         resp_404.headers = {"content-type": "application/json"}
         resp_404.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "404", request=MagicMock(), response=resp_404
+            "404", request=MagicMock(), response=resp_404,
         )
         mock_client = _make_context_mock(resp_404)
         with patch.object(httpx, "Client", return_value=mock_client):

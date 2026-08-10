@@ -31,7 +31,7 @@ from src.backend.services.io.external_database.state import PreparedDBParameter
 # Формат identifier-а: `name` или `schema.name` или `db.schema.name`, где
 # каждый сегмент — обычный SQL identifier без кавычек.
 _IDENT_RE: Final = re.compile(
-    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$"
+    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$",
 )
 
 # Bind-имена (после ":") должны быть простыми — без точек, без спецсимволов.
@@ -94,7 +94,7 @@ class CoreMixin(_ExternalDatabaseProtocol):
                 exc_info=True,
             )
             raise DatabaseError(
-                message=(f"Ошибка выполнения внешнего объекта '{meta.qualified_name}'")
+                message=(f"Ошибка выполнения внешнего объекта '{meta.qualified_name}'"),
             ) from exc
 
         self.logger.info(
@@ -109,7 +109,7 @@ class CoreMixin(_ExternalDatabaseProtocol):
         return self._validate_response(meta, result)
 
     def _validate_request(
-        self, meta: ExternalDBObjectMeta, payload: dict[str, Any] | BaseModel | None
+        self, meta: ExternalDBObjectMeta, payload: dict[str, Any] | BaseModel | None,
     ) -> dict[str, Any]:
         """
         Валидирует входной payload и возвращает обычный dict.
@@ -141,14 +141,14 @@ class CoreMixin(_ExternalDatabaseProtocol):
                 raise DatabaseError(
                     message=(
                         f"Ожидался объект в body_root_field='{meta.body_root_field}'"
-                    )
+                    ),
                 )
             return nested
 
         return source
 
     def _build_db_params(
-        self, meta: ExternalDBObjectMeta, payload: dict[str, Any]
+        self, meta: ExternalDBObjectMeta, payload: dict[str, Any],
     ) -> list[PreparedDBParameter]:
         """
         Преобразует входной payload в параметры DB-вызова.
@@ -163,7 +163,7 @@ class CoreMixin(_ExternalDatabaseProtocol):
                     message=(
                         f"View '{meta.qualified_name}' не принимает параметры. "
                         f"Если нужна фильтрация, опиши объект как query."
-                    )
+                    ),
                 )
             return []
 
@@ -186,7 +186,7 @@ class CoreMixin(_ExternalDatabaseProtocol):
                     message=(
                         f"Не найден обязательный параметр "
                         f"'{param_meta.body_field}' для '{meta.object_name}'"
-                    )
+                    ),
                 )
 
             if value is None and param_meta.exclude_if_none:
@@ -196,7 +196,7 @@ class CoreMixin(_ExternalDatabaseProtocol):
             db_name = param_meta.db_name or param_meta.body_field
 
             prepared.append(
-                PreparedDBParameter(bind_name=bind_name, db_name=db_name, value=value)
+                PreparedDBParameter(bind_name=bind_name, db_name=db_name, value=value),
             )
 
         return prepared

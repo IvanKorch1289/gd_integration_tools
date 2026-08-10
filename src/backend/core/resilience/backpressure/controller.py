@@ -71,7 +71,7 @@ class StreamingBackpressureController:
         logger.debug("StreamingBackpressureController: consumer '%s' added", name)
 
     def update_queue_size(
-        self, queue_size: int, queue_limit: int | None = None
+        self, queue_size: int, queue_limit: int | None = None,
     ) -> None:
         """Обновить размер in-flight очереди.
 
@@ -101,7 +101,7 @@ class StreamingBackpressureController:
             self._state.is_paused = True
             self._state.last_state_change_at = time.monotonic()
             logger.info(
-                "Backpressure: PAUSE (utilization=%.2f >= %.2f)", util, self._high
+                "Backpressure: PAUSE (utilization=%.2f >= %.2f)", util, self._high,
             )
             return True
         if util <= self._low and self._state.is_paused:
@@ -109,7 +109,7 @@ class StreamingBackpressureController:
             self._state.is_paused = False
             self._state.last_state_change_at = time.monotonic()
             logger.info(
-                "Backpressure: RESUME (utilization=%.2f <= %.2f)", util, self._low
+                "Backpressure: RESUME (utilization=%.2f <= %.2f)", util, self._low,
             )
             return True
         return False
@@ -123,7 +123,7 @@ class StreamingBackpressureController:
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
-            self._loop(), name="streaming-backpressure-loop"
+            self._loop(), name="streaming-backpressure-loop",
         )
 
     async def stop(self) -> None:
@@ -162,7 +162,7 @@ class StreamingBackpressureController:
         while not self._stop_event.is_set():
             try:
                 await asyncio.wait_for(
-                    self._stop_event.wait(), timeout=self._check_interval_s
+                    self._stop_event.wait(), timeout=self._check_interval_s,
                 )
             except TimeoutError:
                 await self.evaluate()

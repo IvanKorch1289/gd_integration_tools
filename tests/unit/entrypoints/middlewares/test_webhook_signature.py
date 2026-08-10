@@ -71,7 +71,7 @@ def _read_counter_value(path_prefix: str) -> float:
     """Возвращает текущее значение counter для path_prefix (0 если нет)."""
     try:
         sample = webhook_signature_missing_secret_total.labels(
-            path_prefix=path_prefix
+            path_prefix=path_prefix,
         )
     except Exception:
         return 0.0
@@ -88,7 +88,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_webhook_signature_missing_secret_returns_503(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Path protected, но secret не сконфигурирован → 503 JSON."""
         monkeypatch.delenv("APP_ENVIRONMENT", raising=False)
@@ -98,7 +98,7 @@ class TestWebhookSignatureMissingSecret:
 
         async def downstream(scope, receive, send):
             raise AssertionError(
-                "downstream НЕ должен быть вызван при missing secret"
+                "downstream НЕ должен быть вызван при missing secret",
             )
 
         app = AsyncMock()
@@ -135,7 +135,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_webhook_signature_missing_secret_does_not_call_downstream(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Cycle 33 invariant: при 503 downstream НЕ вызывается."""
         monkeypatch.delenv("APP_ENVIRONMENT", raising=False)
@@ -166,7 +166,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_dev_escape_with_both_env_vars(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """APP_ENVIRONMENT=dev + WEBHOOK_ALLOW_MISSING_SECRET=true → passthrough."""
         monkeypatch.setenv("APP_ENVIRONMENT", "dev")
@@ -193,7 +193,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_dev_escape_requires_both_env_vars(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Только opt-in env var БЕЗ APP_ENVIRONMENT=dev → 503 (fail-closed)."""
         monkeypatch.delenv("APP_ENVIRONMENT", raising=False)
@@ -223,7 +223,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_dev_env_alone_does_not_escape(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """APP_ENVIRONMENT=dev БЕЗ opt-in env var → 503 (нет implicit escape)."""
         monkeypatch.setenv("APP_ENVIRONMENT", "dev")
@@ -231,7 +231,7 @@ class TestWebhookSignatureMissingSecret:
 
         async def downstream(scope, receive, send):
             raise AssertionError(
-                "downstream должен быть skipped без explicit opt-in"
+                "downstream должен быть skipped без explicit opt-in",
             )
 
         app = AsyncMock()
@@ -255,7 +255,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_production_with_optin_env_still_fail_closed(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """APP_ENVIRONMENT=production + opt-in → всё равно 503 (defense in depth)."""
         monkeypatch.setenv("APP_ENVIRONMENT", "production")
@@ -285,7 +285,7 @@ class TestWebhookSignatureMissingSecret:
 
     @pytest.mark.asyncio
     async def test_metric_label_uses_most_specific_path_prefix(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Метка path_prefix в counter использует самый специфичный matched prefix."""
         monkeypatch.delenv("APP_ENVIRONMENT", raising=False)

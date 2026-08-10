@@ -55,11 +55,11 @@ class TavilySearchProcessor(BaseProcessor):
         if search_depth not in self.VALID_DEPTHS:
             raise ValueError(
                 f"search_depth должен быть одним из {self.VALID_DEPTHS}, "
-                f"получено {search_depth!r}"
+                f"получено {search_depth!r}",
             )
         if not 1 <= max_results <= 20:
             raise ValueError(
-                f"max_results должен быть 1-20, получено {max_results}"
+                f"max_results должен быть 1-20, получено {max_results}",
             )
         super().__init__(name=name or "tavily_search")
         self.query = query
@@ -70,7 +70,7 @@ class TavilySearchProcessor(BaseProcessor):
         self.target = to
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Выполняет web-поиск через Tavily API и пишет результаты в target."""
         if not await self.auth_check(exchange, action="invoke"):

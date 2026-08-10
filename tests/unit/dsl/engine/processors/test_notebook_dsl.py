@@ -20,10 +20,10 @@ from src.backend.services.jupyter.execution_service import JupyterExecutionError
 
 
 def _make_exchange(
-    body: Any = None, properties: dict[str, Any] | None = None
+    body: Any = None, properties: dict[str, Any] | None = None,
 ) -> Exchange[Any]:
     return Exchange(
-        in_message=Message(body=body, headers={}), properties=properties or {}
+        in_message=Message(body=body, headers={}), properties=properties or {},
     )
 
 
@@ -43,8 +43,8 @@ class TestNotebookDSLProcessor:
 
         mock_result = {
             "outputs": [
-                {"cell_index": 0, "outputs": [{"output_type": "stream", "text": "ok"}]}
-            ]
+                {"cell_index": 0, "outputs": [{"output_type": "stream", "text": "ok"}]},
+            ],
         }
 
         proc._svc = MagicMock()
@@ -87,7 +87,7 @@ class TestNotebookDSLProcessor:
     async def test_execute_with_export(self) -> None:
         """Выполнение с output_format — export_data тоже попадает в exchange."""
         proc = NotebookDSLProcessor(
-            notebook_path="report.ipynb", output_format="html", user_name="bob"
+            notebook_path="report.ipynb", output_format="html", user_name="bob",
         )
         exchange = _make_exchange()
 
@@ -135,7 +135,7 @@ class TestNotebookDSLProcessor:
                 "output_format": "pdf",
                 "user_name": "admin",
                 "timeout_seconds": 30.0,
-            }
+            },
         }
 
     def test_to_spec_defaults(self) -> None:

@@ -74,7 +74,7 @@ class L1ExactCache:
         client = self._ensure_client()
         try:
             await client.cache_set(
-                self._key(query, tenant=tenant), orjson.dumps(value), self._ttl
+                self._key(query, tenant=tenant), orjson.dumps(value), self._ttl,
             )
         except Exception as exc:
             logger.debug("L1 cache set failed: %s", exc)

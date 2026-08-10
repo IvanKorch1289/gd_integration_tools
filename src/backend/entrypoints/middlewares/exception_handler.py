@@ -85,7 +85,7 @@ class ExceptionHandlerMiddleware:
                     f"{type(exc).__name__} ({exc.__class__.__module__}): {exc}"
                 )
                 traceback_str = "".join(
-                    traceback.format_exception(type(exc), exc, exc.__traceback__)
+                    traceback.format_exception(type(exc), exc, exc.__traceback__),
                 )
                 # B-12 fix (cycle 34): exception envelope error_id + correlation_id + Sentry capture
                 error_id = str(uuid.uuid4())
@@ -153,6 +153,6 @@ class ExceptionHandlerMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body_bytes})

@@ -58,7 +58,7 @@ def reset_ad_client() -> None:
 
 
 def get_ad_client(
-    *, feature_flag_enabled: bool | None = None, connection_factory: Any | None = None
+    *, feature_flag_enabled: bool | None = None, connection_factory: Any | None = None,
 ) -> AdDirectoryClient | None:
     """Возвращает singleton :class:`AdDirectoryClient` или ``None``.
 
@@ -129,6 +129,6 @@ def get_ad_client(
         return None
     _ad_client_instance = client
     _logger.info(
-        "get_ad_client: instantiated AdDirectoryClient for %s", settings.server_uri
+        "get_ad_client: instantiated AdDirectoryClient for %s", settings.server_uri,
     )
     return client

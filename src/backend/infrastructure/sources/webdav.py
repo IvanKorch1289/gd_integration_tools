@@ -104,7 +104,7 @@ class WebDAVSource:
             content = "\n".join(sorted(self._processed_files))
             buf = io.BytesIO(content.encode("utf-8"))
             client.upload_fileobj(
-                buf, self._config.processed_marker_path, overwrite=True
+                buf, self._config.processed_marker_path, overwrite=True,
             )
         except Exception as _:
             logger.exception("WebDAVSource._save_marker failed")

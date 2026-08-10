@@ -61,7 +61,7 @@ class DaskMixin:
         for i, step in enumerate(graph):
             if "op" not in step:
                 raise ValueError(
-                    f"DaskMixin.dask_compute: step[{i}] без 'op': {step!r}"
+                    f"DaskMixin.dask_compute: step[{i}] без 'op': {step!r}",
                 )
 
         from src.backend.dsl.builders.base import RouteBuilder
@@ -71,7 +71,7 @@ class DaskMixin:
         # поэтому создаём RouteBuilder напрямую через .from_() (abstract
         # attributes заполнены конструктором).
         builder = RouteBuilder.from_(
-            route_id=route_id, source="dask:compute", description="Dask compute route"
+            route_id=route_id, source="dask:compute", description="Dask compute route",
         )
 
         processor = DaskComputeProcessor(
@@ -85,7 +85,7 @@ class DaskMixin:
 
     @classmethod
     def dask_map(
-        cls, route_id: str, fn: str, *, output_to: str = "body", **kwargs: Any
+        cls, route_id: str, fn: str, *, output_to: str = "body", **kwargs: Any,
     ) -> RouteBuilder:
         """Shortcut: одностeпенный graph с ``map`` операцией.
 

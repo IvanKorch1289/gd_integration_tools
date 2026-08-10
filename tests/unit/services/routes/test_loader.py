@@ -166,7 +166,7 @@ class TestRequiresPlugins:
                 name="plug_a",
                 version="1.5.0",
                 capabilities=(CapabilityRef(name="db.read", scope="credit_db"),),
-            )
+            ),
         }
         loader, registered = _build_loader(tmp_path, installed_plugins=installed)
         loaded = await loader.discover_and_load()
@@ -202,7 +202,7 @@ class TestRequiresWorkflows:
         assert loaded[0].status in ("enabled", "failed")  # S171 M11 R2: sync
 
     async def test_audit_event_emitted_on_workflow_mismatch(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """workflow.version.mismatch audit event is emitted when workflow check fails."""
         _write_route(tmp_path, name="r1", requires_workflows={"wf_missing": ">=1.0"})
@@ -248,7 +248,7 @@ class TestCapabilitiesSubset:
                 name="plug_a",
                 version="1.0.0",
                 capabilities=(CapabilityRef(name="db.read", scope="audit_db"),),
-            )
+            ),
         }
         loader, _ = _build_loader(tmp_path, installed_plugins=installed)
         loaded = await loader.discover_and_load()
@@ -271,7 +271,7 @@ class TestFeatureFlag:
         assert registered == []
 
     async def test_env_resolver_truthy(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         _write_route(tmp_path, name="r1", feature_flag="ROUTE_ENABLED")
         monkeypatch.setenv("ROUTE_ENABLED", "true")
@@ -289,7 +289,7 @@ class TestFeatureFlag:
     async def test_custom_resolver(self, tmp_path: Path) -> None:
         _write_route(tmp_path, name="r1", feature_flag="custom.flag")
         loader, _ = _build_loader(
-            tmp_path, feature_flag_resolver=lambda flag: flag == "custom.flag"
+            tmp_path, feature_flag_resolver=lambda flag: flag == "custom.flag",
         )
         loaded = await loader.discover_and_load()
         assert loaded[0].status in ("enabled", "failed")  # S171 M11 R2: sync
@@ -322,7 +322,7 @@ class TestPipelineRegistration:
                 name="plug_a",
                 version="1.0.0",
                 capabilities=(CapabilityRef(name="db.read", scope="credit_db"),),
-            )
+            ),
         }
         loader, _ = _build_loader(tmp_path, installed_plugins=installed)
         await loader.discover_and_load()
@@ -347,7 +347,7 @@ class TestTenantAwarePropagation:
         assert registered[0][2].tenant_aware is False
 
     async def test_tenant_aware_true_propagated_to_registrar(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """tenant_aware=true в route.toml попадает в manifest registrar'а."""
         _write_route(tmp_path, name="r_tenant", tenant_aware=True)
@@ -389,7 +389,7 @@ class TestDefaultEnvFlagResolver:
         ],
     )
     def test_truthy_table(
-        self, monkeypatch: pytest.MonkeyPatch, value: str, expected: bool
+        self, monkeypatch: pytest.MonkeyPatch, value: str, expected: bool,
     ) -> None:
         monkeypatch.setenv("F", value)
         assert default_env_feature_flag_resolver("F") is expected
@@ -416,7 +416,7 @@ class TestCapabilityGateAuditAndStrict:
                 name="plug_a",
                 version="1.5.0",
                 capabilities=(CapabilityRef(name="db.read", scope="users"),),
-            )
+            ),
         }
         events: list[dict[str, object]] = []
         loader = RouteLoader(
@@ -440,7 +440,7 @@ class TestCapabilityGateAuditAndStrict:
         assert caps[0]["name"] == "db.read"
 
     async def test_strict_mode_fails_route_without_capabilities(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """strict_capabilities=True: route без capabilities → status=failed."""
         _write_route(tmp_path, name="r_no_caps", capabilities=[])
@@ -458,7 +458,7 @@ class TestCapabilityGateAuditAndStrict:
         assert "routes_capability_gate_strict" in (loaded[0].reason or "")
 
     async def test_default_off_passes_route_without_capabilities(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         """strict_capabilities=False (default): empty-caps route проходит."""
         _write_route(tmp_path, name="r_no_caps", capabilities=[])

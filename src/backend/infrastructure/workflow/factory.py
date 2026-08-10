@@ -79,7 +79,7 @@ async def create_workflow_backend(
             )
         except ImportError as exc:
             _logger.warning(
-                "temporalio SDK unavailable (%s); falling back to pg_runner", exc
+                "temporalio SDK unavailable (%s); falling back to pg_runner", exc,
             )
             from src.backend.infrastructure.workflow.pg_runner_backend import (
                 PgRunnerWorkflowBackend,
@@ -105,7 +105,7 @@ async def create_workflow_backend(
             )
         except RuntimeError as exc:
             _logger.warning(
-                "Temporal SDK unavailable (%s); falling back to pg_runner", exc
+                "Temporal SDK unavailable (%s); falling back to pg_runner", exc,
             )
             from src.backend.infrastructure.workflow.pg_runner_backend import (
                 PgRunnerWorkflowBackend,

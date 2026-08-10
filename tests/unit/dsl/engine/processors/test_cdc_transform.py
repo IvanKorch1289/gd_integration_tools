@@ -195,7 +195,7 @@ class TestTransformCdcEventProcess:
                 "timestamp": "2026-04-19T12:00:00",
                 "new": {"id": 1, "amount": 100},
                 "extra_field": "noise",
-            }
+            },
         ]
         await proc.process(exchange, _Context())
         out = exchange.in_message.body
@@ -213,7 +213,7 @@ class TestTransformCdcEventProcess:
                 "table": "orders",
                 "ts": "2026-04-19T12:00:00",
                 "new": {"id": 1},
-            }
+            },
         ]
         await proc.process(exchange, _Context())
         out = exchange.in_message.body
@@ -247,7 +247,7 @@ class TestTransformCdcEventProcess:
         proc = TransformCdcEventProcessor()
         exchange = _Exchange()
         exchange.in_message.body = [
-            {"operation": "INSERT", "source": "kafka_topic_a", "new": {}}
+            {"operation": "INSERT", "source": "kafka_topic_a", "new": {}},
         ]
         await proc.process(exchange, _Context())
         assert exchange.in_message.body[0]["table"] == "kafka_topic_a"
@@ -262,7 +262,7 @@ class TestTransformCdcEventProcess:
                 "table": "orders",
                 "old": {"id": 1, "amount": 50},
                 "new": {"id": 1, "amount": 100},
-            }
+            },
         ]
         await proc.process(exchange, _Context())
         out = exchange.in_message.body
@@ -308,7 +308,7 @@ class TestTransformCdcEventProcess:
         exchange = _Exchange()
         dt = datetime(2026, 4, 19, 12, 0, 0, tzinfo=UTC)
         exchange.in_message.body = [
-            {"operation": "INSERT", "table": "x", "timestamp": dt, "new": {}}
+            {"operation": "INSERT", "table": "x", "timestamp": dt, "new": {}},
         ]
         await proc.process(exchange, _Context())
         assert exchange.in_message.body[0]["timestamp"] == dt.isoformat()
@@ -322,7 +322,7 @@ class TestTransformCdcEventProcess:
 class TestToSpec:
     def test_spec_with_filter_and_project(self) -> None:
         proc = TransformCdcEventProcessor(
-            operations=["INSERT"], project=["id", "table"]
+            operations=["INSERT"], project=["id", "table"],
         )
         spec = proc.to_spec()
         assert "cdc_transform" in spec

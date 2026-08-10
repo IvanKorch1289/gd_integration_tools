@@ -52,7 +52,7 @@ class InputMixin(_PipelineStepsProtocol):
     _sanitizer: Any
 
     async def _apply_input_sanitizers(
-        self, request: AIRequest, policy: AIPolicySpec | None
+        self, request: AIRequest, policy: AIPolicySpec | None,
     ) -> str:
         """Шаг 3: input sanitizers (PII через Presidio / PIITokenizer).
 
@@ -93,7 +93,7 @@ class InputMixin(_PipelineStepsProtocol):
         return getattr(result, "sanitized_text", prompt)
 
     async def _apply_input_guards(
-        self, sanitized: str, policy: AIPolicySpec | None
+        self, sanitized: str, policy: AIPolicySpec | None,
     ) -> list[GuardResult]:
         """Шаг 4: input guards (NeMo Colang + Lakera).
 
@@ -119,7 +119,7 @@ class InputMixin(_PipelineStepsProtocol):
             return results if results is not None else []
         except NotImplementedError:
             logger.debug(
-                "AIGateway: input guards не реализованы (Wave S24 W2 deferred)"
+                "AIGateway: input guards не реализованы (Wave S24 W2 deferred)",
             )
             return []
 

@@ -59,11 +59,11 @@ async def test_chat_passthrough_when_gate_disabled(
     from src.backend.services.ai.ai_agent import AIAgentService
 
     monkeypatch.setattr(
-        ai_stack.ai_agent_settings, "policy_gate_enabled", False, raising=True
+        ai_stack.ai_agent_settings, "policy_gate_enabled", False, raising=True,
     )
     agent = AIAgentService()
     result = await agent._policy_gate(
-        model="gpt", tenant_id="t1", route_id="r1", metadata=None
+        model="gpt", tenant_id="t1", route_id="r1", metadata=None,
     )
     assert result is None
 
@@ -77,15 +77,15 @@ async def test_chat_allows_when_gateway_returns_allow(
     from src.backend.services.ai.ai_agent import AIAgentService
 
     monkeypatch.setattr(
-        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True
+        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True,
     )
     gateway = _build_gateway(allowed=True)
     monkeypatch.setattr(
-        AIAgentService, "_resolve_authz_gateway", staticmethod(lambda: gateway)
+        AIAgentService, "_resolve_authz_gateway", staticmethod(lambda: gateway),
     )
     agent = AIAgentService()
     result = await agent._policy_gate(
-        model="gpt", tenant_id="tenant-1", route_id="r1", metadata=None
+        model="gpt", tenant_id="tenant-1", route_id="r1", metadata=None,
     )
     assert result is None
     gateway.authorize.assert_awaited_once()
@@ -100,15 +100,15 @@ async def test_chat_denies_when_gateway_returns_deny(
     from src.backend.services.ai.ai_agent import AIAgentService
 
     monkeypatch.setattr(
-        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True
+        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True,
     )
     gateway = _build_gateway(allowed=False)
     monkeypatch.setattr(
-        AIAgentService, "_resolve_authz_gateway", staticmethod(lambda: gateway)
+        AIAgentService, "_resolve_authz_gateway", staticmethod(lambda: gateway),
     )
     agent = AIAgentService()
     result = await agent._policy_gate(
-        model="gpt", tenant_id="tenant-1", route_id="r1", metadata=None
+        model="gpt", tenant_id="tenant-1", route_id="r1", metadata=None,
     )
     assert result is not None
     assert result["success"] is False
@@ -127,14 +127,14 @@ async def test_fail_closed_when_gateway_unavailable(
     from src.backend.services.ai.ai_agent import AIAgentService
 
     monkeypatch.setattr(
-        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True
+        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True,
     )
     monkeypatch.setattr(
-        AIAgentService, "_resolve_authz_gateway", staticmethod(lambda: None)
+        AIAgentService, "_resolve_authz_gateway", staticmethod(lambda: None),
     )
     agent = AIAgentService()
     result = await agent._policy_gate(
-        model="gpt", tenant_id="tenant-1", route_id="r1", metadata=None
+        model="gpt", tenant_id="tenant-1", route_id="r1", metadata=None,
     )
     assert result is not None
     assert result["success"] is False
@@ -148,15 +148,15 @@ async def test_fail_closed_when_gateway_raises(monkeypatch: pytest.MonkeyPatch) 
     from src.backend.services.ai.ai_agent import AIAgentService
 
     monkeypatch.setattr(
-        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True
+        ai_stack.ai_agent_settings, "policy_gate_enabled", True, raising=True,
     )
     gateway = _build_gateway(allowed=True, raise_exc=RuntimeError("boom"))
     monkeypatch.setattr(
-        AIAgentService, "_resolve_authz_gateway", staticmethod(lambda: gateway)
+        AIAgentService, "_resolve_authz_gateway", staticmethod(lambda: gateway),
     )
     agent = AIAgentService()
     result = await agent._policy_gate(
-        model="gpt", tenant_id="tenant-1", route_id="r1", metadata=None
+        model="gpt", tenant_id="tenant-1", route_id="r1", metadata=None,
     )
     assert result is not None
     assert result["success"] is False

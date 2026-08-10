@@ -160,14 +160,14 @@ async def register_ai_stack_providers() -> None:
                         await tokenizer.cleanup_expired(ttl_s=3600)
                     except Exception as cleanup_exc:
                         logger.debug(
-                            "pii_tokenizer cleanup tick failed: %s", cleanup_exc
+                            "pii_tokenizer cleanup tick failed: %s", cleanup_exc,
                         )
                     await _asyncio.sleep(900)
 
             try:
                 task_registry = get_task_registry()
                 task_registry.create_task(
-                    _pii_tokenizer_cleanup_loop(), name="pii-tokenizer-cleanup"
+                    _pii_tokenizer_cleanup_loop(), name="pii-tokenizer-cleanup",
                 )
             except Exception as exc:
                 logger.debug("pii_tokenizer cleanup loop registration skipped: %s", exc)

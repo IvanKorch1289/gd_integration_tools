@@ -48,7 +48,7 @@ def crud_with_audit(
         ("delete", delete_action),
     ]:
         builder = RouteBuilder.from_(
-            f"{route_id_prefix}.{op}", source=f"{source_prefix}:{route_id_prefix}.{op}"
+            f"{route_id_prefix}.{op}", source=f"{source_prefix}:{route_id_prefix}.{op}",
         )
         if validate_model and op in ("create", "update"):
             builder = builder.validate(validate_model)

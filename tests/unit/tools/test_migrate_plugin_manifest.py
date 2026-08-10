@@ -42,12 +42,12 @@ def test_migrate_minimal(tmp_path: Path) -> None:
             config:
               timeout_ms: 30000
               enabled: true
-            """
+            """,
         ),
         encoding="utf-8",
     )
     target, rendered = mod.migrate_one(
-        plugin_dir, core_spec=">=0.2,<0.3", overwrite=False, dry_run=False
+        plugin_dir, core_spec=">=0.2,<0.3", overwrite=False, dry_run=False,
     )
     assert target == plugin_dir / "plugin.toml"
     assert target.is_file()
@@ -71,10 +71,10 @@ def test_dry_run_does_not_write(tmp_path: Path) -> None:
     plugin_dir = tmp_path / "demo"
     plugin_dir.mkdir()
     (plugin_dir / "plugin.yaml").write_text(
-        'name: demo\nversion: "1.0.0"\nentry_class: demo.plugin.X\n', encoding="utf-8"
+        'name: demo\nversion: "1.0.0"\nentry_class: demo.plugin.X\n', encoding="utf-8",
     )
     target, rendered = mod.migrate_one(
-        plugin_dir, core_spec=">=0.2,<0.3", overwrite=False, dry_run=True
+        plugin_dir, core_spec=">=0.2,<0.3", overwrite=False, dry_run=True,
     )
     assert not target.exists()
     assert 'name = "demo"' in rendered
@@ -84,12 +84,12 @@ def test_overwrite_required(tmp_path: Path) -> None:
     plugin_dir = tmp_path / "demo"
     plugin_dir.mkdir()
     (plugin_dir / "plugin.yaml").write_text(
-        'name: demo\nversion: "1.0.0"\nentry_class: demo.plugin.X\n', encoding="utf-8"
+        'name: demo\nversion: "1.0.0"\nentry_class: demo.plugin.X\n', encoding="utf-8",
     )
     (plugin_dir / "plugin.toml").write_text("# existing\n", encoding="utf-8")
     with pytest.raises(FileExistsError):
         mod.migrate_one(
-            plugin_dir, core_spec=">=0.2,<0.3", overwrite=False, dry_run=False
+            plugin_dir, core_spec=">=0.2,<0.3", overwrite=False, dry_run=False,
         )
     # с overwrite — успех.
     mod.migrate_one(plugin_dir, core_spec=">=0.2,<0.3", overwrite=True, dry_run=False)
@@ -105,7 +105,7 @@ def test_missing_legacy_manifest(tmp_path: Path) -> None:
     plugin_dir.mkdir()
     with pytest.raises(FileNotFoundError):
         mod.migrate_one(
-            plugin_dir, core_spec=">=0.2,<0.3", overwrite=False, dry_run=False
+            plugin_dir, core_spec=">=0.2,<0.3", overwrite=False, dry_run=False,
         )
 
 
@@ -129,7 +129,7 @@ def test_main_entry(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     plugin_dir = tmp_path / "demo"
     plugin_dir.mkdir()
     (plugin_dir / "plugin.yaml").write_text(
-        'name: demo\nversion: "1.0.0"\nentry_class: demo.plugin.X\n', encoding="utf-8"
+        'name: demo\nversion: "1.0.0"\nentry_class: demo.plugin.X\n', encoding="utf-8",
     )
     rc = mod.main([str(plugin_dir)])
     assert rc == 0

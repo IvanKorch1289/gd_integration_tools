@@ -88,7 +88,7 @@ class TestDecryptField:
         cipher.decrypt = AsyncMock(return_value=b"hello")
         obj = type("O", (), {"data": "vault:v1:abc"})()
         await decrypt_field(
-            obj, "data", cipher, deserializer=lambda v: v.decode().upper()
+            obj, "data", cipher, deserializer=lambda v: v.decode().upper(),
         )
         assert obj.data == "HELLO"
 

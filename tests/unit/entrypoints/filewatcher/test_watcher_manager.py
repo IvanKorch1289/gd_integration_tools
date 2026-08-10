@@ -146,7 +146,7 @@ def test_list_watchers_empty(manager: WatcherManager) -> None:
 
 @pytest.mark.asyncio
 async def test_stop_all_clears_watchers(
-    temp_dir: Path, manager: WatcherManager
+    temp_dir: Path, manager: WatcherManager,
 ) -> None:
     """stop_all stops all watchers and clears state."""
     spec1 = WatcherSpec(directory=str(temp_dir), pattern="*", route_id="r1")
@@ -174,7 +174,7 @@ async def test_stop_all_clears_watchers(
 
 @pytest.mark.asyncio
 async def test_watch_loop_dispatches_matching_file(
-    temp_dir: Path, manager: WatcherManager
+    temp_dir: Path, manager: WatcherManager,
 ) -> None:
     """_watch_loop dispatches when file matches pattern."""
     spec = WatcherSpec(directory=str(temp_dir), pattern="*.txt", route_id="r1")
@@ -204,7 +204,7 @@ async def test_watch_loop_dispatches_matching_file(
 
 @pytest.mark.asyncio
 async def test_watch_loop_skips_deleted(
-    temp_dir: Path, manager: WatcherManager
+    temp_dir: Path, manager: WatcherManager,
 ) -> None:
     """_watch_loop skips deleted files."""
     from watchfiles import Change
@@ -223,7 +223,7 @@ async def test_watch_loop_skips_deleted(
         patch(
             "src.backend.entrypoints.filewatcher.watcher_manager.awatch",
             return_value=async_generator_yielding(
-                (Change.deleted, str(temp_dir / "gone.txt"))
+                (Change.deleted, str(temp_dir / "gone.txt")),
             ),
         ),
     ):
@@ -234,7 +234,7 @@ async def test_watch_loop_skips_deleted(
 
 @pytest.mark.asyncio
 async def test_watch_loop_skips_non_matching_pattern(
-    temp_dir: Path, manager: WatcherManager
+    temp_dir: Path, manager: WatcherManager,
 ) -> None:
     """_watch_loop skips files not matching pattern."""
     spec = WatcherSpec(directory=str(temp_dir), pattern="*.csv", route_id="r1")
@@ -260,7 +260,7 @@ async def test_watch_loop_skips_non_matching_pattern(
 
 @pytest.mark.asyncio
 async def test_watch_loop_exits_when_spec_removed(
-    temp_dir: Path, manager: WatcherManager
+    temp_dir: Path, manager: WatcherManager,
 ) -> None:
     """_watch_loop exits when spec is removed mid-flight."""
     spec = WatcherSpec(directory=str(temp_dir), pattern="*", route_id="r1")
@@ -283,7 +283,7 @@ async def test_watch_loop_exits_when_spec_removed(
 
 @pytest.mark.asyncio
 async def test_watch_loop_exits_when_inactive(
-    temp_dir: Path, manager: WatcherManager
+    temp_dir: Path, manager: WatcherManager,
 ) -> None:
     """_watch_loop exits when spec becomes inactive."""
     spec = WatcherSpec(directory=str(temp_dir), pattern="*", route_id="r1")
@@ -325,7 +325,7 @@ async def test_dispatch_calls_dsl_service(manager: WatcherManager) -> None:
 
 @pytest.mark.asyncio
 async def test_dispatch_logs_exception(
-    caplog: pytest.LogCaptureFixture, manager: WatcherManager
+    caplog: pytest.LogCaptureFixture, manager: WatcherManager,
 ) -> None:
     """_dispatch logs exception on DSL service failure."""
     spec = WatcherSpec(directory="/tmp", pattern="*", route_id="r1")

@@ -165,7 +165,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
         try:
             self._capability_gateway.check(principal, resource, ctx.get("scope"))
             reasons.append(
-                AuthorizationReason(source="capability_gateway", outcome="allow")
+                AuthorizationReason(source="capability_gateway", outcome="allow"),
             )
         except Exception as exc:
             reason = AuthorizationReason(
@@ -380,7 +380,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
             return False
 
     def _casbin_check(
-        self, subject: str, action: str, resource: str
+        self, subject: str, action: str, resource: str,
     ) -> bool | None:
         """Internal: try Casbin step if available."""
         from src.backend.core.security.authorization_gateway.casbin_mixin import (
@@ -403,7 +403,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
 
         if hasattr(OpaMixin, "_opa_check"):
             return OpaMixin._opa_check(
-                self, subject, action, resource, context
+                self, subject, action, resource, context,
             )
         return None
 

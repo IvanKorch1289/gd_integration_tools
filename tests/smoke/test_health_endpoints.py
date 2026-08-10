@@ -149,7 +149,7 @@ def test_components_fast_mode_returns_200() -> None:
     try:
         di_providers.get_health_aggregator_provider = lambda: mock_aggregator
         di_providers.get_resilience_components_report_provider = lambda: MagicMock(
-            return_value={"chains": []}
+            return_value={"chains": []},
         )
 
         app.include_router(health_router, prefix="/health")
@@ -172,7 +172,7 @@ def test_components_deep_mode_includes_resilience_chains() -> None:
 
     mock_aggregator = MagicMock(spec=["check_all"])
     mock_aggregator.check_all = AsyncMock(
-        return_value={"status": "ok", "components": {}}
+        return_value={"status": "ok", "components": {}},
     )
 
     mock_resilience_report = MagicMock(return_value={"chains": []})

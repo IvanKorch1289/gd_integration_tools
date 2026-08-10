@@ -26,7 +26,7 @@ class _FakeS3Client:
         return {"UploadId": self.upload_id}
 
     async def upload_part(
-        self, *, Bucket: str, Key: str, UploadId: str, PartNumber: int, Body: bytes
+        self, *, Bucket: str, Key: str, UploadId: str, PartNumber: int, Body: bytes,
     ) -> dict[str, Any]:
         assert UploadId == self.upload_id
         self.parts_received.append(Body)
@@ -91,7 +91,7 @@ async def test_multipart_upload_single_part_buffer(s3_client_with_fake) -> None:
     client, fake = s3_client_with_fake
     chunks = [b"x" * (3 * 1024 * 1024)]  # 3MB < 5MB min, должен пойти как 1 part
     etag = await client.put_object_multipart(
-        key="test.bin", stream=_make_stream(chunks), part_size=5 * 1024 * 1024
+        key="test.bin", stream=_make_stream(chunks), part_size=5 * 1024 * 1024,
     )
     assert etag == '"final-etag"'
     assert fake.completed is True
@@ -110,7 +110,7 @@ async def test_multipart_upload_splits_to_5mb_parts(s3_client_with_fake) -> None
         b"c" * (5 * 1024 * 1024),
     ]
     etag = await client.put_object_multipart(
-        key="test.bin", stream=_make_stream(chunks), part_size=5 * 1024 * 1024
+        key="test.bin", stream=_make_stream(chunks), part_size=5 * 1024 * 1024,
     )
     assert etag == '"final-etag"'
     assert fake.completed is True
@@ -123,7 +123,7 @@ async def test_multipart_upload_splits_to_5mb_parts(s3_client_with_fake) -> None
 async def test_multipart_upload_empty_stream_aborts(s3_client_with_fake) -> None:
     client, fake = s3_client_with_fake
     etag = await client.put_object_multipart(
-        key="test.bin", stream=_make_stream([]), part_size=5 * 1024 * 1024
+        key="test.bin", stream=_make_stream([]), part_size=5 * 1024 * 1024,
     )
     assert etag == ""
     assert fake.aborted is True
@@ -137,7 +137,7 @@ async def test_multipart_upload_min_part_size_5mb(s3_client_with_fake) -> None:
     # 6MB поток с part_size=1MB → должен пойти как 1 part 6MB (5MB min достигнут)
     chunks = [b"x" * (6 * 1024 * 1024)]
     await client.put_object_multipart(
-        key="test.bin", stream=_make_stream(chunks), part_size=1024
+        key="test.bin", stream=_make_stream(chunks), part_size=1024,
     )
     # Проверяем что хотя бы один part был отправлен с размером >= 5MB.
     assert len(fake.parts_received) >= 1
@@ -152,6 +152,6 @@ async def test_multipart_upload_aborts_on_exception(s3_client_with_fake) -> None
     chunks = [b"x" * (6 * 1024 * 1024)]
     with pytest.raises(RuntimeError):
         await client.put_object_multipart(
-            key="test.bin", stream=_make_stream(chunks), part_size=5 * 1024 * 1024
+            key="test.bin", stream=_make_stream(chunks), part_size=5 * 1024 * 1024,
         )
     assert fake.aborted is True

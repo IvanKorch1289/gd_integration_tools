@@ -46,7 +46,7 @@ class _RouteTimeoutModel(BaseModel):
         попал в неправильный класс. W24 переносит обратно.
         """
         return RouteTimeoutSpec(
-            connect=self.connect, read=self.read, write=self.write, total=self.total
+            connect=self.connect, read=self.read, write=self.write, total=self.total,
         )
 
 
@@ -95,7 +95,7 @@ class _IPRestrictionModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     allowed_ips: tuple[str, ...] = Field(
-        default_factory=tuple, description="Разрешённые IP/CIDR для доступа к маршруту."
+        default_factory=tuple, description="Разрешённые IP/CIDR для доступа к маршруту.",
     )
     enabled: bool = Field(default=True, description="Включено ли ограничение.")
     path_pattern: str | None = Field(
@@ -123,7 +123,7 @@ class _SecurityModel(BaseModel):
         ),
     )
     ip_restriction: _IPRestrictionModel | None = Field(
-        default=None, description="Per-route IP-ограничения."
+        default=None, description="Per-route IP-ограничения.",
     )
 
 
@@ -196,7 +196,7 @@ class RouteManifest(BaseModel):
                 SpecifierSet(spec)
             except InvalidSpecifier as exc:
                 raise ValueError(
-                    f"Invalid requires_plugins spec for {plugin_name!r}: {spec!r}"
+                    f"Invalid requires_plugins spec for {plugin_name!r}: {spec!r}",
                 ) from exc
         return value
 
@@ -209,7 +209,7 @@ class RouteManifest(BaseModel):
                 SpecifierSet(spec)
             except InvalidSpecifier as exc:
                 raise ValueError(
-                    f"Invalid requires_workflows spec for {workflow_name!r}: {spec!r}"
+                    f"Invalid requires_workflows spec for {workflow_name!r}: {spec!r}",
                 ) from exc
         return value
 
@@ -274,11 +274,11 @@ def load_route_manifest(path: Path | str) -> RouteManifest:
         raise RouteManifestError(f"Invalid TOML in {file_path}: {exc}") from exc
     if not isinstance(raw, dict):
         raise RouteManifestError(
-            f"Manifest must be a TOML table, got {type(raw).__name__}: {file_path}"
+            f"Manifest must be a TOML table, got {type(raw).__name__}: {file_path}",
         )
     try:
         return RouteManifest.model_validate(raw)
     except Exception as exc:
         raise RouteManifestError(
-            f"Manifest validation failed for {file_path}: {exc}"
+            f"Manifest validation failed for {file_path}: {exc}",
         ) from exc

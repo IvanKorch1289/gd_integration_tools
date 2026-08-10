@@ -50,7 +50,7 @@ class APISKBService(BaseExternalAPIClient):
         ``extensions.skb.services.waf_route.resolve_waf_route``.
         """
         return _resolve_waf_route_impl(
-            settings.app.environment, settings.http_base_settings.waf_url
+            settings.app.environment, settings.http_base_settings.waf_url,
         )
 
     async def get_request_kinds(self) -> dict[str, Any]:
@@ -70,7 +70,7 @@ class APISKBService(BaseExternalAPIClient):
             raise ServiceError from exc
 
     async def get_response_by_order(
-        self, order_uuid: UUID, response_type_str: str | None = None
+        self, order_uuid: UUID, response_type_str: str | None = None,
     ) -> Any | dict[str, Any]:
         """Получить результат по залогу из СКБ-Техно."""
         try:
@@ -88,7 +88,7 @@ class APISKBService(BaseExternalAPIClient):
             raise ServiceError from exc
 
     async def get_orders_list(
-        self, take: int | None = None, skip: int | None = None
+        self, take: int | None = None, skip: int | None = None,
     ) -> dict[str, Any]:
         """Получить список заказов документов по залогу из СКБ-Техно."""
         params: dict[str, Any] = {}
@@ -107,7 +107,7 @@ class APISKBService(BaseExternalAPIClient):
             raise ServiceError from exc
 
     async def get_objects_by_address(
-        self, query: str, comment: str | None = None
+        self, query: str, comment: str | None = None,
     ) -> dict[str, Any]:
         """Проверка-поиск объектов недвижимости по адресу."""
         params: dict[str, Any] = {"query": query}
@@ -140,7 +140,7 @@ def get_skb_service() -> APISKBService:
 # DSL-роутах иногда использовалась как ``from skb import resolve_waf_route``.
 # Оставляем модульный символ с DeprecationWarning на одну мажорную версию.
 def resolve_waf_route(
-    environment: str | None, waf_url: str | None
+    environment: str | None, waf_url: str | None,
 ) -> tuple[str | None, bool]:
     """DEPRECATED: используйте ``extensions.skb.services.waf_route.resolve_waf_route``."""
     warnings.warn(

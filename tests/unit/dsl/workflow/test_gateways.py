@@ -125,7 +125,7 @@ class TestProcessGatewayDispatchesByKind:
         ],
     )
     def test_process_gateway_dispatches_by_kind(
-        self, kind: str, expected_strategy: str, expected_join: str | None
+        self, kind: str, expected_strategy: str, expected_join: str | None,
     ) -> None:
         """process_gateway возвращает корректный IR-dict для каждого kind."""
         spec = GatewaySpec(

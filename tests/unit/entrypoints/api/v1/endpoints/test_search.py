@@ -30,7 +30,7 @@ class TestBuildTextQuery:
 
     def test_with_range(self) -> None:
         q = search_mod._build_text_query(
-            None, range_filter={"date": {"gte": "2024-01-01"}}
+            None, range_filter={"date": {"gte": "2024-01-01"}},
         )
         assert q["bool"]["filter"][0] == {"range": {"date": {"gte": "2024-01-01"}}}
 
@@ -76,7 +76,7 @@ class TestSearchFacade:
     @pytest.mark.asyncio
     async def test_search_logs(self, facade: search_mod._SearchFacade) -> None:
         with patch.object(
-            search_mod, "_safe_search", new_callable=AsyncMock
+            search_mod, "_safe_search", new_callable=AsyncMock,
         ) as mock_search:
             mock_search.return_value = [{"id": 1}]
             result = await facade.search_logs(q="test", limit=5)
@@ -86,7 +86,7 @@ class TestSearchFacade:
     @pytest.mark.asyncio
     async def test_search_orders(self, facade: search_mod._SearchFacade) -> None:
         with patch.object(
-            search_mod, "_safe_search", new_callable=AsyncMock
+            search_mod, "_safe_search", new_callable=AsyncMock,
         ) as mock_search:
             mock_search.return_value = []
             result = await facade.search_orders(status="open")
@@ -95,7 +95,7 @@ class TestSearchFacade:
     @pytest.mark.asyncio
     async def test_search_notebooks(self, facade: search_mod._SearchFacade) -> None:
         with patch.object(
-            search_mod, "_safe_search", new_callable=AsyncMock
+            search_mod, "_safe_search", new_callable=AsyncMock,
         ) as mock_search:
             mock_search.return_value = [{"title": "nb1"}]
             result = await facade.search_notebooks(q="ml")
@@ -128,14 +128,14 @@ class TestSearchFacade:
 
     @pytest.mark.asyncio
     async def test_facets_invalid_filter(
-        self, facade: search_mod._SearchFacade
+        self, facade: search_mod._SearchFacade,
     ) -> None:
         with patch.object(search_mod, "get_search_service") as mock_get:
             svc = AsyncMock()
             svc.aggregate_terms.return_value = {}
             mock_get.return_value = svc
             result = await facade.facets(
-                index="orders", field="status", filter="not-json"
+                index="orders", field="status", filter="not-json",
             )
             assert result == {}
 

@@ -18,27 +18,27 @@ class _AIPolicyEnforcerProtocol(Protocol):
     _dlq_writer: DLQWriter | None
 
     async def guard_input(
-        self, prompt: str, policy: AIPolicySpec
+        self, prompt: str, policy: AIPolicySpec,
     ) -> list[GuardResult]: ...
     async def _guard_input_one(
-        self, prompt: str, ref: GuardRef
+        self, prompt: str, ref: GuardRef,
     ) -> GuardResult | None: ...
     async def _guard_input_lakera(
-        self, prompt: str, ref: GuardRef, on_block: str
+        self, prompt: str, ref: GuardRef, on_block: str,
     ) -> GuardResult: ...
     async def guard_output(
-        self, response: AIResponse, policy: AIPolicySpec
+        self, response: AIResponse, policy: AIPolicySpec,
     ) -> list[GuardResult]: ...
     async def _guard_output_one(
-        self, response: AIResponse, ref: GuardRef
+        self, response: AIResponse, ref: GuardRef,
     ) -> GuardResult | None: ...
     async def sanitize_input(self, request: AIRequest, policy: AIPolicySpec) -> str: ...
     async def sanitize_output(
-        self, response: AIResponse, policy: AIPolicySpec
+        self, response: AIResponse, policy: AIPolicySpec,
     ) -> AIResponse: ...
     def _handle_guard_block(
-        self, *, guard_name: str, flagged: list[str], on_block: str, content: str
+        self, *, guard_name: str, flagged: list[str], on_block: str, content: str,
     ) -> None: ...
     async def _publish_dlq(
-        self, guard_name: str, flagged: list[str], content: str
+        self, guard_name: str, flagged: list[str], content: str,
     ) -> None: ...

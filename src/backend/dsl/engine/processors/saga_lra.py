@@ -243,7 +243,7 @@ class SagaLRAProcessor(BaseProcessor):
                         except Exception as comp_exc:
                             any_failed = True
                             _lra_logger.error(
-                                "SagaLRA compensation failed: %s", comp_exc
+                                "SagaLRA compensation failed: %s", comp_exc,
                             )
 
                 final_state = "compensating" if any_failed else "rolled_back"
@@ -294,7 +294,7 @@ class SagaLRAProcessor(BaseProcessor):
         return _RepoProxy(sm, WorkflowStateRepository)
 
     async def _run_in_memory(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Fallback in-memory saga (same logic as :class:`SagaProcessor`)."""
         completed_steps: list[SagaStep] = []
@@ -390,5 +390,5 @@ class SagaLRAProcessor(BaseProcessor):
                 "steps": steps_spec,
                 "workflow_id": self._workflow_id,
                 "run_id": self._run_id,
-            }
+            },
         }

@@ -55,7 +55,7 @@ async def test_batch_update_uses_executemany_not_cycle() -> None:
         return_value=MagicMock(
             __aenter__=AsyncMock(return_value=session),
             __aexit__=AsyncMock(return_value=None),
-        )
+        ),
     )
 
     # Mock registry

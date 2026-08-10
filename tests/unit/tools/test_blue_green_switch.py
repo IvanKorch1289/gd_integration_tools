@@ -110,7 +110,7 @@ def test_switch_idempotent_on_same_target():
         with tempfile.TemporaryDirectory() as tmp:
             _run(script, ["switch", "green"], {"BLUE_GREEN_RELOAD_NGINX": "0"}, cwd=Path(tmp))
             result = _run(
-                script, ["switch", "green"], {"BLUE_GREEN_RELOAD_NGINX": "0"}, cwd=Path(tmp)
+                script, ["switch", "green"], {"BLUE_GREEN_RELOAD_NGINX": "0"}, cwd=Path(tmp),
             )
             assert result.returncode == 0
             assert "already on green" in result.stderr

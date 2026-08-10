@@ -29,8 +29,8 @@ class TestLintYAML:
                 source: timer:1s
                 processors:
                   - log: {level: info}
-                """
-            ).lstrip()
+                """,
+            ).lstrip(),
         )
         assert findings == []
 
@@ -40,8 +40,8 @@ class TestLintYAML:
                 """
                 source: timer:1s
                 processors: []
-                """
-            ).lstrip()
+                """,
+            ).lstrip(),
         )
         rules = {f.rule for f in findings}
         assert "missing-field" in rules
@@ -52,8 +52,8 @@ class TestLintYAML:
                 """
                 route_id: ok
                 processors: []
-                """
-            ).lstrip()
+                """,
+            ).lstrip(),
         )
         assert any(f.rule == "missing-field" for f in findings)
 
@@ -65,8 +65,8 @@ class TestLintYAML:
                 source: timer:1s
                 processors:
                   - bogus_proc: {}
-                """
-            ).lstrip()
+                """,
+            ).lstrip(),
         )
         assert any(
             f.rule == "unknown-processor" and f.processor == "bogus_proc"
@@ -81,8 +81,8 @@ class TestLintYAML:
                 source: timer:1s
                 processors:
                   - log: {level: info, bogus_kwarg: 1}
-                """
-            ).lstrip()
+                """,
+            ).lstrip(),
         )
         assert any(
             f.rule == "unknown-param" and "bogus_kwarg" in f.message for f in findings
@@ -96,8 +96,8 @@ class TestLintYAML:
                 source: timer:1s
                 processors:
                   log: info
-                """
-            ).lstrip()
+                """,
+            ).lstrip(),
         )
         assert any(f.rule == "invalid-processors" for f in findings)
 
@@ -113,8 +113,8 @@ class TestLintYAML:
                 source: timer:1s
                 processors:
                   - {log: {}, normalize: {}}
-                """
-            ).lstrip()
+                """,
+            ).lstrip(),
         )
         assert any(f.rule == "invalid-processor-spec" for f in findings)
 
@@ -127,8 +127,8 @@ class TestLintYAML:
                 source: timer:1s
                 processors:
                   - log
-                """
-            ).lstrip()
+                """,
+            ).lstrip(),
         )
         # Может быть finding по unknown-param если log() требует level,
         # но short form без params не должна давать unknown-processor.
@@ -154,7 +154,7 @@ class TestRouteTomlCapabilityCheck:
                 [[capabilities]]
                 name = "secrets.read"
                 scope = "demo.*"
-                """
+                """,
             ).lstrip(),
             encoding="utf-8",
         )
@@ -187,7 +187,7 @@ class TestRouteTomlCapabilityCheck:
                 [[capabilities]]
                 name = "net.outbound"
                 scope = "*"
-                """
+                """,
             ).lstrip(),
             encoding="utf-8",
         )
@@ -222,7 +222,7 @@ class TestRouteTomlCapabilityCheck:
 
 class TestMainCli:
     def test_strict_returns_1_on_findings(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
     ) -> None:
         path = _write(
             tmp_path,
@@ -240,7 +240,7 @@ class TestMainCli:
         assert "unknown-processor" in captured.out
 
     def test_no_findings_returns_0(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
     ) -> None:
         path = _write(
             tmp_path,
@@ -255,7 +255,7 @@ class TestMainCli:
         assert rc == 0
 
     def test_json_output(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
     ) -> None:
         import json as _json
 

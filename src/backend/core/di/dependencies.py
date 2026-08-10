@@ -72,7 +72,7 @@ def get_reply_registry_singleton() -> ReplyChannelRegistryProtocol:
     отсутствие реестра как опциональное.
     """
     raise RuntimeError(
-        "reply_registry должен быть зарегистрирован через register_app_state()"
+        "reply_registry должен быть зарегистрирован через register_app_state()",
     )
 
 
@@ -98,7 +98,7 @@ def get_watermark_store_singleton() -> WatermarkStore:
     готовый store в app.state.
     """
     raise RuntimeError(
-        "watermark_store должен быть зарегистрирован через register_app_state()"
+        "watermark_store должен быть зарегистрирован через register_app_state()",
     )
 
 

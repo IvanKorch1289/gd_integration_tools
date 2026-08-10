@@ -43,7 +43,7 @@ def _resolve_http_app(mcp: Any) -> Any:
             return asgi
     raise RuntimeError(
         "FastMCP не предоставляет ASGI HTTP API; ожидался один из методов: "
-        "http_app / streamable_http_app / sse_app / asgi_app."
+        "http_app / streamable_http_app / sse_app / asgi_app.",
     )
 
 

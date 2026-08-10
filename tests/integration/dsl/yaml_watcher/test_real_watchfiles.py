@@ -38,7 +38,7 @@ async def test_watcher_registers_new_yaml_file(tmp_path: Path) -> None:
         return _StubPipeline(path.stem)
 
     watcher = DSLYamlWatcher(
-        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80
+        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80,
     )
     await watcher.start()
     # awatch подписывается асинхронно; даём ему успеть до первой записи.
@@ -65,7 +65,7 @@ async def test_watcher_unregisters_deleted_yaml(tmp_path: Path) -> None:
     initial.write_text("route_id: alpha\n", encoding="utf-8")
 
     watcher = DSLYamlWatcher(
-        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80
+        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80,
     )
     await watcher.start()
     await asyncio.sleep(0.3)  # awatch warmup
@@ -74,7 +74,7 @@ async def test_watcher_unregisters_deleted_yaml(tmp_path: Path) -> None:
         initial.unlink()
 
         ok = await _wait_until(
-            lambda: "alpha" not in registry.list_routes(), timeout=4.0
+            lambda: "alpha" not in registry.list_routes(), timeout=4.0,
         )
         assert ok, f"route не удалён: {registry.list_routes()}"
     finally:
@@ -96,7 +96,7 @@ async def test_watcher_invalid_yaml_does_not_break_registry(tmp_path: Path) -> N
         return _StubPipeline(path.stem)
 
     watcher = DSLYamlWatcher(
-        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80
+        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=80,
     )
     await watcher.start()
     await asyncio.sleep(0.3)  # awatch warmup

@@ -110,7 +110,7 @@ def test_module_has_docstring() -> None:
 
 
 def test_register_secrets_backend_env_default(
-    clean_registry: Any, monkeypatch: pytest.MonkeyPatch
+    clean_registry: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Default (без ``SECRETS_BACKEND``) — регистрируется ``EnvSecretsBackend``."""
     from src.backend.core.interfaces.secrets import SecretsBackend
@@ -125,7 +125,7 @@ def test_register_secrets_backend_env_default(
 
 
 def test_register_secrets_backend_env_explicit(
-    clean_registry: Any, monkeypatch: pytest.MonkeyPatch
+    clean_registry: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``SECRETS_BACKEND=env`` — то же поведение, что и default."""
     from src.backend.core.interfaces.secrets import SecretsBackend
@@ -138,7 +138,7 @@ def test_register_secrets_backend_env_explicit(
 
 
 def test_register_secrets_backend_idempotent(
-    clean_registry: Any, monkeypatch: pytest.MonkeyPatch
+    clean_registry: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Повторный вызов ``register_secrets_backend`` не пересоздаёт фабрику."""
     from src.backend.core.interfaces.secrets import SecretsBackend
@@ -154,7 +154,7 @@ def test_register_secrets_backend_idempotent(
 
 
 def test_register_secrets_backend_vault_raises_on_use(
-    clean_registry: Any, monkeypatch: pytest.MonkeyPatch
+    clean_registry: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``SECRETS_BACKEND=vault`` — фабрика зарегистрирована, но бросает ``NotImplementedError``."""
     from src.backend.core.interfaces.secrets import SecretsBackend
@@ -168,7 +168,7 @@ def test_register_secrets_backend_vault_raises_on_use(
 
 
 def test_register_secrets_backend_invalid_kind_raises(
-    clean_registry: Any, monkeypatch: pytest.MonkeyPatch
+    clean_registry: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Неизвестный ``SECRETS_BACKEND`` — ``ValueError`` при первом обращении к сервису."""
     from src.backend.core.interfaces.secrets import SecretsBackend
@@ -197,7 +197,7 @@ def test_register_secrets_backend_logs_kind(
 
 
 def test_register_secrets_backend_strips_whitespace_and_lowercases(
-    clean_registry: Any, monkeypatch: pytest.MonkeyPatch
+    clean_registry: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``SECRETS_BACKEND=  ENV  `` нормализуется до ``env`` (strip+lower)."""
     from src.backend.core.interfaces.secrets import SecretsBackend
@@ -224,7 +224,7 @@ def test_register_default_action_middlewares_registers_three(
     type_names = {type(mw).__name__ for mw in mws}
     # Ровно эти три должны быть зарегистрированы.
     assert {"AuditMiddleware", "IdempotencyMiddleware", "RateLimitMiddleware"}.issubset(
-        type_names
+        type_names,
     )
 
 
@@ -252,7 +252,7 @@ def test_register_default_action_middlewares_returns_none(
 
 
 def test_register_all_services_returns_none(
-    clean_registry: Any, clean_middlewares: Any
+    clean_registry: Any, clean_middlewares: Any,
 ) -> None:
     """``register_all_services`` — void-функция (None)."""
     # Мокаем все factories, чтобы избежать сетевых подключений внутри сервисов.
@@ -261,7 +261,7 @@ def test_register_all_services_returns_none(
 
 
 def test_register_all_services_registers_secrets(
-    clean_registry: Any, clean_middlewares: Any
+    clean_registry: Any, clean_middlewares: Any,
 ) -> None:
     """``register_all_services`` подтягивает ``register_secrets_backend``."""
     from src.backend.core.interfaces.secrets import SecretsBackend
@@ -282,7 +282,7 @@ def test_register_all_services_registers_middlewares(clean_middlewares: Any) -> 
 
 
 def test_register_all_services_idempotent(
-    clean_registry: Any, clean_middlewares: Any
+    clean_registry: Any, clean_middlewares: Any,
 ) -> None:
     """Повторный вызов не падает и не дублирует state."""
     _mock_all_service_factories()
@@ -295,7 +295,7 @@ def test_register_all_services_idempotent(
 
 
 def test_register_all_services_populates_string_factories(
-    clean_registry: Any, clean_middlewares: Any
+    clean_registry: Any, clean_middlewares: Any,
 ) -> None:
     """Регистрирует ожидаемые string-фабрики (singleton-name keys)."""
     _mock_all_service_factories()
@@ -379,7 +379,7 @@ def patch_register_factory(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
 
 
 def test_register_all_services_calls_register_factory_for_each_service(
-    clean_registry: Any, clean_middlewares: Any, patch_register_factory: MagicMock
+    clean_registry: Any, clean_middlewares: Any, patch_register_factory: MagicMock,
 ) -> None:
     """``register_all_services`` вызывает ``register_factory`` >= 14 раз (по числу сервисов)."""
     service_setup.register_all_services()
@@ -387,7 +387,7 @@ def test_register_all_services_calls_register_factory_for_each_service(
 
 
 def test_register_all_services_factory_names_are_expected(
-    clean_registry: Any, clean_middlewares: Any, patch_register_factory: MagicMock
+    clean_registry: Any, clean_middlewares: Any, patch_register_factory: MagicMock,
 ) -> None:
     """Все строковые ключи фабрик соответствуют ожидаемому множеству."""
     service_setup.register_all_services()

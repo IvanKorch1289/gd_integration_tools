@@ -46,7 +46,7 @@ _INTROSPECT_FIELDS = (
 async def introspect(
     token: str = Form(..., description="JWT для проверки"),
     token_type_hint: str | None = Form(
-        None, description="Игнорируется (only access_token)"
+        None, description="Игнорируется (only access_token)",
     ),
 ) -> dict[str, Any]:
     """RFC 7662 token introspection (S165 W2: AuthFacade-backed)."""

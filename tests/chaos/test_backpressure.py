@@ -34,7 +34,7 @@ async def test_no_oom_at_10x_spike() -> None:
     from src.backend.core.resilience.backpressure import AdaptiveBulkhead
 
     bulkhead = AdaptiveBulkhead(
-        min_concurrent=10, max_concurrent=100, initial_concurrent=100
+        min_concurrent=10, max_concurrent=100, initial_concurrent=100,
     )
 
     async def worker():
@@ -79,7 +79,7 @@ async def test_streaming_controller_pauses_consumers() -> None:
     from src.backend.core.resilience.backpressure import StreamingBackpressureController
 
     controller = StreamingBackpressureController(
-        high_watermark=0.85, low_watermark=0.5, check_interval_s=0.1
+        high_watermark=0.85, low_watermark=0.5, check_interval_s=0.1,
     )
 
     consumers = {f"kafka_{i}": AsyncMock() for i in range(5)}
@@ -111,7 +111,7 @@ async def test_adaptive_stream_reader_reduces_count_at_spike() -> None:
     from src.backend.core.resilience.backpressure import AdaptiveStreamReader
 
     reader = AdaptiveStreamReader(
-        initial_count=50, min_count=1, max_count=100, adjust_factor=2.0
+        initial_count=50, min_count=1, max_count=100, adjust_factor=2.0,
     )
 
     # Имитация постепенного роста нагрузки

@@ -54,7 +54,7 @@ async def test_auditable_rotator_emits_success_event() -> None:
 
     rotator = AuditableRotator(inner=FakeRotator(), audit_sink=sink)
     result = await rotator.rotate(
-        "secret/api/token", correlation_id="cid-1", actor="cron"
+        "secret/api/token", correlation_id="cid-1", actor="cron",
     )
     assert isinstance(result, RotationResult)
     assert len(events) == 1
@@ -98,7 +98,7 @@ async def test_auditable_rotator_feature_flag_off_raises() -> None:
         events.append(ev)
 
     rotator = AuditableRotator(
-        inner=FakeRotator(), audit_sink=sink, feature_enabled=lambda: False
+        inner=FakeRotator(), audit_sink=sink, feature_enabled=lambda: False,
     )
     with pytest.raises(RuntimeError, match="rotation_disabled"):
         await rotator.rotate("secret/api/token")

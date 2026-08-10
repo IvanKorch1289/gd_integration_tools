@@ -21,7 +21,7 @@ def _force_flag(monkeypatch: pytest.MonkeyPatch, value: bool) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(
-        feature_flags, "dspy_eval_pipeline_enabled", value, raising=False
+        feature_flags, "dspy_eval_pipeline_enabled", value, raising=False,
     )
 
 
@@ -35,7 +35,7 @@ def _force_flag(monkeypatch: pytest.MonkeyPatch, value: bool) -> None:
     ],
 )
 async def test_dspy_pipeline_baseline_eval(
-    monkeypatch: pytest.MonkeyPatch, fixture_name: str, pipeline_name: str
+    monkeypatch: pytest.MonkeyPatch, fixture_name: str, pipeline_name: str,
 ) -> None:
     """Baseline+optimized для каждого critical pipeline должен компилироваться."""
     _force_flag(monkeypatch, True)

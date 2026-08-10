@@ -136,7 +136,7 @@ class TestRunMigrationDryRun:
                 "analytics",
                 "--stats-out",
                 str(tmp_path / "stats.json"),
-            ]
+            ],
         )
         plan = mig.build_ddl_statements(
             table_source="dlq_events",
@@ -168,7 +168,7 @@ class TestRunMigrationDryRun:
                 "--dry-run",
                 "--stats-out",
                 str(tmp_path / "stats.json"),
-            ]
+            ],
         )
         # Аргумент --dry-run в CLI уже включён по умолчанию;
         # проверяем, что confirm=False → dry-run.
@@ -232,7 +232,7 @@ class TestRunMigrationConfirm:
                 "analytics",
                 "--stats-out",
                 str(tmp_path / "confirm_stats.json"),
-            ]
+            ],
         )
         plan = mig.build_ddl_statements(
             table_source="dlq_events",
@@ -284,7 +284,7 @@ class TestRunMigrationConfirm:
                 "--confirm",
                 "--stats-out",
                 str(tmp_path / "no_drop.json"),
-            ]
+            ],
         )
         plan = mig.build_ddl_statements(
             table_source="dlq_events",
@@ -345,7 +345,7 @@ class TestRunMigrationConfirm:
                 "analytics",
                 "--stats-out",
                 str(tmp_path / "env_confirm.json"),
-            ]
+            ],
         )
         # CLI без --confirm, но env должен включить write mode.
         assert args.confirm is False
@@ -377,7 +377,7 @@ class TestRunMigrationConfirm:
                 "--confirm",
                 "--stats-out",
                 str(tmp_path / "failure.json"),
-            ]
+            ],
         )
         plan = mig.build_ddl_statements(
             table_source="dlq_events",
@@ -423,7 +423,7 @@ class TestPlanInjection:
         )
 
         args = mig.parse_args(
-            ["--confirm", "--stats-out", str(tmp_path / "custom.json")]
+            ["--confirm", "--stats-out", str(tmp_path / "custom.json")],
         )
         exit_code = mig.run_migration(
             args,

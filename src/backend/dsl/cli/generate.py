@@ -103,7 +103,7 @@ def generate_blueprint(
         }
 
     yaml_content = yaml.dump(
-        blueprint_template, default_flow_style=False, sort_keys=False
+        blueprint_template, default_flow_style=False, sort_keys=False,
     )
 
     output_path = (
@@ -151,7 +151,7 @@ def generate_workflow(
     workflow_template = _build_workflow_template(workflow_name, steps)
 
     yaml_content = yaml.dump(
-        workflow_template, default_flow_style=False, sort_keys=False
+        workflow_template, default_flow_style=False, sort_keys=False,
     )
 
     output_path = (
@@ -186,7 +186,7 @@ def _build_route_template(name: str, template: str, protocol: str) -> dict[str, 
                 },
             ],
             "sink": {"type": "log"},
-        }
+        },
     }
 
 
@@ -204,7 +204,7 @@ def _build_service_dsl(name: str, crud: bool) -> dict[str, Any]:
         ]
     else:
         service["endpoints"] = [
-            {"method": "GET", "path": f"/{name}", "action": "invoke"}
+            {"method": "GET", "path": f"/{name}", "action": "invoke"},
         ]
 
     return service
@@ -294,7 +294,7 @@ def _build_workflow_template(name: str, steps: int) -> dict[str, Any]:
                 "name": f"step_{i + 1}",
                 "processor": "log",
                 "params": {"message": f"Step {i + 1} of {name}"},
-            }
+            },
         )
 
     return {
@@ -304,7 +304,7 @@ def _build_workflow_template(name: str, steps: int) -> dict[str, Any]:
             "version": "1.0",
             "steps": workflow_steps,
             "error_handling": {"strategy": "retry", "max_attempts": 3},
-        }
+        },
     }
 
 

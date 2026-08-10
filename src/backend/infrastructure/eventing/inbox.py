@@ -68,7 +68,7 @@ class Inbox:
         except ImportError as exc:
             if self.fail_mode == "closed":
                 raise InboxUnavailableError(
-                    "Redis client unavailable; fail_mode=closed"
+                    "Redis client unavailable; fail_mode=closed",
                 ) from exc
             logger.debug("Redis недоступен — inbox dedup отключён")
             return False

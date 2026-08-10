@@ -90,7 +90,7 @@ def test_with_headers_merge_combines_with_existing() -> None:
     b = (
         _builder()
         .http_call(
-            "https://api.example.com", headers={"X-Trace": "init", "X-Original": "keep"}
+            "https://api.example.com", headers={"X-Trace": "init", "X-Original": "keep"},
         )
         .with_headers({"X-Trace": "override", "X-New": "added"}, mode="merge")
     )
@@ -106,7 +106,7 @@ def test_with_headers_replace_drops_previous() -> None:
     b = (
         _builder()
         .http_call(
-            "https://api.example.com", headers={"X-Trace": "init", "X-Original": "keep"}
+            "https://api.example.com", headers={"X-Trace": "init", "X-Original": "keep"},
         )
         .with_headers({"X-New": "only"}, mode="replace")
     )

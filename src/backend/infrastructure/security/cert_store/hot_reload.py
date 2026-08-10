@@ -85,11 +85,11 @@ class CertFileWatcher:
                 pem = await asyncio.to_thread(file_path.read_text, encoding="utf-8")
                 await self.store.set(cert_id, pem=pem)
                 _logger.info(
-                    "cert.hot_reload.%s id=%s size=%d", event_type, cert_id, len(pem)
+                    "cert.hot_reload.%s id=%s size=%d", event_type, cert_id, len(pem),
                 )
         except Exception as exc:
             _logger.warning(
-                "cert.hot_reload.error id=%s event=%s: %s", cert_id, event_type, exc
+                "cert.hot_reload.error id=%s event=%s: %s", cert_id, event_type, exc,
             )
 
     async def _watch_loop(self) -> None:
@@ -97,16 +97,16 @@ class CertFileWatcher:
         from watchfiles import awatch
 
         _logger.info(
-            "cert.hot_reload.start path=%s extensions=%s", self.path, self.extensions
+            "cert.hot_reload.start path=%s extensions=%s", self.path, self.extensions,
         )
         try:
             async for changes in awatch(
-                self.path, stop_event=self._stop_event, recursive=False
+                self.path, stop_event=self._stop_event, recursive=False,
             ):
                 for change_type, file_path_str in changes:
                     # change_type: 1=added, 2=modified, 3=deleted
                     type_name = {1: "add", 2: "modify", 3: "delete"}.get(
-                        change_type, "unknown"
+                        change_type, "unknown",
                     )
                     file_path = Path(file_path_str)
                     await self._on_file_event(file_path, type_name)
@@ -126,7 +126,7 @@ class CertFileWatcher:
             self.path.mkdir(parents=True, exist_ok=True)
         self._stop_event.clear()
         self._task = asyncio.create_task(
-            self._watch_loop(), name=f"cert-watcher-{self.path.name}"
+            self._watch_loop(), name=f"cert-watcher-{self.path.name}",
         )
         _logger.info("cert.hot_reload.task_started")
 

@@ -66,5 +66,5 @@ class ExpressTypingProcessor(BaseProcessor):
                 "bot": self._bot,
                 "chat_id_from": self._chat_id_from,
                 "action": self._action,
-            }
+            },
         }

@@ -161,7 +161,7 @@ def test_dlq_retry_rule_not_found_moves_to_dead_rule_queue() -> None:
                     "rule_id": "live",
                     "status": "sent",
                     "status_code": 200,
-                }
+                },
             )
             return await relay.dlq_retry()
 
@@ -198,7 +198,7 @@ def test_dlq_retry_no_dead_leaves_main_dlq_intact() -> None:
         ):
             # Чтобы _send_with_retry не делал реальный HTTP — мокаем целиком.
             relay._send_with_retry = AsyncMock(  # type: ignore[method-assign]
-                return_value={"rule_id": "r1", "status": "sent", "status_code": 200}
+                return_value={"rule_id": "r1", "status": "sent", "status_code": 200},
             )
             return await relay.dlq_retry()
 

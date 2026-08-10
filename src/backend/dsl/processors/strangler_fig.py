@@ -224,7 +224,7 @@ class StranglerFigProcessor(BaseProcessor):
     ) -> None:
         if not 0.0 <= traffic_split_pct <= 100.0:
             raise ValueError(
-                f"traffic_split_pct должен быть 0-100, получено {traffic_split_pct}"
+                f"traffic_split_pct должен быть 0-100, получено {traffic_split_pct}",
             )
         if old_handler is None or new_handler is None:
             raise ValueError("old_handler и new_handler обязательны")
@@ -331,5 +331,5 @@ class MigrationMixin:
                 traffic_split_pct=traffic_split_pct,
                 deterministic_seed=deterministic_seed,
                 on_new_error=on_new_error,
-            )
+            ),
         )

@@ -145,7 +145,7 @@ class TestFeatureFlagGuardProcessor:
     @pytest.mark.asyncio
     async def test_resolver_exception(self) -> None:
         proc = FeatureFlagGuardProcessor(
-            "flag1", [], resolver=lambda f: (_ for _ in ()).throw(RuntimeError("fail"))
+            "flag1", [], resolver=lambda f: (_ for _ in ()).throw(RuntimeError("fail")),
         )
         exchange = _ex({})
         await proc.process(exchange, None)  # type: ignore[arg-type]

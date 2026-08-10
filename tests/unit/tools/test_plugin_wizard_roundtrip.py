@@ -120,14 +120,14 @@ def test_build_toml_is_parseable_toml_with_valid_semver_and_pep440() -> None:
 
 
 @pytest.mark.parametrize(
-    ("name", "trust_tier"), [("foo", "A"), ("bar_baz", "B"), ("snake_case_name", "C")]
+    ("name", "trust_tier"), [("foo", "A"), ("bar_baz", "B"), ("snake_case_name", "C")],
 )
 def test_build_toml_emits_snake_case_to_pascal_case_entry_class(
-    name: str, trust_tier: str
+    name: str, trust_tier: str,
 ) -> None:
     """entry_class формируется по snake_case → PascalCase через ``str.title()``."""
     raw = _wizard._build_toml(
-        name, description="x", tenant_aware=False, trust_tier=trust_tier
+        name, description="x", tenant_aware=False, trust_tier=trust_tier,
     )
     data = tomllib.loads(raw)
     expected_class = "".join(part.title() for part in name.split("_")) + "Plugin"
@@ -242,7 +242,7 @@ def test_write_scaffold_refuses_overwrite_without_force(
 ) -> None:
     """Повторный вызов без ``force=True`` поднимает ``FileExistsError``."""
     _wizard._write_scaffold(
-        "no_force_plugin", "No force", tenant_aware=True, trust_tier="B", force=True
+        "no_force_plugin", "No force", tenant_aware=True, trust_tier="B", force=True,
     )
 
     with pytest.raises(FileExistsError):
@@ -269,7 +269,7 @@ def test_wizard_output_is_accepted_by_canonical_manifest_facade(
     from src.backend.core.plugin_runtime.manifest import load_plugin_manifest
 
     target = _wizard._write_scaffold(
-        "facade_compat", "Facade compat", tenant_aware=True, trust_tier="A", force=True
+        "facade_compat", "Facade compat", tenant_aware=True, trust_tier="A", force=True,
     )
 
     manifest = load_plugin_manifest(target / "plugin.toml")
@@ -310,7 +310,7 @@ def test_build_toml_round_trip_via_tempfile() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "plugin.toml"
         raw = _wizard._build_toml(
-            "alpha_beta", description="Alpha beta", tenant_aware=True, trust_tier="B"
+            "alpha_beta", description="Alpha beta", tenant_aware=True, trust_tier="B",
         )
         path.write_text(raw, encoding="utf-8")
         data = tomllib.loads(path.read_text(encoding="utf-8"))

@@ -124,7 +124,7 @@ class MemoryRecallProcessor(BaseAIProcessor):
         # S202 audit fix: UnifiedMemoryGateway.recall_semantic uses keyword args.
         try:
             facts = await backend.recall_semantic(
-                tenant_id=namespace, query=query, top_k=self.k
+                tenant_id=namespace, query=query, top_k=self.k,
             )
             records = [
                 {"content": f.content, "confidence": f.confidence}

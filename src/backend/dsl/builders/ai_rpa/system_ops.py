@@ -69,11 +69,11 @@ class SystemOpsMixin:
         from src.backend.dsl.engine.processors.rpa_banking import CitrixSessionProcessor
 
         return self._add(  # type: ignore[attr-defined]
-            CitrixSessionProcessor(operation=operation, session_id=session_id)
+            CitrixSessionProcessor(operation=operation, session_id=session_id),
         )
 
     def terminal_3270(
-        self, host: str, port: int = 23, action: str = "query"
+        self, host: str, port: int = 23, action: str = "query",
     ) -> RouteBuilder:
         """IBM 3270 терминал-эмулятор (мейнфрейм)."""
         from src.backend.dsl.engine.processors.rpa_banking import (
@@ -81,19 +81,19 @@ class SystemOpsMixin:
         )
 
         return self._add(  # type: ignore[attr-defined]
-            TerminalEmulator3270Processor(host=host, port=port, action=action)
+            TerminalEmulator3270Processor(host=host, port=port, action=action),
         )
 
     def appium_mobile(
-        self, platform: str, app_package: str, operation: str
+        self, platform: str, app_package: str, operation: str,
     ) -> RouteBuilder:
         """Appium автоматизация мобильных приложений (android/ios)."""
         from src.backend.dsl.engine.processors.rpa_banking import AppiumMobileProcessor
 
         return self._add(  # type: ignore[attr-defined]
             AppiumMobileProcessor(
-                platform=platform, app_package=app_package, operation=operation
-            )
+                platform=platform, app_package=app_package, operation=operation,
+            ),
         )
 
     def email_driven(
@@ -107,8 +107,8 @@ class SystemOpsMixin:
 
         return self._add(  # type: ignore[attr-defined]
             EmailDrivenProcessor(
-                mailbox=mailbox, subject_filter=subject_filter, extract=extract
-            )
+                mailbox=mailbox, subject_filter=subject_filter, extract=extract,
+            ),
         )
 
     def keystroke_replay(self, script_name: str) -> RouteBuilder:
@@ -118,5 +118,5 @@ class SystemOpsMixin:
         )
 
         return self._add(  # type: ignore[attr-defined]
-            KeystrokeReplayProcessor(script_name=script_name)
+            KeystrokeReplayProcessor(script_name=script_name),
         )

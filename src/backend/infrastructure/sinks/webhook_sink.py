@@ -76,13 +76,13 @@ class WebhookSink(Sink):
         }
         if self.secret:
             sig = hmac.new(
-                self.secret.encode("utf-8"), body_bytes, hashlib.sha256
+                self.secret.encode("utf-8"), body_bytes, hashlib.sha256,
             ).hexdigest()
             headers["X-Webhook-Signature"] = sig
 
         async def _do_post() -> Any:
             async with OutboundHttpClient(
-                timeout=httpx.Timeout(self.timeout)
+                timeout=httpx.Timeout(self.timeout),
             ) as client:
                 resp = await client.post(self.url, content=body_bytes, headers=headers)
             # 5xx — поднимаем для retry policy
@@ -146,7 +146,7 @@ class WebhookSink(Sink):
         start = time.perf_counter()
         try:
             async with OutboundHttpClient(
-                timeout=httpx.Timeout(self.timeout)
+                timeout=httpx.Timeout(self.timeout),
             ) as client:
                 response = await client.request("HEAD", self.url)
             latency_ms = (time.perf_counter() - start) * 1000.0
@@ -164,5 +164,5 @@ class WebhookSink(Sink):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )

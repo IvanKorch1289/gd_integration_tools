@@ -180,7 +180,7 @@ class TestMCPClientRegistry:
         assert not_found is None
 
     def test_registry_load_from_yaml_empty(
-        self, tmp_path: pytest.TempPathFactory
+        self, tmp_path: pytest.TempPathFactory,
     ) -> None:
         """load_from_yaml with empty clients list."""
         from src.backend.infrastructure.clients.external.mcp_registry import (

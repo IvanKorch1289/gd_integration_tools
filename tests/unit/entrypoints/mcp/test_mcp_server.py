@@ -22,7 +22,7 @@ def test_action_input_schema_json_returns_none_for_unknown_action() -> None:
     mock_registry = MagicMock()
     mock_registry.get_metadata.return_value = None
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry
+        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
     ):
         result = _action_input_schema_json("nonexistent_action_xyz")
     assert result is None
@@ -36,7 +36,7 @@ def test_action_input_schema_json_handles_exception() -> None:
     mock_metadata.input_model.model_json_schema.side_effect = RuntimeError("boom")
     mock_registry.get_metadata.return_value = mock_metadata
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry
+        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
     ):
         result = _action_input_schema_json("some_action")
     assert result is None
@@ -91,7 +91,7 @@ def test_check_mcp_tool_authz_disabled_allows_all() -> None:
     fake_settings.tool_allowlist = []
     fake_settings.tool_public_namespaces = []
     with patch(
-        "src.backend.core.config.ai_stack.mcp_settings", fake_settings, create=True
+        "src.backend.core.config.ai_stack.mcp_settings", fake_settings, create=True,
     ):
         result = _check_mcp_tool_authz("any.random.action")
     assert result is None
@@ -105,7 +105,7 @@ def test_check_mcp_tool_authz_allowlist_passes() -> None:
     fake_settings.tool_allowlist = ["orders.get"]
     fake_settings.tool_public_namespaces = []
     with patch(
-        "src.backend.core.config.ai_stack.mcp_settings", fake_settings, create=True
+        "src.backend.core.config.ai_stack.mcp_settings", fake_settings, create=True,
     ):
         result = _check_mcp_tool_authz("orders.get")
     assert result is None
@@ -119,7 +119,7 @@ def test_check_mcp_tool_authz_denies_unknown_action() -> None:
     fake_settings.tool_allowlist = []
     fake_settings.tool_public_namespaces = []
     with patch(
-        "src.backend.core.config.ai_stack.mcp_settings", fake_settings, create=True
+        "src.backend.core.config.ai_stack.mcp_settings", fake_settings, create=True,
     ):
         result = _check_mcp_tool_authz("forbidden.deep.action")
     # Any non-None string means denied; the specific reason varies by
@@ -142,7 +142,7 @@ def test_action_input_schema_json_unknown_action_returns_none_property(
     mock_registry = MagicMock()
     mock_registry.get_metadata.return_value = None
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry
+        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
     ):
         result = _action_input_schema_json(action_name)
     assert result is None

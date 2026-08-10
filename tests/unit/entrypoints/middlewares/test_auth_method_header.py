@@ -54,7 +54,7 @@ async def test_emits_header_when_enabled_and_auth_context_set() -> None:
     async def downstream(scope, receive, send):
         # Auth middleware имитирует установку state['auth'].
         scope.setdefault("state", {})["auth"] = type(
-            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()}
+            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()},
         )()
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -75,7 +75,7 @@ async def test_no_header_when_disabled_default() -> None:
 
     async def downstream(scope, receive, send):
         scope.setdefault("state", {})["auth"] = type(
-            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()}
+            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()},
         )()
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -115,7 +115,7 @@ async def test_header_value_uses_method_value_attr() -> None:
 
     async def downstream(scope, receive, send):
         scope.setdefault("state", {})["auth"] = type(
-            "AuthCtx", (), {"method": type("M", (), {"value": "api_key"})()}
+            "AuthCtx", (), {"method": type("M", (), {"value": "api_key"})()},
         )()
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -136,7 +136,7 @@ async def test_custom_header_name() -> None:
 
     async def downstream(scope, receive, send):
         scope.setdefault("state", {})["auth"] = type(
-            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()}
+            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()},
         )()
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})
@@ -176,7 +176,7 @@ async def test_preserves_body_chunks_unchanged() -> None:
 
     async def downstream(scope, receive, send):
         scope.setdefault("state", {})["auth"] = type(
-            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()}
+            "AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()},
         )()
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"chunk-1"})

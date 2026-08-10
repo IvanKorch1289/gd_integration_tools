@@ -87,7 +87,7 @@ class APIKeyMiddleware:
         api_key = _get_header_value(scope, b"x-api-key")
         if api_key is None:
             await self._send_401(
-                send, detail="Требуется API-ключ"
+                send, detail="Требуется API-ключ",
             )
             return
 
@@ -126,7 +126,7 @@ class APIKeyMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body})
 

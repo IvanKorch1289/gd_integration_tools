@@ -51,7 +51,7 @@ class MessengersEIPsMixin(EIPMixinBase):
                     silent_response=silent_response,
                     sync=sync,
                     result_property=result_property,
-                )
+                ),
             ),
         )
 
@@ -78,7 +78,7 @@ class MessengersEIPsMixin(EIPMixinBase):
                     body=body,
                     body_from=body_from,
                     result_property=result_property,
-                )
+                ),
             ),
         )
 
@@ -107,7 +107,7 @@ class MessengersEIPsMixin(EIPMixinBase):
                     bubble=bubble,
                     keyboard=keyboard,
                     status=status,
-                )
+                ),
             ),
         )
 
@@ -125,8 +125,8 @@ class MessengersEIPsMixin(EIPMixinBase):
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
                 ExpressTypingProcessor(
-                    bot=bot, chat_id_from=chat_id_from, action=action
-                )
+                    bot=bot, chat_id_from=chat_id_from, action=action,
+                ),
             ),
         )
 
@@ -159,7 +159,7 @@ class MessengersEIPsMixin(EIPMixinBase):
                     body=body,
                     body_from=body_from,
                     result_property=result_property,
-                )
+                ),
             ),
         )
 
@@ -184,7 +184,7 @@ class MessengersEIPsMixin(EIPMixinBase):
                     mention_id=mention_id,
                     name_from=name_from,
                     property_name=property_name,
-                )
+                ),
             ),
         )
 
@@ -202,8 +202,8 @@ class MessengersEIPsMixin(EIPMixinBase):
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
                 ExpressStatusProcessor(
-                    bot=bot, sync_id_from=sync_id_from, result_property=result_property
-                )
+                    bot=bot, sync_id_from=sync_id_from, result_property=result_property,
+                ),
             ),
         )
 
@@ -240,7 +240,7 @@ class MessengersEIPsMixin(EIPMixinBase):
                     disable_notification=disable_notification,
                     disable_web_page_preview=disable_web_page_preview,
                     result_property=result_property,
-                )
+                ),
             ),
         )
 
@@ -269,7 +269,7 @@ class MessengersEIPsMixin(EIPMixinBase):
                     body_from=body_from,
                     parse_mode=parse_mode,
                     result_property=result_property,
-                )
+                ),
             ),
         )
 
@@ -298,7 +298,7 @@ class MessengersEIPsMixin(EIPMixinBase):
                     body_from=body_from,
                     parse_mode=parse_mode,
                     inline_keyboard=inline_keyboard,
-                )
+                ),
             ),
         )
 
@@ -316,8 +316,8 @@ class MessengersEIPsMixin(EIPMixinBase):
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
                 TelegramTypingProcessor(
-                    bot=bot, chat_id_from=chat_id_from, action=action
-                )
+                    bot=bot, chat_id_from=chat_id_from, action=action,
+                ),
             ),
         )
 
@@ -354,7 +354,7 @@ class MessengersEIPsMixin(EIPMixinBase):
                     parse_mode=parse_mode,
                     disable_notification=disable_notification,
                     result_property=result_property,
-                )
+                ),
             ),
         )
 
@@ -379,12 +379,12 @@ class MessengersEIPsMixin(EIPMixinBase):
                     parse_mode=parse_mode,
                     property_name=property_name,
                     append=append,
-                )
+                ),
             ),
         )
 
     def telegram_status(
-        self, *, bot: str = "main_bot", result_property: str = "telegram_bot_profile"
+        self, *, bot: str = "main_bot", result_property: str = "telegram_bot_profile",
     ) -> RouteBuilder:
         """Запросить профиль бота (getMe) — health-check Telegram."""
         from src.backend.dsl.engine.processors.telegram import TelegramStatusProcessor
@@ -392,6 +392,6 @@ class MessengersEIPsMixin(EIPMixinBase):
         return cast(
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
-                TelegramStatusProcessor(bot=bot, result_property=result_property)
+                TelegramStatusProcessor(bot=bot, result_property=result_property),
             ),
         )

@@ -17,7 +17,7 @@ from __future__ import annotations
 import pytest
 
 pytest.importorskip(
-    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"
+    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow",
 )
 
 import sys
@@ -32,7 +32,7 @@ from src.backend.dsl.workflow.spec import ActivityDeclaration, SagaDeclaration
 
 
 def _make_recorder_temporal(
-    *, fail_on: set[str] | None = None
+    *, fail_on: set[str] | None = None,
 ) -> tuple[SimpleNamespace, list[str]]:
     """Сконструировать fake ``temporalio.workflow`` с записью execute_activity.
 
@@ -60,7 +60,7 @@ def _make_recorder_temporal(
         execute_activity=fake_execute_activity,
         sleep=fake_sleep,
         logger=SimpleNamespace(
-            warning=lambda *a, **kw: recorder.append(f"WARN::{a[0] if a else ''}")
+            warning=lambda *a, **kw: recorder.append(f"WARN::{a[0] if a else ''}"),
         ),
     )
     return fake_workflow_module, recorder
@@ -77,7 +77,7 @@ def _make_fake_common() -> SimpleNamespace:
 def _patch_temporal(monkeypatch: pytest.MonkeyPatch, fake_wf: SimpleNamespace) -> None:
     fake_common = _make_fake_common()
     monkeypatch.setitem(
-        sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=fake_common)
+        sys.modules, "temporalio", SimpleNamespace(workflow=fake_wf, common=fake_common),
     )
     monkeypatch.setitem(sys.modules, "temporalio.workflow", fake_wf)
     monkeypatch.setitem(sys.modules, "temporalio.common", fake_common)
@@ -193,7 +193,7 @@ async def test_compensate_failure_does_not_stop_chain(
     """Кейс 4: compensate[1] падает → compensate[0] всё равно выполняется."""
     # forward[2] падает; в compensate-цепочке упадёт inventory.release (idx=1).
     fake_wf, recorder = _make_recorder_temporal(
-        fail_on={"payments.charge", "inventory.release"}
+        fail_on={"payments.charge", "inventory.release"},
     )
     _patch_temporal(monkeypatch, fake_wf)
 
@@ -290,7 +290,7 @@ async def test_saga_strict_compensate_raises_on_failure(
 ) -> None:
     """strict_compensate=True: compensate failure raises instead of warning."""
     fake_wf, recorder = _make_recorder_temporal(
-        fail_on={"payments.charge", "inventory.release"}
+        fail_on={"payments.charge", "inventory.release"},
     )
     _patch_temporal(monkeypatch, fake_wf)
 
@@ -303,7 +303,7 @@ async def test_saga_strict_compensate_raises_on_failure(
         compensate=[
             ActivityDeclaration(name="orders.cancel"),
             ActivityDeclaration(
-                name="inventory.release"
+                name="inventory.release",
             ),  # fails, raises with strict=True
             ActivityDeclaration(name="payments.refund"),
         ],
@@ -328,7 +328,7 @@ async def test_saga_best_effort_swallows_exception(
 ) -> None:
     """strict_compensate=False (default): compensate failure logs warning, original exc re-raised."""
     fake_wf, recorder = _make_recorder_temporal(
-        fail_on={"payments.charge", "inventory.release"}
+        fail_on={"payments.charge", "inventory.release"},
     )
     _patch_temporal(monkeypatch, fake_wf)
 

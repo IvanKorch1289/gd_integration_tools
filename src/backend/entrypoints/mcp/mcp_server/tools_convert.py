@@ -39,7 +39,7 @@ def _register_convert_tools(mcp: Any) -> None:
         if not strategy:
             available = list(_STRATEGIES.keys())
             return encode_json(
-                {"error": f"No converter for {key}", "available": available}
+                {"error": f"No converter for {key}", "available": available},
             ).decode("utf-8")
 
         try:
@@ -60,7 +60,7 @@ def _register_convert_tools(mcp: Any) -> None:
                         "format": to_format,
                         "encoding": "base64",
                         "data": base64.b64encode(result).decode("utf-8"),
-                    }
+                    },
                 ).decode("utf-8")
 
             if isinstance(result, str):

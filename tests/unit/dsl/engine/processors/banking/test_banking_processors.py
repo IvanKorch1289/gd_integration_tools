@@ -86,10 +86,10 @@ async def test_banking_credit_scoring_rules_approve() -> None:
             ],
             context_from="applicant",
             decision_to="decision",
-        )
+        ),
     )
     exchange = _make_exchange(
-        body={"applicant": {"income": 150000, "debt_ratio": 0.2, "credit_score": 750}}
+        body={"applicant": {"income": 150000, "debt_ratio": 0.2, "credit_score": 750}},
     )
 
     await proc.process(exchange, context=AsyncMock())
@@ -120,8 +120,8 @@ async def test_banking_render_docx_credit_decision_letter(tmp_path: Path) -> Non
 
     proc = RenderDocxProcessor(
         RenderDocxParams(
-            template=str(template), context_from=None, output_to="docx_path"
-        )
+            template=str(template), context_from=None, output_to="docx_path",
+        ),
     )
     exchange = _make_exchange(
         body={
@@ -129,7 +129,7 @@ async def test_banking_render_docx_credit_decision_letter(tmp_path: Path) -> Non
             "decision": "APPROVE",
             "amount": 500000,
             "rate": 12.5,
-        }
+        },
     )
 
     await proc.process(exchange, context=AsyncMock())
@@ -161,7 +161,7 @@ async def test_banking_render_xlsx_portfolio_report() -> None:
             context_from="portfolio",
             output_to="xlsx_path",
             mode="append_table",
-        )
+        ),
     )
     exchange = _make_exchange(
         body={
@@ -169,8 +169,8 @@ async def test_banking_render_xlsx_portfolio_report() -> None:
                 {"account": "40802100000000000001", "balance": 150000.50},
                 {"account": "40802100000000000002", "balance": 75300.00},
                 {"account": "40802100000000000003", "balance": 1245000.99},
-            ]
-        }
+            ],
+        },
     )
 
     await proc.process(exchange, context=AsyncMock())
@@ -239,7 +239,7 @@ async def test_banking_pdf_template_transaction_confirmation(
             "account": "40802810400000123456",
             "amount": 1500.00,
             "date": "2026-05-14",
-        }
+        },
     )
 
     await proc.process(exchange, context=AsyncMock())
@@ -293,7 +293,7 @@ async def test_banking_jsonpath_extracts_transactions(
     monkeypatch.setattr(feature_flags, "proc_jsonpath", True)
 
     proc = JsonPathProcessor(
-        expr="$.transactions[*].amount", to="body.amounts", mode="all"
+        expr="$.transactions[*].amount", to="body.amounts", mode="all",
     )
     exchange = _make_exchange(
         body={
@@ -301,8 +301,8 @@ async def test_banking_jsonpath_extracts_transactions(
                 {"id": "t1", "amount": 1500.0, "type": "credit"},
                 {"id": "t2", "amount": 2300.5, "type": "debit"},
                 {"id": "t3", "amount": 999.99, "type": "credit"},
-            ]
-        }
+            ],
+        },
     )
 
     await proc.process(exchange, context=AsyncMock())
@@ -331,7 +331,7 @@ async def test_banking_unit_conversion_meter_to_foot(
     monkeypatch.setattr(feature_flags, "proc_unit_conversion", True)
 
     proc = UnitConversionProcessor(
-        from_unit="meter", to_unit="foot", value=100, to="body.feet"
+        from_unit="meter", to_unit="foot", value=100, to="body.feet",
     )
     exchange = _make_exchange(body={})
 
@@ -365,9 +365,9 @@ async def test_banking_ics_calendar_payment_schedule(
                     "summary": "Платёж по кредиту 12345",
                     "dtstart": "2026-06-01T10:00:00",
                     "dtend": "2026-06-01T10:30:00",
-                }
-            ]
-        }
+                },
+            ],
+        },
     )
 
     await proc.process(exchange, context=AsyncMock())

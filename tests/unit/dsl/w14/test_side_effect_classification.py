@@ -39,7 +39,7 @@ class TestBaseProcessorDefaults:
     def test_default_side_effect_is_pure(self) -> None:
         class P(BaseProcessor):
             async def process(
-                self, exchange: Exchange[Any], context: ExecutionContext
+                self, exchange: Exchange[Any], context: ExecutionContext,
             ) -> None:
                 pass
 
@@ -52,7 +52,7 @@ class TestBaseProcessorDefaults:
             compensatable = False
 
             async def process(
-                self, exchange: Exchange[Any], context: ExecutionContext
+                self, exchange: Exchange[Any], context: ExecutionContext,
             ) -> None:
                 pass
 
@@ -69,7 +69,7 @@ class TestPureProcessorIdempotency:
             side_effect = SideEffectKind.PURE
 
             async def process(
-                self, exchange: Exchange[Any], context: ExecutionContext
+                self, exchange: Exchange[Any], context: ExecutionContext,
             ) -> None:
                 exchange.in_message.body = exchange.in_message.body * 2
 
@@ -97,7 +97,7 @@ class TestStatefulProcessor:
                 self._n = 0
 
             async def process(
-                self, exchange: Exchange[Any], context: ExecutionContext
+                self, exchange: Exchange[Any], context: ExecutionContext,
             ) -> None:
                 self._n += 1
                 exchange.in_message.body = self._n
@@ -121,7 +121,7 @@ class TestIntrospection:
             compensatable = False
 
             async def process(
-                self, exchange: Exchange[Any], context: ExecutionContext
+                self, exchange: Exchange[Any], context: ExecutionContext,
             ) -> None:
                 pass
 

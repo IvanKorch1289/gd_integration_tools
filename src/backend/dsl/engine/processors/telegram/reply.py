@@ -65,7 +65,7 @@ class TelegramReplyProcessor(BaseProcessor):
         if not source_id:
             exchange.fail(
                 f"TelegramReplyProcessor: source_message_id отсутствует "
-                f"({self._source_message_id_from!r})"
+                f"({self._source_message_id_from!r})",
             )
             return
 
@@ -76,7 +76,7 @@ class TelegramReplyProcessor(BaseProcessor):
             return
 
         msg = TelegramMessage(
-            chat_id=str(chat_id), text=str(text), parse_mode=self._parse_mode
+            chat_id=str(chat_id), text=str(text), parse_mode=self._parse_mode,
         )
 
         try:

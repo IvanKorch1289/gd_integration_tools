@@ -29,7 +29,7 @@ def _downstream_ok(status_code: int = 200):
                 break
             more_body = msg.get("more_body", False)
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []}
+            {"type": "http.response.start", "status": status_code, "headers": []},
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -105,7 +105,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_non_admin_path_skips_audit(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Non-admin path (e.g. /api/v1/users) → не аудитируется даже для POST."""
         caplog.set_level(logging.INFO, logger="audit_log.admin")
@@ -125,7 +125,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_put_admin_path_emits_audit(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """PUT /api/v1/admin/* → audit log emitted."""
         caplog.set_level(logging.INFO, logger="audit_log.admin")
@@ -162,7 +162,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_delete_admin_path_emits_audit(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """DELETE /api/v1/admin/* → audit log emitted."""
         caplog.set_level(logging.INFO, logger="audit_log.admin")
@@ -195,7 +195,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_tech_path_emits_audit(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Path /tech/* → admin audit (cycle 49 S13 K1 W2 spec)."""
         caplog.set_level(logging.INFO, logger="audit_log.admin")
@@ -228,7 +228,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_anonymous_principal_when_no_auth_context(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Без auth_context в state → principal='anonymous', metadata={}."""
         caplog.set_level(logging.INFO, logger="audit_log.admin")
@@ -281,7 +281,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_payload_hash_computed_for_body(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """payload_hash = SHA256(body) prefix 16 chars (compliance)."""
         caplog.set_level(logging.INFO, logger="audit_log.admin")
@@ -317,7 +317,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_downstream_consumes_replayed_body(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Cycle 49 invariant: downstream прочитывает body через replay_receive."""
         caplog.set_level(logging.INFO, logger="audit_log.admin")
@@ -363,7 +363,7 @@ class TestAdminAuditMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_uses_cached_body_when_available(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """IL-OBS1: state['body'] (cached от RequestBodyCache) имеет приоритет."""
         caplog.set_level(logging.INFO, logger="audit_log.admin")

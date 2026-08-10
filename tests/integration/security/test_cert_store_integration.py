@@ -80,7 +80,7 @@ async def pg_session_manager(monkeypatch):
                         BaseModel.metadata.tables["certs"],
                         BaseModel.metadata.tables["cert_history"],
                     ],
-                )
+                ),
             )
 
         session_maker = async_sessionmaker(engine, expire_on_commit=False)

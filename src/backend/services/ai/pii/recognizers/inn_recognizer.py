@@ -56,7 +56,7 @@ class InnRecognizer(RegexPiiRecognizer):
 
     SUPPORTED_ENTITY = "INN_RU"
     PATTERNS = [
-        Pattern(name="inn_10_12_digits", regex=r"\b\d{10}(\d{2})?\b", score=0.4)
+        Pattern(name="inn_10_12_digits", regex=r"\b\d{10}(\d{2})?\b", score=0.4),
     ]
     CONTEXT = ["ИНН", "инн", "налогоплательщик", "налоговый"]
 

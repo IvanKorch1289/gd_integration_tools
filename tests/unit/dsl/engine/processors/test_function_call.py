@@ -30,14 +30,14 @@ class TestStrictWhitelistEmpty:
     """K-ARCH-5: пустой whitelist в strict-режиме поднимает PermissionError."""
 
     def test_production_env_raises_on_empty(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("ENVIRONMENT", "production")
         with pytest.raises(PermissionError, match="empty whitelist"):
             CallFunctionProcessor._validate_module_whitelist("anything.fn", _ctx())
 
     def test_feature_flag_strict_raises_on_empty(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.delenv("ENVIRONMENT", raising=False)
         monkeypatch.setattr(feature_flags, "call_function_whitelist_strict", True)
@@ -45,7 +45,7 @@ class TestStrictWhitelistEmpty:
             CallFunctionProcessor._validate_module_whitelist("anything.fn", _ctx())
 
     def test_default_dev_mode_passes_empty(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.delenv("ENVIRONMENT", raising=False)
         monkeypatch.setattr(feature_flags, "call_function_whitelist_strict", False)
@@ -59,20 +59,20 @@ class TestWhitelistMatching:
     def test_module_match(self) -> None:
         ctx = _ctx(call_function_modules=["extensions.x.functions"])
         CallFunctionProcessor._validate_module_whitelist(
-            "extensions.x.functions", ctx
+            "extensions.x.functions", ctx,
         )  # noop
 
     def test_wildcard_match(self) -> None:
         ctx = _ctx(call_function_modules=["extensions.x.*"])
         CallFunctionProcessor._validate_module_whitelist(
-            "extensions.x.functions", ctx
+            "extensions.x.functions", ctx,
         )  # noop
 
     def test_no_match_raises(self) -> None:
         ctx = _ctx(call_function_modules=["extensions.allowed"])
         with pytest.raises(PermissionError, match="not in whitelist"):
             CallFunctionProcessor._validate_module_whitelist(
-                "extensions.forbidden", ctx
+                "extensions.forbidden", ctx,
             )
 
 
@@ -80,20 +80,20 @@ class TestStrictBypassedByWhitelist:
     """strict-режим НЕ блокирует, если whitelist непустой и module матчится."""
 
     def test_production_with_whitelist_passes(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("ENVIRONMENT", "production")
         ctx = _ctx(call_function_modules=["extensions.x.functions"])
         CallFunctionProcessor._validate_module_whitelist("extensions.x.functions", ctx)
 
     def test_production_with_whitelist_denies_other(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("ENVIRONMENT", "production")
         ctx = _ctx(call_function_modules=["extensions.x.functions"])
         with pytest.raises(PermissionError, match="not in whitelist"):
             CallFunctionProcessor._validate_module_whitelist(
-                "extensions.forbidden", ctx
+                "extensions.forbidden", ctx,
             )
 
 

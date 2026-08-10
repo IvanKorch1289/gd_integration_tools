@@ -61,7 +61,7 @@ def test_breach_record_to_dict_shape() -> None:
 def test_sla_policy_breach_action_validation() -> None:
     with pytest.raises(ValueError):
         SlaPolicy(
-            soft_limit_seconds=10, hard_limit_seconds=20, breach_action="invalid_action"
+            soft_limit_seconds=10, hard_limit_seconds=20, breach_action="invalid_action",
         )
 
 

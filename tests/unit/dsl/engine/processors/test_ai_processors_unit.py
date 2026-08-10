@@ -69,7 +69,7 @@ class TestPromptComposerProcessor:
         exchange = _Exchange()
         exchange.in_message.body = {"name": "Alice", "query": "hello"}
         exchange.set_property(
-            "vector_results", [{"document": "ctx1"}, {"document": "ctx2"}]
+            "vector_results", [{"document": "ctx1"}, {"document": "ctx2"}],
         )
 
         processor = PromptComposerProcessor(
@@ -104,7 +104,7 @@ class TestPromptComposerProcessor:
         exchange.set_property("vector_results", ["item1", "item2", "item3"])
 
         processor = PromptComposerProcessor(
-            template="Q: {q}\nDocs:\n{context}", context_property="vector_results"
+            template="Q: {q}\nDocs:\n{context}", context_property="vector_results",
         )
         await processor.process(exchange, _Context())
 
@@ -122,7 +122,7 @@ class TestPromptComposerProcessor:
         exchange.set_property("vector_results", "")
 
         processor = PromptComposerProcessor(
-            template="Known: {known} Missing: {notexist}"
+            template="Known: {known} Missing: {notexist}",
         )
         # The fix: missing keys are filled with empty strings, not KeyError
         await processor.process(exchange, _Context())
@@ -131,11 +131,11 @@ class TestPromptComposerProcessor:
     def test_to_spec_includes_template(self) -> None:
         """to_spec returns compose_prompt dict with template."""
         processor = PromptComposerProcessor(
-            template="Hello {name}", context_property="ctx", output_property="out"
+            template="Hello {name}", context_property="ctx", output_property="out",
         )
         spec = processor.to_spec()
         assert spec == {
-            "compose_prompt": {"template": "Hello {name}", "context_property": "ctx"}
+            "compose_prompt": {"template": "Hello {name}", "context_property": "ctx"},
         }
 
 
@@ -247,7 +247,7 @@ class TestCacheProcessor:
         processor = CacheProcessor(key_fn=key_fn, ttl_seconds=7200)
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.get = AsyncMock(return_value=None)
 
@@ -269,7 +269,7 @@ class TestCacheProcessor:
         processor = CacheProcessor(key_fn=key_fn)
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.get = AsyncMock(return_value=b'{"result": "from_cache"}')
 
@@ -289,7 +289,7 @@ class TestCacheProcessor:
         processor = CacheProcessor(key_fn=lambda e: "miss-key")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.get = AsyncMock(return_value=None)
 
@@ -304,7 +304,7 @@ class TestCacheProcessor:
         processor = CacheProcessor(key_fn=lambda e: "key")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.get = AsyncMock(side_effect=ConnectionError("no redis"))
 
@@ -330,7 +330,7 @@ class TestCacheWriteProcessor:
         processor = CacheWriteProcessor(key_fn=lambda e: "key")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.set_if_not_exists = AsyncMock()
 
@@ -347,11 +347,11 @@ class TestCacheWriteProcessor:
         exchange.in_message.body = {"data": "value"}
 
         processor = CacheWriteProcessor(
-            key_fn=lambda e: "fallback-key", ttl_seconds=3600
+            key_fn=lambda e: "fallback-key", ttl_seconds=3600,
         )
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.set_if_not_exists = AsyncMock()
 
@@ -374,7 +374,7 @@ class TestCacheWriteProcessor:
         processor = CacheWriteProcessor(key_fn=lambda e: "key")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.set_if_not_exists = AsyncMock()
 
@@ -393,10 +393,10 @@ class TestCacheWriteProcessor:
         processor = CacheWriteProcessor(key_fn=lambda e: "key")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.set_if_not_exists = AsyncMock(
-                side_effect=ConnectionError("redis down")
+                side_effect=ConnectionError("redis down"),
             )
 
             # Should not raise

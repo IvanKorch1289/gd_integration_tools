@@ -165,7 +165,7 @@ class DebeziumEventsCDCBackend(CDCSource):
         except ImportError as exc:
             raise RuntimeError(
                 "aiokafka is required for DebeziumEventsCDCBackend; "
-                "install aiokafka>=0.10"
+                "install aiokafka>=0.10",
             ) from exc
         self._consumer = AIOKafkaConsumer(
             *topics,
@@ -180,7 +180,7 @@ class DebeziumEventsCDCBackend(CDCSource):
         return self._consumer
 
     async def subscribe(
-        self, *, tables: list[str], start_cursor: CDCCursor | None = None
+        self, *, tables: list[str], start_cursor: CDCCursor | None = None,
     ) -> AsyncIterator[CDCEvent]:
         """Подписаться на Kafka topics ``<prefix>.<table>``.
 
@@ -262,13 +262,13 @@ class DebeziumEventsCDCBackend(CDCSource):
             tp = TopicPartition(topic, int(partition_str))
             # commit offset+1 (next message to read)
             await self._consumer.commit(
-                {tp: OffsetAndMetadata(int(offset_str) + 1, "")}
+                {tp: OffsetAndMetadata(int(offset_str) + 1, "")},
             )
         except (ValueError, KeyError) as exc:
             _logger.warning("Invalid cursor for commit %r: %s", cursor.value, exc)
 
     async def replay(
-        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
+        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None,
     ) -> AsyncIterator[CDCEvent]:
         """Replay через ``consumer.seek()`` — rewind и re-read.
 
@@ -296,7 +296,7 @@ class DebeziumEventsCDCBackend(CDCSource):
             self._consumer.seek(tp, int(offset_str))
         except (ValueError, KeyError) as exc:
             _logger.error(
-                "Invalid start_cursor for replay %r: %s", start_cursor.value, exc
+                "Invalid start_cursor for replay %r: %s", start_cursor.value, exc,
             )
             return
 
@@ -323,7 +323,7 @@ class DebeziumEventsCDCBackend(CDCSource):
                     if end_offset is not None and msg.offset >= end_offset:
                         return
                     event = parse_debezium_event(
-                        msg.value, kafka_offset=msg.offset, kafka_partition=tp.partition
+                        msg.value, kafka_offset=msg.offset, kafka_partition=tp.partition,
                     )
                     if event is not None:
                         yield event

@@ -124,7 +124,7 @@ def build_reversible_gold_set(n: int = 500) -> list[GoldSetDoc]:
                                     "id": f"doc-{counter:04d}",
                                     "text": text,
                                     "expected_entities": entities,
-                                }
+                                },
                             )
                             counter += 1
     return docs
@@ -152,7 +152,7 @@ def _dump_yaml(docs: list[GoldSetDoc]) -> str:
         text_escaped = doc["text"].replace('"', '\\"')
         lines.append(f'    text: "{text_escaped}"\n')
         lines.append(
-            f"    expected_entities: [{', '.join(doc['expected_entities'])}]\n"
+            f"    expected_entities: [{', '.join(doc['expected_entities'])}]\n",
         )
     return "".join(lines)
 

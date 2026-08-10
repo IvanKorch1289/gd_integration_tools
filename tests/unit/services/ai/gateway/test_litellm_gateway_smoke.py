@@ -46,7 +46,7 @@ async def test_gateway_acompletion_calls_litellm(
     """Подменяем litellm в sys.modules, проверяем вызов acompletion."""
     fake_litellm = SimpleNamespace(
         acompletion=AsyncMock(
-            return_value={"choices": [{"message": {"content": "ok"}}]}
+            return_value={"choices": [{"message": {"content": "ok"}}]},
         ),
         success_callback=[],
         exceptions=_FAKE_EXCEPTIONS,
@@ -56,7 +56,7 @@ async def test_gateway_acompletion_calls_litellm(
     gw = LiteLLMGateway()
     gw._enabled = True
     result = await gw.acompletion(
-        [{"role": "user", "content": "hi"}], model="openai/gpt-4o-mini"
+        [{"role": "user", "content": "hi"}], model="openai/gpt-4o-mini",
     )
     assert result["choices"][0]["message"]["content"] == "ok"
     fake_litellm.acompletion.assert_awaited_once()

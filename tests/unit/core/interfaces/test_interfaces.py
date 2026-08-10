@@ -48,7 +48,7 @@ def test_antivirus_scan_result_defaults() -> None:
 
 def test_antivirus_scan_result_full() -> None:
     result = AntivirusScanResult(
-        clean=False, signature="EICAR", backend="clamav", latency_ms=12.5
+        clean=False, signature="EICAR", backend="clamav", latency_ms=12.5,
     )
     assert result.clean is False
     assert result.signature == "EICAR"
@@ -78,7 +78,7 @@ def test_notification_message_defaults() -> None:
 
 def test_notification_message_full() -> None:
     msg = NotificationMessage(
-        recipient="u1", subject="hi", body="hello", metadata={"k": "v"}
+        recipient="u1", subject="hi", body="hello", metadata={"k": "v"},
     )
     assert msg.metadata == {"k": "v"}
 
@@ -89,7 +89,7 @@ def test_notification_message_full() -> None:
 def test_capability_gateway_protocol_runtime_checkable() -> None:
     class DummyGate:
         def check(
-            self, plugin: str, capability: str, scope: str | None = None
+            self, plugin: str, capability: str, scope: str | None = None,
         ) -> None: ...
 
         def declare(self, plugin: str, capabilities: Any) -> None: ...
@@ -106,7 +106,7 @@ def test_capability_gateway_protocol_runtime_checkable() -> None:
 def test_object_storage_supports_presigned_default() -> None:
     class DummyStorage(ObjectStorage):
         async def upload(
-            self, key: str, data: bytes, content_type: str | None = None
+            self, key: str, data: bytes, content_type: str | None = None,
         ) -> str:
             return ""
 
@@ -258,12 +258,12 @@ async def test_async_batcher_flush_empty() -> None:
 @pytest.mark.asyncio
 async def test_async_batcher_start_stop() -> None:
     with patch(
-        "src.backend.core.utils.task_registry.get_task_registry"
+        "src.backend.core.utils.task_registry.get_task_registry",
     ) as mock_registry:
         mock_task = MagicMock()
         mock_registry.return_value.create_task.return_value = mock_task
         batcher = AsyncBatcher(
-            lambda b: None, batch_size=10, flush_interval_seconds=0.01
+            lambda b: None, batch_size=10, flush_interval_seconds=0.01,
         )
         await batcher.start()
         assert batcher._running is True
@@ -279,7 +279,7 @@ async def test_async_batcher_periodic_flush() -> None:
         flushed.extend(batch)
 
     with patch(
-        "src.backend.core.utils.task_registry.get_task_registry"
+        "src.backend.core.utils.task_registry.get_task_registry",
     ) as mock_registry:
         mock_task = MagicMock()
         mock_registry.return_value.create_task.return_value = mock_task

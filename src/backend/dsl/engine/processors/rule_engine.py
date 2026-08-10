@@ -139,5 +139,5 @@ class EvaluateRulesProcessor(BaseProcessor):
                 "context_from": self.params.context_from,
                 "decision_to": self.params.decision_to,
                 "default_decision": self.params.default_decision,
-            }
+            },
         }

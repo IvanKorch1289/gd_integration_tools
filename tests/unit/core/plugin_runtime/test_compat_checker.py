@@ -26,7 +26,7 @@ from src.backend.core.plugin_runtime.manifest_toml import (
 
 
 def _make_manifest(
-    name: str, version: str, *, compatibility: PluginCompatibility | None = None
+    name: str, version: str, *, compatibility: PluginCompatibility | None = None,
 ) -> PluginManifest:
     return PluginManifest(
         name=name,

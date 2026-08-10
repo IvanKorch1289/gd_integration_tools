@@ -48,7 +48,7 @@ class EventSchemaValidationError(BaseError):
     def __init__(self, channel: str, event_type: str, reason: str) -> None:
         super().__init__(
             f"EventBus schema validation failed for channel='{channel}', "
-            f"event_type='{event_type}': {reason}"
+            f"event_type='{event_type}': {reason}",
         )
         self.channel = channel
         self.event_type = event_type
@@ -163,7 +163,7 @@ class EventBus:
             jsonschema.validate(instance=event.model_dump(), schema=entry.spec_schema)
         except jsonschema.ValidationError as exc:  # pragma: no cover
             raise EventSchemaValidationError(
-                channel=channel, event_type=event_type, reason=exc.message
+                channel=channel, event_type=event_type, reason=exc.message,
             ) from exc
         except ImportError:  # pragma: no cover - jsonschema опциональный
             logger.debug("jsonschema not installed; skipping EventBus validation")
@@ -193,7 +193,7 @@ class EventBus:
         if not quota_result.get("allowed", True):
             from src.backend.core.tenancy.quotas import QuotaExceeded
             raise QuotaExceeded(
-                f"EventBus publish rate limit exceeded for channel {channel}"
+                f"EventBus publish rate limit exceeded for channel {channel}",
             )
         self._validate_event(channel, event)
 
@@ -203,7 +203,7 @@ class EventBus:
             # (see ``plugins/composition/lifespan.py``).
             raise EventBusNotStartedError(
                 f"EventBus.publish() called before start() for channel "
-                f"{channel!r} (broker={self._broker!r}, started={self._started})"
+                f"{channel!r} (broker={self._broker!r}, started={self._started})",
             )
 
         try:
@@ -214,7 +214,7 @@ class EventBus:
         logger.debug("Published to %s: %s", channel, event.__class__.__name__)
 
     async def publish_order_event(
-        self, order_id: int, action: str, payload: dict[str, Any] | None = None
+        self, order_id: int, action: str, payload: dict[str, Any] | None = None,
     ) -> None:
         """Publish order event.
 
@@ -265,7 +265,7 @@ class EventBus:
     async def publish_route_event(self, route_id: str, action: str) -> None:
         """Метод publish_route_event (см. signature)."""
         await self.publish(
-            "events.routes", RouteEvent(route_id=route_id, action=action)
+            "events.routes", RouteEvent(route_id=route_id, action=action),
         )
 
     async def subscribe(self, channel: str, handler: Any) -> Any:
@@ -280,7 +280,7 @@ class EventBus:
         """
         if not self._broker or not self._started:
             logger.warning(
-                "EventBus.subscribe: broker not started, channel=%s ignored", channel
+                "EventBus.subscribe: broker not started, channel=%s ignored", channel,
             )
             return None
         try:

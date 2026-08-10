@@ -98,7 +98,7 @@ class ControlFlowMixin:
                 try_processors=try_processors,
                 catch_processors=catch_processors,
                 finally_processors=finally_processors,
-            )
+            ),
         )
 
     def retry(
@@ -116,7 +116,7 @@ class ControlFlowMixin:
                 max_attempts=max_attempts,
                 delay_seconds=delay_seconds,
                 backoff=backoff,
-            )
+            ),
         )
 
     def fallback(self, processors: list[BaseProcessor]) -> RouteBuilder:
@@ -124,11 +124,11 @@ class ControlFlowMixin:
         return self._add(FallbackChainProcessor(processors=processors))  # type: ignore[attr-defined]
 
     def dead_letter(
-        self, processors: list[BaseProcessor], *, dlq_stream: str = "dsl-dlq"
+        self, processors: list[BaseProcessor], *, dlq_stream: str = "dsl-dlq",
     ) -> RouteBuilder:
         """Dead Letter Channel: при ошибке — отправка в Redis stream."""
         return self._add(  # type: ignore[attr-defined]
-            DeadLetterProcessor(processors=processors, dlq_stream=dlq_stream)
+            DeadLetterProcessor(processors=processors, dlq_stream=dlq_stream),
         )
 
     def on_error(
@@ -161,7 +161,7 @@ class ControlFlowMixin:
         current = list(self._processors)  # type: ignore[attr-defined]
         self._processors.clear()  # type: ignore[attr-defined]
         wrapped = DeadLetterProcessor(
-            processors=current + handler_procs, dlq_stream=dlq_stream
+            processors=current + handler_procs, dlq_stream=dlq_stream,
         )
         self._processors.append(wrapped)  # type: ignore[attr-defined]
         return self  # type: ignore[return-value]
@@ -169,11 +169,11 @@ class ControlFlowMixin:
     # ── Concurrent / parallel / saga ──
 
     def parallel(
-        self, branches: dict[str, list[BaseProcessor]], *, strategy: str = "all"
+        self, branches: dict[str, list[BaseProcessor]], *, strategy: str = "all",
     ) -> RouteBuilder:
         """Параллельное выполнение именованных веток. strategy: all|first."""
         return self._add(  # type: ignore[attr-defined]
-            ParallelProcessor(branches=branches, strategy=strategy)
+            ParallelProcessor(branches=branches, strategy=strategy),
         )
 
     def fork_join(
@@ -232,8 +232,8 @@ class ControlFlowMixin:
         """Идемпотентный consumer: дедупликация через Redis SET NX EX."""
         return self._add(  # type: ignore[attr-defined]
             IdempotentConsumerProcessor(
-                key_expression=key_expression, ttl_seconds=ttl_seconds
-            )
+                key_expression=key_expression, ttl_seconds=ttl_seconds,
+            ),
         )
 
     # ── Time control / circuit_breaker / loop ──
@@ -250,7 +250,7 @@ class ControlFlowMixin:
     ) -> RouteBuilder:
         """Delay: задержка на N миллисекунд или до timestamp."""
         return self._add(  # type: ignore[attr-defined]
-            DelayProcessor(delay_ms=delay_ms, scheduled_time_fn=scheduled_time_fn)
+            DelayProcessor(delay_ms=delay_ms, scheduled_time_fn=scheduled_time_fn),
         )
 
     def circuit_breaker(
@@ -276,7 +276,7 @@ class ControlFlowMixin:
                 recovery_timeout=recovery_timeout,
                 fallback_processors=fallback_processors,
                 breaker_name=breaker_name,
-            )
+            ),
         )
 
     def loop(
@@ -353,7 +353,7 @@ class ControlFlowMixin:
                 ttl_seconds=ttl_seconds,
                 header_name=header_name,
                 drop_action=drop_action,
-            )
+            ),
         )
 
     def correlation_id(self, *, header: str = "x-correlation-id") -> RouteBuilder:
@@ -413,7 +413,7 @@ class ControlFlowMixin:
                 timeout_seconds=timeout_seconds,
                 payload_path=payload_path,
                 request_info_processors=request_info_processors,
-            )
+            ),
         )
 
     def result_unwrap(
@@ -476,7 +476,7 @@ class ControlFlowMixin:
         return self  # type: ignore[return-value]
 
     def supervisor(
-        self, *, max_restarts: int = 3, timeout: float = 60.0, backoff: float = 2.0
+        self, *, max_restarts: int = 3, timeout: float = 60.0, backoff: float = 2.0,
     ) -> RouteBuilder:
         """Supervisor pattern для fault-tolerant execution.
 

@@ -66,7 +66,7 @@ class IntegrationSendProcessor(BaseProcessor):
         facade = get_integration_facade()
         try:
             result = await facade.send_to_sink(
-                self._sink_id, payload, tenant_id=tenant_id
+                self._sink_id, payload, tenant_id=tenant_id,
             )
             exchange.set_property(
                 self._result_property,

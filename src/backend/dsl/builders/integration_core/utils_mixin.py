@@ -33,7 +33,7 @@ class UtilsMixin:
                 data_property=data_property,
                 on_threat=on_threat,
                 result_property=result_property,
-            )
+            ),
         )
 
     def call_function(
@@ -66,11 +66,11 @@ class UtilsMixin:
                 payload_from=payload_from,
                 result_property=result_property,
                 inject=inject,
-            )
+            ),
         )
 
     def get_setting(
-        self, path: str, *, to: str = "body.setting", default: Any = None
+        self, path: str, *, to: str = "body.setting", default: Any = None,
     ) -> RouteBuilder:
         """Чтение настройки из application config (R-V15-17).
 
@@ -84,7 +84,7 @@ class UtilsMixin:
         from src.backend.dsl.engine.processors.get_setting import GetSettingProcessor
 
         return self._add(  # type: ignore[attr-defined]
-            GetSettingProcessor(path=path, to=to, default=default)
+            GetSettingProcessor(path=path, to=to, default=default),
         )
 
     def validate_response(
@@ -109,7 +109,7 @@ class UtilsMixin:
         )
 
         return self._add(  # type: ignore[attr-defined]
-            ResponseValidatorProcessor(schema=schema, on_error=on_error, source=source)
+            ResponseValidatorProcessor(schema=schema, on_error=on_error, source=source),
         )
 
     def render_docx(
@@ -138,9 +138,9 @@ class UtilsMixin:
         return self._add(  # type: ignore[attr-defined]
             RenderDocxProcessor(
                 RenderDocxParams(
-                    template=template, context_from=context_from, output_to=output_to
-                )
-            )
+                    template=template, context_from=context_from, output_to=output_to,
+                ),
+            ),
         )
 
     def render_xlsx(
@@ -175,8 +175,8 @@ class UtilsMixin:
                     context_from=context_from,
                     output_to=output_to,
                     mode=mode,
-                )
-            )
+                ),
+            ),
         )
 
     def evaluate_rules(
@@ -214,12 +214,12 @@ class UtilsMixin:
                     context_from=context_from,
                     decision_to=decision_to,
                     default_decision=default_decision,
-                )
-            )
+                ),
+            ),
         )
 
     def jq_query(
-        self, expr: str, *, to: str = "body.jq_result", mode: str = "all"
+        self, expr: str, *, to: str = "body.jq_result", mode: str = "all",
     ) -> RouteBuilder:
         """JMESPath query via jq processor.
 
@@ -362,7 +362,7 @@ class UtilsMixin:
         )
 
     def ics_calendar(
-        self, mode: str, *, source: str = "body", to: str = "body.events"
+        self, mode: str, *, source: str = "body", to: str = "body.events",
     ) -> RouteBuilder:
         """Parse/render iCalendar (RFC 5545) data.
 
@@ -409,7 +409,7 @@ class UtilsMixin:
                 sink_id=sink_id,
                 payload_from=payload_from,
                 result_property=result_property,
-            )
+            ),
         )
 
     def facade_get_health(

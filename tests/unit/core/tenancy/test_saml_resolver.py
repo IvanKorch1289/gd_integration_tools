@@ -42,7 +42,7 @@ async def test_resolve_with_budget(auth_result: SamlAuthResult) -> None:
     budget = TokenBudget(
         backend=InMemoryTokenBudgetBackend(),
         default_config=TokenBudgetConfig(
-            soft_limit=100, hard_limit=200, period=BudgetPeriod.DAILY
+            soft_limit=100, hard_limit=200, period=BudgetPeriod.DAILY,
         ),
     )
     await budget.reserve(tenant_id="bank-corp", tokens=150)

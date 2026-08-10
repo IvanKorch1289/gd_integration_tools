@@ -60,7 +60,7 @@ class GroupsToCapabilities(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     mappings: dict[str, list[str]] = Field(
-        default_factory=dict, description="IdP group → список capability-scope'ов."
+        default_factory=dict, description="IdP group → список capability-scope'ов.",
     )
 
     def resolve(self, groups: list[str]) -> list[str]:
@@ -100,10 +100,10 @@ class IdpConfig(BaseModel):
     entity_id: str = Field(..., min_length=1, description="IdP entity-id (SAML).")
     sso_url: str = Field(..., min_length=1, description="IdP SAML SSO URL.")
     x509_cert: str = Field(
-        ..., min_length=1, description="Публичный сертификат IdP (PEM)."
+        ..., min_length=1, description="Публичный сертификат IdP (PEM).",
     )
     slo_url: str | None = Field(
-        default=None, description="Single Logout URL (опционально)."
+        default=None, description="Single Logout URL (опционально).",
     )
     allow_create_user: bool = Field(
         default=False,

@@ -61,7 +61,7 @@ def test_runner_config_defaults() -> None:
 
 def test_runner_config_custom() -> None:
     cfg = RunnerConfig(
-        worker_id="custom-worker", max_concurrent=4, batch_size=10, retry_jitter=0.5
+        worker_id="custom-worker", max_concurrent=4, batch_size=10, retry_jitter=0.5,
     )
     assert cfg.worker_id == "custom-worker"
     assert cfg.max_concurrent == 4
@@ -175,7 +175,7 @@ def test_durable_workflow_runner_init_with_mocked_stores() -> None:
 
 
 def _build_runner(
-    *, listener_dsn: str | None = None, max_concurrent: int = 2
+    *, listener_dsn: str | None = None, max_concurrent: int = 2,
 ) -> tuple[DurableWorkflowRunner, MagicMock, MagicMock, MagicMock]:
     """Construct a runner with fully mocked state/event stores + executor.
 
@@ -256,7 +256,7 @@ async def test_start_with_listener_dsn_creates_listen_task() -> None:
 
 
 def _make_instance(
-    workflow_id: UUID | None = None, status: WorkflowStatus = WorkflowStatus.running
+    workflow_id: UUID | None = None, status: WorkflowStatus = WorkflowStatus.running,
 ) -> WorkflowInstanceRow:
     now = datetime.now(UTC)
     return WorkflowInstanceRow(
@@ -302,7 +302,7 @@ async def test_apply_outcome_failed_transitions_to_failed_with_error() -> None:
     result = StepResult(outcome=StepOutcome.FAILED, error_message="boom")
     await runner._apply_outcome(wf_id, result, _make_state(), instance)
     state_store.update_status.assert_awaited_once_with(
-        wf_id, WorkflowStatus.failed, error="boom"
+        wf_id, WorkflowStatus.failed, error="boom",
     )
 
 
@@ -325,7 +325,7 @@ async def test_apply_outcome_pause_sets_next_attempt_at() -> None:
     wf_id = uuid.uuid4()
     instance = _make_instance(workflow_id=wf_id)
     result = StepResult(
-        outcome=StepOutcome.PAUSE, next_attempt_at=datetime(2030, 1, 1, tzinfo=UTC)
+        outcome=StepOutcome.PAUSE, next_attempt_at=datetime(2030, 1, 1, tzinfo=UTC),
     )
     await runner._apply_outcome(wf_id, result, _make_state(attempts=2), instance)
     state_store.update_status.assert_awaited_once()
@@ -383,7 +383,7 @@ async def test_apply_outcome_unknown_outcome_treated_as_pause() -> None:
 )
 @settings(max_examples=50, deadline=None)
 def test_compute_backoff_within_jittered_bounds(
-    attempt: int, base: float, mult: float, max_delay: float, jitter: float
+    attempt: int, base: float, mult: float, max_delay: float, jitter: float,
 ) -> None:
     """_compute_backoff returns delay in [(1-j)*raw, (1+j)*raw] for any attempt."""
     cfg = RunnerConfig(
@@ -442,7 +442,7 @@ def test_on_notify_valid_uuid_enqueues() -> None:
     wf_id = uuid.uuid4()
     fake_conn = MagicMock(name="conn")
     runner._on_notify(
-        fake_conn, _pid=1234, channel="workflow_pending", payload=str(wf_id)
+        fake_conn, _pid=1234, channel="workflow_pending", payload=str(wf_id),
     )
     assert runner._pending_instance_ids.qsize() == 1
     assert runner._pending_instance_ids.get_nowait() == wf_id
@@ -455,14 +455,14 @@ def test_on_notify_invalid_uuid_drops_and_warns() -> None:
     fake_conn = MagicMock(name="conn")
     with patch.object(runner_module._logger, "warning") as warn:
         runner._on_notify(
-            fake_conn, _pid=42, channel="workflow_pending", payload="not-a-uuid"
+            fake_conn, _pid=42, channel="workflow_pending", payload="not-a-uuid",
         )
     assert runner._pending_instance_ids.empty()
     warn.assert_called_once()
     # Warning should mention the bad payload.
     args = warn.call_args.args
     assert "not-a-uuid" in (args[0] if args else "") or "not-a-uuid" in str(
-        warn.call_args
+        warn.call_args,
     )
 
 
@@ -488,7 +488,7 @@ def test_on_notify_queue_full_drops_silently() -> None:
     fake_conn = MagicMock(name="conn")
     # Should NOT raise (QueueFull is caught).
     runner._on_notify(
-        fake_conn, _pid=99, channel="workflow_pending", payload=str(uuid.uuid4())
+        fake_conn, _pid=99, channel="workflow_pending", payload=str(uuid.uuid4()),
     )
     # Queue still has just the original item.
     assert runner._pending_instance_ids.qsize() == 1
@@ -500,7 +500,7 @@ def test_on_notify_queue_full_drops_silently() -> None:
 @pytest.mark.skip(
     reason="S180 regression test relies on WorkflowState.replay() with non-empty "
     "event stream + DB lock semantics — too heavy for unit test, covered by "
-    "integration tests against PG instance."
+    "integration tests against PG instance.",
 )
 @pytest.mark.unit
 @pytest.mark.asyncio
@@ -531,7 +531,7 @@ async def test_paused_workflow_releases_semaphore() -> None:
 
     # Mock executor to return PAUSE outcome
     pause_result = StepResult(
-        outcome=StepOutcome.PAUSE, events=[], next_attempt_at=datetime.now(UTC)
+        outcome=StepOutcome.PAUSE, events=[], next_attempt_at=datetime.now(UTC),
     )
     executor.execute_next = AsyncMock(return_value=pause_result)
 

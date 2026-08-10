@@ -18,7 +18,7 @@ from src.backend.core.ai import AIGateway, AIRequest, AIResponse
 def test_ai_request_dataclass_defaults() -> None:
     """AIRequest имеет ожидаемые поля и slots."""
     req = AIRequest(
-        workflow_id="credit_check", tenant_id="t-1", correlation_id="req-abc"
+        workflow_id="credit_check", tenant_id="t-1", correlation_id="req-abc",
     )
     assert req.workflow_id == "credit_check"
     assert req.tenant_id == "t-1"
@@ -61,7 +61,7 @@ async def test_invoke_pass_through_when_flag_off(
 
     gateway = AIGateway()
     response = await gateway.invoke(
-        AIRequest(workflow_id="credit_check", tenant_id="t-1", correlation_id="req-abc")
+        AIRequest(workflow_id="credit_check", tenant_id="t-1", correlation_id="req-abc"),
     )
     assert isinstance(response, AIResponse)
     assert response.model_used == "pass-through-scaffold"
@@ -90,7 +90,7 @@ async def test_invoke_enforced_runs_pipeline(monkeypatch: pytest.MonkeyPatch) ->
                 tenant_id="t-1",
                 correlation_id="req-abc",
                 prompt_inline="Hello AI",
-            )
+            ),
         )
 
 

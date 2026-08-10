@@ -75,7 +75,7 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
         if action not in _VALID_ACTIONS:
             raise ValueError(
                 f"desktop_pyautogui: action must be one of {sorted(_VALID_ACTIONS)}, "
-                f"got {action!r}"
+                f"got {action!r}",
             )
         self._action = action
         self._x = x

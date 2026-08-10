@@ -98,7 +98,7 @@ class TestGraphQlInfoHelpers:
                 method=AuthMethod.API_KEY,
                 principal="alice",
                 metadata={"permissions": ["role:admin"]},
-            )
+            ),
         )
         assert graphql_schema._principal_from_info(info) == "alice"
 
@@ -123,7 +123,7 @@ class TestGraphQlInfoHelpers:
                 method=AuthMethod.API_KEY,
                 principal="alice",
                 metadata={"permissions": ["role:admin", "scope:read"]},
-            )
+            ),
         )
         assert graphql_schema._permissions_from_info(info) == (
             "role:admin",
@@ -137,7 +137,7 @@ class TestGraphQlInfoHelpers:
                 method=AuthMethod.JWT,
                 principal="bob",
                 metadata={"scope": "credit.read credit.write"},
-            )
+            ),
         )
         assert graphql_schema._permissions_from_info(info) == (
             "scope:credit.read",
@@ -147,7 +147,7 @@ class TestGraphQlInfoHelpers:
     def test_permissions_from_info_no_metadata(self) -> None:
         """AuthContext без metadata → ``()`` (fail-closed)."""
         info = _make_info_with_auth(
-            AuthContext(method=AuthMethod.API_KEY, principal="carol")
+            AuthContext(method=AuthMethod.API_KEY, principal="carol"),
         )
         assert graphql_schema._permissions_from_info(info) == ()
 
@@ -214,7 +214,7 @@ class TestGraphQlDispatchDslAuthContext:
         captured: dict[str, Any] = {}
 
         async def fake_dispatch(
-            *, route_id: str, body: Any, headers: Any, context: Any
+            *, route_id: str, body: Any, headers: Any, context: Any,
         ) -> Any:
             captured["principal"] = context.principal
             captured["permissions"] = context.permissions
@@ -234,7 +234,7 @@ class TestGraphQlDispatchDslAuthContext:
             return exchange
 
         with patch(
-            "src.backend.entrypoints.graphql.schema.get_dsl_service"
+            "src.backend.entrypoints.graphql.schema.get_dsl_service",
         ) as mock_get_dsl:
             mock_dsl = MagicMock()
             mock_dsl.dispatch = AsyncMock(side_effect=fake_dispatch)
@@ -323,7 +323,7 @@ class TestGraphQlResolversAuthPropagation:
         captured: dict[str, Any] = {}
 
         async def fake_dispatch(
-            *, route_id: str, body: Any, headers: Any, context: Any
+            *, route_id: str, body: Any, headers: Any, context: Any,
         ) -> Any:
             captured["principal"] = context.principal
             captured["permissions"] = context.permissions
@@ -339,7 +339,7 @@ class TestGraphQlResolversAuthPropagation:
             return exchange
 
         with patch(
-            "src.backend.entrypoints.graphql.schema.get_dsl_service"
+            "src.backend.entrypoints.graphql.schema.get_dsl_service",
         ) as mock_get_dsl:
             mock_dsl = MagicMock()
             mock_dsl.dispatch = AsyncMock(side_effect=fake_dispatch)
@@ -355,7 +355,7 @@ class TestGraphQlResolversAuthPropagation:
             info = _make_info_with_auth(auth)
 
             await query_instance.dsl_query(
-                route_id="r1", payload={"k": "v"}, info=info
+                route_id="r1", payload={"k": "v"}, info=info,
             )
 
         assert captured["principal"] == "alice"
@@ -367,7 +367,7 @@ class TestGraphQlResolversAuthPropagation:
         captured: dict[str, Any] = {}
 
         async def fake_dispatch(
-            *, route_id: str, body: Any, headers: Any, context: Any
+            *, route_id: str, body: Any, headers: Any, context: Any,
         ) -> Any:
             captured["principal"] = context.principal
             captured["permissions"] = context.permissions
@@ -383,7 +383,7 @@ class TestGraphQlResolversAuthPropagation:
             return exchange
 
         with patch(
-            "src.backend.entrypoints.graphql.schema.get_dsl_service"
+            "src.backend.entrypoints.graphql.schema.get_dsl_service",
         ) as mock_get_dsl:
             mock_dsl = MagicMock()
             mock_dsl.dispatch = AsyncMock(side_effect=fake_dispatch)
@@ -398,7 +398,7 @@ class TestGraphQlResolversAuthPropagation:
             info = _make_info_with_auth(auth)
 
             await mutation_instance.dsl_execute(
-                route_id="r1", payload={"k": "v"}, info=info
+                route_id="r1", payload={"k": "v"}, info=info,
             )
 
         assert captured["principal"] == "bob"
@@ -413,7 +413,7 @@ class TestGraphQlResolversAuthPropagation:
         captured: dict[str, Any] = {}
 
         async def fake_dispatch(
-            *, route_id: str, body: Any, headers: Any, context: Any
+            *, route_id: str, body: Any, headers: Any, context: Any,
         ) -> Any:
             captured["principal"] = context.principal
             captured["permissions"] = context.permissions
@@ -429,7 +429,7 @@ class TestGraphQlResolversAuthPropagation:
             return exchange
 
         with patch(
-            "src.backend.entrypoints.graphql.schema.get_dsl_service"
+            "src.backend.entrypoints.graphql.schema.get_dsl_service",
         ) as mock_get_dsl:
             mock_dsl = MagicMock()
             mock_dsl.dispatch = AsyncMock(side_effect=fake_dispatch)
@@ -440,7 +440,7 @@ class TestGraphQlResolversAuthPropagation:
             info = _make_info_without_auth()
 
             await query_instance.dsl_query(
-                route_id="r1", payload={"k": "v"}, info=info
+                route_id="r1", payload={"k": "v"}, info=info,
             )
 
         assert captured["principal"] == ""

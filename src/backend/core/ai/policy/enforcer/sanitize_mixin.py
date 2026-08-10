@@ -21,7 +21,7 @@ class SanitizeMixin:
         _protocol_self: _AIPolicyEnforcerProtocol
 
     async def sanitize_input(
-        self: _AIPolicyEnforcerProtocol, request: AIRequest, policy: AIPolicySpec
+        self: _AIPolicyEnforcerProtocol, request: AIRequest, policy: AIPolicySpec,
     ) -> str:
         """Применить :attr:`AIPolicySpec.input_sanitizers` (PIITokenizer).
 
@@ -58,7 +58,7 @@ class SanitizeMixin:
         return getattr(result, "sanitized_text", prompt)
 
     async def sanitize_output(
-        self: _AIPolicyEnforcerProtocol, response: AIResponse, policy: AIPolicySpec
+        self: _AIPolicyEnforcerProtocol, response: AIResponse, policy: AIPolicySpec,
     ) -> AIResponse:
         """Применить :attr:`AIPolicySpec.output_sanitizers` (PII redaction).
 

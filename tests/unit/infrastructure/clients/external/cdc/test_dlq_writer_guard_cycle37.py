@@ -137,7 +137,7 @@ async def test_cdc_send_to_dlq_no_writer_required_raises_runtime_error() -> None
         raise RuntimeError("callback boom")
 
     sub = CDCSubscription(
-        profile="prod", tables=["orders"], strategy="polling", callback=bad_cb
+        profile="prod", tables=["orders"], strategy="polling", callback=bad_cb,
     )
     event = CDCEvent(
         operation="INSERT",
@@ -158,7 +158,7 @@ async def test_cdc_send_to_dlq_with_writer_writes_envelope() -> None:
     client = CDCClient(dlq_writer=writer)
 
     sub = CDCSubscription(
-        profile="prod", tables=["orders"], strategy="polling"
+        profile="prod", tables=["orders"], strategy="polling",
     )
     event_dict = {
         "operation": "INSERT",
@@ -170,7 +170,7 @@ async def test_cdc_send_to_dlq_with_writer_writes_envelope() -> None:
     }
 
     await client._send_to_dlq(
-        sub, event_dict, RuntimeError("boom"), stage="callback"
+        sub, event_dict, RuntimeError("boom"), stage="callback",
     )
 
     assert writer.write_calls == 1
@@ -188,7 +188,7 @@ async def test_cdc_send_to_dlq_no_writer_dev_returns_silently() -> None:
     client = CDCClient(dlq_required=False)  # no writer, dev mode
 
     sub = CDCSubscription(
-        profile="dev", tables=["orders"], strategy="polling"
+        profile="dev", tables=["orders"], strategy="polling",
     )
     event_dict = {
         "operation": "INSERT",
@@ -201,7 +201,7 @@ async def test_cdc_send_to_dlq_no_writer_dev_returns_silently() -> None:
 
     # Must NOT raise — log+drop legacy.
     await client._send_to_dlq(
-        sub, event_dict, RuntimeError("dev boom"), stage="callback"
+        sub, event_dict, RuntimeError("dev boom"), stage="callback",
     )
 
 
@@ -317,7 +317,7 @@ async def test_cdc_dispatch_with_writer_required_no_error() -> None:
         raise RuntimeError("callback boom")
 
     sub = CDCSubscription(
-        profile="prod", tables=["orders"], strategy="polling", callback=bad_cb
+        profile="prod", tables=["orders"], strategy="polling", callback=bad_cb,
     )
     event = CDCEvent(
         operation="INSERT",

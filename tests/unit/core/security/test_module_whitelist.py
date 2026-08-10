@@ -14,20 +14,20 @@ class TestValidateModuleWhitelist:
     def test_exact_module_match_is_allowed(self) -> None:
         """Точное имя модуля из whitelist разрешается."""
         validate_module_whitelist(
-            "extensions.credit.functions", ["extensions.credit.functions"]
+            "extensions.credit.functions", ["extensions.credit.functions"],
         )
 
     def test_namespace_wildcard_allows_only_descendants(self) -> None:
         """Шаблон ``prefix.*`` не разрешает сам prefix и соседний namespace."""
         validate_module_whitelist(
-            "extensions.credit.functions", ["extensions.credit.*"]
+            "extensions.credit.functions", ["extensions.credit.*"],
         )
 
         with pytest.raises(PermissionError, match="not in whitelist"):
             validate_module_whitelist("extensions.credit", ["extensions.credit.*"])
         with pytest.raises(PermissionError, match="not in whitelist"):
             validate_module_whitelist(
-                "extensions.credits.functions", ["extensions.credit.*"]
+                "extensions.credits.functions", ["extensions.credit.*"],
             )
 
     def test_empty_whitelist_can_preserve_explicit_dev_fallback(self) -> None:

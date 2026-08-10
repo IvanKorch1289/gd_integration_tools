@@ -17,7 +17,7 @@ __all__ = ("InvocationRequestSchema", "InvocationResponseSchema")
 
 #: Допустимые режимы вызова (string-aliases :class:`InvocationMode`).
 InvocationModeLiteral = Literal[
-    "sync", "async-api", "async-queue", "deferred", "background", "streaming"
+    "sync", "async-api", "async-queue", "deferred", "background", "streaming",
 ]
 
 
@@ -38,10 +38,10 @@ class InvocationRequestSchema(BaseSchema):
         min_length=1,
     )
     payload: dict[str, Any] = Field(
-        default_factory=dict, description="Полезная нагрузка вызова."
+        default_factory=dict, description="Полезная нагрузка вызова.",
     )
     mode: InvocationModeLiteral = Field(
-        default="sync", description="Режим выполнения через Invoker."
+        default="sync", description="Режим выполнения через Invoker.",
     )
     reply_channel: str | None = Field(
         default=None,
@@ -56,17 +56,17 @@ class InvocationResponseSchema(BaseSchema):
     """Унифицированный JSON-ответ Invoker."""
 
     invocation_id: str = Field(
-        description="Уникальный id вызова — единый для трейсинга."
+        description="Уникальный id вызова — единый для трейсинга.",
     )
     status: Literal["ok", "accepted", "error"] = Field(
-        description="Финальный статус (sync/streaming) либо подтверждение приёма."
+        description="Финальный статус (sync/streaming) либо подтверждение приёма.",
     )
     mode: InvocationModeLiteral = Field(
-        description="Режим, с которым был запущен вызов."
+        description="Режим, с которым был запущен вызов.",
     )
     result: Any | None = Field(
-        default=None, description="Результат (только для sync; иначе null)."
+        default=None, description="Результат (только для sync; иначе null).",
     )
     error: str | None = Field(
-        default=None, description="Текст ошибки (если status=error)."
+        default=None, description="Текст ошибки (если status=error).",
     )

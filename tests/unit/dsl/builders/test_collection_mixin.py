@@ -13,7 +13,7 @@ from src.backend.dsl.builders.collection_mixin import CollectionMixin
 class TestCollect:
     def test_collect_simple(self) -> None:
         result = CollectionMixin.collect(
-            [{"name": "a"}, {"name": "b"}, {"name": "c"}], field="name"
+            [{"name": "a"}, {"name": "b"}, {"name": "c"}], field="name",
         )
         assert result == ["a", "b", "c"]
 
@@ -176,7 +176,7 @@ class TestEdgeCases:
             try:
                 for i in range(100):
                     r = CollectionMixin.find_all(
-                        list(range(100)), predicate=lambda x, v=i: x == v
+                        list(range(100)), predicate=lambda x, v=i: x == v,
                     )
                     results.append(r)
             except Exception as e:

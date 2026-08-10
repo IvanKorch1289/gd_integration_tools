@@ -59,7 +59,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
     """
 
     def _enforce_tool_policy_once(
-        self, request: AIRequest, policy: object | None
+        self, request: AIRequest, policy: object | None,
     ) -> None:
         """Единая точка enforce tool whitelist/blacklist (S172 M1.3, ARC-003, S209 fix).
 
@@ -104,7 +104,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 raise ToolPolicyViolationError(
                     f"Tool policy for workflow_id={request.workflow_id!r} has empty "
                     f"whitelist AND empty blacklist — deny-all by default (S209). "
-                    f"Set tools.allow_all_tools=True to opt into allow-all behavior."
+                    f"Set tools.allow_all_tools=True to opt into allow-all behavior.",
                 )
             return
         from src.backend.core.ai.policy.enforcer.tools_policy import (
@@ -118,7 +118,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 f"AIRequest.tool_name is required when tool policy has "
                 f"non-empty whitelist/blacklist (workflow_id="
                 f"{request.workflow_id!r}). "
-                f"Set request.tool_name to the actual tool being invoked."
+                f"Set request.tool_name to the actual tool being invoked.",
             )
         enforce_tool_policy(request.tool_name, tools)
 
@@ -166,7 +166,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 "ai.budget.tenant_less_invocation",
                 extra={
                     "correlation_id": getattr(
-                        request, "correlation_id", ""
+                        request, "correlation_id", "",
                     ),
                     "workflow_id": getattr(request, "workflow_id", ""),
                 },
@@ -178,10 +178,10 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                     event="ai.budget.tenant_less_invocation",
                     details={
                         "workflow_id": getattr(
-                            request, "workflow_id", ""
+                            request, "workflow_id", "",
                         ),
                         "correlation_id": getattr(
-                            request, "correlation_id", ""
+                            request, "correlation_id", "",
                         ),
                         "timestamp": str(time.time()),
                     },
@@ -219,7 +219,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 extra={
                     "tenant_id": tenant_id,
                     "correlation_id": getattr(
-                        request, "correlation_id", ""
+                        request, "correlation_id", "",
                     ),
                     "workflow_id": getattr(request, "workflow_id", ""),
                     "used": exc.used,
@@ -260,7 +260,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         try:
             actual_tokens = int(
                 getattr(completion, "tokens_prompt", 0)
-                + getattr(completion, "tokens_completion", 0)
+                + getattr(completion, "tokens_completion", 0),
             )
             if actual_tokens <= 0:
                 return None
@@ -286,7 +286,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 extra={
                     "tenant_id": tenant_id,
                     "correlation_id": getattr(
-                        request, "correlation_id", ""
+                        request, "correlation_id", "",
                     ),
                     "workflow_id": getattr(request, "workflow_id", ""),
                     "actual_tokens": actual_tokens,
@@ -321,7 +321,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
         ctx.policy = policy
         ctx.policy_name = policy.name if policy else "default"
         await ctx._emit(
-            "policy_resolved", latency_ms=int(time.monotonic() * 1000) - start_ms
+            "policy_resolved", latency_ms=int(time.monotonic() * 1000) - start_ms,
         )
 
         # Шаг 2: capability check (throws CapabilityDeniedError на fail)
@@ -350,7 +350,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 await ctx._emit_guard("guarded.input", gr)
         else:
             await ctx._emit(
-                "guarded.input", latency_ms=int(time.monotonic() * 1000) - start_ms
+                "guarded.input", latency_ms=int(time.monotonic() * 1000) - start_ms,
             )
 
         # Шаг 5: render prompt
@@ -373,7 +373,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
             )
         estimated_tokens = max(1, len(rendered_str) // 4 + 200)
         await self._enforce_token_budget_pre_call(
-            request, estimated_tokens=estimated_tokens
+            request, estimated_tokens=estimated_tokens,
         )
 
         # Шаг 6: invoke LLM
@@ -398,7 +398,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 await ctx._emit_guard("guarded.output", gr)
         else:
             await ctx._emit(
-                "guarded.output", latency_ms=int(time.monotonic() * 1000) - start_ms
+                "guarded.output", latency_ms=int(time.monotonic() * 1000) - start_ms,
             )
 
         # Шаг 8: output sanitizers

@@ -38,7 +38,7 @@ class APIDocsChecksMixin:
                 field="app.enable_swagger",
                 recommendation="APP_ENABLE_SWAGGER=false для production.",
                 context={"environment": app.environment},
-            )
+            ),
         ]
 
     def _check_redoc_in_prod(self, app: AppBaseSettings) -> list[ConfigViolation]:
@@ -58,11 +58,11 @@ class APIDocsChecksMixin:
                 field="app.enable_redoc",
                 recommendation="APP_ENABLE_REDOC=false для production.",
                 context={"environment": app.environment},
-            )
+            ),
         ]
 
     def _check_admin_without_ips(
-        self, app: AppBaseSettings, secure: SecureSettings
+        self, app: AppBaseSettings, secure: SecureSettings,
     ) -> list[ConfigViolation]:
         """Admin-эндпоинты в production обязаны быть защищены IP-allowlist."""
         if not self._is_prod(app):
@@ -88,5 +88,5 @@ class APIDocsChecksMixin:
                     "admin_enabled": app.admin_enabled,
                     "admin_ips_count": len(secure.admin_ips),
                 },
-            )
+            ),
         ]

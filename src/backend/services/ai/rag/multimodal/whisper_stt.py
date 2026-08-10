@@ -60,14 +60,14 @@ class WhisperSTT:
         except ImportError as exc:
             raise RuntimeError(
                 "Whisper STT requires `pip install gd_advanced_tools[ai-voice]`"
-                f" (openai-whisper): {exc}"
+                f" (openai-whisper): {exc}",
             ) from exc
 
         logger.info("WhisperSTT loading model=%s", self._model_name)
         self._model = whisper.load_model(self._model_name)
 
     async def transcribe(
-        self, audio_bytes: bytes, *, suffix: str = ".wav"
+        self, audio_bytes: bytes, *, suffix: str = ".wav",
     ) -> TranscriptionResult:
         """Расшифровать аудиозапись в текст.
 

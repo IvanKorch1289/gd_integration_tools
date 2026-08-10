@@ -26,7 +26,7 @@ def test_vault_disconnect(toxiproxy_vault: ChaosTarget) -> None:
     """disconnect: Vault недоступен."""
     apply_disconnect(toxiproxy_vault)
     assert assert_connection_fails(
-        toxiproxy_vault.proxy_host, toxiproxy_vault.proxy_port
+        toxiproxy_vault.proxy_host, toxiproxy_vault.proxy_port,
     )
 
 
@@ -34,5 +34,5 @@ def test_vault_data_corruption(toxiproxy_vault: ChaosTarget) -> None:
     """data-corruption: slicer на Vault."""
     apply_random_drop(toxiproxy_vault, toxicity=0.3)
     assert smoke_open_socket(
-        toxiproxy_vault.proxy_host, toxiproxy_vault.proxy_port, timeout=2.0
+        toxiproxy_vault.proxy_host, toxiproxy_vault.proxy_port, timeout=2.0,
     ) or assert_connection_fails(toxiproxy_vault.proxy_host, toxiproxy_vault.proxy_port)

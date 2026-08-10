@@ -119,7 +119,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
                 для последующего ack (OutboxEvent не имеет ``id``/``headers``).
                 """
                 msgs = await outbox_repo.claim_pending(
-                    limit=limit, worker_id=_worker_id
+                    limit=limit, worker_id=_worker_id,
                 )
                 result: list[OutboxEvent] = []
                 for m in msgs:
@@ -134,7 +134,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
                             action=m.topic,
                             payload=m.payload,
                             correlation_id=cid,
-                        )
+                        ),
                     )
                 return result
 
@@ -182,7 +182,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
             start_outbox_worker(interval_seconds=5, batch_size=100)
             _logger.info(
                 "Legacy outbox worker registered "
-                "(outbox_settings.enabled=False, S64 W3 cutover not active)."
+                "(outbox_settings.enabled=False, S64 W3 cutover not active).",
             )
     except Exception as exc:
         # Outbox-worker не критичен для базовой работоспособности

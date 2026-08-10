@@ -63,7 +63,7 @@ class AutoScaler:
             return
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._run_loop(), name="auto_scaler.loop"
+            self._run_loop(), name="auto_scaler.loop",
         )
         _logger.info("AutoScaler started (interval=%.1fs)", self._tick_interval_s)
 
@@ -127,7 +127,7 @@ class AutoScaler:
                     _logger.exception("AutoScaler tick_once raised; продолжаем")
                 try:
                     await asyncio.wait_for(
-                        self._stop_event.wait(), timeout=self._tick_interval_s
+                        self._stop_event.wait(), timeout=self._tick_interval_s,
                     )
                 except TimeoutError:
                     pass
@@ -229,7 +229,7 @@ class TemporalWorkerScaler:
 
         current = self._pool_current_workers()
         desired = max(
-            self._min, min(self._max, -(-depth // self._target) if depth else self._min)
+            self._min, min(self._max, -(-depth // self._target) if depth else self._min),
         )
 
         if desired == current:

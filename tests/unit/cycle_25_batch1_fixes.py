@@ -133,7 +133,7 @@ class TestCORSInvariant:
                 if "*" in self.cors_origins and self.cors_allow_credentials:
                     raise ValueError(
                         "CORS misconfiguration: wildcard origin '*' combined "
-                        "with credentials=True is forbidden."
+                        "with credentials=True is forbidden.",
                     )
 
         # Forbidden combination

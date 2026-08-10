@@ -18,10 +18,10 @@ class CustomerSegmentationResult(BaseModel):
     segment: str = Field(description="mass / affluent / business / vip / new")
     confidence: float = Field(ge=0.0, le=1.0, description="Уверенность в сегментации")
     characteristics: list[str] = Field(
-        default_factory=list, description="Характеристики сегмента"
+        default_factory=list, description="Характеристики сегмента",
     )
     recommended_products: list[str] = Field(
-        default_factory=list, description="Рекомендованные продукты"
+        default_factory=list, description="Рекомендованные продукты",
     )
 
 
@@ -78,7 +78,7 @@ class CustomerSegmentationProcessor(_BankingAIProcessor):
                 "confidence": result.confidence,
                 "characteristics": result.characteristics,
                 "recommended_products": result.recommended_products,
-            }
+            },
         )
         exchange.set_property("customer_segment", result.segment)
 
@@ -106,7 +106,7 @@ class CustomerSegmentationProcessor(_BankingAIProcessor):
         )
 
     async def _check_capability(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> bool:
         """Verify capability (S190 — unified facade pattern).
 

@@ -73,7 +73,7 @@ class SmsSink(Sink):
     def __post_init__(self) -> None:
         if self.provider not in self.PROVIDERS:
             raise ValueError(
-                f"sms_sink: provider must be one of {self.PROVIDERS}, got {self.provider!r}"
+                f"sms_sink: provider must be one of {self.PROVIDERS}, got {self.provider!r}",
             )
 
     def _endpoint(self) -> str:
@@ -148,7 +148,7 @@ class SmsSink(Sink):
                 return SinkResult(ok=ok, details=details)
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
+                ok=False, details={"error": str(exc) or exc.__class__.__name__},
             )
 
     def _extract_payload(self, payload: Any) -> tuple[str | None, str | None, str | None]:
@@ -193,5 +193,5 @@ class SmsSink(Sink):
                 )
         except Exception as exc:
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode
+                error=f"{type(exc).__name__}: {exc}", mode=mode,
             )

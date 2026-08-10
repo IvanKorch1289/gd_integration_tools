@@ -29,7 +29,7 @@ from src.backend.services.execution.invoker import Invoker
 
 
 def _make_dispatcher(
-    result: Any = None, raises: BaseException | None = None
+    result: Any = None, raises: BaseException | None = None,
 ) -> MagicMock:
     dispatcher = MagicMock()
     if raises is not None:
@@ -58,7 +58,7 @@ class TestInvokerSync:
         invoker = Invoker(dispatcher=dispatcher)
 
         response = await invoker.invoke(
-            InvocationRequest(action="users.list", payload={}, mode=InvocationMode.SYNC)
+            InvocationRequest(action="users.list", payload={}, mode=InvocationMode.SYNC),
         )
 
         assert response.status is InvocationStatus.OK
@@ -70,7 +70,7 @@ class TestInvokerSync:
         invoker = Invoker(dispatcher=dispatcher)
 
         response = await invoker.invoke(
-            InvocationRequest(action="users.list", mode=InvocationMode.SYNC)
+            InvocationRequest(action="users.list", mode=InvocationMode.SYNC),
         )
 
         assert response.status is InvocationStatus.ERROR
@@ -82,7 +82,7 @@ class TestInvokerSync:
         invoker = Invoker(dispatcher=dispatcher)
 
         response = await invoker.invoke(
-            InvocationRequest(action="x", mode=InvocationMode.SYNC)
+            InvocationRequest(action="x", mode=InvocationMode.SYNC),
         )
 
         assert response.status is InvocationStatus.ERROR
@@ -95,8 +95,8 @@ class TestInvokerSync:
 
         await invoker.invoke(
             InvocationRequest(
-                action="x.y", mode=InvocationMode.SYNC, correlation_id="corr-XYZ"
-            )
+                action="x.y", mode=InvocationMode.SYNC, correlation_id="corr-XYZ",
+            ),
         )
 
         dispatcher.dispatch.assert_awaited_once()
@@ -120,8 +120,8 @@ class TestInvokerSync:
 
         response = await invoker.invoke(
             InvocationRequest(
-                action="slow.action", mode=InvocationMode.SYNC, timeout=0.05
-            )
+                action="slow.action", mode=InvocationMode.SYNC, timeout=0.05,
+            ),
         )
 
         assert response.status is InvocationStatus.ERROR
@@ -210,7 +210,7 @@ class TestInvokerStreaming:
         ws = _StubWs()
 
         invoker = Invoker(
-            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel)
+            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel),
         )
 
         request = InvocationRequest(action="x.stream", mode=InvocationMode.STREAMING)
@@ -228,7 +228,7 @@ class TestInvokerStreaming:
         ws_channel = WsReplyChannel()
         ws = _StubWs()
         invoker = Invoker(
-            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel)
+            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel),
         )
 
         request = InvocationRequest(action="x.y", mode=InvocationMode.STREAMING)
@@ -245,7 +245,7 @@ class TestInvokerStreaming:
         invoker = Invoker(dispatcher=dispatcher, reply_registry=_make_registry())
 
         response = await invoker.invoke(
-            InvocationRequest(action="x.y", mode=InvocationMode.STREAMING)
+            InvocationRequest(action="x.y", mode=InvocationMode.STREAMING),
         )
 
         assert response.status is InvocationStatus.ERROR
@@ -256,7 +256,7 @@ class TestInvokerStreaming:
         ws_channel = WsReplyChannel()
         ws = _StubWs()
         invoker = Invoker(
-            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel)
+            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel),
         )
 
         request = InvocationRequest(action="x.y", mode=InvocationMode.STREAMING)
@@ -278,7 +278,7 @@ class TestInvokerDeferred:
         invoker = Invoker(dispatcher=dispatcher)
 
         response = await invoker.invoke(
-            InvocationRequest(action="x.y", mode=InvocationMode.DEFERRED)
+            InvocationRequest(action="x.y", mode=InvocationMode.DEFERRED),
         )
 
         assert response.status is InvocationStatus.ERROR
@@ -295,7 +295,7 @@ class TestInvokerDeferred:
                 action="x.y",
                 mode=InvocationMode.DEFERRED,
                 metadata={"run_at": "not-a-date"},
-            )
+            ),
         )
 
         assert response.status is InvocationStatus.ERROR
@@ -319,7 +319,7 @@ class TestInvokerDeferred:
         monkeypatch.setitem(sys.modules, module_name, stub_module)
 
     async def test_delay_seconds_registers_job(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """С metadata.delay_seconds регистрирует job через scheduler.add_job."""
         from src.backend.services.execution import invoker as invoker_module
@@ -346,7 +346,7 @@ class TestInvokerDeferred:
                     "delay_seconds": 60,
                     "deferred_durable": False,  # backup jobstore для тестов
                 },
-            )
+            ),
         )
 
         assert response.status is InvocationStatus.ACCEPTED
@@ -362,7 +362,7 @@ class TestInvokerDeferred:
         assert captured["fn"] is invoker_module._run_deferred_job
 
     async def test_durable_uses_default_jobstore(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """По умолчанию (deferred_durable=True) job идёт в SQLAlchemy jobstore."""
         captured: dict[str, Any] = {}
@@ -383,7 +383,7 @@ class TestInvokerDeferred:
                 action="reports.daily",
                 mode=InvocationMode.DEFERRED,
                 metadata={"delay_seconds": 1},
-            )
+            ),
         )
 
         assert response.status is InvocationStatus.ACCEPTED
@@ -391,7 +391,7 @@ class TestInvokerDeferred:
         assert response.metadata["deferred_durable"] is True
 
     async def test_durable_fallback_on_picklability_error(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Если SQLAlchemy jobstore отказался — fallback на backup с warning."""
         attempts: list[str] = []
@@ -414,7 +414,7 @@ class TestInvokerDeferred:
                 action="reports.daily",
                 mode=InvocationMode.DEFERRED,
                 metadata={"delay_seconds": 1},
-            )
+            ),
         )
 
         assert response.status is InvocationStatus.ACCEPTED
@@ -431,8 +431,8 @@ class TestInvokerAsyncQueue:
         invoker = Invoker(dispatcher=dispatcher)
         response = await invoker.invoke(
             InvocationRequest(
-                action="x.y", payload={"k": "v"}, mode=InvocationMode.ASYNC_QUEUE
-            )
+                action="x.y", payload={"k": "v"}, mode=InvocationMode.ASYNC_QUEUE,
+            ),
         )
 
         assert response.status is InvocationStatus.ACCEPTED
@@ -447,7 +447,7 @@ class TestInvokerReplyChannelLookup:
         invoker = Invoker(dispatcher=dispatcher, reply_registry=_make_registry(memory))
 
         request = InvocationRequest(
-            action="x", mode=InvocationMode.ASYNC_API, reply_channel="api"
+            action="x", mode=InvocationMode.ASYNC_API, reply_channel="api",
         )
         await invoker.invoke(request)
         await _drain_pending()
@@ -459,7 +459,7 @@ class TestInvokerReplyChannelLookup:
         ws_channel = WsReplyChannel()
         ws = _StubWs()
         invoker = Invoker(
-            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel)
+            dispatcher=dispatcher, reply_registry=_make_registry(ws_channel),
         )
 
         request = InvocationRequest(

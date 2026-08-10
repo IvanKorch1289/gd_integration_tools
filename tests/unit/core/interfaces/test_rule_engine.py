@@ -55,7 +55,7 @@ class TestRuleEngineRepository:
                 return None
 
             async def list_active(
-                self, *, tenant_id: str | None = None
+                self, *, tenant_id: str | None = None,
             ) -> list[RulesetDoc]:
                 return []
 
@@ -63,7 +63,7 @@ class TestRuleEngineRepository:
                 return doc
 
             async def delete(
-                self, name: str, version: str, *, tenant_id: str | None = None
+                self, name: str, version: str, *, tenant_id: str | None = None,
             ) -> bool:
                 return False
 

@@ -20,7 +20,7 @@ class _RAGServiceProtocol(Protocol):
     _cache: Any | None
 
     def _cache_key(
-        self, *, system_prompt: str, query: str, top_k: int, namespace: str | None
+        self, *, system_prompt: str, query: str, top_k: int, namespace: str | None,
     ) -> str: ...
 
     async def _embed(self, texts: list[str]) -> list[list[float]]: ...

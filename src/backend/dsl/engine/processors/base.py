@@ -131,21 +131,21 @@ class BaseProcessor(ABC):
             )
             if not allowed:
                 exchange.set_error(
-                    f"{self.name}: capability '{self.required_capability}' denied"
+                    f"{self.name}: capability '{self.required_capability}' denied",
                 )
                 exchange.stop()
                 return False
             return True
         except Exception as exc:  # pragma: no cover — fail-closed
             exchange.set_error(
-                f"{self.name}: auth_check error: {exc}"
+                f"{self.name}: auth_check error: {exc}",
             )
             exchange.stop()
             return False
 
     @abstractmethod
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Метод process (см. signature)."""
         ...
@@ -179,7 +179,7 @@ class SubPipelineExecutor:
 
     @staticmethod
     async def execute_route(
-        route_id: str, body: Any, headers: dict[str, Any], context: ExecutionContext
+        route_id: str, body: Any, headers: dict[str, Any], context: ExecutionContext,
     ) -> tuple[Any, str | None]:
         """Выполняет DSL route и возвращает (result_body, error_or_None)."""
         from src.backend.dsl.commands.registry import route_registry
@@ -188,19 +188,19 @@ class SubPipelineExecutor:
         pipeline = route_registry.get(route_id)
         engine = ExecutionEngine()
         sub = await engine.execute(
-            pipeline, body=body, headers=dict(headers), context=context
+            pipeline, body=body, headers=dict(headers), context=context,
         )
         result = sub.out_message.body if sub.out_message else sub.in_message.body
         return result, sub.error
 
     @staticmethod
     async def execute_route_safe(
-        route_id: str, body: Any, headers: dict[str, Any], context: ExecutionContext
+        route_id: str, body: Any, headers: dict[str, Any], context: ExecutionContext,
     ) -> tuple[str, Any, str | None]:
         """Безопасная версия — не бросает исключений."""
         try:
             result, error = await SubPipelineExecutor.execute_route(
-                route_id, body, headers, context
+                route_id, body, headers, context,
             )
             return route_id, result, error
         except Exception as exc:
@@ -208,7 +208,7 @@ class SubPipelineExecutor:
 
 
 async def run_sub_processors(
-    processors: list[BaseProcessor], exchange: Exchange[Any], context: ExecutionContext
+    processors: list[BaseProcessor], exchange: Exchange[Any], context: ExecutionContext,
 ) -> None:
     """Общий цикл выполнения sub-processor list с проверкой failed/stopped."""
     from src.backend.dsl.engine.exchange import ExchangeStatus

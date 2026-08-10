@@ -35,7 +35,7 @@ class ExpressAdapter:
         self._default_bot = default_bot
 
     async def send(
-        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any],
     ) -> None:
         """Отправить уведомление в Express чат.
 
@@ -106,7 +106,7 @@ class ExpressAdapter:
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )
 
 

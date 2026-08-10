@@ -68,7 +68,7 @@ class TelegramWebhookSource:
     offset: int = 0
 
     def validate_webhook_request(
-        self, request_body: bytes, header_secret: str | None
+        self, request_body: bytes, header_secret: str | None,
     ) -> bool:
         """Validate X-Telegram-Bot-Api-Secret-Token header.
 
@@ -107,7 +107,7 @@ class TelegramWebhookSource:
             return None  # type filter
 
         return TelegramUpdate(
-            update_id=update_id, message=msg_text, callback_query=cb_data, raw=payload
+            update_id=update_id, message=msg_text, callback_query=cb_data, raw=payload,
         )
 
     def compute_webhook_url(self, public_base_url: str) -> str:
@@ -127,7 +127,7 @@ class TelegramWebhookSource:
 
 
 def _verify_payload_signature(
-    payload: bytes, signature_header: str | None, secret: str | None
+    payload: bytes, signature_header: str | None, secret: str | None,
 ) -> bool:
     """Generic HMAC-SHA256 verification (для test helper, не webhook)."""
     if secret is None or signature_header is None:

@@ -148,7 +148,7 @@ class ConnectionManager:
             await ws.send_json(data)
 
     async def broadcast(
-        self, data: dict[str, Any], *, group: str | None = None
+        self, data: dict[str, Any], *, group: str | None = None,
     ) -> None:
         """Рассылает JSON всем или по группе.
 

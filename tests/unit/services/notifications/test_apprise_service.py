@@ -35,7 +35,7 @@ def _reset_singleton() -> None:
 async def test_notify_skips_when_flag_off() -> None:
     """notify() возвращает False и не обращается к apprise при flag=False."""
     with patch(
-        "src.backend.core.config.features.feature_flags.notification_dsl_enabled", False
+        "src.backend.core.config.features.feature_flags.notification_dsl_enabled", False,
     ):
         from src.backend.services.notifications.apprise_service import (
             get_notification_service,
@@ -116,7 +116,7 @@ async def test_notify_multi_returns_per_channel_status() -> None:
         await svc.register_channel("telegram", "tgram://token/chat")
 
         results = await svc.notify_multi(
-            channels=["slack", "telegram"], title="Multi", body="Тело"
+            channels=["slack", "telegram"], title="Multi", body="Тело",
         )
 
     assert isinstance(results, dict)
@@ -132,7 +132,7 @@ async def test_notify_multi_returns_per_channel_status() -> None:
 async def test_notify_graceful_when_apprise_missing() -> None:
     """notify() возвращает False без краша если apprise не установлен."""
     with patch(
-        "src.backend.core.config.features.feature_flags.notification_dsl_enabled", True
+        "src.backend.core.config.features.feature_flags.notification_dsl_enabled", True,
     ):
         # Имитируем ImportError при import apprise
         original = sys.modules.get("apprise", ...)

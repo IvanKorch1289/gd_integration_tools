@@ -29,10 +29,10 @@ class ExpressSettings(BaseBotChannelSettings):
         description="URL BotX microservice (внутренний контур).",
     )
     botx_host: str = Field(
-        "", description="FQDN BotX (aud в JWT). Пустой → derived из botx_url."
+        "", description="FQDN BotX (aud в JWT). Пустой → derived из botx_url.",
     )
     default_chat_id: str = Field(
-        "", description="Чат по умолчанию для broadcast notifications."
+        "", description="Чат по умолчанию для broadcast notifications.",
     )
     extra_bots: list[dict] = Field(
         default_factory=list,

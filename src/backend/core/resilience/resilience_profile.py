@@ -113,7 +113,7 @@ class ResilienceProfileStore(Protocol):
     """
 
     async def get(
-        self, name: str, *, tenant_id: str | None = None
+        self, name: str, *, tenant_id: str | None = None,
     ) -> ResilienceProfile | None:
         """Get a resilience profile by name.
 
@@ -138,7 +138,7 @@ class ResilienceProfileStore(Protocol):
         ...
 
     async def upsert(
-        self, profile: ResilienceProfile, *, tenant_id: str | None = None
+        self, profile: ResilienceProfile, *, tenant_id: str | None = None,
     ) -> ResilienceProfile:
         """Create or update a resilience profile.
 

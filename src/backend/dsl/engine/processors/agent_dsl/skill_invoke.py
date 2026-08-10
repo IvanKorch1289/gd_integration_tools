@@ -95,7 +95,7 @@ class SkillInvokeProcessor(BaseAIProcessor):
         registry = self._resolve_registry()
         if registry is None:
             _logger.warning(
-                "%s: SkillRegistry недоступен — pass-through skip", self.name
+                "%s: SkillRegistry недоступен — pass-through skip", self.name,
             )
             return
 
@@ -119,7 +119,7 @@ class SkillInvokeProcessor(BaseAIProcessor):
             return
         except KeyError:
             exchange.set_error(
-                f"{self.name}: skill_id={self.skill_id!r} не зарегистрирован"
+                f"{self.name}: skill_id={self.skill_id!r} не зарегистрирован",
             )
             exchange.stop()
             return
@@ -160,7 +160,7 @@ class SkillInvokeProcessor(BaseAIProcessor):
             return get_skill_registry()
         except Exception as exc:
             _logger.debug(
-                "skill_invoke._resolve_registry: registry not available: %s", exc
+                "skill_invoke._resolve_registry: registry not available: %s", exc,
             )
             return None
 

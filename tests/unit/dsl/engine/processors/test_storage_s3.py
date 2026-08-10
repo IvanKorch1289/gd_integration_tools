@@ -19,10 +19,10 @@ from src.backend.dsl.engine.processors.storage.s3 import FromS3Processor, ToS3Pr
 
 
 def _exchange(
-    body: Any = None, properties: dict[str, Any] | None = None
+    body: Any = None, properties: dict[str, Any] | None = None,
 ) -> Exchange[Any]:
     return Exchange(
-        in_message=Message(body=body, headers={}), properties=properties or {}
+        in_message=Message(body=body, headers={}), properties=properties or {},
     )
 
 
@@ -39,7 +39,7 @@ async def test_to_s3_uploads_via_facade(monkeypatch: pytest.MonkeyPatch) -> None
         plugin: str = ""
 
         async def upload(
-            self, key: str, data: bytes, content_type: str | None = None
+            self, key: str, data: bytes, content_type: str | None = None,
         ) -> str:
             calls.append({"key": key, "data": data, "content_type": content_type})
             return f"loc://{key}"
@@ -95,7 +95,7 @@ async def test_to_s3_fails_exchange_on_backend_error(
 
     class _FakeFacade:
         async def upload(
-            self, key: str, data: bytes, content_type: str | None = None
+            self, key: str, data: bytes, content_type: str | None = None,
         ) -> str:
             raise RuntimeError("s3 down")
 

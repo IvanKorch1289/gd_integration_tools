@@ -82,14 +82,14 @@ class MongoConnectorConfigStore:
         payload = entry.model_dump(mode="json")
         payload["_id"] = payload.pop("name")
         await self._client().update_one(
-            _COLLECTION, query={"_id": name}, update=payload, upsert=True
+            _COLLECTION, query={"_id": name}, update=payload, upsert=True,
         )
         return entry
 
     async def list_all(self) -> list[ConnectorConfigEntry]:
         """Метод list_all (см. signature)."""
         docs = await self._client().find(
-            _COLLECTION, query={}, limit=1000, sort=[("updated_at", -1)]
+            _COLLECTION, query={}, limit=1000, sort=[("updated_at", -1)],
         )
         return [_doc_to_entry(d) for d in docs]
 

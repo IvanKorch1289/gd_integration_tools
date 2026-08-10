@@ -200,7 +200,7 @@ class TestCertHistory:
         now = datetime.now(UTC)
         for i in range(3):
             record = CertHistory(
-                service_id=f"svc-{i}", version=i, pem="pem", uploaded_at=now
+                service_id=f"svc-{i}", version=i, pem="pem", uploaded_at=now,
             )
             db_session.add(record)
         db_session.commit()

@@ -46,7 +46,7 @@ class TestPostInvocation:
                 status=InvocationStatus.OK,
                 result={"x": 1},
                 mode=InvocationMode.SYNC,
-            )
+            ),
         )
 
         response = Response()
@@ -64,7 +64,7 @@ class TestPostInvocation:
                 invocation_id="i-2",
                 status=InvocationStatus.ACCEPTED,
                 mode=InvocationMode.ASYNC_API,
-            )
+            ),
         )
 
         response = Response()
@@ -81,7 +81,7 @@ class TestPostInvocation:
                 status=InvocationStatus.ERROR,
                 error="boom",
                 mode=InvocationMode.SYNC,
-            )
+            ),
         )
 
         response = Response()
@@ -97,12 +97,12 @@ class TestPostInvocation:
                 invocation_id="i-4",
                 status=InvocationStatus.ACCEPTED,
                 mode=InvocationMode.STREAMING,
-            )
+            ),
         )
 
         response = Response()
         body = InvocationRequestSchema(
-            action="x.stream", mode="streaming", reply_channel="ws"
+            action="x.stream", mode="streaming", reply_channel="ws",
         )
         await post_invocation(body, response, invoker=invoker)
 
@@ -121,7 +121,7 @@ class TestGetInvocation:
                 status=InvocationStatus.OK,
                 result={"done": True},
                 mode=InvocationMode.ASYNC_API,
-            )
+            ),
         )
         registry = ReplyChannelRegistry()
         registry.register(memory)
@@ -176,7 +176,7 @@ class TestSchemaValidation:
     @pytest.mark.parametrize("kind", [k.value for k in ReplyChannelKind])
     def test_reply_channel_optional(self, kind: str) -> None:
         schema = InvocationRequestSchema(
-            action="x.y", mode="async-api", reply_channel=kind
+            action="x.y", mode="async-api", reply_channel=kind,
         )
         assert schema.reply_channel == kind
 
@@ -191,7 +191,7 @@ class TestPayloadPassthrough:
                 status=InvocationStatus.OK,
                 result=None,
                 mode=InvocationMode.SYNC,
-            )
+            ),
         )
 
         payload: dict[str, Any] = {"deeply": {"nested": [1, 2, {"key": "v"}]}}

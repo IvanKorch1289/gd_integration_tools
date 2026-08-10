@@ -70,16 +70,16 @@ class _AgentMemoryFacade:
     """Адаптер над ``AgentMemoryService`` для action-маршрутов."""
 
     async def list_messages(
-        self, *, session_id: str, last_n: int = 20
+        self, *, session_id: str, last_n: int = 20,
     ) -> MessagesResponse:
         """Получить список messages (cycle-8/D-AUDIT-807: tenant-scoped)."""
         items = await get_agent_memory_service().get_conversation(
-            session_id, last_n, tenant_id=_current_tenant_id()
+            session_id, last_n, tenant_id=_current_tenant_id(),
         )
         return MessagesResponse(items=items)
 
     async def add_message(
-        self, *, session_id: str, role: str, content: str, metadata: Any = None
+        self, *, session_id: str, role: str, content: str, metadata: Any = None,
     ) -> dict[str, str]:
         """Добавить message (cycle-8/D-AUDIT-807: tenant-scoped)."""
         await get_agent_memory_service().add_message(
@@ -102,7 +102,7 @@ class _AgentMemoryFacade:
         return ScratchpadResponse(session_id=session_id, content=content)
 
     async def set_scratchpad(
-        self, *, session_id: str, content: str = ""
+        self, *, session_id: str, content: str = "",
     ) -> ScratchpadResponse:
         """Установить scratchpad."""
         await get_agent_memory_service().set_scratchpad(session_id, content)
@@ -258,5 +258,5 @@ builder.add_actions(
             path_model=FactKeyPath,
             tags=common_tags,
         ),
-    ]
+    ],
 )

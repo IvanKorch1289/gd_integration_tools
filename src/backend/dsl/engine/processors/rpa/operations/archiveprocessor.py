@@ -27,7 +27,7 @@ class ArchiveProcessor(BaseProcessor):
     audit_event: str | None = "rpa.archive.execute"
 
     def __init__(
-        self, *, mode: str = "extract", format: str = "zip", name: str | None = None
+        self, *, mode: str = "extract", format: str = "zip", name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"archive:{mode}:{format}")
         self._mode = mode
@@ -77,7 +77,7 @@ class ArchiveProcessor(BaseProcessor):
                                     "name": name,
                                     "data": zf.read(info),
                                     "size": info.file_size,
-                                }
+                                },
                             )
         else:
             import tarfile
@@ -95,7 +95,7 @@ class ArchiveProcessor(BaseProcessor):
                                     "name": name,
                                     "data": f.read() if f else b"",
                                     "size": member.size,
-                                }
+                                },
                             )
         return files
 

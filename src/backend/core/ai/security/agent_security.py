@@ -179,16 +179,16 @@ class DangerousCommandDetector:
     ) -> None:
         """Инициализация detector."""
         self._shell_patterns = self._compile_patterns(
-            shell_patterns or _DANGEROUS_SHELL_PATTERNS
+            shell_patterns or _DANGEROUS_SHELL_PATTERNS,
         )
         self._sql_patterns = self._compile_patterns(
-            sql_patterns or _DANGEROUS_SQL_PATTERNS
+            sql_patterns or _DANGEROUS_SQL_PATTERNS,
         )
         self._forbidden_file_patterns = self._compile_patterns(
-            forbidden_file_patterns or _FORBIDDEN_FILE_PATTERNS
+            forbidden_file_patterns or _FORBIDDEN_FILE_PATTERNS,
         )
         self._prompt_injection_patterns = self._compile_patterns(
-            prompt_injection_patterns or _PROMPT_INJECTION_PATTERNS
+            prompt_injection_patterns or _PROMPT_INJECTION_PATTERNS,
         )
 
     @staticmethod
@@ -305,7 +305,7 @@ class AgentSecurityPolicy:
     enable_workflow_hooks: bool = True
     strict_mode: bool = True
     file_policy: FileModificationPolicy = field(
-        default_factory=FileModificationPolicy
+        default_factory=FileModificationPolicy,
     )
 
     @classmethod
@@ -489,7 +489,7 @@ class AgentSecurityFramework:
                 matched_pattern=desc,
             )
             hook_decision = self._run_hooks(
-                "pre_tool", {"command": command, "decision": decision}
+                "pre_tool", {"command": command, "decision": decision},
             )
             if hook_decision is not None and not hook_decision.allowed:
                 return hook_decision

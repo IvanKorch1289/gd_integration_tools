@@ -30,10 +30,10 @@ class MiniMaxProvider:
         self.api_key = api_key or os.environ.get("MINIMAX_API_KEY", "")
         self.model = model
         self.base_url = base_url or os.environ.get(
-            "MINIMAX_BASE_URL", "https://api.minimax.chat/v1"
+            "MINIMAX_BASE_URL", "https://api.minimax.chat/v1",
         )
         self._delegate = OpenAIProvider(
-            api_key=self.api_key, model=self.model, base_url=self.base_url
+            api_key=self.api_key, model=self.model, base_url=self.base_url,
         )
 
     async def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> dict[str, Any]:

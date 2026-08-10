@@ -172,7 +172,7 @@ def _serialize_sub(procs: list[BaseProcessor]) -> list[dict[str, Any]] | None:
 
 
 async def _emit_saga_audit(
-    *, event_type: str, workflow_id: str, payload: dict[str, Any]
+    *, event_type: str, workflow_id: str, payload: dict[str, Any],
 ) -> None:
     """Sprint 12 K3 W6 — best-effort emit saga compensation events.
 

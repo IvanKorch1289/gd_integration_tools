@@ -52,7 +52,7 @@ async def test_enqueue_returns_event_id(outbox: FakeOutbox) -> None:
 
 @pytest.mark.asyncio
 async def test_list_dlq_returns_only_dlq_status(
-    outbox: FakeOutbox, http_dlq_event: OutboxEvent
+    outbox: FakeOutbox, http_dlq_event: OutboxEvent,
 ) -> None:
     """list_dlq не возвращает события со статусом PENDING/DELIVERED/RESOLVED."""
     pending = OutboxEvent(transport="http", action="api.send")
@@ -97,7 +97,7 @@ async def test_list_dlq_filters_by_transport_action_error_tenant(
 
     result_http = await outbox.list_dlq(transport="http")
     result_kafka_http = await outbox.list_dlq(
-        transport="kafka", error_class="HTTPError"
+        transport="kafka", error_class="HTTPError",
     )
     result_t2 = await outbox.list_dlq(tenant_id="t2")
 
@@ -116,7 +116,7 @@ async def test_list_dlq_filters_by_since(outbox: FakeOutbox) -> None:
         created_at=datetime.now(UTC) - timedelta(hours=2),
     )
     new_event = OutboxEvent(
-        transport="http", action="api.send", status=OutboxEventStatus.DLQ
+        transport="http", action="api.send", status=OutboxEventStatus.DLQ,
     )
     await outbox.enqueue(old_event)
     await outbox.enqueue(new_event)
@@ -129,7 +129,7 @@ async def test_list_dlq_filters_by_since(outbox: FakeOutbox) -> None:
 
 @pytest.mark.asyncio
 async def test_replay_transitions_dlq_to_pending(
-    outbox: FakeOutbox, http_dlq_event: OutboxEvent
+    outbox: FakeOutbox, http_dlq_event: OutboxEvent,
 ) -> None:
     """replay переводит DLQ → PENDING + сбрасывает retry_count."""
     await outbox.enqueue(http_dlq_event)
@@ -143,7 +143,7 @@ async def test_replay_transitions_dlq_to_pending(
 
 @pytest.mark.asyncio
 async def test_replay_dry_run_does_not_change_status(
-    outbox: FakeOutbox, http_dlq_event: OutboxEvent
+    outbox: FakeOutbox, http_dlq_event: OutboxEvent,
 ) -> None:
     """dry_run возвращает count, но не меняет статус событий."""
     await outbox.enqueue(http_dlq_event)
@@ -158,7 +158,7 @@ async def test_replay_dry_run_does_not_change_status(
 
 @pytest.mark.asyncio
 async def test_replay_override_payload(
-    outbox: FakeOutbox, http_dlq_event: OutboxEvent
+    outbox: FakeOutbox, http_dlq_event: OutboxEvent,
 ) -> None:
     """override_payload подменяет payload при replay."""
     await outbox.enqueue(http_dlq_event)
@@ -173,13 +173,13 @@ async def test_replay_override_payload(
 
 @pytest.mark.asyncio
 async def test_mark_resolved_transitions_to_resolved(
-    outbox: FakeOutbox, http_dlq_event: OutboxEvent
+    outbox: FakeOutbox, http_dlq_event: OutboxEvent,
 ) -> None:
     """mark_resolved переводит события в RESOLVED + audit-сообщение."""
     await outbox.enqueue(http_dlq_event)
 
     affected = await outbox.mark_resolved(
-        [http_dlq_event.event_id], operator="ivanov", reason="duplicate"
+        [http_dlq_event.event_id], operator="ivanov", reason="duplicate",
     )
 
     assert affected == 1

@@ -142,7 +142,7 @@ class _RecordingMcp:
         self.tools: dict[str, Any] = {}
 
     def tool(
-        self, *, name: str, description: str
+        self, *, name: str, description: str,
     ) -> Any:
         def decorator(fn: Any) -> Any:
             self.tools[name] = fn

@@ -50,7 +50,7 @@ class TestRaisePiiFailClosed:
         original = ValueError("original error")
         with pytest.raises(PIIFailClosedError) as caught:
             raise_pii_fail_closed(
-                source="test.source", payload_size=10, exc=original
+                source="test.source", payload_size=10, exc=original,
             )
         assert caught.value.__cause__ is original
         assert isinstance(caught.value.__cause__, ValueError)
@@ -58,7 +58,7 @@ class TestRaisePiiFailClosed:
     def test_emits_audit_event(self) -> None:
         """Audit event ``pii.sanitizer_failure`` emitted через log_audit_event_lite."""
         with patch(
-            "src.backend.core.observability.logging_helpers.log_audit_event_lite"
+            "src.backend.core.observability.logging_helpers.log_audit_event_lite",
         ) as mock_audit:
             with pytest.raises(PIIFailClosedError):
                 raise_pii_fail_closed(

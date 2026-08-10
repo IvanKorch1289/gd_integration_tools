@@ -65,7 +65,7 @@ class LocalFSStorage(ObjectStorage):
         self._tenant_root_prefix = tenant_root_prefix
 
         env = os.environ.get("APP_ENVIRONMENT") or os.environ.get(
-            "ENVIRONMENT", "development"
+            "ENVIRONMENT", "development",
         )
         if env.lower() in {"prod", "production"}:
             warnings.warn(
@@ -104,7 +104,7 @@ class LocalFSStorage(ObjectStorage):
         return path
 
     async def upload(
-        self, key: str, data: bytes, content_type: str | None = None
+        self, key: str, data: bytes, content_type: str | None = None,
     ) -> str:
         """Upload data to local filesystem.
 
@@ -231,7 +231,7 @@ class LocalFSStorage(ObjectStorage):
             if not self._base.exists():
                 latency_ms = (time.perf_counter() - start) * 1000.0
                 return HealthResult.failed(
-                    error="base_path does not exist", mode=mode, latency_ms=latency_ms
+                    error="base_path does not exist", mode=mode, latency_ms=latency_ms,
                 )
             if not os.access(str(self._base), os.R_OK | os.W_OK):
                 latency_ms = (time.perf_counter() - start) * 1000.0
@@ -245,5 +245,5 @@ class LocalFSStorage(ObjectStorage):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )

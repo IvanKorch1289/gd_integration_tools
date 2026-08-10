@@ -124,7 +124,7 @@ def ensure_utc(dt: datetime) -> datetime:
 
 
 def humanize_delta(
-    dt: datetime, other: datetime | None = None, absolute: bool = True
+    dt: datetime, other: datetime | None = None, absolute: bool = True,
 ) -> str:
     """Human-readable diff между ``dt`` и ``other`` (default: now).
 

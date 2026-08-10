@@ -35,7 +35,7 @@ def test_invalid_yaml_keeps_registry_unchanged(tmp_path: Path) -> None:
         return _StubPipeline("ok")
 
     watcher = DSLYamlWatcher(
-        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=10
+        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=10,
     )
 
     report = watcher._sync_reload_all()
@@ -59,7 +59,7 @@ def test_successful_reload_replaces_routes(tmp_path: Path) -> None:
         return _StubPipeline(rid)
 
     watcher = DSLYamlWatcher(
-        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=10
+        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=10,
     )
     report = watcher._sync_reload_all()
     assert report["loaded"] == 2
@@ -77,7 +77,7 @@ def test_deletion_unregisters_route(tmp_path: Path) -> None:
         return _StubPipeline(path.stem)
 
     watcher = DSLYamlWatcher(
-        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=10
+        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=10,
     )
     watcher._sync_reload_all()
     assert "a" in registry.list_routes()
@@ -96,7 +96,7 @@ async def test_reload_all_async_wraps_sync(tmp_path: Path) -> None:
         return _StubPipeline(path.stem)
 
     watcher = DSLYamlWatcher(
-        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=10
+        routes_dir=tmp_path, route_registry=registry, loader=loader, debounce_ms=10,
     )
     report = await watcher.reload_all()
     assert report["loaded"] == 1

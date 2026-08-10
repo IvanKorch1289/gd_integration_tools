@@ -98,12 +98,12 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
         if stage not in ("input", "output"):
             raise ValueError(
                 f"GuardrailsApplyProcessor: stage must be 'input'|'output', "
-                f"got {stage!r}"
+                f"got {stage!r}",
             )
         if on_block not in ("dlq", "fail", "warn"):
             raise ValueError(
                 f"GuardrailsApplyProcessor: on_block must be "
-                f"'dlq'|'fail'|'warn', got {on_block!r}"
+                f"'dlq'|'fail'|'warn', got {on_block!r}",
             )
         super().__init__(name=name or f"guardrails_apply:{stage}")
         self.stage = stage
@@ -122,7 +122,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
         runtime = self._resolve_runtime()
         if runtime is None:
             _logger.warning(
-                "%s: LLMGuardClient недоступен — pass-through", self.name
+                "%s: LLMGuardClient недоступен — pass-through", self.name,
             )
             return
 
@@ -153,7 +153,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
             exchange.set_error(
                 f"{self.name}: blocked by Llama Guard "
                 f"(stage={self.stage}, "
-                f"categories={verdict['flagged_categories']})"
+                f"categories={verdict['flagged_categories']})",
             )
             exchange.stop()
             return

@@ -83,7 +83,7 @@ async def test_vault_read_default_output_field_writes_full_dict() -> None:
 async def test_vault_read_custom_output_field_writes_only_value() -> None:
     """output_field="db_password" → exchange.properties["db_password"] = value string."""
     proc = VaultSecretProcessor(
-        path="secret/data/db/password", output_field="db_password"
+        path="secret/data/db/password", output_field="db_password",
     )
     ex = _exchange_with()
 
@@ -91,7 +91,7 @@ async def test_vault_read_custom_output_field_writes_only_value() -> None:
 
     with (
         patch(
-            "src.backend.infrastructure.secrets.vault_backend.VaultBackend"
+            "src.backend.infrastructure.secrets.vault_backend.VaultBackend",
         ) as BackendCls,
         patch("src.backend.infrastructure.secrets.vault_backend.VaultConfig.from_env"),
     ):
@@ -147,7 +147,7 @@ async def test_vault_read_backend_exception_fails_exchange() -> None:
             return_value=MagicMock(),
         ),
         patch(
-            "src.backend.infrastructure.secrets.vault_backend.VaultBackend"
+            "src.backend.infrastructure.secrets.vault_backend.VaultBackend",
         ) as BackendCls,
         patch(
             "asyncio.to_thread",
@@ -155,7 +155,7 @@ async def test_vault_read_backend_exception_fails_exchange() -> None:
         ),
     ):
         BackendCls.return_value.get = MagicMock(
-            side_effect=RuntimeError("connection refused")
+            side_effect=RuntimeError("connection refused"),
         )
         await proc.process(ex, context=MagicMock())
 
@@ -203,14 +203,14 @@ def test_vault_read_to_spec_minimal() -> None:
 def test_vault_read_to_spec_full() -> None:
     """Custom output_field и version → все три поля."""
     proc = VaultSecretProcessor(
-        path="secret/data/api", output_field="api_secret", version=2
+        path="secret/data/api", output_field="api_secret", version=2,
     )
     assert proc.to_spec() == {
         "vault_read": {
             "path": "secret/data/api",
             "output_field": "api_secret",
             "version": 2,
-        }
+        },
     }
 
 

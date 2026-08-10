@@ -59,7 +59,7 @@ class ExpressReplyProcessor(BaseProcessor):
         source_sync_id = resolve_value(exchange, self._source_sync_id_from)
         if not source_sync_id:
             exchange.fail(
-                f"ExpressReplyProcessor: source_sync_id отсутствует ({self._source_sync_id_from!r})"
+                f"ExpressReplyProcessor: source_sync_id отсутствует ({self._source_sync_id_from!r})",
             )
             return
 

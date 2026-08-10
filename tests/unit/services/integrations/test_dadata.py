@@ -61,7 +61,7 @@ def service(stub_settings: SimpleNamespace) -> APIDADATAService:
 
 @pytest.mark.asyncio
 async def test_get_geolocate_builds_payload_and_calls_request(
-    service: APIDADATAService, stub_settings: SimpleNamespace
+    service: APIDADATAService, stub_settings: SimpleNamespace,
 ) -> None:
     with patch.object(service, "_request", new_callable=AsyncMock) as mock_req:
         mock_req.return_value = {"suggestions": []}
@@ -74,12 +74,12 @@ async def test_get_geolocate_builds_payload_and_calls_request(
 
 @pytest.mark.asyncio
 async def test_get_geolocate_includes_optional_params(
-    service: APIDADATAService, stub_settings: SimpleNamespace
+    service: APIDADATAService, stub_settings: SimpleNamespace,
 ) -> None:
     with patch.object(service, "_request", new_callable=AsyncMock) as mock_req:
         mock_req.return_value = {"suggestions": []}
         await service.get_geolocate(
-            lat=55.75, lon=37.62, count_results=5, radius_metres=100
+            lat=55.75, lon=37.62, count_results=5, radius_metres=100,
         )
         call_kwargs = mock_req.await_args.kwargs
         assert call_kwargs["json"]["count"] == 5
@@ -103,7 +103,7 @@ async def test_get_geolocate_uses_waf_when_configured(
 
 @pytest.mark.asyncio
 async def test_get_geolocate_wraps_exception_as_service_error(
-    service: APIDADATAService, stub_settings: SimpleNamespace
+    service: APIDADATAService, stub_settings: SimpleNamespace,
 ) -> None:
     from src.backend.core.errors import ServiceError
 

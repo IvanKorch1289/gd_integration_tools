@@ -67,10 +67,10 @@ def _config_from_stub(stub: dict[str, Any]) -> SamlConfig:
 
 
 @pytest.mark.parametrize(
-    "idp_fixture", ["okta_stub_metadata", "azure_ad_stub_metadata"]
+    "idp_fixture", ["okta_stub_metadata", "azure_ad_stub_metadata"],
 )
 def test_login_redirect_url_matrix(
-    request: pytest.FixtureRequest, idp_fixture: str
+    request: pytest.FixtureRequest, idp_fixture: str,
 ) -> None:
     """Проверяет, что :meth:`build_login_redirect_url` валиден для каждого IdP.
 
@@ -127,7 +127,7 @@ def test_logout_redirect_for_azure_ad(
     backend = SamlBackend(config=config)
 
     url = backend.build_logout_redirect_url(
-        session_index="azure-sess-42", name_id="bob@example.com"
+        session_index="azure-sess-42", name_id="bob@example.com",
     )
 
     assert azure_ad_stub_metadata["slo_url"] in url

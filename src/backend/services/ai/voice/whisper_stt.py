@@ -147,13 +147,13 @@ class WhisperSTTService:
             return self._whisper
         if not self.enabled:
             raise VoiceServiceUnavailable(
-                "WhisperSTTService отключён (voice_stt_tts_enabled=false)."
+                "WhisperSTTService отключён (voice_stt_tts_enabled=false).",
             )
         try:
             import whisper
         except ImportError as exc:
             raise VoiceServiceUnavailable(
-                "Пакет 'openai-whisper' не установлен — добавьте extra '[ai-voice]'."
+                "Пакет 'openai-whisper' не установлен — добавьте extra '[ai-voice]'.",
             ) from exc
         self._whisper = whisper
         return whisper
@@ -170,7 +170,7 @@ class WhisperSTTService:
             self._model = whisper.load_model(self._model_name, **kwargs)
         except Exception as exc:
             raise VoiceServiceUnavailable(
-                f"Не удалось загрузить Whisper-модель '{self._model_name}': {exc}"
+                f"Не удалось загрузить Whisper-модель '{self._model_name}': {exc}",
             ) from exc
         return self._model
 
@@ -220,7 +220,7 @@ class WhisperSTTService:
 
         try:
             response: Any = await asyncio.to_thread(
-                model.transcribe, str(path), **transcribe_kwargs
+                model.transcribe, str(path), **transcribe_kwargs,
             )
         except Exception as exc:
             raise VoiceServiceUnavailable(f"Whisper transcribe failed: {exc}") from exc

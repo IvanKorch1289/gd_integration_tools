@@ -35,7 +35,7 @@ def test_build_call_sql_dialects() -> None:
     proc_pg = DbCallProcedureProcessor(profile="p", name="recalc", dialect="postgres")
     assert proc_pg._build_call_sql({"id": 1}) == "CALL public.recalc(:id)"
     proc_mssql = DbCallProcedureProcessor(
-        profile="p", name="recalc", dialect="mssql", schema="dbo"
+        profile="p", name="recalc", dialect="mssql", schema="dbo",
     )
     assert proc_mssql._build_call_sql({"id": 1}) == "EXEC dbo.recalc :id"
     proc_oracle = DbCallProcedureProcessor(profile="p", name="recalc", dialect="oracle")

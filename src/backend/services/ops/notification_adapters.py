@@ -138,13 +138,13 @@ class TelegramNotificationAdapter:
         url = f"https://api.telegram.org/bot{self._token}/sendMessage"
         content_type = message.metadata.get("content_type", "text/plain")
         parse_mode = {"text/markdown": "Markdown", "text/html": "HTML"}.get(
-            content_type
+            content_type,
         )
         from src.backend.core.net.migration_helper import make_http_client
 
         try:
             async with make_http_client(
-                timeout=15, plugin="telegram_adapter"
+                timeout=15, plugin="telegram_adapter",
             ) as client:
                 for chat_id in message.recipients:
                     payload: dict[str, Any] = {"chat_id": chat_id, "text": message.body}
@@ -166,7 +166,7 @@ class TelegramNotificationAdapter:
         try:
             async with make_http_client(timeout=5, plugin="telegram_adapter") as client:
                 resp = await client.get(
-                    f"https://api.telegram.org/bot{self._token}/getMe"
+                    f"https://api.telegram.org/bot{self._token}/getMe",
                 )
                 return resp.is_success
         except Exception as _:

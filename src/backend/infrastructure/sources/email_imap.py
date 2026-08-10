@@ -86,7 +86,7 @@ def _parse_raw_email(raw: bytes) -> dict[str, str]:
             if ct == "text/plain" and "attachment" not in disp:
                 try:
                     body = part.get_payload(decode=True).decode(
-                        part.get_content_charset() or "utf-8", errors="replace"
+                        part.get_content_charset() or "utf-8", errors="replace",
                     )
                 except Exception as _:
                     body = ""
@@ -96,7 +96,7 @@ def _parse_raw_email(raw: bytes) -> dict[str, str]:
             raw_payload = msg.get_payload(decode=True)
             if isinstance(raw_payload, bytes):
                 body = raw_payload.decode(
-                    msg.get_content_charset() or "utf-8", errors="replace"
+                    msg.get_content_charset() or "utf-8", errors="replace",
                 )
         except Exception as _:
             body = ""
@@ -171,7 +171,7 @@ class EmailIMAPSource:
         except ImportError:
             logger.warning(
                 "EmailIMAPSource: aioimaplib не установлен — источник отключён. "
-                "Установите: pip install aioimaplib"
+                "Установите: pip install aioimaplib",
             )
             return
 
@@ -336,7 +336,7 @@ class EmailIMAPSource:
                         await client.wait_server_push()
                     except Exception as exc:
                         logger.warning(
-                            "EmailIMAPSource: IDLE error: %s — reconnecting", exc
+                            "EmailIMAPSource: IDLE error: %s — reconnecting", exc,
                         )
                         break
                     finally:
@@ -344,7 +344,7 @@ class EmailIMAPSource:
                             client.idle_done()
                         except Exception as _:
                             logger.debug(
-                                "EmailIMAPSource: idle_done failed", exc_info=True
+                                "EmailIMAPSource: idle_done failed", exc_info=True,
                             )
 
                     for msg in await self._fetch_new_messages(client):

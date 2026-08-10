@@ -151,7 +151,7 @@ def get_notify_gateway_actions() -> NotifyGatewayActions:
 
 
 def register_notify_actions(
-    registry: ActionHandlerRegistry, *, prefix: str = "notifyv2", override: bool = False
+    registry: ActionHandlerRegistry, *, prefix: str = "notifyv2", override: bool = False,
 ) -> list[str]:
     """Регистрирует action'ы ``<prefix>.email``, ``<prefix>.telegram``...
 
@@ -174,7 +174,7 @@ def register_notify_actions(
             action=f"{base_prefix}.send",
             service_getter=get_notify_gateway_actions,
             service_method="send",
-        )
+        ),
     ]
     for ch in channels:
         specs.append(
@@ -182,7 +182,7 @@ def register_notify_actions(
                 action=f"{base_prefix}.{ch}",
                 service_getter=get_notify_gateway_actions,
                 service_method=ch,
-            )
+            ),
         )
     registry.register_many(specs)
     return [s.action for s in specs]

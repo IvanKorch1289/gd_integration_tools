@@ -60,7 +60,7 @@ builder.add_crud_resource(
         id_param_name="object_id",
         id_field_name="id",
         default_order_by="id",
-    )
+    ),
 )
 
 
@@ -88,8 +88,8 @@ builder.add_actions(
                     destination=settings.redis.get_stream_name("actions"),
                     payload_factory=default_payload_factory,
                     meta_factory=build_http_command_meta,
-                )
+                ),
             ),
-        )
-    ]
+        ),
+    ],
 )

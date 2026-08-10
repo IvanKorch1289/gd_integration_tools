@@ -53,7 +53,7 @@ async def test_authenticate_jwt_awaits_async_decode() -> None:
             exp=None,
             jti="token-1",
             raw={"groups": ["operators"]},
-        )
+        ),
     )
     backend = SimpleNamespace(decode=decode)
 

@@ -56,7 +56,7 @@ def test_to_dict_serialises_all_fields() -> None:
 
 def test_defaults_for_tenant_and_actor() -> None:
     event = CapabilityAuditEvent(
-        plugin="alpha", capability="db.read", scope=None, granted=True
+        plugin="alpha", capability="db.read", scope=None, granted=True,
     )
     assert event.tenant == "_system"
     assert event.actor == "_anonymous"
@@ -65,7 +65,7 @@ def test_defaults_for_tenant_and_actor() -> None:
 
 def test_log_capability_event_does_not_raise() -> None:
     event = CapabilityAuditEvent(
-        plugin="alpha", capability="db.read", scope=None, granted=True
+        plugin="alpha", capability="db.read", scope=None, granted=True,
     )
     # smoke-test: log call should be safe
     log_capability_event(event)
@@ -73,7 +73,7 @@ def test_log_capability_event_does_not_raise() -> None:
 
 def test_frozen_dataclass_rejects_mutation() -> None:
     event = CapabilityAuditEvent(
-        plugin="alpha", capability="db.read", scope=None, granted=True
+        plugin="alpha", capability="db.read", scope=None, granted=True,
     )
     import dataclasses
 

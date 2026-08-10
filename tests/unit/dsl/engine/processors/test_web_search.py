@@ -25,13 +25,13 @@ def _enable(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.asyncio
 async def test_search_with_mocked_service() -> None:
     proc = WebSearchProcessor(
-        engine="tavily", query="python 3.14 release", to="body.results"
+        engine="tavily", query="python 3.14 release", to="body.results",
     )
     ex = _ex({})
 
     fake_service = AsyncMock()
     fake_service.query = AsyncMock(
-        return_value=[{"title": "Python 3.14 Release", "url": "https://x"}]
+        return_value=[{"title": "Python 3.14 Release", "url": "https://x"}],
     )
 
     with patch(
@@ -58,7 +58,7 @@ async def test_query_from_body_source() -> None:
         await proc.process(ex, AsyncMock())
 
     fake_service.query.assert_called_once_with(
-        "search me", max_results=10, provider=None
+        "search me", max_results=10, provider=None,
     )
 
 

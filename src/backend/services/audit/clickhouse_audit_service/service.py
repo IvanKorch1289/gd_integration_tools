@@ -130,7 +130,7 @@ class ClickHouseAuditService:
             )
 
             self._client = await get_async_client(
-                host=host, port=port, database=database
+                host=host, port=port, database=database,
             )
         return self._client
 
@@ -245,7 +245,7 @@ class ClickHouseAuditService:
                 extra=loss_payload,
             )
             audit_silent_loss_total.labels(
-                transport="clickhouse_audit", reason="no_dlq_configured"
+                transport="clickhouse_audit", reason="no_dlq_configured",
             ).inc()
             return
         try:
@@ -260,7 +260,7 @@ class ClickHouseAuditService:
                             "dlq_reason": reason,
                             "clickhouse_error": repr(error),
                         },
-                    }
+                    },
                 )
                 await backend.append(record)
         except Exception as dlq_exc:
@@ -341,7 +341,7 @@ class ClickHouseAuditService:
 
         if not feature_flags.audit_clickhouse_enabled:
             _logger.debug(
-                "audit_clickhouse_enabled=False, skip emit_batch count=%d", len(events)
+                "audit_clickhouse_enabled=False, skip emit_batch count=%d", len(events),
             )
             return
 
@@ -358,7 +358,7 @@ class ClickHouseAuditService:
 
             async def _do_insert_batch() -> None:
                 await client.insert(
-                    self._TABLE, data=data, column_names=column_names
+                    self._TABLE, data=data, column_names=column_names,
                 )
 
             await retry_async(

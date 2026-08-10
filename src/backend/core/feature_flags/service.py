@@ -35,7 +35,7 @@ class FeatureFlagService:
         self._static = feature_flags
 
     def is_enabled(
-        self, flag_key: str, *, default: bool = False, tenant_id: str | None = None
+        self, flag_key: str, *, default: bool = False, tenant_id: str | None = None,
     ) -> bool:
         """Вернуть boolean-значение флага.
 
@@ -50,7 +50,7 @@ class FeatureFlagService:
         return bool(getattr(self._static, flag_key, default))
 
     def get_string(
-        self, flag_key: str, *, default: str = "", tenant_id: str | None = None
+        self, flag_key: str, *, default: str = "", tenant_id: str | None = None,
     ) -> str:
         """Вернуть string-значение флага."""
         overridden = self._overrides.get(flag_key, default=None, tenant_id=tenant_id)
@@ -60,7 +60,7 @@ class FeatureFlagService:
         return str(value) if value is not None else default
 
     def get_int(
-        self, flag_key: str, *, default: int = 0, tenant_id: str | None = None
+        self, flag_key: str, *, default: int = 0, tenant_id: str | None = None,
     ) -> int:
         """Вернуть integer-значение флага."""
         overridden = self._overrides.get(flag_key, default=None, tenant_id=tenant_id)

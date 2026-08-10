@@ -82,7 +82,7 @@ class TestAdminClientFlags:
         with _patched_client(mock) as patched:
             patched.return_value.__enter__.return_value.request.return_value = mock
             assert admin_client.set_override(
-                "f1", True
+                "f1", True,
             ) is True or admin_client.set_override("f1", True) == {"ok": True}
 
     def test_clear_override(self, admin_client: Any) -> None:

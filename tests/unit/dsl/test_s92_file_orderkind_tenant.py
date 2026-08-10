@@ -94,7 +94,7 @@ def test_files_migration_chain() -> None:
 
     migration_path = Path(
         "src/backend/infrastructure/database/migrations/versions/"
-        "2026_06_12_2100-f8a9b0c1d2e3_files_tenant_id.py"
+        "2026_06_12_2100-f8a9b0c1d2e3_files_tenant_id.py",
     )
     spec = importlib.util.spec_from_file_location("s92_w1", migration_path)
     assert spec is not None and spec.loader is not None

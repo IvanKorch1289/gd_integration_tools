@@ -65,7 +65,7 @@ def test_authz_allow_when_in_explicit_allowlist(
         raising=True,
     )
     monkeypatch.setattr(
-        ai_stack.mcp_settings, "tool_public_namespaces", [], raising=True
+        ai_stack.mcp_settings, "tool_public_namespaces", [], raising=True,
     )
 
     assert _check_mcp_tool_authz("credit.score.calculate") is None
@@ -102,10 +102,10 @@ def test_authz_handles_action_without_namespace(
 
     monkeypatch.setattr(ai_stack.mcp_settings, "tool_authz_enabled", True, raising=True)
     monkeypatch.setattr(
-        ai_stack.mcp_settings, "tool_allowlist", ["legacy_action"], raising=True
+        ai_stack.mcp_settings, "tool_allowlist", ["legacy_action"], raising=True,
     )
     monkeypatch.setattr(
-        ai_stack.mcp_settings, "tool_public_namespaces", [], raising=True
+        ai_stack.mcp_settings, "tool_public_namespaces", [], raising=True,
     )
 
     assert _check_mcp_tool_authz("legacy_action") is None

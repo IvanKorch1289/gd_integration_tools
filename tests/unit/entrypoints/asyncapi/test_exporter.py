@@ -102,14 +102,14 @@ class TestBuildAsyncapiSpec:
                 return_value=[("redis", fake_broker), ("rabbit", fake_broker)],
             ),
             patch(
-                "faststream.specification.AsyncAPI", return_value=fake_spec
+                "faststream.specification.AsyncAPI", return_value=fake_spec,
             ) as mock_asyncapi_cls,
         ):
             spec = build_asyncapi_spec("T", "V", "D")
 
         assert spec is fake_spec
         mock_asyncapi_cls.assert_called_once_with(
-            fake_broker, title="T", version="V", description="D", schema_version="3.0.0"
+            fake_broker, title="T", version="V", description="D", schema_version="3.0.0",
         )
         assert fake_spec.add_broker.call_count == 1
         fake_spec.to_specification.assert_called_once()

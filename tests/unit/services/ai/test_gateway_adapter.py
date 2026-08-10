@@ -121,7 +121,7 @@ async def test_adapter_default_gateway_construction(
     # напрямую — он делегирует в get_ai_gateway() (R5 Imp.1 + Sprint 1.3
     # composition root). Подменяем get_ai_gateway вместо AIGateway.
     monkeypatch.setattr(
-        "src.backend.services.ai.gateway_adapter.get_ai_gateway", _capture
+        "src.backend.services.ai.gateway_adapter.get_ai_gateway", _capture,
     )
     response = AIResponse(content="default-gw")
 

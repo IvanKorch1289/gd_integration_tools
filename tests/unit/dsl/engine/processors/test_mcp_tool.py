@@ -28,7 +28,7 @@ class TestMCPToolProcessorInit:
     def test_default_values(self) -> None:
         """Проверка default значений."""
         proc = MCPToolProcessor(
-            tool_uri="http://localhost:8000/mcp", tool_name="db.query"
+            tool_uri="http://localhost:8000/mcp", tool_name="db.query",
         )
         assert proc.tool_uri == "http://localhost:8000/mcp"
         assert proc.tool_name == "db.query"
@@ -93,7 +93,7 @@ class TestMCPToolProcessorExtractArguments:
             arguments_property="body.query_params",
         )
         exchange = _make_exchange(
-            body={"query_params": {"sql": "SELECT 1", "timeout": 30}}
+            body={"query_params": {"sql": "SELECT 1", "timeout": 30}},
         )
         result = proc._extract_arguments(exchange)
         assert result == {"sql": "SELECT 1", "timeout": 30}
@@ -140,14 +140,14 @@ class TestMCPToolProcessorToSpec:
     def test_default_spec(self) -> None:
         """to_spec с default значениями."""
         proc = MCPToolProcessor(
-            tool_uri="http://localhost:8000/mcp", tool_name="db.query"
+            tool_uri="http://localhost:8000/mcp", tool_name="db.query",
         )
         spec = proc.to_spec()
         assert spec == {
             "mcp_tool": {
                 "tool_uri": "http://localhost:8000/mcp",
                 "tool_name": "db.query",
-            }
+            },
         }
 
     def test_custom_spec(self) -> None:
@@ -167,7 +167,7 @@ class TestMCPToolProcessorToSpec:
                 "arguments_property": "body.params",
                 "result_property": "custom_result",
                 "timeout_s": 120.0,
-            }
+            },
         }
 
 
@@ -202,7 +202,7 @@ class TestMCPToolProcessorRun:
         mock_client_class.return_value = mock_client
 
         proc = MCPToolProcessor(
-            tool_uri="http://localhost:8000/mcp", tool_name="db.query"
+            tool_uri="http://localhost:8000/mcp", tool_name="db.query",
         )
         exchange = _make_exchange(body={"sql": "SELECT 1"})
         context = MagicMock()
@@ -211,7 +211,7 @@ class TestMCPToolProcessorRun:
 
         assert exchange.get_property("mcp_result") == {"rows": [1, 2, 3]}
         mock_client.call_tool.assert_called_once_with(
-            "db.query", arguments={"sql": "SELECT 1"}, timeout=30.0
+            "db.query", arguments={"sql": "SELECT 1"}, timeout=30.0,
         )
 
     @pytest.mark.asyncio
@@ -222,12 +222,12 @@ class TestMCPToolProcessorRun:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
         mock_client.call_tool = AsyncMock(
-            side_effect=ConnectionError("MCP server unreachable")
+            side_effect=ConnectionError("MCP server unreachable"),
         )
         mock_client_class.return_value = mock_client
 
         proc = MCPToolProcessor(
-            tool_uri="http://localhost:8000/mcp", tool_name="db.query"
+            tool_uri="http://localhost:8000/mcp", tool_name="db.query",
         )
         exchange = _make_exchange(body={"sql": "SELECT 1"})
         context = MagicMock()
@@ -244,7 +244,7 @@ class TestMCPToolProcessorCapabilityScope:
     def test_capability_scope_returns_tool_name(self) -> None:
         """Scope для mcp.call = tool_name."""
         proc = MCPToolProcessor(
-            tool_uri="http://localhost:8000", tool_name="database.query"
+            tool_uri="http://localhost:8000", tool_name="database.query",
         )
         exchange = _make_exchange(body={})
         scope = proc._capability_scope(exchange)

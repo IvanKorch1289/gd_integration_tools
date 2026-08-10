@@ -111,7 +111,7 @@ def get_express_client(bot_name: str = "main_bot") -> ExpressBotClient:
 
     if not express_settings.enabled:
         raise RuntimeError(
-            "Express интеграция отключена (express_settings.enabled=False)"
+            "Express интеграция отключена (express_settings.enabled=False)",
         )
 
     if bot_name == "main_bot":
@@ -131,10 +131,10 @@ def get_express_client(bot_name: str = "main_bot") -> ExpressBotClient:
                     bot_id=str(bot["bot_id"]),
                     secret_key=str(bot["secret_key"]),
                     botx_host=str(
-                        bot.get("botx_host") or _host_from_url(str(bot["base_url"]))
+                        bot.get("botx_host") or _host_from_url(str(bot["base_url"])),
                     ),
                     base_url=str(bot["base_url"]),
-                )
+                ),
             )
 
     raise RuntimeError(f"Express бот {bot_name!r} не найден в настройках")

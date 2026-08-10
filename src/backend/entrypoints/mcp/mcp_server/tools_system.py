@@ -33,7 +33,7 @@ def _register_system_tools(mcp: Any) -> None:
 
         try:
             result = await action_handler_registry.dispatch(
-                ActionCommandSchema(action="tech.check_all_services", payload={})
+                ActionCommandSchema(action="tech.check_all_services", payload={}),
             )
             if hasattr(result, "model_dump"):
                 return encode_json(result.model_dump(mode="json")).decode("utf-8")
@@ -91,5 +91,5 @@ def _register_system_tools(mcp: Any) -> None:
         from src.backend.core.state.runtime import disabled_feature_flags
 
         return encode_json({"disabled_flags": list(disabled_feature_flags)}).decode(
-            "utf-8"
+            "utf-8",
         )

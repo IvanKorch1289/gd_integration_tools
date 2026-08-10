@@ -22,7 +22,7 @@ from src.backend.entrypoints.middlewares.webhook_signature import (
 )
 
 _UUID4_RE = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
 )
 
 
@@ -68,7 +68,7 @@ class TestWebhookSignature503Envelope:
 
     @pytest.mark.asyncio
     async def test_503_body_has_envelope_keys_and_correlation_id(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """503 body содержит code/detail/error_id/correlation_id.
 
@@ -85,7 +85,7 @@ class TestWebhookSignature503Envelope:
 
         app.side_effect = downstream
         mw = WebhookSignatureMiddleware(
-            app=app, path_prefixes=("/webhooks/",), secrets_by_prefix={}
+            app=app, path_prefixes=("/webhooks/",), secrets_by_prefix={},
         )
 
         send = AsyncMock()
@@ -118,7 +118,7 @@ class TestWebhookSignature503Envelope:
 
     @pytest.mark.asyncio
     async def test_503_body_no_longer_has_legacy_bare_detail_key(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Legacy ``{"detail": ...}`` теперь НЕ отдельный top-level ключ.
 
@@ -138,7 +138,7 @@ class TestWebhookSignature503Envelope:
 
         app.side_effect = downstream
         mw = WebhookSignatureMiddleware(
-            app=app, path_prefixes=("/webhooks/",), secrets_by_prefix={}
+            app=app, path_prefixes=("/webhooks/",), secrets_by_prefix={},
         )
 
         send = AsyncMock()

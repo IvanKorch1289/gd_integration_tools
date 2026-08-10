@@ -34,14 +34,14 @@ def test_policy_allow_skips_declaration_check() -> None:
                 tenant="*",
                 principal="*",
                 priority=10,
-            )
-        ]
+            ),
+        ],
     )
     g = CapabilityGate(policy=policy)
     # Нет declare — но policy allow → check_tenant = True.
     assert (
         g.check_tenant(
-            "net.outbound", "tenant_a", "plugin_x", "net.outbound:example:80"
+            "net.outbound", "tenant_a", "plugin_x", "net.outbound:example:80",
         )
         is True
     )
@@ -53,9 +53,9 @@ def test_policy_allow_does_not_require_scope_match() -> None:
     policy = CapabilityPolicy(
         [
             CapabilityRule(
-                effect="allow", capability="net.outbound", tenant="*", principal="*"
-            )
-        ]
+                effect="allow", capability="net.outbound", tenant="*", principal="*",
+            ),
+        ],
     )
     g = CapabilityGate(policy=policy)
     # Любой scope — granted.
@@ -77,8 +77,8 @@ def test_policy_deny_blocks_even_with_declaration() -> None:
                 tenant="tenant_a",
                 principal="*",
                 priority=100,
-            )
-        ]
+            ),
+        ],
     )
     g = CapabilityGate(policy=policy)
     # ``secrets.read`` использует URISchemeMatcher — vault:// для теста.
@@ -105,8 +105,8 @@ def test_policy_deny_blocks_other_tenants_unaffected() -> None:
                 tenant="tenant_a",
                 principal="*",
                 priority=100,
-            )
-        ]
+            ),
+        ],
     )
     g = CapabilityGate(policy=policy)
     g.declare_tenant(
@@ -135,9 +135,9 @@ def test_policy_no_match_falls_back_to_declaration_granted() -> None:
         [
             # Правило для ДРУГОЙ capability → не match'ит нашу.
             CapabilityRule(
-                effect="allow", capability="net.outbound", tenant="*", principal="*"
-            )
-        ]
+                effect="allow", capability="net.outbound", tenant="*", principal="*",
+            ),
+        ],
     )
     g = CapabilityGate(policy=policy)
     # ``db.read`` exact matcher → exact scope.
@@ -157,9 +157,9 @@ def test_policy_no_match_falls_back_to_declaration_denied() -> None:
     policy = CapabilityPolicy(
         [
             CapabilityRule(
-                effect="allow", capability="net.outbound", tenant="*", principal="*"
-            )
-        ]
+                effect="allow", capability="net.outbound", tenant="*", principal="*",
+            ),
+        ],
     )
     g = CapabilityGate(policy=policy)
     # Нет declaration.
@@ -188,7 +188,7 @@ def test_priority_deny_beats_allow_at_equal_priority() -> None:
                 principal="*",
                 priority=10,
             ),
-        ]
+        ],
     )
     g = CapabilityGate(policy=policy)
     g.declare_tenant(
@@ -221,7 +221,7 @@ def test_priority_higher_wins_over_lower() -> None:
                 principal="*",
                 priority=100,
             ),
-        ]
+        ],
     )
     g = CapabilityGate(policy=policy)
     g.declare_tenant(
@@ -255,7 +255,7 @@ def test_tenant_specific_deny() -> None:
                 principal="*",
                 priority=10,
             ),
-        ]
+        ],
     )
     g = CapabilityGate(policy=policy)
     # tenant_b — allow.

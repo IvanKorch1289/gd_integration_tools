@@ -64,7 +64,7 @@ class TestSemanticMemoryInit:
         from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         mem = SemanticMemory(
-            qdrant_client=AsyncMock(), embedder=MagicMock()
+            qdrant_client=AsyncMock(), embedder=MagicMock(),
         )
         assert mem.is_configured is True
 
@@ -82,7 +82,7 @@ class TestSemanticMemoryAdd:
         embedder = MagicMock()
         embedder.embed = AsyncMock(return_value=[[0.1, 0.2, 0.3]])
         mem = SemanticMemory(
-            qdrant_client=qdrant, embedder=embedder, collection="test"
+            qdrant_client=qdrant, embedder=embedder, collection="test",
         )
         return mem, qdrant, embedder
 
@@ -125,7 +125,7 @@ class TestSemanticMemoryAdd:
 
     @pytest.mark.asyncio
     async def test_add_upserts_point_with_vector_and_payload(
-        self, memory
+        self, memory,
     ) -> None:
         """add() upsert point has vector from embedder + text in payload."""
         mem, qdrant, _embedder = memory
@@ -196,7 +196,7 @@ class TestSemanticMemoryAdd:
 
     @pytest.mark.asyncio
     async def test_add_multiple_calls_return_different_point_ids(
-        self, memory
+        self, memory,
     ) -> None:
         """Каждый add() возвращает уникальный point_id."""
         mem, _qdrant, _embedder = memory
@@ -274,7 +274,7 @@ class TestSemanticMemoryAddErrors:
         embedder.embed = AsyncMock(return_value=[[0.1]])
 
         mem = SemanticMemory(
-            qdrant_client=qdrant, embedder=embedder, collection="my_bank_v1"
+            qdrant_client=qdrant, embedder=embedder, collection="my_bank_v1",
         )
 
         await mem.add(text="x")

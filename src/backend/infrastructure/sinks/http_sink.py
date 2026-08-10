@@ -64,7 +64,7 @@ class HttpSink(Sink):
 
         try:
             async with OutboundHttpClient(
-                timeout=httpx.Timeout(self.timeout)
+                timeout=httpx.Timeout(self.timeout),
             ) as client:
                 response = await client.request(
                     method=self.method,
@@ -75,7 +75,7 @@ class HttpSink(Sink):
                 )
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
+                ok=False, details={"error": str(exc) or exc.__class__.__name__},
             )
 
         ok = 200 <= response.status_code < 300
@@ -99,7 +99,7 @@ class HttpSink(Sink):
         start = time.perf_counter()
         try:
             async with OutboundHttpClient(
-                timeout=httpx.Timeout(self.timeout)
+                timeout=httpx.Timeout(self.timeout),
             ) as client:
                 # ``HEAD`` через ``request`` — ``OutboundHttpClient`` не
                 # имеет shortcut'а ``head``, request совместим со всеми
@@ -121,5 +121,5 @@ class HttpSink(Sink):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )

@@ -158,7 +158,7 @@ class TestRegionRegistry:
                 code="ru-1",
                 primary_url="https://ru-1.example.com",
                 status=RegionStatus.HEALTHY,
-            )
+            ),
         )
         assert get_region_status("ru-1") == RegionStatus.HEALTHY
 
@@ -175,7 +175,7 @@ class TestRegionRegistry:
                 code="ru-1",
                 primary_url="https://ru-1.example.com",
                 status=RegionStatus.HEALTHY,
-            )
+            ),
         )
         set_region_status("ru-1", RegionStatus.DEGRADED)
         assert get_region_status("ru-1") == RegionStatus.DEGRADED
@@ -214,7 +214,7 @@ class TestRegionRouter:
                 code="eu-1",
                 primary_url="https://eu-1.example.com",
                 status=RegionStatus.HEALTHY,
-            )
+            ),
         )
         router = RegionRouter()
         ctx = TenantContext(tenant_id="t1", region="eu-1")
@@ -230,14 +230,14 @@ class TestRegionRouter:
                 code="ru-1",
                 primary_url="https://ru-1.example.com",
                 status=RegionStatus.HEALTHY,
-            )
+            ),
         )
         register_region(
             Region(
                 code="eu-1",
                 primary_url="https://eu-1.example.com",
                 status=RegionStatus.UNHEALTHY,
-            )
+            ),
         )
         router = RegionRouter()
         ctx = TenantContext(tenant_id="t1", region="eu-1")
@@ -254,7 +254,7 @@ class TestRegionRouter:
                 primary_url="https://aa.example.com",
                 weight=10,
                 status=RegionStatus.HEALTHY,
-            )
+            ),
         )
         register_region(
             Region(
@@ -262,7 +262,7 @@ class TestRegionRouter:
                 primary_url="https://bb.example.com",
                 weight=50,
                 status=RegionStatus.HEALTHY,
-            )
+            ),
         )
         router = RegionRouter()
         url = router.route_url()
@@ -277,7 +277,7 @@ class TestRegionRouter:
                 code="ru-1",
                 primary_url="https://ru-1.example.com",
                 status=RegionStatus.DEGRADED,
-            )
+            ),
         )
         router = RegionRouter()
         url = router.route_url()
@@ -292,7 +292,7 @@ class TestRegionRouter:
                 code="aa",
                 primary_url="https://aa.example.com",
                 status=RegionStatus.UNKNOWN,
-            )
+            ),
         )
         router = RegionRouter()
         url = router.route_url()
@@ -308,14 +308,14 @@ class TestRegionRouter:
                 code="bb",
                 primary_url="https://bb.example.com",
                 status=RegionStatus.UNHEALTHY,
-            )
+            ),
         )
         register_region(
             Region(
                 code="aa",
                 primary_url="https://aa.example.com",
                 status=RegionStatus.UNHEALTHY,
-            )
+            ),
         )
         router = RegionRouter()
         url = router.route_url()
@@ -331,28 +331,28 @@ class TestRegionRouter:
                 code="h",
                 primary_url="https://h.example.com",
                 status=RegionStatus.HEALTHY,
-            )
+            ),
         )
         register_region(
             Region(
                 code="d",
                 primary_url="https://d.example.com",
                 status=RegionStatus.DEGRADED,
-            )
+            ),
         )
         register_region(
             Region(
                 code="u",
                 primary_url="https://u.example.com",
                 status=RegionStatus.UNHEALTHY,
-            )
+            ),
         )
         register_region(
             Region(
                 code="n",
                 primary_url="https://n.example.com",
                 status=RegionStatus.UNKNOWN,
-            )
+            ),
         )
         router = RegionRouter()
         assert router.is_healthy("h") is True
@@ -365,10 +365,10 @@ class TestRegionRouter:
     def test_build_candidate_list(self) -> None:
         """_build_candidate_list orders: tenant preference first, then by weight desc."""
         register_region(
-            Region(code="low", primary_url="https://low.example.com", weight=1)
+            Region(code="low", primary_url="https://low.example.com", weight=1),
         )
         register_region(
-            Region(code="high", primary_url="https://high.example.com", weight=100)
+            Region(code="high", primary_url="https://high.example.com", weight=100),
         )
         router = RegionRouter()
         ctx = TenantContext(tenant_id="t1", region="low")
@@ -420,7 +420,7 @@ class TestRegionHealthChecker:
                 code="ru-1",
                 primary_url="https://ru-1.example.com",
                 status=RegionStatus.UNKNOWN,
-            )
+            ),
         )
         checker = RegionHealthChecker()
         await checker._record("ru-1", ok=True)
@@ -436,7 +436,7 @@ class TestRegionHealthChecker:
                 code="ru-1",
                 primary_url="https://ru-1.example.com",
                 status=RegionStatus.HEALTHY,
-            )
+            ),
         )
         checker = RegionHealthChecker(unhealth_threshold=3)
         await checker._record("ru-1", ok=False)
@@ -455,7 +455,7 @@ class TestRegionHealthChecker:
                 code="ru-1",
                 primary_url="https://ru-1.example.com",
                 status=RegionStatus.HEALTHY,
-            )
+            ),
         )
         checker = RegionHealthChecker()
         with patch("region_routing.set_region_status") as mock_set:
@@ -474,7 +474,7 @@ class TestRegionHealthChecker:
         register_region(Region(code="b", primary_url="https://b.example.com"))
         checker = RegionHealthChecker()
         with patch.object(
-            checker, "probe", new=AsyncMock(return_value=True)
+            checker, "probe", new=AsyncMock(return_value=True),
         ) as mock_probe:
             await checker.check_all()
         assert mock_probe.call_count == 2
@@ -488,14 +488,14 @@ class TestRegionHealthChecker:
                 code="ru-1",
                 primary_url="https://ru-1.example.com",
                 status=RegionStatus.HEALTHY,
-            )
+            ),
         )
         checker = RegionHealthChecker(unhealth_threshold=1)
         callback = MagicMock()
         checker.on_status_change = callback
         await checker._record("ru-1", ok=False)
         callback.assert_called_once_with(
-            "ru-1", RegionStatus.HEALTHY, RegionStatus.UNHEALTHY
+            "ru-1", RegionStatus.HEALTHY, RegionStatus.UNHEALTHY,
         )
 
     @pytest.mark.unit
@@ -504,7 +504,7 @@ class TestRegionHealthChecker:
         """start runs check_all periodically; stop terminates the loop."""
         checker = RegionHealthChecker()
         with patch.object(
-            checker, "check_all", new_callable=AsyncMock
+            checker, "check_all", new_callable=AsyncMock,
         ) as mock_check_all:
             task = asyncio.create_task(checker.start(interval=0.01))
             await asyncio.sleep(0.05)

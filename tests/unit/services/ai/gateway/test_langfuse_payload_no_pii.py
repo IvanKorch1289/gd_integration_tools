@@ -58,7 +58,7 @@ class TestLangFuseV3Anonymization:
     """PII anonymization tests for LangFuseCallbackV3."""
 
     async def test_callback_v3_anonymizes_when_flag_on(
-        self, monkeypatch: pytest.MonkeyPatch, stub_langfuse_v3_client: MagicMock
+        self, monkeypatch: pytest.MonkeyPatch, stub_langfuse_v3_client: MagicMock,
     ) -> None:
         """LangFuseCallbackV3 маскирует input/output при sanitize_traces=True."""
         from src.backend.core.config import ai_stack, features
@@ -68,11 +68,11 @@ class TestLangFuseV3Anonymization:
         )
 
         monkeypatch.setattr(
-            features.feature_flags, "presidio_pii_enabled", True, raising=True
+            features.feature_flags, "presidio_pii_enabled", True, raising=True,
         )
         monkeypatch.setattr(ai_stack.langfuse_settings, "enabled", True, raising=True)
         monkeypatch.setattr(
-            ai_stack.langfuse_settings, "sanitize_traces", True, raising=True
+            ai_stack.langfuse_settings, "sanitize_traces", True, raising=True,
         )
         providers.set_ai_sanitizer_provider(_StubSanitizer())
         try:
@@ -83,13 +83,13 @@ class TestLangFuseV3Anonymization:
             kwargs = {
                 "model": "openai/gpt-4o-mini",
                 "messages": [
-                    {"role": "user", "content": "ИНН 7707083893, договор №12345"}
+                    {"role": "user", "content": "ИНН 7707083893, договор №12345"},
                 ],
                 "metadata": {"tenant": "bank-msk", "route": "credit_check"},
             }
             response = MagicMock()
             response.choices = [
-                MagicMock(message=MagicMock(content="Клиент Иванов 9998887"))
+                MagicMock(message=MagicMock(content="Клиент Иванов 9998887")),
             ]
             response.usage = None
             response.response_cost = 0.001
@@ -114,7 +114,7 @@ class TestLangFuseV3Anonymization:
             providers.ai._overrides.pop("ai_sanitizer", None)
 
     async def test_callback_v3_passthrough_when_sanitize_traces_off(
-        self, monkeypatch: pytest.MonkeyPatch, stub_langfuse_v3_client: MagicMock
+        self, monkeypatch: pytest.MonkeyPatch, stub_langfuse_v3_client: MagicMock,
     ) -> None:
         """При sanitize_traces=False payload проходит без анонимизации."""
         from src.backend.core.config import ai_stack, features
@@ -124,11 +124,11 @@ class TestLangFuseV3Anonymization:
         )
 
         monkeypatch.setattr(
-            features.feature_flags, "presidio_pii_enabled", True, raising=True
+            features.feature_flags, "presidio_pii_enabled", True, raising=True,
         )
         monkeypatch.setattr(ai_stack.langfuse_settings, "enabled", True, raising=True)
         monkeypatch.setattr(
-            ai_stack.langfuse_settings, "sanitize_traces", False, raising=True
+            ai_stack.langfuse_settings, "sanitize_traces", False, raising=True,
         )
         providers.set_ai_sanitizer_provider(_StubSanitizer())
         try:
@@ -155,7 +155,7 @@ class TestLangFuseV3Anonymization:
             providers.ai._overrides.pop("ai_sanitizer", None)
 
     async def test_callback_v3_passthrough_when_presidio_off(
-        self, monkeypatch: pytest.MonkeyPatch, stub_langfuse_v3_client: MagicMock
+        self, monkeypatch: pytest.MonkeyPatch, stub_langfuse_v3_client: MagicMock,
     ) -> None:
         """При PRESIDIO_PII_ENABLED=False payload не анонимизируется (single source)."""
         from src.backend.core.config import ai_stack, features
@@ -165,11 +165,11 @@ class TestLangFuseV3Anonymization:
         )
 
         monkeypatch.setattr(
-            features.feature_flags, "presidio_pii_enabled", False, raising=True
+            features.feature_flags, "presidio_pii_enabled", False, raising=True,
         )
         monkeypatch.setattr(ai_stack.langfuse_settings, "enabled", True, raising=True)
         monkeypatch.setattr(
-            ai_stack.langfuse_settings, "sanitize_traces", True, raising=True
+            ai_stack.langfuse_settings, "sanitize_traces", True, raising=True,
         )
         providers.set_ai_sanitizer_provider(_StubSanitizer())
         try:

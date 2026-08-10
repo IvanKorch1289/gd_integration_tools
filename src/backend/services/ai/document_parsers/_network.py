@@ -27,7 +27,7 @@ class _NetworkDeniedError(RuntimeError):
 
 def _denied_urlopen(*args, **kwargs):
     raise _NetworkDeniedError(
-        "markitdown network access is disabled (settings.MARKITDOWN_NETWORK_MODE='off')"
+        "markitdown network access is disabled (settings.MARKITDOWN_NETWORK_MODE='off')",
     )
 
 

@@ -68,7 +68,7 @@ async def test_process_appends_to_non_list_existing() -> None:
 async def test_process_capture_missing_field() -> None:
     """capture_field not in body/headers → not in payload."""
     proc = DataLineageProcessor(
-        dataset="foo", capture_fields=["nonexistent"], lineage_emitter=lambda e: None
+        dataset="foo", capture_fields=["nonexistent"], lineage_emitter=lambda e: None,
     )
     ex = _ex(body={"other": 1})
     await proc.process(ex, None)  # type: ignore[arg-type]
@@ -164,7 +164,7 @@ def test_emitter_to_openlineage_with_attributes() -> None:
             "parent_ids": [],
             "timestamp": 1700000000.0,
             "payload": {},
-        }
+        },
     )
     ol = em.to_openlineage()
     desc = ol[0]["outputs"][0]["facets"]["documentation"]["description"]
@@ -184,7 +184,7 @@ def test_emitter_to_openlineage_no_attributes() -> None:
             "parent_ids": [],
             "timestamp": 1700000000.0,
             "payload": {},
-        }
+        },
     )
     ol = em.to_openlineage()
     # Should not crash
@@ -202,7 +202,7 @@ def test_emitter_to_openlineage_no_parent_ids() -> None:
             "node": {"id": "d:foo", "type": "dataset", "name": "foo", "attributes": {}},
             "timestamp": 1700000000.0,
             "payload": {},
-        }
+        },
     )
     ol = em.to_openlineage()
     assert ol[0]["inputs"] == []

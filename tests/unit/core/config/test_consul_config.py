@@ -32,20 +32,20 @@ class TestConsulConfigStore:
     # ------------------------------------------------------------------
 
     def test_get_returns_value(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         mock_consul.kv.get.return_value = (1, {"Value": b"hello"})
         assert store.get("key") == "hello"
         mock_consul.kv.get.assert_called_once_with("key")
 
     def test_get_returns_default_when_missing(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         mock_consul.kv.get.return_value = (1, None)
         assert store.get("missing", default="fallback") == "fallback"
 
     def test_get_uses_cache(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         mock_consul.kv.get.return_value = (1, {"Value": b"cached"})
         assert store.get("key") == "cached"
@@ -53,19 +53,19 @@ class TestConsulConfigStore:
         mock_consul.kv.get.assert_called_once()
 
     def test_get_returns_default_on_exception(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         mock_consul.kv.get.side_effect = OSError("boom")
         assert store.get("key", default="def") == "def"
 
     def test_get_decodes_str_value(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         mock_consul.kv.get.return_value = (1, {"Value": "already-str"})
         assert store.get("key") == "already-str"
 
     def test_items_decodes_recursive_values(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         mock_consul.kv.get.return_value = (
             1,
@@ -86,14 +86,14 @@ class TestConsulConfigStore:
     # ------------------------------------------------------------------
 
     def test_put_success(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         mock_consul.kv.put.return_value = True
         assert store.put("key", "val") is True
         mock_consul.kv.put.assert_called_once_with("key", "val")
 
     def test_put_clears_cache(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         mock_consul.kv.get.return_value = (1, {"Value": b"old"})
         store.get("key")
@@ -101,7 +101,7 @@ class TestConsulConfigStore:
         assert "key" not in store._cache
 
     def test_put_failure_returns_false(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         mock_consul.kv.put.side_effect = OSError("boom")
         assert store.put("key", "val") is False
@@ -111,7 +111,7 @@ class TestConsulConfigStore:
     # ------------------------------------------------------------------
 
     def test_watch_calls_callback(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         calls: list[str] = []
 
@@ -131,7 +131,7 @@ class TestConsulConfigStore:
         assert calls == ["v1", "v2"]
 
     def test_watch_updates_cache(
-        self, store: ConsulConfigStore, mock_consul: MagicMock
+        self, store: ConsulConfigStore, mock_consul: MagicMock,
     ) -> None:
         mock_consul.kv.get.side_effect = [(1, {"Value": b"v1"}), RuntimeError("stop")]
         t = threading.Thread(target=store.watch, args=("key",), daemon=True)

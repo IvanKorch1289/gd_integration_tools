@@ -156,7 +156,7 @@ async def run_async_migrations() -> None:
         )
 
         lock_ctx: Any = distributed_lock(
-            "alembic:migrations", ttl_seconds=300, blocking_timeout=60.0
+            "alembic:migrations", ttl_seconds=300, blocking_timeout=60.0,
         )
     except ImportError:
         import contextlib
@@ -170,7 +170,7 @@ async def run_async_migrations() -> None:
     async with lock_ctx as acquired:
         if not acquired:
             get_logger("alembic").warning(
-                "Could not acquire migration lock — another instance is running migrations"
+                "Could not acquire migration lock — another instance is running migrations",
             )
             return
 

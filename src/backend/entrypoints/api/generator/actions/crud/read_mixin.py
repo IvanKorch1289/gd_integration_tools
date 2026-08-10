@@ -83,7 +83,7 @@ class ReadMixin:
             )
             service = spec.service_getter()
             return await service.get(
-                pagination=pagination, by=by, order=getattr(order, "value", order)
+                pagination=pagination, by=by, order=getattr(order, "value", order),
             )
 
         endpoint.__name__ = f"{spec.name}_get_all"
@@ -92,7 +92,7 @@ class ReadMixin:
             request_parameter(),
             query_parameter("page", int | None, None, "Номер страницы."),
             query_parameter(
-                "size", int | None, None, "Количество элементов на странице."
+                "size", int | None, None, "Количество элементов на странице.",
             ),
             query_parameter("by", str, spec.default_order_by, "Поле сортировки."),
             query_parameter(
@@ -132,7 +132,7 @@ class ReadMixin:
             """Выполнить операцию endpoint."""
             service = spec.service_getter()
             return await service.get(
-                key=spec.id_field_name, value=kwargs[spec.id_param_name]
+                key=spec.id_field_name, value=kwargs[spec.id_param_name],
             )
 
         endpoint.__name__ = f"{spec.name}_get_by_id"
@@ -140,7 +140,7 @@ class ReadMixin:
         endpoint.__signature__ = make_signature(  # type: ignore[attr-defined]
             request_parameter(),
             path_parameter(
-                spec.id_param_name, spec.id_param_type, "Идентификатор объекта."
+                spec.id_param_name, spec.id_param_type, "Идентификатор объекта.",
             ),
         )
         self._register_route(
@@ -178,7 +178,7 @@ class ReadMixin:
             """Выполнить операцию endpoint."""
             service = spec.service_getter()
             return await service.get_first_or_last_with_limit(
-                limit=limit, by=by, order=getattr(order, "value", order)
+                limit=limit, by=by, order=getattr(order, "value", order),
             )
 
         endpoint.__name__ = f"{spec.name}_get_first_or_last"

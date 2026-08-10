@@ -110,7 +110,7 @@ class AIWorkspaceCleaner:
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
-            self._cleanup_loop(), name="ai-workspace-cleaner"
+            self._cleanup_loop(), name="ai-workspace-cleaner",
         )
 
     async def stop(self) -> None:
@@ -198,7 +198,7 @@ class AIWorkspaceCleaner:
 
         # Собрать session-каталоги и отсортировать по mtime (старые первыми).
         sessions = sorted(
-            (d for d in workspace.iterdir() if d.is_dir()), key=_dir_mtime
+            (d for d in workspace.iterdir() if d.is_dir()), key=_dir_mtime,
         )
 
         removed = 0
@@ -240,7 +240,7 @@ class AIWorkspaceCleaner:
                                 self.enforce_size_quota(tenant_dir)
                 except Exception as exc:
                     _logger.warning(
-                        "ai_workspace_cleaner.loop_error", extra={"error": repr(exc)}
+                        "ai_workspace_cleaner.loop_error", extra={"error": repr(exc)},
                     )
         except asyncio.CancelledError:
             raise

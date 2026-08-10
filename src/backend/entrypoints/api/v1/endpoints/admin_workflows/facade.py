@@ -83,18 +83,18 @@ class _AdminWorkflowsFacade:
         return [_row_to_schema(r) for r in rows]
 
     async def get_workflow(
-        self, *, instance_id: UUID
+        self, *, instance_id: UUID,
     ) -> WorkflowInstanceDetailSchemaOut:
         """Получить детальную информацию о workflow instance + events."""
         row = await _instance_store().get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=404, detail=f"Workflow instance '{instance_id}' not found"
+                status_code=404, detail=f"Workflow instance '{instance_id}' not found",
             )
 
         base = _row_to_schema(row)
         events_rows = await _event_store().read_events(
-            workflow_id=instance_id, after_seq=0, limit=1000
+            workflow_id=instance_id, after_seq=0, limit=1000,
         )
         events = [
             WorkflowEventSchemaOut(
@@ -109,21 +109,21 @@ class _AdminWorkflowsFacade:
         ]
 
         return WorkflowInstanceDetailSchemaOut(
-            **base.model_dump(), snapshot_state=row.snapshot_state, events=events
+            **base.model_dump(), snapshot_state=row.snapshot_state, events=events,
         )
 
     async def get_events(
-        self, *, instance_id: UUID, after_seq: int = 0, limit: int = 100
+        self, *, instance_id: UUID, after_seq: int = 0, limit: int = 100,
     ) -> list[WorkflowEventSchemaOut]:
         """События workflow instance с пагинацией по seq."""
         row = await _instance_store().get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=404, detail=f"Workflow instance '{instance_id}' not found"
+                status_code=404, detail=f"Workflow instance '{instance_id}' not found",
             )
 
         events_rows = await _event_store().read_events(
-            workflow_id=instance_id, after_seq=after_seq, limit=limit
+            workflow_id=instance_id, after_seq=after_seq, limit=limit,
         )
         return [
             WorkflowEventSchemaOut(
@@ -143,7 +143,7 @@ class _AdminWorkflowsFacade:
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=404, detail=f"Workflow instance '{instance_id}' not found"
+                status_code=404, detail=f"Workflow instance '{instance_id}' not found",
             )
 
         terminal = {WorkflowStatus.succeeded, WorkflowStatus.cancelled}
@@ -176,14 +176,14 @@ class _AdminWorkflowsFacade:
         }
 
     async def cancel_workflow(
-        self, *, instance_id: UUID, reason: str | None = None
+        self, *, instance_id: UUID, reason: str | None = None,
     ) -> dict[str, Any]:
         """Отменяет workflow, переводя его в terminal статус."""
         store = _instance_store()
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=404, detail=f"Workflow instance '{instance_id}' not found"
+                status_code=404, detail=f"Workflow instance '{instance_id}' not found",
             )
 
         terminal = {
@@ -217,7 +217,7 @@ class _AdminWorkflowsFacade:
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=404, detail=f"Workflow instance '{instance_id}' not found"
+                status_code=404, detail=f"Workflow instance '{instance_id}' not found",
             )
         if row.status != WorkflowStatus.paused:
             raise HTTPException(
@@ -271,7 +271,7 @@ class _AdminWorkflowsFacade:
         descriptor = workflow_registry.get(workflow_name)
         if descriptor is None:
             raise HTTPException(
-                status_code=404, detail=f"Workflow '{workflow_name}' not registered"
+                status_code=404, detail=f"Workflow '{workflow_name}' not registered",
             )
 
         route_id = workflow_registry.get_route_id(workflow_name)
@@ -287,12 +287,12 @@ class _AdminWorkflowsFacade:
                 payload = validated.model_dump(mode="json")
             except Exception as exc:
                 raise HTTPException(
-                    status_code=422, detail=f"Payload validation failed: {exc}"
+                    status_code=422, detail=f"Payload validation failed: {exc}",
                 ) from exc
 
         store = _instance_store()
         instance_id = await _trigger_via_action_or_store(
-            store=store, workflow_name=workflow_name, route_id=route_id, payload=payload
+            store=store, workflow_name=workflow_name, route_id=route_id, payload=payload,
         )
         _logger.info(
             "workflow triggered: name=%s instance_id=%s wait=%s",
@@ -304,12 +304,12 @@ class _AdminWorkflowsFacade:
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=500, detail="Created instance disappeared (race condition)"
+                status_code=500, detail="Created instance disappeared (race condition)",
             )
 
         if wait:
             row = await _wait_for_terminal(
-                store=store, instance_id=instance_id, timeout_s=timeout_s
+                store=store, instance_id=instance_id, timeout_s=timeout_s,
             )
 
         last_error: str | None = None
@@ -335,7 +335,7 @@ class _AdminWorkflowsFacade:
         )
 
     async def get_saga_history(
-        self, *, workflow_id: str, limit: int = 50
+        self, *, workflow_id: str, limit: int = 50,
     ) -> list[dict[str, Any]]:
         """Возвращает timeline saga events для workflow_id (compensation only)."""
         from src.backend.services.workflows.saga_history import get_saga_history as _get

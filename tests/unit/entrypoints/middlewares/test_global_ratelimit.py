@@ -61,7 +61,7 @@ async def test_feature_disabled_passes_through() -> None:
             return True, 99, 0
 
     middleware = GlobalRateLimitMiddleware(
-        inner, checker=_Recording(), feature_enabled=lambda: False
+        inner, checker=_Recording(), feature_enabled=lambda: False,
     )
     send = _RecordingSend()
     await middleware({"type": "http", "client": ("127.0.0.1", 0)}, _empty_receive, send)
@@ -74,7 +74,7 @@ async def test_allowed_passes_through() -> None:
     """allowed=True → next app вызывается."""
     inner = _RecordingApp()
     middleware = GlobalRateLimitMiddleware(
-        inner, checker=FakeRateLimitChecker(max_per_window=10)
+        inner, checker=FakeRateLimitChecker(max_per_window=10),
     )
     send = _RecordingSend()
     await middleware({"type": "http", "client": ("1.2.3.4", 0)}, _empty_receive, send)
@@ -90,7 +90,7 @@ async def test_blocked_returns_429() -> None:
     # `multi_tenant_rate_limit_enabled` (default-OFF). Тест требует
     # активное middleware — указываем явный enable.
     middleware = GlobalRateLimitMiddleware(
-        inner, checker=checker, feature_enabled=lambda: True
+        inner, checker=checker, feature_enabled=lambda: True,
     )
     send = _RecordingSend()
     scope = {"type": "http", "client": ("1.2.3.4", 0)}
@@ -116,7 +116,7 @@ async def test_non_http_scope_pass_through() -> None:
     """Не-HTTP scope (lifespan/websocket) → pass-through."""
     inner = _RecordingApp()
     middleware = GlobalRateLimitMiddleware(
-        inner, checker=FakeRateLimitChecker(), feature_enabled=lambda: True
+        inner, checker=FakeRateLimitChecker(), feature_enabled=lambda: True,
     )
     send = _RecordingSend()
     await middleware({"type": "lifespan"}, _empty_receive, send)
@@ -133,7 +133,7 @@ async def test_checker_failure_falls_through() -> None:
 
     inner = _RecordingApp()
     middleware = GlobalRateLimitMiddleware(
-        inner, checker=_BrokenChecker(), feature_enabled=lambda: True
+        inner, checker=_BrokenChecker(), feature_enabled=lambda: True,
     )
     send = _RecordingSend()
     await middleware({"type": "http", "client": ("1.2.3.4", 0)}, _empty_receive, send)

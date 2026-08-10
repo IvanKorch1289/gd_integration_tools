@@ -35,7 +35,7 @@ def test_lazy_import_is_now_detected() -> None:
                 PurgatoryCircuitBreaker,
             )
             return PurgatoryCircuitBreaker()
-        """
+        """,
     ).strip()
     tree = ast.parse(src)
     # _imports() возвращает список (module, lineno, is_lazy)
@@ -51,7 +51,7 @@ def test_top_level_import_is_detected() -> None:
     src = textwrap.dedent(
         """
         from src.backend.infrastructure.cache import redis_cache
-        """
+        """,
     ).strip()
     tree = ast.parse(src)
     imports = list(check_layers._imports(tree))
@@ -72,7 +72,7 @@ def test_type_checking_import_is_skipped() -> None:
 
         if typing.TYPE_CHECKING:
             from src.backend.infrastructure.cache import redis_cache
-        """
+        """,
     ).strip()
     tree = ast.parse(src)
     for _module, lineno, _is_lazy in check_layers._imports(tree):
@@ -86,7 +86,7 @@ def test_type_checking_import_is_skipped() -> None:
 def test_violation_key_format() -> None:
     """Violation key — ``{rel}\\t{layer}\\t{module}``, stable для allowlist."""
     key = check_layers._violation_key(
-        ("src/backend/core/foo.py", "core", "src.backend.services.bar")
+        ("src/backend/core/foo.py", "core", "src.backend.services.bar"),
     )
     assert key == "src/backend/core/foo.py\tcore\tsrc.backend.services.bar"
 
@@ -147,13 +147,13 @@ def test_test_files_in_extensions_are_excluded() -> None:
         prod_file.write_text(
             # S110 W4: services.integrations.skb — НЕ framework exception,
             # остаётся violation для production code.
-            "from src.backend.services.integrations.skb import APISKBService\n"
+            "from src.backend.services.integrations.skb import APISKBService\n",
         )
         # Test file in extensions — should be excluded
         test_file = root / "extensions" / "ext1" / "tests" / "test_x.py"
         test_file.parent.mkdir(parents=True)
         test_file.write_text(
-            "from src.backend.core.plugin_runtime.manifest_toml import load_plugin_manifest\n"
+            "from src.backend.core.plugin_runtime.manifest_toml import load_plugin_manifest\n",
         )
 
         prod_violations = check_layers._check_file(prod_file, root)
@@ -181,10 +181,10 @@ def test_update_allowlist_merges_with_existing(tmp_path, monkeypatch) -> None:
 
     # New violations to add
     new_violations = [
-        ("extensions/new/file.py", "extensions", "src.backend.services.bar")
+        ("extensions/new/file.py", "extensions", "src.backend.services.bar"),
     ]
     check_layers._save_allowlist(
-        {check_layers._violation_key(v) for v in new_violations}
+        {check_layers._violation_key(v) for v in new_violations},
     )
 
     content = tmp_path.joinpath("allowlist.txt").read_text()
@@ -215,7 +215,7 @@ def test_prune_allowlist_removes_stale_entries(tmp_path, monkeypatch) -> None:
     stale = f"extensions/stale.py{TAB}extensions{TAB}src.backend.services.removed"
     monkeypatch.setattr(check_layers, "ALLOWLIST_PATH", tmp_path / "allowlist.txt")
     tmp_path.joinpath("allowlist.txt").write_text(
-        "# header\n" + current1 + "\n" + current2 + "\n" + stale + "\n"
+        "# header\n" + current1 + "\n" + current2 + "\n" + stale + "\n",
     )
 
     # Current violations: только current1 + current2 (stale уже нет в коде).
@@ -224,7 +224,7 @@ def test_prune_allowlist_removes_stale_entries(tmp_path, monkeypatch) -> None:
         ("src/backend/core/current2.py", "core", "src.backend.services.bar"),
     ]
     removed = check_layers._prune_allowlist(
-        {check_layers._violation_key(v) for v in current_violations}
+        {check_layers._violation_key(v) for v in current_violations},
     )
 
     assert removed == 1, f"Expected 1 stale entry removed, got {removed}"
@@ -245,10 +245,10 @@ def test_prune_allowlist_no_stale_returns_zero(tmp_path, monkeypatch) -> None:
     tmp_path.joinpath("allowlist.txt").write_text("# header\n" + current + "\n")
 
     current_violations = [
-        ("extensions/current.py", "extensions", "src.backend.services.foo")
+        ("extensions/current.py", "extensions", "src.backend.services.foo"),
     ]
     removed = check_layers._prune_allowlist(
-        {check_layers._violation_key(v) for v in current_violations}
+        {check_layers._violation_key(v) for v in current_violations},
     )
     assert removed == 0
 
@@ -306,7 +306,7 @@ def test_framework_exception_hides_violation() -> None:
         ext_file.write_text(
             "from src.backend.infrastructure.repositories.base import SQLAlchemyRepository\n"
             "from src.backend.infrastructure.database.session_manager import main_session_manager\n"
-            "from src.backend.services.core.base import BaseService\n"
+            "from src.backend.services.core.base import BaseService\n",
         )
 
         violations = check_layers._check_file(ext_file, root)
@@ -331,7 +331,7 @@ def test_framework_exception_does_not_apply_to_other_layers() -> None:
         svc_file = root / "services" / "svc1" / "service.py"
         svc_file.parent.mkdir(parents=True)
         svc_file.write_text(
-            "from src.backend.core.errors import NotFoundError\n"  # core — allowed
+            "from src.backend.core.errors import NotFoundError\n",  # core — allowed
         )
 
         violations = check_layers._check_file(svc_file, root)

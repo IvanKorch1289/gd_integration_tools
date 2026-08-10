@@ -132,7 +132,7 @@ class SSESource:
             extra_ctx={"url": self._url, "subscription_id": self._subscription_id},
         ):
             raise PermissionError(
-                f"sse.read denied for stream url={self._url!r}"
+                f"sse.read denied for stream url={self._url!r}",
             )
         # S1: per-connector rate limit (per subscription).
         limiter = get_connector_rate_limiter()
@@ -192,7 +192,7 @@ class SSESource:
             request_headers["Last-Event-ID"] = self._last_event_id
 
         timeout = httpx.Timeout(
-            connect=10.0, read=self._heartbeat_timeout_s, write=10.0, pool=10.0
+            connect=10.0, read=self._heartbeat_timeout_s, write=10.0, pool=10.0,
         )
 
         # S36-W7 (R-V15-5): SSE consumer обязан идти через
@@ -205,13 +205,13 @@ class SSESource:
             from src.backend.core.net.migration_helper import make_http_client
 
             outbound_client = make_http_client(
-                plugin=f"sse:{self._subscription_id[:8]}"
+                plugin=f"sse:{self._subscription_id[:8]}",
             )
 
         # OutboundHttpClient.stream() возвращает async context manager
         # (httpx API). WAF-check уже выполнен до открытия stream.
         async with outbound_client.stream(
-            "GET", self._url, headers=request_headers, timeout=timeout
+            "GET", self._url, headers=request_headers, timeout=timeout,
         ) as resp:
             resp.raise_for_status()
             # SSE parsers — manual (httpx не парсит SSE)
@@ -249,7 +249,7 @@ class SSESource:
                 yield self._make_event(data_lines, event_type, event_id)
 
     def _make_event(
-        self, data_lines: list[str], event_type: str, event_id: str | None
+        self, data_lines: list[str], event_type: str, event_id: str | None,
     ) -> SSEEvent:
         raw = "\n".join(data_lines)
         parsed: str | dict = raw

@@ -46,7 +46,7 @@ class _FakeAdapter(NotificationAdapter):
 
 
 def _make_exchange(
-    body: Any = None, properties: dict[str, Any] | None = None
+    body: Any = None, properties: dict[str, Any] | None = None,
 ) -> Exchange[Any]:
     ex = Exchange(in_message=Message(body=body))
     if properties:
@@ -91,7 +91,7 @@ class TestNotifyCascadeBasic:
         a = _FakeAdapter("slack", available=False)
         b = _FakeAdapter("email")
         proc = NotifyCascadeProcessor(
-            adapters=[a, b], recipient_path="properties.recipient"
+            adapters=[a, b], recipient_path="properties.recipient",
         )
         ex = _make_exchange(properties={"recipient": "u@b.io"})
         await proc.process(ex, ExecutionContext())
@@ -158,7 +158,7 @@ class TestNotifyCascadeNonBlocking:
         # должен вернуться без блока.
         a = _SlowAdapter(delay=1.0)
         proc = NotifyCascadeProcessor(
-            adapters=[a], recipient_path="properties.recipient"
+            adapters=[a], recipient_path="properties.recipient",
         )
         ex = _make_exchange(properties={"recipient": "u@b.io"})
 
@@ -201,7 +201,7 @@ class TestPathExtraction:
     async def test_body_path_dict(self) -> None:
         a = _FakeAdapter("slack")
         proc = NotifyCascadeProcessor(
-            adapters=[a], recipient_path="body.user", body_path="body.text"
+            adapters=[a], recipient_path="body.user", body_path="body.text",
         )
         ex = _make_exchange(body={"user": "u@b.io", "text": "hello"})
         await proc.process(ex, ExecutionContext())

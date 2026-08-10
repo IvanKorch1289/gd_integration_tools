@@ -23,7 +23,7 @@ def _round_trip(builder: RouteBuilder) -> tuple[dict, dict]:
 
 @pytest.mark.xfail(
     reason="S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) "
-    "not fully implemented — to_spec() missing, round-trip blocked; S30 carryover"
+    "not fully implemented — to_spec() missing, round-trip blocked; S30 carryover",
 )
 @pytest.mark.parametrize(
     "method,kwargs",
@@ -57,13 +57,13 @@ def test_pilot_batch_s5_round_trip(method: str, kwargs: dict) -> None:
 
 @pytest.mark.xfail(
     reason="S5 pilot processors (webhook_verify/jsonpath/convert_units/parse_ics) "
-    "not fully implemented — to_spec() missing, round-trip blocked; S30 carryover"
+    "not fully implemented — to_spec() missing, round-trip blocked; S30 carryover",
 )
 def test_pilot_batch_s5_full_chain() -> None:
     """Полный pipeline: webhook_verify → jsonpath → convert_units → parse_ics."""
     builder = (
         RouteBuilder.from_(
-            "rt.s5.full", source="test:rt.s5.full", description="pilot batch"
+            "rt.s5.full", source="test:rt.s5.full", description="pilot batch",
         )
         .webhook_verify(secret="K", header="X-Hub-Signature-256", prefix="sha256")
         .jsonpath("$.payload.distance_km", single=True, to_property="distance_km")

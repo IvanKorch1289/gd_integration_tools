@@ -89,7 +89,7 @@ class InProcessAgentSandbox:
             raise RuntimeError(
                 "InProcessAgentSandbox forbidden in production "
                 "(GD_INTEGRATION_PRODUCTION=1). Use ProcessPool or E2B backend. "
-                "See ARC-008 / docs/security/sandbox_backends.md."
+                "See ARC-008 / docs/security/sandbox_backends.md.",
             )
         try:
             from src.backend.core.config.features import feature_flags
@@ -103,13 +103,13 @@ class InProcessAgentSandbox:
                     "InProcessAgentSandbox blocked by feature_flags."
                     "ai_in_process_sandbox_disabled=True (default). "
                     "Use ProcessPoolAgentSandbox or E2BAgentSandbox. "
-                    "To override (DEV ONLY): set FEATURE_AI_IN_PROCESS_SANDBOX_DISABLED=false."
+                    "To override (DEV ONLY): set FEATURE_AI_IN_PROCESS_SANDBOX_DISABLED=false.",
                 )
         except ImportError:
             # If feature_flags module unavailable → fail-closed
             raise RuntimeError(
                 "InProcessAgentSandbox: feature_flags module unavailable, "
-                "defaulting to BLOCKED for safety. Use ProcessPoolAgentSandbox."
+                "defaulting to BLOCKED for safety. Use ProcessPoolAgentSandbox.",
             )
         warnings.warn(
             "InProcessAgentSandbox is DEPRECATED since Sprint 172 (ARC-008). "
@@ -196,7 +196,7 @@ def _sync_run_react(
             temperature=temperature,
             durable=durable,
             session_id=session_id,
-        )
+        ),
     )
 
 
@@ -256,7 +256,7 @@ class ProcessPoolAgentSandbox:
             )
             success = "error" not in result
             return AgentSandboxResult(
-                success=success, data=result, backend="process_pool"
+                success=success, data=result, backend="process_pool",
             )
         except TimeoutError:
             _logger.warning(
@@ -366,7 +366,7 @@ class E2BAgentSandbox:
             raise AgentSandboxConfigError(
                 "E2BAgentSandbox requires E2B_API_KEY env var "
                 "(export or pass api_key=). Use ProcessPoolAgentSandbox "
-                "if cloud sandbox is not available."
+                "if cloud sandbox is not available.",
             )
 
         # Lazy import of e2b_code_interpreter (opt-in dep, ~5MB).
@@ -375,7 +375,7 @@ class E2BAgentSandbox:
         except ImportError as exc:
             raise AgentSandboxConfigError(
                 "e2b-code-interpreter not installed. "
-                "Install via: uv pip install 'e2b-code-interpreter>=1.0.0,<3.0.0'"
+                "Install via: uv pip install 'e2b-code-interpreter>=1.0.0,<3.0.0'",
             ) from exc
 
         # Sandbox API — sync. Wrap в asyncio.to_thread (NON-blocking).
@@ -404,7 +404,7 @@ class E2BAgentSandbox:
                     f"# prompt: {prompt}\n"
                     f"# tool_actions: {tool_actions}\n"
                     f"# session_id: {session_id}\n"
-                    f"print('E2B sandbox agent execution for model={model}')"
+                    f"print('E2B sandbox agent execution for model={model}')",
                 )
                 error = execution.error
                 results = []
@@ -466,11 +466,11 @@ class E2BAgentSandbox:
             )
             success = "error" not in result
             return AgentSandboxResult(
-                success=success, data=result, backend="e2b"
+                success=success, data=result, backend="e2b",
             )
         except TimeoutError as exc:
             raise AgentSandboxTimeoutError(
-                f"E2BAgentSandbox timeout after {self._timeout}s"
+                f"E2BAgentSandbox timeout after {self._timeout}s",
             ) from exc
         except Exception as exc:
             _logger.warning("E2BAgentSandbox execution failed: %s", exc)
@@ -530,12 +530,12 @@ class AgentSandboxSelector:
                 _logger.warning(
                     "AgentSandboxSelector: e2b backend selected but "
                     "neither ctor e2b_api_key nor E2B_API_KEY env var set. "
-                    "run_react() will raise AgentSandboxConfigError."
+                    "run_react() will raise AgentSandboxConfigError.",
                 )
             return E2BAgentSandbox(api_key=self._e2b_api_key)
         raise AgentSandboxConfigError(
             f"Unknown sandbox kind: {chosen!r}. "
-            f"Expected one of: in_process, process_pool, e2b."
+            f"Expected one of: in_process, process_pool, e2b.",
         )
 
 

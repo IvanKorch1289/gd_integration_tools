@@ -35,7 +35,7 @@ async def test_dispatch_and_drain_single_record() -> None:
     """Один record → доезжает в inner router после aclose."""
     inner = _StubInner()
     router = BatchingSinkRouter(
-        inner, batch_size=10, flush_interval_ms=20, queue_maxsize=100
+        inner, batch_size=10, flush_interval_ms=20, queue_maxsize=100,
     )
     await router.dispatch({"event": "hello"})
     await router.aclose()
@@ -48,7 +48,7 @@ async def test_batch_collect_drains_all_records() -> None:
     """Несколько dispatch — все доезжают через batch-flush."""
     inner = _StubInner()
     router = BatchingSinkRouter(
-        inner, batch_size=4, flush_interval_ms=20, queue_maxsize=100
+        inner, batch_size=4, flush_interval_ms=20, queue_maxsize=100,
     )
     for i in range(7):
         await router.dispatch({"i": i})
@@ -62,7 +62,7 @@ async def test_queue_overflow_increments_dropped_counter() -> None:
     """Переполнение очереди увеличивает счётчик dropped, не блокирует логгер."""
     inner = _StubInner()
     router = BatchingSinkRouter(
-        inner, batch_size=1, flush_interval_ms=10_000, queue_maxsize=2
+        inner, batch_size=1, flush_interval_ms=10_000, queue_maxsize=2,
     )
     # Заполняем очередь до предела + 3 «избыточных» — worker сразу не успеет
     # дренировать (interval=10s), очередь должна переполниться.

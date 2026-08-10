@@ -60,7 +60,7 @@ _MAINTENANCE_PATH_PREFIXES: Final[tuple[str, ...]] = (
 
 
 def _build_503_json(
-    reason: str, retry_after: int, header: str
+    reason: str, retry_after: int, header: str,
 ) -> tuple[bytes, list[tuple[bytes, bytes]]]:
     """Создаёт 503 JSON body + headers (cycle 42 helper).
 
@@ -71,7 +71,7 @@ def _build_503_json(
             "status": "degraded",
             "reason": reason,
             "retry_after_seconds": retry_after,
-        }
+        },
     ).encode("utf-8")
     headers: list[tuple[bytes, bytes]] = [
         (b"content-type", b"application/json"),
@@ -221,7 +221,7 @@ class DegradationMiddleware:
         return blocked
 
     async def _send_503(
-        self, send: Send, *, reason: str, header: str
+        self, send: Send, *, reason: str, header: str,
     ) -> None:
         """503 sender (instance method, использует self._retry_after).
 
@@ -234,7 +234,7 @@ class DegradationMiddleware:
                 "type": "http.response.start",
                 "status": 503,
                 "headers": headers,
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -254,7 +254,7 @@ class DegradationMiddleware:
                     if k.lower() != b"x-degradation-mode"
                 ]
                 existing.append(
-                    (b"x-degradation-mode", mode_value.encode("latin-1"))
+                    (b"x-degradation-mode", mode_value.encode("latin-1")),
                 )
                 message["headers"] = existing
             await send(message)

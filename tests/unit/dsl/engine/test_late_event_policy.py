@@ -60,7 +60,7 @@ async def test_side_output_policy_marks_and_returns_true() -> None:
     state = _make_state()
 
     result = await apply_late_policy(
-        exchange, state=state, policy=LatePolicy.SIDE_OUTPUT
+        exchange, state=state, policy=LatePolicy.SIDE_OUTPUT,
     )
 
     assert result is True, "SIDE_OUTPUT должен сигнализировать 'продолжать'"
@@ -75,7 +75,7 @@ async def test_reprocess_policy_marks_and_returns_true() -> None:
     state = _make_state()
 
     result = await apply_late_policy(
-        exchange, state=state, policy=LatePolicy.REPROCESS
+        exchange, state=state, policy=LatePolicy.REPROCESS,
     )
 
     assert result is True

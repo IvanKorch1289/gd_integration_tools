@@ -46,7 +46,7 @@ def test_init_rejects_model_without_provider() -> None:
     """``model`` без ``/`` → ValueError на этапе __init__."""
     with pytest.raises(ValueError, match="provider"):
         LLMStructuredProcessor(
-            model="claudeonly", output_schema=_SampleSchema, prompt="x"
+            model="claudeonly", output_schema=_SampleSchema, prompt="x",
         )
 
 
@@ -79,7 +79,7 @@ def test_init_rejects_negative_cost_budget() -> None:
 async def test_schema_none_fails_exchange() -> None:
     """``output_schema=None`` → exchange.fail на schema_error."""
     proc = LLMStructuredProcessor(
-        model="anthropic/claude-sonnet-4-6", output_schema=None, prompt="x"
+        model="anthropic/claude-sonnet-4-6", output_schema=None, prompt="x",
     )
     exchange = _make_exchange(body={})
 
@@ -115,7 +115,7 @@ async def test_missing_instructor_fails_with_helpful_message(
     monkeypatch.setitem(sys.modules, "instructor", None)
     monkeypatch.setitem(sys.modules, "litellm", None)
     proc = LLMStructuredProcessor(
-        model="anthropic/claude-sonnet-4-6", output_schema=_SampleSchema, prompt="x"
+        model="anthropic/claude-sonnet-4-6", output_schema=_SampleSchema, prompt="x",
     )
     exchange = _make_exchange(body={})
 
@@ -183,11 +183,11 @@ async def test_happy_path_records_provider(
 ) -> None:
     """``properties[llm.provider]`` извлекается из ``model.split('/')``."""
     stub_instructor_and_litellm["client_create"].return_value = _SampleSchema(
-        decision="approve", confidence=0.9
+        decision="approve", confidence=0.9,
     )
 
     proc = LLMStructuredProcessor(
-        model="openai/gpt-4o", output_schema=_SampleSchema, prompt="x"
+        model="openai/gpt-4o", output_schema=_SampleSchema, prompt="x",
     )
     exchange = _make_exchange(body={})
 
@@ -203,11 +203,11 @@ async def test_call_failure_marks_exchange_failed(
 ) -> None:
     """instructor.create выбрасывает исключение → exchange.fail."""
     stub_instructor_and_litellm["client_create"].side_effect = ValueError(
-        "validation failed after retries"
+        "validation failed after retries",
     )
 
     proc = LLMStructuredProcessor(
-        model="anthropic/claude-sonnet-4-6", output_schema=_SampleSchema, prompt="x"
+        model="anthropic/claude-sonnet-4-6", output_schema=_SampleSchema, prompt="x",
     )
     exchange = _make_exchange(body={})
 

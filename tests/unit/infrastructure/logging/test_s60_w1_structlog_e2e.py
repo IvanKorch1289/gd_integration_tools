@@ -202,7 +202,7 @@ async def test_compat_shim_with_positional_args_in_gelf(
 
     logger = get_logger("e2e-compat")
     logger.warning(
-        "User %s failed login from %s (attempt %d)", "alice", "192.168.1.1", 3
+        "User %s failed login from %s (attempt %d)", "alice", "192.168.1.1", 3,
     )
 
     await asyncio.sleep(0.5)
@@ -214,7 +214,7 @@ async def test_compat_shim_with_positional_args_in_gelf(
     assert len(mock_graylog.received) >= 1
     last = mock_graylog.received[-1]
     assert "User alice failed login from 192.168.1.1 (attempt 3)" in last.get(
-        "short_message", ""
+        "short_message", "",
     )
     assert last.get("level") == 4  # syslog warning
 

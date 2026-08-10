@@ -112,7 +112,7 @@ def read_pdf(path: Path | str | bytes) -> str:
             return _read_pypdf_bytes(path)
         except ImportError as exc:
             raise PdfReaderUnavailable(
-                "pypdf не установлен. Установите `pypdf`."
+                "pypdf не установлен. Установите `pypdf`.",
             ) from exc
 
     p = Path(path)
@@ -130,5 +130,5 @@ def read_pdf(path: Path | str | bytes) -> str:
     except ImportError as exc:
         raise PdfReaderUnavailable(
             "Ни pypdfium2, ни pypdf не установлены. Установите "
-            "`pypdf` (pure-Python) или `pypdfium2` (native, faster)."
+            "`pypdf` (pure-Python) или `pypdfium2` (native, faster).",
         ) from exc

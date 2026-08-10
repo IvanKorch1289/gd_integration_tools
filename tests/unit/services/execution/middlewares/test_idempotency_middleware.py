@@ -23,7 +23,7 @@ class TestIdempotencyMiddleware:
 
     @pytest.mark.asyncio
     async def test_no_key_passes_through(
-        self, middleware: IdempotencyMiddleware, context: DispatchContext
+        self, middleware: IdempotencyMiddleware, context: DispatchContext,
     ) -> None:
         next_handler = AsyncMock(return_value=ActionResult(success=True, data={}))
         result = await middleware("act", {}, context, next_handler)
@@ -32,7 +32,7 @@ class TestIdempotencyMiddleware:
 
     @pytest.mark.asyncio
     async def test_cached_result_returned(
-        self, middleware: IdempotencyMiddleware, context: DispatchContext
+        self, middleware: IdempotencyMiddleware, context: DispatchContext,
     ) -> None:
         context.idempotency_key = "key1"
         cached = ActionResult(success=True, data={"cached": True})
@@ -45,11 +45,11 @@ class TestIdempotencyMiddleware:
 
     @pytest.mark.asyncio
     async def test_success_caches_result(
-        self, middleware: IdempotencyMiddleware, context: DispatchContext
+        self, middleware: IdempotencyMiddleware, context: DispatchContext,
     ) -> None:
         context.idempotency_key = "key2"
         next_handler = AsyncMock(
-            return_value=ActionResult(success=True, data={"ok": True})
+            return_value=ActionResult(success=True, data={"ok": True}),
         )
         result = await middleware("act", {}, context, next_handler)
         assert result.success is True
@@ -58,7 +58,7 @@ class TestIdempotencyMiddleware:
 
     @pytest.mark.asyncio
     async def test_failure_not_cached(
-        self, middleware: IdempotencyMiddleware, context: DispatchContext
+        self, middleware: IdempotencyMiddleware, context: DispatchContext,
     ) -> None:
         context.idempotency_key = "key3"
         next_handler = AsyncMock(return_value=ActionResult(success=False, error=None))

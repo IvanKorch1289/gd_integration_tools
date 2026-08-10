@@ -54,7 +54,7 @@ SUPPORTED_BACKENDS: frozenset[str] = frozenset(
         "debezium",  # R2.1 DebeziumEventsCDCBackend (aiokafka, 322 LOC)
         "adapter",  # legacy CDCClient adapter (multi-DB через CDCClient)
         "fake",  # in-memory FakeCDCSource (test/dev)
-    }
+    },
 )
 
 
@@ -83,7 +83,7 @@ def get_cdc_source(backend: str, /, **kwargs: Any) -> CDCSource:
     """
     if backend not in SUPPORTED_BACKENDS:
         raise ValueError(
-            f"Unknown CDC backend: {backend!r}. Supported: {sorted(SUPPORTED_BACKENDS)}"
+            f"Unknown CDC backend: {backend!r}. Supported: {sorted(SUPPORTED_BACKENDS)}",
         )
 
     if backend == "poll":

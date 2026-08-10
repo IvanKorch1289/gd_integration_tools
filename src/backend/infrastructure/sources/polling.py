@@ -73,7 +73,7 @@ class PollingSource:
             raise RuntimeError(f"PollingSource(id={self.source_id!r}) уже запущен")
         self._stop_event.clear()
         self._task = get_task_registry().create_task(
-            self._run(on_event), name=f"source-polling:{self.source_id}"
+            self._run(on_event), name=f"source-polling:{self.source_id}",
         )
         logger.info(
             "PollingSource started: id=%s url=%s interval=%.1fs",
@@ -121,7 +121,7 @@ class PollingSource:
                     first = False
                 try:
                     await asyncio.wait_for(
-                        self._stop_event.wait(), timeout=self._interval
+                        self._stop_event.wait(), timeout=self._interval,
                     )
                 except TimeoutError:
                     pass

@@ -158,7 +158,7 @@ class FeatureFlags(
 
     yaml_group: ClassVar[str] = "features"
     model_config = SettingsConfigDict(
-        env_prefix="FEATURE_", extra="forbid", validate_default=True
+        env_prefix="FEATURE_", extra="forbid", validate_default=True,
     )
 
     # K2 — Net & WAF fields (metering_per_host, waf_outbound_via_facade) —

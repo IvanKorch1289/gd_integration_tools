@@ -39,7 +39,7 @@ def test_sub_workflow_dsl_registers_processor() -> None:
     """``RouteBuilder.sub_workflow(...)`` — добавляет SubWorkflowProcessor в pipeline."""
     b = RouteBuilder("test", source="kafka:orders")
     result = b.sub_workflow(
-        "notifications.send_receipt", args={"order_id": "123", "channel": "email"}
+        "notifications.send_receipt", args={"order_id": "123", "channel": "email"},
     )
     assert isinstance(result, RouteBuilder)
     assert result is b
@@ -76,7 +76,7 @@ def test_sub_workflow_to_spec_minimal() -> None:
     p = SubWorkflowProcessor(name="notifications.send", args={"order_id": "1"})
     spec = p.to_spec()
     assert spec == {
-        "sub_workflow": {"name": "notifications.send", "args": {"order_id": "1"}}
+        "sub_workflow": {"name": "notifications.send", "args": {"order_id": "1"}},
     }
 
 
@@ -100,7 +100,7 @@ def test_sub_workflow_to_spec_preserves_custom_namespace() -> None:
 def test_sub_workflow_to_spec_omits_default_parent_properties() -> None:
     """``to_spec()`` — дефолтные parent_*_property не попадают в spec."""
     p = SubWorkflowProcessor(
-        name="x", args={"k": 1}, parent_workflow_id_property="workflow_id"
+        name="x", args={"k": 1}, parent_workflow_id_property="workflow_id",
     )
     spec = p.to_spec()["sub_workflow"]
     assert "parent_workflow_id_property" not in spec
@@ -131,12 +131,12 @@ async def test_sub_workflow_process_uses_async_api_mode() -> None:
 
     backend = MagicMock()
     backend.start_workflow = AsyncMock(
-        return_value=MagicMock(workflow_id="ignored-handle-id")
+        return_value=MagicMock(workflow_id="ignored-handle-id"),
     )
     backend.await_completion = AsyncMock()
 
     p = SubWorkflowProcessor(
-        name="notifications.send", args={"order_id": "1"}, backend=backend
+        name="notifications.send", args={"order_id": "1"}, backend=backend,
     )
     exchange = _ex(body={"unrelated": "x"})
     await p.process(exchange, _ctx())
@@ -183,7 +183,7 @@ async def test_sub_workflow_preserves_explicit_parent_in_args() -> None:
     backend.start_workflow = AsyncMock(return_value=MagicMock(workflow_id="child-1"))
 
     p = SubWorkflowProcessor(
-        name="x", args={"_parent_workflow_id": "explicit-parent"}, backend=backend
+        name="x", args={"_parent_workflow_id": "explicit-parent"}, backend=backend,
     )
     exchange = _ex(workflow_id="parent-123")
     await p.process(exchange, _ctx())

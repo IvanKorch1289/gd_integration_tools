@@ -31,7 +31,7 @@ async def test_auth_method_header_with_method() -> None:
     async def downstream(scope, receive, send):
         # Downstream выставляет auth context в scope['state'].
         scope["state"] = {
-            "auth": type("AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()})()
+            "auth": type("AuthCtx", (), {"method": type("M", (), {"value": "jwt"})()})(),
         }
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok"})

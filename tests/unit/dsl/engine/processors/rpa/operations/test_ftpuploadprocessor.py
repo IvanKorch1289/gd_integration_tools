@@ -33,7 +33,7 @@ def _exchange() -> Exchange[Any]:
 
 class TestFtpUploadSecurity:
     def test_default_uses_tls_with_cert_verification(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         local = tmp_path / "f.txt"
         local.write_text("x")
@@ -106,7 +106,7 @@ class TestFtpUploadSecurity:
         _FakeFtplib.FTP.assert_not_called()
 
     def test_plaintext_rejected_by_default(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         local = tmp_path / "f.txt"
         local.write_text("x")
@@ -171,7 +171,7 @@ class TestFtpUploadSecurity:
         assert plaintext_calls["tls_constructed"] == 1
 
     def test_plaintext_opt_in_requires_both_flags(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         local = tmp_path / "f.txt"
         local.write_text("x")
@@ -238,7 +238,7 @@ class TestFtpUploadSecurity:
         assert plaintext_calls["tls_constructed"] == 1
 
     def test_plaintext_allowed_with_both_flags(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         local = tmp_path / "f.txt"
         local.write_text("x")

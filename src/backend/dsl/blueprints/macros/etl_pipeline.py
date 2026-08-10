@@ -61,7 +61,7 @@ def etl_pipeline(
         )
     """
     builder = RouteBuilder.from_(
-        route_id, source=source, description=description or f"ETL: {route_id}"
+        route_id, source=source, description=description or f"ETL: {route_id}",
     )
 
     extract_proc = DispatchActionProcessor(action=extract_action)
@@ -69,7 +69,7 @@ def etl_pipeline(
     if use_circuit_breaker:
         builder = builder.circuit_breaker(
             processors=[
-                RetryProcessor(processors=[extract_proc], max_attempts=retry_attempts)
+                RetryProcessor(processors=[extract_proc], max_attempts=retry_attempts),
             ],
             failure_threshold=5,
             recovery_timeout=60.0,

@@ -189,7 +189,7 @@ class CheckMixin(_CapabilityGateProtocol):
         )
 
     def check_tenant(
-        self, capability: str, tenant: str, principal: str, scope: str | None = None
+        self, capability: str, tenant: str, principal: str, scope: str | None = None,
     ) -> bool:
         """Tenant-aware check: возвращает ``bool`` (не raise).
 
@@ -235,7 +235,7 @@ class CheckMixin(_CapabilityGateProtocol):
         # 1. Policy consultation.
         if self._policy is not None:
             decision = self._policy.evaluate(
-                tenant=tenant, principal=principal, capability=capability, scope=scope
+                tenant=tenant, principal=principal, capability=capability, scope=scope,
             )
             if decision.effect == "deny":
                 with self._lock:  # D-AUDIT-98 fix (S183 W1.1)

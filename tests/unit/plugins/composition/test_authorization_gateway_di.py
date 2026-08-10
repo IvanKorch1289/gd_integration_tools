@@ -71,7 +71,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
         lambda: _make_stub("api_key_manager"),
     )
     monkeypatch.setattr(
-        "src.backend.dsl.engine.tracer.ExecutionTracer", lambda: _make_stub("tracer")
+        "src.backend.dsl.engine.tracer.ExecutionTracer", lambda: _make_stub("tracer"),
     )
     monkeypatch.setattr(
         "src.backend.dsl.engine.plugin_registry.ProcessorPluginRegistry",
@@ -107,7 +107,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
         lambda: reply_reg,
     )
     monkeypatch.setattr(
-        "src.backend.services.execution.invoker.Invoker", lambda: _make_stub("invoker")
+        "src.backend.services.execution.invoker.Invoker", lambda: _make_stub("invoker"),
     )
     monkeypatch.setattr(
         "src.backend.infrastructure.watermark.factory.create_watermark_store",
@@ -148,7 +148,7 @@ def test_lazy_resolver_exported_from_authorization_gateway_package() -> None:
 
 
 def test_register_app_state_writes_authorization_gateway(
-    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock],
 ) -> None:
     """После ``register_app_state`` ``app.state.authorization_gateway`` существует."""
     di.register_app_state(fresh_app)
@@ -158,7 +158,7 @@ def test_register_app_state_writes_authorization_gateway(
 
 
 def test_register_app_state_authorization_gateway_is_real_instance(
-    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock],
 ) -> None:
     """``app.state.authorization_gateway`` — настоящий ``AuthorizationGateway``."""
     from src.backend.core.security.authorization_gateway import AuthorizationGateway
@@ -169,7 +169,7 @@ def test_register_app_state_authorization_gateway_is_real_instance(
 
 
 def test_register_app_state_authorization_gateway_has_capability_adapter(
-    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock],
 ) -> None:
     """Gateway сконструирован с ``FacadeCapabilityAdapter`` (per S198 pattern)."""
     from src.backend.services.admin._capability_adapter import FacadeCapabilityAdapter
@@ -181,7 +181,7 @@ def test_register_app_state_authorization_gateway_has_capability_adapter(
 
 
 def test_register_app_state_is_idempotent_with_authorization_gateway(
-    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock],
 ) -> None:
     """Повторный ``register_app_state`` (после ``reset_app_state``) переписывает gateway."""
     from src.backend.core.di.app_state import reset_app_state
@@ -213,7 +213,7 @@ async def test_get_authorization_gateway_depends_returns_state_value(
     di.register_app_state(app)
 
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_authorization_gateway(request)
 
@@ -237,7 +237,7 @@ async def test_get_authorization_gateway_depends_raises_when_unregistered(
             "headers": [],
             "path": "/",
             "method": "GET",
-        }
+        },
     )
     with pytest.raises(AttributeError):
         await di.get_authorization_gateway(request)
@@ -319,7 +319,7 @@ def test_lazy_resolver_swallows_exceptions(monkeypatch: pytest.MonkeyPatch) -> N
 
 @pytest.mark.asyncio
 async def test_resolved_gateway_authorize_returns_decision(
-    stub_constructors: dict[str, MagicMock], monkeypatch: pytest.MonkeyPatch
+    stub_constructors: dict[str, MagicMock], monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Lazy-резолвнутый gateway может выполнить ``authorize(...)`` без ошибок.
 
@@ -346,7 +346,7 @@ async def test_resolved_gateway_authorize_returns_decision(
 
     # Дёргаем без feature-flag (default OFF → внутренний _is_enabled вернёт False → allow).
     decision = await gateway.authorize(
-        principal="test-principal", resource="test:resource", action="read"
+        principal="test-principal", resource="test:resource", action="read",
     )
 
     assert decision.allowed is True
@@ -376,7 +376,7 @@ class TestBackwardCompatRouteAuthz:
             return_value=None,
         ):
             allowed, reason = await check_route_permission(
-                route_id="r1", principal="user-1", permissions=("role:admin",)
+                route_id="r1", principal="user-1", permissions=("role:admin",),
             )
 
         assert allowed is False
@@ -424,7 +424,7 @@ class TestBackwardCompatRouteAuthz:
 
 
 def test_authorization_gateway_uses_capability_facade_singleton(
-    stub_constructors: dict[str, MagicMock], monkeypatch: pytest.MonkeyPatch
+    stub_constructors: dict[str, MagicMock], monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Composition root использует существующий ``get_capability_facade()`` singleton.
 

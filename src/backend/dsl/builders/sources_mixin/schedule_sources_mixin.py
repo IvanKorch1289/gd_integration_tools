@@ -13,7 +13,7 @@ class ScheduleSourcesMixin:
 
     @classmethod
     def from_schedule(
-        cls, route_id: str, cron_expr: str, **kwargs: Any
+        cls, route_id: str, cron_expr: str, **kwargs: Any,
     ) -> RouteBuilder:
         """Создаёт маршрут с источником cron-расписания.
 

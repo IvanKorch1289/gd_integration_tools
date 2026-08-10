@@ -24,7 +24,7 @@ class TestGuardResult:
 
     def test_with_categories(self) -> None:
         gr = GuardResult(
-            guard_name="g1", verdict="blocked", categories=["hate", "violence"]
+            guard_name="g1", verdict="blocked", categories=["hate", "violence"],
         )
         assert gr.categories == ["hate", "violence"]
 
@@ -69,7 +69,7 @@ class TestWorkspaceQuotaExceededError:
 class TestWorkspaceTTLExpiredError:
     def test_message(self) -> None:
         exc = WorkspaceTTLExpiredError(
-            session_id="s1", age_seconds=120.5, ttl_seconds=60.0
+            session_id="s1", age_seconds=120.5, ttl_seconds=60.0,
         )
         assert exc.session_id == "s1"
         assert exc.age_seconds == 120.5

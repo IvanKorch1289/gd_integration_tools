@@ -40,7 +40,7 @@ def _redis_client() -> Redis:
     raw = getattr(client, "_raw_client", None) or getattr(client, "client", None)
     if raw is None:  # pragma: no cover — sanity
         raise RuntimeError(
-            "redis_client не инициализирован: создайте backend после старта DI."
+            "redis_client не инициализирован: создайте backend после старта DI.",
         )
     return raw
 
@@ -79,7 +79,7 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
             backend = RedisBackend(client=_redis_client())
         case "keydb":
             backend = KeyDBBackend(
-                client=_redis_client(), active_replica=cfg.keydb_active_replica
+                client=_redis_client(), active_replica=cfg.keydb_active_replica,
             )
         case "memcached":
             try:
@@ -87,7 +87,7 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
             except ImportError as exc:
                 raise RuntimeError(
                     "Memcached-бэкенд требует пакет 'aiomcache'. "
-                    "Добавьте его в pyproject.toml и переинициализируйте."
+                    "Добавьте его в pyproject.toml и переинициализируйте.",
                 ) from exc
             backend = MemcachedBackend()
         case _:

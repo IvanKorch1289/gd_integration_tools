@@ -139,7 +139,7 @@ class StrawberryTypeRegistry:
         from strawberry.scalars import JSON
 
         @strawberry.type(
-            name=f"{model.__name__}Json", description=(model.__doc__ or "")
+            name=f"{model.__name__}Json", description=(model.__doc__ or ""),
         )
         class _JsonStub:
             """JSON-fallback (полная модель не сконвертирована)."""

@@ -60,7 +60,7 @@ def repo(session: AsyncSession) -> WorkflowStateRepository:
 
 
 async def test_checkpoint_persists_and_restores(
-    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID
+    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID,
 ) -> None:
     """Scenario 1: checkpoint after step N → restore returns N+1 start point."""
     await repo.save(workflow_id=wf_id, run_id="r1", step_index=3, tenant_id="t1")
@@ -78,7 +78,7 @@ async def test_checkpoint_persists_and_restores(
 
 
 async def test_compensating_actions_persisted(
-    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID
+    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID,
 ) -> None:
     """Scenario 2: failure на step 3 → 3 compensating_actions persisted."""
     actions = [
@@ -103,7 +103,7 @@ async def test_compensating_actions_persisted(
 
 
 async def test_signal_event_transitions(
-    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID
+    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID,
 ) -> None:
     """Scenario 3: running → compensating → rolled_back через signal_event."""
     await repo.save(workflow_id=wf_id, run_id="r1", step_index=1, tenant_id="t1")
@@ -120,15 +120,15 @@ async def test_signal_event_transitions(
 
 
 async def test_workflow_run_unique_constraint(
-    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID
+    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID,
 ) -> None:
     """Scenario 4: (workflow_id, run_id) uniqueness — повторный save upserts."""
     record_first = await repo.save(
-        workflow_id=wf_id, run_id="r1", step_index=1, tenant_id="t1"
+        workflow_id=wf_id, run_id="r1", step_index=1, tenant_id="t1",
     )
     await session.commit()
     record_second = await repo.save(
-        workflow_id=wf_id, run_id="r1", step_index=5, tenant_id="t1"
+        workflow_id=wf_id, run_id="r1", step_index=5, tenant_id="t1",
     )
     await session.commit()
     # Тот же id (upsert)
@@ -137,7 +137,7 @@ async def test_workflow_run_unique_constraint(
 
 
 async def test_separate_runs_independent(
-    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID
+    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID,
 ) -> None:
     """Один workflow_id может иметь 2 run_id (после retry)."""
     await repo.save(workflow_id=wf_id, run_id="r1", step_index=3, tenant_id="t1")
@@ -151,20 +151,20 @@ async def test_separate_runs_independent(
 
 
 async def test_list_compensating(
-    repo: WorkflowStateRepository, session: AsyncSession
+    repo: WorkflowStateRepository, session: AsyncSession,
 ) -> None:
     """list_compensating возвращает только state='compensating'."""
     wf_a = uuid.uuid4()
     wf_b = uuid.uuid4()
     wf_c = uuid.uuid4()
     await repo.save(
-        workflow_id=wf_a, run_id="r", step_index=1, state="running", tenant_id="t1"
+        workflow_id=wf_a, run_id="r", step_index=1, state="running", tenant_id="t1",
     )
     await repo.save(
-        workflow_id=wf_b, run_id="r", step_index=2, state="compensating", tenant_id="t1"
+        workflow_id=wf_b, run_id="r", step_index=2, state="compensating", tenant_id="t1",
     )
     await repo.save(
-        workflow_id=wf_c, run_id="r", step_index=3, state="compensating", tenant_id="t2"
+        workflow_id=wf_c, run_id="r", step_index=3, state="compensating", tenant_id="t2",
     )
     await session.commit()
 
@@ -184,7 +184,7 @@ async def test_signal_event_missing_record_returns_none(
 
 
 async def test_tenant_id_default(
-    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID
+    repo: WorkflowStateRepository, session: AsyncSession, wf_id: uuid.UUID,
 ) -> None:
     """Default tenant_id = 'default'."""
     await repo.save(workflow_id=wf_id, run_id="r1", step_index=1)

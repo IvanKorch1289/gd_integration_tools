@@ -43,7 +43,7 @@ async def test_reader_groups_by_route() -> None:
             _trace(route="A", cost=0.05),
             _trace(route="A", cost=0.03),
             _trace(route="B", cost=0.01),
-        ]
+        ],
     )
     reader = LangFuseReader(client=client)
     rows = await reader.fetch_costs(group_by="route", top_n=10)
@@ -60,7 +60,7 @@ async def test_reader_groups_by_provider() -> None:
         [
             _trace(provider="openai/x", cost=0.01),
             _trace(provider="anthropic/y", cost=0.02),
-        ]
+        ],
     )
     reader = LangFuseReader(client=client)
     rows = await reader.fetch_costs(group_by="provider", top_n=10)

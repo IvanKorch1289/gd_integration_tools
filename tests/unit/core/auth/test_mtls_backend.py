@@ -50,8 +50,8 @@ def test_headers_only_pass_through() -> None:
             **{
                 "X-Client-Cert-Fingerprint": "ABCDEF",
                 "X-Client-Cert-Subject": "CN=alice",
-            }
-        )
+            },
+        ),
     )
     assert result is not None
     assert result["principal"] == "CN=alice"
@@ -121,8 +121,8 @@ def test_fingerprint_pinning_blocks_unknown_cert() -> None:
                 **{
                     "X-Client-Cert-Fingerprint": "BAD",
                     "X-Client-Cert-Subject": "CN=evil",
-                }
-            )
+                },
+            ),
         )
     assert "pinned" in exc_info.value.reason
 

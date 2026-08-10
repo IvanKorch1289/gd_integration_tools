@@ -53,7 +53,7 @@ class JsonLinesDecodeProcessor(BaseProcessor):
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
 
     def __init__(
-        self, *, ignore_blank_lines: bool = True, name: str | None = None
+        self, *, ignore_blank_lines: bool = True, name: str | None = None,
     ) -> None:
         super().__init__(name=name or "jsonl_decode")
         self._ignore_blank = ignore_blank_lines

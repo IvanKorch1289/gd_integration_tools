@@ -57,7 +57,7 @@ def install_signal_handlers() -> asyncio.Event:
             # Windows / non-Unix / not in main thread → fallback.
             try:
                 signal.signal(
-                    sig, lambda _, __: _on_signal(sig_name, shutdown_event)
+                    sig, lambda _, __: _on_signal(sig_name, shutdown_event),
                 )
                 installed = True
             except (ValueError, OSError):
@@ -66,7 +66,7 @@ def install_signal_handlers() -> asyncio.Event:
 
     if installed:
         _logger.info(
-            "Signal handlers installed: SIGTERM + SIGINT (graceful shutdown hook)"
+            "Signal handlers installed: SIGTERM + SIGINT (graceful shutdown hook)",
         )
     return shutdown_event
 

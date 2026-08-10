@@ -95,7 +95,7 @@ def test_set_correlation_context_partial_args() -> None:
 def test_set_correlation_context_none_args_skipped() -> None:
     """None args — skipped, не overwrites существующие значения."""
     set_correlation_context(
-        correlation_id="initial-cid", request_id="initial-rid", tenant_id="initial-tenant"
+        correlation_id="initial-cid", request_id="initial-rid", tenant_id="initial-tenant",
     )
     set_correlation_context(correlation_id=None, request_id=None, tenant_id=None)
     # Существующие значения сохранены (None не overwrites).

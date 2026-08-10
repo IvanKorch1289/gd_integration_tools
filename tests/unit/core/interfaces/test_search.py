@@ -9,7 +9,7 @@ class TestSearchClient:
     def test_is_runtime_checkable(self) -> None:
         class Fake:
             async def index_document(
-                self, index: str, document: dict[str, object], doc_id: str | None = None
+                self, index: str, document: dict[str, object], doc_id: str | None = None,
             ) -> dict[str, object]:
                 return {}
 
@@ -53,7 +53,7 @@ class TestSearchClient:
                 return False
 
             async def create_index(
-                self, index: str, mappings: dict[str, object] | None = None
+                self, index: str, mappings: dict[str, object] | None = None,
             ) -> None:
                 pass
 

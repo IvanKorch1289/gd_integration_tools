@@ -60,7 +60,7 @@ def test_top_level_dsl_imports() -> None:
     top_imports: list[str] = []
     for node in tree.body:
         if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith(
-            "src.backend.dsl"
+            "src.backend.dsl",
         ):
             top_imports.append(node.module)
 

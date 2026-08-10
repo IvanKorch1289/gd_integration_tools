@@ -101,7 +101,7 @@ async def test_recovery_path_to_healthy() -> None:
     """DEGRADED → RECOVERING (error_rate ≤ recovery) → HEALTHY (полное окно)."""
     registry = GracefulDegradationRegistry()
     feature = _make_feature(
-        window_size=10, error_threshold=0.3, recovery_threshold=0.05
+        window_size=10, error_threshold=0.3, recovery_threshold=0.05,
     )
     registry.register(feature)
     # Вход в DEGRADED.
@@ -121,7 +121,7 @@ async def test_recovering_falls_back_to_degraded_on_new_errors() -> None:
     """В RECOVERING всплеск ошибок снова переключает state в DEGRADED."""
     registry = GracefulDegradationRegistry()
     feature = _make_feature(
-        window_size=10, error_threshold=0.3, recovery_threshold=0.05
+        window_size=10, error_threshold=0.3, recovery_threshold=0.05,
     )
     registry.register(feature)
     # 1) DEGRADED.

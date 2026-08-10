@@ -105,12 +105,12 @@ class TestFastMcpServerLayerBoundary:
 
         # Patch на infrastructure module (где настоящий workflow_registry живёт).
         with patch(
-            "src.backend.infrastructure.workflow.registry.workflow_registry"
+            "src.backend.infrastructure.workflow.registry.workflow_registry",
         ) as mock_wf_reg:
             mock_wf_reg.list_all.return_value = []
 
             with patch(
-                "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
+                "src.backend.dsl.agents.fastmcp_server.SkillRegistry",
             ) as mock_skill_reg:
                 mock_skill_reg.return_value = MagicMock()
                 mock_skill_reg.return_value.list_skills.return_value = []

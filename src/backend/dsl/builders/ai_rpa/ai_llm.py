@@ -34,13 +34,13 @@ class AILlMMixin:
     # --- AI / LLM methods (S51 W1 extraction) ---
 
     def mcp_tool(
-        self, uri: str, tool: str, *, result_property: str = "mcp_result"
+        self, uri: str, tool: str, *, result_property: str = "mcp_result",
     ) -> RouteBuilder:
         """Вызов внешнего MCP tool."""
         return self._add(  # type: ignore[attr-defined]
             MCPToolProcessor(
-                tool_uri=uri, tool_name=tool, result_property=result_property
-            )
+                tool_uri=uri, tool_name=tool, result_property=result_property,
+            ),
         )
 
     def scrape_url(
@@ -165,7 +165,7 @@ class AILlMMixin:
         )
 
     def compose_prompt(
-        self, template: str, context_property: str = "vector_results"
+        self, template: str, context_property: str = "vector_results",
     ) -> RouteBuilder:
         """Построение промпта из шаблона + контекста из properties."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -176,7 +176,7 @@ class AILlMMixin:
         )
 
     def call_llm(
-        self, provider: str | None = None, model: str | None = None
+        self, provider: str | None = None, model: str | None = None,
     ) -> RouteBuilder:
         """LLM chat-completion через ai_agent сервис (с PII-маскировкой)."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -189,7 +189,7 @@ class AILlMMixin:
     def parse_llm_output(self, schema: type | None = None) -> RouteBuilder:
         """Парсинг LLM-ответа в Pydantic-модель (с попыткой извлечь JSON)."""
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors", "LLMParserProcessor", schema=schema
+            "src.backend.dsl.engine.processors", "LLMParserProcessor", schema=schema,
         )
 
     def token_budget(self, max_tokens: int = 4096) -> RouteBuilder:
@@ -203,13 +203,13 @@ class AILlMMixin:
     def sanitize_pii(self) -> RouteBuilder:
         """Маскирование PII (email/phone/СНИЛС/карт) перед LLM."""
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors", "SanitizePIIProcessor"
+            "src.backend.dsl.engine.processors", "SanitizePIIProcessor",
         )
 
     def restore_pii(self) -> RouteBuilder:
         """Восстановление PII в ответе после LLM."""
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors", "RestorePIIProcessor"
+            "src.backend.dsl.engine.processors", "RestorePIIProcessor",
         )
 
     def get_feedback_examples(
@@ -258,7 +258,7 @@ class AILlMMixin:
     def save_memory(self) -> RouteBuilder:
         """Сохранение результата в AgentMemory."""
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors", "MemorySaveProcessor"
+            "src.backend.dsl.engine.processors", "MemorySaveProcessor",
         )
 
     def llm_fallback(

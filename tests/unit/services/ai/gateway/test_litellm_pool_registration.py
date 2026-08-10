@@ -77,7 +77,7 @@ def test_register_litellm_pool_custom_idle_timeout() -> None:
     monitor = PoolHealthMonitor()
     gateway = MagicMock()
     register_litellm_pool(
-        gateway, monitor=monitor, name="litellm_fast", idle_timeout=30.0
+        gateway, monitor=monitor, name="litellm_fast", idle_timeout=30.0,
     )
     entry = monitor._pools["litellm_fast"]
     assert entry.idle_timeout == 30.0

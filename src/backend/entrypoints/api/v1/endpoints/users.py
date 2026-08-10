@@ -46,5 +46,5 @@ builder.add_crud_resource(
         id_param_name="object_id",
         id_field_name="id",
         default_order_by="id",
-    )
+    ),
 )

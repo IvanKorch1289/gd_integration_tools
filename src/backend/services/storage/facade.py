@@ -61,7 +61,7 @@ class StorageFacade:
             self._check(self._plugin, "storage.write", key)
 
     async def upload(
-        self, key: str, data: bytes, content_type: str | None = None
+        self, key: str, data: bytes, content_type: str | None = None,
     ) -> str:
         """Загрузить объект.
 
@@ -102,7 +102,7 @@ class StorageFacade:
             # Если есть async-stream API — используем напрямую
             if hasattr(self._storage, "upload_stream"):
                 return await self._storage.upload_stream(
-                    key, data, content_type=content_type
+                    key, data, content_type=content_type,
                 )
             # Fallback — bytes path (для backends без upload_stream)
             if isinstance(data, str):

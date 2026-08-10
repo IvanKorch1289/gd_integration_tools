@@ -56,7 +56,7 @@ class InfraMixin:
                 source_property=source_property,
                 on_block=on_block,
                 categories=categories,
-            )
+            ),
         )
 
     def pii_mask(
@@ -89,7 +89,7 @@ class InfraMixin:
                 source_property=source_property,
                 target_property=target_property,
                 language=language,
-            )
+            ),
         )
 
     def pii_unmask(
@@ -125,7 +125,7 @@ class InfraMixin:
                 token_map_property=token_map_property,
                 scope=scope,
                 strict=strict,
-            )
+            ),
         )
 
     def agent_graph(
@@ -212,7 +212,7 @@ class InfraMixin:
             get_logger(__name__).warning(
                 "agent_graph: isolated=False (zero process isolation) — "
                 "V15 R-V15-4 recommendation: используйте ProcessPoolAgentSandbox "
-                "(isolated=True default с S3). Audit-event emitted."
+                "(isolated=True default с S3). Audit-event emitted.",
             )
             try:
                 from src.backend.core.audit.facade import emit_audit_safe
@@ -245,7 +245,7 @@ class InfraMixin:
                 result_property=result_property,
                 sandbox=sandbox,
                 isolated=isolated,
-            )
+            ),
         )
 
     def skill_invoke(
@@ -275,7 +275,7 @@ class InfraMixin:
                 skill_id=skill_id,
                 params_property=params_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def ai_memory_recall(
@@ -316,7 +316,7 @@ class InfraMixin:
                 query_property=query_property,
                 k=k,
                 result_property=result_property,
-            )
+            ),
         )
 
     def ai_memory_store(
@@ -357,7 +357,7 @@ class InfraMixin:
                 key_property=key_property,
                 value_property=value_property,
                 ttl_s=ttl_s,
-            )
+            ),
         )
 
     def ai_rpa(
@@ -403,7 +403,7 @@ class InfraMixin:
                 model=model,
                 temperature=temperature,
                 to=to,
-            )
+            ),
         )
 
     def mcp_tool(
@@ -452,7 +452,7 @@ class InfraMixin:
                 arguments_property=arguments_property,
                 result_property=result_property,
                 timeout_s=timeout_s,
-            )
+            ),
         )
 
     def ai_tool_dispatch(
@@ -516,7 +516,7 @@ class InfraMixin:
                 result_property=result_property,
                 model=model,
                 temperature=temperature,
-            )
+            ),
         )
 
     def optimize_prompt(
@@ -556,5 +556,5 @@ class InfraMixin:
                 tenant_id=tenant_id,
                 limit=limit,
                 result_property=result_property,
-            )
+            ),
         )

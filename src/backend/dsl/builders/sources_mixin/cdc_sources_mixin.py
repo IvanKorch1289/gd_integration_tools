@@ -70,7 +70,7 @@ class CdcSourcesMixin:
 
     @classmethod
     def from_cdc_registry(
-        cls, route_id: str, backend: str, **kwargs: Any
+        cls, route_id: str, backend: str, **kwargs: Any,
     ) -> RouteBuilder:
         """S101 W1 — создать маршрут с CDC-source через :func:`get_cdc_source`.
 
@@ -144,7 +144,7 @@ class CdcSourcesMixin:
         import importlib
 
         mod = importlib.import_module(
-            "src.backend.infrastructure.sources.cdc_postgres_logical"
+            "src.backend.infrastructure.sources.cdc_postgres_logical",
         )
         SourceCls = mod.CdcPostgresLogicalSource
         source_instance = SourceCls(
@@ -214,7 +214,7 @@ class CdcSourcesMixin:
             )
         """
         builder: RouteBuilder = cls(
-            route_id=route_id, source=f"cdc-capture:{profile}:{','.join(tables)}"
+            route_id=route_id, source=f"cdc-capture:{profile}:{','.join(tables)}",
         )
         object.__setattr__(
             builder,

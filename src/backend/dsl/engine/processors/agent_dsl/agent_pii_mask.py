@@ -227,7 +227,7 @@ class AgentDictPIIMaskProcessor(BaseAIProcessor):
             return
 
         masked, token_map, detected = await _mask_dict_values(
-            cursor, tokenizer, self.language
+            cursor, tokenizer, self.language,
         )
         _write_dict_at_path(exchange, self.target_property, masked)
         exchange.set_property("pii_token_map", token_map)

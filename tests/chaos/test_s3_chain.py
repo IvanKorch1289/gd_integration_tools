@@ -35,5 +35,5 @@ def test_s3_data_corruption(toxiproxy_s3: ChaosTarget) -> None:
     """data-corruption: slicer на S3."""
     apply_random_drop(toxiproxy_s3, toxicity=0.3)
     assert smoke_open_socket(
-        toxiproxy_s3.proxy_host, toxiproxy_s3.proxy_port, timeout=2.0
+        toxiproxy_s3.proxy_host, toxiproxy_s3.proxy_port, timeout=2.0,
     ) or assert_connection_fails(toxiproxy_s3.proxy_host, toxiproxy_s3.proxy_port)

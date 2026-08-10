@@ -27,7 +27,7 @@ DryRunReport = dict[str, Any]
 
 
 def run_workflow_dryrun(
-    declaration: WorkflowDeclaration, input_data: dict[str, Any]
+    declaration: WorkflowDeclaration, input_data: dict[str, Any],
 ) -> DryRunReport:
     """Симулировать выполнение workflow без Temporal.
 
@@ -70,7 +70,7 @@ def run_workflow_dryrun(
                         "activity": step_name,
                         "input_keys": list(input_data.keys()),
                         "timeout_s": getattr(step, "timeout_s", None),
-                    }
+                    },
                 )
             case "saga":
                 activities.append(
@@ -81,7 +81,7 @@ def run_workflow_dryrun(
                             getattr(s, "name", "unnamed")
                             for s in (getattr(step, "forward", []) or [])
                         ],
-                    }
+                    },
                 )
             case "wait_signal":
                 signals.append(
@@ -90,7 +90,7 @@ def run_workflow_dryrun(
                         "name": step_name,
                         "signal_name": getattr(step, "signal_name", step_name),
                         "timeout_s": getattr(step, "timeout_s", None),
-                    }
+                    },
                 )
             case "sleep":
                 timer_fires.append(
@@ -98,7 +98,7 @@ def run_workflow_dryrun(
                         "step_index": idx,
                         "name": step_name,
                         "duration_s": getattr(step, "duration_s", None),
-                    }
+                    },
                 )
             case "sensor":
                 activities.append(
@@ -107,7 +107,7 @@ def run_workflow_dryrun(
                         "name": step_name,
                         "sensor": True,
                         "interval_s": getattr(step, "poll_interval_s", None),
-                    }
+                    },
                 )
             case _:
                 activities.append(
@@ -116,7 +116,7 @@ def run_workflow_dryrun(
                         "name": step_name,
                         "type": step_type,
                         "raw": True,
-                    }
+                    },
                 )
 
         completed_state = f"STEP_{idx}_COMPLETED"

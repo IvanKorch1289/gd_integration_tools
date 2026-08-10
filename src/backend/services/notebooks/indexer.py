@@ -51,7 +51,7 @@ class NotebookIndexer:
             )
         except Exception as exc:
             logger.warning(
-                "NotebookIndexer.index_one failed (notebook %s): %s", notebook.id, exc
+                "NotebookIndexer.index_one failed (notebook %s): %s", notebook.id, exc,
             )
             return None
 
@@ -61,7 +61,7 @@ class NotebookIndexer:
             return await self._rag.delete(notebook_id)
         except Exception as exc:
             logger.warning(
-                "NotebookIndexer.delete_one failed (notebook %s): %s", notebook_id, exc
+                "NotebookIndexer.delete_one failed (notebook %s): %s", notebook_id, exc,
             )
             return False
 

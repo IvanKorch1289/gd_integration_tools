@@ -101,11 +101,11 @@ class ReflectionLoopProcessor(BaseAIProcessor):
     ) -> None:
         if not generator_workflow_id:
             raise ValueError(
-                "ReflectionLoopProcessor: generator_workflow_id обязателен"
+                "ReflectionLoopProcessor: generator_workflow_id обязателен",
             )
         if not reflector_workflow_id:
             raise ValueError(
-                "ReflectionLoopProcessor: reflector_workflow_id обязателен"
+                "ReflectionLoopProcessor: reflector_workflow_id обязателен",
             )
         super().__init__(name=name or f"reflection_loop:{generator_workflow_id}")
         self.generator_workflow_id = generator_workflow_id
@@ -122,7 +122,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
         gateway = self._resolve_gateway()
         if gateway is None:
             exchange.set_error(
-                f"{self.name}: AIGateway не найден в DI — нельзя выполнить reflection_loop"
+                f"{self.name}: AIGateway не найден в DI — нельзя выполнить reflection_loop",
             )
             exchange.stop()
             return
@@ -135,7 +135,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
             return
 
         history: list[dict[str, Any]] = [
-            {"iteration": 0, "stage": "generate", "draft": draft}
+            {"iteration": 0, "stage": "generate", "draft": draft},
         ]
 
         current_draft = draft
@@ -145,11 +145,11 @@ class ReflectionLoopProcessor(BaseAIProcessor):
         for iteration in range(1, self.max_iterations + 1):
             # ── 2. Reflect ──
             reflection = await self._reflect(
-                gateway, exchange, current_draft, iteration
+                gateway, exchange, current_draft, iteration,
             )
             if reflection is None:
                 exchange.set_error(
-                    f"{self.name}: reflection failed на итерации {iteration}"
+                    f"{self.name}: reflection failed на итерации {iteration}",
                 )
                 exchange.stop()
                 return
@@ -162,12 +162,12 @@ class ReflectionLoopProcessor(BaseAIProcessor):
                     "stage": "reflect",
                     "verdict": final_verdict,
                     "critique": final_critique,
-                }
+                },
             )
 
             if final_verdict.lower() == self.stop_verdict.lower():
                 _logger.debug(
-                    "%s: stop_verdict reached at iteration %d", self.name, iteration
+                    "%s: stop_verdict reached at iteration %d", self.name, iteration,
                 )
                 break
 
@@ -177,18 +177,18 @@ class ReflectionLoopProcessor(BaseAIProcessor):
 
             # ── 3. Refine ──
             refined = await self._refine(
-                gateway, exchange, current_draft, final_critique, iteration
+                gateway, exchange, current_draft, final_critique, iteration,
             )
             if refined is None:
                 exchange.set_error(
-                    f"{self.name}: refine failed на итерации {iteration}"
+                    f"{self.name}: refine failed на итерации {iteration}",
                 )
                 exchange.stop()
                 return
 
             current_draft = refined
             history.append(
-                {"iteration": iteration, "stage": "refine", "draft": current_draft}
+                {"iteration": iteration, "stage": "refine", "draft": current_draft},
             )
         else:
             _logger.info(
@@ -214,19 +214,19 @@ class ReflectionLoopProcessor(BaseAIProcessor):
     # ── internal helpers ──
 
     async def _generate_draft(
-        self, gateway: Any, exchange: Exchange[Any]
+        self, gateway: Any, exchange: Exchange[Any],
     ) -> str | None:
         """Вызвать generator_workflow_id и вернуть draft-текст."""
         context = self._build_context(exchange)
         response = await self._call_workflow(
-            gateway, self.generator_workflow_id, context
+            gateway, self.generator_workflow_id, context,
         )
         if response is None:
             return None
         return self._extract_text(response)
 
     async def _reflect(
-        self, gateway: Any, exchange: Exchange[Any], draft: str, iteration: int
+        self, gateway: Any, exchange: Exchange[Any], draft: str, iteration: int,
     ) -> dict[str, Any] | None:
         """Вызвать reflector_workflow_id и вернуть {verdict, critique}."""
         context = {
@@ -235,7 +235,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
             "iteration": iteration,
         }
         response = await self._call_workflow(
-            gateway, self.reflector_workflow_id, context
+            gateway, self.reflector_workflow_id, context,
         )
         if response is None:
             return None
@@ -262,7 +262,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
         return self._extract_text(response)
 
     async def _call_workflow(
-        self, gateway: Any, workflow_id: str, context: dict[str, Any]
+        self, gateway: Any, workflow_id: str, context: dict[str, Any],
     ) -> Any | None:
         """Один LLM-вызов через AIGateway."""
         from src.backend.core.ai.gateway import AIRequest
@@ -280,7 +280,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
             return None
         except Exception as exc:
             _logger.warning(
-                "%s: gateway.invoke unexpected error: %s", self.name, exc, exc_info=True
+                "%s: gateway.invoke unexpected error: %s", self.name, exc, exc_info=True,
             )
             return None
 
@@ -325,7 +325,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
                     }
             except json.JSONDecodeError:
                 _logger.warning(
-                    "ReflectionLoopProcessor: reflector returned non-JSON: %r", content
+                    "ReflectionLoopProcessor: reflector returned non-JSON: %r", content,
                 )
         return {"verdict": "", "critique": ""}
 

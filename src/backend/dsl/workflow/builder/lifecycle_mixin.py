@@ -50,7 +50,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
                 consolidation_policy=consolidation_policy,
                 async_mode=async_mode,
                 output_key=output_key,
-            )
+            ),
         )
         return self
 
@@ -85,7 +85,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
                 include_steps=include_steps,
                 metadata=metadata or {},
                 output_key=output_key,
-            )
+            ),
         )
         return self
 
@@ -123,7 +123,7 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
                 on_exceed=on_exceed,
                 target=target,
                 output_key=output_key,
-            )
+            ),
         )
         return self
 
@@ -185,6 +185,6 @@ class LifecycleMixin(_WorkflowBuilderProtocol):
                 to_model=to_model,
                 reason=reason,
                 output_key=output_key,
-            )
+            ),
         )
         return self

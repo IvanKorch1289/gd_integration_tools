@@ -38,11 +38,11 @@ class BudgetExceeded(Exception):
     """Hard-limit превышен → caller получает 429."""
 
     def __init__(
-        self, *, tenant_id: str, used: int, hard_limit: int, period: str
+        self, *, tenant_id: str, used: int, hard_limit: int, period: str,
     ) -> None:
         super().__init__(
             f"Token budget exceeded for tenant={tenant_id}: "
-            f"used={used} >= hard_limit={hard_limit} ({period})"
+            f"used={used} >= hard_limit={hard_limit} ({period})",
         )
         self.tenant_id = tenant_id
         self.used = used
@@ -69,7 +69,7 @@ class BudgetBackendUnavailable(Exception):
     def __init__(self, *, backend: str, tenant_id: str) -> None:
         super().__init__(
             f"Token budget backend '{backend}' unavailable for tenant="
-            f"{tenant_id} — fail-closed policy blocks request"
+            f"{tenant_id} — fail-closed policy blocks request",
         )
         self.backend = backend
         self.tenant_id = tenant_id
@@ -316,7 +316,7 @@ class TokenBudget:
         ttl = BudgetPeriod.ttl_seconds(config.period)
         try:
             used = await self._backend.increment(
-                key=key, amount=tokens, ttl_seconds=ttl
+                key=key, amount=tokens, ttl_seconds=ttl,
             )
         except Exception as _:
             if effective_fail_mode == "closed":
@@ -327,7 +327,7 @@ class TokenBudget:
                 )
 
                 raise BudgetBackendUnavailable(
-                    backend="token_budget", tenant_id=tenant_id
+                    backend="token_budget", tenant_id=tenant_id,
                 ) from None
             # fail-open: пропускаем, бюджет не учитывается
             used = 0

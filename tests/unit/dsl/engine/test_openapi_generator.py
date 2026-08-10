@@ -70,7 +70,7 @@ class TestGenerateOpenapi:
     def test_pipeline_with_description(self) -> None:
         """Pipeline description should be used as title."""
         pipeline = Pipeline(
-            route_id="my-route", description="My important integration route"
+            route_id="my-route", description="My important integration route",
         )
 
         spec = generate_openapi(pipeline)
@@ -148,7 +148,7 @@ class TestGenerateOpenapi:
         assert len(op["x-processors"]) == 2
         assert op["x-processors"][0]["name"] == "proc1"
         assert op["x-processors"][1]["spec"] == {
-            "set_property": {"key": "foo", "value": "bar"}
+            "set_property": {"key": "foo", "value": "bar"},
         }
 
     def test_pipeline_with_tenant_aware(self) -> None:
@@ -164,7 +164,7 @@ class TestGenerateOpenapi:
     def test_pipeline_with_feature_flag(self) -> None:
         """Feature flag should appear in operation extensions."""
         pipeline = Pipeline(
-            route_id="flagged-route", feature_flag="new_feature_enabled"
+            route_id="flagged-route", feature_flag="new_feature_enabled",
         )
 
         generate_openapi(pipeline)

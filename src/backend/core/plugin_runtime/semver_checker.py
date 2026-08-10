@@ -190,7 +190,7 @@ def _check_strict_mode(version: str, requires_core: str, errors: list[str]) -> N
     if not has_upper_bound:
         errors.append(
             f"strict-режим: requires_core '{requires_core}' "
-            "не содержит явного верхнего ограничения (<X.Y или ~=X.Y)"
+            "не содержит явного верхнего ограничения (<X.Y или ~=X.Y)",
         )
 
 

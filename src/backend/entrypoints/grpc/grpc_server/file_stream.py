@@ -89,7 +89,7 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
         self.logger.info("FileStreamGRPCServicer инициализирован")
 
     async def DownloadFile(  # type: ignore[no-untyped-def]
-        self, request, context
+        self, request, context,
     ) -> AsyncIterator[Any]:
         """Server streaming: отдаёт файл чанками.
 
@@ -141,7 +141,7 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
             sequence += 1
 
     async def UploadFile(  # type: ignore[no-untyped-def]
-        self, request_iterator, context
+        self, request_iterator, context,
     ) -> Any:
         """Client streaming: принимает файл чанками.
 
@@ -170,7 +170,7 @@ class FileStreamGRPCServicer(BaseGRPCServicer, FileServiceServicer):
         async for request in request_iterator:
             if context.cancelled():
                 self.logger.warning(
-                    "UploadFile cancelled: file_id=%s, chunks=%d", file_id, total_chunks
+                    "UploadFile cancelled: file_id=%s, chunks=%d", file_id, total_chunks,
                 )
                 return FileUploadResponse(error="cancelled")  # type: ignore[operator]
             file_id = request.file_id or file_id

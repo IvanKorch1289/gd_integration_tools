@@ -43,7 +43,7 @@ async def test_history_single_approve() -> None:
             '{"signal_id": "sig-1", "comment": "ok"}',
             ts,
             5000,
-        )
+        ),
     ]
     client = MagicMock()
     client.query = AsyncMock(return_value=_make_result(rows))

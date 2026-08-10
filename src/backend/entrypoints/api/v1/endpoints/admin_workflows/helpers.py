@@ -137,7 +137,7 @@ async def _list_instances_filtered(
 
 
 async def _trigger_via_action_or_store(
-    *, store: Any, workflow_name: str, route_id: str, payload: dict[str, Any]
+    *, store: Any, workflow_name: str, route_id: str, payload: dict[str, Any],
 ) -> UUID:
     """Создаёт workflow-инстанс.
 
@@ -166,12 +166,12 @@ async def _trigger_via_action_or_store(
         return UUID(str(result))
 
     return await store.create(
-        workflow_name=workflow_name, route_id=route_id, input_payload=payload
+        workflow_name=workflow_name, route_id=route_id, input_payload=payload,
     )
 
 
 async def _wait_for_terminal(
-    *, store: Any, instance_id: UUID, timeout_s: int, poll_interval_s: float = 2.0
+    *, store: Any, instance_id: UUID, timeout_s: int, poll_interval_s: float = 2.0,
 ) -> Any:
     """Блокирующее ожидание terminal-статуса через polling."""
     import asyncio
@@ -187,7 +187,7 @@ async def _wait_for_terminal(
         row = await store.get(instance_id)
         if row is None:
             raise HTTPException(
-                status_code=410, detail=f"Workflow instance '{instance_id}' disappeared"
+                status_code=410, detail=f"Workflow instance '{instance_id}' disappeared",
             )
         if row.status in terminal:
             return row

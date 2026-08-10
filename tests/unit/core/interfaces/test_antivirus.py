@@ -17,7 +17,7 @@ class TestAntivirusScanResult:
 
     def test_full(self) -> None:
         res = AntivirusScanResult(
-            clean=False, signature="EICAR", backend="clamav", latency_ms=12.5
+            clean=False, signature="EICAR", backend="clamav", latency_ms=12.5,
         )
         assert res.clean is False
         assert res.signature == "EICAR"

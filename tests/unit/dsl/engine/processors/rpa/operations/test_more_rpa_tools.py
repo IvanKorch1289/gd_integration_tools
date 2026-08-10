@@ -64,7 +64,7 @@ class TestCsvWriteProcessor:
         )
         out = tmp_path / "out.csv"
         p = CsvWriteProcessor(
-            dst=str(out), rows=[{"a": "1", "b": "2"}, {"a": "3", "b": "4"}]
+            dst=str(out), rows=[{"a": "1", "b": "2"}, {"a": "3", "b": "4"}],
         )
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -138,7 +138,7 @@ class TestFtpUploadProcessor:
         assert p._allow_insecure is False
 
     def test_insecure_requires_both_flag_and_env(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         from src.backend.dsl.engine.processors.rpa.operations.ftpuploadprocessor import (
             FtpUploadProcessor,
@@ -173,7 +173,7 @@ class TestFtpUploadProcessor:
 
     @pytest.mark.asyncio
     async def test_plaintext_ftplib_never_imported_by_default(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
     ) -> None:
         """Default path must not instantiate ``ftplib.FTP`` — only ``FTP_TLS``."""
         from src.backend.dsl.engine.processors.rpa.operations import (
@@ -237,7 +237,7 @@ class TestFtpUploadProcessor:
 
     @pytest.mark.asyncio
     async def test_insecure_path_uses_plaintext_with_double_consent(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
     ) -> None:
         """Only when BOTH the ctor flag and env var are set may plaintext be used."""
         from src.backend.dsl.engine.processors.rpa.operations import (

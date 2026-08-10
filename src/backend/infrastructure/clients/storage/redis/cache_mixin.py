@@ -45,7 +45,7 @@ class CacheMixin(_RedisClientProtocol):
         if isinstance(value, dict):
             return {
                 (k.decode() if isinstance(k, bytes) else k): CacheMixin.decode(
-                    v, _depth + 1
+                    v, _depth + 1,
                 )
                 for k, v in value.items()
             }
@@ -61,7 +61,7 @@ class CacheMixin(_RedisClientProtocol):
             await client.aclose()
         except Exception as exc:
             self.logger.warning(
-                "Ошибка закрытия Redis-клиента: %s", str(exc), exc_info=True
+                "Ошибка закрытия Redis-клиента: %s", str(exc), exc_info=True,
             )
 
     async def cache_get(self, key: str) -> bytes | None:
@@ -125,7 +125,7 @@ class CacheMixin(_RedisClientProtocol):
         if len(keys) > _MAX_BATCH_LIMIT:
             raise ValueError(
                 f"bulk_get: batch size {len(keys)} exceeds limit {_MAX_BATCH_LIMIT}. "
-                f"Split into multiple calls."
+                f"Split into multiple calls.",
             )
 
         async def op(conn: Redis) -> list[bytes | None]:
@@ -137,7 +137,7 @@ class CacheMixin(_RedisClientProtocol):
         return await self.execute("cache", op)
 
     async def bulk_set(
-        self, items: dict[str, bytes | str], expire: int | None = None
+        self, items: dict[str, bytes | str], expire: int | None = None,
     ) -> None:
         """Batch-запись через non-transactional pipeline (Sprint 0).
 
@@ -160,7 +160,7 @@ class CacheMixin(_RedisClientProtocol):
         if len(items) > _MAX_BATCH_LIMIT:
             raise ValueError(
                 f"bulk_set: batch size {len(items)} exceeds limit {_MAX_BATCH_LIMIT}. "
-                f"Split into multiple calls."
+                f"Split into multiple calls.",
             )
 
         async def op(conn: Redis) -> None:

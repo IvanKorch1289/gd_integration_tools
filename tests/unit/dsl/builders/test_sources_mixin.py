@@ -41,7 +41,7 @@ def test_from_kafka_returns_route_builder() -> None:
     mock_mq_module.MQSource.return_value = mock_mq_source
 
     with patch.dict(
-        "sys.modules", {"src.backend.infrastructure.sources.mq": mock_mq_module}
+        "sys.modules", {"src.backend.infrastructure.sources.mq": mock_mq_module},
     ):
         builder = _FakeRouteBuilder.from_kafka(
             "payments.stream",
@@ -70,7 +70,7 @@ def test_from_rabbit_returns_route_builder() -> None:
     mock_mq_module.MQSource.return_value = mock_mq_source
 
     with patch.dict(
-        "sys.modules", {"src.backend.infrastructure.sources.mq": mock_mq_module}
+        "sys.modules", {"src.backend.infrastructure.sources.mq": mock_mq_module},
     ):
         builder = _FakeRouteBuilder.from_rabbit(
             "notifications.consumer",
@@ -95,7 +95,7 @@ def test_from_redis_streams_returns_route_builder() -> None:
     mock_mq_module.MQSource.return_value = MagicMock()
 
     with patch.dict(
-        "sys.modules", {"src.backend.infrastructure.sources.mq": mock_mq_module}
+        "sys.modules", {"src.backend.infrastructure.sources.mq": mock_mq_module},
     ):
         builder = _FakeRouteBuilder.from_redis_streams(
             "audit.trail",
@@ -127,7 +127,7 @@ def test_from_filewatcher_returns_route_builder() -> None:
         {"src.backend.infrastructure.sources.file_watcher": mock_fw_module},
     ):
         builder = _FakeRouteBuilder.from_filewatcher(
-            "config.hotreload", path="/etc/app/config", recursive=False
+            "config.hotreload", path="/etc/app/config", recursive=False,
         )
 
     assert isinstance(builder, _FakeRouteBuilder)
@@ -196,10 +196,10 @@ def test_from_webhook_returns_route_builder() -> None:
     mock_wh_module.WebhookSource.return_value = mock_wh_source
 
     with patch.dict(
-        "sys.modules", {"src.backend.infrastructure.sources.webhook": mock_wh_module}
+        "sys.modules", {"src.backend.infrastructure.sources.webhook": mock_wh_module},
     ):
         builder = _FakeRouteBuilder.from_webhook(
-            "github.push", path="/webhooks/github", hmac_secret="test-secret"
+            "github.push", path="/webhooks/github", hmac_secret="test-secret",
         )
 
     assert isinstance(builder, _FakeRouteBuilder)

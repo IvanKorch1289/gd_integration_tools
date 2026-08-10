@@ -110,7 +110,7 @@ class TestInMemoryProvider:
         mock_flags.experimental_feature = True
         with patch("src.backend.core.config.features.feature_flags", mock_flags):
             result = await p.resolve_boolean_value(
-                "experimental_feature", default=False
+                "experimental_feature", default=False,
             )
             assert result is True
 
@@ -205,7 +205,7 @@ class TestFlagsmithBackend:
         b = FlagsmithBackend(environment_key="key")
         assert b._provider is None
         with patch(
-            "src.backend.core.feature_flags.flagsmith_provider.FlagsmithProvider"
+            "src.backend.core.feature_flags.flagsmith_provider.FlagsmithProvider",
         ) as MockProvider:
             provider = b._get_provider()
             assert MockProvider.called
@@ -240,12 +240,12 @@ class TestFlagsmithBackend:
         b = FlagsmithBackend(fallback=InMemoryProvider(overrides={"flag": True}))
         mock_provider = MagicMock()
         mock_provider.resolve_boolean_value = AsyncMock(
-            side_effect=ConnectionError("flagsmith-down")
+            side_effect=ConnectionError("flagsmith-down"),
         )
         b._provider = mock_provider
 
         with patch(
-            "src.backend.core.feature_flags.openfeature_provider._logger"
+            "src.backend.core.feature_flags.openfeature_provider._logger",
         ) as mock_logger:
             result = await b.resolve_boolean_value("flag", default=False)
             assert result is True  # fallback
@@ -345,7 +345,7 @@ class TestFlagsmithBackend:
         b._provider = mock_provider
 
         with patch(
-            "src.backend.core.feature_flags.openfeature_provider._logger"
+            "src.backend.core.feature_flags.openfeature_provider._logger",
         ) as mock_logger:
             await b.shutdown()
             assert mock_logger.exception.called

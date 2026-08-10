@@ -100,7 +100,7 @@ class DLQCleanupScheduler:
             return
         self._running = True
         self._task = get_task_registry().create_task(
-            self._loop(), name="dlq-cleanup"
+            self._loop(), name="dlq-cleanup",
         )
         _logger.info(
             "DLQCleanupScheduler started (interval=%.1fh, table=%s)",

@@ -49,7 +49,7 @@ def http_response_factory() -> Any:
 
 @pytest.mark.asyncio
 async def test_record_latency_after_successful_request(
-    stub_settings: SimpleNamespace, http_response_factory: Any
+    stub_settings: SimpleNamespace, http_response_factory: Any,
 ) -> None:
     """После успешного _request policy получает один сэмпл."""
     client = BaseExternalAPIClient(settings=stub_settings)
@@ -102,7 +102,7 @@ async def test_timeouts_use_policy_after_warmup(stub_settings: SimpleNamespace) 
 
 @pytest.mark.asyncio
 async def test_policy_failure_does_not_break_request(
-    stub_settings: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    stub_settings: SimpleNamespace, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Если get_adaptive_timeout_policy() падает — _request всё равно проходит."""
     import src.backend.services.core.base_external_api as module

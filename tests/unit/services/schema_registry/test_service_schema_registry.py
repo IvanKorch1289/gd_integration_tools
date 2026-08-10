@@ -65,7 +65,7 @@ def test_export_jsonschema(registry: ServiceSchemaRegistry) -> None:
             name="orders.create",
             spec_schema={"type": "object"},
             meta={"protocol": "http"},
-        )
+        ),
     )
     payload = export_jsonschema(registry)
     assert payload["$schema"].startswith("https://json-schema.org/")
@@ -87,7 +87,7 @@ def test_export_openapi(registry: ServiceSchemaRegistry) -> None:
             name="orders.add",
             spec_schema={"type": "object"},
             meta={"tier": 1},
-        )
+        ),
     )
     payload = export_openapi(registry)
     assert payload["openapi"] == "3.1.0"
@@ -165,7 +165,7 @@ def test_register_with_strict_validation_rejects_invalid_schema() -> None:
 def test_register_without_strict_validation_allows_invalid_schema() -> None:
     reg = ServiceSchemaRegistry(strict_validation=False)
     entry = SchemaEntry(
-        kind=SchemaKind.PROCESSOR, name="core:lax", spec_schema={"type": "invalid_type"}
+        kind=SchemaKind.PROCESSOR, name="core:lax", spec_schema={"type": "invalid_type"},
     )
     assert reg.register(entry) is entry
 
@@ -177,14 +177,14 @@ def test_snapshot_round_trip(registry: ServiceSchemaRegistry) -> None:
             name="orders.create",
             spec_schema={"type": "object"},
             meta={"protocol": "http"},
-        )
+        ),
     )
     registry.register(
         SchemaEntry(
             kind=SchemaKind.PROCESSOR,
             name="core:http_call",
             output_schema={"type": "string"},
-        )
+        ),
     )
 
     snapshot = registry.to_snapshot()

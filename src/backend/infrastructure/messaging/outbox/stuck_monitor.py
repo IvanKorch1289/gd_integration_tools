@@ -95,7 +95,7 @@ class OutboxStuckMonitor:
     """
 
     def __init__(
-        self, *, threshold_seconds: int = 300, sample_interval_seconds: int = 60
+        self, *, threshold_seconds: int = 300, sample_interval_seconds: int = 60,
     ) -> None:
         if threshold_seconds <= 0:
             raise ValueError("threshold_seconds должен быть > 0")
@@ -134,7 +134,7 @@ class OutboxStuckMonitor:
             return
         self._running = True
         self._task = get_task_registry().create_task(
-            self._sample_loop(), name="outbox-stuck-monitor"
+            self._sample_loop(), name="outbox-stuck-monitor",
         )
         _logger.info(
             "OutboxStuckMonitor started (threshold=%ds, sample_interval=%ds)",
@@ -189,7 +189,7 @@ class OutboxStuckMonitor:
         # 2. Per-transport breakdown (ND-001 step 5)
         try:
             by_transport = await count_stuck_pending_by_transport(
-                threshold_seconds=self._threshold
+                threshold_seconds=self._threshold,
             )
         except Exception as exc:
             _logger.debug("Per-transport count failed: %s", exc)
@@ -202,7 +202,7 @@ class OutboxStuckMonitor:
                 _STUCK_PENDING_GAUGE.labels(transport=transport).set(count)
             except Exception as exc:
                 _logger.debug(
-                    "Per-transport gauge set failed for %s: %s", transport, exc
+                    "Per-transport gauge set failed for %s: %s", transport, exc,
                 )
 
 
@@ -211,7 +211,7 @@ default_stuck_monitor: OutboxStuckMonitor = OutboxStuckMonitor()
 
 
 async def start_outbox_stuck_monitor(
-    *, threshold_seconds: int = 300, sample_interval_seconds: int = 60
+    *, threshold_seconds: int = 300, sample_interval_seconds: int = 60,
 ) -> None:
     """Запустить default stuck-monitor (idempotent)."""
     global default_stuck_monitor

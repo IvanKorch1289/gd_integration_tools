@@ -74,10 +74,10 @@ try:  # pragma: no cover - prometheus_client optional
         ("pool", "tenant_id"),
     )
     _WARMUP_FAILURES = _PromCounter(
-        "pool_warmup_failures_total", "Pool warmup failures", ("pool", "tenant_id")
+        "pool_warmup_failures_total", "Pool warmup failures", ("pool", "tenant_id"),
     )
     _POOL_RECONNECTS = _PromCounter(
-        "pool_reconnects_total", "Pool reconnect events", ("pool", "tenant_id")
+        "pool_reconnects_total", "Pool reconnect events", ("pool", "tenant_id"),
     )
 except Exception as _:
     _WARMUP_DURATION = None  # type: ignore[assignment,unused-ignore]
@@ -90,7 +90,7 @@ def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
     if _WARMUP_DURATION is not None:
         try:
             _WARMUP_DURATION.labels(pool=pool, tenant_id=tenant_label).observe(
-                duration_ms
+                duration_ms,
             )
         except (AttributeError, TypeError, ValueError) as observe_exc:
             # cycle-9/D-AUDIT-930: narrow exceptions + observability.
@@ -189,15 +189,15 @@ class PoolWarmup:
             tasks["pg"] = registry.create_task(self._warmup_pg(), name="pool-warmup-pg")
         if self._pg_replica is not None:
             tasks["pg_replica"] = registry.create_task(
-                self._warmup_pg_replica(), name="pool-warmup-pg-replica"
+                self._warmup_pg_replica(), name="pool-warmup-pg-replica",
             )
         if self._redis is not None:
             tasks["redis"] = registry.create_task(
-                self._warmup_redis(), name="pool-warmup-redis"
+                self._warmup_redis(), name="pool-warmup-redis",
             )
         if self._ch is not None:
             tasks["clickhouse"] = registry.create_task(
-                self._warmup_clickhouse(), name="pool-warmup-clickhouse"
+                self._warmup_clickhouse(), name="pool-warmup-clickhouse",
             )
 
         if not tasks:
@@ -315,7 +315,7 @@ class PoolWarmup:
         return result
 
     async def warmup_graylog(
-        self, sink: Any, *, ping_count: int = 3, timeout_seconds: float = 3.0
+        self, sink: Any, *, ping_count: int = 3, timeout_seconds: float = 3.0,
     ) -> WarmupResult:
         """Прогреть Graylog TCP-pool серией keepalive GELF-чанков (S13 K2 W7).
 
@@ -345,7 +345,7 @@ class PoolWarmup:
             result.failed_pools["graylog"] = type(exc).__name__
             _record_warmup("graylog", (time.monotonic() - start) * 1000, success=False)
             logger.warning(
-                "pool_warmup.graylog_failed", extra={"error_class": type(exc).__name__}
+                "pool_warmup.graylog_failed", extra={"error_class": type(exc).__name__},
             )
 
         result.duration_seconds = time.monotonic() - start
@@ -384,7 +384,7 @@ class PoolReconnectMonitor:
         from src.backend.core.utils.task_registry import get_task_registry
 
         self._task = get_task_registry().create_task(
-            self._loop(), name="pool_reconnect_monitor"
+            self._loop(), name="pool_reconnect_monitor",
         )
 
     async def stop(self) -> None:
@@ -414,12 +414,12 @@ class PoolReconnectMonitor:
                 previously_healthy = self._last_state.get(name, True)
                 if not healthy and previously_healthy:
                     logger.warning(
-                        "pool_reconnect_monitor.unhealthy", extra={"pool": name}
+                        "pool_reconnect_monitor.unhealthy", extra={"pool": name},
                     )
                     self._last_state[name] = False
                 elif healthy and not previously_healthy:
                     logger.info(
-                        "pool_reconnect_monitor.reconnected", extra={"pool": name}
+                        "pool_reconnect_monitor.reconnected", extra={"pool": name},
                     )
                     _record_reconnect(name)
                     self._last_state[name] = True

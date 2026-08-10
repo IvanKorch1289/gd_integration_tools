@@ -51,8 +51,8 @@ def test_scoring_agent_high_income_low_dti() -> None:
                 "amount": 50_000,
                 "duration_months": 12,
                 "monthly_income": 200_000,
-            }
-        )
+            },
+        ),
     )
     assert result["credit_score"] >= 750
     assert result["risk_class"] == "LOW"
@@ -67,8 +67,8 @@ def test_scoring_agent_high_dti_low_score() -> None:
                 "amount": 500_000,
                 "duration_months": 12,
                 "monthly_income": 50_000,
-            }
-        )
+            },
+        ),
     )
     # DTI = 500_000/12 / 50_000 = 833% → high DTI
     assert result["credit_score"] < 650

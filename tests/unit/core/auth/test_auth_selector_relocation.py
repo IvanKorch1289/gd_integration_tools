@@ -53,7 +53,7 @@ def test_entrypoints_shim_is_deprecated() -> None:
         import importlib
 
         mod = importlib.import_module(
-            "src.backend.entrypoints.api.dependencies.auth_selector"
+            "src.backend.entrypoints.api.dependencies.auth_selector",
         )
         # Reload чтобы DeprecationWarning повторился
         with warnings.catch_warnings(record=True) as caught:

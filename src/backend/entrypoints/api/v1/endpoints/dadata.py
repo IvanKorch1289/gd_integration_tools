@@ -40,6 +40,6 @@ builder.add_actions(
             response_model=None,
             dependencies=[Depends(require_api_key)],
             tags=("DaData",),
-        )
-    ]
+        ),
+    ],
 )

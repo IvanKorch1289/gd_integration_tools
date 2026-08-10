@@ -60,7 +60,7 @@ class ReturnAddressProcessor(BaseProcessor):
     ) -> None:
         if return_address is None and address_resolver is None:
             raise ValueError(
-                "ReturnAddressProcessor: either return_address or address_resolver required"
+                "ReturnAddressProcessor: either return_address or address_resolver required",
             )
         super().__init__(name=name or "return_address")
         self._static_address = return_address

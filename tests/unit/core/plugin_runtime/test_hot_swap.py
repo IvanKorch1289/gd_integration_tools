@@ -156,7 +156,7 @@ async def test_hot_swap_wraps_shutdown_failure() -> None:
     """Падение shutdown_all оборачивается в HotSwapError."""
     entry_before = _FakeEntry(name="p", version="1.0.0")
     loader = _FakeLoader(
-        entries_before=[entry_before], shutdown_raises=RuntimeError("boom")
+        entries_before=[entry_before], shutdown_raises=RuntimeError("boom"),
     )
     with pytest.raises(HotSwapError) as excinfo:
         await hot_swap("p", loader)  # type: ignore[arg-type]
@@ -168,7 +168,7 @@ async def test_hot_swap_wraps_discover_failure() -> None:
     """Падение discover_and_load оборачивается в HotSwapError."""
     entry_before = _FakeEntry(name="p", version="1.0.0")
     loader = _FakeLoader(
-        entries_before=[entry_before], discover_raises=RuntimeError("scan failed")
+        entries_before=[entry_before], discover_raises=RuntimeError("scan failed"),
     )
     with pytest.raises(HotSwapError) as excinfo:
         await hot_swap("p", loader)  # type: ignore[arg-type]
@@ -241,7 +241,7 @@ class _PerPluginFakeLoader:
         self._target = _FakeEntry(name=target_name, version="1.0.0")
         self._others = tuple(_FakeEntry(name=n, version="1.0.0") for n in other_names)
         self._target_after = target_after or _FakeEntry(
-            name=target_name, version="1.0.1"
+            name=target_name, version="1.0.1",
         )
         self._loaded_dict: dict[str, _FakeEntry] = {
             self._target.name: self._target,
@@ -368,7 +368,7 @@ async def test_hot_swap_legacy_shutdown_all_failure_uses_all_reason() -> None:
     """
     entry_before = _FakeEntry(name="p", version="1.0.0")
     loader = _FakeLoader(
-        entries_before=[entry_before], shutdown_raises=RuntimeError("all boom")
+        entries_before=[entry_before], shutdown_raises=RuntimeError("all boom"),
     )
 
     with pytest.raises(HotSwapError) as excinfo:

@@ -45,7 +45,7 @@ def fake_chat_litellm_module(monkeypatch: pytest.MonkeyPatch) -> Any:
 
 
 def test_build_chat_model_propagates_gateway_settings(
-    fake_litellm_gateway: Any, fake_chat_litellm_module: dict[str, Any]
+    fake_litellm_gateway: Any, fake_chat_litellm_module: dict[str, Any],
 ) -> None:
     """``build_chat_model`` должен взять model + fallbacks + timeout из gateway."""
     from src.backend.services.ai.ai_graph import build_chat_model
@@ -63,7 +63,7 @@ def test_build_chat_model_propagates_gateway_settings(
 
 
 def test_build_chat_model_no_fallbacks(
-    monkeypatch: pytest.MonkeyPatch, fake_chat_litellm_module: dict[str, Any]
+    monkeypatch: pytest.MonkeyPatch, fake_chat_litellm_module: dict[str, Any],
 ) -> None:
     """Если fallback-list пустой — ключ 'fallbacks' не передаётся."""
     from src.backend.services.ai.ai_graph import build_chat_model
@@ -81,20 +81,20 @@ def test_build_chat_model_no_fallbacks(
 
 
 def test_build_chat_model_override_model(
-    fake_litellm_gateway: Any, fake_chat_litellm_module: dict[str, Any]
+    fake_litellm_gateway: Any, fake_chat_litellm_module: dict[str, Any],
 ) -> None:
     """Явный model переопределяет gateway._default_model."""
     from src.backend.services.ai.ai_graph import build_chat_model
 
     llm = build_chat_model(
-        gateway=fake_litellm_gateway, model="anthropic/claude-3-opus", temperature=0.0
+        gateway=fake_litellm_gateway, model="anthropic/claude-3-opus", temperature=0.0,
     )
     assert llm is not None
     assert fake_chat_litellm_module["model"] == "anthropic/claude-3-opus"
 
 
 def test_build_chat_model_falls_back_to_community(
-    monkeypatch: pytest.MonkeyPatch, fake_litellm_gateway: Any
+    monkeypatch: pytest.MonkeyPatch, fake_litellm_gateway: Any,
 ) -> None:
     """При отсутствии ``langchain_litellm`` подхватывается ``langchain_community``."""
     monkeypatch.setitem(sys.modules, "langchain_litellm", None)
@@ -113,7 +113,7 @@ def test_build_chat_model_falls_back_to_community(
     fake_community.chat_models = fake_chat_models
     monkeypatch.setitem(sys.modules, "langchain_community", fake_community)
     monkeypatch.setitem(
-        sys.modules, "langchain_community.chat_models", fake_chat_models
+        sys.modules, "langchain_community.chat_models", fake_chat_models,
     )
 
     from src.backend.services.ai.ai_graph import build_chat_model
@@ -124,7 +124,7 @@ def test_build_chat_model_falls_back_to_community(
 
 
 def test_build_chat_model_raises_when_no_adapter(
-    monkeypatch: pytest.MonkeyPatch, fake_litellm_gateway: Any
+    monkeypatch: pytest.MonkeyPatch, fake_litellm_gateway: Any,
 ) -> None:
     """Если ни langchain-litellm ни langchain_community нет — ImportError."""
     # Гарантируем отсутствие обоих модулей.
@@ -173,14 +173,14 @@ async def test_build_and_run_agent_invokes_react(
 
     class _FakeAgent:
         async def ainvoke(
-            self, payload: dict[str, Any], config: dict[str, Any] | None = None
+            self, payload: dict[str, Any], config: dict[str, Any] | None = None,
         ) -> dict[str, Any]:
             captured_invoke.update(payload)
             captured_invoke["config"] = config
             return {"messages": [SimpleNamespace(content="ok-final")]}
 
     def _fake_create_react_agent(
-        llm: Any, tools: list[Any], **kwargs: Any
+        llm: Any, tools: list[Any], **kwargs: Any,
     ) -> _FakeAgent:
         captured_invoke["llm_present"] = llm is not None
         captured_invoke["tools_count"] = len(tools)
@@ -198,7 +198,7 @@ async def test_build_and_run_agent_invokes_react(
     from src.backend.services.ai.ai_graph import build_and_run_agent
 
     result = await build_and_run_agent(
-        "test prompt", tool_actions=[], gateway=fake_litellm_gateway
+        "test prompt", tool_actions=[], gateway=fake_litellm_gateway,
     )
     assert result["prompt"] == "test prompt"
     assert result["response"] == "ok-final"

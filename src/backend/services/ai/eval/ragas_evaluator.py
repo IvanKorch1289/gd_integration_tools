@@ -294,7 +294,7 @@ class RAGASEvaluator:
                     value=value,
                     threshold=threshold,
                     passed=value >= threshold,
-                )
+                ),
             )
 
         return RAGASReport(

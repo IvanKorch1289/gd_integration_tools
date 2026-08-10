@@ -233,13 +233,13 @@ class APIKeyAuth:
                 # (HashingError, ParameterError) логируется как ERROR
                 # (не swallowed) → distributed tracing видит.
                 logger.exception(
-                    "API key verify: Argon2 unexpected error (%s)", exc
+                    "API key verify: Argon2 unexpected error (%s)", exc,
                 )
                 return False
             # Authentication OK — emit upgrade hint (без blocking).
             if needs_argon2_upgrade(expected_hash):
                 logger.info(
-                    "api_keys.argon2_rehash_pending (next rotation recommended)"
+                    "api_keys.argon2_rehash_pending (next rotation recommended)",
                 )
             return True
 
@@ -257,7 +257,7 @@ class APIKeyAuth:
             logger.warning(
                 "API key verify matched against legacy SHA-256 hash. "
                 "Run 'tools/migrations/migrate_api_keys_to_argon2.py' to "
-                "upgrade stored hashes to Argon2id. (S172 M2 ARC-004)"
+                "upgrade stored hashes to Argon2id. (S172 M2 ARC-004)",
             )
         return match
 
@@ -287,7 +287,7 @@ _WEAK_SECRETS: frozenset[str] = frozenset(
         "12345678",
         "qwerty",
         "letmein",
-    }
+    },
 )
 
 
@@ -312,7 +312,7 @@ def _evaluate_strength(raw: str) -> StrengthReport:
         issues.append("empty")
     if len(raw) < _MIN_API_KEY_LENGTH:
         issues.append(
-            f"too_short (length={len(raw)} < {_MIN_API_KEY_LENGTH})"
+            f"too_short (length={len(raw)} < {_MIN_API_KEY_LENGTH})",
         )
     if raw in _WEAK_SECRETS:
         issues.append("blacklisted_common_secret")
@@ -338,7 +338,7 @@ def _evaluate_strength(raw: str) -> StrengthReport:
     if entropy_bits < _MIN_ENTROPY_BITS:
         issues.append(
             f"low_entropy (estimate={entropy_bits:.1f} bits < "
-            f"{_MIN_ENTROPY_BITS:.0f})"
+            f"{_MIN_ENTROPY_BITS:.0f})",
         )
 
     is_acceptable = not issues

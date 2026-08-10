@@ -38,7 +38,7 @@ def _make_context() -> ExecutionContext:
 async def test_static_mode_sets_location_and_stops() -> None:
     """static-режим: устанавливает Location, status_code и stop()."""
     proc = RedirectProcessor(
-        mode="static", status_code=301, target_url="http://example.com/new"
+        mode="static", status_code=301, target_url="http://example.com/new",
     )
     exchange = _make_exchange()
     await proc.process(exchange, _make_context())
@@ -66,7 +66,7 @@ async def test_static_mode_default_status_code_is_302() -> None:
 async def test_proxy_header_source() -> None:
     """proxy: URL берётся из header in_message."""
     proc = RedirectProcessor(
-        mode="proxy", url_source="header", source_key="X-Redirect-To"
+        mode="proxy", url_source="header", source_key="X-Redirect-To",
     )
     exchange = _make_exchange(headers={"X-Redirect-To": "http://h.example/path"})
     await proc.process(exchange, _make_context())
@@ -77,10 +77,10 @@ async def test_proxy_header_source() -> None:
 async def test_proxy_body_field_source_dotted() -> None:
     """proxy: body_field с точечным путём ``a.b.c``."""
     proc = RedirectProcessor(
-        mode="proxy", url_source="body_field", source_key="meta.target.url"
+        mode="proxy", url_source="body_field", source_key="meta.target.url",
     )
     exchange = _make_exchange(
-        body={"meta": {"target": {"url": "http://body.example/here"}}}
+        body={"meta": {"target": {"url": "http://body.example/here"}}},
     )
     await proc.process(exchange, _make_context())
     assert exchange.get_property("_redirect_to") == "http://body.example/here"
@@ -89,7 +89,7 @@ async def test_proxy_body_field_source_dotted() -> None:
 async def test_proxy_exchange_var_source() -> None:
     """proxy: exchange_var — URL из exchange.properties."""
     proc = RedirectProcessor(
-        mode="proxy", url_source="exchange_var", source_key="redirect_url"
+        mode="proxy", url_source="exchange_var", source_key="redirect_url",
     )
     exchange = _make_exchange(properties={"redirect_url": "http://var.example/x"})
     await proc.process(exchange, _make_context())
@@ -187,10 +187,10 @@ def test_proxy_with_invalid_url_source_raises() -> None:
 def test_to_spec_static() -> None:
     """to_spec для static-режима содержит target_url + status_code."""
     proc = RedirectProcessor(
-        mode="static", status_code=308, target_url="http://x.example/"
+        mode="static", status_code=308, target_url="http://x.example/",
     )
     assert proc.to_spec() == {
-        "redirect": {"status_code": 308, "target_url": "http://x.example/"}
+        "redirect": {"status_code": 308, "target_url": "http://x.example/"},
     }
 
 

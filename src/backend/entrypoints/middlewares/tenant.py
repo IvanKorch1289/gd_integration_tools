@@ -110,7 +110,7 @@ def _get_header(scope: Scope, name: bytes) -> str | None:
 
 
 def _make_send_wrapper(
-    send: Send, scope: Scope, default_tenant: str
+    send: Send, scope: Scope, default_tenant: str,
 ) -> Send:
     """Создаёт обёртку вокруг ``send``, добавляющую X-Tenant-ID в start.
 

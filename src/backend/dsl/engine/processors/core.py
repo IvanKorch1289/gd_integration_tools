@@ -155,7 +155,7 @@ class FilterProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, predicate: Callable[[Exchange[Any]], bool], *, name: str | None = None
+        self, predicate: Callable[[Exchange[Any]], bool], *, name: str | None = None,
     ) -> None:
         super().__init__(name=name or "filter")
         self._predicate = predicate

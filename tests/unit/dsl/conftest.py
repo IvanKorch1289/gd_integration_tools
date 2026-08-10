@@ -72,7 +72,7 @@ def _stabilize_blueprint_actions(request: pytest.FixtureRequest) -> Iterator[Non
             payload_model=None,
         )
         action_handler_registry._metadata.setdefault(
-            action_name, ActionMetadata(action=action_name)
+            action_name, ActionMetadata(action=action_name),
         )
         injected.append(action_name)
 

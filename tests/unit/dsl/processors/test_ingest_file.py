@@ -55,7 +55,7 @@ class TestDataPropertySource:
     async def test_str_property_encoded(self) -> None:
         ex = _exchange({"raw": "world", "mime": "text/plain"})
         proc = IngestFileProcessor(
-            data_property="raw", mime_from="properties.mime", result_property="doc"
+            data_property="raw", mime_from="properties.mime", result_property="doc",
         )
         await proc.process(ex, _context())
         result = ex.get_property("doc")
@@ -108,10 +108,10 @@ class TestEngineForce:
         # on_unsupported='fail' → exchange.fail.
         with (
             patch(
-                "src.backend.services.ai.document_parsers._orchestrator._try_markitdown"
+                "src.backend.services.ai.document_parsers._orchestrator._try_markitdown",
             ) as mock_md,
             patch(
-                "src.backend.services.ai.document_parsers._orchestrator._parse_pdf"
+                "src.backend.services.ai.document_parsers._orchestrator._parse_pdf",
             ) as mock_pdf,
         ):
             mock_md.side_effect = RuntimeError("missing")
@@ -123,7 +123,7 @@ class TestEngineForce:
     async def test_engine_auto_used_by_default(self) -> None:
         ex = _exchange({"raw": b"hello", "mime": "text/plain"})
         proc = IngestFileProcessor(
-            data_property="raw", mime_from="properties.mime", result_property="doc"
+            data_property="raw", mime_from="properties.mime", result_property="doc",
         )
         # engine=auto — markitdown пропускается для plain-text.
         await proc.process(ex, _context())

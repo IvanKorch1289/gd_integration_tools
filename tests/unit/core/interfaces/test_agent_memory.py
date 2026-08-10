@@ -49,7 +49,7 @@ class _FakeAgentMemory:
         return f"{prefix}_{self._next_id}"
 
     async def get_messages(
-        self, *, tenant_id: str, session_id: str, limit: int = 50
+        self, *, tenant_id: str, session_id: str, limit: int = 50,
     ) -> list[MemoryMessage]:
         self.call_log.append(("get_messages", tenant_id, session_id, str(limit)))
         msgs = self.messages.get((tenant_id, session_id), [])
@@ -71,7 +71,7 @@ class _FakeAgentMemory:
         return mid
 
     async def get_facts(
-        self, *, tenant_id: str, session_id: str | None = None, limit: int = 50
+        self, *, tenant_id: str, session_id: str | None = None, limit: int = 50,
     ) -> list[MemoryFact]:
         self.call_log.append(("get_facts", tenant_id, str(session_id), str(limit)))
         out: list[MemoryFact] = []
@@ -104,7 +104,7 @@ class _FakeAgentMemory:
         return fid
 
     async def recall_semantic(
-        self, *, tenant_id: str, query: str, top_k: int = 5
+        self, *, tenant_id: str, query: str, top_k: int = 5,
     ) -> list[MemoryFact]:
         self.call_log.append(("recall_semantic", tenant_id, query, str(top_k)))
         out: list[MemoryFact] = []
@@ -120,7 +120,7 @@ class _FakeAgentMemory:
         return self.scratchpads.get((tenant_id, session_id))
 
     async def save_scratchpad(
-        self, *, tenant_id: str, session_id: str, content: str
+        self, *, tenant_id: str, session_id: str, content: str,
     ) -> None:
         self.scratchpads[(tenant_id, session_id)] = content
 
@@ -143,7 +143,7 @@ class _IncompleteAgentMemory:
     """Missing 6 of 8 methods — must fail ``isinstance`` Protocol check."""
 
     async def get_messages(
-        self, *, tenant_id: str, session_id: str, limit: int = 50
+        self, *, tenant_id: str, session_id: str, limit: int = 50,
     ) -> list[MemoryMessage]:
         del tenant_id, session_id, limit
         return []
@@ -157,7 +157,7 @@ class _IncompleteAgentMemory:
 def test_memory_message_creation() -> None:
     """``MemoryMessage`` stores role/content/ts/metadata as a frozen dataclass."""
     msg = MemoryMessage(
-        role="user", content="hello", ts=123.0, metadata={"model": "gpt"}
+        role="user", content="hello", ts=123.0, metadata={"model": "gpt"},
     )
     assert msg.role == "user"
     assert msg.content == "hello"
@@ -238,7 +238,7 @@ async def test_save_message_then_get_messages() -> None:
     """``save_message`` followed by ``get_messages`` returns the saved message."""
     backend = _FakeAgentMemory()
     mid = await backend.save_message(
-        tenant_id="acme", session_id="s1", role="user", content="hello"
+        tenant_id="acme", session_id="s1", role="user", content="hello",
     )
     assert mid.startswith("m_")
     msgs = await backend.get_messages(tenant_id="acme", session_id="s1")
@@ -269,7 +269,7 @@ async def test_metadata_propagation() -> None:
     backend = _FakeAgentMemory()
     meta = {"model": "gpt-4", "cost_usd": 0.002, "tenant_tag": "acme"}
     await backend.save_message(
-        tenant_id="acme", session_id="s1", role="assistant", content="ok", metadata=meta
+        tenant_id="acme", session_id="s1", role="assistant", content="ok", metadata=meta,
     )
     msgs = await backend.get_messages(tenant_id="acme", session_id="s1")
     assert msgs[0].metadata == meta
@@ -281,7 +281,7 @@ async def test_scratchpad_roundtrip() -> None:
     backend = _FakeAgentMemory()
     assert await backend.get_scratchpad(tenant_id="acme", session_id="s1") is None
     await backend.save_scratchpad(
-        tenant_id="acme", session_id="s1", content="TODO: add tests"
+        tenant_id="acme", session_id="s1", content="TODO: add tests",
     )
     assert await backend.get_scratchpad(tenant_id="acme", session_id="s1") == (
         "TODO: add tests"
@@ -293,10 +293,10 @@ async def test_tenant_isolation() -> None:
     """Messages for one tenant must not leak into another's session view."""
     backend = _FakeAgentMemory()
     await backend.save_message(
-        tenant_id="tenant_a", session_id="s1", role="user", content="secret-a"
+        tenant_id="tenant_a", session_id="s1", role="user", content="secret-a",
     )
     await backend.save_message(
-        tenant_id="tenant_b", session_id="s1", role="user", content="secret-b"
+        tenant_id="tenant_b", session_id="s1", role="user", content="secret-b",
     )
 
     a_msgs = await backend.get_messages(tenant_id="tenant_a", session_id="s1")
@@ -311,10 +311,10 @@ async def test_consolidate_moves_messages_to_facts() -> None:
     """``consolidate`` produces a fact per short-term message."""
     backend = _FakeAgentMemory()
     await backend.save_message(
-        tenant_id="acme", session_id="s1", role="user", content="msg-1"
+        tenant_id="acme", session_id="s1", role="user", content="msg-1",
     )
     await backend.save_message(
-        tenant_id="acme", session_id="s1", role="assistant", content="msg-2"
+        tenant_id="acme", session_id="s1", role="assistant", content="msg-2",
     )
     added = await backend.consolidate(tenant_id="acme", session_id="s1")
     assert added == 2

@@ -80,7 +80,7 @@ class TestActionSpecPostInit:
 
     def test_explicit_action_id_wins_over_inference(self) -> None:
         spec = _spec(
-            "GET", "/api/v1/orders/all/", tier=1, action_id="orders.fancy_list"
+            "GET", "/api/v1/orders/all/", tier=1, action_id="orders.fancy_list",
         )
         assert spec.action_id == "orders.fancy_list"
 

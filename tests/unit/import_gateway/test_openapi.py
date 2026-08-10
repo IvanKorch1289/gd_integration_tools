@@ -74,7 +74,7 @@ async def test_openapi_security_apikey_extracts_param_name() -> None:
 @pytest.mark.asyncio
 async def test_openapi_invalid_yaml_raises_import_error() -> None:
     src = ImportSource(
-        kind=ImportSourceKind.OPENAPI, content=b"::not yaml or json::", prefix="x"
+        kind=ImportSourceKind.OPENAPI, content=b"::not yaml or json::", prefix="x",
     )
     with pytest.raises((ImportError, ValueError)):
         await OpenAPIImportGateway().import_spec(src)

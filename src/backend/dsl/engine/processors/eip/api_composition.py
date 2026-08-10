@@ -85,13 +85,13 @@ def _default_http_fetcher() -> HTTPFetcher:
     """Lazy HTTP fetcher provider — imports только на actual call, не at __init__."""
 
     async def fetcher(
-        url: str, method: str, headers: dict[str, str], body: Any, timeout: float
+        url: str, method: str, headers: dict[str, str], body: Any, timeout: float,
     ) -> Any:
         from src.backend.infrastructure.external_apis.http_client import get_http_client  # type: ignore[import-not-found]
 
         client = get_http_client()
         return await client.request(
-            method=method, url=url, headers=headers, json_body=body, timeout=timeout
+            method=method, url=url, headers=headers, json_body=body, timeout=timeout,
         )
 
     return fetcher
@@ -291,7 +291,7 @@ class APICompositionProcessor(BaseProcessor):
         if failed_sources:
             exchange.fail(
                 f"API composition failed for sources: {failed_sources}, "
-                f"errors: {errors}"
+                f"errors: {errors}",
             )
 
         # Merge per strategy
@@ -335,7 +335,7 @@ class APICompositionProcessor(BaseProcessor):
             url = f"{url}{sep}{query}"
 
         response = await self._fetcher(
-            url, source.method, source.headers, source.body, per_source_timeout
+            url, source.method, source.headers, source.body, per_source_timeout,
         )
 
         # Transform
@@ -376,5 +376,5 @@ class APICompositionMixin:
                 merge_strategy=merge_strategy,
                 custom_merger=custom_merger,
                 timeout_seconds=timeout_seconds,
-            )
+            ),
         )

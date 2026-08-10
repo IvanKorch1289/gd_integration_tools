@@ -44,7 +44,7 @@ class LocalProcessScaler:
     ) -> None:
         if min_workers < 1 or max_workers < min_workers:
             raise ValueError(
-                "min_workers >= 1 и max_workers >= min_workers обязательны"
+                "min_workers >= 1 и max_workers >= min_workers обязательны",
             )
         self.min_workers = min_workers
         self.max_workers = max_workers

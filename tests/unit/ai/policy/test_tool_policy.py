@@ -162,7 +162,7 @@ class TestAgentToolPolicyIntegration:
 
         # Custom factory
         custom = AgentToolPolicy(
-            agent_id="custom_agent", allowed_tools=["search"]
+            agent_id="custom_agent", allowed_tools=["search"],
         )
         register_factory(AgentToolPolicy, lambda: custom)
         assert get_service(AgentToolPolicy) is custom

@@ -134,7 +134,7 @@ class E2BExecutionBackend:
         if not self._api_key:
             raise E2BExecutionError(
                 "E2B_API_KEY not set — secure cloud execution disabled. "
-                "Get key: https://e2b.dev/dashboard?tab=keys"
+                "Get key: https://e2b.dev/dashboard?tab=keys",
             )
         import os
 
@@ -146,7 +146,7 @@ class E2BExecutionBackend:
             import nbformat
         except ImportError as exc:
             raise E2BExecutionError(
-                "nbformat required. Install: uv sync --extra jupyter"
+                "nbformat required. Install: uv sync --extra jupyter",
             ) from exc
 
         nb = nbformat.read(notebook_path, as_version=4)
@@ -223,7 +223,7 @@ class E2BExecutionBackend:
             from e2b_code_interpreter import Sandbox
         except ImportError as exc:
             raise E2BExecutionError(
-                "e2b_code_interpreter required. Install: uv sync --extra ai"
+                "e2b_code_interpreter required. Install: uv sync --extra ai",
             ) from exc
 
         cells_executed = 0
@@ -250,7 +250,7 @@ class E2BExecutionBackend:
                 if execution.error:
                     errors.append(
                         f"params cell {cells_executed}: "
-                        f"{execution.error.name}: {execution.error.value}"
+                        f"{execution.error.name}: {execution.error.value}",
                     )
                 cells_executed += 1
 
@@ -260,7 +260,7 @@ class E2BExecutionBackend:
                 if execution.error:
                     errors.append(
                         f"code cell {cells_executed}: "
-                        f"{execution.error.name}: {execution.error.value}"
+                        f"{execution.error.name}: {execution.error.value}",
                     )
                 cells_executed += 1
                 # Persist cell output в nb (для output notebook)
@@ -272,7 +272,7 @@ class E2BExecutionBackend:
                             "output_type": "stream",
                             "name": "stdout",
                             "text": "\n".join(execution.logs.stdout),
-                        }
+                        },
                     ]
         finally:
             # E2B best practice: always kill sandbox после execution
@@ -320,6 +320,6 @@ class E2BExecutionBackend:
                     "execution_count": None,
                     "data": {"text/plain": first.text},
                     "metadata": {},
-                }
+                },
             ]
         return []

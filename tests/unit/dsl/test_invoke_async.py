@@ -27,7 +27,7 @@ class _RecordingDispatcher:
         self._dispatched = asyncio.Event()
 
     async def dispatch(
-        self, action: str, payload: Any, context: DispatchContext
+        self, action: str, payload: Any, context: DispatchContext,
     ) -> ActionResult:
         self.calls.append((action, dict(payload), context))
         if self._exc is not None:
@@ -37,7 +37,7 @@ class _RecordingDispatcher:
             ActionResult(success=True, data={"ok": True})
             if self._succeed
             else ActionResult(
-                success=False, error=ActionError(code="boom", message="failed")
+                success=False, error=ActionError(code="boom", message="failed"),
             )
         )
         self._dispatched.set()

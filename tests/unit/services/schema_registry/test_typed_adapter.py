@@ -86,14 +86,14 @@ def test_snapshot_view_round_trip_via_registry() -> None:
             name="orders.create",
             spec_schema={"type": "object"},
             meta={"protocol": "http"},
-        )
+        ),
     )
     reg.register(
         SchemaEntry(
             kind=SchemaKind.PROCESSOR,
             name="core:http_call",
             output_schema={"type": "string"},
-        )
+        ),
     )
 
     snapshot_payload = reg.to_snapshot()

@@ -43,7 +43,7 @@ def _make_event(**kwargs: Any) -> AuditEvent:
 def _failing_client() -> AsyncMock:
     client = AsyncMock()
     client.insert = AsyncMock(
-        side_effect=RuntimeError("ClickHouse unavailable")
+        side_effect=RuntimeError("ClickHouse unavailable"),
     )
     return client
 
@@ -57,7 +57,7 @@ def _flags_on() -> MagicMock:
 def _counter_value(reason: str = "no_dlq_configured") -> float:
     """Текущее значение audit_silent_loss_total для transport=clickhouse_audit."""
     return audit_silent_loss_total.labels(
-        transport="clickhouse_audit", reason=reason
+        transport="clickhouse_audit", reason=reason,
     )._value.get()
 
 
@@ -72,7 +72,7 @@ class TestClickHouseAuditSilentLossMetric:
 
         with patch("src.backend.core.config.features.feature_flags", _flags_on()):
             with patch(
-                "src.backend.services.audit.clickhouse_audit_service.service._logger"
+                "src.backend.services.audit.clickhouse_audit_service.service._logger",
             ) as mock_logger:
                 await service.emit(event)
 
@@ -99,7 +99,7 @@ class TestClickHouseAuditSilentLossMetric:
 
         with patch("src.backend.core.config.features.feature_flags", _flags_on()):
             with patch(
-                "src.backend.services.audit.clickhouse_audit_service.service._logger"
+                "src.backend.services.audit.clickhouse_audit_service.service._logger",
             ) as mock_logger:
                 await service.emit(event)
 
@@ -122,13 +122,13 @@ class TestClickHouseAuditSilentLossMetric:
 
         writer = InMemoryDLQWriter()
         service = ClickHouseAuditService(
-            client=_failing_client(), dlq_writer=writer
+            client=_failing_client(), dlq_writer=writer,
         )
         before = _counter_value()
 
         with patch("src.backend.core.config.features.feature_flags", _flags_on()):
             with patch(
-                "src.backend.services.audit.clickhouse_audit_service.service._logger"
+                "src.backend.services.audit.clickhouse_audit_service.service._logger",
             ) as mock_logger:
                 await service.emit(_make_event())
 

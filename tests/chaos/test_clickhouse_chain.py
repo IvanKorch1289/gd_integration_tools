@@ -19,7 +19,7 @@ def test_clickhouse_latency(toxiproxy_clickhouse: ChaosTarget) -> None:
     """500ms latency на ClickHouse native-протоколе."""
     apply_latency(toxiproxy_clickhouse, latency_ms=500)
     elapsed = measure_latency_ms(
-        toxiproxy_clickhouse.proxy_host, toxiproxy_clickhouse.proxy_port
+        toxiproxy_clickhouse.proxy_host, toxiproxy_clickhouse.proxy_port,
     )
     assert elapsed < 0 or elapsed >= 400
 
@@ -28,7 +28,7 @@ def test_clickhouse_disconnect(toxiproxy_clickhouse: ChaosTarget) -> None:
     """disconnect: ClickHouse недоступен."""
     apply_disconnect(toxiproxy_clickhouse)
     assert assert_connection_fails(
-        toxiproxy_clickhouse.proxy_host, toxiproxy_clickhouse.proxy_port
+        toxiproxy_clickhouse.proxy_host, toxiproxy_clickhouse.proxy_port,
     )
 
 
@@ -36,7 +36,7 @@ def test_clickhouse_data_corruption(toxiproxy_clickhouse: ChaosTarget) -> None:
     """data-corruption: slicer на ClickHouse."""
     apply_random_drop(toxiproxy_clickhouse, toxicity=0.3)
     assert smoke_open_socket(
-        toxiproxy_clickhouse.proxy_host, toxiproxy_clickhouse.proxy_port, timeout=2.0
+        toxiproxy_clickhouse.proxy_host, toxiproxy_clickhouse.proxy_port, timeout=2.0,
     ) or assert_connection_fails(
-        toxiproxy_clickhouse.proxy_host, toxiproxy_clickhouse.proxy_port
+        toxiproxy_clickhouse.proxy_host, toxiproxy_clickhouse.proxy_port,
     )

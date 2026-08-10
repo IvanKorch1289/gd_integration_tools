@@ -104,7 +104,7 @@ class TestAIGatewaySplit:
     def test_orchestrator_module_loadable(self) -> None:
         """Orchestrator subpackage (enforced_invoke.py) загружается."""
         enforced_invoke_mod = importlib.import_module(
-            "src.backend.core.ai.gateway.orchestrator.enforced_invoke"
+            "src.backend.core.ai.gateway.orchestrator.enforced_invoke",
         )
         # EnforcedInvokeMixin находится в этом модуле (re-exported).
         assert hasattr(enforced_invoke_mod, "EnforcedInvokeMixin")

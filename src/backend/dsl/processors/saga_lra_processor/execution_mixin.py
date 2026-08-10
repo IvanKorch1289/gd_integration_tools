@@ -41,7 +41,7 @@ _VALID_STATES = frozenset(
         STATE_COMPENSATING,
         STATE_COMPENSATED,
         STATE_FAILED,
-    }
+    },
 )
 
 
@@ -87,7 +87,7 @@ class ExecutionMixin(_SagaLRAProcessorProtocol):
             if exchange.status == ExchangeStatus.failed:
                 failed_step = step["name"]
                 last_action_error = SagaLRAError(
-                    exchange.error or f"Step {step['name']!r} marked exchange failed"
+                    exchange.error or f"Step {step['name']!r} marked exchange failed",
                 )
                 _lra_logger.error(
                     "SagaLRA step %s marked exchange as failed: %s",
@@ -114,7 +114,7 @@ class ExecutionMixin(_SagaLRAProcessorProtocol):
                 if step["name"] not in completed:
                     continue
                 exc = await self._run_compensation(
-                    step, exchange, context, ran_compensations=ran_compensations
+                    step, exchange, context, ran_compensations=ran_compensations,
                 )
                 if step["name"] in compensations_run:
                     continue
@@ -124,7 +124,7 @@ class ExecutionMixin(_SagaLRAProcessorProtocol):
                     compensation_errors.append((step["name"], exc))
                     if self._fail_fast:
                         _lra_logger.error(
-                            "SagaLRA fail_fast=True, aborting remaining compensations"
+                            "SagaLRA fail_fast=True, aborting remaining compensations",
                         )
                         break
 
@@ -183,7 +183,7 @@ class ExecutionMixin(_SagaLRAProcessorProtocol):
                 {
                     "name": s["name"],
                     "has_compensation": s.get("compensation") is not None,
-                }
+                },
             )
         return {
             "saga_lra_processor": {
@@ -194,5 +194,5 @@ class ExecutionMixin(_SagaLRAProcessorProtocol):
                 "state_property": self._state_property,
                 "result_property": self._result_property,
                 "fail_fast": self._fail_fast,
-            }
+            },
         }

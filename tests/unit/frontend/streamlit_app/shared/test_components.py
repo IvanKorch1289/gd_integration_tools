@@ -16,7 +16,7 @@ import pytest
 _streamlit_mock = ModuleType("streamlit")
 _streamlit_mock.set_page_config = MagicMock()
 _streamlit_mock.columns = MagicMock(
-    side_effect=lambda n: [MagicMock() for _ in range(n)]
+    side_effect=lambda n: [MagicMock() for _ in range(n)],
 )
 _streamlit_mock.metric = MagicMock()
 _streamlit_mock.dataframe = MagicMock()
@@ -128,7 +128,7 @@ def test_dataframe_view_respects_explicit_width() -> None:
     df = MagicMock(name="DataFrame")
     dataframe_view(df, width="content", height=300)
     _streamlit_mock.dataframe.assert_called_once_with(
-        df, width="content", height=300
+        df, width="content", height=300,
     )
 
 

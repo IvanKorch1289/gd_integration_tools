@@ -34,7 +34,7 @@ class _StubRag:
         self.calls: list[dict[str, Any]] = []
 
     async def augment_prompt(
-        self, *, query: str, system_prompt: str, top_k: int, namespace: str | None
+        self, *, query: str, system_prompt: str, top_k: int, namespace: str | None,
     ) -> str:
         self.calls.append(
             {
@@ -42,7 +42,7 @@ class _StubRag:
                 "system_prompt": system_prompt,
                 "top_k": top_k,
                 "namespace": namespace,
-            }
+            },
         )
         if self.raises is not None:
             raise self.raises
@@ -59,7 +59,7 @@ async def test_no_namespace_skips_augmentation(agent: AIAgentService) -> None:
     """Без ``rag_namespace`` augmentation не запускается, messages не меняются."""
     messages = [{"role": "user", "content": "Привет"}]
     used, result = await agent._maybe_augment_with_rag(
-        messages=messages, namespace=None, top_k=None, system_prompt=""
+        messages=messages, namespace=None, top_k=None, system_prompt="",
     )
     assert used is False
     assert result is messages
@@ -75,7 +75,7 @@ async def test_disabled_rag_skips_augmentation(agent: AIAgentService) -> None:
         patch.object(AIAgentService, "_resolve_rag_service", return_value=rag),
     ):
         used, result = await agent._maybe_augment_with_rag(
-            messages=messages, namespace="notebooks", top_k=None, system_prompt=""
+            messages=messages, namespace="notebooks", top_k=None, system_prompt="",
         )
 
     assert used is False
@@ -99,7 +99,7 @@ async def test_enabled_rag_augments_last_user_message(agent: AIAgentService) -> 
         patch.object(AIAgentService, "_resolve_rag_service", return_value=rag),
     ):
         used, result = await agent._maybe_augment_with_rag(
-            messages=messages, namespace="notebooks", top_k=None, system_prompt="SYS"
+            messages=messages, namespace="notebooks", top_k=None, system_prompt="SYS",
         )
 
     assert used is True
@@ -116,7 +116,7 @@ async def test_enabled_rag_augments_last_user_message(agent: AIAgentService) -> 
             "system_prompt": "SYS",
             "top_k": 7,
             "namespace": "notebooks",
-        }
+        },
     ]
 
 
@@ -131,7 +131,7 @@ async def test_explicit_top_k_overrides_settings(agent: AIAgentService) -> None:
         patch.object(AIAgentService, "_resolve_rag_service", return_value=rag),
     ):
         await agent._maybe_augment_with_rag(
-            messages=messages, namespace="ns", top_k=2, system_prompt=""
+            messages=messages, namespace="ns", top_k=2, system_prompt="",
         )
 
     assert rag.calls[0]["top_k"] == 2
@@ -147,7 +147,7 @@ async def test_augment_failure_falls_back_to_original(agent: AIAgentService) -> 
         patch.object(AIAgentService, "_resolve_rag_service", return_value=rag),
     ):
         used, result = await agent._maybe_augment_with_rag(
-            messages=messages, namespace="ns", top_k=None, system_prompt=""
+            messages=messages, namespace="ns", top_k=None, system_prompt="",
         )
 
     assert used is False
@@ -163,7 +163,7 @@ async def test_resolve_rag_service_returns_none_skips(agent: AIAgentService) -> 
         patch.object(AIAgentService, "_resolve_rag_service", return_value=None),
     ):
         used, result = await agent._maybe_augment_with_rag(
-            messages=messages, namespace="ns", top_k=None, system_prompt=""
+            messages=messages, namespace="ns", top_k=None, system_prompt="",
         )
 
     assert used is False
@@ -189,7 +189,7 @@ async def test_chat_propagates_rag_flag_in_response(agent: AIAgentService) -> No
         patch.object(agent, "_record_feedback", new=AsyncMock(return_value="fb-1")),
     ):
         result = await agent.chat(
-            messages, model="m", provider="perplexity", rag_namespace="notebooks"
+            messages, model="m", provider="perplexity", rag_namespace="notebooks",
         )
 
     assert result["success"] is True

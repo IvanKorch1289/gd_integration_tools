@@ -84,7 +84,7 @@ async def test_pytesseract_recognize_returns_empty_on_tesseract_error() -> None:
     """Pytesseract.recognize() с Tesseract runtime error → empty string (graceful)."""
     fake_pytesseract = type("FakePytesseract", (), {})()
     fake_pytesseract.image_to_string = lambda *args, **kwargs: (_ for _ in ()).throw(
-        RuntimeError("tesseract crashed")
+        RuntimeError("tesseract crashed"),
     )
 
     with patch.dict("sys.modules", {"pytesseract": fake_pytesseract}):

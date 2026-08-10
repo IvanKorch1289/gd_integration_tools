@@ -75,7 +75,7 @@ class TestMqttHandler:
     async def test_start_disabled(self, handler: MqttHandler) -> None:
         handler._settings.enabled = False
         with patch(
-            "src.backend.entrypoints.mqtt.mqtt_handler.get_task_registry"
+            "src.backend.entrypoints.mqtt.mqtt_handler.get_task_registry",
         ) as mock_reg:
             await handler.start()
         mock_reg.assert_not_called()
@@ -95,10 +95,10 @@ class TestMqttHandler:
     async def test_handle_message_with_action(self, handler: MqttHandler) -> None:
         mock_registry = AsyncMock()
         with patch(
-            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry
+            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
         ):
             await handler._handle_message(
-                "gd/orders/create", b'{"action":"orders.create","id":1}'
+                "gd/orders/create", b'{"action":"orders.create","id":1}',
             )
         mock_registry.dispatch.assert_awaited_once()
         call = mock_registry.dispatch.await_args[0][0]
@@ -106,11 +106,11 @@ class TestMqttHandler:
 
     @pytest.mark.asyncio
     async def test_handle_message_falls_back_to_topic(
-        self, handler: MqttHandler
+        self, handler: MqttHandler,
     ) -> None:
         mock_registry = AsyncMock()
         with patch(
-            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry
+            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
         ):
             await handler._handle_message("gd/orders/create", b'{"id":1}')
         call = mock_registry.dispatch.await_args[0][0]
@@ -120,19 +120,19 @@ class TestMqttHandler:
     async def test_handle_message_invalid_json(self, handler: MqttHandler) -> None:
         mock_registry = AsyncMock()
         with patch(
-            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry
+            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
         ):
             await handler._handle_message("gd/orders/create", b"not-json")
         mock_registry.dispatch.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_handle_message_unregistered_action(
-        self, handler: MqttHandler
+        self, handler: MqttHandler,
     ) -> None:
         mock_registry = AsyncMock()
         mock_registry.dispatch.side_effect = KeyError("nope")
         with patch(
-            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry
+            "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
         ):
             await handler._handle_message("gd/orders/create", b'{"action":"nope"}')
 

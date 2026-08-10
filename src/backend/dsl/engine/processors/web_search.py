@@ -92,7 +92,7 @@ class WebSearchProcessor(BaseProcessor):
         if engine not in _ALLOWED_ENGINES:
             raise ValueError(
                 f"web_search: engine must be one of {sorted(_ALLOWED_ENGINES)}, "
-                f"got {engine!r}"
+                f"got {engine!r}",
             )
         if max_results < 1:
             raise ValueError("web_search: max_results must be >= 1")
@@ -170,7 +170,7 @@ class WebSearchProcessor(BaseProcessor):
                 result: Any = await service.deep_research(query, provider=provider)
             else:
                 result = await service.query(
-                    query, max_results=self._max_results, provider=provider
+                    query, max_results=self._max_results, provider=provider,
                 )
         except Exception as exc:
             exchange.fail(f"web_search error: {exc}")

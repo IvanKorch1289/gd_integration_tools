@@ -30,10 +30,10 @@ async def test_supervisor_disabled_returns_stub(
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(
-        feature_flags, "multi_agent_supervisor_enabled", False, raising=False
+        feature_flags, "multi_agent_supervisor_enabled", False, raising=False,
     )
     sup = MultiAgentSupervisor(
-        name="test_supervisor", agents=[AgentSpec(name="a1", description="agent 1")]
+        name="test_supervisor", agents=[AgentSpec(name="a1", description="agent 1")],
     )
     result = await sup.run(prompt="hello")
     assert result["supervisor"] == "test_supervisor"

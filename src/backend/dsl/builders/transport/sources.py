@@ -56,7 +56,7 @@ class SourcesMixin(_RouteBuilderProtocol):
                 max_files=max_files,
                 sort_by=sort_by,
                 result_property=result_property,
-            )
+            ),
         )
 
     @classmethod
@@ -160,7 +160,7 @@ class SourcesMixin(_RouteBuilderProtocol):
         # реальный wire-up идёт через source_registry на основе ``source`` URI.
         mod.WebDAVSource(cfg)
         return cls(
-            route_id=route_id, source=f"webdav:{route_id}", description=description
+            route_id=route_id, source=f"webdav:{route_id}", description=description,
         )
 
     def poll(
@@ -230,7 +230,7 @@ class SourcesMixin(_RouteBuilderProtocol):
                 config=config,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     @classmethod

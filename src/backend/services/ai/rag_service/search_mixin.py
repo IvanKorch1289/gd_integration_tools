@@ -59,7 +59,7 @@ def _build_where(namespace: str | None, tenant_id: str | None) -> dict[str, Any]
 
 
 def _filter_chunks_by_tenant(
-    chunks: list[dict[str, Any]], tenant_id: str | None
+    chunks: list[dict[str, Any]], tenant_id: str | None,
 ) -> list[dict[str, Any]]:
     """Post-filter retrieval chunks по ``metadata.tenant_id`` (Sprint 2.6).
 
@@ -200,7 +200,7 @@ class SearchMixin(_RAGServiceProtocol):
 
         if self._cache is not None:
             chunks, tier = await self._cache.lookup_chunks(
-                query, tenant=effective_tenant, namespace=namespace
+                query, tenant=effective_tenant, namespace=namespace,
             )
             if chunks is not None:
                 filtered = _filter_chunks_by_tenant(chunks, effective_tenant)
@@ -227,7 +227,7 @@ class SearchMixin(_RAGServiceProtocol):
         if self._cache is not None and results:
             try:
                 await self._cache.store_chunks(
-                    query, results, tenant=effective_tenant, namespace=namespace
+                    query, results, tenant=effective_tenant, namespace=namespace,
                 )
             except Exception as exc:
                 logger.debug("RAG L3 store skipped: %s", exc)

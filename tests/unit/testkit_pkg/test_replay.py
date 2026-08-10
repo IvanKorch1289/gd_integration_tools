@@ -20,8 +20,8 @@ async def test_replay_returns_recorded_response() -> None:
                 status=201,
                 response_headers={"content-type": "application/json"},
                 response_body='{"id":42}',
-            )
-        ]
+            ),
+        ],
     )
     transport = build_replay_transport(cassette)
     async with httpx.AsyncClient(transport=transport) as client:
@@ -51,7 +51,7 @@ async def test_replay_non_strict_returns_404() -> None:
 def test_round_trip_recorder_to_replay() -> None:
     """Кассета сериализуется и восстанавливается без потерь."""
     original = HARCassette(
-        entries=[HAREntry(method="POST", url="https://x/y", status=204)]
+        entries=[HAREntry(method="POST", url="https://x/y", status=204)],
     )
     raw = original.to_json()
     restored = HARCassette.from_json(raw)

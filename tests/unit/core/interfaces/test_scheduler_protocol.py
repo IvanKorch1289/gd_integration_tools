@@ -48,7 +48,7 @@ class _FakeSchedulerManager:
                 "cron_expr": cron_expr,
                 "timezone": timezone,
                 "replace_existing": replace_existing,
-            }
+            },
         )
         return name
 

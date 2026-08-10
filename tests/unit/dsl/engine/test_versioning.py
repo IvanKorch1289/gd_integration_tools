@@ -114,14 +114,14 @@ class TestNextVersion:
         mock_session.execute.return_value = mock_result
 
         with patch(
-            "src.backend.dsl.engine.versioning.main_session_manager"
+            "src.backend.dsl.engine.versioning.main_session_manager",
         ) as mock_mgr:
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                return_value=mock_session
+                return_value=mock_session,
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
             assert await mgr._next_version("r1") == 1
             mock_session.execute.assert_called_once()
@@ -134,14 +134,14 @@ class TestNextVersion:
         mock_session.execute.return_value = mock_result
 
         with patch(
-            "src.backend.dsl.engine.versioning.main_session_manager"
+            "src.backend.dsl.engine.versioning.main_session_manager",
         ) as mock_mgr:
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                return_value=mock_session
+                return_value=mock_session,
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
             assert await mgr._next_version("r1") == 8
             mock_session.execute.assert_called_once()
@@ -167,10 +167,10 @@ class TestSnapshot:
         ):
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                return_value=mock_session
+                return_value=mock_session,
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
             mock_mgr.transaction = MagicMock()
             mock_mgr.transaction.return_value.__aenter__ = AsyncMock(return_value=None)
@@ -204,10 +204,10 @@ class TestSnapshot:
         ):
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                side_effect=RuntimeError("db down")
+                side_effect=RuntimeError("db down"),
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
             mock_mgr.transaction = MagicMock()
             mock_mgr.transaction.return_value.__aenter__ = AsyncMock(return_value=None)
@@ -236,14 +236,14 @@ class TestGetHistory:
         mock_session.execute.return_value = mock_result
 
         with patch(
-            "src.backend.dsl.engine.versioning.main_session_manager"
+            "src.backend.dsl.engine.versioning.main_session_manager",
         ) as mock_mgr:
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                return_value=mock_session
+                return_value=mock_session,
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
 
             history = await mgr.get_history("r1")
@@ -261,10 +261,10 @@ class TestGetHistory:
         ):
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                side_effect=RuntimeError("fail")
+                side_effect=RuntimeError("fail"),
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
 
             history = await mgr.get_history("r1")
@@ -284,14 +284,14 @@ class TestCompare:
         mock_session.execute.return_value = mock_result
 
         with patch(
-            "src.backend.dsl.engine.versioning.main_session_manager"
+            "src.backend.dsl.engine.versioning.main_session_manager",
         ) as mock_mgr:
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                return_value=mock_session
+                return_value=mock_session,
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
 
             result = await mgr.compare("r1", 1, 2)
@@ -321,10 +321,10 @@ class TestCompare:
         ):
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                return_value=mock_session
+                return_value=mock_session,
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
 
             result = await mgr.compare("r1", 1, 2)
@@ -340,7 +340,7 @@ class TestCompare:
         row1 = _make_snapshot_row(
             version=1,
             spec={
-                "processors": [{"name": "p1", "type": "A"}, {"name": "p2", "type": "B"}]
+                "processors": [{"name": "p1", "type": "A"}, {"name": "p2", "type": "B"}],
             },
             api_version="v2",
             feature_flag="f1",
@@ -348,7 +348,7 @@ class TestCompare:
         row2 = _make_snapshot_row(
             version=2,
             spec={
-                "processors": [{"name": "p2", "type": "C"}, {"name": "p3", "type": "D"}]
+                "processors": [{"name": "p2", "type": "C"}, {"name": "p3", "type": "D"}],
             },
             api_version="v2",
             feature_flag="f2",
@@ -364,10 +364,10 @@ class TestCompare:
         ):
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                return_value=mock_session
+                return_value=mock_session,
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
 
             result = await mgr.compare("r1", 1, 2)
@@ -388,7 +388,7 @@ class TestCompare:
         mock_session.execute.return_value = mock_result
 
         def fake_migrate(
-            spec: dict[str, Any], *, target_version: str
+            spec: dict[str, Any], *, target_version: str,
         ) -> dict[str, Any]:
             spec["apiVersion"] = target_version
             return spec
@@ -397,15 +397,15 @@ class TestCompare:
             patch("src.backend.dsl.engine.versioning.main_session_manager") as mock_mgr,
             patch("src.backend.dsl.versioning.CURRENT_VERSION", "v2"),
             patch(
-                "src.backend.dsl.versioning.apply_migrations", side_effect=fake_migrate
+                "src.backend.dsl.versioning.apply_migrations", side_effect=fake_migrate,
             ) as mock_migrate,
         ):
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                return_value=mock_session
+                return_value=mock_session,
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
 
             await mgr.compare("r1", 1, 2)
@@ -416,14 +416,14 @@ class TestCompare:
     async def test_compare_returns_error_on_exception(self) -> None:
         mgr = PipelineVersionManager()
         with patch(
-            "src.backend.dsl.engine.versioning.main_session_manager"
+            "src.backend.dsl.engine.versioning.main_session_manager",
         ) as mock_mgr:
             mock_mgr.create_session = MagicMock()
             mock_mgr.create_session.return_value.__aenter__ = AsyncMock(
-                side_effect=RuntimeError("boom")
+                side_effect=RuntimeError("boom"),
             )
             mock_mgr.create_session.return_value.__aexit__ = AsyncMock(
-                return_value=False
+                return_value=False,
             )
 
             result = await mgr.compare("r1", 1, 2)

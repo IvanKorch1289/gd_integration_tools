@@ -85,7 +85,7 @@ def test_graceful_shutdown_rejects_value_above_cap() -> None:
 
     # Уточнение причины — должна упоминаться верхняя граница 300.
     assert "300" in str(exc_info.value) or "less_than_equal" in str(
-        exc_info.value
+        exc_info.value,
     ), f"ожидалась ошибка про cap 300, получено: {exc_info.value!r}"
 
 
@@ -96,7 +96,7 @@ def test_graceful_shutdown_rejects_negative() -> None:
         GranianTuning(graceful_shutdown_timeout=-1)
 
     assert "greater_than_equal" in str(exc_info.value) or "0" in str(
-        exc_info.value
+        exc_info.value,
     ), f"ожидалась ошибка про ge=0, получено: {exc_info.value!r}"
 
 

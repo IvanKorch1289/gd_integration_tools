@@ -106,14 +106,14 @@ class ResponseCacheMiddleware:
         if response_status["status"] != 200:
             # Skip caching — re-send original response.
             await self._send_original(
-                send, response_status["status"], response_headers, body_chunks
+                send, response_status["status"], response_headers, body_chunks,
             )
             return
 
         if "application/json" not in content_type["value"]:
             # Non-JSON — skip caching.
             await self._send_original(
-                send, response_status["status"], response_headers, body_chunks
+                send, response_status["status"], response_headers, body_chunks,
             )
             return
 
@@ -138,7 +138,7 @@ class ResponseCacheMiddleware:
                     "type": "http.response.start",
                     "status": 304,
                     "headers": [(b"etag", etag.encode("latin-1"))],
-                }
+                },
             )
             return
 
@@ -150,7 +150,7 @@ class ResponseCacheMiddleware:
             new_headers.append((k, v))
         new_headers.append((b"etag", etag.encode("latin-1")))
         new_headers.append(
-            (b"cache-control", f"public, max-age={self._max_age}".encode("latin-1"))
+            (b"cache-control", f"public, max-age={self._max_age}".encode("latin-1")),
         )
 
         await send(
@@ -158,7 +158,7 @@ class ResponseCacheMiddleware:
                 "type": "http.response.start",
                 "status": response_status["status"],
                 "headers": new_headers,
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -171,14 +171,14 @@ class ResponseCacheMiddleware:
     ) -> None:
         """Re-send original response (cycle 55 helper для non-cached paths)."""
         await send(
-            {"type": "http.response.start", "status": status, "headers": original_headers}
+            {"type": "http.response.start", "status": status, "headers": original_headers},
         )
         if body_chunks:
             await send(
                 {
                     "type": "http.response.body",
                     "body": b"".join(body_chunks),
-                }
+                },
             )
 
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 import pytest
 
 pytest.importorskip(
-    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"
+    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow",
 )
 
 from src.backend.dsl.workflow.builder import WorkflowBuilder

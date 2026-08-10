@@ -186,13 +186,13 @@ class AuditableRotator:
         """
         if not self._feature_enabled():
             _logger.warning(
-                "secret rotation skipped: feature flag off path=%s", secret_path
+                "secret rotation skipped: feature flag off path=%s", secret_path,
             )
             raise RuntimeError("rotation_disabled")
 
         try:
             result = await self._inner.rotate(
-                secret_path, correlation_id=correlation_id, actor=actor
+                secret_path, correlation_id=correlation_id, actor=actor,
             )
         except Exception as exc:
             await self._audit_emit(

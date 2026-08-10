@@ -53,7 +53,7 @@ class EmbeddingMigrationRunner:
         self.progress = MigrationProgress()
 
     async def run(
-        self, *, source_collection: str, target_collection: str
+        self, *, source_collection: str, target_collection: str,
     ) -> MigrationProgress:
         """Запустить миграцию. Идемпотентна: upsert по id."""
         items = await self._source.list_chunks(source_collection)

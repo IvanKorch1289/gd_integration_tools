@@ -30,7 +30,7 @@ class TestVaultSettingsSource:
         env = {"VAULT_ADDR": "http://vault:8200", "VAULT_TOKEN": "tok"}
         mock_client = MagicMock()
         mock_client.secrets.kv.v2.read_secret_version.return_value = {
-            "data": {"data": {"db_password": "secret123"}}
+            "data": {"data": {"db_password": "secret123"}},
         }
         with patch.dict("os.environ", env, clear=True):
             with patch("hvac.Client", return_value=mock_client):
@@ -76,7 +76,7 @@ class TestAwsSecretsManagerSource:
         src = AwsSecretsManagerSource(object, "my-secret")
         mock_client = MagicMock()
         mock_client.get_secret_value.return_value = {
-            "SecretString": '{"api_key": "abc"}'
+            "SecretString": '{"api_key": "abc"}',
         }
         mock_boto3 = MagicMock()
         mock_boto3.client = MagicMock(return_value=mock_client)

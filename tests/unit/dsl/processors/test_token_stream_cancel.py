@@ -19,7 +19,7 @@ from src.backend.dsl.engine.processors.streaming_llm_publishers import SSEPublis
 def _bypass_auth() -> None:
     """TokenStreamLLMProcessor требует capability=llm.stream — bypass в unit-тестах."""
     TokenStreamLLMProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
-        return_value=True
+        return_value=True,
     )
 
 
@@ -47,7 +47,7 @@ async def test_processor_calls_aclose_on_cancel() -> None:
     gw.acompletion = AsyncMock(return_value=fake_stream)
 
     proc = TokenStreamLLMProcessor(
-        output_mode="sse", publisher=SSEPublisher(), gateway=gw
+        output_mode="sse", publisher=SSEPublisher(), gateway=gw,
     )
     exchange = Exchange(properties={"_composed_prompt": "x"})
 

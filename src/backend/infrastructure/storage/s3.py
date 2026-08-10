@@ -52,7 +52,7 @@ def _import_aioboto3() -> Any:
         import aioboto3
     except ImportError as exc:
         raise ImportError(
-            "S3ObjectStorage requires aioboto3. Install: uv pip install aioboto3"
+            "S3ObjectStorage requires aioboto3. Install: uv pip install aioboto3",
         ) from exc
     return aioboto3
 
@@ -115,7 +115,7 @@ class S3ObjectStorage(ObjectStorage):
     """
 
     def __init__(
-        self, settings: FileStorageSettings, *, key_prefix: str | None = None
+        self, settings: FileStorageSettings, *, key_prefix: str | None = None,
     ) -> None:
         self._settings = settings
         self._bucket = settings.bucket
@@ -201,7 +201,7 @@ class S3ObjectStorage(ObjectStorage):
                         create_exc,
                     )
                     raise ServiceError(
-                        f"S3 create_bucket failed: {create_exc}"
+                        f"S3 create_bucket failed: {create_exc}",
                     ) from create_exc
             else:
                 self.logger.error(
@@ -215,13 +215,13 @@ class S3ObjectStorage(ObjectStorage):
     def _wrap_boto(self, op: str, full_key: str) -> ServiceError:
         """Вернуть ServiceError-обёртку для boto-исключений (helper)."""
         return ServiceError(f"S3 {op} failed: {{}}").__class__(  # type: ignore[arg-type]
-            f"S3 {op} failed for key={full_key}"
+            f"S3 {op} failed for key={full_key}",
         )
 
     # ── ObjectStorage interface ──────────────────────────────────────────
 
     async def upload(
-        self, key: str, data: bytes, content_type: str | None = None
+        self, key: str, data: bytes, content_type: str | None = None,
     ) -> str:
         """Upload data to S3.
 
@@ -242,7 +242,7 @@ class S3ObjectStorage(ObjectStorage):
                 await s3.put_object(**params)
             except (BotoCoreError, ClientError) as exc:
                 self.logger.error(
-                    "S3ObjectStorage.upload failed key=%s err=%s", full_key, exc
+                    "S3ObjectStorage.upload failed key=%s err=%s", full_key, exc,
                 )
                 raise ServiceError(f"S3 upload failed: {exc}") from exc
         return full_key
@@ -286,7 +286,7 @@ class S3ObjectStorage(ObjectStorage):
                 if not isinstance(stream, AsyncIterable):
                     raise TypeError(
                         f"S3ObjectStorage.upload_stream expects AsyncIterable[bytes], "
-                        f"got {type(stream).__name__}"
+                        f"got {type(stream).__name__}",
                     )
                 async for chunk in stream:
                     if not chunk:
@@ -303,7 +303,7 @@ class S3ObjectStorage(ObjectStorage):
                             Body=part_bytes,
                         )
                         parts.append(
-                            {"PartNumber": part_number, "ETag": part_resp["ETag"]}
+                            {"PartNumber": part_number, "ETag": part_resp["ETag"]},
                         )
                         part_number += 1
 
@@ -319,7 +319,7 @@ class S3ObjectStorage(ObjectStorage):
 
                 if not parts:
                     await s3.abort_multipart_upload(
-                        Bucket=self._bucket, Key=full_key, UploadId=upload_id
+                        Bucket=self._bucket, Key=full_key, UploadId=upload_id,
                     )
                     return full_key
 
@@ -339,7 +339,7 @@ class S3ObjectStorage(ObjectStorage):
                 if upload_id is not None:
                     try:
                         await s3.abort_multipart_upload(
-                            Bucket=self._bucket, Key=full_key, UploadId=upload_id
+                            Bucket=self._bucket, Key=full_key, UploadId=upload_id,
                         )
                     except (OSError, RuntimeError, KeyError) as abort_exc:
                         self.logger.exception(
@@ -352,7 +352,7 @@ class S3ObjectStorage(ObjectStorage):
                 if upload_id is not None:
                     try:
                         await s3.abort_multipart_upload(
-                            Bucket=self._bucket, Key=full_key, UploadId=upload_id
+                            Bucket=self._bucket, Key=full_key, UploadId=upload_id,
                         )
                     except (OSError, RuntimeError, KeyError) as abort_exc:
                         self.logger.exception(
@@ -382,7 +382,7 @@ class S3ObjectStorage(ObjectStorage):
                 if self._is_not_found(exc):
                     raise FileNotFoundError(f"Object not found: {key}") from exc
                 self.logger.error(
-                    "S3ObjectStorage.download failed key=%s err=%s", full_key, exc
+                    "S3ObjectStorage.download failed key=%s err=%s", full_key, exc,
                 )
                 raise ServiceError(f"S3 download failed: {exc}") from exc
             async with resp["Body"] as stream:
@@ -400,7 +400,7 @@ class S3ObjectStorage(ObjectStorage):
                 await s3.delete_object(Bucket=self._bucket, Key=full_key)
             except (BotoCoreError, ClientError) as exc:
                 self.logger.error(
-                    "S3ObjectStorage.delete failed key=%s err=%s", full_key, exc
+                    "S3ObjectStorage.delete failed key=%s err=%s", full_key, exc,
                 )
                 raise ServiceError(f"S3 delete failed: {exc}") from exc
 
@@ -422,7 +422,7 @@ class S3ObjectStorage(ObjectStorage):
                 if self._is_not_found(exc):
                     return False
                 self.logger.error(
-                    "S3ObjectStorage.exists failed key=%s err=%s", full_key, exc
+                    "S3ObjectStorage.exists failed key=%s err=%s", full_key, exc,
                 )
                 raise ServiceError(f"S3 head failed: {exc}") from exc
 
@@ -441,7 +441,7 @@ class S3ObjectStorage(ObjectStorage):
             try:
                 paginator = s3.get_paginator("list_objects_v2")
                 async for page in paginator.paginate(
-                    Bucket=self._bucket, Prefix=full_prefix
+                    Bucket=self._bucket, Prefix=full_prefix,
                 ):
                     for obj in page.get("Contents", []):
                         keys.append(self._strip_prefix(obj["Key"]))
@@ -474,7 +474,7 @@ class S3ObjectStorage(ObjectStorage):
                 )
             except (BotoCoreError, ClientError) as exc:
                 self.logger.error(
-                    "S3ObjectStorage.presigned_url failed key=%s err=%s", full_key, exc
+                    "S3ObjectStorage.presigned_url failed key=%s err=%s", full_key, exc,
                 )
                 raise ServiceError(f"S3 presign failed: {exc}") from exc
         # aioboto3 может вернуть корутину или строку в зависимости от версии
@@ -506,5 +506,5 @@ class S3ObjectStorage(ObjectStorage):
             self.logger.warning("S3ObjectStorage.health failed: %s", exc)
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )

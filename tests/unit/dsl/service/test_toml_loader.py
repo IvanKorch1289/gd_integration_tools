@@ -23,7 +23,7 @@ def test_load_service_toml_minimal(tmp_path: Path) -> None:
 [service]
 name = "credit_service"
 version = "1.0.0"
-""".strip()
+""".strip(),
     )
     spec = load_service_toml(service_toml)
     assert spec.name == "credit_service"
@@ -48,7 +48,7 @@ entity = "orders"
 name = "orders.add"
 handler = "extensions.orders.actions:add"
 mode = "sync"
-""".strip()
+""".strip(),
     )
     spec = load_service_toml(service_toml)
     assert spec.name == "orders_service"
@@ -73,10 +73,10 @@ def test_scan_services_recursive(tmp_path: Path) -> None:
     (tmp_path / "ext1").mkdir()
     (tmp_path / "ext2" / "services").mkdir(parents=True)
     (tmp_path / "ext1" / "a.service.toml").write_text(
-        '[service]\nname = "a"\nversion = "1.0"\n'
+        '[service]\nname = "a"\nversion = "1.0"\n',
     )
     (tmp_path / "ext2" / "services" / "b.service.toml").write_text(
-        '[service]\nname = "b"\nversion = "1.0"\n'
+        '[service]\nname = "b"\nversion = "1.0"\n',
     )
     specs = scan_services(tmp_path)
     names = sorted(s.name for s in specs)

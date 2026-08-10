@@ -48,7 +48,7 @@ _FORBIDDEN_DDL_STATEMENTS: frozenset[str] = frozenset(
         "drop user",
         "truncate table",
         "truncate",
-    }
+    },
 )
 _FORBIDDEN_DML_PREFIXES: tuple[str, ...] = ("delete from ", "update ")
 
@@ -88,12 +88,12 @@ def _validate_select_sql(sql: str) -> None:
     # Single-statement guard.
     if ";" in body.rstrip(";"):
         raise SqlValidationError(
-            "query() accepts a single statement only; multi-statement SQL is rejected"
+            "query() accepts a single statement only; multi-statement SQL is rejected",
         )
     head = body[:32].lstrip("(\n\t ").lower()
     if not (head.startswith("select") or head.startswith("with")):
         raise SqlValidationError(
-            f"query() requires a SELECT or WITH statement; got prefix {head[:16]!r}"
+            f"query() requires a SELECT or WITH statement; got prefix {head[:16]!r}",
         )
 
 
@@ -127,12 +127,12 @@ def _validate_write_sql(sql: str) -> None:
     body_no_trailing = body.rstrip().rstrip(";")
     if ";" in body_no_trailing:
         raise SqlValidationError(
-            "execute() accepts a single statement only; multi-statement SQL is rejected"
+            "execute() accepts a single statement only; multi-statement SQL is rejected",
         )
     for forbidden in _FORBIDDEN_DDL_STATEMENTS:
         if forbidden in body_no_trailing:
             raise SqlValidationError(
-                f"execute() forbids DDL: {forbidden!r} not allowed"
+                f"execute() forbids DDL: {forbidden!r} not allowed",
             )
     for prefix in _FORBIDDEN_DML_PREFIXES:
         if body_no_trailing.startswith(prefix) and " where " not in body_no_trailing:
@@ -185,7 +185,7 @@ class ExternalDatabaseTransactionContext:
             self._check(self._plugin, "db.write", self._profile)
 
     async def query(
-        self, sql: str, params: dict[str, Any] | None = None
+        self, sql: str, params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """SELECT внутри транзакции."""
         self._assert_write()
@@ -198,7 +198,7 @@ class ExternalDatabaseTransactionContext:
         from sqlalchemy.engine.cursor import CursorResult
 
         result = cast(
-            CursorResult[Any], await self._session.execute(text(sql), params or {})
+            CursorResult[Any], await self._session.execute(text(sql), params or {}),
         )
         return result.rowcount or 0
 
@@ -265,7 +265,7 @@ class ExternalDatabaseFacade:
         return self._session_manager_factory(profile)
 
     async def query(
-        self, profile: str, sql: str, params: dict[str, Any] | None = None
+        self, profile: str, sql: str, params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """SELECT через профиль внешней БД."""
         self._assert_read(profile)
@@ -279,14 +279,14 @@ class ExternalDatabaseFacade:
             raise
         except Exception as exc:
             _logger.warning(
-                "ExternalDatabaseFacade query failed profile=%s: %s", profile, exc
+                "ExternalDatabaseFacade query failed profile=%s: %s", profile, exc,
             )
             raise DatabaseError(
-                message=f"External DB query failed for '{profile}': {exc}"
+                message=f"External DB query failed for '{profile}': {exc}",
             ) from exc
 
     async def execute(
-        self, profile: str, sql: str, params: dict[str, Any] | None = None
+        self, profile: str, sql: str, params: dict[str, Any] | None = None,
     ) -> int:
         """INSERT/UPDATE/DELETE через профиль внешней БД с auto-commit."""
         self._assert_write(profile)
@@ -300,17 +300,17 @@ class ExternalDatabaseFacade:
                 from sqlalchemy.engine.cursor import CursorResult
 
                 result = cast(
-                    CursorResult[Any], await session.execute(text(sql), params or {})
+                    CursorResult[Any], await session.execute(text(sql), params or {}),
                 )
                 return result.rowcount or 0
         except DatabaseError:
             raise
         except Exception as exc:
             _logger.warning(
-                "ExternalDatabaseFacade execute failed profile=%s: %s", profile, exc
+                "ExternalDatabaseFacade execute failed profile=%s: %s", profile, exc,
             )
             raise DatabaseError(
-                message=f"External DB execute failed for '{profile}': {exc}"
+                message=f"External DB execute failed for '{profile}': {exc}",
             ) from exc
 
     async def call_procedure(
@@ -355,12 +355,12 @@ class ExternalDatabaseFacade:
             raise DatabaseError(
                 message=(
                     f"External DB call_procedure failed for '{profile}.{name}': {exc}"
-                )
+                ),
             ) from exc
 
     @asynccontextmanager
     async def transaction(
-        self, profile: str
+        self, profile: str,
     ) -> AsyncIterator[ExternalDatabaseTransactionContext]:
         """Async context manager для ручной транзакции.
 
@@ -382,7 +382,7 @@ class ExternalDatabaseFacade:
 
 
 def _build_procedure_sql(
-    name: str, params: dict[str, Any], *, schema: str, dialect: str
+    name: str, params: dict[str, Any], *, schema: str, dialect: str,
 ) -> str:
     """Строит SQL вызова хранимой процедуры с bind-параметрами ``:name``.
 

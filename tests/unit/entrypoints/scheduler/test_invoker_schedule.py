@@ -64,7 +64,7 @@ class TestRegisterScheduledInvocation:
             return_value=mock_mgr,
         ):
             job_id = register_scheduled_invocation(
-                ScheduleSpec(action="health.heartbeat", cron="*/5 * * * *")
+                ScheduleSpec(action="health.heartbeat", cron="*/5 * * * *"),
             )
 
         assert job_id == "scheduled_invocation_health.heartbeat"
@@ -84,7 +84,7 @@ class TestRegisterScheduledInvocation:
             return_value=mock_mgr,
         ):
             job_id = register_scheduled_invocation(
-                ScheduleSpec(action="cache.warmup", interval_seconds=300)
+                ScheduleSpec(action="cache.warmup", interval_seconds=300),
             )
 
         assert job_id == "scheduled_invocation_cache.warmup"
@@ -101,7 +101,7 @@ class TestRegisterScheduledInvocation:
             return_value=mock_mgr,
         ):
             job_id = register_scheduled_invocation(
-                ScheduleSpec(action="a", cron="* * * * *", job_id="my_job")
+                ScheduleSpec(action="a", cron="* * * * *", job_id="my_job"),
             )
 
         assert job_id == "my_job"
@@ -124,7 +124,7 @@ class TestRegisterScheduledInvocations:
                 [
                     ScheduleSpec(action="a", cron="* * * * *"),
                     ScheduleSpec(action="b", interval_seconds=60),
-                ]
+                ],
             )
 
         assert len(job_ids) == 2

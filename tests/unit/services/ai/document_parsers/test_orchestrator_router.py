@@ -35,7 +35,7 @@ class TestMarkitdownEngine:
 
     async def test_pdf_uses_markitdown_when_enabled(self) -> None:
         with patch(
-            "src.backend.services.ai.document_parsers._orchestrator._try_markitdown"
+            "src.backend.services.ai.document_parsers._orchestrator._try_markitdown",
         ) as mock_md:
             mock_md.return_value = ("# Heading\n\nbody", [])
             text, meta = await parse_document(b"%PDF-1.0", "application/pdf", "a.pdf")
@@ -49,7 +49,7 @@ class TestMarkitdownEngine:
             "application/vnd.openxmlformats-officedocument.presentationml.presentation"
         )
         with patch(
-            "src.backend.services.ai.document_parsers._orchestrator._try_markitdown"
+            "src.backend.services.ai.document_parsers._orchestrator._try_markitdown",
         ) as mock_md:
             mock_md.return_value = ("## Slide", [])
             text, meta = await parse_document(b"PK\x03\x04", mime, "p.pptx")
@@ -63,15 +63,15 @@ class TestMarkitdownFailureFallback:
 
     async def test_pdf_falls_back_to_legacy_on_markitdown_failure(self) -> None:
         with patch(
-            "src.backend.services.ai.document_parsers._orchestrator._try_markitdown"
+            "src.backend.services.ai.document_parsers._orchestrator._try_markitdown",
         ) as mock_md:
             mock_md.side_effect = RuntimeError("boom")
             with patch(
-                "src.backend.services.ai.document_parsers._orchestrator._parse_pdf"
+                "src.backend.services.ai.document_parsers._orchestrator._parse_pdf",
             ) as mock_pdf:
                 mock_pdf.return_value = ("plain pdf text", [])
                 text, meta = await parse_document(
-                    b"%PDF-1.0", "application/pdf", "a.pdf"
+                    b"%PDF-1.0", "application/pdf", "a.pdf",
                 )
         assert text == "plain pdf text"
         assert meta["engine"] == "legacy"
@@ -84,7 +84,7 @@ class TestMarkitdownFailureFallback:
             "application/vnd.openxmlformats-officedocument.presentationml.presentation"
         )
         with patch(
-            "src.backend.services.ai.document_parsers._orchestrator._try_markitdown"
+            "src.backend.services.ai.document_parsers._orchestrator._try_markitdown",
         ) as mock_md:
             mock_md.side_effect = RuntimeError("no markitdown")
             with pytest.raises(ValueError, match="markitdown-engine"):
@@ -101,11 +101,11 @@ class TestMarkitdownDisabled:
         markitdown_settings.engine_enabled = False
         try:
             with patch(
-                "src.backend.services.ai.document_parsers._orchestrator._parse_pdf"
+                "src.backend.services.ai.document_parsers._orchestrator._parse_pdf",
             ) as mock_pdf:
                 mock_pdf.return_value = ("legacy", [])
                 text, meta = await parse_document(
-                    b"%PDF-1.0", "application/pdf", "a.pdf"
+                    b"%PDF-1.0", "application/pdf", "a.pdf",
                 )
             assert meta["engine"] == "legacy"
             assert text == "legacy"

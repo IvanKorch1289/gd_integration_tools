@@ -194,7 +194,7 @@ class OutboxProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, *, topic: str, outbox_writer: Any = None, name: str | None = None
+        self, *, topic: str, outbox_writer: Any = None, name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"outbox:{topic}")
         self._topic = topic
@@ -234,7 +234,7 @@ _DEFAULT_PATTERNS = {
     "passport_ru": re.compile("\\b\\d{4} \\d{6}\\b"),
     "email": re.compile("\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b"),
     "phone": re.compile(
-        "\\b(?:\\+?7|8)[\\s-]?\\(?\\d{3}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}\\b"
+        "\\b(?:\\+?7|8)[\\s-]?\\(?\\d{3}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}\\b",
     ),
 }
 

@@ -75,7 +75,7 @@ async def test_get_hit_primary(facade: UnifiedCacheFacade) -> None:
 
 @pytest.mark.asyncio
 async def test_get_fallback_to_memory(
-    primary: _SimpleBackend, facade: UnifiedCacheFacade
+    primary: _SimpleBackend, facade: UnifiedCacheFacade,
 ) -> None:
     await facade.set("k2", b"v2")
     primary.fail_next = True
@@ -87,7 +87,7 @@ async def test_get_fallback_to_memory(
 
 @pytest.mark.asyncio
 async def test_get_fallback_to_disk(
-    primary: _SimpleBackend, facade: UnifiedCacheFacade
+    primary: _SimpleBackend, facade: UnifiedCacheFacade,
 ) -> None:
     await facade.set("k3", b"v3")
     primary.fail_next = True
@@ -116,7 +116,7 @@ async def test_set_and_delete(facade: UnifiedCacheFacade) -> None:
 
 @pytest.mark.asyncio
 async def test_delete_pattern_only_primary_and_memory(
-    primary: _SimpleBackend, facade: UnifiedCacheFacade
+    primary: _SimpleBackend, facade: UnifiedCacheFacade,
 ) -> None:
     await facade.set("ns.a", b"1")
     await facade.set("ns.b", b"2")
@@ -170,7 +170,7 @@ async def test_namespace_isolation(facade: UnifiedCacheFacade) -> None:
 
 @pytest.mark.asyncio
 async def test_set_propagates_to_all_tiers(
-    primary: _SimpleBackend, facade: UnifiedCacheFacade
+    primary: _SimpleBackend, facade: UnifiedCacheFacade,
 ) -> None:
     await facade.set("multi", b"v")
     assert await primary.exists("default:multi")

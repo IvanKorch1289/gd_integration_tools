@@ -143,7 +143,7 @@ class MongoDBClient:
 
     @resilient(name="mongodb_find_one", max_attempts=3)
     async def find_one(
-        self, collection: str, query: dict[str, Any]
+        self, collection: str, query: dict[str, Any],
     ) -> dict[str, Any] | None:
         """Find single document in collection.
 
@@ -202,7 +202,7 @@ class MongoDBClient:
         all_ids: list[str] = []
         if batch_size <= 0 or len(documents) <= batch_size:
             result = await self.db[collection].insert_many(
-                documents, ordered=ordered
+                documents, ordered=ordered,
             )
             return [str(id_) for id_ in result.inserted_ids]
 
@@ -210,7 +210,7 @@ class MongoDBClient:
         for i in range(0, len(documents), batch_size):
             chunk = documents[i : i + batch_size]
             result = await self.db[collection].insert_many(
-                chunk, ordered=ordered
+                chunk, ordered=ordered,
             )
             all_ids.extend(str(id_) for id_ in result.inserted_ids)
         return all_ids
@@ -275,7 +275,7 @@ class MongoDBClient:
             Number of modified documents.
         """
         result = await self.db[collection].update_one(
-            query, {"$set": update}, upsert=upsert
+            query, {"$set": update}, upsert=upsert,
         )
         return result.modified_count
 
@@ -293,7 +293,7 @@ class MongoDBClient:
         return result.deleted_count
 
     async def aggregate(
-        self, collection: str, pipeline: list[dict[str, Any]]
+        self, collection: str, pipeline: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
         """Run aggregation pipeline.
 
@@ -355,7 +355,7 @@ def _create_mongo_client() -> MongoDBClient:
     from src.backend.core.config.settings import settings
 
     return MongoDBClient(
-        connection_url=settings.mongo.connection_string, database=settings.mongo.name
+        connection_url=settings.mongo.connection_string, database=settings.mongo.name,
     )
 
 

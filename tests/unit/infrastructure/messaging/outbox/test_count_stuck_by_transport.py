@@ -54,7 +54,7 @@ def _stuck_row(transport: str, age_seconds: int = 600) -> dict[str, Any]:
 
 
 async def _count_stuck_by_transport_inline(
-    session: AsyncSession, *, threshold_seconds: int
+    session: AsyncSession, *, threshold_seconds: int,
 ) -> dict[str, int]:
     """Inline replica of count_stuck_pending_by_transport (for SQLite tests).
 

@@ -56,7 +56,7 @@ def test_actions_list_returns_503_when_flag_off() -> None:
 
     def _raise_503() -> None:
         raise HTTPException(
-            status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE, detail="флаг выключен"
+            status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE, detail="флаг выключен",
         )
 
     with patch.object(actions_mod, "_check_flag_enabled", side_effect=_raise_503):
@@ -146,7 +146,7 @@ def test_plugins_list_returns_503_when_flag_off() -> None:
 
     def _raise_503() -> None:
         raise HTTPException(
-            status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE, detail="флаг выключен"
+            status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE, detail="флаг выключен",
         )
 
     with patch.object(plugins_mod, "_check_flag_enabled", side_effect=_raise_503):
@@ -173,7 +173,7 @@ def test_plugins_toggle_updates_status() -> None:
     ):
         client = TestClient(app)
         resp = client.post(
-            "/api/v1/admin/plugins/core_entities/toggle", json={"active": True}
+            "/api/v1/admin/plugins/core_entities/toggle", json={"active": True},
         )
 
     assert resp.status_code == 200

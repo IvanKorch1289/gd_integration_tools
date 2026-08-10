@@ -55,7 +55,7 @@ class ProcessMixin(_LLMStructuredProcessorProtocol):
         except ImportError as exc:
             exchange.fail(
                 "llm_structured: instructor/litellm не установлены; "
-                f"добавьте extras 'ai-2026' (uv sync --extra ai-2026): {exc}"
+                f"добавьте extras 'ai-2026' (uv sync --extra ai-2026): {exc}",
             )
             return
 
@@ -102,7 +102,7 @@ class ProcessMixin(_LLMStructuredProcessorProtocol):
             if self._cost_budget_usd is not None and cost_usd > self._cost_budget_usd:
                 exchange.fail(
                     f"llm_structured cost budget exceeded: "
-                    f"{cost_usd:.6f} > {self._cost_budget_usd:.6f} USD"
+                    f"{cost_usd:.6f} > {self._cost_budget_usd:.6f} USD",
                 )
                 return
 

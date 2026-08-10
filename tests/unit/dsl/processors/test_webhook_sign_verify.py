@@ -87,7 +87,7 @@ async def test_on_invalid_warn_continues() -> None:
     await proc.process(exchange, None)
     assert exchange.failed is None
     assert "Signature mismatch" in exchange.properties.get(
-        "webhook_signature_error", ""
+        "webhook_signature_error", "",
     )
 
 

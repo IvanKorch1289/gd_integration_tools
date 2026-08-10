@@ -42,7 +42,7 @@ def _downstream_ok(status_code: int = 200):
             body_bytes += msg.get("body", b"")
             more_body = msg.get("more_body", False)
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []}
+            {"type": "http.response.start", "status": status_code, "headers": []},
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -398,7 +398,7 @@ class TestAIToolWhitelistMiddlewarePureASGI:
 
         app.side_effect = downstream
         mw = AIToolWhitelistMiddleware(
-            app=app, on_tool_check=lambda t, n: False
+            app=app, on_tool_check=lambda t, n: False,
         )
 
         send = AsyncMock()

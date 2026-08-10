@@ -49,7 +49,7 @@ class CsvReadProcessor(BaseProcessor):
         self.target = to
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="read"):

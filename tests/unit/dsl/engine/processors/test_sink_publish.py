@@ -106,7 +106,7 @@ class TestGrpcCallProcessor:
 
         mock_sink = AsyncMock()
         mock_sink.send.return_value = _FakeSinkResult(
-            ok=True, details={"method": "/svc/m"}
+            ok=True, details={"method": "/svc/m"},
         )
 
         with patch(
@@ -120,7 +120,7 @@ class TestGrpcCallProcessor:
 
     async def test_payload_property(self) -> None:
         proc = GrpcCallProcessor(
-            target="t", full_method="m", payload_property="payload"
+            target="t", full_method="m", payload_property="payload",
         )
         exchange = _Exchange()
         exchange.properties["payload"] = [1, 2]
@@ -153,7 +153,7 @@ class TestGrpcCallProcessor:
                 "timeout": 5.0,
                 "result_property": "res",
                 "payload_property": "p",
-            }
+            },
         }
 
 
@@ -179,7 +179,7 @@ class TestSoapCallProcessor:
 
     def test_to_spec(self) -> None:
         proc = SoapCallProcessor(
-            wsdl_url="w", operation="o", service_name="s", port_name="p", timeout=10.0
+            wsdl_url="w", operation="o", service_name="s", port_name="p", timeout=10.0,
         )
         spec = proc.to_spec()["soap_call"]
         assert spec["service_name"] == "s"
@@ -198,7 +198,7 @@ class TestMqPublishProcessor:
         mock_sink.send.return_value = _FakeSinkResult(ok=True, details={})
 
         with patch(
-            "src.backend.infrastructure.sinks.mq_sink.MqSink", return_value=mock_sink
+            "src.backend.infrastructure.sinks.mq_sink.MqSink", return_value=mock_sink,
         ):
             await proc.process(exchange, _Context())
 
@@ -206,7 +206,7 @@ class TestMqPublishProcessor:
 
     def test_to_spec_with_extra(self) -> None:
         proc = MqPublishProcessor(
-            broker="rabbit", url="amqp://localhost", topic="q", extra={"durable": True}
+            broker="rabbit", url="amqp://localhost", topic="q", extra={"durable": True},
         )
         spec = proc.to_spec()["mq_publish"]
         assert spec["extra"] == {"durable": True}
@@ -224,7 +224,7 @@ class TestWsPublishProcessor:
         mock_sink.send.return_value = _FakeSinkResult(ok=True, details={})
 
         with patch(
-            "src.backend.infrastructure.sinks.ws_sink.WsSink", return_value=mock_sink
+            "src.backend.infrastructure.sinks.ws_sink.WsSink", return_value=mock_sink,
         ):
             await proc.process(exchange, _Context())
 
@@ -341,7 +341,7 @@ class TestGenericSinkPublishProcessor:
 
     async def test_success(self) -> None:
         proc = GenericSinkPublishProcessor(
-            kind="http", config={"url": "http://example.com"}
+            kind="http", config={"url": "http://example.com"},
         )
         exchange = _Exchange(body={"data": 1})
 
@@ -387,5 +387,5 @@ class TestGenericSinkPublishProcessor:
                 "config": {"bucket": "b"},
                 "result_property": "res",
                 "payload_property": "p",
-            }
+            },
         }

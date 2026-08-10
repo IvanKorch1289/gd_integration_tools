@@ -35,7 +35,7 @@ ALLOWED_FACADES: frozenset[str] = frozenset(
     {
         "src.backend.core.api",
         "src.backend.core.frontend_facade",
-    }
+    },
 )
 
 # Top-level запрещённые слои (architectural layers).
@@ -81,7 +81,7 @@ class TestFrontendLayerBoundaryRatchet:
             for forbidden in FORBIDDEN_TOP_LEVELS:
                 pattern = re.compile(
                     rf"from {re.escape(forbidden)}(?:\b|\.)"
-                    rf"|import {re.escape(forbidden)}(?:\b|\.)"
+                    rf"|import {re.escape(forbidden)}(?:\b|\.)",
                 )
                 for m in pattern.finditer(content):
                     violations.append((p, m.group(0)))
@@ -107,7 +107,7 @@ class TestFrontendLayerBoundaryRatchet:
                 content = fp.read()
             # Unified: catches both 'from src.backend.X' and 'import src.backend.X'.
             matches = re.findall(
-                r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content
+                r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content,
             )
             for mod in matches:
                 if _is_allowed_facade(mod):
@@ -142,7 +142,7 @@ class TestApiClientsBoundaryRatchet:
                 content = fp.read()
             # Unified: catches both 'from' and 'import' styles.
             matches = re.findall(
-                r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content
+                r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content,
             )
             for mod in matches:
                 if _is_allowed_facade(mod):
@@ -171,7 +171,7 @@ class TestApiClientsBoundaryRatchet:
             for forbidden in FORBIDDEN_TOP_LEVELS:
                 pattern = re.compile(
                     rf"from {re.escape(forbidden)}(?:\b|\.)"
-                    rf"|import {re.escape(forbidden)}(?:\b|\.)"
+                    rf"|import {re.escape(forbidden)}(?:\b|\.)",
                 )
                 for m in pattern.finditer(content):
                     violations.append((p, m.group(0)))

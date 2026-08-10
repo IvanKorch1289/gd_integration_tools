@@ -25,7 +25,7 @@ router = APIRouter()
 
 @router.post("/ingest/start", summary="Загрузить N файлов в RAG-индекс")
 async def start_rag_ingest(
-    files: list[UploadFile] = File(...), collection: str = Form(default="default")
+    files: list[UploadFile] = File(...), collection: str = Form(default="default"),
 ) -> dict[str, Any]:
     """Принимает multipart-uploads и стартует ingest."""
     if not files:
@@ -63,7 +63,7 @@ class BulkDocument(BaseModel):
 
     content: str = Field(..., description="Текстовый контент документа")
     metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Метаданные документа"
+        default_factory=dict, description="Метаданные документа",
     )
 
 
@@ -71,7 +71,7 @@ class BulkIngestRequest(BaseModel):
     """Request body для POST /rag/bulk-ingest."""
 
     documents: list[BulkDocument] = Field(
-        ..., min_length=1, description="Список документов"
+        ..., min_length=1, description="Список документов",
     )
     collection: str = Field(default="default", description="Namespace RAG collection")
 
@@ -121,12 +121,12 @@ async def bulk_rag_ingest(request: BulkIngestRequest) -> dict[str, Any]:
     for doc in request.documents:
         try:
             doc_id = await rag.ingest(
-                doc.content, metadata=doc.metadata, namespace=request.collection
+                doc.content, metadata=doc.metadata, namespace=request.collection,
             )
             payload["doc_ids"].append(doc_id)
         except Exception as exc:
             payload["errors"].append(
-                {"content_preview": doc.content[:100], "error": str(exc)}
+                {"content_preview": doc.content[:100], "error": str(exc)},
             )
         payload["processed"] += 1
 

@@ -72,7 +72,7 @@ class TestInProcessAgentSandboxDeprecation:
         ), "deprecation warning should suggest ProcessPool alternative"
 
     def test_in_process_hard_gate_in_production(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """При ``GD_INTEGRATION_PRODUCTION=1`` → in-process raise.
 
@@ -123,7 +123,7 @@ class TestInProcessAgentSandboxFeatureFlagGate:
     """
 
     def test_in_process_blocked_when_feature_flag_enabled(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """ai_in_process_sandbox_disabled=True (default) → RuntimeError.
 
@@ -134,13 +134,13 @@ class TestInProcessAgentSandboxFeatureFlagGate:
         from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
 
         monkeypatch.setattr(
-            feature_flags, "ai_in_process_sandbox_disabled", True
+            feature_flags, "ai_in_process_sandbox_disabled", True,
         )
         with pytest.raises(RuntimeError, match="blocked by feature_flags"):
             InProcessAgentSandbox()
 
     def test_in_process_allowed_when_feature_flag_explicitly_disabled(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """ai_in_process_sandbox_disabled=False (explicit opt-out) → DeprecationWarning.
 
@@ -151,7 +151,7 @@ class TestInProcessAgentSandboxFeatureFlagGate:
         from src.backend.services.ai.agent_sandbox import InProcessAgentSandbox
 
         monkeypatch.setattr(
-            feature_flags, "ai_in_process_sandbox_disabled", False
+            feature_flags, "ai_in_process_sandbox_disabled", False,
         )
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
@@ -163,7 +163,7 @@ class TestInProcessAgentSandboxFeatureFlagGate:
         ), "explicit opt-out должен по-прежнему emit DeprecationWarning"
 
     def test_in_process_blocked_when_feature_flags_module_unavailable(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Если feature_flags module не импортируется — fail-closed.
 
@@ -190,7 +190,7 @@ class TestInProcessAgentSandboxFeatureFlagGate:
         # monkeypatch.setitem гарантирует rollback на teardown,
         # даже если assert упадёт посередине.
         monkeypatch.setitem(
-            sys.modules, "src.backend.core.config.features", _BrokenModule()
+            sys.modules, "src.backend.core.config.features", _BrokenModule(),
         )
 
         from src.backend.services.ai import agent_sandbox as _mod
@@ -268,14 +268,14 @@ class TestE2BAgentSandbox:
 
         def fake_import(name: str, *args: object, **kwargs: object) -> object:
             if name == "e2b_code_interpreter" or name.startswith(
-                "e2b_code_interpreter."
+                "e2b_code_interpreter.",
             ):
                 raise ImportError("simulated missing e2b_code_interpreter")
             return real_import(name, *args, **kwargs)
 
         with patch.object(_builtins, "__import__", side_effect=fake_import):
             with pytest.raises(
-                AgentSandboxConfigError, match="e2b-code-interpreter"
+                AgentSandboxConfigError, match="e2b-code-interpreter",
             ):
                 await backend.run_react(
                     prompt="hi",
@@ -411,7 +411,7 @@ class TestSelectorWarnOnMissingE2BKey:
     """
 
     def test_e2b_select_without_key_emits_warning(
-        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """select(e2b) без ctor-key и без E2B_API_KEY env → warning."""
 
@@ -429,7 +429,7 @@ class TestSelectorWarnOnMissingE2BKey:
         ), "selector должен emit warning при e2b без API key"
 
     def test_e2b_select_with_key_no_warning(
-        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """select(e2b) c key → без warning (OK path)."""
 

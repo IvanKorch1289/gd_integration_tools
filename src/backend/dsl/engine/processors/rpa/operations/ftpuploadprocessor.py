@@ -69,7 +69,7 @@ class FtpUploadProcessor(BaseProcessor):
         # ops/production can revoke centrally via deployment manifests.
         env_insecure = os.environ.get(_INSECURE_ENV) == "1"
         production = os.environ.get("APP_ENV", "").lower() in {
-            "prod", "production"
+            "prod", "production",
         }
         self._allow_insecure = allow_insecure_ftp and env_insecure and not production
 
@@ -127,7 +127,7 @@ class FtpUploadProcessor(BaseProcessor):
             tls_context.verify_mode = ssl.CERT_REQUIRED
 
             ftp = FTP_TLS(
-                context=tls_context, timeout=30
+                context=tls_context, timeout=30,
             )
             # Rationale: TLS-only transport (RFC 4217); CERT_REQUIRED +
             # ``prot_p()`` below. Default path; not a plaintext FTP call.

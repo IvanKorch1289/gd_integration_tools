@@ -142,7 +142,7 @@ async def _safe_search(
 
 
 def _date_range(
-    from_: datetime | None, to_: datetime | None, key: str
+    from_: datetime | None, to_: datetime | None, key: str,
 ) -> dict[str, dict[str, Any]]:
     """Строит range-фильтр по датам, опуская пустые границы."""
     if from_ is None and to_ is None:
@@ -180,7 +180,7 @@ class _SearchFacade:
             range_filter=_date_range(from_, to_, "when"),
         )
         return await _safe_search(
-            "audit_logs", query, limit=limit, offset=offset, sort=[{"when": "desc"}]
+            "audit_logs", query, limit=limit, offset=offset, sort=[{"when": "desc"}],
         )
 
     async def search_orders(
@@ -201,7 +201,7 @@ class _SearchFacade:
             range_filter=_date_range(from_, to_, "created_at"),
         )
         return await _safe_search(
-            "orders", query, limit=limit, offset=offset, sort=[{"created_at": "desc"}]
+            "orders", query, limit=limit, offset=offset, sort=[{"created_at": "desc"}],
         )
 
     async def search_notebooks(
@@ -223,7 +223,7 @@ class _SearchFacade:
         )
 
     async def aggregate(
-        self, *, index: str, field: str, q: str | None = None, size: int = 10
+        self, *, index: str, field: str, q: str | None = None, size: int = 10,
     ) -> dict[str, Any]:
         """Агрегация (terms) по полю index через SearchService."""
         try:
@@ -236,7 +236,7 @@ class _SearchFacade:
             return {}
 
     async def facets(
-        self, *, index: str, field: str, filter: str | None = None, size: int = 20
+        self, *, index: str, field: str, filter: str | None = None, size: int = 20,
     ) -> dict[str, Any]:
         """Возвращает terms-агрегацию для UI-faceting.
 
@@ -258,7 +258,7 @@ class _SearchFacade:
         try:
             service = get_search_service()
             return await service.aggregate_terms(
-                index, field, filters=filters or None, size=size
+                index, field, filters=filters or None, size=size,
             )
         except Exception as exc:
             logger.warning("facets failed for %s.%s: %s", index, field, exc)
@@ -336,5 +336,5 @@ builder.add_actions(
             query_model=FacetsQuery,
             tags=common_tags,
         ),
-    ]
+    ],
 )

@@ -91,7 +91,7 @@ def _make_client() -> HttpClient:
 
 # Status codes the implementation considers retry-able (per ADR-009).
 _RETRYABLE_STATUS_CODES: frozenset[int] = frozenset(
-    {408, 409, 425, 429, 500, 502, 503, 504}
+    {408, 409, 425, 429, 500, 502, 503, 504},
 )
 
 
@@ -196,7 +196,7 @@ async def test_build_headers_content_type_inference_json() -> None:
     """``json_data`` → ``Content-Type: application/json`` (when not set by user)."""
     client = _make_client()
     headers = await client._build_headers(
-        auth_token=None, custom_headers=None, json_data={"x": 1}, data=None, files=None
+        auth_token=None, custom_headers=None, json_data={"x": 1}, data=None, files=None,
     )
     assert headers["Content-Type"] == "application/json"
 
@@ -382,10 +382,10 @@ def _fake_response(
         return httpx.Response(status_code, request=request, headers=headers, text=text)
     if json_data is not None:
         return httpx.Response(
-            status_code, request=request, headers=headers, json=json_data
+            status_code, request=request, headers=headers, json=json_data,
         )
     return httpx.Response(
-        status_code, request=request, headers=headers, content=bytes_content or b""
+        status_code, request=request, headers=headers, content=bytes_content or b"",
     )
 
 
@@ -410,7 +410,7 @@ async def test_process_response_text_branch() -> None:
 async def test_process_response_bytes_branch() -> None:
     client = _make_client()
     resp = _fake_response(
-        content_type="application/octet-stream", bytes_content=b"\x01\x02"
+        content_type="application/octet-stream", bytes_content=b"\x01\x02",
     )
     result = await client._process_response(resp, "bytes")
     assert result == b"\x01\x02"
@@ -422,7 +422,7 @@ async def test_process_response_auto_json_inferred() -> None:
     """``auto`` + JSON Content-Type → calls ``response.json()``."""
     client = _make_client()
     resp = _fake_response(
-        content_type="application/json; charset=utf-8", json_data=[1, 2]
+        content_type="application/json; charset=utf-8", json_data=[1, 2],
     )
     assert await client._process_response(resp, "auto") == [1, 2]
 

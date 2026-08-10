@@ -84,7 +84,7 @@ def hide_msgpack(monkeypatch: pytest.MonkeyPatch) -> None:
         def find_spec(self, fullname, path, target=None):  # type: ignore[no-untyped-def]
             if fullname == "msgpack" or fullname.startswith("msgpack."):
                 raise ImportError(
-                    f"[cycle-6/D-AUDIT-603] msgpack blocked for test: {fullname}"
+                    f"[cycle-6/D-AUDIT-603] msgpack blocked for test: {fullname}",
                 )
             return None
 
@@ -105,7 +105,7 @@ class TestPickleRceRejected:
     """cycle-6/D-AUDIT-603 — pickle payload НЕ должен выполняться."""
 
     def test_pickle_payload_rejected_when_msgpack_unavailable(
-        self, mixin_host: _MsgPickleHost, hide_msgpack: None
+        self, mixin_host: _MsgPickleHost, hide_msgpack: None,
     ) -> None:
         """Pickle-payload → ImportError, а НЕ pickle.loads (RCE)."""
         # Злонамеренный pickle-payload: при unpickling выполняет ``os.system``.
@@ -140,7 +140,7 @@ class TestPickleRceRejected:
             )
 
     def test_to_msgpack_raises_without_msgpack(
-        self, mixin_host: _MsgPickleHost, hide_msgpack: None
+        self, mixin_host: _MsgPickleHost, hide_msgpack: None,
     ) -> None:
         """_to_msgpack без msgpack → ImportError, не pickle fallback."""
         with pytest.raises(ImportError) as excinfo:
@@ -149,7 +149,7 @@ class TestPickleRceRejected:
         assert "pickle" not in str(excinfo.value)
 
     def test_from_msgpack_normalizes_input_types(
-        self, mixin_host: _MsgPickleHost
+        self, mixin_host: _MsgPickleHost,
     ) -> None:
         """Sanity: msgpack доступен → bytes/str input дают нормальный объект."""
         pytest.importorskip("msgpack")
@@ -169,7 +169,7 @@ class TestFormatConvertProcessorFailsClosed:
 
     @pytest.mark.asyncio
     async def test_format_convert_to_msgpack_fails_without_msgpack(
-        self, hide_msgpack: None
+        self, hide_msgpack: None,
     ) -> None:
         proc = FormatConvertProcessor(direction="to_msgpack", fmt="msgpack")
         ex = _make_exchange({"k": "v"})
@@ -183,7 +183,7 @@ class TestFormatConvertProcessorFailsClosed:
 
     @pytest.mark.asyncio
     async def test_format_convert_from_msgpack_fails_without_msgpack(
-        self, hide_msgpack: None
+        self, hide_msgpack: None,
     ) -> None:
         proc = FormatConvertProcessor(direction="from_msgpack", fmt="msgpack")
         ex = _make_exchange(b"\x80\x00")  # любая bytes
@@ -193,7 +193,7 @@ class TestFormatConvertProcessorFailsClosed:
 
     @pytest.mark.asyncio
     async def test_format_convert_pickle_payload_does_not_execute(
-        self, hide_msgpack: None
+        self, hide_msgpack: None,
     ) -> None:
         """End-to-end: pickle-payload через FormatConvertProcessor.process
         → exchange.fail (не RCE)."""
@@ -264,5 +264,5 @@ class TestMsgpackRoundtripSmoke:
                     if func.value.id == "pickle" and func.attr in {"loads", "load", "dumps", "dump"}:
                         pytest.fail(
                             f"regression: pickle.{func.attr} call found "
-                            f"at line {node.lineno} — cycle-6/D-AUDIT-603"
+                            f"at line {node.lineno} — cycle-6/D-AUDIT-603",
                         )

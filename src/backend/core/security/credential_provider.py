@@ -100,7 +100,7 @@ class CredentialProvider:
             )
             raise KeyError(
                 f"Credential spec {name!r} not registered; "
-                f"available: {sorted(self._specs)}"
+                f"available: {sorted(self._specs)}",
             )
 
         cached = self._cache.get(name)
@@ -159,13 +159,13 @@ class CredentialProvider:
             if not vault_path:
                 raise ValueError(
                     f"Credential spec {spec.name!r}: empty vault path "
-                    f"after 'vault:' prefix"
+                    f"after 'vault:' prefix",
                 )
             value = await get_service(SecretsBackend).get_secret(vault_path)
             if value is None:
                 raise KeyError(
                     f"Vault returned None for {spec.name!r} "
-                    f"(path={vault_path!r}); refusing to resolve empty credential"
+                    f"(path={vault_path!r}); refusing to resolve empty credential",
                 )
             return {"value": value}
         if spec.secret_ref.startswith("env:"):
@@ -175,19 +175,19 @@ class CredentialProvider:
             if not env_key:
                 raise ValueError(
                     f"Credential spec {spec.name!r}: empty env var name "
-                    f"after 'env:' prefix"
+                    f"after 'env:' prefix",
                 )
             value = os.environ.get(env_key)
             if value is None:
                 raise KeyError(
                     f"Environment variable {env_key!r} not set "
-                    f"(required by credential spec {spec.name!r})"
+                    f"(required by credential spec {spec.name!r})",
                 )
             return {"value": value}
         # Неизвестный формат ref — fail-loud, не silent return {}.
         raise ValueError(
             f"Credential spec {spec.name!r}: unsupported secret_ref format "
-            f"{spec.secret_ref!r}; expected 'vault:<path>' or 'env:<KEY>'"
+            f"{spec.secret_ref!r}; expected 'vault:<path>' or 'env:<KEY>'",
         )
 
     def invalidate(self, name: str) -> None:

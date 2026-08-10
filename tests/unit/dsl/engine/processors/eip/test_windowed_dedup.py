@@ -31,7 +31,7 @@ def mock_redis(monkeypatch):
     """Мок Redis-клиента с execute(queue, lambda c: ...)."""
     client = AsyncMock()
     monkeypatch.setattr(
-        "src.backend.infrastructure.clients.storage.redis.redis_client", client
+        "src.backend.infrastructure.clients.storage.redis.redis_client", client,
     )
     return client
 
@@ -189,7 +189,7 @@ async def test_dedup_get_latest_none(mock_redis) -> None:
 
 def test_dedup_to_spec() -> None:
     proc = WindowedDedupProcessor(
-        key_from="entity.id", key_prefix="orders", window_seconds=120, mode="last"
+        key_from="entity.id", key_prefix="orders", window_seconds=120, mode="last",
     )
     assert proc.to_spec() == {
         "windowed_dedup": {
@@ -197,7 +197,7 @@ def test_dedup_to_spec() -> None:
             "key_prefix": "orders",
             "window_seconds": 120,
             "mode": "last",
-        }
+        },
     }
 
 
@@ -265,7 +265,7 @@ async def test_collect_get_current_batch(mock_redis) -> None:
     raw2 = b'{"id": "a", "v": 2}'
     mock_redis.execute.return_value = [raw1, raw2]
     proc = WindowedCollectProcessor(
-        key_from="id", window_seconds=10, dedup_by="id", dedup_mode="last"
+        key_from="id", window_seconds=10, dedup_by="id", dedup_mode="last",
     )
     result = await proc.get_current_batch("a")
     assert result == [{"id": "a", "v": 2}]
@@ -297,5 +297,5 @@ def test_collect_to_spec() -> None:
             "window_seconds": 60,
             "dedup_mode": "first",
             "inject_as": "batch",
-        }
+        },
     }

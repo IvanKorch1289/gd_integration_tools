@@ -70,7 +70,7 @@ class TestCreateTask:
         reg = TaskRegistry()
         # Mock Watchdog чтобы избежать реальной deadline-логики
         with patch(
-            "src.backend.core.utils.task_registry.Watchdog"
+            "src.backend.core.utils.task_registry.Watchdog",
         ) as mock_watchdog_cls:
             mock_watchdog = MagicMock()
             mock_watchdog.wrap = lambda coro: coro
@@ -80,7 +80,7 @@ class TestCreateTask:
                 return 42
 
             task = reg.create_task(
-                worker(), name="deadline-worker", deadline_seconds=1.0
+                worker(), name="deadline-worker", deadline_seconds=1.0,
             )
             assert mock_watchdog_cls.called
             assert mock_watchdog_cls.call_args.kwargs == {

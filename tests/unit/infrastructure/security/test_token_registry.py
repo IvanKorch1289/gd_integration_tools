@@ -82,7 +82,7 @@ class _DictRedis:
         return self._data.get(key)
 
     async def set(
-        self, key: str, value: bytes, *, ex: int | None = None, **_: Any
+        self, key: str, value: bytes, *, ex: int | None = None, **_: Any,
     ) -> bool:
         self._data[key] = value
         self.set_calls.append((key, value, ex))
@@ -121,7 +121,7 @@ def _token_map(*, tokens: dict[str, EncryptedValue]) -> TokenMap:
 
 
 def test_encrypt_decrypt_round_trip(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider,
 ) -> None:
     """encrypt_value → decrypt_value возвращает исходный plaintext."""
     registry = _registry(redis_client=fake_redis, key_provider=key_provider)
@@ -138,7 +138,7 @@ def test_encrypt_decrypt_round_trip(
 
 
 def test_decrypt_with_unavailable_key_version_returns_none(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider,
 ) -> None:
     """decrypt_value(key_version=99) → None (rotation gap)."""
     registry = _registry(redis_client=fake_redis, key_provider=key_provider)
@@ -154,7 +154,7 @@ def test_decrypt_with_unavailable_key_version_returns_none(
 
 
 def test_decrypt_with_corrupted_tag_returns_none(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider,
 ) -> None:
     """decrypt_value при invalid AES-GCM tag → None (не raise)."""
     registry = _registry(redis_client=fake_redis, key_provider=key_provider)
@@ -190,7 +190,7 @@ def test_encrypt_raises_when_current_key_unavailable() -> None:
 
 @pytest.mark.asyncio
 async def test_store_retrieve_round_trip(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider,
 ) -> None:
     """store(token_map) → retrieve(key) возвращает идентичный объект."""
     registry = _registry(redis_client=fake_redis, key_provider=key_provider)
@@ -210,7 +210,7 @@ async def test_store_retrieve_round_trip(
 
 @pytest.mark.asyncio
 async def test_retrieve_miss_returns_none(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider,
 ) -> None:
     """retrieve(несуществующий ключ) → None."""
     registry = _registry(redis_client=fake_redis, key_provider=key_provider)
@@ -219,11 +219,11 @@ async def test_retrieve_miss_returns_none(
 
 @pytest.mark.asyncio
 async def test_retrieve_corrupted_json_returns_none(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider, audit_service: AsyncMock
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider, audit_service: AsyncMock,
 ) -> None:
     """Невалидный JSON в Redis → None + emit decrypt_failed."""
     registry = _registry(
-        redis_client=fake_redis, key_provider=key_provider, audit_service=audit_service
+        redis_client=fake_redis, key_provider=key_provider, audit_service=audit_service,
     )
     await fake_redis.set("pii:token:bad", b"NOT-JSON{}}")
     result = await registry.retrieve("bad")
@@ -234,7 +234,7 @@ async def test_retrieve_corrupted_json_returns_none(
 
 @pytest.mark.asyncio
 async def test_encryption_at_rest_raw_bytes_differ_from_plaintext(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider,
 ) -> None:
     """Raw Redis-bytes не содержат plaintext (advisor recommendation)."""
     registry = _registry(redis_client=fake_redis, key_provider=key_provider)
@@ -253,11 +253,11 @@ async def test_encryption_at_rest_raw_bytes_differ_from_plaintext(
 
 @pytest.mark.asyncio
 async def test_delete_removes_key(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider, audit_service: AsyncMock
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider, audit_service: AsyncMock,
 ) -> None:
     """delete(key) убирает запись из Redis и эмит audit."""
     registry = _registry(
-        redis_client=fake_redis, key_provider=key_provider, audit_service=audit_service
+        redis_client=fake_redis, key_provider=key_provider, audit_service=audit_service,
     )
     encrypted = registry.encrypt_value("x")
     await registry.store("rm-me", _token_map(tokens={"<X_1>": encrypted}), ttl_s=60)
@@ -272,14 +272,14 @@ async def test_delete_removes_key(
 
 @pytest.mark.asyncio
 async def test_cleanup_expired_counts_live_keys(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider,
 ) -> None:
     """cleanup_expired возвращает число живых ключей под prefix."""
     registry = _registry(redis_client=fake_redis, key_provider=key_provider)
     encrypted = registry.encrypt_value("x")
     for i in range(3):
         await registry.store(
-            f"key-{i}", _token_map(tokens={"<X_1>": encrypted}), ttl_s=60
+            f"key-{i}", _token_map(tokens={"<X_1>": encrypted}), ttl_s=60,
         )
 
     count = await registry.cleanup_expired()
@@ -288,11 +288,11 @@ async def test_cleanup_expired_counts_live_keys(
 
 @pytest.mark.asyncio
 async def test_store_emits_audit_with_token_count_and_key_version(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider, audit_service: AsyncMock
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider, audit_service: AsyncMock,
 ) -> None:
     """audit.emit для store содержит token_count + key_version."""
     registry = _registry(
-        redis_client=fake_redis, key_provider=key_provider, audit_service=audit_service
+        redis_client=fake_redis, key_provider=key_provider, audit_service=audit_service,
     )
     encrypted = registry.encrypt_value("x")
     token_map = _token_map(tokens={"<X_1>": encrypted, "<X_2>": encrypted})
@@ -324,7 +324,7 @@ async def test_ttl_pushed_to_redis_set_ex(
 
 
 def test_registry_implements_protocol(
-    fake_redis: Any, key_provider: StaticAESGCMKeyProvider
+    fake_redis: Any, key_provider: StaticAESGCMKeyProvider,
 ) -> None:
     """isinstance check на TokenRegistryProtocol (runtime_checkable)."""
     registry = _registry(redis_client=fake_redis, key_provider=key_provider)

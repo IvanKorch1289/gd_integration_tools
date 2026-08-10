@@ -50,7 +50,7 @@ def test_streamlit_page_spec_loadable(filename: str) -> None:
     page = _page_path(filename)
     assert page.exists()
     spec = importlib.util.spec_from_file_location(
-        f"_t4_page_{filename.replace('.', '_')}", page
+        f"_t4_page_{filename.replace('.', '_')}", page,
     )
     assert spec is not None, f"spec_from_file_location вернул None для {filename}"
     assert spec.loader is not None

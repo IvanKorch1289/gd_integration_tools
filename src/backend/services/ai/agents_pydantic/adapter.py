@@ -70,7 +70,7 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):  # type: ignore[misc]
         if not feature_flags.ai_gateway_enforce:
             raise AIGatewayEnforcementRequiredError(
                 "agents_pydantic.LiteLLMModel requires ai_gateway_enforce=True "
-                "(S85 W2: bypass via LiteLLMGateway is no longer supported)"
+                "(S85 W2: bypass via LiteLLMGateway is no longer supported)",
             )
 
         # Convert ModelMessage → dict for gateway
@@ -87,7 +87,7 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):  # type: ignore[misc]
                 dict_messages.append({"role": "user", "content": str(msg.content)})
 
         result = await self._gateway.acompletion(
-            messages=dict_messages, model=self._model_name, stream=False
+            messages=dict_messages, model=self._model_name, stream=False,
         )
         # Extract text from LiteLLM response
         content = ""
@@ -109,5 +109,5 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):  # type: ignore[misc]
     ) -> AsyncIterator[StreamedResponse]:
         """Streaming not supported yet."""
         raise NotImplementedError(
-            f"Streaming not yet supported by {self.__class__.__name__}"
+            f"Streaming not yet supported by {self.__class__.__name__}",
         )

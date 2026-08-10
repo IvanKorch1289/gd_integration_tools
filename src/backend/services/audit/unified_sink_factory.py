@@ -56,7 +56,7 @@ def _create_emit_ai_invocation_event() -> None:
                     logger.debug("LangFuseCallbackV3 init failed: %s", exc)
 
                 _unified_sink = UnifiedAISink(
-                    audit_service=audit, langfuse_callback=langfuse, enabled=True
+                    audit_service=audit, langfuse_callback=langfuse, enabled=True,
                 )
             except Exception as exc:
                 logger.warning("UnifiedAISink: init failed: %s", exc)
@@ -73,7 +73,7 @@ def _create_emit_ai_invocation_event() -> None:
 
             registry = get_task_registry()
             registry.create_task(
-                sink.emit_event(event), name=f"audit.emit.{event.event_type.value}"
+                sink.emit_event(event), name=f"audit.emit.{event.event_type.value}",
             )
         except Exception as exc:
             logger.warning("emit_ai_invocation_event: failed to schedule: %s", exc)

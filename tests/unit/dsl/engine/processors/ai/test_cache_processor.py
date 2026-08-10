@@ -44,7 +44,7 @@ class TestCacheProcessor:
         exchange = _Exchange(body="hello")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.get = AsyncMock(return_value=None)
             await proc.process(exchange, _Context())
@@ -60,7 +60,7 @@ class TestCacheProcessor:
         exchange.in_message.headers = {"h": "v"}
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.get = AsyncMock(return_value=b'{"result": "cached"}')
             await proc.process(exchange, _Context())
@@ -76,7 +76,7 @@ class TestCacheProcessor:
         exchange = _Exchange(body="original")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.get = AsyncMock(return_value=None)
             await proc.process(exchange, _Context())
@@ -90,7 +90,7 @@ class TestCacheProcessor:
         exchange = _Exchange(body="x")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.get = AsyncMock(side_effect=ConnectionError("down"))
             await proc.process(exchange, _Context())
@@ -103,7 +103,7 @@ class TestCacheProcessor:
         exchange = _Exchange(body="x")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.get = AsyncMock(side_effect=TimeoutError("slow"))
             await proc.process(exchange, _Context())
@@ -116,7 +116,7 @@ class TestCacheProcessor:
         exchange = _Exchange(body="x")
 
         with patch(
-            "src.backend.infrastructure.clients.storage.redis.redis_client"
+            "src.backend.infrastructure.clients.storage.redis.redis_client",
         ) as mock_redis:
             mock_redis.get = AsyncMock(side_effect=OSError("os err"))
             await proc.process(exchange, _Context())

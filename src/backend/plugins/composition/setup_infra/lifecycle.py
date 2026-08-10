@@ -34,7 +34,7 @@ from src.backend.plugins.composition.setup_infra.workflow_audit import (
 app_logger = get_logger("application")
 
 OperationItem = tuple[
-    str, Callable[[], Any] | Callable[[], Awaitable[Any]], Callable[[], bool] | None
+    str, Callable[[], Any] | Callable[[], Awaitable[Any]], Callable[[], bool] | None,
 ]
 
 
@@ -77,7 +77,7 @@ def _register_default_degradation_features() -> None:
                 name=name,
                 full_handler=_unsupported_full,
                 degraded_handler=_unsupported_degraded,
-            )
+            ),
         )
     app_logger.info(
         "GracefulDegradationRegistry: %d default features зарегистрированы",
@@ -112,7 +112,7 @@ async def perform_infrastructure_operation(components: list[OperationItem]) -> N
                 await result
 
             app_logger.info(
-                "Операция инфраструктуры выполнена успешно", extra={"operation": name}
+                "Операция инфраструктуры выполнена успешно", extra={"operation": name},
             )
         except Exception as exc:
             app_logger.critical(
@@ -155,7 +155,7 @@ async def _register_agent_security_workflow_hooks() -> None:
     except Exception as exc:
         # Non-fatal: framework optional в некоторых профилях
         app_logger.debug(
-            "AgentSecurityFramework hooks registration skipped: %s", exc
+            "AgentSecurityFramework hooks registration skipped: %s", exc,
         )
 
 

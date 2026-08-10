@@ -73,7 +73,7 @@ class GeoIpProcessor(BaseProcessor):
         reader = self._get_reader()
         if not reader:
             exchange.set_property(
-                self._output, {"ip": ip, "error": "geoip_unavailable"}
+                self._output, {"ip": ip, "error": "geoip_unavailable"},
             )
             return
         try:

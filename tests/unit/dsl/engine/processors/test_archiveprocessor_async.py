@@ -70,7 +70,7 @@ class TestArchiveProcessorNonBlockingZip:
 
     @pytest.mark.asyncio
     async def test_zip_extract_does_not_block_event_loop(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """``archive extract`` (zip) offload-ит zipfile в executor thread."""
         zip_bytes = _make_zip_bytes([("a.txt", b"hello"), ("b.txt", b"world")])
@@ -104,7 +104,7 @@ class TestArchiveProcessorNonBlockingZip:
 
     @pytest.mark.asyncio
     async def test_zip_create_does_not_block_event_loop(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """``archive create`` (zip) offload-ит zipfile в executor thread."""
         items = [
@@ -142,7 +142,7 @@ class TestArchiveProcessorNonBlockingTar:
 
     @pytest.mark.asyncio
     async def test_tar_extract_does_not_block_event_loop(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """``archive extract`` (tar) offload-ит tarfile в executor thread."""
         tar_bytes = _make_tar_bytes([("a.txt", b"hello")])
@@ -172,7 +172,7 @@ class TestArchiveProcessorNonBlockingTar:
 
     @pytest.mark.asyncio
     async def test_tar_create_does_not_block_event_loop(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """``archive create`` (tar) offload-ит tarfile в executor thread."""
         items = [
@@ -215,7 +215,7 @@ class TestArchiveProcessorFunctional:
             body=[
                 {"name": "a.txt", "data": b"hello"},
                 {"name": "b.txt", "data": b"world"},
-            ]
+            ],
         )
         await create_proc.process(ex_create, AsyncMock())
         zip_bytes = ex_create.out_message.body
@@ -238,7 +238,7 @@ class TestArchiveProcessorFunctional:
         """TAR: create → extract round-trip возвращает исходные файлы."""
         create_proc = ArchiveProcessor(mode="create", format="tar")
         ex_create = _make_exchange(
-            body=[{"name": "x.txt", "data": b"foo"}, {"name": "y.txt", "data": b"bar"}]
+            body=[{"name": "x.txt", "data": b"foo"}, {"name": "y.txt", "data": b"bar"}],
         )
         await create_proc.process(ex_create, AsyncMock())
         tar_bytes = ex_create.out_message.body

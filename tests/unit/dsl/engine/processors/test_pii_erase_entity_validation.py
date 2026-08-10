@@ -69,7 +69,7 @@ class TestPiiEraseAnonymizeDbValidation:
         """
         mod = _load_pii_erase_module()
         proc = mod.PiiEraseProcessor(
-            scope="user; DROP TABLE x; --:1", hard_delete=True
+            scope="user; DROP TABLE x; --:1", hard_delete=True,
         )
 
         executed: list[Any] = []

@@ -52,14 +52,14 @@ class MongoFeedbackRepository:
         try:
             collection = self._client().collection(_COLLECTION)
             await collection.create_index(
-                [("agent_id", 1), ("feedback", 1)], name="agent_feedback"
+                [("agent_id", 1), ("feedback", 1)], name="agent_feedback",
             )
             await collection.create_index([("created_at", -1)], name="created_at_desc")
             await collection.create_index(
-                [("labeled_at", -1)], name="labeled_at_desc", sparse=True
+                [("labeled_at", -1)], name="labeled_at_desc", sparse=True,
             )
             await collection.create_index(
-                "created_at", name="ttl_created_at", expireAfterSeconds=_TTL_SECONDS
+                "created_at", name="ttl_created_at", expireAfterSeconds=_TTL_SECONDS,
             )
         except Exception as exc:
             logger.warning("MongoFeedbackRepository: ensure_indexes failed: %s", exc)
@@ -99,7 +99,7 @@ class MongoFeedbackRepository:
         """
         payload = _model_to_doc(doc)
         modified = await self._client().update_one(
-            _COLLECTION, query={"_id": doc.id}, update=payload, upsert=False
+            _COLLECTION, query={"_id": doc.id}, update=payload, upsert=False,
         )
         if modified == 0:
             existing = await self._client().find_one(_COLLECTION, {"_id": doc.id})
@@ -108,7 +108,7 @@ class MongoFeedbackRepository:
         return doc
 
     async def list_pending(
-        self, *, agent_id: str | None = None, limit: int = 50, offset: int = 0
+        self, *, agent_id: str | None = None, limit: int = 50, offset: int = 0,
     ) -> list[AIFeedbackDoc]:
         """Метод list_pending (см. signature)."""
         query: dict[str, Any] = {"feedback": None}

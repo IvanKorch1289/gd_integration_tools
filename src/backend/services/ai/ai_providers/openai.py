@@ -50,7 +50,7 @@ class OpenAIProvider:
         return ""
 
     async def embeddings(
-        self, texts: list[str], *, model: str | None = None
+        self, texts: list[str], *, model: str | None = None,
     ) -> list[list[float]]:
         """Embeddings через ``litellm.aembedding``."""
         if not self.api_key:

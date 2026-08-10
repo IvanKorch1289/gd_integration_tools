@@ -140,7 +140,7 @@ async def _verify_mtls(request: Request) -> AuthContext | None:
     if result is None:
         return None
     return AuthContext(
-        AuthMethod.MTLS, principal=str(result["principal"]), metadata=result
+        AuthMethod.MTLS, principal=str(result["principal"]), metadata=result,
     )
 
 
@@ -167,7 +167,7 @@ async def _verify_saml(request: Request) -> AuthContext | None:
     SP-side session store (cycle-6/D-AUDIT-601 follow-up).
     """
     session_id = request.cookies.get("saml_session") or request.headers.get(
-        "X-SAML-Session-ID"
+        "X-SAML-Session-ID",
     )
     if not session_id:
         return None
@@ -178,7 +178,7 @@ async def _verify_saml(request: Request) -> AuthContext | None:
         "SAML verification not wired in core auth_selector "
         "(cycle-6/D-AUDIT-601 SECURITY-P0-001); rejecting unvalidated "
         "session_id to prevent impersonation. Use JWT or wire "
-        "SamlBackend via core/auth/saml_backend.py."
+        "SamlBackend via core/auth/saml_backend.py.",
     )
     raise NotImplementedError("SAML verification not yet wired; use JWT instead")
 

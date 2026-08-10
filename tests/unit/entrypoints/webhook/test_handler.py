@@ -32,10 +32,10 @@ class TestCheckRateLimit:
     async def test_rate_limit_exceeded(self) -> None:
         with (
             patch(
-                "src.backend.core.di.providers.get_rate_limit_classes_provider"
+                "src.backend.core.di.providers.get_rate_limit_classes_provider",
             ) as mock_cls,
             patch(
-                "src.backend.core.di.providers.get_rate_limiter_provider"
+                "src.backend.core.di.providers.get_rate_limiter_provider",
             ) as mock_lim,
         ):
             RL = MagicMock()
@@ -58,15 +58,15 @@ class TestCreateSubscription:
                 return_value=MagicMock(),
             ),
             patch(
-                "src.backend.dsl.engine.processors.scraping._validate_url"
+                "src.backend.dsl.engine.processors.scraping._validate_url",
             ) as mock_val,
         ):
             mock_val.return_value = None
             body = CreateSubscriptionRequest(
-                event_type="order.created", target_url="https://example.com/hook"
+                event_type="order.created", target_url="https://example.com/hook",
             )
             with patch(
-                "src.backend.entrypoints.webhook.handler.webhook_registry"
+                "src.backend.entrypoints.webhook.handler.webhook_registry",
             ) as mock_reg:
                 sub = MagicMock()
                 sub.id = "sub1"
@@ -89,7 +89,7 @@ class TestCreateSubscription:
             ),
         ):
             body = CreateSubscriptionRequest(
-                event_type="order.created", target_url="bad"
+                event_type="order.created", target_url="bad",
             )
             with pytest.raises(HTTPException) as exc_info:
                 await create_subscription(body, auth=MagicMock())
@@ -105,7 +105,7 @@ class TestDeleteSubscription:
                 return_value=MagicMock(),
             ),
             patch(
-                "src.backend.entrypoints.webhook.handler.webhook_registry"
+                "src.backend.entrypoints.webhook.handler.webhook_registry",
             ) as mock_reg,
         ):
             mock_reg.remove.return_value = None
@@ -120,7 +120,7 @@ class TestDeleteSubscription:
                 return_value=MagicMock(),
             ),
             patch(
-                "src.backend.entrypoints.webhook.handler.webhook_registry"
+                "src.backend.entrypoints.webhook.handler.webhook_registry",
             ) as mock_reg,
         ):
             mock_reg.remove.side_effect = KeyError("missing")
@@ -138,7 +138,7 @@ class TestListSubscriptions:
                 return_value=MagicMock(),
             ),
             patch(
-                "src.backend.entrypoints.webhook.handler.webhook_registry"
+                "src.backend.entrypoints.webhook.handler.webhook_registry",
             ) as mock_reg,
         ):
             mock_reg.list_all.return_value = [{"id": "s1"}]
@@ -155,15 +155,15 @@ class TestReceiveWebhook:
         request.headers = {}
         with (
             patch(
-                "src.backend.entrypoints.webhook.handler.webhook_registry"
+                "src.backend.entrypoints.webhook.handler.webhook_registry",
             ) as mock_reg,
             patch(
-                "src.backend.entrypoints.webhook.handler.dispatch_action_or_dsl"
+                "src.backend.entrypoints.webhook.handler.dispatch_action_or_dsl",
             ) as mock_bridge,
         ):
             mock_reg.list_all.return_value = []
             mock_bridge.return_value = MagicMock(
-                error_code="", success=True, error=None
+                error_code="", success=True, error=None,
             )
             result = await receive_webhook("order.created", request)
             assert result["status"] == "success"
@@ -175,10 +175,10 @@ class TestReceiveWebhook:
         request.body = AsyncMock(return_value=b"{}")
         request.headers = {}
         with patch(
-            "src.backend.entrypoints.webhook.handler.dispatch_action_or_dsl"
+            "src.backend.entrypoints.webhook.handler.dispatch_action_or_dsl",
         ) as mock_bridge:
             mock_bridge.return_value = MagicMock(
-                error_code="action_not_found", success=False, error="not found"
+                error_code="action_not_found", success=False, error="not found",
             )
             with pytest.raises(HTTPException) as exc_info:
                 await receive_webhook("missing", request)
@@ -191,7 +191,7 @@ class TestReceiveWebhook:
         request.body = AsyncMock(return_value=b'{"x":1}')
         request.headers = {"X-Webhook-Signature": "bad"}
         with patch(
-            "src.backend.entrypoints.webhook.handler.webhook_registry"
+            "src.backend.entrypoints.webhook.handler.webhook_registry",
         ) as mock_reg:
             sub = {"event_type": "order.created", "secret": "secret", "id": "s1"}
             mock_reg.list_all.return_value = [sub]
@@ -204,7 +204,7 @@ class TestSendWebhookEvent:
     @pytest.mark.asyncio
     async def test_send_no_subscriptions(self) -> None:
         with patch(
-            "src.backend.entrypoints.webhook.handler.webhook_registry"
+            "src.backend.entrypoints.webhook.handler.webhook_registry",
         ) as mock_reg:
             mock_reg.get_by_event.return_value = []
             result = await send_webhook_event("order.created", {"x": 1})
@@ -218,7 +218,7 @@ class TestSendWebhookEvent:
         sub.target_url = "https://example.com/hook"
         with (
             patch(
-                "src.backend.entrypoints.webhook.handler.webhook_registry"
+                "src.backend.entrypoints.webhook.handler.webhook_registry",
             ) as mock_reg,
             patch("src.backend.core.net.OutboundHttpClient") as mock_client,
         ):

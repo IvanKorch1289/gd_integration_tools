@@ -42,7 +42,7 @@ async def test_query_empty_file(backend: JsonlAuditBackend) -> None:
 
 @pytest.mark.asyncio
 async def test_query_skips_corrupted_lines(
-    backend: JsonlAuditBackend, tmp_path: Path
+    backend: JsonlAuditBackend, tmp_path: Path,
 ) -> None:
     path = tmp_path / "audit.jsonl"
     path.write_text('{"who":"alice"}\nnot-json\n{"who":"bob"}\n')

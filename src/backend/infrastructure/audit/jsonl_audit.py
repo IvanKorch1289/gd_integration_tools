@@ -45,7 +45,7 @@ class JsonlAuditBackend(AuditBackend):
             await asyncio.to_thread(self._write_line, line)
 
     async def query(
-        self, *, limit: int = 100, filters: dict[str, Any] | None = None
+        self, *, limit: int = 100, filters: dict[str, Any] | None = None,
     ) -> list[AuditRecord]:
         """Метод query (см. signature)."""
         if not self._path.exists():

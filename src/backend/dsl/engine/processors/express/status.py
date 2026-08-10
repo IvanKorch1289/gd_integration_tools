@@ -51,7 +51,7 @@ class ExpressStatusProcessor(BaseProcessor):
         sync_id = resolve_value(exchange, self._sync_id_from)
         if not sync_id:
             exchange.fail(
-                f"ExpressStatusProcessor: sync_id отсутствует ({self._sync_id_from!r})"
+                f"ExpressStatusProcessor: sync_id отсутствует ({self._sync_id_from!r})",
             )
             return
 
@@ -79,5 +79,5 @@ class ExpressStatusProcessor(BaseProcessor):
                 "bot": self._bot,
                 "sync_id_from": self._sync_id_from,
                 "result_property": self._result_property,
-            }
+            },
         }

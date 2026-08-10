@@ -37,7 +37,7 @@ def test_e2b_backend_explicit_api_key_overrides_env() -> None:
 
     os.environ["E2B_API_KEY"] = "e2b_env_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     backend = E2BExecutionBackend(
-        api_key="e2b_explicit_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        api_key="e2b_explicit_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     )
     assert backend._api_key == "e2b_explicit_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 
@@ -60,7 +60,7 @@ async def test_e2b_execute_raises_without_api_key() -> None:
     try:
         with pytest.raises(E2BExecutionError, match="E2B_API_KEY not set"):
             await backend.execute_with_params(
-                notebook_path=nb_path, parameters={"x": 1}
+                notebook_path=nb_path, parameters={"x": 1},
             )
     finally:
         os.unlink(nb_path)
@@ -74,7 +74,7 @@ async def test_e2b_execute_notebook_not_found() -> None:
     backend = E2BExecutionBackend(api_key="e2b_test_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     with pytest.raises(FileNotFoundError, match="Notebook не найден"):
         await backend.execute_with_params(
-            notebook_path="/nonexistent/notebook.ipynb", parameters={"x": 1}
+            notebook_path="/nonexistent/notebook.ipynb", parameters={"x": 1},
         )
 
 
@@ -87,7 +87,7 @@ async def test_e2b_inject_parameters() -> None:
 
     source = "x = 1\ny = 2"
     result = E2BExecutionBackend._inject_parameters(
-        source, {"alpha": 100, "beta": "hello"}
+        source, {"alpha": 100, "beta": "hello"},
     )
     assert "x = 1" in result
     assert "alpha = 100" in result
@@ -279,7 +279,7 @@ def test_kernelspec_filter_whitelist_drift_warning() -> None:
             "display_name": "Python 3",
             "language": "python",
             "argv": ["python3", "-m", "ipykernel"],
-        }
+        },
     }
     fake_module = MagicMock()
     fake_module.KernelSpecManager = MagicMock(return_value=mock_ksm)

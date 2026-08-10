@@ -104,7 +104,7 @@ class PipelineVersionManager:
                             source=snap.source,
                             description=snap.description,
                             api_version=snap.api_version,
-                        )
+                        ),
                     )
             logger.info(
                 "Pipeline snapshot: %s v%d (%d processors)",
@@ -156,7 +156,7 @@ class PipelineVersionManager:
         try:
             async with main_session_manager.create_session() as session:
                 stmt = select(DslSnapshot).where(
-                    DslSnapshot.route_id == route_id, DslSnapshot.version.in_([v1, v2])
+                    DslSnapshot.route_id == route_id, DslSnapshot.version.in_([v1, v2]),
                 )
                 rows = (await session.execute(stmt)).scalars().all()
             by_ver = {row.version: row for row in rows}

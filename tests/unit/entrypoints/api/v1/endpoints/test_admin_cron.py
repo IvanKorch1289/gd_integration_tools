@@ -77,12 +77,12 @@ def test_resolve_callable_does_not_import_rejected_module(ref: str) -> None:
 
 @pytest.mark.parametrize("ref", _MALICIOUS_REFS)
 def test_schedule_rejects_malicious_callable_ref(
-    client_app: TestClient, ref: str
+    client_app: TestClient, ref: str,
 ) -> None:
     """POST /admin/cron/schedule с опасным callable_ref → 400, job не создан."""
     manager = MagicMock()
     with patch(
-        "src.backend.core.scheduler.get_scheduler_manager", return_value=manager
+        "src.backend.core.scheduler.get_scheduler_manager", return_value=manager,
     ):
         response = client_app.post(
             "/admin/cron/schedule",
@@ -110,10 +110,10 @@ def test_schedule_accepts_whitelisted_callable_ref(client_app: TestClient) -> No
             "next_run_time": "2026-08-06T09:00:00+00:00",
             "trigger": "cron[0 9 * * *]",
             "paused": False,
-        }
+        },
     ]
     with patch(
-        "src.backend.core.scheduler.get_scheduler_manager", return_value=manager
+        "src.backend.core.scheduler.get_scheduler_manager", return_value=manager,
     ):
         response = client_app.post(
             "/admin/cron/schedule",
@@ -145,5 +145,5 @@ def test_resolve_callable_rejects_non_callable_attribute() -> None:
     """Whitelisted модуль, но атрибут не callable → ValueError."""
     with pytest.raises(ValueError, match="не является callable"):
         _resolve_callable(
-            "src.backend.infrastructure.scheduler.scheduled_tasks:__all__"
+            "src.backend.infrastructure.scheduler.scheduled_tasks:__all__",
         )

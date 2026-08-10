@@ -37,13 +37,13 @@ class TestExecute:
         with patch(
             "src.backend.core.net.migration_helper.make_http_client",
             return_value=MagicMock(
-                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
+                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock(),
             ),
         ):
             result = await client.execute("click", {"x": 1})
         assert result == {"ok": True}
         mock_http.post.assert_awaited_once_with(
-            "http://w/rpa/click", json={"x": 1}, headers={"X-API-Key": "k"}
+            "http://w/rpa/click", json={"x": 1}, headers={"X-API-Key": "k"},
         )
 
     async def test_unsupported_action(self) -> None:
@@ -75,7 +75,7 @@ class TestExecute:
         with patch(
             "src.backend.core.net.migration_helper.make_http_client",
             return_value=MagicMock(
-                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
+                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock(),
             ),
         ), pytest.raises(DesktopRpaError, match="503"):
             await client.execute("click", {})
@@ -90,7 +90,7 @@ class TestExecute:
         with patch(
             "src.backend.core.net.migration_helper.make_http_client",
             return_value=MagicMock(
-                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
+                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock(),
             ),
         ), pytest.raises(DesktopRpaError, match="400"):
             await client.execute("click", {})
@@ -105,7 +105,7 @@ class TestExecute:
         with patch(
             "src.backend.core.net.migration_helper.make_http_client",
             return_value=MagicMock(
-                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock()
+                __aenter__=AsyncMock(return_value=mock_http), __aexit__=AsyncMock(),
             ),
         ):
             await client.execute("type", {"text": "hi"})

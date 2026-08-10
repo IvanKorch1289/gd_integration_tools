@@ -180,7 +180,7 @@ class TestMixinComposition:
         """Все 4 базовых миксина вместе."""
 
         class FullSettings(
-            ConnectionMixin, RetryMixin, LLMModelMixin, APIConnectionMixin, BaseModel
+            ConnectionMixin, RetryMixin, LLMModelMixin, APIConnectionMixin, BaseModel,
         ):
             pass
 

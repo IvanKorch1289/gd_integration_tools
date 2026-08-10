@@ -86,7 +86,7 @@ class WatcherManager:
         stop_event = asyncio.Event()
         self._stop_events[spec.id] = stop_event
         self._tasks[spec.id] = get_task_registry().create_task(
-            self._watch_loop(spec.id, stop_event), name=f"filewatcher:{spec.id}"
+            self._watch_loop(spec.id, stop_event), name=f"filewatcher:{spec.id}",
         )
 
         logger.info(
@@ -176,7 +176,7 @@ class WatcherManager:
 
     @staticmethod
     async def _dispatch(
-        spec: WatcherSpec, watcher_id: str, filepath: str, filename: str
+        spec: WatcherSpec, watcher_id: str, filepath: str, filename: str,
     ) -> None:
         """Отправляет одно файловое событие в DSL-маршрут."""
         logger.info("Watcher %s: новый файл %s", watcher_id, filepath)

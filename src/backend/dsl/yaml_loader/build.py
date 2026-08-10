@@ -109,7 +109,7 @@ def _apply_processor(builder: RouteBuilder, spec: Any) -> None:
     elif isinstance(spec, dict):
         if len(spec) != 1:
             raise ValueError(
-                f"Processor spec must have one key, got: {list(spec.keys())}"
+                f"Processor spec must have one key, got: {list(spec.keys())}",
             )
         proc_name = next(iter(spec))
         raw_params = spec[proc_name]
@@ -120,7 +120,7 @@ def _apply_processor(builder: RouteBuilder, spec: Any) -> None:
     if not _is_allowed_processor(builder, proc_name):
         raise ValueError(
             f"Unknown or forbidden processor '{proc_name}'. "
-            "YAML DSL принимает только публичные методы RouteBuilder (A2 whitelist)."
+            "YAML DSL принимает только публичные методы RouteBuilder (A2 whitelist).",
         )
 
     method = getattr(builder, proc_name)

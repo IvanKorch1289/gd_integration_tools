@@ -23,12 +23,12 @@ __all__ = ("router",)
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_OPERATOR = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
 )
 
 router = APIRouter(
     dependencies=[_ADMIN_GUARD_OPERATOR],
-    prefix="/admin/workflow-templates", tags=["admin", "workflow", "templates"]
+    prefix="/admin/workflow-templates", tags=["admin", "workflow", "templates"],
 )
 
 
@@ -82,7 +82,7 @@ async def list_templates() -> list[WorkflowTemplateSummary]:
 
 @router.get("/search", response_model=list[WorkflowTemplateSearchResult])
 async def search_templates(
-    q: str, top_k: int = 5
+    q: str, top_k: int = 5,
 ) -> list[WorkflowTemplateSearchResult]:
     """Semantic search (BGE-M3 если доступен) или fuzzy fallback."""
     from src.backend.services.workflows.template_registry import get_template_registry
@@ -130,7 +130,7 @@ async def get_template(name: str) -> WorkflowTemplateDetail:
 
 @router.post("/{name}/deploy", status_code=status.HTTP_201_CREATED)
 async def deploy_template(
-    name: str, request: WorkflowTemplateDeployRequest
+    name: str, request: WorkflowTemplateDeployRequest,
 ) -> dict[str, Any]:
     """Копирует template в target_dir/<name>.workflow.yaml.
 

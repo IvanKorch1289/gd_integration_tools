@@ -40,10 +40,10 @@ class RedisCertTransport:
             import redis.asyncio as redis_asyncio
         except ImportError as exc:
             raise ImportError(
-                "redis не установлен. pip install redis>=5.0"
+                "redis не установлен. pip install redis>=5.0",
             ) from exc
         self._redis = redis_asyncio.from_url(
-            self._redis_url, decode_responses=True
+            self._redis_url, decode_responses=True,
         )
         return self._redis
 
@@ -90,7 +90,7 @@ class RedisCertTransport:
 
         if not isinstance(store, CertStore):
             raise TypeError(
-                f"store должен быть CertStore, получен {type(store)}"
+                f"store должен быть CertStore, получен {type(store)}",
             )
 
         async def on_update(cert_id: str) -> None:

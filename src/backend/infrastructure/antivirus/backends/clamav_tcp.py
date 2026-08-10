@@ -27,7 +27,7 @@ class ClamAVTcpBackend(AntivirusBackend):
     name = "clamav_tcp"
 
     def __init__(
-        self, host: str | None = None, port: int | None = None, timeout: float = 30.0
+        self, host: str | None = None, port: int | None = None, timeout: float = 30.0,
     ) -> None:
         from src.backend.core.config.waf import waf_settings
 
@@ -39,7 +39,7 @@ class ClamAVTcpBackend(AntivirusBackend):
         """Метод is_available (см. signature)."""
         try:
             reader, writer = await asyncio.wait_for(
-                asyncio.open_connection(self._host, self._port), timeout=2.0
+                asyncio.open_connection(self._host, self._port), timeout=2.0,
             )
         except (TimeoutError, OSError):
             return False
@@ -75,11 +75,11 @@ class ClamAVTcpBackend(AntivirusBackend):
         start = time.monotonic()
         try:
             reader, writer = await asyncio.wait_for(
-                asyncio.open_connection(self._host, self._port), timeout=self._timeout
+                asyncio.open_connection(self._host, self._port), timeout=self._timeout,
             )
         except (TimeoutError, OSError) as exc:
             raise ConnectionError(
-                f"ClamAV TCP {self._host}:{self._port} недоступен: {exc}"
+                f"ClamAV TCP {self._host}:{self._port} недоступен: {exc}",
             ) from exc
 
         try:
@@ -105,5 +105,5 @@ class ClamAVTcpBackend(AntivirusBackend):
 
         latency_ms = (time.monotonic() - start) * 1000
         return _parse_clamav_response(
-            response, backend=self.name, latency_ms=latency_ms
+            response, backend=self.name, latency_ms=latency_ms,
         )

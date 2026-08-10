@@ -100,7 +100,7 @@ def _build_resolver(action_id: str) -> Callable[..., Any]:
                     "action": action_id,
                     "success": False,
                     "error": f"Action {action_id!r} не зарегистрирован",
-                }
+                },
             )
         except Exception as exc:
             logger.exception("auto-schema action %r упал", action_id)
@@ -155,10 +155,10 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
         error: str | None = None
 
     query_attrs: dict[str, Any] = {
-        "__doc__": "Авто-сгенерированный Query (Wave 1.4 Roadmap V10)."
+        "__doc__": "Авто-сгенерированный Query (Wave 1.4 Roadmap V10).",
     }
     mutation_attrs: dict[str, Any] = {
-        "__doc__": "Авто-сгенерированный Mutation (Wave 1.4 Roadmap V10)."
+        "__doc__": "Авто-сгенерированный Mutation (Wave 1.4 Roadmap V10).",
     }
     query_count = 0
     mutation_count = 0
@@ -172,12 +172,12 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
 
             if meta.side_effect == "read":
                 query_attrs[field_name] = strawberry.field(
-                    resolver=resolver, description=description
+                    resolver=resolver, description=description,
                 )
                 query_count += 1
             else:
                 mutation_attrs[field_name] = strawberry.mutation(
-                    resolver=resolver, description=description
+                    resolver=resolver, description=description,
                 )
                 mutation_count += 1
         except Exception as exc:
@@ -191,13 +191,13 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
 
         _auto_health.__annotations__ = {"return": str}
         query_attrs["_auto_health"] = strawberry.field(
-            resolver=_auto_health, description="Health-check авто-схемы (заглушка)."
+            resolver=_auto_health, description="Health-check авто-схемы (заглушка).",
         )
 
     Query = strawberry.type(name="AutoQuery")(type("AutoQuery", (), query_attrs))
     if mutation_count > 0:
         Mutation = strawberry.type(name="AutoMutation")(
-            type("AutoMutation", (), mutation_attrs)
+            type("AutoMutation", (), mutation_attrs),
         )
         schema = strawberry.Schema(query=Query, mutation=Mutation)
     else:
@@ -216,7 +216,7 @@ def build_auto_strawberry_schema(metadatas: Any | None = None) -> AutoSchemaResu
 
 
 def auto_register_strawberry_schema(
-    app: Any, *, path: str = "/api/v1/graphql"
+    app: Any, *, path: str = "/api/v1/graphql",
 ) -> AutoSchemaResult:
     """Подключить auto-schema к FastAPI-приложению на отдельном пути.
 
@@ -233,7 +233,7 @@ def auto_register_strawberry_schema(
     result = build_auto_strawberry_schema()
     if result.schema is None:
         logger.info(
-            "auto_register_strawberry_schema: нет actions с 'graphql' в transports"
+            "auto_register_strawberry_schema: нет actions с 'graphql' в transports",
         )
         return result
 
@@ -252,8 +252,8 @@ def auto_register_strawberry_schema(
             path=path,
             dependencies=[
                 Depends(
-                    require_auth([AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.MTLS])
-                )
+                    require_auth([AuthMethod.API_KEY, AuthMethod.JWT, AuthMethod.MTLS]),
+                ),
             ],
         )
         app.include_router(router)

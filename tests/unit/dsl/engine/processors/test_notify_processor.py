@@ -12,7 +12,7 @@ from src.backend.dsl.engine.processors.notify import NotifyProcessor
 
 
 def _make_exchange(
-    body: Any = None, headers: dict[str, Any] | None = None
+    body: Any = None, headers: dict[str, Any] | None = None,
 ) -> Exchange[Any]:
     return Exchange(in_message=Message(body=body, headers=headers or {}))
 
@@ -37,14 +37,14 @@ def test_to_spec_round_trip() -> None:
             "locale": "en",
             "context_property": "ctx",
             "result_property": "res",
-        }
+        },
     }
 
 
 @pytest.mark.asyncio
 async def test_process_success() -> None:
     with patch(
-        "src.backend.core.notifications.get_gateway"
+        "src.backend.core.notifications.get_gateway",
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="sent", error=None)
@@ -63,7 +63,7 @@ async def test_process_success() -> None:
 @pytest.mark.asyncio
 async def test_process_failed_sets_error_and_stops() -> None:
     with patch(
-        "src.backend.core.notifications.get_gateway"
+        "src.backend.core.notifications.get_gateway",
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="failed", error="timeout")
@@ -92,7 +92,7 @@ async def test_process_missing_recipient_sets_error_and_stops() -> None:
 @pytest.mark.asyncio
 async def test_process_uses_context_property_when_set() -> None:
     with patch(
-        "src.backend.core.notifications.get_gateway"
+        "src.backend.core.notifications.get_gateway",
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="sent", error=None)
@@ -115,7 +115,7 @@ async def test_process_uses_context_property_when_set() -> None:
 @pytest.mark.asyncio
 async def test_process_uses_body_when_no_context_property() -> None:
     with patch(
-        "src.backend.core.notifications.get_gateway"
+        "src.backend.core.notifications.get_gateway",
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="sent", error=None)

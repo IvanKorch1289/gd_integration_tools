@@ -53,10 +53,10 @@ class TestBuildCacheKey:
             return a
 
         key_with_self = build_cache_key(
-            sample_func, ("self", 1), {}, exclude_self=False
+            sample_func, ("self", 1), {}, exclude_self=False,
         )
         key_without_self = build_cache_key(
-            sample_func, ("self", 1), {}, exclude_self=True
+            sample_func, ("self", 1), {}, exclude_self=True,
         )
         assert key_with_self != key_without_self
 

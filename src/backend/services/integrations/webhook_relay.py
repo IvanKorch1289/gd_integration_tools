@@ -180,7 +180,7 @@ class WebhookRelay:
             return {"error": str(exc)}
 
     def _transform(
-        self, payload: dict[str, Any], rule: RelayRule
+        self, payload: dict[str, Any], rule: RelayRule,
     ) -> dict[str, Any] | None:
         if rule.condition:
             try:
@@ -213,7 +213,7 @@ class WebhookRelay:
         return payload
 
     async def _send_with_retry(
-        self, rule: RelayRule, payload: dict[str, Any]
+        self, rule: RelayRule, payload: dict[str, Any],
     ) -> dict[str, Any]:
         import httpx
 
@@ -305,7 +305,7 @@ class WebhookRelay:
         return entries
 
     async def _dlq_remove(
-        self, entry_id: str, _entry_raw: bytes | str | None = None
+        self, entry_id: str, _entry_raw: bytes | str | None = None,
     ) -> None:
         """Удаляет одну запись DLQ по id (находит raw через полный обход).
 
@@ -330,7 +330,7 @@ class WebhookRelay:
                         return
                 except (orjson.JSONDecodeError, TypeError, ValueError):
                     logger.debug(
-                        "DLQ entry parse failed during remove; skipped", exc_info=True
+                        "DLQ entry parse failed during remove; skipped", exc_info=True,
                     )
                     continue
         except Exception as exc:
@@ -410,7 +410,7 @@ class WebhookRelay:
                         "id": entry.id,
                         "status": "rule_not_found",
                         "moved_to_dead_rule_queue": True,
-                    }
+                    },
                 )
                 continue
             r = await self._send_with_retry(rule, entry.payload)

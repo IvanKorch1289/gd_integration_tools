@@ -19,7 +19,7 @@ def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any
 @pytest.mark.asyncio
 async def test_notify_success() -> None:
     with patch(
-        "src.backend.core.notifications.get_gateway"
+        "src.backend.core.notifications.get_gateway",
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="delivered", error=None)
@@ -46,7 +46,7 @@ async def test_notify_missing_recipient() -> None:
 @pytest.mark.asyncio
 async def test_notify_uses_body_recipient() -> None:
     with patch(
-        "src.backend.core.notifications.get_gateway"
+        "src.backend.core.notifications.get_gateway",
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="delivered", error=None)
@@ -64,7 +64,7 @@ async def test_notify_uses_body_recipient() -> None:
 @pytest.mark.asyncio
 async def test_notify_failed_status_sets_error() -> None:
     with patch(
-        "src.backend.core.notifications.get_gateway"
+        "src.backend.core.notifications.get_gateway",
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="failed", error="timeout")
@@ -82,7 +82,7 @@ async def test_notify_failed_status_sets_error() -> None:
 @pytest.mark.asyncio
 async def test_notify_with_context_property() -> None:
     with patch(
-        "src.backend.core.notifications.get_gateway"
+        "src.backend.core.notifications.get_gateway",
     ) as mock_get:
         gateway = AsyncMock()
         gateway.send.return_value = AsyncMock(status="delivered", error=None)
@@ -106,7 +106,7 @@ async def test_notify_with_context_property() -> None:
 
 def test_notify_to_spec() -> None:
     proc = NotifyProcessor(
-        channel="email", template_key="welcome", recipient="u1", priority="marketing"
+        channel="email", template_key="welcome", recipient="u1", priority="marketing",
     )
     spec = proc.to_spec()
     assert spec == {
@@ -118,5 +118,5 @@ def test_notify_to_spec() -> None:
             "locale": "ru",
             "context_property": None,
             "result_property": "notify_result",
-        }
+        },
     }

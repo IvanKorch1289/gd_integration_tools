@@ -29,7 +29,7 @@ logger = get_logger("services.ai.gateway.langfuse_pii")
 
 
 def anonymize_trace_payload(
-    payload: dict[str, Any] | None, *, tenant_id: str | None = None
+    payload: dict[str, Any] | None, *, tenant_id: str | None = None,
 ) -> dict[str, Any] | None:
     """Anonymize все строковые значения в trace-payload рекурсивно.
 
@@ -74,7 +74,7 @@ def _walk_anonymize(value: Any, sanitizer: Any, tenant_id: str | None) -> Any:
 
 
 def _emit_pii_audit(
-    event_type: str, *, tenant_id: str | None, entity_count: int, source: str
+    event_type: str, *, tenant_id: str | None, entity_count: int, source: str,
 ) -> None:
     """Emit pii.{detected,anonymized,blocked} audit-event.
 
@@ -117,6 +117,6 @@ class LangfusePIICallback:
         for key in ("input", "output", "metadata"):
             if key in cloned:
                 cloned[key] = anonymize_trace_payload(
-                    cloned[key], tenant_id=self._tenant_id
+                    cloned[key], tenant_id=self._tenant_id,
                 )
         return cloned

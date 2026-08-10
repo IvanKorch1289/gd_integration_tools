@@ -94,7 +94,7 @@ class RegexExtractorProcessor(BaseProcessor):
         if mode not in _ALLOWED_MODES:
             raise ValueError(
                 f"regex_extractor: mode must be one of {sorted(_ALLOWED_MODES)}, "
-                f"got {mode!r}"
+                f"got {mode!r}",
             )
         self._pattern_source = pattern
         try:

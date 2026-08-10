@@ -36,7 +36,7 @@ _logger = get_logger("dsl.file_watch")
 
 
 @processor(
-    "file_watch", namespace="core", capabilities=("fs.watch",), tags=["fs", "watch"]
+    "file_watch", namespace="core", capabilities=("fs.watch",), tags=["fs", "watch"],
 )
 class FileWatchProcessor(BaseProcessor):
     """Сканирует директорию и помещает найденные файлы в exchange property.
@@ -115,17 +115,17 @@ class FileWatchProcessor(BaseProcessor):
         # S176 #4: validation — нужен хотя бы один pattern и одна directory.
         if pattern is not None and patterns is not None:
             raise ValueError(
-                "FileWatchProcessor: specify either `pattern` or `patterns`, not both"
+                "FileWatchProcessor: specify either `pattern` or `patterns`, not both",
             )
         if pattern is None and patterns is None:
             patterns = ("*",)  # default: match all files
         if directory is None and directories is None:
             raise ValueError(
-                "FileWatchProcessor: specify either `directory` or `directories`"
+                "FileWatchProcessor: specify either `directory` or `directories`",
             )
         if directory is not None and directories is not None:
             raise ValueError(
-                "FileWatchProcessor: specify either `directory` or `directories`, not both"
+                "FileWatchProcessor: specify either `directory` or `directories`, not both",
             )
 
         effective_dirs = directories if directories is not None else (directory,)
@@ -181,13 +181,13 @@ class FileWatchProcessor(BaseProcessor):
                 exists = await asyncio.to_thread(os.path.isdir, directory)
             except OSError as exc:
                 exchange.fail(
-                    f"file_watch: OS error checking {directory}: {exc}"
+                    f"file_watch: OS error checking {directory}: {exc}",
                 )
                 return
 
             if not exists:
                 exchange.fail(
-                    f"file_watch: directory does not exist: {directory}"
+                    f"file_watch: directory does not exist: {directory}",
                 )
                 return
 
@@ -198,20 +198,20 @@ class FileWatchProcessor(BaseProcessor):
                     for pattern in effective_patterns:
                         raw_paths.extend(
                             await asyncio.to_thread(
-                                _walk_matching_files, directory, pattern
-                            )
+                                _walk_matching_files, directory, pattern,
+                            ),
                         )
                 else:
                     raw_paths = []
                     for pattern in effective_patterns:
                         raw_paths.extend(
                             await asyncio.to_thread(
-                                _list_matching_files, directory, pattern
-                            )
+                                _list_matching_files, directory, pattern,
+                            ),
                         )
             except OSError as exc:
                 exchange.fail(
-                    f"file_watch: OS error scanning {directory}: {exc}"
+                    f"file_watch: OS error scanning {directory}: {exc}",
                 )
                 return
 
@@ -222,7 +222,7 @@ class FileWatchProcessor(BaseProcessor):
                         "name": os.path.basename(path),
                         "size": stat.st_size,
                         "mtime": stat.st_mtime,
-                    }
+                    },
                 )
                 # S176 #4: short-circuit при достижении max_results.
                 if (
@@ -269,7 +269,7 @@ class FileWatchProcessor(BaseProcessor):
 
 
 def _list_matching_files(
-    directory: str, pattern: str
+    directory: str, pattern: str,
 ) -> list[tuple[str, os.stat_result]]:
     """Sync helper: list files в directory matching glob pattern.
 
@@ -287,7 +287,7 @@ def _list_matching_files(
 
 
 def _walk_matching_files(
-    directory: str, pattern: str
+    directory: str, pattern: str,
 ) -> list[tuple[str, os.stat_result]]:
     """Sync helper: recursive walk + glob filter.
 

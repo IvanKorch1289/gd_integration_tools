@@ -37,12 +37,12 @@ class _RouteBuilderProtocol(Protocol):
 
     @staticmethod
     def _set_first_attr(
-        obj: Any, candidates: tuple[str, ...], value: Any
+        obj: Any, candidates: tuple[str, ...], value: Any,
     ) -> str | None: ...
 
     def _validate_action_names(self) -> None: ...
 
     @classmethod
     def from_(
-        cls, route_id: str, source: str, *, description: str | None = None
+        cls, route_id: str, source: str, *, description: str | None = None,
     ) -> Self: ...

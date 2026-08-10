@@ -36,7 +36,7 @@ class CDCSubscribeRequest(BaseModel):
     profile: str = Field(description="Имя профиля внешней БД.")
     tables: list[str] = Field(description="Список таблиц для отслеживания.")
     target_action: str | None = Field(
-        default=None, description="Action для вызова при обнаружении изменений."
+        default=None, description="Action для вызова при обнаружении изменений.",
     )
 
 

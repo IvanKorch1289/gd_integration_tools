@@ -11,7 +11,7 @@ from typing import Any
 
 
 def extract_completion(
-    response: Any, *, fallback_model: str | None
+    response: Any, *, fallback_model: str | None,
 ) -> tuple[str, int, int, str]:
     """Вытаскивает content/tokens/model из litellm-ответа.
 

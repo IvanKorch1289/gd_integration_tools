@@ -76,7 +76,7 @@ async def test_run_returns_workflow_run_result() -> None:
     runner = WorkflowRunner(default_result=result)
 
     workflow_result = await runner.run(
-        workflow_name="test_wf", workflow_id="wf-1", input={"k": "v"}
+        workflow_name="test_wf", workflow_id="wf-1", input={"k": "v"},
     )
 
     assert isinstance(workflow_result, WorkflowRunResult)
@@ -116,7 +116,7 @@ async def test_run_propagates_failure() -> None:
     runner = WorkflowRunner(default_result=default)
 
     result = await runner.run(
-        workflow_name="fail_wf", workflow_id="fail-1", input={}
+        workflow_name="fail_wf", workflow_id="fail-1", input={},
     )
     assert result.status == "failed"
     assert result.failure == failure
@@ -128,7 +128,7 @@ async def test_start_returns_handle_with_correct_workflow_id() -> None:
     runner = WorkflowRunner()
 
     handle = await runner.start(
-        workflow_name="async_wf", workflow_id="async-1", input={"x": 1}
+        workflow_name="async_wf", workflow_id="async-1", input={"x": 1},
     )
     # Handle имеет атрибуты workflow_id и namespace.
     assert handle.workflow_id == "async-1"
@@ -141,10 +141,10 @@ async def test_start_then_set_result_then_await() -> None:
     runner = WorkflowRunner()
 
     handle = await runner.start(
-        workflow_name="two_step_wf", workflow_id="two-1", input={}
+        workflow_name="two_step_wf", workflow_id="two-1", input={},
     )
     runner.backend.set_result(
-        handle, WorkflowResult(output={"two_step": True}, status="completed")
+        handle, WorkflowResult(output={"two_step": True}, status="completed"),
     )
     # await через backend напрямую.
     result = await runner.backend.await_completion(handle=handle)

@@ -43,7 +43,7 @@ class FormatConvertersMixin:
     def to_json(self, *, indent: int | None = None) -> RouteBuilder:
         """Serialize ``exchange.body`` → JSON string в ``out_message.body``."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_json", fmt="json", indent=indent)
+            FormatConvertProcessor(direction="to_json", fmt="json", indent=indent),
         )
 
     def from_json(self, *, from_property: str = "body") -> RouteBuilder:
@@ -54,8 +54,8 @@ class FormatConvertersMixin:
         """
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_json", fmt="json", from_property=from_property
-            )
+                direction="from_json", fmt="json", from_property=from_property,
+            ),
         )
 
     # ── CSV ──
@@ -66,7 +66,7 @@ class FormatConvertersMixin:
         ``headers``: явный порядок колонок (default = keys первого ряда).
         """
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_csv", fmt="csv", headers=headers)
+            FormatConvertProcessor(direction="to_csv", fmt="csv", headers=headers),
         )
 
     def from_csv(self, csv_string: str | None = None) -> RouteBuilder:
@@ -76,8 +76,8 @@ class FormatConvertersMixin:
         """
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_csv", fmt="csv", source_value=csv_string
-            )
+                direction="from_csv", fmt="csv", source_value=csv_string,
+            ),
         )
 
     # ── XML ──
@@ -85,15 +85,15 @@ class FormatConvertersMixin:
     def to_xml(self, *, root_tag: str = "root") -> RouteBuilder:
         """Convert ``dict`` → XML string (stdlib ``xml.etree.ElementTree``)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_xml", fmt="xml", root_tag=root_tag)
+            FormatConvertProcessor(direction="to_xml", fmt="xml", root_tag=root_tag),
         )
 
     def from_xml(self, xml_string: str | None = None) -> RouteBuilder:
         """Parse XML → ``dict`` (через ``xmltodict`` если есть, иначе stdlib)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_xml", fmt="xml", source_value=xml_string
-            )
+                direction="from_xml", fmt="xml", source_value=xml_string,
+            ),
         )
 
     # ── YAML ──
@@ -101,15 +101,15 @@ class FormatConvertersMixin:
     def to_yaml(self) -> RouteBuilder:
         """Convert ``dict``/``list`` → YAML string."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_yaml", fmt="yaml")
+            FormatConvertProcessor(direction="to_yaml", fmt="yaml"),
         )
 
     def from_yaml(self, yaml_string: str | None = None) -> RouteBuilder:
         """Parse YAML → ``dict``/``list``."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_yaml", fmt="yaml", source_value=yaml_string
-            )
+                direction="from_yaml", fmt="yaml", source_value=yaml_string,
+            ),
         )
 
     # ── Excel ──
@@ -118,16 +118,16 @@ class FormatConvertersMixin:
         """Convert ``list[dict]`` → Excel bytes (openpyxl)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="to_excel", fmt="excel", sheet_name=sheet_name
-            )
+                direction="to_excel", fmt="excel", sheet_name=sheet_name,
+            ),
         )
 
     def from_excel(self, excel_bytes: bytes | None = None) -> RouteBuilder:
         """Parse Excel bytes → ``list[dict]`` (openpyxl)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_excel", fmt="excel", source_value=excel_bytes
-            )
+                direction="from_excel", fmt="excel", source_value=excel_bytes,
+            ),
         )
 
     # ── Parquet (S40 W2) ──
@@ -136,16 +136,16 @@ class FormatConvertersMixin:
         """Convert ``list[dict]`` → parquet bytes (pyarrow)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="to_parquet", fmt="parquet", compression=compression
-            )
+                direction="to_parquet", fmt="parquet", compression=compression,
+            ),
         )
 
     def from_parquet(self, parquet_bytes: bytes | None = None) -> RouteBuilder:
         """Parse parquet → ``list[dict]`` (pyarrow)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_parquet", fmt="parquet", source_value=parquet_bytes
-            )
+                direction="from_parquet", fmt="parquet", source_value=parquet_bytes,
+            ),
         )
 
     # ── MessagePack (S40 W2) ──
@@ -153,15 +153,15 @@ class FormatConvertersMixin:
     def to_msgpack(self) -> RouteBuilder:
         """Convert ``dict``/``list`` → msgpack bytes (fallback: ``pickle``)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_msgpack", fmt="msgpack")
+            FormatConvertProcessor(direction="to_msgpack", fmt="msgpack"),
         )
 
     def from_msgpack(self, msgpack_bytes: bytes | None = None) -> RouteBuilder:
         """Parse msgpack → ``dict``/``list`` (fallback: ``pickle``)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_msgpack", fmt="msgpack", source_value=msgpack_bytes
-            )
+                direction="from_msgpack", fmt="msgpack", source_value=msgpack_bytes,
+            ),
         )
 
     # ── TOML (S40 W2) ──
@@ -169,15 +169,15 @@ class FormatConvertersMixin:
     def to_toml(self) -> RouteBuilder:
         """Convert ``dict`` → TOML string (``tomli_w``)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_toml", fmt="toml")
+            FormatConvertProcessor(direction="to_toml", fmt="toml"),
         )
 
     def from_toml(self, toml_string: str | None = None) -> RouteBuilder:
         """Parse TOML → ``dict`` (``tomllib`` stdlib 3.11+)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_toml", fmt="toml", source_value=toml_string
-            )
+                direction="from_toml", fmt="toml", source_value=toml_string,
+            ),
         )
 
     # ── INI (S40 W2) ──
@@ -185,15 +185,15 @@ class FormatConvertersMixin:
     def to_ini(self) -> RouteBuilder:
         """Convert ``dict`` → INI string (stdlib ``configparser``)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_ini", fmt="ini")
+            FormatConvertProcessor(direction="to_ini", fmt="ini"),
         )
 
     def from_ini(self, ini_string: str | None = None) -> RouteBuilder:
         """Parse INI → ``dict`` (stdlib ``configparser``)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_ini", fmt="ini", source_value=ini_string
-            )
+                direction="from_ini", fmt="ini", source_value=ini_string,
+            ),
         )
 
     # ── Base64 (S40 W2) ──
@@ -201,15 +201,15 @@ class FormatConvertersMixin:
     def to_base64(self) -> RouteBuilder:
         """Encode ``bytes``/``str`` → base64 string (stdlib ``base64``)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_base64", fmt="base64")
+            FormatConvertProcessor(direction="to_base64", fmt="base64"),
         )
 
     def from_base64(self, b64_string: str | None = None) -> RouteBuilder:
         """Decode base64 string → ``bytes`` (stdlib ``base64``)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_base64", fmt="base64", source_value=b64_string
-            )
+                direction="from_base64", fmt="base64", source_value=b64_string,
+            ),
         )
 
     # ── URL-encoding (S40 W3) ──
@@ -217,15 +217,15 @@ class FormatConvertersMixin:
     def to_url_encoded(self) -> RouteBuilder:
         """Convert ``dict`` → URL-encoded string (application/x-www-form-urlencoded)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_url_encoded", fmt="url_encoded")
+            FormatConvertProcessor(direction="to_url_encoded", fmt="url_encoded"),
         )
 
     def from_url_encoded(self, url_string: str | None = None) -> RouteBuilder:
         """Parse URL-encoded string → ``dict`` (multi-value → ``list``)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_url_encoded", fmt="url_encoded", source_value=url_string
-            )
+                direction="from_url_encoded", fmt="url_encoded", source_value=url_string,
+            ),
         )
 
     # ── HTML (S40 W3) ──
@@ -233,7 +233,7 @@ class FormatConvertersMixin:
     def to_html_escape(self) -> RouteBuilder:
         """HTML-escape string (``<>&"'`` → entities, ``quote=True``)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_html_escape", fmt="html_escape")
+            FormatConvertProcessor(direction="to_html_escape", fmt="html_escape"),
         )
 
     def from_html_unescape(self, html_string: str | None = None) -> RouteBuilder:
@@ -243,7 +243,7 @@ class FormatConvertersMixin:
                 direction="from_html_unescape",
                 fmt="html_unescape",
                 source_value=html_string,
-            )
+            ),
         )
 
     # ── Markdown (S40 W3) — simple header-based ──
@@ -251,15 +251,15 @@ class FormatConvertersMixin:
     def to_markdown(self) -> RouteBuilder:
         """Convert ``dict`` → markdown string (``# key`` per top-level key)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_markdown", fmt="markdown")
+            FormatConvertProcessor(direction="to_markdown", fmt="markdown"),
         )
 
     def from_markdown(self, md_string: str | None = None) -> RouteBuilder:
         """Parse markdown → ``dict`` (extracts ``# heading`` → content)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_markdown", fmt="markdown", source_value=md_string
-            )
+                direction="from_markdown", fmt="markdown", source_value=md_string,
+            ),
         )
 
     # ── UUID (S40 W3) — generator (to_ only) ──
@@ -267,7 +267,7 @@ class FormatConvertersMixin:
     def to_uuid_string(self) -> RouteBuilder:
         """Generate UUID4 string (``body`` ignored, always fresh)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_uuid_string", fmt="uuid_string")
+            FormatConvertProcessor(direction="to_uuid_string", fmt="uuid_string"),
         )
 
     # ── JWT (S40 W3) — encoder (to_ only; decode вне scope) ──
@@ -291,7 +291,7 @@ class FormatConvertersMixin:
                 secret=secret,
                 algorithm=algorithm,
                 claims=claims,
-            )
+            ),
         )
 
     # ── Bencode (S40 W3) ──
@@ -299,21 +299,21 @@ class FormatConvertersMixin:
     def to_bencode(self) -> RouteBuilder:
         """Convert ``dict``/``list`` → bencoded bytes (bitTorrent metafile)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_bencode", fmt="bencode")
+            FormatConvertProcessor(direction="to_bencode", fmt="bencode"),
         )
 
     def from_bencode(self, bcode_bytes: bytes | None = None) -> RouteBuilder:
         """Parse bencoded bytes → Python object (no external deps)."""
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="from_bencode", fmt="bencode", source_value=bcode_bytes
-            )
+                direction="from_bencode", fmt="bencode", source_value=bcode_bytes,
+            ),
         )
 
     # ── JWT decode (S40 W4) — companion к to_jwt (W3) ──
 
     def from_jwt(
-        self, jwt_string: str | None = None, *, secret: str, algorithm: str = "HS256"
+        self, jwt_string: str | None = None, *, secret: str, algorithm: str = "HS256",
     ) -> RouteBuilder:
         """Decode JWT ``str`` → claims ``dict`` (verify HS* signature via joserfc).
 
@@ -328,7 +328,7 @@ class FormatConvertersMixin:
                 source_value=jwt_string,
                 secret=secret,
                 algorithm=algorithm,
-            )
+            ),
         )
 
     # ── Compact JSON (S40 W4) — minified JSON без пробелов ──
@@ -336,7 +336,7 @@ class FormatConvertersMixin:
     def to_compact_json(self) -> RouteBuilder:
         """Convert ``dict`` → minified JSON ``str`` (no indent, no spaces)."""
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_compact_json", fmt="compact_json")
+            FormatConvertProcessor(direction="to_compact_json", fmt="compact_json"),
         )
 
     # ── Protobuf-like (S40 W4) — base64(JSON) (без real protobuf dep) ──
@@ -348,7 +348,7 @@ class FormatConvertersMixin:
         через :meth:`from_protobuf_like`.
         """
         return self._add(  # type: ignore[attr-defined]
-            FormatConvertProcessor(direction="to_protobuf_like", fmt="protobuf_like")
+            FormatConvertProcessor(direction="to_protobuf_like", fmt="protobuf_like"),
         )
 
     def from_protobuf_like(self, pb_bytes: bytes | None = None) -> RouteBuilder:
@@ -358,7 +358,7 @@ class FormatConvertersMixin:
                 direction="from_protobuf_like",
                 fmt="protobuf_like",
                 source_value=pb_bytes,
-            )
+            ),
         )
 
     # ── Avro-like (S40 W4) — JSON c ``{"schema": ..., "data": ...}`` обёрткой ──
@@ -371,6 +371,6 @@ class FormatConvertersMixin:
         """
         return self._add(  # type: ignore[attr-defined]
             FormatConvertProcessor(
-                direction="to_avro_like", fmt="avro_like", schema=schema
-            )
+                direction="to_avro_like", fmt="avro_like", schema=schema,
+            ),
         )

@@ -38,8 +38,8 @@ class SecurityMixin:
 
         return self._add(  # type: ignore[attr-defined]
             AuthValidateProcessor(
-                methods=methods, result_property=result_property, required=required
-            )
+                methods=methods, result_property=result_property, required=required,
+            ),
         )
 
     def require_header(self, name: str) -> RouteBuilder:
@@ -54,7 +54,7 @@ class SecurityMixin:
                 exchange.fail(f"Missing required header: {name}")
 
         return self._add(  # type: ignore[attr-defined]
-            CallableProcessor(_check, name=f"require_header:{name}")
+            CallableProcessor(_check, name=f"require_header:{name}"),
         )
 
     def require_bearer(self) -> RouteBuilder:
@@ -72,7 +72,7 @@ class SecurityMixin:
             exchange.set_property("auth_token", token)
 
         return self._add(  # type: ignore[attr-defined]
-            CallableProcessor(_check, name="require_bearer")
+            CallableProcessor(_check, name="require_bearer"),
         )
 
     def require_auth(self) -> RouteBuilder:
@@ -83,13 +83,13 @@ class SecurityMixin:
             api_key = exchange.in_message.headers.get("X-API-Key", "")
             if not auth and not api_key:
                 exchange.fail(
-                    "Authentication required (Authorization or X-API-Key header)"
+                    "Authentication required (Authorization or X-API-Key header)",
                 )
                 return
             exchange.set_property("authenticated", True)
 
         return self._add(  # type: ignore[attr-defined]
-            CallableProcessor(_check, name="require_auth")
+            CallableProcessor(_check, name="require_auth"),
         )
 
     def require_fields(self, *names: str) -> RouteBuilder:
@@ -110,7 +110,7 @@ class SecurityMixin:
                 exchange.fail(f"Missing required fields: {missing}")
 
         return self._add(  # type: ignore[attr-defined]
-            CallableProcessor(_check, name=f"require_fields:{','.join(required)}")
+            CallableProcessor(_check, name=f"require_fields:{','.join(required)}"),
         )
 
     def jwt_sign(
@@ -192,7 +192,7 @@ class SecurityMixin:
         )
 
     def deadline(
-        self, *, timeout_seconds: float = 30.0, fail_on_exceed: bool = True
+        self, *, timeout_seconds: float = 30.0, fail_on_exceed: bool = True,
     ) -> RouteBuilder:
         """Установка дedline pipeline; downstream проверяет _deadline_at."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -231,5 +231,5 @@ class SecurityMixin:
                 fields=fields,
                 replacement=replacement,
                 patterns=patterns,
-            )
+            ),
         )

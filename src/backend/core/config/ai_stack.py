@@ -53,7 +53,7 @@ class LiteLLMGatewaySettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="LITELLM_", extra="ignore")
 
     enabled: bool = Field(
-        default=False,     )
+        default=False     )
     default_model: str = Field(
         default="gpt-4o-mini",
         description="Модель по умолчанию (litellm-slug, напр. 'openai/gpt-4o-mini').",
@@ -67,13 +67,13 @@ class LiteLLMGatewaySettings(BaseSettingsWithLoader):
         description="Отправлять cost через CostTrackingCallback в AgentMetricsService.",
     )
     num_retries: int = Field(
-        default=2, ge=0, le=10, description="Кол-во retry на transient-ошибки."
+        default=2, ge=0, le=10, description="Кол-во retry на transient-ошибки.",
     )
     request_timeout: float = Field(
-        default=60.0, ge=1.0, description="Таймаут одного запроса (сек)."
+        default=60.0, ge=1.0, description="Таймаут одного запроса (сек).",
     )
     langfuse_callback: bool = Field(
-        default=False,     )
+        default=False     )
 
 
 class RagCacheSettings(BaseSettingsWithLoader):
@@ -83,7 +83,7 @@ class RagCacheSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="RAG_CACHE_", extra="ignore")
 
     l1_enabled: bool = Field(
-        default=True, description="L1 exact KV cache (Redis prefix rag:l1:)."
+        default=True, description="L1 exact KV cache (Redis prefix rag:l1:).",
     )
     l1_ttl: int = Field(default=3600, ge=1, description="TTL L1 KV-кэша (секунды).")
     l2_enabled: bool = Field(
@@ -96,14 +96,14 @@ class RagCacheSettings(BaseSettingsWithLoader):
         description="Минимальная косинусная похожесть для L2-hit.",
     )
     l2_collection: str = Field(
-        default="rag_cache_l2", description="Имя коллекции Qdrant для L2."
+        default="rag_cache_l2", description="Имя коллекции Qdrant для L2.",
     )
     l3_enabled: bool = Field(
         default=True,
         description="L3 retrieval-cache (Redis prefix rag:l3:v2:).",
     )
     l3_ttl: int = Field(
-        default=600, ge=1, description="TTL L3 retrieval-кэша (секунды)."
+        default=600, ge=1, description="TTL L3 retrieval-кэша (секунды).",
     )
     invalidation_channel: str = Field(
         default="rag:invalidation",
@@ -128,10 +128,10 @@ class RagIngestSettings(BaseSettingsWithLoader):
         description="Backend для IngestStateStore: 'memory' | 'redis'.",
     )
     chunker_fingerprint_version: int = Field(
-        default=1, ge=1, description="Версия chunker-конфигурации для detect re-embed."
+        default=1, ge=1, description="Версия chunker-конфигурации для detect re-embed.",
     )
     state_ttl_seconds: int = Field(
-        default=86_400, ge=60, description="TTL Redis-ключей со state ingest-задач."
+        default=86_400, ge=60, description="TTL Redis-ключей со state ingest-задач.",
     )
     pii_mask_on_ingest: bool = Field(
         default=True,
@@ -172,7 +172,7 @@ class BGESettings(BaseSettingsWithLoader):
         default=False,         description="Включить BGE-провайдер (lazy-load модели на первом запросе).",
     )
     embedding_model: str = Field(
-        default="BAAI/bge-m3", description="Имя модели BGE-M3 (1024-dim dense)."
+        default="BAAI/bge-m3", description="Имя модели BGE-M3 (1024-dim dense).",
     )
     reranker_enabled: bool = Field(
         default=True,
@@ -196,7 +196,7 @@ class BGESettings(BaseSettingsWithLoader):
         ),
     )
     cache_dir: str = Field(
-        default="./var/bge_cache", description="Каталог кэша HuggingFace для весов."
+        default="./var/bge_cache", description="Каталог кэша HuggingFace для весов.",
     )
     use_fp16: bool = Field(
         default=True,
@@ -211,17 +211,17 @@ class LangMemSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="LANGMEM_", extra="ignore")
 
     enabled: bool = Field(
-        default=False,     )
+        default=False     )
     pg_dsn: str = Field(
         default="",
         description="DSN Postgres для episodic/procedural таблиц (если пусто, "
         "используется shared async-engine из core.config.database).",
     )
     qdrant_collection: str = Field(
-        default="langmem_semantic", description="Коллекция Qdrant для semantic-фактов."
+        default="langmem_semantic", description="Коллекция Qdrant для semantic-фактов.",
     )
     consolidation_batch_size: int = Field(
-        default=50, ge=1, description="Размер батча для ConsolidationEngine.run."
+        default=50, ge=1, description="Размер батча для ConsolidationEngine.run.",
     )
     consolidation_schedule_cron: str = Field(
         default="",
@@ -261,15 +261,15 @@ class LangFuseSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="LANGFUSE_", extra="ignore")
 
     enabled: bool = Field(
-        default=False,     )
+        default=False     )
     host: str = Field(default="", description="LangFuse host URL.")
     public_key: str = Field(default="", description="LangFuse public key.")
     secret_key: str = Field(default="", description="LangFuse secret key.")
     flush_at: int = Field(
-        default=15, ge=1, description="Batch size для async flush callback'а."
+        default=15, ge=1, description="Batch size для async flush callback'а.",
     )
     deep_link_base: str = Field(
-        default="", description="Базовый URL для построения deep-link в UI LangFuse."
+        default="", description="Базовый URL для построения deep-link в UI LangFuse.",
     )
     sanitize_traces: bool = Field(
         default=True,
@@ -291,9 +291,9 @@ class McpSettings(BaseSettingsWithLoader):
     model_config = SettingsConfigDict(env_prefix="MCP_", extra="ignore")
 
     http_enabled: bool = Field(
-        default=False,     )
+        default=False     )
     bind_path: str = Field(
-        default="/mcp", description="Path-prefix для FastMCP ASGI app."
+        default="/mcp", description="Path-prefix для FastMCP ASGI app.",
     )
     auth_methods: list[str] = Field(
         default_factory=lambda: ["api_key", "jwt"],

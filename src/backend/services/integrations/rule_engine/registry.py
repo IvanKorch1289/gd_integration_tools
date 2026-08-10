@@ -90,7 +90,7 @@ class RuleEngineRegistry:
         return age >= HOT_RELOAD_TTL_SECONDS
 
     async def get_active(
-        self, name: str, *, tenant_id: str | None = None
+        self, name: str, *, tenant_id: str | None = None,
     ) -> dict[str, Any] | None:
         """Возвращает распарсенный ruleset по имени.
 

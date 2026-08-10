@@ -21,7 +21,7 @@ def _reg_with_entries() -> ServiceSchemaRegistry:
             spec_schema={"type": "object", "properties": {"id": {"type": "string"}}},
             output_schema={"type": "object"},
             meta={"description": "Pay order"},
-        )
+        ),
     )
     reg.register(
         SchemaEntry(
@@ -29,7 +29,7 @@ def _reg_with_entries() -> ServiceSchemaRegistry:
             name="user.create",
             spec_schema={"type": "object"},
             meta={"version": "1.0"},
-        )
+        ),
     )
     return reg
 
@@ -101,7 +101,7 @@ class TestExportOpenAPI:
                 name="r1",
                 spec_schema={},
                 output_schema={"type": "string"},
-            )
+            ),
         )
         result = export_openapi(reg)
         schema = result["components"]["schemas"]["Route_r1"]
@@ -141,8 +141,8 @@ class TestExportAsyncAPI:
         reg = ServiceSchemaRegistry()
         reg.register(
             SchemaEntry(
-                kind=SchemaKind.ROUTE, name="r1", meta={"description": "Do thing"}
-            )
+                kind=SchemaKind.ROUTE, name="r1", meta={"description": "Do thing"},
+            ),
         )
         result = export_asyncapi(reg)
         assert result["channels"]["route.r1"]["description"] == "Do thing"

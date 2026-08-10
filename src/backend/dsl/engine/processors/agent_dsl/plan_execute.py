@@ -114,7 +114,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
         gateway = self._resolve_gateway()
         if gateway is None:
             exchange.set_error(
-                f"{self.name}: AIGateway не найден в DI — нельзя выполнить plan_execute"
+                f"{self.name}: AIGateway не найден в DI — нельзя выполнить plan_execute",
             )
             exchange.stop()
             return
@@ -144,7 +144,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
 
                 # Execute
                 exec_result = await self._execute_step(
-                    gateway, exchange, step_id, step_description, step
+                    gateway, exchange, step_id, step_description, step,
                 )
                 if exec_result is None:
                     exchange.set_error(f"{self.name}: step {step_id} execution failed")
@@ -153,11 +153,11 @@ class PlanExecuteProcessor(BaseAIProcessor):
 
                 # Verify
                 verify_result = await self._verify_step(
-                    gateway, exchange, step_id, step_description, exec_result
+                    gateway, exchange, step_id, step_description, exec_result,
                 )
                 if verify_result is None:
                     exchange.set_error(
-                        f"{self.name}: step {step_id} verification failed"
+                        f"{self.name}: step {step_id} verification failed",
                     )
                     exchange.stop()
                     return
@@ -166,7 +166,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
                 if verdict != "ok":
                     all_passed = False
                     error_msg = verify_result.get(
-                        "reason", f"step {step_id} verification failed"
+                        "reason", f"step {step_id} verification failed",
                     )
                     previous_errors.append(error_msg)
                     _logger.info(
@@ -185,7 +185,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
                         "description": step_description,
                         "result": exec_result.get("output", ""),
                         "verdict": verdict,
-                    }
+                    },
                 )
 
             if all_passed:
@@ -204,14 +204,14 @@ class PlanExecuteProcessor(BaseAIProcessor):
 
         # Исчерпаны replan-attempts
         exchange.set_error(
-            f"{self.name}: исчерпаны попытки replan ({self.max_replans})"
+            f"{self.name}: исчерпаны попытки replan ({self.max_replans})",
         )
         exchange.stop()
 
     # ── internal helpers ──
 
     async def _generate_plan(
-        self, gateway: Any, exchange: Exchange[Any], previous_errors: list[str]
+        self, gateway: Any, exchange: Exchange[Any], previous_errors: list[str],
     ) -> list[dict[str, Any]] | None:
         """Вызвать planner_workflow_id и распарсить JSON-план."""
         context = self._build_context(exchange, previous_errors)
@@ -236,7 +236,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
             "step_input": step.get("input", {}),
         }
         response = await self._call_workflow(
-            gateway, self.executor_workflow_id, context
+            gateway, self.executor_workflow_id, context,
         )
         if response is None:
             return None
@@ -262,7 +262,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
             "step_structured": exec_result.get("structured"),
         }
         response = await self._call_workflow(
-            gateway, self.verifier_workflow_id, context
+            gateway, self.verifier_workflow_id, context,
         )
         if response is None:
             return None
@@ -278,7 +278,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
             return {"verdict": "ok" if "ok" in content.lower() else "fail"}
 
     async def _call_workflow(
-        self, gateway: Any, workflow_id: str, context: dict[str, Any]
+        self, gateway: Any, workflow_id: str, context: dict[str, Any],
     ) -> Any | None:
         """Один LLM-вызов через AIGateway."""
         from src.backend.core.ai.gateway import AIRequest
@@ -296,13 +296,13 @@ class PlanExecuteProcessor(BaseAIProcessor):
             return None
         except Exception as exc:
             _logger.warning(
-                "%s: gateway.invoke unexpected error: %s", self.name, exc, exc_info=True
+                "%s: gateway.invoke unexpected error: %s", self.name, exc, exc_info=True,
             )
             return None
 
     @staticmethod
     def _build_context(
-        exchange: Exchange[Any], previous_errors: list[str] | None = None
+        exchange: Exchange[Any], previous_errors: list[str] | None = None,
     ) -> dict[str, Any]:
         """Сформировать контекст для LLM из exchange."""
         ctx: dict[str, Any] = {
@@ -336,7 +336,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
                 return parsed
         except json.JSONDecodeError:
             _logger.warning(
-                "PlanExecuteProcessor: planner returned non-JSON plan: %r", content
+                "PlanExecuteProcessor: planner returned non-JSON plan: %r", content,
             )
         return None
 

@@ -115,7 +115,7 @@ async def test_await_completion_default() -> None:
 @pytest.mark.asyncio
 async def test_await_completion_custom_default() -> None:
     backend = FakeWorkflowBackend(
-        default_result=WorkflowResult(status="failed", failure={"msg": "oops"})
+        default_result=WorkflowResult(status="failed", failure={"msg": "oops"}),
     )
     handle = await backend.start_workflow(
         workflow_name="wf1",

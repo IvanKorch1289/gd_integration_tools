@@ -77,7 +77,7 @@ async def test_cancelled_error_triggers_abort(monkeypatch) -> None:
     storage = _make_storage()
     s3_mock = AsyncMock()
     s3_mock.create_multipart_upload = AsyncMock(
-        return_value={"UploadId": "upload-cancel-test"}
+        return_value={"UploadId": "upload-cancel-test"},
     )
 
     async def upload_part_raise_cancel(**kwargs) -> dict:
@@ -96,7 +96,7 @@ async def test_cancelled_error_triggers_abort(monkeypatch) -> None:
         await storage.upload_stream(key="k-cancel", stream=stream)
 
     s3_mock.abort_multipart_upload.assert_called_once_with(
-        Bucket="test-bucket", Key="k-cancel", UploadId="upload-cancel-test"
+        Bucket="test-bucket", Key="k-cancel", UploadId="upload-cancel-test",
     )
 
 
@@ -106,7 +106,7 @@ async def test_memory_error_triggers_abort(monkeypatch) -> None:
     storage = _make_storage()
     s3_mock = AsyncMock()
     s3_mock.create_multipart_upload = AsyncMock(
-        return_value={"UploadId": "upload-mem-test"}
+        return_value={"UploadId": "upload-mem-test"},
     )
 
     async def upload_part_raise_mem(**kwargs) -> dict:
@@ -125,7 +125,7 @@ async def test_memory_error_triggers_abort(monkeypatch) -> None:
         await storage.upload_stream(key="k-mem", stream=stream)
 
     s3_mock.abort_multipart_upload.assert_called_once_with(
-        Bucket="test-bucket", Key="k-mem", UploadId="upload-mem-test"
+        Bucket="test-bucket", Key="k-mem", UploadId="upload-mem-test",
     )
 
 
@@ -135,7 +135,7 @@ async def test_os_error_still_wrapped_as_service_error(monkeypatch) -> None:
     storage = _make_storage()
     s3_mock = AsyncMock()
     s3_mock.create_multipart_upload = AsyncMock(
-        return_value={"UploadId": "upload-os-test"}
+        return_value={"UploadId": "upload-os-test"},
     )
     s3_mock.upload_part = AsyncMock(side_effect=OSError("connection reset"))
     s3_mock.abort_multipart_upload = AsyncMock(return_value={})
@@ -150,7 +150,7 @@ async def test_os_error_still_wrapped_as_service_error(monkeypatch) -> None:
         await storage.upload_stream(key="k-os", stream=stream)
 
     s3_mock.abort_multipart_upload.assert_called_once_with(
-        Bucket="test-bucket", Key="k-os", UploadId="upload-os-test"
+        Bucket="test-bucket", Key="k-os", UploadId="upload-os-test",
     )
 
 
@@ -162,7 +162,7 @@ async def test_abort_failure_logged_but_original_exception_propagates(
     storage = _make_storage()
     s3_mock = AsyncMock()
     s3_mock.create_multipart_upload = AsyncMock(
-        return_value={"UploadId": "upload-double-fail"}
+        return_value={"UploadId": "upload-double-fail"},
     )
 
     async def upload_part_raise_cancel(**kwargs) -> dict:
@@ -171,7 +171,7 @@ async def test_abort_failure_logged_but_original_exception_propagates(
     s3_mock.upload_part = upload_part_raise_cancel
     # abort ITSELF raises — should be logged, not propagated
     s3_mock.abort_multipart_upload = AsyncMock(
-        side_effect=OSError("abort S3 also down")
+        side_effect=OSError("abort S3 also down"),
     )
 
     monkeypatch.setattr(storage, "_open", _patched_open(s3_mock))

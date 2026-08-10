@@ -135,7 +135,7 @@ class SortByProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, *, field: str, reverse: bool = False, name: str | None = None
+        self, *, field: str, reverse: bool = False, name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"sort_by({field}, reverse={reverse})")
         self._field = field

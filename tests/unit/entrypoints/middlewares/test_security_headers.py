@@ -53,7 +53,7 @@ def _make_middleware() -> tuple[SecurityHeadersMiddleware, AsyncMock]:
                 "type": "http.response.start",
                 "status": 200,
                 "headers": [],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -130,7 +130,7 @@ async def test_headers_override_downstream_defaults() -> None:
                     (b"x-frame-options", b"SAMEORIGIN"),
                     (b"x-content-type-options", b"text/html"),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -166,7 +166,7 @@ async def test_headers_added_to_error_response() -> None:
                 "type": "http.response.start",
                 "status": 500,
                 "headers": [],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": b"err"})
 

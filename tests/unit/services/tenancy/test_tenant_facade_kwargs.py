@@ -26,12 +26,12 @@ class TestTenantFacadeKwargs:
         """
         facade = TenantFacade()
         with patch(
-            "src.backend.core.tenancy.current_tenant", return_value=None
+            "src.backend.core.tenancy.current_tenant", return_value=None,
         ), patch(
-            "src.backend.core.tenancy.set_tenant"
+            "src.backend.core.tenancy.set_tenant",
         ) as mock_set:
             async with facade.with_tenant(
-                tenant_id="t-001", principal_id="p-007"
+                tenant_id="t-001", principal_id="p-007",
             ):
                 # set_tenant должен быть вызван с CapabilityTenant
                 assert mock_set.called
@@ -46,9 +46,9 @@ class TestTenantFacadeKwargs:
         """Без ``principal_id`` — fallback на SYSTEM_TENANT_ID для principal."""
         facade = TenantFacade()
         with patch(
-            "src.backend.core.tenancy.current_tenant", return_value=None
+            "src.backend.core.tenancy.current_tenant", return_value=None,
         ), patch(
-            "src.backend.core.tenancy.set_tenant"
+            "src.backend.core.tenancy.set_tenant",
         ) as mock_set:
             async with facade.with_tenant("tenant_42"):
                 new_ctx = mock_set.call_args_list[0].args[0]

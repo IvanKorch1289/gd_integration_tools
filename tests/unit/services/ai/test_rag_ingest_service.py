@@ -16,7 +16,7 @@ async def test_ingest_inline_processes_all_files() -> None:
     service = RagIngestService(rag_service=rag, deferred=False)
 
     result = await service.ingest(
-        files=[("a.txt", b"hello"), ("b.txt", b"world")], collection="docs"
+        files=[("a.txt", b"hello"), ("b.txt", b"world")], collection="docs",
     )
     assert result["status"] == "completed"
     assert result["doc_ids"] == ["doc1", "doc2"]

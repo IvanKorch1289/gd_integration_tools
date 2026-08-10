@@ -108,7 +108,7 @@ class LangGraphPostgresSaverWrapper:
                 extra={"error": str(dsn_exc)},
             )
         raise LangGraphPostgresSaverUnavailable(
-            "DSN для AsyncPostgresSaver не передан и не найден в settings.database"
+            "DSN для AsyncPostgresSaver не передан и не найден в settings.database",
         )
 
     async def acquire(self) -> Any:
@@ -123,7 +123,7 @@ class LangGraphPostgresSaverWrapper:
         """
         if not self.enabled:
             raise LangGraphPostgresSaverUnavailable(
-                "feature_flag.langgraph_postgres_checkpoint выключен"
+                "feature_flag.langgraph_postgres_checkpoint выключен",
             )
         if self._saver is not None:
             return self._saver
@@ -131,7 +131,7 @@ class LangGraphPostgresSaverWrapper:
             from langchain_postgres import AsyncPostgresSaver
         except ImportError as exc:
             raise LangGraphPostgresSaverUnavailable(
-                "Пакет langchain_postgres не установлен — добавьте extra ai-memory"
+                "Пакет langchain_postgres не установлен — добавьте extra ai-memory",
             ) from exc
 
         dsn = self._resolve_dsn()
@@ -144,7 +144,7 @@ class LangGraphPostgresSaverWrapper:
             saver = await self._exit_stack.enter_async_context(self._ctx)
         except Exception as exc:
             raise LangGraphPostgresSaverUnavailable(
-                f"Не удалось инициализировать AsyncPostgresSaver: {exc}"
+                f"Не удалось инициализировать AsyncPostgresSaver: {exc}",
             ) from exc
 
         # setup() создаёт служебные таблицы checkpoint_*
@@ -181,7 +181,7 @@ class LangGraphPostgresSaverWrapper:
             self._exit_stack = None
 
     async def __aexit__(
-        self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: Any
+        self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: Any,
     ) -> None:
         """Async context manager exit."""
         await self.close()

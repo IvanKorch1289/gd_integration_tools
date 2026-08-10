@@ -104,7 +104,7 @@ def get_service[T](key: Hashable | type[T]) -> T | Any:
                 for k in sorted(_factories, key=lambda x: str(x))
             )
             raise KeyError(
-                f"Сервис '{key}' не зарегистрирован. Доступные: {available}"
+                f"Сервис '{key}' не зарегистрирован. Доступные: {available}",
             )
         instance = factory()
         _singletons[cast(Hashable, key)] = instance

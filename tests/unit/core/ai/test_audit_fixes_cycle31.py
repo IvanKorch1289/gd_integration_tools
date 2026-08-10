@@ -127,7 +127,7 @@ class TestInProcessAgentSandboxAudit:
 
         original_flag = feature_flags.ai_in_process_sandbox_disabled
         monkeypatch.setattr(
-            feature_flags, "ai_in_process_sandbox_disabled", False
+            feature_flags, "ai_in_process_sandbox_disabled", False,
         )
 
         import warnings
@@ -184,7 +184,7 @@ class TestSkillRegistryWhitelistDelegation:
         from src.backend.core.ai.skill_registry import SkillRegistry
 
         SkillRegistry._validate_module_whitelist(
-            "extensions.credit.fn", ["extensions.credit.fn"], "skill1"
+            "extensions.credit.fn", ["extensions.credit.fn"], "skill1",
         )  # should not raise
 
     def test_prefix_glob_allowed(self) -> None:
@@ -192,7 +192,7 @@ class TestSkillRegistryWhitelistDelegation:
         from src.backend.core.ai.skill_registry import SkillRegistry
 
         SkillRegistry._validate_module_whitelist(
-            "extensions.credit.fn", ["extensions.credit.*"], "skill1"
+            "extensions.credit.fn", ["extensions.credit.*"], "skill1",
         )  # should not raise
 
     def test_module_not_in_whitelist_raises(self) -> None:
@@ -201,7 +201,7 @@ class TestSkillRegistryWhitelistDelegation:
 
         with pytest.raises(PermissionError, match="not in whitelist"):
             SkillRegistry._validate_module_whitelist(
-                "extensions.osint.fn", ["extensions.credit.*"], "skill1"
+                "extensions.osint.fn", ["extensions.credit.*"], "skill1",
             )
 
     def test_uses_shared_utilility(self) -> None:
@@ -334,7 +334,7 @@ class TestInProcessAgentSandboxFeatureFlag:
                 InProcessAgentSandbox()
 
     def test_construction_blocked_via_feature_flag_override(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Even when operator sets flag to False, the env gate still blocks
         in production mode. Need both flag=True AND env=False to allow.

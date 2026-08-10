@@ -33,12 +33,12 @@ class TestRepositoryProtocol:
                 return None
 
             async def get_latest_version(
-                self, *args: object, **kwargs: object
+                self, *args: object, **kwargs: object,
             ) -> object:
                 return None
 
             async def restore_to_version(
-                self, *args: object, **kwargs: object
+                self, *args: object, **kwargs: object,
             ) -> object:
                 return None
 
@@ -73,12 +73,12 @@ class TestSpecializedProtocols:
                 return None
 
             async def get_latest_version(
-                self, *args: object, **kwargs: object
+                self, *args: object, **kwargs: object,
             ) -> object:
                 return None
 
             async def restore_to_version(
-                self, *args: object, **kwargs: object
+                self, *args: object, **kwargs: object,
             ) -> object:
                 return None
 
@@ -106,12 +106,12 @@ class TestSpecializedProtocols:
                 return None
 
             async def get_latest_version(
-                self, *args: object, **kwargs: object
+                self, *args: object, **kwargs: object,
             ) -> object:
                 return None
 
             async def restore_to_version(
-                self, *args: object, **kwargs: object
+                self, *args: object, **kwargs: object,
             ) -> object:
                 return None
 
@@ -141,12 +141,12 @@ class TestSpecializedProtocols:
                 return None
 
             async def get_latest_version(
-                self, *args: object, **kwargs: object
+                self, *args: object, **kwargs: object,
             ) -> object:
                 return None
 
             async def restore_to_version(
-                self, *args: object, **kwargs: object
+                self, *args: object, **kwargs: object,
             ) -> object:
                 return None
 

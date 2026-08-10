@@ -28,7 +28,7 @@ class _FakeProcessor(BaseProcessor):
     """Fake processor для тестов с опц. fail / raise_exc."""
 
     def __init__(
-        self, name: str, *, fail: bool = False, raise_exc: bool = False
+        self, name: str, *, fail: bool = False, raise_exc: bool = False,
     ) -> None:
         super().__init__(name=name)
         self.fail = fail
@@ -123,7 +123,7 @@ async def test_failure_triggers_compensation_and_rolled_back() -> None:
     steps = [
         SagaStep(forward=_FakeProcessor("f0"), compensate=_FakeProcessor("c0")),
         SagaStep(
-            forward=_FakeProcessor("f1", fail=True), compensate=_FakeProcessor("c1")
+            forward=_FakeProcessor("f1", fail=True), compensate=_FakeProcessor("c1"),
         ),
     ]
     proc = SagaLRAProcessor(steps, workflow_id="wf1", run_id="r1")
@@ -155,7 +155,7 @@ async def test_failure_triggers_compensation_and_rolled_back() -> None:
     ]
     assert len(comp_calls) == 1
     assert comp_calls[0].kwargs["compensating_actions"] == [
-        {"step_index": 0, "forward_name": "f0", "compensate_name": "c0"}
+        {"step_index": 0, "forward_name": "f0", "compensate_name": "c0"},
     ]
 
     # Финальное состояние — rolled_back
@@ -171,7 +171,7 @@ async def test_failure_when_compensation_fails_state_is_compensating() -> None:
             compensate=_FakeProcessor("c0", raise_exc=True),
         ),
         SagaStep(
-            forward=_FakeProcessor("f1", fail=True), compensate=_FakeProcessor("c1")
+            forward=_FakeProcessor("f1", fail=True), compensate=_FakeProcessor("c1"),
         ),
     ]
     proc = SagaLRAProcessor(steps, workflow_id="wf1", run_id="r1")

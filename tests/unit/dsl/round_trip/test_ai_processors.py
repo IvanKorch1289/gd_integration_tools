@@ -75,7 +75,7 @@ def test_ai_pipeline_round_trip_full_chain() -> None:
 def test_compose_prompt_default_context_property_omitted() -> None:
     """Default ``context_property='vector_results'`` не пишется в spec."""
     builder = RouteBuilder.from_("rt.ai.cp", source="test:rt").compose_prompt(
-        template="T: {input}"
+        template="T: {input}",
     )
     spec = builder.build().to_dict()
     proc = spec["processors"][0]

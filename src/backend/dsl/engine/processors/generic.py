@@ -144,7 +144,7 @@ class LineageTrackerProcessor(BaseProcessor):
                 if exchange.meta
                 else None,
                 "tag": self.tag,
-            }
+            },
         )
         exchange.set_property("_lineage", lineage)
 

@@ -98,7 +98,7 @@ class AIWorkspaceManager:
         return self._root
 
     async def create_new(
-        self, *, tenant: str, artifact_hint: str | None = None
+        self, *, tenant: str, artifact_hint: str | None = None,
     ) -> WorkspaceHandle:
         """Выдать новый изолированный workspace тенанту.
 
@@ -118,7 +118,7 @@ class AIWorkspaceManager:
             usage = self._usage.setdefault(tenant, _TenantUsage())
             if usage.bytes_used > self._quota:
                 raise WorkspaceQuotaExceededError(
-                    tenant=tenant, used_bytes=usage.bytes_used, quota_bytes=self._quota
+                    tenant=tenant, used_bytes=usage.bytes_used, quota_bytes=self._quota,
                 )
 
             session_id = uuid.uuid4().hex
@@ -140,7 +140,7 @@ class AIWorkspaceManager:
                     "session_id": session_id,
                     "path": str(session_path),
                     "artifact_hint": artifact_hint,
-                }
+                },
             )
             return handle
 
@@ -154,7 +154,7 @@ class AIWorkspaceManager:
         age = time.time() - handle.created_at
         if age > self._ttl:
             raise WorkspaceTTLExpiredError(
-                session_id=handle.session_id, age_seconds=age, ttl_seconds=self._ttl
+                session_id=handle.session_id, age_seconds=age, ttl_seconds=self._ttl,
             )
 
     def add_used_bytes(self, tenant: str, delta: int) -> None:
@@ -183,7 +183,7 @@ class AIWorkspaceManager:
                         shutil.rmtree(handle.path, ignore_errors=True)
                     except OSError as exc:
                         _logger.warning(
-                            "ai_workspace.cleanup_failed: %s (%s)", handle.path, exc
+                            "ai_workspace.cleanup_failed: %s (%s)", handle.path, exc,
                         )
                         continue
                     usage.sessions.pop(session_id, None)
@@ -195,12 +195,12 @@ class AIWorkspaceManager:
                             "tenant": tenant,
                             "session_id": session_id,
                             "freed_bytes": size_freed,
-                        }
+                        },
                     )
         return removed
 
     async def start_cleanup_loop(
-        self, *, task_factory: Callable[..., asyncio.Task[None]] | None = None
+        self, *, task_factory: Callable[..., asyncio.Task[None]] | None = None,
     ) -> None:
         """Запустить периодический cleanup через TaskRegistry.
 
@@ -228,7 +228,7 @@ class AIWorkspaceManager:
             from src.backend.core.utils.task_registry import get_task_registry
 
             self._cleanup_task = get_task_registry().create_task(
-                _loop(), name="ai-workspace-cleanup"
+                _loop(), name="ai-workspace-cleanup",
             )
         else:
             self._cleanup_task = task_factory(_loop(), name="ai-workspace-cleanup")

@@ -175,7 +175,7 @@ async def test_resolved_gateway_under_production_has_full_di(
     monkeypatch.setattr(gateway, "_enforced_invoke", enforced_mock)
 
     request = AIRequest(
-        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="p"
+        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="p",
     )
     response = await gateway.invoke(request)
     assert response is sentinel
@@ -195,7 +195,7 @@ async def test_bare_aigateway_under_production_raises_wiring_error(
 
     gateway = AIGateway()
     request = AIRequest(
-        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="p"
+        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="p",
     )
     with pytest.raises(AIGatewayProductionWiringError) as exc_info:
         await gateway.invoke(request)
@@ -220,7 +220,7 @@ async def test_bare_aigateway_under_development_does_not_raise(
     monkeypatch.setattr(gateway, "_enforced_invoke", enforced_mock)
 
     request = AIRequest(
-        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="p"
+        workflow_id="wf", tenant_id="t-1", correlation_id="req-1", prompt_inline="p",
     )
     response = await gateway.invoke(request)
     assert response is sentinel

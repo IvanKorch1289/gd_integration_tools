@@ -61,7 +61,7 @@ class _StubRegistry:
         self.registered: list[str] = []
 
     def register(
-        self, action_id: str, handler: Callable[..., Any], *, spec: Any | None = None
+        self, action_id: str, handler: Callable[..., Any], *, spec: Any | None = None,
     ) -> None:
         """Сохраняет переданный action_id для последующего assert."""
 

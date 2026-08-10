@@ -52,11 +52,11 @@ class PerplexitySearchProcessor(BaseProcessor):
         if model not in self.VALID_MODELS:
             raise ValueError(
                 f"model должен быть одним из {self.VALID_MODELS}, "
-                f"получено {model!r}"
+                f"получено {model!r}",
             )
         if not 0.0 <= temperature <= 1.0:
             raise ValueError(
-                f"temperature должен быть 0.0-1.0, получено {temperature}"
+                f"temperature должен быть 0.0-1.0, получено {temperature}",
             )
         super().__init__(name=name or "perplexity_search")
         self.query = query
@@ -66,7 +66,7 @@ class PerplexitySearchProcessor(BaseProcessor):
         self.target = to
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Выполняет web-поиск через Perplexity и записывает ответ в exchange."""
         if not await self.auth_check(exchange, action="invoke"):

@@ -39,7 +39,7 @@ class DSLSettings(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "dsl"
     model_config = SettingsConfigDict(
-        env_prefix="DSL_", extra="forbid", validate_default=True
+        env_prefix="DSL_", extra="forbid", validate_default=True,
     )
 
     routes_dir: Path = Field(

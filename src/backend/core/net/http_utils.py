@@ -24,5 +24,5 @@ def generate_link_page(url: str, description: str) -> HTMLResponse:
                 </p>
             </body>
         </html>
-        """
+        """,
     )

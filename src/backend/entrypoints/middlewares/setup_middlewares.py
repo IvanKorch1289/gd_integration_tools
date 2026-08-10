@@ -137,8 +137,8 @@ def build_default_registry() -> MiddlewareRegistry:
         CircuitBreakerMiddleware,
         {
             "default_policy": BreakerPolicy(
-                failure_threshold=5, window_seconds=60.0, reset_timeout=30.0
-            )
+                failure_threshold=5, window_seconds=60.0, reset_timeout=30.0,
+            ),
         },
         order=250,
     )
@@ -160,13 +160,13 @@ def build_default_registry() -> MiddlewareRegistry:
     registry.register_builtin("degradation", DegradationMiddleware, order=360)
     # IL-OBS1 (ADR-032): кэш body для downstream middleware.
     registry.register_builtin(
-        "request_body_cache", RequestBodyCacheMiddleware, order=380
+        "request_body_cache", RequestBodyCacheMiddleware, order=380,
     )
     registry.register_builtin("timeout", TimeoutMiddleware, order=400)
 
     # Layer 3: body / auth (500-749) --------------------------------------- #
     registry.register_builtin(
-        "response_cache", ResponseCacheMiddleware, {"max_age": 60}, order=520
+        "response_cache", ResponseCacheMiddleware, {"max_age": 60}, order=520,
     )
     if settings.app.compression_brotli:
         # S10 K2 W2 (PERF-6.6): Brotli compression — действует выше GZIP.
@@ -191,7 +191,7 @@ def build_default_registry() -> MiddlewareRegistry:
     registry.register_builtin("data_masking", DataMaskingMiddleware, order=580)
     # Wave 8.1: маркер успешной аутентификации в response.
     registry.register_builtin(
-        "auth_method_header", AuthMethodHeaderMiddleware, order=600
+        "auth_method_header", AuthMethodHeaderMiddleware, order=600,
     )
     # V7: глобальный defense-in-depth auth-guard.
     registry.register_builtin("auth_required", AuthRequiredMiddleware, order=620)
@@ -233,7 +233,7 @@ def build_default_registry() -> MiddlewareRegistry:
     )
 
     registry.register_builtin(
-        "pii_masking_response", PIIMaskingResponseMiddleware, order=700
+        "pii_masking_response", PIIMaskingResponseMiddleware, order=700,
     )
     # S183: RPA policy deny-by-default (Layer 3, after auth).
     # Per Master Prompt §3.3: обязателен для банковской шины.
@@ -259,10 +259,10 @@ def build_default_registry() -> MiddlewareRegistry:
     # Layer 4: logging / metrics (750-999) --------------------------------- #
     registry.register_builtin("audit_log", AuditLogMiddleware, order=760)
     registry.register_builtin(
-        "audit_replay", AuditReplayMiddleware, {"sample_rate": 1.0}, order=780
+        "audit_replay", AuditReplayMiddleware, {"sample_rate": 1.0}, order=780,
     )
     registry.register_builtin(
-        "inner_request_logging", InnerRequestLoggingMiddleware, order=800
+        "inner_request_logging", InnerRequestLoggingMiddleware, order=800,
     )
     # IL-OBS1 (ADR-032): FastAPI OTEL middleware — HTTP-span с tenant/route_id.
     registry.register_builtin("otel", OtelMiddleware, order=820)

@@ -24,7 +24,7 @@ def budget() -> TokenBudget:
     return TokenBudget(
         backend=InMemoryTokenBudgetBackend(),
         default_config=TokenBudgetConfig(
-            soft_limit=100, hard_limit=200, period=BudgetPeriod.DAILY
+            soft_limit=100, hard_limit=200, period=BudgetPeriod.DAILY,
         ),
     )
 
@@ -81,7 +81,7 @@ async def test_enforce_pre_call_within(budget: TokenBudget) -> None:
 async def test_enforce_post_call_diff_positive(budget: TokenBudget) -> None:
     await enforce_pre_call(budget=budget, tenant_id="t-post", estimated_tokens=40)
     snap = await enforce_post_call(
-        budget=budget, tenant_id="t-post", estimated_tokens=40, actual_tokens=80
+        budget=budget, tenant_id="t-post", estimated_tokens=40, actual_tokens=80,
     )
     assert snap is not None
     assert snap.used == 80
@@ -91,7 +91,7 @@ async def test_enforce_post_call_diff_positive(budget: TokenBudget) -> None:
 async def test_enforce_post_call_diff_zero_or_negative(budget: TokenBudget) -> None:
     await enforce_pre_call(budget=budget, tenant_id="t-post-2", estimated_tokens=60)
     snap = await enforce_post_call(
-        budget=budget, tenant_id="t-post-2", estimated_tokens=60, actual_tokens=40
+        budget=budget, tenant_id="t-post-2", estimated_tokens=60, actual_tokens=40,
     )
     assert snap is not None
     assert snap.used == 60
@@ -99,7 +99,7 @@ async def test_enforce_post_call_diff_zero_or_negative(budget: TokenBudget) -> N
 
 def test_render_429_shape() -> None:
     exc = BudgetExceeded(
-        tenant_id="t", used=999, hard_limit=200, period=BudgetPeriod.DAILY
+        tenant_id="t", used=999, hard_limit=200, period=BudgetPeriod.DAILY,
     )
     body = render_429(exc)
     assert body["error"] == "token_budget_exceeded"
@@ -115,7 +115,7 @@ def test_tenant_from_saml_attributes_basic() -> None:
             "tenant_id": "bank-corp",
             "subscription_plan": "enterprise",
             "region": "eu",
-        }
+        },
     )
     assert ctx.tenant_id == "bank-corp"
     assert ctx.plan == "enterprise"
@@ -124,7 +124,7 @@ def test_tenant_from_saml_attributes_basic() -> None:
 
 def test_tenant_from_saml_attributes_array_values() -> None:
     ctx = tenant_from_saml_attributes(
-        attributes={"tenant_id": ["bank-corp"], "subscription_plan": ["pro"]}
+        attributes={"tenant_id": ["bank-corp"], "subscription_plan": ["pro"]},
     )
     assert ctx.tenant_id == "bank-corp"
     assert ctx.plan == "pro"
@@ -157,7 +157,7 @@ async def test_fail_open_on_backend_error() -> None:
     budget_open = TokenBudget(
         backend=_FlakyBackend(),
         default_config=TokenBudgetConfig(
-            soft_limit=10, hard_limit=20, fail_mode="open"
+            soft_limit=10, hard_limit=20, fail_mode="open",
         ),
     )
     snap = await budget_open.reserve(tenant_id="t-fail-open", tokens=100)
@@ -179,7 +179,7 @@ async def test_fail_closed_on_backend_error() -> None:
     budget_closed = TokenBudget(
         backend=_FlakyBackend(),
         default_config=TokenBudgetConfig(
-            soft_limit=10, hard_limit=20, fail_mode="closed"
+            soft_limit=10, hard_limit=20, fail_mode="closed",
         ),
     )
     # Cycle 36: raise typed BudgetBackendUnavailable вместо bare ConnectionError.

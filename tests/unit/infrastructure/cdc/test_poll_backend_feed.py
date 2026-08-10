@@ -32,7 +32,7 @@ async def test_poll_cdc_feed_mode_basic() -> None:
                 "new": {"id": 2, "name": "Bob"},
                 "cursor": "2025-01-01T00:00:01Z",
             },
-        ]
+        ],
     )
     backend = PollCDCBackend(profile="test", feed=feed)
     events: list[CDCEvent] = []
@@ -56,7 +56,7 @@ async def test_poll_cdc_feed_skips_non_dict() -> None:
             {"table": "t1", "new": {"v": 1}},
             "not-a-dict",  # type: ignore[list-item]
             {"table": "t1", "new": {"v": 2}},
-        ]
+        ],
     )
     backend = PollCDCBackend(profile="test", feed=feed)
     events: list[CDCEvent] = []
@@ -108,7 +108,7 @@ async def test_poll_cdc_replay_feed_mode() -> None:
     backend = PollCDCBackend(profile="test", feed=feed)
     events: list[CDCEvent] = []
     async for evt in backend.replay(
-        start_cursor=CDCCursor(value="start", backend="poll")
+        start_cursor=CDCCursor(value="start", backend="poll"),
     ):
         events.append(evt)
     assert len(events) == 1

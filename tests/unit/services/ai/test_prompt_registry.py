@@ -106,7 +106,7 @@ async def test_langfuse_path_compiles_and_returns_version() -> None:
     assert pv.version == 5
     assert pv.labels["source"] == "langfuse"
     mock_lf.get_prompt.assert_called_once_with(
-        "my_prompt", label="production", version=None
+        "my_prompt", label="production", version=None,
     )
 
 

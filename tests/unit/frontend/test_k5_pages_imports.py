@@ -50,7 +50,7 @@ def test_streamlit_page_spec_loadable(filename: str) -> None:
     if not page.exists():
         pytest.skip(f"Страница не создана: {filename}")
     spec = importlib.util.spec_from_file_location(
-        f"_k5_page_{filename.replace('.', '_')}", page
+        f"_k5_page_{filename.replace('.', '_')}", page,
     )
     assert spec is not None, f"spec_from_file_location вернул None для {filename}"
     assert spec.loader is not None

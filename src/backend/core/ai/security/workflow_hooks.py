@@ -101,7 +101,7 @@ def banking_transaction_hook(subject: str, context: dict[str, Any]) -> SecurityD
         # Allow non-mutating SELECT/PRAGMA/SHOW.
         normalized = sql_query.strip().upper().lstrip("(")
         if not normalized.startswith(
-            ("SELECT", "PRAGMA", "SHOW", "EXPLAIN", "WITH")
+            ("SELECT", "PRAGMA", "SHOW", "EXPLAIN", "WITH"),
         ):
             return SecurityDecision(
                 allowed=False,
@@ -282,7 +282,7 @@ def register_banking_transaction_hook(framework: Any) -> None:
             name="banking_transaction",
             trigger="pre_tool",
             check_fn=banking_transaction_hook,
-        )
+        ),
     )
     _logger.info("registered: banking_transaction_hook")
 
@@ -294,7 +294,7 @@ def register_rpa_browser_hook(framework: Any) -> None:
             name="rpa_browser",
             trigger="pre_tool",
             check_fn=rpa_browser_hook,
-        )
+        ),
     )
     _logger.info("registered: rpa_browser_hook")
 
@@ -306,7 +306,7 @@ def register_code_generation_hook(framework: Any) -> None:
             name="code_generation",
             trigger="pre_tool",
             check_fn=code_generation_hook,
-        )
+        ),
     )
     _logger.info("registered: code_generation_hook")
 
@@ -318,7 +318,7 @@ def register_data_export_hook(framework: Any) -> None:
             name="data_export",
             trigger="pre_tool",
             check_fn=data_export_hook,
-        )
+        ),
     )
     _logger.info("registered: data_export_hook")
 

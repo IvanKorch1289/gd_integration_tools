@@ -58,7 +58,7 @@ class WafBypassError(RuntimeError):
     def __init__(self, decision: WafDecision) -> None:
         self.decision = decision
         super().__init__(
-            f"WAF blocked outbound request to {decision.host!r}: {decision.reason}"
+            f"WAF blocked outbound request to {decision.host!r}: {decision.reason}",
         )
 
 
@@ -139,7 +139,7 @@ class WafPolicy:
         return WafDecision(True, "allowed", host=host)
 
     async def evaluate_async(
-        self, url: str, payload: bytes | None = None
+        self, url: str, payload: bytes | None = None,
     ) -> WafDecision:
         """Async-версия :meth:`evaluate` с поддержкой async payload-scanner.
 
@@ -168,7 +168,7 @@ class WafPolicy:
         return WafDecision(True, "allowed", host=host)
 
     def _evaluate_pre_payload(
-        self, url: str, payload: bytes | None
+        self, url: str, payload: bytes | None,
     ) -> WafDecision | None:
         """Общая часть sync/async-проверок до payload-scanner'а.
 

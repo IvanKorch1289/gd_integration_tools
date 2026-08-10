@@ -58,7 +58,7 @@ class S3ClientProtocol(Protocol):
         ...
 
     async def put_object(
-        self, key: str, data: bytes, content_type: str | None = None
+        self, key: str, data: bytes, content_type: str | None = None,
     ) -> None:
         """Put object to S3.
 

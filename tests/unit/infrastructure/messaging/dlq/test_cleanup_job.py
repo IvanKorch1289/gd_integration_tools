@@ -48,7 +48,7 @@ async def test_cleanup_stats_total_deleted() -> None:
 
 @pytest.mark.asyncio
 async def test_run_deletes_per_policy(
-    fake_registry: _FakeRegistry, fake_client: MagicMock
+    fake_registry: _FakeRegistry, fake_client: MagicMock,
 ) -> None:
     job = DLQCleanupJob(ch_client=fake_client, registry=fake_registry)
     stats = await job.run()
@@ -58,7 +58,7 @@ async def test_run_deletes_per_policy(
 
 @pytest.mark.asyncio
 async def test_run_handles_exception(
-    fake_registry: _FakeRegistry, fake_client: MagicMock
+    fake_registry: _FakeRegistry, fake_client: MagicMock,
 ) -> None:
     fake_client.execute = AsyncMock(side_effect=RuntimeError("ch down"))
     job = DLQCleanupJob(ch_client=fake_client, registry=fake_registry)
@@ -95,11 +95,11 @@ async def test_count_deleted_approx_returns_zero_on_error(
 
 @pytest.mark.asyncio
 async def test_run_uses_custom_clock(
-    fake_registry: _FakeRegistry, fake_client: MagicMock
+    fake_registry: _FakeRegistry, fake_client: MagicMock,
 ) -> None:
     now = datetime(2024, 1, 1, tzinfo=UTC)
     job = DLQCleanupJob(
-        ch_client=fake_client, registry=fake_registry, clock=lambda: now
+        ch_client=fake_client, registry=fake_registry, clock=lambda: now,
     )
     await job.run()
     params_list = [

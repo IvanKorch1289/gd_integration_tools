@@ -122,7 +122,7 @@ def test_from_mongo_with_pipeline() -> None:
 def test_from_mongo_smoke_validates_constructor() -> None:
     """``from_mongo`` создаёт MongoSource для smoke-валидации."""
     cfg = MongoSourceConfig(
-        connection_url="mongodb://localhost:27017", database="shop", collection="orders"
+        connection_url="mongodb://localhost:27017", database="shop", collection="orders",
     )
     src = MongoSource(cfg)
     assert src.source_id == "mongo:shop/orders"
@@ -155,6 +155,6 @@ def test_nats_source_kind_is_mq() -> None:
 def test_mongo_source_kind_is_cdc() -> None:
     """MongoSource.kind = SourceKind.CDC (change streams — CDC pattern)."""
     src = MongoSource(
-        MongoSourceConfig(connection_url="mongodb://x", database="d", collection="c")
+        MongoSourceConfig(connection_url="mongodb://x", database="d", collection="c"),
     )
     assert src.kind.value == "cdc"

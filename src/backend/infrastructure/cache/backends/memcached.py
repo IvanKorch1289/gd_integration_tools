@@ -38,14 +38,14 @@ class MemcachedBackend(CacheBackend):
     """
 
     def __init__(
-        self, host: str = "127.0.0.1", port: int = 11211, *, default_ttl: int = 3600
+        self, host: str = "127.0.0.1", port: int = 11211, *, default_ttl: int = 3600,
     ) -> None:
         try:
             import aiomcache
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
                 "Memcached-бэкенд требует пакет 'aiomcache'. "
-                "Добавьте его в pyproject.toml и переинициализируйте."
+                "Добавьте его в pyproject.toml и переинициализируйте.",
             ) from exc
 
         self._aiomcache = aiomcache
@@ -109,7 +109,7 @@ class MemcachedBackend(CacheBackend):
         """
         raise NotImplementedError(
             "Memcached protocol не поддерживает pattern-delete "
-            "(нет KEYS/SCAN). Используйте Redis/KeyDB для cache invalidation."
+            "(нет KEYS/SCAN). Используйте Redis/KeyDB для cache invalidation.",
         )
 
     async def exists(self, key: str) -> bool:

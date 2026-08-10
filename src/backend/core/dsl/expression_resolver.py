@@ -32,7 +32,7 @@ _VAR_PATTERN = re.compile(
     r"'([^']+)'"  # key (single-quoted)
     r"(?:\s*,\s*scope\s*=\s*'([^']+)')?"  # optional scope
     r"(?:\s*,\s*default\s*=\s*('[^']*'|\"([^\"]*)\"))?"  # optional default
-    r"\s*\)\}"
+    r"\s*\)\}",
 )
 
 
@@ -82,7 +82,7 @@ class ExpressionResolver:
                     return default_quoted
                 raise ExpressionResolutionError(
                     f"Variable {key!r} not found in scope {scope_str!r} "
-                    f"(no default provided)"
+                    f"(no default provided)",
                 )
             return str(resolved)
 

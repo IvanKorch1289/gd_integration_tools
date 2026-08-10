@@ -47,7 +47,7 @@ class TestSemanticRouterProcessor:
     async def test_empty_query_routes_to_default(self) -> None:
         exchange = _Exchange(body={"question": ""})
         proc = SemanticRouterProcessor(
-            intents={"a": "route.a"}, default_route="route.default"
+            intents={"a": "route.a"}, default_route="route.default",
         )
 
         with patch(
@@ -84,7 +84,7 @@ class TestSemanticRouterProcessor:
         ):
             mock_rag = AsyncMock()
             mock_rag.search = AsyncMock(
-                return_value=[{"score": 0.9, "intent": "billing"}]
+                return_value=[{"score": 0.9, "intent": "billing"}],
             )
             mock_get.return_value = mock_rag
 
@@ -99,7 +99,7 @@ class TestSemanticRouterProcessor:
     async def test_falls_back_when_score_below_threshold(self) -> None:
         exchange = _Exchange(body="something")
         proc = SemanticRouterProcessor(
-            intents={"a": "route.a"}, default_route="route.def", threshold=0.8
+            intents={"a": "route.a"}, default_route="route.def", threshold=0.8,
         )
 
         with (
@@ -122,7 +122,7 @@ class TestSemanticRouterProcessor:
     async def test_rag_error_with_default_fallback(self) -> None:
         exchange = _Exchange(body="q")
         proc = SemanticRouterProcessor(
-            intents={"a": "route.a"}, default_route="route.def"
+            intents={"a": "route.a"}, default_route="route.def",
         )
 
         with (
@@ -174,7 +174,7 @@ class TestSemanticRouterProcessor:
     async def test_route_execution_error_fails_exchange(self) -> None:
         exchange = _Exchange(body="q")
         proc = SemanticRouterProcessor(
-            intents={"a": "route.a"}, default_route="route.def"
+            intents={"a": "route.a"}, default_route="route.def",
         )
 
         with (

@@ -86,7 +86,7 @@ class TestAPIKeyAuthArgon2:
         ],
     )
     def test_verify_corrupt_hash_returns_false(
-        self, auth: APIKeyAuth, bad_hash: str
+        self, auth: APIKeyAuth, bad_hash: str,
     ) -> None:
         """Malformed stored hash → False (no exception propagates)."""
         assert auth.verify("any-key", bad_hash) is False
@@ -156,7 +156,7 @@ class TestNeedsArgon2Upgrade:
     def test_weak_argon2_needs_upgrade(self) -> None:
         # Слабее baseline (time_cost=1, parallelism=1, memory=64MB OK).
         weak = PasswordHasher(time_cost=1, memory_cost=8192, parallelism=1).hash(
-            "x"
+            "x",
         )
         assert needs_argon2_upgrade(weak) is True
 

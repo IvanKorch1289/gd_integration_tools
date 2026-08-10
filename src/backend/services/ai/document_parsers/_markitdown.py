@@ -88,7 +88,7 @@ class MarkitdownEngine:
             from markitdown import MarkItDown
         except ImportError as exc:
             raise MarkitdownUnavailableError(
-                "markitdown пакет не установлен (uv add markitdown)"
+                "markitdown пакет не установлен (uv add markitdown)",
             ) from exc
         try:
             self._md = MarkItDown(enable_plugins=False)
@@ -97,7 +97,7 @@ class MarkitdownEngine:
         return self._md
 
     async def convert(
-        self, content: bytes, mime: str, filename: str | None = None
+        self, content: bytes, mime: str, filename: str | None = None,
     ) -> tuple[str, list[str]]:
         """Конвертирует bytes в Markdown.
 
@@ -116,7 +116,7 @@ class MarkitdownEngine:
         """
         if len(content) > self._max_bytes:
             raise ValueError(
-                f"markitdown: размер {len(content)} > max_bytes={self._max_bytes}"
+                f"markitdown: размер {len(content)} > max_bytes={self._max_bytes}",
             )
 
         md = self._ensure_loaded()

@@ -70,16 +70,16 @@ def test_capability_scope_no_colon() -> None:
 
 @pytest.mark.asyncio
 async def test_happy_path_writes_records(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     backend = _FakeMemoryBackend(
-        records=[{"key": "k1", "value": "v1"}, {"key": "k2", "value": "v2"}]
+        records=[{"key": "k1", "value": "v1"}, {"key": "k2", "value": "v2"}],
     )
     monkeypatch.setattr(
-        MemoryRecallProcessor, "_resolve_backend", staticmethod(lambda: backend)
+        MemoryRecallProcessor, "_resolve_backend", staticmethod(lambda: backend),
     )
 
     ex: Exchange[Any] = Exchange()
@@ -97,21 +97,21 @@ async def test_happy_path_writes_records(
 
 @pytest.mark.asyncio
 async def test_dynamic_query_from_body(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     backend = _FakeMemoryBackend()
     monkeypatch.setattr(
-        MemoryRecallProcessor, "_resolve_backend", staticmethod(lambda: backend)
+        MemoryRecallProcessor, "_resolve_backend", staticmethod(lambda: backend),
     )
 
     ex: Exchange[Any] = Exchange(
-        in_message=Message(body={"user_input": "dynamic query here"})
+        in_message=Message(body={"user_input": "dynamic query here"}),
     )
     proc = MemoryRecallProcessor(
-        namespace="acme:chat", query_property="body.user_input"
+        namespace="acme:chat", query_property="body.user_input",
     )
     await proc.process(ex, context)
 
@@ -120,14 +120,14 @@ async def test_dynamic_query_from_body(
 
 @pytest.mark.asyncio
 async def test_tenant_id_placeholder(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     backend = _FakeMemoryBackend()
     monkeypatch.setattr(
-        MemoryRecallProcessor, "_resolve_backend", staticmethod(lambda: backend)
+        MemoryRecallProcessor, "_resolve_backend", staticmethod(lambda: backend),
     )
 
     ex: Exchange[Any] = Exchange()
@@ -140,13 +140,13 @@ async def test_tenant_id_placeholder(
 
 @pytest.mark.asyncio
 async def test_backend_unavailable_writes_empty_list(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     monkeypatch.setattr(
-        MemoryRecallProcessor, "_resolve_backend", staticmethod(lambda: None)
+        MemoryRecallProcessor, "_resolve_backend", staticmethod(lambda: None),
     )
 
     ex: Exchange[Any] = Exchange()
@@ -158,7 +158,7 @@ async def test_backend_unavailable_writes_empty_list(
 
 @pytest.mark.asyncio
 async def test_backend_exception_writes_empty(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     """Если backend.recall() raises — empty result + no error в exchange."""
     from src.backend.core.config.features import feature_flags
@@ -197,5 +197,5 @@ def test_to_spec_round_trip() -> None:
             "k": 10,
             "query_property": "body.user_input",
             "result_property": "ctx",
-        }
+        },
     }

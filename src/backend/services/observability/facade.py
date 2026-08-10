@@ -49,7 +49,7 @@ class ObservabilityFacade:
         self._plugin = plugin
 
     async def record_metric(
-        self, name: str, value: float = 1.0, *, tags: dict[str, str] | None = None
+        self, name: str, value: float = 1.0, *, tags: dict[str, str] | None = None,
     ) -> None:
         """Записать metric value.
 
@@ -130,7 +130,7 @@ class ObservabilityFacade:
 
     @contextmanager
     def log_event(
-        self, event: str, *, severity: str = "info", **fields: Any
+        self, event: str, *, severity: str = "info", **fields: Any,
     ) -> Iterator[None]:
         """Structured logging context manager.
 

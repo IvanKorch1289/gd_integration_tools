@@ -49,10 +49,10 @@ class MongoExpressDialogStore:
         try:
             collection = self._client().collection(_COLLECTION)
             await collection.create_index(
-                [("group_chat_id", 1), ("updated_at", -1)], name="chat_updated"
+                [("group_chat_id", 1), ("updated_at", -1)], name="chat_updated",
             )
             await collection.create_index(
-                "ttl", name="ttl_expire", expireAfterSeconds=0
+                "ttl", name="ttl_expire", expireAfterSeconds=0,
             )
         except Exception as exc:
             logger.warning("MongoExpressDialogStore: ensure_indexes failed: %s", exc)
@@ -84,7 +84,7 @@ class MongoExpressDialogStore:
             keyboard: Структура клавиатуры (опционально).
         """
         message = ExpressMessage(
-            role=role, body=body, sync_id=sync_id, bubble=bubble, keyboard=keyboard
+            role=role, body=body, sync_id=sync_id, bubble=bubble, keyboard=keyboard,
         ).model_dump(mode="json")
         now = _utc_now()
         ttl = (now + _DEFAULT_TTL).isoformat()
@@ -118,7 +118,7 @@ class MongoExpressDialogStore:
             )
         except Exception as exc:
             logger.warning(
-                "ExpressDialogStore.append_message failed (%s): %s", session_id, exc
+                "ExpressDialogStore.append_message failed (%s): %s", session_id, exc,
             )
 
     async def get_by_session(self, session_id: str) -> ExpressDialog | None:
@@ -127,7 +127,7 @@ class MongoExpressDialogStore:
         return _doc_to_dialog(doc) if doc else None
 
     async def list_by_chat(
-        self, group_chat_id: str, limit: int = 100
+        self, group_chat_id: str, limit: int = 100,
     ) -> list[ExpressDialog]:
         """Список dialogs в group_chat (с pagination)."""
         docs = await self._client().find(
@@ -139,7 +139,7 @@ class MongoExpressDialogStore:
         return [_doc_to_dialog(d) for d in docs]
 
     async def update_context(
-        self, session_id: str, context_delta: dict[str, Any]
+        self, session_id: str, context_delta: dict[str, Any],
     ) -> None:
         """Обновить context (merge delta в existing dict)."""
         if not context_delta:
@@ -147,7 +147,7 @@ class MongoExpressDialogStore:
         update = {f"context.{k}": v for k, v in context_delta.items()}
         update["updated_at"] = _utc_now().isoformat()
         await self._client().update_one(
-            _COLLECTION, query={"_id": session_id}, update=update, upsert=True
+            _COLLECTION, query={"_id": session_id}, update=update, upsert=True,
         )
 
 

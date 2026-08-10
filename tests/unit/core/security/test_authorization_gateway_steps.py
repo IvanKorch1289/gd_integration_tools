@@ -54,7 +54,7 @@ class _FakeCasbin:
         self.calls: list[tuple[str, str, str, str | None]] = []
 
     def enforce(
-        self, user_id: str, resource: str, action: str, tenant_id: str | None = None
+        self, user_id: str, resource: str, action: str, tenant_id: str | None = None,
     ) -> bool:
         self.calls.append((user_id, resource, action, tenant_id))
         if self._raises is not None:
@@ -83,7 +83,7 @@ class _FakeOPA:
         self.calls: list[tuple[str, dict[str, Any]]] = []
 
     async def query(
-        self, policy: str, input_doc: dict[str, Any]
+        self, policy: str, input_doc: dict[str, Any],
     ) -> _FakePolicyDecision:
         self.calls.append((policy, dict(input_doc)))
         if self._raises is not None:
@@ -130,7 +130,7 @@ class TestOPAStep:
     """S-L8-2: AuthorizationGateway.opa_step factory."""
 
     async def test_opa_flag_off_returns_noop_allow(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "opa_runtime_query_enabled", False)
         opa = _FakeOPA(allow=False)  # не должен быть вызван
@@ -145,7 +145,7 @@ class TestOPAStep:
         opa = _FakeOPA(allow=True)
         step = AuthorizationGateway.opa_step(opa, "authz/default")
         reason = await step(
-            "p1", "orders", "read", {"tenant_id": "acme", "correlation_id": "cid-1"}
+            "p1", "orders", "read", {"tenant_id": "acme", "correlation_id": "cid-1"},
         )
         assert reason.outcome == "allow"
         # input_doc должен содержать все 5 полей
@@ -159,7 +159,7 @@ class TestOPAStep:
         assert input_doc["correlation_id"] == "cid-1"
 
     async def test_opa_flag_on_deny_with_reasons(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "opa_runtime_query_enabled", True)
         opa = _FakeOPA(allow=False, reasons=["role_missing", "tenant_mismatch"])
@@ -169,7 +169,7 @@ class TestOPAStep:
         assert reason.detail == "role_missing,tenant_mismatch"
 
     async def test_opa_query_exception_is_fail_closed(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "opa_runtime_query_enabled", True)
         opa = _FakeOPA(allow=True, raises=ConnectionError("opa unreachable"))
@@ -187,7 +187,7 @@ class TestCombinedChain:
     """Композиция capability → casbin → opa в AuthorizationGateway."""
 
     async def test_full_chain_allow_all_three(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "opa_runtime_query_enabled", True)
         casbin = _FakeCasbin(allow=True)
@@ -212,7 +212,7 @@ class TestCombinedChain:
         assert len(opa.calls) == 1
 
     async def test_casbin_deny_short_circuits_opa(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Reason-chain order: capability allow → casbin deny → opa НЕ вызван."""
         monkeypatch.setattr(feature_flags, "opa_runtime_query_enabled", True)

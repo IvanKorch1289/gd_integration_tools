@@ -26,14 +26,14 @@ from src.backend.infrastructure.scheduler.cron_validator import (
 )
 
 croniter_mod = pytest.importorskip(
-    "croniter", reason="croniter не установлен в текущем окружении"
+    "croniter", reason="croniter не установлен в текущем окружении",
 )
 
 
 def test_valid_5field_weekday_business_hours() -> None:
     base = datetime(2026, 5, 18, 8, 0, tzinfo=ZoneInfo("Europe/Moscow"))
     result = validate_cron_expression(
-        "0 9 * * 1-5", timezone="Europe/Moscow", preview_count=5, base=base
+        "0 9 * * 1-5", timezone="Europe/Moscow", preview_count=5, base=base,
     )
     assert result.is_valid
     assert len(result.next_executions) == 5
@@ -46,7 +46,7 @@ def test_valid_5field_weekday_business_hours() -> None:
 def test_valid_6field_with_seconds() -> None:
     base = datetime(2026, 5, 20, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
     result = validate_cron_expression(
-        "30 0 9 * * 1-5", timezone="UTC", preview_count=3, base=base
+        "30 0 9 * * 1-5", timezone="UTC", preview_count=3, base=base,
     )
     assert result.is_valid
     for dt in result.next_executions:
@@ -55,7 +55,7 @@ def test_valid_6field_with_seconds() -> None:
 
 def test_invalid_expression() -> None:
     result = validate_cron_expression(
-        "this is not cron", timezone="UTC", preview_count=5
+        "this is not cron", timezone="UTC", preview_count=5,
     )
     assert not result.is_valid
     assert result.error is not None
@@ -64,7 +64,7 @@ def test_invalid_expression() -> None:
 
 def test_invalid_timezone() -> None:
     result = validate_cron_expression(
-        "0 9 * * *", timezone="Mars/Olympus", preview_count=5
+        "0 9 * * *", timezone="Mars/Olympus", preview_count=5,
     )
     assert not result.is_valid
     assert result.error is not None
@@ -73,7 +73,7 @@ def test_invalid_timezone() -> None:
 def test_timezone_aware_next() -> None:
     base = datetime(2026, 5, 20, 8, 0, tzinfo=ZoneInfo("UTC"))
     result = validate_cron_expression(
-        "0 12 * * *", timezone="Europe/Moscow", preview_count=1, base=base
+        "0 12 * * *", timezone="Europe/Moscow", preview_count=1, base=base,
     )
     assert result.is_valid
     next_dt = result.next_executions[0]
@@ -85,7 +85,7 @@ def test_timezone_aware_next() -> None:
 def test_leap_year_feb_29() -> None:
     base = datetime(2028, 2, 27, 0, 0, tzinfo=ZoneInfo("UTC"))
     result = validate_cron_expression(
-        "0 0 29 2 *", timezone="UTC", preview_count=2, base=base
+        "0 0 29 2 *", timezone="UTC", preview_count=2, base=base,
     )
     assert result.is_valid
     first = result.next_executions[0]

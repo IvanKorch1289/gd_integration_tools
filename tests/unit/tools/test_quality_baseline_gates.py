@@ -18,7 +18,7 @@ from tools.checks import mypy_budget
 
 @pytest.mark.unit
 def test_mypy_budget_process_error_returns_exit_2(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Авария mypy без ошибок не должна давать ложный PASS."""
 
@@ -35,7 +35,7 @@ def test_mypy_budget_process_error_returns_exit_2(
 
 @pytest.mark.unit
 def test_mypy_baseline_roundtrip_uses_supported_format(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
     """Mypy baseline хранит целое число ошибок и имя инструмента."""
     baseline = tmp_path / "mypy.json"
@@ -52,7 +52,7 @@ def test_mypy_baseline_roundtrip_uses_supported_format(
 
 @pytest.mark.unit
 def test_test_baseline_default_process_error_returns_exit_2(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Default collect-only не должен скрывать непарсируемую ошибку pytest."""
 
@@ -77,12 +77,12 @@ def test_test_baseline_default_process_error_returns_exit_2(
 
 @pytest.mark.unit
 def test_test_baseline_allows_known_collection_error(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
     """Allowlisted collection error сохраняет штатный exit 0."""
     allowlist = tmp_path / "allowlist.txt"
     allowlist.write_text(
-        "tests/unit/test_old.py\tизвестная ошибка коллекции\n", encoding="utf-8"
+        "tests/unit/test_old.py\tизвестная ошибка коллекции\n", encoding="utf-8",
     )
 
     def failed_pytest(*, run: bool) -> tuple[int, str]:
@@ -91,7 +91,7 @@ def test_test_baseline_allows_known_collection_error(
 
     monkeypatch.setattr(check_test_baseline, "run_pytest", failed_pytest)
     monkeypatch.setattr(
-        sys, "argv", ["check_test_baseline.py", "--allowlist", str(allowlist)]
+        sys, "argv", ["check_test_baseline.py", "--allowlist", str(allowlist)],
     )
 
     assert check_test_baseline.main() == 0

@@ -41,7 +41,7 @@ def _png_bytes() -> bytes:
     """Минимальный валидный PNG для image-ingest."""
     return bytes.fromhex(
         "89504E470D0A1A0A0000000D49484452000000010000000108060000001F15C489"
-        "0000000D49444154789C636400010000000500010D0A2DB40000000049454E44AE426082"
+        "0000000D49444154789C636400010000000500010D0A2DB40000000049454E44AE426082",
     )
 
 
@@ -53,10 +53,10 @@ async def test_service_search_cross_tenant_returns_empty() -> None:
     """``service.search`` под tenant_b → [] после ingest под tenant_a."""
     svc = _make_service()
     await svc.ingest_document(
-        _png_bytes(), collection="shared", mime="image/png", tenant_id="tenant_a"
+        _png_bytes(), collection="shared", mime="image/png", tenant_id="tenant_a",
     )
     results = await svc.search(
-        "tenant_a", collection="shared", top_k=10, tenant_id="tenant_b"
+        "tenant_a", collection="shared", top_k=10, tenant_id="tenant_b",
     )
     assert results == [], (
         f"service.search должен вернуть [], got {len(results)} chunk(s) от tenant_a"
@@ -86,7 +86,7 @@ async def test_pipeline_query_cross_tenant_returns_empty() -> None:
         tenant_id="tenant_a",
     )
     results = await pipeline.query(
-        "tenant_a", collection="shared", top_k=10, tenant_id="tenant_b"
+        "tenant_a", collection="shared", top_k=10, tenant_id="tenant_b",
     )
     assert results == [], (
         f"pipeline.query должен вернуть [], got {len(results)} chunk(s) от tenant_a"
@@ -127,7 +127,7 @@ async def test_mismatched_metadata_chunks_filtered_out() -> None:
 
     # query под tenant_x — должен видеть ТОЛЬКО good-chunk.
     results = await svc.search(
-        "document", collection="shared", top_k=10, tenant_id="tenant_x"
+        "document", collection="shared", top_k=10, tenant_id="tenant_x",
     )
 
     assert len(results) == 1, f"Должен быть только good-chunk, got {len(results)}"
@@ -136,7 +136,7 @@ async def test_mismatched_metadata_chunks_filtered_out() -> None:
 
     # query под other_tenant — должен видеть ТОЛЬКО bad-chunk.
     results_other = await svc.search(
-        "document", collection="shared", top_k=10, tenant_id="other_tenant"
+        "document", collection="shared", top_k=10, tenant_id="other_tenant",
     )
     assert len(results_other) == 1
     assert results_other[0].chunk.chunk_id == "evil-chunk-1"
@@ -181,11 +181,11 @@ async def test_ingest_without_tenant_id_filtered_at_pipeline_query() -> None:
     svc = _make_service()
     pipeline = MultimodalPipeline(svc)
     await pipeline.ingest(
-        modal="text", payload="untagged pipeline text", collection="default"
+        modal="text", payload="untagged pipeline text", collection="default",
     )
 
     pipeline_hits = await pipeline.query(
-        "any", collection="default", top_k=10, tenant_id="tenant_x"
+        "any", collection="default", top_k=10, tenant_id="tenant_x",
     )
     assert pipeline_hits == [], (
         f"pipeline.query должен filter untagged, got {len(pipeline_hits)} chunk(s)"

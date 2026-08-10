@@ -149,7 +149,7 @@ async def test_overrides_existing_response_headers() -> None:
                     (b"x-request-id", b"downstream-stale-id"),
                     (b"content-type", b"application/json"),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": b"ok"})
 
@@ -176,7 +176,7 @@ async def test_preserves_body_chunks_unchanged() -> None:
         await send({"type": "http.response.body", "body": b"chunk-1"})
         await send({"type": "http.response.body", "body": b"chunk-2"})
         await send(
-            {"type": "http.response.body", "body": b"", "more_body": False}
+            {"type": "http.response.body", "body": b"", "more_body": False},
         )
 
     app.side_effect = downstream

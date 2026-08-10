@@ -145,7 +145,7 @@ class TestBoundaryConsistency:
                     content = fp.read()
                 # Unified: catches both 'from' and 'import' styles.
                 matches = re.findall(
-                    r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content
+                    r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content,
                 )
                 for mod in matches:
                     if mod == "src.backend.core.api":
@@ -170,7 +170,7 @@ class TestApiClientsBoundaryRatchet:
         {
             "src.backend.core.api",
             "src.backend.core.frontend_facade",
-        }
+        },
     )
 
     def test_api_clients_only_use_facade(self):
@@ -194,7 +194,7 @@ class TestApiClientsBoundaryRatchet:
                 content = fp.read()
             # Unified: catches both 'from' and 'import' styles.
             matches = re.findall(
-                r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content
+                r"(?:from|import)\s+(src\.backend\.[\w\.]+)", content,
             )
             for mod in matches:
                 if mod in self.ALLOWED_FACADES:
@@ -236,7 +236,7 @@ class TestApiClientsBoundaryRatchet:
                     pattern = re.compile(
                         rf"from {re.escape(forbidden_mod)}"
                         r"[\.\w]*|"
-                        rf"import {re.escape(forbidden_mod)}"
+                        rf"import {re.escape(forbidden_mod)}",
                     )
                     if pattern.search(content):
                         violations.append((p, forbidden_mod))

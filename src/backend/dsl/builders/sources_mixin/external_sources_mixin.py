@@ -94,7 +94,7 @@ class ExternalSourcesMixin:
             **kwargs,
         )
         builder: RouteBuilder = cls(
-            route_id=route_id, source=f"grpc_stream:{stub_class}/{method}"
+            route_id=route_id, source=f"grpc_stream:{stub_class}/{method}",
         )
         object.__setattr__(builder, "_source_instance", source_instance)
         return builder

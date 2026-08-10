@@ -89,7 +89,7 @@ class AgentSecurityFacade:
         return self._workflow_policies.pop(workflow_id, None) is not None
 
     def validate_prompt(
-        self, prompt: str, *, workflow_id: str | None = None, **kwargs: Any
+        self, prompt: str, *, workflow_id: str | None = None, **kwargs: Any,
     ) -> SecurityDecision:
         """Validate LLM prompt (S187).
 
@@ -104,7 +104,7 @@ class AgentSecurityFacade:
         return self.framework.validate_prompt(prompt, context=ctx)
 
     def validate_command(
-        self, command: str, *, workflow_id: str | None = None, **kwargs: Any
+        self, command: str, *, workflow_id: str | None = None, **kwargs: Any,
     ) -> SecurityDecision:
         """Validate shell command (S187).
 
@@ -119,7 +119,7 @@ class AgentSecurityFacade:
         return self.framework.validate_command(command, context=ctx)
 
     def validate_sql(
-        self, query: str, *, workflow_id: str | None = None, **kwargs: Any
+        self, query: str, *, workflow_id: str | None = None, **kwargs: Any,
     ) -> SecurityDecision:
         """Validate SQL query (S187).
 
@@ -148,7 +148,7 @@ class AgentSecurityFacade:
             raise NotImplementedError(
                 "AgentSecurityFramework.validate_sql does not yet support "
                 f"policy_override (workflow_id={workflow_id!r}); "
-                "see cycle-5/D-AUDIT-502"
+                "see cycle-5/D-AUDIT-502",
             )
         # Без override — passthrough на framework (common path).
         return self.framework.validate_sql(query)
@@ -173,11 +173,11 @@ class AgentSecurityFacade:
         if policy is not None:
             ctx["policy_override"] = policy
         return self.framework.validate_file_modification(
-            file_path, file_size_bytes=file_size_bytes, context=ctx
+            file_path, file_size_bytes=file_size_bytes, context=ctx,
         )
 
     def mask_output(
-        self, output: str, *, workflow_id: str | None = None, **kwargs: Any
+        self, output: str, *, workflow_id: str | None = None, **kwargs: Any,
     ) -> SecurityDecision:
         """Mask sensitive data в output (S187).
 

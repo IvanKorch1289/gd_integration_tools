@@ -61,7 +61,7 @@ class _DictRedis:
         return self._data.get(key)
 
     async def set(
-        self, key: str, value: bytes, *, ex: int | None = None, **_: Any
+        self, key: str, value: bytes, *, ex: int | None = None, **_: Any,
     ) -> bool:
         self._data[key] = value
         self.set_calls.append((key, value, ex))
@@ -98,7 +98,7 @@ async def test_put_then_get_threat_verdict(fake_redis: Any) -> None:
     cache = AntivirusHashCache(fake_redis)
     payload = b"infected-bytes"
     verdict = AntivirusScanResult(
-        clean=False, signature="Eicar-Test-Signature", backend="clamav_tcp"
+        clean=False, signature="Eicar-Test-Signature", backend="clamav_tcp",
     )
 
     await cache.put(payload, verdict)

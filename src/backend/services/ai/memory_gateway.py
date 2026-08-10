@@ -63,14 +63,14 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
     """
 
     def __init__(
-        self, *, short_term: Any, long_term: Any | None = None, mem0: Any | None = None
+        self, *, short_term: Any, long_term: Any | None = None, mem0: Any | None = None,
     ) -> None:
         self._short = short_term
         self._long = long_term
         self._mem0 = mem0
 
     async def get_messages(
-        self, *, tenant_id: str, session_id: str, limit: int = 50
+        self, *, tenant_id: str, session_id: str, limit: int = 50,
     ) -> list[MemoryMessage]:
         """Conversation history через ``AgentMemoryService.get_conversation``."""
         scoped = _scope(tenant_id, session_id)
@@ -117,7 +117,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         return message_id
 
     async def get_facts(
-        self, *, tenant_id: str, session_id: str | None = None, limit: int = 50
+        self, *, tenant_id: str, session_id: str | None = None, limit: int = 50,
     ) -> list[MemoryFact]:
         """Возвращает known facts.
 
@@ -146,7 +146,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
             return []
         try:
             results = await self._long.recall(
-                tenant_id=tenant_id, query="", top_k=limit
+                tenant_id=tenant_id, query="", top_k=limit,
             )
         except Exception as exc:
             logger.warning("memory_gateway.get_facts_long_failed: %s", exc)
@@ -190,14 +190,14 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         return fact_key
 
     async def recall_semantic(
-        self, *, tenant_id: str, query: str, top_k: int = 5
+        self, *, tenant_id: str, query: str, top_k: int = 5,
     ) -> list[MemoryFact]:
         """Semantic search через :class:`LangMemService.recall`."""
         if self._long is None:
             return []
         try:
             results = await self._long.recall(
-                tenant_id=tenant_id, query=query, top_k=top_k
+                tenant_id=tenant_id, query=query, top_k=top_k,
             )
         except Exception as exc:
             logger.warning("memory_gateway.recall_failed: %s", exc)
@@ -205,7 +205,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         return [_lang_to_fact(r) for r in (results or [])]
 
     async def recall_mem0(
-        self, *, tenant_id: str, session_id: str, query: str, top_k: int = 5
+        self, *, tenant_id: str, session_id: str, query: str, top_k: int = 5,
     ) -> list[MemoryFact]:
         """Дополнительный recall через Mem0 backend (если сконфигурирован).
 
@@ -241,7 +241,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         return value if value else None
 
     async def save_scratchpad(
-        self, *, tenant_id: str, session_id: str, content: str
+        self, *, tenant_id: str, session_id: str, content: str,
     ) -> None:
         """Записывает scratchpad (один документ на session)."""
         scoped = _scope(tenant_id, session_id)
@@ -306,5 +306,5 @@ def get_memory_gateway() -> UnifiedMemoryGateway:
     """
     raise RuntimeError(
         "memory_gateway не зарегистрирован — убедитесь, что service_setup "
-        "выполнил app.state.memory_gateway = UnifiedMemoryGateway(...)"
+        "выполнил app.state.memory_gateway = UnifiedMemoryGateway(...)",
     )

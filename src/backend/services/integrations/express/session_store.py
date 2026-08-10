@@ -18,7 +18,7 @@ class ExpressSessionStore(Protocol):
     """Express bot session store contract."""
 
     async def create(
-        self, bot_id: str, *, initial_context: dict[str, Any] | None = None
+        self, bot_id: str, *, initial_context: dict[str, Any] | None = None,
     ) -> str:
         """Create a new session.
 
@@ -43,7 +43,7 @@ class ExpressSessionStore(Protocol):
         ...
 
     async def update_context(
-        self, session_id: str, context_delta: dict[str, Any]
+        self, session_id: str, context_delta: dict[str, Any],
     ) -> None:
         """Update session context.
 

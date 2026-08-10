@@ -22,7 +22,7 @@ from src.backend.core.auth.jwks_cache import JwksCache, JwksFetchError
 
 class CountingFetcher:
     def __init__(
-        self, payload: dict, *, fail: bool = False, delay: float = 0.0
+        self, payload: dict, *, fail: bool = False, delay: float = 0.0,
     ) -> None:
         self.payload = payload
         self.calls = 0

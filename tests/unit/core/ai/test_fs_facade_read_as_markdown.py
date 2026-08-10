@@ -36,7 +36,7 @@ class TestReadAsMarkdownLegacy:
 
 class TestCapabilityCheck:
     async def test_capability_check_invoked_for_read_and_parse(
-        self, tmp_path: Path
+        self, tmp_path: Path,
     ) -> None:
         calls: list[tuple[str, str, str | None]] = []
 
@@ -45,7 +45,7 @@ class TestCapabilityCheck:
 
         wm = AIWorkspaceManager(root=tmp_path / "ai_ws")
         facade = AIFsFacade(
-            workspace_manager=wm, capability_check=_check, plugin="ai-agent"
+            workspace_manager=wm, capability_check=_check, plugin="ai-agent",
         )
 
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:

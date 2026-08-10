@@ -84,7 +84,7 @@ class GeoProcessor(BaseProcessor):
         super().__init__(name=name or f"geo:{mode}")
         if mode not in _ALLOWED_MODES:
             raise ValueError(
-                f"geo: mode must be one of {sorted(_ALLOWED_MODES)}, got {mode!r}"
+                f"geo: mode must be one of {sorted(_ALLOWED_MODES)}, got {mode!r}",
             )
         self._mode = mode
         self._address = address

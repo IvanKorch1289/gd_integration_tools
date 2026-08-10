@@ -164,7 +164,7 @@ class JsonFileTraceStorage:
                         duration_ms=d.get("duration_ms", 0.0),
                         timestamp=d.get("timestamp", ""),
                         error=d.get("error"),
-                    )
+                    ),
                 )
             except Exception as exc:
                 if not isinstance(exc, (json.JSONDecodeError, KeyError)):
@@ -211,7 +211,7 @@ if __name__ == "__main__":
                     processor_type="log",
                     phase="end",
                     duration_ms=2.0,
-                )
+                ),
             )
             recent = await js.read_recent("r1", 10)
             assert len(recent) == 2

@@ -47,7 +47,7 @@ class _CollectingSink(LogSink):
     """
 
     def __init__(
-        self, name: str = "collecting", *, fail: bool = False, healthy: bool = True
+        self, name: str = "collecting", *, fail: bool = False, healthy: bool = True,
     ) -> None:
         self.name = name
         self.is_healthy = healthy

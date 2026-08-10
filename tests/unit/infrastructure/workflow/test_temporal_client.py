@@ -106,7 +106,7 @@ def test_worker_pool_propagates_versioning_disabled() -> None:
 @pytest.mark.asyncio
 async def test_heartbeat_monitor_tracks_activity() -> None:
     monitor = ActivityHeartbeatMonitor(
-        check_interval_seconds=0.05, stale_threshold_seconds=0.5
+        check_interval_seconds=0.05, stale_threshold_seconds=0.5,
     )
     await monitor.heartbeat("act-1")
     await monitor.heartbeat("act-2")
@@ -119,7 +119,7 @@ async def test_heartbeat_monitor_tracks_activity() -> None:
 @pytest.mark.asyncio
 async def test_heartbeat_monitor_detects_stale() -> None:
     monitor = ActivityHeartbeatMonitor(
-        check_interval_seconds=0.05, stale_threshold_seconds=0.05
+        check_interval_seconds=0.05, stale_threshold_seconds=0.05,
     )
     await monitor.heartbeat("act-old")
     await asyncio.sleep(0.1)  # больше threshold

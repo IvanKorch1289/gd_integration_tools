@@ -68,7 +68,7 @@ class AuditProcessor(BaseProcessor):
             raise ValueError("AuditProcessor: укажите action или action_from")
         if outcome not in _VALID_OUTCOMES:
             raise ValueError(
-                f"AuditProcessor: outcome={outcome!r} не из {sorted(_VALID_OUTCOMES)}"
+                f"AuditProcessor: outcome={outcome!r} не из {sorted(_VALID_OUTCOMES)}",
             )
         self._action = action
         self._action_from = action_from

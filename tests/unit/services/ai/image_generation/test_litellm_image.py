@@ -118,13 +118,13 @@ async def test_generate_tracks_cost_via_metrics(
     class _FakeMetrics:
         def record_cost(self, *, provider: str, model: str, cost_usd: float) -> None:
             recorded.append(
-                {"provider": provider, "model": model, "cost_usd": cost_usd}
+                {"provider": provider, "model": model, "cost_usd": cost_usd},
             )
 
     fake_metrics_module = types.ModuleType("src.backend.services.ai.metrics")
     fake_metrics_module.get_agent_metrics_service = lambda: _FakeMetrics()  # type: ignore[attr-defined]
     monkeypatch.setitem(
-        sys.modules, "src.backend.services.ai.metrics", fake_metrics_module
+        sys.modules, "src.backend.services.ai.metrics", fake_metrics_module,
     )
 
     svc = LiteLLMImageGenerationService(enabled=True, cost_tracking=True)

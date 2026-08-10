@@ -53,7 +53,7 @@ async def test_gateway_xor_first_match(
     executed: list[str] = []
 
     async def fake_compile_activity_step(
-        decl: ActivityDeclaration, ctx: dict[str, Any]
+        decl: ActivityDeclaration, ctx: dict[str, Any],
     ) -> str:
         executed.append(decl.name)
         outputs = ctx.setdefault("_outputs", {})
@@ -104,7 +104,7 @@ async def test_gateway_xor_default_fallback(
     executed: list[str] = []
 
     async def fake_compile_activity_step(
-        decl: ActivityDeclaration, ctx: dict[str, Any]
+        decl: ActivityDeclaration, ctx: dict[str, Any],
     ) -> str:
         executed.append(decl.name)
         return decl.name
@@ -150,7 +150,7 @@ async def test_gateway_and_waits_all(
     executed: list[str] = []
 
     async def fake_compile_activity_step(
-        decl: ActivityDeclaration, ctx: dict[str, Any]
+        decl: ActivityDeclaration, ctx: dict[str, Any],
     ) -> str:
         executed.append(decl.name)
         return decl.name
@@ -205,7 +205,7 @@ async def test_gateway_or_cancels_remaining(
     cancel_observed: list[str] = []
 
     async def fake_compile_activity_step(
-        decl: ActivityDeclaration, ctx: dict[str, Any]
+        decl: ActivityDeclaration, ctx: dict[str, Any],
     ) -> str:
         executed.append(decl.name)
         if decl.name == "fast":
@@ -245,7 +245,7 @@ async def test_gateway_or_cancels_remaining(
 
     # Запускаем compile_or с защитой от зависания в slow-ветках.
     result = await asyncio.wait_for(
-        compile_or(decl, ctx), timeout=2.0
+        compile_or(decl, ctx), timeout=2.0,
     )
 
     # Первая завершённая ветка — fast (activity result fake_compile returned).
@@ -267,7 +267,7 @@ def test_gateway_mixin_pushes_activity_declaration_with_gateway_arg() -> None:
             name="a",
             condition="flag",
             steps=[ActivityDeclaration(name="do.a")],
-        )
+        ),
     )
 
     assert len(builder._steps) == 1
@@ -289,14 +289,14 @@ def test_gateway_mixin_and_and_or_set_correct_kind() -> None:
             name="x",
             condition=None,
             steps=[ActivityDeclaration(name="x.step")],
-        )
+        ),
     )
     or_builder = WorkflowBuilder("or.smoke").gateway_or(
         BranchSpec(
             name="y",
             condition=None,
             steps=[ActivityDeclaration(name="y.step")],
-        )
+        ),
     )
 
     assert and_builder._steps[0].args["gateway"].kind == "and"

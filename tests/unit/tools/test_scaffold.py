@@ -18,7 +18,7 @@ class TestScaffoldPaths:
         result = subprocess.run(
             ["python", "tools/scaffold.py", "processor",
              "--name", "TestProc", "--module", "testproc", "--dry-run"],
-            capture_output=True, text=True, cwd="/home/user/dev/gd_integration_tools"
+            capture_output=True, text=True, cwd="/home/user/dev/gd_integration_tools",
         )
         # dry-run output должен указывать правильный путь
         assert "src/backend/dsl/engine/processors/testproc.py" in result.stdout, (
@@ -35,7 +35,7 @@ class TestScaffoldPaths:
         result = subprocess.run(
             ["python", "tools/scaffold.py", "route",
              "--name", "test.demo", "--dry-run"],
-            capture_output=True, text=True, cwd="/home/user/dev/gd_integration_tools"
+            capture_output=True, text=True, cwd="/home/user/dev/gd_integration_tools",
         )
         assert "src/backend/dsl/routes/test_demo.py" in result.stdout, (
             f"Scaffold route должен создавать в src/backend/dsl/, "

@@ -48,7 +48,7 @@ async def test_build_health_check_known_component() -> None:
             mode="auto",
             chain=["pg"],
             last_used_backend="pg",
-        )
+        ),
     }
     check = build_resilience_health_check("db", coordinator=coord)
     result = await check()
@@ -84,7 +84,7 @@ def test_resilience_components_report() -> None:
             mode="auto",
             chain=["pg"],
             last_used_backend="pg",
-        )
+        ),
     }
     report = resilience_components_report(coordinator=coord)
     assert "db" in report

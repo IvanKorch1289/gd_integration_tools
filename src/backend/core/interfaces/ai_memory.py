@@ -68,7 +68,7 @@ class MemoryProtocol(Protocol):
     """
 
     async def recall(
-        self, namespace: str, query: str, *, k: int = 5
+        self, namespace: str, query: str, *, k: int = 5,
     ) -> list[MemoryRecord]:
         """Поиск релевантных записей памяти (RAG-style retrieval).
 
@@ -87,7 +87,7 @@ class MemoryProtocol(Protocol):
         ...
 
     async def store(
-        self, namespace: str, key: str, value: Any, *, ttl_s: int | None = None
+        self, namespace: str, key: str, value: Any, *, ttl_s: int | None = None,
     ) -> None:
         """Сохранить запись в памяти.
 

@@ -28,7 +28,7 @@ def _reset_meter_provider_state():
     Сбрасываем ДО и ПОСЛЕ, чтобы порядок тестов в pytest не имел значения.
     """
     setup_module = importlib.import_module(
-        "src.backend.infrastructure.observability.otel.setup"
+        "src.backend.infrastructure.observability.otel.setup",
     )
     if setup_module._meter_provider_ref is not None:
         try:
@@ -103,7 +103,7 @@ def test_disabled_by_default_module_ref_is_none() -> None:
     и ``shutdown_otel_metrics`` отрабатывает как no-op.
     """
     setup_module = importlib.import_module(
-        "src.backend.infrastructure.observability.otel.setup"
+        "src.backend.infrastructure.observability.otel.setup",
     )
 
     assert setup_module._meter_provider_ref is None, (

@@ -33,7 +33,7 @@ class AuthInterceptor:
         self._expected_key = expected_key
 
     async def intercept_service(
-        self, continuation: Any, handler_call_details: Any
+        self, continuation: Any, handler_call_details: Any,
     ) -> Any:
         """Метод intercept_service (см. signature)."""
         from grpc import StatusCode
@@ -41,17 +41,17 @@ class AuthInterceptor:
 
         metadata = dict(handler_call_details.invocation_metadata or [])
         key = metadata.get("x-api-key") or metadata.get(
-            "authorization", ""
+            "authorization", "",
         ).removeprefix("Bearer ")
         if not key or key != self._expected_key:
             grpc_logger.warning(
-                "gRPC unauthenticated request: method=%s", handler_call_details.method
+                "gRPC unauthenticated request: method=%s", handler_call_details.method,
             )
 
             async def _abort(_request_or_iterator: Any, context: Any) -> None:
                 try:
                     await context.abort(
-                        StatusCode.UNAUTHENTICATED, "invalid or missing API key"
+                        StatusCode.UNAUTHENTICATED, "invalid or missing API key",
                     )
                 except AbortError:
                     raise

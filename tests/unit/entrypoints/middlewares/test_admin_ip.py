@@ -51,7 +51,7 @@ class TestIPRestrictionMiddleware:
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_non_admin_route_bypasses(
-        self, middleware: IPRestrictionMiddleware
+        self, middleware: IPRestrictionMiddleware,
     ) -> None:
         """Non-admin routes are allowed for any IP."""
         send = AsyncMock()
@@ -65,7 +65,7 @@ class TestIPRestrictionMiddleware:
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_admin_route_allowed_ip(
-        self, middleware: IPRestrictionMiddleware
+        self, middleware: IPRestrictionMiddleware,
     ) -> None:
         """Admin route with allowed IP passes through."""
         store = get_ip_restriction_store()
@@ -82,7 +82,7 @@ class TestIPRestrictionMiddleware:
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_admin_route_forbidden_ip(
-        self, middleware: IPRestrictionMiddleware
+        self, middleware: IPRestrictionMiddleware,
     ) -> None:
         """Admin route with disallowed IP → 403 (no-raise pattern, cycle 41)."""
         store = get_ip_restriction_store()
@@ -99,7 +99,7 @@ class TestIPRestrictionMiddleware:
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_admin_route_allowed_subnet(
-        self, middleware: IPRestrictionMiddleware
+        self, middleware: IPRestrictionMiddleware,
     ) -> None:
         """Admin route with IP inside allowed subnet passes through."""
         store = get_ip_restriction_store()
@@ -116,7 +116,7 @@ class TestIPRestrictionMiddleware:
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_per_route_rule_takes_priority(
-        self, middleware: IPRestrictionMiddleware
+        self, middleware: IPRestrictionMiddleware,
     ) -> None:
         """Per-route rule is checked before global admin rule."""
         store = get_ip_restriction_store()
@@ -134,7 +134,7 @@ class TestIPRestrictionMiddleware:
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_per_route_rule_forbids_admin_ip(
-        self, middleware: IPRestrictionMiddleware
+        self, middleware: IPRestrictionMiddleware,
     ) -> None:
         """Per-route rule can forbid an IP that is allowed globally."""
         store = get_ip_restriction_store()
@@ -185,7 +185,7 @@ class TestIPRestrictionMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_passes_through_non_http_scope(
-        self, middleware: IPRestrictionMiddleware
+        self, middleware: IPRestrictionMiddleware,
     ) -> None:
         """Non-HTTP scope (websocket) пробрасывается без IP-проверки."""
         # Используем собственный app+downstream (fixture использует отдельный app).
@@ -210,7 +210,7 @@ class TestIPRestrictionMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_403_response_contains_json_detail(
-        self, middleware: IPRestrictionMiddleware
+        self, middleware: IPRestrictionMiddleware,
     ) -> None:
         """403 response body — JSON с detail полем (PII-safe)."""
         store = get_ip_restriction_store()
@@ -242,7 +242,7 @@ class TestIPRestrictionMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_does_not_call_downstream_when_blocked(
-        self, middleware: IPRestrictionMiddleware
+        self, middleware: IPRestrictionMiddleware,
     ) -> None:
         """При blocked path downstream НЕ вызывается (cycle 41 invariant)."""
         store = get_ip_restriction_store()
@@ -277,7 +277,7 @@ class TestIPRestrictionMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_no_client_info_denies_by_default(
-        self, middleware: IPRestrictionMiddleware
+        self, middleware: IPRestrictionMiddleware,
     ) -> None:
         """Cycle 41: если client IP отсутствует (anonymous) → 403.
 

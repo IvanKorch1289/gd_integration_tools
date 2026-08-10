@@ -63,7 +63,7 @@ def test_profile_requires_auth(client: TestClient) -> None:
 
 def test_profile_invalid_token(client: TestClient) -> None:
     resp = client.get(
-        "/mobile/v1/profile", headers={"Authorization": "Bearer invalid_token"}
+        "/mobile/v1/profile", headers={"Authorization": "Bearer invalid_token"},
     )
     assert resp.status_code == 401
 
@@ -115,14 +115,14 @@ def test_notifications_paginated(client: TestClient) -> None:
     assert body["data"]["total_estimated"] == 5
     # Second page
     resp = client.get(
-        "/mobile/v1/notifications?limit=2&cursor=2", headers=_auth(user_id)
+        "/mobile/v1/notifications?limit=2&cursor=2", headers=_auth(user_id),
     )
     body = resp.json()
     assert len(body["data"]["items"]) == 2
     assert body["data"]["next_cursor"] == "4"
     # Last page
     resp = client.get(
-        "/mobile/v1/notifications?limit=2&cursor=4", headers=_auth(user_id)
+        "/mobile/v1/notifications?limit=2&cursor=4", headers=_auth(user_id),
     )
     body = resp.json()
     assert len(body["data"]["items"]) == 1
@@ -254,7 +254,7 @@ def test_cursor_page_defaults() -> None:
 
 def test_compressed_response_metadata() -> None:
     cr = CompressedResponse(
-        data={"x": 1}, timestamp=datetime.now(tz=UTC), request_id="abc"
+        data={"x": 1}, timestamp=datetime.now(tz=UTC), request_id="abc",
     )
     assert cr.compressed is False  # default — router sets True explicitly
     assert cr.schema_version == 1  # default

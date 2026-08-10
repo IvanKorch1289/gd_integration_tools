@@ -42,7 +42,7 @@ class TestDryRunResult:
     def test_to_dict_with_steps(self) -> None:
         result = DryRunResult(route_id="r1")
         result.steps.append(
-            StepResult(index=0, label="step1", duration_ms=5.0, output_preview="ok")
+            StepResult(index=0, label="step1", duration_ms=5.0, output_preview="ok"),
         )
         d = result.to_dict()
         assert d["route_id"] == "r1"
@@ -120,7 +120,7 @@ class TestWaterfallLines:
     def test_single_step(self) -> None:
         result = DryRunResult(route_id=None)
         result.steps.append(
-            StepResult(index=0, label="s1", duration_ms=10.0, output_preview="ok")
+            StepResult(index=0, label="s1", duration_ms=10.0, output_preview="ok"),
         )
         lines = waterfall_lines(result)
         assert len(lines) == 1
@@ -130,10 +130,10 @@ class TestWaterfallLines:
     def test_width_scaling(self) -> None:
         result = DryRunResult(route_id=None)
         result.steps.append(
-            StepResult(index=0, label="fast", duration_ms=10.0, output_preview="ok")
+            StepResult(index=0, label="fast", duration_ms=10.0, output_preview="ok"),
         )
         result.steps.append(
-            StepResult(index=1, label="slow", duration_ms=100.0, output_preview="ok")
+            StepResult(index=1, label="slow", duration_ms=100.0, output_preview="ok"),
         )
         lines = waterfall_lines(result, width=10)
         # The slower step should have more blocks
@@ -142,7 +142,7 @@ class TestWaterfallLines:
     def test_zero_duration_fallback(self) -> None:
         result = DryRunResult(route_id=None)
         result.steps.append(
-            StepResult(index=0, label="zero", duration_ms=0.0, output_preview="ok")
+            StepResult(index=0, label="zero", duration_ms=0.0, output_preview="ok"),
         )
         lines = waterfall_lines(result)
         assert len(lines) == 1

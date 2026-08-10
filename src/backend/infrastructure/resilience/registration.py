@@ -41,7 +41,7 @@ RESILIENCE_COMPONENTS: Final[tuple[str, ...]] = (
 
 
 def _register_clickhouse(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.audit_chain import (
         build_audit_fallbacks,
@@ -57,7 +57,7 @@ def _register_clickhouse(
 
 
 def _register_clamav(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.antivirus_chain import (
         build_antivirus_fallbacks,
@@ -73,7 +73,7 @@ def _register_clamav(
 
 
 def _register_kafka(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.mq_chain import (
         build_mq_fallbacks,
@@ -89,7 +89,7 @@ def _register_kafka(
 
 
 def _register_db_main(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.database_chain import (
         build_database_fallbacks,
@@ -105,7 +105,7 @@ def _register_db_main(
 
 
 def _register_redis(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.cache_chain import (
         build_cache_fallbacks,
@@ -121,7 +121,7 @@ def _register_redis(
 
 
 def _register_minio(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.object_storage_chain import (
         build_object_storage_fallbacks,
@@ -137,7 +137,7 @@ def _register_minio(
 
 
 def _register_vault(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.secrets_chain import (
         build_secrets_fallbacks,
@@ -153,7 +153,7 @@ def _register_vault(
 
 
 def _register_mongodb(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.mongo_chain import (
         build_mongo_fallbacks,
@@ -169,7 +169,7 @@ def _register_mongodb(
 
 
 def _register_elasticsearch(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.search_chain import (
         build_search_fallbacks,
@@ -185,7 +185,7 @@ def _register_elasticsearch(
 
 
 def _register_smtp(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.smtp_chain import (
         build_smtp_fallbacks,
@@ -201,7 +201,7 @@ def _register_smtp(
 
 
 def _register_express(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     from src.backend.infrastructure.resilience.components.express_chain import (
         build_express_fallbacks,
@@ -232,7 +232,7 @@ _REGISTRARS: Final[dict[str, Any]] = {
 
 
 def register_all_components(
-    coordinator: ResilienceCoordinator, settings: ResilienceSettings
+    coordinator: ResilienceCoordinator, settings: ResilienceSettings,
 ) -> None:
     """Регистрирует все 11 компонентов W26 в ``coordinator``.
 

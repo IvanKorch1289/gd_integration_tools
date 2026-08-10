@@ -69,7 +69,7 @@ class WsSink(Sink):
                 await ws.send(text)
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
+                ok=False, details={"error": str(exc) or exc.__class__.__name__},
             )
 
         return SinkResult(ok=True, details={"bytes": len(text), "url": self.url})
@@ -92,7 +92,7 @@ class WsSink(Sink):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )
         latency_ms = (time.perf_counter() - start) * 1000.0
         return HealthResult.ok(latency_ms=latency_ms, mode=mode)

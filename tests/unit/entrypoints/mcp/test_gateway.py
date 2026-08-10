@@ -37,7 +37,7 @@ class TestCheckFeatureFlag:
                 raise ImportError("nope")
 
         with patch(
-            "src.backend.entrypoints.mcp.gateway.feature_flags", BadFlags()
+            "src.backend.entrypoints.mcp.gateway.feature_flags", BadFlags(),
         ):
             assert _check_feature_flag() is False
 
@@ -56,7 +56,7 @@ class TestResolveAuthProvider:
         with patch(
             "src.backend.entrypoints.mcp.gateway.ai_stack",
             MagicMock(
-                mcp_settings=MagicMock(tool_authz_enabled=True, sso_issuer_url=None)
+                mcp_settings=MagicMock(tool_authz_enabled=True, sso_issuer_url=None),
             ),
         ):
             assert _resolve_auth_provider() is None
@@ -67,8 +67,8 @@ class TestResolveAuthProvider:
             "src.backend.entrypoints.mcp.gateway.ai_stack",
             MagicMock(
                 mcp_settings=MagicMock(
-                    tool_authz_enabled=True, sso_issuer_url="https://sso.local"
-                )
+                    tool_authz_enabled=True, sso_issuer_url="https://sso.local",
+                ),
             ),
         ), patch(
             "src.backend.entrypoints.mcp.gateway.JWTVerifier",
@@ -82,8 +82,8 @@ class TestResolveAuthProvider:
             "src.backend.entrypoints.mcp.gateway.ai_stack",
             MagicMock(
                 mcp_settings=MagicMock(
-                    tool_authz_enabled=True, sso_issuer_url="https://sso.local"
-                )
+                    tool_authz_enabled=True, sso_issuer_url="https://sso.local",
+                ),
             ),
         ), patch(
             "src.backend.entrypoints.mcp.gateway.JWTVerifier",

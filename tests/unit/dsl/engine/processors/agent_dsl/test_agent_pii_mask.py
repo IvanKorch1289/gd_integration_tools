@@ -146,7 +146,7 @@ class TestEdgeCases:
             AgentDictPIIMaskProcessor,
         )
         p = AgentDictPIIMaskProcessor.for_tools(
-            scope="banking", source_property="body.nonexistent.args"
+            scope="banking", source_property="body.nonexistent.args",
         )
         ex = MagicMock()
         ex.in_message = MagicMock()

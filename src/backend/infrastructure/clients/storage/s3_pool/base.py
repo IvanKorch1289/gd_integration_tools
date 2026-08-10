@@ -62,7 +62,7 @@ class BaseS3Client(ABC):
 
     @abstractmethod
     async def put_object(
-        self, key: str, body: Any, metadata: dict[str, Any]
+        self, key: str, body: Any, metadata: dict[str, Any],
     ) -> dict[str, Any]:
         """Загружает объект в S3."""
 

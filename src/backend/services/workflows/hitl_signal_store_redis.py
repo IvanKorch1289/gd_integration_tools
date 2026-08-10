@@ -116,7 +116,7 @@ class RedisHitlSignalStore:
 
         get_redis_client = get_redis_client_factory()
         self._client = cast(
-            _HitlRedisClient, await get_redis_client().get_client("queue")
+            _HitlRedisClient, await get_redis_client().get_client("queue"),
         )
         return self._client
 
@@ -149,12 +149,12 @@ class RedisHitlSignalStore:
             return HitlPendingSignal.from_dict(data)
         except (json.JSONDecodeError, KeyError, TypeError) as exc:
             _logger.warning(
-                "RedisHitlSignalStore.get failed for signal_id=%s: %s", signal_id, exc
+                "RedisHitlSignalStore.get failed for signal_id=%s: %s", signal_id, exc,
             )
             return None
 
     async def list_pending(
-        self, *, tenant_id: str | None = None
+        self, *, tenant_id: str | None = None,
     ) -> list[HitlPendingSignal]:
         """List pending (unresolved) signals.
 
@@ -184,7 +184,7 @@ class RedisHitlSignalStore:
         return items
 
     async def mark_resolved(
-        self, signal_id: str, *, action: str, resolved_by: str
+        self, signal_id: str, *, action: str, resolved_by: str,
     ) -> HitlPendingSignal:
         """Mark signal as resolved (атомарно через Lua).
 
@@ -206,11 +206,11 @@ class RedisHitlSignalStore:
         pipeline_factory = getattr(client, "pipeline", None)
         if pipeline_factory is None:
             data = await self._mark_resolved_without_pipeline(
-                client, signal_id, action=action, resolved_by=resolved_by
+                client, signal_id, action=action, resolved_by=resolved_by,
             )
         else:
             data = await self._mark_resolved_transactional(
-                client, signal_id, action=action, resolved_by=resolved_by
+                client, signal_id, action=action, resolved_by=resolved_by,
             )
         # Cross-instance notify через существующий pub/sub.
         try:
@@ -223,7 +223,7 @@ class RedisHitlSignalStore:
         return HitlPendingSignal.from_dict(data)
 
     async def _mark_resolved_without_pipeline(
-        self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str
+        self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str,
     ) -> dict[str, Any]:
         """Fallback for lightweight Redis test doubles without transactions."""
         raw = await client.hget(_HASH_KEY, signal_id)
@@ -235,7 +235,7 @@ class RedisHitlSignalStore:
         if data.get("resolved_at"):
             raise ValueError(
                 f"HITL signal {signal_id!r} already resolved by "
-                f"{data.get('resolved_by')!r} as {data.get('resolved_action')!r}"
+                f"{data.get('resolved_by')!r} as {data.get('resolved_action')!r}",
             )
         data["resolved_at"] = datetime.now(UTC).isoformat()
         data["resolved_action"] = action
@@ -245,7 +245,7 @@ class RedisHitlSignalStore:
         return data
 
     async def _mark_resolved_transactional(
-        self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str
+        self, client: _HitlRedisClient, signal_id: str, *, action: str, resolved_by: str,
     ) -> dict[str, Any]:
         """Atomic WATCH/MULTI update for the production Redis client.
 
@@ -266,7 +266,7 @@ class RedisHitlSignalStore:
                         raise HITLWatchContentionError(
                             f"HITL signal {signal_id!r} WATCH conflict exceeded "
                             f"{self._max_watch_retries} retries — persistent contention. "
-                            f"Caller must retry или escalate."
+                            f"Caller must retry или escalate.",
                         )
                     await pipe.watch(_HASH_KEY)
                     raw = await pipe.hget(_HASH_KEY, signal_id)
@@ -282,7 +282,7 @@ class RedisHitlSignalStore:
                         await pipe.unwatch()
                         raise ValueError(
                             f"HITL signal {signal_id!r} already resolved by "
-                            f"{data.get('resolved_by')!r} as {data.get('resolved_action')!r}"
+                            f"{data.get('resolved_by')!r} as {data.get('resolved_action')!r}",
                         )
                     data["resolved_at"] = datetime.now(UTC).isoformat()
                     data["resolved_action"] = action
@@ -333,7 +333,7 @@ class RedisHitlSignalStore:
                 try:
                     msg = await asyncio.wait_for(
                         pubsub.get_message(
-                            ignore_subscribe_messages=True, timeout=remaining or 30
+                            ignore_subscribe_messages=True, timeout=remaining or 30,
                         ),
                         timeout=remaining,
                     )

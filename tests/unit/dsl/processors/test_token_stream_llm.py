@@ -18,7 +18,7 @@ from src.backend.dsl.engine.processors.streaming_llm_publishers import SSEPublis
 def _bypass_auth() -> None:
     """TokenStreamLLMProcessor требует capability=llm.stream — bypass в unit-тестах."""
     TokenStreamLLMProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]
-        return_value=True
+        return_value=True,
     )
 
 
@@ -53,7 +53,7 @@ async def test_three_chunks_streamed_to_sse_publisher() -> None:
     ]
     gw = _gateway_with_chunks(chunks)
     proc = TokenStreamLLMProcessor(
-        output_mode="sse", publisher=SSEPublisher(), gateway=gw
+        output_mode="sse", publisher=SSEPublisher(), gateway=gw,
     )
     exchange = Exchange(properties={"_composed_prompt": "say hi"})
     await proc.process(exchange, ExecutionContext())
@@ -86,7 +86,7 @@ def test_normalize_chunk_finish_reason() -> None:
 
 def test_to_spec_serializes_kwargs() -> None:
     proc = TokenStreamLLMProcessor(
-        output_mode="ws", model="openai/gpt-4o-mini", chunk_size=4
+        output_mode="ws", model="openai/gpt-4o-mini", chunk_size=4,
     )
     spec = proc.to_spec()
     assert spec == {
@@ -95,5 +95,5 @@ def test_to_spec_serializes_kwargs() -> None:
             "prompt_property": "_composed_prompt",
             "model": "openai/gpt-4o-mini",
             "chunk_size": 4,
-        }
+        },
     }

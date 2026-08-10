@@ -167,7 +167,7 @@ class RoutingSlipProcessor(BaseProcessor):
 
         if len(steps) > self._max_steps:
             raise ValueError(
-                f"RoutingSlip: {len(steps)} steps exceeds max_steps={self._max_steps}"
+                f"RoutingSlip: {len(steps)} steps exceeds max_steps={self._max_steps}",
             )
 
         exchange.set_property("routing_slip.remaining", list(steps))
@@ -183,7 +183,7 @@ class RoutingSlipProcessor(BaseProcessor):
                 continue
 
             _log.debug(
-                "RoutingSlip[%d/%d]: executing %s", idx + 1, len(steps), step_name
+                "RoutingSlip[%d/%d]: executing %s", idx + 1, len(steps), step_name,
             )
             await processor.process(exchange, context)
             exchange.set_property("routing_slip.remaining", list(steps[idx + 1 :]))

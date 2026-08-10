@@ -52,7 +52,7 @@ def test_scaffold_with_features_writes_actions(codegen: PluginCodegen) -> None:
 
 def test_scaffold_with_capabilities(codegen: PluginCodegen) -> None:
     plugin = codegen.scaffold(
-        name="my_plugin", capabilities=["mq.publish:topic.events.*", "http.outbound"]
+        name="my_plugin", capabilities=["mq.publish:topic.events.*", "http.outbound"],
     )
     manifest = (plugin / "plugin.toml").read_text()
     assert 'name = "mq.publish"' in manifest
@@ -99,7 +99,7 @@ def test_scaffold_with_description(codegen: PluginCodegen) -> None:
 
 
 def test_main_interactive_creates_plugin_with_description(
-    monkeypatch, tmp_path: Path
+    monkeypatch, tmp_path: Path,
 ) -> None:
     mod = sys.modules["codegen_plugin_mod"]
     monkeypatch.setattr(mod, "EXTENSIONS_DIR", tmp_path)

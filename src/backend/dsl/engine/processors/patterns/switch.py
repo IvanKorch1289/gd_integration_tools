@@ -51,6 +51,6 @@ class SwitchProcessor(BaseProcessor):
         key = str(value) if value is not None else ""
         branch = self._cases.get(key, self._default)
         exchange.set_property(
-            "switch_matched", key if key in self._cases else "default"
+            "switch_matched", key if key in self._cases else "default",
         )
         await run_sub_processors(branch, exchange, context)

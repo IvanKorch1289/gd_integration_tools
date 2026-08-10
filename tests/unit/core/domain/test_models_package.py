@@ -142,7 +142,7 @@ class TestCoreDomainModelsPackage:
         assert (
             "OrderKind"
             in __import__(
-                "src.backend.core.domain.models", fromlist=["__all__"]
+                "src.backend.core.domain.models", fromlist=["__all__"],
             ).__all__
         )
 
@@ -157,7 +157,7 @@ class TestCoreDomainModelsPackage:
         assert (
             "Order"
             in __import__(
-                "src.backend.core.domain.models", fromlist=["__all__"]
+                "src.backend.core.domain.models", fromlist=["__all__"],
             ).__all__
         )
 

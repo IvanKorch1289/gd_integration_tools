@@ -142,7 +142,7 @@ def test_cli_route_start_command() -> None:
     import tools.cli
 
     with patch.object(
-        tools.cli, "_post", return_value={"status": "success"}
+        tools.cli, "_post", return_value={"status": "success"},
     ) as mock_post:
         tools.cli.route_start("credit_check")
         mock_post.assert_called_once()
@@ -157,7 +157,7 @@ def test_cli_cache_flush_command() -> None:
     import tools.cli
 
     with patch.object(
-        tools.cli, "_delete", return_value={"status": "flushed"}
+        tools.cli, "_delete", return_value={"status": "flushed"},
     ) as mock_delete:
         tools.cli.cache_flush()
         mock_delete.assert_called_once_with("/cache/invalidate")
@@ -172,8 +172,8 @@ def test_cli_agent_list_tools_command() -> None:
                 "namespace": "orders",
                 "description": "Get order by ID",
                 "tier": "core",
-            }
-        ]
+            },
+        ],
     }
 
     import tools.cli

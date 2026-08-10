@@ -9,7 +9,7 @@ def test_module_imports() -> None:
     import importlib
 
     mod = importlib.import_module(
-        "src.backend.entrypoints.api.v1.endpoints.admin_plugins"
+        "src.backend.entrypoints.api.v1.endpoints.admin_plugins",
     )
     assert hasattr(mod, "router")
 
@@ -18,7 +18,7 @@ def test_router_prefix() -> None:
     import importlib
 
     mod = importlib.import_module(
-        "src.backend.entrypoints.api.v1.endpoints.admin_plugins"
+        "src.backend.entrypoints.api.v1.endpoints.admin_plugins",
     )
     # The router has its prefix set via APIRouter(prefix=...)
     assert mod.router.prefix == "/admin/plugins"
@@ -29,7 +29,7 @@ def test_router_has_routes() -> None:
     import importlib
 
     mod = importlib.import_module(
-        "src.backend.entrypoints.api.v1.endpoints.admin_plugins"
+        "src.backend.entrypoints.api.v1.endpoints.admin_plugins",
     )
     assert mod.router is not None
     routes = mod.router.routes

@@ -70,7 +70,7 @@ async def test_flush_by_timeout() -> None:
 @pytest.mark.asyncio
 async def test_group_by_header_isolates_buffers() -> None:
     proc = BatchWindowProcessor(
-        window_seconds=60.0, max_size=2, group_by="header.tenant_id"
+        window_seconds=60.0, max_size=2, group_by="header.tenant_id",
     )
     ctx = AsyncMock()
     # Тенант A — 2 события → flush
@@ -129,7 +129,7 @@ async def test_concurrency_safety() -> None:
 @pytest.mark.asyncio
 async def test_default_group_falls_back_to_default() -> None:
     proc = BatchWindowProcessor(
-        window_seconds=60.0, max_size=2, group_by="header.x_missing"
+        window_seconds=60.0, max_size=2, group_by="header.x_missing",
     )
     ctx = AsyncMock()
     e1 = _ex(body={"i": 1})

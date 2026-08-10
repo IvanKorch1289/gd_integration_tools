@@ -95,14 +95,14 @@ def _make_settings(
 
 
 def _make_database(
-    *, host: str = "db.example.com", db_type: str = "postgresql"
+    *, host: str = "db.example.com", db_type: str = "postgresql",
 ) -> SimpleNamespace:
     """Фабрика SimpleNamespace, имитирующего DatabaseConnectionSettings."""
     return SimpleNamespace(host=host, type=db_type)
 
 
 def _make_redis(
-    *, host: str = "redis.internal", enabled: bool = True
+    *, host: str = "redis.internal", enabled: bool = True,
 ) -> SimpleNamespace:
     """Фабрика SimpleNamespace, имитирующего RedisSettings."""
     return SimpleNamespace(host=host, enabled=enabled)
@@ -166,7 +166,7 @@ class TestDocsUIInProd:
 
     def test_swagger_in_prod_is_warning(self) -> None:
         settings = _make_settings(
-            app=_make_app(environment="production", enable_swagger=True)
+            app=_make_app(environment="production", enable_swagger=True),
         )
         waf = _make_waf(strict=True, allow_hosts=("a",))
         violations = ConfigValidator().validate(settings, waf)
@@ -176,8 +176,8 @@ class TestDocsUIInProd:
     def test_redoc_in_prod_is_warning(self) -> None:
         settings = _make_settings(
             app=_make_app(
-                environment="production", enable_swagger=False, enable_redoc=True
-            )
+                environment="production", enable_swagger=False, enable_redoc=True,
+            ),
         )
         waf = _make_waf(strict=True, allow_hosts=("a",))
         violations = ConfigValidator().validate(settings, waf)
@@ -186,7 +186,7 @@ class TestDocsUIInProd:
 
     def test_swagger_in_dev_is_ok(self) -> None:
         settings = _make_settings(
-            app=_make_app(environment="development", enable_swagger=True)
+            app=_make_app(environment="development", enable_swagger=True),
         )
         waf = _make_waf(strict=False)
         violations = ConfigValidator().validate(settings, waf)
@@ -232,7 +232,7 @@ class TestVaultInProd:
 
     def test_vault_disabled_in_prod_is_warning(self) -> None:
         settings = _make_settings(
-            app=_make_app(environment="production"), vault=_make_vault(enabled=False)
+            app=_make_app(environment="production"), vault=_make_vault(enabled=False),
         )
         waf = _make_waf(strict=True, allow_hosts=("a",))
         violations = ConfigValidator().validate(settings, waf)
@@ -241,7 +241,7 @@ class TestVaultInProd:
 
     def test_vault_enabled_in_prod_is_clean(self) -> None:
         settings = _make_settings(
-            app=_make_app(environment="production"), vault=_make_vault(enabled=True)
+            app=_make_app(environment="production"), vault=_make_vault(enabled=True),
         )
         waf = _make_waf(strict=True, allow_hosts=("a",))
         violations = ConfigValidator().validate(settings, waf)
@@ -265,7 +265,7 @@ class TestCorsCredentialsWildcard:
 
     def test_wildcard_without_credentials_is_clean(self) -> None:
         settings = _make_settings(
-            secure=_make_secure(cors_origins=["*"], cors_allow_credentials=False)
+            secure=_make_secure(cors_origins=["*"], cors_allow_credentials=False),
         )
         waf = _make_waf()
         violations = ConfigValidator().validate(settings, waf)
@@ -274,8 +274,8 @@ class TestCorsCredentialsWildcard:
     def test_explicit_origins_with_credentials_is_clean(self) -> None:
         settings = _make_settings(
             secure=_make_secure(
-                cors_origins=["https://app.example.com"], cors_allow_credentials=True
-            )
+                cors_origins=["https://app.example.com"], cors_allow_credentials=True,
+            ),
         )
         waf = _make_waf()
         violations = ConfigValidator().validate(settings, waf)
@@ -288,7 +288,7 @@ class TestClamAVFailOpenInProd:
     def test_clamav_enabled_fail_open_in_prod_is_warning(self) -> None:
         settings = _make_settings(app=_make_app(environment="production"))
         waf = _make_waf(
-            strict=True, allow_hosts=("a",), clamav_enabled=True, clamav_fail_open=True
+            strict=True, allow_hosts=("a",), clamav_enabled=True, clamav_fail_open=True,
         )
         violations = ConfigValidator().validate(settings, waf)
         v = next(v for v in violations if v.code == "waf.clamav_fail_open_in_prod")
@@ -297,7 +297,7 @@ class TestClamAVFailOpenInProd:
     def test_clamav_enabled_fail_closed_in_prod_is_clean(self) -> None:
         settings = _make_settings(app=_make_app(environment="production"))
         waf = _make_waf(
-            strict=True, allow_hosts=("a",), clamav_enabled=True, clamav_fail_open=False
+            strict=True, allow_hosts=("a",), clamav_enabled=True, clamav_fail_open=False,
         )
         violations = ConfigValidator().validate(settings, waf)
         assert "waf.clamav_fail_open_in_prod" not in _codes(violations)
@@ -320,7 +320,7 @@ class TestDebugModeInProd:
 
     def test_debug_true_in_prod_is_critical(self) -> None:
         settings = _make_settings(
-            app=_make_app(environment="production", debug_mode=True)
+            app=_make_app(environment="production", debug_mode=True),
         )
         waf = _make_waf(strict=True, allow_hosts=("a",))
         violations = ConfigValidator().validate(settings, waf)
@@ -329,7 +329,7 @@ class TestDebugModeInProd:
 
     def test_debug_true_in_dev_is_clean(self) -> None:
         settings = _make_settings(
-            app=_make_app(environment="development", debug_mode=True)
+            app=_make_app(environment="development", debug_mode=True),
         )
         waf = _make_waf(strict=False)
         violations = ConfigValidator().validate(settings, waf)
@@ -341,7 +341,7 @@ class TestJwtSecretTooShort:
 
     def test_short_secret_is_critical_regardless_of_env(self) -> None:
         settings = _make_settings(
-            app=_make_app(environment="development", secret_key="short")
+            app=_make_app(environment="development", secret_key="short"),
         )
         waf = _make_waf(strict=False)
         violations = ConfigValidator().validate(settings, waf)
@@ -371,7 +371,7 @@ class TestFeatureFlagDependencyUnmet:
         assert "feature_flag.dependency_unmet" not in _codes(violations)
 
     def test_unmet_dependency_yields_warning(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """С временно добавленной зависимостью правило отрабатывает."""
         # Patch the IMPORT location: `infrastructure_checks` does
@@ -397,7 +397,7 @@ class TestFeatureFlagDependencyUnmet:
         assert v.context["unmet_requirements"] == ["foo_enabled"]
 
     def test_unmet_critical_dependency_yields_critical(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Зависимость в _FEATURE_FLAG_DEPENDENCIES_CRITICAL → CRITICAL severity."""
         from src.backend.core.config.validator import infrastructure_checks
@@ -558,7 +558,7 @@ class TestValidateStartupConfig:
     def test_warning_only_in_prod_does_not_raise(self) -> None:
         settings = _make_settings(
             app=_make_app(
-                environment="production", enable_swagger=True, admin_enabled=False
+                environment="production", enable_swagger=True, admin_enabled=False,
             ),
             secure=_make_secure(admin_ips=set()),
             vault=_make_vault(enabled=True),
@@ -588,7 +588,7 @@ class TestValidateStartupConfig:
         """CRITICAL идёт перед WARNING в результирующем кортеже."""
         settings = _make_settings(
             app=_make_app(
-                environment="production", enable_swagger=True, admin_enabled=True
+                environment="production", enable_swagger=True, admin_enabled=True,
             ),
             secure=_make_secure(admin_ips=set()),
             vault=_make_vault(enabled=False),
@@ -598,7 +598,7 @@ class TestValidateStartupConfig:
         severities = [v.severity for v in result]
         # Все CRITICAL должны идти раньше любого WARNING
         first_warning = next(
-            (i for i, s in enumerate(severities) if s == ConfigSeverity.WARNING), None
+            (i for i, s in enumerate(severities) if s == ConfigSeverity.WARNING), None,
         )
         if first_warning is not None:
             assert all(s == ConfigSeverity.CRITICAL for s in severities[:first_warning])

@@ -35,7 +35,7 @@ PROVIDER_ANNOTATIONS: tuple[tuple[Callable[[], object], str], ...] = (
 @pytest.mark.unit
 @pytest.mark.parametrize(("provider", "expected"), PROVIDER_ANNOTATIONS)
 def test_provider_return_annotation_is_concrete(
-    provider: Callable[[], object], expected: str
+    provider: Callable[[], object], expected: str,
 ) -> None:
     """Публичный return type provider'а не должен быть ``Any``."""
     annotations = inspect.get_annotations(provider, eval_str=False)

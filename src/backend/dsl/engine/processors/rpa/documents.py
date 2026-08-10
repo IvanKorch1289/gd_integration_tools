@@ -39,7 +39,7 @@ class PdfReadProcessor(BaseProcessor):
     audit_event: str | None = "rpa.pdf.read"
 
     def __init__(
-        self, *, extract_tables: bool = False, name: str | None = None
+        self, *, extract_tables: bool = False, name: str | None = None,
     ) -> None:
         super().__init__(name=name or "pdf_read")
         self._tables = extract_tables
@@ -70,7 +70,7 @@ class PdfReadProcessor(BaseProcessor):
 
                 def _extract_tables() -> list[Any]:
                     with pdfplumber.open(
-                        io.BytesIO(body) if isinstance(body, bytes) else body
+                        io.BytesIO(body) if isinstance(body, bytes) else body,
                     ) as pdf:
                         tables = []
                         for page in pdf.pages:
@@ -257,7 +257,7 @@ class ExcelReadProcessor(BaseProcessor):
     audit_event: str | None = "rpa.excel.read"
 
     def __init__(
-        self, *, sheet_name: str | None = None, name: str | None = None
+        self, *, sheet_name: str | None = None, name: str | None = None,
     ) -> None:
         super().__init__(name=name or "excel_read")
         self._sheet = sheet_name

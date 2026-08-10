@@ -52,7 +52,7 @@ __all__ = ("PgRunnerWorkflowBackend",)
 
 
 _TERMINAL_STATUSES = frozenset(
-    (WorkflowStatus.succeeded, WorkflowStatus.failed, WorkflowStatus.cancelled)
+    (WorkflowStatus.succeeded, WorkflowStatus.failed, WorkflowStatus.cancelled),
 )
 
 
@@ -134,11 +134,11 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
             tenant_id=tenant_id,
         )
         return WorkflowHandle(
-            workflow_id=workflow_id, run_id=instance_id.hex, namespace=namespace
+            workflow_id=workflow_id, run_id=instance_id.hex, namespace=namespace,
         )
 
     async def signal_workflow(
-        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any]
+        self, *, handle: WorkflowHandle, signal_name: str, payload: dict[str, Any],
     ) -> None:
         """Append ``signal_received`` event + pg_notify через trigger."""
         instance_id = self._uuid_from_handle(handle)
@@ -178,7 +178,7 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
         await self._state_store.update_status(instance_id, WorkflowStatus.cancelling)
 
     async def await_completion(
-        self, *, handle: WorkflowHandle, timeout: timedelta | None = None
+        self, *, handle: WorkflowHandle, timeout: timedelta | None = None,
     ) -> WorkflowResult:
         """Polling ``state_store.get`` до terminal-статуса или timeout.
 
@@ -230,7 +230,7 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
         """
         raise NotImplementedError(
             "pg-runner does not implement Temporal-compatible replay; "
-            "use DurableWorkflowRunner._run_step() instead"
+            "use DurableWorkflowRunner._run_step() instead",
         )
 
     async def await_external_signal(
@@ -271,7 +271,7 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
         after_seq = 0
         while True:
             events = await self._event_store.read_events(
-                workflow_id=instance_id, after_seq=after_seq, limit=1000
+                workflow_id=instance_id, after_seq=after_seq, limit=1000,
             )
             for event in events:
                 if event.seq in seen_event_ids:
@@ -358,7 +358,7 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
             return UUID(hex=handle.run_id)
         except ValueError as exc:
             raise ValueError(
-                f"invalid run_id={handle.run_id!r}: not a UUID hex"
+                f"invalid run_id={handle.run_id!r}: not a UUID hex",
             ) from exc
 
     @staticmethod
@@ -372,5 +372,5 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
         elif row.status is WorkflowStatus.cancelled:
             failure = {"type": "Cancelled", "message": last_error or ""}
         return WorkflowResult(
-            output=snapshot, status=_status_to_protocol(row.status), failure=failure
+            output=snapshot, status=_status_to_protocol(row.status), failure=failure,
         )

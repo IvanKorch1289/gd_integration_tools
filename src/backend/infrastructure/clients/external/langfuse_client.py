@@ -62,7 +62,7 @@ class LangFuseClient:
 
         try:
             trace = self._client.trace(
-                name=name, input=input_data, output=output_data, metadata=metadata or {}
+                name=name, input=input_data, output=output_data, metadata=metadata or {},
             )
             return trace.id
         except Exception as exc:

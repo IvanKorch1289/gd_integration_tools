@@ -139,7 +139,7 @@ async def test_process_appends_to_exchange_properties() -> None:
 async def test_process_captures_from_headers() -> None:
     """capture_fields lookup в headers если не в body."""
     proc = DataLineageProcessor(
-        dataset="foo", capture_fields=["tenant_id"], lineage_emitter=lambda e: None
+        dataset="foo", capture_fields=["tenant_id"], lineage_emitter=lambda e: None,
     )
     exchange = _ex(body={"other": 1}, headers={"tenant_id": "tenant-42"})
     await proc.process(exchange, None)  # type: ignore[arg-type]
@@ -166,7 +166,7 @@ async def test_process_with_derive_from() -> None:
 @pytest.mark.asyncio
 async def test_process_input_event_type() -> None:
     proc = DataLineageProcessor(
-        dataset="foo", event_type="input", lineage_emitter=lambda e: None
+        dataset="foo", event_type="input", lineage_emitter=lambda e: None,
     )
     exchange = _ex(body={})
     await proc.process(exchange, None)  # type: ignore[arg-type]
@@ -205,7 +205,7 @@ async def test_process_run_id_auto_generated() -> None:
 @pytest.mark.asyncio
 async def test_process_run_id_explicit() -> None:
     proc = DataLineageProcessor(
-        dataset="foo", run_id="custom-run-123", lineage_emitter=lambda e: None
+        dataset="foo", run_id="custom-run-123", lineage_emitter=lambda e: None,
     )
     exchange = _ex(body={})
     await proc.process(exchange, None)  # type: ignore[arg-type]

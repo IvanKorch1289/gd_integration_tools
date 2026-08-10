@@ -237,7 +237,7 @@ class Exchange[T](BaseModel):
             in_message=Message(
                 body=body if body is not None else self.in_message.body,
                 headers=dict(self.in_message.headers),
-            )
+            ),
         )
         cloned.meta.route_id = self.meta.route_id
         cloned.meta.correlation_id = self.meta.correlation_id

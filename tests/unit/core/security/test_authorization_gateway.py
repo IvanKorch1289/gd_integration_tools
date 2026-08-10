@@ -38,7 +38,7 @@ def _enable_gateway(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _build_gate_with_declaration(
-    plugin: str = "p1", capability_name: str = "db.read", scope: str = "users"
+    plugin: str = "p1", capability_name: str = "db.read", scope: str = "users",
 ) -> CapabilityGate:
     """Возвращает CapabilityGate с одной декларацией."""
     gate = CapabilityGate(vocabulary=build_default_vocabulary())
@@ -64,7 +64,7 @@ class TestAuthorizeHappyPath:
 
     async def test_capability_only_allow(self) -> None:
         gateway = AuthorizationGateway(
-            capability_gateway=_build_gate_with_declaration()
+            capability_gateway=_build_gate_with_declaration(),
         )
         decision = await gateway.authorize(
             principal="p1",
@@ -78,12 +78,12 @@ class TestAuthorizeHappyPath:
 
     async def test_capability_plus_async_policy_allow(self) -> None:
         async def _allow_policy(
-            principal: str, resource: str, action: str, ctx: dict[str, Any]
+            principal: str, resource: str, action: str, ctx: dict[str, Any],
         ) -> AuthorizationReason:
             return AuthorizationReason(source="my_policy", outcome="allow")
 
         gateway = AuthorizationGateway(
-            capability_gateway=_build_gate_with_declaration(), policies=(_allow_policy,)
+            capability_gateway=_build_gate_with_declaration(), policies=(_allow_policy,),
         )
         decision = await gateway.authorize(
             principal="p1",
@@ -117,21 +117,21 @@ class TestAuthorizeDenyPaths:
         called: list[str] = []
 
         async def _allow_policy(
-            principal: str, resource: str, action: str, ctx: dict[str, Any]
+            principal: str, resource: str, action: str, ctx: dict[str, Any],
         ) -> AuthorizationReason:
             called.append("first")
             return AuthorizationReason(source="first", outcome="allow")
 
         async def _deny_policy(
-            principal: str, resource: str, action: str, ctx: dict[str, Any]
+            principal: str, resource: str, action: str, ctx: dict[str, Any],
         ) -> AuthorizationReason:
             called.append("deny")
             return AuthorizationReason(
-                source="rbac", outcome="deny", detail="role not granted"
+                source="rbac", outcome="deny", detail="role not granted",
             )
 
         async def _never_called(
-            principal: str, resource: str, action: str, ctx: dict[str, Any]
+            principal: str, resource: str, action: str, ctx: dict[str, Any],
         ) -> AuthorizationReason:
             called.append("never")
             return AuthorizationReason(source="never", outcome="allow")
@@ -178,17 +178,17 @@ class TestAuditAndCorrelation:
         events: list[dict[str, Any]] = []
         gate = CapabilityGate(vocabulary=build_default_vocabulary())
         gateway = AuthorizationGateway(
-            capability_gateway=gate, audit_callback=events.append
+            capability_gateway=gate, audit_callback=events.append,
         )
         decision = await gateway.authorize(
-            principal="absent_plugin", resource="db.read", action="check"
+            principal="absent_plugin", resource="db.read", action="check",
         )
         assert decision.allowed is False
         assert events[-1]["outcome"] == "deny"
 
     async def test_correlation_id_generated_when_absent(self) -> None:
         gateway = AuthorizationGateway(
-            capability_gateway=_build_gate_with_declaration()
+            capability_gateway=_build_gate_with_declaration(),
         )
         d1 = await gateway.authorize(
             principal="p1",
@@ -210,14 +210,14 @@ class TestFeatureFlagGate:
     """default-OFF → allow без проверок (плавная миграция)."""
 
     async def test_disabled_returns_allow(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(feature_flags, "authz_gateway_enabled", False)
         gate = CapabilityGate(vocabulary=build_default_vocabulary())
         # Без декларации — нормально CapabilityGate denied, но flag OFF
         gateway = AuthorizationGateway(capability_gateway=gate)
         decision = await gateway.authorize(
-            principal="absent_plugin", resource="db.read", action="check"
+            principal="absent_plugin", resource="db.read", action="check",
         )
         assert decision.allowed is True
         assert decision.reasons[0].source == "feature_flag"

@@ -132,7 +132,7 @@ def from_yaml(yaml_text: str) -> WorkflowDeclaration:
     if not feature_flags.workflow_yaml_round_trip:
         raise FeatureDisabledError(
             "Feature workflow_yaml_round_trip disabled. "
-            "Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации."
+            "Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации.",
         )
 
     loader = _make_safe_yaml()
@@ -160,13 +160,13 @@ class WorkflowDiff(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     added_steps: tuple[str, ...] = Field(
-        default=(), description="Идентификаторы шагов, добавленных в decl_b."
+        default=(), description="Идентификаторы шагов, добавленных в decl_b.",
     )
     removed_steps: tuple[str, ...] = Field(
-        default=(), description="Идентификаторы шагов, удалённых из decl_a."
+        default=(), description="Идентификаторы шагов, удалённых из decl_a.",
     )
     modified_steps: tuple[str, ...] = Field(
-        default=(), description="Идентификаторы изменённых шагов."
+        default=(), description="Идентификаторы изменённых шагов.",
     )
     version_changed: tuple[str, str] | None = Field(
         default=None,
@@ -297,7 +297,7 @@ def load_workflow_from_file(path: str | Path) -> WorkflowDeclaration:
 
 
 def load_all_workflows_from_directory(
-    directory: str | Path, *, pattern: str = "*.workflow.yaml"
+    directory: str | Path, *, pattern: str = "*.workflow.yaml",
 ) -> list[WorkflowDeclaration]:
     """Загрузить все workflow YAML из директории (S8 fix).
 

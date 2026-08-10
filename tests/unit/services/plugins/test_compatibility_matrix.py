@@ -23,7 +23,7 @@ from src.backend.core.plugin_runtime.manifest_toml import (
 
 
 def _make_manifest(
-    name: str, version: str, *, compatibility: PluginCompatibility | None = None
+    name: str, version: str, *, compatibility: PluginCompatibility | None = None,
 ) -> PluginManifest:
     """Фабрика минимального манифеста для тестов."""
     return PluginManifest(
@@ -74,7 +74,7 @@ class TestVersionIncompatible:
             "alpha",
             "1.0.0",
             compatibility=PluginCompatibility(
-                incompatible_plugin_specs={"beta": ">=0.1,<0.5"}
+                incompatible_plugin_specs={"beta": ">=0.1,<0.5"},
             ),
         )
         b = _make_manifest("beta", "0.3.0")
@@ -89,7 +89,7 @@ class TestVersionIncompatible:
             "alpha",
             "1.0.0",
             compatibility=PluginCompatibility(
-                incompatible_plugin_specs={"beta": ">=0.1,<0.5"}
+                incompatible_plugin_specs={"beta": ">=0.1,<0.5"},
             ),
         )
         b = _make_manifest("beta", "1.0.0")

@@ -41,7 +41,7 @@ class TestEmitAuthorizationDecision:
             },
         )()
         facade.emit_authorization_decision(
-            decision=decision, principal="user:alice", resource="api:orders"
+            decision=decision, principal="user:alice", resource="api:orders",
         )
         call = mock_audit_service.emit.call_args
         assert call.kwargs["event"] == "authorization.decision"
@@ -65,7 +65,7 @@ class TestEmitAuthorizationDecision:
             },
         )()
         facade.emit_authorization_decision(
-            decision=decision, principal="user:bob", resource="api:admin"
+            decision=decision, principal="user:bob", resource="api:admin",
         )
         call = mock_audit_service.emit.call_args
         assert call.kwargs["outcome"] == "denied"
@@ -75,7 +75,7 @@ class TestEmitAuthorizationDecision:
         """Empty decision object → details=None values, no crash."""
         decision = type("D", (), {})()  # no attrs
         facade.emit_authorization_decision(
-            decision=decision, principal="system", resource="api:internal"
+            decision=decision, principal="system", resource="api:internal",
         )
         call = mock_audit_service.emit.call_args
         assert call.kwargs["event"] == "authorization.decision"
@@ -87,7 +87,7 @@ class TestEmitWafEvaluation:
 
     def test_allowed_request(self, mock_audit_service: Any) -> None:
         decision = type(
-            "D", (), {"host": "api.example.com", "allowed": True, "reason": "rule_pass"}
+            "D", (), {"host": "api.example.com", "allowed": True, "reason": "rule_pass"},
         )()
         facade.emit_waf_evaluation(
             decision=decision,
@@ -218,7 +218,7 @@ class TestEmitAiWorkspace:
                 "action": "create",
                 "outcome": "success",
                 "isolation_level": "strict",
-            }
+            },
         )
         call = mock_audit_service.emit.call_args
         assert call.kwargs["event"] == "workspace.create"
@@ -245,7 +245,7 @@ class TestEmitAiWorkspace:
                 "action": "delete",
                 "outcome": "success",
                 "extra_field": "extra_value",
-            }
+            },
         )
         call = mock_audit_service.emit.call_args
         details = call.kwargs["details"]

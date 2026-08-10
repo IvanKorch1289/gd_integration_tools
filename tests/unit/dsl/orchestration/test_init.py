@@ -18,10 +18,10 @@ class TestSensor:
         sensor = Sensor(name="s1", predicate=pred, interval_seconds=0.01, route_id="r1")
         registry = MagicMock()
         registry.create_task = MagicMock(
-            return_value=asyncio.create_task(asyncio.sleep(0))
+            return_value=asyncio.create_task(asyncio.sleep(0)),
         )
         with patch(
-            "src.backend.dsl.orchestration.get_task_registry", return_value=registry
+            "src.backend.dsl.orchestration.get_task_registry", return_value=registry,
         ):
             await sensor.start()
         assert sensor._task is not None
@@ -55,7 +55,7 @@ class TestDryRun:
         with patch("src.backend.dsl.service.get_dsl_service", return_value=mock_dsl):
             result = await dr.run({"x": 1})
         mock_dsl.dispatch.assert_awaited_once_with(
-            route_id="r1", body={"x": 1}, headers={"x-dry-run": "1"}
+            route_id="r1", body={"x": 1}, headers={"x-dry-run": "1"},
         )
         assert result == {"dry": True}
 

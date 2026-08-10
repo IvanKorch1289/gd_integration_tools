@@ -60,7 +60,7 @@ async def _verify(scope: dict[str, Any]) -> bool:
             logger.debug("MCP api_key verify failed: %s", exc)
 
     if "jwt" in methods and headers.get("authorization", "").lower().startswith(
-        "bearer "
+        "bearer ",
     ):
         try:
             ctx = await _verify_jwt(request)
@@ -109,12 +109,12 @@ async def _respond_unauthorized(
                 (b"content-type", b"application/json"),
                 (b"www-authenticate", b'Bearer, ApiKey realm="mcp"'),
             ],
-        }
+        },
     )
     await send(
         {
             "type": "http.response.body",
             "body": b'{"error":"unauthorized","reason":"mcp auth required"}',
             "more_body": False,
-        }
+        },
     )

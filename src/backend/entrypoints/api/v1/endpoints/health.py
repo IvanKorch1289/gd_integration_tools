@@ -164,7 +164,7 @@ async def startup_probe(request: Request) -> JSONResponse:
     """
     if not getattr(request.app.state, "infrastructure_ready", False):
         return JSONResponse(
-            status_code=503, content={"status": "starting"}, headers=_no_store_headers()
+            status_code=503, content={"status": "starting"}, headers=_no_store_headers(),
         )
 
     from src.backend.dsl.commands.registry import (
@@ -241,7 +241,7 @@ async def components_health(mode: str = "fast") -> JSONResponse:
         overall = report.get("status", "ok")
         status_code = 503 if overall == "down" else 200
         return JSONResponse(
-            status_code=status_code, content=report, headers=_no_store_headers()
+            status_code=status_code, content=report, headers=_no_store_headers(),
         )
     except Exception as exc:
         return JSONResponse(

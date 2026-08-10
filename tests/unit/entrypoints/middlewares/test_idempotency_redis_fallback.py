@@ -38,7 +38,7 @@ class _BrokenRedis:
         raise self._exc
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
     ) -> bool | None:
         raise self._exc
 
@@ -56,7 +56,7 @@ class _HealthyRedis:
         return self.store.get(key)
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
     ) -> bool | None:
         if nx and key in self.store:
             return None
@@ -362,7 +362,7 @@ class _RaisingGetClient:
         raise TypeError("bug")
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
     ) -> bool | None:
         return True
 
@@ -375,7 +375,7 @@ class _RaisingSetClient:
         return None
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
     ) -> bool | None:
         raise RuntimeError("boom")
 
@@ -388,7 +388,7 @@ class _RaisingDeleteClient:
         return None
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
     ) -> bool | None:
         return True
 

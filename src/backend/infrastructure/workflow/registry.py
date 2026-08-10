@@ -113,7 +113,7 @@ class WorkflowRegistry:
             if descriptor.name in self._descriptors:
                 raise ValueError(
                     f"Workflow '{descriptor.name}' уже зарегистрирован "
-                    "(route_id=%s)" % self._route_ids.get(descriptor.name, "?")
+                    "(route_id=%s)" % self._route_ids.get(descriptor.name, "?"),
                 )
             self._descriptors[descriptor.name] = descriptor
             self._route_ids[descriptor.name] = route_id

@@ -59,7 +59,7 @@ class StubBLIP2:
         self._device = kwargs.get("device", "cpu")
 
     async def caption(
-        self, image_bytes: bytes, *, max_new_tokens: int = 50
+        self, image_bytes: bytes, *, max_new_tokens: int = 50,
     ) -> CaptionResult:
         """Возвращает фиксированный caption для любых image bytes."""
         return CaptionResult(
@@ -81,7 +81,7 @@ class StubWhisper:
         self._language = kwargs.get("language", "en")
 
     async def transcribe(
-        self, audio_bytes: bytes, *, suffix: str = ".wav"
+        self, audio_bytes: bytes, *, suffix: str = ".wav",
     ) -> TranscriptionResult:
         """Возвращает фиксированный transcript для любого audio."""
         return TranscriptionResult(
@@ -166,9 +166,9 @@ class StubLiteLLM:
                             "Based on the retrieved context, the answer "
                             "references a cat sitting on a mat."
                         ),
-                    }
-                }
-            ]
+                    },
+                },
+            ],
         }
 
 
@@ -313,7 +313,7 @@ async def test_image_caption_pipeline_e2e(
 
     # Step 4: semantic search "cat" → top-K должен содержать cat-chunk.
     hits = await multimodal_service.search(
-        "cat", collection="e2e_images", top_k=3, tenant_id="e2e"
+        "cat", collection="e2e_images", top_k=3, tenant_id="e2e",
     )
     assert len(hits) >= 1
     top = hits[0]
@@ -328,8 +328,8 @@ async def test_image_caption_pipeline_e2e(
     )
     response = stub_litellm.completion(
         messages=[
-            {"role": "user", "content": f"Query: cat\nContext:\n{context}"}
-        ]
+            {"role": "user", "content": f"Query: cat\nContext:\n{context}"},
+        ],
     )
     answer = response["choices"][0]["message"]["content"]
 
@@ -366,7 +366,7 @@ async def test_audio_transcript_pipeline_e2e(
     # Step A: service.transcribe_audio (использует WhisperSTT stub).
     fake_audio = _make_fake_wav()
     transcript = await multimodal_service.transcribe_audio(
-        fake_audio, suffix=".wav"
+        fake_audio, suffix=".wav",
     )
     assert transcript == STUB_AUDIO_TRANSCRIPT
 
@@ -397,7 +397,7 @@ async def test_audio_transcript_pipeline_e2e(
 
     # Step C: search "hello" → audio chunk.
     hits = await multimodal_service.search(
-        "hello", collection="e2e_audio", top_k=3, tenant_id="e2e"
+        "hello", collection="e2e_audio", top_k=3, tenant_id="e2e",
     )
     assert len(hits) >= 1
     assert hits[0].chunk.kind == "audio"

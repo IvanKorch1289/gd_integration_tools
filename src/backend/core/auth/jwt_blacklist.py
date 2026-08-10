@@ -127,7 +127,7 @@ class RedisJwtBlacklist:
             await self._redis.set(self._revoke_before_key(), str(new_value).encode())
         except Exception as exc:
             _logger.error(
-                "JWT blacklist revoke_before_time(%s) failed: %s", time_threshold, exc
+                "JWT blacklist revoke_before_time(%s) failed: %s", time_threshold, exc,
             )
             raise
 
@@ -153,7 +153,7 @@ class RedisJwtBlacklist:
             iat_int = int(iat)
         except (TypeError, ValueError):
             _logger.warning(
-                "JWT blacklist is_iat_revoked: некорректный iat=%r — skip", iat
+                "JWT blacklist is_iat_revoked: некорректный iat=%r — skip", iat,
             )
             return False
         value = await self._redis.get(self._revoke_before_key())

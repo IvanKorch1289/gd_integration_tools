@@ -59,7 +59,7 @@ def _make_failing_client() -> AsyncMock:
     """AsyncMock-клиент ClickHouse, ``insert()`` всегда кидает."""
     client = AsyncMock()
     client.insert = AsyncMock(
-        side_effect=RuntimeError("ClickHouse unavailable: connection refused")
+        side_effect=RuntimeError("ClickHouse unavailable: connection refused"),
     )
     return client
 
@@ -104,7 +104,7 @@ def test_service_does_not_use_importlib() -> None:
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom):
             if node.module and node.module.startswith(
-                "src.backend.infrastructure.audit"
+                "src.backend.infrastructure.audit",
             ):
                 infra_imports.append(node.module)
     assert not infra_imports, (
@@ -159,7 +159,7 @@ async def test_facade_backend_appends_records(tmp_path: Path) -> None:
     from src.backend.core.interfaces.audit import AuditRecord
 
     record: AuditRecord = AuditRecord(
-        {"event": "facade.test", "action": "write", "entity_id": "e-1"}
+        {"event": "facade.test", "action": "write", "entity_id": "e-1"},
     )
     await backend.append(record)
 
@@ -184,7 +184,7 @@ async def test_clickhouse_failure_routes_to_facade_dlq(tmp_path: Path) -> None:
     """
     dlq_path = tmp_path / "e2e.jsonl"
     service = ClickHouseAuditService(
-        client=_make_failing_client(), dlq_path=dlq_path
+        client=_make_failing_client(), dlq_path=dlq_path,
     )
     event = _make_event(event_id="cycle33-e2e", event_type="b11.event")
 
@@ -208,7 +208,7 @@ async def test_dlq_backend_is_singleton_via_facade(tmp_path: Path) -> None:
     """Повторные вызовы ``_get_dlq_backend`` возвращают один и тот же instance."""
     dlq_path = tmp_path / "singleton.jsonl"
     service = ClickHouseAuditService(
-        client=_make_failing_client(), dlq_path=dlq_path
+        client=_make_failing_client(), dlq_path=dlq_path,
     )
 
     backend_a = service._get_dlq_backend()

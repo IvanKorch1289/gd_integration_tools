@@ -42,7 +42,7 @@ def test_from_cdc_registry_poll_builds_route() -> None:
 def test_from_cdc_registry_listen_notify() -> None:
     """``from_cdc_registry("listen_notify", ...)`` → ListenNotifyCDCBackend."""
     builder = RouteBuilder.from_cdc_registry(
-        "test", "listen_notify", dsn="postgresql://x", channel="my_ch"
+        "test", "listen_notify", dsn="postgresql://x", channel="my_ch",
     )
     assert isinstance(builder._source_instance, ListenNotifyCDCBackend)
     assert "listen_notify" in str(builder.source)
@@ -51,7 +51,7 @@ def test_from_cdc_registry_listen_notify() -> None:
 def test_from_cdc_registry_debezium() -> None:
     """``from_cdc_registry("debezium", ...)`` → DebeziumEventsCDCBackend."""
     builder = RouteBuilder.from_cdc_registry(
-        "test", "debezium", bootstrap_servers="kafka:9092", group_id="g1"
+        "test", "debezium", bootstrap_servers="kafka:9092", group_id="g1",
     )
     assert isinstance(builder._source_instance, DebeziumEventsCDCBackend)
     assert "debezium" in str(builder.source)
@@ -95,7 +95,7 @@ def test_legacy_from_cdc_still_works() -> None:
 def test_legacy_from_cdc_logical_still_works() -> None:
     """Backward compat: ``from_cdc_logical`` — K3 S5 W5 path still works."""
     builder = RouteBuilder.from_cdc_logical(
-        "test_logical", "orders", dsn="postgresql://x"
+        "test_logical", "orders", dsn="postgresql://x",
     )
     assert builder.route_id == "test_logical"
     assert "cdc-logical" in str(builder.source)

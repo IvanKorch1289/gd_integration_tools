@@ -75,14 +75,14 @@ class TestVaultClient:
     # ─────────────────────────────────────────────────────────────────────────
 
     def test_get_active_secret_returns_none_when_not_registered(
-        self, rotator: VaultClient
+        self, rotator: VaultClient,
     ) -> None:
         """get_active_secret() should return None for unregistered path."""
         result = rotator.get_active_secret("secret/data/nonexistent")
         assert result is None
 
     def test_get_active_secret_returns_cached_after_init(
-        self, rotator: VaultClient
+        self, rotator: VaultClient,
     ) -> None:
         """get_active_secret() should return active_secret_data after init."""
         callback = MagicMock()
@@ -98,14 +98,14 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_initial_version_cached_no_callback(
-        self, rotator: VaultClient
+        self, rotator: VaultClient,
     ) -> None:
         """First read should cache version and data but NOT call callback."""
         callback = MagicMock()
         rotator.register("secret/data/db/password", callback)
 
         mock_response = {
-            "data": {"metadata": {"version": 1}, "data": {"password": "secret-v1"}}
+            "data": {"metadata": {"version": 1}, "data": {"password": "secret-v1"}},
         }
 
         mock_client = MagicMock()
@@ -121,7 +121,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_version_change_activates_after_drift_window(
-        self, rotator: VaultClient
+        self, rotator: VaultClient,
     ) -> None:
         """Version change after drift window should trigger callback."""
         callback = MagicMock()
@@ -130,12 +130,12 @@ class TestVaultClient:
         # Simulate first version cached
         rotator._entries["secret/data/db/password"].current_version = 1
         rotator._entries["secret/data/db/password"].active_secret_data = {
-            "password": "secret-v1"
+            "password": "secret-v1",
         }
 
         # New version response
         mock_response = {
-            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}}
+            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}},
         }
 
         mock_client = MagicMock()
@@ -157,7 +157,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_version_change_kept_during_drift_window(
-        self, rotator: VaultClient
+        self, rotator: VaultClient,
     ) -> None:
         """Within drift window, old secret should stay active (no callback)."""
         callback = MagicMock()
@@ -166,12 +166,12 @@ class TestVaultClient:
         # Simulate first version cached
         rotator._entries["secret/data/db/password"].current_version = 1
         rotator._entries["secret/data/db/password"].active_secret_data = {
-            "password": "secret-v1"
+            "password": "secret-v1",
         }
 
         # New version response
         mock_response = {
-            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}}
+            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}},
         }
 
         mock_client = MagicMock()
@@ -194,7 +194,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_validation_failure_keeps_old_secret(
-        self, rotator: VaultClient
+        self, rotator: VaultClient,
     ) -> None:
         """If validator returns False, old secret should remain active."""
         validator = MagicMock(return_value=False)
@@ -204,12 +204,12 @@ class TestVaultClient:
         # Simulate first version cached
         rotator._entries["secret/data/db/password"].current_version = 1
         rotator._entries["secret/data/db/password"].active_secret_data = {
-            "password": "secret-v1"
+            "password": "secret-v1",
         }
 
         # New version response
         mock_response = {
-            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}}
+            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}},
         }
 
         mock_client = MagicMock()
@@ -233,7 +233,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_validation_success_activates_new_secret(
-        self, rotator: VaultClient
+        self, rotator: VaultClient,
     ) -> None:
         """If validator returns True, new secret should be activated."""
         validator = MagicMock(return_value=True)
@@ -243,12 +243,12 @@ class TestVaultClient:
         # Simulate first version cached
         rotator._entries["secret/data/db/password"].current_version = 1
         rotator._entries["secret/data/db/password"].active_secret_data = {
-            "password": "secret-v1"
+            "password": "secret-v1",
         }
 
         # New version response
         mock_response = {
-            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}}
+            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}},
         }
 
         mock_client = MagicMock()
@@ -272,7 +272,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_validation_exception_keeps_old_secret(
-        self, rotator: VaultClient
+        self, rotator: VaultClient,
     ) -> None:
         """If validator raises, old secret should remain active."""
         validator = MagicMock(side_effect=Exception("Connection failed"))
@@ -282,12 +282,12 @@ class TestVaultClient:
         # Simulate first version cached
         rotator._entries["secret/data/db/password"].current_version = 1
         rotator._entries["secret/data/db/password"].active_secret_data = {
-            "password": "secret-v1"
+            "password": "secret-v1",
         }
 
         # New version response
         mock_response = {
-            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}}
+            "data": {"metadata": {"version": 2}, "data": {"password": "secret-v2"}},
         }
 
         mock_client = MagicMock()
@@ -360,7 +360,7 @@ class TestVaultClient:
 
     @pytest.mark.asyncio()
     async def test_connection_error_resets_client_for_reconnect(
-        self, rotator: VaultClient
+        self, rotator: VaultClient,
     ) -> None:
         """On connection error, client should be reset to None for reconnect."""
         callback = MagicMock()
@@ -369,12 +369,12 @@ class TestVaultClient:
         # First version
         rotator._entries["secret/data/db/password"].current_version = 1
         rotator._entries["secret/data/db/password"].active_secret_data = {
-            "password": "secret-v1"
+            "password": "secret-v1",
         }
 
         mock_client = MagicMock()
         mock_client.secrets.kv.v2.read_secret_version.side_effect = Exception(
-            "Connection refused"
+            "Connection refused",
         )
 
         rotator._client = mock_client

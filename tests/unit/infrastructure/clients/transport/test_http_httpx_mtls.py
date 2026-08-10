@@ -39,7 +39,7 @@ async def test_no_cert_does_not_pass_cert_kwarg() -> None:
     client = HttpxClient()
     client._http_settings = _StubSettings()  # type: ignore[assignment]
     with patch(
-        "src.backend.infrastructure.clients.transport.http_httpx.httpx.AsyncClient"
+        "src.backend.infrastructure.clients.transport.http_httpx.httpx.AsyncClient",
     ) as mock_ac:
         await client._ensure_client()
     assert mock_ac.called
@@ -54,10 +54,10 @@ async def test_cert_paths_passed_as_tuple() -> None:
     key_p = Path("/etc/ssl/client.key")
     client = HttpxClient()
     client._http_settings = _StubSettings(  # type: ignore[assignment]
-        client_cert_path=cert_p, client_key_path=key_p
+        client_cert_path=cert_p, client_key_path=key_p,
     )
     with patch(
-        "src.backend.infrastructure.clients.transport.http_httpx.httpx.AsyncClient"
+        "src.backend.infrastructure.clients.transport.http_httpx.httpx.AsyncClient",
     ) as mock_ac:
         await client._ensure_client()
     kwargs = mock_ac.call_args.kwargs
@@ -82,7 +82,7 @@ async def test_cert_paths_with_password_triple() -> None:
         client_cert_password=_FakeSecret("pwd123"),
     )
     with patch(
-        "src.backend.infrastructure.clients.transport.http_httpx.httpx.AsyncClient"
+        "src.backend.infrastructure.clients.transport.http_httpx.httpx.AsyncClient",
     ) as mock_ac:
         await client._ensure_client()
     kwargs = mock_ac.call_args.kwargs
@@ -94,10 +94,10 @@ async def test_cert_only_one_path_no_op() -> None:
     """Один из ``*_path`` пуст — ``cert`` не передаётся (валидация config-time)."""
     client = HttpxClient()
     client._http_settings = _StubSettings(  # type: ignore[assignment]
-        client_cert_path=Path("/c.crt"), client_key_path=None
+        client_cert_path=Path("/c.crt"), client_key_path=None,
     )
     with patch(
-        "src.backend.infrastructure.clients.transport.http_httpx.httpx.AsyncClient"
+        "src.backend.infrastructure.clients.transport.http_httpx.httpx.AsyncClient",
     ) as mock_ac:
         await client._ensure_client()
     assert "cert" not in mock_ac.call_args.kwargs
@@ -108,7 +108,7 @@ async def test_cert_rotation_resets_client() -> None:
     """Callback ротации сбрасывает self._client (next ensure пересоздаст)."""
     client = HttpxClient()
     client._http_settings = _StubSettings(  # type: ignore[assignment]
-        client_cert_path=Path("/c.crt"), client_key_path=Path("/k.key")
+        client_cert_path=Path("/c.crt"), client_key_path=Path("/k.key"),
     )
     fake_old_client = MagicMock()
     fake_old_client.is_closed = False

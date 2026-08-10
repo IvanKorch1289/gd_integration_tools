@@ -26,7 +26,7 @@ def _entry_payload(entry: SchemaEntry) -> dict[str, Any]:
 
 
 def export_jsonschema(
-    registry: ServiceSchemaRegistry, *, kind: SchemaKind | None = None
+    registry: ServiceSchemaRegistry, *, kind: SchemaKind | None = None,
 ) -> dict[str, Any]:
     """Экспорт каталога в JSON-Schema Draft 2020-12 коллекцию.
 

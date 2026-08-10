@@ -73,7 +73,7 @@ def captured_handlers() -> list[tuple[str, object]]:
     handlers: list[tuple[str, object]] = []
 
     def fake_listens_for(
-        target: object, identifier: str, *args: object, **kw: object
+        target: object, identifier: str, *args: object, **kw: object,
     ) -> object:
         if args and callable(args[0]):
             # Direct form: event.listens_for(target, identifier, fn)
@@ -104,7 +104,7 @@ def test_listener_stores_attributes_correctly(captured_handlers: list[tuple[str,
     """DatabaseListener.__init__ сохраняет config в instance attrs."""
     engine = _make_async_engine()
     listener = DatabaseListener(
-        async_engine=engine, db_name="pg_prod", slow_query_threshold=1.5
+        async_engine=engine, db_name="pg_prod", slow_query_threshold=1.5,
     )
 
     assert listener.async_engine is engine
@@ -229,7 +229,7 @@ def test_handle_error_logs_error_without_query_parameters(
     )
 
     ctx = _make_context(
-        is_disconnect=True, statement="INSERT INTO users (ssn) VALUES (?)"
+        is_disconnect=True, statement="INSERT INTO users (ssn) VALUES (?)",
     )
 
     with caplog.at_level(logging.ERROR, logger="database"):
@@ -266,7 +266,7 @@ def test_handle_error_truncates_long_statements(
 
     # Verify truncation via MockDbLogger.
     DatabaseListener(
-        async_engine=_make_async_engine(), db_name="db2", slow_query_threshold=0.5
+        async_engine=_make_async_engine(), db_name="db2", slow_query_threshold=0.5,
     ).logger
     # Свежий listener → re-register handlers; используем последний listener.
     # Просто вызываем handler на новом listener и проверяем.

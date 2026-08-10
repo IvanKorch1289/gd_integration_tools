@@ -67,7 +67,7 @@ def install_rls_tenant_listener(async_engine: AsyncEngine) -> None:
 
     @event.listens_for(Session, "after_begin")
     def _set_tenant_on_begin(
-        session: Session, transaction: Any, connection: Any
+        session: Session, transaction: Any, connection: Any,
     ) -> None:
         """Set tenant scope на каждое begin transaction (RLS policy bind)."""
         if connection.dialect.name != "postgresql":
@@ -83,9 +83,9 @@ def install_rls_tenant_listener(async_engine: AsyncEngine) -> None:
             return
         try:
             connection.exec_driver_sql(
-                "SELECT set_config('app.tenant_id', %s, true)", (str(tenant_id),)
+                "SELECT set_config('app.tenant_id', %s, true)", (str(tenant_id),),
             )
         except Exception as exc:
             db_logger.warning(
-                "RLS SET LOCAL app.tenant_id не применён: %s", exc, exc_info=True
+                "RLS SET LOCAL app.tenant_id не применён: %s", exc, exc_info=True,
             )

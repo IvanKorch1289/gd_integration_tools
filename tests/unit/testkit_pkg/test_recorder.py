@@ -21,8 +21,8 @@ def test_cassette_round_trip(tmp_path: Path) -> None:
                 request_headers={"accept": "application/json"},
                 response_headers={"content-type": "application/json"},
                 response_body='{"items":[]}',
-            )
-        ]
+            ),
+        ],
     )
     file = tmp_path / "demo.har.json"
     cassette.save(file)
@@ -54,7 +54,7 @@ async def test_recorder_captures_response_via_mock_transport() -> None:
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(
-        transport=transport, base_url="https://mock.local"
+        transport=transport, base_url="https://mock.local",
     ) as client:
         request = client.build_request("GET", "/items")
         response = await client.send(request)

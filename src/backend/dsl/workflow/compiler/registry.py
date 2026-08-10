@@ -108,7 +108,7 @@ class WorkflowCompilerRegistry:
             self._cache = dict(snapshot)
 
     def bulk_register(
-        self, declarations: Iterable[WorkflowDeclaration]
+        self, declarations: Iterable[WorkflowDeclaration],
     ) -> list[CompiledWorkflow]:
         """Скомпилировать и закешировать список деклараций.
 

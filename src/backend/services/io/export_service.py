@@ -51,7 +51,7 @@ class CsvExporter:
         return "csv"
 
     def export(
-        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
+        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
     ) -> bytes:
         """Export data to CSV format.
 
@@ -95,7 +95,7 @@ class ExcelExporter:
         return "xlsx"
 
     def export(
-        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
+        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
     ) -> bytes:
         """Export data to Excel format.
 
@@ -157,7 +157,7 @@ class PdfExporter:
         return "pdf"
 
     def export(
-        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
+        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
     ) -> bytes:
         """Export data to PDF format.
 
@@ -207,8 +207,8 @@ class PdfExporter:
                     ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                     ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
                     ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-                ]
-            )
+                ],
+            ),
         )
         elements.append(table)
 
@@ -233,7 +233,7 @@ class JsonExporter:
         return "json"
 
     def export(
-        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
+        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
     ) -> bytes:
         """Export data to JSON format.
 
@@ -248,7 +248,7 @@ class JsonExporter:
         indent = opts.get("indent", 2)
         # json.dumps для читаемости; orjson медленнее с indent у некоторых версий.
         return json.dumps(data, ensure_ascii=False, indent=indent, default=str).encode(
-            "utf-8"
+            "utf-8",
         )
 
 
@@ -267,7 +267,7 @@ class ParquetExporter:
         return "parquet"
 
     def export(
-        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
+        self, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
     ) -> bytes:
         """Export data to Parquet format.
 
@@ -300,7 +300,7 @@ _EXPORTERS: dict[str, Any] = {
 
 
 def export(
-    format: str, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None
+    format: str, data: list[dict[str, Any]], *, options: dict[str, Any] | None = None,
 ) -> bytes:
     """Универсальный диспатчер по имени формата. Бросает ``KeyError`` если неизвестен."""
     exporter = _EXPORTERS.get(format.lower())
@@ -340,11 +340,11 @@ class ExportFacade:
             CSV bytes.
         """
         return _EXPORTERS["csv"].export(
-            rows, options={"delimiter": delimiter, "encoding": encoding}
+            rows, options={"delimiter": delimiter, "encoding": encoding},
         )
 
     async def to_excel(
-        self, rows: list[dict[str, Any]], *, sheet_name: str = "Data"
+        self, rows: list[dict[str, Any]], *, sheet_name: str = "Data",
     ) -> bytes:
         """Export rows to Excel.
 
@@ -358,7 +358,7 @@ class ExportFacade:
         return _EXPORTERS["xlsx"].export(rows, options={"sheet_name": sheet_name})
 
     async def to_pdf(
-        self, rows: list[dict[str, Any]], *, title: str = "Report"
+        self, rows: list[dict[str, Any]], *, title: str = "Report",
     ) -> bytes:
         """Export rows to PDF.
 

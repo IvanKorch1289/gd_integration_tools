@@ -170,7 +170,7 @@ class AuditEventLog:
                         "correlation_id": e.correlation_id,
                         "tenant_id": e.tenant_id,
                         "metadata": dumps_str(e.metadata),
-                    }
+                    },
                 )
             await client.insert(self._table, rows)
             logger.debug("Flushed %d audit events to ClickHouse", len(rows))
@@ -323,7 +323,7 @@ class AuditEventLog:
                             "batch_size": len(events),
                         },
                         dlq_class="operational",
-                    )
+                    ),
                 )
             except Exception as build_exc:
                 # Envelope build failed (should not happen, defensive):

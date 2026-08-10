@@ -61,10 +61,10 @@ class ListWorkflowsQuery(BaseModel):
     """Query-параметры для /workflows list."""
 
     status_filter: WorkflowStatus | None = Field(
-        default=None, alias="status", description="Фильтр по статусу инстанса."
+        default=None, alias="status", description="Фильтр по статусу инстанса.",
     )
     workflow_name: str | None = Field(
-        default=None, description="Фильтр по логическому имени workflow."
+        default=None, description="Фильтр по логическому имени workflow.",
     )
     tenant_id: str | None = Field(default=None, description="Фильтр по tenant scope.")
     limit: int = Field(default=50, ge=1, le=500, description="Максимум записей.")
@@ -81,10 +81,10 @@ class TriggerQuery(BaseModel):
     """Query-параметры trigger-эндпоинта."""
 
     wait: bool = Field(
-        default=False, description="Ждать завершения (polling до terminal или timeout)."
+        default=False, description="Ждать завершения (polling до terminal или timeout).",
     )
     timeout_s: int = Field(
-        default=30, ge=1, le=600, description="Timeout ожидания (только при wait=True)."
+        default=30, ge=1, le=600, description="Timeout ожидания (только при wait=True).",
     )
 
 

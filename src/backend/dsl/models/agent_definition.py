@@ -74,16 +74,16 @@ class ModelRouterSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     primary: str = Field(
-        min_length=1, description="Canonical LiteLLM model id primary."
+        min_length=1, description="Canonical LiteLLM model id primary.",
     )
     fallback: list[str] = Field(
-        default_factory=list, description="Fallback chain в порядке приоритета."
+        default_factory=list, description="Fallback chain в порядке приоритета.",
     )
     timeout_s: float = Field(
-        default=30.0, gt=0.0, description="Per-call timeout в секундах."
+        default=30.0, gt=0.0, description="Per-call timeout в секундах.",
     )
     retry_attempts: int = Field(
-        default=2, ge=0, description="Повторы primary до fallback."
+        default=2, ge=0, description="Повторы primary до fallback.",
     )
 
 
@@ -105,13 +105,13 @@ class MemoryLayerSpec(BaseModel):
 
     backend: str = Field(min_length=1, description="Тип backend'а memory.")
     ttl_hours: int | None = Field(
-        default=None, ge=0, description="TTL в часах; None — без ограничения."
+        default=None, ge=0, description="TTL в часах; None — без ограничения.",
     )
     namespace: str | None = Field(
-        default=None, description="Шаблон namespace; None — runtime-default."
+        default=None, description="Шаблон namespace; None — runtime-default.",
     )
     encryption: bool = Field(
-        default=True, description="Шифровать ли payload через Vault keys."
+        default=True, description="Шифровать ли payload через Vault keys.",
     )
 
 
@@ -136,13 +136,13 @@ class MemorySpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     scratch: MemoryLayerSpec | None = Field(
-        default=None, description="Краткосрочный scratchpad (Redis)."
+        default=None, description="Краткосрочный scratchpad (Redis).",
     )
     episodic: MemoryLayerSpec | None = Field(
-        default=None, description="Эпизодическая память (Postgres/Qdrant)."
+        default=None, description="Эпизодическая память (Postgres/Qdrant).",
     )
     semantic: MemoryLayerSpec | None = Field(
-        default=None, description="Долгосрочная семантическая память (Qdrant)."
+        default=None, description="Долгосрочная семантическая память (Qdrant).",
     )
 
 
@@ -171,7 +171,7 @@ class ToolSpec(BaseModel):
 
     name: str = Field(min_length=1, description="Идентификатор tool'а в registry.")
     config: dict[str, Any] = Field(
-        default_factory=dict, description="Конфигурация tool'а."
+        default_factory=dict, description="Конфигурация tool'а.",
     )
 
 
@@ -191,13 +191,13 @@ class SupervisorSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     type: Literal["hierarchical", "flat", "router"] = Field(
-        default="flat", description="Тип supervisor-паттерна."
+        default="flat", description="Тип supervisor-паттерна.",
     )
     max_iterations: int = Field(
-        default=10, ge=1, description="Максимум итераций координации."
+        default=10, ge=1, description="Максимум итераций координации.",
     )
     agents: list[str] = Field(
-        default_factory=list, description="Имена sub-agents под supervisor'ом."
+        default_factory=list, description="Имена sub-agents под supervisor'ом.",
     )
 
 
@@ -221,13 +221,13 @@ class StopConditionSpec(BaseModel):
     max_steps: int = Field(default=25, ge=1, description="Максимум шагов graph'а.")
     max_tool_calls: int = Field(default=50, ge=1, description="Максимум вызовов tools.")
     max_tokens: int | None = Field(
-        default=None, ge=1, description="Hard-cap total tokens."
+        default=None, ge=1, description="Hard-cap total tokens.",
     )
     max_cost_usd: float | None = Field(
-        default=None, gt=0.0, description="Hard-cap стоимости USD."
+        default=None, gt=0.0, description="Hard-cap стоимости USD.",
     )
     max_wall_time_s: float | None = Field(
-        default=None, gt=0.0, description="Hard-cap wall-time секунды."
+        default=None, gt=0.0, description="Hard-cap wall-time секунды.",
     )
 
 
@@ -262,10 +262,10 @@ class RLMSpec(BaseModel):
         description="Порог penalty для попадания в consolidation.",
     )
     consolidation_batch_size: int = Field(
-        default=100, ge=1, description="Размер batch'а consolidation."
+        default=100, ge=1, description="Размер batch'а consolidation.",
     )
     reindex_interval_hours: int | None = Field(
-        default=24, ge=1, description="Интервал re-index'а; None — отключено."
+        default=24, ge=1, description="Интервал re-index'а; None — отключено.",
     )
 
 
@@ -299,7 +299,7 @@ class AgentDefinition(BaseModel):
     runtime: AgentRuntime = Field(description="Целевой runtime агента.")
     model: ModelRouterSpec = Field(description="LLM model-router + fallback chain.")
     memory: MemorySpec | None = Field(
-        default=None, description="Memory-layers; None — defaults из AIPolicySpec."
+        default=None, description="Memory-layers; None — defaults из AIPolicySpec.",
     )
     policy: str | None = Field(
         default=None,
@@ -307,13 +307,13 @@ class AgentDefinition(BaseModel):
         description="Имя AIPolicySpec для gateway-enforcement.",
     )
     tools: list[ToolSpec] = Field(
-        default_factory=list, description="Tools агента (RAG / sanitizers / guards)."
+        default_factory=list, description="Tools агента (RAG / sanitizers / guards).",
     )
     supervisor: SupervisorSpec | None = Field(
-        default=None, description="Supervisor multi-agent (LangGraph)."
+        default=None, description="Supervisor multi-agent (LangGraph).",
     )
     stop_condition: StopConditionSpec | None = Field(
-        default=None, description="Anti-loop / budget-cap условия."
+        default=None, description="Anti-loop / budget-cap условия.",
     )
     rlm: RLMSpec | None = Field(default=None, description="RL-memory loop.")
 
@@ -388,6 +388,6 @@ class AgentDefinition(BaseModel):
         if self.supervisor is not None and self.runtime != "langgraph":
             raise ValueError(
                 f"supervisor поддерживается только для runtime='langgraph', "
-                f"задано runtime={self.runtime!r}"
+                f"задано runtime={self.runtime!r}",
             )
         return self

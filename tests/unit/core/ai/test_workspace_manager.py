@@ -31,7 +31,7 @@ async def test_create_new_returns_unique_handle(workspace_root: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_create_new_emits_audit_event(
-    workspace_root: Path, monkeypatch: pytest.MonkeyPatch
+    workspace_root: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """create_new эмитит audit-event через canonical facade.emit_ai_workspace.
 
@@ -45,7 +45,7 @@ async def test_create_new_emits_audit_event(
         captured_events.append(event)
 
     monkeypatch.setattr(
-        "src.backend.core.ai.workspace_manager.emit_ai_workspace", _capture
+        "src.backend.core.ai.workspace_manager.emit_ai_workspace", _capture,
     )
 
     manager = AIWorkspaceManager(root=workspace_root)
@@ -57,7 +57,7 @@ async def test_create_new_emits_audit_event(
             "session_id": handle.session_id,
             "path": str(handle.path),
             "artifact_hint": "report",
-        }
+        },
     ]
 
 
@@ -81,7 +81,7 @@ async def test_ttl_expired_handle_blocks_writes(workspace_root: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_cleanup_expired_removes_old_workspaces(
-    workspace_root: Path, monkeypatch: pytest.MonkeyPatch
+    workspace_root: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """cleanup_expired удаляет TTL-expired workspaces и эмитит audit-event.
 
@@ -93,7 +93,7 @@ async def test_cleanup_expired_removes_old_workspaces(
         captured_events.append(event)
 
     monkeypatch.setattr(
-        "src.backend.core.ai.workspace_manager.emit_ai_workspace", _capture
+        "src.backend.core.ai.workspace_manager.emit_ai_workspace", _capture,
     )
 
     manager = AIWorkspaceManager(root=workspace_root, ttl_seconds=0.001)

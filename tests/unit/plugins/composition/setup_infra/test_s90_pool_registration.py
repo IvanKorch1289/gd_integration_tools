@@ -59,7 +59,7 @@ def stub_optional_dependencies(monkeypatch: Any) -> None:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_mongo_pool_registered_when_enabled(
-    fake_manager: _FakeManager, stub_optional_dependencies: None, monkeypatch: Any
+    fake_manager: _FakeManager, stub_optional_dependencies: None, monkeypatch: Any,
 ) -> None:
     """MongoDB pool registers when settings.mongo.enabled=True."""
     from src.backend.plugins.composition.setup_infra import pools
@@ -80,7 +80,7 @@ async def test_mongo_pool_registered_when_enabled(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_es_pool_registered_when_enabled(
-    fake_manager: _FakeManager, stub_optional_dependencies: None, monkeypatch: Any
+    fake_manager: _FakeManager, stub_optional_dependencies: None, monkeypatch: Any,
 ) -> None:
     """Elasticsearch pool registers when settings.elasticsearch.enabled=True."""
     from src.backend.plugins.composition.setup_infra import pools
@@ -101,7 +101,7 @@ async def test_es_pool_registered_when_enabled(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_pools_skipped_when_disabled(
-    fake_manager: _FakeManager, stub_optional_dependencies: None, monkeypatch: Any
+    fake_manager: _FakeManager, stub_optional_dependencies: None, monkeypatch: Any,
 ) -> None:
     """MongoDB and ES pools do NOT register when their enabled flags are False."""
     from src.backend.plugins.composition.setup_infra import pools

@@ -12,11 +12,11 @@ from src.backend.infrastructure.cache.lru_cache import LruMemoryCache
 @pytest.fixture(autouse=True)
 def _reset_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "src.backend.infrastructure.cache.lru_cache._metrics_initialized", False
+        "src.backend.infrastructure.cache.lru_cache._metrics_initialized", False,
     )
     monkeypatch.setattr("src.backend.infrastructure.cache.lru_cache._metric_hits", None)
     monkeypatch.setattr(
-        "src.backend.infrastructure.cache.lru_cache._metric_misses", None
+        "src.backend.infrastructure.cache.lru_cache._metric_misses", None,
     )
     monkeypatch.setattr("src.backend.infrastructure.cache.lru_cache._metric_sets", None)
 

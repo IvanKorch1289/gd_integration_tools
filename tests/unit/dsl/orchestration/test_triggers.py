@@ -25,7 +25,7 @@ class TestIntervalTrigger:
     @pytest.mark.asyncio
     async def test_fires_after_interval(self) -> None:
         trigger = IntervalTrigger(
-            name="test_interval", route_id="test_route", interval_s=0.1
+            name="test_interval", route_id="test_route", interval_s=0.1,
         )
         with patch("src.backend.dsl.service.get_dsl_service") as mock_get_svc:
             mock_svc = MagicMock()
@@ -97,7 +97,7 @@ class TestIntervalTrigger:
     @pytest.mark.asyncio
     async def test_dispatch_exception_logged_not_raised(self) -> None:
         trigger = IntervalTrigger(
-            name="fail", route_id="r1", interval_s=0.05, start_immediately=True
+            name="fail", route_id="r1", interval_s=0.05, start_immediately=True,
         )
         with patch("src.backend.dsl.service.get_dsl_service") as mock_get_svc:
             mock_svc = MagicMock()
@@ -212,7 +212,7 @@ class TestWebhookTrigger:
             await trigger.start()
 
             async with AsyncClient(
-                transport=ASGITransport(app=app), base_url="http://test"
+                transport=ASGITransport(app=app), base_url="http://test",
             ) as client:
                 resp = await client.post("/webhooks/orders", json={"order_id": 123})
             assert resp.status_code == 200

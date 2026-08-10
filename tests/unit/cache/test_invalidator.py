@@ -47,7 +47,7 @@ async def test_invalidate_multiple_tags() -> None:
 
     invalidator = CacheInvalidator([backend])
     removed = await invalidator.invalidate(
-        "entity:orders", "entity:orders:42", "entity:users"
+        "entity:orders", "entity:orders:42", "entity:users",
     )
 
     assert removed == 3

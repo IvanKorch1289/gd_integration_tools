@@ -19,7 +19,7 @@ def test_database_chain_chaos(scenario: str) -> None:
     """``database`` chain выживает scenario={scenario} через resilience-coordinator."""
     # Smoke: проверяем импорт chain'а и помечаем сценарий.
     assert_chain_module_loadable(
-        "src.backend.infrastructure.resilience.components.database_chain"
+        "src.backend.infrastructure.resilience.components.database_chain",
     )
     # Реальный toxic-инжект делается в живом backend (job chaos.yml);
     # локально без Docker pytest помечает тест skip через

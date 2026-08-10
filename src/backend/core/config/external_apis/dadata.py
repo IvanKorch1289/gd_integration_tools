@@ -56,7 +56,7 @@ class DadataAPISettings(BaseSettingsWithLoader):
     )
 
     read_timeout: float = Field(
-        ..., description="Mаксимальное время чтения данных", examples=[30.0]
+        ..., description="Mаксимальное время чтения данных", examples=[30.0],
     )
 
 

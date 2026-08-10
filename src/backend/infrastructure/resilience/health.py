@@ -72,7 +72,7 @@ def _component_to_dict(component: ComponentStatus) -> dict[str, Any]:
 
 
 def build_resilience_health_check(
-    component: str, coordinator: ResilienceCoordinator | None = None
+    component: str, coordinator: ResilienceCoordinator | None = None,
 ):
     """Возвращает async health-check callable для одного компонента.
 
@@ -105,7 +105,7 @@ def build_resilience_health_check(
 
 
 def register_resilience_health_checks(
-    health_aggregator: Any, coordinator: ResilienceCoordinator | None = None
+    health_aggregator: Any, coordinator: ResilienceCoordinator | None = None,
 ) -> None:
     """Регистрирует health-checks для всех 11 компонентов W26.
 
@@ -120,7 +120,7 @@ def register_resilience_health_checks(
     coord = coordinator or get_resilience_coordinator()
     for component in coord.list_components():
         health_aggregator.register(
-            component, build_resilience_health_check(component, coord)
+            component, build_resilience_health_check(component, coord),
         )
     logger.info("Resilience: registered %d health-checks", len(coord.list_components()))
 

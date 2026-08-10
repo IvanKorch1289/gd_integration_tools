@@ -82,7 +82,7 @@ def test_shim_delegates_to_canonical() -> None:
             (None, None),
         ):
             assert legacy_resolve_waf_route(
-                env, url
+                env, url,
             ) == ext_waf_route.resolve_waf_route(env, url)
 
 
@@ -94,7 +94,7 @@ def test_shim_and_canonical_are_same_object() -> None:
         warnings.simplefilter("ignore", DeprecationWarning)
         legacy_result = legacy_resolve_waf_route("production", "https://waf.bank.ru/x")
     canonical_result = ext_waf_route.resolve_waf_route(
-        "production", "https://waf.bank.ru/x"
+        "production", "https://waf.bank.ru/x",
     )
     assert legacy_result == canonical_result
 

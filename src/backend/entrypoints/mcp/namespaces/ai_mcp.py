@@ -68,7 +68,7 @@ def _register_ai_tool(mcp: FastMCP, action_name: str) -> None:
         deny_reason = _check_mcp_tool_authz(_action)
         if deny_reason is not None:
             return orjson.dumps(
-                {"error": "mcp.tool.denied", "action": _action, "reason": deny_reason}
+                {"error": "mcp.tool.denied", "action": _action, "reason": deny_reason},
             ).decode()
 
         try:
@@ -86,7 +86,7 @@ def _register_ai_tool(mcp: FastMCP, action_name: str) -> None:
             result = await action_handler_registry.dispatch(command)
             if result is None:
                 return orjson.dumps(
-                    {"error": "action_returned_null", "action": _action}
+                    {"error": "action_returned_null", "action": _action},
                 ).decode()
             if hasattr(result, "model_dump"):
                 return orjson.dumps(result.model_dump(mode="json")).decode()

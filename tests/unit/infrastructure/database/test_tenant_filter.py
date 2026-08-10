@@ -18,7 +18,7 @@ def test_tenant_mixin_has_column() -> None:
 def test_apply_tenant_filter_registers_listeners() -> None:
     session_factory = MagicMock()
     with patch(
-        "src.backend.infrastructure.database.tenant_filter.event.listens_for"
+        "src.backend.infrastructure.database.tenant_filter.event.listens_for",
     ) as mock_listen:
         apply_tenant_filter(session_factory)
         assert mock_listen.call_count == 2

@@ -50,7 +50,7 @@ class SoapSink(Sink):
     kind: SinkKind = field(default=SinkKind.SOAP, init=False)
     _client: Any = field(default=None, init=False, repr=False)
     _lock: threading.Lock = field(
-        default_factory=threading.Lock, init=False, repr=False
+        default_factory=threading.Lock, init=False, repr=False,
     )
 
     @with_breaker("soap_sink")
@@ -63,7 +63,7 @@ class SoapSink(Sink):
             client = await asyncio.to_thread(self._get_client)
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
+                ok=False, details={"error": str(exc) or exc.__class__.__name__},
             )
         if client is None:
             return SinkResult(ok=False, details={"error": "zeep not installed"})
@@ -129,13 +129,13 @@ class SoapSink(Sink):
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )
         latency_ms = (time.perf_counter() - start) * 1000.0
         if client is not None:
             return HealthResult.ok(latency_ms=latency_ms, mode=mode)
         return HealthResult.failed(
-            error="zeep not installed", mode=mode, latency_ms=latency_ms
+            error="zeep not installed", mode=mode, latency_ms=latency_ms,
         )
 
 

@@ -34,7 +34,7 @@ class ProcessorMiddleware(ABC):
 
     @abstractmethod
     async def before(
-        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
+        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Выполнить операцию before."""
         ...
@@ -69,7 +69,7 @@ class TimeoutMiddleware(ProcessorMiddleware):
         return self._overrides.get(processor_name, self._default_timeout)
 
     async def before(
-        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
+        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Выполнить операцию before."""
 
@@ -88,7 +88,7 @@ class ErrorNormalizerMiddleware(ProcessorMiddleware):
     """Нормализует ошибки процессоров в единый формат."""
 
     async def before(
-        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
+        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Выполнить операцию before."""
 
@@ -123,7 +123,7 @@ class MetricsMiddleware(ProcessorMiddleware):
         self._durations: dict[str, list[float]] = {}
 
     async def before(
-        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext
+        self, processor_name: str, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Выполнить операцию before."""
 
@@ -188,7 +188,7 @@ class MiddlewareChain:
         try:
             if timeout:
                 await asyncio.wait_for(
-                    processor.process(exchange, context), timeout=timeout
+                    processor.process(exchange, context), timeout=timeout,
                 )
             else:
                 await processor.process(exchange, context)

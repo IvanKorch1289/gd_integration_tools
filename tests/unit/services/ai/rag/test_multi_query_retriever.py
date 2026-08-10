@@ -27,7 +27,7 @@ from src.backend.services.ai.rag.multi_query_retriever import (
 async def test_retrieve_returns_multi_query_results() -> None:
     """Успешный retrieve возвращает MultiQueryResult."""
     generate_mock = AsyncMock(
-        return_value=["альтернативный запрос 1", "альтернативный запрос 2"]
+        return_value=["альтернативный запрос 1", "альтернативный запрос 2"],
     )
     embed_mock = AsyncMock(return_value=[[0.1], [0.2], [0.3]])
     search_mock = AsyncMock(
@@ -35,7 +35,7 @@ async def test_retrieve_returns_multi_query_results() -> None:
             [{"id": "doc_a", "document": "документ A", "metadata": {}}],
             [{"id": "doc_b", "document": "документ B", "metadata": {}}],
             [{"id": "doc_c", "document": "документ C", "metadata": {}}],
-        ]
+        ],
     )
     retriever = MultiQueryRetriever(
         embed_fn=embed_mock,
@@ -105,7 +105,7 @@ async def test_original_query_included_in_search() -> None:
         return [[float(i)] for i in range(len(texts))]
 
     async def capture_search(
-        embeddings: list[list[float]], top_k: int
+        embeddings: list[list[float]], top_k: int,
     ) -> list[dict[str, Any]]:
         all_embeds.extend(embeddings)
         return []
@@ -168,7 +168,7 @@ async def test_retrieve_search_failure_still_returns_results() -> None:
         side_effect=[
             RuntimeError("search down"),
             [{"id": "doc1", "document": "документ", "metadata": {}}],
-        ]
+        ],
     )
     retriever = MultiQueryRetriever(
         embed_fn=embed_mock,
@@ -188,7 +188,7 @@ async def test_retrieve_empty_reformulations_still_works() -> None:
     generate_mock = AsyncMock(return_value=[])
     embed_mock = AsyncMock(return_value=[[0.1]])
     search_mock = AsyncMock(
-        return_value=[{"id": "doc1", "document": "документ", "metadata": {}}]
+        return_value=[{"id": "doc1", "document": "документ", "metadata": {}}],
     )
     retriever = MultiQueryRetriever(
         embed_fn=embed_mock,
@@ -211,7 +211,7 @@ async def test_retrieve_sequential_mode() -> None:
         return [[0.1] for _ in texts]
 
     async def track_search(
-        embeddings: list[list[float]], top_k: int
+        embeddings: list[list[float]], top_k: int,
     ) -> list[dict[str, Any]]:
         call_order.append(f"search-{len(embeddings)}")
         return []
@@ -239,7 +239,7 @@ async def test_retrieve_parallel_mode() -> None:
         return [[0.1] for _ in texts]
 
     async def dummy_search(
-        embeddings: list[list[float]], top_k: int
+        embeddings: list[list[float]], top_k: int,
     ) -> list[dict[str, Any]]:
         return []
 
@@ -275,7 +275,7 @@ async def test_retrieve_sources_include_original_and_reform() -> None:
             [{"id": "doc1", "document": "документ 1", "metadata": {}}],
             [{"id": "doc2", "document": "документ 2", "metadata": {}}],
             [{"id": "doc3", "document": "документ 3", "metadata": {}}],
-        ]
+        ],
     )
     retriever = MultiQueryRetriever(
         embed_fn=embed_mock,

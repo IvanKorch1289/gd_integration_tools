@@ -157,7 +157,7 @@ class TestEventMessage:
     async def test_enrich_only(self) -> None:
         """Без producer — только header enrichment."""
         p = EventMessageProcessor(
-            event_type="customer.created", event_version="1.0", event_source="billing"
+            event_type="customer.created", event_version="1.0", event_source="billing",
         )
         ex = _exchange({"id": 123})
         await p.process(ex, _ctx())
@@ -227,7 +227,7 @@ class TestEventMessage:
         called = {"n": 0}
 
         async def async_producer(
-            topic: str, body: object, headers: dict[str, str]
+            topic: str, body: object, headers: dict[str, str],
         ) -> None:
             await asyncio.sleep(0)
             called["n"] += 1

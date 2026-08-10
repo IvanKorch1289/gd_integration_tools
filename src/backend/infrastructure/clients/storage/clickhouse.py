@@ -38,7 +38,7 @@ MAX_INSERT_ROWS = 100_000
 # подставлялись в SQL raw без валидации.
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
 _ALLOWED_AGG = frozenset(
-    {"count", "sum", "avg", "min", "max", "uniq", "uniqExact", "median", "quantile"}
+    {"count", "sum", "avg", "min", "max", "uniq", "uniqExact", "median", "quantile"},
 )
 
 logger = get_logger(__name__)
@@ -214,7 +214,7 @@ class ClickHouseClient:
 
     @resilient(name="clickhouse_query", max_attempts=3)
     async def query(
-        self, sql: str, params: dict[str, Any] | None = None
+        self, sql: str, params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """SELECT запрос, возвращает список словарей."""
         import orjson
@@ -226,14 +226,14 @@ class ClickHouseClient:
         return [orjson.loads(line) for line in raw.strip().split("\n") if line.strip()]
 
     async def insert(
-        self, table: str, rows: list[dict[str, Any]], *, batch_size: int | None = None
+        self, table: str, rows: list[dict[str, Any]], *, batch_size: int | None = None,
     ) -> int:
         """Batch INSERT with a configurable chunk size and hard row cap."""
         import orjson
 
         if len(rows) > MAX_INSERT_ROWS:
             raise ValueError(
-                f"oversized batch: {len(rows)} rows exceeds {MAX_INSERT_ROWS}"
+                f"oversized batch: {len(rows)} rows exceeds {MAX_INSERT_ROWS}",
             )
         if not rows:
             return 0
@@ -282,7 +282,7 @@ class ClickHouseClient:
             raise ValueError(f"aggregate: invalid table identifier: {table!r}")
         if agg_func not in _ALLOWED_AGG:
             raise ValueError(
-                f"aggregate: agg_func must be one of {sorted(_ALLOWED_AGG)}, got {agg_func!r}"
+                f"aggregate: agg_func must be one of {sorted(_ALLOWED_AGG)}, got {agg_func!r}",
             )
         if not _IDENT_RE.match(column):
             raise ValueError(f"aggregate: invalid column identifier: {column!r}")

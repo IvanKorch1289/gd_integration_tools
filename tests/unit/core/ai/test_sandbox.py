@@ -17,7 +17,7 @@ class TestSandboxResult:
 
     def test_with_artifacts(self) -> None:
         result = SandboxResult(
-            stdout="", stderr="", exit_code=1, artifacts={"f.txt": b"data"}
+            stdout="", stderr="", exit_code=1, artifacts={"f.txt": b"data"},
         )
         assert result.artifacts == {"f.txt": b"data"}
 

@@ -81,7 +81,7 @@ class PresidioSanitizer:
         self._adapter = _resolve_adapter(language=language)
 
     async def sanitize(
-        self, text: str, *, entities: list[str] | None = None
+        self, text: str, *, entities: list[str] | None = None,
     ) -> SanitizeResult:
         """Legacy async-маскирование (delegates to PresidioSanitizerAdapter)."""
         if not self._adapter.available:

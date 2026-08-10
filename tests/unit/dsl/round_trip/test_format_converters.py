@@ -35,7 +35,7 @@ _AVRO_SCHEMA: dict = {
 
 @pytest.mark.xfail(
     reason="Format converter processors (avro/protobuf/toml/markdown) not implemented "
-    "in RouteBuilder — S30 carryover; to_spec() round-trip blocked"
+    "in RouteBuilder — S30 carryover; to_spec() round-trip blocked",
 )
 @pytest.mark.parametrize(
     "method,kwargs",
@@ -67,7 +67,7 @@ def test_format_converter_round_trip(method: str, kwargs: dict) -> None:
 
 @pytest.mark.xfail(
     reason="Format converter processors (avro/protobuf/toml/markdown) not implemented "
-    "in RouteBuilder — S30 carryover; to_spec() round-trip blocked"
+    "in RouteBuilder — S30 carryover; to_spec() round-trip blocked",
 )
 def test_format_converters_full_pipeline() -> None:
     """Реальная цепочка: jsonl_decode → markdown_to_html → toml_encode."""

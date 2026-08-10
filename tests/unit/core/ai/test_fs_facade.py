@@ -24,7 +24,7 @@ async def manager(workspace_root: Path) -> AIWorkspaceManager:
 
 @pytest.mark.asyncio
 async def test_read_invokes_capability_check(
-    manager: AIWorkspaceManager, tmp_path: Path
+    manager: AIWorkspaceManager, tmp_path: Path,
 ) -> None:
     """capability_check вызывается с (plugin, 'fs.read', path)."""
     seen: list[tuple[str, str, str | None]] = []
@@ -49,7 +49,7 @@ async def test_read_returns_bytes(manager: AIWorkspaceManager, tmp_path: Path) -
 
 @pytest.mark.asyncio
 async def test_read_directory_raises(
-    manager: AIWorkspaceManager, tmp_path: Path
+    manager: AIWorkspaceManager, tmp_path: Path,
 ) -> None:
     fs = AIFsFacade(workspace_manager=manager)
     with pytest.raises(IsADirectoryError):
@@ -88,7 +88,7 @@ async def test_create_new_blocks_traversal(manager: AIWorkspaceManager) -> None:
 
 @pytest.mark.asyncio
 async def test_create_new_blocks_absolute_path(
-    manager: AIWorkspaceManager, tmp_path: Path
+    manager: AIWorkspaceManager, tmp_path: Path,
 ) -> None:
     """Абсолютный путь → :class:`FsForbiddenWriteError`."""
     fs = AIFsFacade(workspace_manager=manager)
@@ -113,7 +113,7 @@ async def test_create_new_capability_check_invoked(manager: AIWorkspaceManager) 
 
 @pytest.mark.asyncio
 async def test_create_new_symlink_escape(
-    manager: AIWorkspaceManager, tmp_path: Path
+    manager: AIWorkspaceManager, tmp_path: Path,
 ) -> None:
     """Symlink, ведущий за пределы workspace, должен быть отвергнут."""
     fs = AIFsFacade(workspace_manager=manager)

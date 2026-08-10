@@ -23,8 +23,8 @@ def test_save_then_load_roundtrip(tmp_path: Path) -> None:
                 response_headers={"content-type": "application/json"},
                 request_body=None,
                 response_body='{"y":1}',
-            )
-        ]
+            ),
+        ],
     )
     path = tmp_path / "tc.yaml"
     save_cassette(path, cas)
@@ -45,8 +45,8 @@ def test_replay_transport_returns_recorded_response() -> None:
                 response_headers={"content-type": "application/json"},
                 request_body=None,
                 response_body='{"ok":true}',
-            )
-        ]
+            ),
+        ],
     )
     transport = _ReplayTransport(cas)
     # Просто smoke: map должен содержать запись.
@@ -73,8 +73,8 @@ async def test_decorator_replays_existing_cassette(tmp_path: Path) -> None:
                 response_headers={"content-type": "application/json"},
                 request_body=None,
                 response_body='{"score":750}',
-            )
-        ]
+            ),
+        ],
     )
     path = tmp_path / "score.yaml"
     save_cassette(path, cas)
@@ -102,7 +102,7 @@ async def test_decorator_replay_mode_raises_when_no_file(tmp_path: Path) -> None
 
 @pytest.mark.asyncio
 async def test_decorator_records_then_loadable_yaml(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path, monkeypatch,
 ) -> None:
     """Mock httpx.AsyncHTTPTransport чтобы не выходить в реальную сеть."""
 

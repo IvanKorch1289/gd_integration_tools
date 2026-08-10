@@ -131,7 +131,7 @@ def _resolve_relative(rel: str) -> Path:
     ],
 )
 def test_mq_writer_does_not_inject_w3c_tracecontext(
-    file_path: str, description: str
+    file_path: str, description: str,
 ) -> None:
     """S-L7-5 regression lock: файл НЕ вызывает ``inject_into_headers``.
 

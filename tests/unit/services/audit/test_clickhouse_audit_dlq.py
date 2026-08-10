@@ -52,7 +52,7 @@ def _make_failing_client() -> AsyncMock:
     """AsyncMock-клиент ClickHouse, ``insert()`` всегда кидает RuntimeError."""
     client = AsyncMock()
     client.insert = AsyncMock(
-        side_effect=RuntimeError("ClickHouse unavailable: connection refused")
+        side_effect=RuntimeError("ClickHouse unavailable: connection refused"),
     )
     return client
 
@@ -186,7 +186,7 @@ async def test_dlq_fallback_survives_dlq_write_failure(
     # Подменяем JsonlAuditBackend на broken — метод append() кидает.
     broken_backend = MagicMock()
     broken_backend.append = AsyncMock(
-        side_effect=OSError("disk full or permission denied")
+        side_effect=OSError("disk full or permission denied"),
     )
 
     with patch(
@@ -194,7 +194,7 @@ async def test_dlq_fallback_survives_dlq_write_failure(
         return_value=broken_backend,
     ):
         service = ClickHouseAuditService(
-            client=_make_failing_client(), dlq_path=Path("/tmp/never_written.jsonl")
+            client=_make_failing_client(), dlq_path=Path("/tmp/never_written.jsonl"),
         )
         event = _make_event(event_id="dlq-fail-1")
 

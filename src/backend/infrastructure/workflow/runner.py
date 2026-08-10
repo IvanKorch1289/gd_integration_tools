@@ -90,7 +90,7 @@ class StepResult:
 
     outcome: str
     events: list[tuple[WorkflowEventType, dict[str, Any], str | None]] = field(
-        default_factory=list
+        default_factory=list,
     )
     next_attempt_at: datetime | None = None
     output_state: dict[str, Any] | None = None
@@ -107,7 +107,7 @@ class StepExecutor(Protocol):
     """
 
     async def execute_next(
-        self, *, instance: WorkflowInstanceRow, state: WorkflowState
+        self, *, instance: WorkflowInstanceRow, state: WorkflowState,
     ) -> StepResult:
         """Execute the next step in a workflow instance.
 
@@ -130,8 +130,8 @@ class RunnerConfig:
 
     worker_id: str = field(
         default_factory=lambda: os.environ.get(
-            "WORKFLOW_WORKER_ID", f"worker-{uuid.uuid4().hex[:8]}"
-        )
+            "WORKFLOW_WORKER_ID", f"worker-{uuid.uuid4().hex[:8]}",
+        ),
     )
     #: Размер concurrent execution (семантика "up to N parallel instances").
     max_concurrent: int = 8
@@ -199,11 +199,11 @@ class DurableWorkflowRunner:
         # 1) LISTEN worker (если asyncpg доступен и DSN задан).
         if self._listener_dsn is not None:
             self._listen_task = get_task_registry().create_task(
-                self._listen_loop(), name="wf-listen"
+                self._listen_loop(), name="wf-listen",
             )
         # 2) backup polling loop.
         self._backup_task = get_task_registry().create_task(
-            self._backup_loop(), name="wf-backup-poll"
+            self._backup_loop(), name="wf-backup-poll",
         )
         # 3) dispatcher loop — читает из queue и запускает workers.
         get_task_registry().create_task(self._dispatch_loop(), name="wf-dispatch")
@@ -226,7 +226,7 @@ class DurableWorkflowRunner:
                     await task
                 except (asyncio.CancelledError, Exception):
                     _logger.debug(
-                        "workflow runner task cancellation raised", exc_info=True
+                        "workflow runner task cancellation raised", exc_info=True,
                     )
         # Ждём завершения активных executions (до lock_ttl_s — иначе drop).
         loop = asyncio.get_running_loop()
@@ -268,7 +268,7 @@ class DurableWorkflowRunner:
                     await conn.close()
 
     def _on_notify(
-        self, connection: Any, _pid: int, channel: str, payload: str
+        self, connection: Any, _pid: int, channel: str, payload: str,
     ) -> None:
         """asyncpg callback (sync) — только enqueue."""
         if not payload:
@@ -291,7 +291,7 @@ class DurableWorkflowRunner:
             try:
                 await asyncio.sleep(self._config.backup_poll_interval_s)
                 pending = await self._state_store.list_pending(
-                    limit=self._config.batch_size
+                    limit=self._config.batch_size,
                 )
                 for row in pending:
                     try:
@@ -309,7 +309,7 @@ class DurableWorkflowRunner:
         while self._running:
             try:
                 workflow_id = await asyncio.wait_for(
-                    self._pending_instance_ids.get(), timeout=5.0
+                    self._pending_instance_ids.get(), timeout=5.0,
                 )
             except TimeoutError:
                 continue
@@ -319,7 +319,7 @@ class DurableWorkflowRunner:
                 self._active_executions.add(workflow_id)
             # Fire-and-forget: semaphore ограничивает concurrency.
             get_task_registry().create_task(
-                self._execute_one(workflow_id), name=f"wf-exec-{workflow_id}"
+                self._execute_one(workflow_id), name=f"wf-exec-{workflow_id}",
             )
 
     async def _execute_one(self, workflow_id: UUID) -> None:
@@ -328,7 +328,7 @@ class DurableWorkflowRunner:
                 await self._run_step(workflow_id)
             except Exception as exc:
                 _logger.exception(
-                    "unexpected error executing workflow %s: %s", workflow_id, exc
+                    "unexpected error executing workflow %s: %s", workflow_id, exc,
                 )
             finally:
                 async with self._active_lock:
@@ -367,12 +367,12 @@ class DurableWorkflowRunner:
             # 3) Transition to 'running' if needed.
             if instance.status == WorkflowStatus.pending:
                 await self._state_store.update_status(
-                    workflow_id, WorkflowStatus.running
+                    workflow_id, WorkflowStatus.running,
                 )
 
             # 4) Execute next step via injected executor.
             result: StepResult = await self._executor.execute_next(
-                instance=instance, state=state
+                instance=instance, state=state,
             )
 
             # 5) Append events.
@@ -389,7 +389,7 @@ class DurableWorkflowRunner:
 
         finally:
             await self._state_store.unlock(
-                workflow_id=workflow_id, worker_id=self._config.worker_id
+                workflow_id=workflow_id, worker_id=self._config.worker_id,
             )
 
     async def _apply_outcome(
@@ -422,7 +422,7 @@ class DurableWorkflowRunner:
                 + timedelta(seconds=self._compute_backoff(state.attempts))
             )
             await self._state_store.update_status(
-                workflow_id, WorkflowStatus.paused, next_attempt_at=next_at
+                workflow_id, WorkflowStatus.paused, next_attempt_at=next_at,
             )
             return
 
@@ -435,13 +435,13 @@ class DurableWorkflowRunner:
             return
 
         _logger.warning(
-            "unknown outcome %r for %s; treating as pause", result.outcome, workflow_id
+            "unknown outcome %r for %s; treating as pause", result.outcome, workflow_id,
         )
         next_at = datetime.now(UTC) + timedelta(
-            seconds=self._compute_backoff(state.attempts)
+            seconds=self._compute_backoff(state.attempts),
         )
         await self._state_store.update_status(
-            workflow_id, WorkflowStatus.paused, next_attempt_at=next_at
+            workflow_id, WorkflowStatus.paused, next_attempt_at=next_at,
         )
 
     # -- Helpers ----------------------------------------------------

@@ -62,7 +62,7 @@ class _SkillInvokeProcessor(BaseProcessor):
     """Тестовый SkillInvokeProcessor."""
 
     def __init__(
-        self, skill_id: str = "test.skill", result_property: str = "skill_result"
+        self, skill_id: str = "test.skill", result_property: str = "skill_result",
     ) -> None:
         super().__init__(name=f"skill_invoke:{skill_id}")
         self.skill_id = skill_id
@@ -94,7 +94,7 @@ class _AgentRunProcessor(BaseProcessor):
     """Тестовый AgentRunProcessor."""
 
     def __init__(
-        self, workflow_id: str = "test_workflow", result_property: str = "agent_result"
+        self, workflow_id: str = "test_workflow", result_property: str = "agent_result",
     ) -> None:
         super().__init__(name=f"agent_run:{workflow_id}")
         self.workflow_id = workflow_id
@@ -108,7 +108,7 @@ class _MCPToolProcessor(BaseProcessor):
     """Тестовый MCPToolProcessor."""
 
     def __init__(
-        self, tool_name: str = "test_tool", result_property: str = "mcp_result"
+        self, tool_name: str = "test_tool", result_property: str = "mcp_result",
     ) -> None:
         super().__init__(name=f"mcp_tool:{tool_name}")
         self.tool_name = tool_name
@@ -122,7 +122,7 @@ class _AIRpaProcessor(BaseProcessor):
     """Тестовый AIRpaProcessor."""
 
     def __init__(
-        self, task: str = "click button", action_property: str = "ai_rpa.action"
+        self, task: str = "click button", action_property: str = "ai_rpa.action",
     ) -> None:
         super().__init__(name="ai_rpa_test")
         self.task = task
@@ -152,10 +152,10 @@ class TestW003UnusedProperty:
         """result_property от SkillInvokeProcessor читается."""
         pipeline = Pipeline(route_id="test")
         pipeline.add_processor(
-            _SkillInvokeProcessor(skill_id="test.skill", result_property="skill_result")
+            _SkillInvokeProcessor(skill_id="test.skill", result_property="skill_result"),
         )
         pipeline.add_processor(
-            _FilterProcessor(source_property="property:skill_result")
+            _FilterProcessor(source_property="property:skill_result"),
         )
 
         issues = DSLLinter().lint(pipeline)
@@ -170,10 +170,10 @@ class TestW003UnusedProperty:
                 namespace="test:ns",
                 query_property="body.query",
                 result_property="memory_context",
-            )
+            ),
         )
         pipeline.add_processor(
-            _FilterProcessor(source_property="property:memory_context")
+            _FilterProcessor(source_property="property:memory_context"),
         )
 
         issues = DSLLinter().lint(pipeline)
@@ -185,11 +185,11 @@ class TestW003UnusedProperty:
         pipeline = Pipeline(route_id="test")
         pipeline.add_processor(
             _AgentRunProcessor(
-                workflow_id="test_workflow", result_property="agent_result"
-            )
+                workflow_id="test_workflow", result_property="agent_result",
+            ),
         )
         pipeline.add_processor(
-            _FilterProcessor(source_property="property:agent_result")
+            _FilterProcessor(source_property="property:agent_result"),
         )
 
         issues = DSLLinter().lint(pipeline)
@@ -200,7 +200,7 @@ class TestW003UnusedProperty:
         """result_property от MCPToolProcessor читается."""
         pipeline = Pipeline(route_id="test")
         pipeline.add_processor(
-            _MCPToolProcessor(tool_name="test_tool", result_property="mcp_result")
+            _MCPToolProcessor(tool_name="test_tool", result_property="mcp_result"),
         )
         pipeline.add_processor(_FilterProcessor(source_property="property:mcp_result"))
 
@@ -212,7 +212,7 @@ class TestW003UnusedProperty:
         """action_property от AIRpaProcessor читается."""
         pipeline = Pipeline(route_id="test")
         pipeline.add_processor(
-            _AIRpaProcessor(task="click button", action_property="rpa_action")
+            _AIRpaProcessor(task="click button", action_property="rpa_action"),
         )
         pipeline.add_processor(_FilterProcessor(source_property="property:rpa_action"))
 
@@ -262,7 +262,7 @@ class TestE002UnknownAction:
     """Тесты для E002 — неизвестные actions."""
 
     def test_no_issues_when_registry_available(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Нет issues когда action зарегистрирован."""
 
@@ -271,7 +271,7 @@ class TestE002UnknownAction:
                 return ["known.action", "another.action"]
 
         monkeypatch.setattr(
-            "src.backend.dsl.commands.registry.action_handler_registry", MockRegistry()
+            "src.backend.dsl.commands.registry.action_handler_registry", MockRegistry(),
         )
 
         pipeline = Pipeline(route_id="test")
@@ -282,7 +282,7 @@ class TestE002UnknownAction:
         assert len(e002_issues) == 0
 
     def test_unknown_action_triggers_e002(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Неизвестный action вызывает E002 error."""
 
@@ -291,7 +291,7 @@ class TestE002UnknownAction:
                 return ["known.action", "another.action"]
 
         monkeypatch.setattr(
-            "src.backend.dsl.commands.registry.action_handler_registry", MockRegistry()
+            "src.backend.dsl.commands.registry.action_handler_registry", MockRegistry(),
         )
 
         pipeline = Pipeline(route_id="test")
@@ -312,7 +312,7 @@ class TestE002UnknownAction:
                 return ["known.action"]
 
         monkeypatch.setattr(
-            "src.backend.dsl.commands.registry.action_handler_registry", MockRegistry()
+            "src.backend.dsl.commands.registry.action_handler_registry", MockRegistry(),
         )
 
         pipeline = Pipeline(route_id="test")
@@ -324,7 +324,7 @@ class TestE002UnknownAction:
         assert len(e002_issues) == 2
 
     def test_registry_unavailable_skips_check(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Когда registry недоступен — E002 не вызывается (graceful degradation)."""
 
@@ -353,7 +353,7 @@ class TestLintIssue:
     def test_lint_issue_creation(self) -> None:
         """LintIssue создается с правильными полями."""
         issue = LintIssue(
-            code="W003", severity="warning", message="Test message", processor_index=5
+            code="W003", severity="warning", message="Test message", processor_index=5,
         )
         assert issue.code == "W003"
         assert issue.severity == "warning"

@@ -31,7 +31,7 @@ class _FakeWebDAVClient:
         buf.write(self.marker_content)
 
     def upload_fileobj(
-        self, buf: io.BytesIO, path: str, overwrite: bool = True
+        self, buf: io.BytesIO, path: str, overwrite: bool = True,
     ) -> None:
         buf.seek(0)
         self.uploaded_markers.append(buf.read())

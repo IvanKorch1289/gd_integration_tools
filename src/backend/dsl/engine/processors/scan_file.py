@@ -68,7 +68,7 @@ class ScanFileProcessor(BaseProcessor):
         if on_threat not in _VALID_ON_THREAT:
             raise ValueError(
                 f"ScanFileProcessor: on_threat={on_threat!r} не из "
-                f"{sorted(_VALID_ON_THREAT)}"
+                f"{sorted(_VALID_ON_THREAT)}",
             )
         self._s3_key_from = s3_key_from
         self._data_property = data_property
@@ -124,7 +124,7 @@ class ScanFileProcessor(BaseProcessor):
             if self._on_threat == "fail":
                 exchange.fail(
                     f"ScanFileProcessor: обнаружена угроза "
-                    f"signature={result.signature!r}"
+                    f"signature={result.signature!r}",
                 )
             return
         self._record_metric(threat=False)

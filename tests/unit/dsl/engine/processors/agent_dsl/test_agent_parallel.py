@@ -27,7 +27,7 @@ class _FakeAIGateway:
         if request.workflow_id == "fail_me":
             raise RuntimeError("synthetic failure")
         return self.responses.get(
-            request.workflow_id, AIResponse(content="default", model_used="m")
+            request.workflow_id, AIResponse(content="default", model_used="m"),
         )
 
 
@@ -53,7 +53,7 @@ def test_init_validates_workflow_id_required() -> None:
 
 @pytest.mark.asyncio
 async def test_fan_out_collects_results_by_key(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -62,7 +62,7 @@ async def test_fan_out_collects_results_by_key(
         {
             "scoring": AIResponse(content="80", model_used="m1"),
             "antifraud": AIResponse(content="low", model_used="m2"),
-        }
+        },
     )
     monkeypatch.setattr(AgentRunProcessor, "_resolve_gateway", staticmethod(lambda: gw))
 
@@ -72,7 +72,7 @@ async def test_fan_out_collects_results_by_key(
         agents=[
             {"key": "scoring", "workflow_id": "scoring", "prompt_inline": "x"},
             {"key": "antifraud", "workflow_id": "antifraud", "prompt_inline": "y"},
-        ]
+        ],
     )
     await proc.process(ex, context)
 
@@ -85,7 +85,7 @@ async def test_fan_out_collects_results_by_key(
 
 @pytest.mark.asyncio
 async def test_continue_on_error_captures_failure(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -110,7 +110,7 @@ async def test_continue_on_error_captures_failure(
 
 @pytest.mark.asyncio
 async def test_feature_flag_off_is_pass_through(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -118,7 +118,7 @@ async def test_feature_flag_off_is_pass_through(
 
     ex: Exchange[Any] = Exchange()
     proc = AgentParallelProcessor(
-        agents=[{"key": "a", "workflow_id": "x", "prompt_inline": "y"}]
+        agents=[{"key": "a", "workflow_id": "x", "prompt_inline": "y"}],
     )
     await proc.process(ex, context)
 
@@ -127,7 +127,7 @@ async def test_feature_flag_off_is_pass_through(
 
 @pytest.mark.asyncio
 async def test_custom_result_property(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -160,5 +160,5 @@ def test_to_spec_round_trip() -> None:
             "result_property": "my_res",
             "timeout_s": 15.0,
             "continue_on_error": False,
-        }
+        },
     }

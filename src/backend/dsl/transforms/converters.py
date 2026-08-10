@@ -37,7 +37,7 @@ def glom_transform(spec: dict[str, Any]) -> Callable[[dict[str, Any]], dict[str,
 
 
 def flatten_dict(
-    data: dict[str, Any], separator: str = ".", prefix: str = ""
+    data: dict[str, Any], separator: str = ".", prefix: str = "",
 ) -> dict[str, Any]:
     """Flatten nested dict → flat keys.
 
@@ -74,7 +74,7 @@ def rename_fields(data: dict[str, Any], mapping: dict[str, str]) -> dict[str, An
 
 
 def hash_field(
-    data: dict[str, Any], field: str, algorithm: str = "sha256"
+    data: dict[str, Any], field: str, algorithm: str = "sha256",
 ) -> dict[str, Any]:
     """Хеширует указанное поле."""
     result = dict(data)
@@ -87,7 +87,7 @@ def hash_field(
 
 
 def coalesce_fields(
-    data: dict[str, Any], target: str, *sources: str, default: Any = None
+    data: dict[str, Any], target: str, *sources: str, default: Any = None,
 ) -> dict[str, Any]:
     """Записывает в target первое непустое значение из sources."""
     result = dict(data)

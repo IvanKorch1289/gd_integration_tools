@@ -30,7 +30,7 @@ def test_bulkhead_scaler_high_watermark_increases() -> None:
     asyncio.run(_setup())
 
     scaler = BulkheadScaler(
-        registry, high_watermark_pct=0.9, low_watermark_pct=0.3, adjust_step=4
+        registry, high_watermark_pct=0.9, low_watermark_pct=0.3, adjust_step=4,
     )
     result = asyncio.run(scaler.tick())
     assert result["db"] == 14  # 10 + 4
@@ -62,7 +62,7 @@ def test_bulkhead_scaler_respects_min() -> None:
     registry = BulkheadRegistry()
     asyncio.run(registry.get_or_create("x", max_concurrent=5))
     scaler = BulkheadScaler(
-        registry, adjust_step=10, min_capacity=4, low_watermark_pct=0.3
+        registry, adjust_step=10, min_capacity=4, low_watermark_pct=0.3,
     )
     result = asyncio.run(scaler.tick())
     assert result["x"] == 4

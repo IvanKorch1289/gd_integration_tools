@@ -68,7 +68,7 @@ class SinksMixin:
                 config=config,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def sink_file(
@@ -108,7 +108,7 @@ class SinksMixin:
                 config=config,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def sink_grpc(
@@ -144,7 +144,7 @@ class SinksMixin:
                 timeout=timeout,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def sink_http(
@@ -178,7 +178,7 @@ class SinksMixin:
                 config=config,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def sink_mq(
@@ -212,7 +212,7 @@ class SinksMixin:
                 extra=extra,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def sink_mqtt(
@@ -252,7 +252,7 @@ class SinksMixin:
                 password=password,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def sink_s3(
@@ -285,7 +285,7 @@ class SinksMixin:
                 config=config,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def sink_soap(
@@ -315,7 +315,7 @@ class SinksMixin:
                 timeout=timeout,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def sink_webhook(
@@ -349,7 +349,7 @@ class SinksMixin:
                 config=config,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def sink_ws(
@@ -375,7 +375,7 @@ class SinksMixin:
                 timeout=timeout,
                 payload_property=payload_property,
                 result_property=result_property,
-            )
+            ),
         )
 
     def ssh_command(

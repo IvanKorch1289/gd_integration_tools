@@ -65,10 +65,10 @@ class TestResolveSamlAdminRoles:
             saml_group_to_role={
                 "admins": AdminRole.SUPER_ADMIN,
                 "ops": AdminRole.OPERATOR,
-            }
+            },
         )
         result = resolve_saml_admin_roles(
-            groups=["admins", "ops", "unknown"], mapping=mapping
+            groups=["admins", "ops", "unknown"], mapping=mapping,
         )
         assert AdminRole.SUPER_ADMIN in result
         assert AdminRole.OPERATOR in result
@@ -87,14 +87,14 @@ class TestResolveSamlAdminRoles:
 class TestResolveMtlsAdminRoles:
     def test_matched_cn(self) -> None:
         mapping = AdminRoleMapping(
-            mtls_cn_to_role={"admin.example.com": AdminRole.SUPER_ADMIN}
+            mtls_cn_to_role={"admin.example.com": AdminRole.SUPER_ADMIN},
         )
         result = resolve_mtls_admin_roles(cn="admin.example.com", mapping=mapping)
         assert result == frozenset({AdminRole.SUPER_ADMIN})
 
     def test_unmatched_cn(self) -> None:
         mapping = AdminRoleMapping(
-            mtls_cn_to_role={"admin.example.com": AdminRole.SUPER_ADMIN}
+            mtls_cn_to_role={"admin.example.com": AdminRole.SUPER_ADMIN},
         )
         result = resolve_mtls_admin_roles(cn="other.example.com", mapping=mapping)
         assert result == frozenset()

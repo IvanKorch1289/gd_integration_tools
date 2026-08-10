@@ -38,7 +38,7 @@ async def test_dsl_snapshot_round_trip_with_api_version() -> None:
         await conn.run_sync(BaseModel.metadata.create_all)
 
     SessionLocal = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
+        engine, class_=AsyncSession, expire_on_commit=False,
     )
 
     async with SessionLocal() as session:
@@ -55,7 +55,7 @@ async def test_dsl_snapshot_round_trip_with_api_version() -> None:
 
         row = (
             await session.execute(
-                select(DslSnapshot).where(DslSnapshot.route_id == "rt.versioning")
+                select(DslSnapshot).where(DslSnapshot.route_id == "rt.versioning"),
             )
         ).scalar_one()
         assert row.api_version == "v2"

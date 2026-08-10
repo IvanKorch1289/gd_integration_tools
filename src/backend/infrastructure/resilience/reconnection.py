@@ -97,7 +97,7 @@ class ReconnectForever(ReconnectionStrategy):
             try:
                 result = await dial()
                 reconnect_attempts_total.labels(
-                    client=client_name, outcome="success"
+                    client=client_name, outcome="success",
                 ).inc()
                 if attempt > 1:
                     _logger.info(
@@ -107,7 +107,7 @@ class ReconnectForever(ReconnectionStrategy):
                 return result
             except Exception as exc:
                 reconnect_attempts_total.labels(
-                    client=client_name, outcome="failure"
+                    client=client_name, outcome="failure",
                 ).inc()
                 _logger.warning(
                     "reconnect failed; retrying",
@@ -153,17 +153,17 @@ class ReconnectN(ReconnectionStrategy):
             try:
                 result = await dial()
                 reconnect_attempts_total.labels(
-                    client=client_name, outcome="success"
+                    client=client_name, outcome="success",
                 ).inc()
                 return result
             except Exception as exc:
                 last_exc = exc
                 reconnect_attempts_total.labels(
-                    client=client_name, outcome="failure"
+                    client=client_name, outcome="failure",
                 ).inc()
                 if i == self.attempts:
                     reconnect_attempts_total.labels(
-                        client=client_name, outcome="giveup"
+                        client=client_name, outcome="giveup",
                     ).inc()
                     _logger.error(
                         "reconnect giving up",
@@ -186,7 +186,7 @@ class ReconnectN(ReconnectionStrategy):
                 await asyncio.sleep(delay)
                 delay *= self.multiplier
         raise ReconnectionError(
-            f"Failed to connect '{client_name}' after {self.attempts} attempts"
+            f"Failed to connect '{client_name}' after {self.attempts} attempts",
         ) from last_exc
 
 
@@ -225,7 +225,7 @@ def build(
         return NoReconnect()
     raise ValueError(
         f"Unknown reconnection policy '{policy}'. "
-        "Available: forever | n_attempts | none."
+        "Available: forever | n_attempts | none.",
     )
 
 

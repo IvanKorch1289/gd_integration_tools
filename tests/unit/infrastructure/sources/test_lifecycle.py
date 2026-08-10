@@ -40,7 +40,7 @@ class TestGracefulCancel:
 
     @pytest.mark.asyncio
     async def test_other_exception_logged(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         async def raise_value_error() -> None:
             try:
@@ -52,7 +52,7 @@ class TestGracefulCancel:
         await asyncio.sleep(0)
 
         with caplog.at_level(
-            logging.WARNING, logger="infrastructure.sources.lifecycle"
+            logging.WARNING, logger="infrastructure.sources.lifecycle",
         ):
             await lifecycle.graceful_cancel(task, source_id="s4")
 

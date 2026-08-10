@@ -17,11 +17,11 @@ class MiddlewareMixin(_RouteBuilderProtocol):
     __slots__ = ()
 
     _MIDDLEWARE_REGISTRY: dict[
-        str, type[ProcessorMiddleware]
+        str, type[ProcessorMiddleware],
     ] = {}  # заполняется при первом вызове
 
     def middleware(
-        self, middleware: str | ProcessorMiddleware | dict[str, Any], **kwargs: Any
+        self, middleware: str | ProcessorMiddleware | dict[str, Any], **kwargs: Any,
     ) -> Self:
         """Добавляет middleware в pipeline (per-route override).
 
@@ -56,7 +56,7 @@ class MiddlewareMixin(_RouteBuilderProtocol):
         else:
             raise TypeError(
                 f"middleware(...) ожидает str, dict или ProcessorMiddleware, "
-                f"получено {type(middleware).__name__}"
+                f"получено {type(middleware).__name__}",
             )
 
         self._middlewares.append(instance)
@@ -64,7 +64,7 @@ class MiddlewareMixin(_RouteBuilderProtocol):
 
     @classmethod
     def _build_middleware(
-        cls, name: str, kwargs: dict[str, Any]
+        cls, name: str, kwargs: dict[str, Any],
     ) -> ProcessorMiddleware:
         """Создаёт встроенный middleware по имени."""
         if name == "timeout":
@@ -76,5 +76,5 @@ class MiddlewareMixin(_RouteBuilderProtocol):
             return MetricsMiddleware()
         raise ValueError(
             f"Неизвестный middleware {name!r}. "
-            f"Поддерживаются: timeout, error_normalizer, metrics."
+            f"Поддерживаются: timeout, error_normalizer, metrics.",
         )

@@ -48,7 +48,7 @@ class SemanticMemory:
         """Embed → upsert в Qdrant. Возвращает point_id (uuid4)."""
         if not self.is_configured:
             raise RuntimeError(
-                "SemanticMemory: embedder или qdrant_client не сконфигурированы."
+                "SemanticMemory: embedder или qdrant_client не сконфигурированы.",
             )
         vectors = await self._embedder.embed([text])
         point_id = str(uuid.uuid4())

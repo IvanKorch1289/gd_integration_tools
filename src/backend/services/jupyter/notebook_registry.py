@@ -73,7 +73,7 @@ class NotebookSpec(BaseModel):
             if expected and not _type_matches(value, expected):
                 errors.append(
                     f"parameter {key!r}: expected type {expected!r}, "
-                    f"got {type(value).__name__}"
+                    f"got {type(value).__name__}",
                 )
         return errors
 

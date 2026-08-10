@@ -62,7 +62,7 @@ class GuardrailViolationError(Exception):
         self.content = content[:200] if content else ""  # truncate для логов
         super().__init__(
             f"Guard {guard_name!r} blocked content "
-            f"(categories={flagged_categories}, on_block={on_block})"
+            f"(categories={flagged_categories}, on_block={on_block})",
         )
 
 
@@ -85,7 +85,7 @@ class WorkspaceQuotaExceededError(AIWorkspaceError):
         self.quota_bytes = quota_bytes
         super().__init__(
             f"Tenant {tenant!r} workspace quota exceeded: "
-            f"{used_bytes} / {quota_bytes} bytes"
+            f"{used_bytes} / {quota_bytes} bytes",
         )
 
 
@@ -99,14 +99,14 @@ class WorkspaceTTLExpiredError(AIWorkspaceError):
     """
 
     def __init__(
-        self, *, session_id: str, age_seconds: float, ttl_seconds: float
+        self, *, session_id: str, age_seconds: float, ttl_seconds: float,
     ) -> None:
         self.session_id = session_id
         self.age_seconds = age_seconds
         self.ttl_seconds = ttl_seconds
         super().__init__(
             f"Workspace {session_id!r} TTL expired: "
-            f"{age_seconds:.0f}s > {ttl_seconds:.0f}s"
+            f"{age_seconds:.0f}s > {ttl_seconds:.0f}s",
         )
 
 
@@ -157,7 +157,7 @@ class AIGatewayProductionWiringError(AIGatewayEnforcementRequiredError):
         self.missing = missing
         super().__init__(
             "AIGateway in production requires injected DI: "
-            f"missing {list(missing)}"
+            f"missing {list(missing)}",
         )
 
 

@@ -24,7 +24,7 @@ class _GuardResult:
     """Stand-in для GuardResult dataclass."""
 
     def __init__(
-        self, guard_name: str, verdict: str, categories: list[str] | None = None
+        self, guard_name: str, verdict: str, categories: list[str] | None = None,
     ) -> None:
         self.guard_name = guard_name
         self.verdict = verdict
@@ -41,7 +41,7 @@ class _StubGateway(EnforcedInvokeMixin):
         self._apply_input_sanitizers = AsyncMock(return_value="sanitized_text")
         # GuardResult-like (needs guard_name + verdict string attrs)
         self._input_guard = _GuardResult(
-            guard_name="prompt_injection", verdict="blocked"
+            guard_name="prompt_injection", verdict="blocked",
         )
         self._apply_input_guards = AsyncMock(return_value=[self._input_guard])
         self._render_prompt = AsyncMock(return_value="rendered")
@@ -51,12 +51,12 @@ class _StubGateway(EnforcedInvokeMixin):
                 model_used="stub-model",
                 tokens_prompt=10,
                 tokens_completion=20,
-            )
+            ),
         )
         self._output_guard = _GuardResult(guard_name="llama_guard", verdict="safe")
         self._apply_output_guards = AsyncMock(return_value=[self._output_guard])
         self._apply_output_sanitizers = AsyncMock(
-            return_value=AIResponse(content="clean_output", model_used="stub-model")
+            return_value=AIResponse(content="clean_output", model_used="stub-model"),
         )
         self._cost_track = AsyncMock(return_value=None)
         # Facade state (mocked)
@@ -106,14 +106,14 @@ class TestEnforcedInvokeSequence:
         gw._resolve_policy.side_effect = make_recorder("_resolve_policy")
         gw._check_capability.side_effect = make_recorder("_check_capability")
         gw._apply_input_sanitizers.side_effect = make_recorder(
-            "_apply_input_sanitizers"
+            "_apply_input_sanitizers",
         )
         gw._apply_input_guards.side_effect = make_recorder("_apply_input_guards")
         gw._render_prompt.side_effect = make_recorder("_render_prompt")
         gw._invoke_llm.side_effect = make_recorder("_invoke_llm")
         gw._apply_output_guards.side_effect = make_recorder("_apply_output_guards")
         gw._apply_output_sanitizers.side_effect = make_recorder(
-            "_apply_output_sanitizers"
+            "_apply_output_sanitizers",
         )
         gw._cost_track.side_effect = make_recorder("_cost_track")
 
@@ -165,7 +165,7 @@ class TestEnforcedInvokePolicy:
         gw._apply_output_guards.assert_awaited()
         gw._apply_output_sanitizers.assert_awaited()
         gw._cost_track.assert_awaited_with(
-            request, policy, gw._apply_output_sanitizers.return_value
+            request, policy, gw._apply_output_sanitizers.return_value,
         )
 
     async def test_policy_name_default_when_none(self) -> None:
@@ -237,7 +237,7 @@ class TestEnforcedInvokeGuardBranches:
     async def test_output_guards_with_results(self) -> None:
         gw = _StubGateway()
         gw._apply_output_guards.return_value = [
-            _GuardResult(guard_name="og1", verdict="safe")
+            _GuardResult(guard_name="og1", verdict="safe"),
         ]
         request = AIRequest(workflow_id="wf1", tenant_id="t1", correlation_id="c1")
 

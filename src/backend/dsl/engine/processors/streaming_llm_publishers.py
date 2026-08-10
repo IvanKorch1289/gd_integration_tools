@@ -70,7 +70,7 @@ class WebhookChunkedPublisher(_BasePublisher):
     """Шлёт чанки в webhook URL через httpx с timeout."""
 
     def __init__(
-        self, *, url_property: str = "webhook_url", timeout: float = 5.0
+        self, *, url_property: str = "webhook_url", timeout: float = 5.0,
     ) -> None:
         self._url_property = url_property
         self._timeout = timeout

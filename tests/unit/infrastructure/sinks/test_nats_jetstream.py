@@ -30,7 +30,7 @@ _sink_path = (
     / "src/backend/infrastructure/sinks/nats_jetstream.py"
 )
 _spec = _ilu.spec_from_file_location(
-    "src.backend.infrastructure.sinks.nats_jetstream", _sink_path
+    "src.backend.infrastructure.sinks.nats_jetstream", _sink_path,
 )
 _mod = _ilu.module_from_spec(_spec)
 sys.modules.setdefault("src.backend.infrastructure.sinks.nats_jetstream", _mod)
@@ -121,7 +121,7 @@ async def test_sink_passes_headers(monkeypatch: pytest.MonkeyPatch) -> None:
     headers = {"X-Tenant": "bank1", "X-Source": "payment-api"}
 
     result = await sink.publish(
-        "payments.processed", b'{"amount": 500}', headers=headers
+        "payments.processed", b'{"amount": 500}', headers=headers,
     )
 
     assert result.ok is True
@@ -153,7 +153,7 @@ async def test_sink_send_serializes_dict(monkeypatch: pytest.MonkeyPatch) -> Non
     _install_fake_nats(monkeypatch)
 
     sink = NATSJetStreamSink(
-        sink_id="events.nats_js", default_subject="events.dispatched"
+        sink_id="events.nats_js", default_subject="events.dispatched",
     )
 
     result = await sink.send({"event": "order_created", "id": 7})

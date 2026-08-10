@@ -47,7 +47,7 @@ class TestSaga:
 class TestSensor:
     def test_trigger_construct(self) -> None:
         trigger = SensorTrigger(
-            sensor_id="file-arrived", check=_check_true, poll_interval_s=2.0
+            sensor_id="file-arrived", check=_check_true, poll_interval_s=2.0,
         )
         assert trigger.sensor_id == "file-arrived"
         assert trigger.poll_interval_s == 2.0

@@ -78,7 +78,7 @@ class TestWorkflowVersionRegistry:
         assert len(defaults) == 1
 
     def test_strict_mode_rejects_major_conflict(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         from src.backend.core.config.features import feature_flags
 

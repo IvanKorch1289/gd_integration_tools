@@ -74,7 +74,7 @@ async def test_toggle_route_raises_404_when_missing(service: AdminService) -> No
 @pytest.mark.asyncio
 async def test_list_cache_keys(service: AdminService) -> None:
     with patch(
-        "src.backend.services.core.admin.get_admin_cache_storage_provider"
+        "src.backend.services.core.admin.get_admin_cache_storage_provider",
     ) as mock_provider:
         mock_provider.return_value.list_cache_keys = AsyncMock(return_value=["k1"])
         result = await service.list_cache_keys(pattern="*")
@@ -84,7 +84,7 @@ async def test_list_cache_keys(service: AdminService) -> None:
 @pytest.mark.asyncio
 async def test_get_cache_value(service: AdminService) -> None:
     with patch(
-        "src.backend.services.core.admin.get_admin_cache_storage_provider"
+        "src.backend.services.core.admin.get_admin_cache_storage_provider",
     ) as mock_provider:
         mock_provider.return_value.get_cache_value = AsyncMock(return_value="v1")
         result = await service.get_cache_value("key")
@@ -94,7 +94,7 @@ async def test_get_cache_value(service: AdminService) -> None:
 @pytest.mark.asyncio
 async def test_invalidate_cache(service: AdminService) -> None:
     with patch(
-        "src.backend.services.core.admin.get_admin_cache_storage_provider"
+        "src.backend.services.core.admin.get_admin_cache_storage_provider",
     ) as mock_provider:
         mock_provider.return_value.invalidate_cache = AsyncMock(return_value=5)
         result = await service.invalidate_cache()
@@ -104,7 +104,7 @@ async def test_invalidate_cache(service: AdminService) -> None:
 @pytest.mark.asyncio
 async def test_invalidate_cache_by_pattern(service: AdminService) -> None:
     with patch(
-        "src.backend.core.di.providers.get_cache_invalidator_provider"
+        "src.backend.core.di.providers.get_cache_invalidator_provider",
     ) as mock_provider:
         mock_provider.return_value.invalidate_pattern = AsyncMock(return_value=3)
         result = await service.invalidate_cache_by_pattern("entity:*")
@@ -114,7 +114,7 @@ async def test_invalidate_cache_by_pattern(service: AdminService) -> None:
 @pytest.mark.asyncio
 async def test_invalidate_cache_by_tag(service: AdminService) -> None:
     with patch(
-        "src.backend.core.di.providers.get_cache_invalidator_provider"
+        "src.backend.core.di.providers.get_cache_invalidator_provider",
     ) as mock_provider:
         mock_provider.return_value.invalidate_tags = AsyncMock(return_value=2)
         result = await service.invalidate_cache_by_tag(["tag:a", "tag:b"])
@@ -124,7 +124,7 @@ async def test_invalidate_cache_by_tag(service: AdminService) -> None:
 @pytest.mark.asyncio
 async def test_invalidate_table(service: AdminService) -> None:
     with patch(
-        "src.backend.core.di.providers.get_cache_invalidator_provider"
+        "src.backend.core.di.providers.get_cache_invalidator_provider",
     ) as mock_provider:
         mock_provider.return_value.invalidate_tags = AsyncMock(return_value=4)
         result = await service.invalidate_table("orders")
@@ -146,7 +146,7 @@ async def test_list_actions(service: AdminService) -> None:
     mock_registry = MagicMock()
     mock_registry.list_actions.return_value = ["a1", "a2"]
     with patch(
-        "src.backend.services.core.admin.action_handler_registry", mock_registry
+        "src.backend.services.core.admin.action_handler_registry", mock_registry,
     ):
         result = await service.list_actions()
         assert result == {"actions": ["a1", "a2"]}
@@ -170,7 +170,7 @@ async def test_list_feature_flags(service: AdminService) -> None:
     mock_registry.get_route_feature_flags.return_value = {"r1": "flag_a"}
     with patch("src.backend.services.core.admin.route_registry", mock_registry):
         with patch(
-            "src.backend.services.core.admin.disabled_feature_flags", {"flag_b"}
+            "src.backend.services.core.admin.disabled_feature_flags", {"flag_b"},
         ):
             result = await service.list_feature_flags()
             assert len(result["flags"]) == 1
@@ -187,7 +187,7 @@ async def test_toggle_feature_flag(service: AdminService) -> None:
         assert result["flag"] == "flag_a"
         assert result["enabled"] is False
         mock_registry.toggle_feature_flag.assert_called_once_with(
-            "flag_a", enable=False
+            "flag_a", enable=False,
         )
 
 
@@ -200,9 +200,9 @@ async def test_system_info(service: AdminService) -> None:
     mock_action = MagicMock()
     mock_action.list_actions.return_value = ["a1"]
     with patch("src.backend.services.core.admin.route_registry", mock_route), patch(
-        "src.backend.services.core.admin.action_handler_registry", mock_action
+        "src.backend.services.core.admin.action_handler_registry", mock_action,
     ), patch(
-        "src.backend.services.core.admin.disabled_feature_flags", {"f1"}
+        "src.backend.services.core.admin.disabled_feature_flags", {"f1"},
     ), patch(
         "src.backend.services.core.admin._list_services",
         return_value=["svc"],
@@ -220,7 +220,7 @@ async def test_system_info(service: AdminService) -> None:
 @pytest.mark.asyncio
 async def test_slo_report(service: AdminService) -> None:
     with patch(
-        "src.backend.services.core.admin.get_slo_tracker_provider"
+        "src.backend.services.core.admin.get_slo_tracker_provider",
     ) as mock_provider:
         mock_provider.return_value.get_report.return_value = {"p99": 50}
         result = await service.slo_report()

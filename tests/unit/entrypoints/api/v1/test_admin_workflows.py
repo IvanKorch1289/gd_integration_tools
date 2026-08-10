@@ -10,7 +10,7 @@ import pytest
 def test_admin_workflows_module_importable() -> None:
     """Endpoint-модуль admin_workflows импортируется без ошибок."""
     module = importlib.import_module(
-        "src.backend.entrypoints.api.v1.endpoints.admin_workflows"
+        "src.backend.entrypoints.api.v1.endpoints.admin_workflows",
     )
     assert hasattr(module, "router")
 
@@ -18,7 +18,7 @@ def test_admin_workflows_module_importable() -> None:
 def test_admin_workflows_router_has_routes() -> None:
     """Router admin_workflows регистрирует endpoint'ы."""
     module = importlib.import_module(
-        "src.backend.entrypoints.api.v1.endpoints.admin_workflows"
+        "src.backend.entrypoints.api.v1.endpoints.admin_workflows",
     )
     routes = getattr(module.router, "routes", [])
     paths = {getattr(r, "path", "") for r in routes}

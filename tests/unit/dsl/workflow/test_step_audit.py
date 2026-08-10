@@ -29,7 +29,7 @@ async def test_track_step_buffers_event() -> None:
     await mw.start()
     try:
         async with mw.track_step(
-            workflow_id="wf1", step_name="fetch", correlation_id="cid-1"
+            workflow_id="wf1", step_name="fetch", correlation_id="cid-1",
         ) as ctx:
             ctx.input_schema_hash = "abc"
             ctx.output_schema_hash = "def"

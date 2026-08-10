@@ -22,7 +22,7 @@ def fake_storage_client(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     fake_mod = types.ModuleType("s3_pool_stub")
     fake_mod.storage_client = fake
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.clients.storage.s3_pool", fake_mod
+        sys.modules, "src.backend.infrastructure.clients.storage.s3_pool", fake_mod,
     )
     return fake
 
@@ -41,7 +41,7 @@ async def test_send_bytes_payload(fake_storage_client: MagicMock) -> None:
     assert result.external_id == "obj.bin"
     assert result.details["bytes"] == 2
     fake_storage_client.upload_file.assert_awaited_once_with(
-        b"\x00\x01", "obj.bin", content_type="application/octet-stream"
+        b"\x00\x01", "obj.bin", content_type="application/octet-stream",
     )
 
 
@@ -58,13 +58,13 @@ async def test_send_str_payload(fake_storage_client: MagicMock) -> None:
 
 @pytest.mark.asyncio
 async def test_send_dict_payload(
-    fake_storage_client: MagicMock, monkeypatch: pytest.MonkeyPatch
+    fake_storage_client: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake_orjson = types.ModuleType("orjson")
     fake_orjson.dumps = lambda obj, default=None: b'{"a":1}'
     monkeypatch.setitem(sys.modules, "orjson", fake_orjson)
     sink = S3Sink(
-        sink_id="s3", bucket="b", key="obj.json", content_type="application/json"
+        sink_id="s3", bucket="b", key="obj.json", content_type="application/json",
     )
     result = await sink.send({"a": 1})
     assert result.ok is True

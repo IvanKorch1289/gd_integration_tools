@@ -13,8 +13,8 @@ def test_test_plug_manifest_compatible_with_project_core() -> None:
     """test_plug/plugin.toml совместим с текущим core 0.20.x."""
     raw = tomllib.loads(
         (_PROJECT_ROOT / "extensions/test_plug/plugin.toml").read_text(
-            encoding="utf-8"
-        )
+            encoding="utf-8",
+        ),
     )
     assert raw["requires_core"] == ">=0.20,<0.21"
     assert raw["entry_class"].endswith("TestPlugPlugin")
@@ -29,7 +29,7 @@ def test_test_plug_manifest_compatible_with_project_core() -> None:
 def test_test_plug_plugin_module_resolves_base_plugin_via_core_interfaces() -> None:
     """extensions/test_plug/plugin.py использует канонический ``BasePlugin``."""
     source = (_PROJECT_ROOT / "extensions/test_plug/plugin.py").read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
     compile(source, "extensions/test_plug/plugin.py", "exec")
     assert (
@@ -49,13 +49,13 @@ def test_plugin_wizard_default_requires_core_matches_project() -> None:
     import importlib.util
 
     spec = importlib.util.spec_from_file_location(
-        "plugin_wizard_mod", _PROJECT_ROOT / "tools/wizards/plugin_wizard.py"
+        "plugin_wizard_mod", _PROJECT_ROOT / "tools/wizards/plugin_wizard.py",
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
     raw = module._build_toml(
-        "test_default", description="x", tenant_aware=True, trust_tier="B"
+        "test_default", description="x", tenant_aware=True, trust_tier="B",
     )
     parsed = tomllib.loads(raw)
     assert parsed["requires_core"] == ">=0.20,<0.21"
@@ -72,7 +72,7 @@ def test_route_wizard_default_requires_core_matches_project() -> None:
     import importlib.util
 
     spec = importlib.util.spec_from_file_location(
-        "route_wizard_mod", _PROJECT_ROOT / "tools/wizards/route_wizard.py"
+        "route_wizard_mod", _PROJECT_ROOT / "tools/wizards/route_wizard.py",
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -93,7 +93,7 @@ def test_route_wizard_default_requires_core_matches_project() -> None:
 def test_plugin_template_default_matches_project_core_version() -> None:
     """tools/templates/plugin.toml.j2 синхронизирован с core 0.20.x."""
     template = (_PROJECT_ROOT / "tools/templates/plugin.toml.j2").read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
     match = re.search(r'requires_core\s*=\s*"([^"]+)"', template)
     assert match is not None

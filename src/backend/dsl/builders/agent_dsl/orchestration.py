@@ -77,7 +77,7 @@ class OrchestrationMixin:
                 result_property=result_property,
                 timeout_s=timeout_s,
                 max_retries=max_retries,
-            )
+            ),
         )
 
     def ai_invoke(
@@ -136,8 +136,8 @@ class OrchestrationMixin:
 
         return self._add(  # type: ignore[attr-defined]
             AgentBranchProcessor(
-                source_property=source_property, branches=branches, default=default
-            )
+                source_property=source_property, branches=branches, default=default,
+            ),
         )
 
     def agent_loop(
@@ -178,7 +178,7 @@ class OrchestrationMixin:
                 stop_condition_property=stop_condition_property,
                 budget_cost_usd=budget_cost_usd,
                 budget_tokens=budget_tokens,
-            )
+            ),
         )
 
     def agent_parallel(
@@ -217,7 +217,7 @@ class OrchestrationMixin:
                 result_property=result_property,
                 timeout_s=timeout_s,
                 continue_on_error=continue_on_error,
-            )
+            ),
         )
 
     def plan_execute(
@@ -268,7 +268,7 @@ class OrchestrationMixin:
                 plan_output_property=plan_output_property,
                 result_property=result_property,
                 timeout_s=timeout_s,
-            )
+            ),
         )
 
     def reflection_loop_workflow(
@@ -324,7 +324,7 @@ class OrchestrationMixin:
                 result_property=result_property,
                 history_property=history_property,
                 timeout_s=timeout_s,
-            )
+            ),
         )
 
     def hitl_approval(
@@ -368,5 +368,5 @@ class OrchestrationMixin:
                 timeout_seconds=timeout_seconds,
                 result_property=result_property,
                 priority=priority,
-            )
+            ),
         )

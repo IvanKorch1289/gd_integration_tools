@@ -185,7 +185,7 @@ def test_workflow_jobs_keys(workflow: dict[str, Any]) -> None:
 
 @pytest.mark.parametrize("job_name", sorted(REQUIRED_JOBS))
 def test_job_has_runs_on_and_steps(
-    workflow: dict[str, Any], job_name: str
+    workflow: dict[str, Any], job_name: str,
 ) -> None:
     """Каждый job имеет ``runs-on`` и непустой ``steps``."""
     job = workflow["jobs"][job_name]

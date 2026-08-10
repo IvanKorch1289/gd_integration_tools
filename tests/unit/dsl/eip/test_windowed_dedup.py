@@ -131,7 +131,7 @@ def fake_redis(monkeypatch: pytest.MonkeyPatch) -> _FakeRedisClient:
     fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.redis")
     fake_module.redis_client = fake
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.clients.storage.redis", fake_module
+        sys.modules, "src.backend.infrastructure.clients.storage.redis", fake_module,
     )
     return fake
 
@@ -226,7 +226,7 @@ async def test_redis_failure_passes_message(monkeypatch: pytest.MonkeyPatch) -> 
     fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.redis")
     fake_module.redis_client = types.SimpleNamespace(execute=failing)
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.clients.storage.redis", fake_module
+        sys.modules, "src.backend.infrastructure.clients.storage.redis", fake_module,
     )
 
     proc = WindowedDedupProcessor(key_from="id", mode="first")
@@ -249,7 +249,7 @@ def test_invalid_mode_raises() -> None:
 def test_to_spec_dedup() -> None:
     """to_spec возвращает все 4 поля для round-trip."""
     proc = WindowedDedupProcessor(
-        key_from="body.id", key_prefix="my", window_seconds=120, mode="last"
+        key_from="body.id", key_prefix="my", window_seconds=120, mode="last",
     )
     assert proc.to_spec() == {
         "windowed_dedup": {
@@ -257,7 +257,7 @@ def test_to_spec_dedup() -> None:
             "key_prefix": "my",
             "window_seconds": 120,
             "mode": "last",
-        }
+        },
     }
 
 
@@ -277,7 +277,7 @@ def test_to_spec_collect() -> None:
             "window_seconds": 30,
             "dedup_mode": "first",
             "inject_as": "batch",
-        }
+        },
     }
 
 

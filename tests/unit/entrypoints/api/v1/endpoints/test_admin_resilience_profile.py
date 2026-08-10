@@ -49,7 +49,7 @@ def test_profile_from_payload_full() -> None:
             jitter=0.2,
         ),
         circuit_breaker=mod.CircuitBreakerIn(
-            failure_threshold=10, recovery_timeout_s=60, half_open_max_calls=5
+            failure_threshold=10, recovery_timeout_s=60, half_open_max_calls=5,
         ),
         rate_limit=mod.RateLimitIn(rps=200, burst=50),
         bulkhead=mod.BulkheadIn(high_watermark=200, low_watermark=100),
@@ -78,7 +78,7 @@ def test_profile_from_payload_optional_none() -> None:
 
 @pytest.mark.asyncio
 async def test_list_profiles(
-    mock_store: AsyncMock, sample_profile: ResilienceProfile
+    mock_store: AsyncMock, sample_profile: ResilienceProfile,
 ) -> None:
     """list_profiles returns serialized profiles."""
     mock_store.list.return_value = [sample_profile]
@@ -97,7 +97,7 @@ async def test_list_profiles(
 
 @pytest.mark.asyncio
 async def test_get_profile_found(
-    mock_store: AsyncMock, sample_profile: ResilienceProfile
+    mock_store: AsyncMock, sample_profile: ResilienceProfile,
 ) -> None:
     """get_profile returns profile dict when found."""
     mock_store.get.return_value = sample_profile
@@ -127,7 +127,7 @@ async def test_get_profile_not_found(mock_store: AsyncMock) -> None:
 
 @pytest.mark.asyncio
 async def test_upsert_profile(
-    mock_store: AsyncMock, sample_profile: ResilienceProfile
+    mock_store: AsyncMock, sample_profile: ResilienceProfile,
 ) -> None:
     """upsert_profile saves and returns profile dict."""
     mock_store.upsert.return_value = sample_profile
@@ -135,7 +135,7 @@ async def test_upsert_profile(
     payload = mod.ResilienceProfileIn()
     with patch.object(mod, "get_resilience_profile_store", return_value=mock_store):
         result = await mod.upsert_profile(
-            name="default", payload=payload, tenant_id="t1", store=mock_store
+            name="default", payload=payload, tenant_id="t1", store=mock_store,
         )
 
     assert result["name"] == "default"

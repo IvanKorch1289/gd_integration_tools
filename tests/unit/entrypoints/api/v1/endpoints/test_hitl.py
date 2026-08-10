@@ -58,7 +58,7 @@ def client() -> Iterator[TestClient]:
 def test_hitl_resolve_without_auth_returns_401(client: TestClient) -> None:
     """Неаутентифицированный resolve отклоняется до handler-а."""
     response = client.post(
-        "/hitl/missing/resolve", json={"action": "approve", "resolved_by": "operator"}
+        "/hitl/missing/resolve", json={"action": "approve", "resolved_by": "operator"},
     )
 
     assert response.status_code == 401

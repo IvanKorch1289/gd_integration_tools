@@ -48,7 +48,7 @@ def _load_tls_credentials() -> grpc.ServerCredentials | None:
     key_path = Path(getattr(settings.grpc, "server_key_path", ""))
     if not (cert_path.exists() and key_path.exists()):
         raise RuntimeError(
-            "gRPC TLS включён, но server_cert_path/server_key_path не найдены."
+            "gRPC TLS включён, но server_cert_path/server_key_path не найдены.",
         )
 
     server_cert = cert_path.read_bytes()
@@ -102,7 +102,7 @@ async def serve() -> None:
         # валидацию в settings.grpc (ADR-004).
         grpc_server.add_insecure_port(settings.grpc.socket_uri)
         grpc_logger.warning(
-            "gRPC сервер запущен без TLS — допустимо только для dev/unix-socket."
+            "gRPC сервер запущен без TLS — допустимо только для dev/unix-socket.",
         )
     else:
         grpc_server.add_secure_port(settings.grpc.socket_uri, credentials)

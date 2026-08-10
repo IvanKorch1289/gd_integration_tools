@@ -60,7 +60,7 @@ async def test_warmup_invokes_both_engines_when_replica_available(
 
         async def warmup(self) -> Any:
             return SimpleNamespace(
-                duration_seconds=0.0, warmed_pools=[], failed_pools={}
+                duration_seconds=0.0, warmed_pools=[], failed_pools={},
             )
 
     primary = object()
@@ -71,7 +71,7 @@ async def test_warmup_invokes_both_engines_when_replica_available(
     monkeypatch.setattr(setup_infra, "_redis_enabled", lambda: False)
     monkeypatch.setattr(setup_infra, "_clickhouse_enabled", lambda: False)
     monkeypatch.setattr(
-        "src.backend.infrastructure.database.pool_warmup.PoolWarmup", _StubPoolWarmup
+        "src.backend.infrastructure.database.pool_warmup.PoolWarmup", _StubPoolWarmup,
     )
 
     await setup_infra._warmup_connection_pools()
@@ -95,7 +95,7 @@ async def test_warmup_fallback_primary_only_when_no_replica(
 
         async def warmup(self) -> Any:
             return SimpleNamespace(
-                duration_seconds=0.0, warmed_pools=["pg"], failed_pools={}
+                duration_seconds=0.0, warmed_pools=["pg"], failed_pools={},
             )
 
     primary = object()
@@ -105,7 +105,7 @@ async def test_warmup_fallback_primary_only_when_no_replica(
     monkeypatch.setattr(setup_infra, "_redis_enabled", lambda: False)
     monkeypatch.setattr(setup_infra, "_clickhouse_enabled", lambda: False)
     monkeypatch.setattr(
-        "src.backend.infrastructure.database.pool_warmup.PoolWarmup", _StubPoolWarmup
+        "src.backend.infrastructure.database.pool_warmup.PoolWarmup", _StubPoolWarmup,
     )
 
     await setup_infra._warmup_connection_pools()
@@ -134,7 +134,7 @@ async def test_warmup_noop_when_all_backends_disabled(
     monkeypatch.setattr(setup_infra, "_redis_enabled", lambda: False)
     monkeypatch.setattr(setup_infra, "_clickhouse_enabled", lambda: False)
     monkeypatch.setattr(
-        "src.backend.infrastructure.database.pool_warmup.PoolWarmup", _StubPoolWarmup
+        "src.backend.infrastructure.database.pool_warmup.PoolWarmup", _StubPoolWarmup,
     )
 
     await setup_infra._warmup_connection_pools()

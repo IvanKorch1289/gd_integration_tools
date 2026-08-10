@@ -67,7 +67,7 @@ from src.backend.infrastructure.observability.immutable_audit import VerifyResul
 def _make_ok_verify_result(total: int = 5) -> VerifyResult:
     """Build a valid VerifyResult для успешного verify()."""
     return VerifyResult(
-        valid=True, total_checked=total, first_broken_seq=None, details="ok"
+        valid=True, total_checked=total, first_broken_seq=None, details="ok",
     )
 
 
@@ -113,7 +113,7 @@ async def test_try_start_default_off_flag_noop() -> None:
     def _factory() -> Any:
         # Если factory вдруг вызовется — тест зафиксирует неуспех через assert.
         raise AssertionError(
-            "factory должна быть no-op когда flag=OFF (early-exit branch)"
+            "factory должна быть no-op когда flag=OFF (early-exit branch)",
         )
 
     with patch("src.backend.core.config.features.feature_flags") as mock_flags:

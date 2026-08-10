@@ -112,7 +112,7 @@ def _configure_business_routers(app: FastAPI) -> None:
     _admin_bridge_router = APIRouter()
 
     @_admin_bridge_router.api_route(
-        "/api/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"]
+        "/api/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     )
     async def admin_legacy_redirect(path: str):
         """Redirect legacy admin API paths to v1 admin API.
@@ -131,7 +131,7 @@ def _configure_business_routers(app: FastAPI) -> None:
             from fastapi import HTTPException
 
             raise HTTPException(
-                status_code=400, detail="Invalid path: external URLs not allowed"
+                status_code=400, detail="Invalid path: external URLs not allowed",
             )
         return RedirectResponse(url=f"/api/v1/admin/{path}", status_code=303)
 
@@ -170,11 +170,11 @@ def _configure_business_routers(app: FastAPI) -> None:
 
     if stream_client.redis_router is not None:
         app.include_router(
-            stream_client.redis_router, prefix="/stream/redis", tags=["Redis Streams"]
+            stream_client.redis_router, prefix="/stream/redis", tags=["Redis Streams"],
         )
     if stream_client.rabbit_router is not None:
         app.include_router(
-            stream_client.rabbit_router, prefix="/stream/rabbit", tags=["RabbitMQ"]
+            stream_client.rabbit_router, prefix="/stream/rabbit", tags=["RabbitMQ"],
         )
 
     # Протокольные entrypoints
@@ -233,13 +233,13 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
         added = auto_register_unrouted_actions(app)
     except Exception as exc:
         get_logger("app_factory").warning(
-            "auto_register_unrouted_actions упал: %s — пропускаем", exc
+            "auto_register_unrouted_actions упал: %s — пропускаем", exc,
         )
         return
 
     if added:
         get_logger("app_factory").info(
-            "Wave 1.2: авто-зарегистрировано %d REST-роутов для action-handlers", added
+            "Wave 1.2: авто-зарегистрировано %d REST-роутов для action-handlers", added,
         )
 
 

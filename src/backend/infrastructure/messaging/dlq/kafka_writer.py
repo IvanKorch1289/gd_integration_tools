@@ -34,7 +34,7 @@ def _get_kafka_dlq_breaker() -> Any:
     return get_breaker_registry().get_or_create(
         "kafka_dlq_writer",
         BreakerSpec(
-            name="kafka_dlq_writer", failure_threshold=5, recovery_timeout=30.0
+            name="kafka_dlq_writer", failure_threshold=5, recovery_timeout=30.0,
         ),
     )
 
@@ -50,7 +50,7 @@ class KafkaDLQWriter:
     """
 
     def __init__(
-        self, *, producer: Any, topic_prefix: str = "dlq.", serializer: Any = None
+        self, *, producer: Any, topic_prefix: str = "dlq.", serializer: Any = None,
     ) -> None:
         self._producer = producer
         self._topic_prefix = topic_prefix

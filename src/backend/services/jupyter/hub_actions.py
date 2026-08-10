@@ -67,7 +67,7 @@ class _RunHubNotebookService:
                 content = base64.b64decode(notebook_content_b64, validate=True)
             except (ValueError, binascii.Error) as exc:
                 raise HubRunError(
-                    f"notebook_content_b64 is not valid base64: {exc}"
+                    f"notebook_content_b64 is not valid base64: {exc}",
                 ) from exc
 
         # Notebook name: требуется всегда (для logging/audit)
@@ -79,7 +79,7 @@ class _RunHubNotebookService:
                 effective_name = "inline_notebook"
             else:
                 raise HubRunError(
-                    "either notebook_name, notebook_path or notebook_content required"
+                    "either notebook_name, notebook_path or notebook_content required",
                 )
 
         result: HubRunResult = await run_hub_notebook(
@@ -133,7 +133,7 @@ def register_jupyter_hub_actions(registry: Any) -> list[str]:
         )
     else:
         raise TypeError(
-            f"registry {type(registry).__name__} has no register/registration method"
+            f"registry {type(registry).__name__} has no register/registration method",
         )
 
     _logger.info("Registered jupyter.hub_run action")

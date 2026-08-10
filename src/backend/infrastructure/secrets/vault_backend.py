@@ -88,7 +88,7 @@ class VaultBackend:
             import hvac
         except ImportError as exc:  # pragma: no cover — hvac уже в стеке
             raise RuntimeError(
-                "hvac не установлен; добавьте 'hvac>=2.3.0' в зависимости"
+                "hvac не установлен; добавьте 'hvac>=2.3.0' в зависимости",
             ) from exc
 
         client = hvac.Client(url=self._config.url, namespace=self._config.namespace)
@@ -98,12 +98,12 @@ class VaultBackend:
             # For truly sync callers the blocking is acceptable since they are
             # not on the async event loop's hot path.
             client.auth.approle.login(
-                role_id=self._config.role_id, secret_id=self._config.secret_id
+                role_id=self._config.role_id, secret_id=self._config.secret_id,
             )
         else:
             raise RuntimeError(
                 "Vault auth не сконфигурирован: задайте VAULT_TOKEN либо "
-                "VAULT_ROLE_ID + VAULT_SECRET_ID"
+                "VAULT_ROLE_ID + VAULT_SECRET_ID",
             )
         self._client = client
         return client
@@ -121,7 +121,7 @@ class VaultBackend:
             import hvac
         except ImportError as exc:  # pragma: no cover — hvac уже в стеке
             raise RuntimeError(
-                "hvac не установлен; добавьте 'hvac>=2.3.0' в зависимости"
+                "hvac не установлен; добавьте 'hvac>=2.3.0' в зависимости",
             ) from exc
 
         client = hvac.Client(url=self._config.url, namespace=self._config.namespace)
@@ -134,13 +134,13 @@ class VaultBackend:
             await loop.run_in_executor(
                 None,
                 lambda: client.auth.approle.login(
-                    role_id=self._config.role_id, secret_id=self._config.secret_id
+                    role_id=self._config.role_id, secret_id=self._config.secret_id,
                 ),
             )
         else:
             raise RuntimeError(
                 "Vault auth не сконфигурирован: задайте VAULT_TOKEN либо "
-                "VAULT_ROLE_ID + VAULT_SECRET_ID"
+                "VAULT_ROLE_ID + VAULT_SECRET_ID",
             )
         self._client = client
         return client
@@ -149,7 +149,7 @@ class VaultBackend:
         """Прочитать current version KV v2 secret'а (sync, backward compat)."""
         client = self._ensure_client()
         response = client.secrets.kv.v2.read_secret_version(
-            path=name, mount_point=self._config.mount_point
+            path=name, mount_point=self._config.mount_point,
         )
         return _unpack_kv_v2(name, response)
 
@@ -166,7 +166,7 @@ class VaultBackend:
         """Прочитать metadata KV v2 (нужно :class:`RotationScheduler`)."""
         client = await self._ensure_client_async()
         meta = client.secrets.kv.v2.read_secret_metadata(
-            path=name, mount_point=self._config.mount_point
+            path=name, mount_point=self._config.mount_point,
         )
         if isinstance(meta, dict):
             return meta.get("data", {})

@@ -55,19 +55,19 @@ def upgrade() -> None:
         """
         ALTER TABLE orderkinds
         ADD COLUMN tenant_id VARCHAR(64) NOT NULL DEFAULT 'default'
-        """
+        """,
     )
 
     op.execute(
         """
         CREATE INDEX ix_orderkinds_tenant_id ON orderkinds (tenant_id)
-        """
+        """,
     )
 
     op.execute(
         """
         UPDATE orderkinds SET tenant_id = 'default' WHERE tenant_id IS NULL
-        """
+        """,
     )
 
 

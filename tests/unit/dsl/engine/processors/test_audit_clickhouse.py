@@ -199,7 +199,7 @@ class TestAuditClickhouseToSpec:
     def test_minimal_spec(self) -> None:
         proc = AuditClickhouseProcessor(event_type="evt")
         assert proc.to_spec() == {
-            "audit_clickhouse": {"event_type": "evt", "severity": "info"}
+            "audit_clickhouse": {"event_type": "evt", "severity": "info"},
         }
 
     def test_full_spec(self) -> None:

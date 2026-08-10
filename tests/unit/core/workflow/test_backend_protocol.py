@@ -37,7 +37,7 @@ class TestWorkflowHandle:
                     "run_id": "r-1",
                     "namespace": "t-1",
                     "extra": "no",
-                }
+                },
             )
 
     def test_empty_string_rejected(self) -> None:
@@ -99,7 +99,7 @@ class TestFakeBackendBehavior:
             task_queue="q",
         )
         await backend.signal_workflow(
-            handle=handle, signal_name="approve", payload={"by": "ops"}
+            handle=handle, signal_name="approve", payload={"by": "ops"},
         )
         assert backend.signals_for(handle) == [("approve", {"by": "ops"})]
 
@@ -150,7 +150,7 @@ class TestFakeBackendBehavior:
             task_queue="q",
         )
         result = await backend.await_completion(
-            handle=handle, timeout=timedelta(seconds=1)
+            handle=handle, timeout=timedelta(seconds=1),
         )
         assert result.status == "completed"
         assert result.output == {}

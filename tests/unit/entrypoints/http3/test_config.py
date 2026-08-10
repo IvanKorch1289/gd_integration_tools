@@ -18,7 +18,7 @@ def test_config_requires_existing_certfile(tmp_path: Path) -> None:
 
     with pytest.raises(FileNotFoundError, match="APP_HTTP3_CERTFILE"):
         Http3ServerConfig(
-            host="127.0.0.1", port=8443, certfile=missing_cert, keyfile=keyfile
+            host="127.0.0.1", port=8443, certfile=missing_cert, keyfile=keyfile,
         )
 
 
@@ -30,7 +30,7 @@ def test_config_requires_existing_keyfile(tmp_path: Path) -> None:
 
     with pytest.raises(FileNotFoundError, match="APP_HTTP3_KEYFILE"):
         Http3ServerConfig(
-            host="127.0.0.1", port=8443, certfile=certfile, keyfile=missing_key
+            host="127.0.0.1", port=8443, certfile=certfile, keyfile=missing_key,
         )
 
 

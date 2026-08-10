@@ -36,7 +36,7 @@ def _register_webhook_scheduler() -> None:
                 service_getter=get_webhook_scheduler,
                 service_method="execute_webhook",
             ),
-        ]
+        ],
     )
 
 
@@ -91,7 +91,7 @@ def _register_web_automation_multi_protocol() -> None:
                 service_getter=get_web_automation_service,
                 service_method="monitor_changes",
             ),
-        ]
+        ],
     )
 
 
@@ -116,7 +116,7 @@ def _register_data_export_excel_csv_pdf() -> None:
                 service_getter=get_export_service,
                 service_method="to_pdf",
             ),
-        ]
+        ],
     )
 
 
@@ -171,7 +171,7 @@ def _register_notifications_email_express_webhook_telegram() -> None:
                 service_getter=get_notification_hub,
                 service_method="broadcast",
             ),
-        ]
+        ],
     )
 
 
@@ -201,7 +201,7 @@ def _register_message_replay() -> None:
                 service_getter=get_replay_service,
                 service_method="stats",
             ),
-        ]
+        ],
     )
 
 
@@ -238,7 +238,7 @@ def _register_webhook_relay() -> None:
                 service_getter=get_webhook_relay,
                 service_method="dlq_retry",
             ),
-        ]
+        ],
     )
 
 
@@ -249,7 +249,7 @@ def _register_data_quality() -> None:
     action_handler_registry.register_many(
         [
             ActionHandlerSpec(
-                action="dq.check", service_getter=get_dq_monitor, service_method="check"
+                action="dq.check", service_getter=get_dq_monitor, service_method="check",
             ),
             ActionHandlerSpec(
                 action="dq.schema_infer",
@@ -257,9 +257,9 @@ def _register_data_quality() -> None:
                 service_method="schema_infer",
             ),
             ActionHandlerSpec(
-                action="dq.stats", service_getter=get_dq_monitor, service_method="stats"
+                action="dq.stats", service_getter=get_dq_monitor, service_method="stats",
             ),
-        ]
+        ],
     )
 
 
@@ -279,7 +279,7 @@ def _register_importgateway_w24() -> None:
                 service_getter=get_import_service,
                 service_method="list_imported",
             ),
-        ]
+        ],
     )
 
 
@@ -309,5 +309,5 @@ def _register_scheduled_reports() -> None:
                 service_getter=get_reports_service,
                 service_method="history",
             ),
-        ]
+        ],
     )

@@ -113,7 +113,7 @@ class DenseRetriever:
         chunk_id = str(
             doc.get(self._chunk_id_field)
             or doc.get("metadata", {}).get(self._chunk_id_field)
-            or ""
+            or "",
         )
         return DenseResult(
             chunk_id=chunk_id,

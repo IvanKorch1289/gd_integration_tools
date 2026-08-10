@@ -35,7 +35,7 @@ GLOBAL_POLICY_YAML = dedent(
     input_sanitizers:
       - { name: "pii_tokenizer:reversible:ru_strict", on_error: "fail" }
     required: true
-    """
+    """,
 )
 
 OVERRIDE_POLICY_YAML = dedent(
@@ -48,7 +48,7 @@ OVERRIDE_POLICY_YAML = dedent(
       primary: "openrouter/openai/gpt-4o"
       fallback: ["openrouter/anthropic/claude-3.5-sonnet"]
     required: true
-    """
+    """,
 )
 
 INVALID_POLICY_YAML = dedent(
@@ -56,7 +56,7 @@ INVALID_POLICY_YAML = dedent(
     name: broken
     workflow_pattern: "*"
     # missing required `model_router`
-    """
+    """,
 )
 
 DOC_SUMMARIZE_POLICY_YAML = dedent(
@@ -67,7 +67,7 @@ DOC_SUMMARIZE_POLICY_YAML = dedent(
     model_router:
       primary: "huggingface/local-llama-3-instruct"
     required: false
-    """
+    """,
 )
 
 
@@ -121,7 +121,7 @@ async def test_resolver_tenant_specific_priority(tmp_path: Path) -> None:
     overrides_dir = tmp_path / "extensions" / "credit" / "ai_policies"
     _write_policy(global_dir, "credit_check_strict.policy.yaml", GLOBAL_POLICY_YAML)
     _write_policy(
-        overrides_dir, "credit_check_premium.policy.yaml", OVERRIDE_POLICY_YAML
+        overrides_dir, "credit_check_premium.policy.yaml", OVERRIDE_POLICY_YAML,
     )
 
     resolver = PolicyResolver(roots=[overrides_dir, global_dir])
@@ -139,7 +139,7 @@ async def test_resolver_tenant_specific_priority(tmp_path: Path) -> None:
 async def test_resolver_caches_resolved_policies(tmp_path: Path) -> None:
     """Повторный resolve по тому же ключу — попадает в RAM cache."""
     yaml_path = _write_policy(
-        tmp_path, "credit_check_strict.policy.yaml", GLOBAL_POLICY_YAML
+        tmp_path, "credit_check_strict.policy.yaml", GLOBAL_POLICY_YAML,
     )
     resolver = PolicyResolver(roots=[tmp_path])
     first = await resolver.resolve("credit_check", "t-1")

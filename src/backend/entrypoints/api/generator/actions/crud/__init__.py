@@ -116,7 +116,7 @@ class CrudMixin(ReadMixin, WriteMixin, VersioningMixin, QueryMixin):
             tags=tuple(spec.tags),
         )
         action_handler_registry.register_with_metadata(
-            action=action_id, handler=None, metadata=metadata
+            action=action_id, handler=None, metadata=metadata,
         )
         service_method = cls._CRUD_VERB_TO_SERVICE_METHOD.get(verb)
         if service_method is not None:

@@ -188,7 +188,7 @@ async def test_dlq_writer_handles_backend_error(sample_envelope: DLQEnvelope) ->
 
 @pytest.mark.asyncio
 async def test_dlq_writer_retries_on_failure(
-    sample_envelope: DLQEnvelope, metrics_collector: dict[str, int]
+    sample_envelope: DLQEnvelope, metrics_collector: dict[str, int],
 ) -> None:
     writer = InMemoryDLQWriter()
     writer.fail_n = 2
@@ -270,7 +270,7 @@ async def test_dlq_cleanup_expired_entries() -> None:
 
 @pytest.mark.asyncio
 async def test_dlq_metrics_increment(
-    sample_envelope: DLQEnvelope, metrics_collector: dict[str, int]
+    sample_envelope: DLQEnvelope, metrics_collector: dict[str, int],
 ) -> None:
     writer = InMemoryDLQWriter()
     for _ in range(3):
@@ -313,7 +313,7 @@ def test_dlq_writer_protocol_is_runtime_checkable() -> None:
 
 @pytest.mark.asyncio
 async def test_dlq_writer_with_mock_backend_aggregation(
-    sample_envelope: DLQEnvelope, mock_backend: MagicMock
+    sample_envelope: DLQEnvelope, mock_backend: MagicMock,
 ) -> None:
     """Writer composes with a mocked external backend (Redis/Kafka/S3)."""
     mock_backend.write.return_value = None

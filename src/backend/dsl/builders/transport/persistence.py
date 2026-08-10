@@ -295,7 +295,7 @@ class PersistenceMixin:
         )
 
     def file_move(
-        self, src: str | None = None, dst: str | None = None, *, mode: str = "copy"
+        self, src: str | None = None, dst: str | None = None, *, mode: str = "copy",
     ) -> RouteBuilder:
         """Copy/move/rename файлов."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -307,7 +307,7 @@ class PersistenceMixin:
         )
 
     def read_file(
-        self, path: str | None = None, *, binary: bool = False
+        self, path: str | None = None, *, binary: bool = False,
     ) -> RouteBuilder:
         """Чтение локального файла в body (text или bytes)."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -318,7 +318,7 @@ class PersistenceMixin:
         )
 
     def read_s3(
-        self, bucket: str | None = None, key: str | None = None
+        self, bucket: str | None = None, key: str | None = None,
     ) -> RouteBuilder:
         """Загрузка объекта из S3."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -329,7 +329,7 @@ class PersistenceMixin:
         )
 
     def write_file(
-        self, path: str | None = None, *, format: str = "auto"
+        self, path: str | None = None, *, format: str = "auto",
     ) -> RouteBuilder:
         """Запись body в файл. format: auto|json|csv|text."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -389,7 +389,7 @@ class PersistenceMixin:
         )
 
     def lookup(
-        self, key_from: str, *, target: str, result_property: str = "lookup_result"
+        self, key_from: str, *, target: str, result_property: str = "lookup_result",
     ) -> RouteBuilder:
         """Chainable lookup DSL method (S168 W10 P1-1, per master prompt).
 

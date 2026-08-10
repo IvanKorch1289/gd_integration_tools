@@ -71,7 +71,7 @@ def test_clean_dir_exits_zero(tmp_path: Path) -> None:
 def test_dir_with_violation_exits_one(tmp_path: Path) -> None:
     """Директория с forbidden import → exit 1."""
     (tmp_path / "bad.py").write_text(
-        "from src.backend.infrastructure.repositories import x\n"
+        "from src.backend.infrastructure.repositories import x\n",
     )
     result = runner.invoke(app, [str(tmp_path), "--plain"])
     assert result.exit_code == 1
@@ -99,7 +99,7 @@ def test_scan_directory_clean_file(tmp_path: Path) -> None:
 def test_scan_directory_violation(tmp_path: Path) -> None:
     """Файл с forbidden import → 1 violation с правильным (lineno, module, prefix)."""
     (tmp_path / "bad.py").write_text(
-        "from src.backend.infrastructure.repositories import x\n"
+        "from src.backend.infrastructure.repositories import x\n",
     )
     files, violations = scan_directory(tmp_path)
     assert files == 1
@@ -115,7 +115,7 @@ def test_scan_directory_type_checking_skipped(tmp_path: Path) -> None:
     (tmp_path / "typecheck.py").write_text(
         "from typing import TYPE_CHECKING\n"
         "if TYPE_CHECKING:\n"
-        "    from src.backend.infrastructure.foo import x\n"
+        "    from src.backend.infrastructure.foo import x\n",
     )
     files, violations = scan_directory(tmp_path)
     assert files == 1
@@ -127,7 +127,7 @@ def test_scan_directory_multiple_violations(tmp_path: Path) -> None:
     (tmp_path / "multi.py").write_text(
         "from src.backend.infrastructure.a import x\n"
         "from src.backend.infrastructure.b import y\n"
-        "from src.backend.services.c import z\n"
+        "from src.backend.services.c import z\n",
     )
     files, violations = scan_directory(tmp_path)
     assert files == 1

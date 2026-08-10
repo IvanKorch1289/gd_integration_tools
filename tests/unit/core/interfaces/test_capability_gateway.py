@@ -33,7 +33,7 @@ class _TenantAwareFake(_BaseFake):
     """Полный fake с tenant-aware методами (Sprint 36 V15 GAP)."""
 
     def check_tenant(
-        self, capability: str, tenant: str, principal: str, scope: str | None = None
+        self, capability: str, tenant: str, principal: str, scope: str | None = None,
     ) -> bool:
         return True
 

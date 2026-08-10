@@ -21,7 +21,7 @@ class TestJudgeResponseParsing:
         """Все поля присутствуют → strict pass-through."""
         r = _JudgeResponse.model_validate_json(
             '{"hallucination": 0.2, "relevance": 0.9, "toxicity": 0.0, '
-            '"verdict": "ok", "explanation": "good"}'
+            '"verdict": "ok", "explanation": "good"}',
         )
         assert r.hallucination == 0.2
         assert r.relevance == 0.9
@@ -41,7 +41,7 @@ class TestJudgeResponseParsing:
     def test_string_coerced_to_float(self) -> None:
         """LLM иногда возвращает числа как строки — Pydantic coerce."""
         r = _JudgeResponse.model_validate_json(
-            '{"hallucination": "0.3", "relevance": "0.8", "toxicity": "0"}'
+            '{"hallucination": "0.3", "relevance": "0.8", "toxicity": "0"}',
         )
         assert r.hallucination == 0.3
         assert r.relevance == 0.8
@@ -50,7 +50,7 @@ class TestJudgeResponseParsing:
     def test_extra_fields_ignored(self) -> None:
         """LLM может вернуть лишние поля — игнорируем без ошибки."""
         r = _JudgeResponse.model_validate_json(
-            '{"hallucination": 0.1, "reasoning": "abc", "model_notes": "x"}'
+            '{"hallucination": 0.1, "reasoning": "abc", "model_notes": "x"}',
         )
         assert r.hallucination == 0.1
 

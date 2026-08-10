@@ -34,13 +34,13 @@ def plugin_dir(tmp_path: Path) -> Path:
         'name = "demo"\n'
         'version = "1.0.0"\n'
         'requires_core = ">=0.2,<1.0"\n'
-        'entry_class = "extensions.demo.plugin.Demo"\n'
+        'entry_class = "extensions.demo.plugin.Demo"\n',
     )
     return root
 
 
 def test_bundle_zip_fallback(
-    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Когда нет pyproject.toml и uv → zip-archive."""
     monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)
@@ -60,7 +60,7 @@ def test_bundle_zip_fallback(
 
 
 def test_full_pipeline_dry_run(
-    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """`--dry-run` не вызывает реальных утилит и не упирается в их отсутствие."""
     monkeypatch.setattr(pp, "_ensure_tool", lambda name: name == "uv")
@@ -80,7 +80,7 @@ def test_full_pipeline_dry_run(
 
 
 def test_sbom_skipped_when_disabled(
-    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)
     cfg = pp.PublishConfig(
@@ -97,7 +97,7 @@ def test_sbom_skipped_when_disabled(
 
 
 def test_cosign_skipped_when_key_missing(
-    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(pp, "_ensure_tool", lambda name: True)
     cfg = pp.PublishConfig(
@@ -114,7 +114,7 @@ def test_cosign_skipped_when_key_missing(
 
 
 def test_upload_noop_without_url(
-    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)
     cfg = pp.PublishConfig(
@@ -131,7 +131,7 @@ def test_upload_noop_without_url(
 
 
 def test_main_returns_zero(
-    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)
     exit_code = pp.main(
@@ -147,6 +147,6 @@ def test_main_returns_zero(
             "--skip-sbom",
             "--skip-cosign",
             "--skip-upload",
-        ]
+        ],
     )
     assert exit_code == 0

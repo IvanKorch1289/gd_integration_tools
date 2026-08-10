@@ -61,7 +61,7 @@ def test_no_legacy_except_a_b_in_src() -> None:
         pytest.fail(
             f"Found {len(findings)} legacy 'except A, B:' patterns in src/. "
             f"Run: python tools/fix_except_bug.py src/\n"
-            f"First 20:\n{msg}"
+            f"First 20:\n{msg}",
         )
 
 

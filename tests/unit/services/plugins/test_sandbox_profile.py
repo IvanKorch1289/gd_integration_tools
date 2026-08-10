@@ -131,7 +131,7 @@ class TestSandboxAdapter:
             capabilities=(CapabilityRef(name="code.execute"),),
         )
         adapter = PluginSandboxAdapter(
-            sandbox=FakeSandbox(), manifest=manifest, capability_check=fake_check
+            sandbox=FakeSandbox(), manifest=manifest, capability_check=fake_check,
         )
         await adapter.run("print('x')")
         assert observed == [("demo", "code.execute", None)]

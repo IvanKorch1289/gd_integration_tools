@@ -47,13 +47,13 @@ class TestRateLimitMiddleware:
     @pytest.fixture
     def dispatch_context(self) -> DispatchContext:
         return DispatchContext(
-            correlation_id="corr-1", tenant_id="tenant-1", user_id="user-1"
+            correlation_id="corr-1", tenant_id="tenant-1", user_id="user-1",
         )
 
     @pytest.fixture
     def next_handler(self) -> AsyncMock:
         async def _handler(
-            action: str, payload: Any, ctx: DispatchContext
+            action: str, payload: Any, ctx: DispatchContext,
         ) -> ActionResult:
             return ActionResult(success=True, data={})
 
@@ -91,7 +91,7 @@ class TestRateLimitMiddleware:
         dispatch_context: DispatchContext,
     ) -> None:
         registry.get_metadata.return_value = ActionMetadata(
-            action="action", rate_limit=100
+            action="action", rate_limit=100,
         )
 
         limiter = AsyncMock()
@@ -117,7 +117,7 @@ class TestRateLimitMiddleware:
         dispatch_context: DispatchContext,
     ) -> None:
         registry.get_metadata.return_value = ActionMetadata(
-            action="action", rate_limit=10
+            action="action", rate_limit=10,
         )
 
         limiter = AsyncMock()
@@ -145,7 +145,7 @@ class TestRateLimitMiddleware:
         dispatch_context: DispatchContext,
     ) -> None:
         registry.get_metadata.return_value = ActionMetadata(
-            action="action", rate_limit=10
+            action="action", rate_limit=10,
         )
         mw = RateLimitMiddleware(registry=registry)
         mw._limiter_provider = lambda: None
@@ -160,7 +160,7 @@ class TestRateLimitMiddleware:
         dispatch_context: DispatchContext,
     ) -> None:
         registry.get_metadata.return_value = ActionMetadata(
-            action="action", rate_limit=10
+            action="action", rate_limit=10,
         )
         mw = RateLimitMiddleware(registry=registry)
         mw._limiter_provider = lambda: AsyncMock()
@@ -173,7 +173,7 @@ class TestRateLimitMiddleware:
     def test_uses_global_identifier_fallback(self) -> None:
         registry = MagicMock()
         registry.get_metadata.return_value = ActionMetadata(
-            action="action", rate_limit=5
+            action="action", rate_limit=5,
         )
         mw = RateLimitMiddleware(registry=registry)
 
@@ -188,7 +188,7 @@ class TestRateLimitMiddleware:
                 mw,
                 "_resolve_limiter_module",
                 return_value=MagicMock(
-                    RateLimit=FakeRateLimit, RateLimitExceeded=FakeRateLimitExceeded
+                    RateLimit=FakeRateLimit, RateLimitExceeded=FakeRateLimitExceeded,
                 ),
             ):
                 # Just verify the middleware can be called

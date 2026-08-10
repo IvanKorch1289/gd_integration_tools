@@ -37,7 +37,7 @@ class RPAMixin:
     def navigate(self, url: str) -> RouteBuilder:
         """Открыть URL в браузере (Playwright)."""
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.web", "NavigateProcessor", url=url
+            "src.backend.dsl.engine.processors.web", "NavigateProcessor", url=url,
         )
 
     def click(self, url: str, selector: str) -> RouteBuilder:
@@ -50,7 +50,7 @@ class RPAMixin:
         )
 
     def fill_form(
-        self, url: str, fields: dict | None = None, submit: str | None = None
+        self, url: str, fields: dict | None = None, submit: str | None = None,
     ) -> RouteBuilder:
         """Заполнение формы по полям + опциональный submit."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -62,7 +62,7 @@ class RPAMixin:
         )
 
     def extract(
-        self, selector: str, url: str | None = None, output_property: str = "extracted"
+        self, selector: str, url: str | None = None, output_property: str = "extracted",
     ) -> RouteBuilder:
         """Извлечение текста по CSS-селектору."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -76,7 +76,7 @@ class RPAMixin:
     def screenshot(self, url: str | None = None) -> RouteBuilder:
         """Скриншот страницы как bytes."""
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.web", "ScreenshotProcessor", url=url
+            "src.backend.dsl.engine.processors.web", "ScreenshotProcessor", url=url,
         )
 
     def browser_launch(self, *, headless: bool = True) -> RouteBuilder:
@@ -116,11 +116,11 @@ class RPAMixin:
     def run_scenario(self, steps: list[dict] | None = None) -> RouteBuilder:
         """Multi-step web сценарий (navigate/click/fill/extract)."""
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.web", "RunScenarioProcessor", steps=steps
+            "src.backend.dsl.engine.processors.web", "RunScenarioProcessor", steps=steps,
         )
 
     def call_llm_with_fallback(
-        self, providers: list[str], *, model: str = "default"
+        self, providers: list[str], *, model: str = "default",
     ) -> RouteBuilder:
         """LLM с fallback-цепочкой провайдеров."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -131,7 +131,7 @@ class RPAMixin:
         )
 
     def cache(
-        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600
+        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600,
     ) -> RouteBuilder:
         """Redis-кеш: проверяет наличие по ключу, пропускает если есть."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -142,7 +142,7 @@ class RPAMixin:
         )
 
     def cache_write(
-        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600
+        self, key_fn: Callable[[Exchange[Any]], str], *, ttl: int = 3600,
     ) -> RouteBuilder:
         """Redis-кеш: записывает результат после обработки."""
         return self._add_lazy(  # type: ignore[attr-defined]
@@ -207,7 +207,7 @@ class RPAMixin:
         Результат: bytes (merged PDF).
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa", "PdfMergeProcessor"
+            "src.backend.dsl.engine.processors.rpa", "PdfMergeProcessor",
         )
 
     def word_read(self) -> RouteBuilder:
@@ -217,7 +217,7 @@ class RPAMixin:
         Результат: {"text": "...", "paragraphs": [...]}
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa", "WordReadProcessor"
+            "src.backend.dsl.engine.processors.rpa", "WordReadProcessor",
         )
 
     def word_write(self) -> RouteBuilder:
@@ -227,7 +227,7 @@ class RPAMixin:
         Результат: bytes (.docx файл).
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa", "WordWriteProcessor"
+            "src.backend.dsl.engine.processors.rpa", "WordWriteProcessor",
         )
 
     def excel_read(self, *, sheet_name: str | None = None) -> RouteBuilder:
@@ -243,7 +243,7 @@ class RPAMixin:
         )
 
     def file_move(
-        self, src: str | None = None, dst: str | None = None, *, mode: str = "copy"
+        self, src: str | None = None, dst: str | None = None, *, mode: str = "copy",
     ) -> RouteBuilder:
         """Копировать или переместить файл.
 
@@ -277,7 +277,7 @@ class RPAMixin:
         Результат: {"text": "...", "pages": [...]}
         """
         return self._add_lazy(  # type: ignore[attr-defined]
-            "src.backend.dsl.engine.processors.rpa", "ImageOcrProcessor", lang=lang
+            "src.backend.dsl.engine.processors.rpa", "ImageOcrProcessor", lang=lang,
         )
 
     def image_resize(

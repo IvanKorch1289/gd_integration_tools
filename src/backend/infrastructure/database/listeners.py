@@ -22,7 +22,7 @@ class DatabaseListener:
     """
 
     def __init__(
-        self, async_engine: AsyncEngine, db_name: str, slow_query_threshold: float
+        self, async_engine: AsyncEngine, db_name: str, slow_query_threshold: float,
     ):
         self.async_engine = async_engine
         self.db_name = db_name
@@ -40,7 +40,7 @@ class DatabaseListener:
 
         @event.listens_for(sync_engine, "before_cursor_execute")
         def before_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
+            conn, cursor, statement, parameters, context, executemany,
         ):
             """
             Сохраняет время старта запроса.
@@ -49,7 +49,7 @@ class DatabaseListener:
 
         @event.listens_for(sync_engine, "after_cursor_execute")
         def after_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
+            conn, cursor, statement, parameters, context, executemany,
         ):
             """
             Логирует длительность запроса и помечает slow queries.

@@ -24,7 +24,7 @@ class TestLoadKeysFile:
         path = tmp_path / "keys.txt"
         path.write_text(
             "service_a:gd_aaaaaaaaaaaaaaaaaaaa\n"
-            "service_b:gd_bbbbbbbbbbbbbbbbbbbb\n"
+            "service_b:gd_bbbbbbbbbbbbbbbbbbbb\n",
         )
         result = mig._load_keys_file(path)
         assert result == {
@@ -38,7 +38,7 @@ class TestLoadKeysFile:
             "# comment\n"
             "\n"
             "service_a:gd_aaa\n"
-            "  \n"
+            "  \n",
         )
         result = mig._load_keys_file(path)
         assert result == {"service_a": "gd_aaa"}
@@ -48,13 +48,13 @@ class TestLoadKeysFile:
         path.write_text(
             "service_a:gd_aaa\n"
             "no_colon_line\n"
-            "service_b:gd_bbb\n"
+            "service_b:gd_bbb\n",
         )
         result = mig._load_keys_file(path)
         assert result == {"service_a": "gd_aaa", "service_b": "gd_bbb"}
 
     def test_duplicate_client_id_warns_last_wins(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture,
     ) -> None:
         path = tmp_path / "keys.txt"
         path.write_text("client:gd_first\nclient:gd_second\n")

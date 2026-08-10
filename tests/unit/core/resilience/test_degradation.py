@@ -79,7 +79,7 @@ class TestDataclasses:
 
     def test_transition_frozen(self) -> None:
         t = DegradationTransition(
-            timestamp_utc="x", from_mode="a", to_mode="b", actor="c", reason="d"
+            timestamp_utc="x", from_mode="a", to_mode="b", actor="c", reason="d",
         )
         with pytest.raises((AttributeError, Exception)):
             t.from_mode = "z"  # type: ignore[misc]
@@ -116,7 +116,7 @@ class TestSetMode:
     async def test_basic(self) -> None:
         m = DegradationManager()
         transition = await m.set_mode(
-            DegradationMode.READ_ONLY, actor="admin", reason="test"
+            DegradationMode.READ_ONLY, actor="admin", reason="test",
         )
         assert isinstance(transition, DegradationTransition)
         assert transition.to_mode == "read_only"

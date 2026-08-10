@@ -35,7 +35,7 @@ def _write_plugin(
         requires_core = ">=0.2,<0.3"
         entry_class = "ext.{name}.Plugin"
         models_module = ["ext.{name}.domain.models"]
-        """
+        """,
     )
     (pkg / "plugin.toml").write_text(body, encoding="utf-8")
     return pkg / "plugin.toml"
@@ -92,7 +92,7 @@ class TestLoadPluginManifestsForMigrations:
                 version = "1.0.0"
                 requires_core = ">=0.2,<0.3"
                 entry_class = "ext.schemas_only.Entry"
-                """
+                """,
             ),
         )
         results = load_plugin_manifests_for_migrations(tmp_path)

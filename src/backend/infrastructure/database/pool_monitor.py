@@ -34,7 +34,7 @@ class PoolMonitor:
         """Метод start (см. signature)."""
         self._running = True
         self._task = get_task_registry().create_task(
-            self._monitor_loop(), name="db-pool-monitor"
+            self._monitor_loop(), name="db-pool-monitor",
         )
         logger.info("DB pool monitor started (interval=%ds)", self._interval)
 

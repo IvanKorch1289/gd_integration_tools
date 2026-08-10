@@ -79,7 +79,7 @@ async def _resolve_user_capabilities(registry: SsoRegistry, auth: Any) -> list[s
     tenant_id = extract_tenant_id(auth)
     if tenant_id is None:
         raise RequireSsoAuthError(
-            "AuthContext.metadata['tenant_id'] is required for SSO auth"
+            "AuthContext.metadata['tenant_id'] is required for SSO auth",
         )
 
     idp_config = await registry.get(tenant_id)
@@ -120,12 +120,12 @@ def require_sso_auth(registry: SsoRegistry) -> Callable[[_F], _F]:
             if auth is None:
                 raise RequireSsoAuthError(
                     "Handler decorated with @require_sso_auth must accept "
-                    "an 'auth' parameter (AuthContext)."
+                    "an 'auth' parameter (AuthContext).",
                 )
 
             if auth.method.value != "saml":
                 raise RequireSsoAuthError(
-                    f"SSO auth required, got method={auth.method.value!r}"
+                    f"SSO auth required, got method={auth.method.value!r}",
                 )
 
             # Resolve capabilities (raises on missing tenant/IdP config).
@@ -139,7 +139,7 @@ def require_sso_auth(registry: SsoRegistry) -> Callable[[_F], _F]:
 
 
 def require_sso_capability(
-    capability: str, registry: SsoRegistry
+    capability: str, registry: SsoRegistry,
 ) -> Callable[[_F], _F]:
     """Decorator factory: enforce SSO auth + specific capability.
 
@@ -162,19 +162,19 @@ def require_sso_capability(
             if auth is None:
                 raise RequireSsoAuthError(
                     "Handler decorated with @require_sso_capability must "
-                    "accept an 'auth' parameter (AuthContext)."
+                    "accept an 'auth' parameter (AuthContext).",
                 )
 
             if auth.method.value != "saml":
                 raise RequireSsoAuthError(
-                    f"SSO auth required, got method={auth.method.value!r}"
+                    f"SSO auth required, got method={auth.method.value!r}",
                 )
 
             user_caps = await _resolve_user_capabilities(registry, auth)
             if capability not in user_caps:
                 raise RequireSsoAuthError(
                     f"User lacks required capability '{capability}' "
-                    f"(user has: {sorted(user_caps)})"
+                    f"(user has: {sorted(user_caps)})",
                 )
 
             return await func(*args, **kwargs)
@@ -185,7 +185,7 @@ def require_sso_capability(
 
 
 def _extract_auth_from_args(
-    args: tuple[Any, ...], kwargs: dict[str, Any], func: Callable[..., Any]
+    args: tuple[Any, ...], kwargs: dict[str, Any], func: Callable[..., Any],
 ) -> Any | None:
     """Locate AuthContext-подобный объект в args/kwargs.
 

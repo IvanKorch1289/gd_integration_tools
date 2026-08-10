@@ -67,7 +67,7 @@ class TestInsertManyBatch:
             side_effect=[
                 make_result(["id1", "id2"]),
                 make_result(["id3", "id4"]),
-            ]
+            ],
         )
         mock_db = MagicMock()
         mock_db.__getitem__.return_value = mock_collection
@@ -86,7 +86,7 @@ class TestInsertManyBatch:
         client = MongoDBClient()
         mock_collection = MagicMock()
         mock_collection.insert_many = AsyncMock(
-            return_value=MagicMock(inserted_ids=["id1", "id2"])
+            return_value=MagicMock(inserted_ids=["id1", "id2"]),
         )
         mock_db = MagicMock()
         mock_db.__getitem__.return_value = mock_collection
@@ -108,19 +108,19 @@ class TestUpdateMany:
         client = MongoDBClient()
         mock_collection = MagicMock()
         mock_collection.update_many = AsyncMock(
-            return_value=MagicMock(modified_count=5)
+            return_value=MagicMock(modified_count=5),
         )
         mock_db = MagicMock()
         mock_db.__getitem__.return_value = mock_collection
         monkeypatch.setattr(MongoDBClient, "db", property(lambda self: mock_db))
 
         result = await client.update_many(
-            "test", {"status": "old"}, {"$set": {"status": "new"}}
+            "test", {"status": "old"}, {"$set": {"status": "new"}},
         )
 
         assert result == 5
         mock_collection.update_many.assert_called_once_with(
-            {"status": "old"}, {"$set": {"status": "new"}}
+            {"status": "old"}, {"$set": {"status": "new"}},
         )
 
 
@@ -133,7 +133,7 @@ class TestDeleteMany:
         client = MongoDBClient()
         mock_collection = MagicMock()
         mock_collection.delete_many = AsyncMock(
-            return_value=MagicMock(deleted_count=3)
+            return_value=MagicMock(deleted_count=3),
         )
         mock_db = MagicMock()
         mock_db.__getitem__.return_value = mock_collection

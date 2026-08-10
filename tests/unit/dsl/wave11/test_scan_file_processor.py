@@ -24,7 +24,7 @@ from src.backend.dsl.engine.processors.scan_file import ScanFileProcessor
 
 
 def _make_exchange(
-    body: Any | None = None, properties: dict[str, Any] | None = None
+    body: Any | None = None, properties: dict[str, Any] | None = None,
 ) -> Exchange[Any]:
     """Создаёт ``Exchange`` с заданным body и properties."""
     exchange: Exchange[Any] = Exchange(in_message=Message(body=body))
@@ -59,7 +59,7 @@ def _patch_factory(monkeypatch: pytest.MonkeyPatch, backend: Any) -> None:
     fake_module = types.ModuleType("src.backend.infrastructure.antivirus.factory")
     fake_module.create_antivirus_backend = lambda: backend  # type: ignore[attr-defined]
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.antivirus.factory", fake_module
+        sys.modules, "src.backend.infrastructure.antivirus.factory", fake_module,
     )
 
 
@@ -68,7 +68,7 @@ def _patch_s3(monkeypatch: pytest.MonkeyPatch, s3_client: Any) -> None:
     fake_module = types.ModuleType("src.backend.infrastructure.clients.storage.s3_pool")
     fake_module.s3_client = s3_client  # type: ignore[attr-defined]
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.clients.storage.s3_pool", fake_module
+        sys.modules, "src.backend.infrastructure.clients.storage.s3_pool", fake_module,
     )
 
 
@@ -77,7 +77,7 @@ def _patch_metrics_noop(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_module = types.ModuleType("src.backend.infrastructure.observability.metrics")
     fake_module.record_antivirus_scan = lambda *, threat: None  # type: ignore[attr-defined]
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.observability.metrics", fake_module
+        sys.modules, "src.backend.infrastructure.observability.metrics", fake_module,
     )
 
 
@@ -119,7 +119,7 @@ async def test_scan_file_clean_data_property_bytes(
     """Чистый файл из ``data_property`` (bytes) — verdict пишется в property."""
     fake_backend = MagicMock()
     fake_backend.scan_bytes = AsyncMock(
-        return_value=_make_av_result(clean=True, backend="clamav-unix")
+        return_value=_make_av_result(clean=True, backend="clamav-unix"),
     )
     _patch_factory(monkeypatch, fake_backend)
     _patch_metrics_noop(monkeypatch)
@@ -226,7 +226,7 @@ async def test_scan_file_no_payload_fails_exchange(
     ],
 )
 async def test_scan_file_on_threat_behaviour(
-    monkeypatch: pytest.MonkeyPatch, clean: bool, on_threat: str, should_fail: bool
+    monkeypatch: pytest.MonkeyPatch, clean: bool, on_threat: str, should_fail: bool,
 ) -> None:
     """Матрица: clean × on_threat → exchange.failed?"""
     fake_backend = MagicMock()
@@ -235,7 +235,7 @@ async def test_scan_file_on_threat_behaviour(
             clean=clean,
             signature=None if clean else "EICAR-Test-File",
             backend="clamav",
-        )
+        ),
     )
     _patch_factory(monkeypatch, fake_backend)
     _patch_metrics_noop(monkeypatch)
@@ -258,14 +258,14 @@ async def test_scan_file_on_threat_behaviour(
 
 
 async def test_scan_file_threat_warn_logs_does_not_fail(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture,
 ) -> None:
     """``on_threat=warn`` — пишет warning в лог, не валит exchange."""
     import logging
 
     fake_backend = MagicMock()
     fake_backend.scan_bytes = AsyncMock(
-        return_value=_make_av_result(clean=False, signature="EICAR", backend="clamav")
+        return_value=_make_av_result(clean=False, signature="EICAR", backend="clamav"),
     )
     _patch_factory(monkeypatch, fake_backend)
     _patch_metrics_noop(monkeypatch)
@@ -330,7 +330,7 @@ async def test_scan_file_backend_unavailable_warn_mode_fails_closed(
 def test_scan_file_to_spec_data_property_only() -> None:
     """Round-trip ``to_spec()`` для ``data_property``."""
     proc = ScanFileProcessor(
-        data_property="upload_bytes", on_threat="warn", result_property="av_result"
+        data_property="upload_bytes", on_threat="warn", result_property="av_result",
     )
     spec = proc.to_spec()
 

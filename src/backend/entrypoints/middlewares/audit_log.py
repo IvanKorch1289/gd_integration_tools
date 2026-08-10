@@ -139,7 +139,7 @@ class AuditLogMiddleware:
             "method": scope.get("method", ""),
             "path": scope.get("path", ""),
             "query": scope.get("query_string", b"").decode(
-                "latin-1", errors="replace"
+                "latin-1", errors="replace",
             ),
             "status": response_status["status"],
             "duration_ms": round(duration_ms, 1),
@@ -164,7 +164,7 @@ class AuditLogMiddleware:
             import src.backend.core.di.providers as _di_providers
 
             get_audit_log_writer_provider = getattr(
-                _di_providers, "get_audit_log_writer_provider", None
+                _di_providers, "get_audit_log_writer_provider", None,
             )
             if get_audit_log_writer_provider is None:
                 # Provider ещё не реализован (carryover, см. ADR-NEW-21);
@@ -199,6 +199,6 @@ class AuditLogMiddleware:
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body_bytes)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body_bytes})

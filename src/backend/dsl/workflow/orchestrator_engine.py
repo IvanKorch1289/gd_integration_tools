@@ -78,7 +78,7 @@ class OrchestratorEngine:
         self._registry = registry
 
     async def route(
-        self, task: dict[str, Any], orchestrator_spec: OrchestratorSpec
+        self, task: dict[str, Any], orchestrator_spec: OrchestratorSpec,
     ) -> RoutingResult:
         """Маршрутизировать задачу к агенту на основе routing rules.
 
@@ -106,7 +106,7 @@ class OrchestratorEngine:
                 return RoutingResult(target_agent=agent, target_model=agent.model)
             raise ValueError(
                 "OrchestratorEngine.route: workflow_orchestrator_enabled=False "
-                "and no default_agent specified"
+                "and no default_agent specified",
             )
 
         # Evaluate routing rules
@@ -116,7 +116,7 @@ class OrchestratorEngine:
                 if agent_id is None:
                     raise ValueError(
                         f"Routing rule[{idx}] matched but use_agent and "
-                        "default_agent are both None"
+                        "default_agent are both None",
                     )
                 agent = self._registry.get_agent(agent_id)
                 model = rule.use_model or agent.model
@@ -140,7 +140,7 @@ class OrchestratorEngine:
 
         raise ValueError(
             "OrchestratorEngine.route: no routing rule matched and "
-            "default_agent is not set"
+            "default_agent is not set",
         )
 
     # ── Internal helpers ────────────────────────────────────────────

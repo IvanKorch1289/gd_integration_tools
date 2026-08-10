@@ -48,7 +48,7 @@ def _flag_enabled() -> bool:
 
 
 def make_http_client(
-    *, timeout: float | httpx.Timeout | None = None, plugin: str = "core", **kwargs: Any
+    *, timeout: float | httpx.Timeout | None = None, plugin: str = "core", **kwargs: Any,
 ) -> OutboundHttpClient | httpx.AsyncClient:
     """Возвращает HTTP-клиент с WAF-обвязкой (при flag ON) или legacy httpx.
 

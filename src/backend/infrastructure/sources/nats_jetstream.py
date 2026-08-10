@@ -93,7 +93,7 @@ class NATSJetStreamSource:
         except ImportError as exc:
             raise ImportError(
                 "nats-py не установлен. Добавьте 'nats-py>=2.7' в зависимости "
-                "(S3 Wave 3 cutover). Временно используйте pytest.importorskip('nats')."
+                "(S3 Wave 3 cutover). Временно используйте pytest.importorskip('nats').",
             ) from exc
 
         # S172 (Wave S2): capability check на старте stream-сессии.
@@ -110,14 +110,14 @@ class NATSJetStreamSource:
         ):
             raise PermissionError(
                 f"nats.read denied for stream={self._stream!r} "
-                f"durable={self._durable!r}"
+                f"durable={self._durable!r}",
             )
 
         async with self._lock:
             if self._nc is not None:
                 raise RuntimeError(
                     f"NATSJetStreamSource(stream={self._stream!r}, "
-                    f"durable={self._durable!r}) уже запущен"
+                    f"durable={self._durable!r}) уже запущен",
                 )
             self._nc = await nats.connect(self._nats_url)
             self._running = True
@@ -132,7 +132,7 @@ class NATSJetStreamSource:
         try:
             js = self._nc.jetstream()
             psub = await js.pull_subscribe(
-                self._subject, durable=self._durable, stream=self._stream
+                self._subject, durable=self._durable, stream=self._stream,
             )
 
             while self._running:
@@ -164,7 +164,7 @@ class NATSJetStreamSource:
 
         except GeneratorExit:
             logger.debug(
-                "NATSJetStreamSource: iterator закрыт (stream=%s)", self._stream
+                "NATSJetStreamSource: iterator закрыт (stream=%s)", self._stream,
             )
         finally:
             await self._close()
@@ -239,16 +239,16 @@ class NATSJetStreamSource:
                 "durable": self._durable,
                 "pending_messages": int(getattr(info, "num_pending", 0)),
                 "delivered_consumer_seq": int(
-                    getattr(delivered, "consumer_seq", 0) if delivered else 0
+                    getattr(delivered, "consumer_seq", 0) if delivered else 0,
                 ),
                 "delivered_stream_seq": int(
-                    getattr(delivered, "stream_seq", 0) if delivered else 0
+                    getattr(delivered, "stream_seq", 0) if delivered else 0,
                 ),
                 "ack_floor_consumer_seq": int(
-                    getattr(ack_floor, "consumer_seq", 0) if ack_floor else 0
+                    getattr(ack_floor, "consumer_seq", 0) if ack_floor else 0,
                 ),
                 "ack_floor_stream_seq": int(
-                    getattr(ack_floor, "stream_seq", 0) if ack_floor else 0
+                    getattr(ack_floor, "stream_seq", 0) if ack_floor else 0,
                 ),
             }
         except Exception as exc:

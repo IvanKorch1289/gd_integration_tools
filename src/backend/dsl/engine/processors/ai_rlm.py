@@ -174,7 +174,7 @@ class AIRLMProcessor(BaseProcessor):
 
         if result.answer:
             exchange.out_message = exchange.out_message or Message(
-                body=result.answer, headers={}
+                body=result.answer, headers={},
             )
             if hasattr(exchange.out_message, "body"):
                 exchange.out_message.body = result.answer
@@ -213,7 +213,7 @@ class AIRLMProcessor(BaseProcessor):
                 if self._is_relevant(content):
                     relevant_chunks.append(chunk)
                 result.tokens_used += self._estimate_tokens(
-                    prompt
+                    prompt,
                 ) + self._estimate_tokens(content)
                 result.iterations += 1
             except Exception as exc:
@@ -237,7 +237,7 @@ class AIRLMProcessor(BaseProcessor):
             result.calls += 1
             result.answer = self._extract_content(final_resp)
             result.tokens_used += self._estimate_tokens(
-                final_prompt
+                final_prompt,
             ) + self._estimate_tokens(result.answer)
         except Exception as exc:
             logger.warning("ai_rlm final aggregation failed: %s", exc)
@@ -268,7 +268,7 @@ class AIRLMProcessor(BaseProcessor):
             result.iterations = 1
             result.answer = self._extract_content(resp)
             result.tokens_used = self._estimate_tokens(prompt) + self._estimate_tokens(
-                result.answer
+                result.answer,
             )
         except Exception as exc:
             logger.warning("ai_rlm direct call failed: %s", exc)
@@ -334,5 +334,5 @@ class AIRLMProcessor(BaseProcessor):
                 "context_threshold": self.config.context_threshold,
                 "prompt_template": self.prompt_template,
                 "result_property": self.result_property,
-            }
+            },
         }

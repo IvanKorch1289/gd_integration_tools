@@ -88,7 +88,7 @@ async def test_emit_batch_delegates_to_add_many() -> None:
                 "workflow_id": "wf-1",
                 "tenant_id": "tenant-B",
             },
-        ]
+        ],
     )
     assert len(writer.rows) == 2
     assert writer.rows[0]["event_type"] == "activity.start"

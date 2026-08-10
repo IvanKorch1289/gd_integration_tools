@@ -77,7 +77,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     )
 
     echo: bool = Field(
-        default=False,     )
+        default=False     )
 
     username: str = Field(
         default="",
@@ -110,11 +110,11 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     )
 
     pool_recycle: int = Field(
-        ..., description="Интервал обновления подключения", examples=[3600]
+        ..., description="Интервал обновления подключения", examples=[3600],
     )
 
     pool_timeout: int = Field(
-        ..., description="Таймаут ожидания пула подключений", examples=[30]
+        ..., description="Таймаут ожидания пула подключений", examples=[30],
     )
 
     pool_pre_ping: bool = Field(
@@ -164,11 +164,11 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     )
 
     ca_bundle: str | None = Field(
-        default=None, description="Путь к сертификату", examples=["/path/to/ca.crt"]
+        default=None, description="Путь к сертификату", examples=["/path/to/ca.crt"],
     )
 
     max_retries: int = Field(
-        ..., ge=0, description="Максимальное число повторных попыток", examples=[3]
+        ..., ge=0, description="Максимальное число повторных попыток", examples=[3],
     )
 
     circuit_breaker_max_failures: int = Field(
@@ -179,7 +179,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     )
 
     circuit_breaker_reset_timeout: int = Field(
-        ..., ge=0, description="Таймаут сброса неудачных попыток", examples=[60]
+        ..., ge=0, description="Таймаут сброса неудачных попыток", examples=[60],
     )
 
     slow_query_threshold: float = Field(
@@ -307,7 +307,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
                     f"получено async_driver={self.async_driver!r}, "
                     f"sync_driver={self.sync_driver!r}. Переопределите в "
                     "config_profiles/{profile}.yml::database: "
-                    "async_driver=oracledb, sync_driver=oracledb."
+                    "async_driver=oracledb, sync_driver=oracledb.",
                 )
         return self
 
@@ -322,7 +322,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         # postgresql / oracle: требуем сетевые параметры
         if not self.host or len(self.host) < 3:
             raise ValueError(
-                f"Для type={self.type.value} требуется host (min 3 символа)."
+                f"Для type={self.type.value} требуется host (min 3 символа).",
             )
         if self.port <= 0:
             raise ValueError(f"Для type={self.type.value} требуется валидный port.")

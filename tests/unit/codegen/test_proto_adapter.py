@@ -145,9 +145,9 @@ class TestRenderProtoFile:
                             name="List",
                             request_message="Empty",
                             response_message="Empty",
-                        )
+                        ),
                     ],
-                )
+                ),
             ],
         )
         text = render_proto_file(proto)

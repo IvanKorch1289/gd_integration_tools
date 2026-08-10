@@ -38,7 +38,7 @@ def _force_flag(monkeypatch: pytest.MonkeyPatch, value: bool) -> None:
 
 
 def test_runner_disabled_when_flag_off(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
     _force_flag(monkeypatch, False)
     runner = InspectRunner(artifacts_dir=tmp_path, suites=[_StubSuite()])
@@ -48,7 +48,7 @@ def test_runner_disabled_when_flag_off(
 
 
 def test_runner_runs_stub_suite(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
     _force_flag(monkeypatch, True)
     runner = InspectRunner(artifacts_dir=tmp_path, suites=[_StubSuite()])
@@ -76,7 +76,7 @@ def test_runner_writes_json_md(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) 
 
 def test_summary_markdown_format() -> None:
     summary = SuiteSummary(
-        started_at="2026-05-14T00:00:00Z", finished_at="2026-05-14T00:01:00Z"
+        started_at="2026-05-14T00:00:00Z", finished_at="2026-05-14T00:01:00Z",
     )
     summary.suites.append(
         SuiteResult(
@@ -87,7 +87,7 @@ def test_summary_markdown_format() -> None:
             started_at="2026-05-14T00:00:00Z",
             finished_at="2026-05-14T00:01:00Z",
             duration_seconds=60.0,
-        )
+        ),
     )
     summary.total_samples = 3
     md = summary.to_markdown()

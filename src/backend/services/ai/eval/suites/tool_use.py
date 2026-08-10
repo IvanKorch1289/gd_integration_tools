@@ -24,7 +24,7 @@ class _ToolUse:
                 "expected_tool": "credit.history.fetch",
                 "required_args": ["client_id"],
                 "expected": json.dumps(
-                    {"tool": "credit.history.fetch", "arguments": {"client_id": "X"}}
+                    {"tool": "credit.history.fetch", "arguments": {"client_id": "X"}},
                 ),
             },
             {
@@ -36,7 +36,7 @@ class _ToolUse:
                     {
                         "tool": "credit.scoring.create",
                         "arguments": {"application_id": "A1", "tenant_id": "t1"},
-                    }
+                    },
                 ),
             },
             {
@@ -45,7 +45,7 @@ class _ToolUse:
                 "expected_tool": "rag.document.get",
                 "required_args": ["doc_id"],
                 "expected": json.dumps(
-                    {"tool": "rag.document.get", "arguments": {"doc_id": "d-1"}}
+                    {"tool": "rag.document.get", "arguments": {"doc_id": "d-1"}},
                 ),
             },
         ]

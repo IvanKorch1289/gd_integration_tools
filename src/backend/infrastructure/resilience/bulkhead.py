@@ -76,7 +76,7 @@ class Bulkhead:
                 self.max_concurrent,
             )
             raise BulkheadExhausted(
-                f"bulkhead '{self.name}' exhausted after {self.wait_timeout}s"
+                f"bulkhead '{self.name}' exhausted after {self.wait_timeout}s",
             ) from exc
         try:
             yield
@@ -159,7 +159,7 @@ class BulkheadRegistry:
             bh = self._items.get(name)
             if bh is None:
                 bh = Bulkhead(
-                    name=name, max_concurrent=max_concurrent, wait_timeout=wait_timeout
+                    name=name, max_concurrent=max_concurrent, wait_timeout=wait_timeout,
                 )
                 self._items[name] = bh
             return bh

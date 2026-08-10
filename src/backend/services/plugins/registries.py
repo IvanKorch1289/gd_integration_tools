@@ -60,7 +60,7 @@ KNOWN_REPO_EVENTS = frozenset(
         "after_delete",
         "before_query",
         "after_query",
-    }
+    },
 )
 
 
@@ -81,7 +81,7 @@ class RepositoryHookRegistry:
         self._overrides: dict[tuple[str, str], Callable[..., Awaitable[Any]]] = {}
 
     def register_hook(
-        self, repo_name: str, event: str, callback: Callable[..., Awaitable[Any]]
+        self, repo_name: str, event: str, callback: Callable[..., Awaitable[Any]],
     ) -> None:
         """Регистрирует hook на событие репозитория.
 
@@ -109,7 +109,7 @@ class RepositoryHookRegistry:
         )
 
     def override_method(
-        self, repo_name: str, method: str, replacement: Callable[..., Awaitable[Any]]
+        self, repo_name: str, method: str, replacement: Callable[..., Awaitable[Any]],
     ) -> None:
         """Подменяет метод репозитория целиком.
 
@@ -135,19 +135,19 @@ class RepositoryHookRegistry:
         )
 
     def hooks_for(
-        self, repo_name: str, event: str
+        self, repo_name: str, event: str,
     ) -> Iterable[Callable[..., Awaitable[Any]]]:
         """Возвращает список зарегистрированных hooks для `(repo, event)`."""
         return tuple(self._hooks.get((repo_name, event), ()))
 
     def get_override(
-        self, repo_name: str, method: str
+        self, repo_name: str, method: str,
     ) -> Callable[..., Awaitable[Any]] | None:
         """Возвращает override метода либо None."""
         return self._overrides.get((repo_name, method))
 
     async def dispatch(
-        self, repo_name: str, event: str, repo: Any, *args: Any, **kwargs: Any
+        self, repo_name: str, event: str, repo: Any, *args: Any, **kwargs: Any,
     ) -> None:
         """Вызвать все hooks для `(repo, event)` последовательно.
 
@@ -233,7 +233,7 @@ class ActionRegistryAdapter:
             payload_model=None,
         )
         self._target.register_with_metadata(
-            action=action_id, handler=handler_spec, metadata=metadata
+            action=action_id, handler=handler_spec, metadata=metadata,
         )
         logger.info("Plugin registered action: %s", action_id)
 
@@ -268,7 +268,7 @@ class ProcessorRegistryAdapter:
         """Регистрирует класс DSL-процессора."""
         if not (isinstance(cls, type) and issubclass(cls, BaseProcessor)):
             raise TypeError(
-                f"{cls!r} is not a BaseProcessor subclass — отказ в регистрации"
+                f"{cls!r} is not a BaseProcessor subclass — отказ в регистрации",
             )
         self._target.register_class(name, cls)
         logger.info("Plugin registered DSL processor: %s → %s", name, cls.__name__)

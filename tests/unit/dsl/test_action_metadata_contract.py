@@ -52,7 +52,7 @@ def registered_metadata() -> tuple[ActionMetadata, ...]:
 
 class TestRegisteredActionMetadata:
     def test_registry_is_not_empty(
-        self, registered_metadata: tuple[ActionMetadata, ...]
+        self, registered_metadata: tuple[ActionMetadata, ...],
     ) -> None:
         # Sanity: должно быть хотя бы несколько десятков action.
         assert len(registered_metadata) >= 50, (
@@ -60,13 +60,13 @@ class TestRegisteredActionMetadata:
         )
 
     def test_action_name_is_non_empty_string(
-        self, registered_metadata: tuple[ActionMetadata, ...]
+        self, registered_metadata: tuple[ActionMetadata, ...],
     ) -> None:
         for meta in registered_metadata:
             assert isinstance(meta.action, str) and meta.action, meta
 
     def test_transports_is_non_empty_tuple_of_strings(
-        self, registered_metadata: tuple[ActionMetadata, ...]
+        self, registered_metadata: tuple[ActionMetadata, ...],
     ) -> None:
         for meta in registered_metadata:
             assert isinstance(meta.transports, tuple), meta.action
@@ -75,7 +75,7 @@ class TestRegisteredActionMetadata:
                 assert isinstance(t, str) and t, meta.action
 
     def test_side_effect_in_allowed_set(
-        self, registered_metadata: tuple[ActionMetadata, ...]
+        self, registered_metadata: tuple[ActionMetadata, ...],
     ) -> None:
         for meta in registered_metadata:
             assert meta.side_effect in _ALLOWED_SIDE_EFFECTS, (
@@ -83,13 +83,13 @@ class TestRegisteredActionMetadata:
             )
 
     def test_idempotent_is_bool(
-        self, registered_metadata: tuple[ActionMetadata, ...]
+        self, registered_metadata: tuple[ActionMetadata, ...],
     ) -> None:
         for meta in registered_metadata:
             assert isinstance(meta.idempotent, bool), meta.action
 
     def test_permissions_are_string_tuple(
-        self, registered_metadata: tuple[ActionMetadata, ...]
+        self, registered_metadata: tuple[ActionMetadata, ...],
     ) -> None:
         for meta in registered_metadata:
             assert isinstance(meta.permissions, tuple), meta.action
@@ -97,7 +97,7 @@ class TestRegisteredActionMetadata:
                 assert isinstance(p, str) and p, meta.action
 
     def test_rate_limit_none_or_positive_int(
-        self, registered_metadata: tuple[ActionMetadata, ...]
+        self, registered_metadata: tuple[ActionMetadata, ...],
     ) -> None:
         for meta in registered_metadata:
             if meta.rate_limit is None:
@@ -105,7 +105,7 @@ class TestRegisteredActionMetadata:
             assert isinstance(meta.rate_limit, int) and meta.rate_limit > 0, meta
 
     def test_timeout_ms_none_or_positive_int(
-        self, registered_metadata: tuple[ActionMetadata, ...]
+        self, registered_metadata: tuple[ActionMetadata, ...],
     ) -> None:
         for meta in registered_metadata:
             if meta.timeout_ms is None:
@@ -113,13 +113,13 @@ class TestRegisteredActionMetadata:
             assert isinstance(meta.timeout_ms, int) and meta.timeout_ms > 0, meta
 
     def test_deprecated_is_bool(
-        self, registered_metadata: tuple[ActionMetadata, ...]
+        self, registered_metadata: tuple[ActionMetadata, ...],
     ) -> None:
         for meta in registered_metadata:
             assert isinstance(meta.deprecated, bool), meta.action
 
     def test_tags_are_string_tuple(
-        self, registered_metadata: tuple[ActionMetadata, ...]
+        self, registered_metadata: tuple[ActionMetadata, ...],
     ) -> None:
         for meta in registered_metadata:
             assert isinstance(meta.tags, tuple), meta.action
@@ -141,7 +141,7 @@ class TestSpecToMetadataInference:
         ],
     )
     def test_default_inference_from_method(
-        self, method: str, expected_effect: str, expected_idempotent: bool
+        self, method: str, expected_effect: str, expected_idempotent: bool,
     ) -> None:
         spec = ActionSpec(
             name=f"test.{method.lower()}",

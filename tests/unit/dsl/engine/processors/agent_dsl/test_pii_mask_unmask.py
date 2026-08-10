@@ -44,7 +44,7 @@ class _FakePIITokenizer:
         masked = self.EMAIL_RE.sub(_replace_email, text)
         masked = self.PHONE_RE.sub(_replace_phone, masked)
         return _FakeMaskResult(
-            masked_text=masked, token_map=token_map, pii_detected=bool(token_map)
+            masked_text=masked, token_map=token_map, pii_detected=bool(token_map),
         )
 
     async def unmask(self, text: str, token_map: dict[str, str]) -> str:
@@ -65,14 +65,14 @@ def test_pii_mask_init_requires_scope() -> None:
 
 @pytest.mark.asyncio
 async def test_pii_mask_masks_body_text(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     tokenizer = _FakePIITokenizer()
     monkeypatch.setattr(
-        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer)
+        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer),
     )
 
     text = "Контакт: ivan@example.com или +7 999 123 45 67"
@@ -93,7 +93,7 @@ async def test_pii_mask_masks_body_text(
 
 @pytest.mark.asyncio
 async def test_pii_mask_unmask_round_trip(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     """mask(text=ФИО+email) → unmask(masked, token_map) восстанавливает оригинал."""
     from src.backend.core.config.features import feature_flags
@@ -101,10 +101,10 @@ async def test_pii_mask_unmask_round_trip(
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     tokenizer = _FakePIITokenizer()
     monkeypatch.setattr(
-        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer)
+        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer),
     )
     monkeypatch.setattr(
-        PIIUnmaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer)
+        PIIUnmaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer),
     )
 
     original = "Контакт Иванова: petrov@bank.ru, +7 495 555 12 34"
@@ -123,14 +123,14 @@ async def test_pii_mask_unmask_round_trip(
 
 @pytest.mark.asyncio
 async def test_pii_mask_no_pii_keeps_text(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     tokenizer = _FakePIITokenizer()
     monkeypatch.setattr(
-        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer)
+        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer),
     )
 
     text = "обычный текст без PII"
@@ -144,7 +144,7 @@ async def test_pii_mask_no_pii_keeps_text(
 
 @pytest.mark.asyncio
 async def test_pii_unmask_strict_raises_on_missing_map(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -161,7 +161,7 @@ async def test_pii_unmask_strict_raises_on_missing_map(
 
 @pytest.mark.asyncio
 async def test_pii_unmask_non_strict_passes_through(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
@@ -178,13 +178,13 @@ async def test_pii_unmask_non_strict_passes_through(
 
 @pytest.mark.asyncio
 async def test_pii_mask_tokenizer_unavailable_pass_through(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     monkeypatch.setattr(
-        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: None)
+        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: None),
     )
 
     text = "email: ivan@example.com"
@@ -198,7 +198,7 @@ async def test_pii_mask_tokenizer_unavailable_pass_through(
 
 @pytest.mark.asyncio
 async def test_pii_mask_unmask_target_property(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     """``target_property`` отличный от source — masked-text идёт в другое место."""
     from src.backend.core.config.features import feature_flags
@@ -206,13 +206,13 @@ async def test_pii_mask_unmask_target_property(
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     tokenizer = _FakePIITokenizer()
     monkeypatch.setattr(
-        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer)
+        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer),
     )
 
     text = "Контакт: email@x.com"
     ex: Exchange[Any] = Exchange(in_message=Message(body=text))
     proc = PIIMaskProcessor(
-        scope="banking", source_property="body", target_property="masked_text"
+        scope="banking", source_property="body", target_property="masked_text",
     )
     await proc.process(ex, context)
 
@@ -234,7 +234,7 @@ def test_pii_mask_to_spec_round_trip() -> None:
             "source_property": "property:llm_input",
             "target_property": "property:llm_input_masked",
             "language": "en",
-        }
+        },
     }
 
 
@@ -252,13 +252,13 @@ def test_pii_unmask_to_spec_round_trip() -> None:
             "target_property": "agent_result.content_unmasked",
             "scope": "banking",
             "strict": True,
-        }
+        },
     }
 
 
 @pytest.mark.asyncio
 async def test_pii_mask_source_from_nested_body_field(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     """``source_property="body.text"`` — извлечение из nested dict."""
     from src.backend.core.config.features import feature_flags
@@ -266,14 +266,14 @@ async def test_pii_mask_source_from_nested_body_field(
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     tokenizer = _FakePIITokenizer()
     monkeypatch.setattr(
-        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer)
+        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer),
     )
 
     ex: Exchange[Any] = Exchange(
-        in_message=Message(body={"meta": "x", "text": "email: alice@example.com"})
+        in_message=Message(body={"meta": "x", "text": "email: alice@example.com"}),
     )
     proc = PIIMaskProcessor(
-        scope="banking", source_property="body.text", target_property="body.text"
+        scope="banking", source_property="body.text", target_property="body.text",
     )
     await proc.process(ex, context)
 
@@ -285,7 +285,7 @@ async def test_pii_mask_source_from_nested_body_field(
 
 @pytest.mark.asyncio
 async def test_pii_mask_source_from_property(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     """``source_property="prop_name"`` — извлечение из exchange.properties."""
     from src.backend.core.config.features import feature_flags
@@ -293,13 +293,13 @@ async def test_pii_mask_source_from_property(
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     tokenizer = _FakePIITokenizer()
     monkeypatch.setattr(
-        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer)
+        PIIMaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer),
     )
 
     ex: Exchange[Any] = Exchange()
     ex.set_property("llm_input", "phone: +7 800 555 12 34")
     proc = PIIMaskProcessor(
-        scope="banking", source_property="llm_input", target_property="llm_input_masked"
+        scope="banking", source_property="llm_input", target_property="llm_input_masked",
     )
     await proc.process(ex, context)
 
@@ -310,7 +310,7 @@ async def test_pii_mask_source_from_property(
 
 @pytest.mark.asyncio
 async def test_pii_unmask_target_writes_to_body_field(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     """``target_property="body.unmasked"`` — запись в nested dict."""
     from src.backend.core.config.features import feature_flags
@@ -318,13 +318,13 @@ async def test_pii_unmask_target_writes_to_body_field(
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     tokenizer = _FakePIITokenizer()
     monkeypatch.setattr(
-        PIIUnmaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer)
+        PIIUnmaskProcessor, "_resolve_tokenizer", staticmethod(lambda: tokenizer),
     )
 
     ex: Exchange[Any] = Exchange(in_message=Message(body={"text": "[EMAIL_1]"}))
     ex.set_property("pii_token_map", {"[EMAIL_1]": "bob@example.com"})
     proc = PIIUnmaskProcessor(
-        source_property="body.text", target_property="body.unmasked", strict=False
+        source_property="body.text", target_property="body.unmasked", strict=False,
     )
     await proc.process(ex, context)
 
@@ -335,13 +335,13 @@ async def test_pii_unmask_target_writes_to_body_field(
 
 @pytest.mark.asyncio
 async def test_pii_unmask_tokenizer_unavailable_pass_through(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     monkeypatch.setattr(
-        PIIUnmaskProcessor, "_resolve_tokenizer", staticmethod(lambda: None)
+        PIIUnmaskProcessor, "_resolve_tokenizer", staticmethod(lambda: None),
     )
 
     ex: Exchange[Any] = Exchange(in_message=Message(body="[EMAIL_1]"))
@@ -355,7 +355,7 @@ async def test_pii_unmask_tokenizer_unavailable_pass_through(
 
 @pytest.mark.asyncio
 async def test_pii_mask_tokenizer_raises_pass_through(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     """Если tokenizer.mask_reversible() raises — pass-through + pii_detected=False."""
     from src.backend.core.config.features import feature_flags
@@ -384,7 +384,7 @@ async def test_pii_mask_tokenizer_raises_pass_through(
 
 @pytest.mark.asyncio
 async def test_pii_unmask_uses_di_provider_without_monkeypatch(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     """cycle-6/D-AUDIT-604: ``PIIUnmaskProcessor._resolve_tokenizer`` обязан
     работать через DI provider ``get_pii_tokenizer_provider``, а не возвращать

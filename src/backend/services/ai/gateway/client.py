@@ -92,7 +92,7 @@ class LiteLLMGateway:
                     latency_tier=latency_tier,
                 ):
                     if preferred_provider is None or preferred_provider in rec.tags.get(
-                        "provider", ""
+                        "provider", "",
                     ):
                         return f"{rec.tags.get('provider', 'openai')}/{rec.name}"
             return self._default_model
@@ -117,7 +117,7 @@ class LiteLLMGateway:
             import litellm  # type: ignore[import-not-found]
         except ImportError as exc:
             raise GatewayUnavailable(
-                "Пакет 'litellm' не установлен — добавьте extra '[ai-2026]'."
+                "Пакет 'litellm' не установлен — добавьте extra '[ai-2026]'.",
             ) from exc
 
         self._litellm = litellm
@@ -182,7 +182,7 @@ class LiteLLMGateway:
             self._cb = get_breaker_registry().get_or_create(
                 "litellm_gateway",
                 BreakerSpec(
-                    name="litellm_gateway", failure_threshold=5, recovery_timeout=30.0
+                    name="litellm_gateway", failure_threshold=5, recovery_timeout=30.0,
                 ),
             )
         async with self._cb.guard():
@@ -192,7 +192,7 @@ class LiteLLMGateway:
                 self._raise_normalized(exc)
 
     async def astream_completion(
-        self, messages: list[dict[str, Any]], *, model: str | None = None, **kwargs: Any
+        self, messages: list[dict[str, Any]], *, model: str | None = None, **kwargs: Any,
     ) -> AsyncIterator[Any]:
         """Удобный wrapper над :meth:`acompletion` с ``stream=True``."""
         result = await self.acompletion(messages, model=model, stream=True, **kwargs)
@@ -200,7 +200,7 @@ class LiteLLMGateway:
             yield chunk
 
     async def aembedding(
-        self, input_: list[str], *, model: str = "text-embedding-3-small", **kwargs: Any
+        self, input_: list[str], *, model: str = "text-embedding-3-small", **kwargs: Any,
     ) -> list[list[float]]:
         """Эмбеддинги для RAG-pipeline. Возвращает list[list[float]]."""
         litellm = self._ensure_litellm()
@@ -246,7 +246,7 @@ class LiteLLMGateway:
                     model=model or self._default_model,
                     prompt_tokens=prompt_tokens,
                     completion_tokens=completion_tokens,
-                )
+                ),
             )
         except Exception as exc:
             logger.debug("acost_estimate failed: %s", exc)

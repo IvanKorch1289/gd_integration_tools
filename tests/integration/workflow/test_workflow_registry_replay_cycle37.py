@@ -22,7 +22,7 @@ from typing import Any
 import pytest
 
 pytest.importorskip(
-    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"
+    "temporalio", reason="temporalio not installed — run: uv sync --extra workflow",
 )
 
 
@@ -166,7 +166,7 @@ def test_replay_uses_compiled_class_from_registry() -> None:
     worker_mod.Replayer = _RecordingReplayer  # type: ignore[assignment]
     try:
         compiled = compile_workflow(
-            WorkflowBuilder("wf.replay.e2e").activity("noop").build()
+            WorkflowBuilder("wf.replay.e2e").activity("noop").build(),
         )
         backend = TemporalWorkflowBackend(
             client=object(),  # type: ignore[abstract]
@@ -203,7 +203,7 @@ def test_compile_workflows_post_step_guard_would_raise_if_registry_broken(
     # Подменяем register на no-op (имитируем сломанный реестр).
     original_register = registry_module.workflow_registry.register
     monkeypatch.setattr(
-        registry_module.workflow_registry, "register", lambda cls: cls
+        registry_module.workflow_registry, "register", lambda cls: cls,
     )
 
     # Импортируем compile_workflows ПОСЛЕ monkeypatch (он импортирует
@@ -214,12 +214,12 @@ def test_compile_workflows_post_step_guard_would_raise_if_registry_broken(
         compile_workflows(
             [
                 WorkflowBuilder("guard.flow").activity("noop").build(),
-            ]
+            ],
         )
 
     # Восстанавливаем.
     monkeypatch.setattr(
-        registry_module.workflow_registry, "register", original_register
+        registry_module.workflow_registry, "register", original_register,
     )
 
 

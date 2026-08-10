@@ -103,7 +103,7 @@ class TestEvaluateStrengthHelper:
         ],
     )
     def test_issues_match_expectation(
-        self, raw: str, expected_issue_substr: str
+        self, raw: str, expected_issue_substr: str,
     ) -> None:
         """Parametrized: each failure mode emits expected issue marker.
 
@@ -141,7 +141,7 @@ class TestStrengthReportDataclass:
 
     def test_is_acceptable_true_when_no_issues(self) -> None:
         result = _evaluate_strength(
-            "aX9bZ1kP_8c7Y3mN2vR5eQ4wT6jF0sL"
+            "aX9bZ1kP_8c7Y3mN2vR5eQ4wT6jF0sL",
         )
         assert not result.issues
         assert result.is_acceptable is True

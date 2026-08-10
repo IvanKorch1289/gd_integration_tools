@@ -31,8 +31,8 @@ class TestCapabilityVocabulary:
         v = CapabilityVocabulary()
         v.register(
             CapabilityDef(
-                name="my.do", matcher=ExactAliasMatcher(), aliases=("legacy.do",)
-            )
+                name="my.do", matcher=ExactAliasMatcher(), aliases=("legacy.do",),
+            ),
         )
         assert v.has("legacy.do")
         assert v.get("legacy.do").name == "my.do"
@@ -96,7 +96,7 @@ class TestCapabilityVocabulary:
                 matcher=ExactAliasMatcher(),
                 public=True,
                 scope_required=False,
-            )
+            ),
         )
         publics = v.public_capabilities()
         assert any(d.name == "public.ping" for d in publics)

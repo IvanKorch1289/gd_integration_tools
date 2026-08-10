@@ -47,7 +47,7 @@ class _MockSessionState(dict):
 
 
 def _install_streamlit_mock(
-    monkeypatch: pytest.MonkeyPatch, initial_state: dict[str, Any] | None = None
+    monkeypatch: pytest.MonkeyPatch, initial_state: dict[str, Any] | None = None,
 ) -> _MockSessionState:
     """Инжектит mock ``streamlit`` модуль в ``sys.modules``.
 
@@ -78,7 +78,7 @@ def _rerun_call_count() -> int:
 def test_init_history_creates_initial_state(monkeypatch: pytest.MonkeyPatch) -> None:
     """init_history() → yaml_history=[current_yaml], yaml_history_index=0."""
     state = _install_streamlit_mock(
-        monkeypatch, {"yaml": "route_id: x\nprocessors: []\n"}
+        monkeypatch, {"yaml": "route_id: x\nprocessors: []\n"},
     )
 
     from src.frontend.streamlit_app.pages._editor.history import init_history
@@ -108,7 +108,7 @@ def test_init_history_idempotent(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_push_history_appends_current_state(monkeypatch: pytest.MonkeyPatch) -> None:
     """push_history() добавляет текущий yaml в стек + обновляет cursor."""
     state = _install_streamlit_mock(
-        monkeypatch, {"yaml": "v2", "yaml_history": ["v1"], "yaml_history_index": 0}
+        monkeypatch, {"yaml": "v2", "yaml_history": ["v1"], "yaml_history_index": 0},
     )
 
     from src.frontend.streamlit_app.pages._editor.history import push_history
@@ -245,7 +245,7 @@ def test_sync_yaml_uses_build_yaml_from_steps(monkeypatch: pytest.MonkeyPatch) -
     meta = {"route_id": "x", "source": "y"}
     steps = [{"type": "validate", "params": {}}]
     state = _install_streamlit_mock(
-        monkeypatch, {"canvas_steps": steps, "meta_route": meta}
+        monkeypatch, {"canvas_steps": steps, "meta_route": meta},
     )
 
     from src.frontend.streamlit_app.pages._editor.yaml_sync import (

@@ -29,7 +29,7 @@ class QueueSettings(BaseSettingsWithLoader):
 
     # Блок настроек типа и подключения к брокеру
     type: Literal["kafka", "rabbitmq"] = Field(
-        ..., description="Тип брокера сообщений", json_schema_extra={"example": "kafka"}
+        ..., description="Тип брокера сообщений", json_schema_extra={"example": "kafka"},
     )
     host: str = Field(
         ...,
@@ -107,7 +107,7 @@ class QueueSettings(BaseSettingsWithLoader):
             "example": [
                 {"name": "queue1", "value": "creating-queue"},
                 {"name": "queue2", "value": "updating-queue"},
-            ]
+            ],
         },
     )
 
@@ -247,7 +247,7 @@ class GRPCSettings(BaseSettingsWithLoader):
         description="Макс. размер входящего сообщения (bytes). Защита от OOM.",
     )
     keepalive_time_s: float = Field(
-        default=30.0, gt=0, description="Interval between keepalive pings (seconds)."
+        default=30.0, gt=0, description="Interval between keepalive pings (seconds).",
     )
     keepalive_timeout_s: float = Field(
         default=10.0,
@@ -265,16 +265,16 @@ class GRPCSettings(BaseSettingsWithLoader):
         default=False,         description="Включить TLS для gRPC (обязательно в prod для TCP-портов)",
     )
     server_cert_path: str = Field(
-        default="", description="Путь к серверному сертификату (PEM)"
+        default="", description="Путь к серверному сертификату (PEM)",
     )
     server_key_path: str = Field(
-        default="", description="Путь к приватному ключу сервера (PEM)"
+        default="", description="Путь к приватному ключу сервера (PEM)",
     )
     ca_cert_path: str = Field(
-        default="", description="Путь к CA-сертификату для mTLS (опционально)"
+        default="", description="Путь к CA-сертификату для mTLS (опционально)",
     )
     require_client_auth: bool = Field(
-        default=False,     )
+        default=False     )
 
     @computed_field(description="Сформировать URI для подключения к сокету")
     def socket_uri(self) -> str:

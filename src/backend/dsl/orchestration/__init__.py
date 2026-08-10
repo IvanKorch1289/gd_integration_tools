@@ -49,14 +49,14 @@ class Sensor:
                 try:
                     if await self.predicate():
                         await get_dsl_service().dispatch(
-                            route_id=self.route_id, body={}, headers={}
+                            route_id=self.route_id, body={}, headers={},
                         )
                 except Exception as _:
                     get_logger("dsl.sensor").exception("Sensor '%s' failed", self.name)
                 await asyncio.sleep(self.interval_seconds)
 
         self._task = get_task_registry().create_task(
-            _loop(), name=f"sensor:{self.name}"
+            _loop(), name=f"sensor:{self.name}",
         )
 
     async def stop(self) -> None:
@@ -86,8 +86,8 @@ class Backfill:
             payload = payload_for_day(current)
             results.append(
                 await dsl.dispatch(
-                    route_id=self.route_id, body=payload, headers={"x-backfill": "1"}
-                )
+                    route_id=self.route_id, body=payload, headers={"x-backfill": "1"},
+                ),
             )
             current = current.fromordinal(current.toordinal() + self.step_days)
         return results
@@ -105,7 +105,7 @@ class DryRun:
         from src.backend.dsl.service import get_dsl_service
 
         return await get_dsl_service().dispatch(
-            route_id=self.route_id, body=payload, headers={"x-dry-run": "1"}
+            route_id=self.route_id, body=payload, headers={"x-dry-run": "1"},
         )
 
 

@@ -53,7 +53,7 @@ class LoadBalancerProcessor(BaseProcessor):
             import random as _random
 
             return _random.choice(  # load-balancing, не криптография  # non-cryptographic use
-                self._targets
+                self._targets,
             )
 
         if self._strategy == "weighted" and self._weights:
@@ -78,7 +78,7 @@ class LoadBalancerProcessor(BaseProcessor):
         exchange.set_property("lb_target", target)
 
         result, error = await SubPipelineExecutor.execute_route(
-            target, exchange.in_message.body, dict(exchange.in_message.headers), context
+            target, exchange.in_message.body, dict(exchange.in_message.headers), context,
         )
         if error:
             exchange.fail(f"Load balancer target '{target}' failed: {error}")

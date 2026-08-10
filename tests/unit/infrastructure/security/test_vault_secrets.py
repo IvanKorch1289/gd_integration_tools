@@ -29,7 +29,7 @@ class _FakeKVv2:
         return {"data": {"data": self._store[path], "metadata": {"version": "1"}}}
 
     def create_or_update_secret(
-        self, *, path: str, secret: dict[str, Any], mount_point: str
+        self, *, path: str, secret: dict[str, Any], mount_point: str,
     ) -> dict[str, Any]:
         self.calls.append(("write", path, secret))
         self._maybe_raise()
@@ -37,7 +37,7 @@ class _FakeKVv2:
         return {"ok": True}
 
     def delete_metadata_and_all_versions(
-        self, *, path: str, mount_point: str
+        self, *, path: str, mount_point: str,
     ) -> dict[str, Any]:
         self.calls.append(("delete", path, None))
         self._maybe_raise()
@@ -84,7 +84,7 @@ def fake_client() -> _FakeClient:
         store={
             "app/db": {"value": "postgres-pass", "user": "app"},
             "app/api": {"value": "api-key-1"},
-        }
+        },
     )
 
 
@@ -100,7 +100,7 @@ def backend(fake_client: _FakeClient) -> VaultSecretsBackend:
 
 @pytest.mark.asyncio
 async def test_get_secret_value_field(
-    backend: VaultSecretsBackend, fake_client: _FakeClient
+    backend: VaultSecretsBackend, fake_client: _FakeClient,
 ) -> None:
     assert await backend.get_secret("app/db") == "postgres-pass"
     assert fake_client.kv.calls == [("read", "app/db", None)]
@@ -118,7 +118,7 @@ async def test_get_secret_missing_returns_none(backend: VaultSecretsBackend) -> 
 
 @pytest.mark.asyncio
 async def test_get_secret_uses_cache(
-    backend: VaultSecretsBackend, fake_client: _FakeClient
+    backend: VaultSecretsBackend, fake_client: _FakeClient,
 ) -> None:
     await backend.get_secret("app/db")
     await backend.get_secret("app/db")
@@ -141,7 +141,7 @@ async def test_get_secret_cache_ttl_expires(fake_client: _FakeClient) -> None:
 
 @pytest.mark.asyncio
 async def test_set_secret_invalidates_cache(
-    backend: VaultSecretsBackend, fake_client: _FakeClient
+    backend: VaultSecretsBackend, fake_client: _FakeClient,
 ) -> None:
     await backend.get_secret("app/db")
     await backend.set_secret("app/db", "new-pass")
@@ -151,7 +151,7 @@ async def test_set_secret_invalidates_cache(
 
 @pytest.mark.asyncio
 async def test_delete_secret(
-    backend: VaultSecretsBackend, fake_client: _FakeClient
+    backend: VaultSecretsBackend, fake_client: _FakeClient,
 ) -> None:
     assert await backend.delete_secret("app/db") is True
     assert "app/db" not in fake_client.kv._store
@@ -172,7 +172,7 @@ async def test_health_check_ok(backend: VaultSecretsBackend) -> None:
 async def test_health_check_failure(fake_client: _FakeClient) -> None:
     fake_client.authenticated = False
     backend = VaultSecretsBackend(
-        addr="http://vault:8200", token="t", client_factory=lambda: fake_client
+        addr="http://vault:8200", token="t", client_factory=lambda: fake_client,
     )
     assert await backend.health_check() is False
 

@@ -31,7 +31,7 @@ class TestRagIngestPIIFailClosed:
         # Verify PIIFailClosedError can be raised and caught.
         with pytest.raises(PIIFailClosedError):
             raise PIIFailClosedError(
-                "simulated sanitizer failure"
+                "simulated sanitizer failure",
             )
 
     @pytest.mark.asyncio
@@ -42,7 +42,7 @@ class TestRagIngestPIIFailClosed:
         При default pii_fail_open=False sanitizer failure → raise → 503.
         """
         monkeypatch.setattr(
-            ai_stack.rag_ingest_settings, "pii_fail_open", False, raising=True
+            ai_stack.rag_ingest_settings, "pii_fail_open", False, raising=True,
         )
 
         # Verify settings reflect default fail-CLOSED.
@@ -50,7 +50,7 @@ class TestRagIngestPIIFailClosed:
 
     @pytest.mark.asyncio
     async def test_sanitizer_failure_no_op_in_fail_open_mode(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """pii_fail_open=True (dev_light) → log warning, raw text проходит.
 
@@ -58,7 +58,7 @@ class TestRagIngestPIIFailClosed:
         vector store с metadata flag pii_mask_skipped=True.
         """
         monkeypatch.setattr(
-            ai_stack.rag_ingest_settings, "pii_fail_open", True, raising=True
+            ai_stack.rag_ingest_settings, "pii_fail_open", True, raising=True,
         )
 
         # Verify pii_fail_open flag is True.

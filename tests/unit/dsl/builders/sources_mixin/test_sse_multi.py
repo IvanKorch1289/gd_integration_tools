@@ -42,7 +42,7 @@ def test_from_sse_multi_rejects_invalid_strategy() -> None:
 
     with pytest.raises(ValueError, match="invalid merge_strategy"):
         StreamingSSEMixin.from_sse_multi(
-            "multi.bad_strategy", ["https://a/sse"], merge_strategy="random"
+            "multi.bad_strategy", ["https://a/sse"], merge_strategy="random",
         )
 
 
@@ -57,7 +57,7 @@ def test_from_sse_multi_accepts_all_strategies() -> None:
         # нет from_ в MRO — это pre-existing bug, не W4 scope.
         try:
             StreamingSSEMixin.from_sse_multi(
-                f"multi.{strategy}", ["https://a/sse"], merge_strategy=strategy
+                f"multi.{strategy}", ["https://a/sse"], merge_strategy=strategy,
             )
         except (TypeError, AttributeError) as exc:
             msg = str(exc)
@@ -85,7 +85,7 @@ def test_from_sse_multi_builds_n_sources() -> None:
 
         try:
             StreamingSSEMixin.from_sse_multi(
-                "multi.three_streams", urls, merge_strategy="interleave"
+                "multi.three_streams", urls, merge_strategy="interleave",
             )
             assert mock_source.call_count == 3
             for url in urls:
@@ -109,7 +109,7 @@ def test_from_sse_multi_route_id_suffix() -> None:
     with patch("src.backend.infrastructure.sources.sse.SSESource"):
         try:
             builder = StreamingSSEMixin.from_sse_multi(
-                "my_streams", ["https://a/sse", "https://b/sse"]
+                "my_streams", ["https://a/sse", "https://b/sse"],
             )
             assert builder is not None
         except (TypeError, AttributeError) as exc:

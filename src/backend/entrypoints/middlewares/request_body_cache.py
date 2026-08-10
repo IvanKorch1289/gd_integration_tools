@@ -73,7 +73,7 @@ class RequestBodyCacheMiddleware:
     """
 
     def __init__(
-        self, app: ASGIApp, *, max_body_size: int = _DEFAULT_MAX_BODY_SIZE
+        self, app: ASGIApp, *, max_body_size: int = _DEFAULT_MAX_BODY_SIZE,
     ) -> None:
         """Инициализирует middleware.
 
@@ -174,7 +174,7 @@ class RequestBodyCacheMiddleware:
 
     @staticmethod
     def _install_replay_receive(
-        scope: Scope, original_receive: Receive, body: bytes
+        scope: Scope, original_receive: Receive, body: bytes,
     ) -> None:
         """Устанавливает replay receive в scope для downstream (cycle 52).
 

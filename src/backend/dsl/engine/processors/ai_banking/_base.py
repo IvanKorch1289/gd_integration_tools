@@ -101,7 +101,7 @@ class _BankingAIProcessor(BaseProcessor):
         _retryable = (TimeoutError, ConnectionError)
 
         @make_async_retry(
-            max_attempts=3, initial_backoff=1.0, multiplier=2.0, on=_retryable
+            max_attempts=3, initial_backoff=1.0, multiplier=2.0, on=_retryable,
         )
         async def _chat_with_retry() -> Any:
             return await agent.chat(

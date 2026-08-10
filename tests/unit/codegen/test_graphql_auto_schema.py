@@ -22,7 +22,7 @@ from src.backend.entrypoints.graphql.auto_schema import (
 def _meta(action: str, side_effect: str = "read") -> ActionMetadata:
     """Хелпер — создать ActionMetadata."""
     return ActionMetadata(
-        action=action, side_effect=side_effect, transports=("graphql",)
+        action=action, side_effect=side_effect, transports=("graphql",),
     )
 
 
@@ -43,7 +43,7 @@ class TestBuildAutoSchema:
 
     def test_read_action_becomes_query(self):
         result = build_auto_strawberry_schema(
-            [_meta("orders.list", side_effect="read")]
+            [_meta("orders.list", side_effect="read")],
         )
         assert result.schema is not None
         assert result.query_count == 1
@@ -54,7 +54,7 @@ class TestBuildAutoSchema:
 
     def test_write_action_becomes_mutation(self):
         result = build_auto_strawberry_schema(
-            [_meta("orders.create", side_effect="write")]
+            [_meta("orders.create", side_effect="write")],
         )
         assert result.schema is not None
         assert result.query_count == 0
@@ -69,7 +69,7 @@ class TestBuildAutoSchema:
                 _meta("orders.list", side_effect="read"),
                 _meta("orders.create", side_effect="write"),
                 _meta("orders.delete", side_effect="write"),
-            ]
+            ],
         )
         assert result.query_count == 1
         assert result.mutation_count == 2

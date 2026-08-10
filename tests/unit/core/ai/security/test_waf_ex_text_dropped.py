@@ -17,7 +17,7 @@ from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
 class TestWafExTextRegression:
     @pytest.mark.asyncio
     async def test_block_action_calls_stop_when_matched(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """After the ``ex_text`` dead variable was removed, the
         ``block`` branch must still terminate the exchange via
@@ -52,7 +52,7 @@ class TestWafExTextRegression:
 
     @pytest.mark.asyncio
     async def test_no_match_does_not_stop(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         p = WafCheckProcessor(
             source_property="body.text",

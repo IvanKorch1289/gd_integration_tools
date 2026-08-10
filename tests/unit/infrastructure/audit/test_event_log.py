@@ -22,7 +22,7 @@ from src.backend.infrastructure.audit.event_log import (
 def fresh_audit_log(monkeypatch: pytest.MonkeyPatch) -> AuditEventLog:
     """Return a fresh AuditEventLog instance and reset global singleton."""
     monkeypatch.setattr(
-        "src.backend.infrastructure.audit.event_log._audit_log", None, raising=False
+        "src.backend.infrastructure.audit.event_log._audit_log", None, raising=False,
     )
     log = AuditEventLog(table="audit_events", batch_size=2)
     return log
@@ -38,7 +38,7 @@ def fake_clickhouse(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     fake_mod = types.ModuleType("clickhouse_stub")
     fake_mod.get_clickhouse_client = lambda: fake_client
     monkeypatch.setitem(
-        sys.modules, "src.backend.infrastructure.clients.storage.clickhouse", fake_mod
+        sys.modules, "src.backend.infrastructure.clients.storage.clickhouse", fake_mod,
     )
     return fake_client
 
@@ -51,7 +51,7 @@ def fake_correlation(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda: "cid-123",
     )
     monkeypatch.setattr(
-        "src.backend.infrastructure.audit.event_log.get_tenant_id", lambda: "tenant-42"
+        "src.backend.infrastructure.audit.event_log.get_tenant_id", lambda: "tenant-42",
     )
 
 
@@ -73,10 +73,10 @@ def test_audit_event_defaults() -> None:
 
 @pytest.mark.asyncio
 async def test_emit_sets_correlation_and_tenant(
-    fresh_audit_log: AuditEventLog, fake_correlation: None
+    fresh_audit_log: AuditEventLog, fake_correlation: None,
 ) -> None:
     event = AuditEvent(
-        who="alice", what="x", entity_type="order", entity_id="1", action="a"
+        who="alice", what="x", entity_type="order", entity_id="1", action="a",
     )
     await fresh_audit_log.emit(event)
     assert event.correlation_id == "cid-123"
@@ -85,7 +85,7 @@ async def test_emit_sets_correlation_and_tenant(
 
 @pytest.mark.asyncio
 async def test_emit_preserves_existing_values(
-    fresh_audit_log: AuditEventLog, fake_correlation: None
+    fresh_audit_log: AuditEventLog, fake_correlation: None,
 ) -> None:
     event = AuditEvent(
         who="bob",
@@ -103,7 +103,7 @@ async def test_emit_preserves_existing_values(
 
 @pytest.mark.asyncio
 async def test_flush_to_clickhouse(
-    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock, fake_correlation: None
+    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock, fake_correlation: None,
 ) -> None:
     event = AuditEvent(
         who="alice",
@@ -135,7 +135,7 @@ async def test_flush_to_clickhouse_logs_error(
 ) -> None:
     fake_clickhouse.insert = AsyncMock(side_effect=RuntimeError("db down"))
     event = AuditEvent(
-        who="alice", what="x", entity_type="order", entity_id="1", action="a"
+        who="alice", what="x", entity_type="order", entity_id="1", action="a",
     )
     await fresh_audit_log.emit(event)
     await fresh_audit_log.stop()
@@ -144,10 +144,10 @@ async def test_flush_to_clickhouse_logs_error(
 
 @pytest.mark.asyncio
 async def test_query_with_filters(
-    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock
+    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock,
 ) -> None:
     result = await fresh_audit_log.query(
-        entity_type="order", entity_id="1", who="alice", limit=10
+        entity_type="order", entity_id="1", who="alice", limit=10,
     )
     assert result == [{"who": "alice"}]
     sql = fake_clickhouse.query.call_args[0][0]
@@ -163,7 +163,7 @@ async def test_query_with_filters(
 
 @pytest.mark.asyncio
 async def test_query_without_filters(
-    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock
+    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock,
 ) -> None:
     await fresh_audit_log.query()
     sql = fake_clickhouse.query.call_args[0][0]
@@ -180,7 +180,7 @@ async def test_query_invalid_table_raises() -> None:
 
 @pytest.mark.asyncio
 async def test_query_limit_bounds(
-    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock
+    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock,
 ) -> None:
     await fresh_audit_log.query(limit=5)
     assert "LIMIT 5" in fake_clickhouse.query.call_args[0][0]
@@ -194,7 +194,7 @@ async def test_query_limit_bounds(
 
 @pytest.mark.asyncio
 async def test_query_escapes_quotes(
-    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock
+    fresh_audit_log: AuditEventLog, fake_clickhouse: MagicMock,
 ) -> None:
     await fresh_audit_log.query(who="O'Brien")
     sql = fake_clickhouse.query.call_args[0][0]
@@ -240,7 +240,7 @@ async def test_query_escapes_injection_attempts(
 async def test_emit_audit_event_helper(monkeypatch: pytest.MonkeyPatch) -> None:
     log = AuditEventLog(table="audit_events", batch_size=2)
     monkeypatch.setattr(
-        "src.backend.infrastructure.audit.event_log.get_audit_log", lambda: log
+        "src.backend.infrastructure.audit.event_log.get_audit_log", lambda: log,
     )
     emitted: list[AuditEvent] = []
     original_emit = log.emit

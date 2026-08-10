@@ -108,7 +108,7 @@ async def test_evaluate_returns_metrics_on_mock(
     }
 
     def _fake_evaluate(
-        _ds: Any, *, metrics: list[Any], **_kwargs: Any
+        _ds: Any, *, metrics: list[Any], **_kwargs: Any,
     ) -> dict[str, float]:
         del metrics
         return raw_result
@@ -140,7 +140,7 @@ def test_report_to_dict_shape() -> None:
     """Serialization shape стабильный (для JSON-артефакта / dashboard)."""
     report = RAGASReport(
         metrics=[
-            RAGASMetric(name="faithfulness", value=0.91, threshold=0.8, passed=True)
+            RAGASMetric(name="faithfulness", value=0.91, threshold=0.8, passed=True),
         ],
         record_count=5,
     )

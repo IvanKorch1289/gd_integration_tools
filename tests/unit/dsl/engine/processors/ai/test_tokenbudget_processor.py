@@ -22,7 +22,7 @@ class _Message:
 
 class _Exchange:
     def __init__(
-        self, body: Any = None, properties: dict[str, Any] | None = None
+        self, body: Any = None, properties: dict[str, Any] | None = None,
     ) -> None:
         self.in_message = _Message(body=body)
         self.properties: dict[str, Any] = properties or {}

@@ -185,7 +185,7 @@ class SearXNGProvider(BaseSearchProvider):
     name = "searxng"
 
     def __init__(
-        self, base_url: str, engines: list[str] | None = None, timeout: float = 15.0
+        self, base_url: str, engines: list[str] | None = None, timeout: float = 15.0,
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._engines = engines or ["google", "bing", "duckduckgo"]
@@ -244,7 +244,7 @@ class WebSearchService:
         self._providers.append(provider)
 
     async def query(
-        self, query: str, max_results: int = 5, provider: str | None = None
+        self, query: str, max_results: int = 5, provider: str | None = None,
     ) -> list[dict[str, Any]]:
         """Search via specified provider or fallback chain.
 
@@ -278,7 +278,7 @@ class WebSearchService:
         return []
 
     async def deep_research(
-        self, query: str, provider: str | None = None
+        self, query: str, provider: str | None = None,
     ) -> dict[str, Any]:
         """Perform deep research via specified provider or fallback chain.
 
@@ -337,7 +337,7 @@ def get_web_search_service() -> WebSearchService:
             engines_env = os.getenv("SEARXNG_ENGINES", "google,bing,duckduckgo")
             engines = [e.strip() for e in engines_env.split(",") if e.strip()]
             _web_search.add_provider(
-                SearXNGProvider(base_url=searxng_url, engines=engines)
+                SearXNGProvider(base_url=searxng_url, engines=engines),
             )
     except (ImportError, AttributeError):
         pass

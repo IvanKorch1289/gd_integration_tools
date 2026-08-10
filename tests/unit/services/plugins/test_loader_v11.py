@@ -25,7 +25,7 @@ class _FakeActions:
         self.calls: list[tuple[str, str | None]] = []
 
     def register(
-        self, action_id: str, handler: Any, *, spec: Any | None = None
+        self, action_id: str, handler: Any, *, spec: Any | None = None,
     ) -> None:
         self.calls.append((action_id, "spec" if spec else None))
 
@@ -51,7 +51,7 @@ class _FakeProcessors:
 
 
 def _build_loader(
-    tmp_path: Path, *, core_version: str = "0.2.0"
+    tmp_path: Path, *, core_version: str = "0.2.0",
 ) -> tuple[PluginLoader, _FakeActions, _FakeRepos, _FakeProcessors]:
     actions = _FakeActions()
     repos = _FakeRepos()
@@ -89,7 +89,7 @@ def _write_extension(
             class {plugin_class}(BasePlugin):
                 name = "{name}"
                 version = "1.0.0"
-            """
+            """,
         )
         (pkg / "plugin.py").write_text(body, encoding="utf-8")
     (pkg / "plugin.toml").write_text(
@@ -100,7 +100,7 @@ def _write_extension(
             requires_core = "{requires_core}"
             entry_class = "{name}.plugin.{plugin_class}"
             {manifest_extra}
-            """
+            """,
         ).lstrip(),
         encoding="utf-8",
     )
@@ -142,10 +142,10 @@ class TestPluginLoaderDiscovery:
         assert entry.instance is not None
 
     async def test_skipped_on_incompatible_core(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         _write_extension(
-            isolated_extensions_dir, name="fake_skip", requires_core=">=99.0,<100.0"
+            isolated_extensions_dir, name="fake_skip", requires_core=">=99.0,<100.0",
         )
         loader, *_ = _build_loader(isolated_extensions_dir)
         loaded = await loader.discover_and_load()
@@ -176,10 +176,10 @@ class TestPluginLoaderLifecycle:
                     CALLS.append("processors")
                 async def on_shutdown(self) -> None:
                     CALLS.append("shutdown")
-            """
+            """,
         )
         _write_extension(
-            isolated_extensions_dir, name="good_plugin", plugin_module_body=body
+            isolated_extensions_dir, name="good_plugin", plugin_module_body=body,
         )
         loader, actions, *_ = _build_loader(isolated_extensions_dir)
         await loader.discover_and_load()
@@ -191,7 +191,7 @@ class TestPluginLoaderLifecycle:
         assert ("good.echo", None) in actions.calls
 
     async def test_capability_allocation_before_import(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         # Невалидная capability (грамматика проходит, но имя не в vocabulary)
         _write_extension(
@@ -202,7 +202,7 @@ class TestPluginLoaderLifecycle:
                 [[capabilities]]
                 name = "unknown.do"
                 scope = "x"
-                """
+                """,
             ),
         )
         loader, *_ = _build_loader(isolated_extensions_dir)
@@ -211,7 +211,7 @@ class TestPluginLoaderLifecycle:
         assert "capability" in (loaded[0].reason or "").lower()
 
     async def test_capability_declared_in_gate(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         _write_extension(
             isolated_extensions_dir,
@@ -221,7 +221,7 @@ class TestPluginLoaderLifecycle:
                 [[capabilities]]
                 name = "db.read"
                 scope = "credit_db"
-                """
+                """,
             ),
         )
         loader, *_ = _build_loader(isolated_extensions_dir)
@@ -230,7 +230,7 @@ class TestPluginLoaderLifecycle:
         loader._gate.check("dummy_caps", "db.read", "credit_db")
 
     async def test_inventory_conflict_blocks_second_plugin(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         _write_extension(
             isolated_extensions_dir,
@@ -260,7 +260,7 @@ class TestPluginLoaderLifecycle:
         assert "manifest_error" in (loaded[0].reason or "")
 
     async def test_lifecycle_failure_revokes_capability(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         body = textwrap.dedent(
             """
@@ -272,7 +272,7 @@ class TestPluginLoaderLifecycle:
 
                 async def on_load(self, ctx) -> None:
                     raise RuntimeError("boom")
-            """
+            """,
         )
         _write_extension(
             isolated_extensions_dir,
@@ -283,7 +283,7 @@ class TestPluginLoaderLifecycle:
                 [[capabilities]]
                 name = "db.read"
                 scope = "credit_db"
-                """
+                """,
             ),
         )
         loader, *_ = _build_loader(isolated_extensions_dir)
@@ -297,7 +297,7 @@ class TestPluginLoaderHelpers:
     async def test_successful_property(self, isolated_extensions_dir: Path) -> None:
         _write_extension(isolated_extensions_dir, name="dummy_ok")
         _write_extension(
-            isolated_extensions_dir, name="fake_skipped", requires_core=">=99.0"
+            isolated_extensions_dir, name="fake_skipped", requires_core=">=99.0",
         )
         loader, *_ = _build_loader(isolated_extensions_dir)
         await loader.discover_and_load()
@@ -325,7 +325,7 @@ class TestPluginLoaderShutdownOne:
     """
 
     async def test_shutdown_one_removes_target_only(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         """shutdown_one(target) удаляет только target, unrelated остаётся loaded."""
         body_a = textwrap.dedent(
@@ -340,7 +340,7 @@ class TestPluginLoaderShutdownOne:
 
                 async def on_shutdown(self) -> None:
                     CALLS_A.append("shutdown")
-            """
+            """,
         )
         body_b = textwrap.dedent(
             """
@@ -354,13 +354,13 @@ class TestPluginLoaderShutdownOne:
 
                 async def on_shutdown(self) -> None:
                     CALLS_B.append("shutdown")
-            """
+            """,
         )
         _write_extension(
-            isolated_extensions_dir, name="alpha", plugin_module_body=body_a
+            isolated_extensions_dir, name="alpha", plugin_module_body=body_a,
         )
         _write_extension(
-            isolated_extensions_dir, name="bravo", plugin_module_body=body_b
+            isolated_extensions_dir, name="bravo", plugin_module_body=body_b,
         )
         loader, *_ = _build_loader(isolated_extensions_dir)
         await loader.discover_and_load()
@@ -378,7 +378,7 @@ class TestPluginLoaderShutdownOne:
         assert bravo_mod.CALLS_B == []
 
     async def test_shutdown_one_returns_false_for_unknown_plugin(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         """shutdown_one(unknown) → False (no-op), без raise."""
         loader, *_ = _build_loader(isolated_extensions_dir)
@@ -386,7 +386,7 @@ class TestPluginLoaderShutdownOne:
         assert result is False
 
     async def test_shutdown_one_revokes_capability(
-        self, isolated_extensions_dir: Path
+        self, isolated_extensions_dir: Path,
     ) -> None:
         """shutdown_one(target) вызывает gate.revoke(target) — не raise.
 
@@ -401,10 +401,10 @@ class TestPluginLoaderShutdownOne:
             class Plugin(BasePlugin):
                 name = "alpha_revoke"
                 version = "1.0.0"
-            """
+            """,
         )
         _write_extension(
-            isolated_extensions_dir, name="alpha_revoke", plugin_module_body=body
+            isolated_extensions_dir, name="alpha_revoke", plugin_module_body=body,
         )
 
         loader, *_ = _build_loader(isolated_extensions_dir)
@@ -424,7 +424,7 @@ class TestPluginLoaderShutdownOne:
         )
 
     async def test_shutdown_one_emits_audit_event(
-        self, isolated_extensions_dir: Path, monkeypatch: pytest.MonkeyPatch
+        self, isolated_extensions_dir: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Cycle 33 S176: shutdown_one эмитит audit-event для security observability.
 
@@ -440,10 +440,10 @@ class TestPluginLoaderShutdownOne:
             class Plugin(BasePlugin):
                 name = "alpha_audit"
                 version = "1.2.3"
-            """
+            """,
         )
         _write_extension(
-            isolated_extensions_dir, name="alpha_audit", plugin_module_body=body
+            isolated_extensions_dir, name="alpha_audit", plugin_module_body=body,
         )
 
         # Patch emit_audit_safe для захвата вызовов.
@@ -477,7 +477,7 @@ class TestPluginLoaderShutdownOne:
         assert details.get("old_version") == "1.0.0"
 
     async def test_shutdown_one_audit_failure_does_not_break(
-        self, isolated_extensions_dir: Path, monkeypatch: pytest.MonkeyPatch
+        self, isolated_extensions_dir: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """shutdown_one не падает если audit-emit упал (defense-in-depth)."""
         body = textwrap.dedent(
@@ -487,10 +487,10 @@ class TestPluginLoaderShutdownOne:
             class Plugin(BasePlugin):
                 name = "alpha_audit_fail"
                 version = "1.0.0"
-            """
+            """,
         )
         _write_extension(
-            isolated_extensions_dir, name="alpha_audit_fail", plugin_module_body=body
+            isolated_extensions_dir, name="alpha_audit_fail", plugin_module_body=body,
         )
 
         def _broken_emit_audit_safe(**kwargs: object) -> None:

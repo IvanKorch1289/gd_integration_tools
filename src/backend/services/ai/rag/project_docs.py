@@ -80,7 +80,7 @@ class _SentenceTransformerEmbedder:
         if model is None:
             return [_embed_hashbased(t) for t in texts]
         embeddings = model.encode(
-            texts, convert_to_tensor=False, batch_size=32, show_progress_bar=False
+            texts, convert_to_tensor=False, batch_size=32, show_progress_bar=False,
         )
         return [emb.tolist() for emb in embeddings]
 
@@ -228,7 +228,7 @@ class DocsIndexer:
                 self._qdrant.create_collection(
                     collection_name=self._collection_name,
                     vectors_config=VectorParams(
-                        size=_EMBED_DIM, distance=Distance.COSINE
+                        size=_EMBED_DIM, distance=Distance.COSINE,
                     ),
                 )
             except (ImportError, AttributeError):
@@ -296,7 +296,7 @@ class DocsIndexer:
                                 "chunk_index": idx,
                                 "hash": _h(piece),
                             },
-                        }
+                        },
                     )
                     idx += 1
             start += step
@@ -315,7 +315,7 @@ class DocsIndexer:
         return [_embed_hashbased(t) for t in texts]
 
     def _build_points(
-        self, chunks: list[dict[str, Any]], vecs: list[list[float]]
+        self, chunks: list[dict[str, Any]], vecs: list[list[float]],
     ) -> list[Any]:
         """PointStruct (Qdrant) → dict (fallback) — automatic dispatch."""
         try:
@@ -370,7 +370,7 @@ class DocsIndexer:
                         "file": path.name,
                         "file_hash": _h(raw),
                     },
-                )
+                ),
             )
         if not all_chunks:
             return 0

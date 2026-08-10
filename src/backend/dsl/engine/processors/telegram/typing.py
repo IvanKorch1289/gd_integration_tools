@@ -30,7 +30,7 @@ _VALID_ACTIONS = frozenset(
         "find_location",
         "record_video_note",
         "upload_video_note",
-    }
+    },
 )
 
 
@@ -58,7 +58,7 @@ class TelegramTypingProcessor(BaseProcessor):
         if action not in _VALID_ACTIONS:
             raise ValueError(
                 f"TelegramTypingProcessor: неверный action={action!r}; "
-                f"допустимы {sorted(_VALID_ACTIONS)}."
+                f"допустимы {sorted(_VALID_ACTIONS)}.",
             )
         self._bot = bot
         self._chat_id_from = chat_id_from
@@ -85,5 +85,5 @@ class TelegramTypingProcessor(BaseProcessor):
                 "bot": self._bot,
                 "chat_id_from": self._chat_id_from,
                 "action": self._action,
-            }
+            },
         }

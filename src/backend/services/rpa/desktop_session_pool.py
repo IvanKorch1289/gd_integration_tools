@@ -55,7 +55,7 @@ def _get_pool_breaker():
     return get_breaker_registry().get_or_create(
         "desktop_rpa_pool",
         BreakerSpec(
-            name="desktop_rpa_pool", failure_threshold=5, recovery_timeout=30.0
+            name="desktop_rpa_pool", failure_threshold=5, recovery_timeout=30.0,
         ),
     )
 
@@ -147,13 +147,13 @@ class DesktopRPASessionPool:
             # Stale TTL check
             if not session.in_use and (now - session.last_used_at) > self._ttl:
                 _logger.info(
-                    "desktop_rpa_pool: TTL expired для %s — recreate", app_name
+                    "desktop_rpa_pool: TTL expired для %s — recreate", app_name,
                 )
                 try:
                     await session.client.aclose()
                 except Exception as exc:
                     _logger.debug(
-                        "desktop_rpa_pool: aclose failed for %s: %s", app_name, exc
+                        "desktop_rpa_pool: aclose failed for %s: %s", app_name, exc,
                     )
                 session = None
         if session is None:
@@ -169,7 +169,7 @@ class DesktopRPASessionPool:
                         await oldest.client.aclose()
                     except Exception as exc:
                         _logger.debug(
-                            "desktop_rpa_pool: oldest session aclose failed: %s", exc
+                            "desktop_rpa_pool: oldest session aclose failed: %s", exc,
                         )
                     self._sessions.pop(oldest_app, None)
             session = _PooledSession(
@@ -215,7 +215,7 @@ class DesktopRPASessionPool:
                     await session.client.aclose()
                 except Exception as exc:
                     _logger.debug(
-                        "desktop_rpa_pool: stale session aclose failed: %s", exc
+                        "desktop_rpa_pool: stale session aclose failed: %s", exc,
                     )
                 async with self._lock:
                     self._sessions.pop(app_name, None)
@@ -259,7 +259,7 @@ class DesktopRPASessionPool:
                 return healthy
             except Exception as exc:
                 _logger.debug(
-                    "desktop_rpa_pool.healthcheck(%s) failed: %s", app_name, exc
+                    "desktop_rpa_pool.healthcheck(%s) failed: %s", app_name, exc,
                 )
                 return False
 
@@ -291,7 +291,7 @@ class DesktopRPASessionPool:
                 for name, s in self._sessions.items()
             }
         return DesktopRPASessionStats(
-            total=total, in_use=in_use, idle=idle, by_app=by_app
+            total=total, in_use=in_use, idle=idle, by_app=by_app,
         )
 
     async def shutdown(self) -> None:

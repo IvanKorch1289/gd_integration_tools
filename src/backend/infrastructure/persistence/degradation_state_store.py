@@ -31,7 +31,7 @@ class DegradationStateStore(Protocol):
     """Контракт для persistence-слоя."""
 
     async def persist(
-        self, mode: DegradationMode, transition: DegradationTransition
+        self, mode: DegradationMode, transition: DegradationTransition,
     ) -> None:
         """Persist degradation state.
 
@@ -69,7 +69,7 @@ class InMemoryDegradationStateStore:
         self._history: list[DegradationTransition] = []
 
     async def persist(
-        self, mode: DegradationMode, transition: DegradationTransition
+        self, mode: DegradationMode, transition: DegradationTransition,
     ) -> None:
         """Persist degradation state.
 
@@ -118,7 +118,7 @@ class RedisDegradationStateStore:
         self._redis = redis_client
 
     async def persist(
-        self, mode: DegradationMode, transition: DegradationTransition
+        self, mode: DegradationMode, transition: DegradationTransition,
     ) -> None:
         """Метод persist (см. signature)."""
         import json

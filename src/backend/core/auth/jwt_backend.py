@@ -35,7 +35,7 @@ __all__ = ("JwtBackend", "JwtClaims", "JwtVerificationError", "decode", "encode"
 _logger = get_logger(__name__)
 
 _ASYMMETRIC_ALGS = frozenset(
-    {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"}
+    {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"},
 )
 _SYMMETRIC_ALGS = frozenset({"HS256", "HS384", "HS512"})
 
@@ -95,7 +95,7 @@ def encode(
     elif alg in _ASYMMETRIC_ALGS:
         if private_key is None:
             raise ValueError(
-                "encode: private_key обязателен для асимметричных алгоритмов"
+                "encode: private_key обязателен для асимметричных алгоритмов",
             )
         key = private_key
     else:
@@ -136,13 +136,13 @@ def decode(
         if alg in _SYMMETRIC_ALGS:
             if not secret:
                 raise JwtVerificationError(
-                    "decode: secret обязателен для симметричных алгоритмов"
+                    "decode: secret обязателен для симметричных алгоритмов",
                 )
             key = OctKey.import_key(secret)
         elif alg in _ASYMMETRIC_ALGS:
             if public_key is None:
                 raise JwtVerificationError(
-                    "decode: public_key обязателен для асимметричных алгоритмов"
+                    "decode: public_key обязателен для асимметричных алгоритмов",
                 )
             key = public_key
         else:
@@ -201,7 +201,7 @@ class JwtBackend:
                 raise ValueError(f"JwtBackend: неподдерживаемый алгоритм {alg}")
         if any(a in _ASYMMETRIC_ALGS for a in self.algorithms) and self.jwks is None:
             raise ValueError(
-                "JwtBackend: для асимметричных алгоритмов требуется jwks-кеш"
+                "JwtBackend: для асимметричных алгоритмов требуется jwks-кеш",
             )
         if any(a in _SYMMETRIC_ALGS for a in self.algorithms) and not self.secret:
             raise ValueError("JwtBackend: для симметричных алгоритмов требуется secret")
@@ -215,7 +215,7 @@ class JwtBackend:
                 raise ValueError(
                     f"JwtBackend: weak HS-secret rejected ({len(strength.issues)} "
                     f"issue(s)): {', '.join(strength.issues)}. "
-                    f"Use random-bytes secret of ≥ 32 chars (RFC 7518 256-bit)."
+                    f"Use random-bytes secret of ≥ 32 chars (RFC 7518 256-bit).",
                 )
 
     async def _resolve_key(self, header: dict[str, Any]) -> Any:
@@ -254,7 +254,7 @@ class JwtBackend:
         alg = header.get("alg")
         if alg not in self.algorithms:
             raise JwtVerificationError(
-                f"Алгоритм {alg} не разрешён (allow={self.algorithms})"
+                f"Алгоритм {alg} не разрешён (allow={self.algorithms})",
             )
 
         try:
@@ -281,7 +281,7 @@ class JwtBackend:
                     "values": _audience_list(self.audience),
                 }
             claims_request = joserfc_jwt.JWTClaimsRegistry(
-                leeway=self.leeway, **options
+                leeway=self.leeway, **options,
             )
             claims_request.validate(claims)
         except ExpiredTokenError as exc:
@@ -310,7 +310,7 @@ class JwtBackend:
             try:
                 if await self.blacklist.is_iat_revoked(iat):
                     raise JwtVerificationError(
-                        "JWT отозван (rotation: iat < revoke_before)"
+                        "JWT отозван (rotation: iat < revoke_before)",
                     )
             except JwtVerificationError:
                 raise
@@ -402,7 +402,7 @@ _WEAK_JWT_SECRETS: frozenset[str] = frozenset(
         "jwt-secret",
         "my-secret",
         "supersecret",
-    }
+    },
 )
 
 
@@ -428,7 +428,7 @@ def _validate_jwt_secret_strength(secret: str) -> JwtSecretStrengthReport:
         issues.append("empty")
     if len(secret) < _MIN_JWT_SECRET_LENGTH:
         issues.append(
-            f"too_short (length={len(secret)} < {_MIN_JWT_SECRET_LENGTH})"
+            f"too_short (length={len(secret)} < {_MIN_JWT_SECRET_LENGTH})",
         )
     if secret in _WEAK_JWT_SECRETS:
         issues.append("blacklisted_common_secret")
@@ -444,7 +444,7 @@ def _validate_jwt_secret_strength(secret: str) -> JwtSecretStrengthReport:
     if entropy_bits < 128.0 and len(secret) >= 32:
         issues.append(
             f"low_entropy (estimate={entropy_bits:.1f} bits; "
-            f"RFC 7518 recommends 256+ for HS256)"
+            f"RFC 7518 recommends 256+ for HS256)",
         )
 
     is_acceptable = not issues

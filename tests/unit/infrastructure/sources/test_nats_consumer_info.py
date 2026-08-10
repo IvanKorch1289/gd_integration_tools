@@ -14,7 +14,7 @@ def source():
     from src.backend.infrastructure.sources.nats_jetstream import NATSJetStreamSource
 
     src = NATSJetStreamSource(
-        subject="orders.created", stream="ORDERS", durable="orders-consumer"
+        subject="orders.created", stream="ORDERS", durable="orders-consumer",
     )
     return src
 

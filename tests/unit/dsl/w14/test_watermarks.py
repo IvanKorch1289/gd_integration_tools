@@ -32,7 +32,7 @@ from src.backend.dsl.engine.processors.streaming import (
 
 
 def _make_exchange(
-    body: Any, *, watermark: float | None = None, event_time: float | None = None
+    body: Any, *, watermark: float | None = None, event_time: float | None = None,
 ) -> Exchange[Any]:
     headers: dict[str, Any] = {}
     if event_time is not None:
@@ -66,7 +66,7 @@ class TestWatermarkState:
         assert ws.is_late(85.0, allowed_lateness=10.0) is True
 
     @given(
-        values=st.lists(st.floats(min_value=0, max_value=1e6), min_size=1, max_size=50)
+        values=st.lists(st.floats(min_value=0, max_value=1e6), min_size=1, max_size=50),
     )
     def test_advance_property_monotonic(self, values: list[float]) -> None:
         """Property: после серии advance() current == max(values)."""
@@ -89,7 +89,7 @@ class TestTumblingWindowWatermarks:
             captured.append(bucket)
 
         proc = TumblingWindowProcessor(
-            sink=sink, size=2, interval_seconds=999.0, clock=fake_clock
+            sink=sink, size=2, interval_seconds=999.0, clock=fake_clock,
         )
         ctx = ExecutionContext(route_id="r1")
 
@@ -107,7 +107,7 @@ class TestTumblingWindowWatermarks:
             captured.append(bucket)
 
         proc = TumblingWindowProcessor(
-            sink=sink, size=2, interval_seconds=999.0, clock=fake_clock
+            sink=sink, size=2, interval_seconds=999.0, clock=fake_clock,
         )
         ctx = ExecutionContext(route_id="r1")
 
@@ -123,7 +123,7 @@ class TestTumblingWindowWatermarks:
 
     @pytest.mark.asyncio
     async def test_late_within_allowed_lateness_passes(
-        self, fake_clock: FakeClock
+        self, fake_clock: FakeClock,
     ) -> None:
         captured: list[list[Any]] = []
 
@@ -165,7 +165,7 @@ class TestTumblingWindowWatermarks:
     @pytest.mark.asyncio
     async def test_watermark_does_not_regress(self, fake_clock: FakeClock) -> None:
         proc = TumblingWindowProcessor(
-            sink=lambda b: None, size=10, interval_seconds=999.0, clock=fake_clock
+            sink=lambda b: None, size=10, interval_seconds=999.0, clock=fake_clock,
         )
         ctx = ExecutionContext(route_id="r1")
         await proc.process(_make_exchange("a", watermark=200.0, event_time=205.0), ctx)
@@ -199,7 +199,7 @@ class TestSlidingWindowWatermarks:
 
     @pytest.mark.asyncio
     async def test_late_within_allowed_lateness_passes(
-        self, fake_clock: FakeClock
+        self, fake_clock: FakeClock,
     ) -> None:
         proc = SlidingWindowProcessor(
             sink=lambda b: None,
@@ -238,7 +238,7 @@ class TestSessionWindowWatermarks:
     @pytest.mark.asyncio
     async def test_late_event_dropped_by_default(self, fake_clock: FakeClock) -> None:
         proc = SessionWindowProcessor(
-            sink=lambda b: None, gap_seconds=999.0, clock=fake_clock
+            sink=lambda b: None, gap_seconds=999.0, clock=fake_clock,
         )
         ctx = ExecutionContext(route_id="r1")
 
@@ -252,7 +252,7 @@ class TestSessionWindowWatermarks:
 
     @pytest.mark.asyncio
     async def test_late_within_allowed_lateness_passes(
-        self, fake_clock: FakeClock
+        self, fake_clock: FakeClock,
     ) -> None:
         proc = SessionWindowProcessor(
             sink=lambda b: None,
@@ -271,7 +271,7 @@ class TestSessionWindowWatermarks:
     @pytest.mark.asyncio
     async def test_watermark_does_not_regress(self, fake_clock: FakeClock) -> None:
         proc = SessionWindowProcessor(
-            sink=lambda b: None, gap_seconds=999.0, clock=fake_clock
+            sink=lambda b: None, gap_seconds=999.0, clock=fake_clock,
         )
         ctx = ExecutionContext(route_id="r1")
         await proc.process(_make_exchange("a", watermark=200.0, event_time=205.0), ctx)
@@ -298,7 +298,7 @@ class TestLatePolicy:
             called.append(e)
 
         keep = await apply_late_policy(
-            ex, state=ws, policy=LatePolicy.SIDE_OUTPUT, side_output=side
+            ex, state=ws, policy=LatePolicy.SIDE_OUTPUT, side_output=side,
         )
         assert keep is True
         assert called == [ex]

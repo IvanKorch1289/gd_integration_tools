@@ -215,7 +215,7 @@ class PydanticAIClient:
             raise NotImplementedError(
                 "PydanticAIClient.run(stream=True) пока не реализован "
                 "(deadline S32 W2+). Используйте stream=False или "
-                "напрямую LiteLLMGateway.astream_completion()."
+                "напрямую LiteLLMGateway.astream_completion().",
             )
 
         if not _internal_gateway_call:
@@ -245,11 +245,11 @@ class PydanticAIClient:
                     # — API change, RuntimeError — backend unavailable.
                     # audit-log — best-effort, не должен блокировать raise.
                     logger.debug(
-                        "PydanticAIClient bypass audit failed: %s", audit_exc
+                        "PydanticAIClient bypass audit failed: %s", audit_exc,
                     )
                 raise RuntimeError(
                     "PydanticAIClient.run() bypasses AIGateway; "
-                    "use AIGateway.invoke() instead"
+                    "use AIGateway.invoke() instead",
                 )
 
         if stream:
@@ -258,7 +258,7 @@ class PydanticAIClient:
             # когда stream может стать частично реализованным (частичный
             # success → explicit error вместо silent None).
             raise NotImplementedError(
-                "PydanticAIClient.run(stream=True) недоступен — см. fail-fast выше."
+                "PydanticAIClient.run(stream=True) недоступен — см. fail-fast выше.",
             )
 
         assert not stream, "unreachable"  # for mypy
@@ -270,7 +270,7 @@ class PydanticAIClient:
         retry_attempts = self._retry_attempts()
 
         self._emit_counter(
-            "ai_pydantic_client_requests_total", {"model": primary, "status": "started"}
+            "ai_pydantic_client_requests_total", {"model": primary, "status": "started"},
         )
 
         messages = [{"role": "user", "content": prompt}]
@@ -282,7 +282,7 @@ class PydanticAIClient:
         for attempt in range(1, retry_attempts + 1):
             try:
                 response = await self._gateway.acompletion(
-                    messages, model=primary, **kwargs
+                    messages, model=primary, **kwargs,
                 )
                 latency_ms = int(time.monotonic() * 1000) - start_ms
 
@@ -296,7 +296,7 @@ class PydanticAIClient:
                     {"model": model_used, "status": "success"},
                 )
                 self._emit_histogram(
-                    "ai_pydantic_client_latency_ms", latency_ms, {"model": model_used}
+                    "ai_pydantic_client_latency_ms", latency_ms, {"model": model_used},
                 )
                 if is_fallback:
                     self._emit_counter(
@@ -325,7 +325,7 @@ class PydanticAIClient:
 
         # Все fail — эмитим ошибку и пробрасываем
         self._emit_counter(
-            "ai_pydantic_client_requests_total", {"model": primary, "status": "error"}
+            "ai_pydantic_client_requests_total", {"model": primary, "status": "error"},
         )
         self._reraise_normalized(last_exc or RuntimeError("No models available"))
         # NOTE: unreachable — _reraise_normalized always raises; kept for type checker
@@ -353,7 +353,7 @@ class PydanticAIClient:
 
     @staticmethod
     def _extract_completion(
-        response: Any, *, fallback_model: str | None
+        response: Any, *, fallback_model: str | None,
     ) -> tuple[str, int, int, str]:
         """Layer 8 Cycle 1: единый helper (см. core/ai/_llm_response.py).
 
@@ -451,7 +451,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
         """
 
         def __init__(
-            self, *, gateway: _Any, model_name: str, provider: str = "litellm"
+            self, *, gateway: _Any, model_name: str, provider: str = "litellm",
         ) -> None:
             self._gateway = gateway
             self._model_name = model_name
@@ -499,7 +499,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
                 content = ""
 
             response = await self._gateway.acompletion(
-                model=self._model_name, messages=[{"role": "user", "content": content}]
+                model=self._model_name, messages=[{"role": "user", "content": content}],
             )
 
             # Wrap в pydantic_ai ModelResponse
@@ -529,16 +529,16 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
                 content = ""
 
             async for chunk in await self._gateway.astream(
-                model=self._model_name, messages=[{"role": "user", "content": content}]
+                model=self._model_name, messages=[{"role": "user", "content": content}],
             ):
                 text = self._extract_text(chunk)
                 if text:
                     yield _SimpleStreamedResponse(  # type: ignore[misc]
-                        model_name=self._model_name, text=text
+                        model_name=self._model_name, text=text,
                     )
 
         def customize_request_parameters(
-            self, model_request_parameters: _ModelRequestParameters
+            self, model_request_parameters: _ModelRequestParameters,
         ) -> _ModelRequestParameters:
             """Добавить provider-specific параметры в request (override)."""
             return model_request_parameters
@@ -552,7 +552,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             return (model_settings, model_request_parameters)
 
         def prepare_messages(
-            self, messages: list[_ModelMessage]
+            self, messages: list[_ModelMessage],
         ) -> list[_ModelMessage]:
             """Преобразовать pydantic-ai messages → wire-format."""
             return messages

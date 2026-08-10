@@ -15,7 +15,7 @@ class TestElasticsearchSettings:
 
     def test_custom_values(self) -> None:
         s = ElasticsearchSettings(
-            hosts=["http://es:9200"], enabled=True, api_key="key", index_prefix="test_"
+            hosts=["http://es:9200"], enabled=True, api_key="key", index_prefix="test_",
         )
         assert s.hosts == ["http://es:9200"]
         assert s.enabled is True

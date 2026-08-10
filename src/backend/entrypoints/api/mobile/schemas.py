@@ -61,11 +61,11 @@ class CursorPage(BaseModel):
 
     items: list[Any]
     next_cursor: str | None = Field(
-        None, description="Cursor для следующей страницы (None = no more)"
+        None, description="Cursor для следующей страницы (None = no more)",
     )
     has_more: bool = False
     total_estimated: int | None = Field(
-        None, description="Approximate total (для UI counter)"
+        None, description="Approximate total (для UI counter)",
     )
 
 
@@ -76,7 +76,7 @@ class MobileSyncState(BaseModel):
 
     last_sync_at: datetime
     changes: list[dict[str, Any]] = Field(
-        default_factory=list, description="Server changes since last sync"
+        default_factory=list, description="Server changes since last sync",
     )
     server_version: int = Field(..., description="Server monotonic version")
 

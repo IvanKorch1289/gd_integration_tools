@@ -37,7 +37,7 @@ class PIIFailClosedError(RuntimeError):
 
 
 def raise_pii_fail_closed(
-    *, source: str, payload_size: int, exc: BaseException
+    *, source: str, payload_size: int, exc: BaseException,
 ) -> NoReturn:
     """cycle-4/D-AUDIT-109 — concrete handling для PII sanitizer failure.
 

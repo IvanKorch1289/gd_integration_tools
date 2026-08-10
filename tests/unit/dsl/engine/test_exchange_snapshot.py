@@ -149,7 +149,7 @@ class TestFromDictMsgspec:
         assert result.note == "x"
 
     def test_msgspec_not_available_falls_back(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Когда msgspec недоступен — обе функции идут через orjson/cls(**data).
 
@@ -214,7 +214,7 @@ class TestFromDictMsgspec:
             es._msgspec_enc_hook(object())
 
     def test_to_dict_fallback_on_msgspec_exception(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Если _encode_msgspec бросает — to_dict_fast fallback'ит на orjson."""
         calls: list[str] = []
@@ -285,9 +285,9 @@ class TestRealWorldBenchmarks:
                     "users": [
                         {"id": i, "name": f"user_{i}", "tags": ["a", "b", "c"]}
                         for i in range(100)
-                    ]
-                }
-            )
+                    ],
+                },
+            ),
         )
         iterations = 1_000
 
@@ -358,7 +358,7 @@ class TestRealWorldBenchmarks:
                     "metadata": {"source": "api", "version": 2},
                 }
                 for i in range(7_500)
-            ]
+            ],
         }
         size_bytes = len(msgspec.json.encode(payload))
         assert size_bytes >= 1_000_000, (

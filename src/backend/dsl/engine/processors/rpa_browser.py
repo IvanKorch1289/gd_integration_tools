@@ -72,7 +72,7 @@ def _get_pool(context: ExecutionContext) -> PlaywrightBrowserPool:
     if pool is None:
         raise RuntimeError(
             "PlaywrightBrowserPool не зарегистрирован в ExecutionContext; "
-            "проверь lifespan и DI-конфигурацию (см. plugins/composition)."
+            "проверь lifespan и DI-конфигурацию (см. plugins/composition).",
         )
     return pool
 
@@ -88,7 +88,7 @@ def _get_or_create_page(exchange: Exchange[Any]) -> Any:
     if page is None:
         raise RuntimeError(
             "RPA: page не инициализирована; вызовите .browser_launch() "
-            "перед .navigate / .click / .fill / etc."
+            "перед .navigate / .click / .fill / etc.",
         )
     return page
 
@@ -179,7 +179,7 @@ class NavigateProcessor(BaseProcessor):
             page = _get_or_create_page(exchange)
             ctx = exchange.properties.get("rpa.context")
             cookie_store: BrowserCookieStore | None = exchange.properties.get(
-                "rpa.cookie_store"
+                "rpa.cookie_store",
             )
 
             # Lazy-restore cookies перед навигацией
@@ -193,7 +193,7 @@ class NavigateProcessor(BaseProcessor):
                 domain = _extract_domain(self._url)
                 if (tenant_id or user_id) and domain:
                     cookies = await cookie_store.restore_cookies(
-                        tenant_id=tenant_id, user_id=user_id, domain=domain
+                        tenant_id=tenant_id, user_id=user_id, domain=domain,
                     )
                     if cookies:
                         await ctx.add_cookies(cookies)
@@ -228,7 +228,7 @@ class ClickProcessor(BaseProcessor):
     name = "rpa_click"
 
     def __init__(
-        self, *, selector: str, timeout: float = 30.0, name: str | None = None
+        self, *, selector: str, timeout: float = 30.0, name: str | None = None,
     ) -> None:
         super().__init__(name=name or self.name)
         self._selector = selector

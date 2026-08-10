@@ -206,7 +206,7 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
 
         settings = get_app_settings()
         if settings is not None and hasattr(
-            settings, "graceful_shutdown_timeout"
+            settings, "graceful_shutdown_timeout",
         ):
             # k8s termination_grace_period - preStop sleep = реальное окно
             shutdown_timeout = max(

@@ -55,8 +55,8 @@ def test_yandexgpt_extract_text() -> None:
     p = YandexGPTProvider()
     response = {
         "choices": [
-            {"message": {"role": "assistant", "content": "Привет, мир!"}}
-        ]
+            {"message": {"role": "assistant", "content": "Привет, мир!"}},
+        ],
     }
     assert p.extract_text(response) == "Привет, мир!"
 

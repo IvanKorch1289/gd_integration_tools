@@ -54,7 +54,7 @@ class MongoConnectionSettings(BaseSettingsWithLoader):
     )
 
     host: str = Field(
-        ..., title="Хост", description="Сервер MongoDB", examples=["mongo.example.com"]
+        ..., title="Хост", description="Сервер MongoDB", examples=["mongo.example.com"],
     )
 
     port: int = Field(

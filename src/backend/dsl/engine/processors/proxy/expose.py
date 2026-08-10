@@ -89,7 +89,7 @@ class ExposeProxyProcessor(BaseProcessor):
 def _split_endpoint(raw: str) -> tuple[ProtocolLiteral, str]:
     if ":" not in raw:
         raise ValueError(
-            f"ExposeProxyProcessor.src должен быть '<protocol>:<address>', получено {raw!r}"
+            f"ExposeProxyProcessor.src должен быть '<protocol>:<address>', получено {raw!r}",
         )
     proto, address = raw.split(":", 1)
     proto = proto.lower()

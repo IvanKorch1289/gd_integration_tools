@@ -69,12 +69,12 @@ class CoreMixin(_NotebookExecutionProtocol):
             server_url = server.url if server else ""
             if not server_url:
                 raise JupyterExecutionError(
-                    f"Server URL unavailable for user={user_name}"
+                    f"Server URL unavailable for user={user_name}",
                 )
 
             # 2. Upload notebook
             await self._upload_notebook(
-                server_url, notebook_path, self._build_ipynb(notebook_path, cells)
+                server_url, notebook_path, self._build_ipynb(notebook_path, cells),
             )
 
             # 3. Create session → kernel
@@ -82,7 +82,7 @@ class CoreMixin(_NotebookExecutionProtocol):
             kernel_id = session.get("kernel", {}).get("id")
             if not kernel_id:
                 raise JupyterExecutionError(
-                    "Kernel ID not returned from session creation"
+                    "Kernel ID not returned from session creation",
                 )
 
             # 4. Execute cells
@@ -92,7 +92,7 @@ class CoreMixin(_NotebookExecutionProtocol):
                     if cell.get("cell_type") != "code":
                         continue
                     outputs = await self._execute_cell(
-                        server_url, kernel_id, cell["source"], timeout=timeout
+                        server_url, kernel_id, cell["source"], timeout=timeout,
                     )
                     results.append({"cell_index": idx, "outputs": outputs})
             finally:

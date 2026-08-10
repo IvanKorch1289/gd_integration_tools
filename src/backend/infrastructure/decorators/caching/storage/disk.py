@@ -21,7 +21,7 @@ class DiskTTLCache:
 
     @staticmethod
     def _storage_expire(
-        ttl_seconds: int | None, stale_if_error_seconds: int
+        ttl_seconds: int | None, stale_if_error_seconds: int,
     ) -> int | None:
         if ttl_seconds is None or ttl_seconds <= 0:
             return None
@@ -85,7 +85,7 @@ class DiskTTLCache:
             key,
             self._serialize_envelope(renewed),
             expire=self._storage_expire(
-                renewed.ttl_seconds, renewed.stale_if_error_seconds
+                renewed.ttl_seconds, renewed.stale_if_error_seconds,
             ),
         )
         return renewed
@@ -129,7 +129,7 @@ class DiskTTLCache:
     ) -> None:
         """Сохранить ``value`` с TTL + опц. stale_if_error."""
         await asyncio.to_thread(
-            self._set_sync, key, value, ttl_seconds, stale_if_error_seconds
+            self._set_sync, key, value, ttl_seconds, stale_if_error_seconds,
         )
 
     async def delete(self, *keys: str) -> None:

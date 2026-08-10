@@ -33,7 +33,7 @@ class TransformationEIPsMixin(EIPMixinBase):
         return cast(
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
-                SplitterProcessor(expression=expression, processors=processors)
+                SplitterProcessor(expression=expression, processors=processors),
             ),
         )
 
@@ -52,7 +52,7 @@ class TransformationEIPsMixin(EIPMixinBase):
                     correlation_key=correlation_key,
                     batch_size=batch_size,
                     timeout_seconds=timeout_seconds,
-                )
+                ),
             ),
         )
 
@@ -97,7 +97,7 @@ class TransformationEIPsMixin(EIPMixinBase):
                     store=store,
                     ttl_seconds=ttl_seconds,
                     threshold_bytes=threshold_bytes,
-                )
+                ),
             ),
         )
 
@@ -129,6 +129,6 @@ class TransformationEIPsMixin(EIPMixinBase):
                     sequence_field=sequence_field,
                     batch_size=batch_size,
                     timeout_seconds=timeout_seconds,
-                )
+                ),
             ),
         )

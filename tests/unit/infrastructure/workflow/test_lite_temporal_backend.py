@@ -93,7 +93,7 @@ async def test_connect_ignores_target_and_api_key(
 ) -> None:
     """Target/api_key — игнорируются (in-process не нуждается)."""
     backend = await LiteTemporalBackend.connect(
-        target="will-be-ignored:7233", api_key="will-be-ignored"
+        target="will-be-ignored:7233", api_key="will-be-ignored",
     )
     start_local_mock: AsyncMock = patch_start_local["start_local_mock"]
     kwargs = start_local_mock.call_args.kwargs
@@ -143,7 +143,7 @@ async def test_init_constructs_with_explicit_client_and_env() -> None:
     fake_client = MagicMock()
     fake_env = _FakeEnv(client=fake_client)
     backend = LiteTemporalBackend(
-        client=fake_client, env=fake_env, default_task_queue="t1"
+        client=fake_client, env=fake_env, default_task_queue="t1",
     )
     assert backend._client is fake_client  # type: ignore[attr-defined]
     assert backend.env is fake_env

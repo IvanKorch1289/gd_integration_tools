@@ -94,7 +94,7 @@ class ProcessorPool:
     """
 
     def __init__(
-        self, max_workers: int = 4, thread_pool: ThreadPoolExecutor | None = None
+        self, max_workers: int = 4, thread_pool: ThreadPoolExecutor | None = None,
     ) -> None:
         self._max_workers = max_workers
         self._thread_pool = thread_pool
@@ -105,7 +105,7 @@ class ProcessorPool:
         # Eager creation of thread pool avoids blocking the event loop later
         if thread_pool is None:
             self._own_thread_pool = ThreadPoolExecutor(
-                max_workers=max_workers, thread_name_prefix="processor_pool_"
+                max_workers=max_workers, thread_name_prefix="processor_pool_",
             )
 
     @property
@@ -147,12 +147,12 @@ class ProcessorPool:
         try:
             if inspect.iscoroutinefunction(processor.process):
                 await asyncio.wait_for(
-                    processor.process(exchange, context), timeout=effective_timeout
+                    processor.process(exchange, context), timeout=effective_timeout,
                 )
             else:
                 await asyncio.wait_for(  # type: ignore[unused-coroutine]
                     asyncio.to_thread(
-                        processor.process, exchange, context
+                        processor.process, exchange, context,
                     ),
                     timeout=effective_timeout,
                 )
@@ -240,7 +240,7 @@ class ProcessorPool:
                         "duration_ms": 0.0,
                         "status": "error",
                         "error": str(result),
-                    }
+                    },
                 )
                 self._metrics.inc_completed(failed=True)
             elif isinstance(result, dict):

@@ -53,5 +53,5 @@ class SerializationMixin(_IDPPipelineProtocol):
                 "validators": list(self._validators) if self._validators else None,
                 "hitl_property": self._hitl_property,
                 "result_property": self._result_property,
-            }
+            },
         }

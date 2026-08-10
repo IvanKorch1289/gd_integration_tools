@@ -31,7 +31,7 @@ _SANITIZE_RE = re.compile(
     r"https?://[^\s'\"]+"
     r"|/(?:tmp|var|etc|home|root|Users)[^\s'\"]*"
     r"|(?:password|token|api_key|secret)\s*=\s*\S+"
-    r")"
+    r")",
 )
 _MAX_ERROR_LEN = 500
 
@@ -49,7 +49,7 @@ def _sanitize_error(raw: str | None) -> str | None:
 # Without auth, unauthenticated clients could trigger arbitrary processor
 # chains (incl. call_function, RPA, sink writes). Require admin role.
 _DSL_CONSOLE_GUARD = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
 )
 
 
@@ -65,10 +65,10 @@ class InlineDSLRequest(BaseModel):
         examples=["route_id: test\nprocessors:\n  - log: {level: info}"],
     )
     payload: dict[str, Any] = Field(
-        default_factory=dict, description="Payload для Exchange body"
+        default_factory=dict, description="Payload для Exchange body",
     )
     headers: dict[str, Any] = Field(
-        default_factory=dict, description="Headers для Exchange"
+        default_factory=dict, description="Headers для Exchange",
     )
 
 
@@ -86,7 +86,7 @@ class ExecuteRegisteredRequest(BaseModel):
 
     route_id: str = Field(..., description="Идентификатор зарегистрированного route")
     body: dict[str, Any] = Field(
-        default_factory=dict, description="Payload для Exchange body"
+        default_factory=dict, description="Payload для Exchange body",
     )
 
 
@@ -166,13 +166,13 @@ class _DSLConsoleFacade:
 
             if len(route_yaml) > 65536:
                 return InlineDSLResponse(
-                    status="error", error="YAML too large (max 64KB)"
+                    status="error", error="YAML too large (max 64KB)",
                 )
 
             route_def = yaml.safe_load(route_yaml)
             if not isinstance(route_def, dict) or "route_id" not in route_def:
                 return InlineDSLResponse(
-                    status="error", error="Invalid YAML: missing 'route_id'"
+                    status="error", error="Invalid YAML: missing 'route_id'",
                 )
 
             import re
@@ -216,7 +216,7 @@ class _DSLConsoleFacade:
             # generic message with exception class only.
             # Cycle 76 L1: use module-level canonical logger.
             _logger.exception(
-                "DSL console inline execute failed: route_id=%s", route_id
+                "DSL console inline execute failed: route_id=%s", route_id,
             )
             return InlineDSLResponse(
                 status="error",
@@ -224,7 +224,7 @@ class _DSLConsoleFacade:
             )
 
     async def execute_registered_route(
-        self, *, route_id: str, body: dict[str, Any] | None = None
+        self, *, route_id: str, body: dict[str, Any] | None = None,
     ) -> ExecuteRegisteredResponse:
         """Выполняет зарегистрированный route по route_id."""
         body = body or {}
@@ -237,7 +237,7 @@ class _DSLConsoleFacade:
             pipeline = get_route_pipeline(route_id)
             if pipeline is None:
                 return ExecuteRegisteredResponse(
-                    status="failed", error=f"route {route_id!r} не найден"
+                    status="failed", error=f"route {route_id!r} не найден",
                 )
 
             engine = ExecutionEngine()
@@ -260,7 +260,7 @@ class _DSLConsoleFacade:
             # Cycle 3 swarm: do not leak raw exception string to public client.
             # Cycle 76 L1: use module-level canonical logger.
             _logger.exception(
-                "DSL console execute_registered_route failed: route_id=%s", route_id
+                "DSL console execute_registered_route failed: route_id=%s", route_id,
             )
             return ExecuteRegisteredResponse(
                 status="error",
@@ -268,7 +268,7 @@ class _DSLConsoleFacade:
             )
 
     async def dry_run(
-        self, *, route: dict[str, Any], sample_payload: Any = None, seed: int = 0
+        self, *, route: dict[str, Any], sample_payload: Any = None, seed: int = 0,
     ) -> DryRunResponse:
         """Выполняет route в dry-run режиме (эмуляция, без side-effects)."""
         try:
@@ -286,7 +286,7 @@ class _DSLConsoleFacade:
             # Cycle 76 L1: use module-level canonical logger.
             _logger.exception("DSL console dry_run failed")
             return DryRunResponse(
-                error=f"{type(exc).__name__}: internal error (see server logs)"
+                error=f"{type(exc).__name__}: internal error (see server logs)",
             )
 
 
@@ -348,5 +348,5 @@ builder.add_actions(
             response_model=DryRunResponse,
             tags=("DSL Console",),
         ),
-    ]
+    ],
 )

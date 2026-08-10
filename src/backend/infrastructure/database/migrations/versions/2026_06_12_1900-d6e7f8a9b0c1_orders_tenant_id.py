@@ -70,14 +70,14 @@ def upgrade() -> None:
         """
         ALTER TABLE orders
         ADD COLUMN tenant_id VARCHAR(64) NOT NULL DEFAULT 'default'
-        """
+        """,
     )
 
     # 2. Index для tenant filter performance.
     op.execute(
         """
         CREATE INDEX ix_orders_tenant_id ON orders (tenant_id)
-        """
+        """,
     )
 
     # 3. Verify backfill (idempotent — DEFAULT застосовується на existing rows
@@ -85,7 +85,7 @@ def upgrade() -> None:
     op.execute(
         """
         UPDATE orders SET tenant_id = 'default' WHERE tenant_id IS NULL
-        """
+        """,
     )
 
 

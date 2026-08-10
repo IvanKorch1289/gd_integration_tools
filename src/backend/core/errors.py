@@ -162,7 +162,7 @@ class DatabaseError(BaseError):
 
     def __init__(self, *_: Any, message: str = "Database error") -> None:
         super().__init__(
-            message=message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            message=message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 
@@ -219,7 +219,7 @@ class ServiceError(BaseError):
     def __init__(self, detail: str = "Ошибка обработки запроса") -> None:
         self.detail = detail
         super().__init__(
-            message=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            message=detail, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 

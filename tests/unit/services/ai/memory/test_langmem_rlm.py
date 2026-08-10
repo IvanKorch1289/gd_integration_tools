@@ -65,7 +65,7 @@ class TestRLMSignalDataclass:
 
         # slots-based classes не имеют __dict__.
         assert "__slots__" in RLMSignal.__dict__ or hasattr(
-            RLMSignal, "__slots__"
+            RLMSignal, "__slots__",
         ), "RLMSignal should use __slots__ for memory efficiency"
 
 
@@ -83,7 +83,7 @@ class TestRLMFeedbackProcessorOnFeedback:
     async def test_on_feedback_received_good_no_qdrant(self, processor) -> None:
         """feedback 'good' when qdrant client unavailable → no-op return."""
         signal = await processor.on_feedback_received(
-            doc_id="doc-1", label="good"
+            doc_id="doc-1", label="good",
         )
         # No qdrant → returns zeroed signal.
         assert signal.doc_id == "doc-1"
@@ -96,7 +96,7 @@ class TestRLMFeedbackProcessorOnFeedback:
     async def test_on_feedback_received_bad_no_qdrant(self, processor) -> None:
         """feedback 'bad' when qdrant client unavailable → no-op return."""
         signal = await processor.on_feedback_received(
-            doc_id="doc-2", label="bad"
+            doc_id="doc-2", label="bad",
         )
         # No qdrant → returns zeroed signal.
         assert signal.new_boost == 0
@@ -112,12 +112,12 @@ class TestRLMFeedbackProcessorOnFeedback:
         mock_langmem._client = MagicMock()
         mock_langmem._collection = "test"
         mock_langmem._client.retrieve = AsyncMock(
-            return_value=[{"payload": {"rlm_boost": 5, "rlm_penalty": 0}}]
+            return_value=[{"payload": {"rlm_boost": 5, "rlm_penalty": 0}}],
         )
         mock_langmem._client.upsert = AsyncMock()
 
         proc = RLMFeedbackProcessor(
-            langmem_service=mock_langmem, reindex_threshold=10
+            langmem_service=mock_langmem, reindex_threshold=10,
         )
 
         signal = await proc.on_feedback_received(doc_id="doc-1", label="good")
@@ -138,12 +138,12 @@ class TestRLMFeedbackProcessorOnFeedback:
         mock_langmem._collection = "test"
         # Start at penalty=9 (one short of threshold=10).
         mock_langmem._client.retrieve = AsyncMock(
-            return_value=[{"payload": {"rlm_boost": 0, "rlm_penalty": 9}}]
+            return_value=[{"payload": {"rlm_boost": 0, "rlm_penalty": 9}}],
         )
         mock_langmem._client.upsert = AsyncMock()
 
         proc = RLMFeedbackProcessor(
-            langmem_service=mock_langmem, reindex_threshold=10
+            langmem_service=mock_langmem, reindex_threshold=10,
         )
 
         signal = await proc.on_feedback_received(doc_id="doc-1", label="bad")
@@ -162,13 +162,13 @@ class TestRLMFeedbackProcessorAdjustScore:
 
         # Mock langmem_settings with rlm_enabled=False.
         with patch(
-            "src.backend.core.config.ai_stack.langmem_settings"
+            "src.backend.core.config.ai_stack.langmem_settings",
         ) as mock_settings:
             mock_settings.rlm_enabled = False
             mock_settings.rlm_boost_factor = 0.1
 
             result = RLMFeedbackProcessor.adjust_score(
-                score=1.0, boost=10, penalty=5
+                score=1.0, boost=10, penalty=5,
             )
             # rlm disabled → returns original score.
             assert result == 1.0
@@ -178,28 +178,28 @@ class TestRLMFeedbackProcessorAdjustScore:
         from src.backend.services.ai.memory.langmem.rlm import RLMFeedbackProcessor
 
         with patch(
-            "src.backend.core.config.ai_stack.langmem_settings"
+            "src.backend.core.config.ai_stack.langmem_settings",
         ) as mock_settings:
             mock_settings.rlm_enabled = True
             mock_settings.rlm_boost_factor = 0.1
 
             # No boost/penalty change → no score change.
             result = RLMFeedbackProcessor.adjust_score(
-                score=1.0, boost=5, penalty=5
+                score=1.0, boost=5, penalty=5,
             )
             # Formula: 1.0 * (1 + (5 - 5) * 0.1) = 1.0 * 1.0 = 1.0.
             assert result == pytest.approx(1.0)
 
             # Boost > 0 → score increases.
             result = RLMFeedbackProcessor.adjust_score(
-                score=1.0, boost=10, penalty=0
+                score=1.0, boost=10, penalty=0,
             )
             # 1.0 * (1 + 10 * 0.1) = 1.0 * 2.0 = 2.0.
             assert result == pytest.approx(2.0)
 
             # Penalty > 0 → score decreases.
             result = RLMFeedbackProcessor.adjust_score(
-                score=1.0, boost=0, penalty=10
+                score=1.0, boost=0, penalty=10,
             )
             # 1.0 * (1 + (0 - 10) * 0.1) = 1.0 * 0.0 = 0.0.
             assert result == pytest.approx(0.0)
@@ -214,7 +214,7 @@ class TestRLMConsolidator:
 
         qdrant = MagicMock()
         proc = RLMConsolidator(
-            qdrant_client=qdrant, embedding_model="custom-embed"
+            qdrant_client=qdrant, embedding_model="custom-embed",
         )
         # Internal attributes (cycle 70 invariant: tests contract).
         assert proc.qdrant is qdrant

@@ -34,7 +34,7 @@ class TechService:
             HTML response with link.
         """
         return generate_link_page(
-            f"{settings.logging.host}:{settings.logging.port}", "Хранилище логов"
+            f"{settings.logging.host}:{settings.logging.port}", "Хранилище логов",
         )
 
     async def get_file_storage_link(self) -> HTMLResponse:
@@ -44,7 +44,7 @@ class TechService:
             HTML response with link.
         """
         return generate_link_page(
-            f"{settings.storage.interface_endpoint}", "Файловое хранилище"
+            f"{settings.storage.interface_endpoint}", "Файловое хранилище",
         )
 
     async def get_queue_monitor_link(self) -> HTMLResponse:
@@ -62,7 +62,7 @@ class TechService:
             HTML response with link.
         """
         return generate_link_page(
-            settings.app.langfuse_url, "LangFuse — LLM Observability"
+            settings.app.langfuse_url, "LangFuse — LLM Observability",
         )
 
     async def get_langgraph_link(self) -> HTMLResponse:
@@ -72,7 +72,7 @@ class TechService:
             HTML response with link.
         """
         return generate_link_page(
-            settings.app.langgraph_url, "LangGraph Studio — AI Agents"
+            settings.app.langgraph_url, "LangGraph Studio — AI Agents",
         )
 
     async def check_database(self) -> bool:
@@ -161,7 +161,7 @@ class TechService:
         return {model.value.__tablename__ for model in model_enum}  # type: ignore
 
     async def upload_excel_for_mass_create(
-        self, file_bytes: bytes, table_name: str, model_enum: Enum
+        self, file_bytes: bytes, table_name: str, model_enum: Enum,
     ) -> list[dict[str, Any]]:
         """
         Парсит Excel-файл и добавляет записи в БД через BaseService нужной модели.
@@ -170,14 +170,14 @@ class TechService:
             raise ValueError(f"Таблица {table_name} не найдена.")
 
         service: BaseService = await get_service_for_model(
-            model_enum[table_name].value  # type: ignore
+            model_enum[table_name].value,  # type: ignore
         )
 
         results: list = []
         if pl is None:
             raise RuntimeError(
                 "polars required for Excel-импорт. "
-                "Install: uv pip install polars"
+                "Install: uv pip install polars",
             )
         df = pl.read_excel(BytesIO(file_bytes))
 

@@ -30,7 +30,7 @@ class FakeRepo(RuleEngineRepository):
         self._docs[(doc.name, doc.tenant_id)] = doc
 
     async def get(
-        self, name: str, *, version: str | None = None, tenant_id: str | None = None
+        self, name: str, *, version: str | None = None, tenant_id: str | None = None,
     ) -> RulesetDoc | None:
         self.get_calls += 1
         return self._docs.get((name, tenant_id))
@@ -47,7 +47,7 @@ class FakeRepo(RuleEngineRepository):
         return doc
 
     async def delete(
-        self, name: str, version: str, *, tenant_id: str | None = None
+        self, name: str, version: str, *, tenant_id: str | None = None,
     ) -> bool:
         key = (name, tenant_id)
         if key in self._docs:
@@ -160,7 +160,7 @@ async def test_hot_reload_off_does_not_refetch() -> None:
     fixed = datetime(2026, 5, 15, 12, 0, 0, tzinfo=UTC)
     times: list[datetime] = [fixed]
     registry = RuleEngineRegistry(
-        repo, FakeFlags(hot_reload=False), clock=lambda: times[-1]
+        repo, FakeFlags(hot_reload=False), clock=lambda: times[-1],
     )
 
     await registry.get_active("rs")

@@ -66,7 +66,7 @@ async def test_send_str_payload_success(fake_aiosmtplib: types.ModuleType) -> No
 @pytest.mark.asyncio
 async def test_send_html_payload(fake_aiosmtplib: types.ModuleType) -> None:
     sink = EmailSink(
-        sink_id="e3", host="smtp.test", from_addr="f@test", default_to="t@test"
+        sink_id="e3", host="smtp.test", from_addr="f@test", default_to="t@test",
     )
     result = await sink.send({"body": "<b>hi</b>", "html": True})
     assert result.ok is True
@@ -80,7 +80,7 @@ async def test_send_html_payload(fake_aiosmtplib: types.ModuleType) -> None:
 @pytest.mark.asyncio
 async def test_send_cc_and_bcc(fake_aiosmtplib: types.ModuleType) -> None:
     sink = EmailSink(
-        sink_id="e4", host="smtp.test", from_addr="f@test", default_to="t@test"
+        sink_id="e4", host="smtp.test", from_addr="f@test", default_to="t@test",
     )
     result = await sink.send({"cc": ["c1@test", "c2@test"], "bcc": "bc@test"})
     assert result.ok is True
@@ -108,7 +108,7 @@ async def test_send_missing_from_addr_returns_error() -> None:
 @pytest.mark.asyncio
 async def test_send_invalid_payload_type_returns_error() -> None:
     sink = EmailSink(
-        sink_id="e7", host="smtp.test", from_addr="f@test", default_to="t@test"
+        sink_id="e7", host="smtp.test", from_addr="f@test", default_to="t@test",
     )
     result = await sink.send(12345)
     assert result.ok is False
@@ -121,7 +121,7 @@ async def test_send_returns_false_when_aiosmtplib_missing(
 ) -> None:
     monkeypatch.setitem(sys.modules, "aiosmtplib", None)  # type: ignore[arg-type]
     sink = EmailSink(
-        sink_id="e8", host="smtp.test", from_addr="f@test", default_to="t@test"
+        sink_id="e8", host="smtp.test", from_addr="f@test", default_to="t@test",
     )
     result = await sink.send("body")
     assert result.ok is False
@@ -132,7 +132,7 @@ async def test_send_returns_false_when_aiosmtplib_missing(
 async def test_send_handles_smtp_exception(fake_aiosmtplib: types.ModuleType) -> None:
     fake_aiosmtplib.send = AsyncMock(side_effect=ConnectionRefusedError(" refused"))
     sink = EmailSink(
-        sink_id="e9", host="smtp.test", from_addr="f@test", default_to="t@test"
+        sink_id="e9", host="smtp.test", from_addr="f@test", default_to="t@test",
     )
     result = await sink.send("body")
     assert result.ok is False

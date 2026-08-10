@@ -257,12 +257,12 @@ class FlagsmithBackend:
         except Exception as exc:
             _logger.warning("FlagsmithBackend boolean fallback: %s", exc)
             return await self.fallback.resolve_boolean_value(
-                flag_key, default, evaluation_context
+                flag_key, default, evaluation_context,
             )
         # Если Flagsmith вернул default — даём шанс fallback.
         if value == default:
             fb = await self.fallback.resolve_boolean_value(
-                flag_key, default, evaluation_context
+                flag_key, default, evaluation_context,
             )
             return fb
         return bool(value)
@@ -285,11 +285,11 @@ class FlagsmithBackend:
         except Exception as exc:
             _logger.warning("FlagsmithBackend string fallback: %s", exc)
             return await self.fallback.resolve_string_value(
-                flag_key, default, evaluation_context
+                flag_key, default, evaluation_context,
             )
         if value == default:
             return await self.fallback.resolve_string_value(
-                flag_key, default, evaluation_context
+                flag_key, default, evaluation_context,
             )
         return str(value)
 
@@ -311,11 +311,11 @@ class FlagsmithBackend:
         except Exception as exc:
             _logger.warning("FlagsmithBackend integer fallback: %s", exc)
             return await self.fallback.resolve_integer_value(
-                flag_key, default, evaluation_context
+                flag_key, default, evaluation_context,
             )
         if value == default:
             return await self.fallback.resolve_integer_value(
-                flag_key, default, evaluation_context
+                flag_key, default, evaluation_context,
             )
         return int(value)
 
@@ -337,11 +337,11 @@ class FlagsmithBackend:
         except Exception as exc:
             _logger.warning("FlagsmithBackend object fallback: %s", exc)
             return await self.fallback.resolve_object_value(
-                flag_key, default, evaluation_context
+                flag_key, default, evaluation_context,
             )
         if value == default:
             return await self.fallback.resolve_object_value(
-                flag_key, default, evaluation_context
+                flag_key, default, evaluation_context,
             )
         return dict(value)
 

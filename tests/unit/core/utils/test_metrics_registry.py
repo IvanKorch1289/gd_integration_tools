@@ -69,10 +69,10 @@ class TestCounter:
         assert c1 is c2  # same instance
 
     def test_merged_labels_with_default(
-        self, custom_registry: CollectorRegistry
+        self, custom_registry: CollectorRegistry,
     ) -> None:
         reg = MetricsRegistry(
-            default_labels=("tenant_id", "route_id"), registry=custom_registry
+            default_labels=("tenant_id", "route_id"), registry=custom_registry,
         )
         c = reg.counter("req_total", "Requests", labels=("status",))
         # Доступные labelnames включают default + extra
@@ -104,7 +104,7 @@ class TestHistogram:
         # prometheus_client private API изменчив; smoke test: вызов не падает
         # и возвращает Histogram instance.
         h = fresh_metrics.histogram(
-            "test_duration", "Test duration", buckets=(0.1, 0.5, 1.0)
+            "test_duration", "Test duration", buckets=(0.1, 0.5, 1.0),
         )
         assert isinstance(h, Histogram)
 
@@ -146,7 +146,7 @@ class TestGetCounter:
             fresh_metrics.get_counter("nonexistent")
 
     def test_get_unknown_strict_raises_with_message(
-        self, fresh_metrics: MetricsRegistry
+        self, fresh_metrics: MetricsRegistry,
     ) -> None:
         # feature flag on → KeyError с message
         fresh_metrics._is_strict = lambda: True  # type: ignore[method-assign]

@@ -42,7 +42,7 @@ class ConnectorRotator:
         """Метод subscribe (см. signature)."""
         async with self._lock:
             self._subscriptions.setdefault(vault_path, []).append(
-                (connector_name, reload_fn)
+                (connector_name, reload_fn),
             )
             self._logger.info(
                 "Connector subscribed to vault rotation",

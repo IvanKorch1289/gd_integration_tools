@@ -82,7 +82,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
         lambda: _make_stub("api_key_manager"),
     )
     monkeypatch.setattr(
-        "src.backend.dsl.engine.tracer.ExecutionTracer", lambda: _make_stub("tracer")
+        "src.backend.dsl.engine.tracer.ExecutionTracer", lambda: _make_stub("tracer"),
     )
     monkeypatch.setattr(
         "src.backend.dsl.engine.plugin_registry.ProcessorPluginRegistry",

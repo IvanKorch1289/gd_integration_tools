@@ -40,7 +40,7 @@ def test_di_provider_returns_presidio_adapter_when_flag_on(
     from src.backend.core.di import providers
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", True, raising=True
+        features.feature_flags, "presidio_pii_enabled", True, raising=True,
     )
     providers.ai._overrides.pop("ai_sanitizer", None)
     _reset_presidio_singleton()
@@ -57,7 +57,7 @@ def test_di_provider_returns_legacy_when_flag_off(
     from src.backend.core.di import providers
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", False, raising=True
+        features.feature_flags, "presidio_pii_enabled", False, raising=True,
     )
     providers.ai._overrides.pop("ai_sanitizer", None)
 
@@ -102,7 +102,7 @@ def test_fallback_counter_increments_on_import_error(
 
     def _fake_import(name: str, *args: object, **kwargs: object) -> object:
         if name.startswith("presidio_analyzer") or name.startswith(
-            "presidio_anonymizer"
+            "presidio_anonymizer",
         ):
             raise ImportError(f"эмуляция отсутствия пакета: {name}")
         return real_import(name, *args, **kwargs)
@@ -145,7 +145,7 @@ def test_ai_agent_uses_presidio_when_flag_on(monkeypatch: pytest.MonkeyPatch) ->
     from src.backend.core.di import providers
 
     monkeypatch.setattr(
-        features.feature_flags, "presidio_pii_enabled", True, raising=True
+        features.feature_flags, "presidio_pii_enabled", True, raising=True,
     )
     providers.ai._overrides.pop("ai_sanitizer", None)
     _reset_presidio_singleton()

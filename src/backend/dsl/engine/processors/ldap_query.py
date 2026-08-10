@@ -125,7 +125,7 @@ class LdapQueryProcessor(BaseProcessor):
 
         srv = Server(self._server, use_ssl=self._use_ssl)
         conn = Connection(
-            srv, user=self._bind_dn, password=self._password, auto_bind=True
+            srv, user=self._bind_dn, password=self._password, auto_bind=True,
         )
         try:
             attrs = self._attributes or ALL_ATTRIBUTES

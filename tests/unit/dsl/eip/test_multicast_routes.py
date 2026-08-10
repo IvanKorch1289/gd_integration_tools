@@ -120,7 +120,7 @@ def patched_routing(monkeypatch: pytest.MonkeyPatch):
 
     fake_engine_mod.ExecutionEngine = _engine_factory  # type: ignore[attr-defined]
     monkeypatch.setitem(
-        sys.modules, "src.backend.dsl.engine.execution_engine", fake_engine_mod
+        sys.modules, "src.backend.dsl.engine.execution_engine", fake_engine_mod,
     )
 
     return fake_registry, fake_engine_holder
@@ -153,11 +153,11 @@ async def test_strategy_all_on_error_continue_keeps_going(patched_routing) -> No
     registry.register("good", "good")
     registry.register("bad", "bad")
     engine_holder["engine"] = _FakeEngine(
-        results={"good": {"v": 1}}, errors={"bad": "boom"}
+        results={"good": {"v": 1}}, errors={"bad": "boom"},
     )
 
     proc = MulticastRoutesProcessor(
-        ["good", "bad"], strategy="all", on_error="continue"
+        ["good", "bad"], strategy="all", on_error="continue",
     )
     ex = _make_exchange()
     await proc.process(ex, _make_context())
@@ -194,7 +194,7 @@ async def test_strategy_first_success_returns_first_done(patched_routing) -> Non
     registry.register("fast", "fast")
     registry.register("slow", "slow")
     engine_holder["engine"] = _FakeEngine(
-        results={"fast": {"f": 1}, "slow": {"s": 2}}, delays={"slow": 0.5}
+        results={"fast": {"f": 1}, "slow": {"s": 2}}, delays={"slow": 0.5},
     )
 
     proc = MulticastRoutesProcessor(["fast", "slow"], strategy="first_success")
@@ -219,7 +219,7 @@ async def test_timeout_records_error(patched_routing) -> None:
     engine_holder["engine"] = _FakeEngine(delays={"slow": 0.5})
 
     proc = MulticastRoutesProcessor(
-        ["slow"], strategy="all", on_error="continue", timeout=0.05
+        ["slow"], strategy="all", on_error="continue", timeout=0.05,
     )
     ex = _make_exchange()
     await proc.process(ex, _make_context())
@@ -273,7 +273,7 @@ def test_invalid_on_error_raises() -> None:
 def test_to_spec_round_trip() -> None:
     """to_spec для MulticastRoutesProcessor совместим с YAML round-trip."""
     proc = MulticastRoutesProcessor(
-        ["a", "b", "c"], strategy="first_success", on_error="fail", timeout=15.0
+        ["a", "b", "c"], strategy="first_success", on_error="fail", timeout=15.0,
     )
     assert proc.to_spec() == {
         "multicast_routes": {
@@ -281,5 +281,5 @@ def test_to_spec_round_trip() -> None:
             "strategy": "first_success",
             "on_error": "fail",
             "timeout": 15.0,
-        }
+        },
     }

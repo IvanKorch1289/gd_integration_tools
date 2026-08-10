@@ -120,7 +120,7 @@ def test_waf_audit_callback_emits_granted_outcome() -> None:
                 "host": "example.com",
                 "url": "https://example.com/x",
                 "reason": "ok",
-            }
+            },
         )
     finally:
         waf_audit_logger.removeHandler(handler)
@@ -153,7 +153,7 @@ def test_waf_audit_callback_emits_denied_outcome() -> None:
                 "host": "evil.com",
                 "url": "https://evil.com/y",
                 "reason": "deny-list match",
-            }
+            },
         )
     finally:
         waf_audit_logger.removeHandler(handler)
@@ -327,7 +327,7 @@ def test_resolve_capability_check_returns_callable_when_gate_registered(
     gate_mock.check = sentinel_check
 
     with patch(
-        "src.backend.core.security.capabilities.gate.CapabilityGate"
+        "src.backend.core.security.capabilities.gate.CapabilityGate",
     ) as gate_cls:
         gate_cls.__name__ = "CapabilityGate"
         clean_registry.register_factory(gate_cls, lambda: gate_mock)

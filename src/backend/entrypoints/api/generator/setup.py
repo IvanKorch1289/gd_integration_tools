@@ -63,7 +63,7 @@ def register_action_handlers() -> None:
                 service_getter=get_workflows_service,
                 service_method="order_processing_workflow",
             ),
-        ]
+        ],
     )
 
     _is_registered = True

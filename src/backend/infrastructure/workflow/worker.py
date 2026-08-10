@@ -93,7 +93,7 @@ def _resolve_executor() -> Any:
     mode = os.environ.get("WORKFLOW_WORKER_EXECUTOR", "dsl").lower()
     if mode == "noop":
         _logger.warning(
-            "WORKFLOW_WORKER_EXECUTOR=noop — NoOpStepExecutor active (dev/smoke)"
+            "WORKFLOW_WORKER_EXECUTOR=noop — NoOpStepExecutor active (dev/smoke)",
         )
         return NoOpStepExecutor()
     from src.backend.infrastructure.workflow.executor import DSLStepExecutor
@@ -224,7 +224,7 @@ def _resolve_listener_dsn() -> str | None:
 
 
 async def _run_worker(
-    *, worker_id: str, max_concurrent: int, listen: bool, probes_port: int
+    *, worker_id: str, max_concurrent: int, listen: bool, probes_port: int,
 ) -> None:
     """Внутренний async-entrypoint команды ``run``.
 
@@ -244,7 +244,7 @@ async def _run_worker(
     listener_dsn = _resolve_listener_dsn() if listen else None
 
     runner = DurableWorkflowRunner(
-        config=config, executor=_resolve_executor(), listener_dsn=listener_dsn
+        config=config, executor=_resolve_executor(), listener_dsn=listener_dsn,
     )
 
     probes = WorkerProbesServer(
@@ -315,7 +315,7 @@ async def _print_status() -> None:
     await _bootstrap()
     async with main_session_manager.create_session() as session:
         stmt = select(
-            WorkflowInstance.status, func.count(WorkflowInstance.id)
+            WorkflowInstance.status, func.count(WorkflowInstance.id),
         ).group_by(WorkflowInstance.status)
         result = await session.execute(stmt)
         rows = result.all()
@@ -344,7 +344,7 @@ def run(
         help="Override worker_id (default: env WORKFLOW_WORKER_ID или worker-<rand>).",
     ),
     max_concurrent: int = typer.Option(
-        8, "--max-concurrent", help="Max параллельно выполняемых инстансов."
+        8, "--max-concurrent", help="Max параллельно выполняемых инстансов.",
     ),
     listen: bool = typer.Option(
         True,
@@ -352,7 +352,7 @@ def run(
         help="Включить pg_notify LISTEN (push-path). Backup-polling работает всегда.",
     ),
     probes_port: int = typer.Option(
-        9100, "--probes-port", help="Порт HTTP-сервера K8s probes + /metrics."
+        9100, "--probes-port", help="Порт HTTP-сервера K8s probes + /metrics.",
     ),
     log_level: str = typer.Option("INFO", "--log-level", help="Python logging level."),
 ):
@@ -373,7 +373,7 @@ def run(
                 max_concurrent=max_concurrent,
                 listen=listen,
                 probes_port=probes_port,
-            )
+            ),
         )
     except KeyboardInterrupt:
         typer.echo("Interrupted.")
@@ -405,7 +405,7 @@ def drain():
         "  kill -TERM <pid>                           # bare metal\n"
         "\n"
         "Worker пометит /readyz как 503, дождётся завершения активных executions\n"
-        "(до SHUTDOWN_GRACE_SECONDS, default 30s) и выйдет."
+        "(до SHUTDOWN_GRACE_SECONDS, default 30s) и выйдет.",
     )
 
 

@@ -26,7 +26,7 @@ from src.backend.core.resilience.adaptive_timeout import (
 def test_compute_from_p99_above_min() -> None:
     """После ≥10 замеров get_timeout возвращает p99 × multiplier."""
     policy = AdaptiveTimeoutPolicy(
-        AdaptiveTimeoutConfig(multiplier=1.5, min_timeout=0.5, max_timeout=60.0)
+        AdaptiveTimeoutConfig(multiplier=1.5, min_timeout=0.5, max_timeout=60.0),
     )
     # 10 замеров: 100..1000 мс. p99 = 1000 мс. * 1.5 = 1.5s.
     for ms in range(100, 1001, 100):
@@ -49,7 +49,7 @@ def test_default_when_insufficient_samples() -> None:
 def test_min_timeout_clamp() -> None:
     """Очень быстрые ответы не должны давать таймаут ниже min_timeout."""
     policy = AdaptiveTimeoutPolicy(
-        AdaptiveTimeoutConfig(multiplier=1.5, min_timeout=2.0, max_timeout=60.0)
+        AdaptiveTimeoutConfig(multiplier=1.5, min_timeout=2.0, max_timeout=60.0),
     )
     # 10 замеров по 1 мс → p99 = 0.001s × 1.5 = 0.0015s, должно быть clamped до 2.0s.
     for _ in range(15):
@@ -60,7 +60,7 @@ def test_min_timeout_clamp() -> None:
 def test_max_timeout_clamp() -> None:
     """Очень медленные ответы не должны давать таймаут выше max_timeout."""
     policy = AdaptiveTimeoutPolicy(
-        AdaptiveTimeoutConfig(multiplier=1.5, min_timeout=2.0, max_timeout=10.0)
+        AdaptiveTimeoutConfig(multiplier=1.5, min_timeout=2.0, max_timeout=10.0),
     )
     # 10 замеров по 50_000 мс → p99 = 50s × 1.5 = 75s, должно быть clamped до 10.0s.
     for _ in range(15):
@@ -106,8 +106,8 @@ def test_window_overflow_eviction() -> None:
     """Старые сэмплы вытесняются по достижении window_size."""
     policy = AdaptiveTimeoutPolicy(
         AdaptiveTimeoutConfig(
-            multiplier=1.0, min_timeout=0.0, max_timeout=60.0, window_size=20
-        )
+            multiplier=1.0, min_timeout=0.0, max_timeout=60.0, window_size=20,
+        ),
     )
     # 50 сэмплов — оставаться должны только последние 20.
     for ms in range(50):

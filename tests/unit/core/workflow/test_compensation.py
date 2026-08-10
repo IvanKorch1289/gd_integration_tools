@@ -95,13 +95,13 @@ class TestCompensateWorkflowRequest:
         """
         # Forward order (caller mistake)
         req1 = CompensateWorkflowRequest(
-            workflow_id="wf", reason="r", compensation_steps=["step1", "step2"]
+            workflow_id="wf", reason="r", compensation_steps=["step1", "step2"],
         )
         assert req1.compensation_steps == ["step1", "step2"]
 
         # Reverse order (correct usage)
         req2 = CompensateWorkflowRequest(
-            workflow_id="wf", reason="r", compensation_steps=["step2", "step1"]
+            workflow_id="wf", reason="r", compensation_steps=["step2", "step1"],
         )
         assert req2.compensation_steps == ["step2", "step1"]
 

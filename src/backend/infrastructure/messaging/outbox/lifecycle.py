@@ -90,7 +90,7 @@ async def start_outbox_dispatcher(
     ]
     if missing:
         _logger.warning(
-            "outbox.lifecycle.missing_dependencies", extra={"missing": missing}
+            "outbox.lifecycle.missing_dependencies", extra={"missing": missing},
         )
         return
     assert backend is not None

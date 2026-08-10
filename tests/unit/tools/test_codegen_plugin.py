@@ -51,7 +51,7 @@ def test_plugin_toml_emits_capability_block(isolated_extensions: Path) -> None:
         with_frontend=False,
     )
     toml = (isolated_extensions / "cap_demo" / "plugin.toml").read_text(
-        encoding="utf-8"
+        encoding="utf-8",
     )
     assert "[[capabilities]]" in toml
     assert 'name = "db.read.orders"' in toml
@@ -61,19 +61,19 @@ def test_plugin_toml_emits_capability_block(isolated_extensions: Path) -> None:
 def test_overwrite_protects_existing(isolated_extensions: Path) -> None:
     """Без overwrite повторный запуск падает с FileExistsError."""
     cg = codegen_plugin.PluginCodegen(
-        target_dir=isolated_extensions, default_overwrite=False
+        target_dir=isolated_extensions, default_overwrite=False,
     )
     cg.scaffold(name="test_one", features=["a"], capabilities=[], with_frontend=False)
     with pytest.raises(FileExistsError):
         cg.scaffold(
-            name="test_one", features=["a"], capabilities=[], with_frontend=False
+            name="test_one", features=["a"], capabilities=[], with_frontend=False,
         )
 
 
 def test_overwrite_allows_rewrite(isolated_extensions: Path) -> None:
     """С default_overwrite=True повторный запуск проходит."""
     cg = codegen_plugin.PluginCodegen(
-        target_dir=isolated_extensions, default_overwrite=True
+        target_dir=isolated_extensions, default_overwrite=True,
     )
     cg.scaffold(name="test_two", features=["a"], capabilities=[], with_frontend=False)
     cg.scaffold(name="test_two", features=["a"], capabilities=[], with_frontend=False)
@@ -81,7 +81,7 @@ def test_overwrite_allows_rewrite(isolated_extensions: Path) -> None:
 
 
 def test_cli_main(
-    isolated_extensions: Path, capsys: pytest.CaptureFixture[str]
+    isolated_extensions: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
     """CLI main возвращает 0 и пишет Created plugin."""
     rc = codegen_plugin.main(
@@ -92,7 +92,7 @@ def test_cli_main(
             "ping,echo",
             "--capabilities",
             "mq.publish",
-        ]
+        ],
     )
     out = capsys.readouterr().out
     assert rc == 0
@@ -106,6 +106,6 @@ def test_cleanup(isolated_extensions: Path) -> None:
     """Smoke: tmp directory можно полностью удалить."""
     cg = codegen_plugin.PluginCodegen(target_dir=isolated_extensions)
     cg.scaffold(
-        name="cleanup_demo", features=["a"], capabilities=[], with_frontend=False
+        name="cleanup_demo", features=["a"], capabilities=[], with_frontend=False,
     )
     shutil.rmtree(isolated_extensions / "cleanup_demo")

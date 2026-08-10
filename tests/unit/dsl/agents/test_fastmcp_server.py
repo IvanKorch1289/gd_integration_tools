@@ -19,7 +19,7 @@ class TestFastMCPserver:
         """FastMCPserver is instantiated without error and registers tools."""
         with (
             patch(
-                "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
+                "src.backend.dsl.agents.fastmcp_server.SkillRegistry",
             ) as mock_registry_cls,
             patch("src.backend.dsl.agents.fastmcp_server.workflow_registry"),
         ):
@@ -43,10 +43,10 @@ class TestFastMCPserver:
 
         with (
             patch(
-                "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
+                "src.backend.dsl.agents.fastmcp_server.SkillRegistry",
             ) as mock_registry_cls,
             patch(
-                "src.backend.dsl.agents.fastmcp_server.workflow_registry"
+                "src.backend.dsl.agents.fastmcp_server.workflow_registry",
             ) as mock_wf_registry,
         ):
             mock_registry = MagicMock()
@@ -64,7 +64,7 @@ class TestFastMCPserver:
         """FastMCPserver start/stop are no-ops (lifecycle managed by ASGI host)."""
         with (
             patch(
-                "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
+                "src.backend.dsl.agents.fastmcp_server.SkillRegistry",
             ) as mock_registry_cls,
             patch("src.backend.dsl.agents.fastmcp_server.workflow_registry"),
         ):
@@ -84,7 +84,7 @@ class TestFastMCPserver:
         """asgi_app property returns the MCP ASGI application."""
         with (
             patch(
-                "src.backend.dsl.agents.fastmcp_server.SkillRegistry"
+                "src.backend.dsl.agents.fastmcp_server.SkillRegistry",
             ) as mock_registry_cls,
             patch("src.backend.dsl.agents.fastmcp_server.workflow_registry"),
         ):

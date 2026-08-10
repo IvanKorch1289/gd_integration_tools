@@ -79,7 +79,7 @@ class TenantScopedCasbin:
     """
 
     def __init__(
-        self, base_adapter: CasbinAdapter, *, default_tenant_id: str | None = None
+        self, base_adapter: CasbinAdapter, *, default_tenant_id: str | None = None,
     ) -> None:
         self._base = base_adapter
         self._default_tenant_id = default_tenant_id
@@ -98,7 +98,7 @@ class TenantScopedCasbin:
     # ---------------------------------------------------------------- enforce
 
     def enforce(
-        self, user_id: str, resource: str, action: str, tenant_id: str | None = None
+        self, user_id: str, resource: str, action: str, tenant_id: str | None = None,
     ) -> bool:
         """Разрешён ли ``user_id`` выполнить ``action`` на ``resource`` в ``tenant``.
 
@@ -139,7 +139,7 @@ class TenantScopedCasbin:
     # ----------------------------------------------------------- admin: policy
 
     def add_policy(
-        self, user_id: str, resource: str, action: str, tenant_id: str
+        self, user_id: str, resource: str, action: str, tenant_id: str,
     ) -> bool:
         """Добавить 4-арг policy ``(user, resource, action, tenant)``."""
         enforcer = self._base._ensure_enforcer()
@@ -152,7 +152,7 @@ class TenantScopedCasbin:
             return False
 
     def remove_policy(
-        self, user_id: str, resource: str, action: str, tenant_id: str
+        self, user_id: str, resource: str, action: str, tenant_id: str,
     ) -> bool:
         """Удалить ранее добавленную 4-арг policy."""
         enforcer = self._base._ensure_enforcer()

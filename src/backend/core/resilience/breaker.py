@@ -164,7 +164,7 @@ class BreakerRegistry:
         self._factory.add_listener(self._on_event)
 
     def get_or_create(
-        self, name: str, spec: BreakerSpec | None = None, *, host: str = "default"
+        self, name: str, spec: BreakerSpec | None = None, *, host: str = "default",
     ) -> Breaker:
         """Get existing breaker or create new one.
 
@@ -256,7 +256,7 @@ class BreakerRegistry:
                     client_metrics = _get_cm_mod_fn()
 
                     client_metrics.record_circuit_state(
-                        client=client, host=host, state=state
+                        client=client, host=host, state=state,
                     )
                 except (ImportError, AttributeError, RuntimeError, TypeError) as cm_exc:
                     # cycle-9/D-AUDIT-978: narrow exceptions + observability.

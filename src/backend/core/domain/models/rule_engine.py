@@ -55,7 +55,7 @@ class RuleEngineRulesetORM(RuleEngineBase):
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     tenant_id: Mapped[str | None] = mapped_column(String(length=128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
+        DateTime(timezone=True), nullable=False, server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

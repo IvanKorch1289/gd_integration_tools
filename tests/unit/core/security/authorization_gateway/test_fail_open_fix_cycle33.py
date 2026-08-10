@@ -54,7 +54,7 @@ class TestIsEnabledFailOpenFix:
     """B-01 fix: ``_is_enabled()`` должен остаться enabled при ошибке feature-flag."""
 
     def test_authz_is_enabled_logs_on_exception_returns_true(
-        self, gateway: AuthorizationGateway, caplog: pytest.LogCaptureFixture
+        self, gateway: AuthorizationGateway, caplog: pytest.LogCaptureFixture,
     ) -> None:
         """При падении ``get_feature_flag_service()`` _is_enabled() возвращает True.
 
@@ -97,7 +97,7 @@ class TestIsEnabledFailOpenFix:
         ), "должен быть именно ERROR level (не WARNING)"
 
     def test_authz_is_enabled_constructor_override_takes_precedence(
-        self, gateway: AuthorizationGateway
+        self, gateway: AuthorizationGateway,
     ) -> None:
         """Конструкторский ``enabled=False`` имеет приоритет над fallback.
 
@@ -106,14 +106,14 @@ class TestIsEnabledFailOpenFix:
         и при исключении НЕ должен инвертироваться в True.
         """
         explicit = AuthorizationGateway(
-            capability_gateway=CapabilityGate(), enabled=False
+            capability_gateway=CapabilityGate(), enabled=False,
         )
         assert explicit._enabled is False
         # feature-flag service тут не должен вызываться (early return).
         assert explicit._is_enabled() is False
 
     def test_authz_is_enabled_happy_path_returns_flag_value(
-        self, monkeypatch: pytest.MonkeyPatch, gateway: AuthorizationGateway
+        self, monkeypatch: pytest.MonkeyPatch, gateway: AuthorizationGateway,
     ) -> None:
         """Happy-path: feature flag = True → _is_enabled() = True."""
         monkeypatch.setattr(
@@ -135,7 +135,7 @@ class TestCheckEngineFailureWarning:
         before = _counter_value("casbin")
 
         def _exploding_casbin(
-            subject: str, action: str, resource: str
+            subject: str, action: str, resource: str,
         ) -> bool | None:
             raise ConnectionError("casbin enforcer socket closed")
 
@@ -144,7 +144,7 @@ class TestCheckEngineFailureWarning:
         gateway._casbin_check = _exploding_casbin  # type: ignore[method-assign]
 
         with caplog.at_level(
-            logging.WARNING, logger="core.security.authorization_gateway"
+            logging.WARNING, logger="core.security.authorization_gateway",
         ):
             result = gateway.check("alice", "read", "document:1")
 
@@ -182,7 +182,7 @@ class TestCheckEngineFailureWarning:
         gateway._opa_check = _exploding_opa  # type: ignore[method-assign]
 
         with caplog.at_level(
-            logging.WARNING, logger="core.security.authorization_gateway"
+            logging.WARNING, logger="core.security.authorization_gateway",
         ):
             result = gateway.check("alice", "read", "document:2")
 
@@ -196,7 +196,7 @@ class TestCheckEngineFailureWarning:
         assert _counter_value("opa") == before + 1
 
     def test_check_in_memory_fallback_short_circuits(
-        self, gateway: AuthorizationGateway
+        self, gateway: AuthorizationGateway,
     ) -> None:
         """In-memory hit НЕ вызывает engine'и → counter не растёт.
 

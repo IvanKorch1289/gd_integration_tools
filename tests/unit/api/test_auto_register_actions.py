@@ -86,7 +86,7 @@ class TestInferMethodForAction:
 
 class TestAutoRegisterUnroutedActions:
     def test_empty_registry_adds_zero_routes(
-        self, app: FastAPI, registry: ActionHandlerRegistry
+        self, app: FastAPI, registry: ActionHandlerRegistry,
     ) -> None:
         added = auto_register_unrouted_actions(app, registry)
         assert added == 0
@@ -96,7 +96,7 @@ class TestAutoRegisterUnroutedActions:
         )
 
     def test_single_action_creates_one_route(
-        self, app: FastAPI, registry: ActionHandlerRegistry
+        self, app: FastAPI, registry: ActionHandlerRegistry,
     ) -> None:
         service = _FakeService()
         registry.register(
@@ -111,7 +111,7 @@ class TestAutoRegisterUnroutedActions:
         assert f"{_AUTO_PREFIX}/demo.do_thing" in paths
 
     def test_idempotent_second_call_adds_zero(
-        self, app: FastAPI, registry: ActionHandlerRegistry
+        self, app: FastAPI, registry: ActionHandlerRegistry,
     ) -> None:
         service = _FakeService()
         registry.register(
@@ -125,7 +125,7 @@ class TestAutoRegisterUnroutedActions:
         assert second == 0
 
     def test_skip_action_with_existing_route_name(
-        self, app: FastAPI, registry: ActionHandlerRegistry
+        self, app: FastAPI, registry: ActionHandlerRegistry,
     ) -> None:
         # Имитируем: action ``healthcheck_database`` уже имеет роут
         # с тем же именем (исторический ActionSpec.name == action).
@@ -148,7 +148,7 @@ class TestAutoRegisterUnroutedActions:
         assert added == 0
 
     def test_crud_verb_picks_correct_http_method(
-        self, app: FastAPI, registry: ActionHandlerRegistry
+        self, app: FastAPI, registry: ActionHandlerRegistry,
     ) -> None:
         service = _FakeService()
         for verb, expected_method in [
@@ -176,7 +176,7 @@ class TestAutoRegisterUnroutedActions:
         assert "DELETE" in method_by_path[f"{_AUTO_PREFIX}/products.delete"]
 
     def test_non_crud_action_defaults_to_post(
-        self, app: FastAPI, registry: ActionHandlerRegistry
+        self, app: FastAPI, registry: ActionHandlerRegistry,
     ) -> None:
         service = _FakeService()
         registry.register(
@@ -191,7 +191,7 @@ class TestAutoRegisterUnroutedActions:
                 assert "POST" in route.methods
 
     def test_endpoint_dispatches_to_registry(
-        self, app: FastAPI, registry: ActionHandlerRegistry
+        self, app: FastAPI, registry: ActionHandlerRegistry,
     ) -> None:
         service = _FakeService()
         registry.register(
@@ -208,7 +208,7 @@ class TestAutoRegisterUnroutedActions:
         assert service.calls == [("do_thing", {"foo": "bar"})]
 
     def test_get_endpoint_uses_query_params(
-        self, app: FastAPI, registry: ActionHandlerRegistry
+        self, app: FastAPI, registry: ActionHandlerRegistry,
     ) -> None:
         # Для GET-action параметры ожидаются в query, а не body.
         service = _FakeService()
@@ -234,7 +234,7 @@ class TestAutoRegisterUnroutedActions:
         assert added >= 0
 
     def test_double_call_does_not_create_duplicate_route(
-        self, app: FastAPI, registry: ActionHandlerRegistry
+        self, app: FastAPI, registry: ActionHandlerRegistry,
     ) -> None:
         service = _FakeService()
         registry.register(

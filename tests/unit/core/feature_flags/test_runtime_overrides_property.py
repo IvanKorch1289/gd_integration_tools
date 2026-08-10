@@ -31,14 +31,14 @@ st_tenant = st.text(
     max_size=20,
 )
 st_value = st.one_of(
-    st.booleans(), st.integers(min_value=-1000, max_value=1000), st.text(max_size=20)
+    st.booleans(), st.integers(min_value=-1000, max_value=1000), st.text(max_size=20),
 )
 
 PROP = settings(
-    max_examples=30, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    max_examples=30, suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 PROP20 = settings(
-    max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 
 
@@ -106,7 +106,7 @@ def test_clear_nonexistent_returns_none() -> None:
 @given(flag=st_flag, g_val=st_value, t_val=st_value, tenant=st_tenant)
 @PROP
 def test_per_tenant_overrides_global(
-    flag: str, g_val: object, t_val: object, tenant: str
+    flag: str, g_val: object, t_val: object, tenant: str,
 ) -> None:
     """Per-tenant override takes precedence over global override."""
     store = RuntimeFeatureFlagOverrides()
@@ -121,7 +121,7 @@ def test_per_tenant_overrides_global(
 @given(flag=st_flag, g_val=st_value, t_val=st_value, tenant=st_tenant)
 @PROP
 def test_other_tenant_unaffected(
-    flag: str, g_val: object, t_val: object, tenant: str
+    flag: str, g_val: object, t_val: object, tenant: str,
 ) -> None:
     """Setting tenant A does NOT affect tenant B (isolation)."""
     store = RuntimeFeatureFlagOverrides()

@@ -209,7 +209,7 @@ class RedisIngestStateStore:
         client = self._ensure_client()
         try:
             await client.cache_set(
-                self._task_key(task_id), orjson.dumps(snapshot), self._ttl
+                self._task_key(task_id), orjson.dumps(snapshot), self._ttl,
             )
         except Exception as exc:
             logger.debug("RedisIngestStateStore.update failed: %s", exc)

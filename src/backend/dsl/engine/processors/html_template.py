@@ -82,7 +82,7 @@ class HtmlTemplateProcessor(BaseProcessor):
         if context_from not in {"body", "properties", "merged"}:
             raise ValueError(
                 f"html_template: context_from must be 'body'|'properties'|'merged', "
-                f"got {context_from!r}"
+                f"got {context_from!r}",
             )
         self._template_source = template
         self._target = to

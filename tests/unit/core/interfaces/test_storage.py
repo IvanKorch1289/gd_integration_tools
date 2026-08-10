@@ -15,7 +15,7 @@ class TestObjectStorage:
     def test_partial_subclass_fails(self) -> None:
         class Partial(ObjectStorage):
             async def upload(
-                self, key: str, data: bytes, content_type: str | None = None
+                self, key: str, data: bytes, content_type: str | None = None,
             ) -> str:
                 return ""
 
@@ -25,7 +25,7 @@ class TestObjectStorage:
     def test_valid_subclass(self) -> None:
         class Full(ObjectStorage):
             async def upload(
-                self, key: str, data: bytes, content_type: str | None = None
+                self, key: str, data: bytes, content_type: str | None = None,
             ) -> str:
                 return ""
 
@@ -50,7 +50,7 @@ class TestObjectStorage:
     def test_supports_presigned_override(self) -> None:
         class NoPresign(ObjectStorage):
             async def upload(
-                self, key: str, data: bytes, content_type: str | None = None
+                self, key: str, data: bytes, content_type: str | None = None,
             ) -> str:
                 return ""
 

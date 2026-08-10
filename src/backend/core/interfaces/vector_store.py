@@ -55,7 +55,7 @@ class BaseVectorStore(ABC):
         эффективности; FAISS использует in-memory сканирование.
         """
         raise NotImplementedError(
-            "delete_where не поддерживается этим backend'ом — переопределите в подклассе."
+            "delete_where не поддерживается этим backend'ом — переопределите в подклассе.",
         )
 
     async def count_where(self, where: dict[str, Any]) -> int:
@@ -65,5 +65,5 @@ class BaseVectorStore(ABC):
         переопределяют. Используется для ``RAGService.count(collection=...)``.
         """
         raise NotImplementedError(
-            "count_where не поддерживается этим backend'ом — переопределите в подклассе."
+            "count_where не поддерживается этим backend'ом — переопределите в подклассе.",
         )

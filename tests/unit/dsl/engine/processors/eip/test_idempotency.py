@@ -26,7 +26,7 @@ async def test_idempotent_new_message() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_redis:
         mock_redis.set_if_not_exists = AsyncMock(return_value=True)
         await proc.process(e, ctx)
@@ -43,7 +43,7 @@ async def test_idempotent_duplicate_message() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_redis:
         mock_redis.set_if_not_exists = AsyncMock(return_value=False)
         await proc.process(e, ctx)
@@ -60,7 +60,7 @@ async def test_idempotent_redis_error_proceeds() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_redis:
         mock_redis.set_if_not_exists = AsyncMock(side_effect=RuntimeError("redis down"))
         await proc.process(e, ctx)

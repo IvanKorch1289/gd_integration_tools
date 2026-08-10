@@ -68,7 +68,7 @@ class TestRegisterFromToml:
                     "order": 700,
                     "options": {"x": 1},
                     "enabled_routes": ["/api/v1/*"],
-                }
+                },
             ],
         )
         specs = registry.specs()
@@ -90,7 +90,7 @@ class TestRegisterFromToml:
 
 class TestRegisterFromEntryPoints:
     def test_register_from_entry_point_appends(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Monkey-patched entry_points возвращает spec через register_from_entry_points."""
 
@@ -151,7 +151,7 @@ class TestPerRouteOverride:
         registry.register_builtin("skip", _OtherMiddleware, order=200)
         app = _FakeApp()
         applied = registry.apply_to_app(
-            app, route_overrides={"skip": {"enabled": False}}
+            app, route_overrides={"skip": {"enabled": False}},
         )
         assert applied == ("keep",)
         assert [cls for cls, _ in app.middlewares] == [_DummyMiddleware]
@@ -162,7 +162,7 @@ class TestPerRouteOverride:
         registry.register_builtin("m", _DummyMiddleware, {"a": 1, "b": 2}, order=100)
         app = _FakeApp()
         registry.apply_to_app(
-            app, route_overrides={"m": {"options": {"b": 99, "c": 3}}}
+            app, route_overrides={"m": {"options": {"b": 99, "c": 3}}},
         )
         cls, options = app.middlewares[0]
         assert cls is _DummyMiddleware

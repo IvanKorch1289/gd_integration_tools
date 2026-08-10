@@ -49,7 +49,7 @@ class TestFlagsClient:
         with patch.object(c, "_request", return_value={"ok": True}) as req:
             assert c.toggle_flag("my_flag", True) is True
         req.assert_called_once_with(
-            "POST", "/api/v1/admin/feature-flags/my_flag/toggle", json={"enabled": True}
+            "POST", "/api/v1/admin/feature-flags/my_flag/toggle", json={"enabled": True},
         )
 
     def test_toggle_flag_false(self) -> None:
@@ -156,7 +156,7 @@ class TestFeedbackClient:
             result = c.list_feedback_pending()
         assert result == {"items": []}
         req.assert_called_once_with(
-            "GET", "/api/v1/ai/feedback/pending", params={"limit": 50, "offset": 0}
+            "GET", "/api/v1/ai/feedback/pending", params={"limit": 50, "offset": 0},
         )
 
     def test_list_feedback_pending_with_agent_id(self) -> None:
@@ -177,7 +177,7 @@ class TestFeedbackClient:
         c = FeedbackClient()
         with patch.object(c, "_request", return_value={}) as req:
             c.list_feedback_labeled(
-                label="good", agent_id="a1", indexed_in_rag=True, limit=20, offset=5
+                label="good", agent_id="a1", indexed_in_rag=True, limit=20, offset=5,
             )
         req.assert_called_once_with(
             "GET",
@@ -210,7 +210,7 @@ class TestFeedbackClient:
         with patch.object(c, "_request", return_value={}) as req:
             c.list_feedback_labeled()
         req.assert_called_once_with(
-            "GET", "/api/v1/ai/feedback/labeled", params={"limit": 100, "offset": 0}
+            "GET", "/api/v1/ai/feedback/labeled", params={"limit": 100, "offset": 0},
         )
 
     def test_get_feedback_stats(self) -> None:
@@ -218,7 +218,7 @@ class TestFeedbackClient:
 
         c = FeedbackClient()
         with patch.object(
-            c, "_request", return_value={"pending": 5, "labeled": 100}
+            c, "_request", return_value={"pending": 5, "labeled": 100},
         ) as req:
             result = c.get_feedback_stats()
         assert result == {"pending": 5, "labeled": 100}
@@ -231,7 +231,7 @@ class TestFeedbackClient:
         with patch.object(c, "_request", return_value={"ok": True}) as req:
             c.label_feedback("doc_1", label="good")
         req.assert_called_once_with(
-            "POST", "/api/v1/ai/feedback/doc_1/label", json={"label": "good"}
+            "POST", "/api/v1/ai/feedback/doc_1/label", json={"label": "good"},
         )
 
     def test_label_feedback_full(self) -> None:
@@ -240,7 +240,7 @@ class TestFeedbackClient:
         c = FeedbackClient()
         with patch.object(c, "_request", return_value={}) as req:
             c.label_feedback(
-                "doc_1", label="bad", comment="needs work", operator_id="op_1"
+                "doc_1", label="bad", comment="needs work", operator_id="op_1",
             )
         req.assert_called_once_with(
             "POST",
@@ -256,7 +256,7 @@ class TestFeedbackClient:
             result = c.index_feedback_to_rag()
         assert result == {"indexed": 50}
         req.assert_called_once_with(
-            "POST", "/api/v1/ai/feedback/index-to-rag", json={"limit": 100}
+            "POST", "/api/v1/ai/feedback/index-to-rag", json={"limit": 100},
         )
 
     def test_index_feedback_to_rag_with_agent_id(self) -> None:
@@ -334,7 +334,7 @@ class TestDSLRoutesClient:
             result = c.create_dsl_route("yaml: content")
         assert result == {"id": "new_route"}
         req.assert_called_once_with(
-            "POST", "/api/v1/admin/dsl-routes", json={"yaml": "yaml: content"}
+            "POST", "/api/v1/admin/dsl-routes", json={"yaml": "yaml: content"},
         )
 
     def test_update_dsl_route(self) -> None:
@@ -345,7 +345,7 @@ class TestDSLRoutesClient:
             result = c.update_dsl_route("r1", "new_yaml")
         assert result == {"ok": True}
         req.assert_called_once_with(
-            "PUT", "/api/v1/admin/dsl-routes/r1", json={"yaml": "new_yaml"}
+            "PUT", "/api/v1/admin/dsl-routes/r1", json={"yaml": "new_yaml"},
         )
 
     def test_delete_dsl_route_happy_path(self) -> None:
@@ -368,12 +368,12 @@ class TestDSLRoutesClient:
 
         c = DSLRoutesClient()
         with patch.object(
-            c, "_request", return_value={"valid": True, "errors": []}
+            c, "_request", return_value={"valid": True, "errors": []},
         ) as req:
             result = c.validate_dsl_route("yaml: x")
         assert result == {"valid": True, "errors": []}
         req.assert_called_once_with(
-            "POST", "/api/v1/admin/dsl-routes/validate", json={"yaml": "yaml: x"}
+            "POST", "/api/v1/admin/dsl-routes/validate", json={"yaml": "yaml: x"},
         )
 
     def test_validate_dsl_route_exception_returns_invalid(self) -> None:
@@ -393,7 +393,7 @@ class TestDSLRoutesClient:
             result = c.diff_dsl_route("r1", "new_yaml")
         assert result == {"diff": "..."}
         req.assert_called_once_with(
-            "POST", "/api/v1/admin/dsl-routes/r1/diff", json={"yaml": "new_yaml"}
+            "POST", "/api/v1/admin/dsl-routes/r1/diff", json={"yaml": "new_yaml"},
         )
 
     def test_diff_dsl_route_exception_returns_none(self) -> None:
@@ -429,7 +429,7 @@ class TestRAGClient:
             result = c.get_stats(collection="my_col")
         assert result == {"docs": 50}
         get.assert_called_once_with(
-            "/api/v1/rag/stats", params={"collection": "my_col"}
+            "/api/v1/rag/stats", params={"collection": "my_col"},
         )
 
     def test_get_stats_non_dict_returns_empty(self) -> None:
@@ -454,7 +454,7 @@ class TestRAGClient:
             result = c.search("hello", top_k=3)
         assert result == {"results": []}
         post.assert_called_once_with(
-            "/api/v1/rag/search", json={"query": "hello", "top_k": 3}
+            "/api/v1/rag/search", json={"query": "hello", "top_k": 3},
         )
 
     def test_search_with_namespace(self) -> None:
@@ -464,7 +464,7 @@ class TestRAGClient:
         with patch.object(c, "post", return_value={}) as post:
             c.search("q", top_k=10, namespace="ns1")
         post.assert_called_once_with(
-            "/api/v1/rag/search", json={"query": "q", "top_k": 10, "namespace": "ns1"}
+            "/api/v1/rag/search", json={"query": "q", "top_k": 10, "namespace": "ns1"},
         )
 
     def test_search_exception_returns_empty(self) -> None:
@@ -483,7 +483,7 @@ class TestRAGClient:
         assert result == {"id": "doc_1"}
         # _multipart_post is called with kwargs
         assert mp.call_args.kwargs["files"] == {
-            "file": ("test.txt", b"file bytes", "text/plain")
+            "file": ("test.txt", b"file bytes", "text/plain"),
         }
         assert mp.call_args.kwargs["data"] == {"namespace": "default"}
 
@@ -519,7 +519,7 @@ class TestRAGClient:
             result = c.augment("query")
         assert result == {"augmented": True}
         post.assert_called_once_with(
-            "/api/v1/rag/augment", json={"query": "query", "top_k": 5}
+            "/api/v1/rag/augment", json={"query": "query", "top_k": 5},
         )
 
     def test_augment_with_namespace(self) -> None:
@@ -529,7 +529,7 @@ class TestRAGClient:
         with patch.object(c, "post", return_value={}) as post:
             c.augment("q", namespace="ns", top_k=10)
         post.assert_called_once_with(
-            "/api/v1/rag/augment", json={"query": "q", "top_k": 10, "namespace": "ns"}
+            "/api/v1/rag/augment", json={"query": "q", "top_k": 10, "namespace": "ns"},
         )
 
     def test_augment_exception_returns_empty(self) -> None:
@@ -584,7 +584,7 @@ class TestK4APIClient:
         with patch.object(c, "_request", return_value={}) as req:
             c.flush_rag_cache_tier(tier="l1")
         req.assert_called_once_with(
-            "POST", "/api/v1/admin/rag-cache/flush", params={"tier": "l1"}
+            "POST", "/api/v1/admin/rag-cache/flush", params={"tier": "l1"},
         )
 
     def test_flush_rag_cache_tier_exception(self) -> None:
@@ -602,7 +602,7 @@ class TestK4APIClient:
             result = c.get_rag_invalidation_events()
         assert result == [{"event": "x"}]
         req.assert_called_once_with(
-            "GET", "/api/v1/admin/rag-cache/events", params={"limit": 50}
+            "GET", "/api/v1/admin/rag-cache/events", params={"limit": 50},
         )
 
     def test_get_rag_invalidation_events_with_limit(self) -> None:
@@ -612,7 +612,7 @@ class TestK4APIClient:
         with patch.object(c, "_request", return_value=[]) as req:
             c.get_rag_invalidation_events(limit=100)
         req.assert_called_once_with(
-            "GET", "/api/v1/admin/rag-cache/events", params={"limit": 100}
+            "GET", "/api/v1/admin/rag-cache/events", params={"limit": 100},
         )
 
     def test_get_rag_invalidation_events_exception(self) -> None:
@@ -724,7 +724,7 @@ class TestK4APIClient:
             result = c.rag_search_preview("query", top_k=3)
         assert result == [{"doc": "x"}]
         req.assert_called_once_with(
-            "GET", "/api/v1/rag/search", params={"query": "query", "top_k": 3}
+            "GET", "/api/v1/rag/search", params={"query": "query", "top_k": 3},
         )
 
     def test_rag_search_preview_exception(self) -> None:

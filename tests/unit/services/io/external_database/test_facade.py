@@ -28,7 +28,7 @@ class _FakeResult:
     """Фейковый SQLAlchemy Result."""
 
     def __init__(
-        self, rows: list[dict[str, Any]] | None = None, rowcount: int = 0
+        self, rows: list[dict[str, Any]] | None = None, rowcount: int = 0,
     ) -> None:
         self._rows = rows or []
         self.rowcount = rowcount
@@ -44,7 +44,7 @@ class _FakeSession:
     """Фейковая SQLAlchemy AsyncSession."""
 
     def __init__(
-        self, rows: list[dict[str, Any]] | None = None, rowcount: int = 0
+        self, rows: list[dict[str, Any]] | None = None, rowcount: int = 0,
     ) -> None:
         self._rows = rows or []
         self._rowcount = rowcount
@@ -53,7 +53,7 @@ class _FakeSession:
         self.rolled_back = False
 
     async def _execute(
-        self, stmt: Any, params: dict[str, Any] | None = None
+        self, stmt: Any, params: dict[str, Any] | None = None,
     ) -> _FakeResult:
         return _FakeResult(rows=self._rows, rowcount=self._rowcount)
 
@@ -87,7 +87,7 @@ class _FakeManager:
 
 
 def _make_facade(
-    session: _FakeSession, *, capability_check: Any = None, plugin: str = "ext-1"
+    session: _FakeSession, *, capability_check: Any = None, plugin: str = "ext-1",
 ) -> ExternalDatabaseFacade:
     def _factory(profile: str) -> _FakeManager:
         return _FakeManager(session)
@@ -177,7 +177,7 @@ async def test_execute_rejects_multi_statement_with_comment_bypass() -> None:
     facade = _make_facade(session)
     with pytest.raises(SqlValidationError, match="single statement"):
         await facade.execute(
-            "pg_prod", "INSERT INTO t VALUES (1);--\nDROP DATABASE prod"
+            "pg_prod", "INSERT INTO t VALUES (1);--\nDROP DATABASE prod",
         )
 
 

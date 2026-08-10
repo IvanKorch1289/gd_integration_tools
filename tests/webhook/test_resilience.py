@@ -204,7 +204,7 @@ async def test_webhook_breaker_open_skip(dlq: _InMemoryDLQ) -> None:
 
 
 async def test_webhook_feature_flag_off_no_retry(
-    dlq: _InMemoryDLQ, monkeypatch: pytest.MonkeyPatch
+    dlq: _InMemoryDLQ, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """webhook_resilience_policy_enabled OFF → legacy путь."""
     from src.backend.core.config import features as features_module
@@ -218,7 +218,7 @@ async def test_webhook_feature_flag_off_no_retry(
     )
 
     policy = RPACallPolicy(
-        name="not_used", max_attempts=3, backoff_initial_seconds=0.001, dlq_writer=dlq
+        name="not_used", max_attempts=3, backoff_initial_seconds=0.001, dlq_writer=dlq,
     )
     set_rpa_policy(policy)
 

@@ -53,14 +53,14 @@ def app(fresh_registry: SourceRegistry) -> FastAPI:
 async def client(app: FastAPI) -> httpx.AsyncClient:
     """HTTPX AsyncClient через ASGI transport."""
     async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://test"
+        transport=httpx.ASGITransport(app=app), base_url="http://test",
     ) as cli:
         yield cli
 
 
 @pytest.mark.asyncio
 async def test_unknown_source_returns_404(
-    client: httpx.AsyncClient, fresh_registry: SourceRegistry
+    client: httpx.AsyncClient, fresh_registry: SourceRegistry,
 ) -> None:
     resp = await client.post("/webhooks/sources/missing", json={})
     assert resp.status_code == 404
@@ -69,7 +69,7 @@ async def test_unknown_source_returns_404(
 
 @pytest.mark.asyncio
 async def test_non_webhook_source_returns_404(
-    client: httpx.AsyncClient, fresh_registry: SourceRegistry
+    client: httpx.AsyncClient, fresh_registry: SourceRegistry,
 ) -> None:
     """Source существует, но имеет kind != webhook → 404."""
     from src.backend.infrastructure.sources.file_watcher import FileWatcherSource
@@ -82,7 +82,7 @@ async def test_non_webhook_source_returns_404(
 
 @pytest.mark.asyncio
 async def test_dispatch_without_secret_returns_200(
-    client: httpx.AsyncClient, fresh_registry: SourceRegistry
+    client: httpx.AsyncClient, fresh_registry: SourceRegistry,
 ) -> None:
     captured: list[dict[str, object]] = []
 
@@ -103,7 +103,7 @@ async def test_dispatch_without_secret_returns_200(
 
 @pytest.mark.asyncio
 async def test_invalid_hmac_returns_401(
-    client: httpx.AsyncClient, fresh_registry: SourceRegistry
+    client: httpx.AsyncClient, fresh_registry: SourceRegistry,
 ) -> None:
     src = WebhookSource("payments", path="/pay", hmac_secret="topsecret")
     await src.start(lambda ev: _noop())
@@ -120,7 +120,7 @@ async def test_invalid_hmac_returns_401(
 
 @pytest.mark.asyncio
 async def test_valid_hmac_returns_200(
-    client: httpx.AsyncClient, fresh_registry: SourceRegistry
+    client: httpx.AsyncClient, fresh_registry: SourceRegistry,
 ) -> None:
     secret = "topsecret"
     body = b'{"x":7}'
@@ -145,7 +145,7 @@ async def test_valid_hmac_returns_200(
 
 @pytest.mark.asyncio
 async def test_invalid_json_returns_400(
-    client: httpx.AsyncClient, fresh_registry: SourceRegistry
+    client: httpx.AsyncClient, fresh_registry: SourceRegistry,
 ) -> None:
     src = WebhookSource("raw", path="/raw")
     await src.start(lambda ev: _noop())
@@ -162,7 +162,7 @@ async def test_invalid_json_returns_400(
 
 @pytest.mark.asyncio
 async def test_source_not_started_returns_503(
-    client: httpx.AsyncClient, fresh_registry: SourceRegistry
+    client: httpx.AsyncClient, fresh_registry: SourceRegistry,
 ) -> None:
     """Source зарегистрирован, но start() не вызывался → RuntimeError → 503."""
     src = WebhookSource("idle", path="/idle")

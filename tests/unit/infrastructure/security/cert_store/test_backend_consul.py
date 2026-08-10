@@ -132,7 +132,7 @@ class TestConsulCertBackendGet:
             "version": 2,
         }
         client = FakeConsulClient(
-            store={"certs/my_service": json.dumps(payload).encode("utf-8")}
+            store={"certs/my_service": json.dumps(payload).encode("utf-8")},
         )
 
         with patch("consul.Consul", return_value=client, create=True):
@@ -184,7 +184,7 @@ class TestConsulCertBackendSave:
             "version": 1,
         }
         client = FakeConsulClient(
-            store={"certs/svc": json.dumps(payload).encode("utf-8")}
+            store={"certs/svc": json.dumps(payload).encode("utf-8")},
         )
         with patch("consul.Consul", return_value=client, create=True):
             backend = ConsulCertBackend()
@@ -210,7 +210,7 @@ class TestConsulCertBackendHistory:
             "version": 1,
         }
         client = FakeConsulClient(
-            store={"certs/svc": json.dumps(payload).encode("utf-8")}
+            store={"certs/svc": json.dumps(payload).encode("utf-8")},
         )
         with patch("consul.Consul", return_value=client, create=True):
             backend = ConsulCertBackend()
@@ -234,7 +234,7 @@ class TestConsulCertBackendListExpiring:
                     "fingerprint": _make_fingerprint(expired_pem),
                     "expires_at": past,
                     "version": 1,
-                }
+                },
             ).encode("utf-8"),
             "certs/valid": json.dumps(
                 {
@@ -242,7 +242,7 @@ class TestConsulCertBackendListExpiring:
                     "fingerprint": _make_fingerprint(valid_pem),
                     "expires_at": future,
                     "version": 1,
-                }
+                },
             ).encode("utf-8"),
         }
         client = FakeConsulClient(store=store_data)
@@ -270,7 +270,7 @@ class TestCertStoreFromSettingsDispatch:
         from src.backend.infrastructure.security.cert_store.store import CertStore
 
         settings = CertStoreSettings.model_construct(
-            backend="consul", vault_path="custom/certs"
+            backend="consul", vault_path="custom/certs",
         )
         store = CertStore.from_settings(settings)
         assert isinstance(store._backend, ConsulCertBackend)

@@ -21,7 +21,7 @@ from src.backend.dsl.engine.processors.db_crud import (
 
 def test_build_insert_sql_basic() -> None:
     sql, params = build_insert_sql(
-        "users", {"id": 1, "name": "Alice", "email": "a@b.com"}
+        "users", {"id": 1, "name": "Alice", "email": "a@b.com"},
     )
     assert (
         sql == 'INSERT INTO "users" ("id", "name", "email") VALUES (:id, :name, :email)'
@@ -51,7 +51,7 @@ def test_build_insert_sql_rejects_empty_data() -> None:
 
 def test_build_upsert_sql_basic() -> None:
     sql, params = build_upsert_sql(
-        "users", {"id": 1, "name": "Alice", "email": "a@b.com"}, conflict_keys=["id"]
+        "users", {"id": 1, "name": "Alice", "email": "a@b.com"}, conflict_keys=["id"],
     )
     assert "INSERT INTO" in sql
     assert 'ON CONFLICT ("id")' in sql
@@ -121,7 +121,7 @@ def test_build_update_sql_basic() -> None:
 
 def test_build_update_sql_multiple_cols() -> None:
     sql, params = build_update_sql(
-        "orders", {"status": "shipped", "updated_at": "2026-01-01"}, {"id": 42}
+        "orders", {"status": "shipped", "updated_at": "2026-01-01"}, {"id": 42},
     )
     assert 'UPDATE "orders"' in sql
     assert '"status" = :set_status' in sql
@@ -136,7 +136,7 @@ def test_build_update_sql_multiple_cols() -> None:
 
 def test_build_update_sql_multiple_where_conditions() -> None:
     sql, _ = build_update_sql(
-        "sessions", {"active": True}, {"user_id": 1, "tenant": "corp"}
+        "sessions", {"active": True}, {"user_id": 1, "tenant": "corp"},
     )
     assert 'WHERE "user_id" = :where_user_id' in sql
     assert 'AND "tenant" = :where_tenant' in sql
@@ -172,7 +172,7 @@ def test_build_update_sql_no_collision_set_where() -> None:
 
 def test_processor_insert_creates_with_correct_params() -> None:
     proc = DbCrudProcessor(
-        operation="INSERT", table="orders", data={"id": 1, "status": "new"}
+        operation="INSERT", table="orders", data={"id": 1, "status": "new"},
     )
     assert proc._operation == "INSERT"
     assert proc._table == "orders"
@@ -202,7 +202,7 @@ def test_processor_name_auto() -> None:
     proc = DbCrudProcessor(operation="INSERT", table="t", data={"a": 1})
     assert proc.name == "db_insert"
     proc2 = DbCrudProcessor(
-        operation="UPSERT", table="t", data={"a": 1}, conflict_keys=["a"]
+        operation="UPSERT", table="t", data={"a": 1}, conflict_keys=["a"],
     )
     assert proc2.name == "db_upsert"
     proc3 = DbCrudProcessor(operation="DELETE", table="t", where={"a": 1})
@@ -212,7 +212,7 @@ def test_processor_name_auto() -> None:
 def test_processor_update_accepted() -> None:
     """UPDATE operation is now accepted (was missing)."""
     proc = DbCrudProcessor(
-        operation="UPDATE", table="users", data={"name": "X"}, where={"id": 1}
+        operation="UPDATE", table="users", data={"name": "X"}, where={"id": 1},
     )
     assert proc._operation == "UPDATE"
     assert proc._data == {"name": "X"}
@@ -227,7 +227,7 @@ def test_processor_update_rejects_empty_where() -> None:
     from src.backend.dsl.engine.exchange import Exchange, Message
 
     proc = DbCrudProcessor(
-        operation="UPDATE", table="users", data={"name": "X"}, where={}
+        operation="UPDATE", table="users", data={"name": "X"}, where={},
     )
     ex = Exchange(in_message=Message(body={}))
     asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
@@ -277,13 +277,13 @@ def test_dsl_persistence_total_method_count() -> None:
 def test_supported_dialects_set() -> None:
     """P3 unified DML: ровно 5 диалектов (PG/SQLite/MySQL/Oracle/MSSQL)."""
     assert frozenset(
-        {"postgresql", "sqlite", "mysql", "oracle", "mssql"}
+        {"postgresql", "sqlite", "mysql", "oracle", "mssql"},
     ) == SUPPORTED_DIALECTS
 
 
 def test_build_upsert_sql_mysql_uses_duplicate_key() -> None:
     sql, params = build_upsert_sql_mysql(
-        "users", {"id": 1, "name": "Alice"}, conflict_keys=["id"]
+        "users", {"id": 1, "name": "Alice"}, conflict_keys=["id"],
     )
     assert "INSERT INTO" in sql
     assert "ON DUPLICATE KEY UPDATE" in sql
@@ -306,7 +306,7 @@ def test_build_upsert_sql_mysql_no_update_cols_keeps_clause() -> None:
 
 def test_build_upsert_sql_merge_uses_merge_into() -> None:
     sql, params = build_upsert_sql_merge(
-        "users", {"id": 1, "name": "Alice"}, conflict_keys=["id"]
+        "users", {"id": 1, "name": "Alice"}, conflict_keys=["id"],
     )
     assert sql.startswith("MERGE INTO")
     assert "USING (SELECT" in sql
@@ -320,13 +320,13 @@ def test_build_upsert_sql_merge_uses_merge_into() -> None:
 def test_build_upsert_sql_merge_rejects_unsafe_identifier() -> None:
     with pytest.raises(ValueError, match="Invalid SQL identifier"):
         build_upsert_sql_merge(
-            "users", {"col; DROP TABLE x;--": 1}, conflict_keys=["id"]
+            "users", {"col; DROP TABLE x;--": 1}, conflict_keys=["id"],
         )
 
 
 def test_build_upsert_sql_dispatch_postgres_uses_on_conflict() -> None:
     sql, _ = build_upsert_sql_dialect(
-        "postgresql", "users", {"id": 1, "name": "A"}, ["id"]
+        "postgresql", "users", {"id": 1, "name": "A"}, ["id"],
     )
     assert "ON CONFLICT" in sql
     assert "ON DUPLICATE KEY" not in sql
@@ -336,7 +336,7 @@ def test_build_upsert_sql_dispatch_postgres_uses_on_conflict() -> None:
 def test_build_upsert_sql_dispatch_sqlite_uses_on_conflict() -> None:
     """SQLite — тот же ON CONFLICT path, что и PostgreSQL."""
     sql, _ = build_upsert_sql_dialect(
-        "sqlite", "users", {"id": 1, "name": "A"}, ["id"]
+        "sqlite", "users", {"id": 1, "name": "A"}, ["id"],
     )
     assert "ON CONFLICT" in sql
     assert "ON DUPLICATE KEY" not in sql
@@ -344,7 +344,7 @@ def test_build_upsert_sql_dispatch_sqlite_uses_on_conflict() -> None:
 
 def test_build_upsert_sql_dispatch_mysql_uses_duplicate_key() -> None:
     sql, _ = build_upsert_sql_dialect(
-        "mysql", "users", {"id": 1, "name": "A"}, ["id"]
+        "mysql", "users", {"id": 1, "name": "A"}, ["id"],
     )
     assert "ON DUPLICATE KEY UPDATE" in sql
     assert "ON CONFLICT" not in sql
@@ -352,7 +352,7 @@ def test_build_upsert_sql_dispatch_mysql_uses_duplicate_key() -> None:
 
 def test_build_upsert_sql_dispatch_oracle_uses_merge() -> None:
     sql, _ = build_upsert_sql_dialect(
-        "oracle", "users", {"id": 1, "name": "A"}, ["id"]
+        "oracle", "users", {"id": 1, "name": "A"}, ["id"],
     )
     assert "MERGE INTO" in sql
     assert "ON CONFLICT" not in sql
@@ -361,7 +361,7 @@ def test_build_upsert_sql_dispatch_oracle_uses_merge() -> None:
 
 def test_build_upsert_sql_dispatch_mssql_uses_merge() -> None:
     sql, _ = build_upsert_sql_dialect(
-        "mssql", "users", {"id": 1, "name": "A"}, ["id"]
+        "mssql", "users", {"id": 1, "name": "A"}, ["id"],
     )
     assert "MERGE INTO" in sql
 
@@ -411,7 +411,7 @@ def test_processor_upsert_mysql_dialect_uses_duplicate_key() -> None:
 def test_processor_rejects_unknown_dialect() -> None:
     with pytest.raises(ValueError, match="dialect must be one of"):
         DbCrudProcessor(
-            operation="INSERT", table="users", data={"id": 1}, dialect="mongo"
+            operation="INSERT", table="users", data={"id": 1}, dialect="mongo",
         )
 
 
@@ -461,11 +461,11 @@ def test_processor_dialect_passes_for_non_upsert_ops() -> None:
     """Dialect допустим для INSERT/UPDATE/DELETE (P3 contract surface)."""
     for dialect in SUPPORTED_DIALECTS:
         proc = DbCrudProcessor(
-            operation="INSERT", table="t", data={"a": 1}, dialect=dialect
+            operation="INSERT", table="t", data={"a": 1}, dialect=dialect,
         )
         assert proc._dialect == dialect
         proc_del = DbCrudProcessor(
-            operation="DELETE", table="t", where={"a": 1}, dialect=dialect
+            operation="DELETE", table="t", where={"a": 1}, dialect=dialect,
         )
         assert proc_del._dialect == dialect
 
@@ -474,11 +474,11 @@ def test_processor_dialect_rejects_unsupported() -> None:
     """Только 5 диалектов допустимы; ClickHouse не supported (P3 contract)."""
     with pytest.raises(ValueError, match="dialect must be one of"):
         DbCrudProcessor(
-            operation="INSERT", table="t", data={"a": 1}, dialect="clickhouse"
+            operation="INSERT", table="t", data={"a": 1}, dialect="clickhouse",
         )
     with pytest.raises(ValueError, match="dialect must be one of"):
         DbCrudProcessor(
-            operation="INSERT", table="t", data={"a": 1}, dialect="postgres"
+            operation="INSERT", table="t", data={"a": 1}, dialect="postgres",
         )  # alias not accepted
 
 
@@ -501,7 +501,7 @@ def test_processor_upsert_oracle_routes_to_merge() -> None:
     # _dialect пробрасывается в build_upsert_sql_dialect; проверим,
     # что сохранённое значение действительно "oracle" (для runtime dispatch).
     sql, _ = build_upsert_sql_dialect(
-        proc._dialect, proc._table, proc._data, proc._conflict_keys
+        proc._dialect, proc._table, proc._data, proc._conflict_keys,
     )
     assert sql.startswith("MERGE INTO")
     assert "WHEN MATCHED THEN UPDATE SET" in sql
@@ -517,7 +517,7 @@ def test_processor_upsert_mssql_routes_to_merge() -> None:
         dialect="mssql",
     )
     sql, _ = build_upsert_sql_dialect(
-        proc._dialect, proc._table, proc._data, proc._conflict_keys
+        proc._dialect, proc._table, proc._data, proc._conflict_keys,
     )
     assert sql.startswith("MERGE INTO")
 

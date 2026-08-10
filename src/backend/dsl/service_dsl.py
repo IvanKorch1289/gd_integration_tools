@@ -202,7 +202,7 @@ def register_action(
 
 
 def _find_getter_in_module(
-    module: Any, _method_owner_cls: type | None
+    module: Any, _method_owner_cls: type | None,
 ) -> Callable | None:
     """Auto-detect ``get_<name>_service`` or ``get_<name>`` factory in the module."""
     for name in dir(module):
@@ -225,7 +225,7 @@ def scan_and_register_actions(package_paths: Sequence[str] | None = None) -> int
                 pkg = importlib.import_module(pkg_path)
                 if hasattr(pkg, "__path__"):
                     for _importer, modname, _ispkg in pkgutil.walk_packages(
-                        pkg.__path__, prefix=pkg.__name__ + "."
+                        pkg.__path__, prefix=pkg.__name__ + ".",
                     ):
                         with contextlib.suppress(ImportError):
                             importlib.import_module(modname)
@@ -246,7 +246,7 @@ def scan_and_register_actions(package_paths: Sequence[str] | None = None) -> int
 
         if getter is None:
             logger.warning(
-                "No service_getter found for action '%s', skipping", meta["action"]
+                "No service_getter found for action '%s', skipping", meta["action"],
             )
             continue
 

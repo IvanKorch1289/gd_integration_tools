@@ -142,7 +142,7 @@ async def test_http_backend_without_scan_method_raises_runtime_error() -> None:
 def test_parse_clamav_clean_response() -> None:
     """``stream: OK`` -> clean-вердикт без сигнатуры."""
     result = _parse_clamav_response(
-        b"stream: OK\0", backend="clamav_unix", latency_ms=1.0
+        b"stream: OK\0", backend="clamav_unix", latency_ms=1.0,
     )
     assert result.clean is True
     assert result.signature is None
@@ -152,7 +152,7 @@ def test_parse_clamav_clean_response() -> None:
 def test_parse_clamav_threat_response() -> None:
     """``stream: <SIG> FOUND`` -> threat-вердикт с сигнатурой."""
     result = _parse_clamav_response(
-        b"stream: Win.Test.EICAR_HDB-1 FOUND\0", backend="clamav_tcp", latency_ms=2.0
+        b"stream: Win.Test.EICAR_HDB-1 FOUND\0", backend="clamav_tcp", latency_ms=2.0,
     )
     assert result.clean is False
     assert result.signature == "Win.Test.EICAR_HDB-1"
@@ -229,7 +229,7 @@ async def test_clamav_unix_scan_bytes_clean(
 
 
 async def test_clamav_unix_scan_bytes_threat(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any,
 ) -> None:
     """``scan_bytes`` поверх unix socket: FOUND-ответ -> threat + signature."""
     reader = _FakeReader(b"stream: Eicar-Signature FOUND\0")
@@ -248,7 +248,7 @@ async def test_clamav_unix_scan_bytes_threat(
 
 
 async def test_clamav_unix_scan_raises_connection_error_when_socket_unavailable(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any,
 ) -> None:
     """Если ``open_unix_connection`` падает — поднимается ``ConnectionError``."""
 

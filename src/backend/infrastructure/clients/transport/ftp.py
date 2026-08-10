@@ -121,7 +121,7 @@ class FTPClient:
             encoding=self._encoding,
         )
         logger.info(
-            "FTP connected to %s:%d (TLS=%s)", self._host, self._port, self._use_tls
+            "FTP connected to %s:%d (TLS=%s)", self._host, self._port, self._use_tls,
         )
 
     async def close(self) -> None:
@@ -223,7 +223,7 @@ class FTPClient:
                         "type": info.get("type", "unknown"),
                         "size": int(info.get("size", 0)),
                         "modify": info.get("modify"),
-                    }
+                    },
                 )
         return result
 
@@ -262,5 +262,5 @@ def get_ftp_client(
 ) -> FTPClient:
     """Factory для FTP-клиента (stateless, создаёт новый экземпляр)."""
     return FTPClient(
-        host=host, port=port, user=user, password=password, use_tls=use_tls
+        host=host, port=port, user=user, password=password, use_tls=use_tls,
     )

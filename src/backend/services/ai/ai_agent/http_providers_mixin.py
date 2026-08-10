@@ -34,7 +34,7 @@ class HttpProvidersMixin:
     __slots__ = ()
 
     async def _post_provider(
-        self, *, url: str, headers: dict[str, str], payload: dict[str, Any]
+        self, *, url: str, headers: dict[str, str], payload: dict[str, Any],
     ) -> dict[str, Any]:
         """Общий POST-вызов с единой политикой таймаутов."""
         client = self._get_http_client()
@@ -49,7 +49,7 @@ class HttpProvidersMixin:
         )
 
     def _build_auth_headers(
-        self, api_key: str | None, *, use_waf: bool = False
+        self, api_key: str | None, *, use_waf: bool = False,
     ) -> dict[str, str]:
         """Формирует Content-Type + Authorization (с WAF-перекрытием при необходимости)."""
         headers: dict[str, str] = {}
@@ -61,7 +61,7 @@ class HttpProvidersMixin:
         return headers
 
     async def _call_perplexity(
-        self, messages: list[dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any,
     ) -> dict[str, Any]:
         """Вызов Perplexity API."""
         model = kwargs.get("model", self._perplexity.model)
@@ -71,7 +71,7 @@ class HttpProvidersMixin:
             else f"{self._perplexity.base_url}/chat/completions"
         )
         headers = self._build_auth_headers(
-            self._perplexity.api_key, use_waf=self._perplexity.use_waf
+            self._perplexity.api_key, use_waf=self._perplexity.use_waf,
         )
         payload = {
             "model": model,
@@ -82,7 +82,7 @@ class HttpProvidersMixin:
         return await self._post_provider(url=url, headers=headers, payload=payload)
 
     async def _call_huggingface(
-        self, messages: list[dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any,
     ) -> dict[str, Any]:
         """Вызов HuggingFace Inference API."""
         model = kwargs.get("model", self._huggingface.model)
@@ -99,7 +99,7 @@ class HttpProvidersMixin:
             "inputs": prompt,
             "parameters": {
                 "max_new_tokens": kwargs.get(
-                    "max_tokens", self._huggingface.max_tokens
+                    "max_tokens", self._huggingface.max_tokens,
                 ),
                 "temperature": kwargs.get("temperature", self._huggingface.temperature),
             },
@@ -107,7 +107,7 @@ class HttpProvidersMixin:
         return await self._post_provider(url=url, headers=headers, payload=payload)
 
     async def _call_open_webui(
-        self, messages: list[dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any,
     ) -> dict[str, Any]:
         """Вызов внутреннего OpenWebUI сервера."""
         model = kwargs.get("model", self._open_webui.model)

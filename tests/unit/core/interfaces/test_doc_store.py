@@ -38,12 +38,12 @@ class TestDocStoreBackend:
                 return ""
 
             async def get(
-                self, namespace: str, doc_id: str
+                self, namespace: str, doc_id: str,
             ) -> dict[str, object] | None:
                 return None
 
             async def update(
-                self, namespace: str, doc_id: str, patch: dict[str, object]
+                self, namespace: str, doc_id: str, patch: dict[str, object],
             ) -> bool:
                 return False
 
@@ -61,7 +61,7 @@ class TestDocStoreBackend:
                 return []
 
             async def count(
-                self, namespace: str, filters: dict[str, object] | None = None
+                self, namespace: str, filters: dict[str, object] | None = None,
             ) -> int:
                 return 0
 

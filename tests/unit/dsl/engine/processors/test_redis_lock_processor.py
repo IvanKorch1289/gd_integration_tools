@@ -27,7 +27,7 @@ def _exchange_with() -> Exchange[Any]:
 
 
 def _patch_redis_lock(
-    *, acquire_return: bool | Exception, redis_lock_cls_mock: Any | None = None
+    *, acquire_return: bool | Exception, redis_lock_cls_mock: Any | None = None,
 ) -> Any:
     """Возвращает MagicMock для ``RedisLock`` class.
 
@@ -86,7 +86,7 @@ async def test_redis_lock_acquired_with_blocking_timeout() -> None:
     fake_cls.return_value = fake_instance
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock", new=fake_cls
+        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock", new=fake_cls,
     ):
         await proc.process(ex, context=MagicMock())
 
@@ -146,7 +146,7 @@ async def test_redis_lock_custom_key_prefix() -> None:
     fake_cls.return_value = fake_instance
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock", new=fake_cls
+        "src.backend.infrastructure.clients.storage.redis_lock.RedisLock", new=fake_cls,
     ):
         await proc.process(ex, context=MagicMock())
 
@@ -223,5 +223,5 @@ def test_redis_lock_to_spec_full() -> None:
             "blocking_timeout": 10.0,
             "fail_on_contention": False,
             "key_prefix": "etl",
-        }
+        },
     }

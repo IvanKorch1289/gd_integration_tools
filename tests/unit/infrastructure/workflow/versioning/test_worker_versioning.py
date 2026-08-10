@@ -27,7 +27,7 @@ class TestWorkerVersioningHelper:
             WorkerVersioningHelper,
         )
         helper = WorkerVersioningHelper(
-            deployment_name="gd", build_id="1.0.0"
+            deployment_name="gd", build_id="1.0.0",
         )
         assert helper.use_versioning is False
 
@@ -48,7 +48,7 @@ class TestWorkerVersioningHelper:
             WorkerVersioningHelper,
         )
         helper = WorkerVersioningHelper(
-            deployment_name="gd-prod", build_id="v1.0.0", use_versioning=True
+            deployment_name="gd-prod", build_id="v1.0.0", use_versioning=True,
         )
         kwargs = helper.build_worker_kwargs()
         assert "deployment_options" in kwargs or "build_id" in kwargs
@@ -85,7 +85,7 @@ class TestVersioningPolicy:
             VersioningPolicy,
         )
         policy = VersioningPolicy(
-            deployment_name="gd", build_id="1.0.0", ramp_percentage=25
+            deployment_name="gd", build_id="1.0.0", ramp_percentage=25,
         )
         assert policy.ramp_percentage == 25
 

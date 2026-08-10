@@ -57,7 +57,7 @@ class RuleEngineRepository(Protocol):
     """
 
     async def get(
-        self, name: str, *, version: str | None = None, tenant_id: str | None = None
+        self, name: str, *, version: str | None = None, tenant_id: str | None = None,
     ) -> RulesetDoc | None:
         """Вернуть последнюю включённую запись по ``(name, version?, tenant?)``.
 
@@ -79,7 +79,7 @@ class RuleEngineRepository(Protocol):
         ...
 
     async def delete(
-        self, name: str, version: str, *, tenant_id: str | None = None
+        self, name: str, version: str, *, tenant_id: str | None = None,
     ) -> bool:
         """Удалить запись по составному ключу. Возвращает ``True`` при успехе."""
         ...

@@ -28,10 +28,10 @@ class Http3ServerConfig:
         if not self.certfile.exists():
             raise FileNotFoundError(
                 f"HTTP/3 certfile не найден: {self.certfile}. "
-                "Укажите валидный PEM через APP_HTTP3_CERTFILE."
+                "Укажите валидный PEM через APP_HTTP3_CERTFILE.",
             )
         if not self.keyfile.exists():
             raise FileNotFoundError(
                 f"HTTP/3 keyfile не найден: {self.keyfile}. "
-                "Укажите валидный PEM через APP_HTTP3_KEYFILE."
+                "Укажите валидный PEM через APP_HTTP3_KEYFILE.",
             )

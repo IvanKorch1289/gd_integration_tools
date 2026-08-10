@@ -29,7 +29,7 @@ class TestQuotaConfig:
 
     def test_from_dict_custom(self) -> None:
         config = QuotaConfig.from_dict(
-            {"max_files": 5000, "max_bytes": 1024, "enabled": False}
+            {"max_files": 5000, "max_bytes": 1024, "enabled": False},
         )
         assert config.max_files == 5000
         assert config.max_bytes == 1024

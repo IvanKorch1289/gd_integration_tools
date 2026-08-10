@@ -339,7 +339,7 @@ class TestVariableResolveProcessor:
         processor.__init__(scope="global", fail_on_unresolved=False)
 
         exchange = Exchange(
-            in_message=Message(body={"endpoint": "${var('api.url')}", "method": "GET"})
+            in_message=Message(body={"endpoint": "${var('api.url')}", "method": "GET"}),
         )
         await processor.process(exchange, ExecutionContext())
 

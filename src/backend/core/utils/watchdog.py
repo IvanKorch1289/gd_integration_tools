@@ -56,7 +56,7 @@ class Watchdog:
             return
         try:
             sentry_sdk.capture_message(
-                f"Watchdog deadline exceeded: {self.name}", level="warning"
+                f"Watchdog deadline exceeded: {self.name}", level="warning",
             )
         except Exception as _:
             return

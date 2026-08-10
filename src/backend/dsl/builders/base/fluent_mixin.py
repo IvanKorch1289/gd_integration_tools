@@ -71,13 +71,13 @@ class FluentMixin(_RouteBuilderProtocol):
         if not self._processors:
             raise ValueError(
                 "with_*-модификатор вызван до первого step — нет предыдущего "
-                "processor для модификации"
+                "processor для модификации",
             )
         return self._processors[-1]
 
     @staticmethod
     def _set_first_attr(
-        obj: Any, candidates: tuple[str, ...], value: Any
+        obj: Any, candidates: tuple[str, ...], value: Any,
     ) -> str | None:
         """Устанавливает значение в первый из существующих candidate-атрибутов."""
         for attr in candidates:

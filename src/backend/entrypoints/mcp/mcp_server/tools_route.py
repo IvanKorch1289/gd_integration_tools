@@ -46,7 +46,7 @@ def _register_route_tools(mcp: Any) -> None:
                         "protocol": pipeline.protocol.value
                         if pipeline.protocol
                         else None,
-                    }
+                    },
                 )
         return encode_json(routes).decode("utf-8")
 
@@ -63,7 +63,7 @@ def _register_route_tools(mcp: Any) -> None:
             pipeline = route_registry.get(route_id)
         except KeyError:
             return encode_json({"error": f"Route '{route_id}' not found"}).decode(
-                "utf-8"
+                "utf-8",
             )
 
         try:
@@ -89,7 +89,7 @@ def _register_route_tools(mcp: Any) -> None:
                     for k, v in exchange.properties.items()
                     if not k.startswith("_")
                 },
-            }
+            },
         ).decode("utf-8")
 
     @mcp.tool(
@@ -102,7 +102,7 @@ def _register_route_tools(mcp: Any) -> None:
         pipeline = route_registry.get_optional(route_id)
         if not pipeline:
             return encode_json({"error": f"Route '{route_id}' not found"}).decode(
-                "utf-8"
+                "utf-8",
             )
 
         return encode_json(
@@ -116,5 +116,5 @@ def _register_route_tools(mcp: Any) -> None:
                     {"name": p.name, "type": type(p).__name__}
                     for p in pipeline.processors
                 ],
-            }
+            },
         ).decode("utf-8")

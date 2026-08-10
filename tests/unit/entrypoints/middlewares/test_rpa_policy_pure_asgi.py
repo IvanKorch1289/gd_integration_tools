@@ -168,7 +168,7 @@ async def test_custom_path_prefix() -> None:
     app = AsyncMock()
     app.side_effect = downstream
     mw = RpaPolicyMiddleware(
-        app=app, rpa_path_prefix="/api/v1/custom-rpa"
+        app=app, rpa_path_prefix="/api/v1/custom-rpa",
     )
 
     send = AsyncMock()

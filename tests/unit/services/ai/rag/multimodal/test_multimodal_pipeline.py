@@ -20,7 +20,7 @@ async def test_pipeline_ingest_text_appends_chunk() -> None:
     pipeline = MultimodalPipeline(service)
 
     chunk_id = await pipeline.ingest(
-        modal="text", payload="hello multimodal world", collection="kb"
+        modal="text", payload="hello multimodal world", collection="kb",
     )
 
     assert chunk_id
@@ -36,7 +36,7 @@ async def test_pipeline_ingest_image_calls_captioner() -> None:
     pipeline = MultimodalPipeline(service)
 
     chunk_id = await pipeline.ingest(
-        modal="image", payload=b"FAKE_IMAGE_BYTES", collection="kb"
+        modal="image", payload=b"FAKE_IMAGE_BYTES", collection="kb",
     )
 
     service.caption_image.assert_awaited_once()
@@ -53,7 +53,7 @@ async def test_pipeline_ingest_audio_calls_whisper() -> None:
     pipeline = MultimodalPipeline(service)
 
     chunk_id = await pipeline.ingest(
-        modal="audio", payload=b"FAKE_WAV", collection="kb"
+        modal="audio", payload=b"FAKE_WAV", collection="kb",
     )
     service.transcribe_audio.assert_awaited_once()
     assert service._collections["kb"][chunk_id]["content"] == "привет как дела"
@@ -66,19 +66,19 @@ async def test_cross_modal_retrieval_returns_all_modalities() -> None:
     service = MultimodalRAGService()
     pipeline = MultimodalPipeline(service)
     await pipeline.ingest(
-        modal="text", payload="cat dog", collection="kb", tenant_id="test"
+        modal="text", payload="cat dog", collection="kb", tenant_id="test",
     )
     service.caption_image = AsyncMock(return_value="cat playing")
     await pipeline.ingest(
-        modal="image", payload=b"img", collection="kb", tenant_id="test"
+        modal="image", payload=b"img", collection="kb", tenant_id="test",
     )
     service.transcribe_audio = AsyncMock(return_value="dog barking loud")
     await pipeline.ingest(
-        modal="audio", payload=b"wav", collection="kb", tenant_id="test"
+        modal="audio", payload=b"wav", collection="kb", tenant_id="test",
     )
 
     results = await pipeline.query(
-        "cat dog", collection="kb", top_k=10, tenant_id="test"
+        "cat dog", collection="kb", top_k=10, tenant_id="test",
     )
     modalities = {r.modal for r in results}
     assert {"text", "image", "audio"}.issubset(modalities)
@@ -91,14 +91,14 @@ async def test_modal_filter_restricts_results() -> None:
     service = MultimodalRAGService()
     pipeline = MultimodalPipeline(service)
     await pipeline.ingest(
-        modal="text", payload="some text", collection="kb", tenant_id="test"
+        modal="text", payload="some text", collection="kb", tenant_id="test",
     )
     service.caption_image = AsyncMock(return_value="image caption")
     await pipeline.ingest(
-        modal="image", payload=b"img", collection="kb", tenant_id="test"
+        modal="image", payload=b"img", collection="kb", tenant_id="test",
     )
 
     only_images = await pipeline.query(
-        "text", collection="kb", modal_filter="image", tenant_id="test"
+        "text", collection="kb", modal_filter="image", tenant_id="test",
     )
     assert all(r.modal == "image" for r in only_images)

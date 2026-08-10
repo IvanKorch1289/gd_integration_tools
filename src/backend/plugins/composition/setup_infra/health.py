@@ -129,7 +129,7 @@ async def _register_health_checks() -> None:
         port = queue_settings.port
         try:
             _reader, writer = await asyncio.wait_for(
-                asyncio.open_connection(host, port), timeout=2.0
+                asyncio.open_connection(host, port), timeout=2.0,
             )
             writer.close()
             await writer.wait_closed()
@@ -148,7 +148,7 @@ async def _register_health_checks() -> None:
         start = time.monotonic()
         try:
             _reader, writer = await asyncio.wait_for(
-                asyncio.open_connection("localhost", 4222), timeout=2.0
+                asyncio.open_connection("localhost", 4222), timeout=2.0,
             )
             writer.close()
             await writer.wait_closed()
@@ -177,7 +177,7 @@ async def _register_health_checks() -> None:
 
     app_logger.info(
         "Health checks registered: redis, database, s3, clickhouse, kafka, nats, "
-        "+ sink/source per-kind checks"
+        "+ sink/source per-kind checks",
     )
 
 

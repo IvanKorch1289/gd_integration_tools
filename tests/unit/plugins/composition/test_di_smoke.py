@@ -125,7 +125,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
         lambda: _make_stub("api_key_manager"),
     )
     monkeypatch.setattr(
-        "src.backend.dsl.engine.tracer.ExecutionTracer", lambda: _make_stub("tracer")
+        "src.backend.dsl.engine.tracer.ExecutionTracer", lambda: _make_stub("tracer"),
     )
     monkeypatch.setattr(
         "src.backend.dsl.engine.plugin_registry.ProcessorPluginRegistry",
@@ -166,7 +166,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
 
     # Invoker — конструктор без аргументов.
     monkeypatch.setattr(
-        "src.backend.services.execution.invoker.Invoker", lambda: _make_stub("invoker")
+        "src.backend.services.execution.invoker.Invoker", lambda: _make_stub("invoker"),
     )
 
     # WatermarkStore через factory.
@@ -184,7 +184,7 @@ def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
 
 
 def test_register_app_state_sets_app_ref(
-    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock],
 ) -> None:
     """``register_app_state`` вызывает ``set_app_ref`` с переданным app."""
     from src.backend.core.di.app_state import get_app_ref
@@ -194,7 +194,7 @@ def test_register_app_state_sets_app_ref(
 
 
 def test_register_app_state_writes_every_singleton_to_state(
-    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock],
 ) -> None:
     """После ``register_app_state`` все ожидаемые атрибуты присутствуют в state."""
     di.register_app_state(fresh_app)
@@ -218,7 +218,7 @@ def test_register_app_state_writes_every_singleton_to_state(
 
 
 def test_register_app_state_uses_stub_instances(
-    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock],
 ) -> None:
     """State хранит *именно* те MagicMock'и, что вернули подменённые конструкторы."""
     di.register_app_state(fresh_app)
@@ -250,7 +250,7 @@ def test_register_app_state_mqtt_fallback_when_settings_raise(
         return fallback_settings
 
     monkeypatch.setattr(
-        "src.backend.entrypoints.mqtt.mqtt_handler.MqttSettings", _explode_then_fallback
+        "src.backend.entrypoints.mqtt.mqtt_handler.MqttSettings", _explode_then_fallback,
     )
 
     # Должно завершиться без исключения: внутри есть try/except.
@@ -273,7 +273,7 @@ async def test_get_api_key_manager_returns_from_state(
     app = FastAPI()
     di.register_app_state(app)
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_api_key_manager(request)
     assert result is stub_constructors["api_key_manager"]
@@ -289,7 +289,7 @@ async def test_get_tracer_returns_from_state(
     app = FastAPI()
     di.register_app_state(app)
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_tracer(request)
     assert result is stub_constructors["tracer"]
@@ -305,7 +305,7 @@ async def test_get_plugin_registry_returns_from_state(
     app = FastAPI()
     di.register_app_state(app)
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_plugin_registry(request)
     assert result is stub_constructors["plugin_registry"]
@@ -321,7 +321,7 @@ async def test_get_pipeline_version_manager_returns_from_state(
     app = FastAPI()
     di.register_app_state(app)
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_pipeline_version_manager(request)
     assert result is stub_constructors["pipeline_version_manager"]
@@ -337,7 +337,7 @@ async def test_get_slo_tracker_returns_from_state(
     app = FastAPI()
     di.register_app_state(app)
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_slo_tracker(request)
     assert result is stub_constructors["slo_tracker"]
@@ -353,7 +353,7 @@ async def test_get_pool_monitor_returns_from_state(
     app = FastAPI()
     di.register_app_state(app)
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_pool_monitor(request)
     assert result is stub_constructors["pool_monitor"]
@@ -369,7 +369,7 @@ async def test_get_vault_refresher_returns_from_state(
     app = FastAPI()
     di.register_app_state(app)
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_vault_refresher(request)
     assert result is stub_constructors["vault_refresher"]
@@ -385,7 +385,7 @@ async def test_get_mqtt_handler_returns_from_state(
     app = FastAPI()
     di.register_app_state(app)
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_mqtt_handler(request)
     assert result is stub_constructors["mqtt_handler"]
@@ -401,7 +401,7 @@ async def test_get_langfuse_client_returns_from_state(
     app = FastAPI()
     di.register_app_state(app)
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_langfuse_client(request)
     assert result is stub_constructors["langfuse_client"]
@@ -417,7 +417,7 @@ async def test_get_watermark_store_returns_from_state(
     app = FastAPI()
     di.register_app_state(app)
     request = Request(
-        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"}
+        scope={"type": "http", "app": app, "headers": [], "path": "/", "method": "GET"},
     )
     result = await di.get_watermark_store(request)
     assert result is stub_constructors["watermark_store"]
@@ -473,7 +473,7 @@ def test_depends_functions_work_via_fastapi_endpoint(
 
 
 def test_register_app_state_idempotent_after_reset(
-    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock]
+    fresh_app: FastAPI, stub_constructors: dict[str, MagicMock],
 ) -> None:
     """``register_app_state`` можно вызвать повторно после ``reset_app_state``."""
     from src.backend.core.di.app_state import reset_app_state

@@ -73,16 +73,16 @@ class IngestFileProcessor(BaseProcessor):
         super().__init__(name=name or "ingest_file")
         if not s3_key_from and not data_property:
             raise ValueError(
-                "IngestFileProcessor: укажите s3_key_from или data_property"
+                "IngestFileProcessor: укажите s3_key_from или data_property",
             )
         if on_unsupported not in _VALID_ON_UNSUPPORTED:
             raise ValueError(
                 f"IngestFileProcessor: on_unsupported={on_unsupported!r} не из "
-                f"{sorted(_VALID_ON_UNSUPPORTED)}"
+                f"{sorted(_VALID_ON_UNSUPPORTED)}",
             )
         if engine not in _VALID_ENGINE:
             raise ValueError(
-                f"IngestFileProcessor: engine={engine!r} не из {sorted(_VALID_ENGINE)}"
+                f"IngestFileProcessor: engine={engine!r} не из {sorted(_VALID_ENGINE)}",
             )
         self._s3_key_from = s3_key_from
         self._data_property = data_property
@@ -113,7 +113,7 @@ class IngestFileProcessor(BaseProcessor):
         # выполнение последовательно в рамках одного exchange).
         try:
             text, meta = await self._invoke_parse(
-                parse_document, payload, effective_mime, filename
+                parse_document, payload, effective_mime, filename,
             )
         except ValueError as exc:
             if self._on_unsupported == "fail":
@@ -148,7 +148,7 @@ class IngestFileProcessor(BaseProcessor):
         )
 
     async def _invoke_parse(
-        self, parse_document, content: bytes, mime: str, filename: str | None
+        self, parse_document, content: bytes, mime: str, filename: str | None,
     ):
         """Выбор engine: auto / markitdown / legacy с подменой settings."""
         if self._engine == "auto":
@@ -167,7 +167,7 @@ class IngestFileProcessor(BaseProcessor):
             markitdown_settings.engine_enabled = original
 
     async def _load_bytes(
-        self, exchange: Exchange[Any]
+        self, exchange: Exchange[Any],
     ) -> tuple[bytes | None, str | None]:
         """Загружает файл из S3 → exchange-property; возвращает (bytes, filename)."""
         filename: str | None = None

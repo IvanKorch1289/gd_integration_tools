@@ -89,7 +89,7 @@ class PipelineValidator:
                     "error",
                     "RestorePIIProcessor without preceding SanitizePIIProcessor",
                     processor_index=restore_idx,
-                )
+                ),
             )
 
         if sanitize_idx is not None and restore_idx is not None:
@@ -99,7 +99,7 @@ class PipelineValidator:
                         "error",
                         "RestorePIIProcessor must come after SanitizePIIProcessor",
                         processor_index=restore_idx,
-                    )
+                    ),
                 )
 
         if llm_idx is not None and sanitize_idx is not None:
@@ -109,7 +109,7 @@ class PipelineValidator:
                         "warning",
                         "LLMCallProcessor before SanitizePIIProcessor — PII may leak to LLM",
                         processor_index=llm_idx,
-                    )
+                    ),
                 )
 
         prompt_idx = None
@@ -124,11 +124,11 @@ class PipelineValidator:
                         "warning",
                         "LLMCallProcessor before PromptComposerProcessor — prompt may not be composed",
                         processor_index=llm_idx,
-                    )
+                    ),
                 )
 
     def _check_error_handling(
-        self, proc_types: list[str], issues: list[ValidationIssue]
+        self, proc_types: list[str], issues: list[ValidationIssue],
     ) -> None:
         has_try_catch = "TryCatchProcessor" in proc_types
         has_retry = "RetryProcessor" in proc_types
@@ -147,7 +147,7 @@ class PipelineValidator:
                     "warning",
                     "Pipeline calls external services but has no error handling "
                     "(TryCatch, Retry, DeadLetter, or Fallback)",
-                )
+                ),
             )
 
     def _check_route_refs(self, pipeline: Any, issues: list[ValidationIssue]) -> None:
@@ -161,7 +161,7 @@ class PipelineValidator:
                             "error",
                             f"Circular reference: route '{pipeline.route_id}' references itself",
                             processor_index=i,
-                        )
+                        ),
                     )
 
 

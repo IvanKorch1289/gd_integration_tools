@@ -97,7 +97,7 @@ class ValidationMixin(_RouteBuilderProtocol):
             suggestion = suggestions.get(name)
             if suggestion:
                 msg_parts.append(
-                    f"  - '{name}' — did you mean: {', '.join(suggestion)}?"
+                    f"  - '{name}' — did you mean: {', '.join(suggestion)}?",
                 )
             else:
                 msg_parts.append(f"  - '{name}'")

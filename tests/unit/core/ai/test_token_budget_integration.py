@@ -139,7 +139,7 @@ class TestBudgetNotConfigured:
 
     @pytest.mark.asyncio
     async def test_no_budget_passes_through(
-        self, audit_service: _StubAuditService
+        self, audit_service: _StubAuditService,
     ) -> None:
         """Pipeline без _token_budget → no exception (backward-compat)."""
 
@@ -158,7 +158,7 @@ class TestBudgetEnforced:
 
     @pytest.mark.asyncio
     async def test_pre_call_reserves(
-        self, audit_service: _StubAuditService
+        self, audit_service: _StubAuditService,
     ) -> None:
         """Pre-call reserves estimated tokens + post-call corrects."""
 
@@ -183,7 +183,7 @@ class TestBudgetEnforced:
 
     @pytest.mark.asyncio
     async def test_actual_exceeds_estimated_extra_reserved(
-        self, audit_service: _StubAuditService
+        self, audit_service: _StubAuditService,
     ) -> None:
         """Actual > estimated → дополнительная reservation на diff."""
 
@@ -192,7 +192,7 @@ class TestBudgetEnforced:
             _actual_tokens = (5000, 6000)  # prompts, completions
 
             async def _invoke_llm(  # type: ignore[override]
-                self, rendered: Any, policy: Any, stream: bool
+                self, rendered: Any, policy: Any, stream: bool,
             ) -> Any:
                 class _C:
                     content = "stub"
@@ -221,7 +221,7 @@ class TestBudgetEnforced:
 
     @pytest.mark.asyncio
     async def test_hard_limit_pre_call_raises(
-        self, audit_service: _StubAuditService
+        self, audit_service: _StubAuditService,
     ) -> None:
         """Если estimated уже превышает hard_limit → BudgetExceeded."""
 
@@ -245,7 +245,7 @@ class TestBudgetEnforced:
 
     @pytest.mark.asyncio
     async def test_hard_limit_post_call_raises(
-        self, audit_service: _StubAuditService
+        self, audit_service: _StubAuditService,
     ) -> None:
         """Если actual (post-call diff) превышает hard_limit → BudgetExceeded."""
 
@@ -253,7 +253,7 @@ class TestBudgetEnforced:
             _audit_service = audit_service
 
             async def _invoke_llm(  # type: ignore[override]
-                self, rendered: Any, policy: Any, stream: bool
+                self, rendered: Any, policy: Any, stream: bool,
             ) -> Any:
                 class _C:
                     content = "stub"
@@ -278,7 +278,7 @@ class TestBudgetEnforced:
 
     @pytest.mark.asyncio
     async def test_empty_tenant_id_skips(
-        self, audit_service: _StubAuditService
+        self, audit_service: _StubAuditService,
     ) -> None:
         """Empty ``tenant_id`` → budget skipped (no error)."""
 
@@ -305,7 +305,7 @@ class TestRender429Contract:
 
     def test_render_429_shape(self) -> None:
         exc = BudgetExceeded(
-            tenant_id="t-x", used=200, hard_limit=100, period="daily"
+            tenant_id="t-x", used=200, hard_limit=100, period="daily",
         )
         body = render_429(exc)
         assert body["error"] == "token_budget_exceeded"
@@ -321,7 +321,7 @@ class TestPreCallHelperUnit:
 
     @pytest.mark.asyncio
     async def test_no_budget_attribute_returns_none(
-        self, audit_service: _StubAuditService
+        self, audit_service: _StubAuditService,
     ) -> None:
         """Без _token_budget attribute — no-op (backward-compat)."""
 
@@ -331,13 +331,13 @@ class TestPreCallHelperUnit:
         gw = _Gateway()
         request = _build_request()
         snapshot = await gw._enforce_token_budget_pre_call(
-            request, estimated_tokens=1000
+            request, estimated_tokens=1000,
         )
         assert snapshot is None
 
     @pytest.mark.asyncio
     async def test_no_budget_via_dunder_getattr(
-        self, audit_service: _StubAuditService
+        self, audit_service: _StubAuditService,
     ) -> None:
         """``_token_budget=None`` → return None."""
 
@@ -348,6 +348,6 @@ class TestPreCallHelperUnit:
         gw._token_budget = None  # type: ignore[attr-defined]
         request = _build_request()
         snapshot = await gw._enforce_token_budget_pre_call(
-            request, estimated_tokens=1000
+            request, estimated_tokens=1000,
         )
         assert snapshot is None

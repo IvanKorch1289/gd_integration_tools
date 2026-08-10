@@ -123,7 +123,7 @@ class PlanExecuteProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Plan → execute → verify (replan on fail)."""
         prompt = self._build_prompt(exchange)
@@ -152,7 +152,7 @@ class PlanExecuteProcessor(BaseProcessor):
                             "ok": True,
                             "output": output,
                             "error": None,
-                        }
+                        },
                     )
                     succeeded += 1
                     final_output = output
@@ -163,7 +163,7 @@ class PlanExecuteProcessor(BaseProcessor):
                             "ok": False,
                             "output": None,
                             "error": str(exc),
-                        }
+                        },
                     )
                     failed += 1
                     _log.warning("Plan step failed: %s — %s", step.step_id, exc)
@@ -190,7 +190,7 @@ class PlanExecuteProcessor(BaseProcessor):
             if ok or attempt >= self._max_replans:
                 if not ok:
                     _log.warning(
-                        "Plan exhausted replans (max_replans=%d)", self._max_replans
+                        "Plan exhausted replans (max_replans=%d)", self._max_replans,
                     )
                 break
             # Replan
@@ -242,7 +242,7 @@ class PlanExecuteProcessor(BaseProcessor):
                 "max_steps": self._max_steps,
                 "max_replans": self._max_replans,
                 "has_verifier": self._verifier is not None,
-            }
+            },
         }
 
 
@@ -282,5 +282,5 @@ class PlanExecuteMixin:
                 verifier=verifier,
                 max_steps=max_steps,
                 max_replans=max_replans,
-            )
+            ),
         )

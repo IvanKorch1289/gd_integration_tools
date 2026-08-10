@@ -76,11 +76,11 @@ class NatsConnectionPool:
             if self._nc is not None:
                 return
             self._nc = await nats.connect(
-                self._url, max_reconnect_attempts=self._max_reconnect, name=self._name
+                self._url, max_reconnect_attempts=self._max_reconnect, name=self._name,
             )
             self._started = True
             _logger.info(
-                "nats pool started", extra={"url": self._url, "name": self._name}
+                "nats pool started", extra={"url": self._url, "name": self._name},
             )
 
     async def stop(self) -> None:
@@ -114,7 +114,7 @@ class NatsConnectionPool:
 
     @resilient(name="nats_publish", max_attempts=3)
     async def publish(
-        self, subject: str, data: bytes, headers: dict[str, str] | None = None
+        self, subject: str, data: bytes, headers: dict[str, str] | None = None,
     ) -> Any:
         """Publish to NATS JetStream via pooled connection.
 
@@ -131,7 +131,7 @@ class NatsConnectionPool:
         if not quota_result.get("allowed", True):
             from src.backend.core.tenancy.quotas import QuotaExceeded
             raise QuotaExceeded(
-                f"NATS publish rate limit exceeded for client {self._name}"
+                f"NATS publish rate limit exceeded for client {self._name}",
             )
         if not self._started or self._nc is None:
             raise RuntimeError(f"NatsConnectionPool not started: {self._name}")

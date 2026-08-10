@@ -31,7 +31,7 @@ class TestLlmJudgeMetrics:
         # _noop_llm_judge_metrics must be callable
         assert callable(ai._noop_llm_judge_metrics)
         result = ai._noop_llm_judge_metrics(
-            model="m1", hallucination=0.1, relevance=0.9, toxicity=0.0
+            model="m1", hallucination=0.1, relevance=0.9, toxicity=0.0,
         )
         assert result is None
 

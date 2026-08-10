@@ -48,7 +48,7 @@ class GuardrailsProcessor(BaseProcessor):
 
         if len(text) > self._max_length:
             exchange.fail(
-                f"Guardrail: output too long ({len(text)} > {self._max_length})"
+                f"Guardrail: output too long ({len(text)} > {self._max_length})",
             )
             return
 
@@ -66,7 +66,7 @@ class GuardrailsProcessor(BaseProcessor):
         await self._check_external_providers(exchange, text)
 
     async def _check_external_providers(
-        self, exchange: Exchange[Any], text: str
+        self, exchange: Exchange[Any], text: str,
     ) -> None:
         """Запустить Lakera/Rebuff если активны (Sprint 11 K1 W2)."""
         from src.backend.core.config.features import feature_flags
@@ -108,7 +108,7 @@ class GuardrailsProcessor(BaseProcessor):
                     and lakera_result.score >= config.thresholds.lakera_threshold
                 ):
                     exchange.fail(
-                        f"Guardrail/lakera: flagged (score={lakera_result.score:.2f})"
+                        f"Guardrail/lakera: flagged (score={lakera_result.score:.2f})",
                     )
                     return
             except Exception as exc:
@@ -160,7 +160,7 @@ class GuardrailsProcessor(BaseProcessor):
                 nemo_result = await runtime.check_output(prompt=prompt, completion=text)
                 if not nemo_result.get("safe", True):
                     exchange.fail(
-                        f"Guardrail/nemo: {nemo_result.get('reason', 'unsafe output')}"
+                        f"Guardrail/nemo: {nemo_result.get('reason', 'unsafe output')}",
                     )
                     return
             except Exception as exc:

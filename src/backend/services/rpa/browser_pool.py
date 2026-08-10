@@ -196,7 +196,7 @@ class PlaywrightBrowserPool:
             except ImportError:
                 _logger.warning(
                     "patchright недоступен, fallback на playwright; "
-                    "установите: uv sync --extra rpa"
+                    "установите: uv sync --extra rpa",
                 )
         try:
             from playwright import async_api
@@ -205,5 +205,5 @@ class PlaywrightBrowserPool:
         except ImportError as exc:
             raise RuntimeError(
                 "Ни patchright, ни playwright не установлены; "
-                "установите: uv sync --extra rpa"
+                "установите: uv sync --extra rpa",
             ) from exc

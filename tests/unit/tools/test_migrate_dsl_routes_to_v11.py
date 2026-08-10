@@ -19,7 +19,7 @@ def test_migrate_one_creates_dir_and_manifest(tmp_path: Path) -> None:
     legacy = tmp_path / "legacy"
     legacy.mkdir()
     (legacy / "credit.yaml").write_text(
-        "# pipeline\nfrom: rest\nto: db\n", encoding="utf-8"
+        "# pipeline\nfrom: rest\nto: db\n", encoding="utf-8",
     )
     routes = tmp_path / "routes"
     target, _rendered = mod.migrate_one(
@@ -44,7 +44,7 @@ def test_dry_run_does_not_write(tmp_path: Path) -> None:
     (legacy / "x.yaml").write_text("# y\n", encoding="utf-8")
     routes = tmp_path / "routes"
     target, rendered = mod.migrate_one(
-        legacy / "x.yaml", routes, core_spec=">=0.2,<0.3", overwrite=False, dry_run=True
+        legacy / "x.yaml", routes, core_spec=">=0.2,<0.3", overwrite=False, dry_run=True,
     )
     assert not target.exists()
     assert 'name = "x"' in rendered
@@ -59,10 +59,10 @@ def test_overwrite_required(tmp_path: Path) -> None:
     (routes / "x").mkdir()
     with pytest.raises(FileExistsError):
         mod.migrate_one(
-            legacy / "x.yaml", routes, core_spec=">=0.2", overwrite=False, dry_run=False
+            legacy / "x.yaml", routes, core_spec=">=0.2", overwrite=False, dry_run=False,
         )
     mod.migrate_one(
-        legacy / "x.yaml", routes, core_spec=">=0.2", overwrite=True, dry_run=False
+        legacy / "x.yaml", routes, core_spec=">=0.2", overwrite=True, dry_run=False,
     )
     assert (routes / "x" / "route.toml").is_file()
 
@@ -84,7 +84,7 @@ def test_dsl_suffix_stripped(tmp_path: Path) -> None:
 
 
 def test_main_directory_input(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
     legacy = tmp_path / "legacy"
     legacy.mkdir()
@@ -100,7 +100,7 @@ def test_main_directory_input(
 
 
 def test_main_no_yaml_returns_failure(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
     legacy = tmp_path / "legacy"
     legacy.mkdir()

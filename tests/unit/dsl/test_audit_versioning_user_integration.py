@@ -135,7 +135,7 @@ def test_update_user_email_creates_diff_version(session: Session) -> None:
 def test_update_user_active_flag_audit_trail(session: Session) -> None:
     """Активация/деактивация пользователя (security event) → version row."""
     user = users_module.User(
-        username=f"charlie_{uuid.uuid4().hex[:6]}", password="h", is_active=True
+        username=f"charlie_{uuid.uuid4().hex[:6]}", password="h", is_active=True,
     )
     session.add(user)
     session.commit()
@@ -162,7 +162,7 @@ def test_update_user_active_flag_audit_trail(session: Session) -> None:
 def test_delete_user_creates_delete_version(session: Session) -> None:
     """DELETE User → version row с last state (op=DELETE)."""
     user = users_module.User(
-        username=f"dave_{uuid.uuid4().hex[:6]}", password="h", is_active=True
+        username=f"dave_{uuid.uuid4().hex[:6]}", password="h", is_active=True,
     )
     session.add(user)
     session.commit()

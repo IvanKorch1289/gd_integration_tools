@@ -32,7 +32,7 @@ class TestCreateSubscription:
         db.set_cdc_client_provider(mock_client)
 
         request = CDCSubscribeRequest(
-            profile="pg-prod", tables=["users", "orders"], target_action="cdc.handler"
+            profile="pg-prod", tables=["users", "orders"], target_action="cdc.handler",
         )
         response = await create_subscription(request)
 
@@ -42,7 +42,7 @@ class TestCreateSubscription:
         assert response.tables == ["users", "orders"]
         assert response.target_action == "cdc.handler"
         mock_client.subscribe.assert_awaited_once_with(
-            profile="pg-prod", tables=["users", "orders"], target_action="cdc.handler"
+            profile="pg-prod", tables=["users", "orders"], target_action="cdc.handler",
         )
 
     @pytest.mark.asyncio
@@ -57,7 +57,7 @@ class TestCreateSubscription:
         assert response.subscription_id == "sub-456"
         assert response.target_action is None
         mock_client.subscribe.assert_awaited_once_with(
-            profile="pg-dev", tables=["logs"], target_action=None
+            profile="pg-dev", tables=["logs"], target_action=None,
         )
 
 

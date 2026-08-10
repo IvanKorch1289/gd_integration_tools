@@ -18,7 +18,7 @@ from src.backend.core.resilience.adaptive_timeout import _percentile
 
 # Strategy: finite floats (no NaN/Inf, can't compare them)
 st_floats = st.floats(
-    min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False
+    min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False,
 )
 st_samples = st.lists(st_floats, min_size=1, max_size=100)
 st_percent = st.floats(min_value=0.0, max_value=100.0, allow_nan=False)

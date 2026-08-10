@@ -154,7 +154,7 @@ class RAGLineageTracker:
         """Add chunk source к lineage."""
         if not (0.0 <= retrieval_score <= 1.0):
             raise ValueError(
-                f"retrieval_score должен быть 0.0-1.0, получено {retrieval_score}"
+                f"retrieval_score должен быть 0.0-1.0, получено {retrieval_score}",
             )
         self._lineage.chunk_sources.append(
             RAGChunkSource(
@@ -163,7 +163,7 @@ class RAGLineageTracker:
                 source_doc_version=source_doc_version,
                 embedding_model=embedding_model,
                 retrieval_score=retrieval_score,
-            )
+            ),
         )
 
     @property

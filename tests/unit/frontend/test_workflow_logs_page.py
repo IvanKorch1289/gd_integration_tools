@@ -85,7 +85,7 @@ def test_filter_params_pass_to_api() -> None:
             "duration_ms": 120,
             "tenant_id": "t-001",
             "ts": "2026-05-14T10:00:00Z",
-        }
+        },
     ]
 
     with patch("httpx.Client") as mock_client_cls:

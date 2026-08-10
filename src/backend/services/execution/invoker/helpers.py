@@ -21,7 +21,7 @@ _logger = get_logger("services.execution.invoker")
 def _is_async_iterator(obj: Any) -> bool:
     """True если ``obj`` поддерживает ``async for`` (AsyncIterable/Iterator)."""
     return (hasattr(obj, "__aiter__") and isinstance(obj, AsyncIterator)) or hasattr(
-        obj, "__aiter__"
+        obj, "__aiter__",
     )
 
 

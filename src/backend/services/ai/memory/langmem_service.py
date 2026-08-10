@@ -197,7 +197,7 @@ class LangMemService:
         bucket.append(entry)
 
     def _inmemory_recall(
-        self, agent_id: str, kind: MemoryKind, top_k: int
+        self, agent_id: str, kind: MemoryKind, top_k: int,
     ) -> list[MemoryEntry]:
         """Возвращает записи из inMemory по agent_id и kind, отсортированные по времени."""
         bucket = self._store.get(agent_id, [])
@@ -241,7 +241,7 @@ class LangMemService:
             self._inmemory_save(entry)
 
     async def remember_episode(
-        self, agent_id: str, content: str, metadata: dict[str, Any]
+        self, agent_id: str, content: str, metadata: dict[str, Any],
     ) -> MemoryEntry:
         """Сохраняет эпизодическое событие с временной меткой.
 
@@ -260,16 +260,16 @@ class LangMemService:
         """
         if not self._enabled:
             return _new_entry(
-                kind="episodic", agent_id=agent_id, content="", metadata={}
+                kind="episodic", agent_id=agent_id, content="", metadata={},
             )
         entry = _new_entry(
-            kind="episodic", agent_id=agent_id, content=content, metadata=metadata
+            kind="episodic", agent_id=agent_id, content=content, metadata=metadata,
         )
         await self._pg_save(entry)
         return entry
 
     async def remember_fact(
-        self, agent_id: str, content: str, embedding: list[float]
+        self, agent_id: str, content: str, embedding: list[float],
     ) -> MemoryEntry:
         """Сохраняет семантический факт с вектором эмбеддинга.
 
@@ -312,12 +312,12 @@ class LangMemService:
                             "id": entry.entry_id,
                             "vector": embedding,
                             "payload": {"agent_id": agent_id, "content": content},
-                        }
+                        },
                     ],
                 )
             except Exception as exc:
                 logger.warning(
-                    "LangMemService: ошибка upsert в Qdrant (%s), только inMemory.", exc
+                    "LangMemService: ошибка upsert в Qdrant (%s), только inMemory.", exc,
                 )
                 self._inmemory_save(entry)
                 return entry
@@ -329,7 +329,7 @@ class LangMemService:
         return entry
 
     async def remember_procedure(
-        self, agent_id: str, name: str, steps: list[str]
+        self, agent_id: str, name: str, steps: list[str],
     ) -> MemoryEntry:
         """Сохраняет процедурный навык как последовательность шагов.
 
@@ -348,7 +348,7 @@ class LangMemService:
         """
         if not self._enabled:
             return _new_entry(
-                kind="procedural", agent_id=agent_id, content="", metadata={}
+                kind="procedural", agent_id=agent_id, content="", metadata={},
             )
         entry = _new_entry(
             kind="procedural",
@@ -360,7 +360,7 @@ class LangMemService:
         return entry
 
     async def recall(
-        self, agent_id: str, kind: MemoryKind, query: str | None = None, top_k: int = 10
+        self, agent_id: str, kind: MemoryKind, query: str | None = None, top_k: int = 10,
     ) -> list[MemoryEntry]:
         """Извлекает записи из памяти по агенту и типу.
 
@@ -423,7 +423,7 @@ class LangMemService:
             return self._inmemory_recall(agent_id, kind, top_k)
 
     async def consolidate(
-        self, *, since: datetime | None = None, batch_size: int | None = None
+        self, *, since: datetime | None = None, batch_size: int | None = None,
     ) -> dict[str, Any]:
         """S210: consolidate episodic → semantic (compat с legacy API).
 
@@ -444,7 +444,7 @@ class LangMemService:
         if not self._enabled:
             raise LangMemDisabled(
                 "LangMem disabled (feature_flags.langmem_enabled=False). "
-                "Включите feature flag для consolidation."
+                "Включите feature flag для consolidation.",
             )
         try:
             from src.backend.core.config.ai_stack import langmem_settings
@@ -478,7 +478,7 @@ class LangMemService:
         if not self._enabled:
             raise LangMemDisabled(
                 "LangMem disabled (feature_flags.langmem_enabled=False). "
-                "Включите feature flag для stats."
+                "Включите feature flag для stats.",
             )
         episodic_count = sum(
             1

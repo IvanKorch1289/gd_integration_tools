@@ -68,7 +68,7 @@ class VersioningPolicy:
         if not 0 <= self.ramp_percentage <= 100:
             raise ValueError(
                 f"VersioningPolicy: ramp_percentage должен быть 0-100, "
-                f"получено {self.ramp_percentage}"
+                f"получено {self.ramp_percentage}",
             )
 
 
@@ -98,7 +98,7 @@ class WorkerVersioningHelper:
         self.build_id = build_id
         self.use_versioning = use_versioning
         self.policy = policy or VersioningPolicy(
-            deployment_name=deployment_name, build_id=build_id
+            deployment_name=deployment_name, build_id=build_id,
         )
 
     def build_worker_kwargs(self) -> dict[str, Any]:
@@ -130,7 +130,7 @@ class WorkerVersioningHelper:
 
             kwargs["deployment_config"] = WorkerDeploymentConfig(
                 version=WorkerDeploymentVersion(
-                    deployment_name=self.deployment_name, build_id=self.build_id
+                    deployment_name=self.deployment_name, build_id=self.build_id,
                 ),
                 use_worker_versioning=True,
             )

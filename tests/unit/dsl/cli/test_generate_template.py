@@ -30,7 +30,7 @@ def test_generate_template_no_todo() -> None:
         and "outdated" not in line.lower()
     ]
     assert not actionable_lines, f"Actionable TODO found in {p}:\n  " + "\n  ".join(
-        actionable_lines
+        actionable_lines,
     )
 
 

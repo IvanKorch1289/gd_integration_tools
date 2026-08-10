@@ -52,7 +52,7 @@ def _make_factory_with_client() -> Any:
 def test_init_lazy_factory() -> None:
     """Без client_factory используется singleton TemporalClientFactory()."""
     with patch(
-        "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory"
+        "src.backend.infrastructure.workflow.temporal_client.TemporalClientFactory",
     ) as mock_cls:
         backend = TemporalSchedulerBackend()
         assert backend._namespace == "default"
@@ -111,7 +111,7 @@ async def test_schedule_cron_happy_path() -> None:
     client.create_schedule.assert_awaited_once()
     # Проверяем, что spec был создан через ScheduleSpec (new SDK API).
     fake_spec_cls.assert_called_once_with(
-        cron_expressions=["*/5 * * * *"], time_zone_name="UTC"
+        cron_expressions=["*/5 * * * *"], time_zone_name="UTC",
     )
     fake_action_cls.assert_called_once()
 

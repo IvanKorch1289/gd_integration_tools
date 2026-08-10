@@ -31,7 +31,7 @@ def test_mount_mcp_http_mounts_when_enabled() -> None:
         mock_settings.http_enabled = True
         mock_settings.bind_path = "/mcp"
         with patch(
-            "src.backend.entrypoints.mcp.http_server.create_mcp_http_app"
+            "src.backend.entrypoints.mcp.http_server.create_mcp_http_app",
         ) as mock_create:
             mock_app = MagicMock()
             mock_create.return_value = mock_app

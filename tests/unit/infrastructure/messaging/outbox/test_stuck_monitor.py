@@ -36,7 +36,7 @@ def test_constructor_invalid_sample_interval() -> None:
 def test_constructor_valid() -> None:
     """Valid args → monitor создан."""
     m = stuck_monitor.OutboxStuckMonitor(
-        threshold_seconds=300, sample_interval_seconds=60
+        threshold_seconds=300, sample_interval_seconds=60,
     )
     assert m.threshold_seconds == 300
     assert m.sample_interval_seconds == 60
@@ -48,7 +48,7 @@ def test_constructor_valid() -> None:
 def test_start_registers_task() -> None:
     """start() создаёт asyncio.Task в TaskRegistry."""
     m = stuck_monitor.OutboxStuckMonitor(
-        threshold_seconds=300, sample_interval_seconds=60
+        threshold_seconds=300, sample_interval_seconds=60,
     )
     # Не запускаем настоящий loop — только проверяем регистрацию.
     # Используем mock event loop.
@@ -69,7 +69,7 @@ def test_start_registers_task() -> None:
 def test_start_idempotent() -> None:
     """Повторный start() не создаёт второй task."""
     m = stuck_monitor.OutboxStuckMonitor(
-        threshold_seconds=300, sample_interval_seconds=60
+        threshold_seconds=300, sample_interval_seconds=60,
     )
     import asyncio
 
@@ -86,7 +86,7 @@ def test_start_idempotent() -> None:
 def test_stop_clears_running() -> None:
     """stop() ставит _running=False и отменяет task."""
     m = stuck_monitor.OutboxStuckMonitor(
-        threshold_seconds=300, sample_interval_seconds=60
+        threshold_seconds=300, sample_interval_seconds=60,
     )
     import asyncio
 
@@ -103,7 +103,7 @@ def test_stop_clears_running() -> None:
 async def test_sample_once_calls_count_stuck_pending() -> None:
     """_sample_once() вызывает count_stuck_pending + by_transport с threshold (S81 W2)."""
     m = stuck_monitor.OutboxStuckMonitor(
-        threshold_seconds=300, sample_interval_seconds=60
+        threshold_seconds=300, sample_interval_seconds=60,
     )
     with (
         patch(
@@ -125,7 +125,7 @@ async def test_sample_once_calls_count_stuck_pending() -> None:
 async def test_sample_once_updates_gauge() -> None:
     """_sample_once() обновляет aggregate + per-transport gauges (S81 W2)."""
     m = stuck_monitor.OutboxStuckMonitor(
-        threshold_seconds=300, sample_interval_seconds=60
+        threshold_seconds=300, sample_interval_seconds=60,
     )
     if stuck_monitor._STUCK_PENDING_GAUGE is None:
         pytest.skip("prometheus_client not installed")
@@ -168,7 +168,7 @@ async def test_sample_once_updates_gauge() -> None:
 async def test_sample_loop_handles_exceptions() -> None:
     """_sample_loop() не падает при exception в sample, log и continue."""
     m = stuck_monitor.OutboxStuckMonitor(
-        threshold_seconds=300, sample_interval_seconds=1
+        threshold_seconds=300, sample_interval_seconds=1,
     )
 
     fail_count = 0
@@ -204,7 +204,7 @@ async def test_sample_loop_handles_exceptions() -> None:
 async def test_last_count_and_samples_total_updated() -> None:
     """После sample — last_count и samples_total обновляются (S81 W2)."""
     m = stuck_monitor.OutboxStuckMonitor(
-        threshold_seconds=300, sample_interval_seconds=60
+        threshold_seconds=300, sample_interval_seconds=60,
     )
 
     with (
@@ -232,7 +232,7 @@ async def test_start_outbox_stuck_monitor_singleton_recreate() -> None:
 
     # Сначала создаём с default config.
     await stuck_monitor.start_outbox_stuck_monitor(
-        threshold_seconds=300, sample_interval_seconds=60
+        threshold_seconds=300, sample_interval_seconds=60,
     )
     first = stuck_monitor.default_stuck_monitor
     assert first.threshold_seconds == 300
@@ -240,7 +240,7 @@ async def test_start_outbox_stuck_monitor_singleton_recreate() -> None:
     try:
         # Config change → recreate.
         await stuck_monitor.start_outbox_stuck_monitor(
-            threshold_seconds=600, sample_interval_seconds=120
+            threshold_seconds=600, sample_interval_seconds=120,
         )
         second = stuck_monitor.default_stuck_monitor
         assert second is not first

@@ -31,7 +31,7 @@ from src.backend.services.io.external_database.state import PreparedDBParameter
 # Формат identifier-а: `name` или `schema.name` или `db.schema.name`, где
 # каждый сегмент — обычный SQL identifier без кавычек.
 _IDENT_RE: Final = re.compile(
-    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$"
+    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$",
 )
 
 # Bind-имена (после ":") должны быть простыми — без точек, без спецсимволов.
@@ -84,7 +84,7 @@ class DispatchMixin(_ExternalDatabaseProtocol):
             )
 
         raise DatabaseError(
-            message=f"Неподдерживаемый тип внешнего объекта: {meta.object_type}"
+            message=f"Неподдерживаемый тип внешнего объекта: {meta.object_type}",
         )
 
     async def _execute_query(
@@ -98,14 +98,14 @@ class DispatchMixin(_ExternalDatabaseProtocol):
         """
         if not meta.sql_text:
             raise DatabaseError(
-                message=f"Для query '{meta.object_name}' не задан sql_text"
+                message=f"Для query '{meta.object_name}' не задан sql_text",
             )
 
         result = await session.execute(text(meta.sql_text), execute_params)
         return [dict(row) for row in result.mappings().all()]
 
     async def _execute_view(
-        self, session: AsyncSession, meta: ExternalDBObjectMeta
+        self, session: AsyncSession, meta: ExternalDBObjectMeta,
     ) -> list[dict[str, Any]]:
         """
         Выполняет SELECT * FROM разрешённого view.
@@ -177,7 +177,7 @@ class DispatchMixin(_ExternalDatabaseProtocol):
             sql = f"BEGIN {safe_name}({arguments_sql}); END;"
         else:
             raise DatabaseError(
-                message=f"Неподдерживаемый тип БД для procedure: {db_type}"
+                message=f"Неподдерживаемый тип БД для procedure: {db_type}",
             )
 
         await session.execute(text(sql), execute_params)

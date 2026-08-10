@@ -25,7 +25,7 @@ class PluginInventoryConflictError(RuntimeError):
         self.owner = owner
         super().__init__(
             f"Plugin {plugin!r} cannot register {kind} {name!r} — "
-            f"already provided by {owner!r}"
+            f"already provided by {owner!r}",
         )
 
 

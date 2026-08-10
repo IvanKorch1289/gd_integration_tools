@@ -164,7 +164,7 @@ def test_feature_flag_to_spec_full() -> None:
             "default": True,
             "stop_on_disabled": False,
             "output_field": "can_proceed",
-        }
+        },
     }
 
 

@@ -39,7 +39,7 @@ class _FakeRedis:
         return self.store.get(key)
 
     async def set(
-        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False
+        self, key: str, value: bytes | str, *, ex: int | None = None, nx: bool = False,
     ) -> bool | None:
         self.calls.append(("set", {"key": key, "value": value, "ex": ex, "nx": nx}))
         if nx and key in self.store:
@@ -71,7 +71,7 @@ def backend(fake_redis: _FakeRedis) -> RedisNxBackend:
 
 @pytest.mark.asyncio
 async def test_store_idempotency_key_nx_first_call_reserves(
-    backend: RedisNxBackend, fake_redis: _FakeRedis
+    backend: RedisNxBackend, fake_redis: _FakeRedis,
 ) -> None:
     already_exists = await backend.store_idempotency_key("abc")
     assert already_exists is False
@@ -93,7 +93,7 @@ async def test_store_idempotency_key_second_call_reports_existing(
 
 @pytest.mark.asyncio
 async def test_store_response_data_writes_with_response_ttl(
-    backend: RedisNxBackend, fake_redis: _FakeRedis
+    backend: RedisNxBackend, fake_redis: _FakeRedis,
 ) -> None:
     await backend.store_response_data("abc", {"ok": True, "id": 42}, 201)
     body = fake_redis.store["idem:response:abc"]
@@ -125,7 +125,7 @@ async def test_get_stored_response_missing_returns_none(
 
 @pytest.mark.asyncio
 async def test_clear_idempotency_key_removes_pending_block(
-    backend: RedisNxBackend, fake_redis: _FakeRedis
+    backend: RedisNxBackend, fake_redis: _FakeRedis,
 ) -> None:
     await backend.store_idempotency_key("abc")
     assert "idem:pending:abc" in fake_redis.store
@@ -143,7 +143,7 @@ async def test_concurrent_pending_only_one_wins(backend: RedisNxBackend) -> None
     получит право обработать запрос; остальные → existing=True (→ 409).
     """
     results = await asyncio.gather(
-        *[backend.store_idempotency_key("dup") for _ in range(5)]
+        *[backend.store_idempotency_key("dup") for _ in range(5)],
     )
     # ровно один False (winner), остальные True (already exists)
     assert results.count(False) == 1

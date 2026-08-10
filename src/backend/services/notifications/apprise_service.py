@@ -89,7 +89,7 @@ class AppriseNotificationService:
 
         if not feature_flags.notification_dsl_enabled:
             _log.debug(
-                "notification_dsl_enabled=False, пропускаем notify '%s'", channel
+                "notification_dsl_enabled=False, пропускаем notify '%s'", channel,
             )
             return False
 
@@ -97,14 +97,14 @@ class AppriseNotificationService:
             import apprise  # lazy-import
         except ImportError:
             _log.warning(
-                "Пакет 'apprise' не установлен. Уведомление '%s' пропущено.", channel
+                "Пакет 'apprise' не установлен. Уведомление '%s' пропущено.", channel,
             )
             return False
 
         url = self._channel_urls.get(channel)
         if not url:
             _log.warning(
-                "Канал '%s' не зарегистрирован в AppriseNotificationService.", channel
+                "Канал '%s' не зарегистрирован в AppriseNotificationService.", channel,
             )
             return False
 
@@ -119,7 +119,7 @@ class AppriseNotificationService:
         notify_format = _format_map.get(body_format, apprise.NotifyFormat.TEXT)
 
         result: bool = await apobj.async_notify(
-            title=title, body=body, body_format=notify_format
+            title=title, body=body, body_format=notify_format,
         )
         if not result:
             _log.warning(

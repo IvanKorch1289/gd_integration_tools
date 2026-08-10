@@ -94,11 +94,11 @@ class AIToolDispatchProcessor(BaseAIProcessor):
         if not available_tool_ids:
             raise ValueError(
                 "AIToolDispatchProcessor: available_tool_ids не может быть "
-                "пустым (нет whitelist = нет dispatch)"
+                "пустым (нет whitelist = нет dispatch)",
             )
         if query is None and query_property is None:
             raise ValueError(
-                "AIToolDispatchProcessor: требуется query или query_property"
+                "AIToolDispatchProcessor: требуется query или query_property",
             )
         super().__init__(name=name or "ai_tool_dispatch")
         self.available_tool_ids = list(available_tool_ids)
@@ -132,16 +132,16 @@ class AIToolDispatchProcessor(BaseAIProcessor):
         query = self._resolve_query(exchange)
         if query is None:
             _logger.warning(
-                "%s: query_property %r пуст — skip", self.name, self.query_property
+                "%s: query_property %r пуст — skip", self.name, self.query_property,
             )
             exchange.set_property(
-                self.result_property, {"dispatched": False, "reason": "empty_query"}
+                self.result_property, {"dispatched": False, "reason": "empty_query"},
             )
             return
 
         tools_desc = self._resolve_tools_description()
         selection = await self._ask_llm_for_tool_selection(
-            query=query, tools_desc=tools_desc
+            query=query, tools_desc=tools_desc,
         )
         if selection is None:
             # LLM unavailable, parse error, или не выбрал tool
@@ -220,7 +220,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
             tool_result = await tool.callable(**tool_args)
         except Exception as exc:
             _logger.warning(
-                "%s: tool %r raised %s — record error", self.name, tool_id, exc
+                "%s: tool %r raised %s — record error", self.name, tool_id, exc,
             )
             exchange.set_property(
                 self.result_property,
@@ -244,7 +244,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
         )
 
     async def _ask_llm_for_tool_selection(
-        self, *, query: str, tools_desc: str
+        self, *, query: str, tools_desc: str,
     ) -> dict[str, Any] | None:
         """Build prompt + call AIGateway + parse JSON tool selection.
 
@@ -384,7 +384,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
 
         if registry is None:
             return json.dumps(
-                [{"id": tid, "available": True} for tid in self.available_tool_ids]
+                [{"id": tid, "available": True} for tid in self.available_tool_ids],
             )
 
         tools_spec: list[dict[str, Any]] = []
@@ -399,7 +399,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
                     "name": tool.name,
                     "description": tool.description,
                     "parameters": tool.parameters,
-                }
+                },
             )
         return json.dumps(tools_spec, ensure_ascii=False)
 

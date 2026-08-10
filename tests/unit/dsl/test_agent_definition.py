@@ -55,7 +55,7 @@ CREDIT_RISK_AGENT_YAML = dedent(
     rlm:
       enabled: true
       boost_factor: 0.1
-    """
+    """,
 )
 
 
@@ -117,7 +117,7 @@ def test_tools_explicit_form_supported() -> None:
           - name: rag_query
             config: { namespace: docs }
           - name: sanitize_pii
-        """
+        """,
     )
     agent = load_agent_yaml(yaml_text)
     assert agent.tools == [
@@ -136,7 +136,7 @@ def test_tools_plain_string_form_supported() -> None:
         tools:
           - sanitize_pii
           - guardrails
-        """
+        """,
     )
     agent = load_agent_yaml(yaml_text)
     assert [t.name for t in agent.tools] == ["sanitize_pii", "guardrails"]
@@ -151,7 +151,7 @@ def test_minimal_agent_only_required_fields() -> None:
         runtime: dspy
         model:
           primary: local/llama-3-8b
-        """
+        """,
     )
     agent = load_agent_yaml(yaml_text)
     assert agent.name == "minimal_agent"
@@ -171,7 +171,7 @@ def test_runtime_must_be_one_of_three() -> None:
         name: bad_runtime
         runtime: autogen
         model: { primary: openai/gpt-4o-mini }
-        """
+        """,
     )
     with pytest.raises(AgentDefinitionLoadError) as exc_info:
         load_agent_yaml(yaml_text)
@@ -186,7 +186,7 @@ def test_model_primary_required() -> None:
         runtime: langgraph
         model:
           fallback: [openai/gpt-4o-mini]
-        """
+        """,
     )
     with pytest.raises(AgentDefinitionLoadError) as exc_info:
         load_agent_yaml(yaml_text)
@@ -201,7 +201,7 @@ def test_extra_fields_rejected() -> None:
         runtime: langgraph
         model: { primary: openai/gpt-4o-mini }
         unknown_field: oops
-        """
+        """,
     )
     with pytest.raises(AgentDefinitionLoadError) as exc_info:
         load_agent_yaml(yaml_text)
@@ -221,7 +221,7 @@ def test_supervisor_only_for_langgraph() -> None:
         supervisor:
           type: flat
           agents: [sub_a, sub_b]
-        """
+        """,
     )
     with pytest.raises(AgentDefinitionLoadError) as exc_info:
         load_agent_yaml(yaml_text)
@@ -239,7 +239,7 @@ def test_supervisor_allowed_for_langgraph() -> None:
           type: hierarchical
           max_iterations: 5
           agents: [retrieval_agent, scoring_agent]
-        """
+        """,
     )
     agent = load_agent_yaml(yaml_text)
     assert agent.supervisor == SupervisorSpec(
@@ -260,11 +260,11 @@ def test_stop_condition_parsed() -> None:
           max_steps: 15
           max_cost_usd: 1.25
           max_wall_time_s: 60
-        """
+        """,
     )
     agent = load_agent_yaml(yaml_text)
     assert agent.stop_condition == StopConditionSpec(
-        max_steps=15, max_tool_calls=50, max_cost_usd=1.25, max_wall_time_s=60.0
+        max_steps=15, max_tool_calls=50, max_cost_usd=1.25, max_wall_time_s=60.0,
     )
 
 
@@ -296,7 +296,7 @@ def test_unsafe_yaml_python_object_rejected() -> None:
         name: !!python/object/new:os.system ["echo pwned"]
         runtime: langgraph
         model: { primary: openai/gpt-4o-mini }
-        """
+        """,
     )
     with pytest.raises(AgentDefinitionLoadError):
         load_agent_yaml(yaml_text)
@@ -331,7 +331,7 @@ def test_load_agents_from_directory_returns_sorted(tmp_path: Path) -> None:
             runtime: dspy
             model:
               primary: local/llama-3-8b
-            """
+            """,
         )
 
     (tmp_path / "z_agent.agent.yaml").write_text(_minimal("z_agent"), encoding="utf-8")

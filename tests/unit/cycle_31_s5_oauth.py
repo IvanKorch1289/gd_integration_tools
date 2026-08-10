@@ -45,7 +45,7 @@ class TestRefreshTokenRotation:
         # The class has these methods per S18 W4 (batch-revocation)
         assert hasattr(RedisJwtBlacklist, "is_revoked")
         assert hasattr(RedisJwtBlacklist, "is_iat_revoked") or hasattr(
-            RedisJwtBlacklist, "revoke_before"
+            RedisJwtBlacklist, "revoke_before",
         ), "JWT rotation support missing (S18 W4 S-L8-5)"
 
     def test_rotation_pattern_in_jwt_backend(self):

@@ -117,7 +117,7 @@ class TestSignalAndQuery:
             ("close", {}),
         ]:
             await backend.signal_workflow(
-                handle=handle, signal_name=name, payload=payload
+                handle=handle, signal_name=name, payload=payload,
             )
         assert backend.signals_for(handle) == [
             ("approve", {"by": "ops"}),
@@ -141,7 +141,7 @@ class TestSignalAndQuery:
         handle = await _start(backend)
         # Найденный query возвращает свой dict.
         assert await backend.query_workflow(handle=handle, query_name="status") == {
-            "phase": "ok"
+            "phase": "ok",
         }
         # Несуществующий query — пустой dict, не KeyError.
         assert await backend.query_workflow(handle=handle, query_name="missing") == {}
@@ -152,7 +152,7 @@ class TestSignalAndQuery:
         backend = FakeWorkflowBackend(query_handlers={"echo": {"v": 1}})
         handle = await _start(backend)
         result = await backend.query_workflow(
-            handle=handle, query_name="echo", args={"ignored": True}
+            handle=handle, query_name="echo", args={"ignored": True},
         )
         assert result == {"v": 1}
 
@@ -177,7 +177,7 @@ class TestCancelAndAwait:
         backend = FakeWorkflowBackend()
         handle = await _start(backend)
         backend.set_result(
-            handle, WorkflowResult(status="completed", output={"step": 5})
+            handle, WorkflowResult(status="completed", output={"step": 5}),
         )
         await backend.cancel_workflow(handle=handle)
         result = await backend.await_completion(handle=handle)
@@ -190,7 +190,7 @@ class TestCancelAndAwait:
         backend = FakeWorkflowBackend(default_result=custom)
         handle = await _start(backend)
         result = await backend.await_completion(
-            handle=handle, timeout=timedelta(seconds=5)
+            handle=handle, timeout=timedelta(seconds=5),
         )
         # timeout — параметр для совместимости с Protocol, fake его игнорирует.
         assert result.status == "completed"
@@ -218,7 +218,7 @@ class TestReplay:
         backend = FakeWorkflowBackend()
         # Любой bytes принимается, fake не моделирует replay-семантику.
         result = await backend.replay(
-            workflow_name="credit_score", history=b"\x00\x01\x02\xff"
+            workflow_name="credit_score", history=b"\x00\x01\x02\xff",
         )
         assert result is None
 
@@ -250,7 +250,7 @@ class TestRequire:
         # workflow_id/namespace. ``_require`` обязан отловить это как
         # ValueError, чтобы избежать cross-instance lookup-атак.
         forged = WorkflowHandle(
-            workflow_id="wf-forged", run_id=real.run_id, namespace="other"
+            workflow_id="wf-forged", run_id=real.run_id, namespace="other",
         )
         with pytest.raises(ValueError, match="Handle mismatch"):
             backend._require(forged)

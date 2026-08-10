@@ -57,7 +57,7 @@ class TestStartAllSources:
         assert callable(source.start.await_args[0][0])
 
     async def test_missing_source_warning(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         registry = MagicMock()
         registry.get = MagicMock(side_effect=KeyError("missing"))
@@ -87,7 +87,7 @@ class TestStartAllSources:
         dedupe = MagicMock()
         spec = _fake_spec("wh-1", idempotency=False)
         await start_all_sources(
-            registry=registry, invoker=invoker, specs=[spec], dedupe=dedupe
+            registry=registry, invoker=invoker, specs=[spec], dedupe=dedupe,
         )
         # adapter created without dedupe — callback should work
         source.start.assert_awaited_once()

@@ -33,7 +33,7 @@ class _FakeGateway:
         self.last_messages: list[dict[str, Any]] | None = None
 
     async def acompletion(
-        self, messages: list[dict[str, Any]], **_: Any
+        self, messages: list[dict[str, Any]], **_: Any,
     ) -> dict[str, Any]:
         self.last_messages = messages
         return {"choices": [{"message": {"content": "stub"}}], "usage": self._usage}
@@ -44,7 +44,7 @@ def budget() -> TokenBudget:
     return TokenBudget(
         backend=InMemoryTokenBudgetBackend(),
         default_config=TokenBudgetConfig(
-            soft_limit=100, hard_limit=200, period=BudgetPeriod.DAILY
+            soft_limit=100, hard_limit=200, period=BudgetPeriod.DAILY,
         ),
     )
 
@@ -75,9 +75,9 @@ def test_estimate_tokens_handles_list_content() -> None:
                 "content": [
                     {"type": "text", "text": "hello"},
                     {"type": "text", "text": "world"},
-                ]
-            }
-        ]
+                ],
+            },
+        ],
     )
     assert tokens > 1
 
@@ -87,7 +87,7 @@ async def test_facade_passthrough_when_disabled(budget: TokenBudget) -> None:
     gateway = _FakeGateway(usage={"prompt_tokens": 50, "completion_tokens": 30})
     facade = LiteLLMBudgetFacade(gateway=gateway, budget=budget, enabled=False)
     _, usage = await facade.acompletion(
-        tenant_id="t-1", messages=[{"role": "user", "content": "ping"}]
+        tenant_id="t-1", messages=[{"role": "user", "content": "ping"}],
     )
     assert usage.total_tokens == 80
     snap = await budget.snapshot(tenant_id="t-1")
@@ -116,7 +116,7 @@ async def test_facade_raises_429_on_hard_limit(budget: TokenBudget) -> None:
     facade = LiteLLMBudgetFacade(gateway=gateway, budget=budget, enabled=True)
     with pytest.raises(BudgetEnforcementError) as ctx:
         await facade.acompletion(
-            tenant_id="t-3", messages=[{"role": "user", "content": "hello"}]
+            tenant_id="t-3", messages=[{"role": "user", "content": "hello"}],
         )
     assert ctx.value.body["error"] == "token_budget_exceeded"
     assert ctx.value.body["tenant_id"] == "t-3"

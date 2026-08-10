@@ -242,7 +242,7 @@ async def _send_401(send: Send, *, error: str, detail: str) -> None:
                 (b"content-type", b"application/json"),
                 (b"content-length", str(len(body_bytes)).encode("latin-1")),
             ],
-        }
+        },
     )
     await send({"type": "http.response.body", "body": body_bytes})
 
@@ -250,7 +250,7 @@ async def _send_401(send: Send, *, error: str, detail: str) -> None:
 async def _send_429(send: Send, *, retry_after: int, detail: str) -> None:
     """Отправляет 429 JSON с ``Retry-After`` (no-raise, cycle 39)."""
     body_bytes = json.dumps(
-        {"error": "rate_limit_exceeded", "detail": detail, "retry_after": retry_after}
+        {"error": "rate_limit_exceeded", "detail": detail, "retry_after": retry_after},
     ).encode("utf-8")
     await send(
         {
@@ -262,6 +262,6 @@ async def _send_429(send: Send, *, retry_after: int, detail: str) -> None:
                 (b"retry-after", str(retry_after).encode("latin-1")),
                 (b"x-ratelimit-scope", b"login_step_up"),
             ],
-        }
+        },
     )
     await send({"type": "http.response.body", "body": body_bytes})

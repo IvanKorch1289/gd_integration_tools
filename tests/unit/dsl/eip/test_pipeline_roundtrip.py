@@ -48,7 +48,7 @@ def _build_rich_pipeline() -> Pipeline:
         # 3 multicast_routes
         .multicast_routes(["r1", "r2"])
         .multicast_routes(
-            ["a"], strategy="first_success", on_error="fail", timeout=10.0
+            ["a"], strategy="first_success", on_error="fail", timeout=10.0,
         )
         .multicast_routes(["x", "y", "z"], on_error="continue", timeout=5.0)
         # Финальный redirect для ровно 16 процессоров

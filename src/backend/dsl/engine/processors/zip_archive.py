@@ -155,7 +155,7 @@ class ZipArchiveProcessor(BaseProcessor):
             if self._mode == "pack":
                 if not isinstance(src_value, dict):
                     exchange.fail(
-                        "zip_archive pack: source must be dict[filename -> content]"
+                        "zip_archive pack: source must be dict[filename -> content]",
                     )
                     return
                 result: Any = self._pack(src_value)

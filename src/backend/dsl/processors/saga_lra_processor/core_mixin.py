@@ -43,7 +43,7 @@ _VALID_STATES = frozenset(
         STATE_COMPENSATING,
         STATE_COMPENSATED,
         STATE_FAILED,
-    }
+    },
 )
 
 
@@ -76,12 +76,12 @@ class CoreMixin(_SagaLRAProcessorProtocol):
     ) -> None:
         if timeout_seconds <= 0:
             raise ValueError(
-                f"timeout_seconds должен быть > 0, получено {timeout_seconds!r}"
+                f"timeout_seconds должен быть > 0, получено {timeout_seconds!r}",
             )
         if per_step_timeout_seconds is not None and per_step_timeout_seconds <= 0:
             raise ValueError(
                 "per_step_timeout_seconds должен быть > 0 или None, "
-                f"получено {per_step_timeout_seconds!r}"
+                f"получено {per_step_timeout_seconds!r}",
             )
         normalized = self._normalize_steps(steps)
         # S159 W4: BaseProcessor is NOT in MRO (Protocol chain),

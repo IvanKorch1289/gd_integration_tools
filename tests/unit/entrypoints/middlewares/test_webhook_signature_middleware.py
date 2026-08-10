@@ -138,7 +138,7 @@ def test_protected_prefix_without_secret_fails_closed() -> None:
         return {"ok": True}
 
     app.add_middleware(
-        WebhookSignatureMiddleware, path_prefixes=("/webhooks/",), secrets_by_prefix={}
+        WebhookSignatureMiddleware, path_prefixes=("/webhooks/",), secrets_by_prefix={},
     )
     client = TestClient(app)
     response = client.post("/webhooks/unconfigured", json={"x": 1})

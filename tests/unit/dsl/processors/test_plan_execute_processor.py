@@ -48,7 +48,7 @@ from src.backend.dsl.processors.plan_execute_processor import (
 
 
 def _make_exchange(
-    body: Any = "hello", headers: dict[str, Any] | None = None
+    body: Any = "hello", headers: dict[str, Any] | None = None,
 ) -> Exchange:
     msg = Message(body=body, headers=headers or {})
     return Exchange(in_message=msg, out_message=msg)
@@ -155,7 +155,7 @@ class TestPlanExecuteInit:
 
     async def test_init_minimal(self) -> None:
         p = PlanExecuteProcessor(
-            planner=_identity_planner([]), executor=_identity_executor()
+            planner=_identity_planner([]), executor=_identity_executor(),
         )
         assert p._max_steps == 10
         assert p._max_replans == 2
@@ -266,7 +266,7 @@ class TestPlanVerifier:
         executor = AsyncMock(return_value="ok")
 
         p = PlanExecuteProcessor(
-            planner=planner, executor=executor, verifier=_constant_verifier(True)
+            planner=planner, executor=executor, verifier=_constant_verifier(True),
         )
         ex = _make_exchange("x")
         await p.process(ex, _make_context())
@@ -288,7 +288,7 @@ class TestPlanVerifier:
         executor = AsyncMock(side_effect=["first", "second", "third"])
 
         p = PlanExecuteProcessor(
-            planner=planner, executor=executor, verifier=_constant_verifier(False)
+            planner=planner, executor=executor, verifier=_constant_verifier(False),
         )
         ex = _make_exchange("go")
         await p.process(ex, _make_context())
@@ -398,7 +398,7 @@ class TestPlanExchangeIO:
             return_value=[
                 PlanStep(step_id="s1", action="x", params={"r": "first"}),
                 PlanStep(step_id="s2", action="x", params={"r": "second"}),
-            ]
+            ],
         )
         executor = AsyncMock(side_effect=["first", "second"])
 
@@ -431,7 +431,7 @@ class TestPlanFailureHandling:
             return_value=[
                 PlanStep(step_id="s1", action="x", params={"r": "ok1"}),
                 PlanStep(step_id="s2", action="x", params={"r": "ok2"}),
-            ]
+            ],
         )
         # s2 fails
         executor = AsyncMock(side_effect=["ok1", RuntimeError("boom")])
@@ -505,7 +505,7 @@ class TestPlanAsyncSupport:
             raise RuntimeError("verifier crash")
 
         p = PlanExecuteProcessor(
-            planner=llm, executor=exec_tool, verifier=broken_verifier, max_replans=0
+            planner=llm, executor=exec_tool, verifier=broken_verifier, max_replans=0,
         )
         ex = _make_exchange("go")
         await p.process(ex, _make_context())
@@ -577,7 +577,7 @@ class TestMROIntegration:
             return "ok"
 
         b = RouteBuilder(route_id="t", source="t").plan_execute_with_callbacks(
-            planner=llm, executor=ex_fn
+            planner=llm, executor=ex_fn,
         )
         assert isinstance(b, RouteBuilder)
         assert len(b._processors) == 1
@@ -592,7 +592,7 @@ class TestMROIntegration:
 
         b = RouteBuilder(route_id="t", source="t")
         result = b.plan_execute_with_callbacks(
-            planner=llm, executor=ex_fn, max_steps=5, max_replans=1
+            planner=llm, executor=ex_fn, max_steps=5, max_replans=1,
         )
         assert isinstance(result, RouteBuilder)
         assert result is b  # _add returns self

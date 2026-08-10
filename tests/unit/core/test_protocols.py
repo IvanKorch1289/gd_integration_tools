@@ -21,7 +21,7 @@ class TestLLMProvider:
             name: str = "test"
 
             async def chat(
-                self, messages: list[dict[str, object]], **kwargs: object
+                self, messages: list[dict[str, object]], **kwargs: object,
             ) -> dict[str, object]:
                 return {}
 
@@ -29,7 +29,7 @@ class TestLLMProvider:
                 return ""
 
             async def embeddings(
-                self, texts: list[str], **kwargs: object
+                self, texts: list[str], **kwargs: object,
             ) -> list[list[float]]:
                 return []
 
@@ -90,7 +90,7 @@ class TestExporter:
             mime_type: str = "text/csv"
 
             def export(
-                self, data: object, *, options: dict[str, object] | None = None
+                self, data: object, *, options: dict[str, object] | None = None,
             ) -> bytes:
                 return b""
 
@@ -104,17 +104,17 @@ class TestMemoryBackend:
     def test_is_runtime_checkable(self) -> None:
         class Fake:
             async def get_conversation(
-                self, session_id: str, *, limit: int = 50
+                self, session_id: str, *, limit: int = 50,
             ) -> list[dict[str, object]]:
                 return []
 
             async def append_message(
-                self, session_id: str, message: dict[str, object]
+                self, session_id: str, message: dict[str, object],
             ) -> None:
                 pass
 
             async def save_long_term(
-                self, user_id: str, facts: dict[str, object]
+                self, user_id: str, facts: dict[str, object],
             ) -> None:
                 pass
 

@@ -29,7 +29,7 @@ from typing import Any
 import pytest
 
 pytest.importorskip(
-    "moto", reason="moto not in test deps; S124 W2 honest skip (TD-0244)"
+    "moto", reason="moto not in test deps; S124 W2 honest skip (TD-0244)",
 )
 
 from moto.server import ThreadedMotoServer
@@ -131,7 +131,7 @@ async def test_upload_wraps_boto_error_as_service_error(
     class _FakeS3:
         async def put_object(self, **kwargs: Any) -> None:
             raise ClientError(
-                {"Error": {"Code": "InternalError", "Message": "boom"}}, "PutObject"
+                {"Error": {"Code": "InternalError", "Message": "boom"}}, "PutObject",
             )
 
     class _FakeS3Session:
@@ -266,7 +266,7 @@ async def test_factory_uses_s3_when_provider_not_local(moto_server: Any) -> None
     factory.get_object_storage.cache_clear()
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(
-            "src.backend.core.config.settings.settings.storage.provider", "minio"
+            "src.backend.core.config.settings.settings.storage.provider", "minio",
         )
         store = factory.get_object_storage()
         assert isinstance(store, S3ObjectStorage)
@@ -283,7 +283,7 @@ async def test_factory_returns_local_when_provider_local() -> None:
     factory.get_local_fs_storage.cache_clear()
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(
-            "src.backend.core.config.settings.settings.storage.provider", "local"
+            "src.backend.core.config.settings.settings.storage.provider", "local",
         )
         store = factory.get_object_storage()
     from src.backend.infrastructure.storage.local_fs import LocalFSStorage

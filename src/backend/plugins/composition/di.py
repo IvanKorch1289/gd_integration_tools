@@ -176,8 +176,8 @@ def register_app_state(app: FastAPI) -> None:
                 opa_client = OPAClient(base_url=policy_settings.opa_url)
                 auth_policies.append(
                     build_opa_policy_decider(
-                        opa_client, policy_name=policy_settings.opa_policy_name
-                    )
+                        opa_client, policy_name=policy_settings.opa_policy_name,
+                    ),
                 )
             if policy_settings.casbin_model_path:
                 casbin_base = CasbinAdapter(
@@ -186,8 +186,8 @@ def register_app_state(app: FastAPI) -> None:
                 )
                 auth_policies.append(
                     build_casbin_policy_decider(
-                        TenantScopedCasbin(base_adapter=casbin_base)
-                    )
+                        TenantScopedCasbin(base_adapter=casbin_base),
+                    ),
                 )
             from src.backend.core.logging import get_logger as _gl
 
@@ -227,7 +227,7 @@ def register_app_state(app: FastAPI) -> None:
     from src.backend.infrastructure.watermark.factory import create_watermark_store
 
     app.state.watermark_store = create_watermark_store(
-        _watermark_settings, session_manager=main_session_manager
+        _watermark_settings, session_manager=main_session_manager,
     )
 
     from src.backend.entrypoints.mqtt.mqtt_handler import MqttHandler, MqttSettings
@@ -252,7 +252,7 @@ def register_app_state(app: FastAPI) -> None:
 
     cdc_singleton = get_cdc_client()
     inbox_dlq_writer = InboxDLQWriter(
-        session_factory=_get_outbox_dlq_session_factory()
+        session_factory=_get_outbox_dlq_session_factory(),
     )
     cdc_singleton.set_dlq_writer(inbox_dlq_writer)
     # mark_cdc_dlq_writer_wired вызывается автоматически из

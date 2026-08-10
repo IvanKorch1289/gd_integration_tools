@@ -38,7 +38,7 @@ class TestStartCapabilityGate:
             )
 
     async def test_granted_when_capability_declared(
-        self, facade: WorkflowFacade, gate: CapabilityGate
+        self, facade: WorkflowFacade, gate: CapabilityGate,
     ) -> None:
         gate.declare(
             "ext.credit_score",
@@ -56,7 +56,7 @@ class TestStartCapabilityGate:
         assert handle.namespace == "bank-a"
 
     async def test_scope_mismatch_denied(
-        self, facade: WorkflowFacade, gate: CapabilityGate
+        self, facade: WorkflowFacade, gate: CapabilityGate,
     ) -> None:
         gate.declare(
             "ext.credit_score",
@@ -76,7 +76,7 @@ class TestStartCapabilityGate:
 @pytest.mark.asyncio
 class TestSignalCapabilityGate:
     async def test_signal_gate(
-        self, facade: WorkflowFacade, gate: CapabilityGate
+        self, facade: WorkflowFacade, gate: CapabilityGate,
     ) -> None:
         gate.declare(
             "ext.credit_score",
@@ -94,11 +94,11 @@ class TestSignalCapabilityGate:
             task_queue="default",
         )
         await facade.signal(
-            caller="ext.credit_score", handle=handle, signal_name="approve", payload={}
+            caller="ext.credit_score", handle=handle, signal_name="approve", payload={},
         )
 
     async def test_signal_denied_without_signal_capability(
-        self, facade: WorkflowFacade, gate: CapabilityGate
+        self, facade: WorkflowFacade, gate: CapabilityGate,
     ) -> None:
         gate.declare(
             "ext.credit_score",
@@ -124,7 +124,7 @@ class TestSignalCapabilityGate:
 @pytest.mark.asyncio
 class TestAwaitCompletionNoGate:
     async def test_await_does_not_check_capability(
-        self, facade: WorkflowFacade, gate: CapabilityGate
+        self, facade: WorkflowFacade, gate: CapabilityGate,
     ) -> None:
         gate.declare(
             "ext.credit_score",

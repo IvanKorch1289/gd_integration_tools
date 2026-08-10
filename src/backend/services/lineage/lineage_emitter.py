@@ -69,7 +69,7 @@ class InMemoryLineageEmitter:
             data = dict(event)
         else:
             raise TypeError(
-                f"event должен быть LineageEvent или dict, получено {type(event).__name__}"
+                f"event должен быть LineageEvent или dict, получено {type(event).__name__}",
             )
         with self._lock:
             self._events.append(data)
@@ -121,10 +121,10 @@ class InMemoryLineageEmitter:
                                 "description": ", ".join(
                                     f"{k}={v!r}"
                                     for k, v in (node.get("attributes") or {}).items()
-                                )
-                            }
+                                ),
+                            },
                         },
-                    }
+                    },
                 ],
                 "payload": ev.get("payload", {}),
             }

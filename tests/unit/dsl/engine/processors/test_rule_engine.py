@@ -37,7 +37,7 @@ async def test_first_match_wins_returns_decision() -> None:
             ],
             context_from="applicant",
             decision_to="decision",
-        )
+        ),
     )
     exchange = _make_exchange(body={"applicant": {"score": 720}})
 
@@ -55,7 +55,7 @@ async def test_default_decision_when_no_rule_matches() -> None:
             context_from=None,
             decision_to="decision",
             default_decision="REJECT",
-        )
+        ),
     )
     exchange = _make_exchange(body={"score": 100})
 
@@ -71,13 +71,13 @@ async def test_broken_rule_is_skipped_others_evaluated() -> None:
         EvaluateRulesParams(
             rules=[
                 Rule(
-                    name="broken", expr="undefined_var > 0", decision="SHOULD_NOT_FIRE"
+                    name="broken", expr="undefined_var > 0", decision="SHOULD_NOT_FIRE",
                 ),
                 Rule(name="ok", expr="score == 50", decision="OK"),
             ],
             decision_to="decision",
             default_decision="FALLBACK",
-        )
+        ),
     )
     exchange = _make_exchange(body={"score": 50})
 
@@ -105,10 +105,10 @@ async def test_sandbox_blocks_dunder_import_attempt() -> None:
                     name="malicious",
                     expr="__import__('os').system('echo pwned')",
                     decision="ATTACK_FIRED",
-                )
+                ),
             ],
             default_decision="SAFE",
-        )
+        ),
     )
     exchange = _make_exchange(body={})
 
@@ -128,10 +128,10 @@ async def test_sandbox_blocks_subprocess_alias() -> None:
                     name="bypass",
                     expr="(1).__class__.__base__.__subclasses__()",
                     decision="ESCAPE",
-                )
+                ),
             ],
             default_decision="SAFE",
-        )
+        ),
     )
     exchange = _make_exchange(body={})
 
@@ -150,10 +150,10 @@ async def test_arithmetic_and_logical_operators_work() -> None:
                     name="combo",
                     expr="(score > 500) and (debt_ratio < 0.5)",
                     decision="APPROVE",
-                )
+                ),
             ],
             default_decision="REJECT",
-        )
+        ),
     )
     exchange = _make_exchange(body={"score": 600, "debt_ratio": 0.3})
 

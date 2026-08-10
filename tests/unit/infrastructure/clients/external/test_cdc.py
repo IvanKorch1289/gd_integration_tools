@@ -188,7 +188,7 @@ async def test_cdc_client_subscribe_unknown_strategy_raises_value_error() -> Non
     client = CDCClient()
     with pytest.raises(ValueError, match="Unknown CDC strategy 'weird_thing'"):
         await client.subscribe(
-            profile="default", tables=["orders"], strategy="weird_thing"
+            profile="default", tables=["orders"], strategy="weird_thing",
         )
     # No subscription was created
     assert client._subscriptions == {}
@@ -206,7 +206,7 @@ async def test_cdc_client_subscribe_known_strategy_creates_task(strategy: str) -
     with patch.object(cdc_module.client, "get_task_registry") as reg:
         reg.return_value.create_task = MagicMock(return_value=fake_task)
         sub_id = await client.subscribe(
-            profile="default", tables=["orders"], strategy=strategy
+            profile="default", tables=["orders"], strategy=strategy,
         )
 
     assert sub_id in client._subscriptions
@@ -233,7 +233,7 @@ async def test_cdc_client_unsubscribe_existing_removes_sub_and_cancels_task() ->
     with patch.object(cdc_module.client, "get_task_registry") as reg:
         reg.return_value.create_task = MagicMock(return_value=fake_task)
         sub_id = await client.subscribe(
-            profile="default", tables=["orders"], strategy="polling"
+            profile="default", tables=["orders"], strategy="polling",
         )
 
     # Awaitable stub for `await task` in unsubscribe
@@ -277,7 +277,7 @@ async def test_cdc_client_list_subscriptions_returns_projection() -> None:
             target_action="orders.handle_change",
         )
         await client.subscribe(
-            profile="pg_main", tables=["events"], strategy="listen_notify"
+            profile="pg_main", tables=["events"], strategy="listen_notify",
         )
 
     result = client.list_subscriptions()
@@ -314,7 +314,7 @@ async def test_cdc_dispatch_change_invokes_callback_with_event_dict() -> None:
         received.append(d)
 
     sub = CDCSubscription(
-        profile="default", tables=["orders"], strategy="polling", callback=cb
+        profile="default", tables=["orders"], strategy="polling", callback=cb,
     )
     event = CDCEvent(
         operation="UPSERT",
@@ -349,7 +349,7 @@ async def test_cdc_dispatch_change_handles_callback_error() -> None:
         raise RuntimeError("callback boom")
 
     sub = CDCSubscription(
-        profile="default", tables=["orders"], strategy="polling", callback=bad_cb
+        profile="default", tables=["orders"], strategy="polling", callback=bad_cb,
     )
     event = CDCEvent(
         operation="INSERT",
@@ -400,7 +400,7 @@ async def test_cdc_dispatch_change_forwards_failed_event_to_dlq() -> None:
         raise RuntimeError("callback boom")
 
     sub = CDCSubscription(
-        profile="default", tables=["orders"], strategy="polling", callback=bad_cb
+        profile="default", tables=["orders"], strategy="polling", callback=bad_cb,
     )
     event = CDCEvent(
         operation="INSERT",
@@ -442,7 +442,7 @@ async def test_cdc_dispatch_change_no_dlq_legacy_silent_drop() -> None:
         raise RuntimeError("callback boom")
 
     sub = CDCSubscription(
-        profile="default", tables=["orders"], strategy="polling", callback=bad_cb
+        profile="default", tables=["orders"], strategy="polling", callback=bad_cb,
     )
     event = CDCEvent(
         operation="INSERT",
@@ -491,7 +491,7 @@ async def test_cdc_dispatch_change_dlq_write_failure_does_not_propagate() -> Non
         raise RuntimeError("callback boom")
 
     sub = CDCSubscription(
-        profile="default", tables=["orders"], strategy="polling", callback=bad_cb
+        profile="default", tables=["orders"], strategy="polling", callback=bad_cb,
     )
     event = CDCEvent(
         operation="INSERT",
@@ -563,14 +563,14 @@ async def test_cdc_polling_get_cursor_uses_redis_when_available() -> None:
     operation=st.sampled_from(["INSERT", "UPDATE", "DELETE", "UPSERT"]),
     table=st.text(
         alphabet=st.characters(
-            whitelist_categories=("Lu", "Ll", "Nd"), whitelist_characters="_"
+            whitelist_categories=("Lu", "Ll", "Nd"), whitelist_characters="_",
         ),
         min_size=1,
         max_size=32,
     ),
     profile=st.text(
         alphabet=st.characters(
-            whitelist_categories=("Lu", "Ll", "Nd"), whitelist_characters="_-"
+            whitelist_categories=("Lu", "Ll", "Nd"), whitelist_characters="_-",
         ),
         min_size=1,
         max_size=32,
@@ -586,7 +586,7 @@ async def test_cdc_polling_get_cursor_uses_redis_when_available() -> None:
 @settings(max_examples=50)
 @pytest.mark.unit
 def test_cdc_event_to_dict_round_trip_preserves_fields(
-    operation: str, table: str, profile: str, ts: datetime, has_new: bool, has_old: bool
+    operation: str, table: str, profile: str, ts: datetime, has_new: bool, has_old: bool,
 ) -> None:
     """For any well-formed CDCEvent input, to_dict() must preserve every field verbatim.
 
@@ -641,7 +641,7 @@ async def test_polling_strategy_unknown_profile_returns_silently() -> None:
     from src.backend.infrastructure.database.database import accessors as _accessors_mod
 
     with patch.object(
-        _accessors_mod, "get_external_db_registry", side_effect=KeyError("missing_db")
+        _accessors_mod, "get_external_db_registry", side_effect=KeyError("missing_db"),
     ):
         # Should not raise — caught by except (ValueError, KeyError, AttributeError).
         await strategy.run(sub, _noop_dispatch)
@@ -679,7 +679,7 @@ async def test_logminer_strategy_uses_registry_accessor() -> None:
     from src.backend.infrastructure.database.database import accessors as _accessors_mod
 
     with patch.object(
-        _accessors_mod, "get_external_db_registry", return_value=fake_registry
+        _accessors_mod, "get_external_db_registry", return_value=fake_registry,
     ):
         # Deactivate immediately so loop exits after first iteration.
         sub.active = False

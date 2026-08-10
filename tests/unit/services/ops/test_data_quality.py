@@ -97,7 +97,7 @@ async def test_check_not_null_fails_on_empty_string(
 @pytest.mark.asyncio
 async def test_check_type_int_passes(monitor: DataQualityMonitor) -> None:
     monitor.add_rule(
-        DQRule(name="t1", field="age", check="type", params={"type": "int"})
+        DQRule(name="t1", field="age", check="type", params={"type": "int"}),
     )
     result = await monitor.check({"age": 30})
     assert result["is_clean"] is True
@@ -106,7 +106,7 @@ async def test_check_type_int_passes(monitor: DataQualityMonitor) -> None:
 @pytest.mark.asyncio
 async def test_check_type_int_fails_on_string(monitor: DataQualityMonitor) -> None:
     monitor.add_rule(
-        DQRule(name="t1", field="age", check="type", params={"type": "int"})
+        DQRule(name="t1", field="age", check="type", params={"type": "int"}),
     )
     result = await monitor.check({"age": "thirty"})
     assert result["is_clean"] is False
@@ -116,7 +116,7 @@ async def test_check_type_int_fails_on_string(monitor: DataQualityMonitor) -> No
 @pytest.mark.asyncio
 async def test_check_type_float_accepts_int(monitor: DataQualityMonitor) -> None:
     monitor.add_rule(
-        DQRule(name="t1", field="score", check="type", params={"type": "float"})
+        DQRule(name="t1", field="score", check="type", params={"type": "float"}),
     )
     result = await monitor.check({"score": 5})
     assert result["is_clean"] is True
@@ -125,7 +125,7 @@ async def test_check_type_float_accepts_int(monitor: DataQualityMonitor) -> None
 @pytest.mark.asyncio
 async def test_check_type_none_is_ignored(monitor: DataQualityMonitor) -> None:
     monitor.add_rule(
-        DQRule(name="t1", field="age", check="type", params={"type": "int"})
+        DQRule(name="t1", field="age", check="type", params={"type": "int"}),
     )
     result = await monitor.check({"age": None})
     assert result["is_clean"] is True
@@ -137,7 +137,7 @@ async def test_check_type_none_is_ignored(monitor: DataQualityMonitor) -> None:
 @pytest.mark.asyncio
 async def test_check_range_within_bounds(monitor: DataQualityMonitor) -> None:
     monitor.add_rule(
-        DQRule(name="r1", field="age", check="range", params={"min": 0, "max": 120})
+        DQRule(name="r1", field="age", check="range", params={"min": 0, "max": 120}),
     )
     result = await monitor.check({"age": 25})
     assert result["is_clean"] is True
@@ -214,7 +214,7 @@ async def test_check_outlier_detects_anomaly(monitor: DataQualityMonitor) -> Non
 async def test_check_outlier_high_z_still_warning(monitor: DataQualityMonitor) -> None:
     """data_quality outlier always uses WARNING severity (no critical level)."""
     monitor.add_rule(
-        DQRule(name="o1", field="val", check="outlier", params={"z_threshold": 3.0})
+        DQRule(name="o1", field="val", check="outlier", params={"z_threshold": 3.0}),
     )
     for i in range(10):
         await monitor.check({"val": float(i)})

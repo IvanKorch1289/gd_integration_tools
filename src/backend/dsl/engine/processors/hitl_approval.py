@@ -191,10 +191,10 @@ class HitlApprovalProcessor(BaseProcessor):
 
         elif action == "reject":
             _logger.warning(
-                "HITL rejected: signal_id=%s, by=%s", signal_id, decision.resolved_by
+                "HITL rejected: signal_id=%s, by=%s", signal_id, decision.resolved_by,
             )
             exchange.fail(
-                f"HITL approval rejected by {decision.resolved_by}: {signal_id}"
+                f"HITL approval rejected by {decision.resolved_by}: {signal_id}",
             )
             return
 
@@ -231,7 +231,7 @@ class HitlApprovalProcessor(BaseProcessor):
             next_decision = await self._wait_for_decision(signal.signal_id)
             if next_decision is None or next_decision.resolved_action != "approve":
                 exchange.fail(
-                    f"HITL approval not approved after info request: {signal_id}"
+                    f"HITL approval not approved after info request: {signal_id}",
                 )
                 return
 

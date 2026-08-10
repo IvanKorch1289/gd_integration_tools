@@ -51,6 +51,6 @@ class RAGSearchProcessor(BaseProcessor):
         from src.backend.services.ai.hybrid_rag import HybridRAGSearch
         search = HybridRAGSearch()
         docs = await search.search(
-            self.query, top_k=self.top_k, namespace=self.namespace
+            self.query, top_k=self.top_k, namespace=self.namespace,
         )
         self.set_result(exchange, self.target, docs)

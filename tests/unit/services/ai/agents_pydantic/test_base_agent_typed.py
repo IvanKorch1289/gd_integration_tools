@@ -46,7 +46,7 @@ async def test_agent_run_uses_mocked_pydantic_ai(
 ) -> None:
     fake_agent_instance = MagicMock()
     fake_agent_instance.run = AsyncMock(
-        return_value=SimpleNamespace(data=_Result(text="ok", n=2))
+        return_value=SimpleNamespace(data=_Result(text="ok", n=2)),
     )
     fake_module = SimpleNamespace(Agent=MagicMock(return_value=fake_agent_instance))
     monkeypatch.setitem(sys.modules, "pydantic_ai", fake_module)

@@ -137,7 +137,7 @@ class EventBusFacade:
                 handler=handler,
                 topic_pattern=topic_pattern,
                 ack_mode=ack_mode,
-            )
+            ),
         )
 
     async def unsubscribe_all(self) -> None:

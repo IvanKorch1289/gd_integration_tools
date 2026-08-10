@@ -80,7 +80,7 @@ class CapabilityDeniedError(CapabilityError):
         self.correlation_id = correlation_id
         super().__init__(
             f"Capability denied for {plugin!r}: {capability}"
-            f" (requested={requested_scope!r}, declared={declared_scope!r})"
+            f" (requested={requested_scope!r}, declared={declared_scope!r})",
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -145,7 +145,7 @@ class CapabilitySupersetError(CapabilityError):
         names = ", ".join(f"{c.name}({c.scope!r})" for c in offending)
         super().__init__(
             f"Route {route!r} requests capabilities not covered by "
-            f"requires_plugins or core public set: {names}"
+            f"requires_plugins or core public set: {names}",
         )
 
     def to_dict(self) -> dict[str, Any]:

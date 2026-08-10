@@ -30,7 +30,7 @@ def _get_rabbit_dlq_breaker() -> Any:
     return get_breaker_registry().get_or_create(
         "rabbit_dlq_writer",
         BreakerSpec(
-            name="rabbit_dlq_writer", failure_threshold=5, recovery_timeout=30.0
+            name="rabbit_dlq_writer", failure_threshold=5, recovery_timeout=30.0,
         ),
     )
 
@@ -45,7 +45,7 @@ class RabbitDLQWriter:
     """
 
     def __init__(
-        self, *, channel: Any, exchange_name: str = "", queue_prefix: str = "dlq."
+        self, *, channel: Any, exchange_name: str = "", queue_prefix: str = "dlq.",
     ) -> None:
         self._channel = channel
         self._exchange_name = exchange_name

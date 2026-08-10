@@ -46,7 +46,7 @@ def test_capability_name_uses_provider() -> None:
 
 @pytest.mark.asyncio
 async def test_transcribe_raises_when_whisper_missing(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any,
 ) -> None:
     """При отсутствии пакета 'whisper' transcribe → VoiceServiceUnavailable."""
     monkeypatch.setitem(sys.modules, "whisper", None)  # форсируем ImportError
@@ -60,7 +60,7 @@ async def test_transcribe_raises_when_whisper_missing(
 
 @pytest.mark.asyncio
 async def test_transcribe_returns_result_via_mock_whisper(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any,
 ) -> None:
     """transcribe() с mock-whisper возвращает STTResult с распознанным текстом."""
     audio = tmp_path / "audio.wav"
@@ -100,7 +100,7 @@ async def test_transcribe_returns_result_via_mock_whisper(
 
 @pytest.mark.asyncio
 async def test_transcribe_raises_file_not_found(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any,
 ) -> None:
     """transcribe() с несуществующим путём → FileNotFoundError."""
     svc = WhisperSTTService(enabled=True)

@@ -129,7 +129,7 @@ class SequentialMixin:
                                 "timeout_s": self._timeout_per_step_s,
                             },
                             step.name,
-                        )
+                        ),
                     ],
                 )
 

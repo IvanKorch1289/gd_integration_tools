@@ -18,7 +18,7 @@ class _FakeKVv2:
         self._data = data
 
     def read_secret_version(
-        self, *, path: str, mount_point: str = "secret", version: int | None = None
+        self, *, path: str, mount_point: str = "secret", version: int | None = None,
     ) -> dict[str, Any]:
         if path not in self._data:
             raise KeyError(path)
@@ -27,11 +27,11 @@ class _FakeKVv2:
             "data": {
                 "data": snap["data"],
                 "metadata": {"version": version or snap.get("version", 1)},
-            }
+            },
         }
 
     def read_secret_metadata(
-        self, *, path: str, mount_point: str = "secret"
+        self, *, path: str, mount_point: str = "secret",
     ) -> dict[str, Any]:
         return {"data": {"current_version": self._data[path].get("version", 1)}}
 
@@ -58,7 +58,7 @@ def fake_client() -> _FakeClient:
             "db/pg": {"data": {"value": "pg_password"}, "version": 3},
             "api/key": {"data": {"value": "k1"}, "version": 1},
             "json/secret": {"data": {"foo": "bar", "n": 42}, "version": 1},
-        }
+        },
     )
 
 

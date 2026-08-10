@@ -40,12 +40,12 @@ class ScatterGatherProcessor(BaseProcessor):
         self._timeout = timeout_seconds
 
     async def _call_route(
-        self, route_id: str, body: Any, headers: dict, context: ExecutionContext
+        self, route_id: str, body: Any, headers: dict, context: ExecutionContext,
     ) -> tuple[str, Any, str | None]:
         from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 
         return await SubPipelineExecutor.execute_route_safe(
-            route_id, body, headers, context
+            route_id, body, headers, context,
         )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -57,14 +57,14 @@ class ScatterGatherProcessor(BaseProcessor):
         """
         tasks = [
             self._call_route(
-                rid, exchange.in_message.body, exchange.in_message.headers, context
+                rid, exchange.in_message.body, exchange.in_message.headers, context,
             )
             for rid in self._route_ids
         ]
 
         try:
             raw_results = await asyncio.wait_for(
-                asyncio.gather(*tasks, return_exceptions=True), timeout=self._timeout
+                asyncio.gather(*tasks, return_exceptions=True), timeout=self._timeout,
             )
         except TimeoutError:
             exchange.fail(f"Scatter-gather timeout ({self._timeout}s)")

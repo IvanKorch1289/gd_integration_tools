@@ -29,7 +29,7 @@ BASELINE_PATH = Path(".baselines/coverage.json")
 def _write_coverage_xml(path: Path, line_rate: float) -> None:
     """Создаёт минимальный cobertura coverage.xml с указанным line-rate."""
     root = ET.Element(
-        "coverage", {"line-rate": f"{line_rate:.4f}", "branch-rate": "0.50"}
+        "coverage", {"line-rate": f"{line_rate:.4f}", "branch-rate": "0.50"},
     )
     ET.ElementTree(root).write(str(path))
 
@@ -72,7 +72,7 @@ def test_gate_passes_when_above_threshold(tmp_path: Path) -> None:
     _write_coverage_xml(cov_xml, 0.75)
 
     result = _run_gate(
-        "--coverage-xml", str(cov_xml), "--baseline", str(baseline), "--threshold", "50"
+        "--coverage-xml", str(cov_xml), "--baseline", str(baseline), "--threshold", "50",
     )
     assert result.returncode == 0
     assert "OK" in result.stdout
@@ -85,7 +85,7 @@ def test_gate_fails_when_below_threshold(tmp_path: Path) -> None:
     _write_coverage_xml(cov_xml, 0.45)
 
     result = _run_gate(
-        "--coverage-xml", str(cov_xml), "--baseline", str(baseline), "--threshold", "70"
+        "--coverage-xml", str(cov_xml), "--baseline", str(baseline), "--threshold", "70",
     )
     assert result.returncode == 1
     assert "FAIL" in result.stderr

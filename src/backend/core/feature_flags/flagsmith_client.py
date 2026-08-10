@@ -112,7 +112,7 @@ class FlagsmithClient:
         return [_parse_flag(item) for item in resp.json()]
 
     async def get_identity_flags(
-        self, tenant_id: str, traits: dict[str, Any] | None = None
+        self, tenant_id: str, traits: dict[str, Any] | None = None,
     ) -> list[FlagsmithFlag]:
         """Возвращает flags конкретной identity (tenant) с overrides.
 

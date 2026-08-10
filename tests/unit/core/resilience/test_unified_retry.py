@@ -39,8 +39,8 @@ async def test_with_retry_retries_on_failure() -> None:
 
     @with_retry(
         RetryPolicy(
-            max_attempts=3, initial_backoff=0.001, backoff_multiplier=1.0, jitter=0.0
-        )
+            max_attempts=3, initial_backoff=0.001, backoff_multiplier=1.0, jitter=0.0,
+        ),
     )
     async def flaky_func() -> str:
         counter["calls"] += 1
@@ -59,8 +59,8 @@ async def test_with_retry_reraises_on_exhaustion() -> None:
 
     @with_retry(
         RetryPolicy(
-            max_attempts=2, initial_backoff=0.001, backoff_multiplier=1.0, jitter=0.0
-        )
+            max_attempts=2, initial_backoff=0.001, backoff_multiplier=1.0, jitter=0.0,
+        ),
     )
     async def always_fails() -> str:
         counter["calls"] += 1

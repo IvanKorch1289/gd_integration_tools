@@ -112,7 +112,7 @@ async def test_rollback_unknown_version_raises(extensions_dir: Path) -> None:
 
 def test_installed_version_to_dict() -> None:
     iv = InstalledVersion(
-        plugin="demo", version="1.0.0", path=Path("/tmp/demo"), is_active=True
+        plugin="demo", version="1.0.0", path=Path("/tmp/demo"), is_active=True,
     )
     payload = iv.to_dict()
     assert payload == {

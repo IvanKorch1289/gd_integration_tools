@@ -50,7 +50,7 @@ class CacheEnvelope:
 
     @classmethod
     def create(
-        cls, value: Any, ttl_seconds: int | None, stale_if_error_seconds: int = 0
+        cls, value: Any, ttl_seconds: int | None, stale_if_error_seconds: int = 0,
     ) -> CacheEnvelope:
         """Create a new cache envelope.
 

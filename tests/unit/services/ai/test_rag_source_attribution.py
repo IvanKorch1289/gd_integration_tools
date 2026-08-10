@@ -22,7 +22,7 @@ def test_format_includes_source_when_enabled(monkeypatch: pytest.MonkeyPatch) ->
     from src.backend.services.ai.rag_service import _format_context_with_sources
 
     monkeypatch.setattr(
-        rag.rag_settings, "source_attribution_enabled", True, raising=True
+        rag.rag_settings, "source_attribution_enabled", True, raising=True,
     )
     chunks: list[dict[str, Any]] = [
         {
@@ -48,14 +48,14 @@ def test_format_passthrough_when_disabled(monkeypatch: pytest.MonkeyPatch) -> No
     from src.backend.services.ai.rag_service import _format_context_with_sources
 
     monkeypatch.setattr(
-        rag.rag_settings, "source_attribution_enabled", False, raising=True
+        rag.rag_settings, "source_attribution_enabled", False, raising=True,
     )
     chunks: list[dict[str, Any]] = [
         {
             "id": "1",
             "document": "Текст документа",
             "metadata": {"source": "policy_v3.pdf"},
-        }
+        },
     ]
     context = _format_context_with_sources(chunks)
     assert "[источник:" not in context
@@ -68,7 +68,7 @@ def test_source_priority_source_over_filename(monkeypatch: pytest.MonkeyPatch) -
     from src.backend.services.ai.rag_service import _extract_source_id
 
     monkeypatch.setattr(
-        rag.rag_settings, "source_attribution_enabled", True, raising=True
+        rag.rag_settings, "source_attribution_enabled", True, raising=True,
     )
 
     # source explicit wins.
@@ -108,7 +108,7 @@ def test_format_skips_chunks_without_document(monkeypatch: pytest.MonkeyPatch) -
     from src.backend.services.ai.rag_service import _format_context_with_sources
 
     monkeypatch.setattr(
-        rag.rag_settings, "source_attribution_enabled", True, raising=True
+        rag.rag_settings, "source_attribution_enabled", True, raising=True,
     )
     chunks: list[dict[str, Any]] = [
         {"id": "1", "metadata": {"source": "doc.pdf"}},  # без document

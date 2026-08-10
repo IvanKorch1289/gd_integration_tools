@@ -84,7 +84,7 @@ class SpecialistAgent:
         if not callable(self.handler):
             raise TypeError(
                 f"SpecialistAgent.handler должен быть callable, "
-                f"получено {type(self.handler).__name__}"
+                f"получено {type(self.handler).__name__}",
             )
 
 
@@ -111,7 +111,7 @@ class RoutingDecision:
     def __post_init__(self) -> None:
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError(
-                f"confidence должен быть в [0.0, 1.0], получено {self.confidence}"
+                f"confidence должен быть в [0.0, 1.0], получено {self.confidence}",
             )
 
 
@@ -161,13 +161,13 @@ class RouterSpecialistProcessor(BaseProcessor):
             raise ValueError("specialists должен быть непустым списком")
         if not 0.0 <= min_confidence <= 1.0:
             raise ValueError(
-                f"min_confidence должен быть в [0.0, 1.0], получено {min_confidence}"
+                f"min_confidence должен быть в [0.0, 1.0], получено {min_confidence}",
             )
         names = {s.name for s in specialists}
         if fallback_specialist is not None and fallback_specialist not in names:
             raise ValueError(
                 f"fallback_specialist={fallback_specialist!r} не найден "
-                f"среди specialists с именами {sorted(names)}"
+                f"среди specialists с именами {sorted(names)}",
             )
 
         super().__init__(name=name or "router_specialist")
@@ -181,7 +181,7 @@ class RouterSpecialistProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Запустить LLM-routing → specialist delegation.
 
@@ -257,7 +257,7 @@ class RouterSpecialistProcessor(BaseProcessor):
             else:
                 exchange.fail(
                     f"router_specialist: unknown specialist "
-                    f"{decision.chosen_agent!r} and no fallback configured"
+                    f"{decision.chosen_agent!r} and no fallback configured",
                 )
                 return
 
@@ -267,7 +267,7 @@ class RouterSpecialistProcessor(BaseProcessor):
         except Exception as exc:
             _log.error("Specialist %r failed: %s", specialist.name, exc)
             exchange.fail(
-                f"router_specialist: specialist {specialist.name!r} failed: {exc}"
+                f"router_specialist: specialist {specialist.name!r} failed: {exc}",
             )
             return
 
@@ -302,7 +302,7 @@ class RouterSpecialistProcessor(BaseProcessor):
                     }
                     for s in self._specialists
                 ],
-            }
+            },
         }
 
 
@@ -339,5 +339,5 @@ class RouterSpecialistMixin:
                 specialists=specialists,
                 fallback_specialist=fallback_specialist,
                 min_confidence=min_confidence,
-            )
+            ),
         )

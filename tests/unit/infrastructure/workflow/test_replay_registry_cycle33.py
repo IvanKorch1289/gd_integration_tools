@@ -216,7 +216,7 @@ class _RecordingReplayer:
                 from temporalio.exceptions import WorkflowNonDeterminismError
 
                 raise WorkflowNonDeterminismError(
-                    f"simulated: workflow '{wf_name}' not in {sorted(registered)}"
+                    f"simulated: workflow '{wf_name}' not in {sorted(registered)}",
                 )
         self.replay_calls.append(b"ok")
 
@@ -241,7 +241,7 @@ def backend() -> Any:
 
     fake_client = object()
     return TemporalWorkflowBackend(
-        client=fake_client, default_task_queue="t1"  # type: ignore[abstract]
+        client=fake_client, default_task_queue="t1",  # type: ignore[abstract]
     )
 
 

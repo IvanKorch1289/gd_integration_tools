@@ -48,7 +48,7 @@ def test_check_passes_both_layers() -> None:
     gate = MockGate(allowed=["db.read", "ai.invoke"])
     policy = ToolsSpec(whitelist=["db.read", "ai.invoke"], on_violation="fail")
     check_tool_with_policy(
-        gate=gate, plugin="test", tool_name="db.read", scope=None, policy=policy
+        gate=gate, plugin="test", tool_name="db.read", scope=None, policy=policy,
     )
     # Verify gate.check was called
     assert gate.check_calls == [("test", "db.read", None)]
@@ -60,7 +60,7 @@ def test_check_denied_by_capability() -> None:
     policy = ToolsSpec(on_violation="fail")
     with pytest.raises(CapabilityDeniedError, match="Capability denied"):
         check_tool_with_policy(
-            gate=gate, plugin="test", tool_name="fs.write", scope=None, policy=policy
+            gate=gate, plugin="test", tool_name="fs.write", scope=None, policy=policy,
         )
 
 
@@ -70,7 +70,7 @@ def test_check_denied_by_whitelist() -> None:
     policy = ToolsSpec(whitelist=["db.read"], on_violation="fail")
     with pytest.raises(ToolPolicyViolationError, match="violates AIPolicySpec"):
         check_tool_with_policy(
-            gate=gate, plugin="test", tool_name="ai.invoke", scope=None, policy=policy
+            gate=gate, plugin="test", tool_name="ai.invoke", scope=None, policy=policy,
         )
 
 
@@ -80,7 +80,7 @@ def test_check_denied_by_blacklist() -> None:
     policy = ToolsSpec(blacklist=["fs.write"], on_violation="fail")
     with pytest.raises(ToolPolicyViolationError, match="violates AIPolicySpec"):
         check_tool_with_policy(
-            gate=gate, plugin="test", tool_name="fs.write", scope=None, policy=policy
+            gate=gate, plugin="test", tool_name="fs.write", scope=None, policy=policy,
         )
 
 
@@ -91,7 +91,7 @@ def test_check_capability_checked_first() -> None:
     policy = ToolsSpec(whitelist=["unknown"], on_violation="fail")
     with pytest.raises(CapabilityDeniedError):
         check_tool_with_policy(
-            gate=gate, plugin="test", tool_name="unknown", scope=None, policy=policy
+            gate=gate, plugin="test", tool_name="unknown", scope=None, policy=policy,
         )
 
 
@@ -193,7 +193,7 @@ def test_filter_empty_input() -> None:
     gate = MockGate(allowed=["anything"])
     policy = ToolsSpec()
     filtered = filter_tools_with_gate(
-        gate=gate, plugin="test", tool_names=[], scope=None, policy=policy
+        gate=gate, plugin="test", tool_names=[], scope=None, policy=policy,
     )
     assert filtered == []
 

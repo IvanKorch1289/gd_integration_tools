@@ -96,7 +96,7 @@ class TestFileWatchProcessor:
         ex.stop = MagicMock()
         # Mock Observer so we don't actually start threads
         with patch(
-            "watchdog.observers.Observer"
+            "watchdog.observers.Observer",
         ):
             await p.process(ex, MagicMock())
         # Even with timeout, returns changes list (empty)

@@ -15,7 +15,7 @@ __all__ = ("decorate_endpoint", "extract_invocation_kwargs", "prepare_call_kwarg
 
 
 def prepare_call_kwargs(
-    spec: ActionSpec, request: Request, kwargs: dict[str, Any]
+    spec: ActionSpec, request: Request, kwargs: dict[str, Any],
 ) -> dict[str, Any]:
     """Готовит kwargs для вызова action-handler: payload, request, alias-ы."""
     call_kwargs = dict(kwargs)
@@ -48,7 +48,7 @@ def prepare_call_kwargs(
 
 
 def extract_invocation_kwargs(
-    spec: ActionSpec, call_kwargs: dict[str, Any]
+    spec: ActionSpec, call_kwargs: dict[str, Any],
 ) -> tuple[InvocationOptionsSchema | None, dict[str, Any]]:
     """Разделяет ``call_kwargs`` на invocation-options и прямые kwargs endpoint'а.
 
@@ -70,7 +70,7 @@ def extract_invocation_kwargs(
 
 
 def decorate_endpoint(
-    endpoint: Callable[..., Awaitable[Any]], decorators: Sequence[RouteDecorator]
+    endpoint: Callable[..., Awaitable[Any]], decorators: Sequence[RouteDecorator],
 ) -> Callable[..., Awaitable[Any]]:
     """Применяет список ``decorators`` к ``endpoint`` в обратном порядке.
 

@@ -126,7 +126,7 @@ def _make_lifespan_patches() -> list[Any]:
         ),
         patch("src.backend.plugins.composition.lifecycle.validate_cache_layers"),
         patch(
-            "src.backend.plugins.composition.lifecycle.bootstrap_resilience_coordinator"
+            "src.backend.plugins.composition.lifecycle.bootstrap_resilience_coordinator",
         ),
         patch("src.backend.plugins.composition.lifecycle.bootstrap_snapshot_job"),
         patch(

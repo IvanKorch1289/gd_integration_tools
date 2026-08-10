@@ -57,14 +57,14 @@ class PostmanImportGateway:
 
         if not isinstance(data, dict) or "info" not in data:
             raise ValueError(
-                "Postman: отсутствует поле 'info' (некорректная коллекция)"
+                "Postman: отсутствует поле 'info' (некорректная коллекция)",
             )
 
         info = data.get("info", {})
         schema = info.get("schema", "")
         if "v2.1" not in schema:
             logger.warning(
-                "Postman schema not v2.1: %r — продолжаем best-effort", schema
+                "Postman schema not v2.1: %r — продолжаем best-effort", schema,
             )
 
         title = info.get("name") or "postman_collection"
@@ -115,7 +115,7 @@ class PostmanImportGateway:
                 out.append(ep)
 
     def _parse_request(
-        self, item: dict[str, Any], prefix: str, folder_path: str
+        self, item: dict[str, Any], prefix: str, folder_path: str,
     ) -> EndpointSpec | None:
         request = item.get("request")
         if not request:
@@ -195,7 +195,7 @@ class PostmanImportGateway:
                     "token": SecretRef(
                         ref="${POSTMAN_BEARER_TOKEN}",
                         hint="Bearer-токен из Postman environment",
-                    )
+                    ),
                 },
             )
         if auth_type == "basic":
@@ -203,10 +203,10 @@ class PostmanImportGateway:
                 kind=AuthSchemeKind.BASIC,
                 secret_refs={
                     "username": SecretRef(
-                        ref="${POSTMAN_BASIC_USERNAME}", hint="Basic auth user"
+                        ref="${POSTMAN_BASIC_USERNAME}", hint="Basic auth user",
                     ),
                     "password": SecretRef(
-                        ref="${POSTMAN_BASIC_PASSWORD}", hint="Basic auth pass"
+                        ref="${POSTMAN_BASIC_PASSWORD}", hint="Basic auth pass",
                     ),
                 },
             )
@@ -221,7 +221,7 @@ class PostmanImportGateway:
                 location=params.get("in", "header"),
                 param_name=params.get("key", "X-API-Key"),
                 secret_refs={
-                    "value": SecretRef(ref="${POSTMAN_API_KEY}", hint="API-key value")
+                    "value": SecretRef(ref="${POSTMAN_API_KEY}", hint="API-key value"),
                 },
             )
         if auth_type == "oauth2":
@@ -229,8 +229,8 @@ class PostmanImportGateway:
                 kind=AuthSchemeKind.OAUTH2,
                 secret_refs={
                     "access_token": SecretRef(
-                        ref="${POSTMAN_OAUTH2_TOKEN}", hint="OAuth2 access token"
-                    )
+                        ref="${POSTMAN_OAUTH2_TOKEN}", hint="OAuth2 access token",
+                    ),
                 },
             )
         return None

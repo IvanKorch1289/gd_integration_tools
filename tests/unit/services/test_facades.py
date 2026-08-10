@@ -126,7 +126,7 @@ class TestTenantFacade:
         """tenant_id возвращает '_system' при отсутствии context."""
         facade = TenantFacade()
         with patch(
-            "src.backend.core.tenancy.current_tenant", return_value=None
+            "src.backend.core.tenancy.current_tenant", return_value=None,
         ):
             assert facade.tenant_id() == "_system"
 
@@ -134,7 +134,7 @@ class TestTenantFacade:
         """is_system True при отсутствии context."""
         facade = TenantFacade()
         with patch(
-            "src.backend.core.tenancy.current_tenant", return_value=None
+            "src.backend.core.tenancy.current_tenant", return_value=None,
         ):
             assert facade.is_system() is True
 
@@ -142,7 +142,7 @@ class TestTenantFacade:
         """principal_id None при отсутствии context."""
         facade = TenantFacade()
         with patch(
-            "src.backend.core.tenancy.current_tenant", return_value=None
+            "src.backend.core.tenancy.current_tenant", return_value=None,
         ):
             assert facade.principal_id() is None
 
@@ -151,9 +151,9 @@ class TestTenantFacade:
         """with_tenant восстанавливает previous context."""
         facade = TenantFacade()
         with patch(
-            "src.backend.core.tenancy.current_tenant", return_value=None
+            "src.backend.core.tenancy.current_tenant", return_value=None,
         ), patch(
-            "src.backend.core.tenancy.set_tenant"
+            "src.backend.core.tenancy.set_tenant",
         ) as mock_set:
             async with facade.with_tenant("tenant_42"):
                 # During context, set_tenant should be called with new ctx
@@ -264,7 +264,7 @@ class TestAuthorizationFacade:
         """check возвращает bool."""
         facade = AuthorizationFacade()
         with patch.object(
-            facade.gateway, "check", return_value=True
+            facade.gateway, "check", return_value=True,
         ):
             result = facade.check("user:1", "read", "doc:1")
             assert result is True
@@ -284,7 +284,7 @@ class TestAuthorizationFacade:
         """add_policy возвращает bool."""
         facade = AuthorizationFacade()
         with patch.object(
-            facade.gateway, "add_policy", return_value=None
+            facade.gateway, "add_policy", return_value=None,
         ):
             result = facade.add_policy("user:1", "read", "doc:1")
             assert result is True
@@ -293,7 +293,7 @@ class TestAuthorizationFacade:
         """remove_policy возвращает bool."""
         facade = AuthorizationFacade()
         with patch.object(
-            facade.gateway, "remove_policy", return_value=None
+            facade.gateway, "remove_policy", return_value=None,
         ):
             result = facade.remove_policy("user:1", "read", "doc:1")
             assert result is True

@@ -63,7 +63,7 @@ async def test_checkpoint_get_returns_state_when_available() -> None:
     """Saver available, aget returns state → dict returned."""
     fake_saver = MagicMock()
     fake_saver.aget = AsyncMock(
-        return_value={"v": 1, "id": "chk-abc", "values": {"prompt": "hi"}}
+        return_value={"v": 1, "id": "chk-abc", "values": {"prompt": "hi"}},
     )
     with patch(
         "src.backend.services.ai.agents.langgraph_postgres_saver.get_langgraph_postgres_saver",
@@ -73,7 +73,7 @@ async def test_checkpoint_get_returns_state_when_available() -> None:
     assert isinstance(result, dict)
     assert result.get("id") == "chk-abc"
     fake_saver.aget.assert_awaited_once_with(
-        {"configurable": {"thread_id": "agent-1:corr-1"}}
+        {"configurable": {"thread_id": "agent-1:corr-1"}},
     )
 
 
@@ -111,7 +111,7 @@ async def test_checkpoint_put_returns_false_without_thread_id() -> None:
         new=AsyncMock(),
     ) as mock_saver:
         result = await _langgraph_checkpoint_put_activity(
-            {"agent_id": "x", "output_summary": "y"}  # no thread_id
+            {"agent_id": "x", "output_summary": "y"},  # no thread_id
         )
     assert result is False
     mock_saver.assert_not_awaited()
@@ -125,7 +125,7 @@ async def test_checkpoint_put_returns_false_when_saver_unavailable() -> None:
         new=AsyncMock(return_value=None),
     ):
         result = await _langgraph_checkpoint_put_activity(
-            {"thread_id": "t1", "agent_id": "x"}
+            {"thread_id": "t1", "agent_id": "x"},
         )
     assert result is False
 
@@ -140,7 +140,7 @@ async def test_checkpoint_put_persists_state_with_saver() -> None:
         new=AsyncMock(return_value=fake_saver),
     ):
         result = await _langgraph_checkpoint_put_activity(
-            {"thread_id": "t1", "agent_id": "agent-x", "output_summary": "ok"}
+            {"thread_id": "t1", "agent_id": "agent-x", "output_summary": "ok"},
         )
     assert result is True
     fake_saver.aput.assert_awaited_once()
@@ -161,7 +161,7 @@ async def test_checkpoint_put_isolates_saver_exceptions() -> None:
         new=AsyncMock(return_value=fake_saver),
     ):
         result = await _langgraph_checkpoint_put_activity(
-            {"thread_id": "t1", "agent_id": "x"}
+            {"thread_id": "t1", "agent_id": "x"},
         )
     assert result is False
 
@@ -203,7 +203,7 @@ def test_register_is_idempotent() -> None:
 
 
 def _make_fake_temporal(
-    *, execute_activity_handler: Any = None
+    *, execute_activity_handler: Any = None,
 ) -> tuple[SimpleNamespace, list[dict[str, Any]]]:
     """Build fake ``temporalio.workflow`` module with recorded execute_activity.
 
@@ -236,7 +236,7 @@ def _make_declaration(durable: bool):  # type: ignore[no-untyped-def]
     # Rebuild in the module's own globals so MemoryScope resolves.
     _AdvAID.model_rebuild()
     return AgentInvokeDeclaration(
-        agent_id="agent-test", durable=durable, max_turns=3, timeout_s=60.0
+        agent_id="agent-test", durable=durable, max_turns=3, timeout_s=60.0,
     )
 
 

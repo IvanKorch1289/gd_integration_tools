@@ -50,7 +50,7 @@ def _make_event(route_id: str = "r1", name: str = "p1") -> TraceEvent:
 
 
 def _make_slow_path_open(  # type: ignore[no-untyped-def]
-    sleep_s: float, real_open: Any
+    sleep_s: float, real_open: Any,
 ):
     """Build a Path.open replacement that sleeps before delegating."""
 
@@ -66,7 +66,7 @@ class TestJsonFileTraceStorageNonBlocking:
 
     @pytest.mark.asyncio
     async def test_append_does_not_block_event_loop(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """``append`` offload-ит file write в executor thread."""
         storage = JsonFileTraceStorage(tmp_path)
@@ -91,7 +91,7 @@ class TestJsonFileTraceStorageNonBlocking:
 
     @pytest.mark.asyncio
     async def test_read_recent_does_not_block_event_loop(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """``read_recent`` offload-ит file read в executor thread."""
         storage = JsonFileTraceStorage(tmp_path)

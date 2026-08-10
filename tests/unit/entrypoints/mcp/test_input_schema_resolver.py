@@ -106,7 +106,7 @@ def test_validate_accepts_valid_payload() -> None:
     }
 
     ok, error = validate_input_schema(
-        resolved.input_schema, valid_payload, strict=False
+        resolved.input_schema, valid_payload, strict=False,
     )
 
     assert ok is True
@@ -130,7 +130,7 @@ def test_validate_rejects_invalid_payload() -> None:
     invalid_payload: dict[str, Any] = {"items": ["item_a"], "total": 99.99}
 
     ok, error = validate_input_schema(
-        resolved.input_schema, invalid_payload, strict=False
+        resolved.input_schema, invalid_payload, strict=False,
     )
 
     assert ok is False

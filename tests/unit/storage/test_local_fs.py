@@ -85,7 +85,7 @@ async def test_list_keys_missing_prefix_returns_empty(storage: LocalFSStorage) -
 
 
 async def test_presigned_url_returns_file_uri(
-    storage: LocalFSStorage, tmp_path: Path
+    storage: LocalFSStorage, tmp_path: Path,
 ) -> None:
     """``presigned_url`` возвращает ``file://`` URI на абсолютный путь."""
     await storage.upload("a.txt", b"x")

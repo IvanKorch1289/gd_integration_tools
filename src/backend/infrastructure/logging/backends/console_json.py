@@ -38,7 +38,7 @@ class ConsoleJsonLogSink(LogSink):
     """
 
     def __init__(
-        self, *, stream: TextIO | None = None, name: str = "console_json"
+        self, *, stream: TextIO | None = None, name: str = "console_json",
     ) -> None:
         self.name = name
         self.is_healthy = True
@@ -48,12 +48,12 @@ class ConsoleJsonLogSink(LogSink):
         """Сериализовать ``record`` и записать в поток одной строкой."""
         try:
             payload = orjson.dumps(
-                record, default=_default_serializer, option=_ORJSON_OPTS
+                record, default=_default_serializer, option=_ORJSON_OPTS,
             )
         except (TypeError, ValueError):
             # повторная попытка с агрессивным fallback: всё неподдержанное → str
             payload = orjson.dumps(
-                {k: _coerce(v) for k, v in record.items()}, option=_ORJSON_OPTS
+                {k: _coerce(v) for k, v in record.items()}, option=_ORJSON_OPTS,
             )
         await asyncio.to_thread(self._write_bytes, payload)
 

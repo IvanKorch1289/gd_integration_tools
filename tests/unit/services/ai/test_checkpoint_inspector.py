@@ -47,7 +47,7 @@ async def test_get_state_uses_aget_tuple() -> None:
             config={"configurable": {"thread_id": "s1", "checkpoint_id": "ckpt-42"}},
             checkpoint={"ts": "2026-05-20T10:00:00Z", "data": {"x": 1}},
             metadata={"author": "test"},
-        )
+        ),
     )
 
     wrapper = MagicMock()

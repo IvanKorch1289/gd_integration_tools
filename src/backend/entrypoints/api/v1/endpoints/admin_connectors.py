@@ -65,7 +65,7 @@ class _AdminConnectorsFacade:
             registry = get_connector_registry_provider()
         except ImportError as exc:
             raise HTTPException(
-                status_code=503, detail=f"registry unavailable: {exc}"
+                status_code=503, detail=f"registry unavailable: {exc}",
             ) from exc
 
         names = registry.names()
@@ -87,7 +87,7 @@ class _AdminConnectorsFacade:
                         if r
                         else None
                     ),
-                }
+                },
             )
         return {"total": len(connectors), "connectors": connectors}
 
@@ -104,7 +104,7 @@ class _AdminConnectorsFacade:
             ConnectorNotRegisteredError = get_connector_registry_errors_provider()
         except ImportError as exc:
             raise HTTPException(
-                status_code=503, detail=f"Registry unavailable: {exc}"
+                status_code=503, detail=f"Registry unavailable: {exc}",
             ) from exc
 
         start = time.perf_counter()
@@ -112,11 +112,11 @@ class _AdminConnectorsFacade:
             duration_ms = await registry.reload(name)
         except ConnectorNotRegisteredError:
             raise HTTPException(
-                status_code=404, detail=f"Connector '{name}' not registered"
+                status_code=404, detail=f"Connector '{name}' not registered",
             ) from None
         except Exception as exc:
             raise HTTPException(
-                status_code=500, detail=f"Reload failed: {type(exc).__name__}: {exc}"
+                status_code=500, detail=f"Reload failed: {type(exc).__name__}: {exc}",
             ) from exc
 
         try:
@@ -201,7 +201,7 @@ def _resolve_config_store_or_503() -> Any:
         return get_connector_config_store_provider()
     except Exception as exc:
         raise HTTPException(
-            status_code=503, detail=f"ConnectorConfigStore unavailable: {exc}"
+            status_code=503, detail=f"ConnectorConfigStore unavailable: {exc}",
         ) from exc
 
 
@@ -217,10 +217,10 @@ def _get_facade() -> _AdminConnectorsFacade:
 
 # S202 audit fix: connector reload/config CRUD — require admin role.
 _CONNECTORS_GUARD = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
 )
 router = APIRouter(
-    tags=["Admin · Infrastructure"], dependencies=[_CONNECTORS_GUARD]
+    tags=["Admin · Infrastructure"], dependencies=[_CONNECTORS_GUARD],
 )
 builder = ActionRouterBuilder(router)
 
@@ -280,5 +280,5 @@ builder.add_actions(
             path_model=ConnectorNamePath,
             tags=common_tags,
         ),
-    ]
+    ],
 )

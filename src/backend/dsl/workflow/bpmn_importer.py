@@ -151,7 +151,7 @@ def import_bpmn(
     steps = _build_steps(ordered_node_ids, elements, flows)
     if not steps:
         raise BpmnImportError(
-            "BPMN-процесс не содержит ни одного executable-step (serviceTask/gateway)."
+            "BPMN-процесс не содержит ни одного executable-step (serviceTask/gateway).",
         )
 
     _logger.debug(
@@ -162,7 +162,7 @@ def import_bpmn(
     )
 
     return WorkflowDeclaration(
-        name=workflow_name, description=workflow_description, steps=steps
+        name=workflow_name, description=workflow_description, steps=steps,
     )
 
 
@@ -178,7 +178,7 @@ def _ensure_feature_enabled() -> None:
         raise BpmnImportDisabledError(
             "BPMN import выключен feature-flag "
             "FEATURE_WORKFLOW_BPMN_IMPORT (default-OFF). "
-            "Установите FEATURE_WORKFLOW_BPMN_IMPORT=true для включения."
+            "Установите FEATURE_WORKFLOW_BPMN_IMPORT=true для включения.",
         )
 
 
@@ -194,7 +194,7 @@ def _find_process(root: ET.Element) -> ET.Element:
         raise BpmnImportError(
             "В BPMN-файле не найден элемент <bpmn:process>. "
             "Убедитесь, что namespace == "
-            f"{BPMN_NAMESPACE!r} и root — <bpmn:definitions>."
+            f"{BPMN_NAMESPACE!r} и root — <bpmn:definitions>.",
         )
     return process
 
@@ -252,13 +252,13 @@ def _collect_sequence_flows(process: ET.Element) -> dict[str, list[dict[str, str
                 "target": target,
                 "name": flow.attrib.get("name", ""),
                 "condition": condition,
-            }
+            },
         )
     return adjacency
 
 
 def _topological_order(
-    elements: dict[str, ET.Element], flows: dict[str, list[dict[str, str]]]
+    elements: dict[str, ET.Element], flows: dict[str, list[dict[str, str]]],
 ) -> list[str]:
     """Топологическая сортировка sequence-flow через :class:`graphlib.TopologicalSorter`.
 
@@ -287,12 +287,12 @@ def _topological_order(
     if not starts:
         raise BpmnImportError(
             "В BPMN-процессе не найден <bpmn:startEvent>. "
-            "Импортёр требует ровно один startEvent."
+            "Импортёр требует ровно один startEvent.",
         )
     if len(starts) > 1:
         raise BpmnImportError(
             f"Найдено {len(starts)} startEvent; "
-            "Sprint 4 поддерживает ровно один startEvent."
+            "Sprint 4 поддерживает ровно один startEvent.",
         )
 
     # graph[node] = множество предшественников (формат TopologicalSorter).
@@ -349,7 +349,7 @@ def _build_steps(
                 ActivityDeclaration(
                     name=activity_name,
                     args={"bpmn_id": node_id, "bpmn_type": local_name},
-                )
+                ),
             )
             continue
 
@@ -363,7 +363,7 @@ def _build_steps(
                         "bpmn_type": local_name,
                         "gateway": _gateway_spec_to_dict(gateway_spec),
                     },
-                )
+                ),
             )
             continue
 
@@ -397,7 +397,7 @@ def _build_gateway_spec(
                 name=branch_name,
                 condition=condition_expr,
                 steps=[{"bpmn_target": target_id}],
-            )
+            ),
         )
 
     return GatewaySpec(kind=kind, branches=branches)
@@ -415,7 +415,7 @@ def _map_bpmn_kind_to_gateway_kind(bpmn_type: str) -> str:
         case _:
             raise BpmnImportError(
                 f"Неподдерживаемый тип gateway: {bpmn_type!r}. "
-                "Поддерживаются: exclusiveGateway, parallelGateway, inclusiveGateway."
+                "Поддерживаются: exclusiveGateway, parallelGateway, inclusiveGateway.",
             )
 
 

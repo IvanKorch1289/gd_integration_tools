@@ -79,7 +79,7 @@ async def test_process_writes_variant_to_exchange() -> None:
 
 def test_processor_to_spec_round_trip() -> None:
     p = ABTestProcessor(
-        experiment_id="checkout", split=(0.7, 0.3), track_metric="conversion"
+        experiment_id="checkout", split=(0.7, 0.3), track_metric="conversion",
     )
     spec = p.to_spec()["ab_test"]
     assert spec["experiment_id"] == "checkout"

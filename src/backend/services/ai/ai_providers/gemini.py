@@ -26,7 +26,7 @@ class GeminiProvider:
     name = "gemini"
 
     def __init__(
-        self, *, api_key: str | None = None, model: str = "gemini-1.5-pro"
+        self, *, api_key: str | None = None, model: str = "gemini-1.5-pro",
     ) -> None:
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         self.model = model
@@ -45,7 +45,7 @@ class GeminiProvider:
         return ""
 
     async def embeddings(
-        self, texts: list[str], *, model: str | None = None
+        self, texts: list[str], *, model: str | None = None,
     ) -> list[list[float]]:
         """Возвращает embeddings батча текстов через Gemini embedContent.
 
@@ -83,16 +83,16 @@ class GeminiProvider:
                     "taskType": "RETRIEVAL_DOCUMENT",
                 }
                 response = await client.post(
-                    url, headers=headers, params=params, json=payload
+                    url, headers=headers, params=params, json=payload,
                 )
                 response.raise_for_status()
                 data = response.json()
                 values = data.get("embedding", {}).get("values") or data.get(
-                    "embeddings", [{}]
+                    "embeddings", [{}],
                 )[0].get("values")
                 if not values:
                     raise RuntimeError(
-                        f"Gemini embeddings: empty response for model={embed_model}"
+                        f"Gemini embeddings: empty response for model={embed_model}",
                     )
                 vectors.append([float(v) for v in values])
         return vectors

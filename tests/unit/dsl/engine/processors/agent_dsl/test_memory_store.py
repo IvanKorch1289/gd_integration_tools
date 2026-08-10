@@ -25,7 +25,7 @@ class _FakeMemoryBackend:
         tags: tuple[str, ...] = (),
     ) -> None:
         self.calls.append(
-            {"tenant_id": tenant_id, "content": content, "tags": tags}
+            {"tenant_id": tenant_id, "content": content, "tags": tags},
         )
 
 
@@ -51,14 +51,14 @@ def test_capability_scope_extracts_after_colon() -> None:
 
 @pytest.mark.asyncio
 async def test_happy_path_static_key(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     backend = _FakeMemoryBackend()
     monkeypatch.setattr(
-        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend)
+        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend),
     )
 
     ex: Exchange[Any] = Exchange()
@@ -76,21 +76,21 @@ async def test_happy_path_static_key(
 
 @pytest.mark.asyncio
 async def test_dynamic_key_from_meta(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     backend = _FakeMemoryBackend()
     monkeypatch.setattr(
-        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend)
+        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend),
     )
 
     ex: Exchange[Any] = Exchange()
     ex.meta.correlation_id = "req-xyz-123"
     ex.set_property("agent_result", {"content": "v"})
     proc = MemoryStoreProcessor(
-        namespace="acme:chat", key_property="meta.correlation_id"
+        namespace="acme:chat", key_property="meta.correlation_id",
     )
     await proc.process(ex, context)
 
@@ -99,14 +99,14 @@ async def test_dynamic_key_from_meta(
 
 @pytest.mark.asyncio
 async def test_dynamic_key_from_body(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     backend = _FakeMemoryBackend()
     monkeypatch.setattr(
-        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend)
+        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend),
     )
 
     ex: Exchange[Any] = Exchange(in_message=Message(body={"user_id": "user_42"}))
@@ -119,14 +119,14 @@ async def test_dynamic_key_from_body(
 
 @pytest.mark.asyncio
 async def test_custom_value_property(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     backend = _FakeMemoryBackend()
     monkeypatch.setattr(
-        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend)
+        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend),
     )
 
     ex: Exchange[Any] = Exchange(in_message=Message(body={"foo": "bar"}))
@@ -138,14 +138,14 @@ async def test_custom_value_property(
 
 @pytest.mark.asyncio
 async def test_tenant_id_placeholder(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     backend = _FakeMemoryBackend()
     monkeypatch.setattr(
-        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend)
+        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend),
     )
 
     ex: Exchange[Any] = Exchange()
@@ -159,7 +159,7 @@ async def test_tenant_id_placeholder(
 
 @pytest.mark.asyncio
 async def test_value_missing_pass_through(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     """Когда value=None — store не вызывается."""
     from src.backend.core.config.features import feature_flags
@@ -167,7 +167,7 @@ async def test_value_missing_pass_through(
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     backend = _FakeMemoryBackend()
     monkeypatch.setattr(
-        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend)
+        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: backend),
     )
 
     ex: Exchange[Any] = Exchange()
@@ -180,13 +180,13 @@ async def test_value_missing_pass_through(
 
 @pytest.mark.asyncio
 async def test_backend_unavailable_no_error(
-    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext
+    monkeypatch: pytest.MonkeyPatch, context: ExecutionContext,
 ) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(feature_flags, "ai_agent_dsl_enabled", True)
     monkeypatch.setattr(
-        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: None)
+        MemoryStoreProcessor, "_resolve_backend", staticmethod(lambda: None),
     )
 
     ex: Exchange[Any] = Exchange()
@@ -211,5 +211,5 @@ def test_to_spec_round_trip() -> None:
             "key_property": "meta.exchange_id",
             "value_property": "body.summary",
             "ttl_s": 86400,
-        }
+        },
     }

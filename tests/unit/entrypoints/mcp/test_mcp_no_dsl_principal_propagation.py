@@ -151,7 +151,7 @@ class TestMcpToolAuthzBypass:
         mcp.tool = fake_tool_dec
 
         decorator_factory = helpers._authz_manual_tool(
-            mcp, name="disallowed.tool", description="forbidden"
+            mcp, name="disallowed.tool", description="forbidden",
         )
         wrapped_fn = decorator_factory(fake_handler)
 

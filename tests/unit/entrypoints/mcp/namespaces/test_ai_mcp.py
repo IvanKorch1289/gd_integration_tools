@@ -37,14 +37,14 @@ def mock_registry() -> MagicMock:
 @pytest.fixture(autouse=True)
 def patch_registry(mock_registry: MagicMock) -> Any:
     with patch(
-        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry
+        "src.backend.dsl.commands.registry.action_handler_registry", mock_registry,
     ):
         yield
 
 
 class TestRegisterAiTools:
     def test_filters_by_prefix(
-        self, fake_mcp: FakeMcp, mock_registry: MagicMock
+        self, fake_mcp: FakeMcp, mock_registry: MagicMock,
     ) -> None:
         from src.backend.entrypoints.mcp.namespaces.ai_mcp import register_ai_tools
 
@@ -56,7 +56,7 @@ class TestRegisterAiTools:
             "other.action",
         ]
         with patch(
-            "src.backend.entrypoints.mcp.namespaces.ai_mcp._register_ai_tool"
+            "src.backend.entrypoints.mcp.namespaces.ai_mcp._register_ai_tool",
         ) as mock_register:
             register_ai_tools(fake_mcp)
         assert mock_register.call_count == 4
@@ -72,7 +72,7 @@ class TestRegisterAiTools:
 
         mock_registry.list_actions.return_value = []
         with patch(
-            "src.backend.entrypoints.mcp.namespaces.ai_mcp._register_ai_tool"
+            "src.backend.entrypoints.mcp.namespaces.ai_mcp._register_ai_tool",
         ) as mock_register:
             register_ai_tools(fake_mcp)
         assert mock_register.call_count == 0
@@ -114,7 +114,7 @@ class TestRegisterAiTool:
         return_value="not_allowed",
     )
     async def test_auth_denied(
-        self, _mock_authz: Any, _mock_schema: Any, fake_mcp: FakeMcp
+        self, _mock_authz: Any, _mock_schema: Any, fake_mcp: FakeMcp,
     ) -> None:
         from src.backend.entrypoints.mcp.namespaces.ai_mcp import _register_ai_tool
 
@@ -258,7 +258,7 @@ class TestRegisterAiTool:
     )
     @patch("inspect.signature")
     def test_input_schema_kwarg(
-        self, mock_sig: Any, _mock_schema: Any, fake_mcp: FakeMcp
+        self, mock_sig: Any, _mock_schema: Any, fake_mcp: FakeMcp,
     ) -> None:
         from src.backend.entrypoints.mcp.namespaces.ai_mcp import _register_ai_tool
 
@@ -277,7 +277,7 @@ class TestRegisterAiTool:
     )
     @patch("inspect.signature")
     def test_input_schema_kwarg_camelcase(
-        self, mock_sig: Any, _mock_schema: Any, fake_mcp: FakeMcp
+        self, mock_sig: Any, _mock_schema: Any, fake_mcp: FakeMcp,
     ) -> None:
         from src.backend.entrypoints.mcp.namespaces.ai_mcp import _register_ai_tool
 

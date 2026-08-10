@@ -98,7 +98,7 @@ def _step_preview(step: Any, payload: Any, idx: int) -> str:
 
 
 def dry_run_route(
-    route: dict, *, sample_payload: Any = None, seed: int = 0
+    route: dict, *, sample_payload: Any = None, seed: int = 0,
 ) -> DryRunResult:
     """Выполняет route в dry-run режиме.
 
@@ -132,7 +132,7 @@ def dry_run_route(
                 duration_ms=round(duration, 2),
                 output_preview=preview,
                 notes=notes,
-            )
+            ),
         )
         total += duration
 

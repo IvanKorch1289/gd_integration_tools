@@ -75,7 +75,7 @@ class ResultUnwrapProcessor(BaseProcessor):
         if on_err not in _ALLOWED_ON_ERR:
             raise ValueError(
                 f"result_unwrap: on_err must be one of {sorted(_ALLOWED_ON_ERR)}, "
-                f"got {on_err!r}"
+                f"got {on_err!r}",
             )
         self._source = source
         self._target = to

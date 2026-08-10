@@ -59,7 +59,7 @@ def test_smtp_source_does_not_import_deprecated_circuit_breaker() -> None:
     src = _read_smtp_source()
     # Find import statements: from X import Y, or import X
     import_lines = re.findall(
-        r"^(?:from\s+(\S+)\s+import|import\s+(\S+))", src, flags=re.MULTILINE
+        r"^(?:from\s+(\S+)\s+import|import\s+(\S+))", src, flags=re.MULTILINE,
     )
     for from_target, import_target in import_lines:
         # from src.backend.core.utils.circuit_breaker import ...
@@ -67,13 +67,13 @@ def test_smtp_source_does_not_import_deprecated_circuit_breaker() -> None:
             pytest.fail(
                 "smtp.py imports from deprecated core.utils.circuit_breaker — "
                 "revert of S130 W2 migration detected. Use canonical "
-                "src.backend.core.resilience.breaker.Breaker.guard() instead."
+                "src.backend.core.resilience.breaker.Breaker.guard() instead.",
             )
         # import src.backend.core.utils.circuit_breaker
         if import_target == "src.backend.core.utils.circuit_breaker":
             pytest.fail(
                 "smtp.py imports deprecated core.utils.circuit_breaker — "
-                "revert of S130 W2 migration detected."
+                "revert of S130 W2 migration detected.",
             )
 
 

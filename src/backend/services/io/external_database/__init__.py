@@ -37,7 +37,7 @@ from src.backend.core.logging import get_logger
 # Формат identifier-а: `name` или `schema.name` или `db.schema.name`, где
 # каждый сегмент — обычный SQL identifier без кавычек.
 _IDENT_RE: Final = re.compile(
-    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$"
+    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$",
 )
 
 # Bind-имена (после ":") должны быть простыми — без точек, без спецсимволов.
@@ -78,7 +78,7 @@ __all__ = (
 
 
 class ExternalDatabaseService(
-    CoreMixin, DispatchMixin, ValidationMixin, BuildMixin, ProfileMixin
+    CoreMixin, DispatchMixin, ValidationMixin, BuildMixin, ProfileMixin,
 ):
     """External database service (5 mixins = 14 methods + 1 core)."""
 

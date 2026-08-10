@@ -105,7 +105,7 @@ class TestRequestResponseWithCompensation:
                 super().__init__(name="noop")
 
             async def process(
-                self, exchange: Exchange, context: ExecutionContext
+                self, exchange: Exchange, context: ExecutionContext,
             ) -> None:  # pragma: no cover
                 return None
 

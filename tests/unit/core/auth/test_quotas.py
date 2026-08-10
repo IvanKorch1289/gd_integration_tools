@@ -65,7 +65,7 @@ class TestQuotaCheckMiddleware:
         policy = QuotaPolicy(service=MagicMock())
         mw = QuotaCheckMiddleware(app, policy)
         await mw(
-            {"type": "http", "path": "/api", "headers": []}, MagicMock(), MagicMock()
+            {"type": "http", "path": "/api", "headers": []}, MagicMock(), MagicMock(),
         )
         app.assert_awaited_once()
 
@@ -88,7 +88,7 @@ class TestQuotaCheckMiddleware:
         usage.reset_minute_at = 60
         usage.reset_day_at = 86400
         service.consume_request = AsyncMock(
-            return_value=MagicMock(allowed=False, reason="rpm", usage=usage)
+            return_value=MagicMock(allowed=False, reason="rpm", usage=usage),
         )
         policy = QuotaPolicy(service=service)
         mw = QuotaCheckMiddleware(app, policy)

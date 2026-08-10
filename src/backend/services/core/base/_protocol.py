@@ -27,5 +27,5 @@ class _BaseServiceProtocol(Protocol):
     def _table_tag(self) -> str | None: ...
 
     async def _invalidate_entity_cache(
-        self, *, entity_id: Any | None = None, table_name: str | None = None
+        self, *, entity_id: Any | None = None, table_name: str | None = None,
     ) -> None: ...

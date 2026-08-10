@@ -97,19 +97,19 @@ def test_perf_gate_baseline_thresholds_pure() -> None:
     perf_gate = _import_perf_gate()
 
     baseline = {
-        "global": {"rps_floor": 1000.0, "p95_ms": 200.0, "error_rate_max": 0.01}
+        "global": {"rps_floor": 1000.0, "p95_ms": 200.0, "error_rate_max": 0.01},
     }
 
     # Кейс 1: всё в норме.
     passed, viols = perf_gate._check_thresholds_baseline(
-        {"rps": 1500.0, "p95_ms": 150.0, "fail_rate": 0.005}, baseline
+        {"rps": 1500.0, "p95_ms": 150.0, "fail_rate": 0.005}, baseline,
     )
     assert passed is True, f"должно быть pass, viols={viols}"
     assert viols == []
 
     # Кейс 2: нарушены все три порога.
     passed, viols = perf_gate._check_thresholds_baseline(
-        {"rps": 500.0, "p95_ms": 350.0, "fail_rate": 0.02}, baseline
+        {"rps": 500.0, "p95_ms": 350.0, "fail_rate": 0.02}, baseline,
     )
     assert passed is False
     assert len(viols) == 3, f"ожидалось 3 нарушения, получено: {viols}"

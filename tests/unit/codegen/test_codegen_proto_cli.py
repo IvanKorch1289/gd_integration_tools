@@ -38,7 +38,7 @@ class _CreateResp(BaseModel):
 
 
 def _make_meta(
-    action: str, *, side_effect: str = "read", input_model=None, output_model=None
+    action: str, *, side_effect: str = "read", input_model=None, output_model=None,
 ):
     """Создать ActionMetadata-stub без обращения к реестру."""
     from src.backend.core.interfaces.action_dispatcher import ActionMetadata
@@ -98,7 +98,7 @@ class TestBuildProtoFileForGroup:
             actions=[
                 _make_meta("orders.list", input_model=_ListReq, output_model=_ListResp),
                 _make_meta(
-                    "orders.create", input_model=_CreateReq, output_model=_CreateResp
+                    "orders.create", input_model=_CreateReq, output_model=_CreateResp,
                 ),
             ],
         )
@@ -118,7 +118,7 @@ class TestBuildProtoFileForGroup:
 
     def test_action_without_models_skipped(self):
         group = codegen._ServiceGroup(
-            service="empty", actions=[_make_meta("empty.action")]
+            service="empty", actions=[_make_meta("empty.action")],
         )
         result = codegen._build_proto_file_for_group(group)
         assert "ни input_model" in result.skipped[0]

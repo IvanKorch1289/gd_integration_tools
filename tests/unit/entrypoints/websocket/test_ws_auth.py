@@ -29,7 +29,7 @@ class TestWSAuthenticator:
 
     @pytest.mark.asyncio
     async def test_valid_token_returns_session(
-        self, authenticator: WSAuthenticator
+        self, authenticator: WSAuthenticator,
     ) -> None:
         """authenticate returns WSSession for valid token."""
         mock_mgr = AsyncMock()
@@ -96,7 +96,7 @@ class TestWSAuthenticator:
 
     @pytest.mark.asyncio
     async def test_load_groups_redis_error(
-        self, authenticator: WSAuthenticator
+        self, authenticator: WSAuthenticator,
     ) -> None:
         """_load_groups returns empty set on redis error."""
         with patch(
@@ -109,14 +109,14 @@ class TestWSAuthenticator:
     def test_can_access_group_admin(self, authenticator: WSAuthenticator) -> None:
         """Admin can access any group."""
         session = WSSession(
-            client_id="c", api_key_hash="h", allowed_groups=set(), is_admin=True
+            client_id="c", api_key_hash="h", allowed_groups=set(), is_admin=True,
         )
         assert authenticator.can_access_group(session, "any") is True
 
     def test_can_access_group_member(self, authenticator: WSAuthenticator) -> None:
         """Member can access allowed group."""
         session = WSSession(
-            client_id="c", api_key_hash="h", allowed_groups={"g1"}, is_admin=False
+            client_id="c", api_key_hash="h", allowed_groups={"g1"}, is_admin=False,
         )
         assert authenticator.can_access_group(session, "g1") is True
         assert authenticator.can_access_group(session, "g2") is False

@@ -144,7 +144,7 @@ class TestCompositeRemediator:
     def test_chain_runs_in_order(self) -> None:
         # null default + range clip
         rem = CompositeRemediator(
-            [NullDefaultRemediator(default=0), RangeClipRemediator(min=0, max=100)]
+            [NullDefaultRemediator(default=0), RangeClipRemediator(min=0, max=100)],
         )
         assert rem.remediate(None, {}) == 0  # null → 0
         assert rem.remediate(150, {}) == 100  # clip to 100
@@ -156,7 +156,7 @@ class TestCompositeRemediator:
             [
                 RangeClipRemediator(min=0, max=100),
                 NullDefaultRemediator(default=999),  # should not be reached
-            ]
+            ],
         )
         assert rem.remediate(150, {}) == 100  # clipped, not replaced with 999
 
@@ -220,7 +220,7 @@ class TestMonitorRemediate:
                 field="amount",
                 check="not_null",
                 params={"default": 0},
-            )
+            ),
         )
         result = m.remediate({"amount": None, "name": "x"})
         assert result.data == {"amount": 0, "name": "x"}
@@ -236,7 +236,7 @@ class TestMonitorRemediate:
                 field="age",
                 check="range",
                 params={"min": 0, "max": 120},
-            )
+            ),
         )
         result = m.remediate({"age": 150})
         assert result.data["age"] == 120
@@ -250,7 +250,7 @@ class TestMonitorRemediate:
                 field="x",
                 check="not_null",
                 params={"default": "fallback"},
-            )
+            ),
         )
         result = m.remediate([{"x": None}, {"x": "value"}, {"x": ""}])
         assert result.data[0]["x"] == "fallback"
@@ -261,7 +261,7 @@ class TestMonitorRemediate:
     def test_remediate_no_fixes_needed(self) -> None:
         m = DataQualityMonitor()
         m.add_rule(
-            DQRule(name="x_null", field="x", check="not_null", params={"default": "f"})
+            DQRule(name="x_null", field="x", check="not_null", params={"default": "f"}),
         )
         result = m.remediate({"x": "valid"})
         assert result.data == {"x": "valid"}
@@ -278,7 +278,7 @@ class TestMonitorRemediate:
                 check="not_null",
                 params={"default": "f"},
                 enabled=False,
-            )
+            ),
         )
         result = m.remediate({"x": None})
         assert result.data == {"x": None}  # not fixed
@@ -296,7 +296,7 @@ class TestMonitorRemediate:
     def test_remediate_returns_dq_remediation_result(self) -> None:
         m = DataQualityMonitor()
         m.add_rule(
-            DQRule(name="x_null", field="x", check="not_null", params={"default": 0})
+            DQRule(name="x_null", field="x", check="not_null", params={"default": 0}),
         )
         result = m.remediate({"x": None})
         assert isinstance(result, DQRemediationResult)
@@ -312,7 +312,7 @@ class TestMonitorRemediate:
                 field="status",
                 check="enum",
                 params={"allowed": ["active", "inactive"], "fallback": "unknown"},
-            )
+            ),
         )
         result = m.remediate({"status": "deleted"})
         assert result.data["status"] == "unknown"
@@ -326,7 +326,7 @@ class TestMonitorRemediate:
                 field="phone",
                 check="regex",
                 params={"pattern": r"^\+\d{10,}$", "mask": "INVALID"},
-            )
+            ),
         )
         result = m.remediate({"phone": "abc"})
         assert result.data["phone"] == "INVALID"
@@ -340,7 +340,7 @@ class TestMonitorRemediate:
                 field="count",
                 check="type",
                 params={"target_type": "int"},
-            )
+            ),
         )
         result = m.remediate({"count": "42"})
         assert result.data["count"] == 42
@@ -355,7 +355,7 @@ class TestMonitorRemediate:
                 field="age",
                 check="range",
                 params={"min": 0, "max": 120},
-            )
+            ),
         )
         m.add_rule(
             DQRule(
@@ -363,7 +363,7 @@ class TestMonitorRemediate:
                 field="name",
                 check="not_null",
                 params={"default": "anon"},
-            )
+            ),
         )
         result = m.remediate({"age": 200, "name": None})
         assert result.data == {"age": 120, "name": "anon"}
@@ -377,7 +377,7 @@ class TestMonitorRemediate:
                 field="age",
                 check="range",
                 params={"min": 0, "max": 120},
-            )
+            ),
         )
         result = m.remediate({"age": 200, "name": "alice", "tags": ["a", "b"]})
         assert result.data == {"age": 120, "name": "alice", "tags": ["a", "b"]}
@@ -395,13 +395,13 @@ class TestIntegration:
                 field="age",
                 check="range",
                 params={"min": 0, "max": 120},
-            )
+            ),
         )
         # First: check (no remediation)
         import asyncio
 
         check_result = asyncio.run(
-            m.check({"age": 200, "name": "alice"}, dataset="users")
+            m.check({"age": 200, "name": "alice"}, dataset="users"),
         )
         # Should have violation
         assert len(check_result["violations"]) >= 1  # type: ignore[arg-type]

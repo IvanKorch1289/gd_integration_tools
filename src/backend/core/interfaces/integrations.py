@@ -69,7 +69,7 @@ class BrowserClientProtocol(Protocol):
         """Кликнуть по ``selector`` (CSS/XPath) на ``url``."""
         ...
     async def fill_form(
-        self, url: str, fields: dict[str, str], submit: str | None = None
+        self, url: str, fields: dict[str, str], submit: str | None = None,
     ) -> dict[str, Any]:
 
         """Заполнить ``fields`` и (опц.) submit на ``url``."""
@@ -84,7 +84,7 @@ class BrowserClientProtocol(Protocol):
         """PNG-скриншот страницы (bytes)."""
         ...
     async def run_scenario(
-        self, steps: list[dict[str, Any]]
+        self, steps: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
 
         """Выполнить сценарий из ``steps`` (list[BrowserStep])."""
@@ -107,7 +107,7 @@ class ClickHouseClientProtocol(Protocol):
     """
 
     async def query(
-        self, sql: str, params: dict[str, Any] | None = None
+        self, sql: str, params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
 
         """SELECT-запрос с bound params; вернуть list[dict]."""
@@ -181,7 +181,7 @@ class ExpressClientProtocol(Protocol):
         """Отправить direct message пользователю (user_huid)."""
         ...
     async def send_notification(
-        self, group_chat_ids: list[str], text: str
+        self, group_chat_ids: list[str], text: str,
     ) -> dict[str, Any]:
 
         """Broadcast в group_chat_ids."""
@@ -210,7 +210,7 @@ class RedisKeyValueClientProtocol(Protocol):
     """
 
     async def set(
-        self, key: str, value: Any, ex: int | None = None, **kwargs: Any
+        self, key: str, value: Any, ex: int | None = None, **kwargs: Any,
     ) -> Any:
 
         """Установить ``key=value`` в KV-store (ex=TTL)."""
@@ -271,7 +271,7 @@ class SignatureBuilderProtocol(Protocol):
     """
 
     def __call__(
-        self, payload: dict[str, Any] | bytes | str, secret: str
+        self, payload: dict[str, Any] | bytes | str, secret: str,
     ) -> dict[str, str]:
         """Возвращает заголовки с HMAC-подписью."""
         ...

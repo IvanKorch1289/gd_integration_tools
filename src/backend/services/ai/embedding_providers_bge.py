@@ -45,13 +45,13 @@ class BGEM3EmbeddingProvider:
             from FlagEmbedding import BGEM3FlagModel  # type: ignore[import-not-found]
         except ImportError as exc:
             raise BGEUnavailable(
-                "FlagEmbedding не установлен — добавьте extra '[ai-2026]'."
+                "FlagEmbedding не установлен — добавьте extra '[ai-2026]'.",
             ) from exc
         self._model = BGEM3FlagModel(
-            self._model_name, cache_dir=self._cache_dir, use_fp16=self._use_fp16
+            self._model_name, cache_dir=self._cache_dir, use_fp16=self._use_fp16,
         )
         logger.info(
-            "BGEM3FlagModel %r loaded (cache=%s)", self._model_name, self._cache_dir
+            "BGEM3FlagModel %r loaded (cache=%s)", self._model_name, self._cache_dir,
         )
         return self._model
 
@@ -90,10 +90,10 @@ class BGERerankerV2M3:
             from FlagEmbedding import FlagReranker
         except ImportError as exc:
             raise BGEUnavailable(
-                "FlagEmbedding не установлен — добавьте extra '[ai-2026]'."
+                "FlagEmbedding не установлен — добавьте extra '[ai-2026]'.",
             ) from exc
         self._model = FlagReranker(
-            self._model_name, cache_dir=self._cache_dir, use_fp16=self._use_fp16
+            self._model_name, cache_dir=self._cache_dir, use_fp16=self._use_fp16,
         )
         return self._model
 

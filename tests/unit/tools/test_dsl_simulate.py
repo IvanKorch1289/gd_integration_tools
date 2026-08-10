@@ -30,7 +30,7 @@ def test_resolve_route_path_for_route_name_dir(tmp_path: Path, monkeypatch) -> N
     monkeypatch.chdir(tmp_path)
     (tmp_path / "routes" / "my_route").mkdir(parents=True)
     (tmp_path / "routes" / "my_route" / "main.dsl.yaml").write_text(
-        "route_id: my_route\nsteps: []\n", encoding="utf-8"
+        "route_id: my_route\nsteps: []\n", encoding="utf-8",
     )
     assert mod._resolve_route_path("my_route").name == "main.dsl.yaml"
 
@@ -45,7 +45,7 @@ def test_resolve_route_path_missing_raises() -> None:
 def test_main_runs_dry_run_on_file(tmp_path: Path, monkeypatch, capsys) -> None:
     f = tmp_path / "demo.yaml"
     f.write_text(
-        "route_id: demo\nsteps:\n  - call_function: { ref: m:f }\n", encoding="utf-8"
+        "route_id: demo\nsteps:\n  - call_function: { ref: m:f }\n", encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
     code = mod.main([str(f)])

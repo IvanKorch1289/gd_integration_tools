@@ -123,7 +123,7 @@ def test_to_s3_side_effect() -> None:
 
 def test_to_s3_to_spec_roundtrip() -> None:
     proc = ToS3Processor(
-        data_property="x", key_from="k", content_type_from="ct", result_property="r"
+        data_property="x", key_from="k", content_type_from="ct", result_property="r",
     )
     spec = proc.to_spec()
     assert spec == {
@@ -132,7 +132,7 @@ def test_to_s3_to_spec_roundtrip() -> None:
             "key_from": "k",
             "result_property": "r",
             "content_type_from": "ct",
-        }
+        },
     }
 
 
@@ -140,7 +140,7 @@ def test_to_s3_to_spec_roundtrip() -> None:
 
 
 async def test_from_s3_downloads_bytes(
-    patch_storage: None, fs_storage: LocalFSStorage
+    patch_storage: None, fs_storage: LocalFSStorage,
 ) -> None:
     await fs_storage.upload("file.txt", b"contents")
     ex = _make_exchange({"s3_key": "file.txt"})
@@ -180,7 +180,7 @@ def test_from_s3_side_effect() -> None:
 def test_from_s3_to_spec_roundtrip() -> None:
     proc = FromS3Processor(key_from="mykey", result_property="data")
     assert proc.to_spec() == {
-        "from_s3": {"key_from": "mykey", "result_property": "data"}
+        "from_s3": {"key_from": "mykey", "result_property": "data"},
     }
 
 
@@ -188,7 +188,7 @@ def test_from_s3_to_spec_roundtrip() -> None:
 
 
 async def test_s3_presign_returns_file_uri(
-    patch_storage: None, fs_storage: LocalFSStorage
+    patch_storage: None, fs_storage: LocalFSStorage,
 ) -> None:
     await fs_storage.upload("file.txt", b"x")
     ex = _make_exchange({"s3_key": "file.txt"})
@@ -222,7 +222,7 @@ def test_s3_presign_side_effect() -> None:
 def test_s3_presign_to_spec_roundtrip() -> None:
     proc = S3PresignProcessor(key_from="k", expires_in=300, result_property="url")
     assert proc.to_spec() == {
-        "s3_presign": {"key_from": "k", "expires_in": 300, "result_property": "url"}
+        "s3_presign": {"key_from": "k", "expires_in": 300, "result_property": "url"},
     }
 
 
@@ -230,7 +230,7 @@ def test_s3_presign_to_spec_roundtrip() -> None:
 
 
 async def test_s3_delete_removes_object(
-    patch_storage: None, fs_storage: LocalFSStorage
+    patch_storage: None, fs_storage: LocalFSStorage,
 ) -> None:
     await fs_storage.upload("tmp.txt", b"x")
     ex = _make_exchange({"s3_key": "tmp.txt"})
@@ -268,7 +268,7 @@ def test_s3_delete_to_spec_roundtrip() -> None:
 
 
 async def test_s3_list_returns_keys(
-    patch_storage: None, fs_storage: LocalFSStorage
+    patch_storage: None, fs_storage: LocalFSStorage,
 ) -> None:
     await fs_storage.upload("a.bin", b"1")
     await fs_storage.upload("dir/b.bin", b"2")
@@ -280,7 +280,7 @@ async def test_s3_list_returns_keys(
 
 
 async def test_s3_list_with_prefix(
-    patch_storage: None, fs_storage: LocalFSStorage
+    patch_storage: None, fs_storage: LocalFSStorage,
 ) -> None:
     await fs_storage.upload("a.bin", b"1")
     await fs_storage.upload("dir/b.bin", b"2")

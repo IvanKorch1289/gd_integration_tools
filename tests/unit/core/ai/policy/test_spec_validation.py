@@ -94,10 +94,10 @@ def test_memory_spec_with_backends() -> None:
     """MemorySpec с конкретными backends."""
     memory = MemorySpec(
         short_term=BackendSpec(
-            backend="redis", namespace="credit:short:{tenant_id}", ttl=3600
+            backend="redis", namespace="credit:short:{tenant_id}", ttl=3600,
         ),
         long_term=BackendSpec(
-            backend="mem0+pgvector", namespace="credit:long:{tenant_id}"
+            backend="mem0+pgvector", namespace="credit:long:{tenant_id}",
         ),
     )
     assert memory.short_term is not None
@@ -266,7 +266,7 @@ class TestCrossFieldConsistency:
         from src.backend.core.ai.policy.spec import AIPolicySpec
 
         with pytest.raises(
-            ValidationError, match="budget.inconsistent_tokens"
+            ValidationError, match="budget.inconsistent_tokens",
         ):
             AIPolicySpec.model_validate(
                 {

@@ -26,7 +26,7 @@ class SessionMixin(_HttpClientProtocol):
             if self.client is None or self.client.is_closed:
                 self._create_new_session()
                 self.logger.debug(
-                    "Создана новая HTTP-сессия", extra={"session_id": id(self.client)}
+                    "Создана новая HTTP-сессия", extra={"session_id": id(self.client)},
                 )
             self.last_activity = now
             self._start_purger_if_needed()
@@ -56,14 +56,14 @@ class SessionMixin(_HttpClientProtocol):
     def _start_purger_if_needed(self) -> None:
         if self.purger_task is None or self.purger_task.done():
             self.purger_task = get_task_registry().create_task(
-                self._connection_purger(), name="http-client-connection-purger"
+                self._connection_purger(), name="http-client-connection-purger",
             )
 
     async def _close_session(self) -> None:
         if self.client and not self.client.is_closed:
             await self.client.aclose()
             self.logger.debug(
-                "HTTP-сессия закрыта", extra={"session_id": id(self.client)}
+                "HTTP-сессия закрыта", extra={"session_id": id(self.client)},
             )
         self.client = None
 

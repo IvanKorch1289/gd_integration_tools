@@ -84,7 +84,7 @@ async def test_migration_runner_indexes_all_chunks() -> None:
             {"id": "1", "content": "doc1", "metadata": {}},
             {"id": "2", "content": "doc2", "metadata": {}},
             {"id": "3", "content": "doc3", "metadata": {}},
-        ]
+        ],
     )
     target = AsyncMock()
     target.upsert = AsyncMock(return_value=None)
@@ -93,7 +93,7 @@ async def test_migration_runner_indexes_all_chunks() -> None:
     runner = EmbeddingMigrationRunner(source, target, embedder, batch_size=10)
 
     progress = await runner.run(
-        source_collection="docs_bge_m3", target_collection="docs_bge_m3_v2"
+        source_collection="docs_bge_m3", target_collection="docs_bge_m3_v2",
     )
 
     assert isinstance(progress, MigrationProgress)

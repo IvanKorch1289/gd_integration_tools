@@ -48,7 +48,7 @@ class NotebookMixin:
                 output_format=output_format,
                 user_name=user_name,
                 timeout_seconds=timeout_seconds,
-            )
+            ),
         )
 
     def notebook_execute(
@@ -77,7 +77,7 @@ class NotebookMixin:
                 user_name=user_name,
                 notebook_path=notebook_path,
                 timeout_seconds=timeout_seconds,
-            )
+            ),
         )
 
     def notebook_export(
@@ -109,5 +109,5 @@ class NotebookMixin:
                 notebook_path=notebook_path,
                 fmt=fmt,
                 timeout_seconds=timeout_seconds,
-            )
+            ),
         )

@@ -25,7 +25,7 @@ def mock_streamlit() -> MagicMock:
     sm = ModuleType("streamlit")
     sm.set_page_config = MagicMock()
     sm.cache_data = MagicMock(
-        side_effect=lambda *args, **kwargs: lambda f: f
+        side_effect=lambda *args, **kwargs: lambda f: f,
     )
     sm.cache_data.clear = MagicMock()
     sys.modules["streamlit"] = sm
@@ -47,7 +47,7 @@ def test_ttl_constants_default(mock_streamlit: MagicMock) -> None:
 
 
 def test_ttl_constants_from_env(
-    monkeypatch: pytest.MonkeyPatch, mock_streamlit: MagicMock
+    monkeypatch: pytest.MonkeyPatch, mock_streamlit: MagicMock,
 ) -> None:
     """TTL overridable via env vars."""
     monkeypatch.setenv("STREAMLIT_CACHE_TTL_METRICS", "30")

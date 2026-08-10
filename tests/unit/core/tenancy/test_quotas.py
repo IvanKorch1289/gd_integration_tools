@@ -22,7 +22,7 @@ class TestQuotaTracker:
 
     @pytest.mark.asyncio
     async def test_consume_within_limit(
-        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch
+        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         raw = _make_raw()
         raw.incrby = AsyncMock(return_value=1)
@@ -32,14 +32,14 @@ class TestQuotaTracker:
             lambda: (lambda: raw),
         )
         result = await tracker.consume(
-            "t1", "res", units=1, limit=10, period_seconds=60
+            "t1", "res", units=1, limit=10, period_seconds=60,
         )
         assert result["remaining"] == 9
         assert result["limit"] == 10
 
     @pytest.mark.asyncio
     async def test_exceed_raises(
-        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch
+        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         raw = _make_raw()
         raw.incrby = AsyncMock(return_value=11)
@@ -54,7 +54,7 @@ class TestQuotaTracker:
 
     @pytest.mark.asyncio
     async def test_redis_fail_open(
-        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch
+        self, tracker: QuotaTracker, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         raw = _make_raw()
         raw.incrby = AsyncMock(side_effect=ConnectionError("boom"))
@@ -63,6 +63,6 @@ class TestQuotaTracker:
             lambda: (lambda: raw),
         )
         result = await tracker.consume(
-            "t1", "res", units=1, limit=10, period_seconds=60
+            "t1", "res", units=1, limit=10, period_seconds=60,
         )
         assert result["remaining"] == 9

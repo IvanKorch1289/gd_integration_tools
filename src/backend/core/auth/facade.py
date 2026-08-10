@@ -262,7 +262,7 @@ class AuthFacade:
             from cryptography.hazmat.backends import default_backend
 
             cert = x509.load_pem_x509_certificate(
-                cert_pem.encode(), default_backend()
+                cert_pem.encode(), default_backend(),
             )
             cn = None
             for attr in cert.subject:

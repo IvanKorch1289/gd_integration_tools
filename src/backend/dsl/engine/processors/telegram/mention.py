@@ -52,7 +52,7 @@ class TelegramMentionProcessor(BaseProcessor):
         super().__init__(name=name or f"telegram_mention({parse_mode})")
         if parse_mode not in {"HTML", "MarkdownV2", "Markdown"}:
             raise ValueError(
-                f"TelegramMentionProcessor: parse_mode={parse_mode!r} не поддерживается"
+                f"TelegramMentionProcessor: parse_mode={parse_mode!r} не поддерживается",
             )
         self._user_id_from = user_id_from
         self._display_name_from = display_name_from
@@ -69,7 +69,7 @@ class TelegramMentionProcessor(BaseProcessor):
         user_id = resolve_value(exchange, self._user_id_from)
         if not user_id:
             _logger.debug(
-                "TelegramMention: пустой user_id (%r) — пропуск", self._user_id_from
+                "TelegramMention: пустой user_id (%r) — пропуск", self._user_id_from,
             )
             return
 
@@ -87,7 +87,7 @@ class TelegramMentionProcessor(BaseProcessor):
             return
 
         mention = TelegramMention(
-            user_id=uid, display_name=display_name, parse_mode=self._parse_mode
+            user_id=uid, display_name=display_name, parse_mode=self._parse_mode,
         )
         fragment = mention.to_inline()
 

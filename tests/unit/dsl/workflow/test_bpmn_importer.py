@@ -59,7 +59,7 @@ def test_xor_gateway_maps_to_xor_kind() -> None:
         <bpmn:sequenceFlow id="f3" sourceRef="gw" targetRef="t2"/>
         <bpmn:sequenceFlow id="f4" sourceRef="t1" targetRef="e"/>
         <bpmn:sequenceFlow id="f5" sourceRef="t2" targetRef="e"/>
-        """
+        """,
     )
     decl = import_bpmn(xml, check_feature_flag=False)
     gateway_step = next(
@@ -83,7 +83,7 @@ def test_parallel_gateway_maps_to_and() -> None:
         <bpmn:sequenceFlow id="f1" sourceRef="s" targetRef="gw"/>
         <bpmn:sequenceFlow id="f2" sourceRef="gw" targetRef="t1"/>
         <bpmn:sequenceFlow id="f3" sourceRef="t1" targetRef="e"/>
-        """
+        """,
     )
     decl = import_bpmn(xml, check_feature_flag=False)
     gateway_step = next(
@@ -105,7 +105,7 @@ def test_inclusive_gateway_maps_to_or() -> None:
         <bpmn:sequenceFlow id="f1" sourceRef="s" targetRef="gw"/>
         <bpmn:sequenceFlow id="f2" sourceRef="gw" targetRef="t1"/>
         <bpmn:sequenceFlow id="f3" sourceRef="t1" targetRef="e"/>
-        """
+        """,
     )
     decl = import_bpmn(xml, check_feature_flag=False)
     gateway_step = next(
@@ -141,11 +141,11 @@ def test_import_disabled_when_feature_off() -> None:
         <bpmn:endEvent id="e"/>
         <bpmn:sequenceFlow id="f1" sourceRef="s" targetRef="t"/>
         <bpmn:sequenceFlow id="f2" sourceRef="t" targetRef="e"/>
-        """
+        """,
     )
     with (
         patch(
-            "src.backend.core.config.features.feature_flags.workflow_bpmn_import", False
+            "src.backend.core.config.features.feature_flags.workflow_bpmn_import", False,
         ),
         pytest.raises(BpmnImportDisabledError),
     ):

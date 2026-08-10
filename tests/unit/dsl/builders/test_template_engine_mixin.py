@@ -25,7 +25,7 @@ class TestTemplateEngine:
     def test_render_template_with_context(self, builder: RouteBuilder) -> None:
         ctx = {"user": {"name": "Alice", "age": 30}, "items": [1, 2, 3]}
         result = builder.template_render_str(
-            "{{ user.name }} is {{ user.age }} and has {{ items | length }} items", ctx
+            "{{ user.name }} is {{ user.age }} and has {{ items | length }} items", ctx,
         )
         assert result == "Alice is 30 and has 3 items"
 
@@ -49,7 +49,7 @@ class TestTemplateEngine:
         subject_tmpl = "Welcome {{ name }}"
         body_tmpl = "Hello {{ name }}, your id is {{ user_id }}."
         subject, body = builder.render_email(
-            subject_tmpl, body_tmpl, {"name": "Alice", "user_id": 42}
+            subject_tmpl, body_tmpl, {"name": "Alice", "user_id": 42},
         )
         assert subject == "Welcome Alice"
         assert body == "Hello Alice, your id is 42."
@@ -78,7 +78,7 @@ class TestTemplateEngine:
         assert result == "Привет Мир 🚀"
 
     def test_render_template_missing_var_returns_empty(
-        self, builder: RouteBuilder
+        self, builder: RouteBuilder,
     ) -> None:
         # Jinja by default returns empty for undefined
         result = builder.template_render_str("{{ undefined_var }}")

@@ -69,7 +69,7 @@ class TestSaveAndRestore:
         store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
         cookies = [{"name": "sid", "value": "abc"}]
         await store.save_cookies(
-            tenant_id="t1", user_id="u1", domain="d1", cookies=cookies
+            tenant_id="t1", user_id="u1", domain="d1", cookies=cookies,
         )
         # Verify the stored value is encrypted (not plaintext JSON).
         assert len(stored) == 1
@@ -114,7 +114,7 @@ class TestSaveAndRestore:
         store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
         with caplog.at_level("WARNING"):
             result = await store.restore_cookies(
-                tenant_id="t1", user_id="u1", domain="d1"
+                tenant_id="t1", user_id="u1", domain="d1",
             )
         assert result == []
         assert "decrypt failed" in caplog.text
@@ -125,7 +125,7 @@ class TestSaveAndRestore:
         store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
         with caplog.at_level("WARNING"):
             result = await store.restore_cookies(
-                tenant_id="t1", user_id="u1", domain="d1"
+                tenant_id="t1", user_id="u1", domain="d1",
             )
         assert result == []
         assert "failed" in caplog.text
@@ -136,7 +136,7 @@ class TestSaveAndRestore:
         store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
         with caplog.at_level("WARNING"):
             await store.save_cookies(
-                tenant_id="t1", user_id="u1", domain="d1", cookies=[{"x": 1}]
+                tenant_id="t1", user_id="u1", domain="d1", cookies=[{"x": 1}],
             )
         assert "failed" in caplog.text
 

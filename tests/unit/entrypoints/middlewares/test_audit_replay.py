@@ -26,7 +26,7 @@ def _downstream_ok(status_code: int = 200, body: bytes = b"ok"):
             body_bytes += msg.get("body", b"")
             more_body = msg.get("more_body", False)
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []}
+            {"type": "http.response.start", "status": status_code, "headers": []},
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -291,7 +291,7 @@ class TestAuditReplayMiddleware:
 
         # Make _audit raise (simulating internal bug).
         with patch.object(
-            mw, "_audit", side_effect=RuntimeError("audit bug")
+            mw, "_audit", side_effect=RuntimeError("audit bug"),
         ):
             send = AsyncMock()
             with patch(
@@ -354,7 +354,7 @@ class TestListAuditRecords:
 
         assert records == [{"id": "1", "path": "/api"}]
         redis_mock.read_stream.assert_awaited_once_with(
-            stream_name="audit:requests", count=10, start_id="-"
+            stream_name="audit:requests", count=10, start_id="-",
         )
 
     @pytest.mark.asyncio
@@ -377,7 +377,7 @@ class TestReplayAuditRecord:
         """Returns record data when found."""
         redis_mock = AsyncMock()
         redis_mock.read_stream.return_value = [
-            {"method": "POST", "path": "/api", "request_body": "{}"}
+            {"method": "POST", "path": "/api", "request_body": "{}"},
         ]
 
         with patch(

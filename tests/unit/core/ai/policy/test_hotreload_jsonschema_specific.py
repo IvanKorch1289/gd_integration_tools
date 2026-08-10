@@ -142,7 +142,7 @@ def test_find_specific_match_no_match() -> None:
             workflow_pattern="credit_*",
             tenant_pattern="*",
             model_router=ModelRouterSpec(primary="openai/gpt-4"),
-        )
+        ),
     ]
     assert find_specific_match(policies, "fraud_check", "user") is None
 
@@ -163,7 +163,7 @@ def test_find_specific_match_picks_most_specific() -> None:
     )
     # premium_* more specific than *
     result = find_specific_match(
-        [global_policy, premium_policy], "credit_check", "premium_user"
+        [global_policy, premium_policy], "credit_check", "premium_user",
     )
     assert result is not None
     assert result.name == "premium"
@@ -185,7 +185,7 @@ def test_find_specific_match_falls_back_to_global() -> None:
     )
     # basic_user doesn't match premium_*
     result = find_specific_match(
-        [global_policy, premium_policy], "credit_check", "basic_user"
+        [global_policy, premium_policy], "credit_check", "basic_user",
     )
     assert result is not None
     assert result.name == "global"
@@ -239,10 +239,10 @@ def policy_roots() -> Iterator[tuple[Path, Path]]:
             model_router=ModelRouterSpec(primary="openai/gpt-4o"),
         )
         Path(d1, "global.policy.yaml").write_text(
-            yaml.dump(global_p.model_dump(mode="json"))
+            yaml.dump(global_p.model_dump(mode="json")),
         )
         Path(d2, "premium.policy.yaml").write_text(
-            yaml.dump(premium_p.model_dump(mode="json"))
+            yaml.dump(premium_p.model_dump(mode="json")),
         )
         yield Path(d1), Path(d2)
 
@@ -312,7 +312,7 @@ def test_hotreload_event_dataclass() -> None:
     )
 
     event = PolicyReloadEvent(
-        path=Path("/policies/test.policy.yaml"), action=PolicyReloadAction.MODIFIED
+        path=Path("/policies/test.policy.yaml"), action=PolicyReloadAction.MODIFIED,
     )
     assert event.path == Path("/policies/test.policy.yaml")
     assert event.action == PolicyReloadAction.MODIFIED

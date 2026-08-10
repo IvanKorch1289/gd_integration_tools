@@ -144,7 +144,7 @@ class NotificationHub:
             return {"status": "error", "channel": ch, "message": str(exc)}
 
     async def email(
-        self, to: str, subject: str, message: str, **extras: Any
+        self, to: str, subject: str, message: str, **extras: Any,
     ) -> dict[str, Any]:
         """Email через Gateway (auto-derived template_key)."""
         return await self.send(Channel.EMAIL, to, subject, message, **extras)
@@ -159,11 +159,11 @@ class NotificationHub:
     ) -> dict[str, Any]:
         """eXpress через Gateway."""
         return await self.send(
-            Channel.EXPRESS, to, subject, message, is_direct=is_direct, **extras
+            Channel.EXPRESS, to, subject, message, is_direct=is_direct, **extras,
         )
 
     async def express_broadcast(
-        self, chat_ids: list[str], subject: str, message: str
+        self, chat_ids: list[str], subject: str, message: str,
     ) -> dict[str, Any]:
         """Broadcast в несколько eXpress чатов — loop через Gateway."""
         results = []
@@ -194,11 +194,11 @@ class NotificationHub:
 
         client = get_express_client_provider()
         return await client.create_chat(
-            name=name, members=members, description=description, chat_type=chat_type
+            name=name, members=members, description=description, chat_type=chat_type,
         )
 
     async def express_event(
-        self, event_type: str, chat_id: str, payload: dict[str, Any]
+        self, event_type: str, chat_id: str, payload: dict[str, Any],
     ) -> dict[str, Any]:
         """Структурированное событие в eXpress (legacy — formatting)."""
         emoji = {
@@ -226,17 +226,17 @@ class NotificationHub:
     ) -> dict[str, Any]:
         """Webhook через Gateway (с HMAC signature если secret задан)."""
         return await self.send(
-            Channel.WEBHOOK, to, subject, message, secret=secret, **extras
+            Channel.WEBHOOK, to, subject, message, secret=secret, **extras,
         )
 
     async def telegram(
-        self, to: str, subject: str = "", message: str = "", **extras: Any
+        self, to: str, subject: str = "", message: str = "", **extras: Any,
     ) -> dict[str, Any]:
         """Telegram через Gateway."""
         return await self.send(Channel.TELEGRAM, to, subject, message, **extras)
 
     async def broadcast(
-        self, channels: list[str | dict[str, Any]], subject: str, message: str
+        self, channels: list[str | dict[str, Any]], subject: str, message: str,
     ) -> dict[str, Any]:
         """Multi-channel broadcast.
 

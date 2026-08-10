@@ -122,7 +122,7 @@ def test_purge_empty_db_returns_zeros(session: Session) -> None:
 
 
 def _backdate_transaction(
-    session: Session, model: type, days_ago: int, **kwargs: object
+    session: Session, model: type, days_ago: int, **kwargs: object,
 ) -> int:
     """Создаёт versioned row + backdate его transaction.issued_at."""
     obj = model(**kwargs)
@@ -132,7 +132,7 @@ def _backdate_transaction(
     Transaction = versioning_manager.transaction_cls
     new_issued = datetime.now(UTC) - timedelta(days=days_ago)
     session.query(Transaction).filter(Transaction.id == tx_id).update(
-        {"issued_at": new_issued}, synchronize_session=False
+        {"issued_at": new_issued}, synchronize_session=False,
     )
     session.commit()
     session.expire_all()
@@ -208,7 +208,7 @@ def test_purge_respects_batch_size(session: Session) -> None:
     """batch_size=1 → scanned=1, remaining > 0 (есть ещё)."""
     for i in range(3):
         _backdate_transaction(
-            session, _PurgeTestModel, days_ago=100, name=f"old{i}", value=i
+            session, _PurgeTestModel, days_ago=100, name=f"old{i}", value=i,
         )
 
     result = Versioning.purge_old_versions(session, retention_days=90, batch_size=1)

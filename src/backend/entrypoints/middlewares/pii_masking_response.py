@@ -53,7 +53,7 @@ class PIIMaskingResponseMiddleware:
     """
 
     def __init__(
-        self, app: ASGIApp, *, path_patterns: Iterable[str] | None = None
+        self, app: ASGIApp, *, path_patterns: Iterable[str] | None = None,
     ) -> None:
         """Инициализирует middleware.
 
@@ -166,7 +166,7 @@ class PIIMaskingResponseMiddleware:
                 "type": "http.response.start",
                 "status": original_status,
                 "headers": new_headers,
-            }
+            },
         )
         await send({"type": "http.response.body", "body": masked})
 
@@ -179,7 +179,7 @@ class PIIMaskingResponseMiddleware:
             from src.backend.core.config.features import feature_flags
 
             return bool(
-                getattr(feature_flags, "pii_response_middleware_enabled", False)
+                getattr(feature_flags, "pii_response_middleware_enabled", False),
             )
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1002: narrow exceptions + observability.

@@ -138,7 +138,7 @@ class WorkflowFacade:
         """Послать сигнал workflow от имени плагина/route'а."""
         self._gate.check(caller, "workflow.signal", handle.workflow_id)
         await self._backend.signal_workflow(
-            handle=handle, signal_name=signal_name, payload=payload
+            handle=handle, signal_name=signal_name, payload=payload,
         )
         await self._emit(
             event_type="workflow.signal",
@@ -163,7 +163,7 @@ class WorkflowFacade:
         """
         self._gate.check(caller, "workflow.signal", handle.workflow_id)
         result = await self._backend.query_workflow(
-            handle=handle, query_name=query_name, args=args
+            handle=handle, query_name=query_name, args=args,
         )
         await self._emit(
             event_type="workflow.query",
@@ -178,11 +178,11 @@ class WorkflowFacade:
         self._gate.check(caller, "workflow.signal", handle.workflow_id)
         await self._backend.cancel_workflow(handle=handle)
         await self._emit(
-            event_type="workflow.cancel", workflow_id=handle.workflow_id, caller=caller
+            event_type="workflow.cancel", workflow_id=handle.workflow_id, caller=caller,
         )
 
     async def await_completion(
-        self, *, handle: WorkflowHandle, timeout: timedelta | None = None
+        self, *, handle: WorkflowHandle, timeout: timedelta | None = None,
     ) -> WorkflowResult:
         """Read-only ожидание completion — capability check не нужен.
 

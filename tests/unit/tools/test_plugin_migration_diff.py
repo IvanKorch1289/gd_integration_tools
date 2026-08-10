@@ -38,11 +38,11 @@ def _toml_new() -> dict:
             {"name": "ai.llm.openai"},  # added
         ],
         "provides": {
-            "actions": ["credit.score", "credit.assess"]  # +credit.assess
+            "actions": ["credit.score", "credit.assess"],  # +credit.assess
             # processors удалены полностью → breaking
         },
         "compatibility": {
-            "requires_plugins": {"shared_models": ">=2.0,<3.0"}  # spec изменён
+            "requires_plugins": {"shared_models": ">=2.0,<3.0"},  # spec изменён
         },
     }
 

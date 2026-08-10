@@ -82,7 +82,7 @@ async def test_warmup_timeout_marks_failed() -> None:
             return True
 
     warmup = PoolWarmup(
-        redis_client=_SlowRedis(), min_connections=1, timeout_seconds=0.05
+        redis_client=_SlowRedis(), min_connections=1, timeout_seconds=0.05,
     )
     result = await warmup.warmup()
     assert "redis" in result.failed_pools

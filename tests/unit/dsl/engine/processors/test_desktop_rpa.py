@@ -123,7 +123,7 @@ async def test_screenshot_passes_through_base64() -> None:
         "base64": "iVBORw0KGgo=",
     }
     proc = DesktopRpaProcessor(
-        app="app.exe", action="screenshot", to="property:rpa.shot"
+        app="app.exe", action="screenshot", to="property:rpa.shot",
     )
     ex = _exchange()
 

@@ -33,7 +33,7 @@ from src.backend.core.feature_flags.runtime_overrides import (
 
 
 def _make_change(
-    *, flag: str = "test_flag", tenant_id: str | None = None, new_value: Any = True
+    *, flag: str = "test_flag", tenant_id: str | None = None, new_value: Any = True,
 ) -> FeatureFlagChange:
     return FeatureFlagChange(
         flag=flag,
@@ -148,7 +148,7 @@ class TestSubscriber:
             bcast = RedisFeatureFlagBroadcaster(redis_client=redis, overrides=overrides)
             # Pre-fill messages в Fake pubsub до start().
             await bcast.start(
-                task_factory=lambda coro, name: asyncio.create_task(coro, name=name)
+                task_factory=lambda coro, name: asyncio.create_task(coro, name=name),
             )
             assert redis.pubsub_instance is not None
             pubsub = redis.pubsub_instance
@@ -159,7 +159,7 @@ class TestSubscriber:
             previous2 = mod._PROCESS_REPLICA_ID
             mod._PROCESS_REPLICA_ID = "remote-replica"
             foreign_payload = serialize_change(
-                _make_change(flag="remote_flag", new_value="from-remote")
+                _make_change(flag="remote_flag", new_value="from-remote"),
             )
             mod._PROCESS_REPLICA_ID = "local-replica"
             pubsub.messages.append({"type": "message", "data": foreign_payload})
@@ -182,13 +182,13 @@ class TestSubscriber:
             redis = _FakeRedis()
             bcast = RedisFeatureFlagBroadcaster(redis_client=redis, overrides=overrides)
             await bcast.start(
-                task_factory=lambda coro, name: asyncio.create_task(coro, name=name)
+                task_factory=lambda coro, name: asyncio.create_task(coro, name=name),
             )
             pubsub = redis.pubsub_instance
             assert pubsub is not None
             # serialize_change использует current _PROCESS_REPLICA_ID — own.
             own_payload = serialize_change(
-                _make_change(flag="echo_flag", new_value="echo-val")
+                _make_change(flag="echo_flag", new_value="echo-val"),
             )
             pubsub.messages.append({"type": "message", "data": own_payload})
             await asyncio.sleep(0.05)
@@ -208,7 +208,7 @@ class TestSubscriber:
             redis = _FakeRedis()
             bcast = RedisFeatureFlagBroadcaster(redis_client=redis, overrides=overrides)
             await bcast.start(
-                task_factory=lambda coro, name: asyncio.create_task(coro, name=name)
+                task_factory=lambda coro, name: asyncio.create_task(coro, name=name),
             )
             pubsub = redis.pubsub_instance
             assert pubsub is not None
@@ -231,7 +231,7 @@ class TestSubscriber:
             redis = _FakeRedis()
             bcast = RedisFeatureFlagBroadcaster(redis_client=redis, overrides=overrides)
             await bcast.start(
-                task_factory=lambda coro, name: asyncio.create_task(coro, name=name)
+                task_factory=lambda coro, name: asyncio.create_task(coro, name=name),
             )
             pubsub = redis.pubsub_instance
             assert pubsub is not None
@@ -247,7 +247,7 @@ class TestSubscriber:
                     new_value=None,
                     actor="remote",
                     timestamp=datetime.now(UTC),
-                )
+                ),
             )
             mod._PROCESS_REPLICA_ID = "local-replica"
             pubsub.messages.append({"type": "message", "data": clear_payload})
@@ -265,20 +265,20 @@ class TestSubscriber:
 class TestMaybeStart:
     @pytest.mark.asyncio
     async def test_disabled_flag_returns_none(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         from src.backend.core.config import features
 
         monkeypatch.setattr(features.feature_flags, "tenant_feature_flag_ui", False)
         overrides = RuntimeFeatureFlagOverrides()
         result = await maybe_start_broadcaster(
-            redis_client=_FakeRedis(), overrides=overrides
+            redis_client=_FakeRedis(), overrides=overrides,
         )
         assert result is None
 
     @pytest.mark.asyncio
     async def test_none_redis_returns_none(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         from src.backend.core.config import features
 

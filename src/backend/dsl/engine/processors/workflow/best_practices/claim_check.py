@@ -93,7 +93,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         if storage_backend not in self.SUPPORTED_BACKENDS:
             raise ValueError(
                 f"WorkflowClaimCheckProcessor: backend {storage_backend!r} "
-                f"не поддерживается. Доступно: {self.SUPPORTED_BACKENDS}"
+                f"не поддерживается. Доступно: {self.SUPPORTED_BACKENDS}",
             )
         super().__init__(name=name or f"claim_check:{storage_backend}")
         self.source_property = source_property
@@ -104,7 +104,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
         self.ttl_seconds = ttl_seconds
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Применяет паттерн Claim Check: выгружает большой payload во внешнее хранилище и заменяет его токеном.
 
@@ -124,7 +124,7 @@ class WorkflowClaimCheckProcessor(BaseProcessor):
             payload = cursor
 
         serialized = json.dumps(payload, ensure_ascii=False, default=str).encode(
-            "utf-8"
+            "utf-8",
         )
         size = len(serialized)
 

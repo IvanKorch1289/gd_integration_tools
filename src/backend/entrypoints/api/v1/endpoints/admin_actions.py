@@ -29,7 +29,7 @@ __all__ = ("router",)
 
 # S202 audit fix: require admin role
 _ADMIN_GUARD_OPERATOR = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
+    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)),
 )
 
 router = APIRouter(dependencies=[_ADMIN_GUARD_OPERATOR], prefix="/admin/actions", tags=["admin"])
@@ -52,10 +52,10 @@ class ActionInvokeRequest(BaseModel):
 
     name: str = Field(..., description="Имя action из реестра")
     payload: dict[str, Any] = Field(
-        default_factory=dict, description="Параметры вызова"
+        default_factory=dict, description="Параметры вызова",
     )
     mode: str = Field(
-        default="sync", description="Режим вызова: sync / async / background"
+        default="sync", description="Режим вызова: sync / async / background",
     )
 
 
@@ -215,7 +215,7 @@ async def invoke_action(body: ActionInvokeRequest) -> ActionInvokeResponse:
 
     try:
         result = await registry.invoke(
-            name=body.name, payload=body.payload, mode=body.mode
+            name=body.name, payload=body.payload, mode=body.mode,
         )
         return ActionInvokeResponse(
             name=body.name,

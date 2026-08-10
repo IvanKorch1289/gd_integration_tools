@@ -127,7 +127,7 @@ async def test_error_in_save_recorded_as_property(monkeypatch) -> None:
             raise RuntimeError("DB down")
 
     monkeypatch.setattr(
-        FeedbackProcessor, "_build_service", staticmethod(lambda: _Boom())
+        FeedbackProcessor, "_build_service", staticmethod(lambda: _Boom()),
     )
     proc = FeedbackProcessor(rating=3)
     exchange = _FakeExchange(body={"x": 1})

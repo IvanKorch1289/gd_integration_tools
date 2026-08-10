@@ -95,7 +95,7 @@ class TestSchemaRegistryValidateAvro:
                 "type": "record",
                 "name": "User",
                 "fields": [{"name": "id", "type": "long"}],
-            }
+            },
         )
         registry.register_avro("user", schema)
 
@@ -114,7 +114,7 @@ class TestSchemaRegistryValidateAvro:
         assert result == fake_record
         fake_fastavro.parse_schema.assert_called_once()
         fake_fastavro.schemaless_reader.assert_called_once_with(
-            fake_bytesio, parsed_schema
+            fake_bytesio, parsed_schema,
         )
 
 

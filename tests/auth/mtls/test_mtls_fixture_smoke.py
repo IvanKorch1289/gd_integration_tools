@@ -83,7 +83,7 @@ def test_mtls_backend_accepts_client_cert(
 
     backend = MtlsBackend(config=MtlsConfig(), cert_parser=parser)
     request = _FakeRequest(
-        {"X-Client-Cert": client_cert_chain.cert_pem.decode("utf-8")}
+        {"X-Client-Cert": client_cert_chain.cert_pem.decode("utf-8")},
     )
 
     result = backend.verify(request)

@@ -55,10 +55,10 @@ def _make_minimal_pdf(text: str = "Hello multimodal RAG world") -> bytes:
             NameObject("/Type"): NameObject("/Font"),
             NameObject("/Subtype"): NameObject("/Type1"),
             NameObject("/BaseFont"): NameObject("/Helvetica"),
-        }
+        },
     )
     resources = DictionaryObject(
-        {NameObject("/Font"): DictionaryObject({NameObject("/F1"): font_obj})}
+        {NameObject("/Font"): DictionaryObject({NameObject("/F1"): font_obj})},
     )
     page[NameObject("/Resources")] = resources
 

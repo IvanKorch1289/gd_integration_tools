@@ -39,7 +39,7 @@ def test_start_span_no_op_when_tracer_provider_uninitialized() -> None:
     with patch("opentelemetry.trace.get_tracer") as mock_tracer:
         # Эмулируем runtime где TracerProvider не настроен
         mock_tracer.side_effect = AttributeError(
-            "TracerProvider not configured"
+            "TracerProvider not configured",
         )
         with start_span("test.no.provider") as span:
             assert span is None

@@ -70,15 +70,15 @@ class PriorityRouter:
 
     tx_profile: PoolingProfile = field(default_factory=lambda: DEFAULT_TX_POOL)
     marketing_profile: PoolingProfile = field(
-        default_factory=lambda: DEFAULT_MARKETING_POOL
+        default_factory=lambda: DEFAULT_MARKETING_POOL,
     )
 
     #: Приватные поля — заполняются в `start()`.
     _tx_queue: asyncio.Queue[_QueueItem] = field(
-        init=False, default_factory=asyncio.Queue
+        init=False, default_factory=asyncio.Queue,
     )
     _marketing_queue: asyncio.Queue[_QueueItem] = field(
-        init=False, default_factory=asyncio.Queue
+        init=False, default_factory=asyncio.Queue,
     )
     _workers: list[asyncio.Task[None]] = field(init=False, default_factory=list)
     _started: bool = field(init=False, default=False)
@@ -89,7 +89,7 @@ class PriorityRouter:
             return
         for i in range(self.tx_profile.max_size):
             t = get_task_registry().create_task(
-                self._worker_loop("tx", self._tx_queue), name=f"notif-worker-tx-{i}"
+                self._worker_loop("tx", self._tx_queue), name=f"notif-worker-tx-{i}",
             )
             self._workers.append(t)
         for i in range(self.marketing_profile.max_size):
@@ -142,7 +142,7 @@ class PriorityRouter:
         """
         if priority not in ALL_PRIORITIES:
             raise ValueError(
-                f"Unknown priority '{priority}'. Use: {', '.join(ALL_PRIORITIES)}"
+                f"Unknown priority '{priority}'. Use: {', '.join(ALL_PRIORITIES)}",
             )
         queue = self._tx_queue if priority == "tx" else self._marketing_queue
         item = _QueueItem(priority=priority, payload=payload, callback=callback)
@@ -154,11 +154,11 @@ class PriorityRouter:
             except asyncio.QueueFull as exc:
                 raise NotificationBacklogError(
                     f"Notification queue full for priority='{priority}' — "
-                    f"backlog at qsize={queue.qsize()}"
+                    f"backlog at qsize={queue.qsize()}",
                 ) from exc
 
     async def _worker_loop(
-        self, priority: Priority, queue: asyncio.Queue[_QueueItem]
+        self, priority: Priority, queue: asyncio.Queue[_QueueItem],
     ) -> None:
         while True:
             item = await queue.get()

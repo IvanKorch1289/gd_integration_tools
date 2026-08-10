@@ -35,7 +35,7 @@ def _register_ai() -> None:
                 service_getter=get_ai_agent_service,
                 service_method="run_agent",
             ),
-        ]
+        ],
     )
 
 
@@ -70,7 +70,7 @@ def _register_analytics_clickhouse() -> None:
                 service_getter=get_analytics_service,
                 service_method="aggregate",
             ),
-        ]
+        ],
     )
 
 
@@ -105,7 +105,7 @@ def _register_search_elasticsearch() -> None:
                 service_getter=get_search_service,
                 service_method="delete_document",
             ),
-        ]
+        ],
     )
 
 
@@ -145,7 +145,7 @@ def _register_notebooks_wave_9_1() -> None:
                 service_getter=get_notebook_service,
                 service_method="delete",
             ),
-        ]
+        ],
     )
 
 
@@ -180,7 +180,7 @@ def _register_rag_vector_db_llm() -> None:
                 service_getter=get_rag_service,
                 service_method="count",
             ),
-        ]
+        ],
     )
 
 
@@ -225,7 +225,7 @@ def _register_agent_memory() -> None:
                 service_getter=get_agent_memory_service,
                 service_method="get_facts",
             ),
-        ]
+        ],
     )
 
 
@@ -247,7 +247,7 @@ def _register_web_search_perplexity_tavily() -> None:
                 service_getter=get_web_search_service,
                 service_method="deep_research",
             ),
-        ]
+        ],
     )
 
 
@@ -272,5 +272,5 @@ def _register_anomaly_detection() -> None:
                 service_getter=get_anomaly_detector,
                 service_method="list_metrics",
             ),
-        ]
+        ],
     )

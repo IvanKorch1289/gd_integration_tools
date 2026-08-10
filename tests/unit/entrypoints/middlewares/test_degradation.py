@@ -51,7 +51,7 @@ def _downstream_ok():
 
 
 def _make_scope(
-    method: str = "POST", path: str = "/api/v1/users"
+    method: str = "POST", path: str = "/api/v1/users",
 ) -> dict:
     return {
         "type": "http",
@@ -71,7 +71,7 @@ class TestDegradationMiddleware:
 
     @pytest.mark.asyncio
     async def test_full_mode_passes_through(
-        self, middleware: DegradationMiddleware
+        self, middleware: DegradationMiddleware,
     ) -> None:
         """FULL mode allows all requests."""
         app = AsyncMock()
@@ -80,7 +80,7 @@ class TestDegradationMiddleware:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.FULL
             await mw(_make_scope("POST", "/api/v1/users"), AsyncMock(), send)
@@ -91,7 +91,7 @@ class TestDegradationMiddleware:
 
     @pytest.mark.asyncio
     async def test_maintenance_blocks_non_essential(
-        self, middleware: DegradationMiddleware
+        self, middleware: DegradationMiddleware,
     ) -> None:
         """MAINTENANCE mode blocks non-maintenance paths."""
         app = AsyncMock()
@@ -104,7 +104,7 @@ class TestDegradationMiddleware:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.MAINTENANCE
             await mw(_make_scope("GET", "/api/v1/users"), AsyncMock(), send)
@@ -125,7 +125,7 @@ class TestDegradationMiddleware:
 
     @pytest.mark.asyncio
     async def test_maintenance_allows_liveness(
-        self, middleware: DegradationMiddleware
+        self, middleware: DegradationMiddleware,
     ) -> None:
         """MAINTENANCE mode allows /health/liveness."""
         app = AsyncMock()
@@ -134,7 +134,7 @@ class TestDegradationMiddleware:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.MAINTENANCE
             await mw(_make_scope("GET", "/health/liveness"), AsyncMock(), send)
@@ -145,7 +145,7 @@ class TestDegradationMiddleware:
 
     @pytest.mark.asyncio
     async def test_essential_only_blocks_api(
-        self, middleware: DegradationMiddleware
+        self, middleware: DegradationMiddleware,
     ) -> None:
         """ESSENTIAL_ONLY blocks /api paths."""
         app = AsyncMock()
@@ -158,7 +158,7 @@ class TestDegradationMiddleware:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.ESSENTIAL_ONLY
             await mw(_make_scope("GET", "/api/v1/users"), AsyncMock(), send)
@@ -169,7 +169,7 @@ class TestDegradationMiddleware:
 
     @pytest.mark.asyncio
     async def test_cache_only_blocks_writes(
-        self, middleware: DegradationMiddleware
+        self, middleware: DegradationMiddleware,
     ) -> None:
         """CACHE_ONLY blocks POST/PUT/PATCH/DELETE."""
         app = AsyncMock()
@@ -182,7 +182,7 @@ class TestDegradationMiddleware:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.CACHE_ONLY
             await mw(_make_scope("POST", "/api/v1/users"), AsyncMock(), send)
@@ -195,7 +195,7 @@ class TestDegradationMiddleware:
 
     @pytest.mark.asyncio
     async def test_cache_only_allows_reads_and_sets_header(
-        self, middleware: DegradationMiddleware
+        self, middleware: DegradationMiddleware,
     ) -> None:
         """CACHE_ONLY allows GET и инжектит X-Degradation-Mode header."""
         app = AsyncMock()
@@ -204,7 +204,7 @@ class TestDegradationMiddleware:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.CACHE_ONLY
             await mw(_make_scope("GET", "/api/v1/users"), AsyncMock(), send)
@@ -219,7 +219,7 @@ class TestDegradationMiddleware:
 
     @pytest.mark.asyncio
     async def test_read_only_blocks_writes(
-        self, middleware: DegradationMiddleware
+        self, middleware: DegradationMiddleware,
     ) -> None:
         """READ_ONLY blocks writes."""
         app = AsyncMock()
@@ -232,7 +232,7 @@ class TestDegradationMiddleware:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.READ_ONLY
             await mw(_make_scope("DELETE", "/api/v1/users/1"), AsyncMock(), send)
@@ -252,7 +252,7 @@ class TestDegradationMiddleware:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.READ_ONLY
             await mw(_make_scope("POST", "/api/v1/audit/events"), AsyncMock(), send)
@@ -263,7 +263,7 @@ class TestDegradationMiddleware:
 
     @pytest.mark.asyncio
     async def test_legacy_db_main_fallback_blocks(
-        self, middleware: DegradationMiddleware
+        self, middleware: DegradationMiddleware,
     ) -> None:
         """Legacy path: db_main in fallback blocks writes."""
         app = AsyncMock()
@@ -277,16 +277,16 @@ class TestDegradationMiddleware:
         send = AsyncMock()
         with (
             patch(
-                "src.backend.core.resilience.degradation.degradation_manager"
+                "src.backend.core.resilience.degradation.degradation_manager",
             ) as mock_mgr,
             patch(
-                "src.backend.core.di.providers.get_resilience_coordinator_provider"
+                "src.backend.core.di.providers.get_resilience_coordinator_provider",
             ) as mock_coord_provider,
         ):
             mock_mgr.current_mode = DegradationMode.FULL
             mock_coord = MagicMock()
             mock_coord.status.return_value = {
-                "db_main": FakeStatus("sqlite_ro", "degraded")
+                "db_main": FakeStatus("sqlite_ro", "degraded"),
             }
             mock_coord_provider.return_value = mock_coord
 
@@ -303,7 +303,7 @@ class TestDegradationMiddleware:
 
     @pytest.mark.asyncio
     async def test_legacy_db_main_primary_allows(
-        self, middleware: DegradationMiddleware
+        self, middleware: DegradationMiddleware,
     ) -> None:
         """Legacy path: db_main on primary allows writes."""
         app = AsyncMock()
@@ -313,16 +313,16 @@ class TestDegradationMiddleware:
         send = AsyncMock()
         with (
             patch(
-                "src.backend.core.resilience.degradation.degradation_manager"
+                "src.backend.core.resilience.degradation.degradation_manager",
             ) as mock_mgr,
             patch(
-                "src.backend.core.di.providers.get_resilience_coordinator_provider"
+                "src.backend.core.di.providers.get_resilience_coordinator_provider",
             ) as mock_coord_provider,
         ):
             mock_mgr.current_mode = DegradationMode.FULL
             mock_coord = MagicMock()
             mock_coord.status.return_value = {
-                "db_main": FakeStatus("primary", "healthy")
+                "db_main": FakeStatus("primary", "healthy"),
             }
             mock_coord_provider.return_value = mock_coord
 
@@ -370,7 +370,7 @@ class TestDegradationMiddlewarePureASGI:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.MAINTENANCE
             await mw(
@@ -400,7 +400,7 @@ class TestDegradationMiddlewarePureASGI:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.MAINTENANCE
             await mw(
@@ -429,7 +429,7 @@ class TestDegradationMiddlewarePureASGI:
                     "headers": [
                         (b"x-degradation-mode", b"stale-downstream-value"),
                     ],
-                }
+                },
             )
             await send({"type": "http.response.body", "body": b"ok"})
 
@@ -438,7 +438,7 @@ class TestDegradationMiddlewarePureASGI:
 
         send = AsyncMock()
         with patch(
-            "src.backend.core.resilience.degradation.degradation_manager"
+            "src.backend.core.resilience.degradation.degradation_manager",
         ) as mock_mgr:
             mock_mgr.current_mode = DegradationMode.CACHE_ONLY
             await mw(

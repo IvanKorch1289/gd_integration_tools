@@ -60,7 +60,7 @@ class InvocationSpec:
 
 
 def default_payload_factory(
-    source_kwargs: dict[str, Any], request: Request | None
+    source_kwargs: dict[str, Any], request: Request | None,
 ) -> dict[str, Any]:
     """
     Возвращает payload без преобразований.
@@ -69,11 +69,11 @@ def default_payload_factory(
 
 
 def build_http_command_meta(
-    source_kwargs: dict[str, Any], request: Request | None
+    source_kwargs: dict[str, Any], request: Request | None,
 ) -> ActionCommandMetaSchema:
     """
     Формирует meta для action-команды из HTTP-контекста.
     """
     return ActionCommandMetaSchema(
-        source="http", request_path=request.url.path if request is not None else None
+        source="http", request_path=request.url.path if request is not None else None,
     )

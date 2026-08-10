@@ -105,7 +105,7 @@ class TestCapabilityGate:
     def test_uri_scheme_grant(self) -> None:
         gate = CapabilityGate()
         gate.declare(
-            "p1", [CapabilityRef(name="secrets.read", scope="vault://credit/*")]
+            "p1", [CapabilityRef(name="secrets.read", scope="vault://credit/*")],
         )
         gate.check("p1", "secrets.read", "vault://credit/api_key")
         with pytest.raises(CapabilityDeniedError):
@@ -129,8 +129,8 @@ class TestCapabilityGate:
         vocab = CapabilityVocabulary()
         vocab.register(
             CapabilityDef(
-                name="public.ping", matcher=ExactAliasMatcher(), scope_required=False
-            )
+                name="public.ping", matcher=ExactAliasMatcher(), scope_required=False,
+            ),
         )
         gate = CapabilityGate(vocabulary=vocab)
         gate.declare("p1", [CapabilityRef(name="public.ping")])
@@ -148,7 +148,7 @@ class TestCheckCapabilitiesSubset:
             route="r1",
             route_caps=[CapabilityRef(name="db.read", scope="credit_db")],
             plugin_caps_by_name={
-                "credit": (CapabilityRef(name="db.read", scope="credit_db"),)
+                "credit": (CapabilityRef(name="db.read", scope="credit_db"),),
             },
             vocabulary=vocab,
         )
@@ -171,7 +171,7 @@ class TestCheckCapabilitiesSubset:
             route="r1",
             route_caps=[CapabilityRef(name="net.outbound", scope="api.cbr.ru")],
             plugin_caps_by_name={
-                "p": (CapabilityRef(name="net.outbound", scope="*.cbr.ru"),)
+                "p": (CapabilityRef(name="net.outbound", scope="*.cbr.ru"),),
             },
             vocabulary=vocab,
         )
@@ -184,7 +184,7 @@ class TestCheckCapabilitiesSubset:
                 matcher=ExactAliasMatcher(),
                 public=True,
                 scope_required=False,
-            )
+            ),
         )
         check_capabilities_subset(
             route="r1",
@@ -201,7 +201,7 @@ class TestCheckCapabilitiesSubset:
                 route="r1",
                 route_caps=[CapabilityRef(name="unknown.do", scope="x")],
                 plugin_caps_by_name={
-                    "p": (CapabilityRef(name="unknown.do", scope="x"),)
+                    "p": (CapabilityRef(name="unknown.do", scope="x"),),
                 },
                 vocabulary=vocab,
             )
@@ -214,7 +214,7 @@ class TestCheckCapabilitiesSubset:
                 route="r1",
                 route_caps=[CapabilityRef(name="net.outbound", scope="bad.host")],
                 plugin_caps_by_name={
-                    "p": (CapabilityRef(name="net.outbound", scope="*.cbr.ru"),)
+                    "p": (CapabilityRef(name="net.outbound", scope="*.cbr.ru"),),
                 },
                 vocabulary=vocab,
             )

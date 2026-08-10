@@ -41,7 +41,7 @@ class _RecordingStore:
         self.delete_where = AsyncMock(return_value=1)
 
     async def query(
-        self, *, embedding: list[float], top_k: int, where: dict[str, Any] | None = None
+        self, *, embedding: list[float], top_k: int, where: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         self.calls.append({"embedding": embedding, "top_k": top_k, "where": where})
         if not where:
@@ -341,10 +341,10 @@ async def test_search_cache_hit_empty_after_filter_falls_through() -> None:
     но хотя бы не silent-leak).
     """
     only_foreign: list[dict[str, Any]] = [
-        {"id": "b1", "metadata": {"tenant_id": "bank_b", "namespace": "shared"}}
+        {"id": "b1", "metadata": {"tenant_id": "bank_b", "namespace": "shared"}},
     ]
     store_results: list[dict[str, Any]] = [
-        {"id": "a1", "metadata": {"tenant_id": "bank_a", "namespace": "shared"}}
+        {"id": "a1", "metadata": {"tenant_id": "bank_a", "namespace": "shared"}},
     ]
     cache = type("C", (), {})()
     cache.lookup_chunks = AsyncMock(return_value=(only_foreign, "l3"))
@@ -380,7 +380,7 @@ async def test_search_passes_tenant_to_cache_lookup_and_store() -> None:
     cache.invalidate_by_tag = AsyncMock(return_value=1)
 
     store_results: list[dict[str, Any]] = [
-        {"id": "a1", "metadata": {"tenant_id": "bank_a", "namespace": "shared"}}
+        {"id": "a1", "metadata": {"tenant_id": "bank_a", "namespace": "shared"}},
     ]
     store = _RecordingStore(all_results=store_results)
     service = RAGService(store=store, embedder=_FakeEmbedder(), cache=cache)
@@ -390,7 +390,7 @@ async def test_search_passes_tenant_to_cache_lookup_and_store() -> None:
 
     # Cache получил tenant_id из ContextVar.
     cache.lookup_chunks.assert_awaited_once_with(
-        "query", tenant="bank_a", namespace="shared"
+        "query", tenant="bank_a", namespace="shared",
     )
     cache.store_chunks.assert_awaited_once()
     call = cache.store_chunks.await_args
@@ -410,7 +410,7 @@ async def test_search_passes_explicit_tenant_id_to_cache() -> None:
     cache.invalidate_by_tag = AsyncMock(return_value=1)
 
     store = _RecordingStore(
-        all_results=[{"id": "x", "metadata": {"tenant_id": "override"}}]
+        all_results=[{"id": "x", "metadata": {"tenant_id": "override"}}],
     )
     service = RAGService(store=store, embedder=_FakeEmbedder(), cache=cache)
 
@@ -418,7 +418,7 @@ async def test_search_passes_explicit_tenant_id_to_cache() -> None:
         await service.search("query", tenant_id="override")
 
     cache.lookup_chunks.assert_awaited_once_with(
-        "query", tenant="override", namespace=None
+        "query", tenant="override", namespace=None,
     )
 
 

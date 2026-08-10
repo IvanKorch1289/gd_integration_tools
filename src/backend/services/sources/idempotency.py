@@ -54,7 +54,7 @@ class MemoryDedupeStore:
     """
 
     def __init__(
-        self, *, maxsize: int = 100_000, ttl_seconds: float = 86_400.0
+        self, *, maxsize: int = 100_000, ttl_seconds: float = 86_400.0,
     ) -> None:
         self._cache: TTLCache[str, bool] = TTLCache(maxsize=maxsize, ttl=ttl_seconds)
         self._lock = asyncio.Lock()
@@ -109,7 +109,7 @@ class RedisDedupeStore:
         except Exception as exc:
             if self._fail_closed:
                 logger.error(
-                    "RedisDedupeStore failed in fail-closed mode (re-raising): %s", exc
+                    "RedisDedupeStore failed in fail-closed mode (re-raising): %s", exc,
                 )
                 raise
             logger.warning("RedisDedupeStore failed (degrade to non-dup): %s", exc)

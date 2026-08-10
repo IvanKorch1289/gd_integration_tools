@@ -24,7 +24,7 @@ class _InstructionFollowing:
                 "id": "fmt-1",
                 "instruction": "Верни JSON {decision, score} по клиенту.",
                 "expected": json.dumps(
-                    {"decision": "approve", "score": 650}, ensure_ascii=False
+                    {"decision": "approve", "score": 650}, ensure_ascii=False,
                 ),
                 "required_fields": ["decision", "score"],
             },

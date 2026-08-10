@@ -31,7 +31,7 @@ AUD = "test-aud"
 
 
 def _make_hs_token(
-    claims: dict[str, Any], *, alg: str = "HS256", secret: str = HS_SECRET
+    claims: dict[str, Any], *, alg: str = "HS256", secret: str = HS_SECRET,
 ) -> str:
     key = OctKey.import_key(secret)
     return joserfc_jwt.encode({"alg": alg}, claims, key)
@@ -60,7 +60,7 @@ class _FakeRequest:
 
 @pytest.mark.asyncio
 async def test_hs256_happy_path(
-    hs_backend: JwtBackend, base_claims: dict[str, Any]
+    hs_backend: JwtBackend, base_claims: dict[str, Any],
 ) -> None:
     token = _make_hs_token(base_claims)
     claims = await hs_backend.decode(token)
@@ -72,7 +72,7 @@ async def test_hs256_happy_path(
 
 @pytest.mark.asyncio
 async def test_hs256_wrong_issuer_rejected(
-    hs_backend: JwtBackend, base_claims: dict[str, Any]
+    hs_backend: JwtBackend, base_claims: dict[str, Any],
 ) -> None:
     base_claims["iss"] = "evil"
     token = _make_hs_token(base_claims)
@@ -82,7 +82,7 @@ async def test_hs256_wrong_issuer_rejected(
 
 @pytest.mark.asyncio
 async def test_hs256_wrong_audience_rejected(
-    hs_backend: JwtBackend, base_claims: dict[str, Any]
+    hs_backend: JwtBackend, base_claims: dict[str, Any],
 ) -> None:
     base_claims["aud"] = "evil"
     token = _make_hs_token(base_claims)
@@ -92,7 +92,7 @@ async def test_hs256_wrong_audience_rejected(
 
 @pytest.mark.asyncio
 async def test_hs256_expired_rejected(
-    hs_backend: JwtBackend, base_claims: dict[str, Any]
+    hs_backend: JwtBackend, base_claims: dict[str, Any],
 ) -> None:
     base_claims["exp"] = int(time.time()) - 7200  # 2 часа назад
     token = _make_hs_token(base_claims)
@@ -104,7 +104,7 @@ async def test_hs256_expired_rejected(
 async def test_algorithm_not_in_whitelist_rejected(base_claims: dict[str, Any]) -> None:
     """Backend whitelist'ит только HS384; токен HS256 должен быть отвергнут."""
     backend = JwtBackend(
-        algorithms=["HS384"], secret=HS_SECRET, issuer=ISS, audience=AUD
+        algorithms=["HS384"], secret=HS_SECRET, issuer=ISS, audience=AUD,
     )
     token = _make_hs_token(base_claims, alg="HS256")
     with pytest.raises(JwtVerificationError, match="HS256"):
@@ -113,7 +113,7 @@ async def test_algorithm_not_in_whitelist_rejected(base_claims: dict[str, Any]) 
 
 @pytest.mark.asyncio
 async def test_wrong_signature_rejected(
-    hs_backend: JwtBackend, base_claims: dict[str, Any]
+    hs_backend: JwtBackend, base_claims: dict[str, Any],
 ) -> None:
     token = _make_hs_token(base_claims, secret="differentsecret-32-chars-long-aaaa")
     with pytest.raises(JwtVerificationError):
@@ -248,7 +248,7 @@ async def test_verify_returns_none_for_malformed_token(hs_backend: JwtBackend) -
 
 @pytest.mark.asyncio
 async def test_verify_success_returns_auth_context(
-    hs_backend: JwtBackend, base_claims: dict[str, Any]
+    hs_backend: JwtBackend, base_claims: dict[str, Any],
 ) -> None:
     token = _make_hs_token(base_claims)
     ctx = await hs_backend.verify(_FakeRequest({"Authorization": f"Bearer {token}"}))

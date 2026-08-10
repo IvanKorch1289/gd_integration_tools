@@ -228,7 +228,7 @@ class TestDeferUntil:
         assert b._deferred["timestamp"] == 1234567890.5
 
     def test_defer_until_naive_datetime_treated_as_utc(
-        self, builder: RouteBuilder
+        self, builder: RouteBuilder,
     ) -> None:
         naive = datetime(2026, 6, 1, 12, 0, 0)  # no tz
         b = builder.defer_until(naive)
@@ -236,7 +236,7 @@ class TestDeferUntil:
         assert b._deferred["timestamp"] == expected
 
     def test_defer_until_aware_datetime_converted_to_utc(
-        self, builder: RouteBuilder
+        self, builder: RouteBuilder,
     ) -> None:
         from zoneinfo import ZoneInfo
 

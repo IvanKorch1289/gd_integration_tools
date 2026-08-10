@@ -47,7 +47,7 @@ class DatabaseInitializer:
 
         self.async_engine = self._create_async_engine()
         self.async_session_maker = async_sessionmaker(
-            bind=self.async_engine, autoflush=False, expire_on_commit=False
+            bind=self.async_engine, autoflush=False, expire_on_commit=False,
         )
 
         # S11 K2 W2: опциональная read-replica. ``replica_dsn`` определён
@@ -58,10 +58,10 @@ class DatabaseInitializer:
         replica_dsn = getattr(self.settings, "replica_dsn", None)
         if replica_dsn:
             self.replica_engine = create_async_engine(
-                url=replica_dsn, **self._engine_kwargs()
+                url=replica_dsn, **self._engine_kwargs(),
             )
             self.replica_session_maker = async_sessionmaker(
-                bind=self.replica_engine, autoflush=False, expire_on_commit=False
+                bind=self.replica_engine, autoflush=False, expire_on_commit=False,
             )
 
         # K3 W1: OTel asyncpg auto-instrumentation под default-OFF feature-flag.
@@ -85,7 +85,7 @@ class DatabaseInitializer:
         try:
             self.sync_engine = self._create_sync_engine()
             self.sync_session_maker = sessionmaker(
-                bind=self.sync_engine, autoflush=False, expire_on_commit=False
+                bind=self.sync_engine, autoflush=False, expire_on_commit=False,
             )
         except ModuleNotFoundError as exc:
             self.logger.warning(
@@ -149,7 +149,7 @@ class DatabaseInitializer:
                     "pool_timeout": self.settings.pool_timeout,
                     "pool_pre_ping": True,
                     "pool_use_lifo": self.settings.pool_use_lifo,
-                }
+                },
             )
         return kwargs
 
@@ -158,7 +158,7 @@ class DatabaseInitializer:
         Создаёт и настраивает асинхронный engine SQLAlchemy.
         """
         return create_async_engine(
-            url=self.settings.async_connection_url, **self._engine_kwargs()
+            url=self.settings.async_connection_url, **self._engine_kwargs(),
         )
 
     def _create_sync_engine(self) -> Engine:
@@ -166,7 +166,7 @@ class DatabaseInitializer:
         Создаёт и настраивает синхронный engine SQLAlchemy.
         """
         return create_engine(
-            url=self.settings.sync_connection_url, **self._engine_kwargs()
+            url=self.settings.sync_connection_url, **self._engine_kwargs(),
         )
 
     def _get_connect_args(self) -> dict[str, Any]:
@@ -180,7 +180,7 @@ class DatabaseInitializer:
                 {
                     "command_timeout": self.settings.command_timeout,
                     "timeout": self.settings.connect_timeout,
-                }
+                },
             )
 
             if self.settings.ca_bundle:
@@ -222,7 +222,7 @@ class DatabaseInitializer:
 
     @resilient(name="postgres_query", max_attempts=3)
     async def execute_with_resilience(
-        self, query: Any, params: dict[str, Any] | None = None
+        self, query: Any, params: dict[str, Any] | None = None,
     ) -> Any:
         """Execute raw SQL query с CB + Retry (S182 I-4.5).
 
@@ -259,7 +259,7 @@ class DatabaseInitializer:
         try:
             self.sync_engine.dispose()
             self.logger.info(
-                "Синхронные соединения закрыты", extra={"db_name": self.name}
+                "Синхронные соединения закрыты", extra={"db_name": self.name},
             )
         except (RuntimeError, OSError):
             self.logger.error(
@@ -275,7 +275,7 @@ class DatabaseInitializer:
         try:
             await self.async_engine.dispose()
             self.logger.info(
-                "Асинхронные соединения закрыты", extra={"db_name": self.name}
+                "Асинхронные соединения закрыты", extra={"db_name": self.name},
             )
         except (RuntimeError, OSError):
             self.logger.error(
@@ -322,11 +322,11 @@ class DatabaseInitializer:
 
                 if result.scalar_one_or_none() != 1:
                     raise DatabaseError(
-                        message=f"Ошибка проверки подключения к БД '{self.name}'"
+                        message=f"Ошибка проверки подключения к БД '{self.name}'",
                     )
 
                 return True
             except Exception as exc:
                 raise DatabaseError(
-                    message=f"Ошибка проверки соединения '{self.name}': {exc}"
+                    message=f"Ошибка проверки соединения '{self.name}': {exc}",
                 ) from exc

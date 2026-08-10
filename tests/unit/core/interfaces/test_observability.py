@@ -17,7 +17,7 @@ class TestSLOTrackerProtocol:
     def test_is_runtime_checkable(self) -> None:
         class Fake:
             def record(
-                self, route_id: str, latency_ms: float, is_error: bool = False
+                self, route_id: str, latency_ms: float, is_error: bool = False,
             ) -> None:
                 pass
 
@@ -46,7 +46,7 @@ class TestHealthAggregatorProtocol:
                 return {}
 
             async def check_single(
-                self, name: str, *, mode: str = "fast"
+                self, name: str, *, mode: str = "fast",
             ) -> dict[str, object]:
                 return {}
 

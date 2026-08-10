@@ -48,7 +48,7 @@ class TestConnectionManager:
 
     @pytest.mark.asyncio
     async def test_send_json_to_connected_client(
-        self, manager: ConnectionManager
+        self, manager: ConnectionManager,
     ) -> None:
         ws = MagicMock()
         ws.client_state = WebSocketState.CONNECTED
@@ -59,7 +59,7 @@ class TestConnectionManager:
 
     @pytest.mark.asyncio
     async def test_send_json_skips_disconnected(
-        self, manager: ConnectionManager
+        self, manager: ConnectionManager,
     ) -> None:
         ws = MagicMock()
         ws.client_state = WebSocketState.DISCONNECTED
@@ -99,7 +99,7 @@ class TestConnectionManager:
 
     @pytest.mark.asyncio
     async def test_broadcast_disconnects_on_failure(
-        self, manager: ConnectionManager
+        self, manager: ConnectionManager,
     ) -> None:
         ws1 = MagicMock()
         ws1.client_state = WebSocketState.CONNECTED
@@ -110,7 +110,7 @@ class TestConnectionManager:
 
     @pytest.mark.asyncio
     async def test_broadcast_cleans_missing_ws(
-        self, manager: ConnectionManager
+        self, manager: ConnectionManager,
     ) -> None:
         manager._groups["g1"] = {"c1"}
         manager._connections.clear()

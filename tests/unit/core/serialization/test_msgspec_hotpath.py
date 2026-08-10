@@ -77,7 +77,7 @@ def test_encode_audit_event_full() -> None:
             resource="session-1",
             tenant_id="tenant-A",
             extra={"ip": "1.2.3.4"},
-        )
+        ),
     )
     assert data["resource"] == "session-1"
     assert data["tenant_id"] == "tenant-A"

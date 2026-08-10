@@ -45,7 +45,7 @@ def get_quotas_backend_provider() -> Any:
         raise NotImplementedError(
             "billing_enabled=True but real billing backend not yet integrated. "
             "Use set_quotas_backend_provider(...) for test override or set "
-            "BILLING_ENABLED=False (default) until QuotasService ships."
+            "BILLING_ENABLED=False (default) until QuotasService ships.",
         )
     return no_op_billing.NoOpBillingFacade()
 

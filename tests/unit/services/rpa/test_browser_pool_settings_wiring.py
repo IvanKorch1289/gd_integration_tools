@@ -19,7 +19,7 @@ def test_browser_pool_size_defaults_to_rpa_settings() -> None:
 
     # Patch the settings field to a known value, then construct.
     with patch.object(
-        rpa_settings, "browser_pool_size", 42
+        rpa_settings, "browser_pool_size", 42,
     ):
         pool = PlaywrightBrowserPool()
         assert pool._size == 42
@@ -31,7 +31,7 @@ def test_browser_pool_size_explicit_override_wins() -> None:
     from src.backend.services.rpa.browser_pool import PlaywrightBrowserPool
 
     with patch.object(
-        rpa_settings, "browser_pool_size", 42
+        rpa_settings, "browser_pool_size", 42,
     ):
         pool = PlaywrightBrowserPool(size=5)
         assert pool._size == 5
@@ -43,7 +43,7 @@ def test_browser_headless_defaults_to_rpa_settings() -> None:
     from src.backend.services.rpa.browser_pool import PlaywrightBrowserPool
 
     with patch.object(
-        rpa_settings, "browser_headless", False
+        rpa_settings, "browser_headless", False,
     ):
         pool = PlaywrightBrowserPool()
         # Headless value is read but stored differently in pool;

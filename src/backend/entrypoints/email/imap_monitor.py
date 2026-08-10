@@ -137,7 +137,7 @@ class ImapMonitor:
             logger.warning(
                 "IMAP monitor: verify_cert=False игнорируется (V1 policy: "
                 "ssl.CERT_NONE / check_hostname=False запрещены). "
-                "Используйте кастомный CA через secrets capability."
+                "Используйте кастомный CA через secrets capability.",
             )
         return ctx
 
@@ -154,7 +154,7 @@ class ImapMonitor:
 
         if self.config.use_ssl:
             client = IMAP4_SSL(
-                host=self.config.host, port=self.config.port, ssl_context=ssl_ctx
+                host=self.config.host, port=self.config.port, ssl_context=ssl_ctx,
             )
         else:
             client = IMAP4(host=self.config.host, port=self.config.port)
@@ -248,7 +248,7 @@ class ImapMonitor:
             return
 
         logger.info(
-            "Email: from=%s, subject=%s", msg_data.get("from"), msg_data.get("subject")
+            "Email: from=%s, subject=%s", msg_data.get("from"), msg_data.get("subject"),
         )
         try:
             dsl = get_dsl_service()
@@ -326,7 +326,7 @@ class ImapMonitor:
         self._running = True
         coro = self._idle_loop() if self.config.idle_mode else self._poll_loop()
         self._task = get_task_registry().create_task(
-            coro, name=f"imap-monitor:{self.config.username}@{self.config.host}"
+            coro, name=f"imap-monitor:{self.config.username}@{self.config.host}",
         )
         logger.info(
             "IMAP мониторинг запущен: %s@%s (ssl=%s, starttls=%s, idle=%s)",

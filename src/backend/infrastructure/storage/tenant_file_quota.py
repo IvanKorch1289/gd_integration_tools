@@ -177,13 +177,13 @@ class TenantFileQuotaManager:
         """Override quota config для конкретного tenant."""
         if not self._is_safe_tenant_id(tenant_id):
             _logger.warning(
-                "tenant_id rejected (unsafe pattern): %s", tenant_id
+                "tenant_id rejected (unsafe pattern): %s", tenant_id,
             )
             return
         self._tenant_configs[tenant_id] = config
 
     async def check_can_upload(
-        self, tenant_id: str | None, size_bytes: int
+        self, tenant_id: str | None, size_bytes: int,
     ) -> QuotaCheckResult:
         """Проверить, разрешена ли загрузка файла ``size_bytes``.
 
@@ -211,7 +211,7 @@ class TenantFileQuotaManager:
         # Без Redis — fail-OPEN.
         if self._redis is None:
             _logger.debug(
-                "redis unavailable, quota check bypass for tenant %s", tenant_id
+                "redis unavailable, quota check bypass for tenant %s", tenant_id,
             )
             return QuotaCheckResult(allowed=True, reason="redis unavailable")
 
@@ -250,7 +250,7 @@ class TenantFileQuotaManager:
         )
 
     async def record_upload(
-        self, tenant_id: str | None, size_bytes: int
+        self, tenant_id: str | None, size_bytes: int,
     ) -> bool:
         """Записать успешный upload (атомарный increment).
 
@@ -275,12 +275,12 @@ class TenantFileQuotaManager:
             return True
         except Exception as exc:
             _logger.warning(
-                "redis quota increment failed for tenant=%s: %s", tenant_id, exc
+                "redis quota increment failed for tenant=%s: %s", tenant_id, exc,
             )
             return False
 
     async def record_delete(
-        self, tenant_id: str | None, size_bytes: int
+        self, tenant_id: str | None, size_bytes: int,
     ) -> bool:
         """Записать удаление (атомарный decrement, не ниже 0).
 
@@ -311,7 +311,7 @@ class TenantFileQuotaManager:
             return True
         except Exception as exc:
             _logger.warning(
-                "redis quota decrement failed for tenant=%s: %s", tenant_id, exc
+                "redis quota decrement failed for tenant=%s: %s", tenant_id, exc,
             )
             return False
 
@@ -335,7 +335,7 @@ class TenantFileQuotaManager:
             }
         except Exception as exc:
             _logger.warning(
-                "redis quota read failed for tenant=%s: %s", tenant_id, exc
+                "redis quota read failed for tenant=%s: %s", tenant_id, exc,
             )
             return {"files": 0, "bytes": 0}
 
@@ -357,7 +357,7 @@ class TenantFileQuotaManager:
             return True
         except Exception as exc:
             _logger.warning(
-                "redis quota reset failed for tenant=%s: %s", tenant_id, exc
+                "redis quota reset failed for tenant=%s: %s", tenant_id, exc,
             )
             return False
 

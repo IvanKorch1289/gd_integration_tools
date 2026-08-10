@@ -45,7 +45,7 @@ class SchedulerManager:
             self.logger.warning(
                 "APScheduler: sync_engine отсутствует — default-jobstore "
                 "становится MemoryJobStore (durable отключен). "
-                "Установите sync-драйвер БД для durable-режима."
+                "Установите sync-драйвер БД для durable-режима.",
             )
             default_jobstore = MemoryJobStore()
         else:
@@ -69,7 +69,7 @@ class SchedulerManager:
         )
         self._event_handlers = {}  # Словарь для хранения обработчиков событий
         self._default_jobstore_is_memory: bool = isinstance(
-            default_jobstore, MemoryJobStore
+            default_jobstore, MemoryJobStore,
         )
 
     async def start(self):
@@ -127,7 +127,7 @@ class SchedulerManager:
 
         if job_name in self._event_handlers:
             self.logger.warning(
-                f"Обработчик для задачи '{job_name}' уже зарегистрирован."
+                f"Обработчик для задачи '{job_name}' уже зарегистрирован.",
             )
             return
 
@@ -139,7 +139,7 @@ class SchedulerManager:
                     self.logger.info(f"Задача '{event.job_id}' успешно удалена.")
                 except Exception as exc:
                     self.logger.error(
-                        f"Ошибка при удалении задачи '{event.job_id}': {exc!s}"
+                        f"Ошибка при удалении задачи '{event.job_id}': {exc!s}",
                     )
 
         # Регистрируем обработчик
@@ -218,7 +218,7 @@ class SchedulerManager:
             executor="async",
         )
         self.logger.info(
-            f"Cron job {name!r} зарегистрирован (cron={cron_expr!r}, tz={timezone})."
+            f"Cron job {name!r} зарегистрирован (cron={cron_expr!r}, tz={timezone}).",
         )
         return str(job.id)
 
@@ -235,7 +235,7 @@ class SchedulerManager:
                     "next_run_time": next_run.isoformat() if next_run else None,
                     "trigger": trigger_str,
                     "paused": next_run is None,
-                }
+                },
             )
         return result
 
@@ -312,7 +312,7 @@ def get_scheduler_manager() -> SchedulerManager:
             )
     except Exception as exc:
         manager.logger.warning(
-            "LangMem consolidation job registration skipped: %s", exc
+            "LangMem consolidation job registration skipped: %s", exc,
         )
 
     return manager

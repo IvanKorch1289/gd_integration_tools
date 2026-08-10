@@ -39,7 +39,7 @@ class _FakeSanitizer(PresidioSanitizer):
         self._analyzer = None
 
     async def sanitize(
-        self, text: str, *, entities: list[str] | None = None
+        self, text: str, *, entities: list[str] | None = None,
     ) -> SanitizeResult:
         import re
 
@@ -92,8 +92,8 @@ async def test_passthrough_for_clean_text() -> None:
 
     result = await _to_list(
         stream_filter(
-            _source(chunks), policy=PiiStreamPolicy(window_chars=8), sanitizer=sanitizer
-        )
+            _source(chunks), policy=PiiStreamPolicy(window_chars=8), sanitizer=sanitizer,
+        ),
     )
 
     joined = "".join(result)
@@ -121,7 +121,7 @@ async def test_pii_split_across_chunk_boundary_is_redacted() -> None:
             _source(chunks),
             policy=PiiStreamPolicy(window_chars=64),  # buffer > email length
             sanitizer=sanitizer,
-        )
+        ),
     )
 
     joined = "".join(result)
@@ -149,7 +149,7 @@ async def test_partial_pii_in_single_chunk_is_redacted_on_flush() -> None:
             _source(chunks),
             policy=PiiStreamPolicy(window_chars=512),
             sanitizer=sanitizer,
-        )
+        ),
     )
 
     joined = "".join(result)
@@ -173,7 +173,7 @@ async def test_phone_split_across_chunks_is_redacted() -> None:
             _source(chunks),
             policy=PiiStreamPolicy(window_chars=32),
             sanitizer=sanitizer,
-        )
+        ),
     )
 
     joined = "".join(result)

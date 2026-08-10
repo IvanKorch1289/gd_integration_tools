@@ -29,7 +29,7 @@ class MergeProcessor(BaseProcessor):
     """
 
     def __init__(
-        self, properties: list[str], *, mode: str = "append", name: str | None = None
+        self, properties: list[str], *, mode: str = "append", name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"merge({mode})")
         self._properties = properties

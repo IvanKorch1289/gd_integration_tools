@@ -133,7 +133,7 @@ async def test_scatter_gather_success_merge() -> None:
 async def test_scatter_gather_timeout() -> None:
     """Таймаут scatter-gather → exchange.fail."""
     proc = ScatterGatherProcessor(
-        route_ids=["slow"], timeout_seconds=0.01, aggregation="list"
+        route_ids=["slow"], timeout_seconds=0.01, aggregation="list",
     )
     ctx = AsyncMock()
     e = _ex(body={"input": 1})
@@ -184,7 +184,7 @@ async def test_scatter_gather_errors_collected() -> None:
 async def test_recipient_list_parallel() -> None:
     """Параллельная отправка на несколько маршрутов."""
     proc = RecipientListProcessor(
-        recipients_expression=lambda ex: ["r1", "r2"], parallel=True
+        recipients_expression=lambda ex: ["r1", "r2"], parallel=True,
     )
     ctx = AsyncMock()
     e = _ex(body={"input": 1})
@@ -209,7 +209,7 @@ async def test_recipient_list_sequential() -> None:
         return (route_id, {"v": route_id}, None)
 
     proc = RecipientListProcessor(
-        recipients_expression=lambda ex: ["r1", "r2"], parallel=False
+        recipients_expression=lambda ex: ["r1", "r2"], parallel=False,
     )
     ctx = AsyncMock()
     e = _ex(body={"input": 1})
@@ -292,7 +292,7 @@ async def test_load_balancer_random() -> None:
 async def test_load_balancer_weighted() -> None:
     """Weighted strategy использует weights."""
     proc = LoadBalancerProcessor(
-        targets=["a", "b"], strategy="weighted", weights=[1, 0]
+        targets=["a", "b"], strategy="weighted", weights=[1, 0],
     )
     ctx = AsyncMock()
 
@@ -314,7 +314,7 @@ async def test_load_balancer_weighted() -> None:
 async def test_load_balancer_sticky() -> None:
     """Sticky strategy привязывает к header."""
     proc = LoadBalancerProcessor(
-        targets=["a", "b"], strategy="sticky", sticky_header="user-id"
+        targets=["a", "b"], strategy="sticky", sticky_header="user-id",
     )
     ctx = AsyncMock()
 
@@ -399,7 +399,7 @@ async def test_multicast_first_strategy() -> None:
         ex.out_message = Message(body={"slow": True})
 
     proc = MulticastProcessor(
-        branches=[[DummyProcessor({"fast": True})], [slow]], strategy="first"
+        branches=[[DummyProcessor({"fast": True})], [slow]], strategy="first",
     )
     ctx = AsyncMock()
     e = _ex(body={"input": 1})
@@ -458,7 +458,7 @@ async def test_multicast_routes_all_success() -> None:
 
     with patch("src.backend.dsl.commands.registry.route_registry", mock_registry):
         with patch(
-            "src.backend.dsl.engine.execution_engine.ExecutionEngine"
+            "src.backend.dsl.engine.execution_engine.ExecutionEngine",
         ) as mock_engine_cls:
             mock_engine = MagicMock()
             mock_engine_cls.return_value = mock_engine
@@ -486,7 +486,7 @@ async def test_multicast_routes_first_success() -> None:
 
     with patch("src.backend.dsl.commands.registry.route_registry", mock_registry):
         with patch(
-            "src.backend.dsl.engine.execution_engine.ExecutionEngine"
+            "src.backend.dsl.engine.execution_engine.ExecutionEngine",
         ) as mock_engine_cls:
             mock_engine = MagicMock()
             mock_engine_cls.return_value = mock_engine
@@ -513,7 +513,7 @@ async def test_multicast_routes_on_error_fail() -> None:
 
     with patch("src.backend.dsl.commands.registry.route_registry", mock_registry):
         with patch(
-            "src.backend.dsl.engine.execution_engine.ExecutionEngine"
+            "src.backend.dsl.engine.execution_engine.ExecutionEngine",
         ) as mock_engine_cls:
             mock_engine = MagicMock()
             mock_engine_cls.return_value = mock_engine
@@ -540,7 +540,7 @@ async def test_multicast_routes_unregistered_route() -> None:
 
     with patch("src.backend.dsl.commands.registry.route_registry", mock_registry):
         with patch(
-            "src.backend.dsl.engine.execution_engine.ExecutionEngine"
+            "src.backend.dsl.engine.execution_engine.ExecutionEngine",
         ) as mock_engine_cls:
             mock_engine_cls.return_value = MagicMock()
             await proc.process(e, ctx)
@@ -552,7 +552,7 @@ async def test_multicast_routes_unregistered_route() -> None:
 def test_multicast_routes_to_spec() -> None:
     """to_spec возвращает корректный dict."""
     proc = MulticastRoutesProcessor(
-        route_ids=["a", "b"], strategy="first_success", on_error="fail", timeout=5.0
+        route_ids=["a", "b"], strategy="first_success", on_error="fail", timeout=5.0,
     )
     spec = proc.to_spec()
     assert spec == {
@@ -561,5 +561,5 @@ def test_multicast_routes_to_spec() -> None:
             "strategy": "first_success",
             "on_error": "fail",
             "timeout": 5.0,
-        }
+        },
     }

@@ -135,7 +135,7 @@ class CDCClient:
         """
         if strategy not in self._STRATEGIES:
             raise ValueError(
-                f"Unknown CDC strategy '{strategy}'. Available: {list(self._STRATEGIES)}"
+                f"Unknown CDC strategy '{strategy}'. Available: {list(self._STRATEGIES)}",
             )
 
         sub = CDCSubscription(
@@ -153,7 +153,7 @@ class CDCClient:
 
         strategy_impl = self._STRATEGIES[strategy]()
         task = get_task_registry().create_task(
-            self._run_strategy(strategy_impl, sub), name=f"cdc-{sub.id}"
+            self._run_strategy(strategy_impl, sub), name=f"cdc-{sub.id}",
         )
         self._tasks[sub.id] = task
 
@@ -226,7 +226,7 @@ class CDCClient:
             except Exception as exc:
                 logger.error("CDC callback error [%s]: %s", sub.id, exc)
                 await self._send_to_dlq(
-                    sub, event_dict, exc, stage="callback"
+                    sub, event_dict, exc, stage="callback",
                 )
 
         if sub.target_action:
@@ -242,10 +242,10 @@ class CDCClient:
                 await action_handler_registry.dispatch(command)
             except Exception as exc:
                 logger.error(
-                    "CDC dispatch error [%s -> %s]: %s", sub.id, sub.target_action, exc
+                    "CDC dispatch error [%s -> %s]: %s", sub.id, sub.target_action, exc,
                 )
                 await self._send_to_dlq(
-                    sub, event_dict, exc, stage="dispatch"
+                    sub, event_dict, exc, stage="dispatch",
                 )
 
     async def _send_to_dlq(

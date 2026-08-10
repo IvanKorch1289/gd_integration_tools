@@ -37,7 +37,7 @@ class TestLogWithContext:
         assert "basic message" in buf.getvalue()
 
     def test_correlation_id_added_to_extra(
-        self, captured_logs: tuple[logging.Logger, io.StringIO]
+        self, captured_logs: tuple[logging.Logger, io.StringIO],
     ) -> None:
         logger, buf = captured_logs
         log_with_context(
@@ -67,7 +67,7 @@ class TestLogWithContext:
         assert "test" in buf.getvalue()
 
     def test_all_fields_together(
-        self, captured_logs: tuple[logging.Logger, io.StringIO]
+        self, captured_logs: tuple[logging.Logger, io.StringIO],
     ) -> None:
         logger, buf = captured_logs
         log_with_context(
@@ -113,21 +113,21 @@ class TestLogAuditEventLite:
         logger.addHandler(handler)
 
         log_audit_event_lite(
-            logger, severity=severity, event="test.event"
+            logger, severity=severity, event="test.event",
         )
         assert captured_level[0] == expected_level
 
     def test_event_as_default_message(
-        self, captured_logs: tuple[logging.Logger, io.StringIO]
+        self, captured_logs: tuple[logging.Logger, io.StringIO],
     ) -> None:
         logger, buf = captured_logs
         log_audit_event_lite(
-            logger, severity="info", event="cache.invalidate"
+            logger, severity="info", event="cache.invalidate",
         )
         assert "cache.invalidate" in buf.getvalue()
 
     def test_custom_message_overrides_event(
-        self, captured_logs: tuple[logging.Logger, io.StringIO]
+        self, captured_logs: tuple[logging.Logger, io.StringIO],
     ) -> None:
         logger, buf = captured_logs
         log_audit_event_lite(
@@ -140,7 +140,7 @@ class TestLogAuditEventLite:
         assert "cache.invalidate" not in buf.getvalue()
 
     def test_audit_event_type_in_extra(
-        self, captured_logs: tuple[logging.Logger, io.StringIO]
+        self, captured_logs: tuple[logging.Logger, io.StringIO],
     ) -> None:
         """Audit-event type передаётся через structured ``extra``."""
         logger, _ = captured_logs

@@ -27,7 +27,7 @@ def _make_client(namespace: str = "tenant-a") -> MagicMock:
     client = MagicMock()
     client.namespace = namespace
     client.start_workflow = AsyncMock(
-        return_value=MagicMock(result_run_id="run-123", first_execution_run_id="run-456")
+        return_value=MagicMock(result_run_id="run-123", first_execution_run_id="run-456"),
     )
     return client
 

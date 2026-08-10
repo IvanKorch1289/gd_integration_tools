@@ -95,11 +95,11 @@ class DbCallProcedureProcessor(BaseProcessor):
             raise ValueError("db_call_procedure: name must be non-empty")
         if params_from not in _ALLOWED_PARAM_SOURCES:
             raise ValueError(
-                f"db_call_procedure: params_from must be one of {sorted(_ALLOWED_PARAM_SOURCES)}"
+                f"db_call_procedure: params_from must be one of {sorted(_ALLOWED_PARAM_SOURCES)}",
             )
         if dialect not in {"postgres", "mssql", "oracle"}:
             raise ValueError(
-                "db_call_procedure: dialect must be 'postgres'|'mssql'|'oracle'"
+                "db_call_procedure: dialect must be 'postgres'|'mssql'|'oracle'",
             )
         self._profile = profile
         self._sp_name = name

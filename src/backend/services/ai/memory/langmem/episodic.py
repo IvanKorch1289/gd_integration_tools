@@ -45,7 +45,7 @@ class EpisodicMemory:
             return int(row.id)
 
     async def recall(
-        self, *, session_id: str | None = None, limit: int = 20
+        self, *, session_id: str | None = None, limit: int = 20,
     ) -> list[dict[str, Any]]:
         """Возвращает последние эпизоды (опционально фильтр по session_id)."""
         from src.backend.core.domain.models.langmem_models import LangMemEpisodic

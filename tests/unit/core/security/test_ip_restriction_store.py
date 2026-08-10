@@ -102,7 +102,7 @@ routes:
         assert snapshot["admin_ips"] == ["10.0.0.0/8"]
         assert snapshot["admin_routes"] == ["/admin/*"]
         assert snapshot["route_rules"]["/api/v1/auto/foo"]["allowed_ips"] == [
-            "127.0.0.1"
+            "127.0.0.1",
         ]
 
     def test_reload_from_missing_yaml(self, tmp_path) -> None:

@@ -31,7 +31,7 @@ class PluginInventoryConflictError(RuntimeError):
         self.owner = owner
         super().__init__(
             f"Plugin {plugin!r} cannot register {kind} {name!r} — "
-            f"already provided by {owner!r}"
+            f"already provided by {owner!r}",
         )
 
 
@@ -110,7 +110,7 @@ class ValidationMixin:
                 owner = self._owners[kind].get(name)
                 if owner is not None and owner != manifest.name:
                     raise PluginInventoryConflictError(
-                        plugin=manifest.name, kind=kind, name=name, owner=owner
+                        plugin=manifest.name, kind=kind, name=name, owner=owner,
                     )
         return None
 

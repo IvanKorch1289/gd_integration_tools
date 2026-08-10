@@ -28,7 +28,7 @@ def test_tools_spec_default_empty() -> None:
 def test_tools_spec_with_whitelist() -> None:
     """Whitelist configuration."""
     spec = ToolsSpec(
-        whitelist=["db.read.orders", "ai.invoke.credit_check"], on_violation="warn"
+        whitelist=["db.read.orders", "ai.invoke.credit_check"], on_violation="warn",
     )
     assert len(spec.whitelist) == 2
     assert spec.on_violation == "warn"

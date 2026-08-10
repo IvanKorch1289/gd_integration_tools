@@ -40,7 +40,7 @@ class LocalMCPClient:
                 hashlib.sha256(command[0].encode()).hexdigest()[:16],
             )
             raise McpSecurityError(
-                "MCP stdio command not allowed (configure secure.mcp_stdio_allowed_commands)"
+                "MCP stdio command not allowed (configure secure.mcp_stdio_allowed_commands)",
             )
 
         from mcp import ClientSession, StdioServerParameters
@@ -96,7 +96,7 @@ class LocalMCPClient:
         ]
 
     async def call_tool(
-        self, name: str, arguments: dict[str, Any] | None = None
+        self, name: str, arguments: dict[str, Any] | None = None,
     ) -> Any:
         """Вызывает tool на MCP-сервере."""
         if not self._session:

@@ -36,5 +36,5 @@ class FacadeCapabilityAdapter:
     ) -> bool:
         """Proxy к CapabilityFacade.check_tenant."""
         return self._facade.check_tenant(
-            capability, tenant, principal_id=principal, scope=scope
+            capability, tenant, principal_id=principal, scope=scope,
         )

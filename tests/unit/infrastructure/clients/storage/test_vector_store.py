@@ -70,7 +70,7 @@ def test_chroma_blocked_in_prod_profile(monkeypatch) -> None:
     from src.backend.core.config import profile as profile_mod
 
     profile_mod.get_active_profile.cache_clear() if hasattr(
-        profile_mod.get_active_profile, "cache_clear"
+        profile_mod.get_active_profile, "cache_clear",
     ) else None
     import asyncio
 
@@ -93,7 +93,7 @@ def test_chroma_blocked_in_staging_profile(monkeypatch) -> None:
     from src.backend.core.config import profile as profile_mod
 
     profile_mod.get_active_profile.cache_clear() if hasattr(
-        profile_mod.get_active_profile, "cache_clear"
+        profile_mod.get_active_profile, "cache_clear",
     ) else None
     import asyncio
 
@@ -116,7 +116,7 @@ def test_chroma_allowed_in_dev_with_override(monkeypatch) -> None:
     from src.backend.core.config import profile as profile_mod
 
     profile_mod.get_active_profile.cache_clear() if hasattr(
-        profile_mod.get_active_profile, "cache_clear"
+        profile_mod.get_active_profile, "cache_clear",
     ) else None
     import asyncio
 

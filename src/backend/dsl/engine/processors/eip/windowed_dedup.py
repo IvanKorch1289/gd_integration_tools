@@ -103,7 +103,7 @@ class WindowedDedupProcessor(BaseProcessor):
         super().__init__(name=name or f"windowed_dedup({mode},{window_seconds}s)")
         if mode not in _MODES:
             raise ValueError(
-                f"WindowedDedupProcessor: неверный mode={mode!r}. Допустимые: {_MODES}."
+                f"WindowedDedupProcessor: неверный mode={mode!r}. Допустимые: {_MODES}.",
             )
         self._key_from = key_from
         self._prefix = key_prefix
@@ -130,52 +130,52 @@ class WindowedDedupProcessor(BaseProcessor):
                     await self._apply_unique(exchange, key, serialized, redis_client)
         except Exception as exc:
             _logger.warning(
-                "windowed_dedup: Redis недоступен, сообщение проходит: %s", exc
+                "windowed_dedup: Redis недоступен, сообщение проходит: %s", exc,
             )
 
     async def _apply_first(
-        self, exchange: Exchange[Any], key: str, serialized: str, redis_client: Any
+        self, exchange: Exchange[Any], key: str, serialized: str, redis_client: Any,
     ) -> None:
         """Первый в окне проходит, дубли — стоп."""
         redis_key = f"windowed:dedup:first:{self._prefix}:{key}"
         is_new = await redis_client.execute(
-            "queue", lambda c: c.set(redis_key, "1", nx=True, ex=self._window)
+            "queue", lambda c: c.set(redis_key, "1", nx=True, ex=self._window),
         )
         if not is_new:
             _logger.debug("windowed_dedup(first): дубль ключа %r — стоп", key)
             exchange.stop()
 
     async def _apply_last(
-        self, exchange: Exchange[Any], key: str, serialized: str, redis_client: Any
+        self, exchange: Exchange[Any], key: str, serialized: str, redis_client: Any,
     ) -> None:
         """Первый в окне проходит; каждый дубль обновляет хранимое latest и стоп."""
         redis_key = f"windowed:dedup:last:{self._prefix}:{key}"
         # Атомарная SET NX — только если ключа нет
         is_new = await redis_client.execute(
-            "queue", lambda c: c.set(redis_key, serialized, nx=True, ex=self._window)
+            "queue", lambda c: c.set(redis_key, serialized, nx=True, ex=self._window),
         )
         if is_new:
             # Первое вхождение в окне — проходит
             return
         # Обновляем хранимое latest (без сброса TTL — окно не продлевается)
         await redis_client.execute(
-            "queue", lambda c: c.set(redis_key, serialized, keepttl=True)
+            "queue", lambda c: c.set(redis_key, serialized, keepttl=True),
         )
         _logger.debug("windowed_dedup(last): обновлено latest для ключа %r — стоп", key)
         exchange.stop()
 
     async def _apply_unique(
-        self, exchange: Exchange[Any], key: str, serialized: str, redis_client: Any
+        self, exchange: Exchange[Any], key: str, serialized: str, redis_client: Any,
     ) -> None:
         """Дедупликация по содержимому тела — дубли — стоп."""
         body_hash = hashlib.sha256(serialized.encode()).hexdigest()[:16]
         redis_key = f"windowed:dedup:unique:{self._prefix}:{key}"
         is_new = await redis_client.execute(
-            "queue", lambda c: c.sadd(redis_key, body_hash)
+            "queue", lambda c: c.sadd(redis_key, body_hash),
         )
         if is_new:
             await redis_client.execute(
-                "queue", lambda c: c.expire(redis_key, self._window)
+                "queue", lambda c: c.expire(redis_key, self._window),
             )
         else:
             _logger.debug("windowed_dedup(unique): точный дубль ключа %r — стоп", key)
@@ -189,7 +189,7 @@ class WindowedDedupProcessor(BaseProcessor):
                 "key_prefix": self._prefix,
                 "window_seconds": self._window,
                 "mode": self._mode,
-            }
+            },
         }
 
     async def get_latest(self, key: str) -> Any | None:
@@ -252,7 +252,7 @@ class WindowedCollectProcessor(BaseProcessor):
         super().__init__(name=name or f"windowed_collect({window_seconds}s)")
         if dedup_mode not in {"first", "last"}:
             raise ValueError(
-                f"WindowedCollectProcessor: неверный dedup_mode={dedup_mode!r}."
+                f"WindowedCollectProcessor: неверный dedup_mode={dedup_mode!r}.",
             )
         self._key_from = key_from
         self._window = window_seconds
@@ -279,7 +279,7 @@ class WindowedCollectProcessor(BaseProcessor):
                 # Окно активно — буферизуем и стоп
                 serialized = _serialize(exchange.in_message.body)
                 await redis_client.execute(
-                    "queue", lambda c: c.rpush(buf_key, serialized)
+                    "queue", lambda c: c.rpush(buf_key, serialized),
                 )
                 exchange.stop()
                 return
@@ -291,31 +291,31 @@ class WindowedCollectProcessor(BaseProcessor):
                 # Инжектируем батч в текущий exchange (он проходит downstream)
                 exchange.set_property(self._inject_as, batch)
                 _logger.debug(
-                    "windowed_collect: flush ключа %r → %d записей", key, len(batch)
+                    "windowed_collect: flush ключа %r → %d записей", key, len(batch),
                 )
             else:
                 # Первое сообщение — стартуем новое окно, стоп
                 serialized = _serialize(exchange.in_message.body)
                 await redis_client.execute(
-                    "queue", lambda c: c.rpush(buf_key, serialized)
+                    "queue", lambda c: c.rpush(buf_key, serialized),
                 )
                 exchange.stop()
         except Exception as exc:
             _logger.warning(
-                "windowed_collect: Redis недоступен, сообщение проходит: %s", exc
+                "windowed_collect: Redis недоступен, сообщение проходит: %s", exc,
             )
 
     async def _flush_and_reset(
-        self, key: str, buf_key: str, win_key: str, redis_client: Any
+        self, key: str, buf_key: str, win_key: str, redis_client: Any,
     ) -> list[Any]:
         """Читает и очищает буфер; открывает новое окно."""
         raw_items: list[bytes] = await redis_client.execute(
-            "queue", lambda c: c.lrange(buf_key, 0, -1)
+            "queue", lambda c: c.lrange(buf_key, 0, -1),
         )
         # Сбросить буфер и открыть новое окно
         await redis_client.execute("queue", lambda c: c.delete(buf_key))
         await redis_client.execute(
-            "queue", lambda c: c.set(win_key, "1", ex=self._window)
+            "queue", lambda c: c.set(win_key, "1", ex=self._window),
         )
 
         if not raw_items:
@@ -350,7 +350,7 @@ class WindowedCollectProcessor(BaseProcessor):
                 "window_seconds": self._window,
                 "dedup_mode": self._dedup_mode,
                 "inject_as": self._inject_as,
-            }
+            },
         }
 
     async def get_current_batch(self, key: str) -> list[Any]:
@@ -367,7 +367,7 @@ class WindowedCollectProcessor(BaseProcessor):
 
             buf_key = f"windowed:collect:buf:{key}"
             raw_items: list[bytes] = await redis_client.execute(
-                "queue", lambda c: c.lrange(buf_key, 0, -1)
+                "queue", lambda c: c.lrange(buf_key, 0, -1),
             )
             items = []
             for raw in raw_items:

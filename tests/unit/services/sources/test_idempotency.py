@@ -55,7 +55,7 @@ class TestRedisDedupeStore:
         assert await store.is_duplicate("ns", "e1") is True
 
     async def test_network_error_degrades(
-        self, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture,
     ) -> None:
         redis = AsyncMock()
         redis.set = AsyncMock(side_effect=ConnectionError("down"))

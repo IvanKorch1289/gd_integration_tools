@@ -96,7 +96,7 @@ def get_ai_cost_snapshot(
             model_filter=model_filter,
             pipeline_filter=pipeline_filter,
             top_n=top_n,
-        )
+        ),
     )
     return snapshot.to_dict()
 
@@ -116,7 +116,7 @@ def get_whoosh_index() -> Any:
 
 
 def get_saga_history(
-    workflow_id: str, *, limit: int = 50
+    workflow_id: str, *, limit: int = 50,
 ) -> list[SagaHistoryRecord]:
     """S6 fix: facade для saga history service."""
     import asyncio as _asyncio
@@ -127,7 +127,7 @@ def get_saga_history(
 
 
 def get_saga_stats(
-    tenant_id: str | None = None, *, from_dt: Any = None, to_dt: Any = None
+    tenant_id: str | None = None, *, from_dt: Any = None, to_dt: Any = None,
 ) -> dict[str, Any]:
     """S6 fix: aggregate saga statistics."""
     import asyncio as _asyncio
@@ -135,7 +135,7 @@ def get_saga_stats(
     from src.backend.services.workflows.saga_history import aggregate_saga_stats
 
     return _asyncio.run(
-        aggregate_saga_stats(tenant_id=tenant_id, from_dt=from_dt, to_dt=to_dt)
+        aggregate_saga_stats(tenant_id=tenant_id, from_dt=from_dt, to_dt=to_dt),
     )
 
 

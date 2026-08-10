@@ -27,7 +27,7 @@ class TestFieldSpecParsing:
     def test_minimal_non_secret(self) -> None:
         f = cg._parse_field("host:str:localhost:non-secret")
         assert f == cg.FieldSpec(
-            name="host", type_="str", default="localhost", visibility="non-secret"
+            name="host", type_="str", default="localhost", visibility="non-secret",
         )
 
     def test_secret_field(self) -> None:
@@ -69,7 +69,7 @@ class TestRenderClassModule:
 
     def test_default_base(self) -> None:
         out = cg._render_class_module(
-            "demo", "DEMO_", [cg._parse_field("host:str:localhost:non-secret")]
+            "demo", "DEMO_", [cg._parse_field("host:str:localhost:non-secret")],
         )
         assert "class DemoSettings(BaseSettingsWithLoader):" in out
         assert 'env_prefix="DEMO_"' in out
@@ -93,7 +93,7 @@ class TestRenderClassModule:
     def test_unknown_base_raises(self) -> None:
         with pytest.raises(ValueError):
             cg._render_class_module(
-                "x", "X_", [cg._parse_field("a:str:b:non-secret")], base="NoSuch"
+                "x", "X_", [cg._parse_field("a:str:b:non-secret")], base="NoSuch",
             )
 
 
@@ -107,7 +107,7 @@ class TestLibcstPatches:
                 A,
                 B,
             )
-            """
+            """,
         ).lstrip()
         module = cst.parse_module(src)
         new_module, changed = cg._add_to_import_from(module, "foo.bar", ["C", "D"])
@@ -137,7 +137,7 @@ class TestLibcstPatches:
                 "A",
                 "B",
             )
-            """
+            """,
         ).lstrip()
         module = cst.parse_module(src)
         new_module, changed = cg._extend_all_tuple(module, ["X", "Y"])
@@ -163,17 +163,17 @@ class TestLibcstPatches:
             """
             class Settings:
                 foo: int = 1
-            """
+            """,
         ).lstrip()
         module = cst.parse_module(src)
         new_module, changed = cg._add_class_attribute(
-            module, "Settings", "bar", "str", '"hello"'
+            module, "Settings", "bar", "str", '"hello"',
         )
         assert changed
         assert 'bar: str = "hello"' in new_module.code
         # Идемпотентность.
         _again, again_changed = cg._add_class_attribute(
-            new_module, "Settings", "bar", "str", '"hello"'
+            new_module, "Settings", "bar", "str", '"hello"',
         )
         assert not again_changed
 
@@ -195,7 +195,7 @@ class TestSpecYamlRoundTrip:
                     constraints=("min_length=1",),
                 ),
                 cg.FieldSpec(
-                    name="username", type_="str", default="", visibility="secret"
+                    name="username", type_="str", default="", visibility="secret",
                 ),
             ],
         )
@@ -246,7 +246,7 @@ class TestExtractSpec:
                     bootstrap: str = Field("localhost:9092", description="x")
                     timeout: int = Field(30, ge=1, le=300, description="y")
                     username: str = Field(..., description="z")
-                """
+                """,
             ).lstrip(),
             encoding="utf-8",
         )
@@ -280,7 +280,7 @@ class TestLiteralType:
 
     def test_render_literal_imports_typing(self) -> None:
         out = cg._render_class_module(
-            "demo", "DEMO_", [cg._parse_field('mode:Literal["a","b"]:"a":non-secret')]
+            "demo", "DEMO_", [cg._parse_field('mode:Literal["a","b"]:"a":non-secret')],
         )
         assert "from typing import ClassVar, Literal" in out
         assert 'mode: Literal["a","b"] = Field(' in out
@@ -288,7 +288,7 @@ class TestLiteralType:
 
     def test_render_without_literal_keeps_imports(self) -> None:
         out = cg._render_class_module(
-            "demo", "DEMO_", [cg._parse_field("host:str:x:non-secret")]
+            "demo", "DEMO_", [cg._parse_field("host:str:x:non-secret")],
         )
         assert "from typing import ClassVar\n" in out
         assert "Literal" not in out
@@ -303,7 +303,7 @@ class TestLiteralType:
                     type_='Literal["a","b"]',
                     default='"a"',
                     visibility="non-secret",
-                )
+                ),
             ],
         )
         cg._validate_spec(spec)  # must not raise
@@ -314,8 +314,8 @@ class TestLiteralType:
             env_prefix="DEMO_",
             fields=[
                 cg.FieldSpec(
-                    name="x", type_="dict", default="", visibility="non-secret"
-                )
+                    name="x", type_="dict", default="", visibility="non-secret",
+                ),
             ],
         )
         with pytest.raises(ValueError, match="не поддержан"):
@@ -338,7 +338,7 @@ class TestLiteralType:
                     model_config = SettingsConfigDict(env_prefix="DEMO_", extra="forbid")
 
                     mode: Literal["a", "b", "c"] = Field("a", description="x")
-                """
+                """,
             ).lstrip(),
             encoding="utf-8",
         )

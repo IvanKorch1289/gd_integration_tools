@@ -29,7 +29,7 @@ class TestWorkflowContinueAsNewProcessor:
             WorkflowContinueAsNewProcessor,
         )
         p = WorkflowContinueAsNewProcessor(
-            same_workflow_id=True, same_input=True
+            same_workflow_id=True, same_input=True,
         )
         assert p.same_workflow_id is True
 
@@ -87,7 +87,7 @@ class TestWorkflowClaimCheckProcessor:
         import types
 
         fake_module = types.ModuleType(
-            "src.backend.infrastructure.clients.storage.s3_pool"
+            "src.backend.infrastructure.clients.storage.s3_pool",
         )
         fake_module.get_s3_client = _fake_get_s3_client
         import sys
@@ -122,7 +122,7 @@ class TestWorkflowClaimCheckRedisBackend:
         import types
 
         fake_module = types.ModuleType(
-            "src.backend.infrastructure.clients.storage.redis"
+            "src.backend.infrastructure.clients.storage.redis",
         )
         fake_module.redis_client = fake_client
         monkeypatch.setitem(sys.modules, fake_module.__name__, fake_module)
@@ -222,7 +222,7 @@ class TestWorkflowClaimCheckS3Backend:
             return fake_client_factory()
 
         fake_module = types.ModuleType(
-            "src.backend.infrastructure.clients.storage.s3_pool"
+            "src.backend.infrastructure.clients.storage.s3_pool",
         )
         fake_module.get_s3_client = _factory
         monkeypatch.setitem(sys.modules, fake_module.__name__, fake_module)
@@ -335,7 +335,7 @@ class TestWorkflowCapabilityGating:
 
     @pytest.mark.asyncio
     async def test_workflow_claim_check_auth_denied_skips_storage(
-        self, monkeypatch
+        self, monkeypatch,
     ) -> None:
         """Denied capability → process() возвращается без payload token."""
         async def _deny(*args, **kwargs):

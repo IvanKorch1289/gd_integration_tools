@@ -64,7 +64,7 @@ class DSLLinter:
                     severity="error",
                     message="Pipeline не содержит процессоров",
                     suggestion="Добавьте хотя бы один процессор через RouteBuilder",
-                )
+                ),
             )
             return issues
 
@@ -90,12 +90,12 @@ class DSLLinter:
                             message=f"Процессор '{p.name}' может быть dead code",
                             suggestion="Филтр может остановить pipeline — проверьте ожидается ли это",
                             processor_index=i,
-                        )
+                        ),
                     )
                 stop_idx = i
 
     def _check_unknown_actions(
-        self, pipeline: Pipeline, issues: list[LintIssue]
+        self, pipeline: Pipeline, issues: list[LintIssue],
     ) -> None:
         """E002: DispatchAction/Enrich ссылается на несуществующий action."""
         try:
@@ -109,7 +109,7 @@ class DSLLinter:
         for i, p in enumerate(pipeline.processors):
             type_name = type(p).__name__
             if type_name.endswith("DispatchActionProcessor") or type_name.endswith(
-                "EnrichProcessor"
+                "EnrichProcessor",
             ):
                 action = getattr(p, "action", None)
                 if action and action not in known_actions:
@@ -123,7 +123,7 @@ class DSLLinter:
                             suggestion=f"Доступные actions: {available}{suffix}. "
                             f"Проверьте регистрацию action.",
                             processor_index=i,
-                        )
+                        ),
                     )
 
     def _check_pii_order(self, pipeline: Pipeline, issues: list[LintIssue]) -> None:
@@ -141,11 +141,11 @@ class DSLLinter:
                         message="LLM вызов без предварительной маскировки PII",
                         suggestion="Добавьте .sanitize_pii() перед .call_llm() для защиты данных",
                         processor_index=i,
-                    )
+                    ),
                 )
 
     def _check_optimization_hints(
-        self, pipeline: Pipeline, issues: list[LintIssue]
+        self, pipeline: Pipeline, issues: list[LintIssue],
     ) -> None:
         """I001: подсказки по оптимизации."""
         dispatch_chain = []
@@ -161,12 +161,12 @@ class DSLLinter:
                             message=f"{len(dispatch_chain)} последовательных dispatch_action",
                             suggestion="Рассмотрите .parallel() или .scatter_gather() для ускорения",
                             processor_index=dispatch_chain[0],
-                        )
+                        ),
                     )
                 dispatch_chain = []
 
     def _check_property_usage(
-        self, pipeline: Pipeline, issues: list[LintIssue]
+        self, pipeline: Pipeline, issues: list[LintIssue],
     ) -> None:
         """W003: set_property результаты не используются."""
         # Собираем все установленные свойства: key -> processor_index
@@ -232,7 +232,7 @@ class DSLLinter:
                     suggestion="Проверьте что результат используется в последующих процессорах, "
                     "или удалите лишний set_property",
                     processor_index=proc_idx,
-                )
+                ),
             )
 
     def _extract_property_references(self, value: str) -> set[str]:

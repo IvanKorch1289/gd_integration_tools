@@ -69,7 +69,7 @@ _XFAIL_GATE_DECLARE: Final[frozenset[str]] = frozenset()
 )
 @pytest.mark.unit
 def test_plugin_class_instantiable(
-    entity: str, module_path: str, class_name: str
+    entity: str, module_path: str, class_name: str,
 ) -> None:
     """``import_module → plugin_class()`` отрабатывает без ошибок."""
     module = import_module(module_path)
@@ -94,7 +94,7 @@ def test_plugin_class_instantiable(
 )
 @pytest.mark.unit
 def test_manifest_capabilities_in_vocabulary(
-    entity: str, module_path: str, class_name: str
+    entity: str, module_path: str, class_name: str,
 ) -> None:
     """Каждое имя capability из manifest зарегистрировано в default vocabulary."""
     manifest = load_plugin_manifest(_EXT_ROOT / entity / "plugin.toml")
@@ -122,7 +122,7 @@ def test_manifest_capabilities_in_vocabulary(
 )
 @pytest.mark.unit
 def test_plugin_capabilities_pass_gate_declare(
-    entity: str, module_path: str, class_name: str
+    entity: str, module_path: str, class_name: str,
 ) -> None:
     """``CapabilityGate.declare(manifest.name, manifest.capabilities)`` — ok.
 
@@ -139,7 +139,7 @@ def test_plugin_capabilities_pass_gate_declare(
                 "(declaration_mixin.py:62-66). Second capability is silently "
                 "dropped. Out of explicit sub-task scope (plugin.py only); "
                 "fix the manifest in a follow-up sub-task."
-            )
+            ),
         )
     manifest = load_plugin_manifest(_EXT_ROOT / entity / "plugin.toml")
     gate = CapabilityGate()

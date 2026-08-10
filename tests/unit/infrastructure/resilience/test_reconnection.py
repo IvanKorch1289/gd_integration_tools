@@ -73,7 +73,7 @@ async def test_no_reconnect_success(mock_sleep, _patch_metrics):
     mock_sleep.assert_not_awaited()
 
     _patch_metrics.labels.assert_called_once_with(
-        client="test-client", outcome="success"
+        client="test-client", outcome="success",
     )
     _patch_metrics.labels.return_value.inc.assert_called_once()
 
@@ -91,7 +91,7 @@ async def test_no_reconnect_failure(mock_sleep, _patch_metrics):
     mock_sleep.assert_not_awaited()
 
     _patch_metrics.labels.assert_called_once_with(
-        client="test-client", outcome="failure"
+        client="test-client", outcome="failure",
     )
     _patch_metrics.labels.return_value.inc.assert_called_once()
 
@@ -129,7 +129,7 @@ async def test_reconnect_n_exhausted_raises(mock_sleep, _patch_metrics):
     strategy = ReconnectN(attempts=3, initial_delay=0.5, multiplier=2.0)
 
     with pytest.raises(
-        ReconnectionError, match="Failed to connect 'test-client' after 3 attempts"
+        ReconnectionError, match="Failed to connect 'test-client' after 3 attempts",
     ):
         await strategy.run("test-client", dial)
 
@@ -158,7 +158,7 @@ async def test_reconnect_forever_success_after_failures(mock_sleep, _patch_metri
             ConnectionError("e2"),
             ConnectionError("e3"),
             "success",
-        ]
+        ],
     )
     strategy = ReconnectForever(initial_delay=1.0, max_delay=5.0, multiplier=2.0)
     result = await strategy.run("test-client", dial)
@@ -188,7 +188,7 @@ async def test_reconnect_forever_backoff_capped_at_max_delay(mock_sleep):
             ConnectionError("e4"),
             ConnectionError("e5"),
             "success",
-        ]
+        ],
     )
     strategy = ReconnectForever(initial_delay=1.0, max_delay=3.0, multiplier=2.0)
     result = await strategy.run("test-client", dial)

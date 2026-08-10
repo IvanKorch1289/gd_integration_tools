@@ -74,12 +74,12 @@ class DatabaseQueryProcessor(BaseProcessor):
                     rows = [dict(row._mapping) for row in result.fetchall()]
                     exchange.set_property(self._result_property, rows)
                     exchange.set_out(
-                        body=rows, headers=dict(exchange.in_message.headers)
+                        body=rows, headers=dict(exchange.in_message.headers),
                     )
                 else:
                     await conn.commit()
                     exchange.set_property(
-                        self._result_property, {"rowcount": result.rowcount}
+                        self._result_property, {"rowcount": result.rowcount},
                     )
 
         except Exception as exc:

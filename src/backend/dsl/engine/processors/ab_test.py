@@ -114,7 +114,7 @@ class ABTestProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выбирает A/B на основе correlation_id."""
         cid = getattr(exchange, "correlation_id", None) or exchange.get_property(
-            "correlation_id"
+            "correlation_id",
         )
         variant = select_variant(correlation_id=cid, split=self._split)
         exchange.set_property(self._result_property, variant)

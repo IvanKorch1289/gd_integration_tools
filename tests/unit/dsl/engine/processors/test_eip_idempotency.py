@@ -21,7 +21,7 @@ def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any
 @pytest.mark.asyncio
 async def test_idempotent_new_message() -> None:
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_client:
         mock_client.set_if_not_exists = AsyncMock(return_value=True)
         proc = IdempotentConsumerProcessor(key_expression=lambda ex: "key1")
@@ -34,7 +34,7 @@ async def test_idempotent_new_message() -> None:
 @pytest.mark.asyncio
 async def test_idempotent_duplicate() -> None:
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_client:
         mock_client.set_if_not_exists = AsyncMock(return_value=False)
         proc = IdempotentConsumerProcessor(key_expression=lambda ex: "key1")
@@ -47,7 +47,7 @@ async def test_idempotent_duplicate() -> None:
 @pytest.mark.asyncio
 async def test_idempotent_redis_error_proceeds() -> None:
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_client:
         mock_client.set_if_not_exists = AsyncMock(side_effect=ConnectionError)
         proc = IdempotentConsumerProcessor(key_expression=lambda ex: "key1")

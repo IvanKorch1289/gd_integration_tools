@@ -194,6 +194,6 @@ class AuthRequiredMiddleware:
                     (b"content-length", str(len(body)).encode("latin-1")),
                     (b"www-authenticate", b"Bearer"),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body})

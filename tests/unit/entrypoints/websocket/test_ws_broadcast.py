@@ -54,7 +54,7 @@ def test_set_local_handler(broadcast: WSBroadcast) -> None:
 
 @pytest.mark.asyncio
 async def test_start_listener_creates_task(
-    broadcast: WSBroadcast, mock_pubsub: AsyncMock
+    broadcast: WSBroadcast, mock_pubsub: AsyncMock,
 ) -> None:
     """start_listener creates a background task."""
     mock_registry = MagicMock()
@@ -73,7 +73,7 @@ async def test_start_listener_creates_task(
 
 @pytest.mark.asyncio
 async def test_start_listener_idempotent(
-    broadcast: WSBroadcast, mock_pubsub: AsyncMock
+    broadcast: WSBroadcast, mock_pubsub: AsyncMock,
 ) -> None:
     """start_listener is idempotent when already started."""
     mock_registry = MagicMock()
@@ -136,7 +136,7 @@ async def test_publish_to_group(broadcast: WSBroadcast, mock_pubsub: AsyncMock) 
     result = await broadcast.publish_to_group("room-1", {"text": "hi"})
     assert result == 2
     mock_pubsub.publish.assert_awaited_once_with(
-        {"group": "room-1", "message": {"text": "hi"}}
+        {"group": "room-1", "message": {"text": "hi"}},
     )
 
 
@@ -144,7 +144,7 @@ async def test_publish_to_group(broadcast: WSBroadcast, mock_pubsub: AsyncMock) 
 
 
 def test_group_returns_redis_set(
-    broadcast: WSBroadcast, mock_redis_set: AsyncMock
+    broadcast: WSBroadcast, mock_redis_set: AsyncMock,
 ) -> None:
     """group returns a RedisSet for the given group name."""
     result = broadcast.group("admins")
@@ -156,7 +156,7 @@ def test_group_returns_redis_set(
 
 @pytest.mark.asyncio
 async def test_listener_loop_forwards_dict_messages(
-    broadcast: WSBroadcast, mock_pubsub: AsyncMock
+    broadcast: WSBroadcast, mock_pubsub: AsyncMock,
 ) -> None:
     """Listener loop forwards dict messages to local handler."""
     handler = AsyncMock()
@@ -187,7 +187,7 @@ async def test_listener_loop_forwards_dict_messages(
 
 @pytest.mark.asyncio
 async def test_listener_loop_skips_non_dict_messages(
-    broadcast: WSBroadcast, mock_pubsub: AsyncMock
+    broadcast: WSBroadcast, mock_pubsub: AsyncMock,
 ) -> None:
     """Listener loop skips non-dict messages."""
     handler = AsyncMock()
@@ -216,7 +216,7 @@ async def test_listener_loop_skips_non_dict_messages(
 
 @pytest.mark.asyncio
 async def test_listener_loop_handler_exception_logged(
-    broadcast: WSBroadcast, mock_pubsub: AsyncMock, caplog: pytest.LogCaptureFixture
+    broadcast: WSBroadcast, mock_pubsub: AsyncMock, caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Listener loop logs handler exceptions instead of crashing."""
     handler = AsyncMock()

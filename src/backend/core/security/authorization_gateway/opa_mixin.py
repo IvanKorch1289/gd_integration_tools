@@ -52,13 +52,13 @@ class OpaMixin:
         """
 
         async def _step(
-            principal: str, resource: str, action: str, ctx: dict[str, Any]
+            principal: str, resource: str, action: str, ctx: dict[str, Any],
         ) -> AuthorizationReason:
             try:
                 from src.backend.core.feature_flags import get_feature_flag_service
 
                 if not get_feature_flag_service().is_enabled(
-                    "opa_runtime_query_enabled"
+                    "opa_runtime_query_enabled",
                 ):
                     return AuthorizationReason(
                         source="opa",
@@ -67,7 +67,7 @@ class OpaMixin:
                     )
             except Exception as _:
                 return AuthorizationReason(
-                    source="opa", outcome="deny", detail="feature_flag_unavailable"
+                    source="opa", outcome="deny", detail="feature_flag_unavailable",
                 )
 
             input_doc = {
@@ -81,7 +81,7 @@ class OpaMixin:
                 decision = await opa_client.query(policy_name, input_doc)
             except Exception as exc:
                 return AuthorizationReason(
-                    source="opa", outcome="deny", detail=f"{type(exc).__name__}: {exc}"
+                    source="opa", outcome="deny", detail=f"{type(exc).__name__}: {exc}",
                 )
 
             allow = bool(getattr(decision, "allow", False))
@@ -90,7 +90,7 @@ class OpaMixin:
             if not allow:
                 detail = ",".join(reasons) if reasons else "opa_denied"
             return AuthorizationReason(
-                source="opa", outcome="allow" if allow else "deny", detail=detail
+                source="opa", outcome="allow" if allow else "deny", detail=detail,
             )
 
         _step.__name__ = "opa_step"

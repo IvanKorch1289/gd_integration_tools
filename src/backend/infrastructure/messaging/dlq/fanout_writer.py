@@ -62,7 +62,7 @@ class FanoutDLQWriter:
 
     @staticmethod
     async def _safe_write(
-        writer: Any, envelope: DLQEnvelope
+        writer: Any, envelope: DLQEnvelope,
     ) -> tuple[bool, BaseException | None]:
         try:
             await writer.write(envelope)

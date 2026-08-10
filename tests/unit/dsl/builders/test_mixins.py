@@ -75,7 +75,7 @@ class TestJinjaTemplate:
                 "template_string": "Hello {{name}}",
                 "context_from": "body",
                 "result_property": "rendered",
-            }
+            },
         }
 
 
@@ -131,7 +131,7 @@ class TestBatchInsert:
         )
         spec = pipeline.processors[0].to_spec()
         assert spec == {
-            "batch_insert": {"table": "users", "items": None, "profile": "default"}
+            "batch_insert": {"table": "users", "items": None, "profile": "default"},
         }
 
 

@@ -56,10 +56,10 @@ class OutboxMessage(BaseModel):
     transport: Mapped[str] = mapped_column(String(32), default="other", index=True)
 
     published_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
+        DateTime(timezone=True), nullable=True,
     )
     next_attempt_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=func.now(), index=True
+        DateTime(timezone=True), default=func.now(), index=True,
     )
 
     # S72 W1 (TD-S64-W1, ADR-0087): per-row claim metadata.
@@ -69,8 +69,8 @@ class OutboxMessage(BaseModel):
     # backwards-compat с existing rows.
     claimed_by: Mapped[str | None] = mapped_column(String(256), nullable=True)
     claimed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
+        DateTime(timezone=True), nullable=True,
     )
     claimed_until: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
+        DateTime(timezone=True), nullable=True,
     )

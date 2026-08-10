@@ -120,7 +120,7 @@ class TestWSAuthenticatorJWT:
 
     @pytest.mark.asyncio
     async def test_jwt_decode_is_awaited_before_claim_access(
-        self, authenticator: WSAuthenticator
+        self, authenticator: WSAuthenticator,
     ) -> None:
         """Async JwtBackend.decode is awaited before reading claims."""
 
@@ -136,9 +136,9 @@ class TestWSAuthenticatorJWT:
                 )
 
         with patch(
-            "src.backend.core.auth.jwt_backend.JwtBackend", _FakeBackend
+            "src.backend.core.auth.jwt_backend.JwtBackend", _FakeBackend,
         ), patch.object(
-            authenticator, "_load_groups", new=AsyncMock(return_value={"ops"})
+            authenticator, "_load_groups", new=AsyncMock(return_value={"ops"}),
         ):
             session = await authenticator.authenticate_jwt("valid.token.value")
 
@@ -148,7 +148,7 @@ class TestWSAuthenticatorJWT:
 
     @pytest.mark.asyncio
     async def test_jwt_decode_failure_raises(
-        self, authenticator: WSAuthenticator
+        self, authenticator: WSAuthenticator,
     ) -> None:
         """Backend rejects malformed/expired token → WSAuthError."""
 
@@ -164,7 +164,7 @@ class TestWSAuthenticatorJWT:
 
     @pytest.mark.asyncio
     async def test_jwt_backend_unavailable_raises(
-        self, authenticator: WSAuthenticator, monkeypatch: pytest.MonkeyPatch
+        self, authenticator: WSAuthenticator, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Имитация отсутствующего joserfc / AuthError при ImportError."""
 
@@ -199,7 +199,7 @@ class TestWSAuthenticatorFacade:
 
     @pytest.mark.asyncio
     async def test_routes_jwt_method(
-        self, authenticator: WSAuthenticator
+        self, authenticator: WSAuthenticator,
     ) -> None:
         cred = WSCredential(token="dummy.jwt.token", method="jwt", source="subprotocol")
         # backend отсутствует → WSAuthError (test passes whichever backend raises).
@@ -208,7 +208,7 @@ class TestWSAuthenticatorFacade:
 
     @pytest.mark.asyncio
     async def test_routes_api_key_method(
-        self, authenticator: WSAuthenticator
+        self, authenticator: WSAuthenticator,
     ) -> None:
         """api_key path — backward-compat через authenticate()."""
 
@@ -233,7 +233,7 @@ class TestWSAuthenticatorFacade:
 
     @pytest.mark.asyncio
     async def test_routes_api_key_cookie_sets_auth_source(
-        self, authenticator: WSAuthenticator
+        self, authenticator: WSAuthenticator,
     ) -> None:
         cred = WSCredential(
             token="my-api-key",

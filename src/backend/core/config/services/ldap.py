@@ -102,7 +102,7 @@ class LdapSettings(BaseSettingsWithLoader):
     def is_configured(self) -> bool:
         """Все 4 обязательных параметра заданы (server_uri/bind_dn/password/base)."""
         return bool(
-            self.server_uri and self.bind_dn and self.bind_password and self.search_base
+            self.server_uri and self.bind_dn and self.bind_password and self.search_base,
         )
 
 

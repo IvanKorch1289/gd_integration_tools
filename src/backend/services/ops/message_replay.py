@@ -65,7 +65,7 @@ class MessageReplayService:
     ) -> str:
         """Записывает inbound сообщение. Возвращает message_id."""
         msg = ReplayMessage(
-            source=source, action=action, payload=payload, headers=headers or {}
+            source=source, action=action, payload=payload, headers=headers or {},
         )
         self._messages[msg.id] = msg
         self._trim()
@@ -95,7 +95,7 @@ class MessageReplayService:
         }
 
     async def replay_one(
-        self, message_id: str, dry_run: bool = False
+        self, message_id: str, dry_run: bool = False,
     ) -> dict[str, Any]:
         """Воспроизводит одно сообщение."""
         msg = self._messages.get(message_id)
@@ -130,7 +130,7 @@ class MessageReplayService:
             return {"status": "error", "id": msg.id, "message": str(exc)}
 
     async def replay_bulk(
-        self, message_ids: list[str] | None = None, status_filter: str = "stored"
+        self, message_ids: list[str] | None = None, status_filter: str = "stored",
     ) -> dict[str, Any]:
         """Массовый replay сообщений."""
         if message_ids:

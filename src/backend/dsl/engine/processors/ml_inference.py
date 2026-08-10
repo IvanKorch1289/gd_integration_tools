@@ -67,7 +67,7 @@ class OnnxInferenceProcessor(BaseProcessor):
             import onnxruntime as ort
 
             session = ort.InferenceSession(
-                self._path, providers=["CPUExecutionProvider"]
+                self._path, providers=["CPUExecutionProvider"],
             )
         except ImportError:
             logger.warning("onnxruntime not installed, ONNX inference disabled")
@@ -192,7 +192,7 @@ class StreamingLLMProcessor(BaseProcessor):
             exchange.fail(f"Streaming LLM failed: {exc}")
 
     async def _publish_chunk(
-        self, session_id: str, content: Any, *, is_final: bool
+        self, session_id: str, content: Any, *, is_final: bool,
     ) -> None:
         try:
             from src.backend.infrastructure.clients.storage.redis import redis_client
@@ -240,7 +240,7 @@ class EmbeddingProcessor(BaseProcessor):
             return
 
         provider = self._provider or os.environ.get(
-            "EMBEDDING_PROVIDER", "sentence-transformers"
+            "EMBEDDING_PROVIDER", "sentence-transformers",
         )
 
         try:

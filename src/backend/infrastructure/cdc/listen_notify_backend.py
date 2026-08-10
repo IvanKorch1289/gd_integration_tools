@@ -49,7 +49,7 @@ class ListenNotifyCDCBackend(CDCSource):
         self._cursor_log: list[CDCCursor] = []
 
     async def subscribe(
-        self, *, tables: list[str], start_cursor: CDCCursor | None = None
+        self, *, tables: list[str], start_cursor: CDCCursor | None = None,
     ) -> AsyncIterator[CDCEvent]:
         """LISTEN на ``channel``; парсит payload в `CDCEvent`.
 
@@ -79,7 +79,7 @@ class ListenNotifyCDCBackend(CDCSource):
         self._cursor_log.append(cursor)
 
     async def replay(
-        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
+        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None,
     ) -> AsyncIterator[CDCEvent]:
         """Replay для LISTEN/NOTIFY невозможен (push-only без хранилища).
 
@@ -89,7 +89,7 @@ class ListenNotifyCDCBackend(CDCSource):
         _logger.warning(
             "ListenNotifyCDCBackend.replay: not supported "
             "(LISTEN/NOTIFY is live-stream only); "
-            "use PollCDCBackend or DebeziumEventsCDCBackend for replay"
+            "use PollCDCBackend or DebeziumEventsCDCBackend for replay",
         )
         _ = (start_cursor, end_cursor, datetime.now(UTC))
         return

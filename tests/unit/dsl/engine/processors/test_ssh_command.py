@@ -95,7 +95,7 @@ class TestSshCommandProcessor:
         """При ненулевом exit_code и continue_on_error=False процессор
         устанавливает exchange в статус failed."""
         proc = SshCommandProcessor(
-            host="192.168.1.10", command="exit 1", continue_on_error=False
+            host="192.168.1.10", command="exit 1", continue_on_error=False,
         )
         exchange = _make_exchange()
 
@@ -150,7 +150,7 @@ class TestSshCommandProcessor:
     async def test_ssh_command_password_from_body(self) -> None:
         """Проверка извлечения пароля из body."""
         proc = SshCommandProcessor(
-            host="192.168.1.10", command="ls", password_from="body"
+            host="192.168.1.10", command="ls", password_from="body",
         )
         exchange = _make_exchange(body={"password": "secret123"})
 
@@ -175,7 +175,7 @@ class TestSshCommandProcessor:
     async def test_ssh_command_password_from_properties(self) -> None:
         """Проверка извлечения пароля из properties."""
         proc = SshCommandProcessor(
-            host="192.168.1.10", command="ls", password_from="properties"
+            host="192.168.1.10", command="ls", password_from="properties",
         )
         exchange = _make_exchange()
         exchange.set_property("password", "props_secret")
@@ -202,7 +202,7 @@ class TestSshCommandProcessor:
         """При continue_on_error=True даже ненулевой exit_code
         не вызывает exchange.fail."""
         proc = SshCommandProcessor(
-            host="192.168.1.10", command="exit 1", continue_on_error=True
+            host="192.168.1.10", command="exit 1", continue_on_error=True,
         )
         exchange = _make_exchange()
 
@@ -246,5 +246,5 @@ class TestSshCommandProcessor:
                 "timeout": 60.0,
                 "result_property": "remote_result",
                 "continue_on_error": True,
-            }
+            },
         }

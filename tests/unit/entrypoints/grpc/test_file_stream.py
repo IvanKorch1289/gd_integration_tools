@@ -139,7 +139,7 @@ class _MockStorage:
         return meta["data"][offset:]
 
     async def write(
-        self, file_id: int, filename: str, data: bytes, object_uuid: str
+        self, file_id: int, filename: str, data: bytes, object_uuid: str,
     ) -> None:
         self.files[file_id] = {
             "filename": filename,
@@ -369,10 +369,10 @@ class TestUploadFile:
 
         async def request_iter() -> Any:
             yield _upload_req(
-                file_id=1, filename="hello.txt", data=b"he", seq=0, last=False
+                file_id=1, filename="hello.txt", data=b"he", seq=0, last=False,
             )
             yield _upload_req(
-                file_id=1, filename="hello.txt", data=b"llo", seq=1, last=True
+                file_id=1, filename="hello.txt", data=b"llo", seq=1, last=True,
             )
 
         response = await servicer.UploadFile(request_iter(), context)
@@ -395,7 +395,7 @@ class TestUploadFile:
 
         async def request_iter() -> Any:
             yield _upload_req(
-                file_id=1, filename="empty.txt", data=b"", seq=0, last=True
+                file_id=1, filename="empty.txt", data=b"", seq=0, last=True,
             )
 
         response = await servicer.UploadFile(request_iter(), context)
@@ -424,7 +424,7 @@ class TestUploadFile:
 
         async def request_iter() -> Any:
             yield _upload_req(
-                file_id=1, filename="big.bin", data=b"x" * 100, seq=0, last=True
+                file_id=1, filename="big.bin", data=b"x" * 100, seq=0, last=True,
             )
 
         response = await servicer.UploadFile(request_iter(), context)

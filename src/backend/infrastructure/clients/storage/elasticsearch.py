@@ -96,17 +96,17 @@ class ElasticSearchClient:
 
     @resilient(name="elasticsearch_index", max_attempts=3)
     async def index_document(
-        self, index: str, document: dict[str, Any], doc_id: str | None = None
+        self, index: str, document: dict[str, Any], doc_id: str | None = None,
     ) -> dict[str, Any]:
         """Индексирует один документ."""
         client = await self._ensure_client()
         result = await client.index(
-            index=self._prefixed(index), document=document, id=doc_id
+            index=self._prefixed(index), document=document, id=doc_id,
         )
         return dict(result)
 
     async def bulk_index(
-        self, index: str, documents: list[dict[str, Any]], id_field: str | None = None
+        self, index: str, documents: list[dict[str, Any]], id_field: str | None = None,
     ) -> dict[str, Any]:
         """Bulk-индексация документов."""
         from elasticsearch.helpers import async_bulk
@@ -155,7 +155,7 @@ class ElasticSearchClient:
         ]
 
     async def aggregate(
-        self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None
+        self, index: str, aggs: dict[str, Any], query: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Запрос агрегации."""
         client = await self._ensure_client()
@@ -176,7 +176,7 @@ class ElasticSearchClient:
             return False
 
     async def create_index(
-        self, index: str, mappings: dict[str, Any] | None = None
+        self, index: str, mappings: dict[str, Any] | None = None,
     ) -> None:
         """Создаёт индекс (если не существует)."""
         client = await self._ensure_client()
@@ -239,8 +239,8 @@ class ElasticSearchClient:
                 "bool": {
                     "filter": [
                         {"term": {k: v}} for k, v in filters.items() if v is not None
-                    ]
-                }
+                    ],
+                },
             }
         aggs = {"by_field": {"terms": {"field": field, "size": size}}}
         return await self.aggregate(index, aggs, body_query)

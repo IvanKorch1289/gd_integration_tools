@@ -31,7 +31,7 @@ class WorkflowSettings(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "workflow"
     model_config = SettingsConfigDict(
-        env_prefix="WORKFLOW_", extra="forbid", validate_default=True
+        env_prefix="WORKFLOW_", extra="forbid", validate_default=True,
     )
 
 

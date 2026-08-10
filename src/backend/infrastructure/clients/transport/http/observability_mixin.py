@@ -100,7 +100,7 @@ class ObservabilityMixin(_HttpClientProtocol):
         )
 
     async def _process_response(
-        self, response: httpx.Response, response_type: str
+        self, response: httpx.Response, response_type: str,
     ) -> Any:
         if response_type == "bytes":
             return response.content

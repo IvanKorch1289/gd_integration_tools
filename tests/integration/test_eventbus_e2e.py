@@ -25,7 +25,7 @@ async def test_subscribe_with_lifecycle_registers_handler() -> None:
 
     handler = AsyncMock(name="handler")
     result = await facade.subscribe_with_lifecycle(
-        "events.orders", handler, topic_pattern="orders.*", ack_mode="auto"
+        "events.orders", handler, topic_pattern="orders.*", ack_mode="auto",
     )
 
     # Verify bus.subscribe was called
@@ -108,7 +108,7 @@ async def test_subscribe_with_lifecycle_error_raises_service_error() -> None:
     """subscribe_with_lifecycle() raises ServiceError on bus failure."""
     mock_bus = MagicMock(name="event_bus")
     mock_bus.subscribe = AsyncMock(
-        name="bus.subscribe", side_effect=RuntimeError("bus down")
+        name="bus.subscribe", side_effect=RuntimeError("bus down"),
     )
 
     facade = EventBusFacade(mock_bus, plugin="test")
@@ -136,7 +136,7 @@ async def test_facade_subscribe_and_publish_integration() -> None:
     async def fake_publish(channel: str, event: MagicMock) -> None:
         if channel in stored_handlers:
             await stored_handlers[channel](
-                {"channel": channel, "data": event.model_dump()}
+                {"channel": channel, "data": event.model_dump()},
             )
 
     mock_bus.subscribe = AsyncMock(side_effect=fake_subscribe)

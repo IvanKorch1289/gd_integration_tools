@@ -94,7 +94,7 @@ def test_tool_runs_in_human_mode() -> None:
     tools_dir = Path(__file__).resolve().parents[3] / "tools"
     check_file = tools_dir / "check_dsn_drivers.py"
     result = subprocess.run(
-        [sys.executable, str(check_file)], capture_output=True, text=True, timeout=30
+        [sys.executable, str(check_file)], capture_output=True, text=True, timeout=30,
     )
     assert result.returncode == 0
     assert "DSN driver availability" in result.stdout

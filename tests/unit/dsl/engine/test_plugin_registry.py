@@ -37,7 +37,7 @@ def test_register_dotted_path() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         reg.register(
-            "dummy", "tests.unit.dsl.engine.test_plugin_registry.DummyProcessor"
+            "dummy", "tests.unit.dsl.engine.test_plugin_registry.DummyProcessor",
         )
     assert reg.get("dummy").__name__ == "DummyProcessor"
 

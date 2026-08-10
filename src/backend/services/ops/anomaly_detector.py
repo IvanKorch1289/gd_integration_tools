@@ -120,7 +120,7 @@ class AnomalyDetector:
                 f"Stddev: {anomaly.stddev:.2f}"
             )
             await hub.broadcast(
-                channels=self._notification_channels, subject=subject, message=message
+                channels=self._notification_channels, subject=subject, message=message,
             )
         except Exception as exc:
             logger.error("Anomaly notification failed: %s", exc)

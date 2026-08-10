@@ -214,7 +214,7 @@ class SourcesEIPsMixin(EIPMixinBase):
             route_id = getattr(self, "route_id", "") or "_pending_route_"
             while True:
                 matched = await sensor.watch(
-                    trigger=trigger_cfg, input={}, namespace="default"
+                    trigger=trigger_cfg, input={}, namespace="default",
                 )
                 if matched:
                     await get_dsl_service().dispatch(
@@ -256,7 +256,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         from src.backend.dsl.orchestration.triggers import get_trigger_registry
 
         sensor = SqlSensor(
-            dsn=dsn, query=query, predicate=predicate, poll_interval_s=poll_interval_s
+            dsn=dsn, query=query, predicate=predicate, poll_interval_s=poll_interval_s,
         )
         trigger_cfg = SensorTrigger(
             sensor_id=f"sql_{id(self)}",
@@ -270,7 +270,7 @@ class SourcesEIPsMixin(EIPMixinBase):
             route_id = getattr(self, "route_id", "") or "_pending_route_"
             while True:
                 matched = await sensor.watch(
-                    trigger=trigger_cfg, input={}, namespace="default"
+                    trigger=trigger_cfg, input={}, namespace="default",
                 )
                 if matched:
                     await get_dsl_service().dispatch(
@@ -283,7 +283,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         task = _create_or_defer_sensor_task(_runner, name=f"sensor:sql:{id(self)}")
         if hasattr(task, "start"):  # _DeferredTask
             get_trigger_registry().register(_FileSensorWrapper(
-                task_factory=lambda: task.start(), name=f"sensor:sql:{id(self)}"
+                task_factory=lambda: task.start(), name=f"sensor:sql:{id(self)}",
             ))
         else:
             get_trigger_registry().register(_FileSensorWrapper(task=task, name=f"sensor:sql:{id(self)}"))
@@ -329,7 +329,7 @@ class SourcesEIPsMixin(EIPMixinBase):
             route_id = getattr(self, "route_id", "") or "_pending_route_"
             while True:
                 matched = await sensor.watch(
-                    trigger=trigger_cfg, input={}, namespace="default"
+                    trigger=trigger_cfg, input={}, namespace="default",
                 )
                 if matched:
                     await get_dsl_service().dispatch(
@@ -342,7 +342,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         task = _create_or_defer_sensor_task(_runner, name=f"sensor:http:{url}")
         if hasattr(task, "start"):  # _DeferredTask
             get_trigger_registry().register(_FileSensorWrapper(
-                task_factory=lambda: task.start(), name=f"sensor:http:{url}"
+                task_factory=lambda: task.start(), name=f"sensor:http:{url}",
             ))
         else:
             get_trigger_registry().register(_FileSensorWrapper(task=task, name=f"sensor:http:{url}"))
@@ -391,7 +391,7 @@ class SourcesEIPsMixin(EIPMixinBase):
             route_id = getattr(self, "route_id", "") or "_pending_route_"
             while True:
                 matched = await sensor.watch(
-                    trigger=trigger_cfg, input={}, namespace="default"
+                    trigger=trigger_cfg, input={}, namespace="default",
                 )
                 if matched:
                     await get_dsl_service().dispatch(
@@ -408,14 +408,14 @@ class SourcesEIPsMixin(EIPMixinBase):
         task = _create_or_defer_sensor_task(_runner, name=f"sensor:s3:{bucket}")
         if hasattr(task, "start"):  # _DeferredTask
             get_trigger_registry().register(_FileSensorWrapper(
-                task_factory=lambda: task.start(), name=f"sensor:s3:{bucket}"
+                task_factory=lambda: task.start(), name=f"sensor:s3:{bucket}",
             ))
         else:
             get_trigger_registry().register(_FileSensorWrapper(task=task, name=f"sensor:s3:{bucket}"))
         return self  # type: ignore
 
     def sse_source(
-        self, url: str, event_types: list[str] | None = None
+        self, url: str, event_types: list[str] | None = None,
     ) -> RouteBuilder:
         """Source-процессор для Server-Sent Events."""
         from src.backend.dsl.engine.processors.generic import SseSourceProcessor
@@ -423,6 +423,6 @@ class SourcesEIPsMixin(EIPMixinBase):
         return cast(
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
-                SseSourceProcessor(url=url, event_types=event_types)
+                SseSourceProcessor(url=url, event_types=event_types),
             ),
         )

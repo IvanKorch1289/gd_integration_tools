@@ -36,7 +36,7 @@ def _force_flag(monkeypatch: pytest.MonkeyPatch, value: bool) -> None:
     from src.backend.core.config.features import feature_flags
 
     monkeypatch.setattr(
-        feature_flags, "dspy_eval_pipeline_enabled", value, raising=False
+        feature_flags, "dspy_eval_pipeline_enabled", value, raising=False,
     )
 
 
@@ -100,8 +100,8 @@ def test_baseline_dataset_load_from_json(tmp_path: Path) -> None:
                 "name": "x",
                 "train": [{"input": "a"}, {"input": "b"}],
                 "eval": [{"input": "c"}],
-            }
-        )
+            },
+        ),
     )
     ds = BaselineDataset.load_from_json(file)
     assert ds.name == "x"
@@ -144,7 +144,7 @@ def test_document_parser_pipeline_metric() -> None:
     )
 
     output = document_parser_pipeline.forward(
-        {"input": "Тестовый Тестов Тестович, паспорт 4501 234567, 15.03.1980"}
+        {"input": "Тестовый Тестов Тестович, паспорт 4501 234567, 15.03.1980"},
     )
     parsed = json.loads(output)
     assert parsed["passport"] == "4501 234567"
@@ -174,7 +174,7 @@ def test_rag_reranker_metric() -> None:
 async def test_compile_report_to_dict(monkeypatch: pytest.MonkeyPatch) -> None:
     _force_flag(monkeypatch, True)
     baseline = BaselineDataset(
-        name="x", train=[{"input": "a", "expected": "1"}], eval=[]
+        name="x", train=[{"input": "a", "expected": "1"}], eval=[],
     )
     optimizer = DSPyOptimizer(baseline=baseline)
     report = await optimizer.compile(pipeline=_StubPipeline())

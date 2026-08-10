@@ -111,7 +111,7 @@ def bootstrap_snapshot_job(app: FastAPI) -> None:
 
         if not app_settings.snapshot.enabled:
             app_logger.info(
-                "Snapshot job отключён (snapshot.enabled=false), пропуск bootstrap"
+                "Snapshot job отключён (snapshot.enabled=false), пропуск bootstrap",
             )
             return
 

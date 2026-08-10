@@ -43,7 +43,7 @@ def _downstream_ok(status_code: int = 200, body: bytes = b"ok"):
 
     async def downstream(scope, receive, send):
         await send(
-            {"type": "http.response.start", "status": status_code, "headers": []}
+            {"type": "http.response.start", "status": status_code, "headers": []},
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -407,7 +407,7 @@ class TestCSRFCookieDefaults:
 
         async def downstream(scope, receive, send):
             await send(
-                {"type": "http.response.start", "status": 200, "headers": []}
+                {"type": "http.response.start", "status": 200, "headers": []},
             )
             await send({"type": "http.response.body", "body": b"ok"})
 

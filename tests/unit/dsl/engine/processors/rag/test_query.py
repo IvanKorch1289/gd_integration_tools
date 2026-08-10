@@ -57,7 +57,7 @@ class _StubRag:
                 "top_k": top_k,
                 "namespace": namespace,
                 "max_staleness_hours": max_staleness_hours,
-            }
+            },
         )
         return _StubAugmentResult(prompt=f"P({query})")
 
@@ -66,7 +66,7 @@ class _StubRag:
 def stub_rag(monkeypatch: pytest.MonkeyPatch) -> _StubRag:
     stub = _StubRag()
     monkeypatch.setattr(
-        "src.backend.services.ai.rag_service.get_rag_service", lambda: stub
+        "src.backend.services.ai.rag_service.get_rag_service", lambda: stub,
     )
     return stub
 

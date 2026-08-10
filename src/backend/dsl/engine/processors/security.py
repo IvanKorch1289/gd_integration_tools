@@ -135,7 +135,7 @@ class AuthValidateProcessor(BaseProcessor):
 
         if AuthMethod.NONE in methods or request is None:
             exchange.set_property(
-                self._result_property, AuthContext(AuthMethod.NONE, "anonymous")
+                self._result_property, AuthContext(AuthMethod.NONE, "anonymous"),
             )
             return
 
@@ -163,7 +163,7 @@ class AuthValidateProcessor(BaseProcessor):
         if self._required:
             exchange.set_error(
                 "auth: ни один из методов "
-                f"{[m.value for m in methods]} не подтвердил запрос"
+                f"{[m.value for m in methods]} не подтвердил запрос",
             )
             exchange.stop()
 
@@ -174,5 +174,5 @@ class AuthValidateProcessor(BaseProcessor):
                 "methods": list(self._methods_raw),
                 "result_property": self._result_property,
                 "required": self._required,
-            }
+            },
         }

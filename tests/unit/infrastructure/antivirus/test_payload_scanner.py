@@ -17,7 +17,7 @@ class _CleanBackend(AntivirusBackend):
 
     async def scan_bytes(self, payload: bytes) -> AntivirusScanResult:
         return AntivirusScanResult(
-            clean=True, signature=None, backend=self.name, latency_ms=1.0
+            clean=True, signature=None, backend=self.name, latency_ms=1.0,
         )
 
 

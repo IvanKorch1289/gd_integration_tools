@@ -103,7 +103,7 @@ class _RedisClientProtocol(Protocol):
         ...
 
     async def execute(
-        self, kind: RedisKind, operation: Callable[[Redis], Awaitable[Any]]
+        self, kind: RedisKind, operation: Callable[[Redis], Awaitable[Any]],
     ) -> Any:
         """Execute operation with Redis client.
 
@@ -121,7 +121,7 @@ class _RedisClientProtocol(Protocol):
     async def cache_get(self, key: str) -> Any: ...
 
     async def cache_set(
-        self, key: str, value: Any, expire: int | None = None
+        self, key: str, value: Any, expire: int | None = None,
     ) -> None: ...
 
     async def cache_delete(self, *keys: str) -> int: ...
@@ -131,7 +131,7 @@ class _RedisClientProtocol(Protocol):
     async def bulk_get(self, keys: list[str]) -> list[Any]: ...
 
     async def bulk_set(
-        self, items: dict[str, Any], expire: int | None = None
+        self, items: dict[str, Any], expire: int | None = None,
     ) -> None: ...
 
     def decode(self, value: Any) -> Any: ...

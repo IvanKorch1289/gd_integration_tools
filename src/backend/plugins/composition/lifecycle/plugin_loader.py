@@ -66,7 +66,7 @@ async def bootstrap_v11_plugin_loader(app: FastAPI) -> None:
             action_registry=ActionRegistryAdapter(action_handler_registry),
             repository_registry=get_repository_hook_registry(),
             processor_registry=ProcessorRegistryAdapter(
-                get_processor_plugin_registry()
+                get_processor_plugin_registry(),
             ),
             core_version=app_settings.v11.core_version,
         )
@@ -74,7 +74,7 @@ async def bootstrap_v11_plugin_loader(app: FastAPI) -> None:
         app.state.capability_gate = gate
         app.state.plugin_loader = loader
         app_logger.info(
-            "V11 PluginLoader: %d плагин(ов) загружено", len(loader.successful)
+            "V11 PluginLoader: %d плагин(ов) загружено", len(loader.successful),
         )
     except Exception as exc:
         app_logger.warning("V11 PluginLoader bootstrap skipped: %s", exc)
@@ -233,7 +233,7 @@ async def start_v11_hot_reload(app: FastAPI) -> None:
     route_loader = getattr(app.state, "route_loader", None)
     if plugin_loader is None and route_loader is None:
         app_logger.info(
-            "V11 hot-reload skipped: ни PluginLoader, ни RouteLoader не активны"
+            "V11 hot-reload skipped: ни PluginLoader, ни RouteLoader не активны",
         )
         return
 
@@ -262,7 +262,7 @@ async def start_v11_hot_reload(app: FastAPI) -> None:
     task = get_task_registry().create_task(_watch_loop(), name="v11-hot-reload")
     app.state.v11_hot_reload_task = task
     app_logger.info(
-        "V11 hot-reload started: watching %s (debounce=%dms)", watch_dirs, debounce_ms
+        "V11 hot-reload started: watching %s (debounce=%dms)", watch_dirs, debounce_ms,
     )
 
 

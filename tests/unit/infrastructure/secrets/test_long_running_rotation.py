@@ -43,7 +43,7 @@ def test_first_fetch_reads_backend() -> None:
     backend = _FakeBackend(iter(["secret_v1"]))
     clock = _Clock()
     rotator = LongRunningSecretRotator(
-        backend, "secret/db", refresh_interval_s=60.0, time_source=clock
+        backend, "secret/db", refresh_interval_s=60.0, time_source=clock,
     )
     value = asyncio.run(rotator.fetch_with_rotation())
     assert value == "secret_v1"
@@ -55,7 +55,7 @@ def test_no_refresh_within_interval() -> None:
     backend = _FakeBackend(iter(["v1", "v2"]))
     clock = _Clock()
     rotator = LongRunningSecretRotator(
-        backend, "secret/db", refresh_interval_s=60.0, time_source=clock
+        backend, "secret/db", refresh_interval_s=60.0, time_source=clock,
     )
 
     async def _run() -> tuple[Any, Any]:
@@ -75,7 +75,7 @@ def test_rotation_refresh_after_interval() -> None:
     backend = _FakeBackend(iter(["v1", "v2"]))
     clock = _Clock()
     rotator = LongRunningSecretRotator(
-        backend, "secret/db", refresh_interval_s=60.0, time_source=clock
+        backend, "secret/db", refresh_interval_s=60.0, time_source=clock,
     )
 
     async def _run() -> tuple[Any, Any]:
@@ -116,7 +116,7 @@ def test_heartbeat_called_on_refresh() -> None:
         heartbeat_calls.append(1)
 
     rotator = LongRunningSecretRotator(
-        backend, "secret/db", refresh_interval_s=60.0, heartbeat=_heartbeat
+        backend, "secret/db", refresh_interval_s=60.0, heartbeat=_heartbeat,
     )
     asyncio.run(rotator.fetch_with_rotation())
     assert heartbeat_calls == [1]
@@ -131,7 +131,7 @@ def test_async_heartbeat_supported() -> None:
         heartbeat_calls.append(1)
 
     rotator = LongRunningSecretRotator(
-        backend, "secret/db", refresh_interval_s=60.0, heartbeat=_heartbeat
+        backend, "secret/db", refresh_interval_s=60.0, heartbeat=_heartbeat,
     )
     asyncio.run(rotator.fetch_with_rotation())
     assert heartbeat_calls == [1]

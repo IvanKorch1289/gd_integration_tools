@@ -83,7 +83,7 @@ class TestValidateJwtSecretStrengthRejects:
         # Реальный random-bytes secret (43 chars, alphanumeric)
         # → entropy ≥ 128 (heuristic threshold).
         report = _validate_jwt_secret_strength(
-            "abcdefghijklmnopqrstuvwxyz0123456789abcdef"  # 43 chars
+            "abcdefghijklmnopqrstuvwxyz0123456789abcdef",  # 43 chars
         )
         assert report.is_acceptable is True
 

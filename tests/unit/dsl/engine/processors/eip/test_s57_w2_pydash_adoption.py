@@ -114,7 +114,7 @@ class TestPydashSet:
         await op.process(ex, _ctx())
         assert ex.out_message is not None
         assert ex.out_message.body == {
-            "metadata": {"timestamp": "2025-06-01T00:00:00Z"}
+            "metadata": {"timestamp": "2025-06-01T00:00:00Z"},
         }
 
 
@@ -127,7 +127,7 @@ class TestPydashOmit:
         """Top-level keys removed."""
         op = PydashOmitProcessor(fields=["password", "ssn"])
         ex = _exchange(
-            {"name": "alice", "email": "a@b.com", "password": "x", "ssn": "123"}
+            {"name": "alice", "email": "a@b.com", "password": "x", "ssn": "123"},
         )
         await op.process(ex, _ctx())
         assert ex.out_message is not None
@@ -141,7 +141,7 @@ class TestPydashOmit:
             {
                 "user": {"name": "alice", "secret": "hidden"},
                 "metadata": {"secret": "also-hidden", "version": 1},
-            }
+            },
         )
         await op.process(ex, _ctx())
         assert ex.out_message is not None
@@ -181,7 +181,7 @@ class TestPydashPick:
                 "email": "a@b.com",
                 "password": "x",
                 "ssn": "123",
-            }
+            },
         )
         await op.process(ex, _ctx())
         assert ex.out_message is not None
@@ -204,7 +204,7 @@ class TestPydashMerge:
             defaults={
                 "audit": {"source": "api_v2", "version": 1},
                 "metadata": {"retries": 0},
-            }
+            },
         )
         ex = _exchange({"audit": {"version": 2}})
         await op.process(ex, _ctx())

@@ -69,7 +69,7 @@ async def test_stage1_redis_happy_path_no_metric_incremented() -> None:
     e = _ex(body={"id": 1})
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_redis:
         mock_redis.add_to_stream = AsyncMock(return_value=None)
         await proc.process(e, ctx)
@@ -93,13 +93,13 @@ async def test_stage2_jsonl_fallback_writes_to_local_file(
     failing = _SetFailProcessor("boom")
     dlq_file = tmp_path / "dlq.jsonl"
     proc = DeadLetterProcessor(
-        processors=[failing], dlq_stream="primary-down", dlq_path=str(dlq_file)
+        processors=[failing], dlq_stream="primary-down", dlq_path=str(dlq_file),
     )
     ctx = AsyncMock()
     e = _ex(body={"order_id": 42}, headers={"x-trace": "abc"})
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_redis:
         mock_redis.add_to_stream.side_effect = RuntimeError("redis offline")
         # Должен отработать без raise — Stage 2 успешен.
@@ -135,14 +135,14 @@ async def test_stage3_terminal_raises_when_all_stages_fail(
     failing = _SetFailProcessor("boom")
     dlq_file = tmp_path / "dlq_terminal.jsonl"
     proc = DeadLetterProcessor(
-        processors=[failing], dlq_stream="down", dlq_path=str(dlq_file)
+        processors=[failing], dlq_stream="down", dlq_path=str(dlq_file),
     )
     ctx = AsyncMock()
     e = _ex(body=1)
     before_all = _read_counter(dlq_send_failed_total, "all")
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_redis:
         mock_redis.add_to_stream.side_effect = RuntimeError("redis down")
         # Stage 2 тоже падает — патчим ``importlib.import_module`` через
@@ -183,7 +183,7 @@ async def test_stage3_terminal_when_no_dlq_path_configured() -> None:
     before_primary = _read_counter(dlq_send_failed_total, "primary")
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_redis:
         mock_redis.add_to_stream.side_effect = RuntimeError("redis down")
         with pytest.raises(RuntimeError) as exc_info:
@@ -221,7 +221,7 @@ async def test_no_dlq_invocation_on_success() -> None:
     e = _ex(body=1)
 
     with patch(
-        "src.backend.infrastructure.clients.storage.redis.redis_client"
+        "src.backend.infrastructure.clients.storage.redis.redis_client",
     ) as mock_redis:
         mock_redis.add_to_stream = AsyncMock(return_value=None)
         await proc.process(e, ctx)

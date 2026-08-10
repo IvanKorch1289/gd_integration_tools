@@ -67,7 +67,7 @@ async def test_one_batch_one_reload(tmp_path: Path, monkeypatch) -> None:
 
     monkeypatch.setattr(watcher, "_sync_reload_incremental", lambda changes: fake_sync_reload_all())
     monkeypatch.setattr(
-        yaml_watcher_mod, "awatch", _fake_awatch([{(1, str(tmp_path / "r.yaml"))}])
+        yaml_watcher_mod, "awatch", _fake_awatch([{(1, str(tmp_path / "r.yaml"))}]),
     )
 
     consumer = asyncio.create_task(watcher._consume_loop())
@@ -103,7 +103,7 @@ async def test_two_batches_two_reloads(tmp_path: Path, monkeypatch) -> None:
         yaml_watcher_mod,
         "awatch",
         _fake_awatch(
-            [{(1, str(tmp_path / "a.yaml"))}, {(2, str(tmp_path / "b.yaml"))}]
+            [{(1, str(tmp_path / "a.yaml"))}, {(2, str(tmp_path / "b.yaml"))}],
         ),
     )
 
@@ -137,7 +137,7 @@ async def test_non_yaml_change_is_ignored(tmp_path: Path, monkeypatch) -> None:
 
     monkeypatch.setattr(watcher, "_sync_reload_incremental", lambda changes: fake_sync_reload_all())
     monkeypatch.setattr(
-        yaml_watcher_mod, "awatch", _fake_awatch([{(1, str(tmp_path / "noise.txt"))}])
+        yaml_watcher_mod, "awatch", _fake_awatch([{(1, str(tmp_path / "noise.txt"))}]),
     )
 
     consumer = asyncio.create_task(watcher._consume_loop())

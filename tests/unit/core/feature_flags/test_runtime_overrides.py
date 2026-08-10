@@ -125,13 +125,13 @@ async def test_inmemory_provider_uses_runtime_override() -> None:
     provider = InMemoryProvider()
     # До override — default.
     value_before = await provider.resolve_boolean_value(
-        "some_test_flag_runtime", default=False
+        "some_test_flag_runtime", default=False,
     )
     assert value_before is False
 
     get_runtime_overrides().set("some_test_flag_runtime", True)
     value_after = await provider.resolve_boolean_value(
-        "some_test_flag_runtime", default=False
+        "some_test_flag_runtime", default=False,
     )
     assert value_after is True
 
@@ -146,7 +146,7 @@ async def test_inmemory_provider_tenant_override_isolated() -> None:
 
     provider = InMemoryProvider()
     get_runtime_overrides().set(
-        "tenant_isolated_flag", True, tenant_id="tenant-special"
+        "tenant_isolated_flag", True, tenant_id="tenant-special",
     )
 
     val_default_tenant = await provider.resolve_boolean_value(

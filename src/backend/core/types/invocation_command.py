@@ -55,13 +55,13 @@ class InvocationOptionsSchema(_CoreBaseModel):
     """
 
     mode: InvokeMode = Field(
-        default=InvokeMode.direct, description="Режим выполнения: direct или event."
+        default=InvokeMode.direct, description="Режим выполнения: direct или event.",
     )
     delay_seconds: int | None = Field(
-        default=None, ge=1, description="Отложенный запуск в секундах."
+        default=None, ge=1, description="Отложенный запуск в секундах.",
     )
     cron: str | None = Field(
-        default=None, description="Cron-выражение для планирования публикации."
+        default=None, description="Cron-выражение для планирования публикации.",
     )
 
     @model_validator(mode="after")
@@ -76,17 +76,17 @@ class InvocationResultSchema(_CoreBaseModel):
     """Унифицированный ответ для event/scheduled вызовов."""
 
     status: Literal["queued", "scheduled", "completed"] = Field(
-        description="Статус обработки запроса."
+        description="Статус обработки запроса.",
     )
     transport: str = Field(description="Транспорт или шина (direct, redis, rabbit).")
     job_id: str | None = Field(
-        default=None, description="Идентификатор задачи (если scheduled)."
+        default=None, description="Идентификатор задачи (если scheduled).",
     )
     command: dict[str, Any] | None = Field(
-        default=None, description="Сформированная команда для шины."
+        default=None, description="Сформированная команда для шины.",
     )
     result: Any | None = Field(
-        default=None, description="Результат выполнения (если direct)."
+        default=None, description="Результат выполнения (если direct).",
     )
 
 
@@ -95,7 +95,7 @@ class ActionCommandMetaSchema(_CoreBaseModel):
 
     source: str = Field(default="http", description="Источник вызова команды.")
     request_path: str | None = Field(
-        default=None, description="HTTP path, с которого была сформирована команда."
+        default=None, description="HTTP path, с которого была сформирована команда.",
     )
     requested_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
@@ -108,7 +108,7 @@ class ActionCommandSchema(_CoreBaseModel):
 
     action: str = Field(description="Уникальное имя действия.")
     payload: dict[str, Any] = Field(
-        default_factory=dict, description="Полезная нагрузка команды."
+        default_factory=dict, description="Полезная нагрузка команды.",
     )
     meta: ActionCommandMetaSchema = Field(
         default_factory=ActionCommandMetaSchema,

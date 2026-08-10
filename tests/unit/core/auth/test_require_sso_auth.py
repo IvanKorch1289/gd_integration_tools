@@ -50,8 +50,8 @@ def mock_registry() -> AsyncMock:
     registry = AsyncMock(spec=SsoRegistry)
     registry.get = AsyncMock(
         return_value=_make_idp_config(
-            mappings={"admins": ["admin:read", "admin:write"]}
-        )
+            mappings={"admins": ["admin:read", "admin:write"]},
+        ),
     )
     return registry
 
@@ -61,7 +61,7 @@ class TestRequireSsoAuthDecorator:
 
     @pytest.mark.asyncio
     async def test_passes_when_auth_method_is_saml(
-        self, mock_registry: AsyncMock
+        self, mock_registry: AsyncMock,
     ) -> None:
         @require_sso_auth(mock_registry)
         async def handler(auth: AuthContext) -> str:
@@ -94,7 +94,7 @@ class TestRequireSsoAuthDecorator:
             return "ok"
 
         auth = _make_auth_context(
-            metadata={"tenant_id": "bank-1", "groups": ["admins"]}
+            metadata={"tenant_id": "bank-1", "groups": ["admins"]},
         )
         await handler(auth=auth)
         mock_registry.get.assert_awaited_once_with("bank-1")
@@ -114,21 +114,21 @@ class TestRequireSsoAuthDecorator:
 
     @pytest.mark.asyncio
     async def test_raises_when_tenant_id_missing(
-        self, mock_registry: AsyncMock
+        self, mock_registry: AsyncMock,
     ) -> None:
         @require_sso_auth(mock_registry)
         async def handler(auth: AuthContext) -> str:
             return "ok"
 
         auth = _make_auth_context(
-            method=AuthMethod.SAML, metadata={"groups": ["admins"]}
+            method=AuthMethod.SAML, metadata={"groups": ["admins"]},
         )
         with pytest.raises(RequireSsoAuthError, match="tenant_id"):
             await handler(auth=auth)
 
     @pytest.mark.asyncio
     async def test_raises_when_registry_returns_none(
-        self, mock_registry: AsyncMock
+        self, mock_registry: AsyncMock,
     ) -> None:
         """Если IdpConfig не найден — fail-closed."""
         mock_registry.get.return_value = None
@@ -138,7 +138,7 @@ class TestRequireSsoAuthDecorator:
             return "ok"
 
         auth = _make_auth_context(
-            metadata={"tenant_id": "unknown", "groups": ["admins"]}
+            metadata={"tenant_id": "unknown", "groups": ["admins"]},
         )
         with pytest.raises(RequireSsoAuthError, match="IdP config"):
             await handler(auth=auth)
@@ -149,7 +149,7 @@ class TestRequireSsoCapabilityDecorator:
 
     @pytest.mark.asyncio
     async def test_passes_when_user_has_capability(
-        self, mock_registry: AsyncMock
+        self, mock_registry: AsyncMock,
     ) -> None:
         @require_sso_capability("admin:read", mock_registry)
         async def handler(auth: AuthContext) -> str:
@@ -161,7 +161,7 @@ class TestRequireSsoCapabilityDecorator:
 
     @pytest.mark.asyncio
     async def test_rejects_when_user_lacks_capability(
-        self, mock_registry: AsyncMock
+        self, mock_registry: AsyncMock,
     ) -> None:
         @require_sso_capability("admin:write", mock_registry)
         async def handler(auth: AuthContext) -> str:
@@ -169,7 +169,7 @@ class TestRequireSsoCapabilityDecorator:
 
         # User has "users" group, no mapping -> no caps
         mock_registry.get.return_value = _make_idp_config(
-            mappings={"admins": ["admin:read", "admin:write"]}
+            mappings={"admins": ["admin:read", "admin:write"]},
         )
         auth = _make_auth_context(metadata={"tenant_id": "acme", "groups": ["users"]})
         with pytest.raises(RequireSsoAuthError, match="admin:write"):
@@ -205,7 +205,7 @@ class TestDecoratorMetadata:
 
     @pytest.mark.asyncio
     async def test_preserves_function_name_and_doc(
-        self, mock_registry: AsyncMock
+        self, mock_registry: AsyncMock,
     ) -> None:
         @require_sso_auth(mock_registry)
         async def my_handler(auth: AuthContext) -> str:

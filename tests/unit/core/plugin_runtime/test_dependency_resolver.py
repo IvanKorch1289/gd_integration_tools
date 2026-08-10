@@ -23,7 +23,7 @@ from src.backend.core.plugin_runtime.manifest_toml import (
 
 
 def _make_manifest(
-    name: str, *, requires: dict[str, str] | None = None
+    name: str, *, requires: dict[str, str] | None = None,
 ) -> PluginManifest:
     """Утилита: минимальный PluginManifest с заданными зависимостями.
 
@@ -37,7 +37,7 @@ def _make_manifest(
         requires_core=">=0.2,<1.0",
         entry_class=f"extensions.{name}.plugin.Plugin",
         compatibility=PluginCompatibility(
-            requires_plugins=dict.fromkeys(requires or {}, ">=0.0")
+            requires_plugins=dict.fromkeys(requires or {}, ">=0.0"),
         ),
     )
 

@@ -10,7 +10,7 @@ import pytest
 # S124 W2: vault_cipher module not yet implemented. Honest skip
 # (TD-0246). See ADR-0208 plan for details.
 pytest.skip(
-    "src.backend.core.security.vault_cipher not implemented", allow_module_level=True
+    "src.backend.core.security.vault_cipher not implemented", allow_module_level=True,
 )
 
 from src.backend.core.security.vault_cipher import (
@@ -140,7 +140,7 @@ class TestEncrypt:
         assert result == "vault:v1:abc"
         expected_b64 = base64.b64encode("привет".encode()).decode("ascii")
         mock_client.post.assert_awaited_once_with(
-            "/v1/transit/encrypt/k", json={"plaintext": expected_b64}
+            "/v1/transit/encrypt/k", json={"plaintext": expected_b64},
         )
 
     async def test_network_error(self) -> None:
@@ -201,7 +201,7 @@ class TestDecrypt:
         result = await cipher.decrypt("vault:v1:abc")
         assert result == b"secret"
         mock_client.post.assert_awaited_once_with(
-            "/v1/transit/decrypt/k", json={"ciphertext": "vault:v1:abc"}
+            "/v1/transit/decrypt/k", json={"ciphertext": "vault:v1:abc"},
         )
 
     async def test_invalid_format_not_str(self) -> None:

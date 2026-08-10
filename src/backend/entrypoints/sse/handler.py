@@ -172,7 +172,7 @@ class _InvokeRequest(BaseModel):
 
     action: str = Field(description="Имя action или DSL-маршрута.")
     payload: dict[str, Any] = Field(
-        default_factory=dict, description="Полезная нагрузка вызова."
+        default_factory=dict, description="Полезная нагрузка вызова.",
     )
 
 
@@ -235,7 +235,7 @@ async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingRespons
     GraphQL/SOAP/REST) для route-wide permission enforcement.
     """
     correlation_id = request.headers.get("x-correlation-id") or request.headers.get(
-        "x-request-id"
+        "x-request-id",
     )
     idempotency_key = request.headers.get("idempotency-key")
     principal, permissions = _extract_auth_from_request(request)

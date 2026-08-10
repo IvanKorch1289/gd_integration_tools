@@ -73,7 +73,7 @@ class FileWatchProcessor(BaseProcessor):
         self.target = to
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="read"):
@@ -84,7 +84,7 @@ class FileWatchProcessor(BaseProcessor):
             from watchdog.observers import Observer
         except ImportError as exc:
             raise RuntimeError(
-                "watchdog required: uv add watchdog"
+                "watchdog required: uv add watchdog",
             ) from exc
 
         collector = _ChangeCollector(self.pattern)

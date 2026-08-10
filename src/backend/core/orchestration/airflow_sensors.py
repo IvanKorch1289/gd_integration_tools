@@ -282,7 +282,7 @@ class HttpSensor:
                 attempt += 1
                 try:
                     resp = await client.request(
-                        self._method, self._url, headers=self._headers
+                        self._method, self._url, headers=self._headers,
                     )
                     if resp.status_code == self._expected_status:
                         if self._body_match is None:
@@ -306,12 +306,12 @@ class HttpSensor:
                             data = resp.text
                         if jmespath.search(self._body_match, data):
                             _log.info(
-                                "HttpSensor: match (attempt %d, body matched)", attempt
+                                "HttpSensor: match (attempt %d, body matched)", attempt,
                             )
                             return True
                 except Exception as e:
                     _log.warning(
-                        "HttpSensor: request failed (attempt %d): %s", attempt, e
+                        "HttpSensor: request failed (attempt %d): %s", attempt, e,
                     )
 
                 elapsed = time.monotonic() - start
@@ -365,7 +365,7 @@ class S3Sensor:
             import aioboto3
         except ImportError as e:
             raise ImportError(
-                "S3Sensor requires aioboto3. Install: uv pip install aioboto3"
+                "S3Sensor requires aioboto3. Install: uv pip install aioboto3",
             ) from e
         self._bucket = bucket
         self._key = key
@@ -427,7 +427,7 @@ class S3Sensor:
                 # 404 (NotFound) → expected while waiting; other errors → warn
                 if "NoSuchKey" not in repr(e) and "404" not in repr(e):
                     _log.warning(
-                        "S3Sensor: head_object failed (attempt %d): %s", attempt, e
+                        "S3Sensor: head_object failed (attempt %d): %s", attempt, e,
                     )
 
             elapsed = time.monotonic() - start

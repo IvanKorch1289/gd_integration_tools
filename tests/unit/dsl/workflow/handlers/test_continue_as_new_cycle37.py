@@ -73,7 +73,7 @@ class TestContinueAsNewCycle37:
 
         # SA были переданы в upsert_search_attributes
         fake_workflow.upsert_search_attributes.assert_called_once_with(
-            {"env": "prod", "tenant_id": "t-1"}
+            {"env": "prod", "tenant_id": "t-1"},
         )
         # continue_as_new получил только input (НЕ search_attributes)
         fake_workflow.continue_as_new.assert_called_once_with({"step": 100})

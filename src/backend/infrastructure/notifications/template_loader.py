@@ -47,7 +47,7 @@ def _read_yaml(path: Path) -> dict[str, Any]:
         import yaml
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
-            "PyYAML недоступен; установите pyyaml для загрузки YAML-шаблонов"
+            "PyYAML недоступен; установите pyyaml для загрузки YAML-шаблонов",
         ) from exc
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
 
@@ -67,7 +67,7 @@ def _read_template_file(path: Path) -> dict[str, Any]:
 
 
 def load_template_file(
-    path: Path | str, *, registry: TemplateRegistry | None = None
+    path: Path | str, *, registry: TemplateRegistry | None = None,
 ) -> str:
     """Загрузить и зарегистрировать ОДИН template-файл. Возвращает ключ."""
     path = Path(path)
@@ -86,7 +86,7 @@ def load_template_file(
 
 
 def load_templates_from_dir(
-    directory: Path | str | None = None, *, registry: TemplateRegistry | None = None
+    directory: Path | str | None = None, *, registry: TemplateRegistry | None = None,
 ) -> list[str]:
     """Загружает все ``*.yaml|*.yml|*.toml`` шаблоны из директории.
 
@@ -113,6 +113,6 @@ def load_templates_from_dir(
         except Exception as exc:
             _logger.warning("template skip %s: %s", path, exc)
     _logger.info(
-        "templates loaded from disk", extra={"dir": str(base), "count": len(loaded)}
+        "templates loaded from disk", extra={"dir": str(base), "count": len(loaded)},
     )
     return loaded

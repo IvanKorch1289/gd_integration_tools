@@ -46,7 +46,7 @@ def mock_metrics() -> Any:
     core source (was infrastructure.observability which was removed).
     """
     with patch(
-        "src.backend.core.utils.metrics_registry.metrics_registry"
+        "src.backend.core.utils.metrics_registry.metrics_registry",
     ) as reg:
         age_gauge = MagicMock()
         rows_gauge = MagicMock()
@@ -170,13 +170,13 @@ def test_sync_pg_to_sqlite_success(
     mock_select.assert_called_once_with(mock_table)
     pg_conn.execute.assert_called_once_with(select_stmt)
     mock_metadata.create_all.assert_called_once_with(
-        sqlite_engine, tables=[mock_table], checkfirst=True
+        sqlite_engine, tables=[mock_table], checkfirst=True,
     )
     mock_delete.assert_called_once_with(mock_table)
     sqlite_conn.execute.assert_any_call(delete_stmt)
     mock_insert.assert_called_once_with(mock_table)
     sqlite_conn.execute.assert_any_call(
-        insert_stmt, [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
+        insert_stmt, [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}],
     )
 
 
@@ -234,7 +234,7 @@ def test_sync_pg_to_sqlite_skips_unknown_table(
 
     with caplog.at_level("WARNING"):
         result = sj.sync_pg_to_sqlite(
-            pg_engine, sqlite_engine, ["unknown_tbl", mock_table.name]
+            pg_engine, sqlite_engine, ["unknown_tbl", mock_table.name],
         )
 
     assert mock_table.name in result
@@ -315,7 +315,7 @@ def test_run_snapshot_now_disabled(mock_settings: MagicMock) -> None:
 @pytest.mark.unit
 @patch("src.backend.core.config.settings.settings")
 def test_run_snapshot_now_empty_tables(
-    mock_settings: MagicMock, caplog: pytest.LogCaptureFixture
+    mock_settings: MagicMock, caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Пустой список tables → skip с warning."""
     mock_settings.snapshot = MagicMock(enabled=True, tables=[])
@@ -419,7 +419,7 @@ def test_publish_metrics_no_sync_skips(mock_metrics: Any) -> None:
 @pytest.mark.unit
 @patch("src.backend.core.config.settings.settings")
 def test_register_snapshot_job_disabled(
-    mock_settings: MagicMock, caplog: pytest.LogCaptureFixture
+    mock_settings: MagicMock, caplog: pytest.LogCaptureFixture,
 ) -> None:
     """enabled=False → job не регистрируется."""
     mock_settings.snapshot = MagicMock(enabled=False)
@@ -433,7 +433,7 @@ def test_register_snapshot_job_disabled(
 def test_register_snapshot_job_enabled(mock_settings: MagicMock) -> None:
     """enabled=True → add_job с корректными параметрами."""
     mock_settings.snapshot = MagicMock(
-        enabled=True, interval_minutes=5, tables=["users", "orders"]
+        enabled=True, interval_minutes=5, tables=["users", "orders"],
     )
     mock_settings.scheduler.default_jobstore_name = "default"
     scheduler = MagicMock()

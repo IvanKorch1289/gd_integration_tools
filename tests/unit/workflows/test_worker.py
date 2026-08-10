@@ -49,7 +49,7 @@ def test_build_spec_loader_not_found() -> None:
 
 def test_resolve_executor_dsl_default() -> None:
     with patch.dict(os.environ, {}, clear=True), patch(
-        "src.backend.infrastructure.workflow.executor.DSLStepExecutor"
+        "src.backend.infrastructure.workflow.executor.DSLStepExecutor",
     ) as MockDSL:
         exc = _resolve_executor()
         MockDSL.assert_called_once()
@@ -89,7 +89,7 @@ async def test_noop_executor_returns_done() -> None:
 async def test_bootstrap_calls_registrations() -> None:
     with (
         patch(
-            "src.backend.plugins.composition.service_setup.register_all_services"
+            "src.backend.plugins.composition.service_setup.register_all_services",
         ) as reg_svc,
         patch("src.backend.dsl.commands.setup.register_action_handlers") as reg_act,
         patch("src.backend.dsl.routes.register_dsl_routes") as reg_routes,
@@ -113,7 +113,7 @@ async def test_bootstrap_graceful_on_connector_failure() -> None:
         patch("src.backend.infrastructure.registry.ConnectorRegistry") as Reg,
     ):
         Reg.instance.return_value.start_all = AsyncMock(
-            side_effect=RuntimeError("boom")
+            side_effect=RuntimeError("boom"),
         )
         await _bootstrap()  # should not raise
 
@@ -139,7 +139,7 @@ async def test_shutdown_connectors_graceful_on_failure() -> None:
 @pytest.mark.asyncio
 async def test_readiness_check_success() -> None:
     with patch(
-        "src.backend.infrastructure.database.session_manager.main_session_manager"
+        "src.backend.infrastructure.database.session_manager.main_session_manager",
     ) as mgr:
         session = AsyncMock()
         mgr.create_session.return_value.__aenter__ = AsyncMock(return_value=session)
@@ -151,7 +151,7 @@ async def test_readiness_check_success() -> None:
 @pytest.mark.asyncio
 async def test_readiness_check_failure() -> None:
     with patch(
-        "src.backend.infrastructure.database.session_manager.main_session_manager"
+        "src.backend.infrastructure.database.session_manager.main_session_manager",
     ) as mgr:
         mgr.create_session.side_effect = Exception("db down")
         assert await _readiness_check() is False
@@ -206,14 +206,14 @@ async def test_run_worker_full_lifecycle() -> None:
     with (
         patch("src.backend.infrastructure.workflow.worker.asyncio.Event", return_value=event_mock),
         patch(
-            "src.backend.infrastructure.workflow.worker._bootstrap", new_callable=AsyncMock
+            "src.backend.infrastructure.workflow.worker._bootstrap", new_callable=AsyncMock,
         ) as boot,
         patch(
-            "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
+            "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner",
         ) as Runner,
         patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
-            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock
+            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock,
         ) as shut,
         patch("src.backend.infrastructure.workflow.worker._resolve_listener_dsn", return_value=None),
         patch("src.backend.infrastructure.workflow.worker.asyncio.get_running_loop") as mock_get_loop,
@@ -226,7 +226,7 @@ async def test_run_worker_full_lifecycle() -> None:
         Probes.return_value = probes_inst
 
         await _run_worker(
-            worker_id="w-1", max_concurrent=4, listen=False, probes_port=9100
+            worker_id="w-1", max_concurrent=4, listen=False, probes_port=9100,
         )
 
         boot.assert_awaited_once()
@@ -248,11 +248,11 @@ async def test_run_worker_with_listen() -> None:
         patch("src.backend.infrastructure.workflow.worker.asyncio.Event", return_value=event_mock),
         patch("src.backend.infrastructure.workflow.worker._bootstrap", new_callable=AsyncMock),
         patch(
-            "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
+            "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner",
         ) as Runner,
         patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
-            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock
+            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock,
         ),
         patch(
             "src.backend.infrastructure.workflow.worker._resolve_listener_dsn",
@@ -268,7 +268,7 @@ async def test_run_worker_with_listen() -> None:
         Probes.return_value = probes_inst
 
         await _run_worker(
-            worker_id="w-2", max_concurrent=2, listen=True, probes_port=9200
+            worker_id="w-2", max_concurrent=2, listen=True, probes_port=9200,
         )
 
         cfg = Runner.call_args.kwargs["config"]
@@ -284,11 +284,11 @@ async def test_run_worker_runner_stop_timeout() -> None:
         patch("src.backend.infrastructure.workflow.worker.asyncio.Event", return_value=event_mock),
         patch("src.backend.infrastructure.workflow.worker._bootstrap", new_callable=AsyncMock),
         patch(
-            "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
+            "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner",
         ) as Runner,
         patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
-            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock
+            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock,
         ),
         patch("src.backend.infrastructure.workflow.worker._resolve_listener_dsn", return_value=None),
         patch.dict(os.environ, {"SHUTDOWN_GRACE_SECONDS": "1"}),
@@ -303,7 +303,7 @@ async def test_run_worker_runner_stop_timeout() -> None:
         Probes.return_value = probes_inst
 
         await _run_worker(
-            worker_id="w-1", max_concurrent=4, listen=False, probes_port=9100
+            worker_id="w-1", max_concurrent=4, listen=False, probes_port=9100,
         )
         runner_inst.stop.assert_awaited_once()
         probes_inst.stop.assert_awaited_once()
@@ -317,11 +317,11 @@ async def test_run_worker_runner_stop_error() -> None:
         patch("src.backend.infrastructure.workflow.worker.asyncio.Event", return_value=event_mock),
         patch("src.backend.infrastructure.workflow.worker._bootstrap", new_callable=AsyncMock),
         patch(
-            "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner"
+            "src.backend.infrastructure.workflow.runner.DurableWorkflowRunner",
         ) as Runner,
         patch("src.backend.infrastructure.workflow.worker_probes.WorkerProbesServer") as Probes,
         patch(
-            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock
+            "src.backend.infrastructure.workflow.worker._shutdown_connectors", new_callable=AsyncMock,
         ),
         patch("src.backend.infrastructure.workflow.worker._resolve_listener_dsn", return_value=None),
         patch("src.backend.infrastructure.workflow.worker.asyncio.get_running_loop") as mock_get_loop,
@@ -335,7 +335,7 @@ async def test_run_worker_runner_stop_error() -> None:
         Probes.return_value = probes_inst
 
         await _run_worker(
-            worker_id="w-1", max_concurrent=4, listen=False, probes_port=9100
+            worker_id="w-1", max_concurrent=4, listen=False, probes_port=9100,
         )
         runner_inst.stop.assert_awaited_once()
         probes_inst.stop.assert_awaited_once()

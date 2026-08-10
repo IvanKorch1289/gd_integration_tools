@@ -136,7 +136,7 @@ class ResilienceCoordinator:
         if unknown:
             raise ValueError(
                 f"Fallback chain для '{component}' содержит "
-                f"незарегистрированные backend'ы: {unknown}"
+                f"незарегистрированные backend'ы: {unknown}",
             )
 
         breaker = self._breakers.get_or_create(component, breaker_spec)
@@ -179,7 +179,7 @@ class ResilienceCoordinator:
             else policy.mode
         )
         spec = BreakerSpec(
-            failure_threshold=profile.threshold, recovery_timeout=profile.ttl
+            failure_threshold=profile.threshold, recovery_timeout=profile.ttl,
         )
         self.register(
             component=component,
@@ -206,7 +206,7 @@ class ResilienceCoordinator:
                 return result
             except CircuitOpen:
                 logger.warning(
-                    "Breaker OPEN for '%s' — переключаемся на fallback chain", comp.name
+                    "Breaker OPEN for '%s' — переключаемся на fallback chain", comp.name,
                 )
                 self._mark_failure(comp)
             except Exception as exc:
@@ -219,7 +219,7 @@ class ResilienceCoordinator:
 
         if comp.mode == "off":
             raise RuntimeError(
-                f"Resilience: primary '{comp.name}' упал, fallback mode=off"
+                f"Resilience: primary '{comp.name}' упал, fallback mode=off",
             )
 
         last_exc: Exception | None = None
@@ -239,7 +239,7 @@ class ResilienceCoordinator:
                 )
 
         raise RuntimeError(
-            f"Resilience: все backend'ы '{comp.name}' исчерпаны"
+            f"Resilience: все backend'ы '{comp.name}' исчерпаны",
         ) from last_exc
 
     # ─────────── Snapshot для health-aggregator ───────────
@@ -330,7 +330,7 @@ class ResilienceCoordinator:
             async def policy_wrapper(*args: Any, **kwargs: Any) -> Any:
                 if rate_limiter is not None:
                     await rate_limiter.check(
-                        name, getattr(rate_limiter, "policy", None)
+                        name, getattr(rate_limiter, "policy", None),
                     )
                 if breaker_obj is not None:
                     async with breaker_obj.guard():
@@ -374,7 +374,7 @@ class ResilienceCoordinator:
             )
 
             record_degradation_mode(
-                component=comp.name, label=self._degradation_label(comp)
+                component=comp.name, label=self._degradation_label(comp),
             )
         except ImportError:
             pass

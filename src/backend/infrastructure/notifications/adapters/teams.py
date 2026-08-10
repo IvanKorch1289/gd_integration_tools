@@ -40,7 +40,7 @@ class TeamsAdapter:
         self._theme_color = theme_color
 
     async def send(
-        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any]
+        self, *, recipient: str, subject: str, body: str, metadata: dict[str, Any],
     ) -> None:
         """Метод send (см. signature)."""
         url = self._webhook_url_provider()
@@ -62,7 +62,7 @@ class TeamsAdapter:
         response = await client.request("POST", url, json=card)
         if response.status_code >= 400:
             raise RuntimeError(
-                f"Teams webhook failed: {response.status_code} {response.text[:200]}"
+                f"Teams webhook failed: {response.status_code} {response.text[:200]}",
             )
 
     async def health(self, mode: str = "fast") -> HealthResult:
@@ -84,12 +84,12 @@ class TeamsAdapter:
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000.0
             return HealthResult.failed(
-                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms
+                error=f"{type(exc).__name__}: {exc}", mode=mode, latency_ms=latency_ms,
             )
 
 
 assert isinstance(
-    TeamsAdapter(webhook_url_provider=lambda: ""), NotificationChannel
+    TeamsAdapter(webhook_url_provider=lambda: ""), NotificationChannel,
 )  # Protocol-conformance check на import
 
 

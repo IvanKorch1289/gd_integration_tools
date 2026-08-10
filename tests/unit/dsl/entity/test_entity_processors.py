@@ -29,7 +29,7 @@ from src.backend.schemas.invocation import ActionCommandSchema
 
 
 def _make_exchange(
-    body: Any = None, headers: dict[str, Any] | None = None
+    body: Any = None, headers: dict[str, Any] | None = None,
 ) -> Exchange[Any]:
     """Создаёт реальный Exchange c заданным in_message."""
     return Exchange(in_message=Message(body=body, headers=headers or {}))
@@ -114,7 +114,7 @@ class TestEntityCreateProcessor:
     def test_to_spec_roundtrip(self) -> None:
         """to_spec() возвращает kind ``entity_create`` с полями процессора."""
         processor = EntityCreateProcessor(
-            entity="user", payload_from="body.data", result_property="created"
+            entity="user", payload_from="body.data", result_property="created",
         )
         spec = processor.to_spec()
 
@@ -167,7 +167,7 @@ class TestEntityGetProcessor:
     def test_to_spec_roundtrip(self) -> None:
         """to_spec() возвращает kind ``entity_get`` с полями процессора."""
         processor = EntityGetProcessor(
-            entity="orders", id_from="properties.order_id", result_property="ord"
+            entity="orders", id_from="properties.order_id", result_property="ord",
         )
         spec = processor.to_spec()
 
@@ -218,7 +218,7 @@ class TestEntityUpdateProcessor:
     async def test_non_dict_payload_fails(self) -> None:
         """payload != dict приводит к exchange.fail()."""
         processor = EntityUpdateProcessor(
-            entity="user", id_from="header.X-Id", payload_from="body"
+            entity="user", id_from="header.X-Id", payload_from="body",
         )
         exchange = _make_exchange(body="not-a-dict", headers={"X-Id": "u-9"})
         context = _make_context()
@@ -287,7 +287,7 @@ class TestEntityDeleteProcessor:
     def test_to_spec_roundtrip(self) -> None:
         """to_spec() возвращает kind ``entity_delete`` с полями процессора."""
         processor = EntityDeleteProcessor(
-            entity="orders", id_from="body.order_id", result_property="deleted"
+            entity="orders", id_from="body.order_id", result_property="deleted",
         )
         spec = processor.to_spec()
 

@@ -79,7 +79,7 @@ class TestBatchInsert:
         sess = _make_session()
         provider = MagicMock(return_value=_MockSessionCtx(sess))
         p = BatchProcessor(
-            mode="insert", model=model, batch_size=10, session_provider=provider
+            mode="insert", model=model, batch_size=10, session_provider=provider,
         )
         ex = _make_exchange([{"id": 1}, {"id": 2}, {"id": 3}])
         await p.process(ex, context=MagicMock())
@@ -92,7 +92,7 @@ class TestBatchInsert:
         sess = _make_session()
         provider = MagicMock(return_value=_MockSessionCtx(sess))
         p = BatchProcessor(
-            mode="insert", model=model, batch_size=100, session_provider=provider
+            mode="insert", model=model, batch_size=100, session_provider=provider,
         )
         rows = [{"id": i} for i in range(250)]
         ex = _make_exchange(rows)
@@ -130,7 +130,7 @@ class TestBatchInsert:
         sess.run_sync = fake_run_sync
         provider = MagicMock(return_value=_MockSessionCtx(sess))
         p = BatchProcessor(
-            mode="insert", model=model, batch_size=2, session_provider=provider
+            mode="insert", model=model, batch_size=2, session_provider=provider,
         )
         ex = _make_exchange([{"id": 1}, {"id": 2}, {"id": 3}, {"id": 4}])
         await p.process(ex, context=MagicMock())
@@ -146,7 +146,7 @@ class TestBatchUpdate:
         sess = _make_session()
         provider = MagicMock(return_value=_MockSessionCtx(sess))
         p = BatchProcessor(
-            mode="update", model=model, batch_size=10, session_provider=provider
+            mode="update", model=model, batch_size=10, session_provider=provider,
         )
         ex = _make_exchange([{"id": 1, "name": "x"}])
         await p.process(ex, context=MagicMock())
@@ -160,7 +160,7 @@ class TestBatchDelete:
         sess = _make_session()
         provider = MagicMock(return_value=_MockSessionCtx(sess))
         p = BatchProcessor(
-            mode="delete", model=model, batch_size=10, session_provider=provider
+            mode="delete", model=model, batch_size=10, session_provider=provider,
         )
         ex = _make_exchange([{"id": 1}, {"id": 2}])
         await p.process(ex, context=MagicMock())
@@ -172,7 +172,7 @@ class TestBatchDelete:
         sess = _make_session()
         provider = MagicMock(return_value=_MockSessionCtx(sess))
         p = BatchProcessor(
-            mode="delete", model=model, batch_size=3, session_provider=provider
+            mode="delete", model=model, batch_size=3, session_provider=provider,
         )
         rows = [{"id": i} for i in range(10)]
         ex = _make_exchange(rows)
@@ -187,7 +187,7 @@ class TestBatchSourceField:
         sess = _make_session()
         provider = MagicMock(return_value=_MockSessionCtx(sess))
         p = BatchProcessor(
-            mode="insert", model=model, source_field="data", session_provider=provider
+            mode="insert", model=model, source_field="data", session_provider=provider,
         )
         ex = _make_exchange()
         ex.set_property("data", [{"id": 1}])
@@ -199,7 +199,7 @@ class TestBatchSourceField:
 class TestBatchToSpec:
     def test_to_spec(self) -> None:
         p = BatchProcessor(
-            mode="insert", model=_make_model(), batch_size=50, source_field="rows"
+            mode="insert", model=_make_model(), batch_size=50, source_field="rows",
         )
         spec = p.to_spec()
         assert spec is not None

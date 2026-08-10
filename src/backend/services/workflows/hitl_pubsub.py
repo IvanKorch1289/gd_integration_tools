@@ -78,7 +78,7 @@ async def publish_hitl_resolved(
             "resolved_by": resolved_by,
             "payload": payload or {},
             "event_type": "hitl.resolved",
-        }
+        },
     )
 
     try:

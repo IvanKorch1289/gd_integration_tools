@@ -17,7 +17,7 @@ from src.backend.dsl.engine.processors.dask_compute import (
 def test_dask_compute_minimal_graph_constructs() -> None:
     """Минимальный валидный graph принимается конструктором."""
     proc = DaskComputeProcessor(
-        graph=[{"op": "map", "fn": "json:dumps"}], output_to="body"
+        graph=[{"op": "map", "fn": "json:dumps"}], output_to="body",
     )
     assert proc.name == "dask_compute"
 

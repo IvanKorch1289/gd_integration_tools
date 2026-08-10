@@ -81,7 +81,7 @@ class SinkRegistry:
             raise ValueError(f"Sink с id={sink.sink_id!r} уже зарегистрирован")
         self._sinks[sink.sink_id] = sink
         logger.info(
-            "SinkRegistry: registered %s (kind=%s)", sink.sink_id, sink.kind.value
+            "SinkRegistry: registered %s (kind=%s)", sink.sink_id, sink.kind.value,
         )
 
     def get(self, sink_id: str) -> Sink:

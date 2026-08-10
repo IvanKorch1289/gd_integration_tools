@@ -35,7 +35,7 @@ class TestReadinessProbe:
         request = MagicMock(spec=Request)
         request.app.state.infrastructure_ready = True
         with patch(
-            "src.backend.core.di.providers.get_resilience_coordinator_provider"
+            "src.backend.core.di.providers.get_resilience_coordinator_provider",
         ) as mock_get:
             coord = MagicMock()
             coord.status.return_value = {}
@@ -49,7 +49,7 @@ class TestReadinessProbe:
         request = MagicMock(spec=Request)
         request.app.state.infrastructure_ready = True
         with patch(
-            "src.backend.core.di.providers.get_resilience_coordinator_provider"
+            "src.backend.core.di.providers.get_resilience_coordinator_provider",
         ) as mock_get:
             comp = MagicMock()
             comp.degradation = "degraded"
@@ -65,7 +65,7 @@ class TestReadinessProbe:
         request = MagicMock(spec=Request)
         request.app.state.infrastructure_ready = True
         with patch(
-            "src.backend.core.di.providers.get_resilience_coordinator_provider"
+            "src.backend.core.di.providers.get_resilience_coordinator_provider",
         ) as mock_get:
             comp = MagicMock()
             comp.degradation = "down"
@@ -81,7 +81,7 @@ class TestReadinessProbe:
         request = MagicMock(spec=Request)
         request.app.state.infrastructure_ready = True
         with patch(
-            "src.backend.core.di.providers.get_resilience_coordinator_provider"
+            "src.backend.core.di.providers.get_resilience_coordinator_provider",
         ) as mock_get:
             mock_get.side_effect = RuntimeError("fail")
             resp = await health_mod.readiness_probe(request)
@@ -104,7 +104,7 @@ class TestStartupProbe:
         request.app.state.infrastructure_ready = True
         with (
             patch(
-                "src.backend.dsl.commands.registry.action_handler_registry"
+                "src.backend.dsl.commands.registry.action_handler_registry",
             ) as mock_actions,
             patch("src.backend.dsl.commands.registry.route_registry") as mock_routes,
         ):
@@ -125,7 +125,7 @@ class TestComponentsHealth:
     @pytest.mark.asyncio
     async def test_fast_mode(self) -> None:
         with patch(
-            "src.backend.core.di.providers.get_health_aggregator_provider"
+            "src.backend.core.di.providers.get_health_aggregator_provider",
         ) as mock_get:
             agg = AsyncMock()
             agg.check_all.return_value = {"status": "ok", "components": {}}
@@ -137,10 +137,10 @@ class TestComponentsHealth:
     async def test_deep_mode(self) -> None:
         with (
             patch(
-                "src.backend.core.di.providers.get_health_aggregator_provider"
+                "src.backend.core.di.providers.get_health_aggregator_provider",
             ) as mock_get,
             patch(
-                "src.backend.core.di.providers.get_resilience_components_report_provider"
+                "src.backend.core.di.providers.get_resilience_components_report_provider",
             ) as mock_res,
         ):
             agg = AsyncMock()
@@ -153,7 +153,7 @@ class TestComponentsHealth:
     @pytest.mark.asyncio
     async def test_down_status(self) -> None:
         with patch(
-            "src.backend.core.di.providers.get_health_aggregator_provider"
+            "src.backend.core.di.providers.get_health_aggregator_provider",
         ) as mock_get:
             agg = AsyncMock()
             agg.check_all.return_value = {"status": "down"}
@@ -164,7 +164,7 @@ class TestComponentsHealth:
     @pytest.mark.asyncio
     async def test_exception(self) -> None:
         with patch(
-            "src.backend.core.di.providers.get_health_aggregator_provider"
+            "src.backend.core.di.providers.get_health_aggregator_provider",
         ) as mock_get:
             mock_get.side_effect = RuntimeError("fail")
             resp = await health_mod.components_health(mode="fast")

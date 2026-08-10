@@ -55,12 +55,12 @@ class DslService:
         # Иначе — fail-closed (anonymous → deny).
         await self._enforce_route_permission(pipeline, context)
         return await self._engine.execute(
-            pipeline, body=body, headers=headers, context=context
+            pipeline, body=body, headers=headers, context=context,
         )
 
     @staticmethod
     async def _enforce_route_permission(
-        pipeline: Any, context: ExecutionContext
+        pipeline: Any, context: ExecutionContext,
     ) -> None:
         """Sprint 1: route-wide permission enforcement (V22 R-V15-1).
 

@@ -188,7 +188,7 @@ class WorkflowAuditSink:
                     "payload": dumps_str(raw.get("payload") or {}, default=str),
                     "trace_id": raw.get("trace_id"),
                     "created_at": (raw.get("created_at") or now).astimezone(UTC),
-                }
+                },
             )
         await self._writer.add_many(rows)
 

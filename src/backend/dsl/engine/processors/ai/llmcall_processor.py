@@ -82,7 +82,7 @@ class LLMCallProcessor(BaseProcessor):
         self._retry_delay = retry_delay
 
     def _compute_cost(
-        self, model: str | None, prompt_tokens: int, completion_tokens: int
+        self, model: str | None, prompt_tokens: int, completion_tokens: int,
     ) -> float:
         """Оценка стоимости: litellm pricing first, local fallback second.
 
@@ -175,7 +175,7 @@ class LLMCallProcessor(BaseProcessor):
                 except Exception as exc:
                     if attempt == self._max_retries:
                         exchange.fail(
-                            f"LLM gateway call failed after {self._max_retries + 1} attempts: {exc}"
+                            f"LLM gateway call failed after {self._max_retries + 1} attempts: {exc}",
                         )
                         return
                     await asyncio.sleep(self._retry_delay * (2**attempt))
@@ -240,7 +240,7 @@ class LLMCallProcessor(BaseProcessor):
         _llm_breaker = get_breaker_registry().get_or_create(
             "llm_call_processor",
             BreakerSpec(
-                name="llm_call_processor", failure_threshold=5, recovery_timeout=30.0
+                name="llm_call_processor", failure_threshold=5, recovery_timeout=30.0,
             ),
         )
 
@@ -288,7 +288,7 @@ class LLMCallProcessor(BaseProcessor):
                 exchange.fail(f"LLM rate limit: {msg}")
             else:
                 exchange.fail(
-                    f"LLM call failed after {self._max_retries + 1} attempts: {exc}"
+                    f"LLM call failed after {self._max_retries + 1} attempts: {exc}",
                 )
             return
 
@@ -302,7 +302,7 @@ class LLMCallProcessor(BaseProcessor):
                 exchange.set_property(
                     "llm.cost_usd",
                     self._compute_cost(
-                        result.get("model"), prompt_tokens, completion_tokens
+                        result.get("model"), prompt_tokens, completion_tokens,
                     ),
                 )
             if "model" in result:

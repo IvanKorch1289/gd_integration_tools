@@ -37,7 +37,7 @@ class TestValidationIssue:
 
     def test_issue_with_processor(self) -> None:
         issue = ValidationIssue(
-            "warning", "slow", processor_index=2, processor_name="p2"
+            "warning", "slow", processor_index=2, processor_name="p2",
         )
         assert issue.processor_index == 2
         assert issue.processor_name == "p2"

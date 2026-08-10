@@ -55,7 +55,7 @@ def register_workflow_tools(mcp: Any) -> None:
         route_id = workflow_registry.get_route_id(descriptor.name)
         if route_id is None:  # defensive
             _logger.warning(
-                "skipping workflow %s: no route_id binding", descriptor.name
+                "skipping workflow %s: no route_id binding", descriptor.name,
             )
             continue
         _build_workflow_tool(mcp, descriptor, route_id)
@@ -86,13 +86,13 @@ def _tool_description(descriptor: WorkflowDescriptor) -> str:
         parts.append(f"Теги: {', '.join(descriptor.tags)}.")
     parts.append(
         "Параметры: payload (dict), wait (bool, default=False), "
-        "timeout_s (int, default=300)."
+        "timeout_s (int, default=300).",
     )
     return " ".join(parts)
 
 
 def _build_workflow_tool(
-    mcp: Any, descriptor: WorkflowDescriptor, route_id: str
+    mcp: Any, descriptor: WorkflowDescriptor, route_id: str,
 ) -> None:
     """Регистрирует один workflow как отдельный MCP tool.
 
@@ -128,7 +128,7 @@ def _build_workflow_tool(
             parsed_payload = orjson.loads(payload) if payload else {}
         except (orjson.JSONDecodeError, TypeError):
             return orjson.dumps(
-                {"error": "invalid JSON payload", "raw": payload}
+                {"error": "invalid JSON payload", "raw": payload},
             ).decode()
 
         if _input_schema is not None:
@@ -137,7 +137,7 @@ def _build_workflow_tool(
                 parsed_payload = validated.model_dump(mode="json")
             except Exception as exc:
                 return orjson.dumps(
-                    {"error": f"payload validation failed: {exc}"}
+                    {"error": f"payload validation failed: {exc}"},
                 ).decode()
 
         try:
@@ -201,7 +201,7 @@ async def _trigger_and_maybe_wait(
             instance_id = UUID(str(dispatched))
     else:
         instance_id = await store.create(
-            workflow_name=workflow_name, route_id=route_id, input_payload=payload
+            workflow_name=workflow_name, route_id=route_id, input_payload=payload,
         )
 
     if not wait:
@@ -287,7 +287,7 @@ def _register_catalog_tools(mcp: Any) -> None:
                     "route_id": workflow_registry.get_route_id(descriptor.name),
                     "input_schema": input_schema_json(descriptor.input_schema),
                     "output_schema": input_schema_json(descriptor.output_schema),
-                }
+                },
             )
         return orjson.dumps(items, default=str).decode()
 
@@ -312,7 +312,7 @@ def _register_catalog_tools(mcp: Any) -> None:
         row = await store.get(uid)
         if row is None:
             return orjson.dumps(
-                {"error": f"instance '{instance_id}' not found"}
+                {"error": f"instance '{instance_id}' not found"},
             ).decode()
 
         last_error: str | None = None

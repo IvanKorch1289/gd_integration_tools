@@ -139,7 +139,7 @@ class TestRequestContextMiddleware:
     ],
 )
 async def test_header_case_insensitive(
-    header_name: bytes, header_value: bytes, expected: str
+    header_name: bytes, header_value: bytes, expected: str,
 ) -> None:
     """Заголовки case-insensitive."""
     app = _CapturingApp()

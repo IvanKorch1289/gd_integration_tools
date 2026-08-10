@@ -57,7 +57,7 @@ def populate_from_processor_registry(
                     "replaces": spec.replaces,
                     **spec.meta,
                 },
-            )
+            ),
         )
         count += 1
     return count
@@ -104,7 +104,7 @@ def populate_from_routes(
                     "protocol": getattr(pipeline, "protocol", None),
                     "processors_count": len(pipeline.processors),
                 },
-            )
+            ),
         )
         count += 1
     return count
@@ -145,7 +145,7 @@ def populate_from_actions(registry: ServiceSchemaRegistry | None = None) -> int:
                 spec_schema=spec_schema,
                 output_schema=output_schema,
                 meta=meta,
-            )
+            ),
         )
         count += 1
     return count
@@ -206,7 +206,7 @@ def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> in
                     "requires_core": requires_core,
                     "capabilities": capabilities,
                 },
-            )
+            ),
         )
         count += 1
     return count

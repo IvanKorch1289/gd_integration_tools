@@ -69,7 +69,7 @@ class ResequencerProcessor(BaseProcessor):
                 buf.clear()
                 exchange.set_property("resequenced", True)
                 exchange.set_out(
-                    body=ordered, headers=dict(exchange.in_message.headers)
+                    body=ordered, headers=dict(exchange.in_message.headers),
                 )
             else:
                 exchange.set_property("resequenced", False)

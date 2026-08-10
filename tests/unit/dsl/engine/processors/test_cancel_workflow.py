@@ -50,7 +50,7 @@ def _reset_sink() -> None:
 @pytest.mark.asyncio
 async def test_cancel_by_literal_id(backend_mock: Any) -> None:
     proc = CancelWorkflowProcessor(
-        "wf-abc-123", reason="ttl_expired", backend=backend_mock
+        "wf-abc-123", reason="ttl_expired", backend=backend_mock,
     )
     exchange = _ex()
     await proc.process(exchange, _ctx())
@@ -86,7 +86,7 @@ async def test_cancel_emits_audit_event(backend_mock: Any) -> None:
     wam.set_workflow_audit_sink(sink)
 
     proc = CancelWorkflowProcessor(
-        "wf-cancel-1", reason="user_action", backend=backend_mock
+        "wf-cancel-1", reason="user_action", backend=backend_mock,
     )
     await proc.process(_ex(), _ctx())
 
@@ -121,7 +121,7 @@ async def test_cancel_empty_ref_raises(backend_mock: Any) -> None:
         # но процессор всё равно должен попытаться его cancel'ить.
         # Чтобы проверить ValueError, используем явно пустой spec.
         await CancelWorkflowProcessor("", backend=backend_mock).process(
-            exchange, _ctx()
+            exchange, _ctx(),
         )
 
 
@@ -139,7 +139,7 @@ def test_to_spec_round_trip() -> None:
             "reason": "cleanup",
             "namespace": "payments",
             "result_property": "cancel_out",
-        }
+        },
     }
 
 

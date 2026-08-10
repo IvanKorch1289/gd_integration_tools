@@ -58,7 +58,7 @@ def test_body_mask_json_recursive() -> None:
             "password": "p@ssw0rd",
             "nested": {"refresh_token": "rt-xxx", "other": 42},
             "list": [{"api_key": "k-1"}, {"public": "ok"}],
-        }
+        },
     )
     result = mask_request_body(body, content_type="application/json")
     assert result is not None

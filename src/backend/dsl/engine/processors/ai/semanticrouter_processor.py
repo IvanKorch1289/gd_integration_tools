@@ -93,7 +93,7 @@ class SemanticRouterProcessor(BaseProcessor):
         target_route = self._intents.get(target_intent or "", self._default_route)
         if not target_route:
             exchange.fail(
-                f"SemanticRouter: no matching intent for query (score={score:.3f})"
+                f"SemanticRouter: no matching intent for query (score={score:.3f})",
             )
             return
 
@@ -103,7 +103,7 @@ class SemanticRouterProcessor(BaseProcessor):
 
     @staticmethod
     async def _route_to(
-        route_id: str, exchange: Exchange[Any], context: ExecutionContext
+        route_id: str, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         from src.backend.dsl.engine.processors.base import SubPipelineExecutor
 

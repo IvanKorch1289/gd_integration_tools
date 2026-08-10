@@ -48,7 +48,7 @@ class TestWhitelistStrictEnforcement:
         try:
             reg = SkillRegistry()
             reg._skills["s1"] = SkillSpec(
-                id="s1", version="1", handler="any.module:fn"
+                id="s1", version="1", handler="any.module:fn",
             )
             fake_mod = MagicMock()
             fake_mod.fn = MagicMock(return_value="legacy_ok")
@@ -74,7 +74,7 @@ class TestWhitelistStrictEnforcement:
         """strict=True + whitelist glob-pattern → sub-modules разрешены."""
         reg = SkillRegistry()
         reg._skills["s1"] = SkillSpec(
-            id="s1", version="1", handler="extensions.credit.sub:fn"
+            id="s1", version="1", handler="extensions.credit.sub:fn",
         )
         fake_mod = MagicMock()
         fake_mod.fn = MagicMock(return_value="glob_ok")
@@ -87,7 +87,7 @@ class TestWhitelistStrictEnforcement:
         """strict=True + whitelist → не-listed module → PermissionError."""
         reg = SkillRegistry()
         reg._skills["s1"] = SkillSpec(
-            id="s1", version="1", handler="evil.module:fn"
+            id="s1", version="1", handler="evil.module:fn",
         )
         # import НЕ должен вызваться.
         with patch("importlib.import_module") as mock_imp:
@@ -108,7 +108,7 @@ class TestWhitelistStrictEnforcement:
         """Error message включает skill_id для debugging."""
         reg = SkillRegistry()
         reg._skills["my_skill"] = SkillSpec(
-            id="my_skill", version="1", handler="mod:fn"
+            id="my_skill", version="1", handler="mod:fn",
         )
         with pytest.raises(PermissionError, match="my_skill"):
             await reg.invoke("my_skill")

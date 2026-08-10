@@ -140,7 +140,7 @@ async def test_orchestrator_engine_rule_model_override(
                 when="type == 'score'",
                 use_agent="score_agent",
                 use_model="openai:gpt-4o",
-            )
+            ),
         ],
     )
     result = await engine.route(task={"type": "score"}, orchestrator_spec=spec)
@@ -156,9 +156,9 @@ def agent_registry() -> AgentRegistry:
     registry = AgentRegistry()
     registry.register(AgentSpec(id="score_agent", version="1.0.0", model="minimax:m2"))
     registry.register(
-        AgentSpec(id="approval_agent", version="1.0.0", model="minimax:m2")
+        AgentSpec(id="approval_agent", version="1.0.0", model="minimax:m2"),
     )
     registry.register(
-        AgentSpec(id="default_agent", version="1.0.0", model="minimax:m2")
+        AgentSpec(id="default_agent", version="1.0.0", model="minimax:m2"),
     )
     return registry

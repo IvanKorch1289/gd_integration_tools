@@ -70,7 +70,7 @@ class AgentMemoryGateway(Protocol):
     """Block 4.1: единый Protocol для AI memory с tenant isolation."""
 
     async def get_messages(
-        self, *, tenant_id: str, session_id: str, limit: int = 50
+        self, *, tenant_id: str, session_id: str, limit: int = 50,
     ) -> list[MemoryMessage]:
         """Возвращает последние ``limit`` сообщений conversation (short-term).
 
@@ -99,7 +99,7 @@ class AgentMemoryGateway(Protocol):
         """
 
     async def get_facts(
-        self, *, tenant_id: str, session_id: str | None = None, limit: int = 50
+        self, *, tenant_id: str, session_id: str | None = None, limit: int = 50,
     ) -> list[MemoryFact]:
         """Возвращает known facts (long-term).
 
@@ -123,7 +123,7 @@ class AgentMemoryGateway(Protocol):
         """
 
     async def recall_semantic(
-        self, *, tenant_id: str, query: str, top_k: int = 5
+        self, *, tenant_id: str, query: str, top_k: int = 5,
     ) -> list[MemoryFact]:
         """Semantic search facts по embedding(query)."""
 
@@ -131,7 +131,7 @@ class AgentMemoryGateway(Protocol):
         """Возвращает scratchpad сессии или None если пуст/отсутствует."""
 
     async def save_scratchpad(
-        self, *, tenant_id: str, session_id: str, content: str
+        self, *, tenant_id: str, session_id: str, content: str,
     ) -> None:
         """Записывает scratchpad (один документ на session)."""
 

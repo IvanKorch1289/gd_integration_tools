@@ -47,7 +47,7 @@ def create_watermark_store(
             if session_manager is None:
                 raise RuntimeError(
                     "PostgresWatermarkStore требует DatabaseSessionManager; "
-                    "передайте main_session_manager в composition root."
+                    "передайте main_session_manager в composition root.",
                 )
             from src.backend.infrastructure.watermark.postgres_store import (
                 PostgresWatermarkStore,

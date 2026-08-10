@@ -48,7 +48,7 @@ async def test_canonical_mode_accepts_valid_signature() -> None:
     body = b'{"event": "x"}'
     sig, ts = sign_payload(body, SECRET)
     await source.verify_and_dispatch(
-        body, {"X-Signature": sig, "X-Timestamp": str(ts)}, payload={"event": "x"}
+        body, {"X-Signature": sig, "X-Timestamp": str(ts)}, payload={"event": "x"},
     )
     assert len(captured) == 1
 
@@ -68,7 +68,7 @@ async def test_canonical_mode_rejects_wrong_signature() -> None:
     body = b'{"event": "x"}'
     with pytest.raises(WebhookVerificationError, match="HMAC"):
         await source.verify_and_dispatch(
-            body, {"X-Signature": "deadbeef", "X-Timestamp": str(int(time.time()))}
+            body, {"X-Signature": "deadbeef", "X-Timestamp": str(int(time.time()))},
         )
 
 
@@ -93,7 +93,7 @@ async def test_canonical_mode_rejects_expired_timestamp() -> None:
     # подпись не совпадает с текущим timestamp).
     with pytest.raises(WebhookVerificationError):
         await source.verify_and_dispatch(
-            body, {"X-Signature": sig, "X-Timestamp": str(old_ts)}
+            body, {"X-Signature": sig, "X-Timestamp": str(old_ts)},
         )
 
 

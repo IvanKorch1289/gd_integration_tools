@@ -83,7 +83,7 @@ def test_rollback_returns_503_when_service_missing() -> None:
     ):
         client = TestClient(app)
         r = client.post(
-            "/api/v1/admin/plugins/demo/rollback", json={"to_version": "1.0.0"}
+            "/api/v1/admin/plugins/demo/rollback", json={"to_version": "1.0.0"},
         )
         assert r.status_code == 503
 

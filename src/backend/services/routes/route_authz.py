@@ -63,7 +63,7 @@ async def check_route_permission(
     except Exception as exc:
         _logger.error("route_authz_gateway_unavailable: %s", exc)
         raise RuntimeError(
-            f"AuthorizationGateway unavailable for route {route_id}: {exc}"
+            f"AuthorizationGateway unavailable for route {route_id}: {exc}",
         ) from exc
 
     if gateway is None:

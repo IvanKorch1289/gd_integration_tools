@@ -17,7 +17,7 @@ class _Message:
 
 class _Exchange:
     def __init__(
-        self, body: Any = None, properties: dict[str, Any] | None = None
+        self, body: Any = None, properties: dict[str, Any] | None = None,
     ) -> None:
         self.in_message = _Message(body=body)
         self.properties: dict[str, Any] = properties or {}
@@ -48,7 +48,7 @@ class TestRagIngestProcessor:
         # source module path.
         with (
             patch(
-                "src.backend.services.ai.rag_service.get_rag_service"
+                "src.backend.services.ai.rag_service.get_rag_service",
             ) as mock_get,
             patch(
                 "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
@@ -80,7 +80,7 @@ class TestRagIngestProcessor:
 
         with (
             patch(
-                "src.backend.services.ai.rag_service.get_rag_service"
+                "src.backend.services.ai.rag_service.get_rag_service",
             ) as mock_get,
             patch(
                 "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
@@ -128,7 +128,7 @@ class TestRagIngestProcessor:
 
         with (
             patch(
-                "src.backend.services.ai.rag_service.get_rag_service"
+                "src.backend.services.ai.rag_service.get_rag_service",
             ) as mock_get,
             patch(
                 "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
@@ -166,7 +166,7 @@ class TestRagIngestProcessor:
 
         with (
             patch(
-                "src.backend.services.ai.rag_service.get_rag_service"
+                "src.backend.services.ai.rag_service.get_rag_service",
             ) as mock_get,
             patch(
                 "src.backend.services.ai.rag_ingest_service._maybe_mask_pii",
@@ -188,7 +188,7 @@ class TestRagIngestProcessor:
 
     def test_to_spec_custom(self) -> None:
         proc = RagIngestProcessor(
-            source_property="s", modal="image", collection="c", output_property="o"
+            source_property="s", modal="image", collection="c", output_property="o",
         )
         assert proc.to_spec() == {
             "rag_ingest": {
@@ -196,5 +196,5 @@ class TestRagIngestProcessor:
                 "modal": "image",
                 "collection": "c",
                 "output_property": "o",
-            }
+            },
         }

@@ -80,7 +80,7 @@ def test_audit_callback_receives_event(caplog: pytest.LogCaptureFixture) -> None
             "url": "https://example.com/",
             "allowed": True,
             "reason": "allowed",
-        }
+        },
     )
     record = next(r for r in caplog.records if r.name == "waf.audit")
     assert record.waf_outcome == "granted"

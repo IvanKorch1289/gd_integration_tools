@@ -167,7 +167,7 @@ async def test_register_from_settings_forced_mode_skips_primary() -> None:
     """mode='forced' пропускает primary даже если он есть (dev_light паттерн)."""
     coord = ResilienceCoordinator()
     settings = ResilienceSettings(
-        fallbacks={"svc": FallbackPolicy(chain=["fb"], mode="forced")}
+        fallbacks={"svc": FallbackPolicy(chain=["fb"], mode="forced")},
     )
 
     primary_called = False
@@ -181,7 +181,7 @@ async def test_register_from_settings_forced_mode_skips_primary() -> None:
         return "fallback"
 
     coord.register_from_settings(
-        component="svc", primary=primary, fallbacks={"fb": fb}, settings=settings
+        component="svc", primary=primary, fallbacks={"fb": fb}, settings=settings,
     )
     result = await coord.call("svc")
     assert result == "fallback"

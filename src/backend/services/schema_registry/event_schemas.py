@@ -63,7 +63,7 @@ def register_default_event_schemas(registry: ServiceSchemaRegistry) -> int:
                 name=subject,
                 spec_schema=schema,
                 meta={"model": model_cls.__name__, "auto_registered": True},
-            )
+            ),
         )
         count += 1
     return count

@@ -196,7 +196,7 @@ async def dispatch_action_or_dsl(
 
 
 def _get_or_create_route_semaphore(
-    route_id: str, pool_size: int
+    route_id: str, pool_size: int,
 ) -> asyncio.Semaphore:
     """S163 W25: lazy-init semaphore для per-route concurrency limit."""
     global _route_semaphores
@@ -328,7 +328,7 @@ async def _dispatch_dsl(
 
 
 def _merge_attributes(
-    headers: Mapping[str, Any] | None, attributes: Mapping[str, Any] | None
+    headers: Mapping[str, Any] | None, attributes: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     """Готовит ``DispatchContext.attributes`` из headers + явных атрибутов.
 

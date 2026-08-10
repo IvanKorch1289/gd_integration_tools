@@ -44,7 +44,7 @@ class ControlFlowMixin:
                 WorkflowEventType.branch_taken,
                 {"chosen": chosen, "branch_name": step.name},
                 step.name,
-            )
+            ),
         ]
 
         if not sub_steps:
@@ -102,7 +102,7 @@ class ControlFlowMixin:
                         WorkflowEventType.step_finished,
                         {"reason": "max_iter_exhausted", "iter": iter_count},
                         step.name,
-                    )
+                    ),
                 ],
             )
         should_continue = self._eval_predicate(step.predicate, state)
@@ -114,7 +114,7 @@ class ControlFlowMixin:
                         WorkflowEventType.step_finished,
                         {"reason": "condition_false", "iter": iter_count},
                         step.name,
-                    )
+                    ),
                 ],
             )
 
@@ -123,7 +123,7 @@ class ControlFlowMixin:
                 WorkflowEventType.loop_iter,
                 {"iter": iter_count + 1, "loop_name": step.name},
                 step.name,
-            )
+            ),
         ]
 
         body = dict(state.exchange_snapshot)
@@ -177,7 +177,7 @@ class ControlFlowMixin:
                         WorkflowEventType.step_failed,
                         {"reason": "invalid_collection"},
                         step.name,
-                    )
+                    ),
                 ],
             )
         total = len(collection)
@@ -187,7 +187,7 @@ class ControlFlowMixin:
                 WorkflowEventType.step_started,
                 {"items": total, "parallel": step.parallel, "for_each": step.name},
                 step.name,
-            )
+            ),
         ]
 
         if step.parallel:
@@ -220,7 +220,7 @@ class ControlFlowMixin:
             for idx, r in enumerate(results):
                 if isinstance(r, Exception):
                     _logger.warning(
-                        "for_each item %d raised %s: %s", idx, type(r).__name__, r
+                        "for_each item %d raised %s: %s", idx, type(r).__name__, r,
                     )
                     errors.append(r)
 

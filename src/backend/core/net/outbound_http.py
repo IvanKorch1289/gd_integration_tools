@@ -43,10 +43,10 @@ raise при denied. Ставится :class:`CapabilityGate` или fake в т�
 
 
 _DEFAULT_LIMITS: httpx.Limits = httpx.Limits(
-    max_connections=100, max_keepalive_connections=20, keepalive_expiry=15.0
+    max_connections=100, max_keepalive_connections=20, keepalive_expiry=15.0,
 )
 _DEFAULT_TIMEOUT: httpx.Timeout = httpx.Timeout(
-    connect=5.0, read=30.0, write=10.0, pool=5.0
+    connect=5.0, read=30.0, write=10.0, pool=5.0,
 )
 
 
@@ -300,7 +300,7 @@ class OutboundHttpClient:
                     "host": decision.host,
                     "allowed": decision.allowed,
                     "reason": decision.reason,
-                }
+                },
             )
         # S109 W1: dual-emit через unified audit service.
         # Lazy import для избежания circular dep (facade → services/audit).
@@ -312,7 +312,7 @@ class OutboundHttpClient:
 
         try:
             coro = emit_waf_evaluation(
-                decision=decision, plugin=self._plugin, method=method, url=url
+                decision=decision, plugin=self._plugin, method=method, url=url,
             )
             if asyncio.iscoroutine(coro):
                 try:

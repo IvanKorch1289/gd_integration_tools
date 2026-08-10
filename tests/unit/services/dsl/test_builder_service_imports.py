@@ -123,11 +123,11 @@ def test_no_lazy_imports() -> None:
     lazy_imports: list[tuple[int, str]] = []
 
     def _walk_with_parents(
-        node: ast.AST, in_function: bool, parents: tuple[ast.AST, ...]
+        node: ast.AST, in_function: bool, parents: tuple[ast.AST, ...],
     ) -> None:
         for child in ast.iter_child_nodes(node):
             new_in_function = in_function or isinstance(
-                node, (ast.FunctionDef, ast.AsyncFunctionDef)
+                node, (ast.FunctionDef, ast.AsyncFunctionDef),
             )
             if (
                 new_in_function

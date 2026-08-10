@@ -38,7 +38,7 @@ def _downstream_json(body: bytes, status_code: int = 200):
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -56,7 +56,7 @@ def _downstream_plain(body: bytes, status_code: int = 200):
                     (b"content-type", b"text/plain"),
                     (b"content-length", str(len(body)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -94,7 +94,7 @@ class TestDataMaskingMiddleware:
 
     @pytest.mark.asyncio
     async def test_masks_sensitive_keys(
-        self, middleware: DataMaskingMiddleware
+        self, middleware: DataMaskingMiddleware,
     ) -> None:
         """password → *** (cycle 58 PII safety invariant)."""
         body = json.dumps({"password": "secret123", "name": "Alice"}).encode()
@@ -113,11 +113,11 @@ class TestDataMaskingMiddleware:
 
     @pytest.mark.asyncio
     async def test_masks_nested_sensitive(
-        self, middleware: DataMaskingMiddleware
+        self, middleware: DataMaskingMiddleware,
     ) -> None:
         """Nested sensitive keys → *** (recursive masking)."""
         body = json.dumps(
-            {"user": {"token": "abc123", "name": "Bob"}}
+            {"user": {"token": "abc123", "name": "Bob"}},
         ).encode()
         app = AsyncMock()
         app.side_effect = _downstream_json(body)
@@ -133,7 +133,7 @@ class TestDataMaskingMiddleware:
 
     @pytest.mark.asyncio
     async def test_non_json_passes_through(
-        self, middleware: DataMaskingMiddleware
+        self, middleware: DataMaskingMiddleware,
     ) -> None:
         """Non-JSON content-type → pass through unchanged (cycle 58 invariant)."""
         body = b"plain text with email@x.com"
@@ -150,7 +150,7 @@ class TestDataMaskingMiddleware:
 
     @pytest.mark.asyncio
     async def test_mask_value_string_phone(
-        self, middleware: DataMaskingMiddleware
+        self, middleware: DataMaskingMiddleware,
     ) -> None:
         """Phone number в string → masked."""
         body = json.dumps({"phone": "+7 (999) 123-45-67"}).encode()
@@ -167,7 +167,7 @@ class TestDataMaskingMiddleware:
 
     @pytest.mark.asyncio
     async def test_mask_bytes_invalid_json_returns_raw(
-        self, middleware: DataMaskingMiddleware
+        self, middleware: DataMaskingMiddleware,
     ) -> None:
         """Invalid JSON body → masked fallback (fail-closed)."""
         # Cycle 58 fail-closed: invalid JSON → masked error response
@@ -193,7 +193,7 @@ class TestDataMaskingMiddleware:
     def test_mask_bytes_sensitive_keys(self, middleware: DataMaskingMiddleware) -> None:
         """_mask_bytes заменяет sensitive keys на *** (unit test)."""
         body = json.dumps(
-            {"password": "x", "secret": "y", "token": "z", "name": "keep"}
+            {"password": "x", "secret": "y", "token": "z", "name": "keep"},
         ).encode()
         masked = middleware._mask_bytes(body)
         parsed = json.loads(masked.decode("utf-8"))
@@ -210,9 +210,9 @@ class TestDataMaskingMiddleware:
                     "level2": {
                         "password": "secret",
                         "name": "Alice",
-                    }
-                }
-            }
+                    },
+                },
+            },
         )
         assert result["level1"]["level2"]["password"] == "***"
         assert result["level1"]["level2"]["name"] == "Alice"
@@ -220,7 +220,7 @@ class TestDataMaskingMiddleware:
     def test_mask_value_list(self, middleware: DataMaskingMiddleware) -> None:
         """_mask_value обрабатывает list values."""
         result = middleware._mask_value(
-            [{"password": "1"}, {"password": "2"}, {"safe": "x"}]
+            [{"password": "1"}, {"password": "2"}, {"safe": "x"}],
         )
         assert result[0]["password"] == "***"
         assert result[1]["password"] == "***"
@@ -247,7 +247,7 @@ class TestDataMaskingMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_passes_through_non_http_scope(
-        self, middleware: DataMaskingMiddleware
+        self, middleware: DataMaskingMiddleware,
     ) -> None:
         """Non-HTTP scope (websocket) пробрасывается без masking."""
         app = AsyncMock()
@@ -270,7 +270,7 @@ class TestDataMaskingMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_content_length_updated_after_masking(
-        self, middleware: DataMaskingMiddleware
+        self, middleware: DataMaskingMiddleware,
     ) -> None:
         """Content-Length обновляется после masking (cycle 58 invariant)."""
         original_body = json.dumps({"password": "x" * 100, "name": "y"}).encode()
@@ -287,12 +287,12 @@ class TestDataMaskingMiddlewarePureASGI:
         body_msg = _body_message(send)
         # New content-length равен длине masked body.
         assert headers[b"content-length"] == str(len(body_msg["body"])).encode(
-            "latin-1"
+            "latin-1",
         )
 
     @pytest.mark.asyncio
     async def test_does_not_call_downstream_after_masking(
-        self, middleware: DataMaskingMiddleware
+        self, middleware: DataMaskingMiddleware,
     ) -> None:
         """Cycle 58 invariant: downstream вызван ОДИН раз."""
         call_count = 0
@@ -308,7 +308,7 @@ class TestDataMaskingMiddlewarePureASGI:
                         (b"content-type", b"application/json"),
                         (b"content-length", b"10"),
                     ],
-                }
+                },
             )
             await send({"type": "http.response.body", "body": b'{"x":"y"}'})
 
@@ -324,7 +324,7 @@ class TestDataMaskingMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_email_in_string_value_masked(
-        self, middleware: DataMaskingMiddleware
+        self, middleware: DataMaskingMiddleware,
     ) -> None:
         """Email в string value → masked (cycle 58 PII)."""
         body = json.dumps({"contact": "alice@example.com"}).encode()
@@ -343,7 +343,7 @@ class TestDataMaskingMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_masking_failure_uses_fallback(
-        self, middleware: DataMaskingMiddleware
+        self, middleware: DataMaskingMiddleware,
     ) -> None:
         """Masking failure (JSON parse error) → masked error response (fail-closed)."""
         # Invalid JSON → _mask_bytes возвращает raw body (JSONDecodeError

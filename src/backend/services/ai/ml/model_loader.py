@@ -64,7 +64,7 @@ class MLModelLoader:
     # ── MLModelLoaderProtocol implementation ──────────────────────────────────
 
     async def load(
-        self, path: str | Path, model_type: MLModelType | None = None
+        self, path: str | Path, model_type: MLModelType | None = None,
     ) -> Any:
         """Загружает модель (lazy, с LRU-кэшированием)."""
         path_str = str(Path(path).resolve())
@@ -108,7 +108,7 @@ class MLModelLoader:
         if detected is None:
             raise RuntimeError(
                 f"Cannot detect model type for {resolved}; "
-                "please specify model_type explicitly"
+                "please specify model_type explicitly",
             )
 
         return self._load_by_type(resolved, detected)
@@ -153,7 +153,7 @@ class MLModelLoader:
         except ImportError as exc:
             raise RuntimeError(
                 "torch не установлен; установите: uv add torch "
-                "(или используйте CPU-only: uv add torch --index-url https://download.pytorch.org/whl/cpu)"
+                "(или используйте CPU-only: uv add torch --index-url https://download.pytorch.org/whl/cpu)",
             ) from exc
         # SECURITY (ADR-SEC-001 Option A): fail-fast if weights_only=True
         # does not work. Accepting arbitrary code-execution risk via
@@ -165,7 +165,7 @@ class MLModelLoader:
             raise RuntimeError(
                 f"torch.load(weights_only=True) failed for {path}. "
                 "Model may contain pickled code — refusing to load with "
-                "weights_only=False for security reasons (ADR-SEC-001)."
+                "weights_only=False for security reasons (ADR-SEC-001).",
             ) from exc
 
     def _load_torchscript(self, path: Path) -> Any:
@@ -180,7 +180,7 @@ class MLModelLoader:
             import onnxruntime as ort
         except ImportError as exc:
             raise RuntimeError(
-                "onnxruntime не установлен; установите: uv add onnxruntime"
+                "onnxruntime не установлен; установите: uv add onnxruntime",
             ) from exc
         return ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
 
@@ -189,7 +189,7 @@ class MLModelLoader:
             import joblib
         except ImportError as exc:
             raise RuntimeError(
-                "scikit-learn не установлен; установите: uv add scikit-learn"
+                "scikit-learn не установлен; установите: uv add scikit-learn",
             ) from exc
         # S301: joblib.load аналогичен pickle; допустимо из AI_WORKSPACE (изолирован)
         return joblib.load(path)
@@ -199,7 +199,7 @@ class MLModelLoader:
             from catboost import CatBoostClassifier, CatBoostRegressor
         except ImportError as exc:
             raise RuntimeError(
-                "catboost не установлен; установите: uv add catboost"
+                "catboost не установлен; установите: uv add catboost",
             ) from exc
         # CatBoost сохраняет .cbm файлы (CatBoost Model)
         # Может быть классификатор или регрессор — попробуем оба
@@ -217,7 +217,7 @@ class MLModelLoader:
             import lightgbm as lgb
         except ImportError as exc:
             raise RuntimeError(
-                "lightgbm не установлен; установите: uv add lightgbm"
+                "lightgbm не установлен; установите: uv add lightgbm",
             ) from exc
         return lgb.Booster(model_file=str(path))
 
@@ -226,6 +226,6 @@ class MLModelLoader:
             import joblib
         except ImportError as exc:
             raise RuntimeError(
-                "joblib не установлен; установите: uv add joblib"
+                "joblib не установлен; установите: uv add joblib",
             ) from exc
         return joblib.load(path)

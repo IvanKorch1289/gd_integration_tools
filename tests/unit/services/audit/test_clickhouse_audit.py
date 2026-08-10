@@ -62,7 +62,7 @@ async def test_emit_skips_when_flag_off() -> None:
     with patch("src.backend.core.config.features.feature_flags", mock_flags):
         # Дополнительно патчим _get_client, чтобы убедиться в no-op
         with patch.object(
-            service, "_get_client", new_callable=AsyncMock
+            service, "_get_client", new_callable=AsyncMock,
         ) as mock_get_client:
             await service.emit(event)
             mock_get_client.assert_not_called()
@@ -100,7 +100,7 @@ async def test_emit_lazy_imports_clickhouse() -> None:
     assert call_kwargs.args[0] == "audit_events"
     # data — список из одной строки
     data_arg = call_kwargs.kwargs.get(
-        "data", call_kwargs.args[1] if len(call_kwargs.args) > 1 else []
+        "data", call_kwargs.args[1] if len(call_kwargs.args) > 1 else [],
     )
     assert len(data_arg) == 1
 

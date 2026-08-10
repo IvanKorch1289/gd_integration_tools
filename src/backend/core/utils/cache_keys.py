@@ -41,7 +41,7 @@ def build_cache_key(
         "kwargs": dict(sorted(kwargs.items())),
     }
     payload = orjson.dumps(
-        key_data, option=orjson.OPT_SORT_KEYS | orjson.OPT_NON_STR_KEYS, default=str
+        key_data, option=orjson.OPT_SORT_KEYS | orjson.OPT_NON_STR_KEYS, default=str,
     ).decode("utf-8")
     digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
     return f"{prefix}:{digest}"

@@ -75,7 +75,7 @@ class CapabilityFacade:
             return False
 
     async def check_async(
-        self, plugin: str, capability: str, scope: str | None = None
+        self, plugin: str, capability: str, scope: str | None = None,
     ) -> bool:
         """Async capability check (для batch операций)."""
         return self.check(plugin, capability, scope)
@@ -92,7 +92,7 @@ class CapabilityFacade:
             return False
         try:
             return bool(
-                self.gate.check_tenant(capability, tenant_id, principal_id, scope)
+                self.gate.check_tenant(capability, tenant_id, principal_id, scope),
             )
         except Exception as exc:
             _logger.debug("tenant capability check failed: %s", exc)
@@ -153,10 +153,10 @@ class CapabilityFacade:
             from src.backend.core.security.capabilities import CapabilityRef
 
             self.gate.declare(
-                plugin, tuple(CapabilityRef(name=name) for name in capabilities)
+                plugin, tuple(CapabilityRef(name=name) for name in capabilities),
             )
             _logger.info(
-                "capabilities declared: plugin=%s, count=%d", plugin, len(capabilities)
+                "capabilities declared: plugin=%s, count=%d", plugin, len(capabilities),
             )
         except Exception as exc:
             _logger.warning("capability declare failed: %s", exc)
@@ -178,7 +178,7 @@ class CapabilityFacade:
             return []
 
     def check_or_raise(
-        self, plugin: str, capability: str, scope: str | None = None
+        self, plugin: str, capability: str, scope: str | None = None,
     ) -> None:
         """Capability check (raise on deny) — заменяет inline gate.check() pattern.
 

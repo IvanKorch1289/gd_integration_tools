@@ -247,7 +247,7 @@ class TestEmbeddingProcess:
         mock_rag._embed.return_value = MagicMock(tolist=lambda: [0.1, 0.2])
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag,
         ):
             await proc.process(exchange, _Context())
 
@@ -261,7 +261,7 @@ class TestEmbeddingProcess:
         del mock_rag._embed
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag,
         ):
             await proc.process(exchange, _Context())
 
@@ -329,7 +329,7 @@ class TestEmbeddingProcess:
         mock_rag._embed.return_value = MagicMock(tolist=lambda: [0.1])
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag,
         ):
             await proc.process(exchange, _Context())
 
@@ -343,7 +343,7 @@ class TestEmbeddingProcess:
         mock_rag._embed.side_effect = RuntimeError("boom")
 
         with patch(
-            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag
+            "src.backend.services.ai.rag_service.get_rag_service", return_value=mock_rag,
         ):
             await proc.process(exchange, _Context())
 

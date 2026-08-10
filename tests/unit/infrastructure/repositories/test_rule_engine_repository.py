@@ -57,7 +57,7 @@ async def test_upsert_updates_existing_record(session: AsyncSession) -> None:
     await session.commit()
 
     updated = await repo.upsert(
-        RulesetDoc(name="credit_scoring", version="1", yaml_body="v1-updated")
+        RulesetDoc(name="credit_scoring", version="1", yaml_body="v1-updated"),
     )
     await session.commit()
 
@@ -87,10 +87,10 @@ async def test_get_filters_by_tenant_scope(session: AsyncSession) -> None:
     """tenant_id None vs значение различают записи."""
     repo = SQLRuleEngineRepository(session)
     await repo.upsert(
-        RulesetDoc(name="rs", version="1", yaml_body="global", tenant_id=None)
+        RulesetDoc(name="rs", version="1", yaml_body="global", tenant_id=None),
     )
     await repo.upsert(
-        RulesetDoc(name="rs", version="1", yaml_body="acme", tenant_id="acme")
+        RulesetDoc(name="rs", version="1", yaml_body="acme", tenant_id="acme"),
     )
     await session.commit()
 
@@ -105,10 +105,10 @@ async def test_list_active_skips_disabled(session: AsyncSession) -> None:
     """list_active игнорирует enabled=False."""
     repo = SQLRuleEngineRepository(session)
     await repo.upsert(
-        RulesetDoc(name="active", version="1", yaml_body="x", enabled=True)
+        RulesetDoc(name="active", version="1", yaml_body="x", enabled=True),
     )
     await repo.upsert(
-        RulesetDoc(name="disabled", version="1", yaml_body="y", enabled=False)
+        RulesetDoc(name="disabled", version="1", yaml_body="y", enabled=False),
     )
     await session.commit()
 

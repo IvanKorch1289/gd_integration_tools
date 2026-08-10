@@ -63,7 +63,7 @@ def test_regex_skips_other_calls() -> None:
 def test_refactor_file_replaces_set_page_config() -> None:
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(
-            '"""Test page."""\nimport streamlit as st\n\nst.set_page_config(page_title="X", page_icon="Y", layout="wide")\nst.title("X")\n'
+            '"""Test page."""\nimport streamlit as st\n\nst.set_page_config(page_title="X", page_icon="Y", layout="wide")\nst.title("X")\n',
         )
         path = Path(f.name)
     try:
@@ -98,7 +98,7 @@ def test_refactor_file_idempotent() -> None:
     """Second run на same file → 0 changes."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(
-            '"""Test page."""\nimport streamlit as st\n\nst.set_page_config(page_title="X")\nst.title("X")\n'
+            '"""Test page."""\nimport streamlit as st\n\nst.set_page_config(page_title="X")\nst.title("X")\n',
         )
         path = Path(f.name)
     try:
@@ -115,10 +115,10 @@ def test_refactor_file_idempotent() -> None:
 def test_refactor_file_handles_emoji() -> None:
     """Emoji в page_icon (multi-byte UTF-8) handled correctly."""
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".py", delete=False, encoding="utf-8"
+        mode="w", suffix=".py", delete=False, encoding="utf-8",
     ) as f:
         f.write(
-            '"""Test."""\nimport streamlit as st\nst.set_page_config(page_title="X", page_icon="💸")\n'
+            '"""Test."""\nimport streamlit as st\nst.set_page_config(page_title="X", page_icon="💸")\n',
         )
         path = Path(f.name)
     try:
@@ -134,10 +134,10 @@ def test_refactor_file_syntax_check_prevents_bad_writes() -> None:
     """If refactor would produce syntax error, file не modified."""
     # Create a file with a tricky pattern (e.g., emoji + kwarg in non-standard order)
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".py", delete=False, encoding="utf-8"
+        mode="w", suffix=".py", delete=False, encoding="utf-8",
     ) as f:
         f.write(
-            '"""Test."""\nimport streamlit as st\nst.set_page_config(page_icon="🎉")  # missing page_title\n'
+            '"""Test."""\nimport streamlit as st\nst.set_page_config(page_icon="🎉")  # missing page_title\n',
         )
         path = Path(f.name)
     try:
@@ -159,7 +159,7 @@ def test_real_page_refactor_preserves_content() -> None:
         # Skip if not present
         return
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".py", delete=False, encoding="utf-8"
+        mode="w", suffix=".py", delete=False, encoding="utf-8",
     ) as f:
         f.write(src.read_text(encoding="utf-8"))
         backup = Path(f.name)

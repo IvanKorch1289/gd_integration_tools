@@ -15,7 +15,7 @@ class LLMParserProcessor(BaseProcessor):
     """Парсит ответ LLM в структурированный формат."""
 
     def __init__(
-        self, schema: type | None = None, format: str = "json", name: str | None = None
+        self, schema: type | None = None, format: str = "json", name: str | None = None,
     ) -> None:
         super().__init__(name)
         self._schema = schema

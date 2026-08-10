@@ -38,7 +38,7 @@ def test_compensate_handler_noop() -> None:
         pass
 
     result = _STEP_KIND_DISPATCH["compensate"](
-        _ExecutorStub(), None, None, None
+        _ExecutorStub(), None, None, None,
     )
     assert result.outcome == StepOutcome.CONTINUE
     assert result.events == []

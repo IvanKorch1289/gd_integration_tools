@@ -111,7 +111,7 @@ def test_graceful_fallback_on_import_error(monkeypatch: pytest.MonkeyPatch) -> N
 
     captured: list[str] = []
     monkeypatch.setattr(
-        mod, "_record_reranker_fallback", lambda *, reason: captured.append(reason)
+        mod, "_record_reranker_fallback", lambda *, reason: captured.append(reason),
     )
 
     # Эмулируем отсутствие FlagEmbedding через builtins.__import__.
@@ -156,7 +156,7 @@ def test_graceful_fallback_on_runtime_error(monkeypatch: pytest.MonkeyPatch) -> 
 
     captured: list[str] = []
     monkeypatch.setattr(
-        mod, "_record_reranker_fallback", lambda *, reason: captured.append(reason)
+        mod, "_record_reranker_fallback", lambda *, reason: captured.append(reason),
     )
 
     class _FailingReranker:
@@ -291,7 +291,7 @@ def test_fallback_on_flag_reranker_init_error(monkeypatch: pytest.MonkeyPatch) -
 
     captured: list[str] = []
     monkeypatch.setattr(
-        mod, "_record_reranker_fallback", lambda *, reason: captured.append(reason)
+        mod, "_record_reranker_fallback", lambda *, reason: captured.append(reason),
     )
 
     example = {
@@ -390,7 +390,7 @@ def test_record_reranker_fallback_success_and_failure(
     fake_metrics_mod = MagicMock()
     fake_metrics_mod.metrics_registry = fake_registry
     monkeypatch.setitem(
-        sys.modules, "src.backend.core.utils.metrics_registry", fake_metrics_mod
+        sys.modules, "src.backend.core.utils.metrics_registry", fake_metrics_mod,
     )
 
     mod._record_reranker_fallback(reason="test_reason")
@@ -407,7 +407,7 @@ def test_record_reranker_fallback_success_and_failure(
     broken_registry.counter.side_effect = RuntimeError("metrics down")
     fake_metrics_mod.metrics_registry = broken_registry
     monkeypatch.setitem(
-        sys.modules, "src.backend.core.utils.metrics_registry", fake_metrics_mod
+        sys.modules, "src.backend.core.utils.metrics_registry", fake_metrics_mod,
     )
     mod._record_reranker_fallback(reason="fail")  # не падает
 
@@ -438,7 +438,7 @@ def test_metric_ndcg() -> None:
 
     # empty expected_ranking
     score = rag_reranker_pipeline.metric(
-        {"query": "q", "candidates": [], "expected_ranking": []}, json.dumps(["a"])
+        {"query": "q", "candidates": [], "expected_ranking": []}, json.dumps(["a"]),
     )
     assert score == 0.0
 

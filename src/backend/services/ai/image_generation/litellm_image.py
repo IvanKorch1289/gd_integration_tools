@@ -163,7 +163,7 @@ class LiteLLMImageGenerationService:
         if not self.enabled:
             raise ImageGenerationUnavailable(
                 "LiteLLMImageGenerationService отключён "
-                "(voice_image_gen_enabled=false)."
+                "(voice_image_gen_enabled=false).",
             )
 
         # Попытка пройти через LiteLLMGateway для общей cost-callback регистрации.
@@ -176,14 +176,14 @@ class LiteLLMImageGenerationService:
                 return self._litellm
         except Exception as exc:
             logger.debug(
-                "LiteLLMGateway недоступен, fallback на прямой import: %s", exc
+                "LiteLLMGateway недоступен, fallback на прямой import: %s", exc,
             )
 
         try:
             import litellm
         except ImportError as exc:
             raise ImageGenerationUnavailable(
-                "Пакет 'litellm' не установлен — добавьте extra '[ai-2026]'."
+                "Пакет 'litellm' не установлен — добавьте extra '[ai-2026]'.",
             ) from exc
         self._litellm = litellm
         return litellm
@@ -261,7 +261,7 @@ class LiteLLMImageGenerationService:
             response: Any = await asyncio.to_thread(litellm.image_generation, **params)
         except Exception as exc:
             raise ImageGenerationUnavailable(
-                f"litellm.image_generation failed: {exc}"
+                f"litellm.image_generation failed: {exc}",
             ) from exc
 
         result = self._build_result(response, model=chosen_model, size=size, n=n)
@@ -269,7 +269,7 @@ class LiteLLMImageGenerationService:
         return result
 
     def _build_result(
-        self, response: Any, *, model: str, size: str, n: int
+        self, response: Any, *, model: str, size: str, n: int,
     ) -> ImageResult:
         """Нормализует ответ litellm в :class:`ImageResult`."""
         payload: dict[str, Any] = (
@@ -323,13 +323,13 @@ class LiteLLMImageGenerationService:
             # Попытка оценить через cost_calculator (если доступен).
             try:
                 completion_cost = getattr(
-                    getattr(litellm, "cost_calculator", None), "completion_cost", None
+                    getattr(litellm, "cost_calculator", None), "completion_cost", None,
                 )
                 if completion_cost is not None:
                     cost_usd = float(
                         completion_cost(
-                            model=result.model, prompt_tokens=0, completion_tokens=0
-                        )
+                            model=result.model, prompt_tokens=0, completion_tokens=0,
+                        ),
                     )
                     result.cost_usd = cost_usd
             except Exception as exc:
@@ -343,7 +343,7 @@ class LiteLLMImageGenerationService:
             return
         try:
             metrics.record_cost(
-                provider=self._provider, model=result.model, cost_usd=cost_usd
+                provider=self._provider, model=result.model, cost_usd=cost_usd,
             )
         except Exception as exc:
             logger.debug("record_cost failed: %s", exc)

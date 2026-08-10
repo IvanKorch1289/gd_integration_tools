@@ -40,7 +40,7 @@ def _downstream_json(body: bytes, status_code: int = 200):
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("latin-1")),
                 ],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -54,7 +54,7 @@ def _downstream_plain(body: bytes, status_code: int = 200):
                 "type": "http.response.start",
                 "status": status_code,
                 "headers": [(b"content-type", b"text/plain")],
-            }
+            },
         )
         await send({"type": "http.response.body", "body": body})
 
@@ -91,7 +91,7 @@ class TestResponseCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_non_get_passes_through(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """Non-GET requests skip caching."""
         app = AsyncMock()
@@ -116,7 +116,7 @@ class TestResponseCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_non_200_passes_through(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """Non-200 GET responses skip caching."""
         app = AsyncMock()
@@ -137,7 +137,7 @@ class TestResponseCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_non_json_passes_through(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """Non-JSON GET 200 responses skip caching."""
         app = AsyncMock()
@@ -161,7 +161,7 @@ class TestResponseCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_adds_etag_and_cache_control(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """JSON 200 GET adds ETag and Cache-Control headers."""
         app = AsyncMock()
@@ -187,7 +187,7 @@ class TestResponseCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_if_none_match_returns_304(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """Matching If-None-Match returns 304."""
         body = b'{"data":1}'
@@ -229,7 +229,7 @@ class TestResponseCacheMiddleware:
 
     @pytest.mark.asyncio
     async def test_if_none_match_mismatch_returns_200(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """Mismatched If-None-Match returns 200 with new ETag."""
         app = AsyncMock()
@@ -268,7 +268,7 @@ class TestResponseCacheMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_passes_through_non_http_scope(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """Non-HTTP scope (websocket) пробрасывается без caching."""
         app = AsyncMock()
@@ -291,7 +291,7 @@ class TestResponseCacheMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_etag_deterministic_for_same_body(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """Cycle 55 invariant: ETag deterministic для одного body."""
         app = AsyncMock()
@@ -311,7 +311,7 @@ class TestResponseCacheMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_etag_different_for_different_body(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """Cycle 55 invariant: different body → different ETag."""
         app1 = AsyncMock()
@@ -335,7 +335,7 @@ class TestResponseCacheMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_does_not_call_downstream_after_caching(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """Cycle 55 invariant: downstream вызван ОДИН раз."""
         call_count = 0
@@ -348,7 +348,7 @@ class TestResponseCacheMiddlewarePureASGI:
                     "type": "http.response.start",
                     "status": 200,
                     "headers": [(b"content-type", b"application/json")],
-                }
+                },
             )
             await send({"type": "http.response.body", "body": b'{"x":1}'})
 
@@ -364,7 +364,7 @@ class TestResponseCacheMiddlewarePureASGI:
 
     @pytest.mark.asyncio
     async def test_content_length_updated_with_etag(
-        self, middleware: ResponseCacheMiddleware
+        self, middleware: ResponseCacheMiddleware,
     ) -> None:
         """ETag добавлен + Content-Length preserved."""
         body = b'{"x":1}'

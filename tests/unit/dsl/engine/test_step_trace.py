@@ -94,7 +94,7 @@ class TestTracedStep:
         exchange.body = "response_body"
 
         async with traced_step(
-            exchange, processor_name="http_call", input_value="req"
+            exchange, processor_name="http_call", input_value="req",
         ) as trace:
             trace.output_snapshot = "custom_out"
 

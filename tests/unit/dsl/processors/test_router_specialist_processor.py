@@ -47,7 +47,7 @@ from src.backend.dsl.processors.router_specialist_processor import (
 
 
 def _make_exchange(
-    body: Any = "hello", headers: dict[str, Any] | None = None
+    body: Any = "hello", headers: dict[str, Any] | None = None,
 ) -> Exchange:
     msg = Message(body=body, headers=headers or {})
     return Exchange(in_message=msg, out_message=msg)
@@ -79,8 +79,8 @@ async def test_basic_routing() -> None:
     specialists = [_billing_agent("billing_result")]
     router = AsyncMock(
         return_value=RoutingDecision(
-            chosen_agent="billing", confidence=0.9, reasoning="matches billing keywords"
-        )
+            chosen_agent="billing", confidence=0.9, reasoning="matches billing keywords",
+        ),
     )
     p = RouterSpecialistProcessor(llm_router=router, specialists=specialists)
     ex = _make_exchange("I have a billing question")
@@ -98,8 +98,8 @@ async def test_llm_router_selects_specialist() -> None:
     support = _support_agent("s")
     router = AsyncMock(
         return_value=RoutingDecision(
-            chosen_agent="support", confidence=0.85, reasoning="user mentions error"
-        )
+            chosen_agent="support", confidence=0.85, reasoning="user mentions error",
+        ),
     )
     p = RouterSpecialistProcessor(llm_router=router, specialists=[billing, support])
     ex = _make_exchange("I have an error")
@@ -116,8 +116,8 @@ async def test_min_confidence_threshold_triggers_fallback() -> None:
     specialists = [_billing_agent("b"), _support_agent("default_resp")]
     router = AsyncMock(
         return_value=RoutingDecision(
-            chosen_agent="billing", confidence=0.3, reasoning="low conf"
-        )
+            chosen_agent="billing", confidence=0.3, reasoning="low conf",
+        ),
     )
     p = RouterSpecialistProcessor(
         llm_router=router,
@@ -141,11 +141,11 @@ async def test_low_confidence_no_fallback() -> None:
     specialists = [_billing_agent("b")]
     router = AsyncMock(
         return_value=RoutingDecision(
-            chosen_agent="billing", confidence=0.3, reasoning="low conf"
-        )
+            chosen_agent="billing", confidence=0.3, reasoning="low conf",
+        ),
     )
     p = RouterSpecialistProcessor(
-        llm_router=router, specialists=specialists, min_confidence=0.6
+        llm_router=router, specialists=specialists, min_confidence=0.6,
     )
     ex = _make_exchange("ambiguous")
 
@@ -161,10 +161,10 @@ async def test_specialists_registration() -> None:
     """Specialists list is preserved on the processor."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...", handler=AsyncMock()
+            name="a", capability="x", description="...", handler=AsyncMock(),
         ),
         SpecialistAgent(
-            name="b", capability="y", description="...", handler=AsyncMock()
+            name="b", capability="y", description="...", handler=AsyncMock(),
         ),
     ]
     p = RouterSpecialistProcessor(llm_router=AsyncMock(), specialists=specialists)
@@ -183,12 +183,12 @@ def test_invalid_min_confidence_raises() -> None:
     """min_confidence outside [0, 1] raises ValueError."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...", handler=AsyncMock()
-        )
+            name="a", capability="x", description="...", handler=AsyncMock(),
+        ),
     ]
     with pytest.raises(ValueError, match="min_confidence"):
         RouterSpecialistProcessor(
-            llm_router=AsyncMock(), specialists=specialists, min_confidence=1.5
+            llm_router=AsyncMock(), specialists=specialists, min_confidence=1.5,
         )
 
 
@@ -196,12 +196,12 @@ def test_invalid_min_confidence_negative_raises() -> None:
     """min_confidence < 0 raises ValueError."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...", handler=AsyncMock()
-        )
+            name="a", capability="x", description="...", handler=AsyncMock(),
+        ),
     ]
     with pytest.raises(ValueError, match="min_confidence"):
         RouterSpecialistProcessor(
-            llm_router=AsyncMock(), specialists=specialists, min_confidence=-0.1
+            llm_router=AsyncMock(), specialists=specialists, min_confidence=-0.1,
         )
 
 
@@ -213,8 +213,8 @@ def test_chainable() -> None:
 
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...", handler=AsyncMock()
-        )
+            name="a", capability="x", description="...", handler=AsyncMock(),
+        ),
     ]
     b = RouteBuilder(route_id="t", source="t")
     result = b.router_specialist(llm_router=router, specialists=specialists)
@@ -232,10 +232,10 @@ async def test_async_routing() -> None:
             capability="x",
             description="...",
             handler=AsyncMock(return_value="r"),
-        )
+        ),
     ]
     router = AsyncMock(
-        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok")
+        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok"),
     )
     p = RouterSpecialistProcessor(llm_router=router, specialists=specialists)
     ex = _make_exchange("input")
@@ -254,10 +254,10 @@ async def test_exchange_in_message() -> None:
             capability="x",
             description="...",
             handler=AsyncMock(return_value="r"),
-        )
+        ),
     ]
     router = AsyncMock(
-        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok")
+        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok"),
     )
     p = RouterSpecialistProcessor(llm_router=router, specialists=specialists)
     ex = _make_exchange("MY_INPUT")
@@ -275,10 +275,10 @@ async def test_out_message_set() -> None:
             capability="x",
             description="...",
             handler=AsyncMock(return_value="final"),
-        )
+        ),
     ]
     router = AsyncMock(
-        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok")
+        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok"),
     )
     p = RouterSpecialistProcessor(llm_router=router, specialists=specialists)
     ex = _make_exchange("input")
@@ -296,7 +296,7 @@ async def test_routing_history() -> None:
             capability="x",
             description="...",
             handler=AsyncMock(return_value="r"),
-        )
+        ),
     ]
     decision = RoutingDecision(
         chosen_agent="a",
@@ -324,7 +324,7 @@ async def test_routing_history() -> None:
 async def test_specialist_not_found_uses_fallback() -> None:
     """LLM chooses non-existent specialist → fallback (if configured)."""
     billing = SpecialistAgent(
-        name="billing", capability="b", description="...", handler=AsyncMock()
+        name="billing", capability="b", description="...", handler=AsyncMock(),
     )
     default = SpecialistAgent(
         name="default",
@@ -334,11 +334,11 @@ async def test_specialist_not_found_uses_fallback() -> None:
     )
     router = AsyncMock(
         return_value=RoutingDecision(
-            chosen_agent="nonexistent", confidence=0.9, reasoning=""
-        )
+            chosen_agent="nonexistent", confidence=0.9, reasoning="",
+        ),
     )
     p = RouterSpecialistProcessor(
-        llm_router=router, specialists=[billing, default], fallback_specialist="default"
+        llm_router=router, specialists=[billing, default], fallback_specialist="default",
     )
     ex = _make_exchange("input")
 
@@ -356,8 +356,8 @@ async def test_specialist_not_found_no_fallback_fails() -> None:
     specialists = [_billing_agent()]
     router = AsyncMock(
         return_value=RoutingDecision(
-            chosen_agent="nonexistent", confidence=0.9, reasoning=""
-        )
+            chosen_agent="nonexistent", confidence=0.9, reasoning="",
+        ),
     )
     p = RouterSpecialistProcessor(llm_router=router, specialists=specialists)
     ex = _make_exchange("input")
@@ -384,10 +384,10 @@ def test_to_spec() -> None:
     """to_spec returns router_specialist config dict."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="desc-a", handler=AsyncMock()
+            name="a", capability="x", description="desc-a", handler=AsyncMock(),
         ),
         SpecialistAgent(
-            name="b", capability="y", description="desc-b", handler=AsyncMock()
+            name="b", capability="y", description="desc-b", handler=AsyncMock(),
         ),
     ]
     p = RouterSpecialistProcessor(
@@ -412,8 +412,8 @@ def test_invalid_fallback_specialist_raises() -> None:
     """fallback_specialist не в списке → ValueError."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...", handler=AsyncMock()
-        )
+            name="a", capability="x", description="...", handler=AsyncMock(),
+        ),
     ]
     with pytest.raises(ValueError, match="fallback_specialist"):
         RouterSpecialistProcessor(
@@ -427,12 +427,12 @@ def test_non_callable_llm_router_raises() -> None:
     """llm_router не callable → TypeError."""
     specialists = [
         SpecialistAgent(
-            name="a", capability="x", description="...", handler=AsyncMock()
-        )
+            name="a", capability="x", description="...", handler=AsyncMock(),
+        ),
     ]
     with pytest.raises(TypeError, match="llm_router"):
         RouterSpecialistProcessor(  # type: ignore[arg-type]
-            llm_router="not callable", specialists=specialists
+            llm_router="not callable", specialists=specialists,
         )
 
 
@@ -451,10 +451,10 @@ async def test_specialist_handler_raises_fails_exchange() -> None:
     """Если specialist.handler бросает → exchange.fail()."""
     handler = AsyncMock(side_effect=RuntimeError("boom"))
     specialists = [
-        SpecialistAgent(name="a", capability="x", description="...", handler=handler)
+        SpecialistAgent(name="a", capability="x", description="...", handler=handler),
     ]
     router = AsyncMock(
-        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok")
+        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok"),
     )
     p = RouterSpecialistProcessor(llm_router=router, specialists=specialists)
     ex = _make_exchange("input")
@@ -474,7 +474,7 @@ async def test_llm_router_raises_fails_exchange() -> None:
             capability="x",
             description="...",
             handler=AsyncMock(return_value="r"),
-        )
+        ),
     ]
     p = RouterSpecialistProcessor(llm_router=router, specialists=specialists)
     ex = _make_exchange("input")
@@ -495,10 +495,10 @@ async def test_headers_preserved_on_out_message() -> None:
             capability="x",
             description="...",
             handler=AsyncMock(return_value="r"),
-        )
+        ),
     ]
     router = AsyncMock(
-        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok")
+        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok"),
     )
     p = RouterSpecialistProcessor(llm_router=router, specialists=specialists)
     ex = _make_exchange("input", headers={"X-Trace": "abc"})
@@ -517,10 +517,10 @@ async def test_non_string_body_converted() -> None:
             capability="x",
             description="...",
             handler=AsyncMock(return_value="r"),
-        )
+        ),
     ]
     router = AsyncMock(
-        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok")
+        return_value=RoutingDecision(chosen_agent="a", confidence=0.9, reasoning="ok"),
     )
     p = RouterSpecialistProcessor(llm_router=router, specialists=specialists)
     ex = _make_exchange({"key": "value"})

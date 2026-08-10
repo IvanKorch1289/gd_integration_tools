@@ -188,7 +188,7 @@ class TestAPIKeyMiddlewarePureASGI:
 
         # Mock settings.secure.api_key to known value.
         with patch(
-            "src.backend.entrypoints.middlewares.api_key.settings"
+            "src.backend.entrypoints.middlewares.api_key.settings",
         ) as mock_settings:
             mock_settings.secure.api_key = "secret-key-123"
             mock_settings.secure.routes_without_api_key = []
@@ -221,7 +221,7 @@ class TestAPIKeyMiddlewarePureASGI:
         middleware.compiled_patterns = []
 
         with patch(
-            "src.backend.entrypoints.middlewares.api_key.settings"
+            "src.backend.entrypoints.middlewares.api_key.settings",
         ) as mock_settings:
             mock_settings.secure.api_key = "correct-key"
             mock_settings.secure.routes_without_api_key = []

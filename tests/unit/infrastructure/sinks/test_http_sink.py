@@ -23,7 +23,7 @@ class _FakeResponse:
 
 
 def _fake_client(
-    resp: _FakeResponse | None = None, side_effect: Exception | None = None
+    resp: _FakeResponse | None = None, side_effect: Exception | None = None,
 ) -> AsyncMock:
     client = AsyncMock()
     if side_effect is not None:

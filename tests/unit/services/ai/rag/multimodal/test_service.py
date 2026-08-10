@@ -23,7 +23,7 @@ def _png_bytes() -> bytes:
     """Минимальный валидный PNG."""
     return bytes.fromhex(
         "89504E470D0A1A0A0000000D49484452000000010000000108060000001F15C489"
-        "0000000D49444154789C636400010000000500010D0A2DB40000000049454E44AE426082"
+        "0000000D49444154789C636400010000000500010D0A2DB40000000049454E44AE426082",
     )
 
 
@@ -43,7 +43,7 @@ async def test_service_ingest_image_bytes() -> None:
     svc = _make_service()
 
     result = await svc.ingest_document(
-        _png_bytes(), collection="finance", mime="image/png"
+        _png_bytes(), collection="finance", mime="image/png",
     )
 
     assert isinstance(result, IngestResult)
@@ -65,7 +65,7 @@ async def test_service_ingest_pdf_bytes() -> None:
     pdf_bytes = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"  # битый PDF
 
     result = await svc.ingest_document(
-        pdf_bytes, collection="docs", mime="application/pdf"
+        pdf_bytes, collection="docs", mime="application/pdf",
     )
 
     # Битый PDF → empty chunks + warning, но без exception.
@@ -86,7 +86,7 @@ async def test_service_search_returns_sorted_results() -> None:
         await svc.ingest_document(_png_bytes(), collection="default", mime="image/png")
 
     results = await svc.search(
-        "query string", collection="default", top_k=2, tenant_id="test"
+        "query string", collection="default", top_k=2, tenant_id="test",
     )
 
     assert len(results) <= 2
@@ -123,7 +123,7 @@ async def test_service_respects_feature_flag_off() -> None:
     svc = _make_service(enabled=False)
 
     result = await svc.ingest_document(
-        _png_bytes(), collection="bucket", mime="image/png"
+        _png_bytes(), collection="bucket", mime="image/png",
     )
     # Чанки парсятся, но не сохраняются в _collections.
     assert isinstance(result, IngestResult)

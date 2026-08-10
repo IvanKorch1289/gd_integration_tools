@@ -94,7 +94,7 @@ class ApplyMixin(_DataQualityProtocol):
         return None
 
     def _apply_unique(
-        self, rule: DQRule, value: Any, dataset: str
+        self, rule: DQRule, value: Any, dataset: str,
     ) -> DQViolation | None:
         """Return violation if value was already seen in the same dataset/field."""
         key = f"{dataset}:{rule.field}"
@@ -111,7 +111,7 @@ class ApplyMixin(_DataQualityProtocol):
         return None
 
     def _apply_outlier(
-        self, rule: DQRule, value: Any, dataset: str
+        self, rule: DQRule, value: Any, dataset: str,
     ) -> DQViolation | None:
         """Return violation if numeric value is a statistical outlier (z-score)."""
         if isinstance(value, (int, float)):
@@ -225,7 +225,7 @@ class ApplyMixin(_DataQualityProtocol):
         return None
 
     def _apply_cross_field(
-        self, rule: DQRule, value: Any, record: dict[str, Any]
+        self, rule: DQRule, value: Any, record: dict[str, Any],
     ) -> DQViolation | None:
         """Return violation if cross-field comparison fails."""
         other_field = rule.params.get("other_field")
@@ -301,7 +301,7 @@ class ApplyMixin(_DataQualityProtocol):
         return None
 
     def _apply_cardinality(
-        self, rule: DQRule, value: Any, dataset: str
+        self, rule: DQRule, value: Any, dataset: str,
     ) -> DQViolation | None:
         """Return violation if value appears more than max_count times."""
         max_count = rule.params.get("max_count", 1)
@@ -323,7 +323,7 @@ class ApplyMixin(_DataQualityProtocol):
     # ─── Public dispatcher ────────────────────────────────────────────
 
     def _apply_rule(
-        self, rule: DQRule, record: dict[str, Any], dataset: str
+        self, rule: DQRule, record: dict[str, Any], dataset: str,
     ) -> DQViolation | None:
         """Dispatch to the appropriate check-specific helper."""
         value = record.get(rule.field)

@@ -70,7 +70,7 @@ class PollCDCBackend(CDCSource):
         self._cursor_log: list[CDCCursor] = []
 
     async def subscribe(
-        self, *, tables: list[str], start_cursor: CDCCursor | None = None
+        self, *, tables: list[str], start_cursor: CDCCursor | None = None,
     ) -> AsyncIterator[CDCEvent]:
         """Polling-loop или feed consumption (зависит от режима).
 
@@ -103,7 +103,7 @@ class PollCDCBackend(CDCSource):
                     _logger.warning("PollCDCBackend feed: skip non-dict entry: %r", raw)
                     continue
                 last_cursor = str(
-                    raw.get("timestamp") or raw.get("cursor") or last_cursor
+                    raw.get("timestamp") or raw.get("cursor") or last_cursor,
                 )
                 yield CDCEvent(
                     operation="UPSERT",
@@ -140,7 +140,7 @@ class PollCDCBackend(CDCSource):
         self._cursor_log.append(cursor)
 
     async def replay(
-        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None
+        self, *, start_cursor: CDCCursor, end_cursor: CDCCursor | None = None,
     ) -> AsyncIterator[CDCEvent]:
         """Replay для polling backend = re-poll по тому же timestamp.
 
@@ -162,7 +162,7 @@ class PollCDCBackend(CDCSource):
                     timestamp=datetime.now(UTC),
                     new=raw.get("new"),
                     cursor=CDCCursor(
-                        value=str(raw.get("cursor", start_cursor.value)), backend="poll"
+                        value=str(raw.get("cursor", start_cursor.value)), backend="poll",
                     ),
                 )
         return

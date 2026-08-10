@@ -12,7 +12,7 @@ __all__ = ("IntegrationMixin",)
 
 
 class IntegrationMixin(
-    TransportMixin, SecurityMixin, EntityMixin, IntegrationCoreMixin, NotifyMixin
+    TransportMixin, SecurityMixin, EntityMixin, IntegrationCoreMixin, NotifyMixin,
 ):
     """Facade combining all integration mixins."""
 

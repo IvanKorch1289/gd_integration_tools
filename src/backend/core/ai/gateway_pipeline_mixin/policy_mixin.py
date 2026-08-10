@@ -66,7 +66,7 @@ class PolicyMixin(_PipelineStepsProtocol):
         if self._policy_resolver is None:
             return None
         policy = await self._policy_resolver.resolve(
-            workflow_id=request.workflow_id, tenant_id=request.tenant_id
+            workflow_id=request.workflow_id, tenant_id=request.tenant_id,
         )
         if policy is None:
             try:
@@ -140,7 +140,7 @@ class PolicyMixin(_PipelineStepsProtocol):
                 await result
         except Exception as exc:
             logger.debug(
-                "AIGateway: capability check for %s failed: %s", capability, exc
+                "AIGateway: capability check for %s failed: %s", capability, exc,
             )
 
     @staticmethod

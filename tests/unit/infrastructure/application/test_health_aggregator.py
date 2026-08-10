@@ -150,8 +150,8 @@ class TestCollectRegistryComponents:
             inst.names.return_value = ["redis"]
             inst.health_all = AsyncMock(
                 return_value={
-                    "redis": HealthResult.ok(latency_ms=2.0, mode="fast", connections=5)
-                }
+                    "redis": HealthResult.ok(latency_ms=2.0, mode="fast", connections=5),
+                },
             )
             mock_cls.instance.return_value = inst
             result = await ha._collect_registry_components("fast")
@@ -233,7 +233,7 @@ class TestCheckAll:
             from src.backend.infrastructure.clients.base_connector import HealthResult
 
             inst.health_all = AsyncMock(
-                return_value={"redis": HealthResult.ok(latency_ms=1.0, mode="fast")}
+                return_value={"redis": HealthResult.ok(latency_ms=1.0, mode="fast")},
             )
             mock_cls.instance.return_value = inst
             result = await ha.check_all(mode="fast")
@@ -281,7 +281,7 @@ class TestCheckSingle:
             from src.backend.infrastructure.clients.base_connector import HealthResult
 
             client.health = AsyncMock(
-                return_value=HealthResult.ok(latency_ms=3.0, mode="fast")
+                return_value=HealthResult.ok(latency_ms=3.0, mode="fast"),
             )
             inst.get.return_value = client
             mock_cls.instance.return_value = inst

@@ -41,7 +41,7 @@ async def _smtp_send(payload: dict[str, Any]) -> None:
             "to": [payload["recipient"]],
             "subject": payload.get("subject", "Notification"),
             "body": payload["message"],
-        }
+        },
     )
 
 
@@ -60,10 +60,10 @@ async def _slack_send(payload: dict[str, Any]) -> None:
     if not webhook:
         raise RuntimeError("SLACK_WEBHOOK_URL не задан — Slack-fallback недоступен")
     async with make_http_client(
-        plugin="infrastructure.resilience.express_chain.slack_fallback", timeout=5.0
+        plugin="infrastructure.resilience.express_chain.slack_fallback", timeout=5.0,
     ) as client:
         response = await client.post(
-            webhook, json={"text": f"[{payload.get('recipient')}] {payload['message']}"}
+            webhook, json={"text": f"[{payload.get('recipient')}] {payload['message']}"},
         )
         response.raise_for_status()
 

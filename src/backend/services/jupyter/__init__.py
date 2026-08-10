@@ -26,7 +26,7 @@ def _default_execution_service_factory() -> NotebookExecutionService:
 
 
 @app_state_singleton(
-    "notebook_execution_service", factory=_default_execution_service_factory
+    "notebook_execution_service", factory=_default_execution_service_factory,
 )
 def get_notebook_execution_service() -> NotebookExecutionService:  # type: ignore[empty-body]
     """Singleton ``NotebookExecutionService``. Backend подменяется через app.state."""

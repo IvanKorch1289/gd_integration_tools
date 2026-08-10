@@ -63,7 +63,7 @@ async def test_get_langfuse_link(service: TechService) -> None:
             mock_settings.app.langfuse_url = "http://lf"
             await service.get_langfuse_link()
             mock_gen.assert_called_once_with(
-                "http://lf", "LangFuse — LLM Observability"
+                "http://lf", "LangFuse — LLM Observability",
             )
 
 
@@ -74,7 +74,7 @@ async def test_get_langgraph_link(service: TechService) -> None:
             mock_settings.app.langgraph_url = "http://lg"
             await service.get_langgraph_link()
             mock_gen.assert_called_once_with(
-                "http://lg", "LangGraph Studio — AI Agents"
+                "http://lg", "LangGraph Studio — AI Agents",
             )
 
 
@@ -84,7 +84,7 @@ async def test_get_langgraph_link(service: TechService) -> None:
 @pytest.mark.asyncio
 async def test_check_database(service: TechService) -> None:
     with patch(
-        "src.backend.services.core.tech.get_healthcheck_session_provider"
+        "src.backend.services.core.tech.get_healthcheck_session_provider",
     ) as mock_provider:
         session = AsyncMock()
         session.check_database.return_value = True
@@ -102,7 +102,7 @@ async def test_check_database(service: TechService) -> None:
 @pytest.mark.asyncio
 async def test_check_redis(service: TechService) -> None:
     with patch(
-        "src.backend.services.core.tech.get_healthcheck_session_provider"
+        "src.backend.services.core.tech.get_healthcheck_session_provider",
     ) as mock_provider:
         session = AsyncMock()
         session.check_redis.return_value = False
@@ -119,7 +119,7 @@ async def test_check_redis(service: TechService) -> None:
 @pytest.mark.asyncio
 async def test_check_all_services(service: TechService) -> None:
     with patch(
-        "src.backend.services.core.tech.get_healthcheck_session_provider"
+        "src.backend.services.core.tech.get_healthcheck_session_provider",
     ) as mock_provider:
         session = AsyncMock()
         session.check_all_services.return_value = {"db": True}
@@ -139,7 +139,7 @@ async def test_check_all_services(service: TechService) -> None:
 @pytest.mark.asyncio
 async def test_get_degradation_snapshot(service: TechService) -> None:
     with patch(
-        "src.backend.core.resilience.graceful_degradation.get_graceful_degradation_registry"
+        "src.backend.core.resilience.graceful_degradation.get_graceful_degradation_registry",
     ) as mock_reg:
         mock_reg.return_value.snapshot.return_value = {"feature": {"state": "ok"}}
         result = await service.get_degradation_snapshot()

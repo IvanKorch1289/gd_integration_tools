@@ -91,7 +91,7 @@ class ContentModeration:
             reason = ", ".join(reasons) if reasons else "unspecified"
 
         return ModerationResult(
-            flagged=flagged, categories=categories, scores=scores, reason=reason
+            flagged=flagged, categories=categories, scores=scores, reason=reason,
         )
 
     def _check_local(self, text: str) -> ModerationResult:

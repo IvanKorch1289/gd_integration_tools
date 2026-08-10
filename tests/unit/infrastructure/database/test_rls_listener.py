@@ -27,7 +27,7 @@ def mock_engine() -> MagicMock:
 
 
 def test_install_skips_when_feature_disabled(
-    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.database.rls_listener.feature_flags",
@@ -38,7 +38,7 @@ def test_install_skips_when_feature_disabled(
 
 
 def test_install_skips_for_non_pg(
-    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.database.rls_listener.feature_flags",
@@ -50,7 +50,7 @@ def test_install_skips_for_non_pg(
 
 
 def test_install_idempotent(
-    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.database.rls_listener.feature_flags",
@@ -62,7 +62,7 @@ def test_install_idempotent(
 
 
 def test_after_begin_sets_tenant(
-    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.database.rls_listener.feature_flags",
@@ -98,14 +98,14 @@ def test_after_begin_sets_tenant(
 
 
 def test_after_begin_skips_no_tenant(
-    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.database.rls_listener.feature_flags",
         MagicMock(rls_postgres_enforce=True),
     )
     monkeypatch.setattr(
-        "src.backend.infrastructure.database.rls_listener.current_tenant", lambda: None
+        "src.backend.infrastructure.database.rls_listener.current_tenant", lambda: None,
     )
 
     captured = {}
@@ -130,7 +130,7 @@ def test_after_begin_skips_no_tenant(
 
 
 def test_after_begin_logs_error(
-    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch
+    mock_engine: MagicMock, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "src.backend.infrastructure.database.rls_listener.feature_flags",
@@ -160,7 +160,7 @@ def test_after_begin_logs_error(
     connection.dialect.name = "postgresql"
     connection.exec_driver_sql = MagicMock(side_effect=RuntimeError("pg down"))
     with patch(
-        "src.backend.infrastructure.database.rls_listener.db_logger"
+        "src.backend.infrastructure.database.rls_listener.db_logger",
     ) as mock_logger:
         captured["after_begin"](None, None, connection)
     mock_logger.warning.assert_called_once()

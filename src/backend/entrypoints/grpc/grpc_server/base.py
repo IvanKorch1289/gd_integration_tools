@@ -64,7 +64,7 @@ class BaseGRPCServicer:
             except ImportError:
                 pass
         return await dispatch_action(
-            action=action, payload=payload, source="grpc", correlation_id=correlation_id
+            action=action, payload=payload, source="grpc", correlation_id=correlation_id,
         )
 
     def _serialize(self, result: Any) -> str:

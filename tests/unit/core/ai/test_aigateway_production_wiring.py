@@ -88,7 +88,7 @@ async def test_production_partial_di_raises_with_missing_list(
 
     gateway = AIGateway(policy_resolver=MagicMock())
     request = AIRequest(
-        workflow_id="wf", tenant_id="t-1", correlation_id="req", prompt_inline="p"
+        workflow_id="wf", tenant_id="t-1", correlation_id="req", prompt_inline="p",
     )
 
     with pytest.raises(AIGatewayProductionWiringError) as exc_info:
@@ -126,7 +126,7 @@ async def test_production_full_di_reaches_enforced_invoke(
     monkeypatch.setattr(gateway, "_enforced_invoke", enforced_mock)
 
     request = AIRequest(
-        workflow_id="wf", tenant_id="t-1", correlation_id="req", prompt_inline="p"
+        workflow_id="wf", tenant_id="t-1", correlation_id="req", prompt_inline="p",
     )
     response = await gateway.invoke(request)
     enforced_mock.assert_awaited_once_with(request)
@@ -149,7 +149,7 @@ async def test_development_no_di_does_not_raise(
     monkeypatch.setattr(gateway, "_enforced_invoke", enforced_mock)
 
     request = AIRequest(
-        workflow_id="wf", tenant_id="t-1", correlation_id="req", prompt_inline="p"
+        workflow_id="wf", tenant_id="t-1", correlation_id="req", prompt_inline="p",
     )
     response = await gateway.invoke(request)
     assert response is sentinel
@@ -169,7 +169,7 @@ async def test_staging_no_di_does_not_raise(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(gateway, "_enforced_invoke", enforced_mock)
 
     request = AIRequest(
-        workflow_id="wf", tenant_id="t-1", correlation_id="req", prompt_inline="p"
+        workflow_id="wf", tenant_id="t-1", correlation_id="req", prompt_inline="p",
     )
     response = await gateway.invoke(request)
     assert response is sentinel
@@ -185,7 +185,7 @@ def test_production_wiring_error_str_lists_all_missing() -> None:
     from src.backend.core.ai.errors import AIGatewayProductionWiringError
 
     err = AIGatewayProductionWiringError(
-        missing=("policy_resolver", "capability_gate", "token_budget")
+        missing=("policy_resolver", "capability_gate", "token_budget"),
     )
     msg = str(err)
     assert "policy_resolver" in msg

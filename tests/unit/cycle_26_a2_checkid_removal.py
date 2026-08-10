@@ -60,7 +60,7 @@ class TestCheckpointIdRemoved:
                 return
         # If we reach here, signature still has checkpoint_id
         raise AssertionError(
-            "WorkflowBuilder.resume() still accepts checkpoint_id kwarg"
+            "WorkflowBuilder.resume() still accepts checkpoint_id kwarg",
         )
 
     def test_yaml_doc_updated(self):

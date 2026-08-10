@@ -148,7 +148,7 @@ class CertRotationWatcher:
             return
         self._stop_event.clear()
         self._task = asyncio.create_task(
-            self._loop(), name="cert-rotation-watcher"
+            self._loop(), name="cert-rotation-watcher",
         )
         logger.info("cert.rotation.task_started")
 

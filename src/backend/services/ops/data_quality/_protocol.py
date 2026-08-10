@@ -35,9 +35,9 @@ class _DataQualityProtocol(Protocol):
     def list_rules(self) -> list[dict[str, Any]]: ...
 
     def _check_rule(
-        self, rule: DQRule, value: Any, dataset: str
+        self, rule: DQRule, value: Any, dataset: str,
     ) -> list[DQViolation]: ...
 
     def _apply_rule(
-        self, rule: DQRule, record: dict[str, Any], dataset: str
+        self, rule: DQRule, record: dict[str, Any], dataset: str,
     ) -> DQViolation | None: ...

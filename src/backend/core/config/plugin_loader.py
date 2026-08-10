@@ -50,7 +50,7 @@ class PluginLoaderSettings(BaseSettingsWithLoader):
 
     yaml_group: ClassVar[str] = "v11"
     model_config = SettingsConfigDict(
-        env_prefix="V11_", extra="forbid", validate_default=True
+        env_prefix="V11_", extra="forbid", validate_default=True,
     )
 
     plugin_loader_enabled: bool = Field(
@@ -69,16 +69,16 @@ class PluginLoaderSettings(BaseSettingsWithLoader):
         ),
     )
     extensions_dir: Path = Field(
-        default=Path("extensions"), title="Каталог in-tree V11-плагинов"
+        default=Path("extensions"), title="Каталог in-tree V11-плагинов",
     )
     routes_dir: Path = Field(default=Path("routes"), title="Каталог V11-маршрутов")
     core_version: str = Field(
-        default="0.2.0", title="Текущая версия ядра (для requires_core)"
+        default="0.2.0", title="Текущая версия ядра (для requires_core)",
     )
     hot_reload_enabled: bool = Field(
-        default=False,     )
+        default=False     )
     hot_reload_debounce_ms: int = Field(
-        default=500, ge=0, le=10_000, title="Окно дебаунса (ms)"
+        default=500, ge=0, le=10_000, title="Окно дебаунса (ms)",
     )
 
 

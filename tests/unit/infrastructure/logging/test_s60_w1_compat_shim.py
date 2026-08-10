@@ -91,7 +91,7 @@ def test_kwarg_only_passes_through() -> None:
     sl, inner = _new_logger()
     sl.info("Order created", order_id=123, tenant_id="t-1")
     assert inner.calls == [
-        ("info", "Order created", {"order_id": 123, "tenant_id": "t-1"})
+        ("info", "Order created", {"order_id": 123, "tenant_id": "t-1"}),
     ]
 
 
@@ -121,7 +121,7 @@ def test_exception_with_extra_kwargs() -> None:
             "exception",
             "Redis node-3 down",
             {"host": "redis-1", "port": 6379, "exc_info": True},
-        )
+        ),
     ]
 
 
@@ -134,7 +134,7 @@ def test_unparseable_format_passes_args_as_kwarg() -> None:
     sl.warning("plain text with extra", "arg1", "arg2")
     # msg не имеет %-placeholders → TypeError → args записываются в kwargs
     assert inner.calls == [
-        ("warning", "plain text with extra", {"args": ["arg1", "arg2"]})
+        ("warning", "plain text with extra", {"args": ["arg1", "arg2"]}),
     ]
 
 

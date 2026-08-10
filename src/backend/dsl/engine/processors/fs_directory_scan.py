@@ -129,7 +129,7 @@ class DirectoryScanProcessor(BaseProcessor):
             _logger.warning(
                 "DirectoryScanProcessor used (DEPRECATED, S172 M1.2). "
                 "Will be removed in Sprint 175. "
-                "Migrate to FilteredDirectoryScanProcessor (S171 M7)."
+                "Migrate to FilteredDirectoryScanProcessor (S171 M7).",
             )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -191,7 +191,7 @@ class DirectoryScanProcessor(BaseProcessor):
         captured: dict[str, Any] = {}
 
         def _capture_set_result(
-            _exchange: Exchange[Any], target: str, value: Any
+            _exchange: Exchange[Any], target: str, value: Any,
         ) -> None:
             captured[target] = value
             original_set_result(_exchange, target, value)
@@ -218,7 +218,7 @@ class DirectoryScanProcessor(BaseProcessor):
                         "name": os.path.basename(full),
                         "size": stat.st_size,
                         "mtime": stat.st_mtime,
-                    }
+                    },
                 )
             except OSError:
                 continue
@@ -243,5 +243,5 @@ class DirectoryScanProcessor(BaseProcessor):
                 "max_files": self._max_files,
                 "sort_by": self._sort_by,
                 "result_property": self._result_property,
-            }
+            },
         }

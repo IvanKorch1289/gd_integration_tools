@@ -136,7 +136,7 @@ async def test_fork_join_branch_failure_fails_exchange(
 ) -> None:
     """Любой branch fail → exchange fail (не silent drop)."""
     proc = ForkJoinProcessor(
-        branches={"ok": [_SetProperty("k", "v")], "broken": [_FailProcessor("kaboom")]}
+        branches={"ok": [_SetProperty("k", "v")], "broken": [_FailProcessor("kaboom")]},
     )
     exchange = Exchange(in_message=Message(body={}, headers={}))
     await proc.process(exchange, context)

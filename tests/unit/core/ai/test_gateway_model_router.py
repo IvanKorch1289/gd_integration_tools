@@ -53,7 +53,7 @@ async def test_model_router_passes_primary_to_gateway() -> None:
             "choices": [{"message": {"content": "ok"}}],
             "usage": {"prompt_tokens": 10, "completion_tokens": 5},
             "model": "openai/gpt-4o-mini",
-        }
+        },
     )
     mock_gateway._resolve_llm_gateway = MagicMock(return_value=mock_gateway)
 
@@ -80,7 +80,7 @@ async def test_model_router_passes_fallbacks_list() -> None:
             "choices": [{"message": {"content": "fallback"}}],
             "usage": {"prompt_tokens": 10, "completion_tokens": 5},
             "model": "anthropic/claude-3-haiku",
-        }
+        },
     )
     mock_gateway._resolve_llm_gateway = MagicMock(return_value=mock_gateway)
 
@@ -106,7 +106,7 @@ async def test_model_router_no_fallbacks_no_kwargs() -> None:
             "choices": [{"message": {"content": "ok"}}],
             "usage": {"prompt_tokens": 10, "completion_tokens": 5},
             "model": "openai/gpt-4o-mini",
-        }
+        },
     )
     mock_gateway._resolve_llm_gateway = MagicMock(return_value=mock_gateway)
 
@@ -126,7 +126,7 @@ async def test_invoke_llm_policy_none_uses_none_model() -> None:
             "choices": [{"message": {"content": "default"}}],
             "usage": {"prompt_tokens": 10, "completion_tokens": 5},
             "model": "default",
-        }
+        },
     )
     mock_gateway._resolve_llm_gateway = MagicMock(return_value=mock_gateway)
 
@@ -148,7 +148,7 @@ async def test_model_router_extracts_completion_fields() -> None:
             "choices": [{"message": {"content": "response text"}}],
             "usage": {"prompt_tokens": 15, "completion_tokens": 8},
             "model": "openrouter/anthropic/claude-3.5-sonnet",
-        }
+        },
     )
     mock_gateway._resolve_llm_gateway = MagicMock(return_value=mock_gateway)
 

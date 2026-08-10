@@ -24,11 +24,11 @@ class _ExternalDatabaseProtocol(Protocol):
     def _validate_response(self, meta: ExternalDBObjectMeta, result: Any) -> Any: ...
 
     def _build_arguments_sql(
-        self, meta: ExternalDBObjectMeta, prepared_params: list[PreparedDBParameter]
+        self, meta: ExternalDBObjectMeta, prepared_params: list[PreparedDBParameter],
     ) -> str: ...
 
     def _to_execute_params(
-        self, prepared_params: list[PreparedDBParameter]
+        self, prepared_params: list[PreparedDBParameter],
     ) -> dict[str, Any]: ...
 
     def _resolve_bind_name(self, param_meta: Any, index: int) -> str: ...

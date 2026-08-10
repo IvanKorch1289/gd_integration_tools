@@ -76,7 +76,7 @@ def test_evaluate_runs_payload_scanner() -> None:
 
     policy = WafPolicy(payload_scanner=scanner)
     decision = policy.evaluate(
-        "https://example.com/", payload=b"<script>alert(1)</script>"
+        "https://example.com/", payload=b"<script>alert(1)</script>",
     )
     assert decision.allowed is False
     assert decision.reason == "xss-attempt"

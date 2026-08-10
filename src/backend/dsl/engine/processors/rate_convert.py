@@ -99,7 +99,7 @@ class RateConvertProcessor(BaseProcessor):
         if provider not in providers:
             raise ValueError(
                 f"rate_convert: provider must be one of {sorted(providers)}, "
-                f"got {provider!r}"
+                f"got {provider!r}",
             )
         self._from = from_currency.upper()
         self._to = to_currency.upper()
@@ -147,7 +147,7 @@ class RateConvertProcessor(BaseProcessor):
         from src.backend.core.net.outbound_http import OutboundHttpClient
 
         url = settings.dsl.rate_convert_providers[self._provider].format(
-            base=self._from
+            base=self._from,
         )
         async with OutboundHttpClient(plugin="core.rate_convert") as client:
             response = await client.get(url)

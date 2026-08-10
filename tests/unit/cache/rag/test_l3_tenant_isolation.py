@@ -297,7 +297,7 @@ async def test_three_tier_store_chunks_passes_tenant_to_l3() -> None:
     cache = ThreeTierRagCache(l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=True)
     await cache.store_chunks("Q", [{"document": "c"}], tenant="bank_a", namespace="ns")
     l3.set.assert_awaited_once_with(
-        "Q", [{"document": "c"}], tenant="bank_a", namespace="ns"
+        "Q", [{"document": "c"}], tenant="bank_a", namespace="ns",
     )
 
 
@@ -324,7 +324,7 @@ async def test_three_tier_store_chunks_backward_compat_without_tenant() -> None:
     cache = ThreeTierRagCache(l3=l3, l1_enabled=False, l2_enabled=False, l3_enabled=True)
     await cache.store_chunks("Q", [{"document": "c"}], namespace="legacy-ns")
     l3.set.assert_awaited_once_with(
-        "Q", [{"document": "c"}], tenant=None, namespace="legacy-ns"
+        "Q", [{"document": "c"}], tenant=None, namespace="legacy-ns",
     )
 
 

@@ -56,12 +56,12 @@ class StreamingEIPsMixin(EIPMixinBase):
                     key_prefix=key_prefix,
                     window_seconds=window_seconds,
                     mode=mode,
-                )
+                ),
             ),
         )
 
     def batch(
-        self, *, size: int = 100, timeout_ms: int = 500, group_by: str | None = None
+        self, *, size: int = 100, timeout_ms: int = 500, group_by: str | None = None,
     ) -> RouteBuilder:
         """Накопление сообщений в окно с flush по N ИЛИ по таймауту.
 
@@ -76,8 +76,8 @@ class StreamingEIPsMixin(EIPMixinBase):
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
                 BatchWindowProcessor(
-                    window_seconds=timeout_ms / 1000.0, max_size=size, group_by=group_by
-                )
+                    window_seconds=timeout_ms / 1000.0, max_size=size, group_by=group_by,
+                ),
             ),
         )
 
@@ -112,7 +112,7 @@ class StreamingEIPsMixin(EIPMixinBase):
                     dedup_by=dedup_by,
                     dedup_mode=dedup_mode,
                     inject_as=inject_as,
-                )
+                ),
             ),
         )
 
@@ -139,7 +139,7 @@ class StreamingEIPsMixin(EIPMixinBase):
                     interval_seconds=interval_seconds,
                     watermark_store=store,
                     route_id=self.route_id if store is not None else None,  # type: ignore[attr-defined]
-                )
+                ),
             ),
         )
 
@@ -162,7 +162,7 @@ class StreamingEIPsMixin(EIPMixinBase):
                     step_seconds=step_seconds,
                     watermark_store=store,
                     route_id=self.route_id if store is not None else None,  # type: ignore[attr-defined]
-                )
+                ),
             ),
         )
 
@@ -183,7 +183,7 @@ class StreamingEIPsMixin(EIPMixinBase):
                     gap_seconds=gap_seconds,
                     watermark_store=store,
                     route_id=self.route_id if store is not None else None,  # type: ignore[attr-defined]
-                )
+                ),
             ),
         )
 
@@ -199,7 +199,7 @@ class StreamingEIPsMixin(EIPMixinBase):
             "RouteBuilder",
             self._add(  # type: ignore[attr-defined]
                 GroupByKeyProcessor(
-                    sink=sink, key_path=key_path, window_seconds=window_seconds
-                )
+                    sink=sink, key_path=key_path, window_seconds=window_seconds,
+                ),
             ),
         )

@@ -97,7 +97,7 @@ class UnifiedCacheFacade:
         return CacheResult(value=None, hit=False, backend="none")
 
     async def set(
-        self, key: str, value: bytes, ttl: int | None = None, namespace: str = "default"
+        self, key: str, value: bytes, ttl: int | None = None, namespace: str = "default",
     ) -> None:
         """Записать ключ в кэш (best-effort по всем уровням)."""
         self._assert("cache.write", namespace)

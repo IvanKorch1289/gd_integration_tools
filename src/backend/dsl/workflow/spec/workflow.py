@@ -66,10 +66,10 @@ class WorkflowDeclaration(BaseModel):
         ),
     )
     description: str | None = Field(
-        default=None, description="Человекочитаемое описание."
+        default=None, description="Человекочитаемое описание.",
     )
     steps: list[WorkflowStep] = Field(
-        min_length=1, description="Цепочка шагов workflow."
+        min_length=1, description="Цепочка шагов workflow.",
     )
     default_timeout_s: float = Field(
         default=300.0,

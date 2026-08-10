@@ -90,7 +90,7 @@ def pg_engine_with_alembic() -> Iterator[AsyncEngine]:
     try:
         sync_url = container.get_connection_url()
         async_url = sync_url.replace("postgresql://", "postgresql+asyncpg://").replace(
-            "postgresql+psycopg2://", "postgresql+asyncpg://"
+            "postgresql+psycopg2://", "postgresql+asyncpg://",
         )
 
         cfg = AlembicConfig(str(ALEMBIC_INI))

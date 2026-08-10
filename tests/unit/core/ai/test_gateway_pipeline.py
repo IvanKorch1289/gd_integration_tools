@@ -36,7 +36,7 @@ class _FakeSanitizer:
         self.calls: list[tuple[str, str | None]] = []
 
     async def sanitize_async(
-        self, text: str, *, language: str | None = None
+        self, text: str, *, language: str | None = None,
     ) -> _FakeSanitizerResult:
         self.calls.append((text, language))
         if "@" in text:
@@ -77,7 +77,7 @@ class _FakeLiteLLMGateway:
         **kwargs: Any,
     ) -> dict[str, Any]:
         self.calls.append(
-            {"messages": messages, "model": model, "stream": stream, **kwargs}
+            {"messages": messages, "model": model, "stream": stream, **kwargs},
         )
         return dict(self._payload)
 
@@ -103,7 +103,7 @@ def basic_request() -> AIRequest:
 
 @pytest.mark.asyncio
 async def test_pipeline_runs_end_to_end_with_mocked_deps(
-    enforced: None, basic_request: AIRequest
+    enforced: None, basic_request: AIRequest,
 ) -> None:
     """Полный pipeline проходит все 9 шагов с моками зависимостей."""
     sanitizer = _FakeSanitizer()
@@ -150,7 +150,7 @@ async def test_pipeline_runs_end_to_end_with_mocked_deps(
 
 @pytest.mark.asyncio
 async def test_pipeline_passes_fallbacks_from_policy(
-    enforced: None, monkeypatch: pytest.MonkeyPatch
+    enforced: None, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Policy.model_router.fallback передаётся в LiteLLMGateway."""
     from src.backend.core.ai.policy.spec import AIPolicySpec, ModelRouterSpec
@@ -160,7 +160,7 @@ async def test_pipeline_passes_fallbacks_from_policy(
         workflow_pattern="credit_check*",
         tenant_pattern="*",
         model_router=ModelRouterSpec(
-            primary="openai/gpt-4o-mini", fallback=["anthropic/claude-sonnet-4-6"]
+            primary="openai/gpt-4o-mini", fallback=["anthropic/claude-sonnet-4-6"],
         ),
         required=False,
     )
@@ -183,7 +183,7 @@ async def test_pipeline_passes_fallbacks_from_policy(
             tenant_id="t-1",
             correlation_id="req-1",
             prompt_inline="Hi",
-        )
+        ),
     )
     assert isinstance(response, AIResponse)
     assert llm.calls[0]["model"] == "openai/gpt-4o-mini"
@@ -192,7 +192,7 @@ async def test_pipeline_passes_fallbacks_from_policy(
 
 @pytest.mark.asyncio
 async def test_pipeline_strict_policy_raises_when_missing(
-    enforced: None, monkeypatch: pytest.MonkeyPatch
+    enforced: None, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """При ``ai_policy_enforce=True`` и ``None``-policy поднимается ошибка."""
     from src.backend.core.ai.policy.resolver import PolicyNotResolvedError
@@ -207,13 +207,13 @@ async def test_pipeline_strict_policy_raises_when_missing(
     gateway = AIGateway(policy_resolver=_Resolver())
     with pytest.raises(PolicyNotResolvedError):
         await gateway.invoke(
-            AIRequest(workflow_id="unknown", tenant_id="t-1", correlation_id="req-1")
+            AIRequest(workflow_id="unknown", tenant_id="t-1", correlation_id="req-1"),
         )
 
 
 @pytest.mark.asyncio
 async def test_capability_gate_called_with_workflow_id(
-    enforced: None, basic_request: AIRequest
+    enforced: None, basic_request: AIRequest,
 ) -> None:
     """CapabilityGate.check получает строку ``ai.invoke.<workflow_id>``."""
     gate = MagicMock()
@@ -227,7 +227,7 @@ async def test_capability_gate_called_with_workflow_id(
 
 @pytest.mark.asyncio
 async def test_input_guards_skipped_when_no_enforcer(
-    enforced: None, basic_request: AIRequest
+    enforced: None, basic_request: AIRequest,
 ) -> None:
     """guards шаг 4 — no-op если policy_enforcer не задан."""
     llm = _FakeLiteLLMGateway()
@@ -249,7 +249,7 @@ async def test_pii_not_detected_when_sanitizer_returns_clean(enforced: None) -> 
             tenant_id="t-1",
             correlation_id="req-1",
             prompt_inline="Простой prompt",
-        )
+        ),
     )
     assert response.pii_detected is False
     assert response.content == "Простой ответ"
@@ -257,7 +257,7 @@ async def test_pii_not_detected_when_sanitizer_returns_clean(enforced: None) -> 
 
 @pytest.mark.asyncio
 async def test_audit_failure_does_not_break_pipeline(
-    enforced: None, basic_request: AIRequest
+    enforced: None, basic_request: AIRequest,
 ) -> None:
     """Если AuditService.emit падает — invoke всё равно возвращает response."""
     llm = _FakeLiteLLMGateway()
@@ -278,7 +278,7 @@ async def test_pass_through_default(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(features_module.feature_flags, "ai_gateway_enforce", False)
     gateway = AIGateway()
     response = await gateway.invoke(
-        AIRequest(workflow_id="x", tenant_id="t", correlation_id="c")
+        AIRequest(workflow_id="x", tenant_id="t", correlation_id="c"),
     )
     assert response.model_used == "pass-through-scaffold"
 

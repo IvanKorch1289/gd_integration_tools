@@ -36,7 +36,7 @@ class PluginManifest(BaseModel):
     tenant_aware: bool = False
     provides: list[str] = Field(default_factory=list)
     raw: dict[str, Any] = Field(
-        default_factory=dict, description="Сырое содержимое TOML"
+        default_factory=dict, description="Сырое содержимое TOML",
     )
 
 

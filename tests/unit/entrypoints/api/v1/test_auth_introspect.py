@@ -19,7 +19,7 @@ pytestmark = pytest.mark.skip(reason="S171 M12 R4: src.backend.core.config.featu
 def endpoint_module() -> Any:
     """Endpoint-модуль auth_introspect."""
     return importlib.import_module(
-        "src.backend.entrypoints.api.v1.endpoints.auth_introspect"
+        "src.backend.entrypoints.api.v1.endpoints.auth_introspect",
     )
 
 
@@ -39,7 +39,7 @@ class _FakeBackend:
     """Fake JwtBackend для тестов: настраиваемый ответ на decode()."""
 
     def __init__(
-        self, *, claims: JwtClaims | None = None, exc: Exception | None = None
+        self, *, claims: JwtClaims | None = None, exc: Exception | None = None,
     ) -> None:
         self._claims = claims
         self._exc = exc
@@ -74,10 +74,10 @@ async def test_introspect_active_token_returns_claims(endpoint_module: Any) -> N
     backend = _FakeBackend(claims=claims)
 
     with patch.object(
-        endpoint_module, "get_jwt_backend_provider", return_value=backend
+        endpoint_module, "get_jwt_backend_provider", return_value=backend,
     ):
         result = await endpoint_module.introspect(
-            token="valid-jwt", token_type_hint=None
+            token="valid-jwt", token_type_hint=None,
         )
 
     assert result["active"] is True
@@ -95,10 +95,10 @@ async def test_introspect_expired_token_returns_inactive(endpoint_module: Any) -
     backend = _FakeBackend(exc=JwtVerificationError("JWT истёк"))
 
     with patch.object(
-        endpoint_module, "get_jwt_backend_provider", return_value=backend
+        endpoint_module, "get_jwt_backend_provider", return_value=backend,
     ):
         result = await endpoint_module.introspect(
-            token="expired-jwt", token_type_hint=None
+            token="expired-jwt", token_type_hint=None,
         )
 
     assert result == {"active": False}
@@ -110,10 +110,10 @@ async def test_introspect_revoked_token_returns_inactive(endpoint_module: Any) -
     backend = _FakeBackend(exc=JwtVerificationError("JWT отозван (blacklist)"))
 
     with patch.object(
-        endpoint_module, "get_jwt_backend_provider", return_value=backend
+        endpoint_module, "get_jwt_backend_provider", return_value=backend,
     ):
         result = await endpoint_module.introspect(
-            token="revoked-jwt", token_type_hint=None
+            token="revoked-jwt", token_type_hint=None,
         )
 
     assert result == {"active": False}
@@ -135,15 +135,15 @@ async def test_introspect_no_backend_503(endpoint_module: Any) -> None:
 async def test_introspect_omits_missing_claims(endpoint_module: Any) -> None:
     """Если raw не содержит optional поля — они опущены (per RFC)."""
     claims = JwtClaims(
-        sub="user-min", iss=None, aud=None, exp=None, jti=None, raw={"sub": "user-min"}
+        sub="user-min", iss=None, aud=None, exp=None, jti=None, raw={"sub": "user-min"},
     )
     backend = _FakeBackend(claims=claims)
 
     with patch.object(
-        endpoint_module, "get_jwt_backend_provider", return_value=backend
+        endpoint_module, "get_jwt_backend_provider", return_value=backend,
     ):
         result = await endpoint_module.introspect(
-            token="minimal-jwt", token_type_hint=None
+            token="minimal-jwt", token_type_hint=None,
         )
 
     assert result["active"] is True

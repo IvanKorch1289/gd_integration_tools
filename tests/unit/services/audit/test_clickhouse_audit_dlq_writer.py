@@ -53,7 +53,7 @@ def _failing_client() -> AsyncMock:
     """AsyncMock ClickHouse client: ``insert()`` always raises RuntimeError."""
     client = AsyncMock()
     client.insert = AsyncMock(
-        side_effect=RuntimeError("ClickHouse connection refused")
+        side_effect=RuntimeError("ClickHouse connection refused"),
     )
     return client
 
@@ -227,7 +227,7 @@ async def test_dlq_writer_failure_is_fire_and_forget() -> None:
     """DLQ-writer raise → caller НЕ получает исключение (audit-mid не валится)."""
     broken_writer = MagicMock()
     broken_writer.write = AsyncMock(
-        side_effect=OSError("DLQ backend down")
+        side_effect=OSError("DLQ backend down"),
     )
     service = ClickHouseAuditService(
         client=_failing_client(),

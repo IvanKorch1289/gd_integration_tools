@@ -48,7 +48,7 @@ async def test_estimate_with_empty_history_returns_defaults() -> None:
 async def test_estimate_with_rich_history() -> None:
     client_mock = MagicMock()
     client_mock.query = AsyncMock(
-        return_value=_make_ch_result([(150, 1000.0, 2500.0, 1024.0)])
+        return_value=_make_ch_result([(150, 1000.0, 2500.0, 1024.0)]),
     )
 
     async def factory() -> Any:
@@ -91,7 +91,7 @@ async def test_estimate_query_failure_returns_defaults() -> None:
 async def test_estimate_returns_dataclass() -> None:
     client_mock = MagicMock()
     client_mock.query = AsyncMock(
-        return_value=_make_ch_result([(10, 500.0, 800.0, 256.0)])
+        return_value=_make_ch_result([(10, 500.0, 800.0, 256.0)]),
     )
 
     async def factory() -> Any:
@@ -107,7 +107,7 @@ async def test_estimate_returns_dataclass() -> None:
 async def test_estimate_version_propagated() -> None:
     client_mock = MagicMock()
     client_mock.query = AsyncMock(
-        return_value=_make_ch_result([(5, 100.0, 200.0, 100.0)])
+        return_value=_make_ch_result([(5, 100.0, 200.0, 100.0)]),
     )
 
     async def factory() -> Any:

@@ -69,7 +69,7 @@ class TestAuditContext:
         audit = AsyncMock()
         resp = AIResponse(content="blocked", guardrails_verdict={"output": "blocked"})
         ctx = _AuditContext(
-            request=request_obj, audit_service=audit, final_response=resp
+            request=request_obj, audit_service=audit, final_response=resp,
         )
         await ctx._emit_final(0)
         event = audit.emit.await_args[0][0]

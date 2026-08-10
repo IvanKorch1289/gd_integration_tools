@@ -70,7 +70,7 @@ class WorkflowRegistry:
             raise TypeError(
                 f"{cls!r} не помечен @workflow.defn — WorkflowRegistry принимает "
                 "только классы, задекорированные @workflow.defn "
-                "(или явно помеченные атрибутом _is_workflow=True для тестов)"
+                "(или явно помеченные атрибутом _is_workflow=True для тестов)",
             )
 
         name = self._extract_name(cls)
@@ -78,7 +78,7 @@ class WorkflowRegistry:
             if name in self._classes:
                 raise ValueError(
                     f"Workflow '{name}' уже зарегистрирован "
-                    f"(prev={self._classes[name]!r}, new={cls!r})"
+                    f"(prev={self._classes[name]!r}, new={cls!r})",
                 )
             self._classes[name] = cls
         return cls

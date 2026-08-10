@@ -23,7 +23,7 @@ st_json_value = st.one_of(
     st.floats(allow_nan=False, allow_infinity=False),
     st.lists(st.text(max_size=32), max_size=8),
     st.dictionaries(
-        keys=st.text(min_size=1, max_size=16), values=st.text(max_size=32), max_size=4
+        keys=st.text(min_size=1, max_size=16), values=st.text(max_size=32), max_size=4,
     ),
 )
 

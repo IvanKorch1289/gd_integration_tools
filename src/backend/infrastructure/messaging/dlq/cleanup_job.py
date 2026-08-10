@@ -111,7 +111,7 @@ class DLQCleanupJob:
                 if _CLEANUP_COUNTER is not None:
                     try:
                         _CLEANUP_COUNTER.labels(dlq_class=policy.class_name).inc(
-                            deleted
+                            deleted,
                         )
                     except (AttributeError, TypeError, ValueError) as counter_exc:
                         # cycle-9/D-AUDIT-931: narrow exceptions + observability.
@@ -138,7 +138,7 @@ class DLQCleanupJob:
         sql = f"SELECT count() FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # internal query with controlled parameters
         try:
             rows = await self._client.execute(
-                sql, params=[class_name, cutoff.isoformat()]
+                sql, params=[class_name, cutoff.isoformat()],
             )
             if rows and isinstance(rows[0], dict):
                 return int(rows[0].get("count()", 0))

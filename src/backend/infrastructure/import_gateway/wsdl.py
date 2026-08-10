@@ -110,7 +110,7 @@ class WsdlImportGateway:
                                 request_schema=request_schema,
                                 response_schema=response_schema,
                                 tags=[service_name, binding_name],
-                            )
+                            ),
                         )
 
             if not endpoints:
@@ -119,7 +119,7 @@ class WsdlImportGateway:
             schemas = self._collect_xsd_types(client)
 
             connector_name = self._sanitize_name(
-                next(iter(services.keys())) if services else "wsdl_connector"
+                next(iter(services.keys())) if services else "wsdl_connector",
             )
             spec_hash = hashlib.sha256(raw).hexdigest()
 
@@ -164,7 +164,7 @@ class WsdlImportGateway:
                 for doc in ns:
                     for elm_name, elm in doc._elements.items():
                         result[str(elm_name)] = str(
-                            elm.signature() if hasattr(elm, "signature") else elm
+                            elm.signature() if hasattr(elm, "signature") else elm,
                         )
         except Exception as exc:
             logger.debug("WSDL: не удалось собрать XSD types: %s", exc)

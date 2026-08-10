@@ -22,7 +22,7 @@ def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any
 @pytest.mark.asyncio
 async def test_request_processor_success() -> None:
     with patch(
-        "src.backend.infrastructure.clients.messaging.reply_channel.ReplyChannel"
+        "src.backend.infrastructure.clients.messaging.reply_channel.ReplyChannel",
     ) as mock_cls:
         instance = AsyncMock()
         instance.request = AsyncMock(return_value={"result": "ok"})
@@ -45,7 +45,7 @@ async def test_request_processor_success() -> None:
 @pytest.mark.asyncio
 async def test_request_processor_custom_payload() -> None:
     with patch(
-        "src.backend.infrastructure.clients.messaging.reply_channel.ReplyChannel"
+        "src.backend.infrastructure.clients.messaging.reply_channel.ReplyChannel",
     ) as mock_cls:
         instance = AsyncMock()
         instance.request = AsyncMock(return_value={"ok": True})
@@ -71,7 +71,7 @@ async def test_request_processor_custom_payload() -> None:
 @pytest.mark.asyncio
 async def test_reply_processor_success() -> None:
     with patch(
-        "src.backend.core.di.providers.infrastructure_locator.get_event_bus_facade_provider"
+        "src.backend.core.di.providers.infrastructure_locator.get_event_bus_facade_provider",
     ) as mock_get_facade:
         # CRIT-2 fix (cycle 31 retro): EventBusFacade stores underlying bus
         # as ``self._bus``, NOT ``self._broker``. The test mocks must mirror
@@ -102,7 +102,7 @@ async def test_reply_processor_success() -> None:
 @pytest.mark.asyncio
 async def test_reply_processor_from_exchange() -> None:
     with patch(
-        "src.backend.core.di.providers.infrastructure_locator.get_event_bus_facade_provider"
+        "src.backend.core.di.providers.infrastructure_locator.get_event_bus_facade_provider",
     ) as mock_get_facade:
         broker = AsyncMock()
         underlying_bus = AsyncMock()
@@ -134,7 +134,7 @@ async def test_reply_processor_missing_meta() -> None:
 async def test_reply_processor_no_broker() -> None:
     """Facade возвращается, но underlying bus не имеет _broker — fail-closed."""
     with patch(
-        "src.backend.core.di.providers.infrastructure_locator.get_event_bus_facade_provider"
+        "src.backend.core.di.providers.infrastructure_locator.get_event_bus_facade_provider",
     ) as mock_get_facade:
         underlying_bus = AsyncMock()
         underlying_bus._broker = None

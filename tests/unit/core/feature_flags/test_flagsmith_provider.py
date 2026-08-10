@@ -124,7 +124,7 @@ class TestResolveBoolean:
         with patch.object(p, "_enabled", return_value=True):
             with patch.object(p, "_get_client", side_effect=ProviderError("err")):
                 with patch(
-                    "src.backend.core.feature_flags.flagsmith_provider._logger"
+                    "src.backend.core.feature_flags.flagsmith_provider._logger",
                 ) as mock_logger:
                     result = await p.resolve_boolean_value("flag", default=True)
                     assert result is True
@@ -281,7 +281,7 @@ class TestShutdown:
         p._client = client
 
         with patch(
-            "src.backend.core.feature_flags.flagsmith_provider._logger"
+            "src.backend.core.feature_flags.flagsmith_provider._logger",
         ) as mock_logger:
             await p.shutdown()
             assert mock_logger.exception.called

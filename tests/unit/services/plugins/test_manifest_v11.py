@@ -90,7 +90,7 @@ class TestCapabilityRef:
     def test_extra_forbidden(self) -> None:
         with pytest.raises(ValidationError):
             CapabilityRef.model_validate(
-                {"name": "db.read", "scope": "x", "extra_key": "boom"}
+                {"name": "db.read", "scope": "x", "extra_key": "boom"},
             )
 
 
@@ -100,7 +100,7 @@ class TestCapabilityRef:
 class TestPluginManifest:
     def test_minimal_valid(self) -> None:
         m = PluginManifest(
-            name="x", version="0.1.0", requires_core=">=0.1", entry_class="ext.x.Plugin"
+            name="x", version="0.1.0", requires_core=">=0.1", entry_class="ext.x.Plugin",
         )
         assert m.tenant_aware is False
         assert m.capabilities == ()
@@ -119,7 +119,7 @@ class TestPluginManifest:
                 CapabilityRef(name="net.outbound", scope="*.cbr.ru"),
             ),
             provides=PluginProvides(
-                actions=("credit.score",), processors=("bki_normalizer",)
+                actions=("credit.score",), processors=("bki_normalizer",),
             ),
             config={"timeout": 30000},
         )
@@ -127,7 +127,7 @@ class TestPluginManifest:
         assert m.provides.actions == ("credit.score",)
 
     @pytest.mark.parametrize(
-        "bad_name", ["", "Credit", "credit-pipeline", "1credit", "credit pipeline"]
+        "bad_name", ["", "Credit", "credit-pipeline", "1credit", "credit pipeline"],
     )
     def test_invalid_plugin_name(self, bad_name: str) -> None:
         with pytest.raises(ValidationError):
@@ -139,7 +139,7 @@ class TestPluginManifest:
             )
 
     @pytest.mark.parametrize(
-        "bad_spec", ["NOT_A_SPEC", ">>>0.1", "@@1.0", "0.1.0..0.2.0"]
+        "bad_spec", ["NOT_A_SPEC", ">>>0.1", "@@1.0", "0.1.0..0.2.0"],
     )
     def test_invalid_requires_core(self, bad_spec: str) -> None:
         with pytest.raises(ValidationError) as exc_info:
@@ -171,13 +171,13 @@ class TestPluginManifest:
                     "requires_core": ">=0.1",
                     "entry_class": "ext.x.Plugin",
                     "unknown": "value",
-                }
+                },
             )
 
     def test_models_module_default_empty(self) -> None:
         """Cycle-15 (D-AUDIT-1501): models_module default = empty tuple."""
         m = PluginManifest(
-            name="x", version="0.1.0", requires_core=">=0.1", entry_class="ext.x.Plugin"
+            name="x", version="0.1.0", requires_core=">=0.1", entry_class="ext.x.Plugin",
         )
         assert m.models_module == ()
 

@@ -215,7 +215,7 @@ class JupyterHubClient:
             JupyterHubError: 409 — пользователь уже существует.
         """
         data = await self._request(
-            "POST", f"/hub/api/users/{name}", json={"admin": admin}
+            "POST", f"/hub/api/users/{name}", json={"admin": admin},
         )
         if not isinstance(data, dict):
             raise JupyterHubError("Unexpected response type for create_user")
@@ -269,7 +269,7 @@ class JupyterHubClient:
         await self._request("DELETE", path)
 
     async def get_server(
-        self, user_name: str, *, server_name: str = ""
+        self, user_name: str, *, server_name: str = "",
     ) -> JupyterHubServer | None:
         """Возвращает состояние сервера через get_user.
 
@@ -286,7 +286,7 @@ class JupyterHubClient:
     # ── Low-level ──
 
     async def _request(
-        self, method: str, path: str, *, json: dict[str, Any] | None = None
+        self, method: str, path: str, *, json: dict[str, Any] | None = None,
     ) -> Any:
         """Низкоуровневый запрос с логированием и обработкой ошибок."""
         try:
@@ -294,7 +294,7 @@ class JupyterHubClient:
         except Exception as exc:
             _logger.warning("JupyterHub request error %s %s: %s", method, path, exc)
             raise JupyterHubError(
-                f"JupyterHub request error {method} {path}: {exc}"
+                f"JupyterHub request error {method} {path}: {exc}",
             ) from exc
 
         # JupyterHub возвращает 201/202/204 без тела на spawn/stop;

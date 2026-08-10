@@ -147,11 +147,11 @@ class MulticastRoutesProcessor(BaseProcessor):
         super().__init__(name=name or f"multicast_routes({len(route_ids)})")
         if strategy not in {"all", "first_success"}:
             raise ValueError(
-                f"MulticastRoutesProcessor: неверный strategy={strategy!r}."
+                f"MulticastRoutesProcessor: неверный strategy={strategy!r}.",
             )
         if on_error not in {"fail", "continue"}:
             raise ValueError(
-                f"MulticastRoutesProcessor: неверный on_error={on_error!r}."
+                f"MulticastRoutesProcessor: неверный on_error={on_error!r}.",
             )
         self._route_ids = list(route_ids)
         self._strategy = strategy
@@ -180,7 +180,7 @@ class MulticastRoutesProcessor(BaseProcessor):
             if pipeline is None:
                 return route_id, None, f"Маршрут {route_id!r} не зарегистрирован"
             branch_exchange = Exchange(
-                in_message=Message(body=body, headers=dict(headers))
+                in_message=Message(body=body, headers=dict(headers)),
             )
             branch_exchange.status = ExchangeStatus.processing
             try:
@@ -207,7 +207,7 @@ class MulticastRoutesProcessor(BaseProcessor):
 
         if self._strategy == "first_success":
             done, pending = await asyncio.wait(
-                tasks, return_when=asyncio.FIRST_COMPLETED
+                tasks, return_when=asyncio.FIRST_COMPLETED,
             )
             for task in pending:
                 task.cancel()
@@ -249,5 +249,5 @@ class MulticastRoutesProcessor(BaseProcessor):
                 "strategy": self._strategy,
                 "on_error": self._on_error,
                 "timeout": self._timeout,
-            }
+            },
         }

@@ -91,7 +91,7 @@ class MongoCertBackend(CertBackend):
             except ImportError as exc:
                 raise RuntimeError(
                     "MongoCertBackend требует пакет 'pymongo>=4.9'. "
-                    "Установите: uv add pymongo>=4.9"
+                    "Установите: uv add pymongo>=4.9",
                 ) from exc
 
             from src.backend.core.config.mongo import mongo_connection_settings as cfg
@@ -154,7 +154,7 @@ class MongoCertBackend(CertBackend):
                 "pem": pem,
                 "uploaded_by": uploaded_by,
                 "created_at": datetime.now(tz=UTC),
-            }
+            },
         )
         return CertEntry(
             service_id=service_id,
@@ -179,7 +179,7 @@ class MongoCertBackend(CertBackend):
                     expires_at=doc.get("created_at", datetime.now(tz=UTC)),
                     description=None,
                     version=int(doc["version"]),
-                )
+                ),
             )
         return result
 
@@ -214,6 +214,6 @@ class MongoCertBackend(CertBackend):
                     expires_at=doc["expires_at"],
                     description=doc.get("description"),
                     version=int(doc.get("version", 1)),
-                )
+                ),
             )
         return result

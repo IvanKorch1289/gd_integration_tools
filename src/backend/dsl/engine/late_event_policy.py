@@ -51,7 +51,7 @@ async def apply_late_policy(
         case LatePolicy.DROP:
             exchange.properties["_late_dropped"] = True
             logger.warning(
-                "Late event dropped: exchange_id=%s", exchange.meta.exchange_id
+                "Late event dropped: exchange_id=%s", exchange.meta.exchange_id,
             )
             return False
         case LatePolicy.SIDE_OUTPUT:

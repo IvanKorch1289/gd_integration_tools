@@ -63,7 +63,7 @@ def _make_response(*, lines: list | None = None, result: str = "OK") -> MagicMoc
 
 
 def _make_aioimaplib_client(
-    *, search_ids: list[bytes] | None = None, fetch_lines: list | None = None
+    *, search_ids: list[bytes] | None = None, fetch_lines: list | None = None,
 ) -> AsyncMock:
     """Build a fully-mocked ``aioimaplib`` client.
 
@@ -89,7 +89,7 @@ def _make_aioimaplib_client(
     # idle API
     client.idle_start = AsyncMock(return_value=None)
     client.wait_server_push = AsyncMock(
-        side_effect=asyncio.CancelledError("test-cancel")
+        side_effect=asyncio.CancelledError("test-cancel"),
     )
     client.idle_done = MagicMock(return_value=None)
     return client
@@ -438,7 +438,7 @@ async def test_dispatch_message_passes_filters_and_calls_dsl() -> None:
         return_value=fake_dsl,
     ):
         await mon._dispatch_message(
-            {"subject": "ALERT: ping", "from": "a@b.c", "body": "x"}
+            {"subject": "ALERT: ping", "from": "a@b.c", "body": "x"},
         )
     fake_dsl.dispatch.assert_awaited_once()
     kwargs = fake_dsl.dispatch.await_args.kwargs
@@ -461,7 +461,7 @@ async def test_dispatch_message_rejected_by_filter_skips_dsl() -> None:
         return_value=fake_dsl,
     ):
         await mon._dispatch_message(
-            {"subject": "Newsletter", "from": "x@y.z", "body": "spam"}
+            {"subject": "Newsletter", "from": "x@y.z", "body": "spam"},
         )
     fake_dsl.dispatch.assert_not_awaited()
 
@@ -616,7 +616,7 @@ async def test_idle_loop_connect_failure_triggers_backoff_and_recovers() -> None
             client.logout = AsyncMock(return_value=None)
             client.idle_start = AsyncMock(return_value=None)
             client.wait_server_push = AsyncMock(
-                side_effect=ConnectionError("idle dropped")
+                side_effect=ConnectionError("idle dropped"),
             )
             client.idle_done = MagicMock(return_value=None)
             client.search = AsyncMock(return_value=_make_response(lines=[]))
@@ -654,7 +654,7 @@ async def test_connect_uses_ssl_when_use_ssl_true() -> None:
             "aioimaplib": MagicMock(
                 IMAP4_SSL=MagicMock(return_value=fake_ssl_client),
                 IMAP4=MagicMock(return_value=fake_plain_client),
-            )
+            ),
         },
     ):
         result = await mon._connect()
@@ -678,8 +678,8 @@ async def test_connect_uses_plain_imap_with_starttls() -> None:
         "sys.modules",
         {
             "aioimaplib": MagicMock(
-                IMAP4=MagicMock(return_value=fake_plain), IMAP4_SSL=MagicMock()
-            )
+                IMAP4=MagicMock(return_value=fake_plain), IMAP4_SSL=MagicMock(),
+            ),
         },
     ):
         result = await mon._connect()
@@ -699,7 +699,7 @@ async def test_connect_uses_plain_imap_with_starttls() -> None:
 @given(pattern=st.from_regex(r"[A-Za-z0-9_]{1,40}", fullmatch=True))
 @hyp_settings(max_examples=50)
 @pytest.mark.skip(
-    reason="Wave 2 slice 2: hypothesis found failing example (regex match pattern issue); orchestrator follow-up"
+    reason="Wave 2 slice 2: hypothesis found failing example (regex match pattern issue); orchestrator follow-up",
 )
 def test_compile_subject_pattern_escapes_literal_special_chars(pattern: str) -> None:
     """Literal (no ``re:`` prefix) must escape regex metachars.

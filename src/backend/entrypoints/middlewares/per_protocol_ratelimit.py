@@ -107,7 +107,7 @@ def mqtt_topic_identifier(topic: str, client_id: str | None = None) -> str:
 
 
 def grpc_call_identifier(
-    method: str, service: str, *, tenant_id: str | None = None
+    method: str, service: str, *, tenant_id: str | None = None,
 ) -> str:
     """Per-call identifier для gRPC rate-limit interceptor.
 

@@ -124,7 +124,7 @@ def test_from_jsonable_list() -> None:
 @pytest.mark.unit
 def test_from_jsonable_uuid() -> None:
     assert from_jsonable(
-        {"__type__": "uuid", "value": "12345678-1234-5678-1234-567812345678"}
+        {"__type__": "uuid", "value": "12345678-1234-5678-1234-567812345678"},
     ) == UUID("12345678-1234-5678-1234-567812345678")
 
 
@@ -140,7 +140,7 @@ def test_from_jsonable_datetime() -> None:
 @pytest.mark.unit
 def test_from_jsonable_date() -> None:
     assert from_jsonable({"__type__": "date", "value": "2024-06-05"}) == date(
-        2024, 6, 5
+        2024, 6, 5,
     )
 
 

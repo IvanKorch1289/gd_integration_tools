@@ -57,7 +57,7 @@ class TestSleepBackoffJitter:
         c = BaseAPIClient(jitter_ratio=0.0, initial_backoff=0.5)
         with patch("src.frontend.streamlit_app.api_clients.base.time.sleep") as sleep:
             with patch(
-                "src.frontend.streamlit_app.api_clients.base.random.uniform"
+                "src.frontend.streamlit_app.api_clients.base.random.uniform",
             ) as uniform:
                 c._sleep_backoff(0)  # attempt 0 → base * 2^0 = 0.5
         sleep.assert_called_once_with(0.5)
@@ -177,7 +177,7 @@ class TestJitterRealRandom:
         c = BaseAPIClient(jitter_ratio=0.3, initial_backoff=1.0)
         for attempt in range(5):
             with patch(
-                "src.frontend.streamlit_app.api_clients.base.time.sleep"
+                "src.frontend.streamlit_app.api_clients.base.time.sleep",
             ) as sleep:
                 c._sleep_backoff(attempt)
             called_with = sleep.call_args[0][0]

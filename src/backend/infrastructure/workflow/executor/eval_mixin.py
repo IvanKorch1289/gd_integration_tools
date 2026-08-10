@@ -53,6 +53,6 @@ class EvalMixin:
             return jmespath.search(expr, state.exchange_snapshot)
         except Exception as exc:
             _logger.warning(
-                "jmespath eval failed", extra={"expr": expr, "error": str(exc)}
+                "jmespath eval failed", extra={"expr": expr, "error": str(exc)},
             )
             return None

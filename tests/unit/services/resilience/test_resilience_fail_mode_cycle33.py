@@ -47,7 +47,7 @@ async def test_fail_closed_returns_false() -> None:
     ):
         facade = ResilienceFacade()
         result = await facade.check_rate_limit(
-            "client-1", limit=10, window_seconds=1.0
+            "client-1", limit=10, window_seconds=1.0,
         )
         # B-05 fix: closed → False (deny-by-default).
         assert result is False
@@ -75,7 +75,7 @@ async def test_fail_open_returns_true() -> None:
     ):
         facade = ResilienceFacade()
         result = await facade.check_rate_limit(
-            "client-1", limit=10, window_seconds=1.0
+            "client-1", limit=10, window_seconds=1.0,
         )
         # B-05 fix: open → True (legacy pass-through).
         assert result is True
@@ -104,7 +104,7 @@ async def test_check_rate_limit_happy_path() -> None:
     ):
         facade = ResilienceFacade()
         result = await facade.check_rate_limit(
-            "client-1", limit=10, window_seconds=1.0
+            "client-1", limit=10, window_seconds=1.0,
         )
         assert result is True
 

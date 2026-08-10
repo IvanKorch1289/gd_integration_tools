@@ -72,7 +72,7 @@ async def test_reconnect_monitor_calls_on_reconnect_after_recovery() -> None:
 
     callback = AsyncMock()
     monitor = PoolReconnectMonitor(
-        pools={"db": _hc}, on_reconnect=callback, interval_seconds=0.01
+        pools={"db": _hc}, on_reconnect=callback, interval_seconds=0.01,
     )
     await monitor.start()
     state["healthy"] = False
@@ -90,7 +90,7 @@ async def test_reconnect_monitor_no_callback_on_steady_state() -> None:
 
     callback = AsyncMock()
     monitor = PoolReconnectMonitor(
-        pools={"db": _hc}, on_reconnect=callback, interval_seconds=0.01
+        pools={"db": _hc}, on_reconnect=callback, interval_seconds=0.01,
     )
     await monitor.start()
     await asyncio.sleep(0.05)
@@ -105,7 +105,7 @@ async def test_reconnect_monitor_healthcheck_exception_is_unhealthy() -> None:
 
     callback = AsyncMock()
     monitor = PoolReconnectMonitor(
-        pools={"db": _hc}, on_reconnect=callback, interval_seconds=0.01
+        pools={"db": _hc}, on_reconnect=callback, interval_seconds=0.01,
     )
     await monitor.start()
     await asyncio.sleep(0.05)

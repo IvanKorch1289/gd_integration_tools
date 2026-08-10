@@ -68,7 +68,7 @@ def test_emitter_to_openlineage() -> None:
             "parent_ids": ["dataset:bar"],
             "timestamp": 1700000000.0,
             "payload": {"x": 1},
-        }
+        },
     )
     ol_events = em.to_openlineage()
     assert len(ol_events) == 1

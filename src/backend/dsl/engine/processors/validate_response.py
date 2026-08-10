@@ -70,7 +70,7 @@ class ResponseValidatorProcessor(BaseProcessor):
             allowed = ", ".join(sorted(_ALLOWED_ON_ERROR))
             raise ValueError(
                 f"validate_response: on_error must be one of {allowed}, "
-                f"got {on_error!r}"
+                f"got {on_error!r}",
             )
         self.schema = schema
         self.on_error = on_error
@@ -87,7 +87,7 @@ class ResponseValidatorProcessor(BaseProcessor):
             if not module_name or not class_name:
                 raise ValueError(
                     f"validate_response schema string must be 'module:Class', "
-                    f"got {self.schema!r}"
+                    f"got {self.schema!r}",
                 )
             module = importlib.import_module(module_name)
             return getattr(module, class_name)

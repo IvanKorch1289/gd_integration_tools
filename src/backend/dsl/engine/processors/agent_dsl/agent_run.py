@@ -125,7 +125,7 @@ class AgentRunProcessor(BaseAIProcessor):
             raise ValueError("AgentRunProcessor: workflow_id обязателен")
         if prompt_ref is None and prompt_inline is None:
             raise ValueError(
-                "AgentRunProcessor: требуется prompt_ref или prompt_inline"
+                "AgentRunProcessor: требуется prompt_ref или prompt_inline",
             )
         super().__init__(name=name or f"agent_run:{workflow_id}")
         self.workflow_id = workflow_id
@@ -149,7 +149,7 @@ class AgentRunProcessor(BaseAIProcessor):
         gateway = self._resolve_gateway()
         if gateway is None:
             exchange.set_error(
-                f"{self.name}: AIGateway не найден в DI — нельзя выполнить invoke"
+                f"{self.name}: AIGateway не найден в DI — нельзя выполнить invoke",
             )
             exchange.stop()
             return
@@ -168,17 +168,17 @@ class AgentRunProcessor(BaseAIProcessor):
                 response = await self._invoke_with_retry(gateway, request)
             else:
                 response = await asyncio.wait_for(
-                    gateway.invoke(request), timeout=self.timeout_s
+                    gateway.invoke(request), timeout=self.timeout_s,
                 )
         except TimeoutError:
             exchange.set_error(
-                f"{self.name}: timeout ({self.timeout_s}s) при вызове AIGateway.invoke"
+                f"{self.name}: timeout ({self.timeout_s}s) при вызове AIGateway.invoke",
             )
             exchange.stop()
             return
         except Exception as exc:
             _logger.warning(
-                "%s: AIGateway.invoke failed: %s", self.name, exc, exc_info=True
+                "%s: AIGateway.invoke failed: %s", self.name, exc, exc_info=True,
             )
             exchange.set_error(f"{self.name}: AIGateway.invoke error: {exc}")
             exchange.stop()
@@ -195,7 +195,7 @@ class AgentRunProcessor(BaseAIProcessor):
                 "model_used": getattr(response, "model_used", ""),
                 "pii_detected": getattr(response, "pii_detected", False),
                 "guardrails_verdict": dict(
-                    getattr(response, "guardrails_verdict", {}) or {}
+                    getattr(response, "guardrails_verdict", {}) or {},
                 ),
                 "policy_ref": self.policy_ref,
             },
@@ -211,12 +211,12 @@ class AgentRunProcessor(BaseAIProcessor):
 
         async def _call() -> Any:
             return await asyncio.wait_for(
-                gateway.invoke(request), timeout=self.timeout_s
+                gateway.invoke(request), timeout=self.timeout_s,
             )
 
         retry = tenacity.AsyncRetrying(
             retry=tenacity.retry_if_exception_type(
-                (GatewayUnavailable, OSError, TimeoutError)
+                (GatewayUnavailable, OSError, TimeoutError),
             ),
             wait=tenacity.wait_exponential(multiplier=1.0, min=1.0, max=30.0),
             stop=tenacity.stop_after_attempt(self.max_retries),

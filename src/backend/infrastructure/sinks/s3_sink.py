@@ -72,18 +72,18 @@ class S3Sink(Sink):
             )
         except ImportError as exc:
             return SinkResult(
-                ok=False, details={"error": f"storage_client not available: {exc}"}
+                ok=False, details={"error": f"storage_client not available: {exc}"},
             )
 
         data = _coerce_payload(payload)
 
         try:
             await storage_client.upload_file(
-                data, self.key, content_type=self.content_type
+                data, self.key, content_type=self.content_type,
             )
         except Exception as exc:
             return SinkResult(
-                ok=False, details={"error": str(exc) or exc.__class__.__name__}
+                ok=False, details={"error": str(exc) or exc.__class__.__name__},
             )
 
         return SinkResult(

@@ -72,7 +72,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
 
     if schema is not None and legacy_inline:
         description_parts.append(
-            "Payload (JSON-Schema): " + encode_json(schema).decode("utf-8")
+            "Payload (JSON-Schema): " + encode_json(schema).decode("utf-8"),
         )
 
     tool_kwargs: dict[str, Any] = {
@@ -102,7 +102,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
                 extra={"action": _action, "reason": deny_reason, "source": "mcp"},
             )
             return encode_json(
-                {"error": "mcp.tool.denied", "action": _action, "reason": deny_reason}
+                {"error": "mcp.tool.denied", "action": _action, "reason": deny_reason},
             ).decode("utf-8")
 
         try:
@@ -111,7 +111,7 @@ def _register_single_tool(mcp: Any, action_name: str) -> None:
             parsed_payload = {"raw": payload}
 
         command = ActionCommandSchema(
-            action=_action, payload=parsed_payload, meta={"source": "mcp"}
+            action=_action, payload=parsed_payload, meta={"source": "mcp"},
         )
 
         try:
@@ -152,7 +152,7 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
         # verify policy — deny by default rather than grant.
         # Cycle 77 L1: use module-level canonical logger.
         logger.warning(
-            "MCP authz fail-CLOSED: cannot import mcp_settings (%s)", exc
+            "MCP authz fail-CLOSED: cannot import mcp_settings (%s)", exc,
         )
         return f"mcp_settings unavailable: {type(exc).__name__}"
     if not mcp_settings.tool_authz_enabled:
@@ -180,7 +180,7 @@ def _check_mcp_tool_authz(action_name: str) -> str | None:
             for cap in ns.capabilities_required:
                 try:
                     cap_facade.check_or_raise(
-                        plugin="mcp", capability=cap, scope=None
+                        plugin="mcp", capability=cap, scope=None,
                     )
                 except CapabilityDeniedError:
                     return f"capability_denied:{cap}"

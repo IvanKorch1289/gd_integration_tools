@@ -201,7 +201,7 @@ def test_prompt_kwargs_constants() -> None:
 
 
 def test_cli_exit_zero_when_clean(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Чистый каталог → exit=0."""
     _write(tmp_path, "ok.py", "agent.invoke(label='ok')\n")
@@ -212,7 +212,7 @@ def test_cli_exit_zero_when_clean(
 
 
 def test_cli_exit_one_when_strict_and_found(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Findings + --strict → exit=1."""
     _write(tmp_path, "bad.py", "agent.invoke(system_prompt='" + "x" * 60 + "')\n")
@@ -223,7 +223,7 @@ def test_cli_exit_one_when_strict_and_found(
 
 
 def test_cli_exit_zero_when_warn_only(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Findings без --strict → exit=0 (warn-only)."""
     _write(tmp_path, "bad.py", "agent.invoke(system_prompt='" + "x" * 60 + "')\n")

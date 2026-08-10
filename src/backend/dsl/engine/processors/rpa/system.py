@@ -60,7 +60,7 @@ class ShellExecProcessor(BaseProcessor):
 
         if self._allowed and self._command not in self._allowed:
             exchange.fail(
-                f"Command '{self._command}' not in whitelist: {self._allowed}"
+                f"Command '{self._command}' not in whitelist: {self._allowed}",
             )
             return
         try:
@@ -71,7 +71,7 @@ class ShellExecProcessor(BaseProcessor):
                 stderr=asyncio.subprocess.PIPE,
             )
             stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=self._timeout
+                proc.communicate(), timeout=self._timeout,
             )
             exchange.set_out(
                 body={
@@ -112,7 +112,7 @@ class EmailComposeProcessor(BaseProcessor):
     audit_event: str | None = "rpa.email.send"
 
     def __init__(
-        self, to: str, subject: str, body_template: str, *, name: str | None = None
+        self, to: str, subject: str, body_template: str, *, name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"email:{to[:20]}")
         self._to = to
@@ -133,7 +133,7 @@ class EmailComposeProcessor(BaseProcessor):
             from src.backend.infrastructure.clients.transport.smtp import smtp_client
 
             await smtp_client.send_email(
-                to=self._to, subject=self._subject, body=email_body
+                to=self._to, subject=self._subject, body=email_body,
             )
             exchange.set_property("email_sent", True)
             exchange.set_property("email_to", self._to)
@@ -147,7 +147,7 @@ class EmailComposeProcessor(BaseProcessor):
                 "to": self._to,
                 "subject": self._subject,
                 "body_template": self._body_template,
-            }
+            },
         }
 
 
@@ -183,7 +183,7 @@ class TerminalExecProcessor(BaseProcessor):
         self.shell = shell
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="execute"):
@@ -212,7 +212,7 @@ class TerminalExecProcessor(BaseProcessor):
             )
         try:
             stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=self.timeout
+                proc.communicate(), timeout=self.timeout,
             )
         except TimeoutError:
             proc.kill()
@@ -266,7 +266,7 @@ class EmailReadProcessor(BaseProcessor):
         self.target = to
 
     async def process(
-        self, exchange: Exchange[Any], context: ExecutionContext
+        self, exchange: Exchange[Any], context: ExecutionContext,
     ) -> None:
         """Подключается к IMAP-серверу, читает все письма из папки и пишет их в target."""
         if not await self.auth_check(exchange, action="read"):

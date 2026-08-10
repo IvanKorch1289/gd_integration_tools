@@ -94,7 +94,7 @@ async def test_memory_backend_name() -> None:
 def test_cert_entry_construction() -> None:
     expires = datetime.now(tz=UTC) + timedelta(days=30)
     entry = CertEntry(
-        service_id="x", pem="pem", fingerprint="abc", expires_at=expires, version=1
+        service_id="x", pem="pem", fingerprint="abc", expires_at=expires, version=1,
     )
     assert entry.service_id == "x"
     assert entry.pem == "pem"
@@ -121,7 +121,7 @@ async def test_postgres_backend_delete_returns_true_when_rowcount() -> None:
     fake_manager = MagicMock()
     fake_manager.create_session = MagicMock()
     fake_manager.create_session.return_value.__aenter__ = AsyncMock(
-        return_value=fake_session
+        return_value=fake_session,
     )
     fake_manager.create_session.return_value.__aexit__ = AsyncMock(return_value=None)
     fake_manager.transaction = MagicMock()
@@ -149,7 +149,7 @@ async def test_postgres_backend_delete_returns_false_when_no_rowcount() -> None:
     fake_manager = MagicMock()
     fake_manager.create_session = MagicMock()
     fake_manager.create_session.return_value.__aenter__ = AsyncMock(
-        return_value=fake_session
+        return_value=fake_session,
     )
     fake_manager.create_session.return_value.__aexit__ = AsyncMock(return_value=None)
     fake_manager.transaction = MagicMock()
@@ -171,13 +171,13 @@ async def test_postgres_backend_set_aliases_save_with_default_expiry() -> None:
 
     fake_session = AsyncMock()
     fake_session.execute = AsyncMock(
-        return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=None))
+        return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=None)),
     )
 
     fake_manager = MagicMock()
     fake_manager.create_session = MagicMock()
     fake_manager.create_session.return_value.__aenter__ = AsyncMock(
-        return_value=fake_session
+        return_value=fake_session,
     )
     fake_manager.create_session.return_value.__aexit__ = AsyncMock(return_value=None)
     fake_manager.transaction = MagicMock()

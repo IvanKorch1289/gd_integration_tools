@@ -49,7 +49,7 @@ def test_pii_policy_irreversible_variant() -> None:
 def test_encrypted_value_dataclass_frozen() -> None:
     """EncryptedValue frozen+slots."""
     ev = EncryptedValue(
-        ciphertext=b"\x00\x01\x02", nonce=b"n" * 12, tag=b"t" * 16, key_version=1
+        ciphertext=b"\x00\x01\x02", nonce=b"n" * 12, tag=b"t" * 16, key_version=1,
     )
     assert ev.key_version == 1
     with pytest.raises(AttributeError):
@@ -62,8 +62,8 @@ def test_token_map_dataclass() -> None:
     token_map = TokenMap(
         tokens={
             "<PERSON_a8f3>": EncryptedValue(
-                ciphertext=b"\x00", nonce=b"n" * 12, tag=b"t" * 16, key_version=1
-            )
+                ciphertext=b"\x00", nonce=b"n" * 12, tag=b"t" * 16, key_version=1,
+            ),
         },
         policy_name="ru_strict_reversible",
         created_at=now,
@@ -86,7 +86,7 @@ async def test_mask_reversible_requires_presidio_analyzer() -> None:
     tokenizer = PIITokenizer()
     with pytest.raises(RuntimeError, match="presidio_analyzer"):
         await tokenizer.mask_reversible(
-            "Иванов И.И.", PIIPolicy(name="ru_strict_reversible")
+            "Иванов И.И.", PIIPolicy(name="ru_strict_reversible"),
         )
 
 
@@ -96,7 +96,7 @@ async def test_unmask_with_empty_token_map_returns_input() -> None:
     tokenizer = PIITokenizer()
     now = datetime.now(UTC)
     token_map = TokenMap(
-        tokens={}, policy_name="ru_strict_reversible", created_at=now, ttl_s=3600
+        tokens={}, policy_name="ru_strict_reversible", created_at=now, ttl_s=3600,
     )
     result = await tokenizer.unmask("<PERSON_a8f3> подал заявку", token_map)
     assert result == "<PERSON_a8f3> подал заявку"

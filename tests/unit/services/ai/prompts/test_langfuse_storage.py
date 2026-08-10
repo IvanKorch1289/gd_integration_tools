@@ -81,7 +81,7 @@ async def test_storage_get_prompt_fallback_inmemory() -> None:
 
     # Вручную кладём промпт в in-memory
     entry = PromptEntry(
-        name="test_prompt", version="1", content="Hello {name}!", metadata={}
+        name="test_prompt", version="1", content="Hello {name}!", metadata={},
     )
     storage._store["test_prompt"] = {"1": entry}
 
@@ -165,7 +165,7 @@ async def test_storage_lazy_imports_langfuse_when_flag_on() -> None:
     with (
         patch.object(mod, "feature_flags") as mock_ff,
         patch.dict(
-            "sys.modules", {"langfuse": MagicMock(Langfuse=mock_langfuse_class)}
+            "sys.modules", {"langfuse": MagicMock(Langfuse=mock_langfuse_class)},
         ),
     ):
         mock_ff.prompt_registry_langfuse = True
@@ -181,5 +181,5 @@ async def test_storage_lazy_imports_langfuse_when_flag_on() -> None:
     assert result["content"] == "Mocked content"
     assert result["version"] == "lf-v1"
     mock_langfuse_instance.get_prompt.assert_called_once_with(
-        "mocked_prompt", version=None
+        "mocked_prompt", version=None,
     )
