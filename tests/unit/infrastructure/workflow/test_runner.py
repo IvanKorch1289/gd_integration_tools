@@ -429,7 +429,7 @@ def test_compute_backoff_non_negative(attempt: int, base: float, jitter: float) 
     assert delay >= 0.0
     # Finite: not NaN/inf.
     assert delay == delay  # NaN check
-    assert delay in (delay,) and abs(delay) != float("inf")
+    assert delay == delay and abs(delay) != float("inf")
 
 
 # ── _on_notify: payload validation + queue full handling ───────────

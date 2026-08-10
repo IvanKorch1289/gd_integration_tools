@@ -88,7 +88,7 @@ def build_augment_result(
         ingested = meta.get("ingested_at")
         if isinstance(ingested, str):
             try:
-                ingested_dt = datetime.fromisoformat(ingested.replace("Z", "+00:00"))
+                ingested_dt = datetime.fromisoformat(ingested)
             except ValueError:
                 ingested_dt = None
         elif isinstance(ingested, datetime):

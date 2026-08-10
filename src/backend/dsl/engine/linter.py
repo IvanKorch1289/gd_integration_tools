@@ -81,7 +81,7 @@ class DSLLinter:
         stop_idx = None
         for i, p in enumerate(pipeline.processors):
             type_name = type(p).__name__
-            if type_name in ("FilterProcessor",):
+            if type_name == "FilterProcessor":
                 if stop_idx is not None:
                     issues.append(
                         LintIssue(

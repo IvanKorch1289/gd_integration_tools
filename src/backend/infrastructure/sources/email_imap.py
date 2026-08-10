@@ -307,7 +307,7 @@ class EmailIMAPSource:
                     to_addr=parsed.get("to", ""),
                     body=parsed.get("body", ""),
                     received_at=datetime.now(UTC),
-                    headers={k: v for k, v in parsed.items() if k not in ("body",)},
+                    headers={k: v for k, v in parsed.items() if k != "body"},
                 )
                 result.append(email_msg)
                 if current_uid:

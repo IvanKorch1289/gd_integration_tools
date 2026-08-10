@@ -196,7 +196,7 @@ def _infer_tier1_action_id(path: str, method: HttpMethod) -> str:
     if method_upper == "GET":
         verb = "list" if suffix in {"all", "filter"} else "get"
     elif method_upper == "POST":
-        if suffix in {"create_many"}:
+        if suffix == "create_many":
             verb = "create_many"
         else:
             verb = "create"

@@ -227,7 +227,7 @@ class NotifyMixin:
             route_id=route_id,
             source=source_tag,
             description=description,
-            **{k: v for k, v in kwargs.items() if k in ("_feature_flag",)},
+            **{k: v for k, v in kwargs.items() if k == "_feature_flag"},
         )
         builder._add(  # type: ignore[attr-defined]
             EmailTriggerProcessor(

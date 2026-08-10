@@ -132,7 +132,7 @@ def _graphviz_shape(step_type: str) -> str:
 def _mermaid_shape(step_type: str, label: str) -> str:
     """Mermaid-обёртка ``id[label]`` по типу шага."""
     safe_label = label.replace("\\n", "<br/>").replace('"', "'")
-    if step_type in {"wait_signal"}:
+    if step_type == "wait_signal":
         return f'{{"{safe_label}"}}'
     if step_type == "sleep":
         return f'(("{safe_label}"))'

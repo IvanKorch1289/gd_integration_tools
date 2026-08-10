@@ -207,7 +207,7 @@ async def test_file_watcher_respects_recursive_false(tmp_path: Path) -> None:
     await asyncio.gather(collect_task, change_task, return_exceptions=True)
 
     # При recursive=False вложенные файлы не отслеживаются
-    nested_events = [e for e in events if nested_file in (e.path,)]
+    nested_events = [e for e in events if nested_file == e.path]
     assert not nested_events, f"Неожиданные события из поддиректории: {nested_events}"
 
     # Хотя бы одно событие от top_file должно быть (но watchfiles может не всегда поймать)

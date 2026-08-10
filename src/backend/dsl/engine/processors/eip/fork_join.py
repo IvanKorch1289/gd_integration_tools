@@ -88,7 +88,7 @@ class ForkJoinProcessor(BaseProcessor):
             )
             branch_ex.status = ExchangeStatus.processing
             for proc in procs:
-                if branch_ex.status in (ExchangeStatus.failed,) or branch_ex.stopped:
+                if branch_ex.status == ExchangeStatus.failed or branch_ex.stopped:
                     break
                 try:
                     await proc.process(branch_ex, context)

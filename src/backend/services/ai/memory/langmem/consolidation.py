@@ -132,7 +132,7 @@ class ConsolidationEngine:
                 try:
                     await langmem.add_semantic(
                         text=fact.text,
-                        tenant=key[0] if key[0] else None,
+                        tenant=key[0] or None,
                         meta={
                             "source": "consolidation",
                             "session_id": key[1],

@@ -101,7 +101,7 @@ def parse_dt(value: Any) -> datetime:
     if isinstance(value, str):
         if not _HAS_PENDULUM:
             # stdlib ISO 8601 parser (Python 3.11+)
-            return ensure_utc(datetime.fromisoformat(value.replace("Z", "+00:00")))
+            return ensure_utc(datetime.fromisoformat(value))
         return ensure_utc(pendulum.parse(value))  # type: ignore[union-attr]
     raise TypeError(f"parse_dt: unsupported type {type(value).__name__}")
 
