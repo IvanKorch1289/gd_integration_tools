@@ -382,8 +382,15 @@ def get_tenant_file_quota_manager() -> TenantFileQuotaManager:
 
         redis = app_state_singleton("redis_kv_client", factory=None)
         return TenantFileQuotaManager(redis_client=redis)
-    except Exception:  # noqa: BLE001 — provider best-effort
-        _logger.debug("DI provider: redis unavailable, quota manager in fail-OPEN")
+    except (ImportError, AttributeError, RuntimeError, KeyError) as di_exc:  # noqa: BLE001 — provider best-effort
+        # cycle-9/D-AUDIT-1702: narrow exceptions + observability.
+        # ImportError — app_state_singleton missing, AttributeError —
+        # API change, RuntimeError — DI unavailable, KeyError —
+        # singleton not registered.
+        _logger.debug(
+            "DI provider: redis unavailable, quota manager in fail-OPEN: %s",
+            di_exc,
+        )
         return TenantFileQuotaManager(redis_client=None)
 
 
