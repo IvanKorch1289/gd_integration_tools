@@ -230,7 +230,16 @@ class SmartSessionManager:
 
             if not feature_flags.multi_replica_failover:
                 return False
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-957: narrow exceptions + observability.
+            # ImportError — feature_flags missing, AttributeError — config
+            # not initialized, RuntimeError — flags unavailable. Bare `except
+            # Exception` маскировал unrelated runtime errors.
+            import logging
+            logging.getLogger(__name__).debug(
+                "smart_session_manager.feature_flags_fallback",
+                extra={"error": str(ff_exc)},
+            )
             return False
         return (time.monotonic() - self._last_lag_check) >= self._lag_check_interval
 
