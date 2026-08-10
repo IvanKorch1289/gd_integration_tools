@@ -213,8 +213,16 @@ if submitted:
             st.session_state["invocation_history"] = st.session_state[
                 "invocation_history"
             ][:20]
-        except Exception:  # noqa: BLE001
+        except (ValueError, TypeError, AttributeError, KeyError) as inv_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1068: narrow exceptions + observability.
+            # ValueError для invalid response, TypeError — wrong type,
+            # AttributeError — API change, KeyError — missing key.
             st.code(resp.text[:10_000])
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_39_Консоль.invocation_history_update_failed",
+                extra={"error": str(inv_exc)},
+            )
 
 # ── Polling-форма ────────────────────────────────────────────────────────
 
