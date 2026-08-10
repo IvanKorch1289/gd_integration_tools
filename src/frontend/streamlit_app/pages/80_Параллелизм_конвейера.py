@@ -97,7 +97,16 @@ with tab_topn:
                 try:
                     rep = client.get(f"/api/v1/admin/routes/{rid}/parallelism-report")
                     results.append((rid, rep.get("estimated_speedup", 1.0)))
-                except Exception:  # noqa: BLE001, S112
+                except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as rep_exc:  # noqa: BLE001, S112
+                    # cycle-9/D-AUDIT-1067: narrow exceptions + observability.
+                    # ConnectionError/TimeoutError — server unreachable,
+                    # RuntimeError — API failure, ValueError — invalid
+                    # response, TypeError — wrong type.
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "streamlit_80_Параллелизм.report_load_failed",
+                        extra={"route_id": rid, "error": str(rep_exc)},
+                    )
                     continue
             results.sort(key=lambda x: x[1], reverse=True)
             for rid, speedup in results[:n]:
