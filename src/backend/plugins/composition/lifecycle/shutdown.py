@@ -195,7 +195,31 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     # Sprint 1 V16 (R-V15-11): graceful cancel всех зарегистрированных
     # фоновых задач. Делается ПОСЛЕ ending()/log shutdown, чтобы тех
     # задачи, которые ещё могли логировать остановку, успели завершиться.
+    #
+    # cycle-9/D-AUDIT-901 fix: timeout вынесен в settings.app.graceful_shutdown_timeout
+    # (cycle-1 D-AUDIT-11-04, default 30s). Был hardcoded 10
+    # → k8s termination_grace_period_seconds=30 − preStop sleep=15
+    # = 15s остаётся на cancel; hardcoded 10 "съедал" 2/3 окна.
+    shutdown_timeout = 15.0  # безопасный fallback для unit-light
     try:
-        await task_registry.shutdown_all(timeout=10)  # type: ignore[union-attr]
+        from src.backend.core.config.settings import get_app_settings
+
+        settings = get_app_settings()
+        if settings is not None and hasattr(
+            settings, "graceful_shutdown_timeout"
+        ):
+            # k8s termination_grace_period - preStop sleep = реальное окно
+            shutdown_timeout = max(
+                1.0,
+                float(settings.graceful_shutdown_timeout) - 15.0,
+            )
+    except Exception as settings_exc:
+        _logger.debug(
+            "settings unavailable, using default %s: %s",
+            shutdown_timeout, settings_exc,
+        )
+
+    try:
+        await task_registry.shutdown_all(timeout=shutdown_timeout)  # type: ignore[union-attr]
     except Exception as tr_exc:
         _logger.warning("TaskRegistry shutdown error: %s", tr_exc)

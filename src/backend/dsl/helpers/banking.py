@@ -29,7 +29,14 @@ _SWIFT = re.compile(r"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")
 
 
 def validate_inn(inn: str) -> bool:
-    """Проверяет ИНН (10 или 12 цифр) по контрольной сумме."""
+    """Проверяет ИНН (10 или 12 цифр) по контрольной сумме.
+
+    cycle-9/D-AUDIT-904 fix: defensive check на None/не-строку → fail-CLOSED
+    (return False). Раньше None поднимал TypeError → 500; теперь payload
+    с None/мусорным ИНН корректно отклоняется как невалидный.
+    """
+    if not isinstance(inn, str) or not inn:
+        return False
     if _INN10.match(inn):
         weights = (2, 4, 10, 3, 5, 9, 4, 6, 8)
         check = sum(int(inn[i]) * weights[i] for i in range(9)) % 11 % 10

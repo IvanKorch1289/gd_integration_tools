@@ -45,6 +45,15 @@ services:
       migration-runner:
         condition: service_completed_successfully
     restart: unless-stopped
+    # cycle-9/D-AUDIT-903 fix: OOM-protection (consistent with k8s manifests).
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
 
   workflow-worker:
     build:
@@ -70,6 +79,13 @@ services:
     restart: unless-stopped
     deploy:
       replicas: ${WORKER_COUNT:-4}
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   postgres:
     image: postgres:16-alpine
@@ -86,6 +102,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
 
   redis:
     image: redis:7-alpine
@@ -99,6 +120,11 @@ services:
       timeout: 5s
       retries: 5
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
 
   clamav:
     image: clamav/clamav:stable
@@ -116,6 +142,11 @@ services:
       retries: 5
       start_period: 120s
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
 
 volumes:
   pgdata:
