@@ -105,8 +105,14 @@ class JsonPathProcessor(BaseProcessor):
             if not feature_flags.proc_jsonpath:
                 exchange.set_property("jsonpath_status", "skipped")
                 return
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1714: narrow exceptions + observability (mirror
+            # D-AUDIT-1706..1713).
+            import logging
+            logging.getLogger(__name__).debug(
+                "jsonpath_query.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         try:
             from jsonpath_ng.ext import parse as _parse
