@@ -559,8 +559,16 @@ class SkillRegistry:
                         if fields:
                             InputModel = create_model("Input", **fields)
                             tool_kwargs["args_schema"] = InputModel
-                except Exception:
-                    pass  # Skip schema if not loadable
+                except (TypeError, ValueError, KeyError, AttributeError) as schema_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-997: narrow exceptions + observability.
+                    # TypeError — wrong prop_type, ValueError — invalid
+                    # schema, KeyError — missing required key, AttributeError
+                    # — schema API change.
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "skill_registry.input_model_build_failed",
+                        extra={"error": str(schema_exc)},
+                    )
 
             tool = StructuredTool(**tool_kwargs)
             tools.append(tool)
