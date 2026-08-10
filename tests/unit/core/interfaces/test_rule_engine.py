@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 import pytest
 from pydantic import ValidationError
 
 from src.backend.core.interfaces.rule_engine import RuleEngineRepository, RulesetDoc
-from datetime import UTC
 
 
 class TestRulesetDoc:

@@ -45,7 +45,6 @@ from src.backend.infrastructure.security.cert_store.models import (
 )
 
 
-
 @dataclass
 class MongoCertBackend(CertBackend):
     """MongoDB бэкенд: коллекции ``certs`` + ``certs_history``.

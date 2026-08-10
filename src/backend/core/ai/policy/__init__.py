@@ -42,8 +42,6 @@ from src.backend.core.ai.policy.spec import (
     SanitizerRef,
 )
 
-
-
 __all__ = (
     "AIPolicyEnforcer",
     "AIPolicySpec",

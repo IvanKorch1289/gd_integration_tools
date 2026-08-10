@@ -18,10 +18,7 @@ class TestRouteBuilderProtocols:
 
     def test_protocols_importable(self):
         """Protocol types must be importable from builders.base."""
-        from src.backend.dsl.builders.base import (
-            _RouteProcessorSteps,
-            _RouteCore,
-        )
+        from src.backend.dsl.builders.base import _RouteCore, _RouteProcessorSteps
 
         # Both are runtime_checkable protocols
         assert hasattr(_RouteProcessorSteps, "__protocol_attrs__")
@@ -54,12 +51,10 @@ class TestRouteBuilderProtocols:
 
     def test_route_builder_implements_protocols(self):
         """RouteBuilder must have methods required by protocols."""
-        from src.backend.dsl.builders.base import (
-            RouteBuilder,
-        )
-
         # Check docs mention the migration path
         import inspect
+
+        from src.backend.dsl.builders.base import RouteBuilder
         module = inspect.getmodule(RouteBuilder)
         source = inspect.getsource(module)
         assert "Migration path" in source or "CompositionRouteBuilder" in source, (

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +13,6 @@ import pytest
 from src.backend.core.interfaces.import_gateway import ImportSource, ImportSourceKind
 from src.backend.core.models.connector_configs import ConnectorConfigEntry
 from src.backend.services.integrations import ImportService
-from datetime import UTC
 
 FIXTURES = Path(__file__).parent.parent.parent / "fixtures" / "import_gateway"
 

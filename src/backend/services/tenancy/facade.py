@@ -20,7 +20,6 @@ from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import Any
 
-
 __all__ = ("TenantFacade", "get_tenant_facade")
 
 

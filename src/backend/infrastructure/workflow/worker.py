@@ -43,10 +43,10 @@ import os
 import signal
 import sys
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
-from collections.abc import Callable
 
 import typer
 

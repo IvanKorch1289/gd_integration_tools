@@ -222,8 +222,9 @@ def test_processor_update_accepted() -> None:
 
 def test_processor_update_rejects_empty_where() -> None:
     """UPDATE без where — ошибка на SQL build stage (в process())."""
-    from src.backend.dsl.engine.exchange import Exchange, Message
     import asyncio
+
+    from src.backend.dsl.engine.exchange import Exchange, Message
 
     proc = DbCrudProcessor(
         operation="UPDATE", table="users", data={"name": "X"}, where={}

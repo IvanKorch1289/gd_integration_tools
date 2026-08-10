@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 import os
+
+import pytest
 
 from src.backend.core.config.features import feature_flags
 from src.backend.core.config.features.sprints_18_21 import Sprints1821Flags

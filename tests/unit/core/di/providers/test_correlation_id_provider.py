@@ -11,7 +11,6 @@ Per D102 (single-source-of-truth through facade), infrastructure_facade
 from __future__ import annotations
 
 
-
 class TestCorrelationIdProvider:
     def test_returns_string_not_function(self) -> None:
         """Facade должен возвращать str, а не callable."""

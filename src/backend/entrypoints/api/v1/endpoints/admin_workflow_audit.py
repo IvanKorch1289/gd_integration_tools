@@ -107,9 +107,7 @@ async def _get_clickhouse_client() -> _ClickHouseClient:
     S45 follow-up: импорт через facade ``services.admin.clickhouse_admin``
     вместо прямого infrastructure (single-entry per concern).
     """
-    from src.backend.services.admin.clickhouse_admin import (
-        get_admin_clickhouse_client,
-    )
+    from src.backend.services.admin.clickhouse_admin import get_admin_clickhouse_client
 
     client = await get_admin_clickhouse_client()
     if client is None:

@@ -16,8 +16,8 @@ Coverage:
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, UTC
 from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import Column, Integer, String, create_engine

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import MagicMock, patch
 
-from src.backend.dsl.engine.processors.ai.reranker import RerankerProcessor
+import pytest
+
 from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.ai.reranker import RerankerProcessor
 
 
 class TestRerankerProcessor:

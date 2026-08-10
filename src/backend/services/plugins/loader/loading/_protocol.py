@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from src.backend.core.interfaces.plugin import BasePlugin
-from src.backend.services.plugins.loader.discovery import LoadedPlugin
 from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
+from src.backend.services.plugins.loader.discovery import LoadedPlugin
 
 
 class _LoadingProtocol(Protocol):

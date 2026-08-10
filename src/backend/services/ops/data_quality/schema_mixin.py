@@ -24,7 +24,6 @@ cycle-8/D-AUDIT-803: DQSeverity/DQViolation/DQCheckResult/DQRule consolidated
 
 from collections import defaultdict
 
-
 from src.backend.services.ops.data_quality._protocol import _DataQualityProtocol
 
 

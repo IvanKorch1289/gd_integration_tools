@@ -22,8 +22,6 @@ from __future__ import annotations
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
-
-
 class RetryPolicy(BaseModel):
     """Retry-настройки activity-шага (Temporal-совместимые).
 

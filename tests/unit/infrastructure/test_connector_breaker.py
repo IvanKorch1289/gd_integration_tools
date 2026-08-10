@@ -4,11 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.core.resilience.connector_breaker import (
-    CircuitOpen,
-    with_breaker,
-)
 from src.backend.core.resilience.breaker import get_breaker_registry
+from src.backend.core.resilience.connector_breaker import CircuitOpen, with_breaker
 
 # ruff: noqa: S101
 

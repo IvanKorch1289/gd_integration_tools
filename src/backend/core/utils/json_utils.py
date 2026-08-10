@@ -21,8 +21,8 @@ C-extension); ~2x faster на loads.
 
 from __future__ import annotations
 
-from typing import Any
 from collections.abc import Callable
+from typing import Any
 
 import orjson
 

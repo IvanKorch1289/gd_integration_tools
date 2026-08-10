@@ -12,10 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tools.check_docstrings_prune import (
-    find_stale_entries,
-    parse_entry,
-)
+from tools.check_docstrings_prune import find_stale_entries, parse_entry
 
 PRUNER_PATH = (
     Path(__file__).resolve().parent.parent.parent.parent

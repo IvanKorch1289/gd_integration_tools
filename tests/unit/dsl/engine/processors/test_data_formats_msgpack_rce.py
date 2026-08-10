@@ -47,10 +47,10 @@ from unittest.mock import MagicMock
 import pytest
 
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.format_convert import FormatConvertProcessor
 from src.backend.dsl.engine.processors.format_convert.data_formats import (
     DataFormatsMixin,
 )
-from src.backend.dsl.engine.processors.format_convert import FormatConvertProcessor
 
 
 def _make_exchange(body: Any) -> Exchange[Any]:

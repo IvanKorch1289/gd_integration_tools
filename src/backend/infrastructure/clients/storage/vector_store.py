@@ -12,8 +12,8 @@ RAG prefer ``QdrantVectorStore`` which has no open CVE.
 from __future__ import annotations
 
 import asyncio
-import inspect
 import importlib
+import inspect
 from typing import Any
 
 from src.backend.core.config.profile import AppProfileChoices, get_active_profile

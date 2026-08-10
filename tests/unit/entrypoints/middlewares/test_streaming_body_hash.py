@@ -4,6 +4,7 @@ Fixes OOM risk in data_masking.py which buffers entire response body
 in memory for hash computation.
 """
 from __future__ import annotations
+
 import hashlib
 
 import pytest
@@ -11,20 +12,26 @@ import pytest
 
 class TestStreamingBodyHasher:
     def test_init_creates_hasher(self) -> None:
-        from src.backend.entrypoints.middlewares._streaming_hash import StreamingBodyHasher
+        from src.backend.entrypoints.middlewares._streaming_hash import (
+            StreamingBodyHasher,
+        )
         h = StreamingBodyHasher()
         assert h is not None
         assert h.finalize() == hashlib.sha256(b"").hexdigest()
 
     def test_update_accumulates(self) -> None:
-        from src.backend.entrypoints.middlewares._streaming_hash import StreamingBodyHasher
+        from src.backend.entrypoints.middlewares._streaming_hash import (
+            StreamingBodyHasher,
+        )
         h = StreamingBodyHasher()
         h.update(b"hello ")
         h.update(b"world")
         assert h.finalize() == hashlib.sha256(b"hello world").hexdigest()
 
     def test_finalize_returns_prefix_when_requested(self) -> None:
-        from src.backend.entrypoints.middlewares._streaming_hash import StreamingBodyHasher
+        from src.backend.entrypoints.middlewares._streaming_hash import (
+            StreamingBodyHasher,
+        )
         h = StreamingBodyHasher()
         h.update(b"x" * 1000)
         result = h.finalize(prefix_len=16)
@@ -34,7 +41,9 @@ class TestStreamingBodyHasher:
         assert result == expected
 
     def test_etag_format(self) -> None:
-        from src.backend.entrypoints.middlewares._streaming_hash import StreamingBodyHasher
+        from src.backend.entrypoints.middlewares._streaming_hash import (
+            StreamingBodyHasher,
+        )
         h = StreamingBodyHasher()
         h.update(b"payload")
         etag = h.etag()

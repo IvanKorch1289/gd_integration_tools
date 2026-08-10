@@ -77,7 +77,6 @@ _logger = get_logger(__name__)
 
 from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 26)
 
-
 # Supported graph types.
 GRAPH_TYPES = frozenset(("supervisor", "react"))
 

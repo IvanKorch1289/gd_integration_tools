@@ -10,12 +10,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from src.backend.services.workflows.hitl_service import (
-    HitlPendingSignal,
-)
-from src.backend.services.workflows.hitl_signal_store_redis import (
-    RedisHitlSignalStore,
-)
+from src.backend.services.workflows.hitl_service import HitlPendingSignal
+from src.backend.services.workflows.hitl_signal_store_redis import RedisHitlSignalStore
 
 
 def _make_signal(

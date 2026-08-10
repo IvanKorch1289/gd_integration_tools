@@ -78,9 +78,7 @@ def test_aigateway_enforced_invoke_exists() -> None:
 
     Cycle 60 invariant: pipeline method exists.
     """
-    from src.backend.core.ai.gateway_orchestrator_mixin import (
-        EnforcedInvokeMixin,
-    )
+    from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
 
     assert hasattr(EnforcedInvokeMixin, "_enforced_invoke"), (
         "EnforcedInvokeMixin must define _enforced_invoke pipeline method"

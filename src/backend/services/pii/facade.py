@@ -71,9 +71,7 @@ class PIIFacade:
             self._emit_audit("pii.masked", text)
             return result
         except Exception as exc:
-            from src.backend.core.policy.pii_fail_closed import (
-                raise_pii_fail_closed,
-            )
+            from src.backend.core.policy.pii_fail_closed import raise_pii_fail_closed
 
             raise_pii_fail_closed(
                 source="pii.facade.mask", payload_size=len(text), exc=exc
@@ -109,9 +107,7 @@ class PIIFacade:
             self._emit_audit("pii.tokenized", text)
             return result
         except Exception as exc:
-            from src.backend.core.policy.pii_fail_closed import (
-                raise_pii_fail_closed,
-            )
+            from src.backend.core.policy.pii_fail_closed import raise_pii_fail_closed
 
             raise_pii_fail_closed(
                 source="pii.facade.tokenize", payload_size=len(text), exc=exc

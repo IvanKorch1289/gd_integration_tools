@@ -22,10 +22,10 @@ API::
 from __future__ import annotations
 
 import inspect
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Any
-from collections.abc import AsyncIterator
 
 from src.backend.core.logging import get_logger
 

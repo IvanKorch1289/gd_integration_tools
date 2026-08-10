@@ -225,9 +225,7 @@ def _maybe_mask_pii(content_text: str) -> tuple[str, dict[str, Any]]:
         # cycle-4/D-AUDIT-109 — fail-CLOSED: raw PII НЕ пишется в vector store.
         # Caller (RagIngestService._run) ловит PIIFailClosedError и
         # добавляет запись в state["errors"]; файл пропускается.
-        from src.backend.core.policy.pii_fail_closed import (
-            raise_pii_fail_closed,
-        )
+        from src.backend.core.policy.pii_fail_closed import raise_pii_fail_closed
 
         raise_pii_fail_closed(
             source="rag_ingest._maybe_mask_pii",

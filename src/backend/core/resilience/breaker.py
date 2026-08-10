@@ -20,13 +20,12 @@ API:
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from functools import lru_cache
 from types import MappingProxyType
 from typing import Any, Final
-from collections.abc import Mapping
 
 from purgatory import AsyncCircuitBreakerFactory
 from purgatory.domain.messages.base import Event

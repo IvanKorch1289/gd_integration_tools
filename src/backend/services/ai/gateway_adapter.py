@@ -141,7 +141,9 @@ def get_ai_gateway() -> AIGateway:
         try:
             from src.backend.core.ai.gateway import AIGatewayProductionWiringError
 
-            _logger.error(
+            from src.backend.core.logging import get_logger
+
+            get_logger(__name__).error(
                 "AIGateway: composition-root DI lookup failed",
                 extra={
                     "component": "gateway_adapter",
@@ -156,7 +158,9 @@ def get_ai_gateway() -> AIGateway:
             # unit-тестах без полной composition root): logger.error
             # остаётся, дальше — bare AIGateway() с явным признаком
             # failed DI lookup.
-            _logger.error(
+            from src.backend.core.logging import get_logger
+
+            get_logger(__name__).error(
                 "AIGateway: composition-root DI lookup failed; AIGatewayProductionWiringError unavailable",
                 extra={
                     "component": "gateway_adapter",

@@ -6,6 +6,7 @@ Coverage:
 - Edge cases: empty dict, missing path, non-dict body
 """
 from __future__ import annotations
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-
-
-from src.backend.infrastructure.clients.external.cdc.events import (
-    CDCSubscription,
-)
+from src.backend.infrastructure.clients.external.cdc.events import CDCSubscription
 from src.backend.infrastructure.clients.external.cdc.kafka_strategy import (
     _KafkaDebeziumStrategy,
 )

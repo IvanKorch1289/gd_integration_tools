@@ -12,17 +12,13 @@ import pytest
 class TestDSPyFeedbackLoop:
     def test_instantiate_dspy_optimizer(self) -> None:
         """DSPyFeedbackTrainer — wrapper для dspy signature-based optimization."""
-        from src.backend.services.ai.dspy.feedback_trainer import (
-            DSPyFeedbackTrainer,
-        )
+        from src.backend.services.ai.dspy.feedback_trainer import DSPyFeedbackTrainer
         trainer = DSPyFeedbackTrainer()
         assert trainer is not None
 
     def test_collect_feedback(self) -> None:
         """collect_feedback() собирает feedback из dataset."""
-        from src.backend.services.ai.dspy.feedback_trainer import (
-            DSPyFeedbackTrainer,
-        )
+        from src.backend.services.ai.dspy.feedback_trainer import DSPyFeedbackTrainer
         trainer = DSPyFeedbackTrainer()
         feedback = trainer.collect_feedback(items=[
             {"input": "q1", "expected": "a1", "actual": "a1", "score": 1.0},
@@ -35,9 +31,7 @@ class TestDSPyFeedbackLoop:
     @pytest.mark.asyncio
     async def test_optimize_noop(self) -> None:
         """optimize() без trainer → noop status."""
-        from src.backend.services.ai.dspy.feedback_trainer import (
-            DSPyFeedbackTrainer,
-        )
+        from src.backend.services.ai.dspy.feedback_trainer import DSPyFeedbackTrainer
         trainer = DSPyFeedbackTrainer()
         result = await trainer.optimize()
         assert result is not None

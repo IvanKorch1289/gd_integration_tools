@@ -11,7 +11,6 @@ P3 message claim-check: процессор :class:`ClaimCheckProcessor` уже �
 
 from __future__ import annotations
 
-
 import pytest
 
 from src.backend.dsl.builders.base import RouteBuilder

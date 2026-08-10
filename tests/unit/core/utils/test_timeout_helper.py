@@ -1,5 +1,6 @@
 """Tests for :class:`TimeoutHelper` (S171 M5 proposals)."""
 from __future__ import annotations
+
 import asyncio
 from unittest.mock import AsyncMock
 

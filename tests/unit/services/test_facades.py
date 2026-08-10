@@ -45,9 +45,7 @@ class TestPIIFacade:
             result = facade.mask("test@example.com")
             assert isinstance(result, str)
         except Exception as exc:
-            from src.backend.core.policy.pii_fail_closed import (
-                PIIFailClosedError,
-            )
+            from src.backend.core.policy.pii_fail_closed import PIIFailClosedError
 
             assert isinstance(exc, PIIFailClosedError)
 
@@ -61,9 +59,7 @@ class TestPIIFacade:
             assert isinstance(result, dict)
             assert "age" in result
         except Exception as exc:
-            from src.backend.core.policy.pii_fail_closed import (
-                PIIFailClosedError,
-            )
+            from src.backend.core.policy.pii_fail_closed import PIIFailClosedError
 
             assert isinstance(exc, PIIFailClosedError)
 

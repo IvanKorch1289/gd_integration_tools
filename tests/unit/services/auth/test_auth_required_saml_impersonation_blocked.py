@@ -21,9 +21,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.backend.core.auth import AuthContext, AuthMethod
-from src.backend.entrypoints.middlewares.auth_required import (
-    AuthRequiredMiddleware,
-)
+from src.backend.entrypoints.middlewares.auth_required import AuthRequiredMiddleware
 
 
 def _start_message(send: AsyncMock) -> dict | None:

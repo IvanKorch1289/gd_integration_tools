@@ -241,10 +241,7 @@ async def test_ai_tool_dispatch_end_to_end_happy_path(
     # _build_ai_gateway_singleton возвращает cached instance и mock
     # AIGateway class НЕ применяется. Также сбрасываем feature_flag override
     # от других тестов (test_gateway_adapter.py ставит True).
-    from src.backend.core.di.providers.ai import (
-        _build_ai_gateway_singleton,
-        _overrides,
-    )
+    from src.backend.core.di.providers.ai import _build_ai_gateway_singleton, _overrides
 
     _overrides.pop("ai_gateway", None)
     _build_ai_gateway_singleton.cache_clear()
@@ -317,10 +314,7 @@ async def test_ai_tool_dispatch_end_to_end_blocks_tool_outside_whitelist(
     should be blocked with reason ``tool_id_not_in_whitelist``.
     """
     # Round 20 fix: cache_clear + feature_flag reset (см. happy_path test).
-    from src.backend.core.di.providers.ai import (
-        _build_ai_gateway_singleton,
-        _overrides,
-    )
+    from src.backend.core.di.providers.ai import _build_ai_gateway_singleton, _overrides
 
     _overrides.pop("ai_gateway", None)
     _build_ai_gateway_singleton.cache_clear()
@@ -375,10 +369,7 @@ async def test_ai_tool_dispatch_no_selection_when_llm_unavailable() -> None:
     # Round 20 fix: cache_clear от предыдущих тестов — без этого cached
     # mock instance от happy_path теста возвращает успех, и этот тест
     # не получает ожидаемый failure path.
-    from src.backend.core.di.providers.ai import (
-        _build_ai_gateway_singleton,
-        _overrides,
-    )
+    from src.backend.core.di.providers.ai import _build_ai_gateway_singleton, _overrides
 
     _overrides.pop("ai_gateway", None)
     _build_ai_gateway_singleton.cache_clear()

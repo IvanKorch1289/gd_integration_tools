@@ -8,7 +8,6 @@ Validates the previously no-op stub now actively blocks:
 
 from __future__ import annotations
 
-
 from src.backend.core.ai.security import ThreatLevel
 from src.backend.core.ai.security.workflow_hooks import banking_transaction_hook
 

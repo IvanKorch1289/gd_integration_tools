@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import threading
 import uuid
-from typing import Any, ClassVar
 from collections.abc import Callable
+from typing import Any, ClassVar
 
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext

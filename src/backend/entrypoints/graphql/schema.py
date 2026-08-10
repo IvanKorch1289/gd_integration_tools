@@ -44,10 +44,10 @@ from src.backend.core.auth import AuthMethod
 from src.backend.core.auth.auth_selector import require_auth
 from src.backend.core.logging import get_logger
 from src.backend.dsl.commands.registry import action_handler_registry
+from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.tracer import get_tracer
 from src.backend.dsl.registry import route_registry
 from src.backend.dsl.service import get_dsl_service
-from src.backend.dsl.engine.context import ExecutionContext
 
 # S168 W12 P2-4: DslResult + ActionResult + dispatch_action extracted
 # to dsl_result.py. Re-exported here для backward-compat (existing

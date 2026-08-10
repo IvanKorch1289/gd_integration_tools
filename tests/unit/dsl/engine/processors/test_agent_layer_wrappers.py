@@ -6,6 +6,7 @@ Coverage:
 - Prompt registry DSL (wraps PromptRegistry.get)
 """
 from __future__ import annotations
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -56,18 +57,14 @@ class TestLangGraphAgentDSL:
 class TestRAGSearchDSL:
     @pytest.mark.asyncio
     async def test_processor_instantiates(self) -> None:
-        from src.backend.dsl.engine.processors.ai.rag_search import (
-            RAGSearchProcessor,
-        )
+        from src.backend.dsl.engine.processors.ai.rag_search import RAGSearchProcessor
         p = RAGSearchProcessor(query="test", namespace="docs", to="body.docs")
         assert p.query == "test"
         assert p.namespace == "docs"
 
     @pytest.mark.asyncio
     async def test_search_calls_hybrid_rag(self) -> None:
-        from src.backend.dsl.engine.processors.ai.rag_search import (
-            RAGSearchProcessor,
-        )
+        from src.backend.dsl.engine.processors.ai.rag_search import RAGSearchProcessor
         p = RAGSearchProcessor(query="test", namespace="docs", to="body.docs")
         ex = MagicMock()
         ex.in_message.body = {}

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 
-
 class TestMiniMaxSettingsDefaults:
     def test_default_model(self) -> None:
         from src.backend.core.config.ai import minimax_settings

@@ -7,7 +7,6 @@ Pattern (D273, Ponytail): thin wrapper + skip если pypdf нет.
 from __future__ import annotations
 
 
-
 class TestPdfExtractProcessor:
     def test_instantiates(self) -> None:
         from src.backend.dsl.engine.processors.rpa.pdf_extract import (

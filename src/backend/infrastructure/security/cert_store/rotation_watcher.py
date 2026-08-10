@@ -14,7 +14,7 @@ Production: config flag ``cert_auto_rotate: bool = False``.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger

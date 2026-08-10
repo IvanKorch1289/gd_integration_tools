@@ -6,6 +6,7 @@ New processors for infra categories that lacked DSL:
 - infra_kafka_produce: Kafka message production
 """
 from __future__ import annotations
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

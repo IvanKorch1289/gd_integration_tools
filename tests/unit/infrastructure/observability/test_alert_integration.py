@@ -40,11 +40,12 @@ class TestAlertIntegration:
 
     def test_yamlsave_to_file(self) -> None:
         """save_rules() записывает YAML в файл (для CI deploy)."""
+        import tempfile
+        from pathlib import Path
+
         from src.backend.infrastructure.observability.prometheus_alerting import (
             PrometheusAlertManager,
         )
-        from pathlib import Path
-        import tempfile
         mgr = PrometheusAlertManager()
         with tempfile.TemporaryDirectory() as tmp:
             rules_path = Path(tmp) / "alert_rules.yaml"

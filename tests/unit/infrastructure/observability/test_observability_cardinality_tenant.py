@@ -16,10 +16,7 @@ from __future__ import annotations
 import pytest
 from prometheus_client import CollectorRegistry
 
-from src.backend.core.utils.metrics_registry import (
-    DEFAULT_LABELS,
-    MetricsRegistry,
-)
+from src.backend.core.utils.metrics_registry import DEFAULT_LABELS, MetricsRegistry
 from src.backend.infrastructure.observability.mq_trace_propagator import (
     extract_from_headers,
     inject_into_headers,

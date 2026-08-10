@@ -34,45 +34,35 @@ class TestSemanticMemoryInit:
 
     def test_default_collection_name(self) -> None:
         """Default collection name is 'langmem_semantic'."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         mem = SemanticMemory()
         assert mem._collection == "langmem_semantic"
 
     def test_custom_collection_name(self) -> None:
         """Custom collection name stored in _collection."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         mem = SemanticMemory(collection="custom_coll")
         assert mem._collection == "custom_coll"
 
     def test_is_configured_false_when_no_client(self) -> None:
         """is_configured returns False when qdrant_client is None."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         mem = SemanticMemory(embedder=MagicMock())
         assert mem.is_configured is False
 
     def test_is_configured_false_when_no_embedder(self) -> None:
         """is_configured returns False when embedder is None."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         mem = SemanticMemory(qdrant_client=AsyncMock())
         assert mem.is_configured is False
 
     def test_is_configured_true_when_both_set(self) -> None:
         """is_configured returns True when both client and embedder set."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         mem = SemanticMemory(
             qdrant_client=AsyncMock(), embedder=MagicMock()
@@ -86,9 +76,7 @@ class TestSemanticMemoryAdd:
     @pytest.fixture
     def memory(self) -> tuple:
         """Memory with mocked Qdrant + embedder returning 1D vector."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         qdrant = MagicMock()
         qdrant.upsert = AsyncMock()
@@ -228,9 +216,7 @@ class TestSemanticMemoryAddErrors:
     @pytest.mark.asyncio
     async def test_add_without_embedder_raises(self) -> None:
         """add() без embedder → RuntimeError (memory not configured)."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         mem = SemanticMemory(qdrant_client=AsyncMock())  # no embedder
         assert mem.is_configured is False
@@ -241,9 +227,7 @@ class TestSemanticMemoryAddErrors:
     @pytest.mark.asyncio
     async def test_add_without_qdrant_raises(self) -> None:
         """add() без qdrant_client → RuntimeError."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         mem = SemanticMemory(embedder=MagicMock())  # no qdrant
         assert mem.is_configured is False
@@ -254,9 +238,7 @@ class TestSemanticMemoryAddErrors:
     @pytest.mark.asyncio
     async def test_add_without_both_raises(self) -> None:
         """add() без обоих → RuntimeError."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         mem = SemanticMemory()
         assert mem.is_configured is False
@@ -267,9 +249,7 @@ class TestSemanticMemoryAddErrors:
     @pytest.mark.asyncio
     async def test_add_handles_embedder_failure(self) -> None:
         """add() propagates embedder exceptions (no silent failure)."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         qdrant = MagicMock()
         qdrant.upsert = AsyncMock()
@@ -287,9 +267,7 @@ class TestSemanticMemoryAddErrors:
     @pytest.mark.asyncio
     async def test_add_uses_correct_collection(self) -> None:
         """add() upsert использует self._collection name."""
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         qdrant = MagicMock()
         qdrant.upsert = AsyncMock()
@@ -321,9 +299,7 @@ class TestSemanticMemoryMissingClientMethod:
         is misconfigured (no upsert method). Returns point_id but
         doesn't actually store (logs warning, continues).
         """
-        from src.backend.services.ai.memory.langmem.semantic import (
-            SemanticMemory,
-        )
+        from src.backend.services.ai.memory.langmem.semantic import SemanticMemory
 
         # Mock client WITHOUT upsert method.
         qdrant = MagicMock(spec=[])  # spec=[] → no attributes

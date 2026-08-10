@@ -12,8 +12,6 @@ HierarchicalStrategy зарегистрирована в ``_STRATEGIES`` dict
 
 from __future__ import annotations
 
-
-
 from src.backend.core.ai.context_strategy import (
     ContextMessage,
     ContextStrategyType,

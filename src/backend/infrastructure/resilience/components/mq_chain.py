@@ -21,7 +21,6 @@ from typing import Any
 
 import orjson
 
-
 __all__ = ("MQPublishCallable", "build_mq_fallbacks", "build_mq_primary")
 
 

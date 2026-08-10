@@ -19,8 +19,6 @@ import orjson
 
 from src.backend.core.serialization.msgspec_hotpath import encode_json
 
-
-
 # ── template tools (_register_template_tools) ──
 
 

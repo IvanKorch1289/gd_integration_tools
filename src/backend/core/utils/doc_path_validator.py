@@ -10,7 +10,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-
 __all__ = ("DocPathValidator", "validate_doc_paths")
 
 

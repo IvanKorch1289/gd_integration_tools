@@ -13,7 +13,7 @@ Production: /metrics endpoint exposes cert_* metrics.
 from __future__ import annotations
 
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger

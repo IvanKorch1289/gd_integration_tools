@@ -5,9 +5,9 @@ Pattern (D272, Ponytail): thin wrapper.
 """
 # ruff: noqa: S101
 from __future__ import annotations
+
 import tempfile
 from pathlib import Path
-
 
 
 class TestFileSearchProcessor:

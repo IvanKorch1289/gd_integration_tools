@@ -27,13 +27,13 @@ from src.backend.dsl.builders.infrastructure_dsl import (
     ClickHouseInsertProcessor,
     ElasticsearchIndexProcessor,
     ElasticsearchSearchProcessor,
+    InfrastructureDSL,
     MongoFindProcessor,
     MongoInsertProcessor,
     RedisDeleteProcessor,
     RedisSetProcessor,
     SftpGetProcessor,
     SftpPutProcessor,
-    InfrastructureDSL,
 )
 
 

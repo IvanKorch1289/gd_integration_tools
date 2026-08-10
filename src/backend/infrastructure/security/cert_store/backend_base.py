@@ -40,7 +40,6 @@ from datetime import datetime
 from src.backend.infrastructure.security.cert_store.models import CertEntry
 
 
-
 @dataclass(slots=True)
 class CertBackend(ABC):
     """Контракт persistent-бэкенда сертификатов."""

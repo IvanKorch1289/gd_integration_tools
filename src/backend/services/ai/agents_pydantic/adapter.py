@@ -11,8 +11,6 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from typing import Any
 
-
-
 __all__ = ("LiteLLMModel",)
 
 from contextlib import asynccontextmanager  # noqa: E402

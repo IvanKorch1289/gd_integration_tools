@@ -54,9 +54,7 @@ class TestTemporalWorkerRuntimeCreation:
     @pytest.mark.asyncio
     async def test_worker_creation_with_classes(self) -> None:
         """Worker создаётся + регистрируется в TaskRegistry при start()."""
-        from src.backend.infrastructure.workflow import (
-            temporal_worker_runtime as mod,
-        )
+        from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
         fake_worker_mod, _worker_instance = _patch_temporalio()
         wf_cls = _make_workflow_class("W1")
@@ -86,9 +84,7 @@ class TestTemporalWorkerRuntimeCreation:
     @pytest.mark.asyncio
     async def test_worker_creation_no_classes_skips_registration(self) -> None:
         """Worker создаётся даже без workflow-классов (warning, не raise)."""
-        from src.backend.infrastructure.workflow import (
-            temporal_worker_runtime as mod,
-        )
+        from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
         fake_worker_mod, _ = _patch_temporalio()
 
@@ -113,9 +109,7 @@ class TestTemporalWorkerRuntimeCreation:
     @pytest.mark.asyncio
     async def test_start_stop_lifecycle(self) -> None:
         """start() → stop() корректно очищает state + отменяет task."""
-        from src.backend.infrastructure.workflow import (
-            temporal_worker_runtime as mod,
-        )
+        from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
         fake_worker_mod, worker_instance = _patch_temporalio()
         runtime = mod.get_temporal_worker_runtime()
@@ -139,9 +133,7 @@ class TestTemporalWorkerRuntimeCreation:
     @pytest.mark.asyncio
     async def test_stop_is_idempotent(self) -> None:
         """stop() без активного worker'а — no-op, без ошибок."""
-        from src.backend.infrastructure.workflow import (
-            temporal_worker_runtime as mod,
-        )
+        from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
         runtime = mod.get_temporal_worker_runtime()
         await runtime.stop()
@@ -151,9 +143,7 @@ class TestTemporalWorkerRuntimeCreation:
     @pytest.mark.asyncio
     async def test_double_start_raises(self) -> None:
         """Повторный start() без stop() → RuntimeError."""
-        from src.backend.infrastructure.workflow import (
-            temporal_worker_runtime as mod,
-        )
+        from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
         fake_worker_mod, _ = _patch_temporalio()
         runtime = mod.get_temporal_worker_runtime()
@@ -176,9 +166,7 @@ class TestStartTemporalWorkerRuntimeFeatureFlag:
     @pytest.mark.asyncio
     async def test_feature_flag_disabled_skips_start(self) -> None:
         """workflow_use_temporal=False → op no-op'ит (start не вызывается)."""
-        from src.backend.infrastructure.workflow import (
-            temporal_worker_runtime as mod,
-        )
+        from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
         fake_flags = MagicMock()
         fake_flags.workflow_use_temporal = False
@@ -199,9 +187,7 @@ class TestStartTemporalWorkerRuntimeFeatureFlag:
         D-A8-03 fix (cycle 1): activities=[] — ActivityBridge.decorate wire
         отдельно через composition layer (cross-layer concern).
         """
-        from src.backend.infrastructure.workflow import (
-            temporal_worker_runtime as mod,
-        )
+        from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
         fake_worker_mod, _ = _patch_temporalio()
         fake_factory = MagicMock()
@@ -251,9 +237,7 @@ class TestTemporalWorkerPoolProductionWire:
         До cycle-8: pool не создавался. После: pool.register_worker() вызван,
         runtime.bind_pool() связан, runtime._pool is not None.
         """
-        from src.backend.infrastructure.workflow import (
-            temporal_worker_runtime as mod,
-        )
+        from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
         fake_worker_mod, _ = _patch_temporalio()
         fake_factory = MagicMock()
@@ -305,9 +289,7 @@ class TestTemporalWorkerPoolProductionWire:
     @pytest.mark.asyncio
     async def test_pool_shutdown_in_lifespan_stop(self) -> None:
         """stop_temporal_worker_runtime закрывает TemporalWorkerPool.shutdown()."""
-        from src.backend.infrastructure.workflow import (
-            temporal_worker_runtime as mod,
-        )
+        from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
         runtime = mod.get_temporal_worker_runtime()
         # Симулируем production-bind: pool+worker+task.
@@ -334,9 +316,7 @@ class TestTemporalWorkerPoolProductionWire:
     @pytest.mark.asyncio
     async def test_stop_without_pool_uses_legacy_runtime_stop(self) -> None:
         """Unit-test path (single-client runtime.start) — fallback на runtime.stop()."""
-        from src.backend.infrastructure.workflow import (
-            temporal_worker_runtime as mod,
-        )
+        from src.backend.infrastructure.workflow import temporal_worker_runtime as mod
 
         fake_worker_mod, _ = _patch_temporalio()
         runtime = mod.get_temporal_worker_runtime()

@@ -48,13 +48,14 @@ PLAN V18.1 [wave:s4/k3-bpmn-import].
 
 from __future__ import annotations
 
+from graphlib import CycleError, TopologicalSorter
+from typing import Any, Final
+
 # Layer 7 DSL Cycle 2 fix: заменяем plain xml.etree.ElementTree на
 # defusedxml.ElementTree (drop-in replacement) для XXE-protection.
 # defusedxml уже transitive dep (uv.lock). Устраняет security gap
 # (докстринг ранее обещал defusedxml, но реально использовался stdlib).
 import defusedxml.ElementTree as ET
-from graphlib import CycleError, TopologicalSorter
-from typing import Any, Final
 
 from src.backend.core.logging import get_logger
 from src.backend.dsl.workflow.gateways import BranchSpec, GatewaySpec

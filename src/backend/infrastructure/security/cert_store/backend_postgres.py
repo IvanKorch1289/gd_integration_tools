@@ -49,7 +49,6 @@ from src.backend.infrastructure.security.cert_store.models import (
 )
 
 
-
 @dataclass(slots=True)
 class PostgresCertBackend(CertBackend):
     """PostgreSQL бэкенд: таблицы ``certs`` + ``cert_history``."""

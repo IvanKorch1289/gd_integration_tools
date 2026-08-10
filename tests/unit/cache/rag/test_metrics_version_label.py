@@ -8,7 +8,6 @@ legacy-нагрузка (carry-over от pre-Sprint 2.1 deployments).
 from __future__ import annotations
 
 
-
 class TestMetricsVersionLabel:
     """Проверка, что ``record_hit``/``record_miss`` принимают ``version``."""
 

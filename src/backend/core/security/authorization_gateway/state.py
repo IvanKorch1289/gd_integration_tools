@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import Any
 
 
-
 @dataclass
 class AuthorizationReason:
     """Одно звено в reason-chain ``AuthorizationDecision``."""

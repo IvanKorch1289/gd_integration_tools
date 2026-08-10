@@ -13,12 +13,14 @@ meta во все 4 файла.
 
 from __future__ import annotations
 
+from src.backend.dsl.engine.processors.workflow import (
+    workflow_convert,
+    workflow_subprocess,
+)
 from src.backend.dsl.engine.processors.workflow.best_practices import (
     claim_check,
     continue_as_new,
 )
-from src.backend.dsl.engine.processors.workflow import workflow_convert
-from src.backend.dsl.engine.processors.workflow import workflow_subprocess
 from src.backend.dsl.registry import get_processor_registry
 
 

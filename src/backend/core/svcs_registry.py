@@ -33,7 +33,6 @@ import threading
 from collections.abc import Callable, Hashable
 from typing import Any, TypeVar, cast
 
-
 __all__ = (
     "clear_registry",
     "get_service",

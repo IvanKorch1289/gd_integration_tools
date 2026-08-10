@@ -10,8 +10,8 @@ Pattern (D275, Ponytail): thin wrapper.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from datetime import datetime, UTC
 
+from datetime import UTC, datetime
 
 
 class TestBatchAggregatorProcessor:

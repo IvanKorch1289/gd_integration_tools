@@ -19,10 +19,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def _reset_ai_gateway_singleton_for_dsl() -> None:
     """Сбрасывает AIGateway composition root между DSL-тестами."""
-    from src.backend.core.di.providers.ai import (
-        _build_ai_gateway_singleton,
-        _overrides,
-    )
+    from src.backend.core.di.providers.ai import _build_ai_gateway_singleton, _overrides
 
     _overrides.pop("ai_gateway", None)
     _build_ai_gateway_singleton.cache_clear()

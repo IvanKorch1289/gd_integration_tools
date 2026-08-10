@@ -31,6 +31,7 @@ from tenacity import (
     wait_random,
 )
 
+from src.backend.core.codec.json import json_dumps
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import (
@@ -39,7 +40,6 @@ from src.backend.core.resilience.breaker import (
     CircuitOpen,
     get_breaker_registry,
 )
-from src.backend.core.codec.json import json_dumps
 from src.backend.infrastructure.clients.transport.httpx_cache_adapter import (
     build_cache_transport,
     is_hishel_available,

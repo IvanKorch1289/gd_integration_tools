@@ -5,10 +5,11 @@
 """
 # ruff: noqa: S101
 from __future__ import annotations
+
+from datetime import UTC
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from datetime import UTC
 
 
 class TestAutoRotate:
@@ -29,10 +30,11 @@ class TestAutoRotate:
     @pytest.mark.asyncio
     async def test_expired_cert_triggers_renewal(self) -> None:
         """days_remaining <= 0 + auto_rotate=True → вызов renewal callback."""
+        from datetime import datetime, timedelta
+
         from src.backend.infrastructure.security.cert_store.rotation_watcher import (
             CertRotationWatcher,
         )
-        from datetime import datetime, timedelta
         mock_store = MagicMock()
         mock_entry = MagicMock()
         mock_entry.service_id = "skb_api"

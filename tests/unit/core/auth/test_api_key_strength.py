@@ -24,7 +24,6 @@ from src.backend.core.auth.api_key_backend import (
     _evaluate_strength,
 )
 
-
 # ─── Public API surface ────────────────────────────────────────────
 
 

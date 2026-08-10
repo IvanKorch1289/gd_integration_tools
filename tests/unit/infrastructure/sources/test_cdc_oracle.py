@@ -14,7 +14,8 @@ Requirements:
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from datetime import datetime, UTC
+
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -22,9 +23,7 @@ import pytest
 
 class TestOracleCDCSource:
     def test_instantiates(self) -> None:
-        from src.backend.infrastructure.sources.cdc_oracle import (
-            OracleCDCSource,
-        )
+        from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
         source = OracleCDCSource(
             dsn="oracle://user:pass@host:1521/ORCLPDB1",
             schema="HR",
@@ -35,9 +34,7 @@ class TestOracleCDCSource:
         assert source.tables == ("EMPLOYEES",)
 
     def test_instantiates_with_table_filter(self) -> None:
-        from src.backend.infrastructure.sources.cdc_oracle import (
-            OracleCDCSource,
-        )
+        from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
         source = OracleCDCSource(
             dsn="oracle://x",
             schema="S",
@@ -54,9 +51,7 @@ class TestOracleCDCSourcePolling:
     @pytest.mark.asyncio
     async def test_poll_returns_new_changes(self) -> None:
         """При polling с последним SCN — возвращает новые rows."""
-        from src.backend.infrastructure.sources.cdc_oracle import (
-            OracleCDCSource,
-        )
+        from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
         source = OracleCDCSource(
             dsn="oracle://x",
             schema="HR",
@@ -79,9 +74,7 @@ class TestOracleCDCSourcePolling:
 class TestOracleCDCSourceInDSL:
     def test_registers_in_source_registry(self) -> None:
         """Oracle CDC source регистрируется в SourceRegistry."""
-        from src.backend.infrastructure.sources.cdc_oracle import (
-            OracleCDCSource,
-        )
+        from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
         assert OracleCDCSource is not None
         # SourceRegistry должен иметь метод register_oracle_cdc
         # (проверяем что source имеет нужные capabilities)
@@ -89,9 +82,7 @@ class TestOracleCDCSourceInDSL:
 
 class TestOracleCDCSourceIdentifierValidation:
     def test_valid_table_passes(self) -> None:
-        from src.backend.infrastructure.sources.cdc_oracle import (
-            _validate_oracle_table,
-        )
+        from src.backend.infrastructure.sources.cdc_oracle import _validate_oracle_table
 
         assert _validate_oracle_table("HR.EMPLOYEES") == "HR.EMPLOYEES"
 
@@ -106,9 +97,7 @@ class TestOracleCDCSourceIdentifierValidation:
         ],
     )
     def test_invalid_table_rejected(self, bad: str) -> None:
-        from src.backend.infrastructure.sources.cdc_oracle import (
-            _validate_oracle_table,
-        )
+        from src.backend.infrastructure.sources.cdc_oracle import _validate_oracle_table
 
         with pytest.raises(ValueError):
             _validate_oracle_table(bad)
@@ -132,9 +121,7 @@ class TestOracleCDCSourceIdentifierValidation:
     def test_sync_fetch_uses_validated_identifiers(self) -> None:
         """Constructor itself rejects unsafe watermark columns —
         ``_sync_fetch`` must never be reached for them."""
-        from src.backend.infrastructure.sources.cdc_oracle import (
-            OracleCDCSource,
-        )
+        from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
 
         with pytest.raises(ValueError):
             OracleCDCSource(
@@ -145,9 +132,7 @@ class TestOracleCDCSourceIdentifierValidation:
             )
 
     def test_schema_validated_at_construction(self) -> None:
-        from src.backend.infrastructure.sources.cdc_oracle import (
-            OracleCDCSource,
-        )
+        from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
 
         with pytest.raises(ValueError):
             OracleCDCSource(
@@ -157,9 +142,7 @@ class TestOracleCDCSourceIdentifierValidation:
             )
 
     def test_table_name_validated_at_construction(self) -> None:
-        from src.backend.infrastructure.sources.cdc_oracle import (
-            OracleCDCSource,
-        )
+        from src.backend.infrastructure.sources.cdc_oracle import OracleCDCSource
 
         with pytest.raises(ValueError):
             OracleCDCSource(

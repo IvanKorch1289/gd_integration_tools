@@ -28,6 +28,11 @@ from src.backend.core.plugin_runtime.compat_checker import (
     CompatViolation,
     check_compatibility,
 )
+from src.backend.core.plugin_runtime.manifest_toml import (  # S52 W3: needed for _load_one's compat_violations
+    PluginManifest,
+    PluginManifestError,
+    load_plugin_manifest,
+)
 from src.backend.services.plugins.loader.discovery import (
     DiscoveryMixin,  # S52 W3: MRO
     LoadedPlugin,  # S52 W3: re-export для backward compat
@@ -40,11 +45,6 @@ from src.backend.services.plugins.loader.models_discovery import (  # cycle-15: 
 )
 from src.backend.services.plugins.loader.validation import (
     ValidationMixin,  # S52 W3: MRO
-)
-from src.backend.core.plugin_runtime.manifest_toml import (  # S52 W3: needed for _load_one's compat_violations
-    PluginManifest,
-    PluginManifestError,
-    load_plugin_manifest,
 )
 
 _logger = get_logger(

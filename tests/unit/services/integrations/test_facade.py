@@ -45,9 +45,7 @@ class TestIntegrationFacadeSendToSink:
 
     async def test_send_denied_raises_capability_error(self, monkeypatch) -> None:
         """Если capability denied → CapabilityDeniedError."""
-        from src.backend.core.security.capabilities.errors import (
-            CapabilityDeniedError,
-        )
+        from src.backend.core.security.capabilities.errors import CapabilityDeniedError
 
         sink = _FakeSink("alerts.http", SinkKind.HTTP)
         facade = IntegrationFacade()

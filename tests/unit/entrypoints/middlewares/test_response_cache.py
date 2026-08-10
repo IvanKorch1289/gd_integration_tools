@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.backend.entrypoints.middlewares.response_cache import (
-    ResponseCacheMiddleware,
     _USE_XXHASH,
+    ResponseCacheMiddleware,
 )
 
 
@@ -199,9 +199,7 @@ class TestResponseCacheMiddleware:
 
             expected_etag = f'"{xxhash.xxh64(body).hexdigest()}"'
         else:
-            from src.backend.entrypoints.middlewares._body_hash import (
-                etag_hash,
-            )
+            from src.backend.entrypoints.middlewares._body_hash import etag_hash
 
             expected_etag = etag_hash(body)
 

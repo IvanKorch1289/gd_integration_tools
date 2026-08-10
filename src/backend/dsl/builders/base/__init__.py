@@ -11,11 +11,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-
 if TYPE_CHECKING:
     pass
 from src.backend.dsl.builders.agent_dsl import AgentDSLMixin
 from src.backend.dsl.builders.ai_rpa import AIRPAMixin
+from src.backend.dsl.builders.base.compliance_mixin import (
+    ComplianceMixin,  # S57 W1: MRO
+)
+from src.backend.dsl.builders.base.config_mixin import ConfigMixin  # S57 W1: MRO
+from src.backend.dsl.builders.base.deps_mixin import DepsMixin  # S57 W1: MRO
+from src.backend.dsl.builders.base.feature_mixin import FeatureMixin  # S57 W1: MRO
+from src.backend.dsl.builders.base.fluent_mixin import FluentMixin  # S57 W1: MRO
+from src.backend.dsl.builders.base.middleware_mixin import (
+    MiddlewareMixin,  # S57 W1: MRO
+)
+from src.backend.dsl.builders.base.resilience_mixin import (
+    ResilienceMixin,  # S57 W1: MRO
+)
+from src.backend.dsl.builders.base.validation_mixin import (
+    ValidationMixin,  # S57 W1: MRO
+)
 from src.backend.dsl.builders.batch import BatchMixin
 from src.backend.dsl.builders.collection import CollectionMixin
 from src.backend.dsl.builders.content import ContentMixin
@@ -46,23 +61,6 @@ from src.backend.dsl.engine.processors import BaseProcessor
 from src.backend.dsl.processors.plan_execute_processor import PlanExecuteMixin
 from src.backend.dsl.processors.reflection_loop_processor import ReflectionLoopMixin
 from src.backend.dsl.processors.router_specialist_processor import RouterSpecialistMixin
-
-from src.backend.dsl.builders.base.compliance_mixin import (
-    ComplianceMixin,  # S57 W1: MRO
-)
-from src.backend.dsl.builders.base.config_mixin import ConfigMixin  # S57 W1: MRO
-from src.backend.dsl.builders.base.deps_mixin import DepsMixin  # S57 W1: MRO
-from src.backend.dsl.builders.base.feature_mixin import FeatureMixin  # S57 W1: MRO
-from src.backend.dsl.builders.base.fluent_mixin import FluentMixin  # S57 W1: MRO
-from src.backend.dsl.builders.base.middleware_mixin import (
-    MiddlewareMixin,  # S57 W1: MRO
-)
-from src.backend.dsl.builders.base.resilience_mixin import (
-    ResilienceMixin,  # S57 W1: MRO
-)
-from src.backend.dsl.builders.base.validation_mixin import (
-    ValidationMixin,  # S57 W1: MRO
-)
 
 __all__ = ("RouteBuilder", "get_route_builder")
 

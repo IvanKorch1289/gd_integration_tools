@@ -16,8 +16,6 @@ import asyncio
 import io
 from typing import Any
 
-
-
 __all__ = ("CLIPEmbedder", "ColpaliEmbedder", "LazyImportError")
 
 

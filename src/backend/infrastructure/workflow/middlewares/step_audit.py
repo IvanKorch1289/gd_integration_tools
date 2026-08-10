@@ -31,8 +31,8 @@ Feature flag: ``feature_flags.workflow_step_log_enabled`` (default-OFF).
 from __future__ import annotations
 
 import asyncio
-import inspect
 import hashlib
+import inspect
 import time
 import uuid
 from collections.abc import AsyncIterator

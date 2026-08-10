@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-
 from unittest.mock import AsyncMock
 
 import pytest
@@ -12,9 +11,7 @@ import pytest
 from src.backend.entrypoints.middlewares.auth_method_header import (
     AuthMethodHeaderMiddleware,
 )
-from src.backend.entrypoints.middlewares.blocked_routes import (
-    BlockedRoutesMiddleware,
-)
+from src.backend.entrypoints.middlewares.blocked_routes import BlockedRoutesMiddleware
 from src.backend.entrypoints.middlewares.correlation import (
     CORRELATION_HEADER,
     CorrelationIdMiddleware,

@@ -17,10 +17,10 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable
+from datetime import UTC
 from typing import Any, Protocol
 
 from src.backend.core.logging import get_logger
-from datetime import UTC
 
 __all__ = (
     "InMemoryLineageEmitter",

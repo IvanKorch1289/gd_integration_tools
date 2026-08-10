@@ -12,7 +12,6 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-
 from src.backend.core.ai.security.workflow_hooks import rpa_browser_hook
 
 

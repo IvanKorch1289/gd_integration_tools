@@ -15,7 +15,6 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-
 __all__ = ("NotificationCallable", "build_express_fallbacks", "build_express_primary")
 
 

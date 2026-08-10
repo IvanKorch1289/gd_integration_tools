@@ -19,10 +19,7 @@ import pytest
 
 from src.backend.core.di.providers import http, workflow
 from src.backend.core.messaging.dlq import DLQEnvelope, DLQReason
-from src.backend.infrastructure.messaging.dlq import (
-    FanoutDLQWriter,
-    InMemoryDLQWriter,
-)
+from src.backend.infrastructure.messaging.dlq import FanoutDLQWriter, InMemoryDLQWriter
 
 
 class FakeRouter:
@@ -79,8 +76,8 @@ def integration_fixture() -> Any:
                 "src.backend.entrypoints.stream.subscribers.action_handler_registry"
             ) as mock_registry,
         ):
-            import src.backend.entrypoints.stream.subscribers as subscribers_mod
             import src.backend.entrypoints.stream.invoker_subscribers as invoker_mod
+            import src.backend.entrypoints.stream.subscribers as subscribers_mod
 
             yield {
                 "subscribers_module": subscribers_mod,

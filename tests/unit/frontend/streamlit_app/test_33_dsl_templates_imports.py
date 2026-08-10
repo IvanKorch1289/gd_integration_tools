@@ -276,8 +276,7 @@ def test_dsl_names_callable() -> None:
 
     S173: импорт через ``src.backend.core.frontend_facade`` facade.
     """
-    from src.backend.core.frontend_facade import WorkflowDeclaration
-    from src.backend.core.frontend_facade import to_mermaid
+    from src.backend.core.frontend_facade import WorkflowDeclaration, to_mermaid
 
     assert WorkflowDeclaration is not None
     assert callable(to_mermaid)

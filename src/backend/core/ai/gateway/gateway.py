@@ -157,8 +157,8 @@ class AIGateway(EnforcedInvokeMixin, PipelineStepsMixin):
         Backward-compat: в development/staging недостающие зависимости
         пропускаются (gate не активируется).
         """
-        from src.backend.core.config.settings import settings as app_settings
         from src.backend.core.ai.errors import AIGatewayProductionWiringError
+        from src.backend.core.config.settings import settings as app_settings
 
         env = getattr(getattr(app_settings, "app", None), "environment", "")
         if env != "production":

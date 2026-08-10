@@ -78,9 +78,9 @@ class TestCapabilityGate:
 
     def test_check_signature(self):
         """check() must accept (plugin, capability, requested_scope)."""
-        from src.backend.core.security.capabilities.gate import CapabilityGate
-
         import inspect
+
+        from src.backend.core.security.capabilities.gate import CapabilityGate
         sig = inspect.signature(CapabilityGate.check)
         params = list(sig.parameters.keys())
         assert "plugin" in params

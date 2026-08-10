@@ -10,8 +10,6 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-
-
 __all__ = ("SemanticMemory",)
 
 

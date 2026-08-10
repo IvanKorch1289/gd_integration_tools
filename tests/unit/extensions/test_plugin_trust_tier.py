@@ -12,7 +12,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-
 EXTENSIONS = ["core_admin", "dadata", "skb"]
 REPO_ROOT = Path(__file__).resolve().parents[3]
 

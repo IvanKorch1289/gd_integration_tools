@@ -18,10 +18,10 @@ from src.backend.core.config.external_databases import (
 )
 from src.backend.core.enums.database import DatabaseTypeChoices
 from src.backend.core.errors import DatabaseError
+from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_resilience import resilient
 from src.backend.infrastructure.database.database.bundle import DatabaseBundle
 from src.backend.infrastructure.database.listeners import DatabaseListener
-from src.backend.core.logging import get_logger
 
 db_logger = get_logger("database")
 

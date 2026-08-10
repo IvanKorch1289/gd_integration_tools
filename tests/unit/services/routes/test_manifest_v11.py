@@ -10,10 +10,11 @@ from pydantic import ValidationError
 
 from src.backend.core.security.capabilities import CapabilityRef
 from src.backend.services.routes.manifest_toml import (
-    RouteManifestError,
     RouteManifest,
+    RouteManifestError,
     load_route_manifest,
 )
+
 # Backward-compat alias (test still uses old name)
 RouteManifestV11 = RouteManifest
 

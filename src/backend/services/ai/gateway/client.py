@@ -12,8 +12,8 @@ Lazy-импорт ``litellm`` — отсутствие пакета не лом�
 from __future__ import annotations
 
 import asyncio
-from typing import Any
 from collections.abc import AsyncIterator
+from typing import Any
 
 from src.backend.core.ai.errors import GatewayRateLimited, GatewayUnavailable
 from src.backend.core.di.app_state import app_state_singleton

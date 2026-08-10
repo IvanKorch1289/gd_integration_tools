@@ -158,10 +158,7 @@ class TestAgentToolPolicyIntegration:
         assert policy.agent_id == "default"
 
     def test_re_register_factory(self) -> None:
-        from src.backend.core.svcs_registry import (
-            get_service,
-            register_factory,
-        )
+        from src.backend.core.svcs_registry import get_service, register_factory
 
         # Custom factory
         custom = AgentToolPolicy(

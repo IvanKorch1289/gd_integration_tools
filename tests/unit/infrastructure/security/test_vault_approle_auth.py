@@ -2,9 +2,11 @@
 # ruff: noqa: S101
 from __future__ import annotations
 
+import sys as _sys
+
 # Pre-mock hvac module (D255: lazy import в backend_vault)
 from unittest.mock import MagicMock
-import sys as _sys
+
 if "hvac" not in _sys.modules:
     _mock_hvac = MagicMock()
     _mock_hvac.Client = MagicMock()  # type: ignore[attr-defined]
@@ -54,11 +56,12 @@ class TestVaultCertBackendAppRole:
     @pytest.mark.skip(reason="D255: complex hvac mocking — covered by integration test, manual verification OK")
     def test_get_uses_approle(self) -> None:
         """get() через AppRole auth (D255)."""
+        # hvac уже pre-mocked в начале файла
+        import hvac
+
         from src.backend.infrastructure.security.cert_store.backend_vault import (
             VaultCertBackend,
         )
-        # hvac уже pre-mocked в начале файла
-        import hvac
         mock_client = MagicMock()
         mock_client.is_authenticated.return_value = True
         hvac.Client = MagicMock(return_value=mock_client)

@@ -7,7 +7,6 @@ Pattern (D276): thin wrapper.
 from __future__ import annotations
 
 
-
 class TestMimeDetectProcessor:
     def test_instantiates(self) -> None:
         from src.backend.dsl.engine.processors.rpa.mime_detect import (

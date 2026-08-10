@@ -137,9 +137,7 @@ class TestGetEpisodicRepository:
 
     def test_model_type_binding_episodic(self) -> None:
         """When advanced_alchemy is available, model_type binds to LangMemEpisodic."""
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemEpisodic,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemEpisodic
         from src.backend.services.ai.memory.langmem.backends import (
             get_episodic_repository,
         )
@@ -188,9 +186,7 @@ class TestGetProceduralRepository:
 
     def test_model_type_binding_procedural(self) -> None:
         """When advanced_alchemy is available, model_type binds to LangMemProcedural."""
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemProcedural,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemProcedural
         from src.backend.services.ai.memory.langmem.backends import (
             get_procedural_repository,
         )

@@ -291,6 +291,7 @@ class TestAdminAuditMiddlewarePureASGI:
         mw = AdminAuditMiddleware(app=app)
 
         from types import SimpleNamespace
+
         from src.backend.entrypoints.middlewares._body_hash import payload_hash
 
         auth_ctx = SimpleNamespace(
@@ -372,6 +373,7 @@ class TestAdminAuditMiddlewarePureASGI:
         mw = AdminAuditMiddleware(app=app)
 
         from types import SimpleNamespace
+
         from src.backend.entrypoints.middlewares._body_hash import payload_hash
 
         auth_ctx = SimpleNamespace(

@@ -12,15 +12,15 @@ import importlib
 from src.backend.core.interfaces.plugin import BasePlugin, PluginContext
 from src.backend.core.logging import get_logger
 from src.backend.core.plugin_runtime.compat_checker import CompatViolation
-from src.backend.core.security.capabilities import CapabilityError, CapabilityRef
-from src.backend.services.plugins.loader.discovery import LoadedPlugin
-from src.backend.services.plugins.loader.loading._protocol import _LoadingProtocol
-from src.backend.services.plugins.loader.validation import PluginInventoryConflictError
 from src.backend.core.plugin_runtime.manifest_toml import (
     PluginManifest,
     PluginManifestError,
     load_plugin_manifest,
 )
+from src.backend.core.security.capabilities import CapabilityError, CapabilityRef
+from src.backend.services.plugins.loader.discovery import LoadedPlugin
+from src.backend.services.plugins.loader.loading._protocol import _LoadingProtocol
+from src.backend.services.plugins.loader.validation import PluginInventoryConflictError
 
 _logger = get_logger("services.plugins.loader")
 

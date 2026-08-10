@@ -14,12 +14,12 @@ from typing import Any
 import pytest
 
 from src.backend.core.ai.sandbox import SandboxResult
+from src.backend.core.plugin_runtime.manifest_toml import PluginManifest, PluginSandbox
 from src.backend.core.plugin_runtime.sandbox import (
     PluginSandboxAdapter,
     PluginSandboxError,
 )
 from src.backend.core.security.capabilities import CapabilityRef
-from src.backend.core.plugin_runtime.manifest_toml import PluginManifest, PluginSandbox
 
 
 class FakeSandbox:

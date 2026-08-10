@@ -21,8 +21,6 @@ Backward-compat: ``from src.backend.dsl.builders.sources_mixin import SourcesMix
 
 from __future__ import annotations
 
-
-
 from src.backend.dsl.builders.sources_mixin.cdc_sources_mixin import (
     CdcSourcesMixin,  # S57 W2: MRO
 )

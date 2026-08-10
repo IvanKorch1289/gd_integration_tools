@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from src.backend.dsl.helpers.datetime_utils import add_days, now, to_iso8601
 

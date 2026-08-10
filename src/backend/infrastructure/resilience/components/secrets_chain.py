@@ -22,7 +22,6 @@ from __future__ import annotations
 import os
 from collections.abc import Awaitable, Callable
 
-
 __all__ = ("SecretResolveCallable", "build_secrets_fallbacks", "build_secrets_primary")
 
 

@@ -16,9 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from src.backend.services.plugins.loader import (
-    load_plugin_manifests_for_migrations,
-)
+from src.backend.services.plugins.loader import load_plugin_manifests_for_migrations
 
 
 def _write_plugin(

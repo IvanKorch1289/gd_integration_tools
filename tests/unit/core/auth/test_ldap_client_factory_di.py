@@ -173,9 +173,7 @@ class TestLdapClientFactoryRuntimeSymbols:
     def test_ad_server_config_importable_at_runtime(self):
         """AdServerConfig must be importable from services.auth.ad_directory_client."""
         try:
-            from src.backend.services.auth.ad_directory_client import (
-                AdServerConfig,
-            )
+            from src.backend.services.auth.ad_directory_client import AdServerConfig
             # Has expected attributes (sanity check it's the right class)
             assert hasattr(AdServerConfig, "__init__")
         except ImportError:

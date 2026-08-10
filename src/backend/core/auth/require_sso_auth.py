@@ -39,8 +39,8 @@ from __future__ import annotations
 
 import functools
 import inspect
-from typing import Any, TypeVar, cast
 from collections.abc import Awaitable, Callable
+from typing import Any, TypeVar, cast
 
 from src.backend.core.auth.auth_context_helpers import (
     extract_tenant_id,

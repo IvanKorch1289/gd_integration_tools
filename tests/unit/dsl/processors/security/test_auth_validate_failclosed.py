@@ -22,8 +22,8 @@ import pytest
 from src.backend.core.auth import AuthMethod
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.security import (
-    AuthValidateProcessor,
     AuthenticationProviderUnavailableError,
+    AuthValidateProcessor,
     _load_verifiers,
 )
 

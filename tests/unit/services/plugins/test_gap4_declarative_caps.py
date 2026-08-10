@@ -29,6 +29,12 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from src.backend.core.plugin_runtime.manifest_toml import (
+    PluginManifest,
+    PluginManifestError,
+    PluginTenantDecl,
+    load_plugin_manifest,
+)
 from src.backend.core.security.capabilities import (
     DEFAULT_CAPABILITY_CATALOG,
     CapabilityGate,
@@ -41,17 +47,13 @@ from src.backend.core.security.capabilities.vocabulary import (
     build_default_vocabulary,
 )
 from src.backend.services.plugins.loader import PluginLoader
-from src.backend.core.plugin_runtime.manifest_toml import (
-    PluginManifestError,
-    PluginManifest,
-    PluginTenantDecl,
-    load_plugin_manifest,
-)
 from tests.unit.services.plugins.test_loader_v11_frontend_pages import (
     _build_loader,
     _FakeActions,
     _FakeProcessors,
     _FakeRepos,
+)
+from tests.unit.services.plugins.test_loader_v11_frontend_pages import (
     _write_plugin as _write_extension,  # S168 W15-17: renamed _write_extension → _write_plugin
 )
 

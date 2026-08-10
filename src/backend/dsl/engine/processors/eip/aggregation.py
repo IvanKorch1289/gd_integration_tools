@@ -10,7 +10,6 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
-
 __all__ = ("BatchAggregatorProcessor",)
 
 VALID_WINDOWS = ("tumbling", "sliding", "session")

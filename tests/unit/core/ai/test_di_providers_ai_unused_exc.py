@@ -8,7 +8,6 @@ import sys
 from typing import Any
 from unittest.mock import patch
 
-
 from src.backend.core.di.providers import ai as ai_providers
 
 

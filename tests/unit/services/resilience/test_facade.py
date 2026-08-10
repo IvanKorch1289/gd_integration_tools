@@ -18,7 +18,6 @@ import pytest
 
 from src.backend.services.resilience.facade import ResilienceFacade
 
-
 # ── check_rate_limit: limiter factory cast (C28 fix) ────────────────
 
 

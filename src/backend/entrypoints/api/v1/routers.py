@@ -17,8 +17,14 @@ def get_v1_routers() -> APIRouter:
         router as actions_inventory_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.admin import router as admin_router
+    from src.backend.entrypoints.api.v1.endpoints.admin_actions import (
+        router as admin_actions_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_capabilities import (
         router as admin_capabilities_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_certs import (
+        router as admin_certs_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.admin_connectors import (
         router as admin_connectors_router,
@@ -29,11 +35,32 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_feature_flags import (
         router as admin_feature_flags_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_feedback import (
+        router as admin_feedback_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_ip_restriction import (
         router as admin_ip_restriction_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.admin_langgraph import (
         router as admin_langgraph_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_model_registry import (
+        router as admin_model_registry_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_parallelism import (
+        router as admin_parallelism_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_plugins import (
+        router as admin_plugins_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_rag import (
+        router as admin_rag_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_resilience_profile import (
+        router as admin_resilience_profile_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_scheduler_dlq import (
+        router as admin_scheduler_dlq_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.admin_schemas import (
         router as admin_schemas_router,
@@ -73,6 +100,9 @@ def get_v1_routers() -> APIRouter:
     )
     from src.backend.entrypoints.api.v1.endpoints.ai_tools import (
         router as ai_tools_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.asyncapi import (
+        router as asyncapi_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.auth_introspect import (
         router as auth_introspect_router,
@@ -119,38 +149,8 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.plugin_inventory import (
         routes_router as v11_routes_router,
     )
-    from src.backend.entrypoints.api.v1.endpoints.admin_plugins import (
-        router as admin_plugins_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.admin_actions import (
-        router as admin_actions_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.admin_certs import (
-        router as admin_certs_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.admin_feedback import (
-        router as admin_feedback_router,
-    )
     from src.backend.entrypoints.api.v1.endpoints.processors_catalog import (
         router as processors_catalog_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.asyncapi import (
-        router as asyncapi_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.admin_rag import (
-        router as admin_rag_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.admin_parallelism import (
-        router as admin_parallelism_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.admin_resilience_profile import (
-        router as admin_resilience_profile_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.admin_scheduler_dlq import (
-        router as admin_scheduler_dlq_router,
-    )
-    from src.backend.entrypoints.api.v1.endpoints.admin_model_registry import (
-        router as admin_model_registry_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.rag import router as rag_router
     from src.backend.entrypoints.api.v1.endpoints.rag_cache_admin import (

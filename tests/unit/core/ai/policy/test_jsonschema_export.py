@@ -15,8 +15,8 @@ MCP docs, IDE autocomplete, config validators):
 
 from __future__ import annotations
 
-import yaml
 import pytest
+import yaml
 from pydantic import ValidationError
 
 from src.backend.core.ai.policy.jsonschema_export import (

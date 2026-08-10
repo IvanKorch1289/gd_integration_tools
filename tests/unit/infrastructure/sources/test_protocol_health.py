@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import pytest
-from src.backend.core.interfaces.source import Source, SourceKind
+
 from src.backend.core.interfaces.sink import Sink, SinkKind
+from src.backend.core.interfaces.source import Source, SourceKind
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
 

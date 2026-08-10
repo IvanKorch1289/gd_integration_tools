@@ -16,7 +16,6 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
-
 __all__ = ("SearchCallable", "build_search_fallbacks", "build_search_primary")
 
 

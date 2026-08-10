@@ -36,10 +36,9 @@ _logger = get_logger("alembic.env")  # Cycle-19 (D-AUDIT-1906): explicit logger
 # ``models_module`` каждого плагина. Плагины без ORM-моделей
 # (skb/dadata schemas-only, example_plugin capability-only) пропускаются.
 try:
-    from src.backend.services.plugins.loader import (
-        load_plugin_manifests_for_migrations,
-    )
     from pathlib import Path
+
+    from src.backend.services.plugins.loader import load_plugin_manifests_for_migrations
 
     _EXTENSIONS_DIR = Path(__file__).resolve().parents[4] / "extensions"
     for _mwp in load_plugin_manifests_for_migrations(_EXTENSIONS_DIR):

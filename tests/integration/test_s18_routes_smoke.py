@@ -35,9 +35,7 @@ class TestS18ComponentsSmoke:
 
     def test_metrics_registry_has_tenant_id_label(self) -> None:
         """S17 W11 + S18 W8 verification: tenant_id в DEFAULT_LABELS."""
-        from src.backend.core.utils.metrics_registry import (
-            DEFAULT_LABELS,
-        )
+        from src.backend.core.utils.metrics_registry import DEFAULT_LABELS
 
         assert "tenant_id" in DEFAULT_LABELS
 

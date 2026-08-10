@@ -24,7 +24,6 @@ from typing import Final
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-
 __all__ = ("DegradationMiddleware",)
 
 

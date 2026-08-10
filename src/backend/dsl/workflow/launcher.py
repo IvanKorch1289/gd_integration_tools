@@ -21,7 +21,6 @@ from dataclasses import dataclass
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version
 
-
 __all__ = ("WorkflowLauncher", "WorkflowResolutionError")
 
 

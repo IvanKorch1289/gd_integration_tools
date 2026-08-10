@@ -12,9 +12,7 @@ import pytest
 
 from src.backend.core.ai.gateway_models import AIRequest
 from src.backend.core.ai.gateway_orchestrator_mixin import EnforcedInvokeMixin
-from src.backend.core.ai.policy.enforcer.tools_policy import (
-    ToolPolicyViolationError,
-)
+from src.backend.core.ai.policy.enforcer.tools_policy import ToolPolicyViolationError
 from src.backend.core.ai.policy.spec import ToolsSpec
 
 

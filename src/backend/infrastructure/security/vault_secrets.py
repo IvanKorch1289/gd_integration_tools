@@ -19,9 +19,10 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
-from cachetools import TTLCache
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
+
+from cachetools import TTLCache
 
 from src.backend.core.interfaces.secrets import SecretsBackend
 from src.backend.core.logging import get_logger

@@ -20,10 +20,7 @@ def _reset_ai_gateway_singleton() -> None:
     - ``get_ai_gateway_provider()`` override (``_overrides["ai_gateway"]``)
     - ``_build_ai_gateway_singleton`` ``@lru_cache(maxsize=1)``
     """
-    from src.backend.core.di.providers.ai import (
-        _build_ai_gateway_singleton,
-        _overrides,
-    )
+    from src.backend.core.di.providers.ai import _build_ai_gateway_singleton, _overrides
 
     _overrides.pop("ai_gateway", None)
     _build_ai_gateway_singleton.cache_clear()

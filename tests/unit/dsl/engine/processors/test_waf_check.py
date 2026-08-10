@@ -1,5 +1,6 @@
 """TDD: WafCheckProcessor — DSL обёртка над core/net/waf."""
 from __future__ import annotations
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -15,9 +16,7 @@ def _bypass_auth() -> None:
 
 class TestWafCheckProcessor:
     def test_instantiates(self) -> None:
-        from src.backend.dsl.engine.processors.waf_check import (
-            WafCheckProcessor,
-        )
+        from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
         p = WafCheckProcessor(
             source_property="body.request",
             action="block",
@@ -26,9 +25,7 @@ class TestWafCheckProcessor:
 
     @pytest.mark.asyncio
     async def test_blocks_malicious_request(self) -> None:
-        from src.backend.dsl.engine.processors.waf_check import (
-            WafCheckProcessor,
-        )
+        from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
         p = WafCheckProcessor(
             source_property="body",
             action="block",

@@ -3,6 +3,7 @@
 Thin wrapper для запуска sub-workflow из текущего workflow.
 """
 from __future__ import annotations
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -11,11 +12,11 @@ import pytest
 @pytest.fixture(autouse=True)
 def _bypass_auth() -> None:
     """WorkflowSubprocess/Convert требуют capability — bypass в unit-тестах."""
-    from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
-        WorkflowSubprocessProcessor,
-    )
     from src.backend.dsl.engine.processors.workflow.workflow_convert import (
         WorkflowConvertProcessor,
+    )
+    from src.backend.dsl.engine.processors.workflow.workflow_subprocess import (
+        WorkflowSubprocessProcessor,
     )
 
     WorkflowSubprocessProcessor.auth_check = AsyncMock(  # type: ignore[method-assign]

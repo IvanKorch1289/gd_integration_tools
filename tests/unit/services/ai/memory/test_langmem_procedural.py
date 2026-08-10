@@ -82,9 +82,7 @@ class TestProceduralMemoryInit:
 
     def test_init_stores_session_factory(self) -> None:
         """__init__ stores session_factory parameter."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         factory = MagicMock()
         mem = ProceduralMemory(session_factory=factory)
@@ -97,9 +95,7 @@ class TestProceduralMemoryAdd:
     @pytest.mark.asyncio
     async def test_add_returns_integer_id(self) -> None:
         """add() возвращает integer id из row.id."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
@@ -111,9 +107,7 @@ class TestProceduralMemoryAdd:
     @pytest.mark.asyncio
     async def test_add_sets_required_fields(self) -> None:
         """add() устанавливает name в LangMemProcedural."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
@@ -128,9 +122,7 @@ class TestProceduralMemoryAdd:
     @pytest.mark.asyncio
     async def test_add_with_description_steps_tenant(self) -> None:
         """add() сохраняет description, steps, tenant fields."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         steps = {"step1": "verify", "step2": "approve"}
         factory = _make_mock_session_factory([])
@@ -153,9 +145,7 @@ class TestProceduralMemoryAdd:
     @pytest.mark.asyncio
     async def test_add_with_optional_fields_none(self) -> None:
         """add() без optional fields — None values stored correctly."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
@@ -171,9 +161,7 @@ class TestProceduralMemoryAdd:
     @pytest.mark.asyncio
     async def test_add_increments_id_across_calls(self) -> None:
         """Multiple add() calls get incrementing ids."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
@@ -189,9 +177,7 @@ class TestProceduralMemoryAdd:
     @pytest.mark.asyncio
     async def test_add_commits_session(self) -> None:
         """add() вызывает session.commit() и session.refresh()."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
@@ -208,9 +194,7 @@ class TestProceduralMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_returns_empty_list_when_no_rows(self) -> None:
         """recall() с пустым store возвращает []."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         factory = _make_mock_session_factory([])
         mem = ProceduralMemory(session_factory=factory)
@@ -221,12 +205,8 @@ class TestProceduralMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_returns_dict_per_row(self) -> None:
         """recall() возвращает list of dicts с key fields."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemProcedural,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemProcedural
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         rows = [
             LangMemProcedural(
@@ -253,12 +233,8 @@ class TestProceduralMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_orders_by_updated_at_desc(self) -> None:
         """recall() упорядочивает записи newest first (updated_at desc)."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemProcedural,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemProcedural
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         rows = [
             LangMemProcedural(
@@ -282,12 +258,8 @@ class TestProceduralMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_respects_limit(self) -> None:
         """recall(limit=N) возвращает максимум N записей."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemProcedural,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemProcedural
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         rows = [
             LangMemProcedural(
@@ -307,12 +279,8 @@ class TestProceduralMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_default_limit_is_20(self) -> None:
         """recall() default limit = 20."""
-        from src.backend.services.ai.memory.langmem.procedural import (
-            ProceduralMemory,
-        )
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemProcedural,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemProcedural
+        from src.backend.services.ai.memory.langmem.procedural import ProceduralMemory
 
         rows = [
             LangMemProcedural(

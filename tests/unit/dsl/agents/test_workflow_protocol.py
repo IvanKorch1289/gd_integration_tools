@@ -99,9 +99,9 @@ class TestFastMcpServerLayerBoundary:
         """``workflow_registry`` импортируется внутри ``_register_prompts``."""
         pytest.importorskip("mcp")
 
-        import src.backend.dsl.agents.fastmcp_server as mod
-
         from unittest.mock import MagicMock, patch
+
+        import src.backend.dsl.agents.fastmcp_server as mod
 
         # Patch на infrastructure module (где настоящий workflow_registry живёт).
         with patch(

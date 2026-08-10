@@ -16,7 +16,6 @@ from pathlib import Path
 from types import ModuleType
 from unittest.mock import MagicMock
 
-
 # Mock streamlit (registry не использует, но требуется для page_registry imports)
 _streamlit_mock = ModuleType("streamlit")
 _streamlit_mock.set_page_config = MagicMock()

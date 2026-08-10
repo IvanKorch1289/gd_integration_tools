@@ -9,9 +9,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.backend.entrypoints.middlewares.data_masking import (
-    DataMaskingMiddleware,
-)
+from src.backend.entrypoints.middlewares.data_masking import DataMaskingMiddleware
 
 
 def _start_message(send: AsyncMock):

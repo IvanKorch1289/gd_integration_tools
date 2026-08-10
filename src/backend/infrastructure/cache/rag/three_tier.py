@@ -10,7 +10,6 @@ from src.backend.infrastructure.cache.rag.metrics import get_metrics_snapshot
 from src.backend.infrastructure.cache.rag.retrieval import L3RetrievalCache
 from src.backend.infrastructure.cache.rag.semantic import L2SemanticRagCache
 
-
 __all__ = ("ThreeTierRagCache",)
 
 

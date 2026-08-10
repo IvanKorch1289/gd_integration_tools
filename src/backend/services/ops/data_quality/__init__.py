@@ -30,16 +30,28 @@ if TYPE_CHECKING:
 # Module-alias imports — нужны для post-load injection (см. ниже).
 # Mixins грузятся ДО dataclasses; они используют class identity через
 # globals lookup в method bodies (lazy via ``from __future__ import annotations``).
-from src.backend.services.ops.data_quality import apply_mixin as _apply_mixin_module  # cycle-8/D-AUDIT-803
-from src.backend.services.ops.data_quality import check_mixin as _check_mixin_module  # cycle-8/D-AUDIT-803
-from src.backend.services.ops.data_quality import rule_mgmt_mixin as _rule_mgmt_mixin_module  # cycle-8/D-AUDIT-803
-from src.backend.services.ops.data_quality import schema_mixin as _schema_mixin_module  # cycle-8/D-AUDIT-803
+from src.backend.services.ops.data_quality import (
+    apply_mixin as _apply_mixin_module,  # cycle-8/D-AUDIT-803
+)
+from src.backend.services.ops.data_quality import (
+    check_mixin as _check_mixin_module,  # cycle-8/D-AUDIT-803
+)
+from src.backend.services.ops.data_quality import (
+    rule_mgmt_mixin as _rule_mgmt_mixin_module,  # cycle-8/D-AUDIT-803
+)
+from src.backend.services.ops.data_quality import (
+    schema_mixin as _schema_mixin_module,  # cycle-8/D-AUDIT-803
+)
 
 # Bare-class imports — для MRO в DataQualityMonitor ниже.
 from src.backend.services.ops.data_quality.apply_mixin import ApplyMixin  # S55 W4: MRO
 from src.backend.services.ops.data_quality.check_mixin import CheckMixin  # S55 W4: MRO
-from src.backend.services.ops.data_quality.rule_mgmt_mixin import RuleManagementMixin  # S55 W4: MRO
-from src.backend.services.ops.data_quality.schema_mixin import SchemaMixin  # S55 W4: MRO
+from src.backend.services.ops.data_quality.rule_mgmt_mixin import (
+    RuleManagementMixin,  # S55 W4: MRO
+)
+from src.backend.services.ops.data_quality.schema_mixin import (
+    SchemaMixin,  # S55 W4: MRO
+)
 
 __all__ = (
     "DataQualityMonitor",

@@ -13,7 +13,7 @@ ClickHouseAuditService эмитит:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -117,7 +117,9 @@ class TestClickHouseAuditSilentLossMetric:
     @pytest.mark.asyncio
     async def test_silent_loss_not_triggered_when_dlq_writer_set(self) -> None:
         """Если dlq_writer сконфигурирован → critical log НЕ эмитится, counter НЕ inc."""
-        from src.backend.infrastructure.messaging.dlq.memory_writer import InMemoryDLQWriter
+        from src.backend.infrastructure.messaging.dlq.memory_writer import (
+            InMemoryDLQWriter,
+        )
 
         writer = InMemoryDLQWriter()
         service = ClickHouseAuditService(

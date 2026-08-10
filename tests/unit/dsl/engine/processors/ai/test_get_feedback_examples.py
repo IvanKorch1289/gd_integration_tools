@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.backend.dsl.engine.processors.ai.getfeedbackexamples_processor import GetFeedbackExamplesProcessor
+import pytest
+
 from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors.ai.getfeedbackexamples_processor import (
+    GetFeedbackExamplesProcessor,
+)
 
 
 class TestGetFeedbackExamplesProcessor:

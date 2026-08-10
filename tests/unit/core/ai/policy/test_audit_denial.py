@@ -9,33 +9,24 @@ Pattern (D269, Ponytail): thin wrapper, audit event на DENY.
 from __future__ import annotations
 
 
-
 class TestToolPolicyAudit:
     def test_check_returns_status_allow(self) -> None:
         """Разрешенный tool → ALLOW."""
-        from src.backend.ai.policy.tool_policy import (
-            AgentToolPolicy,
-            ToolPermission,
-        )
+        from src.backend.ai.policy.tool_policy import AgentToolPolicy, ToolPermission
         policy = AgentToolPolicy(agent_id="test", allowed_tools=["test_tool"], audit_all=False)
         status = policy.check("test_tool")
         assert status == ToolPermission.ALLOW
 
     def test_check_returns_status_deny(self) -> None:
         """Неизвестный tool → DENY (default-deny)."""
-        from src.backend.ai.policy.tool_policy import (
-            AgentToolPolicy,
-            ToolPermission,
-        )
+        from src.backend.ai.policy.tool_policy import AgentToolPolicy, ToolPermission
         policy = AgentToolPolicy(agent_id="test", allowed_tools=["safe_tool"])
         status = policy.check("dangerous_tool")
         assert status == ToolPermission.DENY
 
     def test_audit_denial_logs_event(self) -> None:
         """При DENY создаётся audit event (D269)."""
-        from src.backend.ai.policy.tool_policy import (
-            AgentToolPolicy,
-        )
+        from src.backend.ai.policy.tool_policy import AgentToolPolicy
         policy = AgentToolPolicy(agent_id="test", allowed_tools=["safe"])
         # Mock logger
         # Просто check — должна быть audit log запись

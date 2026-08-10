@@ -53,9 +53,7 @@ class TestMakeKindHealth:
     """S203 W3: per-kind health helper для HealthAggregator."""
 
     async def test_skipped_when_no_sinks(self) -> None:
-        from src.backend.plugins.composition.setup_infra.health import (
-            _make_kind_health,
-        )
+        from src.backend.plugins.composition.setup_infra.health import _make_kind_health
 
         # Registry может быть пустой в test context.
         check = _make_kind_health("http", "sink")
@@ -64,9 +62,7 @@ class TestMakeKindHealth:
 
     async def test_normalizes_health_result(self) -> None:
         """HealthResult instance → dict."""
-        from src.backend.plugins.composition.setup_infra.health import (
-            _make_kind_health,
-        )
+        from src.backend.plugins.composition.setup_infra.health import _make_kind_health
 
         # Подменяем реестр через monkeypatch ниже — здесь проверяем форму.
         check = _make_kind_health("nonexistent_kind_xyz", "sink")

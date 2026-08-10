@@ -46,7 +46,6 @@ from __future__ import annotations
 import fnmatch
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from src.backend.core.ai.policy.spec import AIPolicySpec
 

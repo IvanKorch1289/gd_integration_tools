@@ -8,15 +8,15 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from src.backend.core.plugin_runtime.manifest_toml import (
+    PluginManifest,
+    PluginManifestError,
+    PluginProvides,
+    load_plugin_manifest,
+)
 from src.backend.core.security.capabilities import (
     CAPABILITY_NAME_PATTERN,
     CapabilityRef,
-)
-from src.backend.core.plugin_runtime.manifest_toml import (
-    PluginManifestError,
-    PluginManifest,
-    PluginProvides,
-    load_plugin_manifest,
 )
 
 VALID_TOML = """

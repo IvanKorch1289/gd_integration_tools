@@ -14,7 +14,6 @@ from __future__ import annotations
 import time
 from collections import OrderedDict
 
-
 # Mirror of production algorithm
 DEDUP_MAX = 10_000
 DEDUP_TTL_S = 600.0

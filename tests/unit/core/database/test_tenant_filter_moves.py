@@ -175,6 +175,7 @@ def test_shim_compat_reexports_json_b() -> None:
     Проверяем, что shim-модуль действительно удалён.
     """
     import importlib
+
     import pytest
 
     with pytest.raises(ModuleNotFoundError):
@@ -190,6 +191,7 @@ def test_shim_compat_reexports_uuid_t() -> None:
     Проверяем, что shim-модуль действительно удалён.
     """
     import importlib
+
     import pytest
 
     with pytest.raises(ModuleNotFoundError):

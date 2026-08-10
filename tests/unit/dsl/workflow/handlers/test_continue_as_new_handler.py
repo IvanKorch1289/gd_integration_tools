@@ -8,8 +8,8 @@ Pattern (Ponytail, D169): handler — тонкая обёртка, lazy temporal
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from unittest.mock import MagicMock
 
+from unittest.mock import MagicMock
 
 
 class TestContinueAsNewHandler:

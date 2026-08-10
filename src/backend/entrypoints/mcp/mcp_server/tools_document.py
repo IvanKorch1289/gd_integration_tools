@@ -17,8 +17,6 @@ from typing import Any
 
 from src.backend.core.serialization.msgspec_hotpath import encode_json
 
-
-
 # ── document tools (_register_document_tools) ──
 
 

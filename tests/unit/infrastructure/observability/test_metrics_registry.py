@@ -19,10 +19,7 @@ import pytest
 from prometheus_client import CollectorRegistry
 
 from src.backend.core.config.features import feature_flags
-from src.backend.core.utils.metrics_registry import (
-    DEFAULT_LABELS,
-    MetricsRegistry,
-)
+from src.backend.core.utils.metrics_registry import DEFAULT_LABELS, MetricsRegistry
 
 
 @pytest.fixture

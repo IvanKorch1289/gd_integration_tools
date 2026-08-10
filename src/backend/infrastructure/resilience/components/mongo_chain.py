@@ -19,7 +19,6 @@ from typing import Any
 
 import orjson
 
-
 __all__ = ("MongoFindCallable", "build_mongo_fallbacks", "build_mongo_primary")
 
 

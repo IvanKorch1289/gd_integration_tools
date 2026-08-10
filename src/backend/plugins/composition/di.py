@@ -28,6 +28,9 @@ if TYPE_CHECKING:
     from fastapi import FastAPI
 
     from src.backend.core.interfaces.watermark_store import WatermarkStore
+    from src.backend.core.security.authorization_gateway import (
+        AuthorizationGateway,  # Cycle-19 (D-AUDIT-1907): forward-ref для get_authorization_gateway
+    )
     from src.backend.dsl.engine.plugin_registry import ProcessorPluginRegistry
     from src.backend.dsl.engine.tracer import ExecutionTracer
     from src.backend.dsl.engine.versioning import PipelineVersionManager
@@ -41,7 +44,6 @@ if TYPE_CHECKING:
     )
     from src.backend.infrastructure.database.pool_monitor import PoolMonitor
     from src.backend.infrastructure.security.api_key_manager import APIKeyManager
-    from src.backend.core.security.authorization_gateway import AuthorizationGateway  # Cycle-19 (D-AUDIT-1907): forward-ref для get_authorization_gateway
 
 __all__ = (
     "register_app_state",

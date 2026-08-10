@@ -8,8 +8,6 @@ if TYPE_CHECKING:  # cycle-8/D-AUDIT-803: canonical DQ types live in __init__.py
 import statistics
 from collections import defaultdict
 
-
-
 """Data Quality Monitor — авто-детект схемы + аномалии.
 
 Проверки:

@@ -6,7 +6,6 @@ Pattern (D277): thin wrapper.
 # ruff: noqa: E501
 from __future__ import annotations
 
-
 __all__ = ("EncodingDetectProcessor",)
 
 

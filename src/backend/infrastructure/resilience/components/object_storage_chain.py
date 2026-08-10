@@ -17,7 +17,6 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 
-
 __all__ = (
     "StorageGetCallable",
     "build_object_storage_fallbacks",

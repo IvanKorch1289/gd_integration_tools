@@ -41,7 +41,6 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import route_registry
 from src.backend.entrypoints.sse.handler import _InvokeRequest, sse_invoke
 
-
 # Round 24 fix: 8 тестов — forward-looking TDD для Sprint 1.4 L5 Security
 # Chain: SSE /events/invoke endpoint должен пробрасывать principal/permissions
 # из request.state.auth в DslService.dispatch (parity с GraphQL/REST/SOAP).

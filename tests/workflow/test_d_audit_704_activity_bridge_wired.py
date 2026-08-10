@@ -188,8 +188,8 @@ class TestWrapperInStartingOperations:
     @pytest.mark.asyncio
     async def test_wrapper_calls_register_and_passes_activities(self) -> None:
         """Wrapper зовёт ``_build_temporal_activities`` → ``start_temporal_worker_runtime(activities=...)``."""
-        from src.backend.plugins.composition.setup_infra import lifecycle
         from src.backend.infrastructure.workflow import temporal_worker_runtime
+        from src.backend.plugins.composition.setup_infra import lifecycle
 
         fake_activities = [MagicMock(name="act1"), MagicMock(name="act2")]
         # Patch source module (wrapper делает local re-import — patch на

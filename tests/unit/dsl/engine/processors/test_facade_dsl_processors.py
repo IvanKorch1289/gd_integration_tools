@@ -41,9 +41,7 @@ class TestFacadeGetHealthProcessor:
 
     @pytest.mark.asyncio
     async def test_health_bridge_uses_canonical_aggregator(self) -> None:
-        from src.backend.core.di.providers.health_bridge import (
-            get_health_check_factory,
-        )
+        from src.backend.core.di.providers.health_bridge import get_health_check_factory
         from src.backend.infrastructure.application.health_aggregator import (
             get_health_aggregator,
         )

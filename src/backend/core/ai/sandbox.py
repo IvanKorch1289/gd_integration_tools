@@ -17,9 +17,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
 
-
-
-
 if TYPE_CHECKING:
     from src.backend.core.ai.workspace_manager import WorkspaceHandle
 

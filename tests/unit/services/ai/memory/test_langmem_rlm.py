@@ -76,9 +76,7 @@ class TestRLMFeedbackProcessorOnFeedback:
     @pytest.fixture
     def processor(self):
         """RLMFeedbackProcessor with reindex_threshold=10."""
-        from src.backend.services.ai.memory.langmem.rlm import (
-            RLMFeedbackProcessor,
-        )
+        from src.backend.services.ai.memory.langmem.rlm import RLMFeedbackProcessor
 
         return RLMFeedbackProcessor(reindex_threshold=10)
 
@@ -108,9 +106,7 @@ class TestRLMFeedbackProcessorOnFeedback:
     @pytest.mark.asyncio
     async def test_on_feedback_received_with_qdrant_good(self, processor) -> None:
         """feedback 'good' with qdrant → boost incremented in payload."""
-        from src.backend.services.ai.memory.langmem.rlm import (
-            RLMFeedbackProcessor,
-        )
+        from src.backend.services.ai.memory.langmem.rlm import RLMFeedbackProcessor
 
         # Mock langmem with qdrant client.
         mock_langmem = MagicMock()
@@ -136,9 +132,7 @@ class TestRLMFeedbackProcessorOnFeedback:
     @pytest.mark.asyncio
     async def test_on_feedback_received_with_qdrant_bad_threshold(self, processor) -> None:
         """feedback 'bad' triggers reindex_hinted when penalty ≥ threshold."""
-        from src.backend.services.ai.memory.langmem.rlm import (
-            RLMFeedbackProcessor,
-        )
+        from src.backend.services.ai.memory.langmem.rlm import RLMFeedbackProcessor
 
         mock_langmem = MagicMock()
         mock_langmem._client = MagicMock()
@@ -165,9 +159,7 @@ class TestRLMFeedbackProcessorAdjustScore:
 
     def test_adjust_score_with_rlm_disabled(self) -> None:
         """When langmem_settings.rlm_enabled=False → returns original score."""
-        from src.backend.services.ai.memory.langmem.rlm import (
-            RLMFeedbackProcessor,
-        )
+        from src.backend.services.ai.memory.langmem.rlm import RLMFeedbackProcessor
 
         # Mock langmem_settings with rlm_enabled=False.
         with patch(
@@ -184,9 +176,7 @@ class TestRLMFeedbackProcessorAdjustScore:
 
     def test_adjust_score_with_rlm_enabled(self) -> None:
         """When rlm_enabled=True → score * (1 + (boost - penalty) * factor)."""
-        from src.backend.services.ai.memory.langmem.rlm import (
-            RLMFeedbackProcessor,
-        )
+        from src.backend.services.ai.memory.langmem.rlm import RLMFeedbackProcessor
 
         with patch(
             "src.backend.core.config.ai_stack.langmem_settings"
@@ -221,9 +211,7 @@ class TestRLMConsolidator:
 
     def test_init_stores_qdrant_and_embedding(self) -> None:
         """__init__ stores qdrant and embedding_model attributes."""
-        from src.backend.services.ai.memory.langmem.rlm import (
-            RLMConsolidator,
-        )
+        from src.backend.services.ai.memory.langmem.rlm import RLMConsolidator
 
         qdrant = MagicMock()
         proc = RLMConsolidator(
@@ -237,9 +225,7 @@ class TestRLMConsolidator:
 
     def test_init_default_embedding_model(self) -> None:
         """__init__ default embedding_model is MiniLM-L6-v2."""
-        from src.backend.services.ai.memory.langmem.rlm import (
-            RLMConsolidator,
-        )
+        from src.backend.services.ai.memory.langmem.rlm import RLMConsolidator
 
         proc = RLMConsolidator(qdrant_client=MagicMock())
         assert "MiniLM" in proc.embedding_model or "all-" in proc.embedding_model

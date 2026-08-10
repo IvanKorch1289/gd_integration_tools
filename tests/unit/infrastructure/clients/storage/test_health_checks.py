@@ -3,8 +3,9 @@
 Sprint 170 M2 Phase 1: ensure all infra components have health probes.
 """
 from __future__ import annotations
-from unittest.mock import MagicMock
+
 import inspect
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -12,7 +13,9 @@ import pytest
 class TestClickHouseHealth:
     @pytest.mark.asyncio
     async def test_health_check_returns_dict(self) -> None:
-        from src.backend.infrastructure.clients.storage.clickhouse import ClickHouseClient
+        from src.backend.infrastructure.clients.storage.clickhouse import (
+            ClickHouseClient,
+        )
         c = ClickHouseClient()
         result = await c.health_check()
         assert isinstance(result, dict)
@@ -32,7 +35,9 @@ class TestMongoDBHealth:
 class TestRedisCoordinatorHealth:
     @pytest.mark.asyncio
     async def test_redis_hash_health(self) -> None:
-        from src.backend.infrastructure.clients.storage.redis_coordinator import RedisHash
+        from src.backend.infrastructure.clients.storage.redis_coordinator import (
+            RedisHash,
+        )
         c = RedisHash(key="test_key")
         result = await c.health_check()
         assert isinstance(result, dict)
@@ -40,7 +45,9 @@ class TestRedisCoordinatorHealth:
 
     @pytest.mark.asyncio
     async def test_redis_set_health(self) -> None:
-        from src.backend.infrastructure.clients.storage.redis_coordinator import RedisSet
+        from src.backend.infrastructure.clients.storage.redis_coordinator import (
+            RedisSet,
+        )
         c = RedisSet(key="test_key")
         result = await c.health_check()
         assert isinstance(result, dict)
@@ -48,7 +55,9 @@ class TestRedisCoordinatorHealth:
 
     @pytest.mark.asyncio
     async def test_redis_cursor_health(self) -> None:
-        from src.backend.infrastructure.clients.storage.redis_coordinator import RedisCursor
+        from src.backend.infrastructure.clients.storage.redis_coordinator import (
+            RedisCursor,
+        )
         c = RedisCursor(key="test_key")
         result = await c.health_check()
         assert isinstance(result, dict)
@@ -58,7 +67,9 @@ class TestRedisCoordinatorHealth:
 class TestVectorStoreHealth:
     @pytest.mark.asyncio
     async def test_qdrant_health(self) -> None:
-        from src.backend.infrastructure.clients.storage.vector_store import QdrantVectorStore
+        from src.backend.infrastructure.clients.storage.vector_store import (
+            QdrantVectorStore,
+        )
         # Skip constructor (requires real Qdrant) - verify method exists
         assert hasattr(QdrantVectorStore, "health_check")
         assert "mode" in inspect.signature(QdrantVectorStore.health_check).parameters
@@ -67,7 +78,9 @@ class TestVectorStoreHealth:
 class TestElasticsearchHealth:
     @pytest.mark.asyncio
     async def test_health_check_returns_dict(self) -> None:
-        from src.backend.infrastructure.clients.storage.elasticsearch import ElasticSearchClient
+        from src.backend.infrastructure.clients.storage.elasticsearch import (
+            ElasticSearchClient,
+        )
         c = ElasticSearchClient()
         result = await c.health_check()
         assert isinstance(result, dict)
@@ -116,7 +129,9 @@ class TestPollCDCBackendHealth:
 class TestListenNotifyCDCBackendHealth:
     @pytest.mark.asyncio
     async def test_listen_notify_cdc_health(self) -> None:
-        from src.backend.infrastructure.cdc.listen_notify_backend import ListenNotifyCDCBackend
+        from src.backend.infrastructure.cdc.listen_notify_backend import (
+            ListenNotifyCDCBackend,
+        )
         c = ListenNotifyCDCBackend(dsn="postgresql://test")
         result = await c.health_check()
         assert isinstance(result, dict)
@@ -126,7 +141,9 @@ class TestListenNotifyCDCBackendHealth:
 class TestDebeziumEventsCDCBackendHealth:
     @pytest.mark.asyncio
     async def test_debezium_events_cdc_health(self) -> None:
-        from src.backend.infrastructure.cdc.debezium_events_backend import DebeziumEventsCDCBackend
+        from src.backend.infrastructure.cdc.debezium_events_backend import (
+            DebeziumEventsCDCBackend,
+        )
         c = DebeziumEventsCDCBackend(bootstrap_servers="localhost:9092")
         result = await c.health_check()
         assert isinstance(result, dict)
@@ -150,7 +167,9 @@ class TestHealthCheckErrorPaths:
     @pytest.mark.asyncio
     async def test_health_check_returns_valid_dict_structure(self) -> None:
         """All health_check impls must return dict with at minimum 'status' key."""
-        from src.backend.infrastructure.clients.storage.clickhouse import ClickHouseClient
+        from src.backend.infrastructure.clients.storage.clickhouse import (
+            ClickHouseClient,
+        )
         c = ClickHouseClient()
         result = await c.health_check()
         assert isinstance(result, dict)

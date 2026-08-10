@@ -44,7 +44,6 @@ from src.backend.infrastructure.security.cert_store.models import (
 )
 
 
-
 @dataclass
 class MemoryCertBackend(CertBackend):
     """In-process бэкенд (тесты, dev-стенд без БД)."""

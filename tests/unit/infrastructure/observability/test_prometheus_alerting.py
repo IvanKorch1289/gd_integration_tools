@@ -7,7 +7,6 @@ Pattern (D285, Ponytail): thin wrapper над prometheus_client.
 from __future__ import annotations
 
 
-
 class TestPrometheusAlertManager:
     def test_instantiates(self) -> None:
         from src.backend.infrastructure.observability.prometheus_alerting import (

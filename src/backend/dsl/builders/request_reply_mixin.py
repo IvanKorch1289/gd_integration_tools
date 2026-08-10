@@ -18,7 +18,6 @@ import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any, Protocol, runtime_checkable
 
-
 __all__ = (
     "DEFAULT_TIMEOUT_S",
     "REPLY_CHANNEL_PREFIX",

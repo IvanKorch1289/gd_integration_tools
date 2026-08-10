@@ -9,17 +9,15 @@ Pattern (D252, D237 TDD): RED → GREEN → review.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from unittest.mock import patch
 
+from unittest.mock import patch
 
 
 class TestCertStoreFromSettingsFallback:
     def test_fallback_disabled_default(self) -> None:
         """По умолчанию fallback_enabled=False → plain backend."""
         from src.backend.core.config.cert_store import CertStoreSettings
-        from src.backend.infrastructure.security.cert_store.store import (
-            CertStore,
-        )
+        from src.backend.infrastructure.security.cert_store.store import CertStore
         settings = CertStoreSettings(fallback_enabled=False)
         with patch(
             "src.backend.infrastructure.security.cert_store.store.PostgresCertBackend"
@@ -30,9 +28,7 @@ class TestCertStoreFromSettingsFallback:
     def test_fallback_enabled_wraps_backend(self) -> None:
         """fallback_enabled=True → backend wrapped в FallbackCertBackend."""
         from src.backend.core.config.cert_store import CertStoreSettings
-        from src.backend.infrastructure.security.cert_store.store import (
-            CertStore,
-        )
+        from src.backend.infrastructure.security.cert_store.store import CertStore
         settings = CertStoreSettings(
             fallback_enabled=True,
             backend="postgres",

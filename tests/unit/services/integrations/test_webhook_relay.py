@@ -20,12 +20,11 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.backend.services.integrations.webhook_relay import (
+    _DLQ_MAX_LEN,
     DLQEntry,
     RelayRule,
     WebhookRelay,
-    _DLQ_MAX_LEN,
 )
-
 
 # ── Helpers ─────────────────────────────────────────────────────
 

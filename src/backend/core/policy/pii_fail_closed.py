@@ -63,9 +63,7 @@ def raise_pii_fail_closed(
         exc,
     )
     try:
-        from src.backend.core.observability.logging_helpers import (
-            log_audit_event_lite,
-        )
+        from src.backend.core.observability.logging_helpers import log_audit_event_lite
 
         log_audit_event_lite(
             _logger,

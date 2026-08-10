@@ -7,7 +7,7 @@ Pattern (D257, Ponytail): thin wrapper над redis.asyncio.
 from __future__ import annotations
 
 import json
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.logging import get_logger

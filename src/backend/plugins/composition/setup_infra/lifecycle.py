@@ -12,6 +12,9 @@ from inspect import isawaitable
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.workflow.temporal_worker_runtime import (
+    stop_temporal_worker_runtime,
+)
 from src.backend.plugins.composition.setup_infra.health import _register_health_checks
 from src.backend.plugins.composition.setup_infra.pools import (
     _clickhouse_enabled,
@@ -26,9 +29,6 @@ from src.backend.plugins.composition.setup_infra.scheduler_leader import (
 from src.backend.plugins.composition.setup_infra.workflow_audit import (
     _close_workflow_audit_sink,
     _init_workflow_audit_sink,
-)
-from src.backend.infrastructure.workflow.temporal_worker_runtime import (
-    stop_temporal_worker_runtime,
 )
 
 app_logger = get_logger("application")

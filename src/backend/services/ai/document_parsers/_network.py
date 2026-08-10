@@ -17,7 +17,6 @@ import contextlib
 import urllib.request
 from collections.abc import Iterator
 
-
 __all__ = ("markitdown_network_disabled",)
 
 

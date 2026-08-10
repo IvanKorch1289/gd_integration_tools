@@ -22,8 +22,8 @@ infrastructure/workflow/{runner,outbox,registry}/".
 from __future__ import annotations
 
 import asyncio
-from typing import Any
 from collections.abc import Awaitable, Callable
+from typing import Any
 
 import uvicorn
 from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, generate_latest

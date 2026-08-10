@@ -15,7 +15,6 @@ import importlib
 import os
 
 
-
 class TestAIGatewaySplit:
     """S175 #8: AIGateway moved from god-file to subpackage."""
 
@@ -59,9 +58,9 @@ class TestAIGatewaySplit:
 
     def test_aigateway_init_signature(self) -> None:
         """AIGateway.__init__ принимает стандартные параметры."""
-        from src.backend.core.ai.gateway import AIGateway
-
         import inspect
+
+        from src.backend.core.ai.gateway import AIGateway
 
         sig = inspect.signature(AIGateway.__init__)
         params = list(sig.parameters.keys())

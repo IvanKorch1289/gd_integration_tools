@@ -35,12 +35,12 @@ creation, см. ``infrastructure/database/session_manager.py``).
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any, ClassVar
 
 from sqlalchemy import inspect
 from sqlalchemy_continuum import version_class
 from sqlalchemy_continuum.exc import ClassNotVersioned
-from datetime import UTC
 
 __all__ = ("OP_DELETE", "OP_INSERT", "OP_UPDATE", "Versioning", "VersioningError")
 

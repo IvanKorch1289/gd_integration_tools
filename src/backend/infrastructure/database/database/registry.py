@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-
 from src.backend.core.config.database import DatabaseConnectionSettings
 from src.backend.core.config.external_databases import (
     ExternalDatabaseConnectionSettings,
 )
 from src.backend.core.errors import DatabaseError
+from src.backend.core.logging import get_logger
 from src.backend.infrastructure.database.database.bundle import DatabaseBundle
 from src.backend.infrastructure.database.database.initializer import DatabaseInitializer
-from src.backend.core.logging import get_logger
 
 db_logger = get_logger("database")
 

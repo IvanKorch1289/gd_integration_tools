@@ -17,30 +17,22 @@ from src.backend.services.ops.data_quality import (
     DQSeverity,
     DQViolation,
 )
-from src.backend.services.ops.data_quality.apply_mixin import (
-    DQCheckResult as ACR,
-    DQRule as AR,
-    DQSeverity as AS,
-    DQViolation as AV,
-)
-from src.backend.services.ops.data_quality.check_mixin import (
-    DQCheckResult as CCR,
-    DQRule as CR,
-    DQSeverity as CS,
-    DQViolation as CV,
-)
-from src.backend.services.ops.data_quality.rule_mgmt_mixin import (
-    DQCheckResult as RCR,
-    DQRule as RR,
-    DQSeverity as RS,
-    DQViolation as RV,
-)
-from src.backend.services.ops.data_quality.schema_mixin import (
-    DQCheckResult as SCR,
-    DQRule as SR,
-    DQSeverity as SS,
-    DQViolation as SV,
-)
+from src.backend.services.ops.data_quality.apply_mixin import DQCheckResult as ACR
+from src.backend.services.ops.data_quality.apply_mixin import DQRule as AR
+from src.backend.services.ops.data_quality.apply_mixin import DQSeverity as AS
+from src.backend.services.ops.data_quality.apply_mixin import DQViolation as AV
+from src.backend.services.ops.data_quality.check_mixin import DQCheckResult as CCR
+from src.backend.services.ops.data_quality.check_mixin import DQRule as CR
+from src.backend.services.ops.data_quality.check_mixin import DQSeverity as CS
+from src.backend.services.ops.data_quality.check_mixin import DQViolation as CV
+from src.backend.services.ops.data_quality.rule_mgmt_mixin import DQCheckResult as RCR
+from src.backend.services.ops.data_quality.rule_mgmt_mixin import DQRule as RR
+from src.backend.services.ops.data_quality.rule_mgmt_mixin import DQSeverity as RS
+from src.backend.services.ops.data_quality.rule_mgmt_mixin import DQViolation as RV
+from src.backend.services.ops.data_quality.schema_mixin import DQCheckResult as SCR
+from src.backend.services.ops.data_quality.schema_mixin import DQRule as SR
+from src.backend.services.ops.data_quality.schema_mixin import DQSeverity as SS
+from src.backend.services.ops.data_quality.schema_mixin import DQViolation as SV
 
 
 def test_dq_severity_identity_consistent() -> None:

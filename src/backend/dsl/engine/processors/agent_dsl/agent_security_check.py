@@ -49,7 +49,6 @@ _logger = get_logger("dsl.agent_security_check")
 
 from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 26)
 
-
 CheckType = Literal["prompt", "command", "sql", "file"]
 
 

@@ -13,7 +13,6 @@ False to True (line 117). Builder already had True (infra.py:141).
 from __future__ import annotations
 
 
-
 class TestProcessPoolDefault:
     """AgentGraphProcessor must default to isolated=True (ProcessPool)."""
 

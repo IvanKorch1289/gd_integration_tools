@@ -59,9 +59,7 @@ class ExecutionContext:
         Returns:
             ``ExecutionContext`` с заполненными ``principal`` и ``permissions``.
         """
-        from src.backend.core.auth.auth_context_helpers import (
-            extract_user_permissions,
-        )
+        from src.backend.core.auth.auth_context_helpers import extract_user_permissions
 
         principal: str = ""
         permissions: tuple[str, ...] = ()

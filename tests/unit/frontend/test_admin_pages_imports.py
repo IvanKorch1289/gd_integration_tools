@@ -9,11 +9,10 @@
 
 from __future__ import annotations
 
-import pytest
-
 import importlib.util
 from pathlib import Path
 
+import pytest
 
 
 def _page_path(filename: str) -> Path:

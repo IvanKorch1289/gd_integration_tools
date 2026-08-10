@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 import uuid
 from collections.abc import Iterator
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

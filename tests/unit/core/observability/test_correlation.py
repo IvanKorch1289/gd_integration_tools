@@ -14,9 +14,8 @@ correlation_id/request_id/tenant_id propagation через async-задачи.
 
 from __future__ import annotations
 
-import structlog
-
 import pytest
+import structlog
 
 from src.backend.core.observability.correlation import (
     correlation_id_var,

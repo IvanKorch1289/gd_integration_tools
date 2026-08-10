@@ -6,7 +6,6 @@ Pattern (D290, Ponytail): verify orjson is consistently used для hot paths.
 from __future__ import annotations
 
 
-
 class TestOrjsonAdoption:
     def test_orjson_importable(self) -> None:
         import orjson
@@ -28,6 +27,7 @@ class TestOrjsonAdoption:
     def test_orjson_dataclass_serializable(self) -> None:
         """orjson поддерживает dataclass через default (D290)."""
         from dataclasses import dataclass
+
         import orjson
 
         @dataclass

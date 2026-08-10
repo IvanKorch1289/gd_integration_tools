@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from src.backend.dsl.processors.idp_pipeline_processor.state import (
     IDPResult,

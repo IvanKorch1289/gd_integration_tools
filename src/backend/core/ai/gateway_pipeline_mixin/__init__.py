@@ -43,7 +43,6 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     pass
 

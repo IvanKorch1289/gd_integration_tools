@@ -19,6 +19,7 @@ Tests against running Streamlit app on http://127.0.0.1:8501.
 """
 import sys
 import time
+
 from playwright.sync_api import sync_playwright
 
 BASE = "http://127.0.0.1:8501"

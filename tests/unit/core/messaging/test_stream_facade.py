@@ -42,6 +42,8 @@ def test_stream_facade_resolves_event_bus_facade() -> None:
     from src.backend.core.messaging import stream_facade
     from src.backend.core.messaging.eventbus.facade import (
         EventBusFacade as CanonicalEBF,
+    )
+    from src.backend.core.messaging.eventbus.facade import (
         get_event_bus_facade as CanonicalGEBF,
     )
 

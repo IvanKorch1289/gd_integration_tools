@@ -1,5 +1,6 @@
 """Config completeness test (Sprint 170 M2 Phase 5)."""
 from __future__ import annotations
+
 from pathlib import Path
 
 

@@ -21,6 +21,7 @@ Usage::
 
 from src.backend.ai.policy.tool_policy import AgentToolPolicy, ToolPermission
 
+
 # Round 79: register default AgentToolPolicy в svcs_registry для
 # canonical `get_service(AgentToolPolicy)` (тест test_di_factory_returns_default_policy
 # требовал эту регистрацию — pre-existing test gap).

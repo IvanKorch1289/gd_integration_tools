@@ -7,6 +7,7 @@ Covers:
 - Key isolation (raises if MINIMAX_API_KEY unset)
 """
 from __future__ import annotations
+
 import os
 from unittest.mock import AsyncMock, patch
 

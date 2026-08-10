@@ -35,9 +35,7 @@ Hot-reload механизм:
 
 import hashlib
 from dataclasses import dataclass
-from datetime import datetime, UTC
-
-
+from datetime import UTC, datetime
 
 
 def _fingerprint(pem: str) -> str:

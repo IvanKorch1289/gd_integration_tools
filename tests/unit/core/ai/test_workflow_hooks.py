@@ -4,11 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-
-from src.backend.core.ai.security import (
-    AgentSecurityFramework,
-    ThreatLevel,
-)
+from src.backend.core.ai.security import AgentSecurityFramework, ThreatLevel
 from src.backend.core.ai.security.workflow_hooks import (
     banking_transaction_hook,
     code_generation_hook,

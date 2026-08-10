@@ -37,9 +37,7 @@ from src.backend.core.tenancy import current_tenant
 if TYPE_CHECKING:
     # cycle-5/D-AUDIT-501: структурный Protocol из core/ вместо прямого
     # импорта infrastructure.workflow.registry на module-level.
-    from src.backend.core.ai.workflow_protocol import (
-        WorkflowDescriptorProtocol,
-    )
+    from src.backend.core.ai.workflow_protocol import WorkflowDescriptorProtocol
 
 __all__ = ("FastMCPserver",)
 

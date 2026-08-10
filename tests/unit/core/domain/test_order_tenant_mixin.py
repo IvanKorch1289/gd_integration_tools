@@ -14,7 +14,9 @@ S168 W14: orders.py moved to extensions.core_entities.orders.domain.models
 
 from __future__ import annotations
 
-from src.backend.core.domain.models import Order  # S168 W14: was src.backend.core.domain.models.orders
+from src.backend.core.domain.models import (
+    Order,  # S168 W14: was src.backend.core.domain.models.orders
+)
 from src.backend.infrastructure.database.tenant_filter import (
     TenantMixin,
     _is_tenant_aware,

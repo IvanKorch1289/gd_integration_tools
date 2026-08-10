@@ -11,16 +11,13 @@ PASS даже при cost explosion (banking context).
 
 from __future__ import annotations
 
-
 import pytest
 
 from src.backend.dsl.workflow.compiler.step_compilers import (
     GuardrailValueTypeError,
     compile_guardrail_step,
 )
-from src.backend.dsl.workflow.spec.advanced_declarations import (
-    GuardrailDeclaration,
-)
+from src.backend.dsl.workflow.spec.advanced_declarations import GuardrailDeclaration
 
 
 def _make_decl(

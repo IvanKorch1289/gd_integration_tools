@@ -10,7 +10,6 @@ Pattern (Ponytail, D172): тонкая обёртка над temporalio SDK.
 from __future__ import annotations
 
 
-
 class TestWorkerVersioningHelper:
     def test_instantiates(self) -> None:
         from src.backend.infrastructure.workflow.versioning.worker_versioning import (

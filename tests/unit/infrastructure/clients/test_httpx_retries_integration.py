@@ -7,7 +7,6 @@ Replace custom retry logic в HTTP-клиентах.
 from __future__ import annotations
 
 
-
 class TestHttpxRetriesIntegration:
     def test_httpx_retries_importable(self) -> None:
         """httpx_retries (retry_on_exceptions) — должен быть доступен."""

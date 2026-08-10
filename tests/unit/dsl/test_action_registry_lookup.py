@@ -48,9 +48,7 @@ class TestActionHandlerRegistryLookup:
         self, registry
     ) -> None:
         """get_metadata returns None for unregistered action."""
-        from src.backend.core.interfaces.action_dispatcher import (
-            ActionMetadata,
-        )
+        from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 
         ActionMetadata(
             action="nonexistent",
@@ -64,12 +62,8 @@ class TestActionHandlerRegistryLookup:
         self, registry, sample_handler
     ) -> None:
         """register_with_metadata stores metadata, get_metadata retrieves it."""
-        from src.backend.core.interfaces.action_dispatcher import (
-            ActionMetadata,
-        )
-        from src.backend.dsl.commands.action_registry import (
-            ActionHandlerSpec,
-        )
+        from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+        from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 
         metadata = ActionMetadata(
             action="test.cycle61",
@@ -99,12 +93,8 @@ class TestActionHandlerRegistryLookup:
         self, registry, sample_handler
     ) -> None:
         """ValueError when metadata.action != action argument (cycle 133 invariant)."""
-        from src.backend.core.interfaces.action_dispatcher import (
-            ActionMetadata,
-        )
-        from src.backend.dsl.commands.action_registry import (
-            ActionHandlerSpec,
-        )
+        from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+        from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 
         metadata = ActionMetadata(
             action="different.name",
@@ -126,12 +116,8 @@ class TestActionHandlerRegistryLookup:
         self, registry, sample_handler
     ) -> None:
         """list_metadata returns sorted by action name."""
-        from src.backend.core.interfaces.action_dispatcher import (
-            ActionMetadata,
-        )
-        from src.backend.dsl.commands.action_registry import (
-            ActionHandlerSpec,
-        )
+        from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+        from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 
         for name in ("z.last", "a.first", "m.middle"):
             md = ActionMetadata(action=name, input_model=None, output_model=None)
@@ -155,12 +141,8 @@ class TestActionHandlerRegistryLookup:
         self, registry, sample_handler
     ) -> None:
         """list_metadata(transport=X) filters by transport membership."""
-        from src.backend.core.interfaces.action_dispatcher import (
-            ActionMetadata,
-        )
-        from src.backend.dsl.commands.action_registry import (
-            ActionHandlerSpec,
-        )
+        from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+        from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 
         # Register actions with different transports.
         for name, transports in [
@@ -198,9 +180,7 @@ class TestActionHandlerRegistryLookup:
         self, registry
     ) -> None:
         """register_middleware + list_middleware сохраняет порядок регистрации."""
-        from src.backend.core.interfaces.action_dispatcher import (
-            ActionMiddleware,
-        )
+        from src.backend.core.interfaces.action_dispatcher import ActionMiddleware
 
         class M1(ActionMiddleware):
             async def process(self, command, call_next):
@@ -251,12 +231,8 @@ class TestActionHandlerRegistryLookup:
         self, registry, sample_handler
     ) -> None:
         """clear() removes handlers, metadata, middleware."""
-        from src.backend.core.interfaces.action_dispatcher import (
-            ActionMetadata,
-        )
-        from src.backend.dsl.commands.action_registry import (
-            ActionHandlerSpec,
-        )
+        from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+        from src.backend.dsl.commands.action_registry import ActionHandlerSpec
 
         registry.register(
             action="test.a",
@@ -295,9 +271,7 @@ class TestActionHandlerRegistryLookup:
         Use case: action handler registered separately via :meth:`register`,
         but metadata registered earlier for documentation/discovery.
         """
-        from src.backend.core.interfaces.action_dispatcher import (
-            ActionMetadata,
-        )
+        from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 
         metadata = ActionMetadata(
             action="metadata_only",

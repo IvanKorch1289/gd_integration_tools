@@ -24,11 +24,11 @@ class TestCertBackendRegistry:
 
     def test_register_custom_backend(self) -> None:
         """register() добавляет backend по id."""
-        from src.backend.infrastructure.security.cert_store.backend_registry import (
-            CertBackendRegistry,
-        )
         from src.backend.infrastructure.security.cert_store.backend_base import (
             CertBackend,
+        )
+        from src.backend.infrastructure.security.cert_store.backend_registry import (
+            CertBackendRegistry,
         )
         reg = CertBackendRegistry()
 
@@ -53,11 +53,11 @@ class TestCertBackendRegistry:
 
     def test_get_returns_class(self) -> None:
         """get(id) возвращает CertBackend class."""
-        from src.backend.infrastructure.security.cert_store.backend_registry import (
-            CertBackendRegistry,
-        )
         from src.backend.infrastructure.security.cert_store.backend_base import (
             CertBackend,
+        )
+        from src.backend.infrastructure.security.cert_store.backend_registry import (
+            CertBackendRegistry,
         )
         reg = CertBackendRegistry()
 
@@ -92,11 +92,11 @@ class TestCertBackendRegistry:
 
     def test_list_ids(self) -> None:
         """list_ids() возвращает все зарегистрированные id."""
-        from src.backend.infrastructure.security.cert_store.backend_registry import (
-            CertBackendRegistry,
-        )
         from src.backend.infrastructure.security.cert_store.backend_base import (
             CertBackend,
+        )
+        from src.backend.infrastructure.security.cert_store.backend_registry import (
+            CertBackendRegistry,
         )
         reg = CertBackendRegistry()
 
@@ -124,11 +124,11 @@ class TestCertBackendRegistry:
 
     def test_unregister(self) -> None:
         """unregister(id) удаляет backend."""
-        from src.backend.infrastructure.security.cert_store.backend_registry import (
-            CertBackendRegistry,
-        )
         from src.backend.infrastructure.security.cert_store.backend_base import (
             CertBackend,
+        )
+        from src.backend.infrastructure.security.cert_store.backend_registry import (
+            CertBackendRegistry,
         )
         reg = CertBackendRegistry()
 

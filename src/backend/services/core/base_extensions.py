@@ -18,7 +18,6 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Any, TypeVar
 
-
 __all__ = (
     "SoftDeleteMixin",
     "bulk_upsert",

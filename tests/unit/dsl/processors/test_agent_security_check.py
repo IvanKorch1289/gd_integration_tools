@@ -6,10 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.backend.core.ai.security import (
-    SecurityDecision,
-    ThreatLevel,
-)
+from src.backend.core.ai.security import SecurityDecision, ThreatLevel
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.agent_dsl.agent_security_check import (
     AgentSecurityCheckProcessor,

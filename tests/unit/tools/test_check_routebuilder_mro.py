@@ -15,7 +15,6 @@ import sys
 from typing import Protocol
 
 
-
 class TestCheckMroDepth:
     """check_mro_depth function: budget enforcement."""
 

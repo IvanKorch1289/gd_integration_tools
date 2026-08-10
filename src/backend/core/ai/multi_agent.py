@@ -13,6 +13,4 @@ from src.backend.services.ai.multi_agent.supervisor import (  # noqa: F401
     MultiAgentSupervisorUnavailable,
 )
 
-
-
 __all__ = ("AgentSpec", "MultiAgentSupervisor", "MultiAgentSupervisorUnavailable")

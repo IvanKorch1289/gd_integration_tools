@@ -22,7 +22,6 @@ from typing import Any, Literal
 
 import httpx
 
-
 __all__ = (
     "TelegramBotClient",
     "TelegramBotConfig",

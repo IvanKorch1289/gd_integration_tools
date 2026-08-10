@@ -6,13 +6,12 @@ matches and sets the decision without crashing.
 """
 from __future__ import annotations
 
+from typing import Any  # Cycle-19 (D-AUDIT-1908): runtime Any для monkeypatch callbacks
 from unittest.mock import MagicMock
 
 import pytest
 
 from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
-
-from typing import Any  # Cycle-19 (D-AUDIT-1908): runtime Any для monkeypatch callbacks
 
 
 class TestWafExTextRegression:

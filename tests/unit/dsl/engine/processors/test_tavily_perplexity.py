@@ -9,6 +9,7 @@ Per Perplexity docs: model (sonar, sonar-pro), max_tokens, temperature.
 """
 # ruff: noqa: S101
 from __future__ import annotations
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

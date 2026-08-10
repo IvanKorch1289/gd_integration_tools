@@ -25,7 +25,6 @@ from src.backend.core.di import providers
 from src.backend.entrypoints.api.v1.endpoints import rag as rag_mod
 from src.backend.services.ai.rag_ingest_service import RagIngestService
 
-
 # Round 24 fix: forward-looking тесты RAG endpoint PII masking (Sprint 1.1 L5 Security).
 _XFAIL_RAG_PII = pytest.mark.xfail(
     reason=(

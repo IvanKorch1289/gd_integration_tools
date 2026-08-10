@@ -131,9 +131,7 @@ class AdminAuditMiddleware:
             if auth_ctx
             else []
         )
-        from src.backend.entrypoints.middlewares._body_hash import (
-            payload_hash as _ph,
-        )
+        from src.backend.entrypoints.middlewares._body_hash import payload_hash as _ph
 
         payload_hash = _ph(body_bytes)
         correlation_id = (

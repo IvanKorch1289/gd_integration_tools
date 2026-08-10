@@ -8,8 +8,8 @@ Pattern (D256, D237 TDD): RED → GREEN → review.
 """
 # ruff: noqa: S101
 from __future__ import annotations
-from datetime import datetime, UTC
 
+from datetime import UTC, datetime
 
 
 class TestAdminCertsExpiring:

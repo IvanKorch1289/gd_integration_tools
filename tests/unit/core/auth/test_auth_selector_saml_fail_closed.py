@@ -22,8 +22,8 @@ import logging
 
 import pytest
 
-from src.backend.core.auth.auth_selector import _verify_saml, verify_request
 from src.backend.core.auth import AuthMethod
+from src.backend.core.auth.auth_selector import _verify_saml, verify_request
 
 
 class _FakeCookies:

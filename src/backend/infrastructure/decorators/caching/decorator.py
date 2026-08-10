@@ -10,9 +10,10 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import RedisError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from src.backend.core.config.settings import settings
-from src.backend.core.utils.cache_keys import build_cache_key
 from src.backend.core.codec.json import json_dumps, json_loads
+from src.backend.core.config.settings import settings
+from src.backend.core.logging import get_logger
+from src.backend.core.utils.cache_keys import build_cache_key
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 from src.backend.infrastructure.clients.storage.redis import (
     get_redis_client as redis_client,
@@ -20,7 +21,6 @@ from src.backend.infrastructure.clients.storage.redis import (
 from src.backend.infrastructure.decorators.caching.envelope import CacheEnvelope
 from src.backend.infrastructure.decorators.caching.stampede import KeyLockManager
 from src.backend.infrastructure.decorators.caching.storage.disk import DiskTTLCache
-from src.backend.core.logging import get_logger
 
 redis_logger = get_logger("redis")
 

@@ -221,9 +221,7 @@ class _RAGFacade:
             PIIFailClosedError,
             raise_pii_fail_closed,
         )
-        from src.backend.services.ai.rag_ingest_service import (
-            _maybe_mask_pii,
-        )
+        from src.backend.services.ai.rag_ingest_service import _maybe_mask_pii
 
         _check_enabled()
 

@@ -33,7 +33,6 @@ from typing import Any
 import httpx
 import jwt
 
-
 __all__ = ("BotConfig", "BotxButton", "BotxMention", "BotxMessage", "ExpressBotClient")
 
 

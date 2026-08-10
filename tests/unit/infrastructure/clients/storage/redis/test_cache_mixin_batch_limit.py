@@ -19,9 +19,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.backend.infrastructure.clients.storage.redis import (
-    cache_mixin as cm_mod,
-)
+from src.backend.infrastructure.clients.storage.redis import cache_mixin as cm_mod
 
 
 class _StubCache(cm_mod.CacheMixin):

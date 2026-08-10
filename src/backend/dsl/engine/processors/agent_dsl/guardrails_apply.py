@@ -212,9 +212,7 @@ class GuardrailsApplyProcessor(BaseAIProcessor):
         чтобы dev_light/CI без llm-guard не падали — см. L105-109).
         """
         try:
-            from src.backend.core.di.providers.ai import (
-                get_llm_guard_runtime_provider,
-            )
+            from src.backend.core.di.providers.ai import get_llm_guard_runtime_provider
 
             return get_llm_guard_runtime_provider()
         except Exception as exc:

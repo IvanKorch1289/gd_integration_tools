@@ -137,6 +137,7 @@ class TestAgentGraphToolPolicyWireUp:
         Если нужен legacy fail-open — установить env AGENT_TOOL_POLICY_FAIL_OPEN=true.
         """
         import os
+
         from src.backend.core.svcs_registry import clear_registry
 
         old_value = os.environ.pop("AGENT_TOOL_POLICY_FAIL_OPEN", None)
@@ -163,6 +164,7 @@ class TestAgentGraphToolPolicyWireUp:
     ) -> None:
         """Opt-in fail-open через env AGENT_TOOL_POLICY_FAIL_OPEN=true."""
         import os
+
         from src.backend.core.svcs_registry import clear_registry
 
         old_value = os.environ.get("AGENT_TOOL_POLICY_FAIL_OPEN")

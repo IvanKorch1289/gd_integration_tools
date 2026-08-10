@@ -39,7 +39,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-
 __all__ = ("AgentSpec", "HandoffPolicy", "MemoryScope")
 
 

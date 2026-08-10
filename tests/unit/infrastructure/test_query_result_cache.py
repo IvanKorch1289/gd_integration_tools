@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 import pytest
 
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
@@ -12,7 +14,6 @@ from src.backend.infrastructure.database.query_result_cache import (
     QueryResultCache,
     get_default_serializer,
 )
-from datetime import UTC
 
 pytestmark = pytest.mark.unit
 

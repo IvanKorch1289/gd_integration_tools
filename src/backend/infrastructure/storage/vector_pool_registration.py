@@ -14,8 +14,8 @@ Qdrant/Chroma vector stores в :class:`UnifiedPoolManager`.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from collections.abc import Awaitable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.infrastructure.clients.unified_pool_manager import (

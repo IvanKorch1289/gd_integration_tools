@@ -95,9 +95,7 @@ class TestEpisodicMemoryInit:
 
     def test_init_stores_session_factory(self) -> None:
         """__init__ stores session_factory parameter."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         factory = MagicMock()
         mem = EpisodicMemory(session_factory=factory)
@@ -110,9 +108,7 @@ class TestEpisodicMemoryAdd:
     @pytest.mark.asyncio
     async def test_add_returns_integer_id(self) -> None:
         """add() возвращает integer id из row.id (mock auto-increments)."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         factory = _make_mock_session_factory([])
         mem = EpisodicMemory(session_factory=factory)
@@ -126,9 +122,7 @@ class TestEpisodicMemoryAdd:
     @pytest.mark.asyncio
     async def test_add_sets_required_fields(self) -> None:
         """add() устанавливает session_id, role, content, occurred_at."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         factory = _make_mock_session_factory([])
         mem = EpisodicMemory(session_factory=factory)
@@ -152,9 +146,7 @@ class TestEpisodicMemoryAdd:
     @pytest.mark.asyncio
     async def test_add_with_tenant_and_meta(self) -> None:
         """add() сохраняет tenant и meta fields."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         meta_dict = {"source": "test", "tags": ["urgent"]}
         factory = _make_mock_session_factory([])
@@ -176,9 +168,7 @@ class TestEpisodicMemoryAdd:
     @pytest.mark.asyncio
     async def test_add_increments_id_across_calls(self) -> None:
         """Multiple add() calls get incrementing ids (auto-increment)."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         factory = _make_mock_session_factory([])
         mem = EpisodicMemory(session_factory=factory)
@@ -198,9 +188,7 @@ class TestEpisodicMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_returns_empty_list_when_no_rows(self) -> None:
         """recall() с пустым store возвращает []."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         factory = _make_mock_session_factory([])
         mem = EpisodicMemory(session_factory=factory)
@@ -211,12 +199,8 @@ class TestEpisodicMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_returns_dict_per_row(self) -> None:
         """recall() возвращает list of dicts с key fields."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemEpisodic,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemEpisodic
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         ts1 = datetime(2024, 1, 1, 10, 0, 0)
         ts2 = datetime(2024, 1, 1, 11, 0, 0)
@@ -248,12 +232,8 @@ class TestEpisodicMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_orders_by_occurred_at_desc(self) -> None:
         """recall() упорядочивает эпизоды newest first."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemEpisodic,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemEpisodic
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         ts1 = datetime(2024, 1, 1, 10, 0, 0)
         ts2 = datetime(2024, 1, 1, 11, 0, 0)
@@ -274,12 +254,8 @@ class TestEpisodicMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_respects_limit(self) -> None:
         """recall(limit=N) возвращает максимум N эпизодов."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemEpisodic,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemEpisodic
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         # Create 5 episodes.
         rows = [
@@ -302,12 +278,8 @@ class TestEpisodicMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_default_limit_is_20(self) -> None:
         """recall() default limit = 20."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemEpisodic,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemEpisodic
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         # Create 25 episodes.
         rows = [
@@ -327,12 +299,8 @@ class TestEpisodicMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_includes_iso_timestamp(self) -> None:
         """recall() result содержит ISO 8601 timestamp в occurred_at."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemEpisodic,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemEpisodic
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         ts = datetime(2024, 6, 15, 14, 30, 0)
         row = LangMemEpisodic(
@@ -351,12 +319,8 @@ class TestEpisodicMemoryRecall:
     @pytest.mark.asyncio
     async def test_recall_handles_null_occurred_at(self) -> None:
         """recall() с row.occurred_at=None → None в result (defensive)."""
-        from src.backend.services.ai.memory.langmem.episodic import (
-            EpisodicMemory,
-        )
-        from src.backend.core.domain.models.langmem_models import (
-            LangMemEpisodic,
-        )
+        from src.backend.core.domain.models.langmem_models import LangMemEpisodic
+        from src.backend.services.ai.memory.langmem.episodic import EpisodicMemory
 
         # Row with None occurred_at.
         row = LangMemEpisodic(
