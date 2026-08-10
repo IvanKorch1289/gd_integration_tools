@@ -198,7 +198,11 @@ class OtelMiddleware:
                 for h in scope.get("headers", [])
             }
             return self._propagator.extract(carrier=carrier)
-        except Exception:  # pragma: no cover
+        except (AttributeError, KeyError, UnicodeDecodeError, RuntimeError, TypeError):  # pragma: no cover
+            # cycle-9/D-AUDIT-1021: narrow exceptions + observability.
+            # AttributeError — scope.get API change, KeyError — missing
+            # header, UnicodeDecodeError — bad header encoding,
+            # RuntimeError — propagator unavailable, TypeError — wrong arg.
             return None
 
     def _inject_traceparent_to_headers(
@@ -210,7 +214,8 @@ class OtelMiddleware:
         carrier: dict[str, str] = {}
         try:
             self._propagator.inject(carrier)
-        except Exception:  # pragma: no cover
+        except (AttributeError, RuntimeError, TypeError, ValueError):  # pragma: no cover
+            # cycle-9/D-AUDIT-1021: см. выше — narrow для inject path.
             return
         for key, value in carrier.items():
             headers.append((key.encode("latin-1"), value.encode("latin-1")))
