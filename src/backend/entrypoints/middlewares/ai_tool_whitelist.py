@@ -137,8 +137,17 @@ class AIToolWhitelistMiddleware:
                     detail="tenant_id required via auth context or X-Tenant-ID header",
                 )
                 return
-        except Exception:
+        except (ValueError, TypeError, json.JSONDecodeError, KeyError, AttributeError) as parse_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1006: narrow exceptions + observability.
+            # ValueError/JSONDecodeError — malformed JSON, TypeError —
+            # wrong body type, KeyError — missing required key, AttributeError
+            # — body API change.
             # Malformed body — пропускаем (другие middleware обработают).
+            import logging
+            logging.getLogger(__name__).debug(
+                "ai_tool_whitelist.body_parse_failed",
+                extra={"error": str(parse_exc)},
+            )
             await self.app(scope, replay_receive, send)
             return
 
