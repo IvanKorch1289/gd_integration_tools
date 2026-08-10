@@ -47,7 +47,16 @@ class CapabilityClient(BaseAPIClient):
             if isinstance(response, list):
                 return response
             return response.get("events", []) if isinstance(response, dict) else []
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as cap_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1072: narrow exceptions + observability.
+            # ConnectionError/TimeoutError — server unreachable, RuntimeError
+            # — API failure, ValueError — invalid response, TypeError —
+            # wrong type.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_capability_client.audit_failed",
+                extra={"error": str(cap_exc)},
+            )
             return []
 
     def get_dependency_graph(self) -> dict[str, Any]:
