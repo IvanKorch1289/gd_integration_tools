@@ -21,14 +21,29 @@ class DSLRoutesClient(BaseAPIClient):
         try:
             result = self._request("GET", "/api/v1/admin/dsl-routes")
             return result if isinstance(result, list) else []
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as list_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1066: narrow exceptions + observability.
+            # ConnectionError/TimeoutError — server unreachable, RuntimeError
+            # — API failure, ValueError — invalid response, TypeError —
+            # wrong type.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_dsl_routes.list_failed",
+                extra={"error": str(list_exc)},
+            )
             return []
 
     def get_dsl_route(self, route_id: str) -> dict[str, Any] | None:
         """GET /api/v1/admin/dsl-routes/{id} — yaml + spec + python."""
         try:
             return self._request("GET", f"/api/v1/admin/dsl-routes/{route_id}")
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as get_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1066: см. выше — mirror для get.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_dsl_routes.get_failed",
+                extra={"route_id": route_id, "error": str(get_exc)},
+            )
             return None
 
     def create_dsl_route(self, yaml_str: str) -> dict[str, Any]:
