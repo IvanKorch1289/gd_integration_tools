@@ -276,8 +276,16 @@ class TokenBudget:
 
             if getattr(feature_flags, "token_budget_fail_closed", False):
                 return "closed"
-        except Exception:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-979: narrow exceptions + observability.
+            # ImportError — features module missing, AttributeError —
+            # config not initialized, RuntimeError — feature_flags
+            # unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "token_budget.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
         return config.fail_mode
 
     def _config_for(self, tenant_id: str) -> TokenBudgetConfig:
