@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
@@ -320,10 +321,10 @@ class RedisHitlSignalStore:
         pubsub = client.pubsub()
         await pubsub.psubscribe("hitl:resolved:*")
         try:
-            deadline = asyncio.get_event_loop().time() + timeout if timeout else None
+            deadline = time.monotonic() + timeout if timeout else None
             while True:
                 remaining = (
-                    deadline - asyncio.get_event_loop().time()
+                    deadline - time.monotonic()
                     if deadline is not None
                     else None
                 )
