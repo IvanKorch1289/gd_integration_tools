@@ -113,8 +113,15 @@ class DLQCleanupJob:
                         _CLEANUP_COUNTER.labels(dlq_class=policy.class_name).inc(
                             deleted
                         )
-                    except Exception:
-                        pass
+                    except (AttributeError, TypeError, ValueError) as counter_exc:  # noqa: BLE001
+                        # cycle-9/D-AUDIT-931: narrow exceptions + observability.
+                        # AttributeError — counter API change, TypeError —
+                        # invalid arg, ValueError — invalid label value.
+                        import logging
+                        logging.getLogger(__name__).debug(
+                            "dlq_cleanup.counter_inc_failed",
+                            extra={"dlq_class": policy.class_name, "error": str(counter_exc)},
+                        )
             except Exception as exc:
                 msg = f"cleanup_failed class={policy.class_name}: {exc!r}"
                 stats.errors.append(msg)
@@ -137,6 +144,15 @@ class DLQCleanupJob:
                 return int(rows[0].get("count()", 0))
             if rows and isinstance(rows[0], (list, tuple)):
                 return int(rows[0][0])
-        except Exception:
-            pass
+        except (RuntimeError, ConnectionError, OSError, AttributeError) as count_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-932: narrow exceptions + observability.
+            # RuntimeError — ClickHouse unavailable, ConnectionError —
+            # network, OSError — protocol, AttributeError — client API
+            # change. Bare `except Exception` маскировал unrelated runtime
+            # errors (KeyError, TypeError).
+            import logging
+            logging.getLogger(__name__).debug(
+                "dlq_cleanup.count_deleted_failed",
+                extra={"class_name": class_name, "error": str(count_exc)},
+            )
         return 0

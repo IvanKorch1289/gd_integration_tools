@@ -112,12 +112,34 @@ class SecureSettings(BaseSettingsWithLoader):
     @field_validator("cors_origins")
     @classmethod
     def _forbid_wildcard_in_prod(cls, value: list[str]) -> list[str]:
-        """В prod-окружении запрещён '*' — требуется явный whitelist."""
-        env = os.getenv("APP_ENV") or os.getenv("ENVIRONMENT") or "dev"
+        """В prod-окружении запрещён '*' — требуется явный whitelist.
+
+        cycle-9/D-AUDIT-902 fix: canonical env var — APP_ENVIRONMENT.
+        Старые APP_ENV / ENVIRONMENT оставлены для backward-compat;
+        при их использовании эмитится DeprecationWarning (cycle-10
+        планирует их полное удаление).
+        """
+        import warnings as _warnings
+
+        legacy_app_env = os.getenv("APP_ENV")
+        legacy_environment = os.getenv("ENVIRONMENT")
+        env = os.getenv("APP_ENVIRONMENT")
+        if env is None:
+            if legacy_app_env is not None or legacy_environment is not None:
+                _warnings.warn(
+                    "APP_ENV/ENVIRONMENT deprecated; use APP_ENVIRONMENT "
+                    "instead. Удаление в cycle-10.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                env = legacy_app_env or legacy_environment or "dev"
+            else:
+                env = "dev"
         if env.lower() in {"prod", "production"} and "*" in value:
             raise ValueError(
                 "CORS wildcard '*' запрещён в prod. Укажите явный список origin."
             )
+        return value
         return value
 
     @model_validator(mode="after")
