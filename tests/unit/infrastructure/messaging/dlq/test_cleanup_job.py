@@ -87,7 +87,7 @@ async def test_count_deleted_approx_list_row(fake_client: MagicMock) -> None:
 async def test_count_deleted_approx_returns_zero_on_error(
     fake_client: MagicMock,
 ) -> None:
-    fake_client.execute = AsyncMock(side_effect=Exception("fail"))
+    fake_client.execute = AsyncMock(side_effect=RuntimeError("fail"))
     job = DLQCleanupJob(ch_client=fake_client, registry=_FakeRegistry())
     result = await job._count_deleted_approx("cls", datetime.now(UTC))
     assert result == 0
