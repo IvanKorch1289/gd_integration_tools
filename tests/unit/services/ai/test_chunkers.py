@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты RAG-chunkers (token + recursive)."""
 
 from __future__ import annotations

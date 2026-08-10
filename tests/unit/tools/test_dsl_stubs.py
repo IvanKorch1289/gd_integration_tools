@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 K3 W2 — unit-тесты ``tools.gen_dsl_stubs``."""
 
 from __future__ import annotations
@@ -10,7 +9,7 @@ _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
-import gen_dsl_stubs as gds  # noqa: E402
+import gen_dsl_stubs as gds
 
 
 class _Demo:

@@ -10,7 +10,6 @@ P0 security fix (cycle 33): раньше ``WebhookSignatureMiddleware`` skip-ver
 ``WEBHOOK_ALLOW_MISSING_SECRET=true`` (явный opt-in).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

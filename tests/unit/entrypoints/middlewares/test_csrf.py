@@ -1,6 +1,5 @@
 """Unit tests for CSRFMiddleware (cycle 57 pure ASGI)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

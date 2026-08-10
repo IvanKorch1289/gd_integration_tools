@@ -281,7 +281,7 @@ class SagaLRAProcessor(BaseProcessor):
             from src.backend.infrastructure.workflow.saga_state import (
                 WorkflowStateRepository,
             )
-        except (ImportError, AttributeError, RuntimeError) as dep_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as dep_exc:
             # cycle-9/D-AUDIT-977: narrow exceptions + observability.
             # ImportError — deps missing, AttributeError — API change,
             # RuntimeError — manager unavailable.

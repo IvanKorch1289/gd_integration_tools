@@ -43,7 +43,7 @@ from src.backend.core.logging import get_logger
 
 _logger = get_logger("services.jupyter.kernelspec")
 
-__all__ = ("KernelSpecDiscovery", "DEFAULT_FALLBACK_SPECS")
+__all__ = ("DEFAULT_FALLBACK_SPECS", "KernelSpecDiscovery")
 
 
 # Default fallback если jupyter_client не установлен — single python3
@@ -101,7 +101,7 @@ class KernelSpecDiscovery:
         try:
             ksm = KernelSpecManager()
             raw_specs = ksm.get_all_specs()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "KernelSpecManager.get_all_specs() failed: %s — fallback to defaults",
                 exc,

@@ -125,7 +125,7 @@ class AIRLMProcessor(BaseProcessor):
             from src.backend.services.ai.gateway.client import get_litellm_gateway
 
             return get_litellm_gateway()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("ai_rlm: LiteLLMGateway unavailable: %s", exc)
             return None
 
@@ -160,7 +160,7 @@ class AIRLMProcessor(BaseProcessor):
                 result = await self._execute_rlm(ctx, query)
             else:
                 result = await self._execute_direct(ctx, query)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # Round 14 fix: include ``exc`` в log message (stdlib idiom:
             # format-args style; traceback добавлен автоматически через
             # ``logger.exception`` + ``exc_info=True``).
@@ -216,7 +216,7 @@ class AIRLMProcessor(BaseProcessor):
                     prompt
                 ) + self._estimate_tokens(content)
                 result.iterations += 1
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("ai_rlm chunk evaluation failed: %s", exc)
 
         if not relevant_chunks:
@@ -239,7 +239,7 @@ class AIRLMProcessor(BaseProcessor):
             result.tokens_used += self._estimate_tokens(
                 final_prompt
             ) + self._estimate_tokens(result.answer)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("ai_rlm final aggregation failed: %s", exc)
             result.answer = f"[RLM] Failed to aggregate answer: {exc}"
 
@@ -270,7 +270,7 @@ class AIRLMProcessor(BaseProcessor):
             result.tokens_used = self._estimate_tokens(prompt) + self._estimate_tokens(
                 result.answer
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("ai_rlm direct call failed: %s", exc)
             result.answer = f"[Direct] Failed to get answer: {exc}"
 

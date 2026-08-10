@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke tests for cert_store (infrastructure/security/cert_store.py)."""
 
 from __future__ import annotations

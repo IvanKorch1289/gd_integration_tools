@@ -9,7 +9,6 @@
 - игнорирование неизвестных полей (``ConfigDict(extra="ignore")``).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

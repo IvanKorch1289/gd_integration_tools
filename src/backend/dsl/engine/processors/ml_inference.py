@@ -361,7 +361,7 @@ class OutboxTransactionProcessor(BaseProcessor):
                     text(f"""
                         INSERT INTO {self._table} (id, topic, payload)
                         VALUES (:id, :topic, CAST(:payload AS JSONB))
-                    """),  # self._table провалидирован через .isalnum() в __init__  # noqa: S608  # internal query with controlled parameters
+                    """),  # self._table провалидирован через .isalnum() в __init__  # internal query with controlled parameters
                     {"id": msg_id, "topic": self._topic, "payload": payload_json},
                 )
                 await conn.commit()

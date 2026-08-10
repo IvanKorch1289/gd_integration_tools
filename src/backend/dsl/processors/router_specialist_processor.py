@@ -199,7 +199,7 @@ class RouterSpecialistProcessor(BaseProcessor):
         raw_input = self._extract_input(exchange)
         try:
             decision = await self._llm_router(raw_input, self._specialists)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _log.error("LLM router failed: %s", exc)
             exchange.fail(f"router_specialist: LLM router failed: {exc}")
             return
@@ -264,7 +264,7 @@ class RouterSpecialistProcessor(BaseProcessor):
         # 5. Delegate to specialist
         try:
             output = await specialist.handler(raw_input)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _log.error("Specialist %r failed: %s", specialist.name, exc)
             exchange.fail(
                 f"router_specialist: specialist {specialist.name!r} failed: {exc}"

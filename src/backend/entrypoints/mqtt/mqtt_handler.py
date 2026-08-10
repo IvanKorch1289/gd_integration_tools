@@ -25,7 +25,7 @@ logger = get_logger("mqtt")
 
 
 # Re-export from core/config for backward compatibility
-from src.backend.core.config.services.mqtt import MqttSettings  # noqa: E402
+from src.backend.core.config.services.mqtt import MqttSettings
 
 
 class MqttHandler:

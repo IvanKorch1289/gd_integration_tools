@@ -106,7 +106,7 @@ class S3Sink(Sink):
         """
         try:
             from src.backend.infrastructure.clients.storage.s3_pool import (
-                storage_client,  # noqa: F401
+                storage_client,
             )
         except ImportError:
             return HealthResult.failed(error="storage_client not available", mode=mode)

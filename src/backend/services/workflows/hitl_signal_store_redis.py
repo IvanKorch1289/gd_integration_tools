@@ -350,7 +350,7 @@ class RedisHitlSignalStore:
             try:
                 await pubsub.punsubscribe("hitl:resolved:*")
                 await pubsub.aclose()
-            except (OSError, ConnectionError, RuntimeError, AttributeError) as pubsub_exc:  # noqa: BLE001
+            except (OSError, ConnectionError, RuntimeError, AttributeError) as pubsub_exc:
                 # cycle-9/D-AUDIT-911: narrow exceptions + observability.
                 # OSError/ConnectionError — network при punsubscribe/aclose,
                 # RuntimeError — pubsub не subscribed, AttributeError —

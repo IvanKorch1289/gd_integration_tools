@@ -1,6 +1,5 @@
 """Unit tests for DQCheckProcessor."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

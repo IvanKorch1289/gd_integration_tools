@@ -8,7 +8,6 @@
   уходит в vector store (с metadata flag ``pii_mask_skipped=True``).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

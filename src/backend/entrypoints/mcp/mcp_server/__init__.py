@@ -38,17 +38,17 @@ from src.backend.entrypoints.mcp.mcp_server.tools_yaml import _register_yaml_too
 logger = get_logger(__name__)
 
 __all__ = (
-    "create_mcp_server",
-    "register_mcp_tools",
     "_action_input_schema_json",
     "_check_mcp_tool_authz",
-    "_register_single_tool",
-    "_register_route_tools",
-    "_register_template_tools",
     "_register_convert_tools",
-    "_register_system_tools",
-    "_register_yaml_tools",
     "_register_document_tools",
+    "_register_route_tools",
+    "_register_single_tool",
+    "_register_system_tools",
+    "_register_template_tools",
+    "_register_yaml_tools",
+    "create_mcp_server",
+    "register_mcp_tools",
 )
 
 

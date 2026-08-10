@@ -1,6 +1,5 @@
 """W23 — операции SourceRegistry / SinkRegistry."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -16,7 +15,7 @@ class _Src:
         self.source_id = sid
         self.kind = kind
 
-    async def start(self, on_event: EventCallback) -> None:  # noqa: D401
+    async def start(self, on_event: EventCallback) -> None:
         return None
 
     async def stop(self) -> None:

@@ -7,7 +7,6 @@
 4. UDP server принимает пакет → парсим GELF → проверяем поля
 """
 
-# ruff: noqa: S101, D103, ANN001, ANN201
 
 from __future__ import annotations
 

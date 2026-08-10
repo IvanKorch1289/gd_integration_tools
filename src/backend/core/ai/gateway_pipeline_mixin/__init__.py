@@ -75,11 +75,11 @@ class PipelineStepsMixin(
     # directly and set facade-provided attrs (mixin files use
     # __slots__ = () which forbids instance attrs by default).
     __slots__ = (
-        "_policy_resolver",
-        "_capability_gate",
         "_audit_service",
+        "_capability_gate",
         "_cost_tracker",
-        "_sanitizer",
         "_llm_gateway",
         "_policy_enforcer",
+        "_policy_resolver",
+        "_sanitizer",
     )

@@ -31,28 +31,28 @@ from src.backend.services.ai.rag.strategy_selector import (
 )
 
 __all__ = (
+    "STRATEGIES",
+    "AccuracyBenchmarkResult",
     # Strategy selector.
     "AdaptiveStrategySelector",
-    "StrategyDecision",
-    "STRATEGIES",
-    # Classifier.
-    "QueryClassifier",
     "ClassifierResult",
-    "AccuracyBenchmarkResult",
-    "benchmark_accuracy",
+    "DenseResult",
     # Dense.
     "DenseRetriever",
-    "DenseResult",
-    # Hybrid.
-    "HybridRetriever",
-    "HybridResult",
-    "rrf_merge",
+    "HyDEConfig",
+    "HyDEResult",
     # HyDE.
     "HyDERetriever",
-    "HyDEResult",
-    "HyDEConfig",
+    "HybridResult",
+    # Hybrid.
+    "HybridRetriever",
+    "MultiQueryConfig",
+    "MultiQueryResult",
     # Multi-query.
     "MultiQueryRetriever",
-    "MultiQueryResult",
-    "MultiQueryConfig",
+    # Classifier.
+    "QueryClassifier",
+    "StrategyDecision",
+    "benchmark_accuracy",
+    "rrf_merge",
 )

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты PluginManifest + CapabilityRef (ADR-042 / ADR-044)."""
 
 from __future__ import annotations

@@ -21,6 +21,6 @@ SMS_SINK_TIMEOUT_S: float = 10.0
 
 __all__ = (
     "DEFAULT_SINK_TIMEOUT_S",
-    "SOAP_SINK_TIMEOUT_S",
     "SMS_SINK_TIMEOUT_S",
+    "SOAP_SINK_TIMEOUT_S",
 )

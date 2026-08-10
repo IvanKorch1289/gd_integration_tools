@@ -23,7 +23,7 @@ from typing import Any
 import strawberry
 from strawberry.scalars import JSON
 
-__all__ = ("DslResult", "ActionResult", "dispatch_action")
+__all__ = ("ActionResult", "DslResult", "dispatch_action")
 
 
 @strawberry.type

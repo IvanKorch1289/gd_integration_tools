@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 
-from src.backend.core.tenancy.sqlalchemy_filter import (  # noqa: F401  re-export
+from src.backend.core.tenancy.sqlalchemy_filter import (
     TenantMixin,
     _is_tenant_aware,
     apply_tenant_filter,

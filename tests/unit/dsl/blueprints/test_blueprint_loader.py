@@ -1,6 +1,5 @@
 """Unit-тесты для blueprint loader (Wave [wave:s5/k3-w6-blueprints])."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

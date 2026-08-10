@@ -23,14 +23,14 @@ via the ``UnifiedCacheFacade`` Protocol (Rule 1).
 """
 from __future__ import annotations
 
-from src.backend.core.cache.facade import (  # noqa: F401
+from src.backend.core.cache.facade import (
     CacheError,
     CacheInvalidationPolicy,
     FallbackCacheFacade,
     MemoryCacheFacade,
     UnifiedCacheFacade,
 )
-from src.backend.core.cache.rag import ThreeTierRagCache  # noqa: F401
+from src.backend.core.cache.rag import ThreeTierRagCache
 
 __all__ = (
     "CacheError",

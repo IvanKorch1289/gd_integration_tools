@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты для ``tools/discover_plugin_capabilities.py`` (V15 GAP Gap 4).
 
 Покрытие:
@@ -30,7 +29,7 @@ TOOL_PATH = Path("tools/discover_plugin_capabilities.py")
 def _run_cli(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
     """Запускает ``python tools/discover_plugin_capabilities.py <args>``."""
     abs_tool = (Path(__file__).resolve().parents[3] / TOOL_PATH).resolve()
-    return subprocess.run(  # noqa: S603
+    return subprocess.run(
         [sys.executable, str(abs_tool), *args],
         capture_output=True,
         text=True,

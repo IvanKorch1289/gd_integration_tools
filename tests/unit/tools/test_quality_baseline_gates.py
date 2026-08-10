@@ -3,7 +3,6 @@
 Проверяют fail-closed для аварий mypy/pytest и формат mypy baseline.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -30,7 +30,7 @@ from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.auth.jwks_cache import JwksCache
 from src.backend.core.logging import get_logger
 
-__all__ = ("JwtBackend", "JwtClaims", "JwtVerificationError", "encode", "decode")
+__all__ = ("JwtBackend", "JwtClaims", "JwtVerificationError", "decode", "encode")
 
 _logger = get_logger(__name__)
 

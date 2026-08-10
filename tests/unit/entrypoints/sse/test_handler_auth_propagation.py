@@ -24,7 +24,6 @@ principal/permissions из ``request.state.auth`` в
       tests/unit/entrypoints/sse/test_handler_auth_propagation.py -v
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

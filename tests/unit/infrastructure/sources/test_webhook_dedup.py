@@ -7,7 +7,6 @@ in isolation by replicating the same logic.
 Production code: src/backend/infrastructure/sources/webhook.py
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -31,7 +30,7 @@ def _extract_delivery_id(headers):
 def _is_duplicate(delivery_id):
     now = time.monotonic()
     while _dedup_cache:
-        oldest_id, ts = next(iter(_dedup_cache.items()))
+        _oldest_id, ts = next(iter(_dedup_cache.items()))
         if now - ts > DEDUP_TTL_S:
             _dedup_cache.popitem(last=False)
         else:

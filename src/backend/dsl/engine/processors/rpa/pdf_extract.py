@@ -3,7 +3,6 @@
 Извлечение текста из PDF (pypdf, lazy import).
 Pattern (D273, Ponytail): thin wrapper, skip if pypdf not installed.
 """
-# ruff: noqa: E501
 from __future__ import annotations
 
 import io
@@ -38,7 +37,7 @@ class PdfExtractProcessor:
             for page in reader.pages:
                 try:
                     text_parts.append(page.extract_text() or "")
-                except (AttributeError, TypeError, ValueError, RuntimeError) as page_exc:  # noqa: BLE001
+                except (AttributeError, TypeError, ValueError, RuntimeError) as page_exc:
                     # cycle-9/D-AUDIT-947: narrow exceptions + observability.
                     # AttributeError — page.extract_text API change,
                     # TypeError — wrong type, ValueError — invalid page,

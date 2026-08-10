@@ -1,6 +1,5 @@
 """D-AUDIT-07: management endpoints auth guard (CDC + Filewatcher)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

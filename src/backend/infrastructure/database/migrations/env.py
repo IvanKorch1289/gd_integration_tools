@@ -12,19 +12,19 @@ from sqlalchemy.orm import configure_mappers
 # extensions/core_entities/ (S168 W14 P2-10). Ранее шли через
 # src.backend.core.domain.models.{files,orders,orderkinds,users} (DEPRECATED
 # shim, удалён этим коммитом).
-from extensions.core_entities.files.domain.models import (  # noqa: E402,F401
+from extensions.core_entities.files.domain.models import (
     File,
     OrderFile,
 )
 from extensions.core_entities.orderkinds.domain.models import (
-    OrderKind,  # noqa: E402,F401
+    OrderKind,
 )
-from extensions.core_entities.orders.domain.models import Order  # noqa: E402,F401
-from extensions.core_entities.users.domain.models import User  # noqa: E402,F401
+from extensions.core_entities.orders.domain.models import Order
+from extensions.core_entities.users.domain.models import User
 from src.backend.core.config.settings import settings
-from src.backend.core.domain.models.base import BaseModel, metadata  # noqa: F401
+from src.backend.core.domain.models.base import BaseModel, metadata
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.database.database import db_initializer  # noqa: F401
+from src.backend.infrastructure.database.database import db_initializer
 from src.backend.infrastructure.database.migrations.types import load_types
 
 _logger = get_logger("alembic.env")  # Cycle-19 (D-AUDIT-1906): explicit logger

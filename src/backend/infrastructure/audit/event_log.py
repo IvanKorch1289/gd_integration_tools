@@ -249,7 +249,7 @@ class AuditEventLog:
         for env in envelopes:
             try:
                 await self._dlq_writer.write(env)
-            except Exception as dlq_exc:  # noqa: BLE001
+            except Exception as dlq_exc:
                 logger.exception(
                     "Audit DLQ handoff failed [dlq_id=%s, tenant=%s]: %s "
                     "— EVENT WILL BE LOST",
@@ -325,7 +325,7 @@ class AuditEventLog:
                         dlq_class="operational",
                     )
                 )
-            except Exception as build_exc:  # noqa: BLE001
+            except Exception as build_exc:
                 # Envelope build failed (should not happen, defensive):
                 # log + drop, never propagate.
                 logger.exception(
@@ -392,7 +392,7 @@ class AuditEventLog:
             conditions.append("who = {who:String}")
 
         where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
-        sql = f"SELECT * FROM {safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"  # noqa: S608
+        sql = f"SELECT * FROM {safe_table}{where} ORDER BY when DESC LIMIT {safe_limit}"
         return await client.query(sql, params)
 
 

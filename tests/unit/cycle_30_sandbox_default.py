@@ -8,7 +8,6 @@ Cycle 30 fix: AgentGraphProcessor.isolated default changed from
 False to True (line 117). Builder already had True (infra.py:141).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

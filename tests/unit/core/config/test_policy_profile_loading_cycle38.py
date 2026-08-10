@@ -10,7 +10,6 @@
 pydantic-модели (которые могут упасть из-за отсутствия секретов в worktree).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

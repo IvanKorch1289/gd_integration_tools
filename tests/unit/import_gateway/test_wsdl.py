@@ -1,6 +1,5 @@
 """W24 — WSDL backend тесты (через zeep)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

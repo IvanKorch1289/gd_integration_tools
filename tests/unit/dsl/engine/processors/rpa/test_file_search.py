@@ -3,7 +3,6 @@
 Поиск подстроки/regex в файлах с фильтром по path glob.
 Pattern (D272, Ponytail): thin wrapper.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 import tempfile

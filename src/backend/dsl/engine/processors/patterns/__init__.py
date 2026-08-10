@@ -15,23 +15,23 @@ Phase 2 = физическое разделение в thematic files (S175.5+).
 """
 from __future__ import annotations
 
-from src.backend.dsl.engine.processors.patterns._helpers import _SafeDict  # noqa: F401
-from src.backend.dsl.engine.processors.patterns.batch_window import (  # noqa: F401
+from src.backend.dsl.engine.processors.patterns._helpers import _SafeDict
+from src.backend.dsl.engine.processors.patterns.batch_window import (
     BatchWindowProcessor,
 )
-from src.backend.dsl.engine.processors.patterns.debounce import (  # noqa: F401
+from src.backend.dsl.engine.processors.patterns.debounce import (
     DebounceProcessor,
 )
-from src.backend.dsl.engine.processors.patterns.deduplicate import (  # noqa: F401
+from src.backend.dsl.engine.processors.patterns.deduplicate import (
     DeduplicateProcessor,
 )
-from src.backend.dsl.engine.processors.patterns.formatter import (  # noqa: F401
+from src.backend.dsl.engine.processors.patterns.formatter import (
     FormatterProcessor,
 )
-from src.backend.dsl.engine.processors.patterns.merge import (  # noqa: F401
+from src.backend.dsl.engine.processors.patterns.merge import (
     MergeProcessor,
 )
-from src.backend.dsl.engine.processors.patterns.switch import (  # noqa: F401
+from src.backend.dsl.engine.processors.patterns.switch import (
     SwitchProcessor,
 )
 

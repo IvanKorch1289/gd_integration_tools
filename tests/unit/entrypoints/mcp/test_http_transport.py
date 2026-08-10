@@ -12,7 +12,7 @@ import pytest
 async def test_auth_middleware_rejects_without_credentials() -> None:
     from src.backend.entrypoints.mcp.auth_middleware import McpAuthMiddleware
 
-    async def _app(scope, receive, send):  # noqa: ANN001
+    async def _app(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"", "more_body": False})
 
@@ -35,7 +35,7 @@ async def test_auth_middleware_rejects_without_credentials() -> None:
 async def test_auth_middleware_passes_with_api_key() -> None:
     from src.backend.entrypoints.mcp import auth_middleware as auth_mod
 
-    async def _passthrough(scope, receive, send):  # noqa: ANN001
+    async def _passthrough(scope, receive, send):
         await send({"type": "http.response.start", "status": 200, "headers": []})
         await send({"type": "http.response.body", "body": b"ok", "more_body": False})
 
@@ -79,7 +79,7 @@ async def test_auth_middleware_passes_through_non_http() -> None:
 
     called: dict[str, Any] = {"hit": False}
 
-    async def _app(scope, receive, send):  # noqa: ANN001
+    async def _app(scope, receive, send):
         called["hit"] = True
 
     middleware = McpAuthMiddleware(_app)
@@ -93,7 +93,7 @@ def test_resolve_http_app_prefers_modern_methods() -> None:
     from src.backend.entrypoints.mcp.http_server import _resolve_http_app
 
     class _FakeMcp:
-        def http_app(self):  # noqa: ANN001
+        def http_app(self):
             return object()
 
     assert _resolve_http_app(_FakeMcp()) is not None
@@ -103,7 +103,7 @@ def test_resolve_http_app_falls_back_to_sse() -> None:
     from src.backend.entrypoints.mcp.http_server import _resolve_http_app
 
     class _Legacy:
-        def sse_app(self):  # noqa: ANN001
+        def sse_app(self):
             return object()
 
     assert _resolve_http_app(_Legacy()) is not None

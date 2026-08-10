@@ -29,7 +29,7 @@ from src.backend.services.plugins.loader.loading.state import (
     PluginInventoryConflictError,  # S63 W1: re-export
 )
 
-__all__ = ("LoadingMixin", "PluginInventoryConflictError", "LoadedPlugin")
+__all__ = ("LoadedPlugin", "LoadingMixin", "PluginInventoryConflictError")
 
 
 class LoadingMixin(LoaderMixin, FrontendMixin):

@@ -7,7 +7,6 @@
     * to_spec() возвращает корректную dict-репрезентацию.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -5,7 +5,6 @@ ReplyTo, ExactlyOnce, DurableSubscriber, ChannelPurger, Sampling.
 Паттерн: async tests, _ex fixture, моки для broker / storage / clock.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -1,6 +1,5 @@
 """Unit-тесты UnifiedCacheFacade (P1 S133 W4)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -92,7 +91,7 @@ async def test_get_fallback_to_disk(
 ) -> None:
     await facade.set("k3", b"v3")
     primary.fail_next = True
-    facade._memory._cache = {}  # noqa: SLF001
+    facade._memory._cache = {}
     result = await facade.get("k3")
     assert result.hit is True
     assert result.value == b"v3"
@@ -140,7 +139,7 @@ async def test_set_without_permission(facade: UnifiedCacheFacade) -> None:
                 declared_scope=None,
             )
 
-    facade._check = _check_denied  # noqa: SLF001
+    facade._check = _check_denied
     with pytest.raises(CapabilityDeniedError):
         await facade.set("x", b"y")
 
@@ -156,7 +155,7 @@ async def test_get_without_permission(facade: UnifiedCacheFacade) -> None:
                 declared_scope=None,
             )
 
-    facade._check = _check_write  # noqa: SLF001
+    facade._check = _check_write
     with pytest.raises(CapabilityDeniedError):
         await facade.get("x")
 
@@ -175,5 +174,5 @@ async def test_set_propagates_to_all_tiers(
 ) -> None:
     await facade.set("multi", b"v")
     assert await primary.exists("default:multi")
-    assert await facade._memory.exists("default:multi")  # noqa: SLF001
-    assert await facade._disk.exists("default:multi")  # noqa: SLF001
+    assert await facade._memory.exists("default:multi")
+    assert await facade._disk.exists("default:multi")

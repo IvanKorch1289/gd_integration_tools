@@ -46,21 +46,21 @@ if TYPE_CHECKING:
     from src.backend.infrastructure.security.api_key_manager import APIKeyManager
 
 __all__ = (
-    "register_app_state",
-    "app_state_singleton",
     "_get_from_app_state",
+    "app_state_singleton",
     "get_api_key_manager",
-    "get_tracer",
-    "get_plugin_registry",
-    "get_pipeline_version_manager",
-    "get_slo_tracker",
-    "get_pool_monitor",
-    "get_vault_refresher",
-    "get_mqtt_handler",
-    "get_langfuse_client",
-    "get_watermark_store",
     # Round 88: AuthorizationGateway Depends (Sprint 1 K5).
     "get_authorization_gateway",
+    "get_langfuse_client",
+    "get_mqtt_handler",
+    "get_pipeline_version_manager",
+    "get_plugin_registry",
+    "get_pool_monitor",
+    "get_slo_tracker",
+    "get_tracer",
+    "get_vault_refresher",
+    "get_watermark_store",
+    "register_app_state",
 )
 
 

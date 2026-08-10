@@ -170,7 +170,7 @@ def _emit_audit(context: CapabilityContext | None, event: dict[str, object]) -> 
                 loop.create_task(coro)
             except RuntimeError:
                 pass  # no running loop → drop coroutine (sync context)
-    except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError) as audit_exc:
         # cycle-9/D-AUDIT-1729: narrow exceptions + observability.
         # ImportError — audit facade missing, AttributeError — API
         # change, RuntimeError — backend unavailable. never raise from

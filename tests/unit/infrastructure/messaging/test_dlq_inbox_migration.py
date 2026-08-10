@@ -17,7 +17,7 @@ from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, inspect, text
 
-# ruff: noqa: S101  # pytest asserts
+# pytest asserts
 
 
 def _alembic_config_for_migration(migration_rev: str) -> tuple[Config, ScriptDirectory]:
@@ -62,7 +62,7 @@ def _downgrade_one(engine: sa.Engine, script: ScriptDirectory, rev: str) -> None
 
 def test_dlq_inbox_table_creation() -> None:
     """upgrade() создаёт dlq_inbox с правильной схемой."""
-    cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
+    _cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
     engine = create_engine("sqlite:///:memory:")
 
     _upgrade_one(engine, script, "z9a8b7c6d5e4")
@@ -93,7 +93,7 @@ def test_dlq_inbox_table_creation() -> None:
 
 def test_dlq_inbox_primary_key() -> None:
     """dlq_id — primary key (для ON CONFLICT DO NOTHING в writer'е)."""
-    cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
+    _cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
     engine = create_engine("sqlite:///:memory:")
     _upgrade_one(engine, script, "z9a8b7c6d5e4")
 
@@ -104,7 +104,7 @@ def test_dlq_inbox_primary_key() -> None:
 
 def test_dlq_inbox_indexes_created() -> None:
     """3 индекса: (transport, last_failed_at), tenant_id, route_id."""
-    cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
+    _cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
     engine = create_engine("sqlite:///:memory:")
     _upgrade_one(engine, script, "z9a8b7c6d5e4")
 
@@ -123,7 +123,7 @@ def test_dlq_inbox_indexes_created() -> None:
 
 def test_dlq_inbox_upgrade_is_idempotent() -> None:
     """Повторный upgrade() не падает (idempotent guard в upgrade())."""
-    cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
+    _cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
     engine = create_engine("sqlite:///:memory:")
 
     _upgrade_one(engine, script, "z9a8b7c6d5e4")
@@ -135,7 +135,7 @@ def test_dlq_inbox_upgrade_is_idempotent() -> None:
 
 def test_dlq_inbox_downgrade_removes_table() -> None:
     """downgrade() удаляет таблицу и все 3 индекса."""
-    cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
+    _cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
     engine = create_engine("sqlite:///:memory:")
 
     _upgrade_one(engine, script, "z9a8b7c6d5e4")
@@ -147,7 +147,7 @@ def test_dlq_inbox_downgrade_removes_table() -> None:
 
 def test_dlq_inbox_insert_and_idempotent_write() -> None:
     """Smoke: вставка + повторная вставка с тем же dlq_id = ON CONFLICT skip."""
-    cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
+    _cfg, script = _alembic_config_for_migration("z9a8b7c6d5e4")
     engine = create_engine("sqlite:///:memory:")
     _upgrade_one(engine, script, "z9a8b7c6d5e4")
 
@@ -172,7 +172,7 @@ def test_dlq_inbox_insert_and_idempotent_write() -> None:
                 ),
                 {"id": "fixed-uuid-1"},
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             pytest.fail(f"Duplicate insert raised: {exc}")
 
         # Verify only one row exists with this dlq_id.

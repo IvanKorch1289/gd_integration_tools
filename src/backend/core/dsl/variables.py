@@ -278,7 +278,7 @@ class ConsulVariableBackend:
 
         def _sync_put() -> None:
             store = ConsulConfigStore(host=self.host, port=self.port)
-            client = store._get_client()  # noqa: SLF001
+            client = store._get_client()
             client.kv.put(path, str(value))
 
         try:
@@ -296,7 +296,7 @@ class ConsulVariableBackend:
 
         def _sync_delete() -> None:
             store = ConsulConfigStore(host=self.host, port=self.port)
-            client = store._get_client()  # noqa: SLF001
+            client = store._get_client()
             client.kv.delete(path)
 
         try:
@@ -314,7 +314,7 @@ class ConsulVariableBackend:
 
         def _sync_list() -> list[str]:
             store = ConsulConfigStore(host=self.host, port=self.port)
-            client = store._get_client()  # noqa: SLF001
+            client = store._get_client()
             _, keys = client.kv.get(prefix, recurse=True, keys=True)
             return [k[len(prefix) :] for k in (keys or []) if k.startswith(prefix)]
 

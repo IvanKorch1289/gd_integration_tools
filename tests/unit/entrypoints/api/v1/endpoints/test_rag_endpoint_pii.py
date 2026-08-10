@@ -10,7 +10,6 @@
 это доказывает, что PII-mask отрабатывает на single-doc пути endpoint'а.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

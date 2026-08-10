@@ -104,7 +104,7 @@ def test_scan_directory_violation(tmp_path: Path) -> None:
     files, violations = scan_directory(tmp_path)
     assert files == 1
     assert len(violations) == 1
-    py, lineno, module, prefix = violations[0]
+    _py, lineno, module, prefix = violations[0]
     assert lineno == 1
     assert module == "src.backend.infrastructure.repositories"
     assert prefix == "src.backend.infrastructure."
@@ -115,7 +115,7 @@ def test_scan_directory_type_checking_skipped(tmp_path: Path) -> None:
     (tmp_path / "typecheck.py").write_text(
         "from typing import TYPE_CHECKING\n"
         "if TYPE_CHECKING:\n"
-        "    from src.backend.infrastructure.foo import x\n"  # noqa
+        "    from src.backend.infrastructure.foo import x\n"
     )
     files, violations = scan_directory(tmp_path)
     assert files == 1

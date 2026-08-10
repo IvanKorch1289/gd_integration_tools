@@ -146,7 +146,7 @@ def inject_prompt_cache(
             cfg.apply_to_user_content
             and msg.get("role") == "user"
             and isinstance(content, str)
-        ) or msg.get("role") == "system" and isinstance(content, str):
+        ) or (msg.get("role") == "system" and isinstance(content, str)):
             new_msg["content"] = [
                 {"type": "text", "text": content, "cache_control": cache_control}
             ]

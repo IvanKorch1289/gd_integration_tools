@@ -40,13 +40,13 @@ if TYPE_CHECKING:
     from src.backend.core.resilience import RateLimiter
 
 __all__ = (
-    "check_ip_rate_limit",
-    "check_username_rate_limit",
     "IP_LIMIT",
     "IP_WINDOW_SECONDS",
+    "TARPIT_DELAY_SECONDS",
     "USERNAME_LIMIT",
     "USERNAME_WINDOW_SECONDS",
-    "TARPIT_DELAY_SECONDS",
+    "check_ip_rate_limit",
+    "check_username_rate_limit",
 )
 
 # === Tunables (можно вынести в config/services/login.py в S60+) ===

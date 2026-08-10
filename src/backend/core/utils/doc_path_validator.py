@@ -3,7 +3,6 @@
 Validates paths cited in docs/ against actual files in src/backend/ and extensions/.
 Ponytail YAGNI: AST-based regex, no sphinx dependency.
 """
-# ruff: noqa: E501
 from __future__ import annotations
 
 import re

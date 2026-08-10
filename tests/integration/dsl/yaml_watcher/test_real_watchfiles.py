@@ -1,6 +1,5 @@
 """Wave B — Integration-тесты DSLYamlWatcher поверх ``watchfiles.awatch``."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

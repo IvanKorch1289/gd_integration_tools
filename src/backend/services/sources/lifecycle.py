@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from src.backend.core.interfaces.invoker import Invoker
     from src.backend.services.sources.registry import SourceRegistry
 
-__all__ = ("start_all_sources", "stop_all_sources", "make_dedupe_store")
+__all__ = ("make_dedupe_store", "start_all_sources", "stop_all_sources")
 
 logger = get_logger("services.sources.lifecycle")
 

@@ -52,14 +52,14 @@ class LoadBalancerProcessor(BaseProcessor):
         if self._strategy == "random":
             import random as _random
 
-            return _random.choice(  # noqa: S311  # load-balancing, не криптография  # non-cryptographic use
+            return _random.choice(  # load-balancing, не криптография  # non-cryptographic use
                 self._targets
             )
 
         if self._strategy == "weighted" and self._weights:
             import random as _random
 
-            return _random.choices(self._targets, weights=self._weights, k=1)[  # noqa: S311  # non-cryptographic use
+            return _random.choices(self._targets, weights=self._weights, k=1)[  # non-cryptographic use
                 0
             ]  # weighted load-balancing, не криптография
 

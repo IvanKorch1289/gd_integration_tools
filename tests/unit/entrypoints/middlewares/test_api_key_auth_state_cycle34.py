@@ -17,7 +17,6 @@ interop с audit_log/rpa_policy. До фикса audit_log получал ``anon
    (downstream не должен видеть ложный auth context).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

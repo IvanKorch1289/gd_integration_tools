@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты RAG-augmentation в ``AIAgentService.chat`` (Wave 13).
 
 Проверяется поведение метода ``_maybe_augment_with_rag``:

@@ -136,7 +136,7 @@ def test_no_lazy_imports() -> None:
                 and "src.backend.dsl" in child.module
             ):
                 lazy_imports.append((child.lineno, child.module))
-            _walk_with_parents(child, new_in_function, parents + (node,))
+            _walk_with_parents(child, new_in_function, (*parents, node))
 
     for top_node in tree.body:
         _walk_with_parents(top_node, False, ())

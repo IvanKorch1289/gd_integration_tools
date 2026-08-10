@@ -1,6 +1,5 @@
 """Unit tests for APICompositionProcessor (S50 W2, v21 §7.3)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

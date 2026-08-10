@@ -117,7 +117,7 @@ class MlflowModelRegistry(ModelRegistryAdapter):
             await loop.run_in_executor(
                 None, lambda: client.create_registered_model(record.name)
             )
-        except (ConnectionError, TimeoutError, RuntimeError) as _mlflow_exc:  # noqa: PERF203
+        except (ConnectionError, TimeoutError, RuntimeError) as _mlflow_exc:
             # D-A1-04 fix (cycle 30): narrow exceptions + debug logging.
             # Bare `except Exception: pass` маскировал MLflow backend failures
             # (e.g. registry down, timeout, name conflict).

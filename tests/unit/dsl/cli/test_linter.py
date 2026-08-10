@@ -13,7 +13,6 @@ Wave ``[wave:s6/k3-dsl-linter-lsp]``.
 + plugin-aware discovery + strict-mode + CLI JSON output.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -143,7 +142,7 @@ def test_cli_returns_exit_1_on_error(tmp_path: Path) -> None:
         "from:\n  http:\n    path: /x\nsteps: []\n", encoding="utf-8"
     )
 
-    result = subprocess.run(  # noqa: S603 (trusted local script)
+    result = subprocess.run(
         [sys.executable, "-m", "src.backend.dsl.cli.linter", str(tmp_path)],
         capture_output=True,
         text=True,
@@ -162,7 +161,7 @@ def test_cli_json_output(tmp_path: Path) -> None:
         "from:\n  http:\n    path: /x\nsteps: []\n", encoding="utf-8"
     )
 
-    result = subprocess.run(  # noqa: S603 (trusted local script)
+    result = subprocess.run(
         [sys.executable, "-m", "src.backend.dsl.cli.linter", str(tmp_path), "--json"],
         capture_output=True,
         text=True,

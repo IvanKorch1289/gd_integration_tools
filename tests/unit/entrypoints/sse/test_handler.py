@@ -1,6 +1,5 @@
 """Unit tests for SSE handler."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

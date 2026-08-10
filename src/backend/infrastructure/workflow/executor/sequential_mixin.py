@@ -46,7 +46,7 @@ def _is_exchange_wrapping_enabled() -> bool:
         from src.backend.core.config.features import feature_flags
 
         return bool(getattr(feature_flags, "workflow_exchange_wrapping", True))
-    except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError) as ff_exc:
         # cycle-9/D-AUDIT-936: narrow exceptions + observability.
         # ImportError — features module missing, AttributeError — config
         # not initialized, RuntimeError — feature_flags unavailable. Bare

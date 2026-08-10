@@ -46,9 +46,9 @@ from src.backend.core.utils.metrics_registry import metrics_registry
 
 __all__ = (
     "AuditCallback",
+    "AuthorizationDecision",
     "AuthorizationGateway",
     "AuthorizationReason",
-    "AuthorizationDecision",
     "PolicyDecider",
     # Round 88: lazy resolver для non-Request контекста (Sprint 1 K5).
     # Использует app-state singleton из composition root + fallback на None
@@ -84,7 +84,7 @@ def get_authorization_gateway() -> AuthorizationGateway | None:
         from src.backend.core.di.app_state import get_app_ref
 
         app = get_app_ref()
-    except (ImportError, AttributeError, RuntimeError) as app_exc:  # noqa: BLE001 — defensive, returns None per test_lazy_resolver_swallows_exceptions
+    except (ImportError, AttributeError, RuntimeError) as app_exc:
         # cycle-9/D-AUDIT-1036: narrow exceptions + observability.
         # ImportError — get_app_ref missing, AttributeError — API
         # change, RuntimeError — app_state unavailable.
@@ -102,7 +102,7 @@ def get_authorization_gateway() -> AuthorizationGateway | None:
 class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
     """Authorization gateway (4 mixins = 4 methods + 5 core)."""
 
-    __slots__ = ("_capability_gateway", "_policies", "_audit", "_enabled")
+    __slots__ = ("_audit", "_capability_gateway", "_enabled", "_policies")
 
     def __init__(
         self,
@@ -339,7 +339,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
             key = (subject, action, resource)
             self._in_memory_policies[key] = allowed
             return True
-        except (AttributeError, TypeError, ValueError) as policy_exc:  # noqa: BLE001
+        except (AttributeError, TypeError, ValueError) as policy_exc:
             # cycle-9/D-AUDIT-990: narrow exceptions + observability.
             # AttributeError — effect missing, TypeError — wrong type,
             # ValueError — invalid effect value.
@@ -367,7 +367,7 @@ class AuthorizationGateway(AuditMixin, CasbinMixin, OpaMixin, PermissionMixin):
                 del self._in_memory_policies[key]
                 return True
             return False
-        except (KeyError, AttributeError, TypeError) as rm_exc:  # noqa: BLE001
+        except (KeyError, AttributeError, TypeError) as rm_exc:
             # cycle-9/D-AUDIT-999: narrow exceptions + observability (mirror
             # D-AUDIT-990 для add_policy).
             # KeyError — key not in dict (rare race), AttributeError —

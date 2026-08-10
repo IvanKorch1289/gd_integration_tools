@@ -1,6 +1,5 @@
 """Unit-тесты NATSJetStreamSource.fetch_consumer_info + admin endpoint (S13 K3 W5)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

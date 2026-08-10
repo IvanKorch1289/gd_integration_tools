@@ -7,7 +7,6 @@
   (``parents[4]``), а не на ``src/``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

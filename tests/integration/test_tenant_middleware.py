@@ -6,7 +6,6 @@
 ``request.state`` и в ``structlog`` contextvars.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

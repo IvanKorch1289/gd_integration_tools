@@ -4,7 +4,6 @@ Per next-sprint plan S3: docstring coverage 70% → 80%.
 Tests measure current coverage and document the baseline.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

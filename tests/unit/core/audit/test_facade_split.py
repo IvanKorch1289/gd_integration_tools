@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """S107 W3 — tests для ``core.audit.facade`` package split (TD-008).
 
 Покрытие:

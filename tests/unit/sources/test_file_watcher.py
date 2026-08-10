@@ -1,6 +1,5 @@
 """W23.3 — FileWatcherSource (integration через tmp_path)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

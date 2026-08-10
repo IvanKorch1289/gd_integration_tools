@@ -52,7 +52,7 @@ async def _sqlite_fts5_search(
                 "USING fts5(doc_id, content)"
             )
             cursor = conn.execute(
-                f"SELECT doc_id, content, rank FROM {index}_fts "  # noqa: S608  # internal query with controlled parameters
+                f"SELECT doc_id, content, rank FROM {index}_fts "  # internal query with controlled parameters
                 f"WHERE {index}_fts MATCH ? ORDER BY rank LIMIT ?",
                 (query, limit),
             )

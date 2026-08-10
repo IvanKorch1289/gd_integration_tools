@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests для src.frontend.streamlit_app.shared.page_registry (S171 W1).
 
 Тестируем:
@@ -22,7 +21,7 @@ _streamlit_mock.set_page_config = MagicMock()
 sys.modules["streamlit"] = _streamlit_mock
 
 # Now safe to import
-from src.frontend.streamlit_app.shared.page_registry import (  # noqa: E402
+from src.frontend.streamlit_app.shared.page_registry import (
     PAGE_METADATA,
     get_page_metadata,
 )

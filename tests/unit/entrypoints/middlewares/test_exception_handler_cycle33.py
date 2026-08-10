@@ -6,7 +6,6 @@
 Source: src/backend/entrypoints/middlewares/exception_handler.py
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

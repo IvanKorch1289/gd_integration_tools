@@ -68,7 +68,7 @@ def test_model_has_tenant_mixin(model_name: str) -> None:
             if candidate is not None:
                 cls = candidate
                 break
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             last_err = exc
     if cls is None:
         pytest.skip(f"module not found: {last_err}")

@@ -15,7 +15,6 @@ external service — mock at the network boundary, not at the
 function-under-test").
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """B-05 fix (cycle 33): regression tests для rate_limit_fail_mode.
 
 Tests:

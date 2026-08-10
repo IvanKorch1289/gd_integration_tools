@@ -52,7 +52,7 @@ _log = get_logger(__name__)
 
 # Type alias: filter step получает exchange, может (опционально) вернуть
 # новый body. Если возвращает None — body остаётся прежним.
-FilterStep = Callable[[Exchange[Any]], Any | None | Awaitable[Any | None]]
+FilterStep = Callable[[Exchange[Any]], Any | Awaitable[Any | None] | None]
 
 
 class PipesAndFiltersProcessor(BaseProcessor):
@@ -126,7 +126,7 @@ class PipesAndFiltersProcessor(BaseProcessor):
                     exchange.in_message.body = result
                 exchange.set_property("pipes_filters.completed", idx + 1)
                 exchange.set_property("pipes_filters.last_step", idx)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 with self._lock:
                     self._failures += 1
                 _log.warning(

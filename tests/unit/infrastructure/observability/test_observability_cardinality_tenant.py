@@ -9,7 +9,6 @@
       работают round-trip (если OTel установлен) либо graceful no-op.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

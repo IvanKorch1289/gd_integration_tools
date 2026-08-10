@@ -3,7 +3,6 @@
 Использует mock'и т.к. реальный 3-node testcontainer недоступен в unit-suite.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

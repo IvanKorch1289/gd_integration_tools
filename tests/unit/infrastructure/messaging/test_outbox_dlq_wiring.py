@@ -10,7 +10,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# ruff: noqa: S101
 
 
 def test_build_default_dlq_returns_none_without_session_factory() -> None:

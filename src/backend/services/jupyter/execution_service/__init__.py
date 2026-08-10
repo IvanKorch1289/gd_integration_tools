@@ -52,8 +52,8 @@ from src.backend.services.jupyter.execution_service.papermill_backend import (  
 )
 
 __all__ = (
-    "BackendKind",  # S74 W2
     "DEFAULT_FALLBACK_SPECS",  # S75 W3
+    "BackendKind",  # S74 W2
     "E2BExecutionBackend",  # S75 W1
     "ExecutionBackendFactory",  # S74 W2
     "JupyterExecutionError",

@@ -9,7 +9,6 @@ User directive: "продумай fallback логику для SSL Cert, есл�
 недоступен (для настроек есть .env, а для сертификатов ничего нет)".
 +.env STRICTLY forbidden (per AGENTS.md permission rules).
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 import asyncio

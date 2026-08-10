@@ -11,7 +11,6 @@ Wave ``[wave:s6/k3-coverage-gate-70]``.
 * error-handling (missing file / invalid XML).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -37,7 +36,7 @@ def _write_coverage_xml(path: Path, line_rate: float) -> None:
 
 def _run_gate(*args: str) -> subprocess.CompletedProcess:
     """Запускает CLI gate с заданными аргументами."""
-    return subprocess.run(  # noqa: S603
+    return subprocess.run(
         [sys.executable, str(TOOL_PATH), *args],
         capture_output=True,
         text=True,

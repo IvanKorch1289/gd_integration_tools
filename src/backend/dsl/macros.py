@@ -62,7 +62,7 @@ def _emit_deprecation_once() -> None:
                 DeprecationWarning,
                 stacklevel=3,
             )
-    except (ImportError, AttributeError, RuntimeError) as dep_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError) as dep_exc:
         # cycle-9/D-AUDIT-959: narrow exceptions + observability.
         # ImportError — settings module missing, AttributeError — config
         # not initialized, RuntimeError — bootstrap unavailable. Bare

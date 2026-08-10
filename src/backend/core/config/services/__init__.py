@@ -55,8 +55,8 @@ __all__ = (
     "GraphQLSettings",  # S163 W13
     "InvokerSettings",
     "JupyterHubSettings",
-    "LogStorageSettings",
     "LLMSettings",  # S164 W2
+    "LogStorageSettings",
     "MailSettings",
     "QueueSettings",
     "RPASettings",  # S164 W4
@@ -73,13 +73,13 @@ __all__ = (
     "grpc_settings",
     "invoker_settings",
     "jupyter_hub_settings",
-    "log_settings",
     "llm_settings",  # S164 W2
+    "log_settings",
     "mail_settings",
     "queue_settings",
     "redis_settings",
-    "rpa_settings",  # S164 W4
     "resilience_settings",
+    "rpa_settings",  # S164 W4
     "sms_settings",
     "snapshot_settings",
     "tasks_settings",

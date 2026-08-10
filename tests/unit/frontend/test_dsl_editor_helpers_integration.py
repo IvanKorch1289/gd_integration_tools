@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Integration-тесты для _editor/ helper-модулей (streamlit-зависимые).
 
 S78 W3. Покрывают push_history / undo / redo / sync_yaml через
@@ -181,7 +180,7 @@ def test_undo_redo_round_trip(monkeypatch: pytest.MonkeyPatch) -> None:
         {"yaml": "v3", "yaml_history": ["v1", "v2", "v3"], "yaml_history_index": 2},
     )
 
-    from src.frontend.streamlit_app.pages._editor.history import (  # noqa: E402
+    from src.frontend.streamlit_app.pages._editor.history import (
         can_redo,
         can_undo,
         redo,
@@ -249,7 +248,7 @@ def test_sync_yaml_uses_build_yaml_from_steps(monkeypatch: pytest.MonkeyPatch) -
         monkeypatch, {"canvas_steps": steps, "meta_route": meta}
     )
 
-    from src.frontend.streamlit_app.pages._editor.yaml_sync import (  # noqa: E402
+    from src.frontend.streamlit_app.pages._editor.yaml_sync import (
         build_yaml_from_steps,
         sync_yaml,
     )

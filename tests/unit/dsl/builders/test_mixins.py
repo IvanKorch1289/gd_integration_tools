@@ -4,7 +4,6 @@ batch_insert, content_filter, content_transform, unique, flatten).
 Покрывают fluent-интерфейс, тип добавленного процессора и to_spec().
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -154,7 +153,7 @@ class TestContentFilter:
         assert isinstance(proc, FilterProcessor)
 
     def test_predicate_set(self) -> None:
-        pred = lambda e: True  # noqa: E731
+        pred = lambda e: True
         pipeline = (
             RouteBuilder.from_("test.filter", source="internal:test")
             .content_filter(predicate=pred)

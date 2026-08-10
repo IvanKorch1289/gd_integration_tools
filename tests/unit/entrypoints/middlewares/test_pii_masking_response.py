@@ -9,7 +9,6 @@
     * Empty path_patterns → applies to ALL paths (default behavior).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

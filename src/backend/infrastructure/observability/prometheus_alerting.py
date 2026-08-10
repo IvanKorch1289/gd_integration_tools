@@ -5,7 +5,6 @@
 
 Pattern (D285, Ponytail): thin wrapper над yaml.
 """
-# ruff: noqa: E501
 from __future__ import annotations
 
 from pathlib import Path

@@ -28,7 +28,7 @@ _TOOLS_MIGRATIONS = Path(__file__).resolve().parents[3] / "tools" / "migrations"
 if str(_TOOLS_MIGRATIONS) not in sys.path:
     sys.path.insert(0, str(_TOOLS_MIGRATIONS))
 
-import migrate_dlq_partition as mig  # noqa: E402
+import migrate_dlq_partition as mig
 
 
 class TestParseArgs:

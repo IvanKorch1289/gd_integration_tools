@@ -28,7 +28,6 @@ helpers / эмулировать их dispatch-цепочку и сравнит�
 и ``commands/action_registry.py``::``ActionHandlerRegistry.dispatch``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

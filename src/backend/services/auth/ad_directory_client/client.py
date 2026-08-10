@@ -51,7 +51,7 @@ class AdDirectoryClient:
             True если LDAP client доступен; False иначе.
         """
         try:
-            import ldap3  # noqa: F401
+            import ldap3
 
             return True
         except ImportError:

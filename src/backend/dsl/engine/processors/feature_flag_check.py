@@ -88,7 +88,7 @@ class FeatureFlagCheckProcessor(BaseProcessor):
         try:
             resolver = TenantFeatureFlagResolver()
             enabled = await resolver.is_enabled(self._flag, default=self._default)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.exception(
                 "feature_flag resolver error",
                 extra={"flag": self._flag, "error": str(exc)},

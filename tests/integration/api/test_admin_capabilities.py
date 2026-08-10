@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Integration tests для admin/capabilities endpoints (К5/docs-tenants-caps)."""
 
 from __future__ import annotations

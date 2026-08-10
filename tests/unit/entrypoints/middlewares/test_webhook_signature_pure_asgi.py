@@ -5,7 +5,6 @@ HMAC-SHA256 signature verification для входящих webhooks
 ASGI — body буферизуется в middleware, re-injected для downstream.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -155,7 +155,7 @@ class RPACallPolicy:
         """Exponential backoff с jitter (attempt — 0-indexed)."""
         base = min(self.backoff_initial * (2**attempt), self.backoff_max)
         if self.jitter > 0:
-            base *= 1 + random.uniform(-self.jitter, self.jitter)  # noqa: S311  # non-cryptographic use
+            base *= 1 + random.uniform(-self.jitter, self.jitter)  # non-cryptographic use
         return max(0.0, base)
 
     async def call(

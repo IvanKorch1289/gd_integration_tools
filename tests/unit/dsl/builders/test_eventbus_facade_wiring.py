@@ -19,7 +19,6 @@
     * ``_make_eventbus_handler`` записывает события в exchange.properties.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

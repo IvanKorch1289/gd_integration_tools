@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты orchestration primitives Protocol-shape (R2.2).
 
 Примечание: DeadlinePolicy, HumanApproval, RetryWithCompensation и связанные

@@ -167,7 +167,7 @@ class EmailIMAPSource:
             :class:`EmailMessage` для каждого нового письма, прошедшего фильтры.
         """
         try:
-            import aioimaplib  # noqa: F401
+            import aioimaplib
         except ImportError:
             logger.warning(
                 "EmailIMAPSource: aioimaplib не установлен — источник отключён. "

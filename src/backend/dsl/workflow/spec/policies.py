@@ -7,16 +7,16 @@ retry + SLA + memory scope policies.
 
 from __future__ import annotations
 
-from typing import Literal  # noqa: E402
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field  # noqa: E402
+from pydantic import BaseModel, ConfigDict, Field
 
 # S68 W2: RetryPolicy moved в core/ai/retry_policy.py (re-export здесь для
 # backward compat — existing imports ``from src.backend.dsl.workflow.spec
 # import RetryPolicy`` продолжают работать).
-from src.backend.core.ai.retry_policy import RetryPolicy  # noqa: E402
+from src.backend.core.ai.retry_policy import RetryPolicy
 
-__all__ = ("RetryPolicy", "SlaPolicy", "MemoryScope")
+__all__ = ("MemoryScope", "RetryPolicy", "SlaPolicy")
 
 
 class SlaPolicy(BaseModel):

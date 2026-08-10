@@ -144,7 +144,7 @@ def _make_send_wrapper(
             # значит все middlewares отработали).
             try:
                 get_correlation_context_setter_provider()(tenant_id=tenant_id)
-            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError) as corr_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError) as corr_exc:
                 # cycle-9/D-AUDIT-1001: narrow exceptions + observability.
                 # ImportError — provider missing, AttributeError — API
                 # change, RuntimeError — DI unavailable, TypeError —

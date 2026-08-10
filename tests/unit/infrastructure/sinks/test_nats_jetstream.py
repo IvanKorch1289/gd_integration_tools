@@ -11,7 +11,6 @@
 чтобы не тянуть всю цепочку settings (codec → converters → logging_service).
 """
 
-# ruff: noqa: S101, I001
 
 from __future__ import annotations
 
@@ -24,7 +23,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 # Прямой импорт без triggering sinks/__init__.py
-from src.backend.core.interfaces.sink import SinkKind  # noqa: E402
+from src.backend.core.interfaces.sink import SinkKind
 
 _sink_path = (
     _pl.Path(__file__).parent.parent.parent.parent.parent

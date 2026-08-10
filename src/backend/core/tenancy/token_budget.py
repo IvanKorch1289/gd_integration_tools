@@ -276,7 +276,7 @@ class TokenBudget:
 
             if getattr(feature_flags, "token_budget_fail_closed", False):
                 return "closed"
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-979: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags

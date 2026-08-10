@@ -1,6 +1,5 @@
 """Тесты async-pathway WafPolicy (Sprint 16 Wave 6, B-3 finale)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -80,7 +80,7 @@ class LoginResponse(BaseModel):
     """Success response с JWT token."""
 
     access_token: str
-    token_type: str = "bearer"  # noqa: S105 (OAuth2 token type literal, не password)
+    token_type: str = "bearer"
     auth_method: AuthMethodLiteral
     username: str
     is_superuser: bool

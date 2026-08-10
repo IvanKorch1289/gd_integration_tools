@@ -1,6 +1,5 @@
 """W24 — ImportService integration: idempotency + orphan cleanup + secret_refs."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -3,7 +3,6 @@
 Pattern (D285, Ponytail): thin wrapper над prometheus_client.
 Все алерты в одном месте для observability.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

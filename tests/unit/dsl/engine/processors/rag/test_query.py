@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты RagQueryProcessor strategy-расширения (S11 K3 W3 — Phase B.2)."""
 
 from __future__ import annotations

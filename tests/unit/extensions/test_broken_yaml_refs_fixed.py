@@ -15,7 +15,6 @@ B-103 (P0): routes/test_route_w1/main.dsl.yaml аналогично.
 - test_route_w1/main.dsl.yaml: broken call_function step удалён аналогично.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

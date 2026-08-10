@@ -158,7 +158,7 @@ _PROC_IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
 _logger = get_logger("services.io.external_database.facade")
 
 CapabilityChecker = Callable[[str, str, str | None], None]
-"""Сигнатура capability-check: ``(plugin, capability, scope) -> None`` raise при denied."""  # noqa: E501
+"""Сигнатура capability-check: ``(plugin, capability, scope) -> None`` raise при denied."""
 
 
 class ExternalDatabaseTransactionContext:
@@ -216,7 +216,7 @@ class ExternalDatabaseTransactionContext:
         result = await self._session.execute(text(sql), params or {})
         try:
             return [dict(row) for row in result.mappings().all()]
-        except (TypeError, ValueError, KeyError, AttributeError) as mapping_exc:  # noqa: BLE001
+        except (TypeError, ValueError, KeyError, AttributeError) as mapping_exc:
             # cycle-9/D-AUDIT-1028: narrow exceptions + observability.
             # TypeError для wrong row type, ValueError для invalid value,
             # KeyError для missing key, AttributeError для mappings API
@@ -334,7 +334,7 @@ class ExternalDatabaseFacade:
                 result = await session.execute(text(sql), params or {})
                 try:
                     return [dict(row) for row in result.mappings().all()]
-                except (TypeError, ValueError, KeyError, AttributeError) as mapping_exc:  # noqa: BLE001
+                except (TypeError, ValueError, KeyError, AttributeError) as mapping_exc:
                     # cycle-9/D-AUDIT-1029: см. D-AUDIT-1028 — mirror для
                     # async path (call_procedure).
                     import logging

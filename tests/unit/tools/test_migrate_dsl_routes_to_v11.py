@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты tools/migrate_dsl_routes_to_v11.py."""
 
 from __future__ import annotations
@@ -11,9 +10,9 @@ import pytest
 _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 sys.path.insert(0, str(_TOOLS))
 
-import migrate_dsl_routes_to_v11 as mod  # noqa: E402
+import migrate_dsl_routes_to_v11 as mod
 
-from src.backend.services.routes.manifest_toml import load_route_manifest  # noqa: E402
+from src.backend.services.routes.manifest_toml import load_route_manifest
 
 
 def test_migrate_one_creates_dir_and_manifest(tmp_path: Path) -> None:
@@ -23,7 +22,7 @@ def test_migrate_one_creates_dir_and_manifest(tmp_path: Path) -> None:
         "# pipeline\nfrom: rest\nto: db\n", encoding="utf-8"
     )
     routes = tmp_path / "routes"
-    target, rendered = mod.migrate_one(
+    target, _rendered = mod.migrate_one(
         legacy / "credit.yaml",
         routes,
         core_spec=">=0.2,<0.3",

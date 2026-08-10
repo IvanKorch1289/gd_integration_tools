@@ -128,7 +128,7 @@ class HtmlTemplateProcessor(BaseProcessor):
             if not feature_flags.proc_html_template:
                 exchange.set_property("html_template_status", "skipped")
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1710: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags

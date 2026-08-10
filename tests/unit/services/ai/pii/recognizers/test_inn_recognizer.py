@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for InnRecognizer (ФНС checksum validation).
 
 Covers:

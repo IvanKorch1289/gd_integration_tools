@@ -1,6 +1,5 @@
 """Unit tests for StranglerFigProcessor (v21 §2.3)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

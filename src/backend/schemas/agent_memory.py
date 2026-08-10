@@ -17,15 +17,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 __all__ = (
     "FactCreate",
+    "FactKeyPath",
     "FactRead",
     "FactsResponse",
     "MessageCreate",
     "MessagesResponse",
     "ScratchpadResponse",
     "ScratchpadValue",
-    "SessionPath",
     "SessionListQuery",
-    "FactKeyPath",
+    "SessionPath",
 )
 
 

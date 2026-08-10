@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты `InvokeAsyncProcessor` (R2.7)."""
 
 from __future__ import annotations

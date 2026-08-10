@@ -1,6 +1,5 @@
 """Тесты RuntimeFeatureFlagOverrides (Sprint 16 Wave 9, CP-15)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

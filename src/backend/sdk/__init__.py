@@ -27,33 +27,33 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.pipeline import Pipeline
 
 __all__ = [
-    # DSL Engine
-    "Exchange",
-    "Pipeline",
-    # DI Container (runtime services)
-    "get_service",
-    "register_factory",
-    # DI infrastructure-module registry (S172 M3 ARC-006)
-    "register_infra_module",
-    "unregister_infra_module",
-    "ExtensionRegistrationError",
-    "is_extension_path",
-    # App State decorator
-    "app_state_singleton",
+    # AI Tool Policy (S170 P0-7)
+    "AgentToolPolicy",
     # Errors
     "BaseError",
     # Utilities
     "Clock",
-    # Jupyter Hub (S170 NEW)
-    "run_hub_notebook",
-    "NotebookSpec",
+    # DSL Engine
+    "Exchange",
+    "ExtensionRegistrationError",
     "NotebookRegistry",
-    # Composition-bound extension API (S172 P1).
-    "get_scheduler_provider",
+    "NotebookSpec",
+    "Pipeline",
     "SchedulerManager",
     "WorkflowBuilder",
-    # AI Tool Policy (S170 P0-7)
-    "AgentToolPolicy",
+    # App State decorator
+    "app_state_singleton",
+    # Composition-bound extension API (S172 P1).
+    "get_scheduler_provider",
+    # DI Container (runtime services)
+    "get_service",
+    "is_extension_path",
+    "register_factory",
+    # DI infrastructure-module registry (S172 M3 ARC-006)
+    "register_infra_module",
+    # Jupyter Hub (S170 NEW)
+    "run_hub_notebook",
+    "unregister_infra_module",
 ]
 
 # Публичные типы для type-checking

@@ -11,7 +11,6 @@
 интеграционный тест с фейковым IMAP-сервером.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -58,7 +57,7 @@ def test_email_imap_source_constructor() -> None:
 @pytest.mark.asyncio
 async def test_email_imap_filter_subject_mock() -> None:
     """subject_filter пропускает письма с совпадающей темой и отфильтровывает остальные."""
-    aioimaplib = pytest.importorskip("aioimaplib")  # noqa: F841
+    aioimaplib = pytest.importorskip("aioimaplib")
 
     src = EmailIMAPSource(
         host="imap.example.com",

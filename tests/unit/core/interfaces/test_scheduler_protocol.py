@@ -3,7 +3,6 @@
 Wave ``[wave:s18/w0-goal-driven-sweep-8-scheduler-backend-protocol]``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

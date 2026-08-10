@@ -1,6 +1,5 @@
 """Unit tests for YAMLStore."""
 
-# ruff: noqa: S101, SLF001
 
 from __future__ import annotations
 

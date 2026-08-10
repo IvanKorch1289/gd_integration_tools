@@ -4,7 +4,6 @@
 напрямую — оборачивает в ``asyncio.to_thread``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

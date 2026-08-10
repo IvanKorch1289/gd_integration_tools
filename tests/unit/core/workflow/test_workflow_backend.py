@@ -1,6 +1,5 @@
 """Unit tests for WorkflowBackend Protocol and FakeWorkflowBackend."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

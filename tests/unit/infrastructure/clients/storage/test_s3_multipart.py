@@ -4,7 +4,6 @@
 покрывается отдельным integration-тестом (под testcontainer MinIO).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

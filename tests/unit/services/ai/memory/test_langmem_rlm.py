@@ -10,7 +10,6 @@ Cycle 70 invariant: tests catch regressions in feedback processing
 that could corrupt semantic search ranking.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

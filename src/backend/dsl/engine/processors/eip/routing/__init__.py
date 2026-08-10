@@ -31,9 +31,9 @@ from src.backend.dsl.engine.processors.eip.routing.scatter_gather import (
 
 __all__ = (
     "DynamicRouterProcessor",
-    "ScatterGatherProcessor",
-    "RecipientListProcessor",
     "LoadBalancerProcessor",
     "MulticastProcessor",
     "MulticastRoutesProcessor",
+    "RecipientListProcessor",
+    "ScatterGatherProcessor",
 )

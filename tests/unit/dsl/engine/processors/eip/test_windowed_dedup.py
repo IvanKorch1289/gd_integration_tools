@@ -4,7 +4,6 @@ WindowedCollectProcessor.
 Паттерн: async tests, моки для Redis через monkeypatch.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

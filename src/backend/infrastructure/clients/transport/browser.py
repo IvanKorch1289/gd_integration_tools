@@ -19,7 +19,7 @@ from typing import Any
 # NB: порядок импортов критичен (S163 W3 lesson, см. ftp.py).
 # ``core.config.settings`` грузится ПЕРВЫМ — pre-breaks circular import chain
 # breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
-from src.backend.core.config.settings import settings as _settings  # noqa: F401
+from src.backend.core.config.settings import settings as _settings
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 
@@ -94,14 +94,14 @@ class BrowserClient:
         """
         ctx_kwargs: dict[str, Any] = {
             "viewport": {
-                "width": random.randint(  # noqa: S311  # non-cryptographic use
+                "width": random.randint(  # non-cryptographic use
                     1280, 1920
                 ),  # stealth fingerprint randomization, не криптография
-                "height": random.randint(  # noqa: S311  # non-cryptographic use
+                "height": random.randint(  # non-cryptographic use
                     720, 1080
                 ),  # stealth fingerprint randomization, не криптография
             },
-            "user_agent": random.choice(  # noqa: S311  # non-cryptographic use
+            "user_agent": random.choice(  # non-cryptographic use
                 _USER_AGENTS
             ),  # stealth UA rotation, не криптография
         }
@@ -120,7 +120,7 @@ class BrowserClient:
         """
         if self._human_delays:
             await asyncio.sleep(
-                random.randint(min_ms, max_ms) / 1000  # noqa: S311  # non-cryptographic use
+                random.randint(min_ms, max_ms) / 1000  # non-cryptographic use
             )  # human-like delay jitter, не криптография
 
     async def navigate(

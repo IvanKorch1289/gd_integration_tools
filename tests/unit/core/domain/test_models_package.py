@@ -170,7 +170,7 @@ class TestCoreDomainModelsPackage:
         assert hasattr(OrderKind, "orders")
         # FK constraint name in Order points to orderkinds.id
         fk_columns = [col for col in Order.__table__.c if col.foreign_keys]
-        fk_targets = {list(col.foreign_keys)[0].target_fullname for col in fk_columns}
+        fk_targets = {next(iter(col.foreign_keys)).target_fullname for col in fk_columns}
         assert any("orderkinds" in t for t in fk_targets), (
             f"FK→orderkinds missing: {fk_targets}"
         )
@@ -239,13 +239,13 @@ class TestCoreDomainModelsPackage:
         from src.backend.core.domain.models import WorkflowEvent
 
         fk_cols = [c for c in WorkflowEvent.__table__.c if c.foreign_keys]
-        fk_targets = {list(c.foreign_keys)[0].target_fullname for c in fk_cols}
+        fk_targets = {next(iter(c.foreign_keys)).target_fullname for c in fk_cols}
         assert "workflow_instances.id" in fk_targets
         # ONDELETE CASCADE preserved
-        workflow_id_fk = [
+        workflow_id_fk = next(
             c.foreign_keys for c in WorkflowEvent.__table__.c if c.name == "workflow_id"
-        ][0]
-        ondelete = list(workflow_id_fk)[0].ondelete
+        )
+        ondelete = next(iter(workflow_id_fk)).ondelete
         assert ondelete == "CASCADE"
 
 

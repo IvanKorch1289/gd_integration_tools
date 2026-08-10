@@ -56,7 +56,7 @@ async def test_status_returns_none_for_unknown_id() -> None:
 async def test_chunker_fingerprint_propagates_to_metadata() -> None:
     captured: list[dict] = []
 
-    async def _capture(text, metadata=None, namespace="default"):  # noqa: ANN001
+    async def _capture(text, metadata=None, namespace="default"):
         captured.append(metadata or {})
         return "doc"
 

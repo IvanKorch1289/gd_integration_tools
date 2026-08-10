@@ -1,6 +1,5 @@
 """W23 — фабрика build_source + SourceSpec."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -32,7 +31,7 @@ def test_specfile_empty() -> None:
     [
         ("webhook", {"path": "/wh"}),
         ("http", {"path": "/api/inbound"}),
-        ("file_watcher", {"directory": "/tmp"}),  # noqa: S108
+        ("file_watcher", {"directory": "/tmp"}),
         ("polling", {"url": "http://x", "interval_seconds": 1.0}),
         ("websocket", {"url": "ws://x"}),
         ("soap", {"wsdl_url": "http://x?wsdl", "operation": "GetX"}),

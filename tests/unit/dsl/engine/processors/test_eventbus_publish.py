@@ -6,7 +6,6 @@
     * EventBus запущен → публикация через ``bus.publish()``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

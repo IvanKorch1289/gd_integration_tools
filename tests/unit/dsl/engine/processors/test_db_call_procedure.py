@@ -1,6 +1,5 @@
 """Unit-тесты DbCallProcedureProcessor — Wave [wave:s5/k3-w8-db-call-procedure]."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

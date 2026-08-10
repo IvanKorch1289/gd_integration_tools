@@ -8,7 +8,6 @@ ClickHouseAuditService эмитит:
 Раньше silent return без observability → production data-loss без алертинга.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

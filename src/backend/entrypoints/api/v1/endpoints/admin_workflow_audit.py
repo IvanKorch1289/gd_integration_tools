@@ -204,7 +204,7 @@ async def get_audit_events(
         params["event_type"] = event_type
 
     sql = (
-        "SELECT event_id, event_type, workflow_id, tenant_id, payload, "  # noqa: S608  # internal query with controlled parameters
+        "SELECT event_id, event_type, workflow_id, tenant_id, payload, "  # internal query with controlled parameters
         "trace_id, created_at, actor, duration_ms, parent_workflow_id "
         f"FROM workflow_audit WHERE {' AND '.join(conditions)} "
         "ORDER BY created_at DESC LIMIT %(limit)s"

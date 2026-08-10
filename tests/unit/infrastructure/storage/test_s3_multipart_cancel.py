@@ -33,8 +33,8 @@ sys.modules.setdefault("botocore", _boto_stub)
 sys.modules.setdefault("botocore.config", _boto_stub.config)
 sys.modules.setdefault("botocore.exceptions", _boto_stub.exceptions)
 
-from src.backend.core.errors import ServiceError  # noqa: E402
-from src.backend.infrastructure.storage.s3 import S3ObjectStorage  # noqa: E402
+from src.backend.core.errors import ServiceError
+from src.backend.infrastructure.storage.s3 import S3ObjectStorage
 
 
 def _make_storage() -> S3ObjectStorage:

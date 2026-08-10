@@ -7,7 +7,6 @@
 * Source-классы НЕ инстанцируются в процессе теста — используются mock'и
   через ``unittest.mock.patch``.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 

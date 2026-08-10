@@ -1,6 +1,5 @@
 """Sprint 6 K2 — тесты backpressure (streaming + adaptive bulkhead)."""
 
-# ruff: noqa: S101, SLF001
 
 from __future__ import annotations
 

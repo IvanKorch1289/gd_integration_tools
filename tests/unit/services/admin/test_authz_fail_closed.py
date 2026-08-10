@@ -10,7 +10,6 @@ audit event с outcome="denied". Opt-in fail-OPEN только через
 ADMIN_AUTHZ_FAIL_OPEN=true env var (для dev_light без AuthZ).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

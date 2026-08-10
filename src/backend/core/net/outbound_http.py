@@ -245,7 +245,7 @@ class OutboundHttpClient:
 
             provider: CorrelationIdProvider = _get_cid
             cid = provider()
-        except (ImportError, AttributeError, RuntimeError, TypeError) as cid_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError, TypeError) as cid_exc:
             # cycle-9/D-AUDIT-989: narrow exceptions + observability.
             # ImportError — provider missing, AttributeError — API change,
             # RuntimeError — provider unavailable, TypeError — wrong
@@ -320,7 +320,7 @@ class OutboundHttpClient:
                     loop.create_task(coro)
                 except RuntimeError:
                     pass  # no running loop → drop coroutine (sync context)
-        except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as audit_exc:
             # cycle-9/D-AUDIT-1727: narrow exceptions + observability.
             # ImportError — audit facade missing, AttributeError — API
             # change, RuntimeError — backend unavailable. never raise from

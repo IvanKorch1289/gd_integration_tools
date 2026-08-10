@@ -20,13 +20,13 @@ HealthCheck = Callable[[], Awaitable[dict[str, Any]]]
 HealthCheckFactory = Callable[[str], HealthCheck]
 
 __all__ = (
+    "get_health_check_factory",
+    "get_health_mode_class",
     "get_health_result_class",
+    "get_infrastructure_client_class",
     "get_pool_entry_class",
     "get_pool_health_monitor_class",
     "get_pool_monitor_factory",
-    "get_health_mode_class",
-    "get_infrastructure_client_class",
-    "get_health_check_factory",
 )
 
 

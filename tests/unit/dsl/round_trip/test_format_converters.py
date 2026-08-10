@@ -8,7 +8,6 @@
 * jsonl_encode / jsonl_decode.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

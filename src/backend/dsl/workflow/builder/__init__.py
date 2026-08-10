@@ -48,7 +48,7 @@ from src.backend.dsl.workflow.builder.sla_mixin import SlaMixin  # S58 W4: MRO
 from src.backend.dsl.workflow.builder.wait_mixin import WaitMixin  # S58 W4: MRO
 from src.backend.dsl.workflow.builder.workflow_mixin import WorkflowMixin  # S58 W4: MRO
 
-__all__ = ("WorkflowBuilder", "SagaBuilder")
+__all__ = ("SagaBuilder", "WorkflowBuilder")
 
 
 class WorkflowBuilder(
@@ -67,13 +67,13 @@ class WorkflowBuilder(
     """
 
     __slots__ = (
-        "_name",
-        "_description",
-        "_version",
-        "_steps",
-        "_default_timeout_s",
         "_default_retry_policy",
+        "_default_timeout_s",
+        "_description",
+        "_name",
         "_sla",
+        "_steps",
+        "_version",
     )
 
     def __init__(self, name: str, *, description: str | None = None) -> None:

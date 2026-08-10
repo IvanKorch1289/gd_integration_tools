@@ -15,7 +15,6 @@
     * Integration with simple route (build → metadata).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -265,7 +264,7 @@ class TestDeferUntil:
 
 class TestDeferIf:
     def test_defer_if_callable_stored(self, builder: RouteBuilder) -> None:
-        cond = lambda ex: True  # noqa: E731
+        cond = lambda ex: True
         b = builder.defer_if(cond)
         assert b._deferred["type"] == "conditional"
         assert b._deferred["condition"] is cond

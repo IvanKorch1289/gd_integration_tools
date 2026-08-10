@@ -9,7 +9,6 @@
 Pattern (D259, Ponytail): thin wrapper над prometheus_client.
 Production: /metrics endpoint exposes cert_* metrics.
 """
-# ruff: noqa: E501
 from __future__ import annotations
 
 import time
@@ -39,7 +38,7 @@ class CertPrometheusExporter:
 
     def __init__(self) -> None:
         try:
-            from prometheus_client import (  # noqa: F401 — used dynamically in render()
+            from prometheus_client import (
                 CollectorRegistry,
                 Counter,
                 Gauge,

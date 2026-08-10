@@ -178,7 +178,7 @@ class UnifiedPoolManager:
                     if hasattr(pool, attr):
                         try:
                             metrics[attr] = getattr(pool, attr)
-                        except (AttributeError, TypeError, ValueError) as attr_exc:  # noqa: BLE001
+                        except (AttributeError, TypeError, ValueError) as attr_exc:
                             # cycle-9/D-AUDIT-956: narrow exceptions + observability.
                             # AttributeError для property raised on access,
                             # TypeError для wrong return type, ValueError

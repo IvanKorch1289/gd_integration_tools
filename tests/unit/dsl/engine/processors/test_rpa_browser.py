@@ -5,7 +5,6 @@ Wave: ``[wave:s8/k3-rpa-universal-stage1]``. Используют AsyncMock дл
 ошибок (exchange.fail) каждого из 8 процессоров.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -210,7 +209,7 @@ async def test_browser_launch_acquires_context_and_creates_page() -> None:
     pooled_ctx.new_page.return_value = page
 
     class _FakePool:
-        def acquire(self):  # noqa: ANN001
+        def acquire(self):
             class _CM:
                 async def __aenter__(self_inner):
                     return pooled_ctx
@@ -256,7 +255,7 @@ async def test_browser_launch_releases_context_via_finalizer() -> None:
     released = {"count": 0}
 
     class _FakePool:
-        def acquire(self):  # noqa: ANN001
+        def acquire(self):
             class _CM:
                 async def __aenter__(self_inner):
                     return pooled_ctx
@@ -294,7 +293,7 @@ async def test_browser_launch_finalizer_releases_on_goto_failure() -> None:
     released = {"count": 0}
 
     class _FakePool:
-        def acquire(self):  # noqa: ANN001
+        def acquire(self):
             class _CM:
                 async def __aenter__(self_inner):
                     return pooled_ctx

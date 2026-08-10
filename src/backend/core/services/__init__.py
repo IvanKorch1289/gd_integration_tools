@@ -18,7 +18,7 @@ Related:
 
 from __future__ import annotations
 
-from src.backend.services.core.base_external_api import (  # noqa: F401
+from src.backend.services.core.base_external_api import (
     BaseExternalAPIClient,
 )
 

@@ -7,7 +7,6 @@
 Маркер ``requires_pg`` позволяет отфильтровать тест в среде без Docker.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

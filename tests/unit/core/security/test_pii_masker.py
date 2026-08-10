@@ -9,7 +9,7 @@
 * стабильность ``default_masker`` singleton.
 """
 
-# ruff: noqa: S101 — assert разрешён в pytest
+
 
 from __future__ import annotations
 

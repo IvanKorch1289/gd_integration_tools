@@ -299,7 +299,7 @@ class ConsulConfigSettingsSource(FilteredSettingsSource):
                 field_name = key[len(prefix) :] if key.startswith(prefix) else key
                 data[field_name] = value
             return data
-        except (AttributeError, TypeError, ValueError, KeyError) as items_exc:  # noqa: BLE001
+        except (AttributeError, TypeError, ValueError, KeyError) as items_exc:
             # cycle-9/D-AUDIT-982: narrow exceptions + observability.
             # AttributeError — store.items API change, TypeError — wrong
             # store type, ValueError — invalid prefix, KeyError — missing

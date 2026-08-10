@@ -3,7 +3,6 @@
 Pattern (D289, Ponytail): PrometheusAlertManager интегрирован с D259 exporter
 и CertRotationWatcher. CI deploy rules.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

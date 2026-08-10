@@ -102,7 +102,7 @@ class VaultSecretProcessor(BaseProcessor):
                 import asyncio
 
                 secret = await asyncio.to_thread(backend.get, self._path)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "vault_read failed", extra={"path": self._path, "error": str(exc)}
             )

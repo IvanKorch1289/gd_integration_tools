@@ -10,7 +10,7 @@ Per architecture invariants: services не должны зависеть от en
 
 from __future__ import annotations
 
-from src.backend.services.integrations.webhook_relay import (  # noqa: F401
+from src.backend.services.integrations.webhook_relay import (
     DLQEntry,
     RelayRule,
     WebhookRelay,

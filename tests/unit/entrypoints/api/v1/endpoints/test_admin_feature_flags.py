@@ -1,6 +1,5 @@
 """Unit tests for admin feature-flags endpoints."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

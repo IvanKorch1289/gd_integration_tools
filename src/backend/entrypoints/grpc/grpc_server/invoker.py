@@ -141,7 +141,7 @@ class InvokerGRPCServicer(InvokerServiceServicer):
                     ).decode("utf-8")
                 else:
                     result_json = encode_json(response.result).decode("utf-8")
-            except (AttributeError, TypeError, ValueError) as json_exc:  # noqa: BLE001
+            except (AttributeError, TypeError, ValueError) as json_exc:
                 # cycle-9/D-AUDIT-1010: narrow exceptions + observability.
                 # AttributeError — model_dump API change, TypeError —
                 # wrong result type, ValueError — invalid JSON value.

@@ -1,6 +1,5 @@
 """Unit-тесты PolicyMixin chainable API — Wave [wave:s5/k3-w7-policy-chainable]."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

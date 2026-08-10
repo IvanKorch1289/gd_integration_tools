@@ -18,7 +18,6 @@ Wave ``[wave:s6/k3-banking-processors-tests]``.
 12. ``geo`` — геокодинг адреса клиента (через geopy).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

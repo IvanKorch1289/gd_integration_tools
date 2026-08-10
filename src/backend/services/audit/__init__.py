@@ -18,7 +18,7 @@ S45 QW10: AuditService + get_unified_audit_service теперь импортир
 
 from __future__ import annotations
 
-from src.backend.core.audit.facade.audit_service import (  # noqa: E402,F401
+from src.backend.core.audit.facade.audit_service import (
     AuditService,
     get_unified_audit_service,
 )

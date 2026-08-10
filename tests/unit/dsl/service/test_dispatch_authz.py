@@ -17,7 +17,6 @@ K3 S19 W3: проверяет, что canonical dispatch path (``DslService.disp
     .venv/bin/python -m pytest tests/unit/dsl/service/test_dispatch_authz.py -q
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

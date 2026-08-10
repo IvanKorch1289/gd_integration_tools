@@ -3,7 +3,6 @@
 Smoke-coverage для нового free SearXNG search-провайдера в WebSearchService chain.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

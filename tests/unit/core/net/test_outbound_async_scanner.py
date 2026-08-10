@@ -4,7 +4,6 @@
 инициализация может падать из-за SOCKS proxy env vars.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

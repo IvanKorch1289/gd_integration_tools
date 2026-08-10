@@ -16,4 +16,4 @@ from src.backend.infra_cli.register import (
     register_connector,
 )
 
-__all__ = ("register_connector", "get_aggregator_with_registry")
+__all__ = ("get_aggregator_with_registry", "register_connector")

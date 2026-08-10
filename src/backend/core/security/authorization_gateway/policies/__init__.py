@@ -31,8 +31,8 @@ from src.backend.core.security.authorization_gateway.policies.opa_policy_decider
 )
 
 __all__ = (
-    "OPAPolicyDecider",
     "CasbinPolicyDecider",
-    "build_opa_policy_decider",
+    "OPAPolicyDecider",
     "build_casbin_policy_decider",
+    "build_opa_policy_decider",
 )

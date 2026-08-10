@@ -21,12 +21,12 @@ BACKEND_DIR = DSL_DIR.parent
 SRC_DIR = BACKEND_DIR.parent
 sys.path.insert(0, str(SRC_DIR))
 
-from src.backend.dsl.engine.exchange import (  # noqa: E402
+from src.backend.dsl.engine.exchange import (
     Exchange,
     ExchangeStatus,
     Message,
 )
-from src.backend.dsl.engine.processors.base import BaseProcessor  # noqa: E402
+from src.backend.dsl.engine.processors.base import BaseProcessor
 
 
 @click.group()

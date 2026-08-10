@@ -7,7 +7,6 @@ Cycle 64 invariant: tests catch regressions in episodic storage
 that could lead to silent conversation history corruption.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

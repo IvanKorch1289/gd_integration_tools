@@ -1,6 +1,5 @@
 """Unit-тесты GraphQLSubscriptionSource (K3 W5b S3)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

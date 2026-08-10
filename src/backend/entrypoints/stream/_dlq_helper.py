@@ -22,7 +22,7 @@ def _summarize_body(body: Any, *, max_len: int = 256) -> str:
     """Краткое summary body для metadata (truncate to ``max_len``)."""
     try:
         rendered = repr(body)
-    except (TypeError, ValueError) as repr_exc:  # noqa: BLE001
+    except (TypeError, ValueError) as repr_exc:
         # cycle-9/D-AUDIT-1013: narrow exceptions + observability (mirror
         # D-AUDIT-1011/1012 для stream).
         # TypeError для unrepresentable type, ValueError для invalid repr

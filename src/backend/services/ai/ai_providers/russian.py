@@ -206,7 +206,7 @@ async def _smoke_test_providers() -> None:
             assert p.name == cls.name
             assert p.model, f"{cls.name}: empty model"
             logger.info("russian_provider_smoke_ok", extra={"provider": p.name})
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "russian_provider_smoke_failed",
                 extra={"provider": cls.name, "error": str(exc)},

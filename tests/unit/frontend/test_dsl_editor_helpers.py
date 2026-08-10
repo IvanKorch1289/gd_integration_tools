@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты для _editor/ helper-модулей DSL Visual Editor (S77 W3).
 
 Покрывают pure-функции (constants, yaml_to_steps, build_yaml_from_steps,
@@ -17,13 +16,13 @@ from __future__ import annotations
 
 import pytest
 
-from src.frontend.streamlit_app.pages._editor.constants import (  # noqa: E402
+from src.frontend.streamlit_app.pages._editor.constants import (
     PROCESSOR_ICONS,
     STEP_PALETTE,
     VISUAL_PROCESSORS,
     default_yaml,
 )
-from src.frontend.streamlit_app.pages._editor.yaml_sync import (  # noqa: E402
+from src.frontend.streamlit_app.pages._editor.yaml_sync import (
     build_yaml_from_steps,
     try_load,
     yaml_to_steps,
@@ -142,7 +141,7 @@ def test_yaml_to_steps_string_processor_form() -> None:
 def test_yaml_to_steps_dict_processor_form() -> None:
     """Процессор как dict ``- log: {level: info}`` → ``{type: log, params}``."""
     yaml_str = "route_id: x\nprocessors:\n  - log:\n      level: info\n  - transform:\n      expression: .x\n"
-    meta, steps = yaml_to_steps(yaml_str)
+    _meta, steps = yaml_to_steps(yaml_str)
     assert len(steps) == 2
     assert steps[0] == {"type": "log", "params": {"level": "info"}}
     assert steps[1] == {"type": "transform", "params": {"expression": ".x"}}
@@ -151,7 +150,7 @@ def test_yaml_to_steps_dict_processor_form() -> None:
 def test_yaml_to_steps_dict_processor_non_dict_value() -> None:
     """Если значение processor'а не dict, params={} (default)."""
     yaml_str = "route_id: x\nprocessors:\n  - log: just_a_string\n"
-    meta, steps = yaml_to_steps(yaml_str)
+    _meta, steps = yaml_to_steps(yaml_str)
     assert steps[0] == {"type": "log", "params": {}}
 
 

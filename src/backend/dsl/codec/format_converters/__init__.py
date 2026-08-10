@@ -40,20 +40,20 @@ from src.backend.dsl.codec.format_converters.toml import (
 )
 
 __all__ = (
-    "AvroEncodeProcessor",
     "AvroDecodeProcessor",
-    "ProtobufEncodeProcessor",
-    "ProtobufDecodeProcessor",
-    "TomlEncodeProcessor",
-    "TomlDecodeProcessor",
-    "MarkdownToHtmlProcessor",
+    "AvroEncodeProcessor",
     "HtmlToMarkdownProcessor",
-    "JsonLinesEncodeProcessor",
     "JsonLinesDecodeProcessor",
+    "JsonLinesEncodeProcessor",
+    "MarkdownToHtmlProcessor",
+    "ProtobufDecodeProcessor",
+    "ProtobufEncodeProcessor",
+    "TomlDecodeProcessor",
+    "TomlEncodeProcessor",
     "_resolve_protobuf_class",
+    "_simple_html_to_markdown",
     "_toml_encode",
     "_toml_encode_table",
     "_toml_key",
     "_toml_value",
-    "_simple_html_to_markdown",
 )

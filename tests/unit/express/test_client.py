@@ -18,7 +18,6 @@
 сценарию ``async with client:`` без сетевых вызовов.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -47,7 +46,7 @@ def bot_config() -> BotConfig:
         bot_id="00000000-0000-0000-0000-000000000001",
         # Длина ≥32 байт чтобы PyJWT не выдавал InsecureKeyLengthWarning
         # (рекомендация RFC 7518 §3.2 для HS256).
-        secret_key="test-secret-key-with-sufficient-length-32+",  # noqa: S106
+        secret_key="test-secret-key-with-sufficient-length-32+",
         botx_host="cts.example.ru",
         base_url="https://cts.example.ru",
         timeout=5.0,
@@ -71,7 +70,7 @@ def _make_client(
         if isinstance(handler, httpx.MockTransport)
         else httpx.MockTransport(handler)
     )
-    client._http = httpx.AsyncClient(  # noqa: SLF001
+    client._http = httpx.AsyncClient(
         base_url=config.base_url, timeout=config.timeout, transport=transport
     )
     return client
@@ -86,7 +85,7 @@ class TestJWT:
     def test_jwt_has_required_claims(self, bot_config: BotConfig) -> None:
         """JWT содержит все обязательные поля BotX API v4."""
         client = ExpressBotClient(bot_config)
-        token = client._generate_token()  # noqa: SLF001
+        token = client._generate_token()
         payload = jwt.decode(
             token,
             bot_config.secret_key,
@@ -103,8 +102,8 @@ class TestJWT:
     def test_jwt_jti_is_unique(self, bot_config: BotConfig) -> None:
         """``jti`` уникален для каждого вызова."""
         client = ExpressBotClient(bot_config)
-        t1 = client._generate_token()  # noqa: SLF001
-        t2 = client._generate_token()  # noqa: SLF001
+        t1 = client._generate_token()
+        t2 = client._generate_token()
         p1 = jwt.decode(
             t1,
             bot_config.secret_key,
@@ -122,7 +121,7 @@ class TestJWT:
     def test_auth_headers_bearer_prefix(self, bot_config: BotConfig) -> None:
         """``Authorization`` header — Bearer-токен."""
         client = ExpressBotClient(bot_config)
-        headers = client._auth_headers()  # noqa: SLF001
+        headers = client._auth_headers()
         assert headers["Authorization"].startswith("Bearer ")
 
 
@@ -449,11 +448,11 @@ class TestContextManager:
     async def test_context_manager_lifecycle(self, bot_config: BotConfig) -> None:
         """``async with`` создаёт и закрывает HTTP-клиент."""
         client = ExpressBotClient(bot_config)
-        assert client._http is None  # noqa: SLF001
+        assert client._http is None
         async with client as opened:
             assert opened is client
-            assert client._http is not None  # noqa: SLF001
-        assert client._http is None  # noqa: SLF001
+            assert client._http is not None
+        assert client._http is None
 
     def test_http_property_lazy_init(self, bot_config: BotConfig) -> None:
         """``client.http`` создаёт временный AsyncClient если не открыт."""

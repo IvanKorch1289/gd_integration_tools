@@ -53,9 +53,9 @@ from src.backend.core.di.module_registry_extensions import (
 )
 
 __all__ = (
-    "ExtensionRegistrationError",
     "INFRA_MODULES",
     "MODULE_SCOPES",
+    "ExtensionRegistrationError",
     "ModuleRegistryError",
     "Scope",
     "clear_extension_modules",

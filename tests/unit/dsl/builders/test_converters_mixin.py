@@ -9,7 +9,6 @@
 Target: 30+ tests (3+ per method × 10 методов).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

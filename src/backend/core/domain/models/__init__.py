@@ -25,15 +25,15 @@ from __future__ import annotations
 
 # S4 fix (S36-W10): 4 shim-модуля удалены (files/orders/orderkinds/users).
 # Импорт напрямую из extensions/core_entities/ (S168 W14 P2-10 closure).
-from extensions.core_entities.files.domain.models import (  # noqa: E402,F401
+from extensions.core_entities.files.domain.models import (
     File,
     OrderFile,
 )
 from extensions.core_entities.orderkinds.domain.models import (
-    OrderKind,  # noqa: E402,F401
+    OrderKind,
 )
-from extensions.core_entities.orders.domain.models import Order  # noqa: E402,F401
-from extensions.core_entities.users.domain.models import User  # noqa: E402,F401
+from extensions.core_entities.orders.domain.models import Order
+from extensions.core_entities.users.domain.models import User
 from src.backend.core.domain.models.base import (
     Base,
     BaseModel,
@@ -65,9 +65,6 @@ __all__ = (
     # base
     "Base",
     "BaseModel",
-    "mapper_registry",
-    "metadata",
-    "nullable_str",
     # cert
     "CertHistory",
     "CertRecord",
@@ -75,14 +72,14 @@ __all__ = (
     "DslSnapshot",
     # files (S4: from extensions/core_entities/files/)
     "File",
-    "OrderFile",
     # langmem
     "LangMemEpisodic",
     "LangMemProcedural",
-    # orderkinds (S4: from extensions/core_entities/orderkinds/)
-    "OrderKind",
     # orders (S4: from extensions/core_entities/orders/)
     "Order",
+    "OrderFile",
+    # orderkinds (S4: from extensions/core_entities/orderkinds/)
+    "OrderKind",
     # outbox
     "OutboxMessage",
     # rule_engine
@@ -96,4 +93,7 @@ __all__ = (
     # workflow_instance
     "WorkflowInstance",
     "WorkflowStatus",
+    "mapper_registry",
+    "metadata",
+    "nullable_str",
 )

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke-тест для 4 in-tree core_entities плагинов (Sprint 8 Extensions 3).
 
 Проверяет для ``extensions/core_entities/{orders,users,files,orderkinds}``:

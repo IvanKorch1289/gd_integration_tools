@@ -7,7 +7,6 @@
     * объявлен ровно один источник ``http`` с методом и path;
     * последовательность ``steps`` включает CRUD pass-through ключевые шаги.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 

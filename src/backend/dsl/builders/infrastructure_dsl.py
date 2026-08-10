@@ -489,7 +489,7 @@ class InfrastructureDSL:
         remote_path: str,
         *,
         username: str | None = None,
-        password_from: str = "none",  # noqa: S107
+        password_from: str = "none",
         key_file: str | None = None,
         timeout: float = 30.0,
         result_property: str = "sftp_object",
@@ -527,7 +527,7 @@ class InfrastructureDSL:
         *,
         body_from: str = "body",
         username: str | None = None,
-        password_from: str = "none",  # noqa: S107
+        password_from: str = "none",
         key_file: str | None = None,
         timeout: float = 30.0,
         result_property: str = "sftp_result",

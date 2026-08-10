@@ -105,7 +105,7 @@ async def emit_secret_access(
             outcome=outcome,
             details=details,
         )
-    except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001 — audit must never break credential flow
+    except (ImportError, AttributeError, RuntimeError) as audit_exc:
         # cycle-9/D-AUDIT-1033: narrow exceptions + observability.
         # ImportError — audit facade missing, AttributeError — API
         # change, RuntimeError — backend unavailable.

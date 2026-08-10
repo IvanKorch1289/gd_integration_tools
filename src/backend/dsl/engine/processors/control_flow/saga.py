@@ -193,7 +193,7 @@ async def _emit_saga_audit(
             tenant_id=None,
             payload={"caller": "dsl.saga", **payload},
         )
-    except (OSError, ConnectionError, RuntimeError, AttributeError, TypeError) as emit_exc:  # noqa: BLE001
+    except (OSError, ConnectionError, RuntimeError, AttributeError, TypeError) as emit_exc:
         # cycle-9/D-AUDIT-1722: narrow exceptions + observability.
         # OSError/ConnectionError — sink transport failure, RuntimeError
         # — backend unavailable, AttributeError — sink API change,

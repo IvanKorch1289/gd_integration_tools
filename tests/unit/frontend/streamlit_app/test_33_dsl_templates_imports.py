@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """S70 W2: tests для 33_DSL_Templates.py top-level dsl imports.
 
 S173 STATUS: файл ``pages/33_DSL_Templates.py`` (англ.) НЕ существует —

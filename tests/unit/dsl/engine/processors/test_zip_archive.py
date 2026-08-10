@@ -1,6 +1,5 @@
 """Unit-тесты ZipArchiveProcessor — Wave [wave:s5/k3-w2-processor-pack-2]."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

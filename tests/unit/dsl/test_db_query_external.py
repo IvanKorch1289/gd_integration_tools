@@ -9,7 +9,6 @@
 * round-trip ``to_spec()``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

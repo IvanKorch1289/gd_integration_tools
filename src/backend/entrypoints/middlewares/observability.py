@@ -137,7 +137,7 @@ def _emit_audit(event: dict[str, Any]) -> None:
                 "status_code", "duration_ms", "service", "ts_ms",
             ],
         )
-    except (ImportError, AttributeError, RuntimeError, OSError) as ch_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError, OSError) as ch_exc:
         # cycle-9/D-AUDIT-1005: narrow exceptions + observability.
         # ImportError — ClickHouse client missing, AttributeError — API
         # change, RuntimeError — ClickHouse unavailable, OSError — network.
@@ -224,7 +224,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         """
         try:
             emit_fn(event, *args)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "ObservabilityMiddleware: %s emit failed (degraded mode): %s",
                 channel,

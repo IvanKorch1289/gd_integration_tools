@@ -75,11 +75,11 @@ class RegionHealthChecker:
                 host = parsed.hostname or "localhost"
                 port = parsed.port or (443 if parsed.scheme == "https" else 80)
                 sock = _asyncio.open_connection(host, port)
-                reader, writer = await sock
+                _reader, writer = await sock
                 writer.close()
                 await writer.wait_closed()
                 return True
-        except (OSError, ConnectionError, TimeoutError, AttributeError) as probe_exc:  # noqa: BLE001
+        except (OSError, ConnectionError, TimeoutError, AttributeError) as probe_exc:
             # cycle-9/D-AUDIT-924: narrow exceptions + observability.
             # OSError/ConnectionError/TimeoutError для network probe,
             # AttributeError для protocol mismatch. Bare `except Exception`

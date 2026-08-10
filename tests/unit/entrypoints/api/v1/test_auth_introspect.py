@@ -1,7 +1,6 @@
 
 
 """Unit-тесты JWT Introspection endpoint (RFC 7662) — Sprint 16 DoD-7."""
-# ruff: noqa: S101
 
 from __future__ import annotations
 

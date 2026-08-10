@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Property-based tests for _percentile (Sprint 42 W1 C-2).
 
 Covers:

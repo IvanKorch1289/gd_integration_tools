@@ -80,7 +80,7 @@ class AutoScaler:
             await self._task
         except asyncio.CancelledError:
             pass
-        except (RuntimeError, AttributeError, TypeError) as task_exc:  # noqa: BLE001
+        except (RuntimeError, AttributeError, TypeError) as task_exc:
             # cycle-9/D-AUDIT-991: narrow exceptions + observability.
             # RuntimeError — task raised, AttributeError — task API change,
             # TypeError — wrong task type.

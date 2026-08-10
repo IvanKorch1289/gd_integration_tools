@@ -118,7 +118,7 @@ class TestSessionManagerGetattr:
         """``session_manager.unknown_attr`` → ``AttributeError``."""
         with pytest.raises(AttributeError, match="has no attribute 'unknown_attr'"):
             from src.backend.infrastructure.database import (
-                session_manager,  # noqa: F401
+                session_manager,
             )
 
             _ = session_manager.unknown_attr

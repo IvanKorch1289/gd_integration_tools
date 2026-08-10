@@ -45,7 +45,7 @@ def gate(audit_events: list[dict[str, Any]]) -> CapabilityGate:
     def safe(event: dict[str, object]) -> None:
         try:
             audit_events.append(dict(event))
-        except Exception:  # noqa: BLE001, S110
+        except Exception:
             pass
 
     return CapabilityGate(audit=safe)

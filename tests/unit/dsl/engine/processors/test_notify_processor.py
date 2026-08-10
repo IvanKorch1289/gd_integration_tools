@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for NotifyProcessor."""
 
 from __future__ import annotations

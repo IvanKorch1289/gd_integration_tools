@@ -32,7 +32,7 @@ _ROOT = Path(__file__).resolve().parents[3]
 # (все тесты используют ``_default_requires_core()`` вместо хардкоженного
 # ``">=22.0,<23"`` который не соответствует semver-схеме ``0.20.0``).
 sys.path.insert(0, str(_ROOT))
-from tools.wizards.plugin_wizard import _default_requires_core  # noqa: E402
+from tools.wizards.plugin_wizard import _default_requires_core
 
 # SemVer X.Y.Z с опциональным pre-release суффиксом — синхронизирован с
 # ``src/backend/core/plugin_runtime/semver_checker._SEMVER_RE``.

@@ -13,7 +13,6 @@
 и заменяется уже сконфигурированным транспортом.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -410,7 +409,7 @@ async def test_http_client_auth_token_sets_authorization(fast_retry: None) -> No
         await client.make_request(
             method="GET",
             url="http://x.test/p",
-            auth_token="my-token",  # noqa: S106 — тестовый токен
+            auth_token="my-token",
         )
         assert captured.get("authorization") == "Bearer my-token"
     finally:

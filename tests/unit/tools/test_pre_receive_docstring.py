@@ -1,4 +1,3 @@
-# ruff: noqa: S101, S603, S607
 """Тесты server-side pre-receive docstring-gate.
 
 Wave: [wave:s8/k1-pre-receive-docstring]

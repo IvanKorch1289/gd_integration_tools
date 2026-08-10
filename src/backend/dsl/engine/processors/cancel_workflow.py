@@ -169,7 +169,7 @@ class CancelWorkflowProcessor(BaseProcessor):
                         "namespace": self.namespace_name,
                     },
                 )
-        except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as audit_exc:
             # cycle-9/D-AUDIT-1715: narrow exceptions + observability.
             # ImportError — audit facade missing, AttributeError — API
             # change, RuntimeError — backend unavailable.

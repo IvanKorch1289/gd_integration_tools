@@ -140,7 +140,7 @@ async def aggregate_saga_stats(
         params["tenant_id"] = tenant_id
 
     sql = (
-        "SELECT countIf(event_type='workflow.compensation_complete') AS succeeded, "  # noqa: S608  # internal query with controlled parameters
+        "SELECT countIf(event_type='workflow.compensation_complete') AS succeeded, "  # internal query with controlled parameters
         "  countIf(event_type='workflow.compensation_fail') AS failed, "
         "  avg(duration_ms) AS avg_dur "
         f"FROM workflow_audit WHERE {' AND '.join(conditions)}"

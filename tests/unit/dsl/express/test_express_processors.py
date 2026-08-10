@@ -16,7 +16,6 @@
     * Используются реальные ``Exchange`` и ``ExecutionContext``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

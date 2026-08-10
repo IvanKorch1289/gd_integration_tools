@@ -1,6 +1,5 @@
 """Unit-тесты для ``src.backend.dsl.engine.processors.telegram._common``."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

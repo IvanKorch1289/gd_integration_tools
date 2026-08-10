@@ -24,9 +24,9 @@ from src.backend.core.auth.mtls_backend import (
 )
 from testkit.mtls_fixtures import (
     CertChain,
-    ca_cert,  # noqa: F401 — re-export фикстура.
-    client_cert_chain,  # noqa: F401
-    server_cert_chain,  # noqa: F401
+    ca_cert,
+    client_cert_chain,
+    server_cert_chain,
 )
 
 
@@ -48,9 +48,9 @@ class _FakeRequest:
 
 
 def test_cert_generation_produces_valid_pem(
-    ca_cert: CertChain,  # noqa: F811 — pytest fixture override.
-    server_cert_chain: CertChain,  # noqa: F811
-    client_cert_chain: CertChain,  # noqa: F811
+    ca_cert: CertChain,
+    server_cert_chain: CertChain,
+    client_cert_chain: CertChain,
 ) -> None:
     """CA/server/client cert'ы содержат корректные PEM-blocks и fingerprint."""
     for chain in (ca_cert, server_cert_chain, client_cert_chain):
@@ -68,7 +68,7 @@ def test_cert_generation_produces_valid_pem(
 
 
 def test_mtls_backend_accepts_client_cert(
-    client_cert_chain: CertChain,  # noqa: F811
+    client_cert_chain: CertChain,
 ) -> None:
     """:class:`MtlsBackend` парсит client cert и возвращает principal.
 

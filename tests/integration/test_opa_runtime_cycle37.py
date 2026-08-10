@@ -18,7 +18,6 @@
 (async query метод). ``httpx`` не используется.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

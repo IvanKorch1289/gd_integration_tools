@@ -10,7 +10,6 @@ Pure ASGI runtime assertions:
 4. ``process()`` с недоступным реестром → exchange.stopped + error (fail-closed).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

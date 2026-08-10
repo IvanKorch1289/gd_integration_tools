@@ -294,7 +294,7 @@ class HttpSensor:
                             return True
                         try:
                             data = resp.json()
-                        except (ValueError, TypeError) as json_exc:  # noqa: BLE001
+                        except (ValueError, TypeError) as json_exc:
                             # cycle-9/D-AUDIT-1007: narrow exceptions + observability.
                             # ValueError для malformed JSON, TypeError для
                             # wrong response type.
@@ -362,7 +362,7 @@ class S3Sensor:
         poll_interval_s: float = 30.0,
     ) -> None:
         try:
-            import aioboto3  # noqa: F401  (import check)
+            import aioboto3
         except ImportError as e:
             raise ImportError(
                 "S3Sensor requires aioboto3. Install: uv pip install aioboto3"

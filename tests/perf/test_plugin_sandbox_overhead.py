@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 K2 W2 — bench overhead PluginSandboxAdapter vs прямой вызов.
 
 Запуск:
@@ -42,11 +41,11 @@ _BASELINE_FILE = _BASELINES / "plugin_sandbox.json"
 class _FakeSandbox:
     async def run(
         self,
-        code: str,  # noqa: ARG002
+        code: str,
         *,
-        timeout_s: float = 30.0,  # noqa: ARG002
-        files: Mapping[str, bytes] | None = None,  # noqa: ARG002
-        workspace: Any | None = None,  # noqa: ARG002
+        timeout_s: float = 30.0,
+        files: Mapping[str, bytes] | None = None,
+        workspace: Any | None = None,
     ) -> SandboxResult:
         return SandboxResult(stdout="", stderr="", exit_code=0)
 
@@ -97,7 +96,7 @@ def test_sandbox_overhead_cpu_bound(benchmark: Any) -> None:
     benchmark(runner)
 
 
-def test_record_baseline(benchmark: Any | None = None) -> None:  # noqa: ARG001
+def test_record_baseline(benchmark: Any | None = None) -> None:
     """Записать baseline-payload в JSON (вызывается отдельно `--benchmark-save`).
 
     В обычном `pytest -q` просто проверяет, что файл может быть создан.

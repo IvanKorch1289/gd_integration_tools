@@ -17,7 +17,6 @@ Wave ``[wave:s6/msgspec-benchmark]``. Цель — собрать заранее
 Отчёт сохраняется в ``vault/benchmark-2026-05-14-msgspec.md``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

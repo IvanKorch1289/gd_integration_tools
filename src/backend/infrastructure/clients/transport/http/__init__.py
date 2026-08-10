@@ -48,9 +48,9 @@ from src.backend.infrastructure.clients.transport.http.session_mixin import (
 )
 
 __all__ = (
-    "HttpClient",
     "BaseHttpClient",
     "FilePart",
+    "HttpClient",
     "get_http_client",
     "get_http_client_dependency",
 )
@@ -65,16 +65,16 @@ class HttpClient(SessionMixin, PrepMixin, RequestMixin, ObservabilityMixin):
     """
 
     __slots__ = (
-        "settings",
-        "logger",
+        "_metrics_lock",
+        "active_requests",
+        "circuit_breaker",
         "client",
         "last_activity",
-        "active_requests",
-        "session_lock",
-        "_metrics_lock",
-        "purger_task",
+        "logger",
         "metrics",
-        "circuit_breaker",
+        "purger_task",
+        "session_lock",
+        "settings",
     )
 
     def __init__(self) -> None:

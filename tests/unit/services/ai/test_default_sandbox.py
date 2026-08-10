@@ -4,7 +4,6 @@ Per M14 audit: InProcessAgentSandbox — default, no process isolation.
 Fix: change default to ProcessPoolAgentSandbox (P0 security).
 Pattern (D270, Ponytail): settings flag.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

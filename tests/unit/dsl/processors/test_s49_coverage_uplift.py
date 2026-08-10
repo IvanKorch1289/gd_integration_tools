@@ -1,6 +1,5 @@
 """Additional coverage tests for S49 modules (push 92% → 98%+)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

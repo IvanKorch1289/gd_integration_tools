@@ -66,7 +66,7 @@ class StdlibLogger(LoggerProtocol):
         """
         return self._inner.parent
 
-    def setLevel(self, level: int) -> None:  # noqa: N802 — stdlib API
+    def setLevel(self, level: int) -> None:
         """Set logger level.
 
         Args:
@@ -74,7 +74,7 @@ class StdlibLogger(LoggerProtocol):
         """
         self._inner.setLevel(level)
 
-    def addHandler(self, handler: logging.Handler) -> None:  # noqa: N802
+    def addHandler(self, handler: logging.Handler) -> None:
         """Add a handler.
 
         Args:
@@ -82,7 +82,7 @@ class StdlibLogger(LoggerProtocol):
         """
         self._inner.addHandler(handler)
 
-    def removeHandler(self, handler: logging.Handler) -> None:  # noqa: N802
+    def removeHandler(self, handler: logging.Handler) -> None:
         """Remove a handler.
 
         Args:
@@ -142,7 +142,7 @@ class StdlibLogger(LoggerProtocol):
         """Log message at custom ``level`` (int или str-name)."""
         self._inner.log(level, msg, *args, **kwargs)
 
-    def isEnabledFor(self, level: int) -> bool:  # noqa: N802
+    def isEnabledFor(self, level: int) -> bool:
         """True if level enabled в stdlib logging config."""
         return self._inner.isEnabledFor(level)
 

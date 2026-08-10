@@ -11,7 +11,6 @@ Production code:
 - src/backend/dsl/engine/processors/ldap_query.py
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

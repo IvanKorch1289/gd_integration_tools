@@ -3,7 +3,6 @@
 Pattern (D287, Ponytail): thin wrapper над dspy.
 Replace manual LLM optimization with DSPy signature/optimizer.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 import pytest

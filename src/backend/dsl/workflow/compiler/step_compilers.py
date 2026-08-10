@@ -46,7 +46,7 @@ from src.backend.dsl.workflow.spec import (
 
 # Relative import (avoid Pyright false-positive on long absolute path within
 # the same package; runtime resolves both equivalently).
-from .activity_bridge import (  # noqa: I001 — intentional relative
+from .activity_bridge import (
     LANGGRAPH_CHECKPOINT_GET_ACTIVITY,
     LANGGRAPH_CHECKPOINT_PUT_ACTIVITY,
 )
@@ -54,7 +54,7 @@ from .activity_bridge import (  # noqa: I001 — intentional relative
 # Cycle 33 restore: gateway runtime compilers (P0 #8 + #9).
 # Lazy import inside compile_activity_step to avoid circular import at module
 # load time (gateways.py imports from spec.py which is already in MRO).
-from .gateways import (  # noqa: I001 — intentional relative
+from .gateways import (
     compile_and,
     compile_or,
     compile_xor,

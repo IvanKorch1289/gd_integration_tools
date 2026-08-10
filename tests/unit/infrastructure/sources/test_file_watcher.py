@@ -24,7 +24,7 @@ import pytest
 # Пропуск всего модуля, если watchfiles не установлен
 watchfiles = pytest.importorskip("watchfiles")
 
-from src.backend.infrastructure.sources.file_watcher import (  # noqa: E402
+from src.backend.infrastructure.sources.file_watcher import (
     FileEvent,
     FileWatcherSource,
 )
@@ -47,7 +47,7 @@ async def _collect_one(source: FileWatcherSource, timeout: float = 3.0) -> FileE
     async def _inner() -> FileEvent:
         async for event in source.stream():
             return event
-        raise RuntimeError("stream() завершился без события")  # noqa: TRY301
+        raise RuntimeError("stream() завершился без события")
 
     return await asyncio.wait_for(_inner(), timeout=timeout)
 

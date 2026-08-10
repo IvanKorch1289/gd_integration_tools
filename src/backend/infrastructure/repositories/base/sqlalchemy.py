@@ -94,7 +94,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             session: AsyncSession,
             query_or_object: Select | ConcreteTable,  # type: ignore
             is_return_list: bool = False,
-        ) -> ConcreteTable | None | list[ConcreteTable]:  # type: ignore
+        ) -> ConcreteTable | list[ConcreteTable] | None:  # type: ignore
             """
             Выполняет запрос или подгружает связи для объекта.
 
@@ -190,7 +190,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             return result.scalars().all()
 
     def __init__(
-        self, model: type[ConcreteTable] = None, load_joined_models: bool = False
+        self, model: type[ConcreteTable] | None = None, load_joined_models: bool = False
     ):
         self.model = model
         self.load_joined_models = load_joined_models

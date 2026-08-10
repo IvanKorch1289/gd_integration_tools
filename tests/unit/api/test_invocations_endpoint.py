@@ -5,7 +5,6 @@ handler-функции с явно переданными ``invoker`` / ``regist
 зависимости резолвятся через :mod:`src.core.di.dependencies`.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

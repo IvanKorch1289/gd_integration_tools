@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for services/resilience/facade.py (Sprint C28 fix).
 
 Covers:

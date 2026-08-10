@@ -129,7 +129,7 @@ def test_builders_chainable() -> None:
     from src.backend.dsl.builders.base import RouteBuilder
     from src.backend.dsl.engine.processors import CallableProcessor
 
-    async def noop(exchange, context):  # noqa: ARG001
+    async def noop(exchange, context):
         return exchange
 
     b = RouteBuilder.from_sse("chain.test", "https://example.com/sse")
@@ -144,7 +144,7 @@ def test_build_pipeline_after_chain() -> None:
     from src.backend.dsl.builders.base import RouteBuilder
     from src.backend.dsl.engine.processors import CallableProcessor
 
-    async def noop(exchange, context):  # noqa: ARG001
+    async def noop(exchange, context):
         return exchange
 
     b = RouteBuilder.from_sse("pipeline.test", "https://example.com/sse")

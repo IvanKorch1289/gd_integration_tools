@@ -1,6 +1,5 @@
 """Тесты RPA процессоров (Wave 6)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

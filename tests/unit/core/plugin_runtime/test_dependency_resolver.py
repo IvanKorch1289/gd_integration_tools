@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 16 K5-W1 — unit-тесты ``PluginGraphResolver``.
 
 Покрытие:

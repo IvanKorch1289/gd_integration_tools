@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Wave 1.7: CodeSandbox + NoOp + E2B мок."""
 
 from __future__ import annotations

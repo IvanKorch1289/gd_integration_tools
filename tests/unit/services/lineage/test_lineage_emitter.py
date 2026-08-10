@@ -1,6 +1,5 @@
 """Unit tests for lineage emitter (in-memory + OpenLineage serialization)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

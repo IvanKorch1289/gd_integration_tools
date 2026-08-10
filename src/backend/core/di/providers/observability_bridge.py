@@ -17,23 +17,23 @@ from __future__ import annotations
 from typing import Any
 
 __all__ = (
-    "get_correlation_id",
     "get_client_metrics",
-    "get_prometheus_exporter",
+    "get_client_metrics_module",
+    "get_correlation_id",
+    "get_correlation_module",
+    "get_default_labels_attr",
     "get_default_labels_tuple",
+    "get_logger_factory",
+    "get_logger_protocol_class",
     "get_metrics_registry_class",
+    "get_metrics_registry_factory",
     "get_metrics_registry_singleton",
+    "get_prometheus_exporter",
     "get_prometheus_temporal_exporter_class",
     "get_prometheus_temporal_exporter_factory",
     "get_record_scale_event",
     "get_set_task_queue_depth",
     "get_set_workers_active",
-    "get_logger_protocol_class",
-    "get_logger_factory",
-    "get_default_labels_attr",
-    "get_metrics_registry_factory",
-    "get_client_metrics_module",
-    "get_correlation_module",
 )
 
 

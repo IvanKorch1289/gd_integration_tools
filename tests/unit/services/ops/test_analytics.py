@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for AnalyticsService (services/ops/analytics.py)."""
 
 from __future__ import annotations

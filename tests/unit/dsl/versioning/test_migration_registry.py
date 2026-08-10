@@ -1,6 +1,5 @@
 """W25.3 — Unit-тесты MigrationRegistry: find_path / apply / circular paths."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

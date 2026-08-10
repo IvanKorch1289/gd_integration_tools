@@ -8,7 +8,6 @@ Full composition migration is deferred (multi-week work), but the
 Protocol surface is now testable.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

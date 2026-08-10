@@ -14,7 +14,6 @@ Refs:
 - D102 (single-source-of-truth через facade)
 - M12 R4 refactor phase
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 from pathlib import Path

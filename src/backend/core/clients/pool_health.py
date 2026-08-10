@@ -7,7 +7,7 @@ ADR-0207: services/ai/gateway/pool_registration.py импортирует
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
+from src.backend.core.di.providers.infrastructure_locator import (
     get_pool_entry_class as _get_pe_cls,
 )
 from src.backend.core.di.providers.infrastructure_locator import (

@@ -24,8 +24,8 @@ History:
 - workflow.py  (30 funcs) — actions, scheduler, workflow state, resilience, loggers
 """
 
-from src.backend.core.di.module_registry import resolve_module  # noqa: F401
-from src.backend.core.di.providers import (  # noqa: F401
+from src.backend.core.di.module_registry import resolve_module
+from src.backend.core.di.providers import (
     ai,
     auth,
     cache,
@@ -36,7 +36,7 @@ from src.backend.core.di.providers import (  # noqa: F401
 )
 
 # --- ai.py (12) ---
-from src.backend.core.di.providers.ai import (  # noqa: F401
+from src.backend.core.di.providers.ai import (
     get_ai_sanitizer_provider,
     get_antivirus_service_provider,
     get_llm_guard_runtime_provider,
@@ -54,7 +54,7 @@ from src.backend.core.di.providers.ai import (  # noqa: F401
 )
 
 # --- auth.py (6) ---
-from src.backend.core.di.providers.auth import (  # noqa: F401
+from src.backend.core.di.providers.auth import (
     get_api_key_manager_provider,
     get_jwks_cache_provider,
     get_jwt_backend_provider,
@@ -67,7 +67,7 @@ from src.backend.core.di.providers.auth import (  # noqa: F401
 # This guarantees ``from src.backend.core.di.providers import get_X_provider``
 # works exactly as before the split.
 # --- cache.py (20) ---
-from src.backend.core.di.providers.cache import (  # noqa: F401
+from src.backend.core.di.providers.cache import (
     get_admin_cache_storage_provider,
     get_cache_invalidator_provider,
     get_health_aggregator_provider,
@@ -91,7 +91,7 @@ from src.backend.core.di.providers.cache import (  # noqa: F401
 )
 
 # --- db.py (15) ---
-from src.backend.core.di.providers.db import (  # noqa: F401
+from src.backend.core.di.providers.db import (
     get_cdc_client_provider,
     get_clickhouse_client_provider,
     get_connector_config_store_provider,
@@ -110,7 +110,7 @@ from src.backend.core.di.providers.db import (  # noqa: F401
 )
 
 # --- http.py (31) ---
-from src.backend.core.di.providers.http import (  # noqa: F401
+from src.backend.core.di.providers.http import (
     get_browser_client_provider,
     get_express_bot_client_factory_provider,
     get_express_botx_message_class_provider,
@@ -145,7 +145,7 @@ from src.backend.core.di.providers.http import (  # noqa: F401
 )
 
 # --- storage.py (3, S36-W23) ---
-from src.backend.core.di.providers.storage import (  # noqa: F401
+from src.backend.core.di.providers.storage import (
     get_object_storage_provider,
     get_storage_facade_provider,
     set_object_storage_provider,
@@ -153,7 +153,7 @@ from src.backend.core.di.providers.storage import (  # noqa: F401
 )
 
 # --- workflow.py (30) ---
-from src.backend.core.di.providers.workflow import (  # noqa: F401
+from src.backend.core.di.providers.workflow import (
     get_action_bus_service_provider,
     get_action_dispatcher_provider,
     get_app_logger_provider,

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 W3 — unit-тесты ``tools.publish_plugin``.
 
 Покрывает:
@@ -23,7 +22,7 @@ _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
-import publish_plugin as pp  # noqa: E402
+import publish_plugin as pp
 
 
 @pytest.fixture()
@@ -44,7 +43,7 @@ def test_bundle_zip_fallback(
     plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Когда нет pyproject.toml и uv → zip-archive."""
-    monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)  # noqa: ARG005
+    monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)
     cfg = pp.PublishConfig(
         plugin="demo",
         version="1.0.0",
@@ -83,7 +82,7 @@ def test_full_pipeline_dry_run(
 def test_sbom_skipped_when_disabled(
     plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)  # noqa: ARG005
+    monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)
     cfg = pp.PublishConfig(
         plugin="demo",
         version="1.0.0",
@@ -100,7 +99,7 @@ def test_sbom_skipped_when_disabled(
 def test_cosign_skipped_when_key_missing(
     plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(pp, "_ensure_tool", lambda name: True)  # noqa: ARG005
+    monkeypatch.setattr(pp, "_ensure_tool", lambda name: True)
     cfg = pp.PublishConfig(
         plugin="demo",
         version="1.0.0",
@@ -117,7 +116,7 @@ def test_cosign_skipped_when_key_missing(
 def test_upload_noop_without_url(
     plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)  # noqa: ARG005
+    monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)
     cfg = pp.PublishConfig(
         plugin="demo",
         version="1.0.0",
@@ -134,7 +133,7 @@ def test_upload_noop_without_url(
 def test_main_returns_zero(
     plugin_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)  # noqa: ARG005
+    monkeypatch.setattr(pp, "_ensure_tool", lambda name: False)
     exit_code = pp.main(
         [
             "--plugin",

@@ -1,6 +1,5 @@
 """Unit-тесты 5-уровневой Graceful Degradation (S13 K2 W4)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

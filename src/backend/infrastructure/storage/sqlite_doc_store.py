@@ -59,7 +59,7 @@ class SqliteDocStore(DocStoreBackend):
         # SQL-injection невозможен (S608 — false positive).
         async with aiosqlite.connect(self._path) as db:
             await db.execute(
-                f"INSERT OR REPLACE INTO {table} (doc_id, body) VALUES (?, ?)",  # noqa: S608  # internal query with controlled parameters
+                f"INSERT OR REPLACE INTO {table} (doc_id, body) VALUES (?, ?)",  # internal query with controlled parameters
                 (doc_id, body),
             )
             await db.commit()
@@ -78,7 +78,7 @@ class SqliteDocStore(DocStoreBackend):
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
-                f"SELECT body FROM {table} WHERE doc_id = ?",  # noqa: S608  # internal query with controlled parameters
+                f"SELECT body FROM {table} WHERE doc_id = ?",  # internal query with controlled parameters
                 (doc_id,),
             )
             row = await cursor.fetchone()
@@ -115,7 +115,7 @@ class SqliteDocStore(DocStoreBackend):
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
-                f"DELETE FROM {table} WHERE doc_id = ?",  # noqa: S608  # internal query with controlled parameters
+                f"DELETE FROM {table} WHERE doc_id = ?",  # internal query with controlled parameters
                 (doc_id,),
             )
             await db.commit()
@@ -151,12 +151,12 @@ class SqliteDocStore(DocStoreBackend):
                 where_clause = " AND ".join(
                     f"json_extract(body, '$.{key}') = ?" for key in conditions
                 )
-                sql = f"SELECT body FROM {table} WHERE {where_clause} ORDER BY doc_id LIMIT ? OFFSET ?"  # noqa: S608  # table name allowlisted via _ensure_namespace
+                sql = f"SELECT body FROM {table} WHERE {where_clause} ORDER BY doc_id LIMIT ? OFFSET ?"  # table name allowlisted via _ensure_namespace
                 query_params = (*params, limit, offset)
                 cursor = await db.execute(sql, query_params)
             else:
                 cursor = await db.execute(
-                    f"SELECT body FROM {table} ORDER BY doc_id LIMIT ? OFFSET ?",  # noqa: S608  # table name allowlisted via _ensure_namespace
+                    f"SELECT body FROM {table} ORDER BY doc_id LIMIT ? OFFSET ?",  # table name allowlisted via _ensure_namespace
                     (limit, offset),
                 )
             rows = await cursor.fetchall()
@@ -175,7 +175,7 @@ class SqliteDocStore(DocStoreBackend):
         if filters is None:
             table = await self._ensure_namespace(namespace)
             async with aiosqlite.connect(self._path) as db:
-                cursor = await db.execute(f"SELECT COUNT(*) FROM {table}")  # noqa: S608  # internal query with controlled parameters
+                cursor = await db.execute(f"SELECT COUNT(*) FROM {table}")  # internal query with controlled parameters
                 row = await cursor.fetchone()
             return int(row[0]) if row else 0
         # С фильтрами — линейный подсчёт через find().

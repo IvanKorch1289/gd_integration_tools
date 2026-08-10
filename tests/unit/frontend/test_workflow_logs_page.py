@@ -9,7 +9,6 @@
 NOTE: K3 W11 stub-fallback удалён — backend errors теперь поднимают RuntimeError.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

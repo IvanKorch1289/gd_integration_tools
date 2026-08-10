@@ -125,7 +125,7 @@ class CoquiTTSService:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "voice_stt_tts_enabled", False))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     def is_available(self) -> bool:
@@ -133,7 +133,7 @@ class CoquiTTSService:
         if not self.enabled:
             return False
         try:
-            from TTS.api import TTS  # type: ignore[import-not-found]  # noqa: F401
+            from TTS.api import TTS  # type: ignore[import-not-found]
 
             return True
         except ImportError:
@@ -160,7 +160,7 @@ class CoquiTTSService:
                 progress_bar=self._progress_bar,
                 gpu=self._gpu,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise VoiceServiceUnavailable(
                 f"Не удалось загрузить Coqui-модель '{self._model_name}': {exc}"
             ) from exc
@@ -201,7 +201,7 @@ class CoquiTTSService:
         if self._capability_audit is not None:
             try:
                 self._capability_audit(self.capability, self._model_name)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("capability_audit hook failed: %s", exc)
 
         engine = self._ensure_engine()
@@ -226,7 +226,7 @@ class CoquiTTSService:
 
         try:
             await asyncio.to_thread(engine.tts_to_file, **tts_kwargs)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise VoiceServiceUnavailable(f"Coqui tts_to_file failed: {exc}") from exc
 
         sample_rate = self._extract_sample_rate(engine)

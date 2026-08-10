@@ -23,7 +23,7 @@ def test_conf_py_loadable() -> None:
     assert conf_path.exists(), f"docs/conf.py не найден: {conf_path}"
 
     namespace: dict = {}
-    exec(conf_path.read_text(encoding="utf-8"), namespace)  # noqa: S102
+    exec(conf_path.read_text(encoding="utf-8"), namespace)
 
     assert "project" in namespace, "conf.py не объявляет переменную 'project'"
     assert namespace["project"] == "gd_integration_tools"

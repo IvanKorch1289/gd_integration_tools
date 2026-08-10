@@ -39,7 +39,7 @@ from src.backend.services.jupyter.notebook_registry import (
 )
 
 # Re-export для удобства callers
-JupyterExecutionError = _JupyterExecutionError  # noqa: F405
+JupyterExecutionError = _JupyterExecutionError
 
 _logger = get_logger("services.jupyter.hub_run")
 
@@ -201,7 +201,7 @@ async def run_hub_notebook(
                     "content_size": len(notebook_content),
                 },
             )
-        except (ImportError, RuntimeError, AttributeError, OSError, TypeError) as audit_exc:  # noqa: BLE001
+        except (ImportError, RuntimeError, AttributeError, OSError, TypeError) as audit_exc:
             # cycle-9/D-AUDIT-905: narrow exceptions + observability.
             # Bare `except Exception` маскировал unrelated runtime errors
             # (KeyError, TypeError, ValueError). Audit emission — best-effort,

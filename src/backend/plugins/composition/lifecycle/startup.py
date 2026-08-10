@@ -77,7 +77,7 @@ async def _start_event_bus(app: FastAPI) -> None:
             return
         app.state.event_bus = bus
         _logger.info("EventBus started on %s", settings.redis.redis_url)
-    except BaseException as exc:  # noqa: BLE001 — ловим TimeoutError, CancelledError и др.
+    except BaseException as exc:
         _logger.warning("EventBus startup skipped: %s", exc)
 
 

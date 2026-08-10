@@ -1,6 +1,5 @@
 """Unit-тесты WebSearchProcessor — Wave [wave:s5/k3-w9-web-search-builder]."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

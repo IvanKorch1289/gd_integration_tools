@@ -169,7 +169,7 @@ class ImapMonitor:
     async def _fetch_unseen(self) -> list[dict[str, Any]]:
         """Асинхронно получает непрочитанные письма (legacy polling путь)."""
         try:
-            from aioimaplib import IMAP4, IMAP4_SSL  # noqa: F401
+            from aioimaplib import IMAP4, IMAP4_SSL
         except ImportError:
             logger.warning("aioimaplib не установлен — IMAP отключён")
             return []
@@ -279,7 +279,7 @@ class ImapMonitor:
     async def _idle_loop(self) -> None:
         """Цикл IMAP IDLE — push-уведомления о новых письмах."""
         try:
-            from aioimaplib import IMAP4, IMAP4_SSL  # noqa: F401
+            from aioimaplib import IMAP4, IMAP4_SSL
         except ImportError:
             logger.warning("aioimaplib не установлен — IMAP отключён")
             return

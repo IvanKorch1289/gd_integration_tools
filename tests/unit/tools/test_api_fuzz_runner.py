@@ -1,6 +1,5 @@
 """Sprint 6 K2 — тесты tools/api_fuzz_runner.py."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -42,7 +41,7 @@ def test_help_runs() -> None:
     """python tools/api_fuzz_runner.py --help возвращает exit 0."""
     import subprocess
 
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, str(API_FUZZ_PATH), "--help"],
         capture_output=True,
         text=True,

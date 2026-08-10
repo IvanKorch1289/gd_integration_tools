@@ -6,7 +6,6 @@
 - Возвращает exit code != 0 если есть violations
 - Поддерживает --update-allowlist
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 import subprocess

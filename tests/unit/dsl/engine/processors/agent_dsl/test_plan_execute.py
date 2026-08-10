@@ -1,6 +1,5 @@
 """Unit-тесты PlanExecuteProcessor (S39 W2)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

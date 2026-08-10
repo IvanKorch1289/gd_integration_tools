@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 W1 — unit-тесты ``PluginCompatibility`` и ``check_compatibility``.
 
 Покрывает 4 ключевых кейса:

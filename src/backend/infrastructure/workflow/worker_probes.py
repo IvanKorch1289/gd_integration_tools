@@ -37,10 +37,10 @@ from src.backend.core.utils.metrics_registry import metrics_registry
 from src.backend.core.utils.task_registry import get_task_registry
 
 __all__ = (
-    "WorkerProbesServer",
     "WORKER_ACTIVE_EXECUTIONS",
     "WORKER_QUEUE_DEPTH",
     "WORKER_UP",
+    "WorkerProbesServer",
 )
 
 _logger = get_logger("workflow.worker.probes")

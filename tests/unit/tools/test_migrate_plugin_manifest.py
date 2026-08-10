@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты tools/migrate_plugin_manifest.py."""
 
 from __future__ import annotations
@@ -13,10 +12,10 @@ import pytest
 _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 sys.path.insert(0, str(_TOOLS))
 
-import migrate_plugin_manifest as mod  # noqa: E402
+import migrate_plugin_manifest as mod
 
 from src.backend.core.plugin_runtime.manifest_toml import (
-    load_plugin_manifest,  # noqa: E402
+    load_plugin_manifest,
 )
 
 

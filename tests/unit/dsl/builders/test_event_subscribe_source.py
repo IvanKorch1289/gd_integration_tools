@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import pytest
 
-# ruff: noqa: S101
 
 
 def test_from_event_subscribe_minimal() -> None:
@@ -116,7 +115,7 @@ def test_from_event_subscribe_chains_with_dispatch_action() -> None:
     try:
         result = builder.build()
         assert result is not None
-    except Exception:  # noqa: BLE001
+    except Exception:
         # build may fail in test env without full setup; the key is
         # that from_event_subscribe didn't break the chain.
         pass

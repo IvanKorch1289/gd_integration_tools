@@ -226,7 +226,7 @@ class ReplicaFailoverBreaker:
 
 # Re-export canonical API для единой точки импорта:
 #   from src.backend.core.resilience.circuit_breaker import Breaker, ...
-from src.backend.core.resilience.breaker import (  # noqa: F401  (re-export)
+from src.backend.core.resilience.breaker import (
     Breaker,
     BreakerRegistry,
     BreakerSpec,

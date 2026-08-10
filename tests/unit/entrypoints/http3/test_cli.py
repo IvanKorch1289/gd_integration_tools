@@ -4,7 +4,6 @@
 с выключенным ``http3_enabled``. Реальный event-loop не запускается.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

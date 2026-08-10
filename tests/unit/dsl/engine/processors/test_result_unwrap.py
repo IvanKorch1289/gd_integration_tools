@@ -1,6 +1,5 @@
 """Unit-тесты ResultUnwrapProcessor — Wave [wave:s5/k3-w12-result-monad]."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

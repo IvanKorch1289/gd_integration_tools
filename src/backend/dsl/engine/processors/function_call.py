@@ -152,7 +152,7 @@ class CallFunctionProcessor(BaseProcessor):
                 )
                 if global_wl:
                     whitelist |= set(global_wl)
-            except (ImportError, AttributeError, RuntimeError, ValueError, TypeError) as wl_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError, ValueError, TypeError) as wl_exc:
                 # cycle-9/D-AUDIT-941: narrow exceptions + observability.
                 # ImportError — settings missing, AttributeError — schema
                 # change, RuntimeError — settings unavailable, ValueError —

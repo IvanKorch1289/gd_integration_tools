@@ -24,7 +24,7 @@ from typing import Any
 from src.backend.core.errors import ServiceError
 from src.backend.core.logging import get_logger
 
-__all__ = ("EventBusFacade", "get_event_bus_facade", "CapabilityChecker")
+__all__ = ("CapabilityChecker", "EventBusFacade", "get_event_bus_facade")
 
 _logger = get_logger("core.messaging.eventbus.facade")
 

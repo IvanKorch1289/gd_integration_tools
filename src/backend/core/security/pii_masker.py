@@ -49,7 +49,7 @@ __all__ = ("PIIMasker", "build_default_patterns", "default_masker")
 # Дефолтные регулярные выражения. Порядок задаётся ``_DEFAULT_ORDER``
 # в :func:`build_default_patterns` — specific-first.
 # S222: Email/Phone/Card/INN/RU_PASSPORT/SNILS shared via core.security.pii_patterns.
-from src.backend.core.security.pii_patterns import CARD as _CARD  # noqa: F401
+from src.backend.core.security.pii_patterns import CARD as _CARD
 from src.backend.core.security.pii_patterns import EMAIL as _EMAIL
 from src.backend.core.security.pii_patterns import INN as _INN
 from src.backend.core.security.pii_patterns import PHONE as _PHONE

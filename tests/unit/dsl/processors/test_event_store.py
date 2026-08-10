@@ -1,6 +1,5 @@
 """Unit tests for Event Sourcing / CQRS (v21 §2.2)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

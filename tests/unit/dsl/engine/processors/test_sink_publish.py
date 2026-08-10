@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты для sink_publish процессоров.
 
 Покрывает GrpcCallProcessor, SoapCallProcessor, MqPublishProcessor,

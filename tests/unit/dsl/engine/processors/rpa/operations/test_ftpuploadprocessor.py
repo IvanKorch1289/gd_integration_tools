@@ -10,7 +10,6 @@
   plaintext ``FTP()`` (для legacy dev/test серверов без FTPS).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

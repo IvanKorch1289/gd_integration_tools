@@ -186,7 +186,7 @@ class CdcPostgresLogicalSource:
                     self.source_id,
                 )
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1712: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags unavailable.

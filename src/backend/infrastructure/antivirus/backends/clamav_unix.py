@@ -58,7 +58,7 @@ class ClamAVUnixBackend(AntivirusBackend):
             writer.close()
             try:
                 await writer.wait_closed()
-            except (OSError, ConnectionError) as wait_closed_exc:  # noqa: BLE001
+            except (OSError, ConnectionError) as wait_closed_exc:
                 # cycle-9/D-AUDIT-914: narrow exceptions + observability.
                 # OSError/ConnectionError для unix socket cleanup. Bare
                 # `except Exception` маскировал unrelated runtime errors
@@ -92,7 +92,7 @@ class ClamAVUnixBackend(AntivirusBackend):
             writer.close()
             try:
                 await writer.wait_closed()
-            except (OSError, ConnectionError) as wait_closed_exc:  # noqa: BLE001
+            except (OSError, ConnectionError) as wait_closed_exc:
                 # cycle-9/D-AUDIT-914: см. выше — тот же narrow для scan_bytes.
                 import logging
                 logging.getLogger(__name__).debug(

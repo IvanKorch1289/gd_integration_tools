@@ -23,7 +23,7 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.ai.agent_sandbox_protocol import (  # noqa: F401
+from src.backend.core.ai.agent_sandbox_protocol import (
     AgentSandbox,
     AgentSandboxResult,
 )
@@ -410,7 +410,7 @@ class E2BAgentSandbox:
                 results = []
                 try:
                     results = [r.text for r in execution.results]
-                except (AttributeError, TypeError) as parse_exc:  # noqa: PERF203
+                except (AttributeError, TypeError) as parse_exc:
                     # D-A9-04 fix (cycle 21): narrow exceptions + логирование.
                     # Раньше bare `except Exception: pass` маскировал malformed
                     # e2b execution.results — observability gap.
@@ -568,7 +568,7 @@ def resolve_agent_sandbox(
             from src.backend.core.config.ai import ai_workspace_settings
 
             default_kind = str(ai_workspace_settings.default_agent_sandbox)
-        except (ImportError, AttributeError) as ai_settings_exc:  # noqa: PERF203
+        except (ImportError, AttributeError) as ai_settings_exc:
             # D-A1-04 fix (cycle 38): narrow exceptions + observability.
             # Bare `except Exception` маскировал ImportError (ai_settings
             # module not ready) и AttributeError (неправильный settings).

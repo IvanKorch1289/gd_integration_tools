@@ -120,7 +120,7 @@ async def test_scan_once_signals_rolled_back_for_each_stuck_saga() -> None:
         assert len(fake_repo.signal_calls) == 2
         # Both should be rolled_back
         for call in fake_repo.signal_calls:
-            workflow_id, run_id, event = call
+            _workflow_id, _run_id, event = call
             assert event == "rolled_back"
 
 

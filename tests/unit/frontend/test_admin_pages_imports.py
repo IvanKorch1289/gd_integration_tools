@@ -5,7 +5,6 @@
 исполнение модулей в unit-окружении невозможно — streamlit context
 отсутствует. Поэтому проверка ограничена парсингом и валидацией spec.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 

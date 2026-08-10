@@ -67,7 +67,7 @@ def create_app() -> FastAPI:
         # Настройка корневого эндпоинта
         _configure_root_endpoint(app)
     except Exception as exc:
-        error_msg = f"Ошибка конфигурации приложения: {str(exc)}"
+        error_msg = f"Ошибка конфигурации приложения: {exc!s}"
         raise RuntimeError(error_msg) from exc
 
     return app
@@ -163,7 +163,7 @@ def _configure_business_routers(app: FastAPI) -> None:
         stream_client.redis_router is not None
         or stream_client.rabbit_router is not None
     ):
-        from src.backend.entrypoints.stream import (  # noqa: F401
+        from src.backend.entrypoints.stream import (
             invoker_subscribers,
             subscribers,
         )

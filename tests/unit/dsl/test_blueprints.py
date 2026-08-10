@@ -1,4 +1,3 @@
-# ruff: noqa: S101, S108
 """Тесты `src.dsl.blueprints` (R2.5): шаблоны интеграционных pipeline'ов."""
 
 from __future__ import annotations

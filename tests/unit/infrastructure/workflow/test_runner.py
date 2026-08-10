@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit + smoke tests for workflow runner (infrastructure/workflow/runner.py).
 
 Sections:

@@ -3,7 +3,6 @@
 Windowed aggregation Apache Flink-style: tumbling/sliding/session.
 Pattern (D275, Ponytail): thin wrapper, stdlib only.
 """
-# ruff: noqa: E501
 from __future__ import annotations
 
 from collections import defaultdict

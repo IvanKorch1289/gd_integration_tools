@@ -199,7 +199,7 @@ def _get_or_create_route_semaphore(
     route_id: str, pool_size: int
 ) -> asyncio.Semaphore:
     """S163 W25: lazy-init semaphore для per-route concurrency limit."""
-    global _route_semaphores  # noqa: PLW0603
+    global _route_semaphores
 
     sem = _route_semaphores.get(route_id)
     if sem is None or sem._value != pool_size:  # type: ignore[attr-defined]

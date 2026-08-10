@@ -63,12 +63,12 @@ class BaseService[
     HelperMethods: type[Any]
 
     __slots__ = (
-        "repo",
-        "response_schema",
-        "request_schema",
-        "version_schema",
-        "table_name",
         "helper",
+        "repo",
+        "request_schema",
+        "response_schema",
+        "table_name",
+        "version_schema",
     )
 
     def __init__(

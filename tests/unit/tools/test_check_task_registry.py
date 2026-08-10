@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты CI-gate ``tools/checks/check_task_registry.py``.
 
 Покрывают:
@@ -19,7 +18,7 @@ from textwrap import dedent
 _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 sys.path.insert(0, str(_TOOLS))
 
-from checks.check_task_registry import RULE_ORPHAN_TASK, check_file  # noqa: E402
+from checks.check_task_registry import RULE_ORPHAN_TASK, check_file
 
 
 def _write(tmp: Path, name: str, body: str) -> Path:

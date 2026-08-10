@@ -53,7 +53,7 @@ class SchemaMixin(_DataQualityProtocol):
                 drift[k] = "missing_field"
 
         self._inferred_schemas[dataset] = {
-            k: list(v)[0] if len(v) == 1 else str(v) for k, v in schema.items()
+            k: next(iter(v)) if len(v) == 1 else str(v) for k, v in schema.items()
         }
         return {
             "schema": self._inferred_schemas[dataset],

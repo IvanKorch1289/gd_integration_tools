@@ -102,7 +102,7 @@ def _summarize_poison(body: Any, *, max_len: int = 256) -> str:
     """Краткое summary body для log/error message (truncate to ``max_len``)."""
     try:
         rendered = repr(body)
-    except (TypeError, ValueError) as repr_exc:  # noqa: BLE001
+    except (TypeError, ValueError) as repr_exc:
         # cycle-9/D-AUDIT-1011: narrow exceptions + observability.
         # TypeError для unrepresentable type, ValueError для invalid
         # repr value.

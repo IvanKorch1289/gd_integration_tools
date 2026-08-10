@@ -16,7 +16,7 @@ Related:
 
 from __future__ import annotations
 
-from src.backend.services.core.base import (  # noqa: F401
+from src.backend.services.core.base import (
     BaseService,
     create_service_class,
     get_service_for_model,

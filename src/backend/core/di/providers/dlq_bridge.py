@@ -16,8 +16,8 @@ from __future__ import annotations
 from typing import Any
 
 __all__ = (
-    "get_dlq_envelope_class",
     "get_dlq_base_module",
+    "get_dlq_envelope_class",
     "get_dlq_reason_class",
     "get_dlq_writer_class",
 )

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты подключения SmartSessionManager к DatabaseBundle (Wave A.4)."""
 
 from __future__ import annotations

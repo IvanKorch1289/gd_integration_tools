@@ -17,9 +17,9 @@ from __future__ import annotations
 from typing import Any
 
 __all__ = (
-    "get_search_providers_module",
     "get_base_search_provider_class",
     "get_perplexity_provider_class",
+    "get_search_providers_module",
     "get_searxng_provider_class",
     "get_tavily_provider_class",
     "get_web_search_service_class",

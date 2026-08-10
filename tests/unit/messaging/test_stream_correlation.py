@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты propagation correlation_id в FastStream publish (S17 K3 W3 D12).
 
 Покрывают helper ``_inject_correlation_id_headers``:

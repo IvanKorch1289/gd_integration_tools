@@ -8,7 +8,6 @@ S164 W3: async Protocol + asyncio.to_thread (CPU-bound offload).
 RPA pipelines.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

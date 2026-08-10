@@ -258,7 +258,7 @@ class BreakerRegistry:
                     client_metrics.record_circuit_state(
                         client=client, host=host, state=state
                     )
-                except (ImportError, AttributeError, RuntimeError, TypeError) as cm_exc:  # noqa: BLE001
+                except (ImportError, AttributeError, RuntimeError, TypeError) as cm_exc:
                     # cycle-9/D-AUDIT-978: narrow exceptions + observability.
                     # ImportError — client_metrics module missing,
                     # AttributeError — API change, RuntimeError — recorder
@@ -271,7 +271,7 @@ class BreakerRegistry:
 
             recorder: CircuitBreakerMetricsRecorder = _record
             recorder(client=name, host=host, state=state)
-        except (ImportError, AttributeError, RuntimeError, TypeError) as recorder_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError, TypeError) as recorder_exc:
             # cycle-9/D-AUDIT-978: см. выше — outer recorder fail-soft.
             import logging
             logging.getLogger(__name__).debug(

@@ -1,6 +1,5 @@
 """Unit tests for DataMaskingMiddleware (cycle 58 pure ASGI, FINAL L1)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

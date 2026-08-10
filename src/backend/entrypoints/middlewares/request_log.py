@@ -181,7 +181,7 @@ class InnerRequestLoggingMiddleware:
             try:
                 with GzipFile(fileobj=BytesIO(body)) as gzip_file:
                     body = gzip_file.read()
-            except (OSError, EOFError) as gzip_exc:  # noqa: BLE001
+            except (OSError, EOFError) as gzip_exc:
                 # cycle-9/D-AUDIT-994: narrow exceptions + observability.
                 # OSError — gzip read failure, EOFError — truncated stream.
                 # (zlib.error raised internally не экспортирован, OSError

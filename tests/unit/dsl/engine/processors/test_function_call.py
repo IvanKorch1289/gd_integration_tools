@@ -9,7 +9,6 @@
     * deny path (module не в whitelist).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

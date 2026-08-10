@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke tests for GraphQL schema (entrypoints/graphql/schema.py)."""
 
 from __future__ import annotations

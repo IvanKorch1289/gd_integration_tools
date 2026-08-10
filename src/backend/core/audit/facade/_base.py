@@ -98,5 +98,5 @@ def emit_audit_safe(
             outcome=outcome,
             details=merged_details or None,
         )
-    except Exception:  # noqa: BLE001 — _safe variant per design
+    except Exception:
         return None

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты RouteLoader (ADR-043 / ADR-044)."""
 
 from __future__ import annotations

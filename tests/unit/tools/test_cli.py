@@ -16,7 +16,7 @@ TOOL_PATH = Path("tools/cli.py")
 
 def _run_cli(*args: str) -> subprocess.CompletedProcess:
     """Run CLI command and return result."""
-    return subprocess.run(  # noqa: S603
+    return subprocess.run(
         [sys.executable, str(TOOL_PATH), *args],
         capture_output=True,
         text=True,

@@ -6,7 +6,6 @@ Middleware блокирует запросы к путям, совпадающи
 BaseHTTPMiddleware версии).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

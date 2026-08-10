@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 K3 W1 — unit-тест fuzzy-search каталога процессоров.
 
 План S14 §C T-3: ``_ProcessorsCatalogFacade.search`` имела только smoke,
@@ -58,7 +57,7 @@ async def test_search_without_rapidfuzz_returns_error_payload(facade) -> None:
     тест пропускается.
     """
     try:
-        import rapidfuzz  # noqa: F401, PLC0415
+        import rapidfuzz
     except ImportError:
         result = await facade.search(q="proxy", limit=5)
         assert result["items"] == []

@@ -6,7 +6,6 @@
     * to_spec сериализует isolated.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

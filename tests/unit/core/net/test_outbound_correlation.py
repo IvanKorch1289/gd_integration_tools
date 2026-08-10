@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты propagation X-Correlation-ID в :class:`OutboundHttpClient` (S17 K3 W3 D12).
 
 Покрывают:

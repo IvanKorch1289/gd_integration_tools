@@ -2,7 +2,6 @@
 
 Pattern (D295, Ponytail): thin wrapper, no abstractions.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

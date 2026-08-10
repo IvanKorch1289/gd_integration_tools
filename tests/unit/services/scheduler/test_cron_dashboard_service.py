@@ -1,6 +1,5 @@
 """Unit-тесты CronDashboardService — Sprint 12 K5 W3."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

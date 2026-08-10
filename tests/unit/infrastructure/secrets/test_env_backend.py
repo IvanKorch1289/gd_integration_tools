@@ -1,6 +1,5 @@
 """Unit-тесты для ``src.backend.infrastructure.secrets.env_backend.EnvBackend``."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

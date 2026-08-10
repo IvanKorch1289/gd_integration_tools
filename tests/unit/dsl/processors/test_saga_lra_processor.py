@@ -22,7 +22,6 @@ Run::
     .venv/bin/python -m pytest tests/unit/dsl/processors/test_saga_lra_processor.py -q --tb=short
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

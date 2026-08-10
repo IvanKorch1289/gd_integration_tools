@@ -10,7 +10,6 @@ Tests используют minimal subclass CacheMixin с подменённым
 НЕ поднимают реальный Redis.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -57,7 +56,7 @@ class TestBulkGetBatchLimit:
         result = await stub.bulk_get(["k1", "k2"])
         assert result == [b"v1", b"v2"]
         assert len(stub.execute_calls) == 1
-        kind, op = stub.execute_calls[0]
+        kind, _op = stub.execute_calls[0]
         assert kind == "cache"
 
     @pytest.mark.asyncio

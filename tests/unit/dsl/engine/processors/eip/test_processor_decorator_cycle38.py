@@ -12,19 +12,19 @@ import pytest
 
 # Top-level imports — триггерят module-level @processor регистрацию.
 # Без них parametrized тесты запустятся ДО импорта модулей и увидят пустой registry.
-from src.backend.dsl.engine.processors.eip.flow_control.throttler import (  # noqa: F401
+from src.backend.dsl.engine.processors.eip.flow_control.throttler import (
     ThrottlerProcessor,
 )
-from src.backend.dsl.engine.processors.eip.reliability.redelivery_policy import (  # noqa: F401
+from src.backend.dsl.engine.processors.eip.reliability.redelivery_policy import (
     RedeliveryPolicyProcessor,
 )
-from src.backend.dsl.engine.processors.eip.resilience import (  # noqa: F401
+from src.backend.dsl.engine.processors.eip.resilience import (
     CircuitBreakerProcessor,
     DeadLetterProcessor,
     FallbackChainProcessor,
     TimeoutProcessor,
 )
-from src.backend.dsl.engine.processors.eip.routing_slip import (  # noqa: F401
+from src.backend.dsl.engine.processors.eip.routing_slip import (
     RoutingSlipProcessor,
 )
 from src.backend.dsl.registry.processor import ProcessorSpec, get_processor_registry

@@ -37,7 +37,7 @@ from src.backend.infrastructure.clients.base_connector import HealthResult
 if TYPE_CHECKING:
     pass
 
-__all__ = ("NatsSource", "NatsMessage")
+__all__ = ("NatsMessage", "NatsSource")
 
 logger = get_logger("infrastructure.sources.nats")
 

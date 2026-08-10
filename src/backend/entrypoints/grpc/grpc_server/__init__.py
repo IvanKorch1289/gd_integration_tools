@@ -33,11 +33,11 @@ from src.backend.entrypoints.grpc.grpc_server.server import (
 )
 
 __all__ = (
-    "BaseGRPCServicer",
-    "OrderGRPCServicer",
-    "InvokerGRPCServicer",
     "AuthInterceptor",
-    "_safe_error",
+    "BaseGRPCServicer",
+    "InvokerGRPCServicer",
+    "OrderGRPCServicer",
     "_load_tls_credentials",
+    "_safe_error",
     "serve",
 )

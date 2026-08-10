@@ -11,7 +11,6 @@ production не вызывал ``watch()`` / ``start()``. Операторы н�
 - Callback: settings.reload() если доступен.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

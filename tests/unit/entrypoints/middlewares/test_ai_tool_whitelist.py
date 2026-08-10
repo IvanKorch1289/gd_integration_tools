@@ -1,6 +1,5 @@
 """Pure ASGI tests для AIToolWhitelistMiddleware (cycle 46)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

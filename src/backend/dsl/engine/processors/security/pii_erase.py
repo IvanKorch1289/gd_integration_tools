@@ -329,8 +329,8 @@ class PiiEraseProcessor(BaseProcessor):
                     # SQL injection surface; values still bind via
                     # ``:entity_id``.
                     sql = text(
-                        f"DELETE FROM {entity_type}_pii "  # noqa: S608
-                        f"WHERE entity_id = :entity_id"  # noqa: S608
+                        f"DELETE FROM {entity_type}_pii "
+                        f"WHERE entity_id = :entity_id"
                         # ``entity_type`` validated by regex whitelist; values bound.
                     )
                     result = await session.execute(
@@ -338,10 +338,10 @@ class PiiEraseProcessor(BaseProcessor):
                     )
                 else:
                     sql = text(
-                        f"UPDATE {entity_type}_pii "  # noqa: S608
-                        f"SET name = NULL, email = NULL, phone = NULL, "  # noqa: S608
-                        f"anonymized_at = NOW() "  # noqa: S608
-                        f"WHERE entity_id = :entity_id"  # noqa: S608
+                        f"UPDATE {entity_type}_pii "
+                        f"SET name = NULL, email = NULL, phone = NULL, "
+                        f"anonymized_at = NOW() "
+                        f"WHERE entity_id = :entity_id"
                         # Same whitelist as DELETE branch above.
                     )
                     result = await session.execute(

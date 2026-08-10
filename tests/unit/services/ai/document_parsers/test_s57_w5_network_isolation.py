@@ -103,7 +103,7 @@ class TestMarkitdownNetworkDisabled:
             # Этот тест не запускает markitdown (зависимость), а только
             # проверяет что stub работает.
             try:
-                urllib.request.urlopen(html)  # type: ignore[arg-type]  # noqa: S310
+                urllib.request.urlopen(html)  # type: ignore[arg-type]
             except _NetworkDeniedError:
                 pass  # expected
             else:
@@ -122,7 +122,7 @@ class TestMarkitdownNetworkDisabled:
         """
         with markitdown_network_disabled():
             try:
-                urllib.request.urlopen(rss)  # type: ignore[arg-type]  # noqa: S310
+                urllib.request.urlopen(rss)  # type: ignore[arg-type]
             except _NetworkDeniedError:
                 pass
             else:

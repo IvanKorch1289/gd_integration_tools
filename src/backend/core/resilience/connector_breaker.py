@@ -28,7 +28,7 @@ from src.backend.core.resilience.breaker import (
     get_breaker_registry,
 )
 
-__all__ = ("with_breaker", "CircuitOpen")
+__all__ = ("CircuitOpen", "with_breaker")
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")

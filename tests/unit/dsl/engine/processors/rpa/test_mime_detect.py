@@ -3,7 +3,6 @@
 MIME-type detection по magic bytes (Ponytail YAGNI: stdlib only).
 Pattern (D276): thin wrapper.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

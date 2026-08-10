@@ -11,7 +11,6 @@
   отбрасывается.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

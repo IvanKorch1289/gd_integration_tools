@@ -7,7 +7,6 @@ be swallowed before send_feedback call.
 Production code: src/backend/infrastructure/sources/cdc.py
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

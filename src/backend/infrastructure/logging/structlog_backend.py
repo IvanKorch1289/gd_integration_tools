@@ -147,7 +147,7 @@ class StructlogLogger(LoggerProtocol):
         formatted, merged = self._format(msg, args, kwargs)
         self._inner.log(level, formatted, **merged)
 
-    def isEnabledFor(self, level: int) -> bool:  # noqa: N802
+    def isEnabledFor(self, level: int) -> bool:
         """True if level enabled в structlog config."""
         return self._inner.isEnabledFor(level)
 
@@ -379,11 +379,11 @@ class StructlogGraylogBackend(BaseLoggerBackend):
 
             if is_router_configured():
                 router = get_router()
-                for sink in router._sinks:  # noqa: SLF001 — internal access
+                for sink in router._sinks:
                     if hasattr(sink, "close_sync"):
                         try:
                             sink.close_sync()
-                        except (OSError, RuntimeError, AttributeError) as sink_exc:  # noqa: BLE001 — best-effort cleanup
+                        except (OSError, RuntimeError, AttributeError) as sink_exc:
                             # cycle-9/D-AUDIT-1027: narrow exceptions + observability.
                             # OSError — sink close failure, RuntimeError —
                             # sink unavailable, AttributeError — API change.
@@ -392,7 +392,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                                 "structlog_backend.sink_close_sync_failed",
                                 extra={"error": str(sink_exc)},
                             )
-        except (ImportError, AttributeError, RuntimeError) as router_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as router_exc:
             # cycle-9/D-AUDIT-1027: см. выше — outer для router access.
             # ImportError — router module missing, AttributeError —
             # API change, RuntimeError — router unavailable.
@@ -408,7 +408,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             try:
                 handler.flush()
                 handler.close()
-            except (OSError, RuntimeError, AttributeError, TypeError) as handler_exc:  # noqa: BLE001
+            except (OSError, RuntimeError, AttributeError, TypeError) as handler_exc:
                 # cycle-9/D-AUDIT-1026: narrow exceptions + observability.
                 # OSError — handler flush failure, RuntimeError —
                 # handler unavailable, AttributeError — handler API

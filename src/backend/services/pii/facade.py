@@ -167,7 +167,7 @@ class PIIFacade:
         try:
             if hasattr(self.masker, "_patterns"):
                 return list(self.masker._patterns.keys())
-        except (AttributeError, TypeError) as introspect_exc:  # noqa: PERF203
+        except (AttributeError, TypeError) as introspect_exc:
             # D-A1-04 fix (cycle 29): narrow exceptions + observability.
             # Раньше bare `except Exception: pass` маскировал любые ошибки
             # в masker._patterns (e.g. corrupted sanitizer state).

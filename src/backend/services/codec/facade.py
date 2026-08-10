@@ -126,7 +126,7 @@ class CodecFacade:
         # Try to parse as JSON first
         try:
             return self._decode_json(decoded)
-        except (ValueError, TypeError) as exc:  # noqa: BLE001
+        except (ValueError, TypeError) as exc:
             # cycle-9/D-AUDIT-901: narrow JSON-decode failure (не bare
             # ``except Exception`` — ранее маскировал unrelated runtime
             # errors как "not JSON" и терял сигнал).
@@ -144,7 +144,7 @@ class CodecFacade:
     def _encode_msgpack(self, data: Any) -> bytes:
         if self._msgpack_available is None:
             try:
-                import msgpack  # noqa: F401
+                import msgpack
 
                 self._msgpack_available = True
             except ImportError:
@@ -160,7 +160,7 @@ class CodecFacade:
     def _decode_msgpack(self, data: bytes) -> Any:
         if self._msgpack_available is None:
             try:
-                import msgpack  # noqa: F401
+                import msgpack
 
                 self._msgpack_available = True
             except ImportError:

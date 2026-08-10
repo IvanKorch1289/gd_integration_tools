@@ -3,7 +3,6 @@
 Тесты падают gracefully когда Vault/Temporal недоступны.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -28,8 +28,8 @@ from src.backend.core.security.capabilities import (
 
 __all__ = (
     "PluginCompatibility",
-    "PluginManifestError",
     "PluginManifest",
+    "PluginManifestError",
     "PluginProvides",
     "PluginSandbox",
     "PluginTenantDecl",

@@ -122,7 +122,7 @@ class ExpressSendProcessor(BaseProcessor):
                 )
 
                 record_express_message_sent(self._bot, status="ok")
-            except (ImportError, AttributeError, RuntimeError, OSError) as metrics_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError, OSError) as metrics_exc:
                 # cycle-9/D-AUDIT-974: narrow exceptions + observability.
                 # ImportError — metrics missing, AttributeError — schema
                 # change, RuntimeError — metrics unavailable, OSError —
@@ -141,7 +141,7 @@ class ExpressSendProcessor(BaseProcessor):
                 )
 
                 record_express_message_sent(self._bot, status="error")
-            except (ImportError, AttributeError, RuntimeError, OSError) as err_metrics_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError, OSError) as err_metrics_exc:
                 # cycle-9/D-AUDIT-974: см. выше — тот же narrow для error path.
                 import logging
                 logging.getLogger(__name__).debug(

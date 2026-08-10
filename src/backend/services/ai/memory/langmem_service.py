@@ -34,7 +34,7 @@ from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-__all__ = ("LangMemDisabled", "MemoryEntry", "LangMemService", "get_langmem_service")
+__all__ = ("LangMemDisabled", "LangMemService", "MemoryEntry", "get_langmem_service")
 
 
 class LangMemDisabled(RuntimeError):

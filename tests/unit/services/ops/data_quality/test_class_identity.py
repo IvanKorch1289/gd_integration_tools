@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Class-identity verification для data_quality package.
 
 cycle-8/D-AUDIT-803: консолидация 5-way duplication.

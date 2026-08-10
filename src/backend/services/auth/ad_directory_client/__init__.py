@@ -18,4 +18,4 @@ from src.backend.services.auth.ad_directory_client.state import (
     AdServerConfig,  # S67 W4: re-export
 )
 
-__all__ = ("AdAuthError", "AdServerConfig", "AdSearchEntry", "AdDirectoryClient")
+__all__ = ("AdAuthError", "AdDirectoryClient", "AdSearchEntry", "AdServerConfig")

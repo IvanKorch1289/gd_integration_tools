@@ -26,7 +26,7 @@ from src.backend.dsl.engine.processors.format_convert import FormatConvertProces
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
 
-__all__ = ("FormatConvertersMixin", "FormatConvertProcessor")
+__all__ = ("FormatConvertProcessor", "FormatConvertersMixin")
 
 
 class FormatConvertersMixin:

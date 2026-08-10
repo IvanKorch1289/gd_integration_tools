@@ -28,7 +28,6 @@ Stub'ы подменяют **только внешние модели** (network
 ``-m 'not e2e'``).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

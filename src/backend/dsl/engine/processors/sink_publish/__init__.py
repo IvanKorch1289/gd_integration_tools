@@ -27,13 +27,13 @@ from src.backend.dsl.engine.processors.sink_publish.protocols import (
 )
 
 __all__ = (
-    "_OutSpec",
     "GenericSinkPublishProcessor",
     "GrpcCallProcessor",
-    "SoapCallProcessor",
     "MqPublishProcessor",
-    "WsPublishProcessor",
     "MqttPublishProcessor",
+    "SoapCallProcessor",
+    "WsPublishProcessor",
+    "_OutSpec",
     "_resolve_payload",
     "_store_result",
 )

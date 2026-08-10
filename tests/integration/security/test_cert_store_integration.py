@@ -13,7 +13,7 @@
 ``config_profiles/dev.yml``, который при сборке тестов может быть недоступен.
 """
 
-# ruff: noqa: S101  # assert — стандартная идиома pytest
+# assert — стандартная идиома pytest
 
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ async def pg_session_manager(monkeypatch):
     try:
         pg = PostgresContainer("postgres:16-alpine")
         pg.start()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         pytest.skip(f"Docker недоступен: {exc}")
 
     try:
@@ -67,7 +67,7 @@ async def pg_session_manager(monkeypatch):
         engine = create_async_engine(async_url, future=True)
 
         from src.backend.core.domain.models.base import BaseModel
-        from src.backend.core.domain.models.cert import (  # noqa: F401
+        from src.backend.core.domain.models.cert import (
             CertHistory,
             CertRecord,
         )

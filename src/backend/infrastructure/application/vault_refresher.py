@@ -237,7 +237,7 @@ class VaultSecretRefresher:
                     "connectors reloaded",
                     extra={"path": path, "count": reloaded},
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # Connector bridge — best-effort: не валим основной rotation loop.
             logger.error(
                 "connector rotator fan-out failed",

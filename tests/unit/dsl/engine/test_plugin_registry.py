@@ -1,6 +1,5 @@
 """Unit tests for ProcessorPluginRegistry (legacy shim)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

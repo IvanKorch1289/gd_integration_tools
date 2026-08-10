@@ -145,7 +145,7 @@ class WebSearchProcessor(BaseProcessor):
             if not feature_flags.web_search_enabled:
                 exchange.set_property("web_search_status", "skipped")
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1708: narrow exceptions + observability (mirror
             # D-AUDIT-1705/1706/1707).
             import logging

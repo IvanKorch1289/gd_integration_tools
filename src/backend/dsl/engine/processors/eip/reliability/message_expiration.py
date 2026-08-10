@@ -27,10 +27,10 @@ from src.backend.dsl.engine.processors.eip.reliability._legacy import (
 _log = get_logger(__name__)
 
 __all__ = (
-    "MessageExpirationProcessor",
-    "ExpirationResolver",
     "HEADER_EXPIRATION",
     "HEADER_MESSAGE_ID",
+    "ExpirationResolver",
+    "MessageExpirationProcessor",
 )
 
 
@@ -59,7 +59,7 @@ class MessageExpirationProcessor(BaseProcessor):
         SideEffectKind.STATEFUL
     )  # tracks state (current/expiring)
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         *,
         ttl_seconds: int | None = None,

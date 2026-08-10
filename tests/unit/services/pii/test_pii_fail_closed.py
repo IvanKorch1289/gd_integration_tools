@@ -27,7 +27,7 @@ from src.backend.core.policy.pii_fail_closed import (
 class _FailingMasker:
     """Sanitizer-стаб, всегда raises."""
 
-    def mask_text(self, text: str) -> str:  # noqa: ARG002
+    def mask_text(self, text: str) -> str:
         raise RuntimeError("simulated masker failure")
 
 

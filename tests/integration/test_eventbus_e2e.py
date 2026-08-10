@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """EventBus integration test — publish → subscribe → receive.
 
 Verifies that EventBusFacade.subscribe_with_lifecycle() actually registers

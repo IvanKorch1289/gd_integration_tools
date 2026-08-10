@@ -14,7 +14,6 @@
 (default executor), а не в main event loop thread.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -55,7 +54,7 @@ def _make_slow_path_open(  # type: ignore[no-untyped-def]
 ):
     """Build a Path.open replacement that sleeps before delegating."""
 
-    def slow_open(path_self: Path, *args: Any, **kwargs: Any) -> Any:  # noqa: ARG001
+    def slow_open(path_self: Path, *args: Any, **kwargs: Any) -> Any:
         time.sleep(sleep_s)
         return real_open(path_self, *args, **kwargs)
 
@@ -121,7 +120,7 @@ class TestJsonFileTraceStorageNonBlocking:
 
         real_open = Path.open
 
-        def capturing_open(path_self: Path, *args: Any, **kwargs: Any) -> Any:  # noqa: ARG001
+        def capturing_open(path_self: Path, *args: Any, **kwargs: Any) -> Any:
             io_thread_holder.append(threading.get_ident())
             return real_open(path_self, *args, **kwargs)
 
@@ -149,7 +148,7 @@ class TestJsonFileTraceStorageNonBlocking:
 
         real_open = Path.open
 
-        def capturing_open(path_self: Path, *args: Any, **kwargs: Any) -> Any:  # noqa: ARG001
+        def capturing_open(path_self: Path, *args: Any, **kwargs: Any) -> Any:
             io_thread_holder.append(threading.get_ident())
             return real_open(path_self, *args, **kwargs)
 

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты mTLS-поддержки в :class:`HttpxClient` (Wave 1.3 / S2)."""
 
 from __future__ import annotations

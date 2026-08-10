@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 K5 W5 — smoke на ``GET /admin/capabilities/graph``.
 
 План S14 §C T-2: эндпоинт ранее не покрывался тестами. Проверяет

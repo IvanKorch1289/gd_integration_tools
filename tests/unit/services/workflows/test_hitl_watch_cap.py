@@ -8,7 +8,6 @@ saturation (DoS vector).
 превышении. Caller должен retry с backoff или escalate.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

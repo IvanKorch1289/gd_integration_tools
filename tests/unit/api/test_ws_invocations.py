@@ -6,7 +6,6 @@
 ``self.app.state.invoker`` / ``self.app.state.reply_registry``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -268,7 +267,7 @@ class TestWebsocketInvocations:
         invoker.invoke.assert_awaited_once()
 
     async def test_disconnect_unregisters_channel(self) -> None:
-        registry, ws_channel = _registry_with_ws()
+        registry, _ws_channel = _registry_with_ws()
         invoker = _make_invoker(
             InvocationResponse(
                 invocation_id="i-bye",

@@ -10,7 +10,6 @@ Pattern (D260, Ponytail): thin wrapper — auto-rotation logic OPTIONAL
 
 Production: config flag ``cert_auto_rotate: bool = False``.
 """
-# ruff: noqa: E501
 from __future__ import annotations
 
 import asyncio

@@ -70,7 +70,7 @@ class TenantFacade:
             from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
 
             return ctx.tenant_id == SYSTEM_TENANT_ID
-        except (ImportError, AttributeError) as tenant_exc:  # noqa: PERF203
+        except (ImportError, AttributeError) as tenant_exc:
             # D-A1-04 fix (cycle 32): narrow exceptions + observability.
             # Bare `except Exception` маскировал security-critical
             # SYSTEM_TENANT_ID import failure → silent permission grant.

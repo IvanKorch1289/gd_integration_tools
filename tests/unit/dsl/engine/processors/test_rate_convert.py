@@ -1,6 +1,5 @@
 """Unit-тесты RateConvertProcessor — Wave [wave:s5/k3-w4-processor-pack-4]."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -19,7 +19,7 @@ import pytest
 # redis 5.x обязателен; skip — если случайно отсутствует.
 redis_mod = pytest.importorskip("redis.asyncio.cluster")
 
-from src.backend.infrastructure.cache.redis_cluster import (  # noqa: E402
+from src.backend.infrastructure.cache.redis_cluster import (
     RedisClusterAdapter,
 )
 

@@ -58,7 +58,7 @@ route_id: x
 
 def test_strict_undefined_raises_on_typo() -> None:
     raw = "route_id: {{ missin_variable }}\n"
-    with pytest.raises(Exception):  # noqa: BLE001
+    with pytest.raises(Exception):
         render_macros(raw, context={"rid": "x"})
 
 

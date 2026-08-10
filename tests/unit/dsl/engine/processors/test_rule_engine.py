@@ -7,7 +7,6 @@ Wave ``[wave:s8/rule-engine-scaffold]``. Покрытие:
 * битое выражение в правиле пропускается, остальные обрабатываются.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

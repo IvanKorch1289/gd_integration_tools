@@ -12,7 +12,7 @@ Coverage:
 * Multi-batch (batch_size < total) → scanned == batch_size.
 """
 
-# ruff: noqa: S101, S106  # assert, hardcoded test creds
+# assert, hardcoded test creds
 
 from __future__ import annotations
 

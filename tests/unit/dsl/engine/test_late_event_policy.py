@@ -13,7 +13,6 @@ windowed aggregations. Без тестов — гарантии поведени
 только на type hints и docstring.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

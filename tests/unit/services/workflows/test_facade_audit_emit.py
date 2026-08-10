@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты audit emit интеграции в :class:`WorkflowFacade` (Wave A.2)."""
 
 from __future__ import annotations

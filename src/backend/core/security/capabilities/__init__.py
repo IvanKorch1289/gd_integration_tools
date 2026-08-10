@@ -51,6 +51,7 @@ from src.backend.core.security.capabilities.vocabulary import (
 __all__ = (
     "CAPABILITY_NAME_PATTERN",
     "DEFAULT_CAPABILITY_CATALOG",
+    "SYSTEM_TENANT_ID",
     "AuditCallback",
     "CapabilityAuditEvent",
     "CapabilityAuditEventKind",
@@ -68,7 +69,6 @@ __all__ = (
     "ExactAliasMatcher",
     "GlobScopeMatcher",
     "PolicyDecision",
-    "SYSTEM_TENANT_ID",
     "ScopeMatcher",
     "SegmentedGlobMatcher",
     "TenantContext",

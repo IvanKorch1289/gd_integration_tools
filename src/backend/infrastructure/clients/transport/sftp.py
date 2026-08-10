@@ -23,7 +23,7 @@ from src.backend.core.config.profile import AppProfileChoices, get_active_profil
 # ``core.config.settings`` грузится ПЕРВЫМ — pre-breaks circular import chain
 # breaker → core.logging → infrastructure.logging → core.interfaces → breaker.
 # ``core.config.profile`` загружается ПОСЛЕ settings, иначе profile не pre-loads core.interfaces.
-from src.backend.core.config.settings import settings as _settings  # noqa: F401
+from src.backend.core.config.settings import settings as _settings
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 

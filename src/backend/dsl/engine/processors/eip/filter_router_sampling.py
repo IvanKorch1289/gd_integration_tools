@@ -181,7 +181,7 @@ class SamplingProcessor(BaseProcessor):
         self._max_in_window = max_in_window
         # SECURITY: random.Random — non-cryptographic, fine для sampling/test filtering
         # (не используется для security tokens, IDs, или auth).
-        self._rng = random.Random(seed)  # noqa: S311
+        self._rng = random.Random(seed)
         self._counter = 0
         self._window_start_ms: float = 0.0
         self._window_count = 0

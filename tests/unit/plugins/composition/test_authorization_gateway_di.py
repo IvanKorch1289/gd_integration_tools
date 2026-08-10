@@ -29,7 +29,6 @@ Pre-state (зафиксировано до Sprint 1.2):
    сломаны (см. ``TestBackwardCompatRouteAuthz`` ниже).
 """
 
-# ruff: noqa: S101, SLF001
 
 from __future__ import annotations
 

@@ -151,7 +151,7 @@ def is_backend_available(backend: str) -> bool:
         return False
     if backend == "listen_notify":
         try:
-            import asyncpg  # noqa: F401
+            import asyncpg
         except ImportError:
             return False
     return True

@@ -222,7 +222,7 @@ async def _register_pools_in_unified_manager() -> None:
     # Central registration would require a new accessor (e.g. get_kafka_producer)
     # which is out of scope for S90. See ADR-0172.
     try:
-        from src.backend.infrastructure.messaging.dlq.kafka_writer import (  # noqa: F401
+        from src.backend.infrastructure.messaging.dlq.kafka_writer import (
             KafkaDLQWriter,
         )
     except ImportError:

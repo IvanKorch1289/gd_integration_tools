@@ -15,10 +15,10 @@ Layer policy: entrypoints -> services (allowed per V22).
 
 from __future__ import annotations
 
-from src.backend.infrastructure.cache.metrics_collector import (  # noqa: E402,F401
+from src.backend.infrastructure.cache.metrics_collector import (
     get_cache_metrics_snapshot,
 )
-from src.backend.infrastructure.cache.rag.metrics import (  # noqa: E402,F401
+from src.backend.infrastructure.cache.rag.metrics import (
     get_metrics_snapshot,
 )
 

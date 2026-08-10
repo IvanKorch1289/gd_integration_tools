@@ -33,7 +33,7 @@ except ImportError:  # pragma: no cover — degraded mode без msgspec
 
 T = TypeVar("T")
 
-__all__ = ("to_dict_fast", "from_dict_fast")
+__all__ = ("from_dict_fast", "to_dict_fast")
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +75,7 @@ def _orjson_default(obj: Any) -> Any:
     if _msgspec is not None:
         try:
             return _msgspec.to_builtins(obj, enc_hook=_msgspec_enc_hook)
-        except (TypeError, ValueError, AttributeError, NotImplementedError) as msgspec_exc:  # noqa: BLE001
+        except (TypeError, ValueError, AttributeError, NotImplementedError) as msgspec_exc:
             # cycle-9/D-AUDIT-942: narrow exceptions + observability.
             # TypeError для unsupported type, ValueError для invalid value,
             # AttributeError для msgspec API change. Bare `except Exception`
@@ -99,7 +99,7 @@ def _orjson_default(obj: Any) -> Any:
 
 def _encode_msgspec(obj: Any) -> Any:
     """msgspec-путь. Бросает исключение, если тип не поддерживается."""
-    assert _msgspec is not None  # noqa: S101 — guarded by caller
+    assert _msgspec is not None
     return _msgspec.to_builtins(obj, enc_hook=_msgspec_enc_hook)
 
 
@@ -133,7 +133,7 @@ def to_dict_fast(obj: Any, *, use_msgspec: bool = True) -> dict[str, Any]:
     if use_msgspec and _HAS_MSGSPEC and _msgspec is not None:
         try:
             return _encode_msgspec(obj)
-        except (TypeError, ValueError, AttributeError, NotImplementedError) as msgspec_exc:  # noqa: BLE001
+        except (TypeError, ValueError, AttributeError, NotImplementedError) as msgspec_exc:
             # cycle-9/D-AUDIT-943: narrow exceptions + observability.
             # Тип не поддерживается msgspec (pydantic / exotic) — fallback.
             import logging
@@ -158,7 +158,7 @@ def from_dict_fast[T](cls: type[T], data: dict[str, Any]) -> T:
     if _HAS_MSGSPEC and _msgspec is not None:
         try:
             return _msgspec.convert(data, cls)
-        except (TypeError, ValueError, AttributeError, NotImplementedError) as msgspec_exc:  # noqa: BLE001
+        except (TypeError, ValueError, AttributeError, NotImplementedError) as msgspec_exc:
             # cycle-9/D-AUDIT-944: narrow exceptions + observability.
             # cls не поддерживается msgspec.convert (pydantic и пр.) — fallback.
             import logging

@@ -3,7 +3,6 @@
 Покрывает: ``webhook_verify``, ``jsonpath``, ``convert_units``, ``parse_ics``.
 """
 
-# ruff: noqa: S101, S106
 
 from __future__ import annotations
 

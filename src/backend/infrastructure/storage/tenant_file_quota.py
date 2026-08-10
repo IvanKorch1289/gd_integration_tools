@@ -60,11 +60,11 @@ from typing import Any
 _logger = logging.getLogger(__name__)
 
 __all__ = (
-    "DEFAULT_MAX_FILES",
     "DEFAULT_MAX_BYTES",
+    "DEFAULT_MAX_FILES",
+    "QuotaCheckResult",
     "QuotaConfig",
     "TenantFileQuotaManager",
-    "QuotaCheckResult",
 )
 
 
@@ -273,7 +273,7 @@ class TenantFileQuotaManager:
                 pipe.expire(bytes_key, REDIS_TTL_SECONDS)
                 await pipe.execute()
             return True
-        except Exception as exc:  # noqa: BLE001 — quota best-effort
+        except Exception as exc:
             _logger.warning(
                 "redis quota increment failed for tenant=%s: %s", tenant_id, exc
             )
@@ -309,7 +309,7 @@ class TenantFileQuotaManager:
             if bytes_val is not None and int(bytes_val) < 0:
                 await self._redis.set(bytes_key, 0)
             return True
-        except Exception as exc:  # noqa: BLE001 — quota best-effort
+        except Exception as exc:
             _logger.warning(
                 "redis quota decrement failed for tenant=%s: %s", tenant_id, exc
             )
@@ -333,7 +333,7 @@ class TenantFileQuotaManager:
                 "files": int(count_val or 0),
                 "bytes": int(bytes_val or 0),
             }
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "redis quota read failed for tenant=%s: %s", tenant_id, exc
             )
@@ -355,7 +355,7 @@ class TenantFileQuotaManager:
             await self._redis.delete(*keys)
             _logger.info("tenant file quota reset: tenant=%s", tenant_id)
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "redis quota reset failed for tenant=%s: %s", tenant_id, exc
             )
@@ -382,7 +382,7 @@ def get_tenant_file_quota_manager() -> TenantFileQuotaManager:
 
         redis = app_state_singleton("redis_kv_client", factory=None)
         return TenantFileQuotaManager(redis_client=redis)
-    except (ImportError, AttributeError, RuntimeError, KeyError) as di_exc:  # noqa: BLE001 — provider best-effort
+    except (ImportError, AttributeError, RuntimeError, KeyError) as di_exc:
         # cycle-9/D-AUDIT-1702: narrow exceptions + observability.
         # ImportError — app_state_singleton missing, AttributeError —
         # API change, RuntimeError — DI unavailable, KeyError —

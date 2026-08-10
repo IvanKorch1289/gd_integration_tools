@@ -23,7 +23,7 @@ token-stream → events → nodes (полноценный AST для YAML); Pyth
       через ``docker/build-push-action``;
     * pipeline ordering: scan ждёт build, sign ждёт build+scan, push ждёт sign.
 """
-# ruff: noqa: S101  (тесты используют assert)
+
 
 from __future__ import annotations
 

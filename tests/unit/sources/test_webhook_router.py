@@ -8,7 +8,6 @@
 для тестов).
 """
 
-# ruff: noqa: S101, S105, S106, S108
 
 from __future__ import annotations
 

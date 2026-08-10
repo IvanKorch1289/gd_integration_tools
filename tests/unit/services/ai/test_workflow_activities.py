@@ -1,5 +1,4 @@
 """Тесты LLM-activity wrapper для Temporal (Sprint 4 Wave C)."""
-# ruff: noqa: S101
 
 from __future__ import annotations
 

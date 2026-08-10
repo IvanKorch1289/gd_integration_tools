@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты ``ClickHouseInsertProcessor`` — Cycle 29 P2 batch contract.
 
 Покрывает:

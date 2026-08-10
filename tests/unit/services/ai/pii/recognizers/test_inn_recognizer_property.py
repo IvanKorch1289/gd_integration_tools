@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Property-based tests for _inn_checksum_valid (Sprint 42 W1 C-4).
 
 Covers invariants of the ФНС checksum algorithm (10/12 digit ИНН):

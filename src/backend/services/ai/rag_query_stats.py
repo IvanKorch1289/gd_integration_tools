@@ -61,7 +61,7 @@ class RagQueryStatsCollector:
                 await self._redis.hset(f"{self._prefix}:query:{tenant_id}", h, query)
                 await self._redis.expire(f"{self._prefix}:query:{tenant_id}", self._ttl)
                 return
-            except (ConnectionError, TimeoutError, ValueError, TypeError) as redis_exc:  # noqa: BLE001
+            except (ConnectionError, TimeoutError, ValueError, TypeError) as redis_exc:
                 # cycle-9/D-AUDIT-904: narrow exceptions + observability.
                 # Bare `except Exception` маскировал Redis failures (Redis
                 # down, malformed payload, decode errors) — silently
@@ -91,7 +91,7 @@ class RagQueryStatsCollector:
                     raw_q = queries_map.get(
                         h.encode()
                         if isinstance(
-                            list(queries_map.keys())[0] if queries_map else b"", bytes
+                            next(iter(queries_map.keys())) if queries_map else b"", bytes
                         )
                         else h
                     )
@@ -101,7 +101,7 @@ class RagQueryStatsCollector:
                         normalized.append((raw_q, int(score)))
                 if normalized:
                     return normalized
-            except (ConnectionError, ValueError, TypeError, KeyError) as redis_exc:  # noqa: PERF203
+            except (ConnectionError, ValueError, TypeError, KeyError) as redis_exc:
                 # D-A1-04 fix (cycle 43): narrow exceptions + observability.
                 # Bare `except Exception` маскировал Redis failures
                 # (Redis down, malformed payload, decode errors).

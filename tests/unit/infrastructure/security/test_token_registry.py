@@ -13,7 +13,7 @@ Sprint 25 W4 / ADR-NEW-21 / ADR-0068.
 * :class:`EnvAESGCMKeyProvider`: валидный base64 / invalid base64 / неверная длина / missing env.
 """
 
-# ruff: noqa: S101  # assert — стандартная идиома pytest
+# assert — стандартная идиома pytest
 
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ def fake_redis() -> Any:
     ``scan_iter``. Иначе — простейшая реализация на ``dict``.
     """
     try:
-        import fakeredis.aioredis as far  # noqa: PLC0415
+        import fakeredis.aioredis as far
 
         return far.FakeRedis()
     except ImportError:
@@ -174,7 +174,7 @@ def test_encrypt_raises_when_current_key_unavailable() -> None:
     class _NullKeyProvider:
         current_version = 1
 
-        def get_key(self, version: int) -> bytes | None:  # noqa: ARG002
+        def get_key(self, version: int) -> bytes | None:
             return None
 
     registry = RedisTokenRegistry(

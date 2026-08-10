@@ -1,6 +1,5 @@
 """Unit-тесты scraping processors — _validate_url, _is_blocked_host, ScrapeProcessor, PaginateProcessor, ApiProxyProcessor."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

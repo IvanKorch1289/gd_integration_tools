@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke tests for admin plugins endpoint (entrypoints/api/v1/endpoints/admin_plugins.py)."""
 
 from __future__ import annotations

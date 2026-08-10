@@ -8,7 +8,6 @@
 * sync и async splitter / aggregator поддерживаются.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -124,7 +124,7 @@ async def receive_command(request: Request) -> JSONResponse:
         recorder = get_express_metrics_recorder_provider()
         bot_name = str(payload.get("bot_id", "main_bot"))
         recorder(bot_name, command_name)
-    except (ImportError, AttributeError, RuntimeError, TypeError) as rec_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError, TypeError) as rec_exc:
         # cycle-9/D-AUDIT-1008: narrow exceptions + observability.
         # ImportError — recorder missing, AttributeError — API change,
         # RuntimeError — metrics unavailable, TypeError — wrong arg type.

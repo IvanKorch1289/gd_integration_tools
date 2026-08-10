@@ -22,7 +22,6 @@ Approved boundary:
 CI: enqueue через ``make arch-ratchet`` (см. ``make/quality.mk``).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

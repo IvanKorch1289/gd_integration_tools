@@ -55,7 +55,7 @@ def _parse_soap_request(xml_body: bytes) -> tuple[str, dict[str, Any]]:
 
         root = safe_fromstring(xml_body)
     except ImportError:
-        root = ET.fromstring(xml_body)  # noqa: S314  # internal controlled XML parsing
+        root = ET.fromstring(xml_body)  # internal controlled XML parsing
 
     body = root.find(f"{{{_SOAP_NS}}}Body")
     if body is None:
@@ -321,7 +321,7 @@ def _parse_invoker_envelope(xml_body: bytes) -> InvocationRequest:
 
         root = safe_fromstring(xml_body)
     except ImportError:
-        root = ET.fromstring(xml_body)  # noqa: S314  # internal controlled XML parsing
+        root = ET.fromstring(xml_body)  # internal controlled XML parsing
 
     body = root.find(f"{{{_SOAP_NS}}}Body")
     if body is None:

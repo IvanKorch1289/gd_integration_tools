@@ -25,9 +25,9 @@ from typing import Any
 from src.backend.core.logging import get_logger
 
 __all__ = (
+    "run_once",
     "start_outbox_worker",
     "stop_outbox_worker",
-    "run_once",
     "sweep_stuck_once",  # S72 W3, TD-S64-W1 sweeper
 )
 

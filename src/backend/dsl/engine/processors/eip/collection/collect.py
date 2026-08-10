@@ -110,7 +110,7 @@ class FindAllProcessor(BaseProcessor):
                 try:
                     if bool(SimpleEval(names=ctx).eval(self._condition)):
                         result.append(item)
-                except (NameError, SyntaxError, TypeError, ValueError, KeyError) as eval_exc:  # noqa: BLE001
+                except (NameError, SyntaxError, TypeError, ValueError, KeyError) as eval_exc:
                     # cycle-9/D-AUDIT-952: narrow exceptions + observability.
                     # NameError/SyntaxError для invalid condition,
                     # TypeError/ValueError для wrong arg, KeyError для

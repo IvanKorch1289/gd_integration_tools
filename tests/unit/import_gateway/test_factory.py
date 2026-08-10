@@ -1,6 +1,5 @@
 """W24 — factory.build_import_gateway для всех ImportSourceKind."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

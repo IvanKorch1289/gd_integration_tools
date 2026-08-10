@@ -5,7 +5,6 @@ structure (plugin.toml, services/, tests/).
 This test documents current status and flags regressions.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

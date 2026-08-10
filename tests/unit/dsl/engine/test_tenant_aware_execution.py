@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """K-ARCH-4 (S17): ExecutionEngine tenant_aware enforcement.
 
 Pipeline с ``tenant_aware=True`` обязан валиться с

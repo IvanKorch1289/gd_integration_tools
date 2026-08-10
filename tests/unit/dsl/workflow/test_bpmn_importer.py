@@ -1,5 +1,4 @@
 """Тесты BPMN 2.0 импортёра (Sprint 4 Wave B)."""
-# ruff: noqa: S101
 
 from __future__ import annotations
 

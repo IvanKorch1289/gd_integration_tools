@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 K5 W1 — unit-тесты ``MigrationDiffer`` + render_guide."""
 
 from __future__ import annotations
@@ -10,7 +9,7 @@ _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
-import plugin_migration_diff as pmd  # noqa: E402
+import plugin_migration_diff as pmd
 
 
 def _toml_old() -> dict:

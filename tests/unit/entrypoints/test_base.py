@@ -1,6 +1,5 @@
 """Unit tests for BaseEntrypoint and dispatch_action."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

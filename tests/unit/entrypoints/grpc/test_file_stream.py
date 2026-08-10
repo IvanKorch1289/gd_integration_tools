@@ -86,7 +86,7 @@ def _make_msg_class(name: str) -> type:
 
 _install_protobuf_stubs()
 
-from src.backend.entrypoints.grpc.grpc_server.file_stream import (  # noqa: E402
+from src.backend.entrypoints.grpc.grpc_server.file_stream import (
     FileStreamConfig,
     FileStreamGRPCServicer,
     compute_sha256,

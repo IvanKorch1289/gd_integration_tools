@@ -9,7 +9,7 @@
 * регистрация в ProcessorRegistry.
 """
 
-# ruff: noqa: S101 — assert разрешён в pytest
+
 
 from __future__ import annotations
 

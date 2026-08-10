@@ -13,7 +13,6 @@
 поля из :class:`ObservabilityConfig` + request metadata.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

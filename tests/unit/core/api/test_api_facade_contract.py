@@ -10,7 +10,6 @@ guarantees any new symbols added to core/api/__init__.py work
 and don't break the existing migration pattern.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

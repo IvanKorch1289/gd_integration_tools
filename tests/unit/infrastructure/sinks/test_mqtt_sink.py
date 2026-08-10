@@ -1,6 +1,5 @@
 """Sprint 3 — unit-тесты MqttSink (V16.1 P1)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

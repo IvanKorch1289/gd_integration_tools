@@ -33,13 +33,13 @@ if TYPE_CHECKING:
     pass
 
 # Re-export for backward compat (S64 W3 cutover test references this).
-from src.backend.plugins.composition.lifecycle.startup import (  # noqa: E402,F401
+from src.backend.plugins.composition.lifecycle.startup import (
     _register_outbox_dispatcher,
 )
 
 app_logger = get_logger("application")
 
-__all__ = ("lifespan", "_register_outbox_dispatcher")
+__all__ = ("_register_outbox_dispatcher", "lifespan")
 
 
 @asynccontextmanager

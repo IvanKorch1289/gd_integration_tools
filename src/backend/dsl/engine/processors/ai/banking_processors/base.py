@@ -90,7 +90,7 @@ class _BankingAIProcessor(BaseProcessor):
             if not feature_flags.banking_ai_processors_enabled:
                 exchange.set_property(f"{self.name}_status", "skipped")
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1031: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags
@@ -147,7 +147,7 @@ class _BankingAIProcessor(BaseProcessor):
 
         try:
             result = await _call()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.warning(
                 "%s failed: model=%s provider=%s error=%s",
                 self.name,

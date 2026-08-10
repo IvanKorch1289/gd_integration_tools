@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты fallback в ``StepAuditMiddleware.track_step`` на ContextVar (S17 K3 W3 D12).
 
 Покрывают:

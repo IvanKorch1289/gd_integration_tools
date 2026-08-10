@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты ``tools/codegen_plugin.py`` (Wave K5/devx-codegen)."""
 
 from __future__ import annotations
@@ -13,7 +12,7 @@ _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
-import codegen_plugin  # noqa: E402
+import codegen_plugin
 
 
 @pytest.fixture

@@ -17,7 +17,6 @@ Cycle 63 invariant: tests catch regressions in Qdrant vector storage
 that could lead to silent memory corruption in AI agents.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

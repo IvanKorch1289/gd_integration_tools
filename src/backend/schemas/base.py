@@ -10,7 +10,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, EmailStr
 from pydantic.alias_generators import to_camel
 
-__all__ = ("EmailSchema", "BaseSchema", "FileResponse", "PaginatedResult")
+__all__ = ("BaseSchema", "EmailSchema", "FileResponse", "PaginatedResult")
 
 
 class EmailSchema(BaseModel):

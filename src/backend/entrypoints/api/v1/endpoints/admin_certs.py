@@ -6,7 +6,6 @@
 Pattern (D256, Ponytail): thin wrapper над CertStore.list_expiring.
 Production: integration с Prometheus alert (DEFER M21+).
 """
-# ruff: noqa: E501
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
@@ -21,10 +20,10 @@ from src.backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 __all__ = (
-    "router",
-    "CertExpiringItem",
     "EXPIRING_DEFAULT_DAYS",
     "EXPIRING_MAX_DAYS",
+    "CertExpiringItem",
+    "router",
 )
 
 # S202 audit fix: require admin role

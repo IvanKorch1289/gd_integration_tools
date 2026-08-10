@@ -173,7 +173,7 @@ class TestWSAuthenticatorJWT:
         from src.backend.core.auth import jwt_backend as jbmod
 
         # Симулируем ImportError на строке `from joserfc import jwt`.
-        original_import = jbmod.__class__.__name__  # noqa: F841 (no-op, just to keep)
+        original_import = jbmod.__class__.__name__
 
         # Простой подход: попросить authenticate_jwt и убедиться, что WSAuthError поднимается
         # при ImportError на joserfc.

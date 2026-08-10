@@ -290,7 +290,7 @@ class EmailReadProcessor(BaseProcessor):
             finally:
                 try:
                     conn.logout()
-                except (OSError, ConnectionError, RuntimeError, AttributeError) as logout_exc:  # noqa: BLE001
+                except (OSError, ConnectionError, RuntimeError, AttributeError) as logout_exc:
                     # cycle-9/D-AUDIT-948: narrow exceptions + observability.
                     # OSError/ConnectionError для IMAP network, RuntimeError
                     # — server error, AttributeError — IMAP API change.

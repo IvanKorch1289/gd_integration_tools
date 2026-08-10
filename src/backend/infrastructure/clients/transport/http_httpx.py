@@ -70,7 +70,7 @@ def is_httpx_retries_available() -> bool:
         ``True`` если ``httpx_retries`` импортируется без ошибок.
     """
     try:
-        import httpx_retries  # noqa: F401
+        import httpx_retries
 
         return True
     except ImportError:
@@ -255,7 +255,7 @@ class HttpxClient:
                 on_rotation(str(cert_path), self._on_cert_rotated)
                 self._cert_subscribed = True
                 return
-            except (TypeError, AttributeError, RuntimeError) as rotation_exc:  # noqa: BLE001
+            except (TypeError, AttributeError, RuntimeError) as rotation_exc:
                 # cycle-17/D-AUDIT-1703: narrow exceptions + observability.
                 # TypeError — wrong callback signature, AttributeError —
                 # cert_store API change, RuntimeError — callback raised.
@@ -269,7 +269,7 @@ class HttpxClient:
             try:
                 register_listener(self._on_cert_rotated)
                 self._cert_subscribed = True
-            except (TypeError, AttributeError, RuntimeError) as listener_exc:  # noqa: BLE001
+            except (TypeError, AttributeError, RuntimeError) as listener_exc:
                 # cycle-17/D-AUDIT-1704: см. D-AUDIT-1703 — тот же narrow для
                 # register_listener path.
                 import logging

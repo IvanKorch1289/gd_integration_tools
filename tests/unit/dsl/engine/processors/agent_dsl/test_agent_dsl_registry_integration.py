@@ -4,7 +4,6 @@
 через @processor() decorator в ProcessorRegistry.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

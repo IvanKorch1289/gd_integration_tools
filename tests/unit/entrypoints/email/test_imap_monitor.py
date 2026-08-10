@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke tests for IMAP monitor (entrypoints/email/imap_monitor.py).
 
 Sprint 41 Wave 2: добавляем ``@pytest.mark.unit`` ко всем существующим

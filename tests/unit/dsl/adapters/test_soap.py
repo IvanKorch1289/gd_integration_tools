@@ -11,7 +11,6 @@
 T-P0.1.20 — P0 v9 small worst-файл, цель 80%+ coverage.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

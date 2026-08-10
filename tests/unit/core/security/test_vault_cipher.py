@@ -13,7 +13,7 @@ pytest.skip(
     "src.backend.core.security.vault_cipher not implemented", allow_module_level=True
 )
 
-from src.backend.core.security.vault_cipher import (  # noqa: E402, F401
+from src.backend.core.security.vault_cipher import (
     VaultCipherError,
     VaultTransitCipher,
 )

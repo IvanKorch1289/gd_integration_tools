@@ -20,8 +20,8 @@ import pytest
 # pre-existing baseline: ``AppStateRegistry`` not always exported in
 # production env. Skip entire module on collection failure.
 try:
-    from src.backend.core.di import app_state  # noqa: F401
-    from src.backend.core.di.app_state import (  # noqa: F401
+    from src.backend.core.di import app_state
+    from src.backend.core.di.app_state import (
         AppStateRegistry,
         app_state_singleton,
         get_app_ref,
@@ -39,7 +39,7 @@ if not _IMPORT_OK:
         allow_module_level=True,
     )
 
-from collections.abc import Iterator  # noqa: E402  (post-skip)
+from collections.abc import Iterator
 
 
 @pytest.fixture(autouse=True)

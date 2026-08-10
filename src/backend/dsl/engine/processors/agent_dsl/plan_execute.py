@@ -349,7 +349,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
             )
 
             return get_ai_gateway()
-        except (ImportError, AttributeError, RuntimeError) as di_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as di_exc:
             # cycle-9/D-AUDIT-966: narrow exceptions + observability.
             # ImportError — gateway_adapter missing, AttributeError —
             # function API change, RuntimeError — DI unavailable.

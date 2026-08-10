@@ -5,7 +5,6 @@ TTL через cachetools задаётся глобально на cache, поэ
 ttl-overrides не проверяем (см. docstring в исходнике backend'а).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

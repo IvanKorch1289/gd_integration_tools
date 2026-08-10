@@ -4,7 +4,6 @@
 SDK может отсутствовать в test env (lazy-import pattern).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

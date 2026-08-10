@@ -7,7 +7,6 @@ atexit / SIGTERM сокеты оставались открытыми → FD lea
 Новый метод ``close_sync()`` гарантирует закрытие из любого контекста.
 """
 
-# ruff: noqa: S101, D103, ANN001, ANN201
 
 from __future__ import annotations
 

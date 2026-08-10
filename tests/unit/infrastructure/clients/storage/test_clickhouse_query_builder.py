@@ -1,6 +1,5 @@
 """Unit-тесты ClickHouseQueryBuilder (S13 K2 W2)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

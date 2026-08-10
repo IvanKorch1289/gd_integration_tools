@@ -16,7 +16,6 @@ literal-секреты в YAML — для production secret-store использ
 SecretRef-маркеры (см. ``docs/reference/dsl/to_spec_audit.md``).
 """
 
-# ruff: noqa: S101, S106
 
 from __future__ import annotations
 
@@ -146,7 +145,7 @@ def test_outbox_with_custom_writer_skipped_in_spec() -> None:
     """OutboxProcessor с custom outbox_writer — to_spec → None (skipped)."""
     from src.backend.dsl.engine.processors.business import OutboxProcessor
 
-    async def _custom_writer(*, topic, payload, headers):  # noqa: ANN001, ARG001
+    async def _custom_writer(*, topic, payload, headers):
         return None
 
     proc = OutboxProcessor(topic="test.topic", outbox_writer=_custom_writer)

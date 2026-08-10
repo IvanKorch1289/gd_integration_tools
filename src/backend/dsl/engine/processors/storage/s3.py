@@ -149,7 +149,7 @@ class ToS3Processor(BaseProcessor):
         except (ValueError, OSError) as exc:
             exchange.fail(f"to_s3: {exc}")
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error("to_s3 failed key=%s err=%s", key, exc)
             exchange.fail(f"to_s3: {type(exc).__name__}: {exc}")
             return
@@ -212,7 +212,7 @@ class FromS3Processor(BaseProcessor):
         except (ValueError, OSError) as exc:
             exchange.fail(f"from_s3: {exc}")
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error("from_s3 failed key=%s err=%s", key, exc)
             exchange.fail(f"from_s3: {type(exc).__name__}: {exc}")
             return
@@ -275,7 +275,7 @@ class S3PresignProcessor(BaseProcessor):
         except (ValueError, OSError) as exc:
             exchange.fail(f"s3_presign: {exc}")
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error("s3_presign failed key=%s err=%s", key, exc)
             exchange.fail(f"s3_presign: {type(exc).__name__}: {exc}")
             return
@@ -322,7 +322,7 @@ class S3DeleteProcessor(BaseProcessor):
         except (ValueError, OSError) as exc:
             exchange.fail(f"s3_delete: {exc}")
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error("s3_delete failed key=%s err=%s", key, exc)
             exchange.fail(f"s3_delete: {type(exc).__name__}: {exc}")
             return
@@ -375,7 +375,7 @@ class S3ListProcessor(BaseProcessor):
         except (ValueError, OSError) as exc:
             exchange.fail(f"s3_list: {exc}")
             return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.error("s3_list failed prefix=%s err=%s", prefix, exc)
             exchange.fail(f"s3_list: {type(exc).__name__}: {exc}")
             return

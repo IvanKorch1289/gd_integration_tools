@@ -12,7 +12,6 @@ Verifies:
 4. Core/api facade exists and re-exports from sdk
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

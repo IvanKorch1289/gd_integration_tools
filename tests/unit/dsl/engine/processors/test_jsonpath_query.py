@@ -1,6 +1,5 @@
 """Unit-тесты JsonPathProcessor — Wave [wave:s5/k3-w1-processor-pack-1]."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

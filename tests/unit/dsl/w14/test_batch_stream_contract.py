@@ -12,7 +12,6 @@ Note: ``BatchCapable`` Protocol (W14.2 opt-in) был удалён как YAGNI 
 или явная проверка ``exchange.in_message.data_kind``).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

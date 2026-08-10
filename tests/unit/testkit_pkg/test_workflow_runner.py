@@ -7,7 +7,6 @@ WorkflowRunner — thin wrapper over DurableWorkflowRunner, использует
 change в сигнатуре ``run()``) пройдут незаметно.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

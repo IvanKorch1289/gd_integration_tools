@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """S107 W1 — tests для TD-002 residual (tenant_filter + _compat moves).
 
 Покрытие:
@@ -210,7 +209,7 @@ def test_tenant_mixin_consumers_still_work_via_canonical() -> None:
     без ImportError. Полный mapper-load не делаем (требует DB).
     """
     # Если imports сломаны — тест упадёт на collection.
-    from src.backend.core.domain.models import (  # noqa: F401
+    from src.backend.core.domain.models import (
         dsl_snapshot,
         workflow_event,
         workflow_instance,
@@ -223,7 +222,7 @@ def test_dialect_types_consumers_still_work_via_canonical() -> None:
     Round 54: missing import block restored (Round 32 left orphan body —
     function body без ``from ... import (...)`` блока, syntax error).
     """
-    from src.backend.core.domain.models import (  # noqa: F401
+    from src.backend.core.domain.models import (
         dsl_snapshot,
         workflow_event,
         workflow_instance,

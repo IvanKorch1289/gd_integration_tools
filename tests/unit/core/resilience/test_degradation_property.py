@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Property-based tests for DegradationManager helpers (Sprint 42 W1 C).
 
 Covers:
@@ -15,6 +14,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from src.backend.core.resilience.degradation import DegradationMode, mode_at_least
+import itertools
 
 ALL_MODES = list(DegradationMode)
 STRICTNESS: dict[DegradationMode, int] = {
@@ -149,7 +149,7 @@ def test_strict_ladder_monotonic() -> None:
         DegradationMode.ESSENTIAL_ONLY,
         DegradationMode.MAINTENANCE,
     ]
-    for prev, nxt in zip(ladder, ladder[1:], strict=False):
+    for prev, nxt in itertools.pairwise(ladder):
         assert STRICTNESS[prev] < STRICTNESS[nxt], (
             f"ladder broken: {prev.name}({STRICTNESS[prev]}) < "
             f"{nxt.name}({STRICTNESS[nxt]}) expected"

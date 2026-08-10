@@ -170,5 +170,5 @@ class AgentSpec:
     feature_flag: str | None = None
 
 
-from src.backend.core.ai.retry_policy import RetryPolicy  # noqa: E402
+from src.backend.core.ai.retry_policy import RetryPolicy
 

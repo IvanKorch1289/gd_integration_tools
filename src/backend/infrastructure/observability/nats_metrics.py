@@ -43,7 +43,7 @@ try:  # pragma: no cover
         "Total errors fetching NATS consumer_info",
         labels=("stream", "consumer"),
     )
-except (ImportError, AttributeError, RuntimeError, ValueError) as metrics_init_exc:  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError, ValueError) as metrics_init_exc:
     # cycle-9/D-AUDIT-921: narrow exceptions + observability.
     # ImportError — metrics_registry missing, AttributeError — counter
     # API changed, RuntimeError — registry not initialized, ValueError
@@ -69,7 +69,7 @@ def record_consumer_info(info: dict[str, Any]) -> None:
         if consumer_info_errors is not None:
             try:
                 consumer_info_errors.labels(stream=stream, consumer=consumer).inc()
-            except (AttributeError, TypeError, ValueError) as counter_exc:  # noqa: BLE001
+            except (AttributeError, TypeError, ValueError) as counter_exc:
                 # cycle-9/D-AUDIT-922: narrow exceptions + observability.
                 # AttributeError — labels API change, TypeError — invalid
                 # arg type, ValueError — invalid label value. Bare `except
@@ -84,7 +84,7 @@ def record_consumer_info(info: dict[str, Any]) -> None:
     if consumer_pending is not None:
         try:
             consumer_pending.labels(stream=stream, consumer=consumer).set(pending)
-        except (AttributeError, TypeError, ValueError) as gauge_exc:  # noqa: BLE001
+        except (AttributeError, TypeError, ValueError) as gauge_exc:
             # cycle-9/D-AUDIT-922: см. выше — тот же narrow для gauge set.
             import logging
             logging.getLogger(__name__).debug(

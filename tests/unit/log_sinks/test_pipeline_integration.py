@@ -13,7 +13,6 @@
 6. Падение одного sink в pipeline не ломает остальные (изоляция).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

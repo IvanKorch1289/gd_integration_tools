@@ -28,7 +28,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("AuthorizationFacade", "AuthDecision", "get_authorization_facade")
+__all__ = ("AuthDecision", "AuthorizationFacade", "get_authorization_facade")
 
 _logger = get_logger("services.authorization.facade")
 

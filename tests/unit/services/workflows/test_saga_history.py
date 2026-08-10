@@ -1,6 +1,5 @@
 """Unit-тесты saga_history — Sprint 12 K3 W6."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

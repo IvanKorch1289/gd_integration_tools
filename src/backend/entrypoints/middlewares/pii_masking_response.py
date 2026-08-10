@@ -181,7 +181,7 @@ class PIIMaskingResponseMiddleware:
             return bool(
                 getattr(feature_flags, "pii_response_middleware_enabled", False)
             )
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1002: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags unavailable.

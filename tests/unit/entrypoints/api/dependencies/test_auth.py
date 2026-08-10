@@ -1,6 +1,5 @@
 """Unit-тесты для ``src.backend.entrypoints.api.dependencies.auth``."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

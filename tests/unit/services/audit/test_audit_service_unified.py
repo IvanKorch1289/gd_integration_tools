@@ -1,6 +1,5 @@
 """Тесты unified AuditService facade (Sprint 16 Wave 8, CP-20)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

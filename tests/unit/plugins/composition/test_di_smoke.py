@@ -1,4 +1,3 @@
-# ruff: noqa: S101, SLF001
 """Smoke-тесты S39 W5 — модуль ``src.backend.plugins.composition.di``.
 
 Покрывают:
@@ -23,7 +22,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.backend.plugins.composition import di
-from src.backend.plugins.composition import (  # noqa: F401  (sidebar import check)
+from src.backend.plugins.composition import (
     service_setup as _service_setup_marker,
 )
 

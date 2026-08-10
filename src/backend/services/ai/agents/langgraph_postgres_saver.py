@@ -91,14 +91,14 @@ class LangGraphPostgresSaverWrapper:
         if self._dsn:
             return self._dsn
         try:
-            from src.backend.core.config.application_settings import settings  # type: ignore[import-not-found]  # noqa: I001
+            from src.backend.core.config.application_settings import settings  # type: ignore[import-not-found]
 
             db = getattr(settings, "database", None)
             if db is not None:
                 dsn = getattr(db, "dsn", None) or getattr(db, "url", None)
                 if dsn:
                     return str(dsn)
-        except (ImportError, AttributeError, RuntimeError) as dsn_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as dsn_exc:
             # cycle-9/D-AUDIT-1728: narrow exceptions + observability.
             # ImportError — application_settings missing, AttributeError
             # — settings.database missing, RuntimeError — settings unavailable.

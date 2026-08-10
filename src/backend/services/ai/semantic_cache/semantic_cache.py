@@ -188,7 +188,7 @@ class SemanticCache:
                     )
 
                     masked_query, pii_meta = _maybe_mask_pii(query)
-                except (ImportError, RuntimeError, ValueError) as pii_mask_exc:  # noqa: PERF203
+                except (ImportError, RuntimeError, ValueError) as pii_mask_exc:
                     # D-A1-04 fix (cycle 40): narrow exceptions + observability.
                     # Bare `except Exception` маскировал ImportError (rag_ingest_service
                     # недоступен), RuntimeError/ValueError (sanitizer failure).

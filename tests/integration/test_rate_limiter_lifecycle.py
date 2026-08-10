@@ -1,7 +1,6 @@
 """Integration-тесты pyrate_limiter shutdown + BoundedInMemoryBucket
 (Sprint 1 V16 Single-Entry, Step 3.4)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

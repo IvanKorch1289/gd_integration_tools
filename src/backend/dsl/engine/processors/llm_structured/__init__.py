@@ -93,12 +93,12 @@ class LLMStructuredProcessor(
     """
 
     __slots__ = (
+        "_cost_budget_usd",
         "_model",
         "_output_schema_ref",
         "_prompt_template",
         "_retry",
         "_temperature",
-        "_cost_budget_usd",
         "_to",
     )
 

@@ -11,10 +11,10 @@ from src.backend.core.security.capabilities import CapabilityDeniedError
 from src.backend.dsl.engine.processors.ai_banking._base import _BankingAIProcessor
 
 if TYPE_CHECKING:  # Cycle-19 (D-AUDIT-1909): unused but referenced for type stub.
-    from typing import Any  # noqa: F401
+    from typing import Any
 
-    from src.backend.dsl.engine.context import ExecutionContext  # noqa: F401
-    from src.backend.dsl.engine.exchange import Exchange  # noqa: F401
+    from src.backend.dsl.engine.context import ExecutionContext
+    from src.backend.dsl.engine.exchange import Exchange
 
 
 class _TestProcessor(_BankingAIProcessor):

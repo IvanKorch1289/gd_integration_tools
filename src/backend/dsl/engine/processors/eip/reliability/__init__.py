@@ -43,14 +43,14 @@ from src.backend.dsl.engine.processors.eip.reliability.return_address import (
 )
 
 __all__ = (
-    "CorrelationIdentifierProcessor",
-    "ExpirationResolver",
     "HEADER_CORRELATION_ID",
     "HEADER_EXPIRATION",
     "HEADER_MESSAGE_ID",
     "HEADER_REDELIVERED",
     "HEADER_REDELIVERY_COUNT",
     "HEADER_RETURN_ADDRESS",
+    "CorrelationIdentifierProcessor",
+    "ExpirationResolver",
     "IdFactory",
     "MessageExpirationProcessor",
     "RedeliveryAttempt",

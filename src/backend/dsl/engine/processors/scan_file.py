@@ -167,7 +167,7 @@ class ScanFileProcessor(BaseProcessor):
             )
 
             record_antivirus_scan(threat=threat)
-        except (ImportError, AttributeError, RuntimeError, OSError) as metrics_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError, OSError) as metrics_exc:
             # cycle-9/D-AUDIT-945: narrow exceptions + observability.
             # ImportError — metrics missing, AttributeError — schema change,
             # RuntimeError — metrics unavailable, OSError — backend failure.

@@ -5,7 +5,6 @@ Smoke-тест на SQLite (через testcontainers Postgres skipped если 
 значением api_version и считать его обратно.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -18,7 +17,7 @@ pytest_plugins: list[str] = []
 async def test_dsl_snapshot_round_trip_with_api_version() -> None:
     """Создание/чтение DslSnapshot с api_version='v2' через in-memory SQLite."""
     try:
-        from sqlalchemy.ext.asyncio import (  # noqa: PLC0415
+        from sqlalchemy.ext.asyncio import (
             AsyncSession,
             async_sessionmaker,
             create_async_engine,
@@ -27,7 +26,7 @@ async def test_dsl_snapshot_round_trip_with_api_version() -> None:
         pytest.skip("sqlalchemy[asyncio] не установлен")
 
     try:
-        import aiosqlite  # noqa: F401, PLC0415
+        import aiosqlite
     except ImportError:
         pytest.skip("aiosqlite не установлен (extra dev-light)")
 

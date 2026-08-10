@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты `create_workflow_backend` factory (Wave D.2)."""
 
 from __future__ import annotations

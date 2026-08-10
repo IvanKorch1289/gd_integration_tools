@@ -19,7 +19,7 @@ from src.backend.dsl.engine.processors.eip.reliability._legacy import (
     HEADER_RETURN_ADDRESS,
 )
 
-__all__ = ("ReturnAddressProcessor", "HEADER_RETURN_ADDRESS")
+__all__ = ("HEADER_RETURN_ADDRESS", "ReturnAddressProcessor")
 
 _log = get_logger(__name__)
 

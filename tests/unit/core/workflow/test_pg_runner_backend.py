@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты ``PgRunnerWorkflowBackend`` через mock state/event stores.
 
 Wave D.1 / ADR-045: проверяет контракт adapter'а без поднятия

@@ -23,7 +23,7 @@ from typing import Any, Protocol
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("InspectRunner", "SuiteResult", "SuiteSummary", "EvalSuite")
+__all__ = ("EvalSuite", "InspectRunner", "SuiteResult", "SuiteSummary")
 
 logger = get_logger(__name__)
 
@@ -152,14 +152,14 @@ class InspectRunner:
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.inspect_ai_eval_enabled)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("InspectRunner: feature_flags недоступны: %s", exc)
             return False
 
     def _is_sdk_available(self) -> bool:
         """Проверяет наличие ``inspect-ai`` SDK (extra ``ai``)."""
         try:
-            import inspect_ai  # type: ignore[import-not-found]  # noqa: F401
+            import inspect_ai  # type: ignore[import-not-found]
 
             return True
         except ImportError:
@@ -170,7 +170,7 @@ class InspectRunner:
         started = datetime.now(UTC)
         try:
             dataset = suite.build_dataset()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("Suite %s build_dataset failed: %s", suite.name, exc)
             return SuiteResult(
                 name=suite.name,
@@ -192,7 +192,7 @@ class InspectRunner:
                 metrics = suite.score(sample, output)
                 for key, value in metrics.items():
                     accumulated.setdefault(key, []).append(float(value))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("Suite %s sample failed: %s", suite.name, exc)
 
         finished = datetime.now(UTC)

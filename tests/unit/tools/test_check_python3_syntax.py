@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты CI-gate ``tools/checks/check_python3_syntax.py``.
 
 Проверяют, что AST-gate отличает Python-2 стиль ``except A, B:`` от
@@ -16,7 +15,7 @@ import pytest
 _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 sys.path.insert(0, str(_TOOLS))
 
-from checks.check_python3_syntax import (  # noqa: E402
+from checks.check_python3_syntax import (
     RULE_EXCEPT_TUPLE_NO_PAREN,
     check_file,
 )

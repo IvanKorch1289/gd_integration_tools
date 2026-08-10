@@ -13,7 +13,7 @@
 Все listener-варианты проверяются: sync-callable и async-coroutine.
 """
 
-# ruff: noqa: S101  # assert — стандартная идиома pytest
+# assert — стандартная идиома pytest
 
 from __future__ import annotations
 

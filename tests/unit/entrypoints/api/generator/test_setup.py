@@ -5,7 +5,6 @@
 бизнес-логику extensions и тяжёлые зависимости.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

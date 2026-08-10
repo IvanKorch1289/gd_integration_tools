@@ -22,7 +22,7 @@ BACKEND_DIR = DSL_DIR.parent
 SRC_DIR = BACKEND_DIR.parent
 sys.path.insert(0, str(SRC_DIR))
 
-from src.backend.dsl.blueprint_loader import discover_blueprints  # noqa: E402
+from src.backend.dsl.blueprint_loader import discover_blueprints
 
 app = typer.Typer(help="DSL Code Generation CLI.")
 

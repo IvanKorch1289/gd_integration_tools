@@ -8,7 +8,6 @@
 * dry-run путь ``run_codegen`` с inj регистром.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

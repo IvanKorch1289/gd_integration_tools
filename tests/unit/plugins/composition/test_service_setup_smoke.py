@@ -1,4 +1,3 @@
-# ruff: noqa: S101, SLF001
 """Smoke-тесты S39 W5 — модуль ``src.backend.plugins.composition.service_setup``.
 
 Покрывают:
@@ -57,7 +56,7 @@ def clean_middlewares() -> Any:
         for mw in snapshot:
             try:
                 action_handler_registry.unregister_middleware(mw)  # type: ignore[attr-defined]
-            except Exception:  # noqa: S110
+            except Exception:
                 pass
         yield action_handler_registry
     finally:
@@ -65,7 +64,7 @@ def clean_middlewares() -> Any:
         for mw in snapshot:
             try:
                 action_handler_registry.register_middleware(mw)  # type: ignore[attr-defined]
-            except Exception:  # noqa: S110
+            except Exception:
                 pass
 
 
@@ -334,7 +333,7 @@ def _mock_all_service_factories() -> None:
 
     # Собираем список (module_path, factory_name) — все они вызываются в
     # ``register_all_services`` без аргументов, поэтому MagicMock() подходит.
-    lazy_factories = [  # noqa: F841
+    lazy_factories = [
         (
             "extensions.core_entities.orderkinds.services.orderkinds.get_order_kind_service",
         ),

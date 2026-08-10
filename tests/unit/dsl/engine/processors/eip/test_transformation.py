@@ -4,7 +4,6 @@ Splitter, Normalizer, Sort.
 Паттерн: async tests, _ex fixture, моки для redis / s3 / jmespath.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

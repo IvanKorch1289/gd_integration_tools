@@ -9,7 +9,6 @@ Middleware извлекает tenant_id из request и устанавливае
 если применимо).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

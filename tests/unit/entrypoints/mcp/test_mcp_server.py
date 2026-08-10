@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke tests for MCP server (entrypoints/mcp/mcp_server.py)."""
 
 from __future__ import annotations

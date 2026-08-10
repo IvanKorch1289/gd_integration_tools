@@ -10,7 +10,6 @@ Wave ``[wave:s6/k3-dsl-linter-lsp]``.
 * ``_publish_diagnostics`` вызывает linter и публикует diagnostics.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

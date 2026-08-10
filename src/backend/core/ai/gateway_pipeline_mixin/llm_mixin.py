@@ -118,7 +118,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
 
         try:
             get_context_strategy(strategy_type)
-        except (ImportError, AttributeError, KeyError, TypeError, ValueError) as strategy_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, KeyError, TypeError, ValueError) as strategy_exc:
             # cycle-9/D-AUDIT-1726: narrow exceptions + observability.
             # ImportError — strategy module missing, AttributeError —
             # API change, KeyError — strategy name not registered,
@@ -138,7 +138,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
                 encoded_full = enc.encode(prompt)
                 truncated_enc = encoded_full[:half] + encoded_full[-(limit - half) :]
                 return enc.decode(truncated_enc)
-            except (AttributeError, TypeError, ValueError, UnicodeDecodeError) as tk_exc:  # noqa: BLE001
+            except (AttributeError, TypeError, ValueError, UnicodeDecodeError) as tk_exc:
                 # cycle-9/D-AUDIT-987: narrow exceptions + observability.
                 # AttributeError — encoder API change, TypeError — wrong
                 # prompt type, ValueError — invalid limit, UnicodeDecodeError

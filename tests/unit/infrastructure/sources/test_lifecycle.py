@@ -1,6 +1,5 @@
 """Unit-тесты для ``src.backend.infrastructure.sources._lifecycle``."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

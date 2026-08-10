@@ -14,7 +14,6 @@ temporalio SDK опционален (extra dep ``uv sync --extra workflow``);
 fallback-маркер ``_is_workflow``).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

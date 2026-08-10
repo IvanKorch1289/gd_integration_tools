@@ -1,6 +1,5 @@
 """Тесты bridge StdlibLoggingBackend → logging_service (Wave 2)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

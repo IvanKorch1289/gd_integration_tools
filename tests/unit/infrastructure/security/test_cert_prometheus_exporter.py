@@ -7,7 +7,6 @@
 
 Pattern (D259, Ponytail): thin wrapper над prometheus_client.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock

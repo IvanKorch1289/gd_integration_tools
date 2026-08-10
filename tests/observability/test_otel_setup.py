@@ -23,14 +23,14 @@ in_memory_exporter_mod = pytest.importorskip(
     "opentelemetry.sdk.trace.export.in_memory_span_exporter"
 )
 
-from opentelemetry import trace  # noqa: E402
-from opentelemetry.sdk.trace import TracerProvider  # noqa: E402
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor  # noqa: E402
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import (  # noqa: E402
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from src.backend.infrastructure.observability.otel import configure_otel  # noqa: E402
+from src.backend.infrastructure.observability.otel import configure_otel
 
 
 @pytest.fixture(autouse=True)
@@ -43,11 +43,11 @@ def _reset_global_tracer_provider() -> None:
     """
     from opentelemetry.util._once import Once
 
-    trace._TRACER_PROVIDER = None  # noqa: SLF001 — управляем тестовым state.
-    trace._TRACER_PROVIDER_SET_ONCE = Once()  # noqa: SLF001
+    trace._TRACER_PROVIDER = None
+    trace._TRACER_PROVIDER_SET_ONCE = Once()
     yield
-    trace._TRACER_PROVIDER = None  # noqa: SLF001
-    trace._TRACER_PROVIDER_SET_ONCE = Once()  # noqa: SLF001
+    trace._TRACER_PROVIDER = None
+    trace._TRACER_PROVIDER_SET_ONCE = Once()
 
 
 def test_configure_otel_console_exporter_returns_provider() -> None:

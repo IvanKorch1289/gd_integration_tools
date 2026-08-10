@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты CapabilityGate + check_capabilities_subset (ADR-044)."""
 
 from __future__ import annotations

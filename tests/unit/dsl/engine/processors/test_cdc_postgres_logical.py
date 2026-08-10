@@ -1,6 +1,5 @@
 """Unit-тесты CdcPostgresLogicalSource — Wave [wave:s5/k3-w5-cdc-postgres]."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

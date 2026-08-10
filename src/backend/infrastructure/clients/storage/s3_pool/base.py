@@ -83,7 +83,7 @@ class BaseS3Client(ABC):
         pass
 
     @abstractmethod
-    async def list_objects(self, prefix: str = None) -> list[str]:
+    async def list_objects(self, prefix: str | None = None) -> list[str]:
         """Возвращает список объектов в бакете."""
         pass
 

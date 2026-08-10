@@ -4,7 +4,6 @@ Self-contained — does NOT import modules with chain deps.
 Tests the fix: dead field removed, no callers use it.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

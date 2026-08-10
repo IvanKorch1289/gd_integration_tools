@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 W2 — unit-тесты ``PluginSandboxAdapter`` (resource-limits смысл)."""
 
 from __future__ import annotations
@@ -20,11 +19,11 @@ from src.backend.core.security.capabilities import CapabilityRef
 class _StubSandbox:
     async def run(
         self,
-        code: str,  # noqa: ARG002
+        code: str,
         *,
-        timeout_s: float = 30.0,  # noqa: ARG002
-        files: Mapping[str, bytes] | None = None,  # noqa: ARG002
-        workspace: Any | None = None,  # noqa: ARG002
+        timeout_s: float = 30.0,
+        files: Mapping[str, bytes] | None = None,
+        workspace: Any | None = None,
     ) -> SandboxResult:
         return SandboxResult(stdout="", stderr="", exit_code=0)
 

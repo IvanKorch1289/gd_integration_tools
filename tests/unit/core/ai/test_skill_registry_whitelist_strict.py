@@ -11,7 +11,6 @@
 новыми тестами на S177 #5 enforcement.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

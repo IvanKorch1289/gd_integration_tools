@@ -22,7 +22,7 @@ from src.backend.entrypoints.http3.asgi_bridge import (
 from src.backend.entrypoints.http3.config import Http3ServerConfig
 
 if TYPE_CHECKING:  # pragma: no cover
-    from aioquic.asyncio.protocol import QuicConnectionProtocol  # noqa: F401
+    from aioquic.asyncio.protocol import QuicConnectionProtocol
 
 logger = get_logger(__name__)
 

@@ -9,7 +9,6 @@ Self-contained — does NOT import modules with chain deps (workflow.compiler
 uses Temporal). Tests via AST inspection + behavior simulation.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

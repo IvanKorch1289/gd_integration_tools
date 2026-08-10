@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """B-17 fix (cycle 37): regression tests для CDC DLQ writer composition.
 
 Coverage:

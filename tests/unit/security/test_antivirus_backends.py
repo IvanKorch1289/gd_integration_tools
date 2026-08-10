@@ -13,7 +13,7 @@
 Реальная сеть и реальный clamd не требуются.
 """
 
-# ruff: noqa: S101  # assert — стандартная идиома pytest
+# assert — стандартная идиома pytest
 
 from __future__ import annotations
 

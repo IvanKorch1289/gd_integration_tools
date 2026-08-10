@@ -12,7 +12,6 @@ Requirements:
 - без Kafka
 - поддержка DBA_CDC_PUBLICATIONS / SCN tracking
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 from datetime import UTC, datetime

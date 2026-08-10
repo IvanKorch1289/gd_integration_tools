@@ -6,7 +6,6 @@ Worker (или activity step) должен прочитать marker и вызв
 
 Pattern (Ponytail, D169): handler — тонкая обёртка, lazy temporalio import.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 from unittest.mock import MagicMock

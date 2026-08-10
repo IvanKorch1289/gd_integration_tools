@@ -1,6 +1,5 @@
 """Тесты UnifiedMemoryGateway.recall_mem0 (Wave 4)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

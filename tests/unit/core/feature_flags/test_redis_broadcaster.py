@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты ``RedisFeatureFlagBroadcaster`` (Sprint 17 K5 W1 / D9).
 
 Покрывают:

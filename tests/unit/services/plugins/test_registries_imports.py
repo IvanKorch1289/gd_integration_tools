@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """S70 W3 — style-guard для ``src.backend.services.plugins.registries``.
 
 Защищаем инвариант S70 W3:
@@ -24,7 +23,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.backend.services.plugins import (  # noqa: F401  (smoke regression)
+from src.backend.services.plugins import (
     ActionRegistryAdapter,
     ProcessorRegistryAdapter,
     RepositoryHookRegistry,

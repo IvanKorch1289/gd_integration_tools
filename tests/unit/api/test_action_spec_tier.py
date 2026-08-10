@@ -8,7 +8,6 @@
 * tier=3 не инферрит (manual).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

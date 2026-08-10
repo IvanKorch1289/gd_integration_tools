@@ -121,7 +121,7 @@ class _PollingStrategy(_CDCStrategy):
                 try:
                     async with engine.connect() as conn:
                         query = text(
-                            f"SELECT * FROM {table} "  # table/timestamp_column — DSL/config параметры подписки, не runtime user input  # noqa: S608  # internal query with controlled parameters
+                            f"SELECT * FROM {table} "  # table/timestamp_column — DSL/config параметры подписки, не runtime user input  # internal query with controlled parameters
                             f"WHERE {sub.timestamp_column} > :last "
                             f"ORDER BY {sub.timestamp_column} "
                             f"LIMIT :limit"
@@ -330,7 +330,7 @@ class _LogMinerStrategy(_CDCStrategy):
                           AND OPERATION IN ('INSERT', 'UPDATE', 'DELETE')
                         ORDER BY SCN
                         FETCH FIRST :limit ROWS ONLY
-                    """)  # table_list собран из sub.tables (DSL config), upper-cased  # noqa: S608  # internal query with controlled parameters
+                    """)  # table_list собран из sub.tables (DSL config), upper-cased  # internal query with controlled parameters
                     result = await conn.execute(
                         query, {"last_scn": last_scn, "limit": sub.batch_size}
                     )

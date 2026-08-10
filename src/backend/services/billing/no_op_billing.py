@@ -30,7 +30,7 @@ from src.backend.core.auth.quotas_protocol import (
 )
 from src.backend.core.logging import get_logger
 
-__all__ = ("NoOpBillingFacade", "BILLING_ENABLED")
+__all__ = ("BILLING_ENABLED", "NoOpBillingFacade")
 
 _logger = get_logger("services.billing.no_op")
 
@@ -174,4 +174,4 @@ async def _emit_quota_check_skipped(
 # Structural typing self-check (development aid; not enforced at import time).
 # ``isinstance(NoOpBillingFacade(), QuotasBackend)`` is True by duck typing.
 if __name__ != "__main__":  # pragma: no cover
-    _ = (NoOpBillingFacade, QuotasBackend)  # noqa: F841 — keep imports live
+    _ = (NoOpBillingFacade, QuotasBackend)

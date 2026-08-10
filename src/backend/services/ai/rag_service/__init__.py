@@ -75,7 +75,7 @@ def get_rag_service() -> RAGService:
 class RAGService(IngestMixin, SearchMixin, AugmentMixin, CollectionMixin):
     """RAG service (4 mixins = 13 methods + 1 core)."""
 
-    __slots__ = ("_store", "_embedder", "_cache")
+    __slots__ = ("_cache", "_embedder", "_store")
 
     def __init__(
         self,

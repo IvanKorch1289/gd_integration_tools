@@ -9,7 +9,6 @@
 модуль без cycle через ``plugins.composition.__init__``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -154,7 +154,7 @@ async def watch_policy_files(
             # S77 W1: reload resolver (clears cache + re-loads on next resolve)
             try:
                 resolver.reload()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.warning(
                     "resolver.reload() failed after %s %s: %s", action, path, exc
                 )
@@ -164,7 +164,7 @@ async def watch_policy_files(
             if on_reload is not None:
                 try:
                     on_reload(event)
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     _logger.warning("on_reload callback failed: %s", exc)
 
             _logger.info("Policy %s: %s (resolver reloaded)", action.value, path)

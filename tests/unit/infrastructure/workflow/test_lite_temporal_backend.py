@@ -13,7 +13,6 @@
 ``WorkflowEnvironment.start_local`` через ``monkeypatch.setattr``,
 чтобы не запускать локальный Temporal-сервер.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 

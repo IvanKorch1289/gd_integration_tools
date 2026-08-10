@@ -1,6 +1,5 @@
 """Unit-тесты service.toml loader + ServiceDSLRegistry (K3 W5 S3)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

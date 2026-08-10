@@ -10,7 +10,6 @@
     * Размеры не заданы → bytes копируются без resize.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

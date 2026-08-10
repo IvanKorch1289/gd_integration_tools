@@ -12,7 +12,6 @@
     7. PIIMaskingResponseMiddleware доступен (S18 W5).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

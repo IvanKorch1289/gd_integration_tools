@@ -3,7 +3,6 @@
 v21 §2.1: Data Lineage / Provenance. EU AI Act, RAG provenance, OpenLineage.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

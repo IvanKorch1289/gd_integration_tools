@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты codemod ``tools/codemods/fix_except_clause.py``.
 
 Покрывают трансформацию ``except A, B:`` → ``except (A, B):`` для нескольких
@@ -15,7 +14,7 @@ from textwrap import dedent
 _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 sys.path.insert(0, str(_TOOLS))
 
-from codemods.fix_except_clause import transform_source  # noqa: E402
+from codemods.fix_except_clause import transform_source
 
 
 class TestFixExceptClause:

@@ -9,7 +9,6 @@
 * skipping не валит общую сборку при ошибке в одном action.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

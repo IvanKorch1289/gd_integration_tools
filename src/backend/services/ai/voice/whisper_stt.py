@@ -127,7 +127,7 @@ class WhisperSTTService:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "voice_stt_tts_enabled", False))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     def is_available(self) -> bool:
@@ -135,7 +135,7 @@ class WhisperSTTService:
         if not self.enabled:
             return False
         try:
-            import whisper  # type: ignore[import-not-found]  # noqa: F401
+            import whisper  # type: ignore[import-not-found]
 
             return True
         except ImportError:
@@ -168,7 +168,7 @@ class WhisperSTTService:
             if self._device is not None:
                 kwargs["device"] = self._device
             self._model = whisper.load_model(self._model_name, **kwargs)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise VoiceServiceUnavailable(
                 f"Не удалось загрузить Whisper-модель '{self._model_name}': {exc}"
             ) from exc
@@ -210,7 +210,7 @@ class WhisperSTTService:
         if self._capability_audit is not None:
             try:
                 self._capability_audit(self.capability, self._model_name)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("capability_audit hook failed: %s", exc)
 
         model = self._ensure_model()
@@ -222,7 +222,7 @@ class WhisperSTTService:
             response: Any = await asyncio.to_thread(
                 model.transcribe, str(path), **transcribe_kwargs
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise VoiceServiceUnavailable(f"Whisper transcribe failed: {exc}") from exc
 
         return self._build_result(response)

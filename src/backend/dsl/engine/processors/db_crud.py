@@ -29,9 +29,9 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = (
+    "SUPPORTED_DIALECTS",
     "CRUDOperation",
     "DbCrudProcessor",
-    "SUPPORTED_DIALECTS",
     "build_delete_sql",
     "build_insert_sql",
     "build_update_sql",
@@ -102,7 +102,7 @@ def build_insert_sql(table: str, data: dict[str, Any]) -> tuple[str, dict[str, A
     table_q = _quote_identifier(table)
     cols_q = ", ".join(_quote_identifier(c) for c in cols)
     placeholders = ", ".join(f":{c}" for c in cols)
-    sql = f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders})"  # noqa: S608
+    sql = f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders})"
     return sql, dict(data)
 
 
@@ -143,7 +143,7 @@ def build_upsert_sql(
         )
         update_clause = f"DO UPDATE SET {update_set}"
     sql = (
-        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "  # noqa: S608
+        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "
         f"ON CONFLICT ({conflict_q}) {update_clause}"
     )
     return sql, dict(data)
@@ -164,7 +164,7 @@ def build_delete_sql(table: str, where: dict[str, Any]) -> tuple[str, dict[str, 
         _quote_identifier(col)
     table_q = _quote_identifier(table)
     conditions = " AND ".join(f"{_quote_identifier(c)} = :{c}" for c in where.keys())
-    sql = f"DELETE FROM {table_q} WHERE {conditions}"  # noqa: S608
+    sql = f"DELETE FROM {table_q} WHERE {conditions}"
     return sql, dict(where)
 
 
@@ -200,7 +200,7 @@ def build_update_sql(
     conditions = " AND ".join(
         f"{_quote_identifier(c)} = :where_{c}" for c in where.keys()
     )
-    sql = f"UPDATE {table_q} SET {set_clause} WHERE {conditions}"  # noqa: S608
+    sql = f"UPDATE {table_q} SET {set_clause} WHERE {conditions}"
     # Merge params with prefixed keys to avoid collisions between SET and WHERE.
     params: dict[str, Any] = {}
     params.update({f"set_{k}": v for k, v in data.items()})
@@ -236,7 +236,7 @@ def build_upsert_sql_mysql(
             for c in update_cols
         )
     sql = (
-        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "  # noqa: S608
+        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "
         f"ON DUPLICATE KEY UPDATE {update_clause}"
     )
     return sql, dict(data)
@@ -272,7 +272,7 @@ def build_upsert_sql_merge(
         insert_cols = ", ".join(_quote_identifier(c) for c in cols)
         insert_vals = ", ".join(f"src.{_quote_identifier(c)}" for c in cols)
         not_matched_clause = (
-            f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"  # noqa: S608
+            f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"
             # Identifiers quoted via ``_quote_identifier`` (whitelist regex);
             # all values bound via ``:name`` placeholders in MERGE ... USING.
         )
@@ -285,13 +285,13 @@ def build_upsert_sql_merge(
         insert_cols = ", ".join(_quote_identifier(c) for c in cols)
         insert_vals = ", ".join(f"src.{_quote_identifier(c)}" for c in cols)
         not_matched_clause = (
-            f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"  # noqa: S608
+            f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"
             # Same whitelist as the ``if`` branch above; values bound.
         )
     # Identifiers above go through ``_quote_identifier`` (whitelist regex)
     # and every user value is bound via ``:name`` placeholders.
     sql = (
-        f"MERGE INTO {table_q} AS t "  # noqa: S608
+        f"MERGE INTO {table_q} AS t "
         f"USING (SELECT {', '.join(f':{c} AS {_quote_identifier(c)}' for c in cols)}) AS src "
         f"ON {on_clause} {matched_clause} {not_matched_clause}"
     )
@@ -393,7 +393,7 @@ class DbCrudProcessor(BaseProcessor):
                 self._dialect, self._table, self._data, self._conflict_keys
             )
         else:  # DELETE
-            sql, params = build_delete_sql(self._table, self._where)
+            sql, _params = build_delete_sql(self._table, self._where)
 
         _logger.info(
             "db_crud: op=%s dialect=%s table=%s sql=%s",

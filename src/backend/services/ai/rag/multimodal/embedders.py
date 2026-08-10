@@ -116,7 +116,7 @@ class CLIPEmbedder:
                 with Image.open(io.BytesIO(content)) as img:
                     img.load()
                     vec = model.encode(img, convert_to_numpy=True)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise ValueError(f"не удалось распарсить изображение: {exc}") from exc
         else:
             raise ValueError(
@@ -164,7 +164,7 @@ class ColpaliEmbedder:
             LazyImportError: Если colpali_engine не установлен.
         """
         try:
-            import colpali_engine  # type: ignore[import-not-found]  # noqa: F401
+            import colpali_engine  # type: ignore[import-not-found]
         except ImportError as exc:
             raise LazyImportError(
                 "colpali_engine не установлен. "

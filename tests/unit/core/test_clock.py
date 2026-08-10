@@ -8,7 +8,6 @@
 * отказ FakeClock.advance при отрицательном значении.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

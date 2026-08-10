@@ -40,7 +40,7 @@ def _async_ping(backend: str) -> Awaitable[bool]:
 
             client = get_vector_store(backend=backend)
             return (await client.count()) >= 0
-        except (ImportError, RuntimeError, OSError, ConnectionError, AttributeError) as probe_exc:  # noqa: BLE001
+        except (ImportError, RuntimeError, OSError, ConnectionError, AttributeError) as probe_exc:
             # cycle-9/D-AUDIT-926: narrow exceptions + observability.
             # ImportError — vector store missing, RuntimeError —
             # backend unavailable, OSError/ConnectionError — network,
@@ -88,7 +88,7 @@ def register_vector_pool_if_available(
             ping_fn=ping_fn,
         )
         return True
-    except (ImportError, RuntimeError, AttributeError, ValueError) as reg_exc:  # noqa: BLE001
+    except (ImportError, RuntimeError, AttributeError, ValueError) as reg_exc:
         # cycle-9/D-AUDIT-926: narrow exceptions + observability.
         # ImportError — manager missing, RuntimeError — already registered,
         # AttributeError — manager API change, ValueError — invalid args.

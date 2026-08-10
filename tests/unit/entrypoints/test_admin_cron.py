@@ -10,7 +10,6 @@
     * GET /admin/cron/dashboard.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

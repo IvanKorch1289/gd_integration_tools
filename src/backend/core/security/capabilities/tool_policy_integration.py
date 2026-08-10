@@ -60,9 +60,9 @@ if TYPE_CHECKING:
 _logger = get_logger("core.security.capabilities.tool_integration")
 
 __all__ = (
+    "ToolCapabilityCheckError",
     "check_tool_with_policy",
     "filter_tools_with_gate",
-    "ToolCapabilityCheckError",
 )
 
 

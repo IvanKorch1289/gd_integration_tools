@@ -10,7 +10,6 @@ Auth context устанавливается downstream (auth_selector пишет
 вычисляется ВНУТРИ send-wrapper, а не в __call__.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

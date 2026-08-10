@@ -1,6 +1,5 @@
 """Тесты unified circuit breaker (Sprint 1 V16 Single-Entry, Step 3.2)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

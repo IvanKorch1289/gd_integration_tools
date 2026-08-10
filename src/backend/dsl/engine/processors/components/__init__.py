@@ -33,12 +33,12 @@ from src.backend.dsl.engine.processors.components.timerprocessor import (
 )
 
 __all__ = (
-    "HttpCallProcessor",
     "DatabaseQueryProcessor",
     "FileReadProcessor",
     "FileWriteProcessor",
+    "HttpCallProcessor",
+    "PollingConsumerProcessor",
     "S3ReadProcessor",
     "S3WriteProcessor",
     "TimerProcessor",
-    "PollingConsumerProcessor",
 )

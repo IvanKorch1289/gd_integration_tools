@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock  # noqa: F401
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -13,7 +13,7 @@ pytest.skip(
     allow_module_level=True,
 )
 
-from src.backend.core.security.vault_cipher_sqlalchemy import (  # noqa: E402, F401
+from src.backend.core.security.vault_cipher_sqlalchemy import (
     decrypt_field,
     decrypt_mapping,
     encrypt_field,

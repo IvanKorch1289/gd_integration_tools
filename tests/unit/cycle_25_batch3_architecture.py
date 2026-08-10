@@ -3,7 +3,6 @@
 Self-contained — does NOT import application modules.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

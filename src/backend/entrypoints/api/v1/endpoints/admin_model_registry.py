@@ -44,7 +44,7 @@ async def _composite() -> Any:
         )
 
         backends["mlflow"] = MlflowModelRegistry()
-    except (ImportError, AttributeError, RuntimeError) as mlflow_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError) as mlflow_exc:
         # cycle-9/D-AUDIT-1730: narrow exceptions + observability.
         # ImportError — mlflow_backend missing, AttributeError — API
         # change, RuntimeError — MLflow unavailable.
@@ -59,7 +59,7 @@ async def _composite() -> Any:
         )
 
         backends["huggingface"] = HuggingFaceModelRegistry()
-    except (ImportError, AttributeError, RuntimeError) as hf_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError) as hf_exc:
         # cycle-9/D-AUDIT-1731: см. D-AUDIT-1730 — narrow для HF Hub.
         import logging
         logging.getLogger(__name__).debug(

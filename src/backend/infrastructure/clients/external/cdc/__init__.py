@@ -28,13 +28,13 @@ from src.backend.infrastructure.clients.external.cdc.strategies import (
 )
 
 __all__ = (
+    "CDCClient",
     "CDCEvent",
     "CDCSubscription",
     "_CDCStrategy",
-    "_PollingStrategy",
     "_ListenNotifyStrategy",
     "_LogMinerStrategy",
-    "CDCClient",
+    "_PollingStrategy",
     "get_cdc_client",
     "get_task_registry",
     "reset_cdc_client",

@@ -8,7 +8,6 @@
 позиционный topic + kwargs stream= конфликтовали в faststream 0.6.7.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

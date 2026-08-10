@@ -8,13 +8,13 @@ from pydantic_settings import SettingsConfigDict
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = (
-    "RAGSettings",
-    "rag_settings",
-    "HyDESettings",
-    "MultiQuerySettings",
-    "HybridSettings",
-    "StrategyThresholdsSettings",
     "AdaptiveRAGSettings",
+    "HyDESettings",
+    "HybridSettings",
+    "MultiQuerySettings",
+    "RAGSettings",
+    "StrategyThresholdsSettings",
+    "rag_settings",
 )
 
 

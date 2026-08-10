@@ -5,7 +5,6 @@ Tests importability + class presence + exception type correctness
 (without complex internal state setup).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for NotifyGatewayActions (services/ops/notify_actions.py)."""
 
 from __future__ import annotations

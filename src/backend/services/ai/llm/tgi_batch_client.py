@@ -106,7 +106,7 @@ class TgiBatchClient:
                 )
                 for p in prompts
             ]
-        return [t.result() for t in tg_tasks]  # type: ignore[union-attr]  # noqa
+        return [t.result() for t in tg_tasks]  # type: ignore[union-attr]
 
     async def _single_embedding(self, text: str) -> list[float]:
         async with self._semaphore:

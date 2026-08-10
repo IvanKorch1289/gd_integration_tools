@@ -6,7 +6,7 @@ ADR-0207: services/jupyter/execution_service/__init__.py импортирует
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
+from src.backend.core.di.providers.infrastructure_locator import (
     get_jupyter_hub_client_class as _get_jhc_cls,
 )
 from src.backend.core.di.providers.infrastructure_locator import (

@@ -6,7 +6,6 @@ Per https://docs.temporal.io/production-deployment/worker-deployments/worker-ver
 
 Pattern (Ponytail, D172): тонкая обёртка над temporalio SDK.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

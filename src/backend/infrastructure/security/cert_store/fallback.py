@@ -97,7 +97,7 @@ class FallbackCertBackend(CertBackend):
                 continue
             try:
                 results.append(await backend.delete(service_id))
-            except (OSError, ConnectionError, RuntimeError, ValueError) as delete_exc:  # noqa: BLE001
+            except (OSError, ConnectionError, RuntimeError, ValueError) as delete_exc:
                 # cycle-9/D-AUDIT-935: narrow exceptions + observability.
                 # OSError/ConnectionError для vault backend, RuntimeError
                 # для not-initialized, ValueError для invalid args. Bare

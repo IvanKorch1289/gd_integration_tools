@@ -37,11 +37,11 @@ from src.backend.core.auth.saml_backend import (
     SamlError,
 )
 from testkit.auth_fixtures import (
-    azure_ad_stub_metadata,  # noqa: F401 — re-export фикстура pytest.
-    keycloak_container,  # noqa: F401
-    okta_stub_metadata,  # noqa: F401
-    saml_idp_metadata,  # noqa: F401
-    saml_sp_metadata,  # noqa: F401
+    azure_ad_stub_metadata,
+    keycloak_container,
+    okta_stub_metadata,
+    saml_idp_metadata,
+    saml_sp_metadata,
 )
 
 
@@ -94,7 +94,7 @@ def test_login_redirect_url_matrix(
 
 
 def test_assertion_decoded_returns_principal_and_attributes(
-    okta_stub_metadata: dict[str, Any],  # noqa: F811 — pytest fixture
+    okta_stub_metadata: dict[str, Any],
 ) -> None:
     """После успешной валидации возвращается principal + attributes."""
     config = _config_from_stub(okta_stub_metadata)
@@ -120,7 +120,7 @@ def test_assertion_decoded_returns_principal_and_attributes(
 
 
 def test_logout_redirect_for_azure_ad(
-    azure_ad_stub_metadata: dict[str, Any],  # noqa: F811
+    azure_ad_stub_metadata: dict[str, Any],
 ) -> None:
     """SLO redirect содержит ``SessionIndex`` и ``NameID``."""
     config = _config_from_stub(azure_ad_stub_metadata)
@@ -141,7 +141,7 @@ def test_logout_redirect_for_azure_ad(
 
 
 def test_replay_defence_blocks_reuse_of_request_id(
-    okta_stub_metadata: dict[str, Any],  # noqa: F811
+    okta_stub_metadata: dict[str, Any],
 ) -> None:
     """Повторное использование ``request_id`` → :class:`SamlError`."""
     config = _config_from_stub(okta_stub_metadata)
@@ -161,7 +161,7 @@ def test_replay_defence_blocks_reuse_of_request_id(
 
 
 def test_keycloak_saml_descriptor_accessible(
-    keycloak_container: Any,  # noqa: F811 — фикстура session-scoped.
+    keycloak_container: Any,
 ) -> None:
     """Realm Keycloak отдаёт SAML descriptor XML (HTTP 200 + XML-payload).
 

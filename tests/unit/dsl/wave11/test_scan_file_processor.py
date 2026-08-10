@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты ``ScanFileProcessor`` (Wave 11).
 
 Покрывают:

@@ -36,7 +36,6 @@ DSL-fallback (Tier 3) — не применим к MCP: MCP tools зарегис
       tests/unit/entrypoints/mcp/test_mcp_no_dsl_principal_propagation.py -v
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

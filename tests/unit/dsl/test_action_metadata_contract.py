@@ -22,7 +22,6 @@
 HTTP-метода для специально подобранных action'ов.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

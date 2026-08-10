@@ -16,7 +16,6 @@ implementations, but the new test_preserves_streaming_body_chunks
 verifies the property that only the ASGI implementation can satisfy.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

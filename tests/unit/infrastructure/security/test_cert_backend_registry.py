@@ -8,7 +8,6 @@ register/unregister/get/list, like a plugin registry.
 
 Test: register custom backend → get returns instance.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 import pytest

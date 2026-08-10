@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты для ``src.backend.dsl.engine.versioning``.
 
 Покрывает PipelineVersionManager, PipelineSnapshot, get_pipeline_version_manager.

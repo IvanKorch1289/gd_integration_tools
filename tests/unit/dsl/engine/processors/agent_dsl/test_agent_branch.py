@@ -24,7 +24,7 @@ class _RecordingProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         del context
         executed = exchange.get_property("_branch_executed", [])
-        executed = list(executed) + [self.tag]
+        executed = [*list(executed), self.tag]
         exchange.set_property("_branch_executed", executed)
 
     def to_spec(self) -> dict[str, Any]:

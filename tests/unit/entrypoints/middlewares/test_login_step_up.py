@@ -6,7 +6,6 @@ B-04 fix (cycle 33): step-up auth для ``POST /api/v1/auth/login``:
 3. CSRF cookie default: ``httponly=True``, ``samesite=strict``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

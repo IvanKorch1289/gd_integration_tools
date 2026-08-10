@@ -180,7 +180,7 @@ class SchemaValidateProcessor(BaseProcessor):
         super().__init__(name="schema_validate")
         self.schema = schema
         try:
-            import jsonschema  # noqa: F401
+            import jsonschema
 
             self._strict = True
         except ImportError:

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Wave C scaffold tests: контракт ``WorkflowBackend`` + ``FakeWorkflowBackend``."""
 
 from __future__ import annotations

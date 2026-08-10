@@ -5,7 +5,6 @@ watcher регистрирует route через ``RouteRegistry``; затем 
 watcher вычищает route. Дебаунс делегирован ``watchfiles.awatch``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -36,16 +36,16 @@ from src.backend.dsl.processors.event_store.types import (
 )
 
 __all__ = (
-    "EventStream",
+    "CQRSMixin",
+    "CommandBus",
     "Event",
     "EventStore",
+    "EventStoreProcessor",
+    "EventStream",
     "InMemoryEventStore",
     "Projection",
-    "CommandBus",
     "QueryBus",
-    "EventStoreProcessor",
-    "CQRSMixin",
     "get_event_store",
-    "set_event_store",
     "reset_event_store",
+    "set_event_store",
 )

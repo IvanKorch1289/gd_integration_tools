@@ -6,7 +6,7 @@ ADR-0207: services/ai/rag_service/__init__.py импортирует
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
+from src.backend.core.di.providers.infrastructure_locator import (
     get_three_tier_rag_cache_class as _get_three_tier_rag_cache_cls,
 )
 

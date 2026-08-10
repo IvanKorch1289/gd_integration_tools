@@ -107,7 +107,7 @@ def _get_plugin_registry() -> Any:
     При недоступности возвращает None — эндпоинты используют mock.
     """
     try:
-        from src.backend.core.plugin_runtime.loader import PluginLoader  # type: ignore[import-not-found]  # noqa: I001  # lazy import
+        from src.backend.core.plugin_runtime.loader import PluginLoader  # type: ignore[import-not-found]  # lazy import
 
         return PluginLoader.get_instance()
     except (ImportError, AttributeError, RuntimeError):

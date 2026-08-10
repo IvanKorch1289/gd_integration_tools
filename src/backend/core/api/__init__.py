@@ -33,7 +33,7 @@ from typing import Any
 # Re-export from existing single entry point (src/backend/sdk).
 # This facade does NOT replace SDK; it complements it with explicit
 # DI providers + AIGateway + SchedulerManager + workflow builders.
-from src.backend.sdk import (  # noqa: F401
+from src.backend.sdk import (
     AgentToolPolicy,
     BaseError,
     Clock,
@@ -52,44 +52,44 @@ from src.backend.sdk import (  # noqa: F401
 )
 
 __all__ = [
-    # === DSL Engine (re-exported from src.backend.sdk) ===
-    "Exchange",
-    "Pipeline",
-    # === DI Container (re-exported from src.backend.sdk) ===
-    "get_service",
-    "register_factory",
-    "register_infra_module",
-    "unregister_infra_module",
-    "is_extension_path",
-    "ExtensionRegistrationError",
-    # === App State decorator (re-exported) ===
-    "app_state_singleton",
+    "AIGateway",
+    # === AI Tool Policy (re-exported) ===
+    "AgentToolPolicy",
     # === Errors (re-exported) ===
     "BaseError",
     # === Utilities (re-exported) ===
     "Clock",
-    # === AI Tool Policy (re-exported) ===
-    "AgentToolPolicy",
-    # === Jupyter (re-exported) ===
-    "run_hub_notebook",
-    "NotebookSpec",
+    # === DSL Engine (re-exported from src.backend.sdk) ===
+    "Exchange",
+    "ExtensionRegistrationError",
     "NotebookRegistry",
+    "NotebookSpec",
+    "Pipeline",
+    # === App State decorator (re-exported) ===
+    "app_state_singleton",
+    "emit_audit_safe",                  # AuditService.safe (never-raises emit)
+    "get_auth_facade",                  # AuthFacade (verify + capability)
+    "get_cache_facade",                 # UnifiedCacheFacade (get/set/delete/tag)
+    "get_clickhouse_client_class",
+    "get_elasticsearch_client_class",
+    "get_external_db_facade",           # ExternalDBFacade (queries + transactions)
+    "get_mongodb_client_class",
+    "get_redis_client_class",
     # === Cycle 29 additions: P1-#1 explicit categories ===
     # DI providers (lazy via __getattr__ to avoid import-time deps)
     "get_scheduler_provider",
-    "get_redis_client_class",
-    "get_mongodb_client_class",
-    "get_elasticsearch_client_class",
-    "get_clickhouse_client_class",
-    "AIGateway",
+    # === DI Container (re-exported from src.backend.sdk) ===
+    "get_service",
     # === Cycle 31 P2.1 additions: Domain Facades ===
     # Capability-checked facades (via DI providers, lazy).
     # Extensions should prefer these over direct infrastructure imports.
     "get_storage_facade_provider",      # StorageFacade (CRUD + presign + list)
-    "get_external_db_facade",           # ExternalDBFacade (queries + transactions)
-    "get_auth_facade",                  # AuthFacade (verify + capability)
-    "get_cache_facade",                 # UnifiedCacheFacade (get/set/delete/tag)
-    "emit_audit_safe",                  # AuditService.safe (never-raises emit)
+    "is_extension_path",
+    "register_factory",
+    "register_infra_module",
+    # === Jupyter (re-exported) ===
+    "run_hub_notebook",
+    "unregister_infra_module",
     # NOTE: SchedulerManager and WorkflowBuilder are upper-layer symbols.
     # They live in src.backend.sdk (the permitted composition boundary),
     # NOT in core.api — importing dsl/infrastructure from core violates

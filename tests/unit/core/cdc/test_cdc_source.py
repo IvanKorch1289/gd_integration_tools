@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты `CDCSource` Protocol + `FakeCDCSource` + Debezium parser (R2.1)."""
 
 from __future__ import annotations

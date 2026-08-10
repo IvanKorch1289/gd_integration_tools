@@ -4,7 +4,6 @@ Self-contained — does NOT import deps that require chain infrastructure
 (Vault, FastAPI app, etc.). Tests facade re-exports + lazy loads.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

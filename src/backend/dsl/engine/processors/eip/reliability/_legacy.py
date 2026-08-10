@@ -23,7 +23,7 @@ Apache Camel EIP catalog (reliability / routing-metadata):
 
 from __future__ import annotations
 
-# ruff: noqa: F822  # lazy __getattr__ exports verified by runtime test
+# lazy __getattr__ exports verified by runtime test
 from collections.abc import Awaitable, Callable
 from datetime import datetime
 from typing import Any
@@ -53,7 +53,7 @@ HEADER_RETURN_ADDRESS = "return_address"  # reply-to endpoint URI
 # Type aliases
 IdFactory = Callable[[], str]
 ExpirationResolver = Callable[
-    [Exchange[Any]], datetime | None | Awaitable[datetime | None]
+    [Exchange[Any]], datetime | Awaitable[datetime | None] | None
 ]
 RedeliveryAttempt = tuple[int, float]  # (attempt_number, delay_seconds)
 

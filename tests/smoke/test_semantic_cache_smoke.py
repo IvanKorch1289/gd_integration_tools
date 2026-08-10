@@ -10,7 +10,6 @@
 в unit-тестах с fakeredis.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -39,8 +38,8 @@ def test_semantic_cache_key_is_deterministic() -> None:
     """_exact_key(q) → один и тот же ключ для одного запроса."""
     cache = SemanticCache()
 
-    key1 = cache._exact_key("hello world")  # noqa: SLF001
-    key2 = cache._exact_key("hello world")  # noqa: SLF001
+    key1 = cache._exact_key("hello world")
+    key2 = cache._exact_key("hello world")
 
     assert key1 == key2
     assert key1.startswith(cache.prefix)
@@ -50,8 +49,8 @@ def test_semantic_cache_key_distinct_per_query() -> None:
     """_exact_key: разные запросы → разные ключи."""
     cache = SemanticCache()
 
-    key_a = cache._exact_key("query A")  # noqa: SLF001
-    key_b = cache._exact_key("query B")  # noqa: SLF001
+    key_a = cache._exact_key("query A")
+    key_b = cache._exact_key("query B")
 
     assert key_a != key_b
 
@@ -60,7 +59,7 @@ def test_semantic_cache_key_uses_sha256() -> None:
     """_exact_key: ключ включает sha256-хеш (64 hex chars после prefix)."""
     cache = SemanticCache()
 
-    key = cache._exact_key("anything")  # noqa: SLF001
+    key = cache._exact_key("anything")
     hex_part = key.removeprefix(cache.prefix)
 
     assert len(hex_part) == 64

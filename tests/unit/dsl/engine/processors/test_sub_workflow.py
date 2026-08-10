@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """S106 W3 — tests для ``RouteBuilder.sub_workflow()`` + ``SubWorkflowProcessor``.
 
 Покрытие:

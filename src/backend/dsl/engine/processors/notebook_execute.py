@@ -83,7 +83,7 @@ class NotebookExecuteProcessor(BaseProcessor):
             try:
                 body = exchange.in_message.body
                 cells = body if isinstance(body, list) else []
-            except (AttributeError, TypeError, ValueError) as body_exc:  # noqa: BLE001
+            except (AttributeError, TypeError, ValueError) as body_exc:
                 # cycle-9/D-AUDIT-973: narrow exceptions + observability.
                 # AttributeError — exchange missing body, TypeError — wrong
                 # type, ValueError — invalid body. Bare `except Exception`

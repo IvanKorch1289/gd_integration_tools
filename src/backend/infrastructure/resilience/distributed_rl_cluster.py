@@ -60,7 +60,7 @@ end
 redis.call('HMSET', key, 'tokens', tokens, 'last_ms', now_ms)
 redis.call('EXPIRE', key, 3600)
 return {allowed, tokens, retry_after_ms}
-"""  # noqa: S105  # config field name, not a password
+"""  # config field name, not a password
 
 
 @dataclass(frozen=True, slots=True)

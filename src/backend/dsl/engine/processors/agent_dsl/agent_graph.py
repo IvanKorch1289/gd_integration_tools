@@ -341,7 +341,7 @@ class AgentGraphProcessor(BaseAIProcessor):
                 )
                 return [] if not fail_open_env else list(tool_actions)
             policy = get_service(AgentToolPolicy)
-        except (ImportError, AttributeError, RuntimeError, KeyError) as di_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError, KeyError) as di_exc:
             # cycle-9/D-AUDIT-964: narrow exceptions + observability.
             # ImportError — DI module missing, AttributeError — policy
             # class change, RuntimeError — DI unavailable, KeyError —
@@ -360,7 +360,7 @@ class AgentGraphProcessor(BaseAIProcessor):
             try:
                 if policy.is_allowed(tool):
                     allowed.append(tool)
-            except (AttributeError, TypeError, ValueError) as policy_exc:  # noqa: BLE001
+            except (AttributeError, TypeError, ValueError) as policy_exc:
                 # cycle-9/D-AUDIT-965: narrow exceptions + observability.
                 # AttributeError — is_allowed API change, TypeError — wrong
                 # arg, ValueError — invalid tool name.

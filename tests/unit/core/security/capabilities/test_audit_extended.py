@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 K1 W4 — unit-тесты ``CapabilityAuditEvent``."""
 
 from __future__ import annotations

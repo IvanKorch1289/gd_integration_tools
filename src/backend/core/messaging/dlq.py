@@ -14,7 +14,7 @@ public-API в core, чтобы плагины могли использоват�
 
 from __future__ import annotations
 
-# ruff: noqa: F822  # lazy __getattr__ exports verified by runtime test
+# lazy __getattr__ exports verified by runtime test
 from typing import TYPE_CHECKING, Any
 
 

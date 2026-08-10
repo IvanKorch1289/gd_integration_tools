@@ -128,7 +128,7 @@ async def _register_health_checks() -> None:
         host = queue_settings.host
         port = queue_settings.port
         try:
-            reader, writer = await asyncio.wait_for(
+            _reader, writer = await asyncio.wait_for(
                 asyncio.open_connection(host, port), timeout=2.0
             )
             writer.close()
@@ -147,7 +147,7 @@ async def _register_health_checks() -> None:
 
         start = time.monotonic()
         try:
-            reader, writer = await asyncio.wait_for(
+            _reader, writer = await asyncio.wait_for(
                 asyncio.open_connection("localhost", 4222), timeout=2.0
             )
             writer.close()

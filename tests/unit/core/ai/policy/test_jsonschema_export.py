@@ -11,7 +11,6 @@ MCP docs, IDE autocomplete, config validators):
 для backward-compatibility и consistency.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

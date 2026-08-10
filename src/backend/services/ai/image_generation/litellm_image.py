@@ -137,7 +137,7 @@ class LiteLLMImageGenerationService:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "voice_image_gen_enabled", False))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return False
 
     def is_available(self) -> bool:
@@ -145,7 +145,7 @@ class LiteLLMImageGenerationService:
         if not self.enabled:
             return False
         try:
-            import litellm  # type: ignore[import-not-found]  # noqa: F401
+            import litellm  # type: ignore[import-not-found]
 
             return True
         except ImportError:
@@ -174,7 +174,7 @@ class LiteLLMImageGenerationService:
             if hasattr(gateway, "_ensure_litellm"):
                 self._litellm = gateway._ensure_litellm()
                 return self._litellm
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug(
                 "LiteLLMGateway недоступен, fallback на прямой import: %s", exc
             )
@@ -199,7 +199,7 @@ class LiteLLMImageGenerationService:
             from src.backend.services.ai.metrics import get_agent_metrics_service
 
             self._metrics = get_agent_metrics_service()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("AgentMetricsService недоступен: %s", exc)
             self._metrics = False
         return self._metrics if self._metrics is not False else None
@@ -242,7 +242,7 @@ class LiteLLMImageGenerationService:
         if self._capability_audit is not None:
             try:
                 self._capability_audit(self.capability, chosen_model)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("capability_audit hook failed: %s", exc)
 
         litellm = self._ensure_litellm()
@@ -259,7 +259,7 @@ class LiteLLMImageGenerationService:
 
         try:
             response: Any = await asyncio.to_thread(litellm.image_generation, **params)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise ImageGenerationUnavailable(
                 f"litellm.image_generation failed: {exc}"
             ) from exc
@@ -307,7 +307,7 @@ class LiteLLMImageGenerationService:
         if hasattr(obj, "model_dump"):
             try:
                 return dict(obj.model_dump())
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("model_dump failed, fallback to __dict__: %s", exc)
         if hasattr(obj, "__dict__"):
             return {k: v for k, v in obj.__dict__.items() if not k.startswith("_")}
@@ -332,7 +332,7 @@ class LiteLLMImageGenerationService:
                         )
                     )
                     result.cost_usd = cost_usd
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("image cost estimate failed: %s", exc)
 
         if cost_usd <= 0:
@@ -345,5 +345,5 @@ class LiteLLMImageGenerationService:
             metrics.record_cost(
                 provider=self._provider, model=result.model, cost_usd=cost_usd
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("record_cost failed: %s", exc)

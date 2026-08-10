@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Property-based tests for RuntimeFeatureFlagOverrides (Sprint 42 W1 C-3).
 
 Covers invariants of the singleton state machine:

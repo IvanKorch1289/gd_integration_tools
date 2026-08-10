@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты для ``AuditClickhouseProcessor``.
 
 Покрывают process (с динамическими полями, без них, ошибки), to_spec и параметры.

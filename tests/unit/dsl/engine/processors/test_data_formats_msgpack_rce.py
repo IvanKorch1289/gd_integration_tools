@@ -115,7 +115,7 @@ class TestPickleRceRejected:
         import os
 
         class _RcePayload:
-            def __reduce__(self):  # noqa: D401
+            def __reduce__(self):
                 return (os.system, ("echo PWNED > /tmp/should_not_exist",))
 
         malicious = pickle.dumps(_RcePayload())
@@ -201,7 +201,7 @@ class TestFormatConvertProcessorFailsClosed:
         import os
 
         class _RcePayload:
-            def __reduce__(self):  # noqa: D401
+            def __reduce__(self):
                 return (os.system, ("touch /tmp/cycle6_d_audit_603_e2e_rce",))
 
         malicious = pickle.dumps(_RcePayload())

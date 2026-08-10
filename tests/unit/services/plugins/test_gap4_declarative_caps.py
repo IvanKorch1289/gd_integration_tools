@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """V15 GAP Gap 4 (Sprint 36) — тесты ``[[tenants]]`` манифеста + loader integration.
 
 Покрывает:

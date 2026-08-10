@@ -5,7 +5,6 @@ endpoints. Cycle 43: переписано с BaseHTTPMiddleware на pure ASGI
 — 401 отправляется через send (no-raise, cycle 39 lesson).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

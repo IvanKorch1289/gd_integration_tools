@@ -45,7 +45,7 @@ def _embed_hashbased(text: str, dim: int = _EMBED_DIM) -> list[float]:
     for tok in re.findall(r"\w+", (text or "").lower()):
         vec[
             int(hashlib.md5(tok.encode(), usedforsecurity=False).hexdigest(), 16) % dim
-        ] += 1.0  # noqa: S324
+        ] += 1.0
     n = sum(v * v for v in vec) ** 0.5
     return [v / n for v in vec] if n > 0 else vec
 
@@ -63,7 +63,7 @@ class _SentenceTransformerEmbedder:
                 from sentence_transformers import SentenceTransformer
 
                 self._model = SentenceTransformer(self._model_name)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning(
                     "sentence_transformers unavailable (%s); fallback to hash-based",
                     exc,
@@ -141,7 +141,7 @@ class InMemoryQdrantFallback:
             vecs[pid] = list(getattr(p, "vector", None) or p.get("vector") or [])
             coll[pid] = dict(payload)
 
-    def search(  # noqa: ARG002 — query_filter unsupported in fallback
+    def search(
         self,
         collection_name: str,
         query_vector: list[float],
@@ -217,7 +217,7 @@ class DocsIndexer:
             return
         try:
             self._qdrant.get_collection(self._collection_name)
-        except (AttributeError, RuntimeError, ValueError, ConnectionError):  # noqa: BLE001
+        except (AttributeError, RuntimeError, ValueError, ConnectionError):
             # cycle-9/D-AUDIT-906: narrow exceptions + observability.
             # Qdrant raises RuntimeError/ValueError для invalid collections,
             # ConnectionError для network issues. Bare `except Exception`
@@ -231,7 +231,7 @@ class DocsIndexer:
                         size=_EMBED_DIM, distance=Distance.COSINE
                     ),
                 )
-            except (ImportError, AttributeError):  # noqa: BLE001
+            except (ImportError, AttributeError):
                 # cycle-9/D-AUDIT-906: см. выше — narrow для fallback API
                 # (legacy qdrant без VectorParams — old signature).
                 self._qdrant.create_collection(self._collection_name)
@@ -329,7 +329,7 @@ class DocsIndexer:
                 )
                 for i in range(len(chunks))
             ]
-        except (ImportError, AttributeError, TypeError, KeyError) as point_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, TypeError, KeyError) as point_exc:
             # cycle-9/D-AUDIT-909: narrow exceptions + observability.
             # ImportError — qdrant_client.models missing, AttributeError —
             # API changed, TypeError — schema mismatch, KeyError — chunk
@@ -392,7 +392,7 @@ class DocsIndexer:
                 query_vector=(await self._embed([query]))[0],
                 limit=limit,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("docs_indexer.search_failed: %s", exc)
             return []
         return [_hit(r) for r in results]

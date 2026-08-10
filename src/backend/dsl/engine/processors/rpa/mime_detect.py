@@ -3,7 +3,6 @@
 MIME-type detection по magic bytes (Ponytail YAGNI: stdlib only).
 Pattern (D276): thin wrapper.
 """
-# ruff: noqa: E501
 from __future__ import annotations
 
 __all__ = ("MimeDetectProcessor",)

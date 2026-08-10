@@ -51,7 +51,7 @@ class TestRedisRateLimitChecker:
         self, checker: RedisRateLimitChecker, redis: MagicMock
     ) -> None:
         redis.incr.return_value = 1
-        allowed, remaining, retry = await checker.check("ip1")
+        allowed, remaining, _retry = await checker.check("ip1")
         assert allowed is True
         assert remaining == 4
         redis.expire.assert_awaited_once()
@@ -71,7 +71,7 @@ class TestRedisRateLimitChecker:
         self, checker: RedisRateLimitChecker, redis: MagicMock
     ) -> None:
         redis.incr.side_effect = RuntimeError("redis down")
-        allowed, remaining, retry = await checker.check("ip1")
+        allowed, remaining, _retry = await checker.check("ip1")
         assert allowed is True
         assert remaining == 5
 
@@ -147,9 +147,9 @@ class TestGlobalRateLimitMiddlewareExtra:
             send,
         )
         assert inner.called is False
-        start_call = [
+        start_call = next(
             c
             for c in send.await_args_list
             if c.args[0]["type"] == "http.response.start"
-        ][0]
+        )
         assert start_call.args[0]["status"] == 429

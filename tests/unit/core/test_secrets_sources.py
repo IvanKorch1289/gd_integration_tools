@@ -61,7 +61,7 @@ class TestVaultSettingsSource:
     def test_get_field_value_miss(self) -> None:
         src = VaultSettingsSource(object, "secret/app")
         with patch.object(src, "_load", return_value={}):
-            val, name, is_json = src.get_field_value(None, "k")
+            val, _name, _is_json = src.get_field_value(None, "k")
         assert val is None
 
 
@@ -104,6 +104,6 @@ class TestAwsSecretsManagerSource:
     def test_get_field_value(self) -> None:
         src = AwsSecretsManagerSource(object, "my-secret")
         with patch.object(src, "_load", return_value={"k": "v"}):
-            val, name, is_json = src.get_field_value(None, "k")
+            val, _name, is_json = src.get_field_value(None, "k")
         assert val == "v"
         assert is_json is False

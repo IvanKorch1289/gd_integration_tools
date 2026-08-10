@@ -1,6 +1,5 @@
 """Pure ASGI regression-тесты для AdminAuditMiddleware (cycle 49)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

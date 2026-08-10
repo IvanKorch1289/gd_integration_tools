@@ -90,7 +90,7 @@ class ForkJoinProcessor(BaseProcessor):
                     break
                 try:
                     await proc.process(branch_ex, context)
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     branch_ex.fail(str(exc))
                     break
             if branch_ex.status == ExchangeStatus.failed:

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты `tools/migrate_workflow_v11.py` (Wave D.3)."""
 
 from __future__ import annotations
@@ -13,7 +12,7 @@ import pytest
 _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 sys.path.insert(0, str(_TOOLS))
 
-from migrate_workflow_v11 import scan_file  # noqa: E402
+from migrate_workflow_v11 import scan_file
 
 
 def _write(tmp: Path, name: str, body: str) -> Path:

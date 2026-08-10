@@ -23,7 +23,7 @@
 Helm CLI не установлен в тестовой среде, а офлайн-проверка структуры не
 требует рендеринга values.
 """
-# ruff: noqa: S101  (тесты используют assert)
+
 
 from __future__ import annotations
 

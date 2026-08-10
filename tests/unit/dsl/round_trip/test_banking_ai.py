@@ -12,7 +12,6 @@ FIX, EDIFACT) и интеграции с проприетарными ERP/CRM (1
 маршрутизируются через корпоративную интеграционную шину.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

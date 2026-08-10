@@ -70,7 +70,7 @@ class MaxByProcessor(BaseProcessor):
 
         try:
             result = max(body, key=lambda item: _resolve_field(item, self._field))
-        except (TypeError, KeyError, ValueError, AttributeError) as max_exc:  # noqa: BLE001
+        except (TypeError, KeyError, ValueError, AttributeError) as max_exc:
             # cycle-9/D-AUDIT-953: narrow exceptions + observability.
             # TypeError для некомпарируемых items, KeyError для missing
             # field, ValueError для invalid value, AttributeError для
@@ -110,7 +110,7 @@ class MinByProcessor(BaseProcessor):
 
         try:
             result = min(body, key=lambda item: _resolve_field(item, self._field))
-        except (TypeError, KeyError, ValueError, AttributeError) as min_exc:  # noqa: BLE001
+        except (TypeError, KeyError, ValueError, AttributeError) as min_exc:
             # cycle-9/D-AUDIT-954: narrow exceptions + observability (mirror
             # D-AUDIT-953 для max_by).
             import logging
@@ -154,7 +154,7 @@ class SortByProcessor(BaseProcessor):
                 key=lambda item: _resolve_field(item, self._field),
                 reverse=self._reverse,
             )
-        except (TypeError, KeyError, ValueError, AttributeError) as sort_exc:  # noqa: BLE001
+        except (TypeError, KeyError, ValueError, AttributeError) as sort_exc:
             # cycle-9/D-AUDIT-955: narrow exceptions + observability (mirror
             # D-AUDIT-953/954).
             import logging

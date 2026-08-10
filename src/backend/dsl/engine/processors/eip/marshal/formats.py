@@ -136,7 +136,7 @@ class XmlDataFormat(DataFormat):
         if DET is not None:
             root = DET.fromstring(data)  # type: ignore[union-attr]
         else:  # pragma: no cover — dev-light path
-            root = ET.fromstring(data)  # noqa: S314 — see SECURITY above
+            root = ET.fromstring(data)
         return _xml_to_dict(root)
 
 
@@ -205,7 +205,7 @@ class MessagePackDataFormat(DataFormat):
     def __init__(self) -> None:
         """Lazy-validate msgpack dependency, raise ``ImportError`` если нет."""
         try:
-            import msgpack  # type: ignore[import-not-found]  # noqa: F401
+            import msgpack  # type: ignore[import-not-found]
         except ImportError as exc:
             raise ImportError(
                 "MessagePackDataFormat requires 'msgpack' package: uv add msgpack"
@@ -266,7 +266,7 @@ class PickleDataFormat(DataFormat):
         callers MUST validate data provenance (signature, mTLS, source check)
         before invoking this processor. See Camel Marshal docs warning.
         """
-        obj = pickle.loads(data)  # noqa: S301 — see SECURITY above
+        obj = pickle.loads(data)
         if target_type is not None and not isinstance(obj, target_type):
             return target_type(obj)
         return obj

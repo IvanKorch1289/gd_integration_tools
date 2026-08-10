@@ -5,7 +5,6 @@
 допустимых значений), а не голый ``'foo' is not a valid InvocationMode``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

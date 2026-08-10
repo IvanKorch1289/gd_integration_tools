@@ -99,7 +99,7 @@ class DLQCleanupJob:
             # table_name контролируется конструктором (не user input);
             # partition suffix вычисляется из cutoff (controlled).
             sql = (
-                f"ALTER TABLE {self._table} "  # noqa: S608
+                f"ALTER TABLE {self._table} "
                 f"DROP PARTITION ID '{cutoff_partition}'"
             )
             try:
@@ -113,7 +113,7 @@ class DLQCleanupJob:
                         _CLEANUP_COUNTER.labels(dlq_class=policy.class_name).inc(
                             deleted
                         )
-                    except (AttributeError, TypeError, ValueError) as counter_exc:  # noqa: BLE001
+                    except (AttributeError, TypeError, ValueError) as counter_exc:
                         # cycle-9/D-AUDIT-931: narrow exceptions + observability.
                         # AttributeError — counter API change, TypeError —
                         # invalid arg, ValueError — invalid label value.
@@ -135,7 +135,7 @@ class DLQCleanupJob:
         COUNT перед DELETE для approximate stats. На production может
         быть заменено на ``OPTIMIZE TABLE ... FINAL DEDUPLICATE`` метрику.
         """
-        sql = f"SELECT count() FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # noqa: S608  # internal query with controlled parameters
+        sql = f"SELECT count() FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # internal query with controlled parameters
         try:
             rows = await self._client.execute(
                 sql, params=[class_name, cutoff.isoformat()]
@@ -144,7 +144,7 @@ class DLQCleanupJob:
                 return int(rows[0].get("count()", 0))
             if rows and isinstance(rows[0], (list, tuple)):
                 return int(rows[0][0])
-        except (RuntimeError, ConnectionError, OSError, AttributeError) as count_exc:  # noqa: BLE001
+        except (RuntimeError, ConnectionError, OSError, AttributeError) as count_exc:
             # cycle-9/D-AUDIT-932: narrow exceptions + observability.
             # RuntimeError — ClickHouse unavailable, ConnectionError —
             # network, OSError — protocol, AttributeError — client API

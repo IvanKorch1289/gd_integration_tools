@@ -160,14 +160,14 @@ def _build_jwt_blacklist_or_none() -> Any:
 
 
 __all__ = (
+    "get_ad_directory_client_provider",
     "get_api_key_manager_provider",
     "get_jwks_cache_provider",
     "get_jwt_backend_provider",
+    "set_ad_directory_client_provider",
     "set_api_key_manager_provider",
     "set_jwks_cache_provider",
     "set_jwt_backend_provider",
-    "get_ad_directory_client_provider",
-    "set_ad_directory_client_provider",
 )
 
 

@@ -56,7 +56,7 @@ class TestBankingHookSQL:
             subject="alice",
             context=_ctx(
                 tool_name="call_procedure",
-                sql_query="CALL sp_bank_transfer(...)",  # noqa: S608
+                sql_query="CALL sp_bank_transfer(...)",
             ),
         )
         assert result.allowed is True

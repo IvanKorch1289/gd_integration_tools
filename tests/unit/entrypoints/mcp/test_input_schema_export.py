@@ -27,7 +27,7 @@ class _MCPStub:
         name: str = "<anon>",
         description: str = "",
         input_schema: dict | None = None,
-        inputSchema: dict | None = None,  # noqa: N803
+        inputSchema: dict | None = None,
     ):
         captured = {
             "name": name,
@@ -35,7 +35,7 @@ class _MCPStub:
             "input_schema": input_schema or inputSchema,
         }
 
-        def decorator(fn):  # noqa: ANN001
+        def decorator(fn):
             self.registered.append(captured)
             return fn
 

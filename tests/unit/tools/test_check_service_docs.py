@@ -37,7 +37,7 @@ def test_script_returns_zero_on_good_fixture(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, str(_SCRIPT), "--target", str(tmp_path)],
         capture_output=True,
         text=True,
@@ -59,7 +59,7 @@ def test_script_returns_one_on_bad_fixture(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, str(_SCRIPT), "--target", str(tmp_path)],
         capture_output=True,
         text=True,
@@ -77,7 +77,7 @@ def test_script_returns_one_on_bad_fixture(tmp_path: Path) -> None:
 
 def test_script_runs_against_real_codebase() -> None:
     """Smoke: скрипт запускается на src/backend/services без crash."""
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [
             sys.executable,
             str(_SCRIPT),

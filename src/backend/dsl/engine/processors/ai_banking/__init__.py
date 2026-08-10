@@ -47,12 +47,11 @@ from src.backend.dsl.engine.processors.ai_banking.segmentation import (  # B3: m
 )
 
 __all__ = (
-    "_BankingAIProcessor",
     "AntiFraudResult",
     "AntiFraudScoreProcessor",
     "AppealProcessorAI",
-    "CreditScoringResult",
     "CreditScoringRagProcessor",
+    "CreditScoringResult",
     "CustomerChatbotProcessor",
     "CustomerSegmentationProcessor",
     "CustomerSegmentationResult",
@@ -68,4 +67,5 @@ __all__ = (
     "RiskAssessmentProcessor",
     "RiskAssessmentResult",
     "TransactionCategorizerProcessor",
+    "_BankingAIProcessor",
 )

@@ -12,7 +12,6 @@ Cycle 69 invariant: tests catch regressions in memory backend
 factories that could lead to silent model_type mismatches.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -96,7 +95,7 @@ class TestResolveRepositoryCls:
 
         # Only meaningful if advanced_alchemy is not installed.
         try:
-            import advanced_alchemy.repository  # noqa: F401
+            import advanced_alchemy.repository
             pytest.skip("advanced_alchemy is installed in this env")
         except ImportError:
             with pytest.raises(AdvancedAlchemyMissing, match="advanced-alchemy"):
@@ -129,7 +128,7 @@ class TestGetEpisodicRepository:
         )
 
         try:
-            import advanced_alchemy.repository  # noqa: F401
+            import advanced_alchemy.repository
             pytest.skip("advanced_alchemy installed")
         except ImportError:
             with pytest.raises(AdvancedAlchemyMissing):
@@ -143,7 +142,7 @@ class TestGetEpisodicRepository:
         )
 
         try:
-            import advanced_alchemy.repository  # noqa: F401
+            import advanced_alchemy.repository
         except ImportError:
             pytest.skip("advanced_alchemy not installed")
 
@@ -178,7 +177,7 @@ class TestGetProceduralRepository:
         )
 
         try:
-            import advanced_alchemy.repository  # noqa: F401
+            import advanced_alchemy.repository
             pytest.skip("advanced_alchemy installed")
         except ImportError:
             with pytest.raises(AdvancedAlchemyMissing):
@@ -192,7 +191,7 @@ class TestGetProceduralRepository:
         )
 
         try:
-            import advanced_alchemy.repository  # noqa: F401
+            import advanced_alchemy.repository
         except ImportError:
             pytest.skip("advanced_alchemy not installed")
 

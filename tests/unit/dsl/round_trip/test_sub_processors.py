@@ -14,7 +14,6 @@
 - Choice с legacy callable predicate → ``to_spec() is None``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

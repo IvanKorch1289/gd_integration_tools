@@ -11,7 +11,6 @@
     * PolicyChain.timeout(seconds=X, total=Y) — ValueError (mutually exclusive).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

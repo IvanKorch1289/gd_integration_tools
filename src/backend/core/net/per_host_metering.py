@@ -137,8 +137,8 @@ def _percentile(sorted_data: list[float], n: int, q: float) -> float:
     if n == 1:
         return sorted_data[0]
     idx = q * (n - 1)
-    lo = int(math.floor(idx))
-    hi = int(math.ceil(idx))
+    lo = math.floor(idx)
+    hi = math.ceil(idx)
     if lo == hi:
         return sorted_data[lo]
     frac = idx - lo

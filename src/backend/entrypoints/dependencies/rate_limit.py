@@ -36,8 +36,8 @@ from src.backend.services.resilience.rate_limiter import (
 
 __all__ = (
     "RateLimitDependency",
-    "WebSocketRateLimiter",
     "RedisLimiterAdapter",
+    "WebSocketRateLimiter",
     "get_default_limiter",
     "get_default_rate_limiter",
 )

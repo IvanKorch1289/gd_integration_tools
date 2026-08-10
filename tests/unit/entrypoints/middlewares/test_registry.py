@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты ``MiddlewareRegistry`` (S17 ADR-NEW-2).
 
 Покрывают регистрацию built-in / plugin.toml / entry-points, порядок

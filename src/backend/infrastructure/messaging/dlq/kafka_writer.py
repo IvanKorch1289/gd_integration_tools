@@ -16,7 +16,7 @@ from src.backend.core.logging import get_logger
 # S165 W5: Purgatory Circuit Breaker для Kafka DLQ writer (Rule 6).
 # Per skill: import settings pre-loads core.config.settings, breaking
 # the circular chain breaker -> core.logging -> core.interfaces -> breaker.
-from src.backend.core.resilience.breaker import (  # noqa: E402
+from src.backend.core.resilience.breaker import (
     BreakerSpec,
     get_breaker_registry,
 )

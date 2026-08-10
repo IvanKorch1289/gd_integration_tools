@@ -10,7 +10,6 @@
     * процессор регистрируется в processor-registry.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

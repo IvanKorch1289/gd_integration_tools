@@ -10,7 +10,6 @@
     * Валидация конструктора (strategy / on_error).
     * to_spec() round-trip.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -67,7 +66,7 @@ class _FakeEngine:
         self.errors = errors or {}
         self.raises = raises or {}
 
-    def __call__(self, *, route_registry: Any) -> _FakeEngine:  # noqa: ARG002
+    def __call__(self, *, route_registry: Any) -> _FakeEngine:
         # Имитирует конструктор ExecutionEngine(route_registry=...)
         return self
 
@@ -106,7 +105,7 @@ def patched_routing(monkeypatch: pytest.MonkeyPatch):
     # Подменяем src.dsl.commands.registry.route_registry.
     cmd_registry_mod = sys.modules.get("src.backend.dsl.commands.registry")
     if cmd_registry_mod is None:  # pragma: no cover
-        import src.backend.dsl.commands.registry as cmd_registry_mod  # noqa: F401
+        import src.backend.dsl.commands.registry as cmd_registry_mod
 
         cmd_registry_mod = sys.modules["src.backend.dsl.commands.registry"]
     monkeypatch.setattr(cmd_registry_mod, "route_registry", fake_registry)
@@ -116,7 +115,7 @@ def patched_routing(monkeypatch: pytest.MonkeyPatch):
 
     fake_engine_mod = types.ModuleType("src.backend.dsl.engine.execution_engine")
 
-    def _engine_factory(*, route_registry: Any):  # noqa: ARG001
+    def _engine_factory(*, route_registry: Any):
         return fake_engine_holder["engine"]
 
     fake_engine_mod.ExecutionEngine = _engine_factory  # type: ignore[attr-defined]

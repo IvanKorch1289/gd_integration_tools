@@ -6,7 +6,6 @@ metrics (queue depth, error rate, latency). Без тестов — измене
 z_threshold или window_size молча сломает detection в production.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

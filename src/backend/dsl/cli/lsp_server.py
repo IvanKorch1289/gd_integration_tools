@@ -42,7 +42,7 @@ _logger = get_logger(__name__)
 def _try_import_pygls() -> Any | None:
     """Lazy import pygls. Возвращает None, если не установлен."""
     try:
-        from pygls.lsp.server import LanguageServer  # noqa: F401
+        from pygls.lsp.server import LanguageServer
 
         return True
     except ImportError:

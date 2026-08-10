@@ -117,7 +117,7 @@ class ObservabilityFacade:
             )
 
             return _get_cid()
-        except (ImportError, AttributeError, RuntimeError) as cid_exc:  # noqa: PERF203
+        except (ImportError, AttributeError, RuntimeError) as cid_exc:
             # D-A1-04 fix (cycle 33): narrow exceptions + observability.
             # Bare `except Exception` маскировал correlation_id failures
             # (отсутствующий correlation context, broken tracing backend).

@@ -73,7 +73,7 @@ class ConsulConfigStore:
 
         try:
             client = self._get_client()
-            index, data = client.kv.get(key)
+            _index, data = client.kv.get(key)
         except Exception as exc:
             _logger.warning("Consul get %s failed: %s", key, exc)
             return default

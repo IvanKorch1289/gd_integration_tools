@@ -1,6 +1,5 @@
 """Unit-тесты ReflectionLoopProcessor (S39 W3)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

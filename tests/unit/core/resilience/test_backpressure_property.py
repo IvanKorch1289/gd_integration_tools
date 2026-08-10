@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Property-based tests for backpressure (core/resilience/backpressure.py).
 
 Uses Hypothesis to verify invariants of pure functions and validators.

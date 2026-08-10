@@ -10,7 +10,6 @@
     * RequestContext.current() == None после shutdown.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

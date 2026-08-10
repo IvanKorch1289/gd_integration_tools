@@ -43,7 +43,7 @@ logger = get_logger("infrastructure.clients.cdc")
 # thread-safety для concurrent first-call.
 import threading
 
-_cdc_instance: CDCClient | None = None  # type: ignore[name-defined]  # noqa: F821
+_cdc_instance: CDCClient | None = None  # type: ignore[name-defined]
 _cdc_lock = threading.Lock()
 
 
@@ -311,7 +311,7 @@ class CDCClient:
                     "operation": event_dict.get("operation"),
                 },
             )
-        except Exception as build_exc:  # noqa: BLE001
+        except Exception as build_exc:
             # Envelope build failed (should not happen, but defensive):
             # log + drop, never propagate.
             logger.exception(
@@ -327,7 +327,7 @@ class CDCClient:
                 "[subscription=%s table=%s]",
                 stage, sub.id, event_dict.get("table"),
             )
-        except Exception as dlq_exc:  # noqa: BLE001
+        except Exception as dlq_exc:
             logger.exception(
                 "CDC DLQ handoff failed [%s stage=%s]: %s — EVENT WILL BE LOST",
                 sub.id, stage, dlq_exc,

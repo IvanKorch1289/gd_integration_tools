@@ -33,7 +33,6 @@ composition root при misconfiguration. Реальный OPA/Casbin runtime co
 уже есть в ``test_opa_runtime_cycle37.py``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

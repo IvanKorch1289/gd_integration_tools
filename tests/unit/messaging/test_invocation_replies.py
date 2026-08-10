@@ -1,6 +1,5 @@
 """Unit-тесты для :class:`InvocationReplyChannel` backends (W22.3)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

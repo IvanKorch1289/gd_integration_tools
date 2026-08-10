@@ -230,7 +230,7 @@ class SmartSessionManager:
 
             if not feature_flags.multi_replica_failover:
                 return False
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-957: narrow exceptions + observability.
             # ImportError — feature_flags missing, AttributeError — config
             # not initialized, RuntimeError — flags unavailable. Bare `except

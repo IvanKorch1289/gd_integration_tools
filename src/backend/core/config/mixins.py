@@ -17,12 +17,12 @@ Defaults взяты из существующих файлов (``core/config/ai
 from pydantic import BaseModel, Field, SecretStr
 
 __all__ = (
-    "ConnectionMixin",
-    "RetryMixin",
-    "LLMModelMixin",
     "APIConnectionMixin",
+    "ConnectionMixin",
     "DBPoolMixin",
+    "LLMModelMixin",
     "ResilienceMixin",
+    "RetryMixin",
 )
 
 

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 K5 W2 — unit-тесты ``PluginVersionService``."""
 
 from __future__ import annotations

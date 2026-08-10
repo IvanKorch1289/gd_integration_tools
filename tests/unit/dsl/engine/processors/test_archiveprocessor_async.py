@@ -7,7 +7,6 @@
 параллельно с ``asyncio.sleep(SLEEP_S)`` → проверяем elapsed < 1.7 * SLEEP_S.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -14,7 +14,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("WhisperSTT", "TranscriptionResult")
+__all__ = ("TranscriptionResult", "WhisperSTT")
 
 logger = get_logger("services.ai.rag.multimodal.whisper")
 

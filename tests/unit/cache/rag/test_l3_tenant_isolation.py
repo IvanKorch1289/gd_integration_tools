@@ -153,7 +153,7 @@ def test_l3_key_query_change_changes_digest() -> None:
 @pytest.mark.asyncio
 async def test_l3_cross_tenant_isolation_roundtrip() -> None:
     """Sprint 2.1: ключевой regression — tenant B не видит данные tenant A."""
-    cache, redis = _make_cache()
+    cache, _redis = _make_cache()
     chunks_a = [{"document": "tenant-a-secret", "score": 0.9}]
     chunks_b = [{"document": "tenant-b-public", "score": 0.8}]
 

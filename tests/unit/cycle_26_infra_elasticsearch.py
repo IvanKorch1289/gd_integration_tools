@@ -7,7 +7,6 @@ User request (turn 39): wrap unused deps (elasticsearch) in DSL.
 Verified: src/backend/dsl/engine/processors/infra_elasticsearch.py created.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

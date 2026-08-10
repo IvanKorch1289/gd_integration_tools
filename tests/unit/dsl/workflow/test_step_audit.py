@@ -1,6 +1,5 @@
 """Unit-тесты StepAuditMiddleware — Wave [wave:s5/k3-w11-step-log-clickhouse]."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

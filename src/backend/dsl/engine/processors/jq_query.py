@@ -98,7 +98,7 @@ class JqProcessor(BaseProcessor):
             if not feature_flags.proc_jq:
                 exchange.set_property("jq_status", "skipped")
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1709: narrow exceptions + observability (mirror
             # D-AUDIT-1705/1706/1707/1708).
             import logging

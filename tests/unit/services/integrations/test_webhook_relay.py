@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for WebhookRelay DLQ lifecycle (services/integrations/webhook_relay.py).
 
 cycle-8/D-AUDIT-802 — фикс silent-loss в DLQ:

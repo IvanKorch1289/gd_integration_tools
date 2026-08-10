@@ -48,7 +48,7 @@ def _resolve_bge_reranker() -> Any:
 
     try:
         from src.backend.core.config.ai_stack import bge_settings
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         _reranker_unavailable = True
         return None
     if not getattr(bge_settings, "reranker_enabled", False):
@@ -78,7 +78,7 @@ def _resolve_bge_reranker() -> Any:
             getattr(bge_settings, "reranker_use_fp16", True),
         )
         return _reranker_cache
-    except Exception as exc:  # noqa: BLE001 — CUDA OOM / weights download fail
+    except Exception as exc:
         logger.warning("FlagReranker init failed (%s), fallback на token-overlap", exc)
         _record_reranker_fallback(reason="init_error")
         _reranker_unavailable = True
@@ -96,7 +96,7 @@ def _record_reranker_fallback(*, reason: str) -> None:
             labels=("reason",),
         )
         counter.labels(reason=reason).inc()
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:
         logger.debug("rag_reranker_fallback metric emit failed", exc_info=True)
 
 
@@ -139,7 +139,7 @@ class _RagRerankerPipeline:
                 return json.dumps(
                     [doc.get("id") for doc, _ in ranked], ensure_ascii=False
                 )
-            except Exception as exc:  # noqa: BLE001 — CUDA OOM/runtime
+            except Exception as exc:
                 logger.warning(
                     "FlagReranker.compute_score failed (%s), fallback на token-overlap",
                     exc,
@@ -164,7 +164,7 @@ class _RagRerankerPipeline:
         """NDCG@k где k = min(len(predicted), len(expected_ranking))."""
         try:
             predicted = json.loads(output)
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return 0.0
         expected_ranking = example.get("expected_ranking") or []
         if not predicted or not expected_ranking:

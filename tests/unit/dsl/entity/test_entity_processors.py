@@ -7,7 +7,6 @@
     * Валидация некорректных входных данных (entity с точкой, payload != dict)
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

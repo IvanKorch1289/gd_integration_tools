@@ -7,7 +7,6 @@
     * Сравнение через ``[s.to_spec() for s in p.processors]``.
     * Препроверка: процессоры без ``to_spec()`` (LogProcessor) пропускаются.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 

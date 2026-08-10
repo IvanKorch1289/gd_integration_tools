@@ -4,7 +4,6 @@
 (только через api_client / capability-checked facades; нет прямого импорта
 ``src.backend.infrastructure`` в frontend-слое).
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 

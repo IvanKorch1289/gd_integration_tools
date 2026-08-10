@@ -10,7 +10,6 @@ Covers:
 - AuthProvider, AsyncBatcher
 """
 
-# ruff: noqa: S101, D101, D102
 
 from __future__ import annotations
 

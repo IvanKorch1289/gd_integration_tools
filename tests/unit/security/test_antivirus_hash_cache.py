@@ -18,7 +18,7 @@ Backend выбирается так:
 * иначе fallback на ``unittest.mock.AsyncMock``.
 """
 
-# ruff: noqa: S101  # assert — стандартная идиома pytest
+# assert — стандартная идиома pytest
 
 from __future__ import annotations
 

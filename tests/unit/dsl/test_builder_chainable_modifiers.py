@@ -8,7 +8,6 @@
 * Поведение при пустом pipeline (ValueError).
 * Поведение при processor без поддержки атрибута (ValueError).
 """
-# ruff: noqa: S101, S105, S106
 
 from __future__ import annotations
 

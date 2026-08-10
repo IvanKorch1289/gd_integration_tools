@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты workflow versioning (Sprint 7 K3 ``[wave:s7/k3-workflow-versioning]``)."""
 
 from __future__ import annotations

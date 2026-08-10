@@ -48,7 +48,7 @@ async def test_make_dedupe_store_redis_returns_redis_store() -> None:
         store = await make_dedupe_store()
     assert isinstance(store, RedisDedupeStore)
     # RedisDedupeStore.__init__ принимает redis instance
-    assert store._redis is fake_redis_instance  # noqa: SLF001
+    assert store._redis is fake_redis_instance
     # kind="cache" использован для RedisClient.get_client
     fake_redis_client_singleton.get_client.assert_awaited_once_with("cache")
 

@@ -6,7 +6,6 @@ Per M20 plan: GET /admin/certs/expiring?days=N → JSON список
 
 Pattern (D256, D237 TDD): RED → GREEN → review.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 from datetime import UTC, datetime

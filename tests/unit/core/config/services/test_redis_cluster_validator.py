@@ -6,7 +6,6 @@
 - cluster_mode=False + cluster_nodes=[...] → OK (warning, не error)
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

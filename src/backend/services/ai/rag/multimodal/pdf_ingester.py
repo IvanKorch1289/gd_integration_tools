@@ -112,7 +112,7 @@ class PDFIngester:
                 self._parse_pdf, content
             )
             meta.update(doc_meta)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             warnings.append(f"pdf parse failed: {exc}")
             logger.warning("PDFIngester: парсинг PDF упал: %s", exc)
             return IngestResult(
@@ -223,7 +223,7 @@ class PDFIngester:
                                 "mime": "image/png",
                             }
                         )
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         logger.debug(
                             "PDFIngester: пропуск image page=%s idx=%s: %s",
                             page_idx,
@@ -240,7 +240,7 @@ class PDFIngester:
                     meta_obj["title"] = title
                 if author := doc_meta.get("Author"):
                     meta_obj["author"] = author
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("PDFIngester: не удалось прочитать meta: %s", exc)
         finally:
             pdf.close()

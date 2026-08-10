@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты для storage_ext процессоров.
 
 Покрывает Neo4jQueryProcessor, TimeSeriesWriteProcessor, PriorityEnqueueProcessor.
@@ -387,7 +386,7 @@ class TestPriorityEnqueueProcess:
             await proc.process(exchange, _Context())
 
         call_args = mock_redis.zadd.call_args
-        payload_json = list(call_args[0][1].keys())[0]
+        payload_json = next(iter(call_args[0][1].keys()))
         assert '"priority":5' in payload_json
 
     async def test_trims_when_over_max_size(self) -> None:

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for APISKBService (services/integrations/skb.py)."""
 
 from __future__ import annotations

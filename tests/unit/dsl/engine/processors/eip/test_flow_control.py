@@ -4,7 +4,6 @@ Loop, ForEach, OnCompletion.
 Паттерн: async tests, _ex fixture, моки для task_registry / redis / time.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

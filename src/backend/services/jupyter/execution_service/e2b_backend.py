@@ -239,7 +239,7 @@ class E2BExecutionBackend:
                 timeout=int(self._timeout),
             )
             sandbox_id = sb.get_info().sandbox_id
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise E2BExecutionError(f"E2B sandbox creation failed: {exc}") from exc
 
         try:
@@ -279,7 +279,7 @@ class E2BExecutionBackend:
             # E2B best practice: always kill sandbox после execution
             try:
                 sb.kill()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _logger.warning("Failed to kill E2B sandbox: %s", exc)
 
         return sandbox_id, cells_executed, errors

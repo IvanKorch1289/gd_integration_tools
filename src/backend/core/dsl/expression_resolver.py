@@ -22,7 +22,7 @@ from typing import Any
 
 from src.backend.core.dsl.variables import DSLVariableStore, VariableScope
 
-__all__ = ("ExpressionResolver", "ExpressionResolutionError", "resolve_expression")
+__all__ = ("ExpressionResolutionError", "ExpressionResolver", "resolve_expression")
 
 
 # Pattern for `${var('key', scope='tenant:acme', default='x')}`.

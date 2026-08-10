@@ -111,7 +111,7 @@ class DispatchMixin(_ExternalDatabaseProtocol):
         Выполняет SELECT * FROM разрешённого view.
         """
         safe_name = self._validate_identifier(meta.qualified_name, context="view")
-        sql = f"SELECT * FROM {safe_name}"  # safe_name провалидирован _validate_identifier (regex)  # noqa: S608  # internal query with controlled parameters
+        sql = f"SELECT * FROM {safe_name}"  # safe_name провалидирован _validate_identifier (regex)  # internal query with controlled parameters
         result = await session.execute(text(sql))
         return [dict(row) for row in result.mappings().all()]
 
@@ -131,7 +131,7 @@ class DispatchMixin(_ExternalDatabaseProtocol):
 
         if db_type == DatabaseTypeChoices.postgresql:
             if meta.returns_rows:
-                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # noqa: S608  # internal query with controlled parameters
+                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # internal query with controlled parameters
                 result = await session.execute(text(sql), execute_params)
                 return result.mappings().all()
 
@@ -141,11 +141,11 @@ class DispatchMixin(_ExternalDatabaseProtocol):
 
         if db_type == DatabaseTypeChoices.oracle:
             if meta.returns_rows:
-                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # noqa: S608  # internal query with controlled parameters
+                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # internal query with controlled parameters
                 result = await session.execute(text(sql), execute_params)
                 return result.mappings().all()
 
-            sql = f"SELECT {safe_name}({arguments_sql}) AS result FROM dual"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # noqa: S608  # internal query with controlled parameters
+            sql = f"SELECT {safe_name}({arguments_sql}) AS result FROM dual"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # internal query with controlled parameters
             result = await session.execute(text(sql), execute_params)
             return result.scalar_one_or_none()
 

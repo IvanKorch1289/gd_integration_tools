@@ -13,7 +13,6 @@ fabrication detection metric that could lead to silent hallucinations
 in production.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

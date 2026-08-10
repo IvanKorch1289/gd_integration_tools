@@ -9,7 +9,6 @@
 После фикса все entry points пишут в canonical ``dist/sbom/sbom.cdx.json``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

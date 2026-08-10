@@ -31,14 +31,14 @@ from src.backend.dsl.yaml_loader.resolve import (
 )
 
 __all__ = (
-    "_is_route_composition_include_enabled",
-    "_resolve_include_extends",
-    "load_pipeline_from_yaml",
-    "load_pipeline_from_file",
-    "load_all_from_directory",
-    "_build_pipeline",
-    "_is_allowed_processor",
-    "_build_sub",
     "_apply_processor",
+    "_build_pipeline",
+    "_build_sub",
+    "_is_allowed_processor",
+    "_is_route_composition_include_enabled",
     "_materialize_control_flow_params",
+    "_resolve_include_extends",
+    "load_all_from_directory",
+    "load_pipeline_from_file",
+    "load_pipeline_from_yaml",
 )

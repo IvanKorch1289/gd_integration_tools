@@ -18,7 +18,7 @@ aioboto3 совместим с ним нативно. ``mock_aws`` decorator у 
 * ``ServiceError`` оборачивает boto-исключения.
 """
 
-# ruff: noqa: S101  # assert — стандартная идиома pytest
+# assert — стандартная идиома pytest
 
 from __future__ import annotations
 

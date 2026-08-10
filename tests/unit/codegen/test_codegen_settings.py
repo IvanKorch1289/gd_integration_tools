@@ -9,7 +9,6 @@
 * extract из существующего ast-класса.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -119,7 +118,7 @@ class TestLibcstPatches:
         assert "C" in new_module.code
         assert "D" in new_module.code
         # Идемпотентность: повторный вызов с теми же именами — без изменений.
-        again, again_changed = cg._add_to_import_from(new_module, "foo.bar", ["A", "B"])
+        _again, again_changed = cg._add_to_import_from(new_module, "foo.bar", ["A", "B"])
         assert not again_changed
 
     def test_add_import_creates_new_when_missing(self) -> None:
@@ -156,7 +155,7 @@ class TestLibcstPatches:
     def test_extend_all_tuple_idempotent(self) -> None:
         src = '__all__ = ("A", "B")\n'
         module = cst.parse_module(src)
-        new_module, changed = cg._extend_all_tuple(module, ["A", "B"])
+        _new_module, changed = cg._extend_all_tuple(module, ["A", "B"])
         assert not changed
 
     def test_add_class_attribute(self) -> None:
@@ -173,7 +172,7 @@ class TestLibcstPatches:
         assert changed
         assert 'bar: str = "hello"' in new_module.code
         # Идемпотентность.
-        again, again_changed = cg._add_class_attribute(
+        _again, again_changed = cg._add_class_attribute(
             new_module, "Settings", "bar", "str", '"hello"'
         )
         assert not again_changed

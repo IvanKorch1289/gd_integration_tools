@@ -203,7 +203,7 @@ class PipelineVersionManager:
         return spec
 
 
-from src.backend.core.di import app_state_singleton  # noqa: E402
+from src.backend.core.di import app_state_singleton
 
 
 @app_state_singleton("pipeline_version_manager", PipelineVersionManager)

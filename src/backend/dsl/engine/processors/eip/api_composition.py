@@ -63,8 +63,8 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 __all__ = (
-    "APICompositionProcessor",
     "APICompositionMixin",
+    "APICompositionProcessor",
     "APISource",
     "CacheStore",
     "HTTPFetcher",
@@ -87,7 +87,7 @@ def _default_http_fetcher() -> HTTPFetcher:
     async def fetcher(
         url: str, method: str, headers: dict[str, str], body: Any, timeout: float
     ) -> Any:
-        from src.backend.infrastructure.external_apis.http_client import get_http_client  # type: ignore[import-not-found]  # noqa: I001
+        from src.backend.infrastructure.external_apis.http_client import get_http_client  # type: ignore[import-not-found]
 
         client = get_http_client()
         return await client.request(

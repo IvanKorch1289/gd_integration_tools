@@ -8,7 +8,6 @@ Wave ``[wave:s5/doc-generation-dsl]``. Покрытие:
 * output_to пишет путь в указанное место body.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 def test_fixture_modules_importable() -> None:
     """Все fixture-модули импортируются и экспортируют ожидаемые символы."""
-    from testkit.fixtures import db, redis, temporal, tenant, toxiproxy  # noqa: PLC0415
+    from testkit.fixtures import db, redis, temporal, tenant, toxiproxy
 
     assert hasattr(db, "postgres_url")
     assert hasattr(redis, "redis_url")
@@ -22,7 +22,7 @@ def test_fixture_modules_importable() -> None:
 
 def test_pytest_plugin_lists_fixtures() -> None:
     """pytest_plugins содержит все ожидаемые fixture-модули."""
-    from testkit import pytest_plugin  # noqa: PLC0415
+    from testkit import pytest_plugin
 
     plugins = set(pytest_plugin.pytest_plugins)
     assert {
@@ -36,7 +36,7 @@ def test_pytest_plugin_lists_fixtures() -> None:
 
 def test_top_level_exports() -> None:
     """testkit.__init__ переэкспортирует основные символы."""
-    import testkit  # noqa: PLC0415
+    import testkit
 
     for name in (
         "HARCassette",

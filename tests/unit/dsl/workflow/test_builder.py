@@ -7,7 +7,6 @@
 * Саб-builder ``SagaBuilder`` с forward/compensate цепочками.
 * Default-значения timeout / retry workflow-уровня.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 

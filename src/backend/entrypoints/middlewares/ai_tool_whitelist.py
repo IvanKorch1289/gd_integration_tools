@@ -137,7 +137,7 @@ class AIToolWhitelistMiddleware:
                     detail="tenant_id required via auth context or X-Tenant-ID header",
                 )
                 return
-        except (ValueError, TypeError, json.JSONDecodeError, KeyError, AttributeError) as parse_exc:  # noqa: BLE001
+        except (ValueError, TypeError, json.JSONDecodeError, KeyError, AttributeError) as parse_exc:
             # cycle-9/D-AUDIT-1006: narrow exceptions + observability.
             # ValueError/JSONDecodeError — malformed JSON, TypeError —
             # wrong body type, KeyError — missing required key, AttributeError
@@ -243,7 +243,7 @@ def _default_whitelist_check(tenant_id: str, tool_name: str) -> bool:
             f"tool:{tool_name}",
         )
         return True
-    except (ImportError, AttributeError, RuntimeError, ValueError, TypeError) as gate_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError, ValueError, TypeError) as gate_exc:
         # cycle-9/D-AUDIT-1016: narrow exceptions + observability.
         # ImportError — gate missing, AttributeError — gate API change,
         # RuntimeError — gate unavailable, ValueError/TypeError — invalid

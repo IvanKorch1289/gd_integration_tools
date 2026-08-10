@@ -326,7 +326,7 @@ class WindowedCollectProcessor(BaseProcessor):
             try:
                 text = raw.decode() if isinstance(raw, bytes) else raw
                 items.append(_json_loads(text))
-            except (ValueError, TypeError, UnicodeDecodeError, AttributeError) as parse_exc:  # noqa: BLE001
+            except (ValueError, TypeError, UnicodeDecodeError, AttributeError) as parse_exc:
                 # cycle-9/D-AUDIT-951: narrow exceptions + observability.
                 # ValueError для JSON parse, TypeError для wrong type,
                 # UnicodeDecodeError для bytes decode, AttributeError для
@@ -374,7 +374,7 @@ class WindowedCollectProcessor(BaseProcessor):
                 try:
                     text = raw.decode() if isinstance(raw, bytes) else raw
                     items.append(_json_loads(text))
-                except (ValueError, TypeError, UnicodeDecodeError, AttributeError) as parse_exc:  # noqa: BLE001
+                except (ValueError, TypeError, UnicodeDecodeError, AttributeError) as parse_exc:
                     # cycle-9/D-AUDIT-951: см. выше — тот же narrow для get_current_batch.
                     import logging
                     logging.getLogger(__name__).debug(

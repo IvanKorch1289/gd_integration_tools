@@ -5,7 +5,6 @@ P4-#3: vulture CI gate target exists in Makefile
 P4-#4: Protocol definitions exist in RouteBuilder module
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

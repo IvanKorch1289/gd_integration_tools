@@ -107,7 +107,7 @@ class ConnectorRateLimiter:
                 сохранён для observability и обратной совместимости с
                 будущим token-bucket бэкендом.
         """
-        limit, window = _parse_rate(rate)
+        _limit, window = _parse_rate(rate)
         self._policies[connector_name] = (rate, burst, window)
         logger.debug(
             "Connector RL registered: %s rate=%s burst=%d window=%ds",

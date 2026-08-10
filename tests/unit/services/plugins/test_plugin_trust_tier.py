@@ -8,7 +8,6 @@
       имеют trust_tier = "A" (Tier-A migration verified).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -3,7 +3,6 @@
 Pattern (D286, Ponytail): thin wrapper над httpx + httpx_retries.
 Replace custom retry logic в HTTP-клиентах.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

@@ -31,8 +31,8 @@ __all__ = (
     "DatabaseBundle",
     "DatabaseInitializer",
     "ExternalDatabaseRegistry",
-    "get_db_initializer",
-    "get_smart_session_manager",
-    "get_external_db_registry",
     "__getattr__",
+    "get_db_initializer",
+    "get_external_db_registry",
+    "get_smart_session_manager",
 )

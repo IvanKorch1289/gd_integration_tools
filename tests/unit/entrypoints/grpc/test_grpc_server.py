@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke tests for gRPC server (entrypoints/grpc/grpc_server.py).
 
 The gRPC server module imports ``invoker_pb2`` at module load time which

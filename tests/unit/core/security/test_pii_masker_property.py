@@ -6,7 +6,6 @@ Critical properties verified:
     - Email edge-cases: RFC-compatible emails are masked
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -1,6 +1,5 @@
 """Pure ASGI regression-тесты для TimeoutMiddleware (cycle 50)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

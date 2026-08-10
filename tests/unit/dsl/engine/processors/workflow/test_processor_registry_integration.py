@@ -9,7 +9,6 @@ required_capability, но не зарегистрированы в ProcessorRegi
 meta во все 4 файла.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

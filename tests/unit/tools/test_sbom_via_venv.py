@@ -19,7 +19,6 @@ CVE-handling отделено: ``|| true`` подавляет exit != 0 при C
 ``audit-deps`` target.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

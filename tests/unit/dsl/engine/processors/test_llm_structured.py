@@ -13,7 +13,6 @@ test env не установлены — happy-path тесты подменяю�
 ``monkeypatch.setitem(sys.modules, ...)``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

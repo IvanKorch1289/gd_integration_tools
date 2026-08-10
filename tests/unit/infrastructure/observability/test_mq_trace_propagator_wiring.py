@@ -31,7 +31,6 @@ Auth (``require_capability("dlq.write", ...)``) — bypass через
 monkeypatch на уровне facade.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -166,11 +165,11 @@ def _reset_otel_tracer_provider() -> Iterator[None]:
     import opentelemetry.trace as _trace
     from opentelemetry.util._once import Once
 
-    _trace._TRACER_PROVIDER = None  # noqa: SLF001
-    _trace._TRACER_PROVIDER_SET_ONCE = Once()  # noqa: SLF001
+    _trace._TRACER_PROVIDER = None
+    _trace._TRACER_PROVIDER_SET_ONCE = Once()
     yield
-    _trace._TRACER_PROVIDER = None  # noqa: SLF001
-    _trace._TRACER_PROVIDER_SET_ONCE = Once()  # noqa: SLF001
+    _trace._TRACER_PROVIDER = None
+    _trace._TRACER_PROVIDER_SET_ONCE = Once()
 
 
 @pytest.fixture

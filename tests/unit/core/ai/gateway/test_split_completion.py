@@ -7,7 +7,6 @@
 - EnforcedInvokeMixin / AIRequest / AIResponse re-export работают
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

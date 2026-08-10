@@ -239,10 +239,10 @@ class StranglerFigProcessor(BaseProcessor):
         # Per-instance random для deterministic routing
         # S311: random для traffic split, не crypto (комментарий явно)
         self._rng = (
-            random.Random(deterministic_seed)  # noqa: S311
+            random.Random(deterministic_seed)
             if deterministic_seed is not None
             else None
-        )  # noqa: S311
+        )
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -261,11 +261,11 @@ class StranglerFigProcessor(BaseProcessor):
             roll_value = (
                 self._rng.random() * 100.0
                 if self._rng is not None
-                else random.random() * 100.0  # noqa: S311
+                else random.random() * 100.0
             )
             target = (
                 RouteTarget.NEW if roll_value < self._split_pct else RouteTarget.OLD
-            )  # noqa: S311
+            )
 
         # 3. Execute
         try:
@@ -274,7 +274,7 @@ class StranglerFigProcessor(BaseProcessor):
             else:
                 result = await self._new_handler(body)
             self._stats.record_route(target)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self._stats.record_error(target)
             if target == RouteTarget.NEW and self._on_new_error:
                 # Fallback to old

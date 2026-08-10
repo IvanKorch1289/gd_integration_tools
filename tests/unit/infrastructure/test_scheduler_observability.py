@@ -1,6 +1,5 @@
 """Тесты Prometheus observability для APScheduler (Sprint 16 Wave 5, M-9/CP-22)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

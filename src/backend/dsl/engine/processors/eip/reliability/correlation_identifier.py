@@ -20,7 +20,7 @@ from src.backend.dsl.engine.processors.eip.reliability._legacy import (
     HEADER_CORRELATION_ID,
 )
 
-__all__ = ("CorrelationIdentifierProcessor", "HEADER_CORRELATION_ID", "IdFactory")
+__all__ = ("HEADER_CORRELATION_ID", "CorrelationIdentifierProcessor", "IdFactory")
 
 IdFactory = Callable[[], str]
 

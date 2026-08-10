@@ -19,7 +19,6 @@ Scope-discipline (Ponytail):
   (третья `..` лишняя) — отдельный finding, не правится здесь (cross-sprint scope).
 """
 
-# ruff: noqa: S101
 from __future__ import annotations
 
 import re
@@ -101,7 +100,7 @@ class TestBuilderScriptNoPlanRef:
         Subprocess изолирует side-effects (запись WIKI.md) от тестов — скрипт пишет
         в свой нормальный OUT path, после чего мы проверяем результат.
         """
-        result = subprocess.run(  # noqa: S603 (test runs project-owned script via absolute path)
+        result = subprocess.run(
             [sys.executable, str(_BUILDER_PATH)],
             check=False,
             capture_output=True,

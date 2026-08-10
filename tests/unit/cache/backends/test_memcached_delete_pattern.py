@@ -20,7 +20,7 @@ import sys
 sys.modules.setdefault("aiomcache", aiomcache_mock)
 
 from src.backend.infrastructure.cache.backends.memcached import (
-    MemcachedBackend,  # noqa: E402
+    MemcachedBackend,
 )
 
 

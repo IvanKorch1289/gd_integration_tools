@@ -39,7 +39,7 @@ Note:
     Когда появится, добавить в этот facade + ``__all__``.
 """
 
-from src.backend.core.ai.security.agent_security import (  # noqa: F401
+from src.backend.core.ai.security.agent_security import (
     AgentSecurityFramework,
     AgentSecurityPolicy,
     DangerousCommandDetector,

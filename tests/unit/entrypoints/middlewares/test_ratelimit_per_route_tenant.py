@@ -9,7 +9,6 @@
       feature_enabled.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -88,7 +87,7 @@ class TestRedisRateLimitChecker:
         """Защитный fallback: ошибка Redis → pass-through (не SPoF)."""
         redis = _FakeRedis(fail=True)
         checker = RedisRateLimitChecker(redis, max_per_window=2, window_seconds=60.0)
-        allowed, remaining, retry_after = await checker.check("user:1")
+        allowed, _remaining, retry_after = await checker.check("user:1")
         assert allowed is True
         assert retry_after == 0
 

@@ -224,7 +224,7 @@ class ImmutableAuditStore:
             prev_row = (
                 await session.execute(
                     text(
-                        f"SELECT event_hash FROM {self._table} "  # self._table — ctor-parameter, не user input  # noqa: S608  # internal query with controlled parameters
+                        f"SELECT event_hash FROM {self._table} "  # self._table — ctor-parameter, не user input  # internal query with controlled parameters
                         f"ORDER BY seq DESC LIMIT 1"
                     )
                 )
@@ -234,7 +234,7 @@ class ImmutableAuditStore:
 
             await session.execute(
                 text(
-                    f"INSERT INTO {self._table} "  # self._table — ctor-parameter, не user input  # noqa: S608  # internal query with controlled parameters
+                    f"INSERT INTO {self._table} "  # self._table — ctor-parameter, не user input  # internal query with controlled parameters
                     f"(actor, action, resource, outcome, metadata, "
                     f" tenant_id, correlation_id, prev_hash, event_hash, "
                     f" occurred_at) "
@@ -276,7 +276,7 @@ class ImmutableAuditStore:
         from sqlalchemy import text
 
         sql = (
-            f"SELECT seq, actor, action, resource, outcome, metadata, "  # self._table — ctor-parameter, не user input  # noqa: S608  # internal query with controlled parameters
+            f"SELECT seq, actor, action, resource, outcome, metadata, "  # self._table — ctor-parameter, не user input  # internal query with controlled parameters
             f" tenant_id, correlation_id, prev_hash, event_hash, occurred_at "
             f"FROM {self._table} "
             f"WHERE seq >= :from_seq "
@@ -306,7 +306,7 @@ class ImmutableAuditStore:
                 anchor_row = (
                     await session.execute(
                         text(
-                            f"SELECT event_hash FROM {self._table} WHERE seq = :s"  # noqa: S608  # internal query with controlled parameters
+                            f"SELECT event_hash FROM {self._table} WHERE seq = :s"  # internal query with controlled parameters
                         ),  # self._table — ctor-parameter, не user input
                         {"s": int(first[0]) - 1},
                     )

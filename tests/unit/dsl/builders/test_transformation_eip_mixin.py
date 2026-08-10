@@ -7,7 +7,6 @@ P3 message claim-check: процессор :class:`ClaimCheckProcessor` уже �
 параметрами (store, ttl, threshold).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

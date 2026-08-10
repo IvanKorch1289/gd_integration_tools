@@ -88,7 +88,7 @@ class RedisLockProcessor(BaseProcessor):
         lock = RedisLock(self._key, ttl_seconds=self._ttl, key_prefix=self._key_prefix)
         try:
             acquired = await lock.acquire(blocking_timeout=self._blocking_timeout)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _logger.exception(
                 "redis_lock: acquire failed",
                 extra={"key": self._key, "error": str(exc)},

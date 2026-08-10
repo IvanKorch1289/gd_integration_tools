@@ -5,7 +5,6 @@ SumBy, MaxBy, MinBy, SortBy.
 Покрывают поведение (не сериализацию round-trip).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

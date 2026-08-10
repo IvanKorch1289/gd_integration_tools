@@ -19,7 +19,7 @@ runtime). Покрывает 5 типов ``(PERSON, INN, SNILS, PHONE_NUMBER, C
 ``[TYPE_N]``, что и реальный :class:`PresidioSanitizerAdapter`.
 """
 
-# ruff: noqa: S101  # assert — стандартная идиома pytest
+# assert — стандартная идиома pytest
 
 from __future__ import annotations
 
@@ -110,7 +110,7 @@ def key_provider(aes_key: bytes) -> StaticAESGCMKeyProvider:
 @pytest.fixture
 def fake_redis() -> Any:
     try:
-        import fakeredis.aioredis as far  # noqa: PLC0415
+        import fakeredis.aioredis as far
 
         return far.FakeRedis()
     except ImportError:

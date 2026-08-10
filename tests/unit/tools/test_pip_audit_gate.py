@@ -30,7 +30,7 @@ def cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 def _run_gate(cwd: Path) -> subprocess.CompletedProcess[str]:
     """Run pip_audit_gate.py из cwd; возвращает CompletedProcess."""
-    return subprocess.run(  # noqa: S603
+    return subprocess.run(
         [sys.executable, str(_GATE)],
         capture_output=True,
         text=True,

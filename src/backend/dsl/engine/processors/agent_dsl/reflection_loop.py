@@ -338,7 +338,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
             )
 
             return get_ai_gateway()
-        except (ImportError, AttributeError, RuntimeError) as di_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as di_exc:
             # cycle-9/D-AUDIT-967: narrow exceptions + observability (mirror
             # D-AUDIT-966 для plan_execute).
             import logging

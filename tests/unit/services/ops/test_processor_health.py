@@ -1,6 +1,5 @@
 """Sprint 6 K2 — тесты ProcessorHealthService (services/ops/health.py)."""
 
-# ruff: noqa: S101, SLF001
 
 from __future__ import annotations
 

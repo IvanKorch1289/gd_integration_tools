@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke + unit + property tests for CDC client (infrastructure/clients/external/cdc.py).
 
 Sections:

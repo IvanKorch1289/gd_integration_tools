@@ -4,7 +4,6 @@ Self-contained — does NOT import Temporal/workflow compiler (chain deps).
 Tests the Pydantic model_validator on SagaDeclaration only.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

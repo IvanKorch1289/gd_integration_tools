@@ -16,11 +16,11 @@ from __future__ import annotations
 from typing import Any
 
 __all__ = (
-    "get_poll_cdc_backend_class",
-    "get_listen_notify_cdc_backend_class",
-    "get_debezium_cdc_backend_class",
     "get_cdc_client_adapter_class",
+    "get_debezium_cdc_backend_class",
     "get_debezium_events_cdc_backend_class",
+    "get_listen_notify_cdc_backend_class",
+    "get_poll_cdc_backend_class",
 )
 
 

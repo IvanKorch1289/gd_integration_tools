@@ -10,7 +10,6 @@
 только логика через mock nats.
 """
 
-# ruff: noqa: S101, I001
 
 from __future__ import annotations
 

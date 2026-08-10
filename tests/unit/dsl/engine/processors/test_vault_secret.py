@@ -10,7 +10,6 @@
     * ``to_spec()`` сериализует path/output_field/version.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

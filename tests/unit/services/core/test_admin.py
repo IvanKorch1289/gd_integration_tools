@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for AdminService (services/core/admin.py)."""
 
 from __future__ import annotations

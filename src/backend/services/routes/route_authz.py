@@ -127,7 +127,7 @@ def _resolve_authz_gateway() -> AuthorizationGateway | None:
         gateway = getattr(agent, "_authz_gateway", None)
         if gateway is not None:
             return gateway
-    except (ImportError, AttributeError, RuntimeError) as gw_resolve_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError) as gw_resolve_exc:
         # cycle-9/D-AUDIT-902: narrow exceptions (ImportError для missing
         # module, AttributeError для malformed agent, RuntimeError для
         # service not initialized). Bare 'except Exception' маскировал

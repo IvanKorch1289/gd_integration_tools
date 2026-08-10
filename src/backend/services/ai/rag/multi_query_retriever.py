@@ -146,7 +146,7 @@ class MultiQueryRetriever:
             return []
 
         # Всегда включаем оригинальный запрос.
-        all_queries = [query] + reformulations
+        all_queries = [query, *reformulations]
         source_labels = ["original"] + [
             f"reform_{i}" for i in range(len(reformulations))
         ]

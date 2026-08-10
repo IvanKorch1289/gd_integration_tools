@@ -3,7 +3,6 @@
 Извлечение текста из PDF (pypdf).
 Pattern (D273, Ponytail): thin wrapper + skip если pypdf нет.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

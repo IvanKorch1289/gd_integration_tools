@@ -3,7 +3,6 @@
 Encoding detection по BOM + UTF-8 validation (Ponytail YAGNI: stdlib only).
 Pattern (D277): thin wrapper.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

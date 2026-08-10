@@ -10,7 +10,6 @@
 * идемпотентность: повторная регистрация той же модели не дублирует.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -37,7 +36,7 @@ class _SimpleModel(BaseModel):
 class _OptionalModel(BaseModel):
     """Модель с Optional / list."""
 
-    description: Optional[str] = None  # noqa: UP045 — намеренно тестируем typing.Optional
+    description: Optional[str] = None
     tags: list[str] = []
 
 

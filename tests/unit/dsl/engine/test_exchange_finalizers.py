@@ -4,7 +4,6 @@
 поддержка sync/async колбэков, idempotency.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

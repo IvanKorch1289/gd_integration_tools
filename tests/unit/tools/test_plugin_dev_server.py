@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 K5 W4 — smoke-тесты ``tools.plugin_dev_server``."""
 
 from __future__ import annotations
@@ -10,7 +9,7 @@ _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 if str(_TOOLS) not in sys.path:
     sys.path.insert(0, str(_TOOLS))
 
-import plugin_dev_server as pds  # noqa: E402
+import plugin_dev_server as pds
 
 
 def test_main_returns_2_when_plugin_missing(monkeypatch, tmp_path) -> None:

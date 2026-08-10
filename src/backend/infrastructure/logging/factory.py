@@ -76,7 +76,7 @@ def configure_logging(backend: str = "structlog", **settings: Any) -> BaseLogger
 
     if backend == "auto":
         try:
-            import structlog  # noqa: F401
+            import structlog
 
             backend = "structlog"
         except ImportError:

@@ -215,7 +215,7 @@ class Exchange[T](BaseModel):
                 result = fn()
                 if inspect.isawaitable(result):
                     await result
-            except Exception as exc:  # noqa: BLE001 — best-effort cleanup
+            except Exception as exc:
                 _logger.debug("finalizer %r failed: %s", fn, exc)
 
     def set_error(self, reason: str) -> None:

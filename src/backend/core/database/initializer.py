@@ -7,7 +7,7 @@ ADR-0207: services/ai/memory/langmem_service.py импортирует ``get_db_
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
+from src.backend.core.di.providers.infrastructure_locator import (
     get_db_initializer_factory as _get_db_initializer_fn,
 )
 

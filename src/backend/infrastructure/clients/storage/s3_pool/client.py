@@ -41,7 +41,7 @@ from src.backend.core.errors import ServiceError
 # Per skill: import _settings pre-loads core.config.settings, breaking
 # the circular chain breaker -> core.logging -> core.interfaces -> breaker.
 # Module-level shared CB (per-call, not per-instance) per skill pattern.
-from src.backend.core.resilience.breaker import (  # noqa: E402
+from src.backend.core.resilience.breaker import (
     BreakerSpec,
     get_breaker_registry,
 )
@@ -490,7 +490,7 @@ class S3Client(BaseS3Client):
                 raise ServiceError(f"Ошибка получения метаданных {key}") from exc
 
     @ensure_connected
-    async def list_objects(self, prefix: str = None) -> list[str]:
+    async def list_objects(self, prefix: str | None = None) -> list[str]:
         """Возвращает список объектов в бакете с опциональным префиксом."""
         objects = []
         async with self.client_context() as client:

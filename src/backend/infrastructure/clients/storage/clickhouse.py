@@ -26,7 +26,7 @@ from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_resilience import resilient
 
-__all__ = ("ClickHouseClient", "MAX_INSERT_ROWS", "get_clickhouse_client")
+__all__ = ("MAX_INSERT_ROWS", "ClickHouseClient", "get_clickhouse_client")
 
 # Hard request-level safety cap; chunk size remains configurable separately.
 MAX_INSERT_ROWS = 100_000

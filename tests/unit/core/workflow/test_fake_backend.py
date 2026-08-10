@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты ``src.backend.core.workflow.fake_backend.FakeWorkflowBackend``.
 
 Покрывает публичные методы, test-helpers и приватный ``_require``
@@ -47,20 +46,20 @@ class TestFakeBackendConstruction:
     def test_default_result_is_completed(self) -> None:
         backend = FakeWorkflowBackend()
         # Дефолтный default_result = WorkflowResult(status="completed")
-        assert backend._default_result.status == "completed"  # noqa: SLF001
-        assert backend._default_result.output == {}  # noqa: SLF001
-        assert backend._query_handlers == {}  # noqa: SLF001
-        assert backend._instances == {}  # noqa: SLF001
+        assert backend._default_result.status == "completed"
+        assert backend._default_result.output == {}
+        assert backend._query_handlers == {}
+        assert backend._instances == {}
 
     def test_custom_default_result(self) -> None:
         custom = WorkflowResult(status="failed", output={"reason": "test-fixture"})
         backend = FakeWorkflowBackend(default_result=custom)
-        assert backend._default_result is custom  # noqa: SLF001
+        assert backend._default_result is custom
 
     def test_custom_query_handlers(self) -> None:
         handlers = {"status": {"phase": "review"}, "progress": {"pct": 50}}
         backend = FakeWorkflowBackend(query_handlers=handlers)
-        assert backend._query_handlers == handlers  # noqa: SLF001
+        assert backend._query_handlers == handlers
 
 
 @pytest.mark.asyncio
@@ -87,7 +86,7 @@ class TestStartWorkflow:
             task_queue="priority",
             execution_timeout=timedelta(seconds=30),
         )
-        instance = backend._instances[handle.run_id]  # noqa: SLF001
+        instance = backend._instances[handle.run_id]
         assert instance.workflow_name == "credit_score"
         assert instance.input == {"client_id": 42, "force": True}
         assert instance.task_queue == "priority"
@@ -101,7 +100,7 @@ class TestStartWorkflow:
         backend = FakeWorkflowBackend()
         handle = await _start(backend)
         assert (
-            backend._instances[handle.run_id].execution_timeout is None  # noqa: SLF001
+            backend._instances[handle.run_id].execution_timeout is None
         )
 
 
@@ -228,7 +227,7 @@ class TestReplay:
         handle = await _start(backend)
         await backend.replay(workflow_name="wf", history=b"history")
         # Состояние инстанса не меняется.
-        instance = backend._instances[handle.run_id]  # noqa: SLF001
+        instance = backend._instances[handle.run_id]
         assert instance.cancelled is False
         assert instance.result is None
         assert instance.signals == []
@@ -241,7 +240,7 @@ class TestRequire:
         backend = FakeWorkflowBackend()
         ghost = WorkflowHandle(workflow_id="x", run_id="missing", namespace="t")
         with pytest.raises(KeyError, match="missing"):
-            backend._require(ghost)  # noqa: SLF001
+            backend._require(ghost)
 
     @pytest.mark.asyncio
     async def test_require_raises_valueerror_on_handle_mismatch(self) -> None:
@@ -254,7 +253,7 @@ class TestRequire:
             workflow_id="wf-forged", run_id=real.run_id, namespace="other"
         )
         with pytest.raises(ValueError, match="Handle mismatch"):
-            backend._require(forged)  # noqa: SLF001
+            backend._require(forged)
 
     @pytest.mark.asyncio
     async def test_require_propagates_through_public_methods(self) -> None:

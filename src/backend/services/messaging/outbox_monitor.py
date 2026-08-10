@@ -21,7 +21,7 @@ S44 W3 sprint goal: закрыть последний frontend→infra import
 
 from __future__ import annotations
 
-from src.backend.infrastructure.messaging.outbox.stuck_monitor import (  # noqa: E402,F401
+from src.backend.infrastructure.messaging.outbox.stuck_monitor import (
     OutboxStuckMonitor,
     OutboxStuckMonitorSettings,
     default_stuck_monitor,

@@ -310,8 +310,8 @@ async def _import_bulk_objects(
     if dry_run:
         return {"parsed": len(rows), "sample": rows[:3], "dry_run": True}
 
-    from src.backend.dsl.engine.execution_engine import ExecutionEngine  # noqa: I001
-    from src.backend.dsl.engine.pipeline_registry import get_pipeline_registry  # type: ignore[import-not-found]  # noqa: I001
+    from src.backend.dsl.engine.execution_engine import ExecutionEngine
+    from src.backend.dsl.engine.pipeline_registry import get_pipeline_registry  # type: ignore[import-not-found]
 
     pipeline = get_pipeline_registry().get(route_id)
     if pipeline is None:

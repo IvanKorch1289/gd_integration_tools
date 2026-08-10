@@ -15,11 +15,11 @@ from typing import Any, ClassVar
 from pydantic import BaseModel, Field
 
 __all__ = (
-    "UnifiedCacheFacade",
     "CacheError",
     "CacheInvalidationPolicy",
-    "RedisCacheFacade",
     "DiskCacheFacade",
+    "RedisCacheFacade",
+    "UnifiedCacheFacade",
 )
 
 

@@ -13,7 +13,7 @@ import pytest
 
 try:
     from src.backend.infrastructure.clients.transport.imap_pool import (
-        ImapPool,  # noqa: F401
+        ImapPool,
     )
 
     HAS_IMAP_POOL = True

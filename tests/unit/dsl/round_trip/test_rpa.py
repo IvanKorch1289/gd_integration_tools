@@ -20,7 +20,6 @@
   production нужны SecretRef-маркеры (см. W28 секрет-note в audit.md).
 """
 
-# ruff: noqa: S101, S106
 
 from __future__ import annotations
 

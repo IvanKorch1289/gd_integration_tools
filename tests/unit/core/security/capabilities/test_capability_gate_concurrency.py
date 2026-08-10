@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Regression test for D-AUDIT-98 (S183 W1.1): CapabilityGate cache race.
 
 The previous implementation of ``CapabilityGate._cache`` /
@@ -69,7 +68,7 @@ class TestCacheMixinRaceSync:
                     gate._cache_granted(key)
                     if i % 7 == 0:
                         gate._invalidate_plugin(f"plugin_{worker_id % 8}")
-            except BaseException as exc:  # noqa: BLE001
+            except BaseException as exc:
                 with gate_lock:
                     errors.append(exc)
 
@@ -105,7 +104,7 @@ class TestCacheMixinRaceSync:
                 while not stop.is_set():
                     gate._cache_granted((f"p{i % 4}", "db.read", f"s{i % 64}"))
                     i += 1
-            except BaseException as exc:  # noqa: BLE001
+            except BaseException as exc:
                 with err_lock:
                     errors.append(exc)
 
@@ -113,7 +112,7 @@ class TestCacheMixinRaceSync:
             try:
                 while not stop.is_set():
                     gate._invalidate_plugin("p0")
-            except BaseException as exc:  # noqa: BLE001
+            except BaseException as exc:
                 with err_lock:
                     errors.append(exc)
 
@@ -161,7 +160,7 @@ class TestCacheMixinRaceSync:
                     if i % 5 == 0:
                         gate._invalidate_plugin("plug")
                     i += 1
-            except BaseException as exc:  # noqa: BLE001
+            except BaseException as exc:
                 with err_lock:
                     errors.append(exc)
 
@@ -204,7 +203,7 @@ class TestCheckMixinRaceAsync:
                     tenant = f"tenant_{task_id % 4}"
                     await asyncio.sleep(0)
                     gate.check_tenant("db.read", tenant, "plug", "credit_db")
-            except BaseException as exc:  # noqa: BLE001
+            except BaseException as exc:
                 async with errors_lock:
                     errors.append(exc)
 
@@ -213,7 +212,7 @@ class TestCheckMixinRaceAsync:
                 for i in range(200):
                     await asyncio.sleep(0)
                     gate._invalidate_tenant(f"tenant_{i % 4}")
-            except BaseException as exc:  # noqa: BLE001
+            except BaseException as exc:
                 async with errors_lock:
                     errors.append(exc)
 
@@ -285,7 +284,7 @@ class TestCheckMixinRaceAsync:
                         gate._invalidate_tenant("tenant_a", "plug")
                     i += 1
                     await asyncio.sleep(0)
-            except BaseException as exc:  # noqa: BLE001
+            except BaseException as exc:
                 async with err_lock:
                     errors.append(exc)
 
@@ -294,7 +293,7 @@ class TestCheckMixinRaceAsync:
                 while not stop.is_set():
                     gate.check_tenant("db.read", "tenant_a", "plug", "credit_db")
                     await asyncio.sleep(0)
-            except BaseException as exc:  # noqa: BLE001
+            except BaseException as exc:
                 async with err_lock:
                     errors.append(exc)
 

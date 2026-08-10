@@ -10,7 +10,6 @@ Mock-based — no real Kafka required. Verifies:
 Reference: ``src/backend/infrastructure/cdc/debezium_events_backend.py``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -209,7 +208,7 @@ async def test_ack_commits_offset(mock_aiokafka: Any, fake_message: Any) -> None
     assert len(consumer.commits) == 1
     commit_offsets = consumer.commits[0]
     # Find the TP and verify offset+1
-    tp = list(commit_offsets.keys())[0]
+    tp = next(iter(commit_offsets.keys()))
     assert tp.topic == "debezium.test.users"
     assert commit_offsets[tp].offset == 100  # 99 + 1
 
@@ -288,5 +287,5 @@ async def test_subscribe_with_start_cursor_calls_seek(
     consumer = backend._consumer
     # Should have called seek for the start cursor
     assert len(consumer.seeks) >= 1
-    tp, offset = consumer.seeks[0]
+    _tp, offset = consumer.seeks[0]
     assert offset == 50

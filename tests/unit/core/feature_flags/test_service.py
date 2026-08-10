@@ -1,6 +1,5 @@
 """Tests for src.backend.core.feature_flags.service (Sprint 41)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

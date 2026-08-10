@@ -1,6 +1,5 @@
 """Тесты K2 W1 TemporalActivityWrapper / wrap_as_temporal_activity."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

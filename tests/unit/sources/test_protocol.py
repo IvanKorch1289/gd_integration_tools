@@ -1,6 +1,5 @@
 """W23 — контракт ``Source`` Protocol и ``SourceEvent``."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

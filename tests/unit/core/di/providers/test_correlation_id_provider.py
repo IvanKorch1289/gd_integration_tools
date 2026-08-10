@@ -7,7 +7,6 @@ Per D102 (single-source-of-truth through facade), infrastructure_facade
 ``<function get_correlation_id>`` вместо строки, что ломает audit_service.emit
 (test_emit_uses_correlation_id_from_contextvar).
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

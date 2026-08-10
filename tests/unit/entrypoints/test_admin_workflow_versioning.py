@@ -1,6 +1,5 @@
 """Unit-тесты admin_workflow_versioning — Sprint 12 K3 W8."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

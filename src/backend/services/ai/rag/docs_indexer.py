@@ -52,7 +52,7 @@ def _embed_offline(text: str, dim: int = _EMBED_DIM) -> list[float]:
     """
     vec = [0.0] * dim
     for tok in re.findall(r"\w+", (text or "").lower()):
-        vec[int(hashlib.md5(tok.encode()).hexdigest(), 16) % dim] += 1.0  # noqa: S324
+        vec[int(hashlib.md5(tok.encode()).hexdigest(), 16) % dim] += 1.0
     n = sum(v * v for v in vec) ** 0.5
     return [v / n for v in vec] if n > 0 else vec
 
@@ -122,7 +122,7 @@ class InMemoryQdrantFallback:
             vecs[pid] = list(getattr(p, "vector", None) or p.get("vector") or [])
             coll[pid] = dict(payload)
 
-    def search(  # noqa: ARG002 — query_filter unsupported in fallback
+    def search(
         self,
         collection_name: str,
         query_vector: list[float],
@@ -194,7 +194,7 @@ class DocsIndexer:
             return
         try:
             self._qdrant.get_collection(self._collection_name)
-        except (ConnectionError, RuntimeError, ValueError) as qdrant_exc:  # noqa: BLE001
+        except (ConnectionError, RuntimeError, ValueError) as qdrant_exc:
             # D-A1-04 fix (cycle 42): narrow exceptions + observability.
             # Bare `except Exception` маскировал Qdrant backend failures
             # (connection refused, timeout, malformed response).
@@ -210,7 +210,7 @@ class DocsIndexer:
                     collection_name=self._collection_name,
                     vectors_config=VectorParams(size=384, distance=Distance.COSINE),
                 )
-            except (ImportError, AttributeError, TypeError) as legacy_qdrant_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, TypeError) as legacy_qdrant_exc:
                 # cycle-9/D-AUDIT-910: narrow exceptions + observability.
                 # ImportError — qdrant_client.models missing, AttributeError
                 # — legacy Qdrant (нет VectorParams), TypeError —
@@ -295,7 +295,7 @@ class DocsIndexer:
                 )
                 for i in range(len(chunks))
             ]
-        except (ImportError, AttributeError, TypeError, KeyError) as point_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, TypeError, KeyError) as point_exc:
             # cycle-9/D-AUDIT-912: narrow exceptions + observability.
             # ImportError — qdrant_client.models missing, AttributeError —
             # API change, TypeError/KeyError — schema mismatch. Bare
@@ -358,7 +358,7 @@ class DocsIndexer:
                 query_vector=(await self._embed([query]))[0],
                 limit=limit,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("docs_indexer.search_failed: %s", exc)
             return []
         out: list[dict[str, Any]] = []

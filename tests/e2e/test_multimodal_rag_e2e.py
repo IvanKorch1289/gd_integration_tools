@@ -26,7 +26,6 @@ Stub'и подменяют **только внешние модели** (network
 ``-m 'not e2e'``).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -414,7 +413,7 @@ async def test_public_api_exports_complete() -> None:
     Это guard против случайного удаления/переименования экспортов в
     ``src/backend/services/ai/rag/multimodal/__init__.py``.
     """
-    from src.backend.services.ai.rag.multimodal import (  # noqa: PLC0415
+    from src.backend.services.ai.rag.multimodal import (
         ChunkDoc,
         CLIPEmbedder,
         ImageIngester,

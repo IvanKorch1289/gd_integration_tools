@@ -72,8 +72,8 @@ from src.backend.services.io.external_database.validation_mixin import (
 __all__ = (
     "ExternalDatabaseService",
     "PreparedDBParameter",
-    "get_external_db_service",
     "__getattr__",
+    "get_external_db_service",
 )
 
 

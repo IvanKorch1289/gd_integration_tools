@@ -6,7 +6,6 @@ Ponytail-YAGNI: tests run without Temporal/Prometheus chain deps by
 replicating the minimal WorkflowDeclaration structure inline.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

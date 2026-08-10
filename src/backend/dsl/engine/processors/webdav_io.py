@@ -172,7 +172,7 @@ class WebDavProcessor(BaseProcessor):
             if not feature_flags.proc_webdav:
                 exchange.set_property("webdav_status", "skipped")
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1719: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1718).
             import logging
@@ -206,7 +206,7 @@ class WebDavProcessor(BaseProcessor):
         if self._password:
             # ``password`` dict key in YAML spec; value is the redacted
             # placeholder string, runtime secret is never serialized.
-            spec["password"] = "<redacted: use credential_ref>"  # noqa: S105
+            spec["password"] = "<redacted: use credential_ref>"
         if self._source != "body":
             spec["source"] = self._source
         if self._target != "body.webdav_result":

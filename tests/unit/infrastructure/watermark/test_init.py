@@ -2,7 +2,6 @@
 через ``src.backend.infrastructure.watermark``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

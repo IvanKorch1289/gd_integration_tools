@@ -11,7 +11,6 @@
 требует DB_USERNAME / DB_PASSWORD).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

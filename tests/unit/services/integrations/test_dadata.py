@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for APIDADATAService (services/integrations/dadata.py)."""
 
 from __future__ import annotations

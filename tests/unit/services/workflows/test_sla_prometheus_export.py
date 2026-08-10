@@ -1,6 +1,5 @@
 """Unit-тесты Prometheus export для SLA — Sprint 12 K2 W1."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

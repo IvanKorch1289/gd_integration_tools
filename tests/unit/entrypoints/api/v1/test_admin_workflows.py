@@ -1,5 +1,4 @@
 """Smoke-тесты admin_workflows endpoints (Sprint 4 Wave F)."""
-# ruff: noqa: S101
 
 from __future__ import annotations
 

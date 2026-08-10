@@ -14,7 +14,6 @@ Inspired by D102 (facade) + D187 (facade single-import):
 5 built-in backends (vault/postgres/mongo/memory/consul)
 регистрируются автоматически при первом импорте модуля.
 """
-# ruff: noqa: E501
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 W1 — marker-тест для ``core.plugin_runtime.compat_checker``.
 
 Полный набор кейсов покрыт в

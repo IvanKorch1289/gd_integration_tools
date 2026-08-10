@@ -40,11 +40,11 @@ from src.backend.dsl.workflow.spec import (
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = (
+    "LANGGRAPH_CHECKPOINT_GET_ACTIVITY",
+    "LANGGRAPH_CHECKPOINT_PUT_ACTIVITY",
     "ActivityBridge",
     "bridge_action_handler",
     "get_activity_callables",
-    "LANGGRAPH_CHECKPOINT_GET_ACTIVITY",
-    "LANGGRAPH_CHECKPOINT_PUT_ACTIVITY",
 )
 
 
@@ -107,7 +107,7 @@ async def _langgraph_checkpoint_get_activity(thread_id: str) -> dict[str, Any] |
         # AsyncPostgresSaver возвращает TypedDict-подобный объект; нормализуем
         # в plain dict для безопасной передачи через Temporal payload.
         return dict(chk) if hasattr(chk, "__iter__") else {"raw": chk}
-    except Exception as exc:  # noqa: BLE001 — best-effort checkpoint load
+    except Exception as exc:
         _logger.debug(
             "LangGraph checkpoint get(thread_id=%s) failed: %s", thread_id, exc
         )
@@ -145,7 +145,7 @@ async def _langgraph_checkpoint_put_activity(state: dict[str, Any]) -> bool:
         # AsyncPostgresSaver.aput signature: (config, values, metadata)
         await saver.aput(config, state, {})
         return True
-    except Exception as exc:  # noqa: BLE001 — best-effort checkpoint save
+    except Exception as exc:
         _logger.debug(
             "LangGraph checkpoint put(thread_id=%s) failed: %s", thread_id, exc
         )

@@ -8,7 +8,6 @@
     * DOT/Mermaid syntax валиден (basic regex проверки).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for WorkflowBackend Protocol and Pydantic models."""
 
 from __future__ import annotations

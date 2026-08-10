@@ -5,7 +5,6 @@ Middleware deny-by-default для ``/api/v1/rpa/*`` endpoints. Cycle 40:
 отправляется напрямую через ``send()`` (НЕ raise, как в cycle 39).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -1,6 +1,5 @@
 """Unit-тесты PoolWarmup HTTPX/Graylog + PoolReconnectMonitor (S13 K2 W7)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

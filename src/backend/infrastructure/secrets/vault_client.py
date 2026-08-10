@@ -471,7 +471,7 @@ class VaultClient:
                         },
                         severity="info",
                     )
-                except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001
+                except (ImportError, AttributeError, RuntimeError) as audit_exc:
                     # cycle-9/D-AUDIT-925: narrow exceptions + observability.
                     # ImportError — audit facade missing, AttributeError
                     # — schema change, RuntimeError — backend unavailable.

@@ -40,7 +40,7 @@ from src.backend.infrastructure.security.connector_rate_limiter import (
     get_connector_rate_limiter,
 )
 from src.backend.infrastructure.sinks._timeouts import (
-    DEFAULT_SINK_TIMEOUT_S,  # noqa: F401 — re-exported for sink factory
+    DEFAULT_SINK_TIMEOUT_S,
 )
 
 __all__ = ("SmsSink",)
@@ -135,7 +135,7 @@ class SmsSink(Sink):
                         sms_id = payload_resp.get("sms_id")
                         if sms_id is not None:
                             details["external_id"] = str(sms_id)
-                except (ValueError, TypeError) as json_exc:  # noqa: BLE001
+                except (ValueError, TypeError) as json_exc:
                     # cycle-9/D-AUDIT-929: narrow exceptions + observability.
                     # ValueError для malformed JSON, TypeError для invalid
                     # response type. Bare `except Exception` маскировал

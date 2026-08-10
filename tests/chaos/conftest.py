@@ -14,7 +14,7 @@ import pytest
 
 # Импорт фикстур: pytest автоматически их зарегистрирует благодаря
 # conftest-механизму.
-from testkit.chaos_fixtures import (  # noqa: F401
+from testkit.chaos_fixtures import (
     apply_disconnect,
     apply_latency,
     apply_random_drop,

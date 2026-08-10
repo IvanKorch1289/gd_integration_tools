@@ -29,7 +29,6 @@ anonymous.
       tests/unit/entrypoints/graphql/test_schema_auth_propagation.py -v
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

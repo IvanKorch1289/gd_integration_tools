@@ -1,6 +1,5 @@
 """Unit-тесты DLQPolicy + Registry + Resolver + Cleanup job (S13 K3 W4)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

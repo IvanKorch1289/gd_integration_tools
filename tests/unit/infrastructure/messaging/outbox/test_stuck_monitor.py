@@ -250,4 +250,4 @@ async def test_start_outbox_stuck_monitor_singleton_recreate() -> None:
         await stuck_monitor.stop_outbox_stuck_monitor()
 
 
-import asyncio  # noqa: E402
+import asyncio

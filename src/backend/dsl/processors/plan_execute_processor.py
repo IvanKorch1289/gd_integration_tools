@@ -156,7 +156,7 @@ class PlanExecuteProcessor(BaseProcessor):
                     )
                     succeeded += 1
                     final_output = output
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     executed.append(
                         {
                             "step_id": step.step_id,
@@ -183,7 +183,7 @@ class PlanExecuteProcessor(BaseProcessor):
                 break
             try:
                 ok = await self._verifier(result)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _log.warning("Verifier raised: %s — treating as False", exc)
                 ok = False
             result.verified = ok
@@ -197,7 +197,7 @@ class PlanExecuteProcessor(BaseProcessor):
             replan_prompt = self._build_replan_prompt(prompt, result)
             try:
                 steps = await self._planner(replan_prompt)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _log.error("Replan failed: %s — keeping partial result", exc)
                 break
             if len(steps) > self._max_steps:

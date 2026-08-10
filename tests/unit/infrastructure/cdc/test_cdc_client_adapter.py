@@ -1,6 +1,5 @@
 """Тесты CDCClientAdapter (Wave 5)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -174,4 +173,4 @@ def test_dlq_envelope_shape() -> None:
 
 
 # Import for type hint in _FakeDLQ (Any in test signatures)
-from typing import Any  # noqa: E402
+from typing import Any

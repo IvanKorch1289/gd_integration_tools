@@ -81,7 +81,7 @@ async def test_cleanup_run_does_not_use_delete() -> None:
     actual_sql = ch_client.execute.await_args.args[0]
     # Pre-fix used "DELETE FROM"; post-fix should NOT have it
     assert "DELETE FROM" not in actual_sql, (
-        "D-AUDIT-FIX-184-4: pre-fix used DELETE FROM (O(n) full-table). "  # noqa: S608
+        "D-AUDIT-FIX-184-4: pre-fix used DELETE FROM (O(n) full-table). "
         "Post-fix should use ALTER TABLE ... DROP PARTITION (O(log n)). "
         f"Got SQL: {actual_sql}"
     )

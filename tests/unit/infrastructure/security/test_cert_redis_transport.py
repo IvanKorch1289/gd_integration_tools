@@ -1,5 +1,4 @@
 """TDD: Redis transport для cert store subscribe_updates (S171 M22, D257)."""
-# ruff: noqa: S101
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock

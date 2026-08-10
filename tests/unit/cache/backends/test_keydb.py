@@ -5,7 +5,6 @@ KeyDB наследуется от RedisBackend (RESP-совместим), поэ
 ``active_replica``-флаг конструктора.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

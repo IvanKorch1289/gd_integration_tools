@@ -39,7 +39,7 @@ from src.backend.services.lineage.lineage_emitter import (
     _iso_timestamp,
 )
 
-__all__ = ("OpenLineageHttpEmitter", "OpenLineageHttpConfig")
+__all__ = ("OpenLineageHttpConfig", "OpenLineageHttpEmitter")
 
 _log = get_logger(__name__)
 
@@ -48,12 +48,12 @@ class OpenLineageHttpConfig:
     """Immutable config для HTTP emitter."""
 
     __slots__ = (
-        "url",
-        "namespace",
-        "timeout_s",
+        "auth_token",
         "batch_size",
         "max_queue",
-        "auth_token",
+        "namespace",
+        "timeout_s",
+        "url",
     )
 
     def __init__(
@@ -168,7 +168,7 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
 
         # SECURITY: endpoint — config-controlled (lineage.url в Settings),
         # не user input. Production MUST validate https:// schema + restrict egress.
-        req = urllib.request.Request(  # noqa: S310
+        req = urllib.request.Request(
             endpoint,
             data=payload,
             method="POST",
@@ -187,7 +187,7 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
             # SECURITY: endpoint — config-controlled (lineage.url в Settings),
             # не user input. Production deployments MUST validate endpoint schema
             # (https://) и restrict network egress. См. ADR-NEW-12 (RLS для outbound).
-            with urllib.request.urlopen(  # noqa: S310
+            with urllib.request.urlopen(
                 req, timeout=self._config.timeout_s
             ) as resp:
                 if 200 <= resp.status < 300:

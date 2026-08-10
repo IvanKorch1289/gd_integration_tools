@@ -75,7 +75,7 @@ class EnrichEIPProcessor(BaseProcessor):
     def _fetch(self, exchange: Exchange[Any]) -> Any:
         if self.strategy == "http":
             assert self.source, "http strategy requires source URL"
-            with urllib.request.urlopen(  # noqa: S310
+            with urllib.request.urlopen(
                 _resolve(self.source, exchange), timeout=5
             ) as r:
                 raw = r.read().decode("utf-8")

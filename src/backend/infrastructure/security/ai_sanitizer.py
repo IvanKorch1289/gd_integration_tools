@@ -32,7 +32,7 @@ _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
 _PHONE_RE = re.compile(r"\+?[78][\d\s\-()]{9,}\d")
 # C3: shared INN/SNILS via core.security.pii_patterns (single source of truth).
 # INN — ровно 10 OR 12 цифр; старый inline \b\d{10,12}\b ошибочно ловил 11-значные.
-from src.backend.core.security.pii_patterns import INN as _INN_RE  # noqa: F401
+from src.backend.core.security.pii_patterns import INN as _INN_RE
 from src.backend.core.security.pii_patterns import SNILS as _SNILS_RE
 
 # US Social Security Number (M2.1)

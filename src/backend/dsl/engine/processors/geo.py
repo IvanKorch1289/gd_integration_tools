@@ -149,7 +149,7 @@ class GeoProcessor(BaseProcessor):
             if not feature_flags.proc_geo:
                 exchange.set_property("geo_status", "skipped")
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1713: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1712).
             import logging

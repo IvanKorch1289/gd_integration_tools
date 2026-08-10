@@ -19,7 +19,6 @@ Counter читаем напрямую через ``prometheus_client.Counter._va
 (не через Registry API), чтобы не зависеть от test-isolation helpers.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -48,7 +47,7 @@ def _counter_value(engine: str) -> float:
     но она требует registry-walk; этот вариант проще и быстрее.
     """
     metric = authz_check_engine_failed_total.labels(engine=engine)
-    return metric._value.get()  # noqa: SLF001 — internal prometheus API
+    return metric._value.get()
 
 
 class TestIsEnabledFailOpenFix:

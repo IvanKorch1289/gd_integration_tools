@@ -41,7 +41,7 @@ def register_default_event_schemas(registry: ServiceSchemaRegistry) -> int:
     for subject, model_cls in items:
         try:
             schema = model_cls.model_json_schema()
-        except (AttributeError, TypeError, ValueError, ImportError, RuntimeError) as schema_exc:  # noqa: BLE001
+        except (AttributeError, TypeError, ValueError, ImportError, RuntimeError) as schema_exc:
             # cycle-9/D-AUDIT-915: narrow exceptions + observability.
             # AttributeError — model_cls не Pydantic, TypeError — schema
             # generation failed, ValueError — invalid field, ImportError —

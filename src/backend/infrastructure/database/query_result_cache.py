@@ -30,10 +30,10 @@ from src.backend.core.logging import get_logger
 from src.backend.core.utils.json_utils import dumps_bytes, loads
 
 __all__ = (
-    "QueryResultCache",
-    "PickleSerializer",
     "JsonSerializer",
     "OrjsonSerializer",
+    "PickleSerializer",
+    "QueryResultCache",
     "get_default_serializer",
 )
 
@@ -72,7 +72,7 @@ class PickleSerializer:
         """
         # S301: pickle используется для сериализации собственных данных
         # из доверенного CacheBackend; входные данные контролируются приложением.
-        return pickle.loads(data)  # noqa: S301
+        return pickle.loads(data)
 
 
 class JsonSerializer:
@@ -105,7 +105,7 @@ class OrjsonSerializer:
     """Orjson serializer (fast, optional)."""
 
     def __init__(self) -> None:
-        import orjson  # noqa: PLC0415
+        import orjson
 
         self._mod = orjson
 
@@ -230,7 +230,7 @@ class QueryResultCache:
             return None
         try:
             return self._serializer.loads(raw)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("qrc_deserialize_failed key=%s exc=%s", key, exc)
             await self._backend.delete(key)
             return None
@@ -277,7 +277,7 @@ class QueryResultCache:
             return 0
         try:
             keys: list[str] = loads(raw)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("qrc_index_corrupt", idx_key=idx_key, exc=str(exc))
             await self._backend.delete(idx_key)
             return 0
@@ -312,7 +312,7 @@ class QueryResultCache:
             raw = await self._backend.get(idx_key)
             try:
                 keys: list[str] = loads(raw) if raw else []
-            except (ValueError, TypeError) as decode_exc:  # noqa: BLE001,S110
+            except (ValueError, TypeError) as decode_exc:
                 # cycle-9/D-AUDIT-1030: narrow exceptions + observability.
                 # ValueError для malformed JSON, TypeError для wrong
                 # data type, pickle.UnpicklingError для corrupted cache.

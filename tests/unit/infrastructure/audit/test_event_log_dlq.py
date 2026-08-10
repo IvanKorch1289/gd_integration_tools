@@ -8,7 +8,6 @@
 * DLQ writer exception не пробрасывается (defense-in-depth).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

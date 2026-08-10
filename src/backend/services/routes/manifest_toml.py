@@ -22,7 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from src.backend.core.security.capabilities import CapabilityRef
 from src.backend.core.utils.route_timeout import RouteTimeoutSpec
 
-__all__ = ("RouteManifestError", "RouteManifest", "load_route_manifest")
+__all__ = ("RouteManifest", "RouteManifestError", "load_route_manifest")
 
 
 class _RouteTimeoutModel(BaseModel):

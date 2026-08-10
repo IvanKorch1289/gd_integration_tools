@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты для ``src.backend.core.workflow.backend``.
 
 Покрывает Pydantic-модели WorkflowHandle / WorkflowResult и
@@ -101,7 +100,7 @@ class TestWorkflowStatus:
     """WorkflowStatus — alias для str."""
 
     def test_is_str(self) -> None:
-        assert WorkflowStatus == str  # type: ignore[misc]  # noqa: E721
+        assert WorkflowStatus == str  # type: ignore[misc]
 
 
 class _FakeBackend:

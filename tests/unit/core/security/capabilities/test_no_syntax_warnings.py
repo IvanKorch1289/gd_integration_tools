@@ -37,7 +37,7 @@ def test_no_syntax_warnings_in_capabilities() -> None:
             try:
                 # cfile=None → in-memory compile, не пишет .pyc файлы.
                 # Собирает AST и байт-код; SyntaxWarning поднимается на compile step.
-                py_compile.compile(  # noqa: S603
+                py_compile.compile(
                     str(path), doraise=True, cfile=None
                 )
             except py_compile.PyCompileError as exc:

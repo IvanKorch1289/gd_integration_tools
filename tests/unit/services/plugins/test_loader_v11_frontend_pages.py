@@ -9,7 +9,6 @@
 * идемпотентность: повторный mount того же source не дублирует.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

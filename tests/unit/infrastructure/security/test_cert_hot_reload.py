@@ -5,7 +5,6 @@ CertStore автоматически обновляется + уведомляе
 
 Pattern (D237, D238 TDD discipline): RED → fix → GREEN.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 import tempfile

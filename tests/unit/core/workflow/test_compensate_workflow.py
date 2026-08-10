@@ -5,7 +5,6 @@ Temporal: нет native compensation — реализуем через signal + 
 
 Pattern (Ponytail, D173): тонкая обёртка над signal_workflow.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

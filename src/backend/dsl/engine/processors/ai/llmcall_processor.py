@@ -37,7 +37,7 @@ def _try_litellm_cost(model: str, prompt_tokens: int, completion_tokens: int) ->
             completion="x" * completion_tokens,
         )
         return float(cost) if cost is not None else None
-    except (ImportError, AttributeError, ValueError, TypeError, RuntimeError) as cost_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, ValueError, TypeError, RuntimeError) as cost_exc:
         # cycle-9/D-AUDIT-963: narrow exceptions + observability.
         # ImportError — litellm missing, AttributeError — completion_cost
         # API change, ValueError — invalid cost value, TypeError — wrong
@@ -142,7 +142,7 @@ class LLMCallProcessor(BaseProcessor):
 
         if feature_flags is not None and feature_flags.ai_gateway_enforce:
             try:
-                import src.backend.core.ai.gateway  # noqa: F401  (availability check)
+                import src.backend.core.ai.gateway
                 from src.backend.core.ai.gateway_models import AIRequest
                 from src.backend.services.ai.gateway_adapter import get_ai_gateway
             except ImportError as exc:

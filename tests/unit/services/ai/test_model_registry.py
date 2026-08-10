@@ -5,7 +5,6 @@ MlflowModelRegistry: с MagicMock'нутым MlflowClient (без реально
 HuggingFaceModelRegistry: с MagicMock'нутым HfApi (без реального huggingface_hub).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

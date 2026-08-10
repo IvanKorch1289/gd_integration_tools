@@ -67,7 +67,7 @@ class Sprints1821Flags(BaseSettings):
         # Try to read app environment from AppBaseSettings singleton.
         try:
             app_env = AppBaseSettings().environment  # type: ignore[attr-defined]
-        except (ImportError, AttributeError, RuntimeError, ValueError) as app_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError, ValueError) as app_exc:
             # cycle-9/D-AUDIT-983: narrow exceptions + observability.
             # ImportError — AppBaseSettings module missing, AttributeError
             # — environment attribute change, RuntimeError — settings

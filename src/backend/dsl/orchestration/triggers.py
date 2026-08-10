@@ -25,8 +25,8 @@ from typing import Any, Protocol
 from src.backend.core.logging import get_logger
 
 __all__ = (
-    "IntervalTrigger",
     "FileSensorTaskWrapper",
+    "IntervalTrigger",
     "Trigger",
     "TriggerRegistry",
     "WebhookTrigger",
@@ -194,7 +194,7 @@ class IntervalTrigger:
             await get_dsl_service().dispatch(
                 route_id=self.route_id, body=body, headers={"x-trigger": self.name}
             )
-        except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as dispatch_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as dispatch_exc:
             # cycle-9/D-AUDIT-968: narrow exceptions + observability.
             # ImportError — DSL service missing, AttributeError — service
             # API change, RuntimeError — dispatch failure, ConnectionError/
@@ -310,7 +310,7 @@ class CronTrigger:
             await get_dsl_service().dispatch(
                 route_id=self.route_id, body=body, headers={"x-trigger": self.name}
             )
-        except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as dispatch_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as dispatch_exc:
             # cycle-9/D-AUDIT-969: narrow exceptions + observability (mirror
             # D-AUDIT-968 для IntervalTrigger).
             _log.exception(
@@ -366,10 +366,10 @@ class WebhookTrigger:
         app = self._app
         if app is None:
             try:
-                from src.backend.entrypoints.api.app import get_app  # type: ignore[import-not-found]  # noqa: I001
+                from src.backend.entrypoints.api.app import get_app  # type: ignore[import-not-found]
 
                 app = get_app()
-            except (ImportError, AttributeError, RuntimeError) as app_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError) as app_exc:
                 # cycle-9/D-AUDIT-1017: narrow exceptions + observability.
                 # ImportError — get_app missing, AttributeError — API
                 # change, RuntimeError — FastAPI app unavailable.
@@ -390,7 +390,7 @@ class WebhookTrigger:
                     headers={"x-webhook": self.name, "x-webhook-path": self.path},
                 )
                 return {"status": "dispatched", "route_id": self.route_id}
-            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError, TypeError, ValueError) as dispatch_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError, TypeError, ValueError) as dispatch_exc:
                 # cycle-9/D-AUDIT-970: narrow exceptions + observability (mirror
                 # D-AUDIT-968/969 для WebhookTrigger). TypeError/ValueError
                 # включены т.к. body может быть malformed.
@@ -418,7 +418,7 @@ class WebhookTrigger:
                     for r in self._app.router.routes
                     if getattr(r, "name", "") != f"webhook_{self.name}"
                 ]
-            except (AttributeError, TypeError, RuntimeError) as router_exc:  # noqa: BLE001
+            except (AttributeError, TypeError, RuntimeError) as router_exc:
                 # cycle-9/D-AUDIT-971: narrow exceptions + observability.
                 # AttributeError — router API change, TypeError — wrong
                 # routes type, RuntimeError — router mutated concurrently.
@@ -474,7 +474,7 @@ class TriggerRegistry:
         for t in triggers:
             try:
                 await t.start()
-            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as start_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as start_exc:
                 # cycle-9/D-AUDIT-972: narrow exceptions + observability.
                 # ImportError — trigger dep missing, AttributeError — API
                 # change, RuntimeError — start failure, ConnectionError/
@@ -488,7 +488,7 @@ class TriggerRegistry:
         for t in triggers:
             try:
                 await t.stop()
-            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as stop_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as stop_exc:
                 # cycle-9/D-AUDIT-1018: narrow exceptions + observability (mirror
                 # D-AUDIT-972 для start_all).
                 # ImportError — trigger dep missing, AttributeError —

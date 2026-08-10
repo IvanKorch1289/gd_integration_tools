@@ -137,9 +137,9 @@ class ChaosEngineering:
             if probability is not None
             else (cfg.probability if cfg else 0.0)
         )
-        if p <= 0.0 or random.random() > p:  # noqa: S311
+        if p <= 0.0 or random.random() > p:
             return
-        delay = random.uniform(0, max_delay_ms) / 1000.0  # noqa: S311
+        delay = random.uniform(0, max_delay_ms) / 1000.0
         logger.warning("Chaos latency injected: %s delay=%.3fs", name, delay)
         await asyncio.sleep(delay)
 
@@ -165,7 +165,7 @@ class ChaosEngineering:
             if probability is not None
             else (cfg.probability if cfg else 0.0)
         )
-        if p <= 0.0 or random.random() > p:  # noqa: S311
+        if p <= 0.0 or random.random() > p:
             return
         error = exc or RuntimeError(f"Chaos error probe: {name}")
         logger.warning("Chaos error injected: %s — %s", name, error)
@@ -213,7 +213,7 @@ class ChaosEngineering:
                         attr_name = attr
                         pool_target = target
                         break
-                    except (AttributeError, TypeError) as attr_probe_exc:  # noqa: BLE001
+                    except (AttributeError, TypeError) as attr_probe_exc:
                         # cycle-9/D-AUDIT-917: narrow exceptions + observability.
                         # AttributeError — descriptor/protocol mismatch,
                         # TypeError — property raised on access. Bare
@@ -308,7 +308,7 @@ def is_chaos_enabled() -> bool:
     """
     try:
         return get_feature_flag_service().is_enabled("chaos_engineering_enabled")
-    except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError) as ff_exc:
         # cycle-9/D-AUDIT-918: narrow exceptions + observability.
         # ImportError — feature_flag service missing, AttributeError —
         # service not initialized, RuntimeError — backend unavailable.

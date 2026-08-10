@@ -38,7 +38,7 @@ from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
-from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (  # noqa: E501
+from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
     FilteredDirectoryScanProcessor,
 )
 

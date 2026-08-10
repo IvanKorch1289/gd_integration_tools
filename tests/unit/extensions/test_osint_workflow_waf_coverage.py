@@ -8,7 +8,6 @@ extensions/ НЕ сканируются check_waf_coverage.py по умолча�
 Фикс: заменено на ``OutboundHttpClient`` с plugin='osint_agent.scrape'.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

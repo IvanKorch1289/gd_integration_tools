@@ -7,7 +7,6 @@ kwarg — это отдельный метод ``workflow.upsert_search_attribut
 The fix splits the call: upsert SA first (defensive skip on empty), then
 ``workflow.continue_as_new(args["input"])`` with only the input payload.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 import sys

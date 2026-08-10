@@ -221,7 +221,7 @@ class CDCClientAdapter(CDCSource):
                 event.source,
                 event.table,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.exception(
                 "CDC DLQ handoff failed for profile=%s source=%s table=%s: %s",
                 self._profile,

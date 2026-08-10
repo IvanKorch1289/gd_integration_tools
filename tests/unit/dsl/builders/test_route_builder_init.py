@@ -102,7 +102,7 @@ def test_fluent_chain_add_processor() -> None:
     from src.backend.dsl.builders.base import RouteBuilder
     from src.backend.dsl.engine.processors import CallableProcessor
 
-    async def my_proc(exchange, context):  # noqa: ARG001
+    async def my_proc(exchange, context):
         return exchange
 
     b = RouteBuilder.from_("test.fluent", source="timer:60s")

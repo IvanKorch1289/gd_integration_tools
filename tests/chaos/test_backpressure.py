@@ -14,7 +14,6 @@
 Marker: ``chaos`` + ``backpressure``. CI: warn-only (continue-on-error).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

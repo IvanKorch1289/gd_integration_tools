@@ -6,7 +6,6 @@
 * Базовые валидации (min_length, gt=0 и пр.).
 * WorkflowDeclaration агрегирует список шагов разных типов.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 

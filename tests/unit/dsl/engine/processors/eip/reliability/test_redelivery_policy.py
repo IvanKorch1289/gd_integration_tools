@@ -15,7 +15,6 @@ ValueError). До фикса ``redelivery_policy.py:145`` использовал
 cycle-1/B-04
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

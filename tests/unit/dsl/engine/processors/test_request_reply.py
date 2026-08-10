@@ -1,6 +1,5 @@
 """Unit-тесты Request-Reply processors."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

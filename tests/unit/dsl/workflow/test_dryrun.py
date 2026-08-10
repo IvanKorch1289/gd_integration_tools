@@ -1,6 +1,5 @@
 """Unit-тесты workflow dryrun — Wave [wave:s5/k3-w10-workflow-dryrun]."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

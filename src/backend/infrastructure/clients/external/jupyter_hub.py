@@ -38,7 +38,7 @@ from src.backend.core.logging import get_logger
 from src.backend.core.net.outbound_http import OutboundHttpClient
 from src.backend.core.net.waf import WafPolicy
 
-__all__ = ("JupyterHubClient", "JupyterHubError", "JupyterHubUser", "JupyterHubServer")
+__all__ = ("JupyterHubClient", "JupyterHubError", "JupyterHubServer", "JupyterHubUser")
 
 _logger = get_logger("infrastructure.jupyter_hub")
 

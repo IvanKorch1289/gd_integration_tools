@@ -238,7 +238,7 @@ class NotifyMixin:
         command: str,
         *,
         username: str | None = None,
-        password_from: str = "none",  # noqa: S107  # config field name, not a password
+        password_from: str = "none",  # config field name, not a password
         key_file: str | None = None,
         timeout: float = 30.0,
         result_property: str = "ssh_result",

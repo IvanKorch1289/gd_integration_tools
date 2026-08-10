@@ -148,7 +148,7 @@ def _scrub_with_presidio(event: dict[str, Any]) -> None:
         if isinstance(message, str) and len(message) >= 3:
             try:
                 event["message"] = sanitizer.sanitize(message)
-            except (AttributeError, TypeError, ValueError, RuntimeError) as sanitize_exc:  # noqa: BLE001
+            except (AttributeError, TypeError, ValueError, RuntimeError) as sanitize_exc:
                 # cycle-9/D-AUDIT-919: narrow exceptions + observability.
                 # AttributeError — sanitizer API change, TypeError — invalid
                 # message type, ValueError — sanitize failure, RuntimeError —

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Wave 1.5: BaseExternalAPIClient → OutboundHttpClient через feature-flag."""
 
 from __future__ import annotations

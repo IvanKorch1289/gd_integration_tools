@@ -21,7 +21,7 @@
 * Audit-event ``persisted`` флаг в ``ai.pii.tokenize.mask`` details.
 """
 
-# ruff: noqa: S101  # assert — стандартная идиома pytest
+# assert — стандартная идиома pytest
 
 from __future__ import annotations
 
@@ -151,7 +151,7 @@ async def test_mask_reversible_persists_token_map_to_redis_with_tenant_key(
     """mask_reversible с tenant_id+correlation_id → store(pii:token:tenant:corr)."""
     text = "Иванов И.И., ИНН 7707083893, тел. +7-999-123-45-67."
 
-    masked, token_map = await tokenizer.mask_reversible(
+    _masked, token_map = await tokenizer.mask_reversible(
         text,
         policy_banking,
         tenant_id="credit_premium",
@@ -206,7 +206,7 @@ async def test_mask_reversible_without_tenant_id_keeps_token_map_in_memory(
     """Без tenant_id/correlation_id — TokenMap НЕ персистится (no Redis write)."""
     text = "Иванов И.И."
 
-    masked, token_map = await tokenizer.mask_reversible(text, policy_banking)
+    _masked, token_map = await tokenizer.mask_reversible(text, policy_banking)
 
     assert token_map.tokens
     # В Redis ничего не должно быть:
@@ -496,7 +496,7 @@ async def test_mask_reversible_without_capability_gate_runs_without_check(
 ) -> None:
     """capability_gate=None + require_capability=True → no-op (backward-compat)."""
     # tokenizer уже создан без capability_gate (фикстура tokenizer).
-    masked, token_map = await tokenizer.mask_reversible(
+    _masked, token_map = await tokenizer.mask_reversible(
         "Иванов И.И.",
         policy_banking,
         tenant_id="t1",

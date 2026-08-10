@@ -4,7 +4,6 @@ Self-contained — does NOT import modules with chain deps.
 Tests the LOGIC of each fix.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

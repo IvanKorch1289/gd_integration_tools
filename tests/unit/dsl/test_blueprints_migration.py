@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты миграции DSL blueprints в пакет ``src.backend.dsl.blueprints``.
 
 Sprint 7 / K3 (``[wave:s7/k3-dsl-blueprints-migrate]``):

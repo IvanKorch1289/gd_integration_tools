@@ -103,7 +103,7 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
     # Accept уже вызван снаружи? Не вызываем здесь — caller решает accept/reject.
     try:
         subprotocol = websocket.headers.get("sec-websocket-protocol")
-    except (AttributeError, TypeError, ValueError) as ws_exc:  # noqa: BLE001
+    except (AttributeError, TypeError, ValueError) as ws_exc:
         # cycle-9/D-AUDIT-993: narrow exceptions + observability.
         # AttributeError — websocket missing headers, TypeError — wrong
         # header type, ValueError — invalid header value.
@@ -115,7 +115,7 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
         subprotocol = None
     try:
         cookies = dict(websocket.cookies) if websocket.cookies else {}
-    except (AttributeError, TypeError, ValueError) as cookie_exc:  # noqa: BLE001
+    except (AttributeError, TypeError, ValueError) as cookie_exc:
         # cycle-9/D-AUDIT-993: см. выше — тот же narrow для cookies.
         import logging
         logging.getLogger(__name__).debug(
@@ -125,7 +125,7 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
         cookies = None
     try:
         query_token = websocket.query_params.get("token")
-    except (AttributeError, TypeError, ValueError) as qp_exc:  # noqa: BLE001
+    except (AttributeError, TypeError, ValueError) as qp_exc:
         # cycle-9/D-AUDIT-993: см. выше — тот же narrow для query_params.
         import logging
         logging.getLogger(__name__).debug(

@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests для src.frontend.streamlit_app.api_clients.cached (S171 W2/M3).
 
 Тестируем:

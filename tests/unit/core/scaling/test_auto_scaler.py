@@ -1,5 +1,4 @@
 """Тесты AutoScaler + BulkheadScaler + LocalProcessScaler (Sprint 4 Wave D)."""
-# ruff: noqa: S101, SLF001
 
 from __future__ import annotations
 

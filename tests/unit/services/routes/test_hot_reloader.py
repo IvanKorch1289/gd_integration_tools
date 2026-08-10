@@ -28,7 +28,7 @@ class _FakeLoader:
     async def unload_all(self) -> None:
         self.full_reloads += 1
 
-    async def discover_and_load(self) -> tuple:  # noqa: ANN401
+    async def discover_and_load(self) -> tuple:
         return ()
 
 

@@ -71,7 +71,7 @@ class TestRecordTrace:
         trace = StepTrace(processor_name="p1")
         record_trace(exchange, trace)
         exchange.set_property.assert_called_once()
-        name, args, kwargs = exchange.set_property.mock_calls[0]
+        _name, args, _kwargs = exchange.set_property.mock_calls[0]
         assert args[0] == "dsl_step_traces"
         assert isinstance(args[1], list)
         assert args[1][0] is trace

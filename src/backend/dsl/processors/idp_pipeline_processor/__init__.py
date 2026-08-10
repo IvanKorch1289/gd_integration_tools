@@ -65,20 +65,20 @@ from src.backend.dsl.processors.idp_pipeline_processor.state import (
 )
 
 __all__ = (
+    "DEFAULT_EXTRACTORS",
     "IDPPipelineProcessor",
     "IDPResult",
     "_FieldPattern",
-    "_invoice_extractors",
+    "_coerce_to_text",
     "_contract_extractors",
-    "_receipt_extractors",
     "_default_extractors_for",
-    "DEFAULT_EXTRACTORS",
-    "classify_document",
-    "extract_fields",
+    "_invoice_extractors",
+    "_receipt_extractors",
     "_rule_required_present",
     "_rule_total_positive",
+    "classify_document",
+    "extract_fields",
     "validate_result",
-    "_coerce_to_text",
 )
 
 

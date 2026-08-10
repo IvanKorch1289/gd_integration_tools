@@ -24,7 +24,7 @@ from src.backend.infrastructure.cache.tenant_wrapper import (
     TenantCacheBackend,
 )
 from src.backend.infrastructure.cache.tiered import (
-    TieredCacheBackend,  # noqa: F401  # re-exported
+    TieredCacheBackend,  # re-exported
 )
 from src.backend.infrastructure.cache.validator import (
     CacheConfigEntry,

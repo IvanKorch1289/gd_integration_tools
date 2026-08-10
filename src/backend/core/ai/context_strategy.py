@@ -132,7 +132,7 @@ class RollingWindowStrategy(ContextStrategy):
         budget: TokenBudget,
         *,
         count_tokens: Any = None,
-        summarizer: Any = None,  # noqa: ARG002 — unused, для единого контракта
+        summarizer: Any = None,
     ) -> list[ContextMessage]:
         """Применить стратегию усечения контекста к ``messages``.
 

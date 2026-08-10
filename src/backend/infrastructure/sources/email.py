@@ -232,7 +232,7 @@ class EmailSource:
     async def _run(self, on_event: EventCallback) -> None:
         """Главный цикл: IDLE или polling."""
         try:
-            from aioimaplib import IMAP4, IMAP4_SSL  # noqa: F401
+            from aioimaplib import IMAP4, IMAP4_SSL
         except ImportError:
             logger.warning(
                 "EmailSource(%s): aioimaplib не установлен — источник отключён",

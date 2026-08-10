@@ -9,7 +9,6 @@
 не сохраняются — by design (см. ``docs/reference/dsl/to_spec_audit.md``).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

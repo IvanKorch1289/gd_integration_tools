@@ -4,7 +4,6 @@ Self-contained — uses inline TOML strings + tmp_path for file tests.
 Targets: src/backend/services/plugins/manifest_toml.py
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

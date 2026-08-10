@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import pytest
 
-# ruff: noqa: S101
 
 
 def test_yandexgpt_instantiation_with_defaults() -> None:

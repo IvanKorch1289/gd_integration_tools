@@ -3,7 +3,6 @@
 Pattern (D288, Ponytail): AST-based regex validator.
 Validates src/backend/ + extensions/ paths cited in docs/.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 from pathlib import Path

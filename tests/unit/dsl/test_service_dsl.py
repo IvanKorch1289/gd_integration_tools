@@ -1,6 +1,5 @@
 """Unit tests for ServiceDSLRegistry and decorators."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

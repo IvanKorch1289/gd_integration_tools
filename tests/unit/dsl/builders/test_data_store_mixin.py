@@ -16,7 +16,6 @@
     * get-or-create semantics.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -136,7 +135,7 @@ class TestThreadSafety:
                     store.set(key, i)
                     assert store.get(key) == i
                     assert store.has(key)
-            except BaseException as e:  # noqa: BLE001
+            except BaseException as e:
                 errors.append(e)
 
         threads = [threading.Thread(target=worker, args=(i,)) for i in range(n_threads)]

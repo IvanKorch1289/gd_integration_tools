@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """S106 W4 — tests для ``RouteBuilder.ai_tool_dispatch()`` + ``AIToolDispatchProcessor``.
 
 Покрытие:

@@ -70,7 +70,7 @@ def test_run_granian_configures_granian_correctly() -> None:
                 _run_granian()
 
                 mock_instance.serve.assert_called_once()
-                init_args, init_kwargs = mock_init.call_args
+                _init_args, init_kwargs = mock_init.call_args
 
                 assert init_kwargs["target"] == "src.backend.main:app"
                 assert init_kwargs["address"] == "127.0.0.1"
@@ -104,7 +104,7 @@ def test_run_granian_st_mode() -> None:
 
                 _run_granian()
 
-                init_args, init_kwargs = mock_init.call_args
+                _init_args, init_kwargs = mock_init.call_args
                 assert init_kwargs["runtime_mode"] == RuntimeModes.st
                 assert init_kwargs["http"] == HTTPModes.http2
                 assert init_kwargs["log_level"] == LogLevels.debug
@@ -130,7 +130,7 @@ def test_run_granian_blocking_threads_optional() -> None:
 
                 _run_granian()
 
-                init_args, init_kwargs = mock_init.call_args
+                _init_args, init_kwargs = mock_init.call_args
                 assert "blocking_threads" not in init_kwargs
 
 
@@ -154,5 +154,5 @@ def test_run_granian_blocking_threads_when_set() -> None:
 
                 _run_granian()
 
-                init_args, init_kwargs = mock_init.call_args
+                _init_args, init_kwargs = mock_init.call_args
                 assert init_kwargs["blocking_threads"] == 16

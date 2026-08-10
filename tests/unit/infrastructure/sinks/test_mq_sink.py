@@ -1,6 +1,5 @@
 """Unit-tests for MqSink."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

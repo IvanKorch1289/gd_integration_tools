@@ -7,7 +7,6 @@
 требует feature-flag ``workflow_yaml_round_trip=True``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

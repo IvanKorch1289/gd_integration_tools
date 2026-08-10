@@ -37,7 +37,7 @@ def test_adapter_available_is_false_without_presidio() -> None:
     adapter = PresidioSanitizerAdapter()
     # Если presidio установлен в окружении — пропускаем; иначе available=False.
     try:
-        import presidio_analyzer  # noqa: F401
+        import presidio_analyzer
     except ImportError:
         assert adapter.available is False
 
@@ -86,7 +86,7 @@ async def test_async_sanitize_raises_when_presidio_unavailable() -> None:
     from src.backend.services.ai.pii.presidio_analyzer import PresidioSanitizerAdapter
 
     try:
-        import presidio_analyzer  # noqa: F401
+        import presidio_analyzer
     except ImportError:
         adapter = PresidioSanitizerAdapter()
         with pytest.raises(RuntimeError, match="Presidio"):

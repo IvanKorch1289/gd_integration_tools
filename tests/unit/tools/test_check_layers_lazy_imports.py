@@ -19,7 +19,7 @@ import pytest
 TOOLS_DIR = Path(__file__).resolve().parents[3] / "tools"
 sys.path.insert(0, str(TOOLS_DIR))
 
-import check_layers  # noqa: E402  (после sys.path insert)
+import check_layers
 
 
 def test_lazy_import_is_now_detected() -> None:

@@ -10,7 +10,6 @@
 интеграционный тест с фейковым IMAP-сервером (отдельно, Wave R3).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

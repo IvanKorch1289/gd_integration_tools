@@ -10,7 +10,6 @@
       пропускает opa (reason-chain ordering verified).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

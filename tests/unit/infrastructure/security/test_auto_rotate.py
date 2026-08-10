@@ -3,7 +3,6 @@
 При days_remaining <= 0 (cert expired) И auto_rotate=True —
 вызвать set() с renewal callback. По умолчанию False (D260 Ponytail YAGNI).
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 from datetime import UTC

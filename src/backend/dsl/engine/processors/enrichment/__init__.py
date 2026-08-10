@@ -32,12 +32,12 @@ from src.backend.dsl.engine.processors.enrichment.webhook import (
 )
 
 __all__ = (
+    "CompressProcessor",
+    "DeadlineProcessor",
+    "DecompressProcessor",
     "GeoIpProcessor",
     "JwtSignProcessor",
     "JwtVerifyProcessor",
-    "CompressProcessor",
-    "DecompressProcessor",
     "WebhookSignProcessor",
     "WebhookSignVerifyProcessor",
-    "DeadlineProcessor",
 )

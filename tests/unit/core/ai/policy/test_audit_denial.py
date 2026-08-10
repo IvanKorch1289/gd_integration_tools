@@ -5,7 +5,6 @@ audit log (D269: security audit trail).
 
 Pattern (D269, Ponytail): thin wrapper, audit event на DENY.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

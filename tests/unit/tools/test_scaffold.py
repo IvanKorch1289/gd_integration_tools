@@ -7,7 +7,6 @@ Scaffold СОЗДАЁТ файлы в ``src/dsl/...`` (без backend), но р�
 
 M14.3: fix path bug.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 import subprocess

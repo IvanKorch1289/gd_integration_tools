@@ -6,7 +6,6 @@
 ``scan_iter`` для ``delete_pattern``).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

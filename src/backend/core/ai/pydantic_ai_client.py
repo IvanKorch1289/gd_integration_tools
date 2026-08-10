@@ -239,7 +239,7 @@ class PydanticAIClient:
                             "для вызовов из AIGateway-pipeline",
                         },
                     )
-                except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001
+                except (ImportError, AttributeError, RuntimeError) as audit_exc:
                     # cycle-9/D-AUDIT-1035: narrow exceptions + observability.
                     # ImportError — audit facade missing, AttributeError
                     # — API change, RuntimeError — backend unavailable.
@@ -380,7 +380,7 @@ class PydanticAIClient:
             counter = getattr(self._metrics_registry, name, None)
             if counter is not None and hasattr(counter, "labels"):
                 counter.labels(**labels).inc()
-        except (AttributeError, TypeError, ValueError) as counter_exc:  # noqa: BLE001
+        except (AttributeError, TypeError, ValueError) as counter_exc:
             # cycle-9/D-AUDIT-986: narrow exceptions + observability.
             # AttributeError — counter API change, TypeError — wrong arg
             # type, ValueError — invalid label value.
@@ -398,7 +398,7 @@ class PydanticAIClient:
             histogram = getattr(self._metrics_registry, name, None)
             if histogram is not None and hasattr(histogram, "labels"):
                 histogram.labels(**labels).observe(value)
-        except (AttributeError, TypeError, ValueError) as hist_exc:  # noqa: BLE001
+        except (AttributeError, TypeError, ValueError) as hist_exc:
             # cycle-9/D-AUDIT-986: см. выше — тот же narrow для histogram.
             import logging
             logging.getLogger(__name__).debug(

@@ -64,9 +64,9 @@ SpecLoader = Callable[[str], WorkflowSpec]
 
 __all__ = (
     "DSLStepExecutor",
-    "WorkflowStep",
-    "WorkflowSpec",
     "DurableWorkflowProcessor",
+    "WorkflowSpec",
+    "WorkflowStep",
 )
 
 

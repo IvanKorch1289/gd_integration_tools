@@ -11,7 +11,6 @@
     * Per-jti revoke / is_revoked продолжают работать после S18 W4 расширения.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

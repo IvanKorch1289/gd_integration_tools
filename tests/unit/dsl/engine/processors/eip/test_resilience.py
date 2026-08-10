@@ -4,7 +4,6 @@ CircuitBreaker, Timeout.
 Паттерн: async tests, _ex fixture, моки для redis / breaker registry.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

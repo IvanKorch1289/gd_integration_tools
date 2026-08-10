@@ -14,7 +14,7 @@ Layer policy: entrypoints -> services (allowed per V22).
 
 from __future__ import annotations
 
-from src.backend.infrastructure.security.signatures import (  # noqa: E402,F401
+from src.backend.infrastructure.security.signatures import (
     DEFAULT_TIMESTAMP_WINDOW,
     verify_signature,
 )

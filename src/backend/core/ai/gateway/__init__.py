@@ -22,14 +22,14 @@ Migration roadmap (post-S175 #8):
 from __future__ import annotations
 
 # AIGateway class — перенесён в subpackage (S175 #8 split completion).
-from src.backend.core.ai.gateway.gateway import AIGateway  # noqa: F401
+from src.backend.core.ai.gateway.gateway import AIGateway
 
 # AIRequest / AIResponse — external (in gateway_models.py).
-from src.backend.core.ai.gateway_models import AIRequest, AIResponse  # noqa: F401
+from src.backend.core.ai.gateway_models import AIRequest, AIResponse
 
 # Backward-compat re-export из orchestrator subpackage
-from src.backend.core.ai.gateway_orchestrator_mixin import (  # noqa: F401
+from src.backend.core.ai.gateway_orchestrator_mixin import (
     EnforcedInvokeMixin,
 )
 
-__all__ = ("EnforcedInvokeMixin", "AIGateway", "AIRequest", "AIResponse")
+__all__ = ("AIGateway", "AIRequest", "AIResponse", "EnforcedInvokeMixin")

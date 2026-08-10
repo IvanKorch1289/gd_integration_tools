@@ -290,7 +290,7 @@ class TestS3Sensor:
 
     def test_construction_with_aioboto3(self) -> None:
         try:
-            import aioboto3  # noqa: F401
+            import aioboto3
         except ImportError:
             pytest.skip("aioboto3 not installed in this env")
         s = S3Sensor(bucket="my-bucket", key="path/to/file.json", region="eu-west-1")
@@ -301,7 +301,7 @@ class TestS3Sensor:
     @pytest.mark.asyncio
     async def test_match_when_object_exists_v2(self) -> None:
         try:
-            import aioboto3  # noqa: F401
+            import aioboto3
         except ImportError:
             pytest.skip("aioboto3 not installed in this env")
         sensor = S3Sensor(bucket="b", key="k", poll_interval_s=0.5)
@@ -336,7 +336,7 @@ class TestS3Sensor:
     @pytest.mark.asyncio
     async def test_404_timeout_v2(self) -> None:
         try:
-            import aioboto3  # noqa: F401
+            import aioboto3
         except ImportError:
             pytest.skip("aioboto3 not installed in this env")
         sensor = S3Sensor(bucket="b", key="missing", poll_interval_s=0.5)

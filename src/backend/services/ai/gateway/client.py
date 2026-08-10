@@ -96,7 +96,7 @@ class LiteLLMGateway:
                     ):
                         return f"{rec.tags.get('provider', 'openai')}/{rec.name}"
             return self._default_model
-        except (AttributeError, KeyError, TypeError) as model_resolve_exc:  # noqa: BLE001
+        except (AttributeError, KeyError, TypeError) as model_resolve_exc:
             # D-A1-04 fix (cycle 41): narrow exceptions + observability.
             # Bare `except Exception` маскировал malformed model registry
             # (corrupted metadata, missing tags). Fallback: default model.
@@ -127,7 +127,7 @@ class LiteLLMGateway:
         """Wave D.5: LangFuse как primary cost-tracker если включён."""
         try:
             from src.backend.core.config.ai_stack import langfuse_settings
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:
             return self._cost_callback
         if not langfuse_settings.enabled:
             return self._cost_callback
@@ -137,7 +137,7 @@ class LiteLLMGateway:
             )
 
             return get_langfuse_callback()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("LangFuse callback selection failed: %s", exc)
             return self._cost_callback
 
@@ -248,7 +248,7 @@ class LiteLLMGateway:
                     completion_tokens=completion_tokens,
                 )
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("acost_estimate failed: %s", exc)
             return 0.0
 

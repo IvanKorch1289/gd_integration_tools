@@ -39,13 +39,13 @@ from src.backend.infrastructure.security.cert_store.store import (
 )
 
 __all__ = (
-    "CertEntry",
     "CertBackend",
+    "CertEntry",
+    "CertStore",
     "MemoryCertBackend",
+    "MongoCertBackend",
     "PostgresCertBackend",
     "VaultCertBackend",
-    "MongoCertBackend",
-    "CertStore",
     "_fingerprint",
     "create_cert_store",
 )
@@ -60,6 +60,6 @@ def create_cert_store() -> CertStore:
 
 
 # S171 M16: file watcher для cert hot-reload (D245)
-from src.backend.infrastructure.security.cert_store.hot_reload import (  # noqa: F401 — re-exported for public API
+from src.backend.infrastructure.security.cert_store.hot_reload import (
     CertFileWatcher,
 )

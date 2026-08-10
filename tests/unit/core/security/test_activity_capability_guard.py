@@ -1,5 +1,4 @@
 """Тесты capability guard для Temporal activities (Sprint 4 Wave E)."""
-# ruff: noqa: S101
 
 from __future__ import annotations
 

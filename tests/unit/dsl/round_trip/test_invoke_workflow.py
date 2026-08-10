@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 4 К3-B §6 — Round-trip тесты ``.invoke_workflow()``."""
 
 from __future__ import annotations

@@ -18,7 +18,7 @@ from typing import Any
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("IPRestrictionStore", "IPRestrictionRule", "get_ip_restriction_store")
+__all__ = ("IPRestrictionRule", "IPRestrictionStore", "get_ip_restriction_store")
 
 logger = get_logger("core.security.ip_restriction")
 

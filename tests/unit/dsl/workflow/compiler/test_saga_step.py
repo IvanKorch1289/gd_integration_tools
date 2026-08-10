@@ -12,10 +12,9 @@
 чтобы не запускать реальный workflow runtime.
 """
 
-# ruff: noqa: S101
 from __future__ import annotations
 
-import pytest  # noqa: S101
+import pytest
 
 pytest.importorskip(
     "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"

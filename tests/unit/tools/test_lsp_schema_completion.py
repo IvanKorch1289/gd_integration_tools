@@ -7,7 +7,6 @@ LSP provider для автодополнения DSL. Каждый step имее
 
 M14.3 audit: работает, 23 step + 12 route completions.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 

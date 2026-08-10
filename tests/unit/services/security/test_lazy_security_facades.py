@@ -7,7 +7,6 @@ that unknown names still raise ``AttributeError``.
 ponytail: self-contained, no Vault / Redis / DB.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

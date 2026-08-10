@@ -8,7 +8,6 @@ Pattern (D275, Ponytail): thin wrapper.
 - Sliding window: интервалы с overlap
 - Session window: gap-based
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 from datetime import UTC, datetime

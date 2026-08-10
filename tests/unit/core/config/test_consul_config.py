@@ -4,7 +4,6 @@ Mock-уровень: consul.Consul полностью мокируется,
 чтобы не требовать running Consul в unit-тестах.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

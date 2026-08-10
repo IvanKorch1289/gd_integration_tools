@@ -1,6 +1,5 @@
 """Unit tests for ExceptionHandlerMiddleware (cycle 51 pure ASGI)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -1,6 +1,5 @@
 """Unit-тесты batch processors с моком ExternalDatabaseRegistry."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

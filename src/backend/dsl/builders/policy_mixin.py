@@ -223,7 +223,7 @@ class PolicyChain:
                 )
                 self._builder._processors.append(marker)  # type: ignore[attr-defined]
                 return self._builder
-        except (ImportError, AttributeError, RuntimeError, TypeError) as marker_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError, TypeError) as marker_exc:
             # cycle-9/D-AUDIT-1724: narrow exceptions + observability.
             # ImportError — PolicyMarkerProcessor missing, AttributeError
             # — API change, RuntimeError — DI unavailable, TypeError —
@@ -265,7 +265,7 @@ class PolicyMarkerProcessor:
 
             if not feature_flags.policy_chainable_enabled:
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1725: narrow exceptions + observability (mirror
             # D-AUDIT-1724 для marker path).
             import logging

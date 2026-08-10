@@ -14,11 +14,11 @@ Layer policy: entrypoints -> services (allowed per V22).
 
 from __future__ import annotations
 
-from src.backend.infrastructure.scheduler.dlq import (  # noqa: E402,F401
+from src.backend.infrastructure.scheduler.dlq import (
     SchedulerDLQStore,
     get_scheduler_dlq_store,
 )
-from src.backend.infrastructure.scheduler.scheduler_manager import (  # noqa: E402,F401
+from src.backend.infrastructure.scheduler.scheduler_manager import (
     get_scheduler_manager,
 )
 

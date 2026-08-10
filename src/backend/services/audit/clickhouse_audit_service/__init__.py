@@ -32,6 +32,6 @@ __all__ = (
     "_make_default_timestamp",
     "_service_instance",
     "_service_lock",
-    "make_audit_event",
     "get_audit_service",
+    "make_audit_event",
 )

@@ -23,7 +23,7 @@ from functools import lru_cache
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("UnifiedRateLimiter", "get_unified_rate_limiter", "RateLimitResult")
+__all__ = ("RateLimitResult", "UnifiedRateLimiter", "get_unified_rate_limiter")
 
 _logger = get_logger("core.resilience.unified_rate_limiter")
 
@@ -115,7 +115,7 @@ class UnifiedRateLimiter:
 
             get_redis_rate_limiter_class()
             backend = "redis"
-        except (ImportError, AttributeError, RuntimeError) as backend_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as backend_exc:
             # cycle-9/D-AUDIT-961: narrow exceptions + observability.
             # ImportError — redis class missing, AttributeError — class
             # API change, RuntimeError — class unavailable.

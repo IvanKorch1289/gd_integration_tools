@@ -132,7 +132,7 @@ class SMSAdapter:
             # Best-effort: парсим JSON-ответ, проверяем status/success поле.
             try:
                 data = response.json()
-            except (ValueError, TypeError) as json_exc:  # noqa: BLE001
+            except (ValueError, TypeError) as json_exc:
                 # cycle-9/D-AUDIT-928: narrow exceptions + observability.
                 # ValueError/json.JSONDecodeError для malformed JSON.
                 # Bare `except Exception` маскировал unrelated runtime

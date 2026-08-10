@@ -88,11 +88,11 @@ def _stealth_headers(referer: str | None = None) -> dict[str, str]:
     import random
 
     headers = {
-        "User-Agent": random.choice(  # noqa: S311  # non-cryptographic use
+        "User-Agent": random.choice(  # non-cryptographic use
             _USER_AGENTS
         ),  # stealth header rotation, не криптография
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": random.choice(  # noqa: S311  # non-cryptographic use
+        "Accept-Language": random.choice(  # non-cryptographic use
             _ACCEPT_LANGUAGES
         ),  # stealth header rotation, не криптография
         "Accept-Encoding": "gzip, deflate, br",
@@ -110,7 +110,7 @@ async def _random_delay(min_s: float = 1.0, max_s: float = 3.0) -> None:
     import random
 
     await asyncio.sleep(
-        min_s + random.random() * (max_s - min_s)  # noqa: S311  # non-cryptographic use
+        min_s + random.random() * (max_s - min_s)  # non-cryptographic use
     )  # rate-limit jitter, не криптография
 
 

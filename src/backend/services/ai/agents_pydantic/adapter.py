@@ -13,7 +13,7 @@ from typing import Any
 
 __all__ = ("LiteLLMModel",)
 
-from contextlib import asynccontextmanager  # noqa: E402
+from contextlib import asynccontextmanager
 
 try:
     from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart

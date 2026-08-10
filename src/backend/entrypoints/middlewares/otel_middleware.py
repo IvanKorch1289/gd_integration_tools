@@ -263,7 +263,7 @@ class OtelMiddleware:
                 ctx = current_tenant()
                 if ctx is not None:
                     tenant_id = getattr(ctx, "tenant_id", "") or ""
-            except (ImportError, AttributeError, RuntimeError) as ten_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError) as ten_exc:
                 # cycle-9/D-AUDIT-1003: narrow exceptions + observability.
                 # ImportError — tenancy missing, AttributeError — API
                 # change, RuntimeError — context unavailable.

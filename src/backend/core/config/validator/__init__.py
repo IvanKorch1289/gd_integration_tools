@@ -36,12 +36,12 @@ from src.backend.core.config.validator.security_checks import (
 )
 
 __all__ = (
+    "PRODUCTION_ENV",
     "APIDocsChecksMixin",
     "ConfigSeverity",
     "ConfigValidator",
     "ConfigViolation",
     "InfrastructureChecksMixin",
-    "PRODUCTION_ENV",
     "ProductionConfigError",
     "SecurityChecksMixin",
     "validate_startup_config",

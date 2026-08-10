@@ -15,7 +15,6 @@
     * Тестируются: to_spec roundtrip, basic process, error path.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

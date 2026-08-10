@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты admin-endpoint /tech/degradation/snapshot (Wave A.5).
 
 Покрывает:

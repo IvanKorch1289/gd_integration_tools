@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты RagIngestProcessor (S11 K3 W2 — Phase B.1)."""
 
 from __future__ import annotations

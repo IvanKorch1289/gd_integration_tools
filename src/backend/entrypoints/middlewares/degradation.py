@@ -200,7 +200,7 @@ class DegradationMiddleware:
             )
 
             statuses = get_resilience_coordinator_provider().status()
-        except (ImportError, AttributeError, RuntimeError) as di_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as di_exc:
             # cycle-9/D-AUDIT-995: narrow exceptions + observability.
             # ImportError — providers missing, AttributeError — provider
             # API change, RuntimeError — coordinator unavailable.

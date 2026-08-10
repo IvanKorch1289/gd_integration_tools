@@ -457,5 +457,5 @@ class DurableWorkflowRunner:
         raw = min(max_delay, base * (mult ** max(0, attempt)))
         jitter = self._config.retry_jitter
         return raw * (
-            1 + random.uniform(-jitter, jitter)  # noqa: S311  # non-cryptographic use
+            1 + random.uniform(-jitter, jitter)  # non-cryptographic use
         )  # retry-jitter, не криптография

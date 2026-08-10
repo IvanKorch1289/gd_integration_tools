@@ -105,7 +105,7 @@ class JsonPathProcessor(BaseProcessor):
             if not feature_flags.proc_jsonpath:
                 exchange.set_property("jsonpath_status", "skipped")
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1714: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1713).
             import logging

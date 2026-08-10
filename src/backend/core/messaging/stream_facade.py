@@ -8,13 +8,13 @@ Entry points must import from this facade, not from infrastructure/* directly.
 
 from __future__ import annotations
 
-# ruff: noqa: F822  # lazy __getattr__ exports verified by runtime test
+# lazy __getattr__ exports verified by runtime test
 from typing import Any
 
 __all__ = (
-    "get_stream_client",
-    "get_event_bus_facade",
     "EventBusFacade",
+    "get_event_bus_facade",
+    "get_stream_client",
 )
 
 

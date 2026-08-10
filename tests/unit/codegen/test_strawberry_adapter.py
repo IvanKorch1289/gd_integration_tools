@@ -8,7 +8,6 @@
 * fallback при некорректной модели не валит общий процесс.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -27,7 +26,7 @@ class _SimpleStraw(BaseModel):
 
     id: int
     name: str
-    description: Optional[str] = None  # noqa: UP045
+    description: Optional[str] = None
 
 
 class _NestedItem(BaseModel):
@@ -66,6 +65,6 @@ class TestNested:
         reg = StrawberryTypeRegistry()
         reg.get_or_create(_StrawWithNested)
         # Должны быть зарегистрированы оба type (outer + nested).
-        names = {k.split(".")[-1] for k in reg._cache}  # noqa: SLF001
+        names = {k.split(".")[-1] for k in reg._cache}
         assert "_StrawWithNested" in names
         assert "_NestedItem" in names

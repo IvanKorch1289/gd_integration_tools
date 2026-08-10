@@ -20,7 +20,7 @@ from typing import TypeVar
 
 T = TypeVar("T")
 
-__all__ = ("run_cpu_bound", "default_cpu_pool", "PROCESS_POOL_SIZE")
+__all__ = ("PROCESS_POOL_SIZE", "default_cpu_pool", "run_cpu_bound")
 
 # Default pool size = cpu_count - 1 (reserve 1 for asyncio loop)
 PROCESS_POOL_SIZE: int = max(1, (os.cpu_count() or 2) - 1)

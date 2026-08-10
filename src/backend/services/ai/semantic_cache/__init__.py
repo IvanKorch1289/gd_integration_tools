@@ -23,9 +23,9 @@ from src.backend.services.ai.semantic_cache.semantic_cache import (
 )
 
 __all__ = (
-    "SemanticCache",
-    "L3RetrievalGraphCache",
     "RAG_CACHE_INVALIDATE_CHANNEL",
-    "get_semantic_cache",
+    "L3RetrievalGraphCache",
+    "SemanticCache",
     "get_l3_retrieval_cache",
+    "get_semantic_cache",
 )

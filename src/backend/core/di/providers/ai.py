@@ -232,7 +232,7 @@ def get_skill_registry() -> Any:
         from src.backend.core.di import app_state_singleton
 
         return app_state_singleton("skill_registry", factory=None)()
-    except (ImportError, AttributeError, RuntimeError, KeyError, TypeError) as di_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError, KeyError, TypeError) as di_exc:
         # cycle-9/D-AUDIT-1000: narrow exceptions + observability.
         # ImportError — app_state_singleton missing, AttributeError — API
         # change, RuntimeError — DI unavailable, KeyError — singleton not
@@ -266,7 +266,7 @@ def get_llm_guard_runtime_provider() -> Any:
         from src.backend.core.ai.guardrails import LlamaGuardRuntime
 
         return LlamaGuardRuntime()
-    except Exception as exc:  # noqa: BLE001 — DI provider, contract = None
+    except Exception as exc:
         # `core.ai.guardrails.__init__` импортирует из несуществующего
         # `llamaguard.py` (upstream stale); не наша ответственность.
         import logging

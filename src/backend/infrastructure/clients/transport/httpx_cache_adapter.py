@@ -38,7 +38,7 @@ def is_hishel_available() -> bool:
         ``True`` если ``hishel`` импортируется без ошибок.
     """
     try:
-        import hishel  # noqa: F401
+        import hishel
 
         return True
     except ImportError:

@@ -11,7 +11,6 @@
 
 Redis-клиент полностью замокан через AsyncMock — реальный Redis не нужен.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -57,7 +56,7 @@ class _FakeRedisClient:
         self.lists: dict[str, list[Any]] = {}
         self.ttl: dict[str, int] = {}
 
-    async def execute(self, kind: str, operation):  # noqa: ARG002
+    async def execute(self, kind: str, operation):
         return await operation(_FakeRedisProxy(self))
 
 
@@ -67,7 +66,7 @@ class _FakeRedisProxy:
     def __init__(self, store: _FakeRedisClient) -> None:
         self._s = store
 
-    async def set(  # noqa: A003
+    async def set(
         self,
         key: str,
         value: Any,

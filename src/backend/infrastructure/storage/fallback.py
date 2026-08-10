@@ -268,7 +268,7 @@ class FallbackObjectStorage(ObjectStorage):
             try:
                 async for chunk in stream:
                     buffer.extend(chunk)
-            except (OSError, ConnectionError, RuntimeError) as stream_exc:  # noqa: BLE001
+            except (OSError, ConnectionError, RuntimeError) as stream_exc:
                 # cycle-9/D-AUDIT-934: narrow exceptions + observability.
                 # OSError/ConnectionError для stream, RuntimeError для
                 # backend failure. Bare `except Exception` маскировал

@@ -82,7 +82,7 @@ class PytesseractOCRProcessor:
     async def is_available(self) -> bool:
         """Проверка доступности pytesseract на момент вызова (async)."""
         try:
-            import pytesseract  # noqa: F401
+            import pytesseract
         except ImportError:
             return False
         return True
@@ -161,7 +161,7 @@ def from_environment() -> OCRProcessor:
 
         if not feature_flags.rpa_ocr_enabled:
             return NoOpOCRProcessor()
-    except (ImportError, AttributeError) as feature_exc:  # noqa: PERF203
+    except (ImportError, AttributeError) as feature_exc:
         # D-A1-04 fix (cycle 34): narrow exceptions + debug logging.
         # Bare `except Exception` маскировал ImportError (early-init
         # feature_flags module not ready) и AttributeError (feature_flags

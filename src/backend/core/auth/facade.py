@@ -338,7 +338,7 @@ class AuthFacade:
             roles = extract_admin_roles(auth_ctx)
             if AdminRole.SUPER_ADMIN in roles:
                 return True
-        except (ImportError, AttributeError, TypeError, ValueError) as auth_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, TypeError, ValueError) as auth_exc:
             # cycle-9/D-AUDIT-980: narrow exceptions + observability.
             # ImportError — AdminRole missing, AttributeError — auth API
             # change, TypeError — wrong auth ctx, ValueError — invalid
@@ -475,7 +475,7 @@ class AuthFacade:
             from src.backend.core.config.features import feature_flags
 
             dev_mode = bool(getattr(feature_flags, "saml_sp_initiated_enabled", False))
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-981: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags
@@ -506,7 +506,7 @@ class AuthFacade:
             import xml.etree.ElementTree as ET
 
             xml_bytes = base64.b64decode(assertion_b64)
-            root = ET.fromstring(xml_bytes)  # noqa: S314  # dev-mode path; ElementTree has limited XXE risk (entity expansion DoS)
+            root = ET.fromstring(xml_bytes)  # dev-mode path; ElementTree has limited XXE risk (entity expansion DoS)
             ns = {"saml": "urn:oasis:names:tc:SAML:2.0:assertion"}
             name_id_el = root.find(".//saml:NameID", ns)
             subject_el = root.find(".//saml:Subject", ns)

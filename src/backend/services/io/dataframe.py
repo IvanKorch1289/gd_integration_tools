@@ -25,7 +25,7 @@ except ImportError:
     pl = None  # type: ignore[assignment]
 
 
-__all__ = (  # noqa: F822
+__all__ = (
     "DataFrame",
     "from_records",
     "read_csv",

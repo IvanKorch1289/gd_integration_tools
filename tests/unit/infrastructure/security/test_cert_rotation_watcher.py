@@ -5,7 +5,6 @@ Periodic check + auto-rotation certs via Vault.
 - _check_expiring() — list expiring + rotate
 - record_rotation в Prometheus exporter
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 from datetime import UTC, datetime

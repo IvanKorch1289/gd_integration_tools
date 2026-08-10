@@ -141,10 +141,10 @@ class _RecordingMcp:
     def __init__(self) -> None:
         self.tools: dict[str, Any] = {}
 
-    def tool(  # noqa: ANN201 — signature совпадает с FastMCP.tool
+    def tool(
         self, *, name: str, description: str
     ) -> Any:
-        def decorator(fn: Any) -> Any:  # noqa: ANN401
+        def decorator(fn: Any) -> Any:
             self.tools[name] = fn
             return fn
 

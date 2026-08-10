@@ -52,7 +52,7 @@ def test_build_gold_set_full(pii_audit_module) -> None:
 def test_precision_recall_zero_when_presidio_unavailable(pii_audit_module) -> None:
     """Без Presidio все documents → 0 entities found → precision/recall = 0."""
     try:
-        import presidio_analyzer  # noqa: F401
+        import presidio_analyzer
     except ImportError:
         docs = pii_audit_module._build_gold_set(mode="smoke")
         found = [set() for _ in docs]  # пусто
@@ -66,7 +66,7 @@ def test_cli_exits_with_error_when_threshold_unmet(
 ) -> None:
     """CLI с threshold 0.9 и без Presidio → exit code 1."""
     try:
-        import presidio_analyzer  # noqa: F401
+        import presidio_analyzer
 
         pytest.skip("Presidio установлен — поведение будет другим")
     except ImportError:

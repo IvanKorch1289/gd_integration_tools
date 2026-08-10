@@ -5,7 +5,6 @@
 Паттерн: async tests, _ex fixture, asyncio tests — аналогично test_batch_processor.py.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

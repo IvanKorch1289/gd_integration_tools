@@ -1,5 +1,4 @@
 """TDD: VaultCertBackend AppRole auth (S171 M21, D255)."""
-# ruff: noqa: S101
 from __future__ import annotations
 
 import sys as _sys

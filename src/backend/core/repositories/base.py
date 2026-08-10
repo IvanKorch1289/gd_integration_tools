@@ -21,7 +21,7 @@ from __future__ import annotations
 
 # Re-exports (capability-checked: extensions имеют право на эти классы,
 # но не на private helpers из infrastructure.repositories.base.*).
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
+from src.backend.core.di.providers.infrastructure_locator import (
     get_abstract_repository_class as _get_ar_cls,
 )
 from src.backend.core.di.providers.infrastructure_locator import (

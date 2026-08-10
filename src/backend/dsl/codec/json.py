@@ -24,7 +24,7 @@ from __future__ import annotations
 
 # Re-export everything from the canonical location. This is a back-compat
 # shim — all new code should import from src.backend.core.codec.json directly.
-from src.backend.core.codec.json import (  # noqa: F401
+from src.backend.core.codec.json import (
     TYPE_MARKER,
     VALUE_MARKER,
     canonical_json_bytes,

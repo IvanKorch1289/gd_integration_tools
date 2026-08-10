@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты `TenantNamespacedCache` (R2.4): изоляция между tenants."""
 
 from __future__ import annotations

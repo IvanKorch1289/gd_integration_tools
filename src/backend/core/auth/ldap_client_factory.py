@@ -35,7 +35,7 @@ if TYPE_CHECKING:
         AdDirectoryClientProtocol as AdDirectoryClient,
     )
 
-__all__ = ("get_ad_client", "reset_ad_client", "ad_client_cached")
+__all__ = ("ad_client_cached", "get_ad_client", "reset_ad_client")
 
 _logger = get_logger(__name__)
 

@@ -25,10 +25,10 @@ from src.backend.dsl.registry import processor
 _log = get_logger(__name__)
 
 __all__ = (
-    "RedeliveryPolicyProcessor",
-    "RedeliveryAttempt",
     "HEADER_REDELIVERED",
     "HEADER_REDELIVERY_COUNT",
+    "RedeliveryAttempt",
+    "RedeliveryPolicyProcessor",
 )
 
 
@@ -96,7 +96,7 @@ class RedeliveryPolicyProcessor(BaseProcessor):
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         *,
         max_attempts: int = 3,

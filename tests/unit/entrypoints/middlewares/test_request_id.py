@@ -11,7 +11,6 @@ Cycle 36: middleware переписан с BaseHTTPMiddleware на pure ASGI.
 пойманы.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

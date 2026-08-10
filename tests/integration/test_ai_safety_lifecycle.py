@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Wave 1.6: AI Safety lifecycle (register_ai_safety + start/stop)."""
 
 from __future__ import annotations

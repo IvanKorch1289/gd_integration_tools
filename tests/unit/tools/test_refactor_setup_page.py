@@ -141,7 +141,7 @@ def test_refactor_file_syntax_check_prevents_bad_writes() -> None:
         )
         path = Path(f.name)
     try:
-        changed, summary = refactor_file(path)
+        changed, _summary = refactor_file(path)
         # Should not modify (no page_title)
         assert changed is False
     finally:

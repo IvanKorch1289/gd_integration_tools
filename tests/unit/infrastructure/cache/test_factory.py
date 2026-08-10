@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for cache backend factory (infrastructure/cache/factory.py).
 
 Covers all 4 backend modes (memory/redis/keydb/memcached) + error paths:

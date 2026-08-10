@@ -1,6 +1,5 @@
 """Unit tests for Mobile BFF (S50 W3, v21 §7.2)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

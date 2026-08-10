@@ -151,7 +151,7 @@ class SSESource:
                 # Server closed stream cleanly — reconnect.
             except asyncio.CancelledError:
                 raise
-            except (OSError, ConnectionError, TimeoutError, RuntimeError, ValueError) as sse_exc:  # noqa: BLE001
+            except (OSError, ConnectionError, TimeoutError, RuntimeError, ValueError) as sse_exc:
                 # cycle-9/D-AUDIT-1025: narrow exceptions + observability.
                 # OSError/ConnectionError/TimeoutError — network/SSE transport,
                 # RuntimeError — server error, ValueError — malformed event.

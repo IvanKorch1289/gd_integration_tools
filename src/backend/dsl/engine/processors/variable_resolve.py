@@ -36,7 +36,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _logger = get_logger("dsl.processor.variable_resolve")
 
-__all__ = ("VariableResolveResult", "VariableResolveProcessor")
+__all__ = ("VariableResolveProcessor", "VariableResolveResult")
 
 
 @dataclass

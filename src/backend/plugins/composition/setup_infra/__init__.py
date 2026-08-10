@@ -39,20 +39,20 @@ from src.backend.plugins.composition.setup_infra.workflow_audit import (
 )
 
 __all__ = (
+    "_clickhouse_enabled",
+    "_close_workflow_audit_sink",
     "_get_watcher_manager",
+    "_init_workflow_audit_sink",
+    "_redis_enabled",
+    "_register_default_degradation_features",
     "_register_health_checks",
     "_register_pools_in_unified_manager",
-    "_warmup_connection_pools",
-    "_redis_enabled",
     "_s3_enabled",
-    "_clickhouse_enabled",
-    "_init_workflow_audit_sink",
-    "_close_workflow_audit_sink",
-    "_register_default_degradation_features",
     "_scheduler_heartbeat_loop",  # S71 W3
     "_start_scheduler_with_leader_election",  # S71 W2
     "_stop_scheduler_if_leader",  # S71 W2
+    "_warmup_connection_pools",
+    "ending",
     "perform_infrastructure_operation",
     "starting",
-    "ending",
 )

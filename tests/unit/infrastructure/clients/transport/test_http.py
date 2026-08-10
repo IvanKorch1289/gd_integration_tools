@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke + targeted unit/property tests for HTTP client (infrastructure/clients/transport/http.py).
 
 Top-3 deep coverage (S36 W? — worst-coverage lift):

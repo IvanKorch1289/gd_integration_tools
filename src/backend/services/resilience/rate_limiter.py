@@ -14,7 +14,7 @@ Layer policy: entrypoints -> services (allowed per V22).
 
 from __future__ import annotations
 
-from src.backend.infrastructure.resilience.unified_rate_limiter import (  # noqa: E402,F401
+from src.backend.infrastructure.resilience.unified_rate_limiter import (
     RateLimit,
     RateLimitExceeded,
     get_rate_limiter,

@@ -30,10 +30,10 @@ from src.backend.core.resilience.backpressure.types import (
 )
 
 __all__ = (
-    "ConsumerControlProtocol",
-    "BackpressureState",
-    "StreamingBackpressureController",
-    "AdaptiveStreamReader",
     "AdaptiveBulkhead",
+    "AdaptiveStreamReader",
+    "BackpressureState",
+    "ConsumerControlProtocol",
+    "StreamingBackpressureController",
     "get_streaming_controller",
 )

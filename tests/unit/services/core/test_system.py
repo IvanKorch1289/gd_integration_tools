@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for SystemService (services/core/system.py)."""
 
 from __future__ import annotations

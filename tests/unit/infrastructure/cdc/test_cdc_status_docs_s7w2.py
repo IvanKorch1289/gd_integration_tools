@@ -30,7 +30,7 @@ from src.backend.infrastructure.cdc.debezium_events_backend import (
 from src.backend.infrastructure.cdc.listen_notify_backend import ListenNotifyCDCBackend
 from src.backend.infrastructure.cdc.poll_backend import PollCDCBackend
 
-# ruff: noqa: S101 — pytest asserts required
+
 
 
 # --- Paths ------------------------------------------------------------------

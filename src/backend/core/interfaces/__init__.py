@@ -104,41 +104,41 @@ def __getattr__(name: str) -> Any:
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = (
-    # Health
-    "HealthStatus",
-    "HealthReport",
-    "Healthcheck",
-    # Cache / Storage / Antivirus / Notification (через подмодули)
-    "CacheBackend",
-    "ObjectStorage",
     "AntivirusBackend",
     "AntivirusScanResult",
-    "NotificationAdapter",
-    "NotificationMessage",
+    # Batching
+    "AsyncBatcher",
+    # Lifecycle
+    "AsyncLifecycle",
     # Wave 21.3c fallback contracts
     "AuditBackend",
     "AuditRecord",
-    "DocStoreBackend",
-    "SecretsBackend",
-    "MetricsBackend",
-    # Messaging
-    "MessageBroker",
-    # Lifecycle
-    "AsyncLifecycle",
-    "ManagedResource",
+    # Auth
+    "AuthProvider",
+    # Cache / Storage / Antivirus / Notification (через подмодули)
+    "CacheBackend",
+    "CircuitBreaker",
+    "CircuitBreakerConfig",
+    "CircuitBreakerOpenError",
     # Circuit breaker
     "CircuitState",
-    "CircuitBreakerConfig",
-    "CircuitBreaker",
-    "CircuitBreakerOpenError",
+    "DocStoreBackend",
+    "HealthReport",
+    # Health
+    "HealthStatus",
+    "Healthcheck",
+    "ManagedResource",
+    # Messaging
+    "MessageBroker",
+    "MetricsBackend",
+    "NotificationAdapter",
+    "NotificationMessage",
+    "ObjectStorage",
     # Pool
     "PoolMetrics",
     "PoolMetricsCollector",
+    "SecretsBackend",
     "pool_metrics",
-    # Auth
-    "AuthProvider",
-    # Batching
-    "AsyncBatcher",
 )
 
 

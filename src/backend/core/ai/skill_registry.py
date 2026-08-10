@@ -308,7 +308,7 @@ class SkillRegistry:
                 strict = bool(
                     getattr(feature_flags, "call_function_whitelist_strict", True)
                 )
-            except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError) as ff_exc:
                 # cycle-9/D-AUDIT-988: narrow exceptions + observability.
                 # ImportError — features module missing, AttributeError —
                 # config not initialized, RuntimeError — feature_flags
@@ -471,7 +471,7 @@ class SkillRegistry:
                         with open(schema_path) as f:
                             input_schema = json.load(f)
                         tool_def["inputSchema"] = input_schema
-                except (OSError, ValueError, UnicodeDecodeError, AttributeError) as schema_exc:  # noqa: BLE001
+                except (OSError, ValueError, UnicodeDecodeError, AttributeError) as schema_exc:
                     # cycle-9/D-AUDIT-996: narrow exceptions + observability.
                     # OSError — schema read failure, ValueError/JSONDecodeError
                     # — invalid JSON, UnicodeDecodeError — bad encoding,
@@ -559,7 +559,7 @@ class SkillRegistry:
                         if fields:
                             InputModel = create_model("Input", **fields)
                             tool_kwargs["args_schema"] = InputModel
-                except (TypeError, ValueError, KeyError, AttributeError) as schema_exc:  # noqa: BLE001
+                except (TypeError, ValueError, KeyError, AttributeError) as schema_exc:
                     # cycle-9/D-AUDIT-997: narrow exceptions + observability.
                     # TypeError — wrong prop_type, ValueError — invalid
                     # schema, KeyError — missing required key, AttributeError
@@ -610,7 +610,7 @@ class SkillRegistry:
                         with open(schema_path) as f:
                             input_schema = json.load(f)
                         tool_def["function"]["parameters"] = input_schema
-                except (OSError, ValueError, UnicodeDecodeError, AttributeError) as schema_exc:  # noqa: BLE001
+                except (OSError, ValueError, UnicodeDecodeError, AttributeError) as schema_exc:
                     # cycle-9/D-AUDIT-998: narrow exceptions + observability
                     # (mirror D-AUDIT-996 для openai_tools path).
                     import logging

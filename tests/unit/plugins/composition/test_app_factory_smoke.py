@@ -1,4 +1,3 @@
-# ruff: noqa: S101, SLF001
 """Smoke-тесты S39 W5 — модуль ``src.backend.plugins.composition.app_factory``.
 
 Покрывают:

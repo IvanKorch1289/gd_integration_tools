@@ -52,7 +52,7 @@ import typer
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("app", "NoOpStepExecutor", "main", "build_spec_loader")
+__all__ = ("NoOpStepExecutor", "app", "build_spec_loader", "main")
 
 _logger = get_logger("workflow.worker")
 

@@ -145,7 +145,7 @@ class DbCallProcedureProcessor(BaseProcessor):
             if not feature_flags.db_call_procedure_enabled:
                 exchange.set_property("db_call_procedure_status", "skipped")
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1721: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1720).
             import logging

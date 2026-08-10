@@ -30,21 +30,21 @@ def _reset_meter_provider_state():
     setup_module = importlib.import_module(
         "src.backend.infrastructure.observability.otel.setup"
     )
-    if setup_module._meter_provider_ref is not None:  # noqa: SLF001
+    if setup_module._meter_provider_ref is not None:
         try:
-            setup_module._meter_provider_ref.shutdown(timeout_millis=500)  # noqa: SLF001
-        except Exception:  # noqa: BLE001, S110
+            setup_module._meter_provider_ref.shutdown(timeout_millis=500)
+        except Exception:
             pass  # cleanup в тестовой fixture, исключения проглатываются намеренно
-        setup_module._meter_provider_ref = None  # noqa: SLF001
+        setup_module._meter_provider_ref = None
 
     yield
 
-    if setup_module._meter_provider_ref is not None:  # noqa: SLF001
+    if setup_module._meter_provider_ref is not None:
         try:
-            setup_module._meter_provider_ref.shutdown(timeout_millis=500)  # noqa: SLF001
-        except Exception:  # noqa: BLE001, S110
+            setup_module._meter_provider_ref.shutdown(timeout_millis=500)
+        except Exception:
             pass  # cleanup в тестовой fixture, исключения проглатываются намеренно
-    setup_module._meter_provider_ref = None  # noqa: SLF001
+    setup_module._meter_provider_ref = None
 
 
 def test_setup_otel_metrics_registers_provider() -> None:
@@ -106,7 +106,7 @@ def test_disabled_by_default_module_ref_is_none() -> None:
         "src.backend.infrastructure.observability.otel.setup"
     )
 
-    assert setup_module._meter_provider_ref is None, (  # noqa: SLF001
+    assert setup_module._meter_provider_ref is None, (
         "Без явного вызова setup_otel_metrics module-level _meter_provider_ref "
         "должен быть None (default-OFF инвариант)"
     )

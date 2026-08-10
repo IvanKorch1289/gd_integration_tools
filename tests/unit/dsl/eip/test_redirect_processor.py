@@ -6,7 +6,6 @@
     * Валидация конструктора (mode/status_code/url_source/source_key).
     * to_spec() для round-trip сериализации.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 

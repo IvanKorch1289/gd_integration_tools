@@ -1,6 +1,5 @@
 """W23 — start_all_sources / stop_all_sources + e2e через адаптер."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

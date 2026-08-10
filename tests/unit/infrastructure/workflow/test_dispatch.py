@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "src"))
 
-from src.backend.infrastructure.workflow.executor import (  # noqa: E402
+from src.backend.infrastructure.workflow.executor import (
     _STEP_KIND_DISPATCH,
     DSLStepExecutor,
 )

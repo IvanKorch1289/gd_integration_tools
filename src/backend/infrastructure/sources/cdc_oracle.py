@@ -125,7 +125,7 @@ class OracleCDCSource:
             # (regex ``[A-Za-z_][A-Za-z0-9_]*``); ``watermark`` value is
             # bound via DBAPI param style (``cursor.execute(query, ...)``).
             query = (
-                f"SELECT * FROM {table} "  # noqa: S608
+                f"SELECT * FROM {table} "
                 f"WHERE {self.watermark_column} > :watermark "
                 f"ORDER BY {self.watermark_column} ASC"
             )

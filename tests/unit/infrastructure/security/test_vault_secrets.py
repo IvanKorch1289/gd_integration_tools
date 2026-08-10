@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты :class:`VaultSecretsBackend` (Wave 1.2 / S3).
 
 Используем мок-клиент hvac (`FakeHvacClient`), чтобы не требовать сетевого

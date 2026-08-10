@@ -4,7 +4,6 @@ Self-contained — does NOT import streamlit (heavy dep).
 Tests the manifest content and config function behavior.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

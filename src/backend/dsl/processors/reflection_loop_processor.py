@@ -103,7 +103,7 @@ class ReflectionLoopProcessor(BaseProcessor):
         # 1. Initial generation
         try:
             current_output = await self._generator(prompt)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             _log.error("Generator failed on initial call: %s", exc)
             exchange.fail(f"reflection_loop: generator failed: {exc}")
             return
@@ -114,7 +114,7 @@ class ReflectionLoopProcessor(BaseProcessor):
         for i in range(self._max_refinements + 1):
             try:
                 last_critique, last_score = await self._critic(current_output)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _log.warning(
                     "Critic raised on iteration %d: %s — keeping prior output", i, exc
                 )
@@ -157,7 +157,7 @@ class ReflectionLoopProcessor(BaseProcessor):
             )
             try:
                 current_output = await self._generator(refine_prompt)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 _log.warning("Generator failed on refine %d: %s", i + 1, exc)
                 break  # keep prior output
 

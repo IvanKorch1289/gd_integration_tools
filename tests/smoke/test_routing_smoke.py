@@ -7,7 +7,6 @@
 end-to-end на уровне Python.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -47,7 +46,7 @@ def test_pipeline_compiler_cache_clear() -> None:
 
     compiler.compile(pipeline)
     compiler.clear_cache()
-    cache_info_after = compiler._compile_cached.cache_info()  # noqa: SLF001
+    cache_info_after = compiler._compile_cached.cache_info()
 
     assert cache_info_after.currsize == 0
 

@@ -5,7 +5,6 @@ OutboxBackend.enqueue. ProcessManager — facade над SagaProcessor с
 опциональной persist_state.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

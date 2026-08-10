@@ -249,7 +249,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         if entry.status == "loaded" and entry.instance is not None:
             try:
                 await entry.instance.on_shutdown()
-            except (ImportError, AttributeError, RuntimeError, OSError, TypeError) as shutdown_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError, OSError, TypeError) as shutdown_exc:
                 # cycle-9/D-AUDIT-958: narrow exceptions + observability.
                 # ImportError — plugin dep missing, AttributeError — plugin
                 # API change, RuntimeError — plugin shutdown failure,
@@ -319,7 +319,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
 # which expects a get_plugin_loader() singleton. If app.state.plugin_loader
 # is set, returns it; otherwise raises (caught by try/except in startup,
 # falls back to bootstrap_v11_plugin_loader).
-from src.backend.core.di.app_state import app_state_singleton  # noqa: E402
+from src.backend.core.di.app_state import app_state_singleton
 
 
 def _empty_plugin_loader_factory() -> PluginLoader:

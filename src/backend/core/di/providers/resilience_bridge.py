@@ -16,16 +16,16 @@ from __future__ import annotations
 from typing import Any
 
 __all__ = (
-    "get_profile_store_memory_class",
+    "get_bulkhead_attr",
     "get_bulkhead_class",
     "get_bulkhead_registry_class",
-    "get_bulkhead_attr",
     "get_in_memory_resilience_profile_store_class",
-    "get_unified_rate_limiter_attr",
+    "get_profile_store_memory_class",
     "get_rate_limit_class",
     "get_rate_limit_exceeded_class",
-    "get_redis_rate_limiter_class",
     "get_rate_limiter_factory",
+    "get_redis_rate_limiter_class",
+    "get_unified_rate_limiter_attr",
 )
 
 

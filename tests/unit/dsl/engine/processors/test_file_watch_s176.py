@@ -9,7 +9,6 @@
   хотя бы один из них должен быть указан.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

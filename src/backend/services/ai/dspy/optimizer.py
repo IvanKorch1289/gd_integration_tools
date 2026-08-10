@@ -146,7 +146,7 @@ class DSPyOptimizer:
 
     def _is_sdk_available(self) -> bool:
         try:
-            import dspy  # noqa: F401
+            import dspy
 
             return True
         except ImportError:

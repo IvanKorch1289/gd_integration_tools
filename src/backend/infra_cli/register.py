@@ -22,4 +22,4 @@ def get_aggregator_with_registry():  # Helper for /health endpoint
     return agg
 
 
-__all__ = ("register_connector", "get_aggregator_with_registry")
+__all__ = ("get_aggregator_with_registry", "register_connector")

@@ -1,4 +1,3 @@
-# ruff: noqa: S101, SLF001
 """Tail-debt s10-debt/c1 — проверка wiring :class:`PoolWarmup` в lifespan.
 
 Закрывает orphan-scaffold: :class:`PoolWarmup` создан в S9 K2 W3, но до

@@ -78,7 +78,7 @@ async def _litellm_ping(gateway: LiteLLMGateway) -> bool:
         if isinstance(models, list) and len(models) > 0:
             return True
         return False
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _logger.warning("litellm ping failed: %s", exc)
         return False
 

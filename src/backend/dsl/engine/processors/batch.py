@@ -95,7 +95,7 @@ class BatchInsertProcessor(BaseProcessor):
         # executemany через list[dict]
         columns = ", ".join(first.keys())
         placeholders = ", ".join(f":{k}" for k in first)
-        stmt_text = f"INSERT INTO {self._table} ({columns}) VALUES ({placeholders})"  # noqa: S608
+        stmt_text = f"INSERT INTO {self._table} ({columns}) VALUES ({placeholders})"
         async with bundle.async_session_maker() as session:
             result = await session.execute(text(stmt_text), items)
             await session.commit()
@@ -206,7 +206,7 @@ class BatchUpdateProcessor(BaseProcessor):
             for cols, params_list in groups.items():
                 set_clause = ", ".join(f"{k} = :{k}" for k in cols)
                 stmt_text = (
-                    f"UPDATE {self._table} SET {set_clause} "  # noqa: S608
+                    f"UPDATE {self._table} SET {set_clause} "
                     f"WHERE {self._key_field} = :_key"
                 )
                 result = await session.execute(text(stmt_text), params_list)
@@ -271,7 +271,7 @@ class BatchDeleteProcessor(BaseProcessor):
         bundle = _lazy_get_external_db_registry()().get_bundle(self._profile)
         async with bundle.async_session_maker() as session:
             # Postgres-compatible: = ANY(:ids); fallback IN для остальных
-            stmt_text = f"DELETE FROM {self._table} WHERE {self._key_field} = ANY(:ids)"  # noqa: S608
+            stmt_text = f"DELETE FROM {self._table} WHERE {self._key_field} = ANY(:ids)"
             result = await session.execute(text(stmt_text), {"ids": list(ids)})
             await session.commit()
             affected = getattr(result, "rowcount", len(ids))

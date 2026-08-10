@@ -64,14 +64,7 @@ class ControlFlowMixin:
                         return StepResult(
                             outcome=StepOutcome.FAILED,
                             error_message="branch sub-step processor timeout",
-                            events=events
-                            + [
-                                (
-                                    WorkflowEventType.step_failed,
-                                    {"reason": "timeout"},
-                                    sub_step.name,
-                                )
-                            ],
+                            events=[*events, (WorkflowEventType.step_failed, {"reason": "timeout"}, sub_step.name)],
                         )
             else:
                 _logger.warning(
@@ -143,14 +136,7 @@ class ControlFlowMixin:
                         return StepResult(
                             outcome=StepOutcome.FAILED,
                             error_message=f"loop body processor timeout at iter {iter_count}",
-                            events=events
-                            + [
-                                (
-                                    WorkflowEventType.step_failed,
-                                    {"reason": "timeout", "iter": iter_count},
-                                    body_step.name,
-                                )
-                            ],
+                            events=[*events, (WorkflowEventType.step_failed, {"reason": "timeout", "iter": iter_count}, body_step.name)],
                         )
             else:
                 _logger.warning(
@@ -242,14 +228,7 @@ class ControlFlowMixin:
                 return StepResult(
                     outcome=StepOutcome.FAILED,
                     error_message=f"for_each: {len(errors)} items failed",
-                    events=events
-                    + [
-                        (
-                            WorkflowEventType.step_failed,
-                            {"reason": "item_error", "count": len(errors)},
-                            step.name,
-                        )
-                    ],
+                    events=[*events, (WorkflowEventType.step_failed, {"reason": "item_error", "count": len(errors)}, step.name)],
                 )
 
             final_body = dict(state.exchange_snapshot)
@@ -270,24 +249,10 @@ class ControlFlowMixin:
                                 return StepResult(
                                     outcome=StepOutcome.FAILED,
                                     error_message=f"for_each sequential timeout at item {idx}",
-                                    events=events
-                                    + [
-                                        (
-                                            WorkflowEventType.step_failed,
-                                            {"reason": "timeout", "index": idx},
-                                            step.name,
-                                        )
-                                    ],
+                                    events=[*events, (WorkflowEventType.step_failed, {"reason": "timeout", "index": idx}, step.name)],
                                 )
         return StepResult(
             outcome=StepOutcome.CONTINUE,
-            events=events
-            + [
-                (
-                    WorkflowEventType.step_finished,
-                    {"items": total, "completed": True},
-                    step.name,
-                )
-            ],
+            events=[*events, (WorkflowEventType.step_finished, {"items": total, "completed": True}, step.name)],
             output_state={"for_each_count": total, "exchange_snapshot": final_body},
         )

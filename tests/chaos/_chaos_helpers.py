@@ -38,7 +38,7 @@ def assert_chain_module_loadable(dotted_path: str) -> None:
     """
     try:
         importlib.import_module(dotted_path)
-    except ImportError as exc:  # noqa: BLE001
+    except ImportError as exc:
         raise AssertionError(
             f"chain module {dotted_path!r} not loadable: {exc}"
         ) from exc

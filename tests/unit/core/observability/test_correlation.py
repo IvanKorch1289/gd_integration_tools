@@ -10,7 +10,6 @@ correlation_id/request_id/tenant_id propagation через async-задачи.
 прямых тестов контракт модуля (set/get/new) не покрыт.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

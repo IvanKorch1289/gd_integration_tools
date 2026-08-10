@@ -38,10 +38,10 @@ if TYPE_CHECKING:
     from src.backend.entrypoints.middlewares.global_ratelimit import RateLimitChecker
 
 __all__ = (
-    "LoginStepUpMiddleware",
     "LOGIN_PATH",
     "LOGIN_RATE_LIMIT",
     "LOGIN_WINDOW_SECONDS",
+    "LoginStepUpMiddleware",
 )
 
 _logger = get_logger("entrypoints.middlewares.login_step_up")
@@ -199,7 +199,7 @@ class LoginStepUpMiddleware:
         client_ip = _extract_client_ip(scope)
         identifier = f"login_stepup:ip:{client_ip}"
         try:
-            allowed, remaining, retry_after = await self._checker.check(identifier)
+            allowed, _remaining, retry_after = await self._checker.check(identifier)
         except Exception as exc:
             # Fail-closed для login: deny (anti-brute-force).
             _logger.error(

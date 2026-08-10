@@ -7,7 +7,6 @@ PASS даже при cost explosion (banking context).
 Фикс: raise GuardrailValueTypeError при non-numeric value.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

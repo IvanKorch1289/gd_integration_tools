@@ -49,7 +49,7 @@ def _current_tenant_label() -> str:
     """
     try:
         ctx = current_tenant()
-    except (ImportError, AttributeError, RuntimeError) as ten_exc:  # noqa: BLE001 — best-effort metric label
+    except (ImportError, AttributeError, RuntimeError) as ten_exc:
         # cycle-9/D-AUDIT-1032: narrow exceptions + observability.
         # ImportError — tenancy missing, AttributeError — context API
         # change, RuntimeError — context unavailable.
@@ -92,7 +92,7 @@ def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
             _WARMUP_DURATION.labels(pool=pool, tenant_id=tenant_label).observe(
                 duration_ms
             )
-        except (AttributeError, TypeError, ValueError) as observe_exc:  # noqa: BLE001
+        except (AttributeError, TypeError, ValueError) as observe_exc:
             # cycle-9/D-AUDIT-930: narrow exceptions + observability.
             # AttributeError — histogram API change, TypeError — invalid
             # arg type, ValueError — invalid label value. Bare `except
@@ -105,7 +105,7 @@ def _record_warmup(pool: str, duration_ms: float, success: bool) -> None:
     if not success and _WARMUP_FAILURES is not None:
         try:
             _WARMUP_FAILURES.labels(pool=pool, tenant_id=tenant_label).inc()
-        except (AttributeError, TypeError, ValueError) as inc_exc:  # noqa: BLE001
+        except (AttributeError, TypeError, ValueError) as inc_exc:
             # cycle-9/D-AUDIT-930: см. выше — тот же narrow для counter inc.
             import logging
             logging.getLogger(__name__).debug(
@@ -119,7 +119,7 @@ def _record_reconnect(pool: str) -> None:
     if _POOL_RECONNECTS is not None:
         try:
             _POOL_RECONNECTS.labels(pool=pool, tenant_id=tenant_label).inc()
-        except (AttributeError, TypeError, ValueError) as reconnect_exc:  # noqa: BLE001
+        except (AttributeError, TypeError, ValueError) as reconnect_exc:
             # cycle-9/D-AUDIT-930: см. выше — тот же narrow для reconnect counter.
             import logging
             logging.getLogger(__name__).debug(

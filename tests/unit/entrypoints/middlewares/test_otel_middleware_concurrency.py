@@ -9,7 +9,6 @@ concurrent requests → race condition: status code от request A мог
 (ASGI scope dict живёт один request, не shared).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

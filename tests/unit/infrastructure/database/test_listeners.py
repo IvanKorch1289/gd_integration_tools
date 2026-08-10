@@ -10,7 +10,6 @@ listener'а держится только на docstring; SQL telemetry regressi
 не будут пойманы тестами.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

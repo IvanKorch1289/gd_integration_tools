@@ -14,7 +14,6 @@
 только логика через mock motor.
 """
 
-# ruff: noqa: S101, I001
 
 from __future__ import annotations
 

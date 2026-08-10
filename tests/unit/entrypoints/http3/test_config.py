@@ -1,6 +1,5 @@
 """Тесты Http3ServerConfig — валидация TLS-путей без сетевого запуска."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -43,7 +42,7 @@ def test_config_defaults(tmp_path: Path) -> None:
     key.write_bytes(b"-----BEGIN PRIVATE KEY-----\n")
 
     config = Http3ServerConfig(
-        host="0.0.0.0",  # noqa: S104  # тест-только
+        host="0.0.0.0",  # тест-только
         port=8443,
         certfile=cert,
         keyfile=key,

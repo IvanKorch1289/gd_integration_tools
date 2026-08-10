@@ -7,7 +7,6 @@ CertStoreSettings.fallback_enabled=True → from_settings автоматичес
 
 Pattern (D252, D237 TDD): RED → GREEN → review.
 """
-# ruff: noqa: S101
 from __future__ import annotations
 
 from unittest.mock import patch

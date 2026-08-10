@@ -161,7 +161,7 @@ class TimeSeriesWriteProcessor(BaseProcessor):
         columns = ["timestamp", *self._tags, self._field]
         placeholders = ", ".join(f":{c}" for c in columns)
         col_names = ", ".join(columns)
-        sql = f"INSERT INTO {self._table} ({col_names}) VALUES ({placeholders})"  # _table/_tags/_field — DSL-config параметры, не runtime input  # noqa: S608  # internal query with controlled parameters
+        sql = f"INSERT INTO {self._table} ({col_names}) VALUES ({placeholders})"  # _table/_tags/_field — DSL-config параметры, не runtime input  # internal query with controlled parameters
 
         rows: list[dict[str, Any]] = []
         for point in points:

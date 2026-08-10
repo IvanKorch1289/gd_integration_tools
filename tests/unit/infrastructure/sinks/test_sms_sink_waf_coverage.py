@@ -6,7 +6,6 @@
 Фикс: заменено на ``OutboundHttpClient`` с WAF pre-hook + capability-gate.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

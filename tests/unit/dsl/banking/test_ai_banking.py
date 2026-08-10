@@ -25,7 +25,6 @@ PLAN.md V16.1 §3 Sprint 6 DSL/Workflow row: «Banking-процессоры unit
 ``test_rpa_banking.py``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

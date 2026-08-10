@@ -93,7 +93,7 @@ class FtpUploadProcessor(BaseProcessor):
                 # Used only for legacy dev/test servers that lack FTPS.
                 from ftplib import FTP
 
-                ftp = FTP()  # noqa: S321
+                ftp = FTP()
                 # Rationale: opt-in legacy path; both flags required,
                 # logged via ``_rpa_logger.info(tls=...)`` for audit.
                 ftp.connect(self.host, self.port)
@@ -105,7 +105,7 @@ class FtpUploadProcessor(BaseProcessor):
                 finally:
                     try:
                         ftp.quit()
-                    except (OSError, ConnectionError, RuntimeError) as quit_exc:  # noqa: BLE001
+                    except (OSError, ConnectionError, RuntimeError) as quit_exc:
                         # cycle-9/D-AUDIT-949: narrow exceptions + observability.
                         # OSError/ConnectionError для FTP network, RuntimeError
                         # для server error. Bare `except Exception` маскировал
@@ -126,7 +126,7 @@ class FtpUploadProcessor(BaseProcessor):
             tls_context.check_hostname = True
             tls_context.verify_mode = ssl.CERT_REQUIRED
 
-            ftp = FTP_TLS(  # noqa: S321
+            ftp = FTP_TLS(
                 context=tls_context, timeout=30
             )
             # Rationale: TLS-only transport (RFC 4217); CERT_REQUIRED +
@@ -142,7 +142,7 @@ class FtpUploadProcessor(BaseProcessor):
             finally:
                 try:
                     ftp.quit()
-                except (OSError, ConnectionError, RuntimeError) as tls_quit_exc:  # noqa: BLE001
+                except (OSError, ConnectionError, RuntimeError) as tls_quit_exc:
                     # cycle-9/D-AUDIT-950: см. D-AUDIT-949 — тот же narrow для
                     # TLS path.
                     import logging

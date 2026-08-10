@@ -11,7 +11,6 @@
     * default-OFF: get_counter обычный KeyError (но не "strict").
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -53,7 +52,7 @@ class TestDefaultLabels:
     def test_default_labels_attached(self, isolated_registry: MetricsRegistry) -> None:
         counter = isolated_registry.counter("http_requests_total", "HTTP")
         # prometheus_client хранит labelnames в ._labelnames
-        labels = counter._labelnames  # noqa: SLF001
+        labels = counter._labelnames
         for name in DEFAULT_LABELS:
             assert name in labels
 
@@ -61,7 +60,7 @@ class TestDefaultLabels:
         counter = isolated_registry.counter(
             "http_requests_total", "HTTP", labels=("status", "method")
         )
-        labels = counter._labelnames  # noqa: SLF001
+        labels = counter._labelnames
         assert "status" in labels
         assert "method" in labels
         assert "tenant_id" in labels
@@ -73,7 +72,7 @@ class TestDefaultLabels:
         counter = isolated_registry.counter(
             "x_total", "X", labels=("tenant_id", "status")
         )
-        labels = counter._labelnames  # noqa: SLF001
+        labels = counter._labelnames
         assert labels.count("tenant_id") == 1
 
 
@@ -90,7 +89,7 @@ class TestHistogramBuckets:
             "latency_seconds_2", "Latency", buckets=(0.1, 0.5, 1.0, 5.0)
         )
         # buckets применены — проверяем через _buckets internal
-        assert tuple(h._upper_bounds) == (0.1, 0.5, 1.0, 5.0, float("inf"))  # noqa: SLF001
+        assert tuple(h._upper_bounds) == (0.1, 0.5, 1.0, 5.0, float("inf"))
 
 
 class TestStrictMode:

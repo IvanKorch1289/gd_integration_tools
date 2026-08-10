@@ -60,7 +60,7 @@ class InboxDLQWriter:
                 :retry_count, :first_failed_at, :last_failed_at, :metadata
             )
             ON CONFLICT (dlq_id) DO NOTHING
-            """  # noqa: S608  # internal query with controlled parameters
+            """  # internal query with controlled parameters
         )
         params = envelope.model_dump()
         # SQLAlchemy JSON-сериализация поля metadata + original_payload

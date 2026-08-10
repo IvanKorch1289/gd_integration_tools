@@ -6,10 +6,9 @@
 чтобы не запускать реальный workflow runtime.
 """
 
-# ruff: noqa: S101
 from __future__ import annotations
 
-import pytest  # noqa: S101
+import pytest
 
 pytest.importorskip(
     "temporalio", reason="temporalio not installed — run: uv sync --extra workflow"
@@ -138,7 +137,7 @@ async def test_activity_step_uses_explicit_timeout(
 
 @pytest.mark.asyncio
 async def test_activity_step_writes_output_key(monkeypatch: pytest.MonkeyPatch) -> None:
-    fake_wf, recorder = _make_fake_temporal(execute_activity_return={"id": 42})
+    fake_wf, _recorder = _make_fake_temporal(execute_activity_return={"id": 42})
     monkeypatch.setitem(
         sys.modules,
         "temporalio",
@@ -203,7 +202,7 @@ async def test_saga_step_all_forward_success_no_compensate(
 async def test_signal_wait_returns_payload_when_signal_present(
     temporal_mock: tuple[SimpleNamespace, list[Any]],
 ) -> None:
-    _, recorder = temporal_mock
+    _, _recorder = temporal_mock
     decl = SignalWaitDeclaration(signal_name="approve", output_key="decision")
     ctx: dict[str, Any] = {"_signals": {"approve": {"by": "manager"}}, "_outputs": {}}
     payload = await compile_signal_wait_step(decl, ctx)
@@ -217,7 +216,7 @@ async def test_signal_wait_returns_payload_when_signal_present(
 async def test_signal_wait_with_timeout_records_call(
     temporal_mock: tuple[SimpleNamespace, list[Any]],
 ) -> None:
-    fake_wf, recorder = temporal_mock
+    _fake_wf, recorder = temporal_mock
     decl = SignalWaitDeclaration(signal_name="approve", timeout_s=120.0)
     ctx: dict[str, Any] = {"_signals": {"approve": {"x": 1}}}
     await compile_signal_wait_step(decl, ctx)
@@ -292,7 +291,7 @@ async def test_sensor_step_returns_truthy_first_iteration(
 @pytest.mark.asyncio
 async def test_sensor_step_timeout_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     """Sensor падает в TimeoutError если predicate не truthy + истёк timeout."""
-    fake_wf, recorder = _make_fake_temporal(execute_activity_return=False)
+    fake_wf, _recorder = _make_fake_temporal(execute_activity_return=False)
     monkeypatch.setitem(
         sys.modules,
         "temporalio",
@@ -434,7 +433,7 @@ async def test_agent_invoke_step_durable_falls_back_to_stateless(
 ) -> None:
     """S27 W6: durable agent_invoke → fallback на stateless activity при недоступности checkpointer."""
     fake_response = _mock_ai_response("Approved")
-    fake_wf, recorder = _make_fake_temporal(execute_activity_return=fake_response)
+    fake_wf, _recorder = _make_fake_temporal(execute_activity_return=fake_response)
     monkeypatch.setitem(
         sys.modules,
         "temporalio",
@@ -465,7 +464,7 @@ async def test_agent_invoke_step_durable_falls_back_to_stateless(
 async def test_agent_invoke_writes_output_key(monkeypatch: pytest.MonkeyPatch) -> None:
     """S27 W6: agent_invoke пишет AIResponse в ``ctx._outputs`` при заданном ``output_key``."""
     fake_response = _mock_ai_response("Result content")
-    fake_wf, recorder = _make_fake_temporal(execute_activity_return=fake_response)
+    fake_wf, _recorder = _make_fake_temporal(execute_activity_return=fake_response)
     monkeypatch.setitem(
         sys.modules,
         "temporalio",

@@ -1,4 +1,3 @@
-# ruff: noqa: SLF001
 """Conftest для DSL unit-тестов: изоляция глобальных реестров между тестами.
 
 Между тестами расходится :class:`ProcessorRegistry` — модули могут

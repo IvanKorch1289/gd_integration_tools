@@ -384,7 +384,7 @@ class SinksMixin:
         command: str,
         *,
         username: str | None = None,
-        password_from: str = "none",  # noqa: S107 — source selector, not password
+        password_from: str = "none",
         key_file: str | None = None,
         timeout: float = 30.0,
         result_property: str = "ssh_result",

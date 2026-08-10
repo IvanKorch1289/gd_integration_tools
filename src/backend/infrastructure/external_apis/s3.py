@@ -135,7 +135,7 @@ class S3Service:
             raise FileNotFoundError(f"Файл {key} не найден")
         return encode_base64(content)
 
-    async def list_files(self, prefix: str = None) -> list[str]:
+    async def list_files(self, prefix: str | None = None) -> list[str]:
         """Получить список files."""
         return await self.client.list_objects(prefix)
 

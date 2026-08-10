@@ -3,7 +3,6 @@
 Используют AsyncMock для DesktopRpaClient — реальный pywinauto не нужен.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

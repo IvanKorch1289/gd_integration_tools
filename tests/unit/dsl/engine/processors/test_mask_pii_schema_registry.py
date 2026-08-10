@@ -5,12 +5,11 @@ ProcessorRegistry и попадает в Schema Registry через
 :func:`populate_from_processor_registry`.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
 # Принудительно импортируем модуль — auto-registry @processor.
-import src.backend.dsl.engine.processors.mask_pii  # noqa: F401
+import src.backend.dsl.engine.processors.mask_pii
 from src.backend.services.schema_registry import (
     SchemaKind,
     ServiceSchemaRegistry,

@@ -1,6 +1,5 @@
 """W25.1 — Unit-тесты атомарности reload в DSLYamlWatcher."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

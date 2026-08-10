@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit tests for shared/components.py (Sprint 43 W1).
 
 Uses sys.modules mocking for streamlit + pandas (not installed in venv,
@@ -29,7 +28,7 @@ _pandas_mock.DataFrame = MagicMock
 sys.modules["pandas"] = _pandas_mock
 
 # Now safe to import
-from src.frontend.streamlit_app.shared.components import (  # noqa: E402
+from src.frontend.streamlit_app.shared.components import (
     dataframe_view,
     metric_row,
     setup_page,

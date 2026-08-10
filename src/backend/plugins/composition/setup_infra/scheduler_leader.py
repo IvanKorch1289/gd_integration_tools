@@ -155,7 +155,7 @@ async def _scheduler_heartbeat_loop() -> None:
                 app_logger.debug("Scheduler heartbeat: lock extended OK")
             except asyncio.CancelledError:
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 # Transient Redis error — log + retry next tick.
                 # До 4 consecutive failures tolerated.
                 app_logger.warning(
@@ -206,7 +206,7 @@ async def _stop_scheduler_if_leader() -> None:
 
     try:
         await get_scheduler_manager().stop()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         app_logger.warning("scheduler.stop() raised (continuing): %s", exc)
     _scheduler_leader_acquired = False
 
@@ -214,16 +214,16 @@ async def _stop_scheduler_if_leader() -> None:
     if _scheduler_lock_handle is not None:
         try:
             await _scheduler_lock_handle.release()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             app_logger.warning("lock release failed (best-effort): %s", exc)
         _scheduler_lock_handle = None
 
 
 __all__ = (
-    "_start_scheduler_with_leader_election",
-    "_stop_scheduler_if_leader",
-    "_scheduler_heartbeat_loop",
+    "_SCHEDULER_LEADER_HEARTBEAT_S",
     "_SCHEDULER_LEADER_LOCK_KEY",
     "_SCHEDULER_LEADER_LOCK_TTL_S",
-    "_SCHEDULER_LEADER_HEARTBEAT_S",
+    "_scheduler_heartbeat_loop",
+    "_start_scheduler_with_leader_election",
+    "_stop_scheduler_if_leader",
 )

@@ -37,12 +37,12 @@ WorkflowEventType: Any = resolve_module(
 WorkflowStatus: Any = resolve_module("database.models.workflow_instance").WorkflowStatus
 
 __all__ = (
-    "WorkflowInstanceSchemaOut",
-    "WorkflowInstanceDetailSchemaOut",
-    "WorkflowEventSchemaOut",
-    "WorkflowInstanceRef",
-    "WorkflowTriggerRequest",
     "WorkflowCancelRequest",
+    "WorkflowEventSchemaOut",
+    "WorkflowInstanceDetailSchemaOut",
+    "WorkflowInstanceRef",
+    "WorkflowInstanceSchemaOut",
+    "WorkflowTriggerRequest",
 )
 
 

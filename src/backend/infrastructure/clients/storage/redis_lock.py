@@ -52,7 +52,7 @@ class RedisLock:
         S64 W2 design: "если Redis недоступен, ``RedisLock.acquire()``
         возвращает True (fail-open)".
         """
-        import asyncio  # noqa: F401 — asyncio.wait_for used above
+        import asyncio
 
         from src.backend.infrastructure.clients.storage.redis import get_redis_client
 

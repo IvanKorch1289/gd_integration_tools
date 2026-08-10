@@ -5,7 +5,6 @@ This test verifies that JWT validation supports refresh semantics
 (iat-based rotation pattern).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

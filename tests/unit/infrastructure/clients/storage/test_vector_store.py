@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke tests for vector store (infrastructure/clients/storage/vector_store.py)."""
 
 from __future__ import annotations

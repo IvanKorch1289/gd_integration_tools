@@ -228,7 +228,7 @@ def _make_declaration(durable: bool):  # type: ignore[no-untyped-def]
     # Pydantic forward reference (MemoryScope) требует чтобы все forward
     # refs были в globals ПЕРЕД model_rebuild. Импортируем ВСЕ spec
     # submodules чтобы MemoryScope был в globals, потом rebuild.
-    from src.backend.dsl.workflow.spec import AgentInvokeDeclaration  # noqa: F401
+    from src.backend.dsl.workflow.spec import AgentInvokeDeclaration
     from src.backend.dsl.workflow.spec.advanced_declarations import (
         AgentInvokeDeclaration as _AdvAID,
     )

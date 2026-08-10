@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты gRPC correlation_id propagation (S17 K3 W3 D12).
 
 Покрывают helper ``_extract_correlation_id_from_grpc_context``:

@@ -150,7 +150,7 @@ class PdfTemplateProcessor(BaseProcessor):
             if not feature_flags.proc_pdf_template:
                 exchange.set_property("pdf_template_status", "skipped")
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1716: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1715).
             import logging

@@ -6,7 +6,6 @@ Verifies:
 3. No direct core→services imports remain in fixed files
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

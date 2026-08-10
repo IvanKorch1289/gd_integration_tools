@@ -51,14 +51,14 @@ class CoreMixin(_SagaLRAProcessorProtocol):
     """core lifecycle methods (state + invoke) для SagaLRAProcessor. S58 W2 extraction."""
 
     __slots__ = (
-        "_steps",
-        "_timeout_seconds",
-        "_per_step_timeout",
-        "_result_property",
-        "_state_property",
         "_fail_fast",
         "_on_state_change",
+        "_per_step_timeout",
+        "_result_property",
         "_saga_id",
+        "_state_property",
+        "_steps",
+        "_timeout_seconds",
         "name",  # S159 W4: added — BaseProcessor.__init__ sets self.name
     )
 
@@ -109,7 +109,7 @@ class CoreMixin(_SagaLRAProcessorProtocol):
         if old_state != new_state and self._on_state_change is not None:
             try:
                 self._on_state_change(old_state or "", new_state, exchange)
-            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError) as cb_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError) as cb_exc:
                 # cycle-9/D-AUDIT-960: narrow exceptions + observability.
                 # ImportError — callback dep missing, AttributeError — API
                 # change, RuntimeError — callback raised, TypeError/ValueError

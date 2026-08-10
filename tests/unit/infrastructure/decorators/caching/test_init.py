@@ -1,6 +1,5 @@
 """Unit tests for infrastructure.decorators.caching.__init__."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

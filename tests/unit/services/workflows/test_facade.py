@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты `WorkflowFacade` capability-gate (Wave D.2 / ADR-045)."""
 
 from __future__ import annotations

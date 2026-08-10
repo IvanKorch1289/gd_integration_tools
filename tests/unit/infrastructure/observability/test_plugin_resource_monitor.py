@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Sprint 14 K2 W1 — unit-тесты ``PluginResourceMonitor``."""
 
 from __future__ import annotations

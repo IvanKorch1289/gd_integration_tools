@@ -68,22 +68,22 @@ from src.backend.dsl.engine.processors.rpa.operations.templaterenderprocessor im
 )
 
 __all__ = (
-    "FileMoveProcessor",
     "ArchiveProcessor",
+    # S171/S180 добавлены для backward-compat после operations split:
+    "CsvReadProcessor",
+    "CsvWriteProcessor",
+    "DecryptProcessor",
+    "EncryptProcessor",
+    "FileDeleteProcessor",
+    "FileListProcessor",
+    "FileMoveProcessor",
+    "FileWatchProcessor",
+    "FilteredDirectoryScanProcessor",
+    "FtpUploadProcessor",
+    "HashProcessor",
+    "HttpRequestProcessor",
     "ImageOcrProcessor",
     "ImageResizeProcessor",
     "RegexProcessor",
     "TemplateRenderProcessor",
-    "HashProcessor",
-    "EncryptProcessor",
-    "DecryptProcessor",
-    # S171/S180 добавлены для backward-compat после operations split:
-    "CsvReadProcessor",
-    "CsvWriteProcessor",
-    "FileDeleteProcessor",
-    "FileListProcessor",
-    "FileWatchProcessor",
-    "FilteredDirectoryScanProcessor",
-    "FtpUploadProcessor",
-    "HttpRequestProcessor",
 )

@@ -8,7 +8,6 @@ Cycle 47: pure ASGI rewrite — middleware использует scope['state']
 вместо request.state для pure ASGI compatibility.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

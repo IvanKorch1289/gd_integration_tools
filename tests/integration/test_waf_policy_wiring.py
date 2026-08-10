@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Интеграционные тесты Wave 1.4: register_waf_policy + register_outbound_http_client."""
 
 from __future__ import annotations

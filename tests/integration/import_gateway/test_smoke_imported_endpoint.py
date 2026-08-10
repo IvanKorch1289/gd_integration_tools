@@ -11,7 +11,6 @@
 Проверяет интеграцию с настоящей kw-only сигнатурой реестра, без fake-shim'ов.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

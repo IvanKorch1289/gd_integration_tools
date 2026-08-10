@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import hashlib
 
-__all__ = ("payload_hash", "etag_hash")
+__all__ = ("etag_hash", "payload_hash")
 
 
 def payload_hash(body: bytes | None, *, prefix_len: int | None = 16) -> str:

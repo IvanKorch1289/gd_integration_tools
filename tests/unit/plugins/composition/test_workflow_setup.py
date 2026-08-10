@@ -1,4 +1,3 @@
-# ruff: noqa: S101, SLF001
 """Smoke-тесты Sprint 4 К3-B §5 — workflow_setup runtime.
 
 D-AUDIT-A8-05 fix (cycle 1): ``_bootstrap_default_declarations`` удалена.

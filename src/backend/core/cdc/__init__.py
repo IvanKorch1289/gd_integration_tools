@@ -5,13 +5,13 @@ Generic ``CDCSource`` Protocol + Pydantic-модели событий.
 ``src/infrastructure/cdc/`` и подключаются через factory.
 """
 
-from src.backend.core.cdc.registry import (  # noqa: F401
+from src.backend.core.cdc.registry import (
     SUPPORTED_BACKENDS,
     get_cdc_source,
     is_backend_available,
     list_backends,
 )
-from src.backend.core.cdc.source import (  # noqa: F401
+from src.backend.core.cdc.source import (
     CDCCursor,
     CDCEvent,
     CDCOperation,
@@ -20,6 +20,7 @@ from src.backend.core.cdc.source import (  # noqa: F401
 )
 
 __all__ = (
+    "SUPPORTED_BACKENDS",
     "CDCCursor",
     "CDCEvent",
     "CDCOperation",
@@ -28,5 +29,4 @@ __all__ = (
     "get_cdc_source",
     "is_backend_available",
     "list_backends",
-    "SUPPORTED_BACKENDS",
 )

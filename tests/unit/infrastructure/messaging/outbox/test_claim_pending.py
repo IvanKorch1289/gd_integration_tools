@@ -57,7 +57,7 @@ sys.modules["src.backend.infrastructure.database.session_manager"] = _stub_sm
 
 # Импорт outbox-модели тоже требует session_manager (для Base.metadata),
 # но sqlalchemy-mapped класс импортируется без runtime DB connection.
-from src.backend.infrastructure.repositories.outbox import (  # noqa: E402
+from src.backend.infrastructure.repositories.outbox import (
     _advisory_lock_key,
     claim_pending,
 )

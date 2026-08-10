@@ -8,7 +8,6 @@
 snapshot() shape) сломают ассерты в десятках тестов одновременно.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

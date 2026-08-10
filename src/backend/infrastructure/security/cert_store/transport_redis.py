@@ -3,7 +3,6 @@
 Pub/Sub-based multi-instance cert invalidation.
 Pattern (D257, Ponytail): thin wrapper над redis.asyncio.
 """
-# ruff: noqa: E501
 from __future__ import annotations
 
 import json
@@ -14,7 +13,7 @@ from src.backend.core.logging import get_logger
 
 logger = get_logger("security.cert_store.transport_redis")
 
-__all__ = ("RedisCertTransport", "DEFAULT_CHANNEL")
+__all__ = ("DEFAULT_CHANNEL", "RedisCertTransport")
 
 DEFAULT_CHANNEL = "cert:updated"
 

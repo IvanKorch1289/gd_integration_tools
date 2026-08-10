@@ -30,7 +30,7 @@ from src.backend.infrastructure.clients.base_connector import HealthResult
 if TYPE_CHECKING:
     pass
 
-__all__ = ("MongoSource", "MongoChangeEvent", "MongoSourceConfig")
+__all__ = ("MongoChangeEvent", "MongoSource", "MongoSourceConfig")
 
 logger = get_logger("infrastructure.sources.mongo")
 

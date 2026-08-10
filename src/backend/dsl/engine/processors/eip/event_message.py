@@ -84,13 +84,13 @@ class EventMessageEnvelope:
     """
 
     __slots__ = (
+        "body",
         "event_id",
+        "event_source",
+        "event_timestamp",
         "event_type",
         "event_version",
-        "event_timestamp",
-        "event_source",
         "topic",
-        "body",
     )
 
     def __init__(
@@ -158,7 +158,7 @@ class EventMessageProcessor(BaseProcessor):
         SideEffectKind.PURE
     )  # default; producer=None → PURE
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         *,
         event_type: str,

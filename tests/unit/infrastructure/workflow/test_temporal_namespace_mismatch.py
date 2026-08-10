@@ -9,7 +9,6 @@ isolation bypass (banking context critical, cross-tenant data leak).
 ADR-045 §opens).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

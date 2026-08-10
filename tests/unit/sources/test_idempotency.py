@@ -1,6 +1,5 @@
 """W23 — DedupeStore (memory backend)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

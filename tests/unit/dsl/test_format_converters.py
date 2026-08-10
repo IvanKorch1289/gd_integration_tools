@@ -5,7 +5,6 @@
 отдельно через mock-класс с минимальной API-совместимостью.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -10,7 +10,7 @@ stable, but cross-layer access now goes через core/ facade.
 
 from __future__ import annotations
 
-from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
+from src.backend.core.di.providers.infrastructure_locator import (
     get_event_bus_class as _get_event_bus_cls,
 )
 from src.backend.core.di.providers.infrastructure_locator import (

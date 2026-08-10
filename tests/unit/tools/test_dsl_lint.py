@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты `tools/dsl_lint.py` (R2.6)."""
 
 from __future__ import annotations
@@ -12,7 +11,7 @@ import pytest
 _TOOLS = Path(__file__).resolve().parents[3] / "tools"
 sys.path.insert(0, str(_TOOLS))
 
-from dsl_lint import lint_file, lint_yaml, main  # noqa: E402
+from dsl_lint import lint_file, lint_yaml, main
 
 
 def _write(tmp: Path, name: str, body: str) -> Path:

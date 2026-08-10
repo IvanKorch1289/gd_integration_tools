@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Cycle-15 (D-AUDIT-1502): tests for models_discovery helper.
 
 Coverage:

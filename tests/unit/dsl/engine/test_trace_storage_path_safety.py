@@ -9,7 +9,6 @@
     * Принимает обычные route_id без изменений.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

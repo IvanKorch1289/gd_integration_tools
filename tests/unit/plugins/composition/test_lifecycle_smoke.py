@@ -1,4 +1,3 @@
-# ruff: noqa: S101, SLF001
 """Smoke-тесты S39 W5 — модуль ``src.backend.plugins.composition.lifecycle``.
 
 Покрывают:
@@ -326,7 +325,7 @@ async def test_start_v11_hot_reload_skipped_when_feature_flag_disabled(
     monkeypatch.setattr(settings.v11, "hot_reload_enabled", False)
 
     app = FastAPI()
-    await lifecycle.plugin_loader.start_v11_hot_reload(app)  # noqa: F841
+    await lifecycle.plugin_loader.start_v11_hot_reload(app)
 
     # Возвращаемое значение не важно (None), но state НЕ должен содержать task.
     assert getattr(app.state, "v11_hot_reload_task", None) is None
@@ -344,7 +343,7 @@ async def test_start_v11_hot_reload_skipped_when_no_loaders_and_no_dirs(
     app = FastAPI()
     # Намеренно не заполняем state.
 
-    await lifecycle.plugin_loader.start_v11_hot_reload(app)  # noqa: F841
+    await lifecycle.plugin_loader.start_v11_hot_reload(app)
 
     assert getattr(app.state, "v11_hot_reload_task", None) is None
 

@@ -108,6 +108,6 @@ class NotifyProcessor(BaseProcessor):
 
 
 # Импорт AppriseNotifyProcessor из подмодуля пакета
-from src.backend.dsl.engine.processors.notify.apprise_notify import (  # noqa: E402
+from src.backend.dsl.engine.processors.notify.apprise_notify import (
     AppriseNotifyProcessor,
 )

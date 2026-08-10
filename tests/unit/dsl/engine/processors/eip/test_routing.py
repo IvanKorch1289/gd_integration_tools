@@ -4,7 +4,6 @@ LoadBalancer, Multicast, MulticastRoutes.
 Паттерн: async tests, _ex fixture, моки для RouteRegistry / SubPipelineExecutor.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

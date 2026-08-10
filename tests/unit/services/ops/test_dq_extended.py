@@ -4,7 +4,6 @@ v21 §7.1: Data Quality Framework — extended dq_check 49→300 LOC.
 New check types: regex_match, enum, length, date_format, cross_field, json_schema, cardinality.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

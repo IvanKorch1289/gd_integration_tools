@@ -11,7 +11,6 @@ poll_interval_s > 0 (defense-in-depth, BaseModel gt=0.0 уже проверяе�
 которые компилятор должен дополнительно защищать).
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -43,12 +42,12 @@ sys.modules["temporalio"] = _mock_temporalio
 sys.modules["temporalio.workflow"] = _MockTemporalioWorkflow
 
 
-from src.backend.dsl.workflow.compiler.step_compilers import (  # noqa: E402
+from src.backend.dsl.workflow.compiler.step_compilers import (
     SensorMaxIterationsError,
     SensorTimeoutRequiredError,
     compile_sensor_step,
 )
-from src.backend.dsl.workflow.spec.advanced_declarations import (  # noqa: E402
+from src.backend.dsl.workflow.spec.advanced_declarations import (
     SensorDeclaration,
 )
 

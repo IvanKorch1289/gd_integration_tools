@@ -1,6 +1,5 @@
 """Unit tests for DirectoryScanProcessor (S35 GAP-INT-3)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -66,7 +65,7 @@ def _mtime(path: str) -> float:
 @pytest.mark.asyncio
 async def test_directory_scan_finds_matching_files() -> None:
     """Non-recursive scan returns only files matching the glob in the root."""
-    tmp, created = _tmpdir(["a.csv", "b.csv", "c.txt"])
+    tmp, _created = _tmpdir(["a.csv", "b.csv", "c.txt"])
     try:
         proc = DirectoryScanProcessor(path=tmp, pattern="*.csv", recursive=False)
         ctx = AsyncMock()
@@ -91,7 +90,7 @@ async def test_directory_scan_finds_matching_files() -> None:
 @pytest.mark.asyncio
 async def test_directory_scan_respects_max_files() -> None:
     """Setting max_files limits the returned list."""
-    tmp, created = _tmpdir([f"file_{i}.txt" for i in range(10)])
+    tmp, _created = _tmpdir([f"file_{i}.txt" for i in range(10)])
     try:
         proc = DirectoryScanProcessor(
             path=tmp, pattern="*.txt", recursive=False, max_files=3
@@ -110,7 +109,7 @@ async def test_directory_scan_respects_max_files() -> None:
 @pytest.mark.asyncio
 async def test_directory_scan_recursive() -> None:
     """Recursive scan finds files in subdirectories."""
-    tmp, created = _tmpdir(["root.txt", "subdir/nested.csv", "subdir/deep/more.json"])
+    tmp, _created = _tmpdir(["root.txt", "subdir/nested.csv", "subdir/deep/more.json"])
     try:
         proc = DirectoryScanProcessor(path=tmp, pattern="*.csv", recursive=True)
         ctx = AsyncMock()
@@ -129,7 +128,7 @@ async def test_directory_scan_recursive() -> None:
 @pytest.mark.asyncio
 async def test_directory_scan_sort_by_mtime() -> None:
     """Results are sorted by mtime when sort_by='mtime'."""
-    tmp, created = _tmpdir(["old.txt", "new.txt"])
+    tmp, _created = _tmpdir(["old.txt", "new.txt"])
     try:
         # Ensure different mtimes: touch old first, new second
         old_path = os.path.join(tmp, "old.txt")
@@ -156,7 +155,7 @@ async def test_directory_scan_sort_by_mtime() -> None:
 @pytest.mark.asyncio
 async def test_directory_scan_sort_by_size() -> None:
     """Results are sorted by size when sort_by='size'."""
-    tmp, created = _tmpdir(["small.txt", "big.txt"])
+    tmp, _created = _tmpdir(["small.txt", "big.txt"])
     try:
         small_path = os.path.join(tmp, "small.txt")
         big_path = os.path.join(tmp, "big.txt")

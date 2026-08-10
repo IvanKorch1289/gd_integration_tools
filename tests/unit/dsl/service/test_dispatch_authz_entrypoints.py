@@ -23,7 +23,6 @@ wrong role»:
     .venv/bin/python -m pytest tests/unit/dsl/service/test_dispatch_authz_entrypoints.py -q
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

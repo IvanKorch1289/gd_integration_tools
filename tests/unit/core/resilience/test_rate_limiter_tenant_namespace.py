@@ -7,7 +7,6 @@
 - Fallback ``tenant:_default_`` если контекст не установлен.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

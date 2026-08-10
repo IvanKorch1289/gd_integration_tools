@@ -1,6 +1,5 @@
 """W25.3 — Unit-тест V1ToV2Migration."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

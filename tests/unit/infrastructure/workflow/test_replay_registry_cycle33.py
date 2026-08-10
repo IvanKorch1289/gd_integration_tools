@@ -20,7 +20,6 @@ temporalio SDK опционален (extra dep ``uv sync --extra workflow``); е
 объёме.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -147,7 +146,7 @@ def test_workflow_registry_singleton_is_module_level() -> None:
     (stateful module global), проверяем что pre-reload ссылка остаётся
     живой (не заменяется неявно).
     """
-    import src.backend.core.workflow_registry as other_import  # noqa: PLC0415
+    import src.backend.core.workflow_registry as other_import
 
     # До reload — один и тот же объект.
     pre_reload_id = id(workflow_registry)
@@ -175,7 +174,7 @@ def test_register_uses_decorator_name_when_present() -> None:
 
 def _has_temporalio() -> bool:
     try:
-        import temporalio  # noqa: F401
+        import temporalio
 
         return True
     except ImportError:

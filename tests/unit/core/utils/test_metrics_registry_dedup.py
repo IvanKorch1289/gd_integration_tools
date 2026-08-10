@@ -4,7 +4,6 @@ Per Master Prompt P1-#4: удали дублирующий metrics_registry из
 infrastructure/observability, оставь только core/utils/metrics_registry.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

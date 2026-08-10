@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты PoolHealthMonitor (K8 Wave 5, S1-R6).
 
 Покрывают три ключевых сценария DoD:

@@ -53,8 +53,8 @@ __all__ = (
     "RedisClient",
     "RedisKind",
     "_RedisClientProtocol",
-    "get_redis_client",
     "__getattr__",
+    "get_redis_client",
 )
 
 
@@ -68,7 +68,7 @@ class RedisClient(ConnectionMixin, CacheMixin, HelpersMixin, StreamMixin):
     # 'settings' and no __dict__ for setting new attributes`` on the very
     # first attribute assignment. Pre-existing bug masked by tests that
     # either stubbed ``__init__`` or never exercised ``RedisClient()``.
-    __slots__ = ("settings", "logger", "_clients", "_locks", "_breakers")
+    __slots__ = ("_breakers", "_clients", "_locks", "logger", "settings")
 
     def __init__(self, settings: RedisSettings) -> None:
         """Args:

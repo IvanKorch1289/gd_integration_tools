@@ -67,7 +67,7 @@ class OptimizePromptProcessor(BaseProcessor):
                     {"status": "skipped", "reason": "dspy_eval_pipeline_enabled=False"},
                 )
                 return
-        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-962: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError — config
             # not initialized, RuntimeError — feature_flags unavailable.

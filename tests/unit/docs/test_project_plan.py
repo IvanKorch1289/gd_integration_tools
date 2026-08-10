@@ -8,7 +8,6 @@ PLAN.md.
 Не запускает sphinx-build / не открывает файлы вне `docs/`.
 """
 
-# ruff: noqa: S101
 from __future__ import annotations
 
 import re

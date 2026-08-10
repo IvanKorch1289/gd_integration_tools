@@ -35,7 +35,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 if TYPE_CHECKING:
     from src.backend.dsl.engine.tracer import TraceEvent
 
-__all__ = ("TraceStorage", "InMemoryTraceStorage", "JsonFileTraceStorage")
+__all__ = ("InMemoryTraceStorage", "JsonFileTraceStorage", "TraceStorage")
 
 
 @runtime_checkable
@@ -166,7 +166,7 @@ class JsonFileTraceStorage:
                         error=d.get("error"),
                     )
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 if not isinstance(exc, (json.JSONDecodeError, KeyError)):
                     raise
                 continue

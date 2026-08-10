@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты CapabilityRef + DEFAULT_CAPABILITY_CATALOG (ADR-044)."""
 
 from __future__ import annotations

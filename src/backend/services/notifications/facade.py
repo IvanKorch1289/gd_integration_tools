@@ -223,7 +223,7 @@ class NotificationsFacade:
             facade = self._get_messaging()
             if await facade.is_available(channel):
                 return True
-        except (ConnectionError, TimeoutError, AttributeError) as probe_exc:  # noqa: PERF203
+        except (ConnectionError, TimeoutError, AttributeError) as probe_exc:
             # D-A1-04 fix (cycle 29): narrow exceptions + observability.
             # Bare `except Exception` маскировал любые ошибки пробы messaging
             # backend (e.g. RabbitMQ/Redis временно недоступны).

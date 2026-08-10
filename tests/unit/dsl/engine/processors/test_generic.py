@@ -1,6 +1,5 @@
 """Unit tests for generic DSL processors."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

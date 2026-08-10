@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 # Canonical re-exports (backward compat с pre-S107 callers)
 from src.backend.core.audit.facade._base import emit_audit, emit_audit_safe
 from src.backend.core.audit.facade.ai import emit_ai_workspace
-from src.backend.core.audit.facade.audit_service import (  # noqa: F401
+from src.backend.core.audit.facade.audit_service import (
     AuditService,
     get_unified_audit_service,
 )
@@ -71,16 +71,16 @@ def get_jsonl_backend(path: str | Path) -> JsonlAuditBackend:
 
 __all__ = (
     "AuditService",
-    "get_unified_audit_service",
-    "get_jsonl_backend",
+    "emit_ai_workspace",
     "emit_audit",
+    "emit_audit_safe",
     # Per-domain helpers (S106 W2 Path A)
     "emit_authorization_decision",
-    "emit_waf_evaluation",
-    "emit_capability_check",
-    "emit_secret_rotation",
-    "emit_secret_access",
-    "emit_ai_workspace",
-    "emit_audit_safe",
     "emit_banking_audit",
+    "emit_capability_check",
+    "emit_secret_access",
+    "emit_secret_rotation",
+    "emit_waf_evaluation",
+    "get_jsonl_backend",
+    "get_unified_audit_service",
 )

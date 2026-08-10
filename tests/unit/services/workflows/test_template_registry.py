@@ -10,7 +10,6 @@
     * BGE-M3 fallback на rapidfuzz при ImportError.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

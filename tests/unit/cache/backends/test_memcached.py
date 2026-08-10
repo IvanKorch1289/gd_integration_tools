@@ -5,7 +5,6 @@
 :class:`unittest.mock.AsyncMock`, чтобы не поднимать реальный memcached.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -17,7 +16,7 @@ import pytest
 pytest.importorskip("aiomcache")
 
 from src.backend.infrastructure.cache.backends.memcached import (
-    MemcachedBackend,  # noqa: E402
+    MemcachedBackend,
 )
 
 

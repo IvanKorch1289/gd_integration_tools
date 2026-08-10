@@ -86,7 +86,7 @@ _SERVICE: FeatureFlagService | None = None
 
 def get_feature_flag_service() -> FeatureFlagService:
     """Вернуть глобальный singleton ``FeatureFlagService``."""
-    global _SERVICE  # noqa: PLW0603
+    global _SERVICE
     if _SERVICE is None:
         _SERVICE = FeatureFlagService()
     return _SERVICE

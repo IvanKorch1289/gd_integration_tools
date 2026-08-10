@@ -14,7 +14,6 @@
 9. ``SinkRouter.dispatch`` — отказ одного sink не ломает остальные.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

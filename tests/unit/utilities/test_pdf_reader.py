@@ -1,6 +1,5 @@
 """Unit-тесты PDF reader facade — ``[wave:s18/w0-goal-driven-sweep-5-pdf-facade]``."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

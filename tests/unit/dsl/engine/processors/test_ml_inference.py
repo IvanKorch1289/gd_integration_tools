@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Unit-тесты для ml_inference процессоров.
 
 Покрывает OnnxInferenceProcessor, EmbeddingProcessor.

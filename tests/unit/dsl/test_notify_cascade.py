@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Тесты `NotifyCascadeProcessor` (R2.3)."""
 
 from __future__ import annotations

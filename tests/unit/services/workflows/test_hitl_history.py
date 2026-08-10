@@ -1,6 +1,5 @@
 """Unit-тесты HitlHistoryService — Sprint 12 K5 W2."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

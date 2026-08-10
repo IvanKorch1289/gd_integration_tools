@@ -1,6 +1,5 @@
 """Pure ASGI regression-тесты для PIIMaskingResponseMiddleware (cycle 54)."""
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

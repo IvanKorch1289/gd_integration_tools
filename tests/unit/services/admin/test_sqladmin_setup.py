@@ -12,7 +12,6 @@
     Поэтому каждый тест подменяет ``sys.modules['...setup_admin']`` на
     лёгкий stub ДО первого вызова :func:`register_admin`.
 """
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -53,7 +52,7 @@ def test_register_admin_returns_none_when_legacy_fails() -> None:
     graceful-degradation в dev_light/тест-режимах.
     """
 
-    def _raising_setup(*, app: object) -> None:  # noqa: ARG001
+    def _raising_setup(*, app: object) -> None:
         raise RuntimeError("DB unavailable")
 
     _install_stub_legacy(_raising_setup)

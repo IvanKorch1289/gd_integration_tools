@@ -1,4 +1,3 @@
-# ruff: noqa: S101
 """Smoke-тест для in-tree reference-плагина ``extensions/example_plugin``.
 
 Проверяет, что манифест V11 (ADR-042) парсится и совместим с целевой

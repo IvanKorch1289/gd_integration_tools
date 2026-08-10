@@ -179,7 +179,7 @@ class TemporalSchedulerBackend:
             try:
                 handle = client.get_schedule_handle(name)
                 await handle.delete()
-            except (RuntimeError, AttributeError, OSError, ConnectionError) as delete_exc:  # noqa: BLE001 — schedule мог не существовать
+            except (RuntimeError, AttributeError, OSError, ConnectionError) as delete_exc:
                 # cycle-9/D-AUDIT-1022: narrow exceptions + observability.
                 # RuntimeError — schedule not found, AttributeError —
                 # handle API change, OSError/ConnectionError — Temporal
@@ -278,7 +278,7 @@ class TemporalSchedulerBackend:
                 handle = client.get_schedule_handle(job_id)
                 await handle.delete()
                 return True
-            except (RuntimeError, AttributeError, KeyError) as sched_exc:  # noqa: BLE001
+            except (RuntimeError, AttributeError, KeyError) as sched_exc:
                 # cycle-9/D-AUDIT-1023: narrow exceptions + observability.
                 # RuntimeError — schedule not found, AttributeError —
                 # handle API change, KeyError — _oneshot_ids missing.
@@ -292,7 +292,7 @@ class TemporalSchedulerBackend:
                 await wf_handle.cancel()
                 self._oneshot_ids.pop(job_id, None)
                 return True
-        except (RuntimeError, AttributeError, OSError, ConnectionError) as outer_exc:  # noqa: BLE001
+        except (RuntimeError, AttributeError, OSError, ConnectionError) as outer_exc:
             # cycle-9/D-AUDIT-1023: см. выше — outer cancel path.
             import logging
             logging.getLogger(__name__).debug(
@@ -330,7 +330,7 @@ class TemporalSchedulerBackend:
                         "status": "active",
                     }
                 )
-        except (RuntimeError, AttributeError, OSError, ConnectionError) as list_exc:  # noqa: BLE001
+        except (RuntimeError, AttributeError, OSError, ConnectionError) as list_exc:
             # cycle-9/D-AUDIT-1024: narrow exceptions + observability.
             # RuntimeError — list_schedules not supported (old Temporal),
             # AttributeError — API change, OSError/ConnectionError — cluster

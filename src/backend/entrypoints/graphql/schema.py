@@ -37,7 +37,7 @@ from typing import Any
 import strawberry
 from fastapi import Depends
 from strawberry.fastapi import GraphQLRouter
-from strawberry.scalars import JSON  # noqa: F401  # re-exported below
+from strawberry.scalars import JSON  # re-exported below
 from strawberry.types import Info
 
 from src.backend.core.auth import AuthMethod
@@ -52,7 +52,7 @@ from src.backend.dsl.service import get_dsl_service
 # S168 W12 P2-4: DslResult + ActionResult + dispatch_action extracted
 # to dsl_result.py. Re-exported here для backward-compat (existing
 # callers: tests/unit/entrypoints/graphql/test_schema.py).
-from src.backend.entrypoints.graphql.dsl_result import (  # noqa: E402,F401
+from src.backend.entrypoints.graphql.dsl_result import (
     ActionResult,
     DslResult,
 )

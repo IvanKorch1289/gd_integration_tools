@@ -97,7 +97,7 @@ class InfraMixin:
         *,
         source_property: str = "body",
         target_property: str | None = None,
-        token_map_property: str = "pii_token_map",  # noqa: S107  # config field name, not a password
+        token_map_property: str = "pii_token_map",  # config field name, not a password
         scope: str = "default",
         strict: bool = False,
     ) -> RouteBuilder:
@@ -222,7 +222,7 @@ class InfraMixin:
                     details={"graph_type": graph_type, "model": model},
                     severity="warning",
                 )
-            except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001
+            except (ImportError, AttributeError, RuntimeError) as audit_exc:
                 # cycle-9/D-AUDIT-976: narrow exceptions + observability.
                 # ImportError — audit facade missing, AttributeError —
                 # schema change, RuntimeError — backend unavailable.

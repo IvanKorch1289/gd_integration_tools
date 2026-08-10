@@ -128,7 +128,7 @@ class MessagingFacade:
             return False
         try:
             return await adapter.is_available()
-        except (ImportError, RuntimeError, OSError, ConnectionError, AttributeError) as ch_exc:  # noqa: BLE001
+        except (ImportError, RuntimeError, OSError, ConnectionError, AttributeError) as ch_exc:
             # cycle-9/D-AUDIT-908: narrow exceptions + observability.
             # Bare `except Exception` маскировал unrelated runtime errors
             # (KeyError, TypeError, ValueError) — ложные 'channel down'.

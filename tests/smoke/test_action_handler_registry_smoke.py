@@ -4,7 +4,6 @@
 получение метаданных, листинг, dispatch через in-memory stub.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

@@ -213,7 +213,7 @@ class WebhookSource:
         now = time.monotonic()
         # Drop expired
         while cls._dedup_cache:
-            oldest_id, ts = next(iter(cls._dedup_cache.items()))
+            _oldest_id, ts = next(iter(cls._dedup_cache.items()))
             if now - ts > cls._DEDUP_TTL_S:
                 cls._dedup_cache.popitem(last=False)
             else:

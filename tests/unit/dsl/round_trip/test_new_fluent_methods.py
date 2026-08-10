@@ -6,7 +6,6 @@
       invoke_workflow) — наличие в pipeline + базовая to_spec round-trip.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

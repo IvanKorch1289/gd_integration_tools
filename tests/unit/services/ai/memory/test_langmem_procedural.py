@@ -7,7 +7,6 @@ Cycle 65 invariant: tests catch regressions in procedural storage
 that could lead to silent SOP corruption в banking AI agents.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 

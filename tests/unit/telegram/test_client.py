@@ -14,7 +14,6 @@
 Подмена HTTP-транспорта через ``httpx.MockTransport``.
 """
 
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -38,7 +37,7 @@ def bot_config() -> TelegramBotConfig:
     """Тестовая конфигурация Telegram бота."""
     return TelegramBotConfig(
         bot_id="12345",
-        secret_key="ABCDEF",  # noqa: S106
+        secret_key="ABCDEF",
         base_url="https://api.telegram.org",
         timeout=5.0,
     )
@@ -52,7 +51,7 @@ def _make_client(config: TelegramBotConfig, handler: Any) -> TelegramBotClient:
         if isinstance(handler, httpx.MockTransport)
         else httpx.MockTransport(handler)
     )
-    client._http = httpx.AsyncClient(  # noqa: SLF001
+    client._http = httpx.AsyncClient(
         base_url=f"{config.base_url}/bot{config.token}",
         timeout=config.timeout,
         transport=transport,
@@ -332,11 +331,11 @@ class TestContextManager:
     ) -> None:
         """``async with`` создаёт и закрывает HTTP-клиент."""
         client = TelegramBotClient(bot_config)
-        assert client._http is None  # noqa: SLF001
+        assert client._http is None
         async with client as opened:
             assert opened is client
-            assert client._http is not None  # noqa: SLF001
-        assert client._http is None  # noqa: SLF001
+            assert client._http is not None
+        assert client._http is None
 
     def test_http_property_lazy_init(self, bot_config: TelegramBotConfig) -> None:
         """``client.http`` создаёт временный AsyncClient если не открыт."""
