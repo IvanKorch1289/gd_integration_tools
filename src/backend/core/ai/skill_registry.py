@@ -308,7 +308,16 @@ class SkillRegistry:
                 strict = bool(
                     getattr(feature_flags, "call_function_whitelist_strict", True)
                 )
-            except Exception:
+            except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-988: narrow exceptions + observability.
+                # ImportError — features module missing, AttributeError —
+                # config not initialized, RuntimeError — feature_flags
+                # unavailable.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "skill_registry.feature_flag_fallback",
+                    extra={"error": str(ff_exc)},
+                )
                 strict = True  # fail-closed
             if strict:
                 raise PermissionError(
