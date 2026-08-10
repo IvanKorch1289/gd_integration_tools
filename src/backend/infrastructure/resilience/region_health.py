@@ -79,7 +79,16 @@ class RegionHealthChecker:
                 writer.close()
                 await writer.wait_closed()
                 return True
-        except Exception:
+        except (OSError, ConnectionError, TimeoutError, AttributeError) as probe_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-924: narrow exceptions + observability.
+            # OSError/ConnectionError/TimeoutError для network probe,
+            # AttributeError для protocol mismatch. Bare `except Exception`
+            # маскировал unrelated runtime errors (KeyError, TypeError).
+            import logging
+            logging.getLogger(__name__).debug(
+                "region_health.probe_failed",
+                extra={"error": str(probe_exc), "error_type": type(probe_exc).__name__},
+            )
             return False
 
     async def check_all(self) -> None:
