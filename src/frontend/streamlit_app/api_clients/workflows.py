@@ -139,7 +139,16 @@ class WorkflowsClient(BaseAPIClient):
                 json=payload,
                 params={"wait": str(wait).lower(), "timeout_s": timeout_s},
             )
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_trigger_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1075: narrow exceptions + observability.
+            # ConnectionError/TimeoutError — server unreachable, RuntimeError
+            # — API failure, ValueError — invalid response, TypeError —
+            # wrong type.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_workflows_client.trigger_failed",
+                extra={"workflow_name": workflow_name, "error": str(wf_trigger_exc)},
+            )
             return None
 
     def get_saga_history(
@@ -157,5 +166,11 @@ class WorkflowsClient(BaseAPIClient):
                 params={"limit": limit},
             )
             return result if isinstance(result, list) else []
-        except Exception:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as wf_saga_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1075: см. выше — mirror для saga_history.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_workflows_client.saga_history_failed",
+                extra={"workflow_id": workflow_id, "error": str(wf_saga_exc)},
+            )
             return []
