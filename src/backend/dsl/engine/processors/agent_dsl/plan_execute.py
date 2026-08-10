@@ -349,7 +349,15 @@ class PlanExecuteProcessor(BaseAIProcessor):
             )
 
             return get_ai_gateway()
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError) as di_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-966: narrow exceptions + observability.
+            # ImportError — gateway_adapter missing, AttributeError —
+            # function API change, RuntimeError — DI unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "plan_execute.ai_gateway_resolve_fallback",
+                extra={"error": str(di_exc)},
+            )
             return None
 
     def to_spec(self) -> dict[str, Any]:
