@@ -216,7 +216,16 @@ class ExternalDatabaseTransactionContext:
         result = await self._session.execute(text(sql), params or {})
         try:
             return [dict(row) for row in result.mappings().all()]
-        except Exception:  # noqa: BLE001
+        except (TypeError, ValueError, KeyError, AttributeError) as mapping_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1028: narrow exceptions + observability.
+            # TypeError для wrong row type, ValueError для invalid value,
+            # KeyError для missing key, AttributeError для mappings API
+            # change.
+            import logging
+            logging.getLogger(__name__).debug(
+                "external_database_facade.row_mapping_failed",
+                extra={"error": str(mapping_exc)},
+            )
             return None
 
 
