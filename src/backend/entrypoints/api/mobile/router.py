@@ -14,7 +14,7 @@ All endpoints return CompressedResponse (uniform shape).
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, Query, status
@@ -46,7 +46,7 @@ def _wrap(data: Any, compressed: bool = True) -> CompressedResponse:
     """Wrap data в CompressedResponse с metadata."""
     return CompressedResponse(
         data=PayloadOptimizer.compact(data) if compressed else data,
-        timestamp=datetime.now(tz=timezone.utc),
+        timestamp=datetime.now(tz=UTC),
         request_id=str(uuid.uuid4()),
         compressed=compressed,
     )
@@ -134,7 +134,7 @@ async def get_profile(
             avatar_url=None,
             tenant_id="default",
             role="user",
-            last_seen_at=datetime.now(tz=timezone.utc),
+            last_seen_at=datetime.now(tz=UTC),
             unread_count=len(_notifications.get(user_id, [])),
         ),
     )
@@ -188,7 +188,7 @@ async def get_sync_state(
     """Offline-first sync: return server changes since last sync."""
     user_id = await _verify_mobile_token(authorization)
     state = MobileSyncState(
-        last_sync_at=datetime.now(tz=timezone.utc),
+        last_sync_at=datetime.now(tz=UTC),
         changes=[],  # Production: query actual changes since `since`
         server_version=1,
     )
@@ -199,7 +199,7 @@ async def get_sync_state(
 @mobile_router.get("/health", response_model=CompressedResponse)
 async def mobile_health() -> CompressedResponse:
     """Health check endpoint для mobile clients (liveness)."""
-    return _wrap({"status": "ok", "ts": datetime.now(tz=timezone.utc).isoformat()})
+    return _wrap({"status": "ok", "ts": datetime.now(tz=UTC).isoformat()})
 
 
 # ── Test helpers ────────────────────────────────────────────────────

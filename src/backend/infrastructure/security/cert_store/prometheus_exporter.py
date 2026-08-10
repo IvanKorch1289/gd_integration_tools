@@ -13,7 +13,7 @@ Production: /metrics endpoint exposes cert_* metrics.
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
@@ -84,7 +84,7 @@ class CertPrometheusExporter:
             store: CertStore instance.
             days: Окно в днях для проверки expiring.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         before = now.timestamp() + days * 86400
 
         # Получить истекающие через backend
@@ -101,7 +101,7 @@ class CertPrometheusExporter:
             if exp is None:
                 continue
             if exp.tzinfo is None:
-                exp = exp.replace(tzinfo=timezone.utc)
+                exp = exp.replace(tzinfo=UTC)
             seconds_remaining = (exp.timestamp() - now.timestamp())
             days_remaining = seconds_remaining / 86400
             sid = getattr(entry, "service_id", "unknown")

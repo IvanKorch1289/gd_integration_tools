@@ -7,7 +7,7 @@ Pattern (D257, Ponytail): thin wrapper над redis.asyncio.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -53,7 +53,7 @@ class RedisCertTransport:
         return {
             "cert_id": cert_id,
             "action": action,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def publish(self, cert_id: str, *, action: str = "set") -> None:

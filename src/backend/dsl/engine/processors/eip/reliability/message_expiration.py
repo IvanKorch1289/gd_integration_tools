@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import threading
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
@@ -83,7 +83,7 @@ class MessageExpirationProcessor(BaseProcessor):
         self._on_expired = on_expired_action
         self._dispatcher = action_dispatcher
         self._header_name = header_name
-        self._time_source = time_source or (lambda: datetime.now(tz=timezone.utc))
+        self._time_source = time_source or (lambda: datetime.now(tz=UTC))
         self._lock = threading.Lock()
         self._expired_count = 0
         self._kept_count = 0

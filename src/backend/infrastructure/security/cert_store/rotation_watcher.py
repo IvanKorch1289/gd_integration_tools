@@ -14,7 +14,7 @@ Production: config flag ``cert_auto_rotate: bool = False``.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import TYPE_CHECKING
 
 from src.backend.core.logging import get_logger
@@ -62,7 +62,7 @@ class CertRotationWatcher:
 
     async def _check_expiring(self) -> int:
         """Один check cycle — возвращает количество expiring certs."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         before = now.timestamp() + self._rotation_threshold_days * 86400
         try:
             entries = await self._cert_store._backend.list_expiring(before=before)
@@ -76,7 +76,7 @@ class CertRotationWatcher:
             if exp is None:
                 continue
             if exp.tzinfo is None:
-                exp = exp.replace(tzinfo=timezone.utc)
+                exp = exp.replace(tzinfo=UTC)
             days_remaining = (exp.timestamp() - now.timestamp()) / 86400
             sid = getattr(entry, "service_id", "unknown")
             logger.warning(

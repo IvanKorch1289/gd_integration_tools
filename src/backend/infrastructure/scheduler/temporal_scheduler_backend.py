@@ -38,7 +38,7 @@ Out of scope (future):
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 __all__ = ("TemporalSchedulerBackend",)
@@ -239,11 +239,11 @@ class TemporalSchedulerBackend:
 
         # Temporal работает в UTC.
         if run_at.tzinfo is None:
-            run_at_utc = run_at.replace(tzinfo=timezone.utc)
+            run_at_utc = run_at.replace(tzinfo=UTC)
         else:
-            run_at_utc = run_at.astimezone(timezone.utc)
+            run_at_utc = run_at.astimezone(UTC)
         # start_delay — timedelta от now до run_at.
-        now_utc = datetime.now(tz=timezone.utc)
+        now_utc = datetime.now(tz=UTC)
         start_delay = max(run_at_utc - now_utc, timedelta(0))
 
         handle = await client.start_workflow(

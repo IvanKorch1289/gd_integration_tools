@@ -20,6 +20,7 @@ from collections.abc import Callable
 from typing import Any, Protocol
 
 from src.backend.core.logging import get_logger
+from datetime import UTC
 
 __all__ = (
     "InMemoryLineageEmitter",
@@ -133,10 +134,10 @@ class InMemoryLineageEmitter:
 
 def _iso_timestamp(unix_ts: float) -> str:
     """Unix timestamp → ISO 8601 string (OpenLineage format)."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     return (
-        datetime.fromtimestamp(unix_ts, tz=timezone.utc)
+        datetime.fromtimestamp(unix_ts, tz=UTC)
         .isoformat()
         .replace("+00:00", "Z")
     )

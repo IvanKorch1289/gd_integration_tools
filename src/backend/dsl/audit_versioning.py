@@ -40,6 +40,7 @@ from typing import Any, ClassVar
 from sqlalchemy import inspect
 from sqlalchemy_continuum import version_class
 from sqlalchemy_continuum.exc import ClassNotVersioned
+from datetime import UTC
 
 __all__ = ("OP_DELETE", "OP_INSERT", "OP_UPDATE", "Versioning", "VersioningError")
 
@@ -299,12 +300,12 @@ class Versioning:
         if batch_size <= 0:
             raise VersioningError(f"batch_size должен быть > 0, получено {batch_size}")
 
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         from sqlalchemy_continuum import version_class, versioning_manager
         from sqlalchemy_continuum.exc import ClassNotVersioned
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        cutoff = datetime.now(UTC) - timedelta(days=retention_days)
         Transaction = versioning_manager.transaction_cls
 
         # 1. Найти ID старых transactions (пагинированно)

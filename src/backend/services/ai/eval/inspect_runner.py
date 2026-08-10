@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -167,7 +167,7 @@ class InspectRunner:
 
     def run_suite(self, suite: EvalSuite) -> SuiteResult:
         """Прогоняет один suite (синхронно)."""
-        started = datetime.now(timezone.utc)
+        started = datetime.now(UTC)
         try:
             dataset = suite.build_dataset()
         except Exception as exc:  # noqa: BLE001
@@ -178,7 +178,7 @@ class InspectRunner:
                 sample_count=0,
                 metrics={},
                 started_at=started.isoformat(),
-                finished_at=datetime.now(timezone.utc).isoformat(),
+                finished_at=datetime.now(UTC).isoformat(),
                 duration_seconds=0.0,
                 error=f"build_dataset failed: {exc}",
             )
@@ -195,7 +195,7 @@ class InspectRunner:
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Suite %s sample failed: %s", suite.name, exc)
 
-        finished = datetime.now(timezone.utc)
+        finished = datetime.now(UTC)
         aggregated = {
             key: round(sum(values) / max(len(values), 1), 6)
             for key, values in accumulated.items()
@@ -213,14 +213,14 @@ class InspectRunner:
 
     def run_all(self, *, write_artifacts: bool = True) -> SuiteSummary:
         """Запускает все зарегистрированные suite + пишет артефакты."""
-        started = datetime.now(timezone.utc)
+        started = datetime.now(UTC)
         summary = SuiteSummary(started_at=started.isoformat(), finished_at="")
 
         if not self.is_enabled():
             logger.info(
                 "InspectRunner: feature_flag inspect_ai_eval_enabled=False — skip"
             )
-            summary.finished_at = datetime.now(timezone.utc).isoformat()
+            summary.finished_at = datetime.now(UTC).isoformat()
             summary.skipped = len(self._suites)
             return summary
 
@@ -231,7 +231,7 @@ class InspectRunner:
             if result.error:
                 summary.failed += 1
 
-        summary.finished_at = datetime.now(timezone.utc).isoformat()
+        summary.finished_at = datetime.now(UTC).isoformat()
 
         if write_artifacts:
             self._write_artifacts(summary)
@@ -239,7 +239,7 @@ class InspectRunner:
 
     def _write_artifacts(self, summary: SuiteSummary) -> None:
         """Записывает JSON и Markdown отчёт в ``artifacts/inspect-ai/<date>/``."""
-        date_dir = self._artifacts_dir / datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        date_dir = self._artifacts_dir / datetime.now(UTC).strftime("%Y-%m-%d")
         date_dir.mkdir(parents=True, exist_ok=True)
         json_path = date_dir / "report.json"
         md_path = date_dir / "report.md"

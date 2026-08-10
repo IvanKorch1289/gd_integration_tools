@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
@@ -92,7 +92,7 @@ def _new_entry(
         agent_id=agent_id,
         content=content,
         metadata=metadata,
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         embedding=embedding,
     )
 
@@ -464,8 +464,8 @@ class LangMemService:
                 "episodic_processed": 0,
                 "semantic_created": 0,
                 "duration_s": 0.0,
-                "started_at": datetime.now(timezone.utc).isoformat(),
-                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "started_at": datetime.now(UTC).isoformat(),
+                "finished_at": datetime.now(UTC).isoformat(),
             }
 
     async def stats(self) -> dict[str, Any]:

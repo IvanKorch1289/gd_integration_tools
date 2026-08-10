@@ -35,7 +35,7 @@ Hot-reload механизм:
 
 import hashlib
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 
 
 
@@ -64,12 +64,12 @@ def make_cert_entry(service_id: str, pem: str) -> CertEntry:
     Используется в backend'ах без полной metadata (file, env).
     Production backends (vault, postgres) сохраняют реальные fingerprint + expires_at.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from src.backend.infrastructure.security.cert_store.models import _fingerprint
     return CertEntry(
         service_id=service_id,
         pem=pem,
         fingerprint=_fingerprint(pem),
-        expires_at=datetime.now(timezone.utc).replace(year=2099),
+        expires_at=datetime.now(UTC).replace(year=2099),
     )

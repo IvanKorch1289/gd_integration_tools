@@ -23,7 +23,7 @@ Thread-safe: all functions pure (no shared state). Pendulum.DateTime is immutabl
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 
 try:
@@ -62,8 +62,8 @@ def utc_now() -> datetime:
         # both pendulum.DateTime и stdlib.datetime совместимы
     """
     if _HAS_PENDULUM:
-        return pendulum.now(tz=timezone.utc)  # type: ignore[return-value]
-    return datetime.now(tz=timezone.utc)
+        return pendulum.now(tz=UTC)  # type: ignore[return-value]
+    return datetime.now(tz=UTC)
 
 
 def parse_dt(value: Any) -> datetime:
@@ -93,8 +93,8 @@ def parse_dt(value: Any) -> datetime:
     if isinstance(value, (int, float)):
         # Heuristic: > 1e12 → milliseconds (post-2001 в ms); else seconds.
         if value > 1e12:
-            return ensure_utc(datetime.fromtimestamp(value / 1000.0, tz=timezone.utc))
-        return ensure_utc(datetime.fromtimestamp(value, tz=timezone.utc))
+            return ensure_utc(datetime.fromtimestamp(value / 1000.0, tz=UTC))
+        return ensure_utc(datetime.fromtimestamp(value, tz=UTC))
     if isinstance(value, str):
         if not _HAS_PENDULUM:
             # stdlib ISO 8601 parser (Python 3.11+)
@@ -119,8 +119,8 @@ def ensure_utc(dt: datetime) -> datetime:
     """
     if dt.tzinfo is None:
         # Naive datetime — assume UTC (no local-tz surprise).
-        return dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+        return dt.replace(tzinfo=UTC)
+    return dt.astimezone(UTC)
 
 
 def humanize_delta(

@@ -9,7 +9,7 @@ Production: integration с Prometheus alert (DEFER M21+).
 # ruff: noqa: E501
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -75,7 +75,7 @@ async def list_expiring_certs(
 
         cert_store = CertStore.from_settings(cert_store_settings)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     before = now + timedelta(days=days)
     entries = await cert_store._backend.list_expiring(before=before)
 
@@ -85,7 +85,7 @@ async def list_expiring_certs(
         if exp is None:
             continue
         if exp.tzinfo is None:
-            exp = exp.replace(tzinfo=timezone.utc)
+            exp = exp.replace(tzinfo=UTC)
         days_remaining = (exp - now).days
         sid = getattr(entry, "service_id", None)
         items.append(

@@ -268,7 +268,7 @@ class CronTrigger:
 
         async def _loop() -> None:
             while not self._stop.is_set():
-                now = _dt.datetime.now(_dt.timezone.utc)
+                now = _dt.datetime.now(_dt.UTC)
                 next_fire = self._aps_trigger.get_next_fire_time(None, now)
                 if next_fire is None:
                     return  # cron expression yields no future fire
