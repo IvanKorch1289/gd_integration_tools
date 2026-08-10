@@ -12,6 +12,8 @@ import pytest
 
 from src.backend.dsl.engine.processors.waf_check import WafCheckProcessor
 
+from typing import Any  # Cycle-19 (D-AUDIT-1908): runtime Any для monkeypatch callbacks
+
 
 class TestWafExTextRegression:
     @pytest.mark.asyncio
