@@ -43,7 +43,15 @@ def cached_get_metrics() -> dict[str, Any]:
     client = BaseAPIClient()
     try:
         return client._request("GET", "/api/v1/admin/metrics")
-    except Exception:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as metrics_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1048: narrow exceptions + observability.
+        # ConnectionError/TimeoutError — server unreachable, RuntimeError
+        # — API failure, ValueError — invalid response, TypeError — wrong.
+        import logging
+        logging.getLogger(__name__).debug(
+            "streamlit_cached.metrics_request_failed",
+            extra={"error": str(metrics_exc)},
+        )
         return {}
 
 
@@ -56,7 +64,14 @@ def cached_get_health() -> dict[str, Any]:
     client = BaseAPIClient()
     try:
         return client._request("GET", "/api/v1/health/components")
-    except Exception:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as health_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1049: narrow exceptions + observability (mirror
+        # D-AUDIT-1048).
+        import logging
+        logging.getLogger(__name__).debug(
+            "streamlit_cached.health_request_failed",
+            extra={"error": str(health_exc)},
+        )
         return {}
 
 
