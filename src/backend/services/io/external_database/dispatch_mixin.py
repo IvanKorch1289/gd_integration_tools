@@ -56,9 +56,7 @@ class DispatchMixin(_ExternalDatabaseProtocol):
         prepared_params: list[PreparedDBParameter],
         execute_params: dict[str, Any],
     ) -> Any:
-        """
-        Разруливает выполнение по типу объекта.
-        """
+        """Разруливает выполнение по типу объекта."""
         if meta.object_type == ExternalDBObjectTypeChoices.query:
             return await self._execute_query(session, meta, execute_params)
 
@@ -93,9 +91,7 @@ class DispatchMixin(_ExternalDatabaseProtocol):
         meta: ExternalDBObjectMeta,
         execute_params: dict[str, Any],
     ) -> list[dict[str, Any]]:
-        """
-        Выполняет whitelist-query.
-        """
+        """Выполняет whitelist-query."""
         if not meta.sql_text:
             raise DatabaseError(
                 message=f"Для query '{meta.object_name}' не задан sql_text",
@@ -107,9 +103,7 @@ class DispatchMixin(_ExternalDatabaseProtocol):
     async def _execute_view(
         self, session: AsyncSession, meta: ExternalDBObjectMeta,
     ) -> list[dict[str, Any]]:
-        """
-        Выполняет SELECT * FROM разрешённого view.
-        """
+        """Выполняет SELECT * FROM разрешённого view."""
         safe_name = self._validate_identifier(meta.qualified_name, context="view")
         sql = f"SELECT * FROM {safe_name}"  # safe_name провалидирован _validate_identifier (regex)  # internal query with controlled parameters
         result = await session.execute(text(sql))
@@ -123,9 +117,7 @@ class DispatchMixin(_ExternalDatabaseProtocol):
         prepared_params: list[PreparedDBParameter],
         execute_params: dict[str, Any],
     ) -> Any:
-        """
-        Выполняет разрешённую функцию.
-        """
+        """Выполняет разрешённую функцию."""
         safe_name = self._validate_identifier(meta.qualified_name, context="function")
         arguments_sql = self._build_arguments_sql(meta, prepared_params)
 

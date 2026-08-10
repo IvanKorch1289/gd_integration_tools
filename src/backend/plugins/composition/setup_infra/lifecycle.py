@@ -124,16 +124,12 @@ async def perform_infrastructure_operation(components: list[OperationItem]) -> N
 
 
 async def starting() -> None:
-    """
-    Инициализирует инфраструктурные зависимости приложения.
-    """
+    """Инициализирует инфраструктурные зависимости приложения."""
     await perform_infrastructure_operation(starting_operations)
 
 
 async def ending() -> None:
-    """
-    Корректно завершает инфраструктурные зависимости приложения.
-    """
+    """Корректно завершает инфраструктурные зависимости приложения."""
     await perform_infrastructure_operation(ending_operations)
 
 

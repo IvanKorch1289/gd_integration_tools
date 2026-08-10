@@ -28,9 +28,7 @@ MetaFactory = Callable[[dict[str, Any], Request | None], ActionCommandMetaSchema
 
 @dataclass(slots=True)
 class EventPublishSpec:
-    """
-    Спецификация публикации action-команды в broker.
-    """
+    """Спецификация публикации action-команды в broker."""
 
     action: str
     broker: BrokerKind
@@ -63,18 +61,14 @@ class InvocationSpec:
 def default_payload_factory(
     source_kwargs: dict[str, Any], request: Request | None,
 ) -> dict[str, Any]:
-    """
-    Возвращает payload без преобразований.
-    """
+    """Возвращает payload без преобразований."""
     return dict(source_kwargs)
 
 
 def build_http_command_meta(
     source_kwargs: dict[str, Any], request: Request | None,
 ) -> ActionCommandMetaSchema:
-    """
-    Формирует meta для action-команды из HTTP-контекста.
-    """
+    """Формирует meta для action-команды из HTTP-контекста."""
     return ActionCommandMetaSchema(
         source="http", request_path=request.url.path if request is not None else None,
     )

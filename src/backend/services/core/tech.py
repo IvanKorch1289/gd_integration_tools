@@ -23,9 +23,7 @@ __all__ = ("TechService", "get_tech_service")
 
 
 class TechService:
-    """
-    Сервис для технических и служебных операций (Healthcheck, ссылки, отправка писем, массовая загрузка).
-    """
+    """Сервис для технических и служебных операций (Healthcheck, ссылки, отправка писем, массовая загрузка)."""
 
     async def get_log_storage_link(self) -> HTMLResponse:
         """Get link to log storage.
@@ -175,9 +173,7 @@ class TechService:
     async def upload_excel_for_mass_create(
         self, file_bytes: bytes, table_name: str, model_enum: Enum,
     ) -> list[dict[str, Any]]:
-        """
-        Парсит Excel-файл и добавляет записи в БД через BaseService нужной модели.
-        """
+        """Парсит Excel-файл и добавляет записи в БД через BaseService нужной модели."""
         if table_name not in model_enum._member_names_:  # type: ignore
             raise ValueError(f"Таблица {table_name} не найдена.")
 

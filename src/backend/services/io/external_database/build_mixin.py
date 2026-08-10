@@ -76,9 +76,7 @@ class BuildMixin(_ExternalDatabaseProtocol):
 
     @staticmethod
     def _resolve_bind_name(param_meta: ExternalDBParameterMeta, index: int) -> str:
-        """
-        Возвращает bind-имя параметра.
-        """
+        """Возвращает bind-имя параметра."""
         if param_meta.bind_name:
             return param_meta.bind_name
 
@@ -91,7 +89,5 @@ class BuildMixin(_ExternalDatabaseProtocol):
     def _to_execute_params(
         prepared_params: list[PreparedDBParameter],
     ) -> dict[str, Any]:
-        """
-        Преобразует prepared params в словарь для session.execute(...).
-        """
+        """Преобразует prepared params в словарь для session.execute(...)."""
         return {param.bind_name: param.value for param in prepared_params}

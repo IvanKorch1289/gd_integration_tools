@@ -19,9 +19,7 @@ _logger = get_logger(__name__)
 
 
 class ExchangeStatus(StrEnum):
-    """
-    Статус выполнения Exchange внутри DSL-маршрута.
-    """
+    """Статус выполнения Exchange внутри DSL-маршрута."""
 
     pending = "pending"
     processing = "processing"

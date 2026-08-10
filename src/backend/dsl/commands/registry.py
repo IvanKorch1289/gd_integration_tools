@@ -188,9 +188,7 @@ class RouteRegistry:
             disabled_feature_flags.add(flag_name)
 
     def clear(self) -> None:
-        """
-        Очищает реестр маршрутов.
-        """
+        """Очищает реестр маршрутов."""
         self._routes.clear()
 
     def unregister(self, route_id: str) -> bool:

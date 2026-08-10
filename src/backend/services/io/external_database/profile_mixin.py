@@ -41,7 +41,5 @@ class ProfileMixin(_ExternalDatabaseProtocol):
 
     @staticmethod
     def _get_profile_settings(profile_name: str):
-        """
-        Возвращает resolved settings профиля внешней БД.
-        """
+        """Возвращает resolved settings профиля внешней БД."""
         return settings.external_databases.get_profile(profile_name)

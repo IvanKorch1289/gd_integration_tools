@@ -74,9 +74,7 @@ class ValidationMixin(_ExternalDatabaseProtocol):
         return value
 
     def _validate_response(self, meta: ExternalDBObjectMeta, result: Any) -> Any:
-        """
-        Валидирует ответ, если для объекта задан response_schema.
-        """
+        """Валидирует ответ, если для объекта задан response_schema."""
         if meta.response_schema is None:
             return result
 

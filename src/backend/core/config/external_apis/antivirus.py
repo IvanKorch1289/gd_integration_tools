@@ -114,9 +114,7 @@ class AntivirusAPISettings(BaseSettingsWithLoader):
     )
 
     def build_url(self, endpoint_name: str) -> str:
-        """
-        Собирает полный URL по имени эндпоинта.
-        """
+        """Собирает полный URL по имени эндпоинта."""
         path = self.endpoints[endpoint_name]
         return f"{self.base_url.rstrip('/')}/{path.lstrip('/')}"
 

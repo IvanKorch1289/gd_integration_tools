@@ -35,9 +35,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
     """
 
     class HelperMethods:
-        """
-        Вспомогательные методы для работы с базой данных.
-        """
+        """Вспомогательные методы для работы с базой данных."""
 
         def __init__(
             self,
@@ -57,9 +55,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             ignore_none: bool = True,
             load_into_memory: bool = True,
         ) -> ConcreteTable:  # type: ignore
-            """
-            Обрабатывает данные и сохраняет объект в базе данных.
-            """
+            """Обрабатывает данные и сохраняет объект в базе данных."""
             unsecret_data = await self.model.get_value_from_secret_str(data)
 
             if existing_object:
@@ -129,9 +125,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             return query_or_object
 
         def _get_selectinload_options(self) -> list:
-            """
-            Формирует список опций для загрузки связанных моделей.
-            """
+            """Формирует список опций для загрузки связанных моделей."""
             from sqlalchemy.orm import selectinload
 
             mapper = inspect(self.model)
@@ -147,9 +141,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         async def _execute_stmt(
             self, session: AsyncSession, stmt: Insert | Update,
         ) -> ConcreteTable | None:  # type: ignore
-            """
-            Выполняет SQL-запрос (INSERT или UPDATE) и возвращает созданный или обновленный объект.
-            """
+            """Выполняет SQL-запрос (INSERT или UPDATE) и возвращает созданный или обновленный объект."""
             await session.flush()
             result = await session.execute(stmt)
             if not result:
@@ -166,9 +158,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             order: str = "asc",
             limit: int | None = None,
         ) -> Sequence[ConcreteTable]:  # type: ignore
-            """
-            Общий метод для получения версий объекта.
-            """
+            """Общий метод для получения версий объекта."""
             obj = await self.main_class.get(session=session, key="id", value=object_id)
 
             if not obj or (isinstance(obj, list) and not obj):
@@ -409,9 +399,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
     async def get_all_versions(
         self, session: AsyncSession, object_id: int, order: str,
     ) -> Sequence[Any]:
-        """
-        Получить все версии объекта.
-        """
+        """Получить все версии объекта."""
         return await self.helper._get_versions_query(
             session=session, object_id=object_id, order=order,
         )
@@ -420,9 +408,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
     async def get_latest_version(
         self, session: AsyncSession, object_id: int,
     ) -> dict[str, Any] | None:
-        """
-        Получить последнюю версию объекта.
-        """
+        """Получить последнюю версию объекта."""
         versions = await self.helper._get_versions_query(
             session=session, object_id=object_id, order="desc", limit=1,
         )

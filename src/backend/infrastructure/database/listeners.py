@@ -42,18 +42,14 @@ class DatabaseListener:
         def before_cursor_execute(
             conn, cursor, statement, parameters, context, executemany,
         ):
-            """
-            Сохраняет время старта запроса.
-            """
+            """Сохраняет время старта запроса."""
             context._query_start_time = monotonic()
 
         @event.listens_for(sync_engine, "after_cursor_execute")
         def after_cursor_execute(
             conn, cursor, statement, parameters, context, executemany,
         ):
-            """
-            Логирует длительность запроса и помечает slow queries.
-            """
+            """Логирует длительность запроса и помечает slow queries."""
             started_at = getattr(context, "_query_start_time", None)
             if started_at is None:
                 return

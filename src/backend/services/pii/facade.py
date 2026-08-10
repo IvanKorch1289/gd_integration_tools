@@ -26,9 +26,7 @@ _logger = get_logger("services.pii.facade")
 
 
 class PIIFacade:
-    """Unified facade для PII masking/tokenization operations.
-
-    """
+    """Unified facade для PII masking/tokenization operations."""
 
     def __init__(self) -> None:
         """Инициализация facade."""

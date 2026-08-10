@@ -7,10 +7,7 @@ from src.backend.infrastructure.repositories.base.sqlalchemy import SQLAlchemyRe
 async def get_repository_for_model(
     model: type[BaseModel],
 ) -> type[SQLAlchemyRepository]:
-    """
-    Возвращает класс репозитория для указанной модели.
-
-    """
+    """Возвращает класс репозитория для указанной модели."""
     from importlib import import_module
 
     repository_name = f"{model.__name__}Repository"  # Формируем имя репозитория

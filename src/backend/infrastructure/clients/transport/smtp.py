@@ -39,9 +39,7 @@ class BaseSmtpClient(ABC):
 
 
 class SmtpClient(BaseSmtpClient):
-    """
-    Расширенный SMTP-клиент с поддержкой пула соединений и механизмами отказоустойчивости.
-    """
+    """Расширенный SMTP-клиент с поддержкой пула соединений и механизмами отказоустойчивости."""
 
     def __init__(self, settings: MailSettings) -> None:
         """
@@ -86,9 +84,7 @@ class SmtpClient(BaseSmtpClient):
         return self
 
     async def __aexit__(self, exc_type, exc_val, _exc_tb) -> None:
-        """
-        Выход из асинхронного контекстного менеджера для корректного завершения работы.
-        """
+        """Выход из асинхронного контекстного менеджера для корректного завершения работы."""
         await self.close_pool()
 
     async def initialize_pool(self) -> None:

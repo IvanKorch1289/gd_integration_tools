@@ -116,9 +116,7 @@ class DatabaseInitializer:
             self.logger.debug("RLS tenant listener пропущен: %s", exc)
 
     def as_bundle(self) -> DatabaseBundle:
-        """
-        Возвращает единый контейнер инфраструктурных объектов.
-        """
+        """Возвращает единый контейнер инфраструктурных объектов."""
         return DatabaseBundle(
             name=self.name,
             settings=self.settings,
@@ -154,25 +152,19 @@ class DatabaseInitializer:
         return kwargs
 
     def _create_async_engine(self) -> AsyncEngine:
-        """
-        Создаёт и настраивает асинхронный engine SQLAlchemy.
-        """
+        """Создаёт и настраивает асинхронный engine SQLAlchemy."""
         return create_async_engine(
             url=self.settings.async_connection_url, **self._engine_kwargs(),
         )
 
     def _create_sync_engine(self) -> Engine:
-        """
-        Создаёт и настраивает синхронный engine SQLAlchemy.
-        """
+        """Создаёт и настраивает синхронный engine SQLAlchemy."""
         return create_engine(
             url=self.settings.sync_connection_url, **self._engine_kwargs(),
         )
 
     def _get_connect_args(self) -> dict[str, Any]:
-        """
-        Генерирует driver-level параметры подключения.
-        """
+        """Генерирует driver-level параметры подключения."""
         connect_args: dict[str, Any] = {}
 
         if self.settings.type == DatabaseTypeChoices.postgresql:
@@ -193,9 +185,7 @@ class DatabaseInitializer:
         return connect_args
 
     async def initialize_async_pool(self) -> None:
-        """
-        Предварительно прогревает асинхронный пул соединений.
-        """
+        """Предварительно прогревает асинхронный пул соединений."""
         connections = []
 
         try:
@@ -238,9 +228,7 @@ class DatabaseInitializer:
             return await conn.execute(query, params or {})
 
     def get_async_engine(self) -> AsyncEngine:
-        """
-        Возвращает асинхронный engine.
-        """
+        """Возвращает асинхронный engine."""
         return self.async_engine
 
     def get_sync_engine(self) -> Engine | None:
@@ -252,9 +240,7 @@ class DatabaseInitializer:
         return self.sync_engine
 
     async def dispose_sync(self) -> None:
-        """
-        Закрывает синхронные соединения (no-op если sync_engine is None).
-        """
+        """Закрывает синхронные соединения (no-op если sync_engine is None)."""
         if self.sync_engine is None:
             return
         try:
@@ -270,9 +256,7 @@ class DatabaseInitializer:
             )
 
     async def dispose_async(self) -> None:
-        """
-        Закрывает асинхронные соединения.
-        """
+        """Закрывает асинхронные соединения."""
         try:
             await self.async_engine.dispose()
             self.logger.info(
@@ -286,9 +270,7 @@ class DatabaseInitializer:
             )
 
     async def close(self) -> None:
-        """
-        Закрывает все соединения с БД.
-        """
+        """Закрывает все соединения с БД."""
         await self.dispose_sync()
         await self.dispose_async()
         if self.replica_engine is not None:

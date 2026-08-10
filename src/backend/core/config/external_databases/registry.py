@@ -242,9 +242,7 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
         return result
 
     def get_profile(self, profile_name: str) -> ExternalDatabaseConnectionSettings:
-        """
-        Возвращает resolved-конфигурацию внешней БД по profile_name.
-        """
+        """Возвращает resolved-конфигурацию внешней БД по profile_name."""
         try:
             return self.profiles[profile_name]  # type: ignore[index]
         except KeyError as exc:

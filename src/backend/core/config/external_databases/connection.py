@@ -149,9 +149,7 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
         return self._build_dsn(is_async=False)
 
     def _build_dsn(self, is_async: bool) -> str:
-        """
-        Внутренний метод генерации строки подключения.
-        """
+        """Внутренний метод генерации строки подключения."""
         driver = self.async_driver if is_async else self.sync_driver
         username = quote_plus(self.username)
         password = quote_plus(self.password.get_secret_value())

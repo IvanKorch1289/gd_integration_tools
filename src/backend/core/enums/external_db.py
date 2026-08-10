@@ -13,9 +13,7 @@ __all__ = (
 
 
 class ExternalDBObjectTypeChoices(StrEnum):
-    """
-    Типы разрешённых объектов внешних БД.
-    """
+    """Типы разрешённых объектов внешних БД."""
 
     view = "view"
     function = "function"
@@ -227,9 +225,7 @@ class ExternalDBObjectMeta(BaseModel):
 
     @model_validator(mode="after")
     def validate_meta(self) -> ExternalDBObjectMeta:
-        """
-        Проверяет согласованность описания объекта.
-        """
+        """Проверяет согласованность описания объекта."""
         if self.object_type == ExternalDBObjectTypeChoices.query and not self.sql_text:
             raise ValueError("Для object_type='query' обязательно поле sql_text")
 
@@ -293,9 +289,7 @@ class ExternalDBObjectMeta(BaseModel):
 
     @property
     def is_read_operation(self) -> bool:
-        """
-        Возвращает True для read-only операций.
-        """
+        """Возвращает True для read-only операций."""
         return self.object_type in {
             ExternalDBObjectTypeChoices.view,
             ExternalDBObjectTypeChoices.function,
@@ -401,21 +395,15 @@ class ExternalDBObjectChoices(Enum):
 
     @property
     def meta(self) -> ExternalDBObjectMeta:
-        """
-        Возвращает метаданные enum-элемента.
-        """
+        """Возвращает метаданные enum-элемента."""
         return self.value
 
     @classmethod
     def get(cls, name: str) -> ExternalDBObjectChoices:
-        """
-        Возвращает enum-элемент по имени.
-        """
+        """Возвращает enum-элемент по имени."""
         return cls[name]
 
     @classmethod
     def list_by_profile(cls, profile_name: str) -> list[ExternalDBObjectChoices]:
-        """
-        Возвращает все разрешённые объекты для конкретного профиля БД.
-        """
+        """Возвращает все разрешённые объекты для конкретного профиля БД."""
         return [item for item in cls if item.meta.profile_name == profile_name]

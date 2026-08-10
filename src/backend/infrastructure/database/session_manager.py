@@ -81,9 +81,7 @@ class DatabaseSessionManager:
 
     @asynccontextmanager
     async def transaction(self, session: AsyncSession) -> AsyncGenerator[None]:
-        """
-        Выполняет commit при успехе и rollback при ошибке.
-        """
+        """Выполняет commit при успехе и rollback при ошибке."""
         try:
             yield
             await session.commit()
@@ -97,16 +95,12 @@ class DatabaseSessionManager:
             ) from exc
 
     async def get_session(self) -> AsyncGenerator[AsyncSession]:
-        """
-        Dependency-совместимый генератор сессии без auto-commit.
-        """
+        """Dependency-совместимый генератор сессии без auto-commit."""
         async with self.create_session() as session:
             yield session
 
     async def get_transaction_session(self) -> AsyncGenerator[AsyncSession]:
-        """
-        Dependency-совместимый генератор транзакционной сессии.
-        """
+        """Dependency-совместимый генератор транзакционной сессии."""
         async with self.create_session() as session, self.transaction(session):
             yield session
 
@@ -174,9 +168,7 @@ def get_main_session_manager() -> DatabaseSessionManager:
 
 
 def get_external_session_manager(profile_name: str) -> DatabaseSessionManager:
-    """
-    Возвращает session manager для внешней БД по profile_name.
-    """
+    """Возвращает session manager для внешней БД по profile_name."""
     initializer = get_external_db_registry().get_initializer(profile_name)
 
     return DatabaseSessionManager(

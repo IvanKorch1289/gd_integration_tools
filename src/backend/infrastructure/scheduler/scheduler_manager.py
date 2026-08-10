@@ -111,9 +111,7 @@ class SchedulerManager:
             self.logger.warning("Scheduler DLQ attach skipped: %s", exc)
 
     async def stop(self):
-        """
-        Останавливает планировщик при завершении работы приложения.
-        """
+        """Останавливает планировщик при завершении работы приложения."""
         self.scheduler.shutdown()
 
     def register_job_cleanup(self, job_name: str):
