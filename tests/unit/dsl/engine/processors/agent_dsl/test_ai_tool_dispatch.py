@@ -254,8 +254,6 @@ async def test_ai_tool_dispatch_end_to_end_happy_path(
 
     from src.backend.core.ai.gateway_models import AIRequest, AIResponse
     from src.backend.services.ai.tools.registry import AgentTool
-    from src.backend.core.ai.gateway_models import AIRequest, AIResponse
-    from src.backend.services.ai.tools.registry import AgentTool
 
     # Mock AIGateway instance — AIGateway() returns this mock, .invoke() returns AIResponse.
     async def _mock_invoke(request: AIRequest) -> AIResponse:
@@ -330,7 +328,6 @@ async def test_ai_tool_dispatch_end_to_end_blocks_tool_outside_whitelist(
 
     monkeypatch.setattr(features_module.feature_flags, "ai_gateway_enforce", False)
 
-    from src.backend.core.ai.gateway_models import AIRequest, AIResponse
     from src.backend.core.ai.gateway_models import AIRequest, AIResponse
 
     async def _mock_invoke(request: AIRequest) -> AIResponse:
