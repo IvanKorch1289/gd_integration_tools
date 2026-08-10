@@ -157,10 +157,12 @@ class RouteBuilder(  # type: ignore[misc]
         cls, route_id: str, source: str, *, description: str | None = None,
     ) -> RouteBuilder:
         """Точка входа: создаёт новый RouteBuilder.
+
         Args:
             route_id: Уникальный ID маршрута (e.g., "orders.create").
             source: Источник данных (e.g., "internal:orders", "timer:60s", "webhook:/path").
             description: Человекочитаемое описание маршрута.
+
         Returns:
             RouteBuilder для fluent-chain вызовов.
         Example::
@@ -183,6 +185,7 @@ class RouteBuilder(  # type: ignore[misc]
         через :class:`SourceToInvokerAdapter`; этот метод нужен только
         для **декларации** в DSL ("этот route ждёт события от source X")
         и метаданных ``Pipeline``.
+
         Args:
             route_id: Уникальный ID маршрута.
             source_id: ID source-инстанса в :class:`SourceRegistry`.
