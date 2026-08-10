@@ -59,7 +59,7 @@ class CsvReadProcessor(BaseProcessor):
         elif self.src:
             import aiofiles
 
-            async with aiofiles.open(self.src, mode="r", encoding="utf-8") as f:
+            async with aiofiles.open(self.src, encoding="utf-8") as f:
                 text = await f.read()
         else:
             raise ValueError("CsvReadProcessor: укажите src или content")

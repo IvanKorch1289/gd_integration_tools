@@ -92,7 +92,7 @@ class JsonToXml(ConversionStrategy):
             data = {"root": data}
         return xmltodict.unparse(
             data
-            if any((isinstance(v, dict) for v in data.values()))
+            if any(isinstance(v, dict) for v in data.values())
             else {"root": data},
             pretty=True,
         )
@@ -231,7 +231,7 @@ class DictToCsv(ConversionStrategy):
             headers = list(data[0].keys())
             lines = [",".join(headers)]
             for row in data:
-                lines.append(",".join((str(row.get(h, "")) for h in headers)))
+                lines.append(",".join(str(row.get(h, "")) for h in headers))
             return "\n".join(lines)
 
 

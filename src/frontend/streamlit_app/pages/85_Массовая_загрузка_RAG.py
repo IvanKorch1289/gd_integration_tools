@@ -79,10 +79,10 @@ with tab_file:
         st.write(f"**Выбрано файлов:** {len(uploaded_files)}")
         for f in uploaded_files:
             st.write(
-                (
+                
                     f"  • `{getattr(f, 'name', 'unnamed')}` "
                     f"({getattr(f, 'size', '?')} bytes)"
-                )
+                
             )
 
         if st.button("Загрузить файлы", type="primary", key="ingest_files"):
@@ -213,10 +213,10 @@ if st.button("Обновить статус", key="refresh_status"):
         if items:
             for item in items:
                 with st.expander(
-                    (
+                    
                         f"Task: {item.get('task_id', '?')[:8]}... — "
                         f"{item.get('status', '?')}"
-                    )
+                    
                 ):
                     st.json(item)
         else:

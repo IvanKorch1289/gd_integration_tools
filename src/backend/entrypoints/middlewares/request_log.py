@@ -191,7 +191,7 @@ class InnerRequestLoggingMiddleware:
                 )
 
         if len(body) > self.max_body_size:
-            body = "<тело ответа слишком велико для логирования>".encode("utf-8")
+            body = "<тело ответа слишком велико для логирования>".encode()
 
         try:
             self.logger.debug(f"Тело ответа: {body.decode('utf-8')[:self.max_body_size]}")

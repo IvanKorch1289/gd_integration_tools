@@ -198,7 +198,7 @@ class QueryResultCache:
             )
         ).hexdigest()[:16]
         digest = hashlib.sha256(
-            f"{profile}:{normalized}:{param_hash}".encode("utf-8")
+            f"{profile}:{normalized}:{param_hash}".encode()
         ).hexdigest()[:32]
         return f"{self._prefix}:{profile}:{digest}"
 

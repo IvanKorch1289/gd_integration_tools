@@ -99,10 +99,10 @@ with tabs[1]:
             elif node["kind"] == "resource":
                 shape_open, shape_close = "{{", "}}"
             diagram.append(
-                (
+                
                     f'    {node["id"].replace(":", "_")}'
                     f'{shape_open}"{node["label"]}"{shape_close}'
-                )
+                
             )
         for edge in graph["edges"]:
             label = f"|{edge['label']}|" if edge.get("label") else ""

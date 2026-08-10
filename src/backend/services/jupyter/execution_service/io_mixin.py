@@ -94,7 +94,7 @@ class IOMixin(_NotebookExecutionProtocol):
             import nbformat
 
             def _read_nbformat() -> Any:
-                with open(notebook_path, "r", encoding="utf-8") as fh:
+                with open(notebook_path, encoding="utf-8") as fh:
                     return nbformat.read(fh, as_version=4)
 
             nb = await asyncio.to_thread(_read_nbformat)
@@ -106,7 +106,7 @@ class IOMixin(_NotebookExecutionProtocol):
             _logger.warning("nbformat not installed — falling back to manual JSON read")
 
             def _read_json() -> Any:
-                with open(notebook_path, "r", encoding="utf-8") as fh:
+                with open(notebook_path, encoding="utf-8") as fh:
                     return json.load(fh)
 
             data = await asyncio.to_thread(_read_json)

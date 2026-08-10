@@ -118,12 +118,12 @@ class CreditScoringRagProcessor(_BankingAIProcessor):
             return "No RAG context available."
         if isinstance(rag_context, list):
             return "\n---\n".join(
-                (
+
                     item.get("document", str(item))
                     if isinstance(item, dict)
                     else str(item)
                     for item in rag_context
-                )
+
             )
         return str(rag_context)
 

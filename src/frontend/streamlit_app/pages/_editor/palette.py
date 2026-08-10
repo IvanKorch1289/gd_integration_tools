@@ -95,10 +95,10 @@ def render_step_palette():
     )
     if selected_palette_proc != "—":
         st.sidebar.info(
-            (
+            
             f"➡️ Перетащите **{selected_palette_proc}** на панель Pipeline ниже "
             f"или добавьте через форму слева."
-        )
+        
         )
         # Auto-select in the visual editor form
         st.session_state.vis_proc_type = selected_palette_proc

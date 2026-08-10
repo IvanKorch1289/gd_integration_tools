@@ -95,7 +95,7 @@ def _toml_encode_table(data: dict[str, Any], *, prefix: str) -> str:
         elif (
             isinstance(value, list)
             and value
-            and all((isinstance(item, dict) for item in value))
+            and all(isinstance(item, dict) for item in value)
         ):
             array_of_tables.append((safe_key, value))
         elif value is None:
@@ -124,7 +124,7 @@ def _toml_encode_table(data: dict[str, Any], *, prefix: str) -> str:
                     continue
                 sub_lines.append(f"{_toml_key(sub_key)} = {_toml_value(sub_value)}")
             sections.append("\n".join(sub_lines))
-    return "\n\n".join((s for s in sections if s))
+    return "\n\n".join(s for s in sections if s)
 
 
 def _toml_key(name: str) -> str:
@@ -145,5 +145,5 @@ def _toml_value(value: Any) -> str:
     if isinstance(value, (_dt.datetime, _dt.date)):
         return value.isoformat()
     if isinstance(value, list):
-        return "[" + ", ".join((_toml_value(v) for v in value)) + "]"
+        return "[" + ", ".join(_toml_value(v) for v in value) + "]"
     raise TypeError(f"TOML encoder: неподдерживаемый тип {type(value).__name__}")
