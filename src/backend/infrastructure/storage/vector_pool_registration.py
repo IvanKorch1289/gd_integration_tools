@@ -39,7 +39,16 @@ def _async_ping(backend: str) -> "Awaitable[bool]":
 
             client = get_vector_store(backend=backend)
             return (await client.count()) >= 0
-        except Exception:
+        except (ImportError, RuntimeError, OSError, ConnectionError, AttributeError) as probe_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-926: narrow exceptions + observability.
+            # ImportError — vector store missing, RuntimeError —
+            # backend unavailable, OSError/ConnectionError — network,
+            # AttributeError — API mismatch.
+            import logging
+            logging.getLogger(__name__).debug(
+                "vector_pool._async_ping_failed",
+                extra={"backend": backend, "error": str(probe_exc)},
+            )
             return False
 
     return _probe()
@@ -78,7 +87,15 @@ def register_vector_pool_if_available(
             ping_fn=ping_fn,
         )
         return True
-    except Exception:
+    except (ImportError, RuntimeError, AttributeError, ValueError) as reg_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-926: narrow exceptions + observability.
+        # ImportError — manager missing, RuntimeError — already registered,
+        # AttributeError — manager API change, ValueError — invalid args.
+        import logging
+        logging.getLogger(__name__).debug(
+            "vector_pool.register_failed",
+            extra={"name": name, "backend": backend, "error": str(reg_exc)},
+        )
         return False
 
 
