@@ -103,15 +103,35 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
     # Accept уже вызван снаружи? Не вызываем здесь — caller решает accept/reject.
     try:
         subprotocol = websocket.headers.get("sec-websocket-protocol")
-    except Exception:
+    except (AttributeError, TypeError, ValueError) as ws_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-993: narrow exceptions + observability.
+        # AttributeError — websocket missing headers, TypeError — wrong
+        # header type, ValueError — invalid header value.
+        import logging
+        logging.getLogger(__name__).debug(
+            "ws_handler.subprotocol_failed",
+            extra={"error": str(ws_exc)},
+        )
         subprotocol = None
     try:
         cookies = dict(websocket.cookies) if websocket.cookies else {}
-    except Exception:
+    except (AttributeError, TypeError, ValueError) as cookie_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-993: см. выше — тот же narrow для cookies.
+        import logging
+        logging.getLogger(__name__).debug(
+            "ws_handler.cookies_failed",
+            extra={"error": str(cookie_exc)},
+        )
         cookies = None
     try:
         query_token = websocket.query_params.get("token")
-    except Exception:
+    except (AttributeError, TypeError, ValueError) as qp_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-993: см. выше — тот же narrow для query_params.
+        import logging
+        logging.getLogger(__name__).debug(
+            "ws_handler.query_token_failed",
+            extra={"error": str(qp_exc)},
+        )
         query_token = None
 
     credential = extract_credential(
