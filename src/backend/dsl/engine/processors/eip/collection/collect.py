@@ -110,7 +110,17 @@ class FindAllProcessor(BaseProcessor):
                 try:
                     if bool(SimpleEval(names=ctx).eval(self._condition)):
                         result.append(item)
-                except Exception:
+                except (NameError, SyntaxError, TypeError, ValueError, KeyError) as eval_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-952: narrow exceptions + observability.
+                    # NameError/SyntaxError для invalid condition,
+                    # TypeError/ValueError для wrong arg, KeyError для
+                    # missing key. Bare `except Exception` маскировал
+                    # unrelated runtime errors.
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "collect.filter_eval_failed",
+                        extra={"error": str(eval_exc)},
+                    )
                     continue
         else:
             result = body
