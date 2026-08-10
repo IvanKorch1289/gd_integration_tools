@@ -294,7 +294,15 @@ class HttpSensor:
                             return True
                         try:
                             data = resp.json()
-                        except Exception:
+                        except (ValueError, TypeError) as json_exc:  # noqa: BLE001
+                            # cycle-9/D-AUDIT-1007: narrow exceptions + observability.
+                            # ValueError для malformed JSON, TypeError для
+                            # wrong response type.
+                            import logging
+                            logging.getLogger(__name__).debug(
+                                "airflow_sensors.http_body_parse_fallback",
+                                extra={"error": str(json_exc)},
+                            )
                             data = resp.text
                         if jmespath.search(self._body_match, data):
                             _log.info(
