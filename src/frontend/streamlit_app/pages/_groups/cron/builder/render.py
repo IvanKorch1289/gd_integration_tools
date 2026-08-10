@@ -26,7 +26,16 @@ def _supported_timezones() -> list[str]:
         from zoneinfo import available_timezones
 
         return sorted(available_timezones())
-    except Exception:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError, OSError) as tz_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1041: narrow exceptions + observability.
+        # ImportError — zoneinfo missing (Python <3.9), AttributeError
+        # — API change, RuntimeError — system tzdata unavailable,
+        # OSError — tz file missing.
+        import logging
+        logging.getLogger(__name__).debug(
+            "streamlit_cron_render.timezone_load_fallback",
+            extra={"error": str(tz_exc)},
+        )
         return ["Europe/Moscow", "UTC", "Europe/London", "America/New_York"]
 
 
