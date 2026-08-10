@@ -53,7 +53,10 @@ def _snapshot_to_dict(snapshot: object) -> dict[str, Any]:
 
 try:
     from src.frontend.streamlit_app.utils.api_client import api_get  # type: ignore[import-not-found]  # noqa: I001
-except Exception:  # noqa: BLE001
+except (ImportError, AttributeError, ModuleNotFoundError) as import_exc:  # noqa: BLE001
+    # cycle-9/D-AUDIT-1046: narrow exceptions + observability.
+    # ImportError — api_client module missing, AttributeError — name
+    # API change, ModuleNotFoundError — module path broken.
 
     def api_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """Метод api_get (см. signature)."""
