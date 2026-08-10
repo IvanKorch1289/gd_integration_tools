@@ -137,9 +137,16 @@ def _emit_audit(event: dict[str, Any]) -> None:
                 "status_code", "duration_ms", "service", "ts_ms",
             ],
         )
-    except Exception:
+    except (ImportError, AttributeError, RuntimeError, OSError) as ch_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1005: narrow exceptions + observability.
+        # ImportError — ClickHouse client missing, AttributeError — API
+        # change, RuntimeError — ClickHouse unavailable, OSError — network.
         # Audit failures не блокируют request — gracefully no-op.
-        pass
+        import logging
+        logging.getLogger(__name__).debug(
+            "observability_middleware.clickhouse_insert_failed",
+            extra={"error": str(ch_exc)},
+        )
 
 
 class ObservabilityMiddleware(BaseHTTPMiddleware):
