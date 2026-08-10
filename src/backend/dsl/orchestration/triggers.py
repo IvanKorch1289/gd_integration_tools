@@ -488,8 +488,13 @@ class TriggerRegistry:
         for t in triggers:
             try:
                 await t.stop()
-            except Exception:
-                _log.exception("Trigger %s stop failed", t.name)
+            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as stop_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-1018: narrow exceptions + observability (mirror
+                # D-AUDIT-972 для start_all).
+                # ImportError — trigger dep missing, AttributeError —
+                # API change, RuntimeError — stop failure, ConnectionError/
+                # OSError — backend unavailable.
+                _log.exception("Trigger %s stop failed: %s", t.name, stop_exc)
 
 
 _REGISTRY: TriggerRegistry | None = None
