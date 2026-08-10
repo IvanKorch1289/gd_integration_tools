@@ -161,7 +161,7 @@ class WsdlImportGateway:
         result: dict[str, object] = {}
         try:
             types = client.wsdl.types  # type: ignore[attr-defined]
-            for _ns_name, ns in (types.documents._documents or {}).items():
+            for ns in (types.documents._documents or {}).values():
                 for doc in ns:
                     for elm_name, elm in doc._elements.items():
                         result[str(elm_name)] = str(

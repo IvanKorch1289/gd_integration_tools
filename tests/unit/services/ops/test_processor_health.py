@@ -154,7 +154,7 @@ async def test_default_checks_run_without_errors() -> None:
     # Все 7 processor'ов есть в matrix
     assert matrix["registered_count"] >= 7
     # Не должно быть exceptions (best-effort stub'ы)
-    for _proc_name, info in matrix["checks"].items():
+    for info in matrix["checks"].values():
         assert "ok" in info
         assert "reason" in info
         assert "latency_ms" in info

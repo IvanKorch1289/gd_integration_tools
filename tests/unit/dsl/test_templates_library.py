@@ -20,7 +20,7 @@ class TestTemplates:
         assert len(templates) > 0
 
     def test_template_info(self) -> None:
-        for _key, t in templates.items():
+        for t in templates.values():
             assert isinstance(t, TemplateInfo)
             assert t.name
             assert callable(t.builder)
