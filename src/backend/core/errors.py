@@ -5,7 +5,6 @@
 для протоколо-агностичной сериализации.
 """
 
-import json
 import uuid
 from typing import Any
 

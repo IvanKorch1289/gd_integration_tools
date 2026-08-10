@@ -11,7 +11,7 @@ D-AUDIT-04 fix (cycle 1): удалены дубликаты MCPToolProcessor и 
 - CDCProcessor (canonical, нет дубля)
 """
 
-from typing import Any, ClassVar
+from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange

@@ -217,7 +217,7 @@ class DocsIndexer:
             return
         try:
             self._qdrant.get_collection(self._collection_name)
-        except (AttributeError, RuntimeError, ValueError, ConnectionError) as get_exc:  # noqa: BLE001
+        except (AttributeError, RuntimeError, ValueError, ConnectionError):  # noqa: BLE001
             # cycle-9/D-AUDIT-906: narrow exceptions + observability.
             # Qdrant raises RuntimeError/ValueError для invalid collections,
             # ConnectionError для network issues. Bare `except Exception`
