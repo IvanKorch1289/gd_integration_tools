@@ -12,13 +12,11 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from src.backend.core.config import ai_stack
 from src.backend.core.policy.pii_fail_closed import PIIFailClosedError
-from src.backend.services.ai.rag_ingest_service import _maybe_mask_pii
 
 
 class TestRagIngestPIIFailClosed:

@@ -121,7 +121,6 @@ async def test_ingest_fail_closed_on_sanitizer_failure(
     """
     from src.backend.core.config import ai_stack
     from src.backend.core.di import providers
-    from src.backend.core.policy.pii_fail_closed import PIIFailClosedError
     from src.backend.services.ai.rag_ingest_service import RagIngestService
 
     monkeypatch.setattr(
@@ -152,7 +151,6 @@ async def test_ingest_fail_closed_on_sanitizer_failure(
 @pytest.mark.asyncio
 async def test_ingest_maybe_mask_pii_raises_pii_fail_closed() -> None:
     """cycle-4/D-AUDIT-109: _maybe_mask_pii raises PIIFailClosedError on failure."""
-    from src.backend.core.config import ai_stack
     from src.backend.core.di import providers
     from src.backend.core.policy.pii_fail_closed import PIIFailClosedError
     from src.backend.services.ai.rag_ingest_service import _maybe_mask_pii

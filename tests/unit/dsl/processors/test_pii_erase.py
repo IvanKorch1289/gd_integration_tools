@@ -201,9 +201,6 @@ class TestDqWriteEnqueue:
         mod = _load_pii_erase_module()
         proc = mod.PiiEraseProcessor(scope="user:42", hard_delete=True)
 
-        from src.backend.infrastructure.messaging.dlq.memory_writer import (
-            InMemoryDLQWriter,
-        )
 
         captured: list[Any] = []
 

@@ -182,7 +182,7 @@ class TestLdapClientFactoryRuntimeSymbols:
             # Class may not exist in current build (dev_light)
             # — this is OK, fallback path handles it
             pass
-        except Exception as e:
+        except Exception:
             # Some other error (chain deps) — acceptable
             pass
 

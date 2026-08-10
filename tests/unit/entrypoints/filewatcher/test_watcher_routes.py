@@ -22,7 +22,6 @@ def _make_app() -> FastAPI:
     # override dependency чтобы не требовать auth в unit-context.
     _admin_dep = getattr(mod, "_admin_dep", None)
     if _admin_dep is not None:
-        from src.backend.core.auth.admin_roles import AdminRole
 
         app.dependency_overrides[_admin_dep] = lambda: None
     return app
