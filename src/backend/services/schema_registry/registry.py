@@ -225,8 +225,13 @@ class ServiceSchemaRegistry:
                     "Total schema list queries",
                     labels=("kind",),
                 ).labels(kind=kind.value).inc()
-            except Exception:  # pragma: no cover - metrics best-effort
-                pass
+            except (AttributeError, TypeError, ValueError) as counter_exc:  # pragma: no cover - metrics best-effort
+                # cycle-9/D-AUDIT-939: см. D-AUDIT-938 — тот же narrow.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "schema_registry.list_counter_failed",
+                    extra={"error": str(counter_exc)},
+                )
 
         return result
 
@@ -253,8 +258,13 @@ class ServiceSchemaRegistry:
                     "Total schema registry clears",
                     labels=("scope",),
                 ).labels(scope="all" if kind is None else kind.value).inc()
-            except Exception:  # pragma: no cover - metrics best-effort
-                pass
+            except (AttributeError, TypeError, ValueError) as counter_exc:  # pragma: no cover - metrics best-effort
+                # cycle-9/D-AUDIT-940: см. D-AUDIT-938 — тот же narrow для clear.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "schema_registry.clear_counter_failed",
+                    extra={"error": str(counter_exc)},
+                )
 
     # ── snapshot persistence ─────────────────────────────────────────
 
