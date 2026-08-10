@@ -25,7 +25,7 @@ def test_mask_idempotent(text: str) -> None:
     masker = PIIMasker()
     once = masker.mask_text(text)
     twice = masker.mask_text(once)
-    assert once == twice, f"Idempotency violated: first pass changed on second pass"
+    assert once == twice, "Idempotency violated: first pass changed on second pass"
 
 
 @settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow])

@@ -29,8 +29,8 @@ class TestCheckpointIdRemoved:
                     if isinstance(f, ast.AnnAssign)
                 ]
                 assert "checkpoint_id" not in field_names, (
-                    f"ResumeDeclaration still has checkpoint_id field "
-                    f"(should be removed in cycle 26)"
+                    "ResumeDeclaration still has checkpoint_id field "
+                    "(should be removed in cycle 26)"
                 )
 
     def test_compile_resume_step_ignores_checkpoint_id(self):
