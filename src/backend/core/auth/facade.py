@@ -338,9 +338,17 @@ class AuthFacade:
             roles = extract_admin_roles(auth_ctx)
             if AdminRole.SUPER_ADMIN in roles:
                 return True
-        except Exception:
-            # Fallback: если AdminRole import failed — НЕ bypass (fail-closed)
-            pass
+        except (ImportError, AttributeError, TypeError, ValueError) as auth_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-980: narrow exceptions + observability.
+            # ImportError — AdminRole missing, AttributeError — auth API
+            # change, TypeError — wrong auth ctx, ValueError — invalid
+            # auth fields. Fallback: если AdminRole import failed — НЕ
+            # bypass (fail-closed).
+            import logging
+            logging.getLogger(__name__).debug(
+                "auth_facade.super_admin_check_failed",
+                extra={"error": str(auth_exc)},
+            )
 
         if required_capability in auth.capabilities:
             return True
