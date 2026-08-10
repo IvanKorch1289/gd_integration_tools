@@ -117,7 +117,15 @@ class TimeoutMiddleware:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "per_route_timeout_enabled", False))
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1004: narrow exceptions + observability.
+            # ImportError — features module missing, AttributeError —
+            # config not initialized, RuntimeError — feature_flags unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "timeout_middleware.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
             return False
 
     @staticmethod
