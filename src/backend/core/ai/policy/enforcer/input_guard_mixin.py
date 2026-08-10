@@ -171,7 +171,7 @@ class InputGuardMixin:
                 # cycle-9/D-AUDIT-1034: narrow exceptions + observability.
                 # ImportError — audit facade missing, AttributeError —
                 # API change, RuntimeError — backend unavailable.
-                import logging  # noqa: F401 — availability probe
+                import logging
                 logging.getLogger(__name__).debug(
                     "input_guard_mixin.audit_failed",
                     extra={"guard": ref.name, "error": str(audit_exc)},

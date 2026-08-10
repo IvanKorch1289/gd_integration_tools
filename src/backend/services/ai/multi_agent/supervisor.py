@@ -171,7 +171,7 @@ class MultiAgentSupervisor:
             return bool(self._enabled_override)
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             return bool(getattr(feature_flags, "multi_agent_supervisor_enabled", False))
@@ -181,7 +181,7 @@ class MultiAgentSupervisor:
     def _is_langgraph_available(self) -> bool:
         """Проверяет наличие ``langgraph`` SDK (extra ``ai``)."""
         try:
-            import langgraph  # noqa: F401 — availability probe
+            import langgraph
 
             return True
         except ImportError:
@@ -319,7 +319,7 @@ class MultiAgentSupervisor:
         if self._compiled is not None:
             return self._compiled
         try:
-            from langgraph.graph import (  # noqa: F401 — availability probe
+            from langgraph.graph import (
                 END,
                 START,
                 StateGraph,

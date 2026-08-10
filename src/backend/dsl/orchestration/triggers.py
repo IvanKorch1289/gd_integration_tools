@@ -369,7 +369,7 @@ class WebhookTrigger:
         app = self._app
         if app is None:
             try:
-                from src.backend.entrypoints.api.app import (  # noqa: F401 — availability probe
+                from src.backend.entrypoints.api.app import (
                     get_app,  # type: ignore[import-not-found]
                 )
 

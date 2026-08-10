@@ -190,9 +190,9 @@ class GuardrailsProcessor(BaseProcessor):
             return self._providers_config
         try:
             from src.backend.core.tenancy import (
-                current_tenant,  # noqa: F401 — availability probe
+                current_tenant,
             )
-            from src.backend.services.ai.guardrails.tenant_config import (  # noqa: F401 — availability probe
+            from src.backend.services.ai.guardrails.tenant_config import (
                 get_default_config,
             )
         except ImportError:

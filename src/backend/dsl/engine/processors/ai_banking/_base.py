@@ -96,7 +96,7 @@ class _BankingAIProcessor(BaseProcessor):
 
         try:
             from src.backend.services.ai.ai_agent import (
-                get_ai_agent_service,  # noqa: F401 — availability probe
+                get_ai_agent_service,
             )
         except ImportError as exc:
             exchange.fail(f"AI agent service unavailable: {exc}")

@@ -96,7 +96,7 @@ async def bulk_upsert(
 
     try:
         from sqlalchemy.dialects.postgresql import (
-            insert as pg_insert,  # noqa: F401 — availability probe
+            insert as pg_insert,
         )
     except ImportError:
         raise RuntimeError("bulk_upsert requires SQLAlchemy PostgreSQL dialect")

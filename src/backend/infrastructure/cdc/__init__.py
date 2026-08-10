@@ -22,10 +22,10 @@ from src.backend.infrastructure.cdc.debezium_events_backend import (
     DebeziumEventsCDCBackend,
 )
 from src.backend.infrastructure.cdc.listen_notify_backend import (
-    ListenNotifyCDCBackend,  # noqa: F401 — re-export
+    ListenNotifyCDCBackend,
 )
 from src.backend.infrastructure.cdc.poll_backend import (
-    PollCDCBackend,  # noqa: F401 — re-export
+    PollCDCBackend,
 )
 
 __all__ = ("DebeziumEventsCDCBackend", "ListenNotifyCDCBackend", "PollCDCBackend")

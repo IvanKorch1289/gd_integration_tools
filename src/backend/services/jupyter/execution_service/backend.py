@@ -28,7 +28,7 @@ class NbClientExecutionBackend:
 
         """
         try:
-            import nbclient  # noqa: F401 — availability probe
+            import nbclient
         except ImportError as exc:
             raise JupyterExecutionError(
                 "nbclient required for local execution. "

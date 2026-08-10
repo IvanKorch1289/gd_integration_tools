@@ -15,9 +15,9 @@
 """
 
 from src.backend.core.resilience.retry_budget import (
-    RetryBudget,  # noqa: F401 — re-export
+    RetryBudget,
 )
-from src.backend.infrastructure.resilience.bulkhead import (  # noqa: F401 — re-export
+from src.backend.infrastructure.resilience.bulkhead import (
     Bulkhead,
     BulkheadRegistry,
 )
@@ -27,7 +27,7 @@ from src.backend.infrastructure.resilience.health import (
     resilience_components_report,
 )
 from src.backend.infrastructure.resilience.time_limiter import (
-    TimeLimiter,  # noqa: F401 — re-export
+    TimeLimiter,
 )
 from src.backend.infrastructure.resilience.unified_rate_limiter import (
     RateLimiterPolicy,

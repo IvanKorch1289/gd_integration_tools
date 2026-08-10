@@ -121,7 +121,7 @@ class WorkerVersioningHelper:
         if self.use_versioning:
             # Lazy import — temporalio SDK ~15-20MB
             try:
-                from temporalio.worker import (  # type: ignore[attr-defined]  # noqa: F401 — availability probe
+                from temporalio.worker import (  # type: ignore[attr-defined]
                     WorkerDeploymentConfig,
                     WorkerDeploymentVersion,
                 )

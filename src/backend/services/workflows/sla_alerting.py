@@ -162,7 +162,7 @@ def _emit_sla_metric(
     if _sla_counter is None:
         try:
             from src.backend.core.observability.metrics import (
-                metrics_registry,  # noqa: F401 — availability probe
+                metrics_registry,
             )
 
             _sla_counter = metrics_registry.counter(

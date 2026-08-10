@@ -33,7 +33,7 @@ from src.backend.dsl.engine.processors.base import BaseProcessor, handle_process
 
 try:
     from src.backend.infrastructure.clients.external.cdc import (
-        get_cdc_client,  # noqa: F401 — availability probe
+        get_cdc_client,
     )
 except ImportError:
     get_cdc_client = None

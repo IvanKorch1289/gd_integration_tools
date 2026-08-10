@@ -59,7 +59,7 @@ class BLIP2Captioner:
         if self._model is not None:
             return
         try:
-            from transformers import (  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            from transformers import (  # type: ignore[import-not-found]
                 AutoProcessor,
                 Blip2ForConditionalGeneration,
             )
@@ -100,7 +100,7 @@ class BLIP2Captioner:
         from io import BytesIO
 
         try:
-            from PIL import Image  # noqa: F401 — availability probe
+            from PIL import Image
         except ImportError as exc:
             raise RuntimeError(
                 "BLIP2 requires Pillow — install [multimodal-rag] extra",

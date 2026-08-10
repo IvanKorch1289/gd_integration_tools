@@ -187,7 +187,7 @@ class WSAuthenticator:
 
         try:
             from src.backend.core.di.providers import (
-                get_api_key_manager_provider,  # noqa: F401 — availability probe
+                get_api_key_manager_provider,
             )
 
             mgr = get_api_key_manager_provider()
@@ -227,7 +227,7 @@ class WSAuthenticator:
         if not token:
             raise WSAuthError("Missing JWT token")
         try:
-            from src.backend.core.auth.jwt_backend import (  # noqa: F401 — availability probe
+            from src.backend.core.auth.jwt_backend import (
                 JwtBackend,
                 JwtVerificationError,
             )
@@ -316,7 +316,7 @@ class WSAuthenticator:
             return set()
         try:
             from src.backend.core.di.providers import (
-                get_redis_kv_client_provider,  # noqa: F401 — availability probe
+                get_redis_kv_client_provider,
             )
 
             raw = get_redis_kv_client_provider()
@@ -337,7 +337,7 @@ class WSAuthenticator:
         """Выдаёт доступ к группе (admin operation)."""
         try:
             from src.backend.core.di.providers import (
-                get_redis_kv_client_provider,  # noqa: F401 — availability probe
+                get_redis_kv_client_provider,
             )
 
             raw = get_redis_kv_client_provider()
@@ -349,7 +349,7 @@ class WSAuthenticator:
         """Отзывает доступ к группе."""
         try:
             from src.backend.core.di.providers import (
-                get_redis_kv_client_provider,  # noqa: F401 — availability probe
+                get_redis_kv_client_provider,
             )
 
             raw = get_redis_kv_client_provider()

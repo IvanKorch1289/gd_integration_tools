@@ -64,7 +64,7 @@ def instrument_asyncpg_if_enabled() -> bool:
 
     try:
         from opentelemetry.instrumentation.asyncpg import (
-            AsyncPGInstrumentor,  # noqa: F401 — availability probe
+            AsyncPGInstrumentor,
         )
 
         AsyncPGInstrumentor().instrument()
@@ -105,18 +105,18 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
     environment = os.environ.get("APP_ENVIRONMENT", "development")
 
     try:
-        from opentelemetry import trace  # noqa: F401 — availability probe
-        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (  # noqa: F401 — availability probe
+        from opentelemetry import trace
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
             OTLPSpanExporter,
         )
         from opentelemetry.sdk.resources import (
-            Resource,  # noqa: F401 — availability probe
+            Resource,
         )
         from opentelemetry.sdk.trace import (
-            TracerProvider,  # noqa: F401 — availability probe
+            TracerProvider,
         )
         from opentelemetry.sdk.trace.export import (
-            BatchSpanProcessor,  # noqa: F401 — availability probe
+            BatchSpanProcessor,
         )
     except ImportError as exc:
         logger.warning("OpenTelemetry SDK not installed: %s", exc)
@@ -153,7 +153,7 @@ def _instrument_fastapi(app: Any) -> None:
         return
     try:
         from opentelemetry.instrumentation.fastapi import (
-            FastAPIInstrumentor,  # noqa: F401 — availability probe
+            FastAPIInstrumentor,
         )
 
         FastAPIInstrumentor.instrument_app(app)
@@ -165,7 +165,7 @@ def _instrument_fastapi(app: Any) -> None:
 def _instrument_httpx() -> None:
     try:
         from opentelemetry.instrumentation.httpx import (
-            HTTPXClientInstrumentor,  # noqa: F401 — availability probe
+            HTTPXClientInstrumentor,
         )
 
         HTTPXClientInstrumentor().instrument()
@@ -177,7 +177,7 @@ def _instrument_httpx() -> None:
 def _instrument_sqlalchemy() -> None:
     try:
         from opentelemetry.instrumentation.sqlalchemy import (
-            SQLAlchemyInstrumentor,  # noqa: F401 — availability probe
+            SQLAlchemyInstrumentor,
         )
 
         SQLAlchemyInstrumentor().instrument()
@@ -189,7 +189,7 @@ def _instrument_sqlalchemy() -> None:
 def _instrument_redis() -> None:
     try:
         from opentelemetry.instrumentation.redis import (
-            RedisInstrumentor,  # noqa: F401 — availability probe
+            RedisInstrumentor,
         )
 
         RedisInstrumentor().instrument()
@@ -201,7 +201,7 @@ def _instrument_redis() -> None:
 def _instrument_logging() -> None:
     try:
         from opentelemetry.instrumentation.logging import (
-            LoggingInstrumentor,  # noqa: F401 — availability probe
+            LoggingInstrumentor,
         )
 
         LoggingInstrumentor().instrument(set_logging_format=True)
@@ -216,7 +216,7 @@ def _instrument_aiokafka() -> None:
     """
     try:
         from opentelemetry.instrumentation.aiokafka import (
-            AIOKafkaInstrumentor,  # noqa: F401 — availability probe
+            AIOKafkaInstrumentor,
         )
 
         AIOKafkaInstrumentor().instrument()
@@ -231,7 +231,7 @@ def _instrument_aiopika() -> None:
     """
     try:
         from opentelemetry.instrumentation.aio_pika import (
-            AioPikaInstrumentor,  # noqa: F401 — availability probe
+            AioPikaInstrumentor,
         )
 
         AioPikaInstrumentor().instrument()
@@ -249,7 +249,7 @@ def _instrument_pymongo() -> None:
     """
     try:
         from opentelemetry.instrumentation.pymongo import (
-            PymongoInstrumentor,  # noqa: F401 — availability probe
+            PymongoInstrumentor,
         )
 
         PymongoInstrumentor().instrument()
@@ -266,7 +266,7 @@ def _instrument_grpc_client() -> None:
     """
     try:
         from opentelemetry.instrumentation.grpc import (
-            GrpcAioInstrumentorClient,  # noqa: F401 — availability probe
+            GrpcAioInstrumentorClient,
         )
 
         GrpcAioInstrumentorClient().instrument()
@@ -286,7 +286,7 @@ def _instrument_asyncpg() -> None:
     """
     try:
         from opentelemetry.instrumentation.asyncpg import (
-            AsyncPGInstrumentor,  # noqa: F401 — availability probe
+            AsyncPGInstrumentor,
         )
 
         AsyncPGInstrumentor().instrument()

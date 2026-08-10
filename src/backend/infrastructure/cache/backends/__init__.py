@@ -11,16 +11,16 @@
 """
 
 from src.backend.infrastructure.cache.backends.disk import (
-    DiskCacheBackend,  # noqa: F401 — re-export
+    DiskCacheBackend,
 )
 from src.backend.infrastructure.cache.backends.keydb import (
-    KeyDBBackend,  # noqa: F401 — re-export
+    KeyDBBackend,
 )
 from src.backend.infrastructure.cache.backends.memory import (
-    MemoryBackend,  # noqa: F401 — re-export
+    MemoryBackend,
 )
 from src.backend.infrastructure.cache.backends.redis import (
-    RedisBackend,  # noqa: F401 — re-export
+    RedisBackend,
 )
 
 __all__ = ("DiskCacheBackend", "KeyDBBackend", "MemoryBackend", "RedisBackend")

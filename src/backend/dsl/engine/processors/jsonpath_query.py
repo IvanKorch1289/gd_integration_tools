@@ -102,7 +102,7 @@ class JsonPathProcessor(BaseProcessor):
         """Выполняет JSONPath-запрос над body и пишет результат в target."""
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             if not feature_flags.proc_jsonpath:
@@ -111,7 +111,7 @@ class JsonPathProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1714: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1713).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "jsonpath_query.feature_flag_fallback",
                 extra={"error": str(ff_exc)},
@@ -119,12 +119,12 @@ class JsonPathProcessor(BaseProcessor):
 
         try:
             from jsonpath_ng.ext import (
-                parse as _parse,  # noqa: F401 — availability probe
+                parse as _parse,
             )
         except ImportError:
             try:
                 from jsonpath_ng import (
-                    parse as _parse,  # noqa: F401 — availability probe
+                    parse as _parse,
                 )
             except ImportError as exc:
                 exchange.fail(f"jsonpath: jsonpath-ng not available: {exc}")

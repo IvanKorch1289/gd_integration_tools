@@ -96,7 +96,7 @@ class OracleCDCSource:
 
         """
         try:
-            import oracledb  # type: ignore[import-not-found]  # lazy, optional  # noqa: F401 — availability probe
+            import oracledb  # type: ignore[import-not-found]  # lazy, optional
         except ImportError as exc:
             raise ImportError(
                 "oracledb не установлен. Установите: pip install oracledb>=2.0",

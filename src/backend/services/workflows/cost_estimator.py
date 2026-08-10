@@ -202,7 +202,7 @@ class WorkflowCostEstimator:
         """
         try:
             from src.backend.services.ai.costs.llm_model_pricing import (
-                LLMModelPricing,  # noqa: F401 — availability probe
+                LLMModelPricing,
             )
         except ImportError:
             return None

@@ -281,7 +281,7 @@ class UnifiedPoolManager:
         result: dict[str, str] = {}
         try:
             from src.backend.infrastructure.database.pool_warmup import (
-                PoolWarmup,  # noqa: F401 — availability probe
+                PoolWarmup,
             )
 
             warmup = PoolWarmup()

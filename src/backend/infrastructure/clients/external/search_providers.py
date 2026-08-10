@@ -327,7 +327,7 @@ def get_web_search_service() -> WebSearchService:
 
     try:
         from src.backend.core.config.settings import (
-            settings,  # noqa: F401 — availability probe
+            settings,
         )
 
         perplexity_key = getattr(settings, "perplexity_api_key", None) or ""
@@ -344,7 +344,7 @@ def get_web_search_service() -> WebSearchService:
     # Включается только если SEARXNG_BASE_URL задан И feature-flag активен.
     try:
         from src.backend.core.config.features import (
-            feature_flags,  # noqa: F401 — availability probe
+            feature_flags,
         )
 
         searxng_url = os.getenv("SEARXNG_BASE_URL", "").strip()

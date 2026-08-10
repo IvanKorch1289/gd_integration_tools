@@ -86,7 +86,7 @@ class _BankingAIProcessor(BaseProcessor):
         # Feature gate
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             if not feature_flags.banking_ai_processors_enabled:
@@ -97,7 +97,7 @@ class _BankingAIProcessor(BaseProcessor):
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags
             # unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "banking_processors.feature_flag_fallback",
                 extra={"error": str(ff_exc)},
@@ -119,8 +119,8 @@ class _BankingAIProcessor(BaseProcessor):
             prompt = prompt[:8000]
 
         try:
-            import instructor  # type: ignore[import-not-found]  # noqa: F401 — availability probe
-            import litellm  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            import instructor  # type: ignore[import-not-found]
+            import litellm  # type: ignore[import-not-found]
         except ImportError as exc:
             exchange.fail(
                 f"{self.name}: instructor/litellm не установлены; "

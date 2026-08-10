@@ -105,7 +105,7 @@ def __getattr__(name: str) -> Any:
     # DI providers
     if name == "get_scheduler_provider":
         from src.backend.core.di.providers.scheduler import (
-            get_scheduler_provider,  # noqa: F401 — re-export
+            get_scheduler_provider,
         )
 
         return get_scheduler_provider
@@ -136,14 +136,14 @@ def __getattr__(name: str) -> Any:
     # AIGateway
     if name == "AIGateway":
         from src.backend.core.ai.gateway.gateway import (
-            AIGateway,  # noqa: F401 — re-export
+            AIGateway,
         )
 
         return AIGateway
     # === Domain Facades (Cycle 31 P2.1) ===
     if name == "get_storage_facade_provider":
         from src.backend.core.di.providers.storage import (
-            get_storage_facade_provider,  # noqa: F401 — re-export
+            get_storage_facade_provider,
         )
 
         return get_storage_facade_provider
@@ -153,19 +153,19 @@ def __getattr__(name: str) -> Any:
         return ExternalDBFacade.get_default
     if name == "get_auth_facade":
         from src.backend.core.auth.facade import (
-            get_auth_facade,  # noqa: F401 — re-export
+            get_auth_facade,
         )
 
         return get_auth_facade
     if name == "get_cache_facade":
         from src.backend.core.di.providers.cache import (
-            get_cache_facade,  # noqa: F401 — re-export
+            get_cache_facade,
         )
 
         return get_cache_facade
     if name == "emit_audit_safe":
         from src.backend.core.audit.facade import (
-            emit_audit_safe,  # noqa: F401 — re-export
+            emit_audit_safe,
         )
 
         return emit_audit_safe

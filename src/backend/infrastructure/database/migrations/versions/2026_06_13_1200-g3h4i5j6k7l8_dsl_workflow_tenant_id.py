@@ -48,7 +48,7 @@ def _column_exists(table_name: str, column_name: str) -> bool:
     """Idempotent guard: True if column уже існує в table."""
     bind = op.get_bind()
     try:
-        from sqlalchemy import inspect  # noqa: F401 — availability probe
+        from sqlalchemy import inspect
 
         inspector = inspect(bind)
     except ImportError:

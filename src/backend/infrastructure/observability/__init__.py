@@ -6,7 +6,7 @@ from src.backend.infrastructure.observability.correlation import (
     set_correlation_context,
 )
 from src.backend.infrastructure.observability.pii_filter import (
-    redact_for_observability,  # noqa: F401 — re-export
+    redact_for_observability,
 )
 
 __all__ = (

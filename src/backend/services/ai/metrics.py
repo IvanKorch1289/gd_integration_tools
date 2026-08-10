@@ -77,7 +77,7 @@ class AgentMetricsService:
             return
         try:
             from src.backend.core.observability.metrics import (
-                metrics_registry,  # noqa: F401 — availability probe
+                metrics_registry,
             )
 
             self._histogram = metrics_registry.histogram(

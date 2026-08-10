@@ -12,7 +12,7 @@ from __future__ import annotations as annotations
 from enum import StrEnum as StrEnum
 from typing import Any as Any
 
-from src.backend.core.auth.api_key_backend import APIKeyAuth  # noqa: F401 — re-export
+from src.backend.core.auth.api_key_backend import APIKeyAuth
 from src.backend.core.auth.auth_context_helpers import (
     extract_tenant_id,
     extract_user_groups,
@@ -42,7 +42,7 @@ from src.backend.core.auth.sso_registry import (
     SsoRegistryVaultError,
     VaultClientProtocol,
 )
-from src.backend.core.auth.sso_types import (  # noqa: F401 — re-export
+from src.backend.core.auth.sso_types import (
     GroupsToCapabilities,
     IdpConfig,
     SSOUserInfo,

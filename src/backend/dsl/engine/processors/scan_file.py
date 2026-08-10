@@ -164,7 +164,7 @@ class ScanFileProcessor(BaseProcessor):
         может быть недоступен в тестах.
         """
         try:
-            from src.backend.infrastructure.observability.metrics import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.observability.metrics import (
                 record_antivirus_scan,
             )
 
@@ -173,7 +173,7 @@ class ScanFileProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-945: narrow exceptions + observability.
             # ImportError — metrics missing, AttributeError — schema change,
             # RuntimeError — metrics unavailable, OSError — backend failure.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "scan_file.metrics_failed",
                 extra={"error": str(metrics_exc)},

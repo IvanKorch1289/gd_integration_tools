@@ -52,7 +52,7 @@ class LiteTemporalBackend(TemporalWorkflowBackend):
         """Поднять in-process env; ``target`` / ``api_key`` игнорируются."""
         try:
             from temporalio.testing import (
-                WorkflowEnvironment,  # noqa: F401 — availability probe
+                WorkflowEnvironment,
             )
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(

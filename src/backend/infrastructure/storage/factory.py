@@ -76,10 +76,10 @@ def get_object_storage() -> ObjectStorage:
 
     try:
         from src.backend.core.config.services.storage import (
-            fs_settings,  # noqa: F401 — availability probe
+            fs_settings,
         )
         from src.backend.infrastructure.storage.s3 import (
-            S3ObjectStorage,  # noqa: F401 — availability probe
+            S3ObjectStorage,
         )
 
         primary = S3ObjectStorage(fs_settings)

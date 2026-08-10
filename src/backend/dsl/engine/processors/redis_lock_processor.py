@@ -82,7 +82,7 @@ class RedisLockProcessor(BaseProcessor):
         """Приобретает Redis lock или fail'ит exchange."""
         try:
             from src.backend.infrastructure.clients.storage.redis_lock import (
-                RedisLock,  # noqa: F401 — availability probe
+                RedisLock,
             )
         except ImportError as exc:
             exchange.fail(f"redis_lock: redis dependencies not installed: {exc}")

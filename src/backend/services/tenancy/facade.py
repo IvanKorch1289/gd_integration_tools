@@ -71,7 +71,7 @@ class TenantFacade:
 
         try:
             from src.backend.core.security.capabilities.tenant import (
-                SYSTEM_TENANT_ID,  # noqa: F401 — availability probe
+                SYSTEM_TENANT_ID,
             )
 
             return ctx.tenant_id == SYSTEM_TENANT_ID
@@ -80,7 +80,7 @@ class TenantFacade:
             # Bare `except Exception` маскировал security-critical
             # SYSTEM_TENANT_ID import failure → silent permission grant.
             from src.backend.core.logging import (
-                get_logger,  # noqa: F401 — availability probe
+                get_logger,
             )
             get_logger(__name__).warning(
                 "tenancy.system_tenant_check.failed",

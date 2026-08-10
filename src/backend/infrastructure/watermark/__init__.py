@@ -11,10 +11,10 @@ from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any
 
 from src.backend.infrastructure.watermark.factory import (
-    create_watermark_store,  # noqa: F401 — re-export
+    create_watermark_store,
 )
 from src.backend.infrastructure.watermark.memory_store import (
-    MemoryWatermarkStore,  # noqa: F401 — re-export
+    MemoryWatermarkStore,
 )
 
 if TYPE_CHECKING:

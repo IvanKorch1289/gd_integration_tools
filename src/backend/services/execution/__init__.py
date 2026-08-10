@@ -14,7 +14,7 @@ from src.backend.services.execution.action_dispatcher import (
     DefaultActionDispatcher,
     get_action_dispatcher,
 )
-from src.backend.services.execution.invoker import (  # noqa: F401 — re-export
+from src.backend.services.execution.invoker import (
     InvocationMode,
     Invoker,
     get_invoker,

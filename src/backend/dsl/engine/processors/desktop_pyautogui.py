@@ -105,7 +105,7 @@ class DesktopPyAutoGUIProcessor(BaseProcessor):
             return
 
         try:
-            import pyautogui  # noqa: F401 — availability probe
+            import pyautogui
         except ImportError:
             exchange.fail("pyautogui not installed. Install: uv sync --extra rpa")
             return

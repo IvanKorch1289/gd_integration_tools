@@ -329,9 +329,9 @@ class AuthFacade:
         # (любой IdP group с именем "admin" получал bypass).
         try:
             from src.backend.core.auth import (
-                AuthContext,  # noqa: F401 — availability probe
+                AuthContext,
             )
-            from src.backend.core.auth.admin_roles import (  # noqa: F401 — availability probe
+            from src.backend.core.auth.admin_roles import (
                 AdminRole,
                 extract_admin_roles,
             )
@@ -357,7 +357,7 @@ class AuthFacade:
             # change, TypeError — wrong auth ctx, ValueError — invalid
             # auth fields. Fallback: если AdminRole import failed — НЕ
             # bypass (fail-closed).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "auth_facade.super_admin_check_failed",
                 extra={"error": str(auth_exc)},
@@ -489,7 +489,7 @@ class AuthFacade:
         dev_mode = False
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             dev_mode = bool(getattr(feature_flags, "saml_sp_initiated_enabled", False))
@@ -498,7 +498,7 @@ class AuthFacade:
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags
             # unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "auth_facade.saml_dev_mode_fallback",
                 extra={"error": str(ff_exc)},

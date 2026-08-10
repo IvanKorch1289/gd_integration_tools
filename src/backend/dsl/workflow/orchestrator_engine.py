@@ -157,7 +157,7 @@ class OrchestratorEngine:
         """
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             return getattr(feature_flags, "workflow_orchestrator_enabled", False)

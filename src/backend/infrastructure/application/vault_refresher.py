@@ -121,7 +121,7 @@ class VaultSecretRefresher:
             return
 
         try:
-            from hvac import Client  # noqa: F401 — availability probe
+            from hvac import Client
 
             client = Client(url=vault_addr, token=vault_token)
             if not client.is_authenticated():
@@ -176,7 +176,7 @@ class VaultSecretRefresher:
             return
 
         try:
-            from hvac import Client  # noqa: F401 — availability probe
+            from hvac import Client
         except ImportError:
             return
 

@@ -9,13 +9,13 @@
 """
 
 from src.backend.services.sources.adapter import (
-    SourceToInvokerAdapter,  # noqa: F401 — re-export
+    SourceToInvokerAdapter,
 )
-from src.backend.services.sources.idempotency import (  # noqa: F401 — re-export
+from src.backend.services.sources.idempotency import (
     DedupeStore,
     MemoryDedupeStore,
 )
-from src.backend.services.sources.lifecycle import (  # noqa: F401 — re-export
+from src.backend.services.sources.lifecycle import (
     start_all_sources,
     stop_all_sources,
 )

@@ -30,30 +30,30 @@ from pathlib import Path as Path
 from typing import TYPE_CHECKING as TYPE_CHECKING
 
 # Canonical re-exports (backward compat с pre-S107 callers)
-from src.backend.core.audit.facade._base import (  # noqa: F401 — re-export
+from src.backend.core.audit.facade._base import (
     emit_audit,
     emit_audit_safe,
 )
-from src.backend.core.audit.facade.ai import emit_ai_workspace  # noqa: F401 — re-export
+from src.backend.core.audit.facade.ai import emit_ai_workspace
 from src.backend.core.audit.facade.audit_service import (
     AuditService,
     get_unified_audit_service,
 )
 from src.backend.core.audit.facade.authorization import (
-    emit_authorization_decision,  # noqa: F401 — re-export
+    emit_authorization_decision,
 )
 from src.backend.core.audit.facade.banking import (
-    emit_banking_audit,  # noqa: F401 — re-export
+    emit_banking_audit,
 )
 from src.backend.core.audit.facade.capability import (
-    emit_capability_check,  # noqa: F401 — re-export
+    emit_capability_check,
 )
 from src.backend.core.audit.facade.secrets import (
     emit_secret_access,
     emit_secret_rotation,
 )
 from src.backend.core.audit.facade.waf import (
-    emit_waf_evaluation,  # noqa: F401 — re-export
+    emit_waf_evaluation,
 )
 
 if TYPE_CHECKING:

@@ -18,7 +18,7 @@ def _is_route_composition_include_enabled() -> bool:
     """Check if route_composition_include feature flag is enabled."""
     try:
         from src.backend.core.config.features import (
-            feature_flags,  # noqa: F401 — availability probe
+            feature_flags,
         )
 
         return getattr(feature_flags, "route_composition_include", False)

@@ -11,9 +11,9 @@ Backward-compat: ``from src.backend.entrypoints.api.v1.endpoints.admin_workflows
 
 from __future__ import annotations as annotations
 
-from fastapi import APIRouter as APIRouter  # noqa: F401 — re-export
+from fastapi import APIRouter as APIRouter
 from fastapi import Depends as Depends
-from fastapi import status  # noqa: F401 — re-export
+from fastapi import status
 
 from src.backend.core.auth.admin_roles import AdminRole as AdminRole
 from src.backend.core.auth.admin_roles import require_admin as require_admin

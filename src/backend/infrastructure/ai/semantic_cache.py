@@ -52,7 +52,7 @@ def _ensure_tier_metrics() -> None:
         return
     try:
         from src.backend.core.utils.metrics_registry import (
-            metrics_registry,  # noqa: F401 — availability probe
+            metrics_registry,
         )
 
         _tier_counter = metrics_registry.counter(
@@ -111,7 +111,7 @@ class SemanticCache:
 
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.clients.storage.redis import (
                 get_redis_client as redis_client,
             )
         except ImportError:
@@ -134,7 +134,7 @@ class SemanticCache:
 
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.clients.storage.redis import (
                 get_redis_client as redis_client,
             )
         except ImportError:

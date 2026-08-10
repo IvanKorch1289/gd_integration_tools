@@ -50,8 +50,8 @@ class ProcessMixin(_LLMStructuredProcessorProtocol):
 
         # Lazy-import тяжёлых зависимостей: instructor / litellm / tenacity.
         try:
-            import instructor  # type: ignore[import-not-found]  # noqa: F401 — availability probe
-            import litellm  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            import instructor  # type: ignore[import-not-found]
+            import litellm  # type: ignore[import-not-found]
         except ImportError as exc:
             exchange.fail(
                 "llm_structured: instructor/litellm не установлены; "

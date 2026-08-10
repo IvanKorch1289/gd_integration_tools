@@ -111,7 +111,7 @@ async def emit_secret_access(
         # cycle-9/D-AUDIT-1033: narrow exceptions + observability.
         # ImportError — audit facade missing, AttributeError — API
         # change, RuntimeError — backend unavailable.
-        import logging  # noqa: F401 — availability probe
+        import logging
         logging.getLogger(__name__).debug(
             "secrets_audit.emit_failed",
             extra={"error": str(audit_exc)},

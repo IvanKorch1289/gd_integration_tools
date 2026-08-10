@@ -220,7 +220,7 @@ class InfraMixin:
             )
             try:
                 from src.backend.core.audit.facade import (
-                    emit_audit_safe,  # noqa: F401 — availability probe
+                    emit_audit_safe,
                 )
 
                 emit_audit_safe(
@@ -233,7 +233,7 @@ class InfraMixin:
                 # ImportError — audit facade missing, AttributeError —
                 # schema change, RuntimeError — backend unavailable.
                 # audit is best-effort.
-                import logging  # noqa: F401 — availability probe
+                import logging
                 logging.getLogger(__name__).debug(
                     "agent_dsl_infra.audit_emit_failed",
                     extra={"error": str(audit_exc)},

@@ -29,7 +29,7 @@ from src.backend.dsl.engine.processors.entity._legacy import (
 # original entity.py). _resolve используется audit.py и другими
 # callers для namespace-path resolution.
 from src.backend.dsl.engine.processors.entity._resolve import (
-    _resolve as _resolve,  # noqa: F401 — re-export
+    _resolve as _resolve,
 )
 from src.backend.dsl.engine.processors.entity.create import (
     EntityCreateProcessor as EntityCreateProcessor,

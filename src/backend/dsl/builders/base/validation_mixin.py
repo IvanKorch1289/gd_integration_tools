@@ -65,7 +65,7 @@ class ValidationMixin(_RouteBuilderProtocol):
         """
         try:
             from src.backend.dsl.commands.registry import (
-                action_handler_registry,  # noqa: F401 — availability probe
+                action_handler_registry,
             )
 
             available = set(action_handler_registry.list_actions())

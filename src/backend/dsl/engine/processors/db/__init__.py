@@ -14,7 +14,7 @@ from src.backend.dsl.engine.processors.db_call_procedure import (
     DbCallProcedureProcessor as DbCallProcedureProcessor,
 )
 from src.backend.dsl.engine.processors.db_crud import (
-    DbCrudProcessor,  # noqa: F401 — re-export
+    DbCrudProcessor,
 )
 from src.backend.dsl.engine.processors.db_query_external import (
     ExternalDbQueryProcessor as DbQueryExternalProcessor,

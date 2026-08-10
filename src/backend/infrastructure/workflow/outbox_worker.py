@@ -111,7 +111,7 @@ def start_outbox_worker(*, interval_seconds: int = 5, batch_size: int = 100) -> 
         return
     try:
         from apscheduler.schedulers.asyncio import (
-            AsyncIOScheduler,  # noqa: F401 — availability probe
+            AsyncIOScheduler,
         )
     except ImportError:
         logger.error("APScheduler не установлен, outbox worker выключен")

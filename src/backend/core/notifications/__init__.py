@@ -19,7 +19,7 @@ from typing import Any as Any
 def _get_notif_gateway() -> Any:
     """Возвращает ``notifications.get_gateway`` factory (lazy-import)."""
     from src.backend.infrastructure.notifications import (
-        get_gateway,  # noqa: F401 — re-export
+        get_gateway,
     )
 
     return get_gateway
@@ -28,7 +28,7 @@ def _get_notif_gateway() -> Any:
 def _get_ng_cls() -> Any:
     """Возвращает ``notifications.gateway.NotificationGateway`` class."""
     from src.backend.infrastructure.notifications.gateway import (
-        NotificationGateway,  # noqa: F401 — re-export
+        NotificationGateway,
     )
 
     return NotificationGateway

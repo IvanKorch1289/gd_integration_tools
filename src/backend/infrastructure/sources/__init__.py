@@ -10,9 +10,9 @@
 """
 
 from src.backend.infrastructure.sources.factory import (
-    build_source,  # noqa: F401 — re-export
+    build_source,
 )
-from src.backend.infrastructure.sources.file_watcher import (  # noqa: F401 — re-export
+from src.backend.infrastructure.sources.file_watcher import (
     FileEvent,
     FileWatcherSource,
 )

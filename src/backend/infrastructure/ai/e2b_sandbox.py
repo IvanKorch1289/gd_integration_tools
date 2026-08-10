@@ -88,7 +88,7 @@ class E2BSandbox(CodeSandbox):
 
         try:
             from e2b_code_interpreter import (
-                Sandbox as _E2BSandbox,  # noqa: F401 — availability probe
+                Sandbox as _E2BSandbox,
             )
         except ImportError as exc:
             raise RuntimeError(

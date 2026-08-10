@@ -42,7 +42,7 @@ def _ensure_metrics() -> None:
         return
     try:
         from src.backend.core.utils.metrics_registry import (
-            metrics_registry,  # noqa: F401 — availability probe
+            metrics_registry,
         )
 
         _metric_hits = metrics_registry.counter(
@@ -115,7 +115,7 @@ class LruMemoryCache:
     def _record_local_hit(self) -> None:
         """Updates local metrics snapshot for admin API."""
         try:
-            from src.backend.infrastructure.cache.metrics_collector import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.cache.metrics_collector import (
                 record_lru_hit,
             )
 
@@ -126,7 +126,7 @@ class LruMemoryCache:
     def _record_local_miss(self) -> None:
         """Updates local metrics snapshot for admin API."""
         try:
-            from src.backend.infrastructure.cache.metrics_collector import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.cache.metrics_collector import (
                 record_lru_miss,
             )
 

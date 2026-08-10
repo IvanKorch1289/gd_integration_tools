@@ -64,7 +64,7 @@ class OnnxInferenceProcessor(BaseProcessor):
                 return self._model_cache[self._path]
 
         try:
-            import onnxruntime as ort  # noqa: F401 — availability probe
+            import onnxruntime as ort
 
             session = ort.InferenceSession(
                 self._path, providers=["CPUExecutionProvider"],
@@ -161,7 +161,7 @@ class StreamingLLMProcessor(BaseProcessor):
 
         try:
             from src.backend.services.ai.ai_agent import (
-                get_ai_agent_service,  # noqa: F401 — availability probe
+                get_ai_agent_service,
             )
 
             agent = get_ai_agent_service()
@@ -348,7 +348,7 @@ class OutboxTransactionProcessor(BaseProcessor):
 
         try:
             from src.backend.infrastructure.database.database import (
-                db_initializer,  # noqa: F401 — availability probe
+                db_initializer,
             )
         except ImportError:
             exchange.fail("Database not configured for outbox")

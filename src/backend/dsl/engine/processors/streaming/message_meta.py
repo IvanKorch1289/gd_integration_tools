@@ -153,7 +153,7 @@ class SchemaRegistryValidator(BaseProcessor):
             return
 
         try:
-            import jsonschema  # noqa: F401 — availability probe
+            import jsonschema
 
             jsonschema.validate(instance=exchange.in_message.body, schema=schema)
         except ImportError:

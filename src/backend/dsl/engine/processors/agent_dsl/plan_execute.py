@@ -345,7 +345,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
     def _resolve_gateway() -> Any | None:
         """Lazy-резолв AIGateway через DI."""
         try:
-            from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]  # noqa: F401 — availability probe
+            from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]
                 get_ai_gateway,
             )
 
@@ -354,7 +354,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
             # cycle-9/D-AUDIT-966: narrow exceptions + observability.
             # ImportError — gateway_adapter missing, AttributeError —
             # function API change, RuntimeError — DI unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "plan_execute.ai_gateway_resolve_fallback",
                 extra={"error": str(di_exc)},

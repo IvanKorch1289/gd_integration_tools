@@ -188,7 +188,7 @@ class ScrapeProcessor(BaseProcessor):
             return
 
         try:
-            from selectolax.parser import HTMLParser  # noqa: F401 — availability probe
+            from selectolax.parser import HTMLParser
 
             tree = HTMLParser(html)
         except ImportError:
@@ -285,7 +285,7 @@ class PaginateProcessor(BaseProcessor):
             return
 
         try:
-            from selectolax.parser import HTMLParser  # noqa: F401 — availability probe
+            from selectolax.parser import HTMLParser
         except ImportError:
             exchange.fail("selectolax not installed")
             return

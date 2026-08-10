@@ -22,13 +22,13 @@ Scaffolding-адаптеры — placeholder'ы с правильным инте
 """
 
 from src.backend.infrastructure.notifications.adapters.base import (
-    NotificationChannel,  # noqa: F401 — re-export
+    NotificationChannel,
 )
 from src.backend.infrastructure.notifications.adapters.express import (
-    ExpressAdapter,  # noqa: F401 — re-export
+    ExpressAdapter,
 )
 from src.backend.infrastructure.notifications.adapters.telegram import (
-    TelegramAdapter,  # noqa: F401 — re-export
+    TelegramAdapter,
 )
 
 __all__ = ("ExpressAdapter", "NotificationChannel", "TelegramAdapter")

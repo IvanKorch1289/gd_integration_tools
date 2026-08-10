@@ -114,7 +114,7 @@ class ResultUnwrapProcessor(BaseProcessor):
         """Разворачивает Result(Ok/Err) и пишет значение в target, при Err — fail."""
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             if not feature_flags.result_unwrap_processor:
@@ -123,7 +123,7 @@ class ResultUnwrapProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1718: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1717).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "result_unwrap.feature_flag_fallback",
                 extra={"error": str(ff_exc)},
@@ -131,7 +131,7 @@ class ResultUnwrapProcessor(BaseProcessor):
 
         # Lazy-import result library (extra)
         try:
-            from result import (  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            from result import (  # type: ignore[import-not-found]
                 Err,
                 Ok,
             )

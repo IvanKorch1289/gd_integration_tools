@@ -108,10 +108,10 @@ def get_ad_client(
     # No runtime core→services import (layer violation eliminated).
     try:
         from src.backend.core.auth.ldap_contract import (
-            AdServerConfig,  # noqa: F401 — availability probe
+            AdServerConfig,
         )
         from src.backend.core.di.providers.auth import (
-            get_ad_directory_client_provider,  # noqa: F401 — availability probe
+            get_ad_directory_client_provider,
         )
 
         config = AdServerConfig(

@@ -162,7 +162,7 @@ class DebeziumEventsCDCBackend(CDCSource):
             return self._consumer
         try:
             from aiokafka import (
-                AIOKafkaConsumer,  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+                AIOKafkaConsumer,  # type: ignore[import-not-found]
             )
         except ImportError as exc:
             raise RuntimeError(

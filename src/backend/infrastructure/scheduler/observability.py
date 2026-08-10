@@ -51,7 +51,7 @@ def _ensure_metrics() -> tuple[Any | None, Any | None]:
 
     try:
         from src.backend.core.utils.metrics_registry import (
-            metrics_registry,  # noqa: F401 — availability probe
+            metrics_registry,
         )
     except ImportError:
         _logger.debug("MetricsRegistry недоступен — scheduler metrics no-op")

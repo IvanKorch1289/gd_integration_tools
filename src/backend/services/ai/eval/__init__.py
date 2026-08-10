@@ -35,7 +35,7 @@ from src.backend.services.ai.eval.ragas_evaluator import (
     get_ragas_evaluator,
 )
 from src.backend.services.ai.eval.suites import (
-    REFERENCE_SUITES,  # noqa: F401 — re-export
+    REFERENCE_SUITES,
 )
 
 __all__ = (

@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 # TimeoutError — для timeout, ConnectionError — для refused connection.
 try:
     from src.backend.core.resilience.retry import (
-        make_async_retry,  # noqa: F401 — availability probe
+        make_async_retry,
     )
 except ImportError:  # pragma: no cover
     make_async_retry = None  # type: ignore[assignment]

@@ -270,7 +270,7 @@ class ApplyMixin(_DataQualityProtocol):
     def _apply_json_schema(self, rule: DQRule, value: Any) -> DQViolation | None:
         """Return violation if value fails jsonschema validation."""
         try:
-            import jsonschema  # type: ignore[import-untyped]  # noqa: F401 — availability probe
+            import jsonschema  # type: ignore[import-untyped]
         except ImportError:
             return DQViolation(
                 rule.name,

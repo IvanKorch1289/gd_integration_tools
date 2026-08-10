@@ -289,7 +289,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         # контексте (per-plugin shutdown vs full unload).
         try:
             from src.backend.core.audit.facade import (
-                emit_audit_safe,  # noqa: F401 — availability probe
+                emit_audit_safe,
             )
 
             emit_audit_safe(
@@ -307,7 +307,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
             # ImportError — audit facade missing, AttributeError — schema
             # change, RuntimeError — backend unavailable. Bare `except
             # Exception` маскировал unrelated runtime errors.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "plugin_loader.unload_audit_failed",
                 extra={"plugin_name": plugin_name, "error": str(audit_exc)},

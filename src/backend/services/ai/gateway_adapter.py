@@ -115,7 +115,7 @@ def get_ai_gateway() -> AIGateway:
     """
     try:
         from src.backend.core.di.app_state import (
-            get_app_ref,  # noqa: F401 — availability probe
+            get_app_ref,
         )
 
         app = get_app_ref()
@@ -128,7 +128,7 @@ def get_ai_gateway() -> AIGateway:
         # Bare `except Exception` маскировал broken app_state (early-init,
         # не инициализированный app.state). Fallback: provider chain.
         from src.backend.core.logging import (
-            get_logger,  # noqa: F401 — availability probe
+            get_logger,
         )
         get_logger(__name__).debug(
             "gateway_adapter.app_state_resolve_failed",
@@ -146,10 +146,10 @@ def get_ai_gateway() -> AIGateway:
         # AIGatewayProductionWiringError вместо silent bare AIGateway().
         try:
             from src.backend.core.ai.gateway import (
-                AIGatewayProductionWiringError,  # noqa: F401 — availability probe
+                AIGatewayProductionWiringError,
             )
             from src.backend.core.logging import (
-                get_logger,  # noqa: F401 — availability probe
+                get_logger,
             )
 
             get_logger(__name__).error(
@@ -168,7 +168,7 @@ def get_ai_gateway() -> AIGateway:
             # остаётся, дальше — bare AIGateway() с явным признаком
             # failed DI lookup.
             from src.backend.core.logging import (
-                get_logger,  # noqa: F401 — availability probe
+                get_logger,
             )
 
             get_logger(__name__).error(

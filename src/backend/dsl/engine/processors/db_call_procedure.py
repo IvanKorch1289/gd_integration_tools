@@ -142,7 +142,7 @@ class DbCallProcedureProcessor(BaseProcessor):
         """Вызывает хранимую SQL-процедуру через внешний session manager."""
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             if not feature_flags.db_call_procedure_enabled:
@@ -151,7 +151,7 @@ class DbCallProcedureProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1721: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1720).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "db_call_procedure.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

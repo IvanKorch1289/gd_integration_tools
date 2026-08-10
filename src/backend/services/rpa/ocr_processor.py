@@ -83,7 +83,7 @@ class PytesseractOCRProcessor:
     async def is_available(self) -> bool:
         """Проверка доступности pytesseract на момент вызова (async)."""
         try:
-            import pytesseract  # noqa: F401 — availability probe
+            import pytesseract
         except ImportError:
             return False
         return True
@@ -103,7 +103,7 @@ class PytesseractOCRProcessor:
 
         """
         try:
-            import pytesseract  # noqa: F401 — availability probe
+            import pytesseract
         except ImportError as exc:
             _logger.warning("pytesseract not installed: %s", exc)
             return ""
@@ -161,7 +161,7 @@ def from_environment() -> OCRProcessor:
     """
     try:
         from src.backend.core.config.features import (
-            feature_flags,  # noqa: F401 — availability probe
+            feature_flags,
         )
 
         if not feature_flags.rpa_ocr_enabled:
@@ -173,7 +173,7 @@ def from_environment() -> OCRProcessor:
         # missing rpa_ocr_enabled attribute). Fallback NoOpOCRProcessor
         # корректен — caller проверяет availability отдельно.
         from src.backend.core.logging import (
-            get_logger,  # noqa: F401 — availability probe
+            get_logger,
         )
         get_logger(__name__).debug(
             "rpa.ocr.feature_flags_resolve_failed",

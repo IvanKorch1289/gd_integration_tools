@@ -30,7 +30,7 @@ def _get_rate_limit_settings() -> Any:
     """
     try:
         from src.backend.core.config.settings import (
-            settings,  # noqa: F401 — availability probe
+            settings,
         )
 
         return settings
@@ -39,7 +39,7 @@ def _get_rate_limit_settings() -> Any:
         # Bare `except Exception` маскировал ImportError (settings module
         # не инициализирован) или AttributeError (неправильный settings).
         from src.backend.core.logging import (
-            get_logger,  # noqa: F401 — availability probe
+            get_logger,
         )
         get_logger(__name__).debug(
             "resilience.settings_resolve_failed",

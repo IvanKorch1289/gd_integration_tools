@@ -27,7 +27,7 @@ __all__ = ("AbstractRepository", "SQLAlchemyRepository", "get_repository_for_mod
 def __getattr__(name: str) -> Any:
     if name == "AbstractRepository":
         from src.backend.infrastructure.repositories.base.base import (
-            AbstractRepository,  # noqa: F401 — re-export
+            AbstractRepository,
         )
         return AbstractRepository
     if name == "SQLAlchemyRepository":

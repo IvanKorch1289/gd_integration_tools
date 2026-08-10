@@ -9,7 +9,7 @@ Lakera Guard (external API) and NeMo Guard are the remaining providers.
 NeMo is self-hosted; Lakera remains the only third-party API integration.
 """
 
-from src.backend.services.ai.guardrails.lakera_client import (  # noqa: F401 — re-export
+from src.backend.services.ai.guardrails.lakera_client import (
     LakeraClient,
     LakeraResult,
 )

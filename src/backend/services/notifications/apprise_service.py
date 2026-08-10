@@ -98,7 +98,7 @@ class AppriseNotificationService:
             return False
 
         try:
-            import apprise  # lazy-import  # noqa: F401 — availability probe
+            import apprise  # lazy-import
         except ImportError:
             _log.warning(
                 "Пакет 'apprise' не установлен. Уведомление '%s' пропущено.", channel,

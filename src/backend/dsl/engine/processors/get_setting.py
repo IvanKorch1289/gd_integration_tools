@@ -84,7 +84,7 @@ class GetSettingProcessor(BaseProcessor):
         """Читает значение из application settings (с fallback на default)."""
         try:
             from src.backend.core.config.settings import (
-                settings as app_settings,  # noqa: F401 — availability probe
+                settings as app_settings,
             )
         except ImportError:
             return self.default

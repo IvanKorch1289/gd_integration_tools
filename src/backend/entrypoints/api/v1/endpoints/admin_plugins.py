@@ -107,7 +107,7 @@ def _get_plugin_registry() -> Any:
     При недоступности возвращает None — эндпоинты используют mock.
     """
     try:
-        from src.backend.core.plugin_runtime.loader import (  # noqa: F401 — availability probe
+        from src.backend.core.plugin_runtime.loader import (
             PluginLoader,  # type: ignore[import-not-found]  # lazy import
         )
 
@@ -348,14 +348,14 @@ def _get_version_service() -> Any | None:
     """
     try:
         from src.backend.main import (
-            app as fastapi_app,  # noqa: F401 — availability probe
+            app as fastapi_app,
         )
 
         loader = getattr(fastapi_app.state, "plugin_loader_v1", None)
         if loader is None:
             return None
         from src.backend.services.plugins.versioning import (
-            PluginVersionService,  # noqa: F401 — availability probe
+            PluginVersionService,
         )
 
         return PluginVersionService(loader=loader, extensions_dir=Path("extensions"))

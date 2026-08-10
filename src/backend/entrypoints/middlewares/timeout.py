@@ -118,7 +118,7 @@ class TimeoutMiddleware:
         """Lazy-проверка feature-flag ``per_route_timeout_enabled``."""
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             return bool(getattr(feature_flags, "per_route_timeout_enabled", False))
@@ -126,7 +126,7 @@ class TimeoutMiddleware:
             # cycle-9/D-AUDIT-1004: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "timeout_middleware.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

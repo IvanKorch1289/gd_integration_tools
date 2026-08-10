@@ -5,7 +5,7 @@ from src.backend.services.ai.embeddings.ab_migration import (
     EmbeddingMigrationStatus,
 )
 from src.backend.services.ai.embeddings.migration_runner import (
-    EmbeddingMigrationRunner,  # noqa: F401 — re-export
+    EmbeddingMigrationRunner,
 )
 
 __all__ = ("EmbeddingABRouter", "EmbeddingMigrationRunner", "EmbeddingMigrationStatus")

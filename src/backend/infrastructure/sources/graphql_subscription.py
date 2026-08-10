@@ -115,9 +115,9 @@ class GraphQLSubscriptionSource:
 
         """
         try:
-            import gql  # noqa: F401 — availability probe
+            import gql
             from gql.transport.websockets import (
-                WebsocketsTransport,  # noqa: F401 — availability probe
+                WebsocketsTransport,
             )
         except ImportError as exc:
             raise RuntimeError(

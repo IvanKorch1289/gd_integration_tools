@@ -255,7 +255,7 @@ class DurableWorkflowRunner:
 
     async def _listen_loop(self) -> None:
         try:
-            import asyncpg  # noqa: F401 — availability probe
+            import asyncpg
         except ImportError:
             _logger.warning("asyncpg not installed; LISTEN path disabled")
             return

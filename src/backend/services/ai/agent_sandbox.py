@@ -90,7 +90,7 @@ class InProcessAgentSandbox:
             )
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             if getattr(
@@ -375,7 +375,7 @@ class E2BAgentSandbox:
         # Lazy import of e2b_code_interpreter (opt-in dep, ~5MB).
         try:
             from e2b_code_interpreter import (
-                Sandbox as _E2BSandbox,  # noqa: F401 — availability probe
+                Sandbox as _E2BSandbox,
             )
         except ImportError as exc:
             raise AgentSandboxConfigError(
@@ -438,7 +438,7 @@ class E2BAgentSandbox:
                     )
                     try:
                         from src.backend.core.audit.facade import (
-                            emit_audit_safe,  # noqa: F401 — availability probe
+                            emit_audit_safe,
                         )
 
                         emit_audit_safe(
@@ -457,7 +457,7 @@ class E2BAgentSandbox:
                         # — malformed audit schema, RuntimeError — backend
                         # unavailable. Bare `except Exception` маскировал
                         # unrelated runtime errors (KeyError, TypeError).
-                        import logging  # noqa: F401 — availability probe
+                        import logging
                         logging.getLogger(__name__).debug(
                             "agent_sandbox.audit_emit_failed",
                             extra={
@@ -575,7 +575,7 @@ def resolve_agent_sandbox(
     if default_kind is None and use_settings_default:
         try:
             from src.backend.core.config.ai import (
-                ai_workspace_settings,  # noqa: F401 — availability probe
+                ai_workspace_settings,
             )
 
             default_kind = str(ai_workspace_settings.default_agent_sandbox)
@@ -585,7 +585,7 @@ def resolve_agent_sandbox(
             # module not ready) и AttributeError (неправильный settings).
             # Fallback "process_pool" — default-OFF-safe.
             from src.backend.core.logging import (
-                get_logger,  # noqa: F401 — availability probe
+                get_logger,
             )
             get_logger(__name__).debug(
                 "agent_sandbox.default_kind_resolve_failed",

@@ -26,7 +26,7 @@
 """
 
 from src.backend.core.ai.policy.enforcer import (
-    AIPolicyEnforcer,  # noqa: F401 — re-export
+    AIPolicyEnforcer,
 )
 from src.backend.core.ai.policy.resolver import (
     PolicyLoadError,

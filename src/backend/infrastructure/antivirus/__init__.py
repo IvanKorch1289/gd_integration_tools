@@ -15,19 +15,19 @@
 """
 
 from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
-    ClamAVTcpBackend,  # noqa: F401 — re-export
+    ClamAVTcpBackend,
 )
 from src.backend.infrastructure.antivirus.backends.clamav_unix import (
-    ClamAVUnixBackend,  # noqa: F401 — re-export
+    ClamAVUnixBackend,
 )
 from src.backend.infrastructure.antivirus.backends.http import (
-    HttpAntivirusBackend,  # noqa: F401 — re-export
+    HttpAntivirusBackend,
 )
 from src.backend.infrastructure.antivirus.factory import (
-    create_antivirus_backend,  # noqa: F401 — re-export
+    create_antivirus_backend,
 )
 from src.backend.infrastructure.antivirus.hash_cache import (
-    AntivirusHashCache,  # noqa: F401 — re-export
+    AntivirusHashCache,
 )
 from src.backend.infrastructure.antivirus.service import (
     AntivirusService,

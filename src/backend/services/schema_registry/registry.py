@@ -321,7 +321,7 @@ class ServiceSchemaRegistry:
         """Проверяет spec_schema / output_schema через jsonschema."""
         try:
             from jsonschema import (
-                Draft202012Validator,  # noqa: F401 — availability probe
+                Draft202012Validator,
             )
         except ImportError:
             logger.warning("jsonschema not available; skipping schema validation")

@@ -1,13 +1,13 @@
 """Бэкенды AntivirusBackend ABC (Wave 2.4)."""
 
 from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
-    ClamAVTcpBackend,  # noqa: F401 — re-export
+    ClamAVTcpBackend,
 )
 from src.backend.infrastructure.antivirus.backends.clamav_unix import (
-    ClamAVUnixBackend,  # noqa: F401 — re-export
+    ClamAVUnixBackend,
 )
 from src.backend.infrastructure.antivirus.backends.http import (
-    HttpAntivirusBackend,  # noqa: F401 — re-export
+    HttpAntivirusBackend,
 )
 
 __all__ = ("ClamAVTcpBackend", "ClamAVUnixBackend", "HttpAntivirusBackend")

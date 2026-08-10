@@ -156,7 +156,7 @@ class HtmlToJson(ConversionStrategy):
         if not isinstance(data, str):
             return data
         try:
-            from selectolax.parser import HTMLParser  # noqa: F401 — availability probe
+            from selectolax.parser import HTMLParser
 
             tree = HTMLParser(data)
             return {
@@ -223,7 +223,7 @@ class DictToCsv(ConversionStrategy):
         if not isinstance(data, list) or not data:
             return data
         try:
-            import polars as pl  # noqa: F401 — availability probe
+            import polars as pl
 
             df = pl.DataFrame(data)
             return df.write_csv()
@@ -243,9 +243,9 @@ class CsvToDict(ConversionStrategy):
         if not isinstance(data, str):
             return data
         try:
-            import io  # noqa: F401 — availability probe
+            import io
 
-            import polars as pl  # noqa: F401 — availability probe
+            import polars as pl
 
             df = pl.read_csv(io.StringIO(data))
             return df.to_dicts()

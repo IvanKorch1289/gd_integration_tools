@@ -24,10 +24,10 @@ Public API:
 """
 
 from src.backend.dsl.workflow.builder import (
-    SagaBuilder as SagaBuilder,  # noqa: F401 — re-export
+    SagaBuilder as SagaBuilder,
 )
 from src.backend.dsl.workflow.builder import (
-    WorkflowBuilder as WorkflowBuilder,  # noqa: F401 — re-export
+    WorkflowBuilder as WorkflowBuilder,
 )
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,

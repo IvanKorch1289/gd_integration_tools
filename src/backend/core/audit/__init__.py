@@ -14,7 +14,7 @@ __all__ = ("get_audit_log",)
 def __getattr__(name: str) -> Any:
     if name == "get_audit_log":
         from src.backend.infrastructure.audit.event_log import (
-            get_audit_log,  # noqa: F401 — re-export
+            get_audit_log,
         )
 
         return get_audit_log

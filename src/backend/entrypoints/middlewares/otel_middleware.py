@@ -63,7 +63,7 @@ class OtelMiddleware:
     def _load_tracer() -> Any:
         """Пытается получить OTEL tracer; возвращает None при отсутствии SDK."""
         try:
-            from opentelemetry import trace  # noqa: F401 — availability probe
+            from opentelemetry import trace
 
             return trace.get_tracer("gd.entrypoints.http")
         except ImportError:
@@ -81,7 +81,7 @@ class OtelMiddleware:
     def _load_propagator() -> Any:
         """Загружает W3C trace-context propagator или возвращает None."""
         try:
-            from opentelemetry.trace.propagation.tracecontext import (  # noqa: F401 — availability probe
+            from opentelemetry.trace.propagation.tracecontext import (
                 TraceContextTextMapPropagator,
             )
 
@@ -114,7 +114,7 @@ class OtelMiddleware:
         attributes = self._build_attributes(scope)
 
         try:
-            from opentelemetry.trace import SpanKind  # noqa: F401 — availability probe
+            from opentelemetry.trace import SpanKind
         except ImportError:
             await self.app(scope, receive, send)
             return
@@ -262,7 +262,7 @@ class OtelMiddleware:
         if not tenant_id:
             try:
                 from src.backend.core.tenancy import (
-                    current_tenant,  # noqa: F401 — availability probe
+                    current_tenant,
                 )
 
                 ctx = current_tenant()
@@ -272,7 +272,7 @@ class OtelMiddleware:
                 # cycle-9/D-AUDIT-1003: narrow exceptions + observability.
                 # ImportError — tenancy missing, AttributeError — API
                 # change, RuntimeError — context unavailable.
-                import logging  # noqa: F401 — availability probe
+                import logging
                 logging.getLogger(__name__).debug(
                     "otel_middleware.current_tenant_fallback",
                     extra={"error": str(ten_exc)},
@@ -308,7 +308,7 @@ class OtelMiddleware:
     def _mark_error(span: Any, exc: BaseException) -> None:
         """Cycle 56: помечает span как error + records exception."""
         try:
-            from opentelemetry.trace import (  # noqa: F401 — availability probe
+            from opentelemetry.trace import (
                 Status,
                 StatusCode,
             )

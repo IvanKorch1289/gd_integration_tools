@@ -1,7 +1,7 @@
 """AI-driven route optimization (Sprint 11 K4 W7)."""
 
 from src.backend.services.ai.optimization.pr_generator import (
-    PRGenerator,  # noqa: F401 — re-export
+    PRGenerator,
 )
 from src.backend.services.ai.optimization.route_analyzer import (
     OptimizationRecommendation,

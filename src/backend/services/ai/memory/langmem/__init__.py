@@ -11,16 +11,16 @@ from src.backend.services.ai.memory.langmem.consolidation import (
     ConsolidationReport,
 )
 from src.backend.services.ai.memory.langmem.episodic import (
-    EpisodicMemory,  # noqa: F401 — re-export
+    EpisodicMemory,
 )
 from src.backend.services.ai.memory.langmem.procedural import (
-    ProceduralMemory,  # noqa: F401 — re-export
+    ProceduralMemory,
 )
 from src.backend.services.ai.memory.langmem.rlm import (
-    RLMFeedbackProcessor,  # noqa: F401 — re-export
+    RLMFeedbackProcessor,
 )
 from src.backend.services.ai.memory.langmem.semantic import (
-    SemanticMemory,  # noqa: F401 — re-export
+    SemanticMemory,
 )
 
 __all__ = (

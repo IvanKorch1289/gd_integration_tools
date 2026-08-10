@@ -19,13 +19,13 @@ from src.backend.infrastructure.secrets.broker import (
     SubscriberCallback,
 )
 from src.backend.infrastructure.secrets.env_backend import (
-    EnvBackend,  # noqa: F401 — re-export
+    EnvBackend,
 )
 from src.backend.infrastructure.secrets.rotation import (
-    RotationScheduler,  # noqa: F401 — re-export
+    RotationScheduler,
 )
 from src.backend.infrastructure.secrets.vault_backend import (
-    VaultBackend,  # noqa: F401 — re-export
+    VaultBackend,
 )
 
 __all__ = (

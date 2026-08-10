@@ -82,7 +82,7 @@ def _ensure_metrics() -> None:
         return
     try:
         from src.backend.core.utils.metrics_registry import (
-            metrics_registry,  # noqa: F401 — availability probe
+            metrics_registry,
         )
 
         _age_gauge = metrics_registry.gauge(

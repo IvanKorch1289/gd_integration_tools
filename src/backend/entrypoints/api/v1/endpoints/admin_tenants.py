@@ -53,7 +53,7 @@ async def _query_audit_safe(
     """
     try:
         from src.backend.core.audit import (
-            get_audit_log,  # noqa: F401 — availability probe
+            get_audit_log,
         )
     except ImportError:
         return None

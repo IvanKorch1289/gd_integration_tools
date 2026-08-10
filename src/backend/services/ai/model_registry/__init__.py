@@ -19,10 +19,10 @@ from src.backend.services.ai.model_registry.hf_hub_backend import (
     HuggingFaceModelRegistry,
 )
 from src.backend.services.ai.model_registry.local_fs_backend import (
-    LocalFSModelRegistry,  # noqa: F401 — re-export
+    LocalFSModelRegistry,
 )
 from src.backend.services.ai.model_registry.mlflow_backend import (
-    MlflowModelRegistry,  # noqa: F401 — re-export
+    MlflowModelRegistry,
 )
 
 __all__ = (

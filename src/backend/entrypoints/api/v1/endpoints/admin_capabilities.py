@@ -41,7 +41,7 @@ router = APIRouter(dependencies=[_ADMIN_GUARD_READ])
 async def list_capabilities() -> dict[str, Any]:
     """Список всех известных capabilities."""
     try:
-        from src.backend.core.security.capabilities import (  # noqa: F401 — availability probe
+        from src.backend.core.security.capabilities import (
             DEFAULT_CAPABILITY_CATALOG,
             build_default_vocabulary,
         )
@@ -80,7 +80,7 @@ async def get_capability_audit_events(limit: int = 100) -> dict[str, Any]:
     safe_limit = max(1, min(int(limit), 1000))
     try:
         from src.backend.core.audit import (
-            get_audit_log,  # noqa: F401 — availability probe
+            get_audit_log,
         )
     except ImportError:
         return {"events": [], "limit": safe_limit, "stub": True}
@@ -120,7 +120,7 @@ async def get_capability_graph() -> dict[str, Any]:
         return {"nodes": [], "edges": []}
 
     try:
-        from src.backend.core.plugin_runtime.manifest_toml import (  # noqa: F401 — availability probe
+        from src.backend.core.plugin_runtime.manifest_toml import (
             PluginManifestError,
             load_plugin_manifest,
         )

@@ -54,7 +54,7 @@ class QdrantVectorStore(BaseVectorStore):
             return self._client
         try:
             from qdrant_client import (
-                AsyncQdrantClient,  # noqa: F401 — availability probe
+                AsyncQdrantClient,
             )
         except ImportError as exc:
             raise RuntimeError(

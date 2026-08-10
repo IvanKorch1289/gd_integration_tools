@@ -139,7 +139,7 @@ def _build_default_dlq_handler(state: Any) -> DLQHandler | None:
         return None
     try:
         from src.backend.infrastructure.messaging.dlq.inbox_writer import (
-            InboxDLQWriter,  # noqa: F401 — availability probe
+            InboxDLQWriter,
         )
     except ImportError:
         return None

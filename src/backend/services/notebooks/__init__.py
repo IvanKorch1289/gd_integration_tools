@@ -5,7 +5,7 @@ Append-only история версий с restore, REST API и Streamlit-стр
 
 from __future__ import annotations as annotations
 
-from src.backend.services.notebooks.models import (  # noqa: F401 — re-export
+from src.backend.services.notebooks.models import (
     Notebook,
     NotebookVersion,
 )
@@ -13,7 +13,7 @@ from src.backend.services.notebooks.repository import (
     InMemoryNotebookRepository,
     NotebookRepository,
 )
-from src.backend.services.notebooks.service import (  # noqa: F401 — re-export
+from src.backend.services.notebooks.service import (
     NotebookService,
     get_notebook_service,
 )

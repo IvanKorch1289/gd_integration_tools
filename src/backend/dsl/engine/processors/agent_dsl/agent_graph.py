@@ -209,7 +209,7 @@ class AgentGraphProcessor(BaseAIProcessor):
     ) -> dict[str, Any]:
         """Execute multi-agent supervisor via existing MultiAgentSupervisor."""
         try:
-            from src.backend.services.ai.multi_agent.supervisor import (  # noqa: F401 — availability probe
+            from src.backend.services.ai.multi_agent.supervisor import (
                 AgentSpec,
                 MultiAgentSupervisor,
             )
@@ -235,7 +235,7 @@ class AgentGraphProcessor(BaseAIProcessor):
 
             async def make_invoke(wf_id: str) -> Any:
                 """Create invoke callable that runs AgentRunProcessor."""
-                from src.backend.dsl.engine.processors.agent_dsl.agent_run import (  # noqa: F401 — availability probe
+                from src.backend.dsl.engine.processors.agent_dsl.agent_run import (
                     AgentRunProcessor,
                 )
 
@@ -327,9 +327,9 @@ class AgentGraphProcessor(BaseAIProcessor):
 
         try:
             from src.backend.ai.policy import (
-                AgentToolPolicy,  # noqa: F401 — availability probe
+                AgentToolPolicy,
             )
-            from src.backend.core.svcs_registry import (  # noqa: F401 — availability probe
+            from src.backend.core.svcs_registry import (
                 get_service,
                 has_service,
             )

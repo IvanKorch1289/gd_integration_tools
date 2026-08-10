@@ -571,7 +571,7 @@ def _is_strict_mode() -> bool:
     """Проверить feature-flag processor_health_checks_strict."""
     try:
         from src.backend.core.config.features import (
-            feature_flags,  # noqa: F401 — availability probe
+            feature_flags,
         )
 
         return feature_flags.processor_health_checks_strict

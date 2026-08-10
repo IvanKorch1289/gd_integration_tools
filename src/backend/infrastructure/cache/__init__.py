@@ -11,7 +11,7 @@ from src.backend.infrastructure.cache.backends import (
     RedisBackend,
 )
 from src.backend.infrastructure.cache.factory import (
-    create_cache_backend,  # noqa: F401 — re-export
+    create_cache_backend,
 )
 from src.backend.infrastructure.cache.invalidator import (
     CacheBackendProtocol,
@@ -25,7 +25,7 @@ from src.backend.infrastructure.cache.tenant_wrapper import (
     TenantCacheBackend,
 )
 from src.backend.infrastructure.cache.tiered import (
-    TieredCacheBackend,  # noqa: F401 — re-exported as TieredCacheBackend
+    TieredCacheBackend,
 )
 from src.backend.infrastructure.cache.validator import (
     CacheConfigEntry,

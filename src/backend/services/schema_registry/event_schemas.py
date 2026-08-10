@@ -48,7 +48,7 @@ def register_default_event_schemas(registry: ServiceSchemaRegistry) -> int:
             # generation failed, ValueError — invalid field, ImportError —
             # forward-ref missing. Bare `except Exception` маскировал
             # unrelated runtime errors (KeyError, RuntimeError).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "event_schemas.model_schema_failed",
                 extra={

@@ -130,7 +130,7 @@ class LangMemService:
         if enabled is None:
             try:
                 from src.backend.core.config.features import (
-                    feature_flags,  # noqa: F401 — availability probe
+                    feature_flags,
                 )
 
                 enabled = feature_flags.langmem_enabled
@@ -457,9 +457,9 @@ class LangMemService:
             )
         try:
             from src.backend.core.config.ai_stack import (
-                langmem_settings,  # noqa: F401 — availability probe
+                langmem_settings,
             )
-            from src.backend.services.ai.memory.langmem.consolidation import (  # noqa: F401 — availability probe
+            from src.backend.services.ai.memory.langmem.consolidation import (
                 ConsolidationEngine,
             )
 

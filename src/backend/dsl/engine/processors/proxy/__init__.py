@@ -21,10 +21,10 @@ from src.backend.dsl.engine.processors.proxy.forward import (
     ProxyOutboundSpec,
 )
 from src.backend.dsl.engine.processors.proxy.headers import (
-    HeaderMapPolicy,  # noqa: F401 — re-export
+    HeaderMapPolicy,
 )
 from src.backend.dsl.engine.processors.proxy.redirect import (
-    RedirectProcessor,  # noqa: F401 — re-export
+    RedirectProcessor,
 )
 
 __all__ = (

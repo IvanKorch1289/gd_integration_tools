@@ -6,7 +6,7 @@ capability-gate проверкой (`workflow.start` / `workflow.signal`),
 """
 
 from src.backend.services.workflows.facade import (
-    WorkflowFacade,  # noqa: F401 — re-export
+    WorkflowFacade,
 )
 
 __all__ = ("WorkflowFacade",)

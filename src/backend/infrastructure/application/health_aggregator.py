@@ -150,7 +150,7 @@ class HealthAggregator:
             return {}
         try:
             from src.backend.infrastructure.registry import (
-                ConnectorRegistry,  # noqa: F401 — availability probe
+                ConnectorRegistry,
             )
         except ImportError:
             return {}

@@ -84,7 +84,7 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
             )
         case "memcached":
             try:
-                import aiomcache  # noqa: F401 — availability probe
+                import aiomcache
             except ImportError as exc:
                 raise RuntimeError(
                     "Memcached-бэкенд требует пакет 'aiomcache'. "

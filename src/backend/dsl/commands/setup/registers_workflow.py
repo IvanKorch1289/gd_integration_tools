@@ -213,7 +213,7 @@ def _register_webhook_relay() -> None:
     # backward-compat shim в entrypoints оставлен для extensions/tests.
     try:
         from src.backend.services.integrations.webhook_relay import (
-            get_webhook_relay,  # noqa: F401 — availability probe
+            get_webhook_relay,
         )
     except ImportError:
         return  # services module unavailable; skip registration

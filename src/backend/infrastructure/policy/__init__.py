@@ -6,9 +6,9 @@
 """
 
 from src.backend.infrastructure.policy.casbin_adapter import (
-    CasbinAdapter,  # noqa: F401 — re-export
+    CasbinAdapter,
 )
-from src.backend.infrastructure.policy.opa import (  # noqa: F401 — re-export
+from src.backend.infrastructure.policy.opa import (
     OPAClient,
     PolicyDecision,
 )

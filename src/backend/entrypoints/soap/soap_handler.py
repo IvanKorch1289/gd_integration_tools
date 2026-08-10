@@ -52,7 +52,7 @@ def _parse_soap_request(xml_body: bytes) -> tuple[str, dict[str, Any]]:
     """
     try:
         from defusedxml.ElementTree import (
-            fromstring as safe_fromstring,  # noqa: F401 — availability probe
+            fromstring as safe_fromstring,
         )
 
         root = safe_fromstring(xml_body)
@@ -320,7 +320,7 @@ def _parse_invoker_envelope(xml_body: bytes) -> InvocationRequest:
     """
     try:
         from defusedxml.ElementTree import (
-            fromstring as safe_fromstring,  # noqa: F401 — availability probe
+            fromstring as safe_fromstring,
         )
 
         root = safe_fromstring(xml_body)

@@ -26,7 +26,7 @@ class LangFuseClient:
             return
 
         try:
-            from langfuse import Langfuse  # noqa: F401 — availability probe
+            from langfuse import Langfuse
 
             self._client = Langfuse()
             self._initialized = True
@@ -96,7 +96,7 @@ class LangFuseClient:
 
         try:
             from langfuse.callback import (
-                CallbackHandler,  # noqa: F401 — availability probe
+                CallbackHandler,
             )
 
             return CallbackHandler()

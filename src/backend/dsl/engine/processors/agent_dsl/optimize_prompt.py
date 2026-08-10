@@ -61,7 +61,7 @@ class OptimizePromptProcessor(BaseProcessor):
         """Запустить optimization."""
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             if not feature_flags.dspy_eval_pipeline_enabled:
@@ -74,7 +74,7 @@ class OptimizePromptProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-962: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError — config
             # not initialized, RuntimeError — feature_flags unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "optimize_prompt.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

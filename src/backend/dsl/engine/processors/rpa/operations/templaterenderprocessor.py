@@ -35,7 +35,7 @@ class TemplateRenderProcessor(BaseProcessor):
             return
         try:
             from jinja2.sandbox import (
-                SandboxedEnvironment,  # noqa: F401 — availability probe
+                SandboxedEnvironment,
             )
         except ImportError:
             exchange.fail("jinja2 not installed: pip install Jinja2")

@@ -99,13 +99,13 @@ class PresidioSanitizerAdapter:
             return self._available
         try:
             from presidio_analyzer import (
-                AnalyzerEngine,  # noqa: F401 — availability probe
+                AnalyzerEngine,
             )
             from presidio_analyzer.nlp_engine import (
-                NlpEngineProvider,  # noqa: F401 — availability probe
+                NlpEngineProvider,
             )
             from presidio_anonymizer import (
-                AnonymizerEngine,  # noqa: F401 — availability probe
+                AnonymizerEngine,
             )
         except ImportError as exc:
             logger.warning(

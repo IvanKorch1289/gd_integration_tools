@@ -64,7 +64,7 @@ class Inbox:
 
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.clients.storage.redis import (
                 get_redis_client as redis_client,
             )
         except ImportError as exc:

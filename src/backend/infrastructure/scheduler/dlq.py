@@ -225,7 +225,7 @@ def attach_scheduler_dlq(
 
     try:
         from apscheduler.events import (
-            EVENT_JOB_ERROR,  # noqa: F401 — availability probe
+            EVENT_JOB_ERROR,
         )
     except ImportError:
         _logger.warning("attach_scheduler_dlq: apscheduler not installed — no-op")

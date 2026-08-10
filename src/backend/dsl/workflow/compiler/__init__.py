@@ -44,7 +44,7 @@ from src.backend.dsl.workflow.compiler.emitter import (
     compile_workflows,
 )
 from src.backend.dsl.workflow.compiler.registry import (
-    WorkflowCompilerRegistry,  # noqa: F401 — re-export
+    WorkflowCompilerRegistry,
 )
 
 __all__ = (

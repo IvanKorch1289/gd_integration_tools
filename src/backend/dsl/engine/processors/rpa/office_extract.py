@@ -59,7 +59,7 @@ class OfficeExtractProcessor:
 
     def _extract_docx(self, data: bytes) -> str | None:
         try:
-            from docx import Document  # noqa: F401 — availability probe
+            from docx import Document
         except ImportError:
             _logger.debug("office_extract.python_docx_not_installed")
             return None
@@ -79,7 +79,7 @@ class OfficeExtractProcessor:
 
     def _extract_xlsx(self, data: bytes) -> str | None:
         try:
-            from openpyxl import load_workbook  # noqa: F401 — availability probe
+            from openpyxl import load_workbook
         except ImportError:
             _logger.debug("office_extract.openpyxl_not_installed")
             return None

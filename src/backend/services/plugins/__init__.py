@@ -18,11 +18,11 @@ from src.backend.core.plugin_runtime.manifest_toml import (  # S168 W15-17: yaml
     PluginManifest,
     load_plugin_manifest,  # was load_manifest in old yaml manifest.py
 )
-from src.backend.services.plugins.decorators import (  # noqa: F401 — re-export
+from src.backend.services.plugins.decorators import (
     override_method,
     repository_hook,
 )
-from src.backend.services.plugins.loader import (  # noqa: F401 — re-export
+from src.backend.services.plugins.loader import (
     PluginLoader,
     get_plugin_loader,
 )

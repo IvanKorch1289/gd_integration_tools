@@ -65,11 +65,11 @@ class FeedbackTrainer:
             tenant_id=tenant_id, limit=limit, only_positive=True,
         )
         try:
-            import dspy  # noqa: F401 — availability probe
+            import dspy
 
             examples = self._dataset_builder.to_dspy_examples(records)
             from dspy.teleprompt import (
-                BootstrapFewShot,  # noqa: F401 — availability probe
+                BootstrapFewShot,
             )
 
             optimizer = BootstrapFewShot(metric=lambda *_a, **_k: 1.0)

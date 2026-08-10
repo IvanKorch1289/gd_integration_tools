@@ -19,7 +19,7 @@ from src.backend.core.workflow.backend import (
     WorkflowStatus,
 )
 from src.backend.core.workflow.fake_backend import (
-    FakeWorkflowBackend,  # noqa: F401 — re-export
+    FakeWorkflowBackend,
 )
 
 
@@ -27,7 +27,7 @@ def __getattr__(name: str) -> Any:
     """Lazy re-export create_workflow_backend из infrastructure (ponytail)."""
     if name == "create_workflow_backend":
         from src.backend.infrastructure.workflow.factory import (
-            create_workflow_backend,  # noqa: F401 — re-export
+            create_workflow_backend,
         )
 
         return create_workflow_backend

@@ -20,7 +20,7 @@
 """
 
 from src.backend.services.execution.middlewares.audit_middleware import (
-    AuditMiddleware,  # noqa: F401 — re-export
+    AuditMiddleware,
 )
 from src.backend.services.execution.middlewares.idempotency_middleware import (
     IdempotencyMiddleware,

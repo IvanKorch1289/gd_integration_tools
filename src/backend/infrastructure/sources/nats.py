@@ -125,7 +125,7 @@ class NatsSource:
 
         """
         try:
-            import nats  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            import nats  # type: ignore[import-not-found]
         except ImportError as exc:
             raise ImportError(
                 "nats-py not installed. Add 'nats-py>=2.7' to dependencies "

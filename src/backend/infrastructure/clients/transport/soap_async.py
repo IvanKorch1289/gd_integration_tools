@@ -30,7 +30,7 @@ _SOAP_BREAKER = get_breaker_registry().get_or_create(
 # Retry при httpx/сетевых ошибках + TimeoutError. 3 попытки, exponential backoff.
 try:
     from src.backend.core.resilience.retry import (
-        make_async_retry,  # noqa: F401 — availability probe
+        make_async_retry,
     )
 except ImportError:  # pragma: no cover
     make_async_retry = None  # type: ignore[assignment]

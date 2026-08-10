@@ -87,10 +87,10 @@ class VaultSecretProcessor(BaseProcessor):
             return
         try:
             from src.backend.infrastructure.secrets.vault_backend import (
-                VaultBackend,  # noqa: F401 — availability probe
+                VaultBackend,
             )
             from src.backend.infrastructure.secrets.vault_client import (
-                VaultConfig,  # noqa: F401 — availability probe
+                VaultConfig,
             )
         except ImportError as exc:
             exchange.fail(

@@ -11,7 +11,7 @@ per-class files (not from ai_processors.py).
 # FraudDetectionProcessor≈AntiFraudScoreProcessor (S50 kept).
 # Per-class AI processors (extracted from ai_processors.py, ADR-0102)
 from src.backend.dsl.engine.processors.ai.cache_processor import (
-    CacheProcessor,  # noqa: F401 — re-export
+    CacheProcessor,
 )
 from src.backend.dsl.engine.processors.ai.cachewrite_processor import (
     CacheWriteProcessor,
@@ -23,30 +23,30 @@ from src.backend.dsl.engine.processors.ai.guardrails_processor import (
     GuardrailsProcessor,
 )
 from src.backend.dsl.engine.processors.ai.llmcall_processor import (
-    LLMCallProcessor,  # noqa: F401 — re-export
+    LLMCallProcessor,
 )
 from src.backend.dsl.engine.processors.ai.llmfallback_processor import (
     LLMFallbackProcessor,
 )
 from src.backend.dsl.engine.processors.ai.llmparser_processor import (
-    LLMParserProcessor,  # noqa: F401 — re-export
+    LLMParserProcessor,
 )
 from src.backend.dsl.engine.processors.ai.promptcomposer_processor import (
     PromptComposerProcessor,
 )
 from src.backend.dsl.engine.processors.ai.ragingest_processor import (
-    RagIngestProcessor,  # noqa: F401 — re-export
+    RagIngestProcessor,
 )
 from src.backend.dsl.engine.processors.ai.ragpiiredaction_processor import (
     RagPIIRedactionProcessor,
 )
 from src.backend.dsl.engine.processors.ai.ragquery_processor import (
-    RagQueryProcessor,  # noqa: F401 — re-export
+    RagQueryProcessor,
 )
 
 # Reranker processor (separately added in sibling split)
 from src.backend.dsl.engine.processors.ai.reranker import (
-    RerankerProcessor,  # noqa: F401 — re-export
+    RerankerProcessor,
 )
 from src.backend.dsl.engine.processors.ai.restorepii_processor import (
     RestorePIIProcessor,

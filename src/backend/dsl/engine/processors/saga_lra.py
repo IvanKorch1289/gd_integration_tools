@@ -280,14 +280,14 @@ class SagaLRAProcessor(BaseProcessor):
         """Lazy-load DB deps and return a ``_RepoProxy`` or ``None``."""
         try:
             sm = _lazy_get_smart_session_manager()()
-            from src.backend.infrastructure.workflow.saga_state import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.workflow.saga_state import (
                 WorkflowStateRepository,
             )
         except (ImportError, AttributeError, RuntimeError) as dep_exc:
             # cycle-9/D-AUDIT-977: narrow exceptions + observability.
             # ImportError — deps missing, AttributeError — API change,
             # RuntimeError — manager unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "saga_lra.lazy_load_repo_failed",
                 extra={"error": str(dep_exc)},

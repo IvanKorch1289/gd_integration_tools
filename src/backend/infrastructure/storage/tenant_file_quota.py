@@ -387,7 +387,7 @@ def get_tenant_file_quota_manager() -> TenantFileQuotaManager:
     """
     try:
         from src.backend.core.di.app_state import (
-            app_state_singleton,  # noqa: F401 — availability probe
+            app_state_singleton,
         )
 
         redis = app_state_singleton("redis_kv_client", factory=None)

@@ -27,9 +27,9 @@ from datetime import UTC, datetime
 from typing import Any
 
 try:
-    import pendulum  # noqa: F401 — availability probe
+    import pendulum
     from pendulum import (
-        DateTime as _PendulumDateTime,  # noqa: F401 — availability probe
+        DateTime as _PendulumDateTime,
     )
 
     _HAS_PENDULUM = True

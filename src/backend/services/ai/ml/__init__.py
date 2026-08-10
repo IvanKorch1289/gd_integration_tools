@@ -2,7 +2,7 @@
 
 from __future__ import annotations as annotations
 
-from src.backend.services.ai.ml.model_loader import (  # noqa: F401 — re-export
+from src.backend.services.ai.ml.model_loader import (
     MLModelLoader,
     get_ml_model_loader,
 )

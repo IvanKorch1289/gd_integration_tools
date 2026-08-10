@@ -53,7 +53,7 @@ class AdDirectoryClient:
 
         """
         try:
-            import ldap3  # noqa: F401 — availability probe
+            import ldap3
 
             return True
         except ImportError:

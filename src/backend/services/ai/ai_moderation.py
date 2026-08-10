@@ -136,9 +136,9 @@ class RagasEvaluator:
         Returns dict с метриками 0-1.
         """
         try:
-            from datasets import Dataset  # noqa: F401 — availability probe
-            from ragas import evaluate  # noqa: F401 — availability probe
-            from ragas.metrics import (  # noqa: F401 — availability probe
+            from datasets import Dataset
+            from ragas import evaluate
+            from ragas.metrics import (
                 answer_relevancy,
                 context_precision,
                 faithfulness,
@@ -151,7 +151,7 @@ class RagasEvaluator:
         metrics = [faithfulness, answer_relevancy, context_precision]
 
         if ground_truth:
-            from ragas.metrics import context_recall  # noqa: F401 — availability probe
+            from ragas.metrics import context_recall
 
             row["ground_truth"] = [ground_truth]
             metrics.append(context_recall)

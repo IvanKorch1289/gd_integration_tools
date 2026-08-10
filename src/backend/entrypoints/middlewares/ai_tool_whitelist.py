@@ -236,7 +236,7 @@ def _default_whitelist_check(tenant_id: str, tool_name: str) -> bool:
     """
     try:
         from src.backend.core.security.capabilities import (
-            CapabilityGate,  # noqa: F401 — availability probe
+            CapabilityGate,
         )
 
         # ``check`` signals allow by returning normally and deny by raising.
@@ -252,7 +252,7 @@ def _default_whitelist_check(tenant_id: str, tool_name: str) -> bool:
         # ImportError — gate missing, AttributeError — gate API change,
         # RuntimeError — gate unavailable, ValueError/TypeError — invalid
         # args. Deny-by-default при ошибке (fail-closed).
-        import logging  # noqa: F401 — availability probe
+        import logging
         logging.getLogger(__name__).debug(
             "ai_tool_whitelist.gate_check_failed",
             extra={"tool_name": tool_name, "error": str(gate_exc)},

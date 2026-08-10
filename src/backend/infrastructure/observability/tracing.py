@@ -24,7 +24,7 @@ def get_tracer():
     if _tracer is not None:
         return _tracer
     try:
-        from opentelemetry import trace  # noqa: F401 — availability probe
+        from opentelemetry import trace
 
         _tracer = trace.get_tracer("gd.dsl.engine")
     except ImportError:

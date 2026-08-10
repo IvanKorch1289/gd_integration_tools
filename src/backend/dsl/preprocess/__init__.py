@@ -2,7 +2,7 @@
 
 from __future__ import annotations as annotations
 
-from src.backend.dsl.preprocess.jinja_macros import (  # noqa: F401 — re-export
+from src.backend.dsl.preprocess.jinja_macros import (
     has_jinja_syntax,
     render_macros,
 )

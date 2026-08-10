@@ -133,7 +133,7 @@ def get_ai_agent_service() -> AIAgentService:
     """
     try:
         from src.backend.core.di.app_state import (
-            get_app_ref,  # noqa: F401 — availability probe
+            get_app_ref,
         )
 
         app = get_app_ref()

@@ -228,7 +228,7 @@ def _resolve_exception_types() -> tuple[
     circuit_types: list[type[BaseException]] = []
     try:
         from purgatory.domain.model import (
-            OpenedState,  # noqa: F401 — availability probe
+            OpenedState,
         )
 
         circuit_types.append(OpenedState)

@@ -38,7 +38,7 @@ def _ensure() -> None:
         return
     try:
         from src.backend.core.utils.metrics_registry import (
-            metrics_registry,  # noqa: F401 — availability probe
+            metrics_registry,
         )
 
         _hits = metrics_registry.counter(

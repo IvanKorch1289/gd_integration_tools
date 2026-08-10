@@ -68,7 +68,7 @@ def _ensure_stale_metric() -> None:
         return
     try:
         from src.backend.core.utils.metrics_registry import (
-            metrics_registry,  # noqa: F401 — availability probe
+            metrics_registry,
         )
 
         _stale_warning_counter = metrics_registry.counter(

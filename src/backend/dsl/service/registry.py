@@ -31,7 +31,7 @@ class ServiceDSLRegistry:
         """
         try:
             from src.backend.core.config.features import (
-                feature_flags,  # noqa: F401 — availability probe
+                feature_flags,
             )
 
             if not getattr(feature_flags, "service_toml_loader", False):

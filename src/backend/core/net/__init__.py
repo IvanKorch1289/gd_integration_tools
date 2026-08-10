@@ -6,12 +6,12 @@
 запрещены — ловит CI-gate ``tools/check_waf_coverage.py``.
 """
 
-from src.backend.core.net.http_utils import (  # noqa: F401 — re-export
+from src.backend.core.net.http_utils import (
     ensure_url_protocol,
     generate_link_page,
 )
 from src.backend.core.net.outbound_http import (
-    OutboundHttpClient,  # noqa: F401 — re-export
+    OutboundHttpClient,
 )
 from src.backend.core.net.waf import (
     WafBypassError,

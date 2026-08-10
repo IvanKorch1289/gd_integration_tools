@@ -214,7 +214,7 @@ class AgentOrchestrationMixin:
 
         try:
             from src.backend.services.ai.ai_graph import (
-                build_and_run_agent,  # noqa: F401 — availability probe
+                build_and_run_agent,
             )
 
             result = await build_and_run_agent(
