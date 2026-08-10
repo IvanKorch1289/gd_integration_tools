@@ -456,9 +456,17 @@ class RouteLoader:
             return
         try:
             self._audit(event)
-        except Exception:
+        except (TypeError, ValueError, KeyError, RuntimeError) as audit_cb_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-923: narrow exceptions + observability.
+            # TypeError — audit callback signature mismatch, ValueError —
+            # invalid event payload, KeyError — missing required field,
+            # RuntimeError — callback raised. Bare `except Exception`
+            # маскировал unrelated runtime errors.
             _logger.exception(
-                "RouteLoader audit_callback failed: %s", event.get("event")
+                "RouteLoader audit_callback failed: %s event=%s error=%s",
+                event.get("event"),
+                type(audit_cb_exc).__name__,
+                audit_cb_exc,
             )
 
     # ── permission validation helpers ──────────────────────────────────
