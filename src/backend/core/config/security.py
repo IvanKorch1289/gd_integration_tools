@@ -140,7 +140,6 @@ class SecureSettings(BaseSettingsWithLoader):
                 "CORS wildcard '*' запрещён в prod. Укажите явный список origin."
             )
         return value
-        return value
 
     @model_validator(mode="after")
     def _forbid_wildcard_with_credentials(self) -> "SecureSettings":

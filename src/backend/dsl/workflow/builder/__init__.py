@@ -111,7 +111,6 @@ class WorkflowBuilder(
         """
         self._steps.append(step)
         return self
-        return self
 
     def version(self, ver: str) -> Self:
         """Установить semver-версию workflow (например, ``"2.1"``).
