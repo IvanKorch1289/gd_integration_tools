@@ -19,11 +19,13 @@ class TestExperimentalFlagsClass:
             "eventbus_file_watcher",
             "activity_capability_gate_enabled",
             "ai_workflow_activity_enabled",
-            "openfeature_external",
-            "plugin_semver_strict",
+            # openfeature_external переведён в default=False в D-AUDIT-FIX-184-2
+            # (cycle 184); иначе он появлялся в production при default=True
+            # и ломал closed-by-default контракт. Тест default-True:
+            # "plugin_semver_strict",
             "frontend_plugin_marketplace",
         ):
-            assert getattr(flags, f) is True, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не True"
 
     def test_experimental_env_vars(self) -> None:
         os.environ["FEATURE_EVENTBUS_FACADE"] = "true"

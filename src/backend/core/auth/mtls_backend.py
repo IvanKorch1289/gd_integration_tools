@@ -22,6 +22,15 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+# cycle-9/D-AUDIT-911 fix: use canonical core.logging (was bare
+# no-logger). codemod test (test_core_logging_codemod) verifies that
+# все auth modules используют canonical logger; bare "no logger"
+# нарушал этот контракт. Теперь модуль имеет named logger
+# через :func:`get_logger` (singleton, structured, JSON-ready).
+from src.backend.core.logging import get_logger
+
+_logger = get_logger(__name__)
+
 
 __all__ = ("MtlsBackend", "MtlsConfig", "MtlsVerificationError", "ParsedClientCert")
 

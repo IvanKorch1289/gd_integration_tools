@@ -16,6 +16,15 @@ from src.backend.entrypoints.filewatcher.watcher_manager import WatcherSpec
 def _make_app() -> FastAPI:
     app = FastAPI()
     app.include_router(mod.watcher_router, prefix="/api/v1")
+    # cycle-9/D-AUDIT-910 fix: test fixture override admin dependency.
+    # Cycle-2 D-AUDIT-07 (T-W1-05) added router-level Depends(require_admin)
+    # — production endpoint 401/403 без principal. Тесты должны
+    # override dependency чтобы не требовать auth в unit-context.
+    _admin_dep = getattr(mod, "_admin_dep", None)
+    if _admin_dep is not None:
+        from src.backend.core.auth.admin_roles import AdminRole
+
+        app.dependency_overrides[_admin_dep] = lambda: None
     return app
 
 
