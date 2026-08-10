@@ -43,7 +43,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
@@ -60,8 +60,8 @@ _CRON_FIELDS = (5, 6)
 # и возвращает bool.
 DeferCondition = Callable[[Any], bool]
 
-# Union для defer_until timestamp-аргумента.
-TimestampLike = Union[datetime, str, int, float]
+# X | Y для defer_until timestamp-аргумента (UP007 cycle-22).
+TimestampLike = datetime | str | int | float
 
 
 def _validate_cron_expression(expression: str) -> str:

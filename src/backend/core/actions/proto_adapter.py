@@ -297,8 +297,12 @@ def _strip_optional(annotation: Any) -> Any:
     args = tuple(arg for arg in get_args(annotation) if arg is not type(None))
     if len(args) == 1:
         return args[0]
-    # Несколько ненулевых членов — оставляем как Union (попадёт в Any в _convert_annotation).
-    return typing.Union[args]
+    # Несколько ненулевых членов — собираем через ``args[0] | args[1] | ...``
+    # (X | Y form per UP007, cycle-22).
+    result: Any = args[0]
+    for arg in args[1:]:
+        result = result | arg
+    return result
 
 
 def _is_enum_like(tp: type) -> bool:
