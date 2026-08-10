@@ -1,5 +1,4 @@
-"""
-Conftest для E2E тестов.
+"""Conftest для E2E тестов.
 
 Поднимает полное приложение через httpx AsyncClient + ASGITransport.
 Не требует реального сервера — использует ASGI transport.

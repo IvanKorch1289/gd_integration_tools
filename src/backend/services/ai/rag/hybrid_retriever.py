@@ -102,7 +102,7 @@ class HybridRetriever:
         if self._bm25 is not None:
             return self._bm25
         try:
-            from rank_bm25 import BM25Okapi
+            from rank_bm25 import BM25Okapi  # noqa: F401 — availability probe
         except ImportError as exc:
             logger.warning(
                 "rank-bm25 не установлен (extra '[rag-advanced]'), "

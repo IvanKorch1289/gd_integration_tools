@@ -230,9 +230,9 @@ class RAGASEvaluator:
     def _evaluate_sync(self, records: list[RAGASRecord]) -> RAGASReport:
         """Синхронный путь evaluation (ragas API — sync)."""
         try:
-            from datasets import Dataset
-            from ragas import evaluate
-            from ragas.metrics import answer_relevancy, context_precision, faithfulness
+            from datasets import Dataset  # noqa: F401 — availability probe
+            from ragas import evaluate  # noqa: F401 — availability probe
+            from ragas.metrics import answer_relevancy, context_precision, faithfulness  # noqa: F401 — availability probe
         except ImportError as exc:
             logger.warning("ragas/datasets not installed: %s", exc)
             return RAGASReport(
@@ -251,7 +251,7 @@ class RAGASEvaluator:
 
         if has_ground_truth:
             try:
-                from ragas.metrics import context_recall
+                from ragas.metrics import context_recall  # noqa: F401 — availability probe
 
                 metrics_list.append(context_recall)
                 metric_names.append("context_recall")

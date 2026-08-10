@@ -368,7 +368,7 @@ class S3Sensor:
         poll_interval_s: float = 30.0,
     ) -> None:
         try:
-            import aioboto3
+            import aioboto3  # noqa: F401 — availability probe
         except ImportError as e:
             raise ImportError(
                 "S3Sensor requires aioboto3. Install: uv pip install aioboto3",

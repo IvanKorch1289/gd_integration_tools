@@ -80,7 +80,7 @@ class CLIPEmbedder:
             return self._model
 
         try:
-            from sentence_transformers import SentenceTransformer
+            from sentence_transformers import SentenceTransformer  # noqa: F401 — availability probe
         except ImportError as exc:
             raise LazyImportError(
                 "sentence-transformers не установлен. "
@@ -110,7 +110,7 @@ class CLIPEmbedder:
             vec = model.encode(content, convert_to_numpy=True)
         elif isinstance(content, (bytes, bytearray)):
             try:
-                from PIL import Image
+                from PIL import Image  # noqa: F401 — availability probe
             except ImportError as exc:
                 raise LazyImportError(
                     "Pillow не установлен — обработка изображений недоступна.",

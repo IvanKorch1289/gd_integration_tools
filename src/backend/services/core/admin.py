@@ -17,8 +17,7 @@ __all__ = ("AdminService", "get_admin_service")
 
 
 class AdminService:
-    """
-    Сервис для административных action-роутов.
+    """Сервис для административных action-роутов.
 
     Выносит из transport-слоя:
     - получение конфигурации приложения;
@@ -30,8 +29,7 @@ class AdminService:
     """
 
     async def get_config(self) -> dict[str, Any]:
-        """
-        Возвращает текущую конфигурацию приложения.
+        """Возвращает текущую конфигурацию приложения.
 
         Returns:
             dict[str, Any]: Конфигурация приложения в виде словаря.
@@ -42,8 +40,7 @@ class AdminService:
     async def toggle_route(
         self, request: Request, route_path: str, enable: bool,
     ) -> dict[str, str]:
-        """
-        Активирует или деактивирует указанный маршрут.
+        """Активирует или деактивирует указанный маршрут.
 
         Args:
             request: Текущий FastAPI Request.
@@ -71,8 +68,7 @@ class AdminService:
         return {"status": "success"}
 
     async def list_cache_keys(self, pattern: str = "*") -> Any:
-        """
-        Возвращает список ключей кэша по шаблону.
+        """Возвращает список ключей кэша по шаблону.
 
         Args:
             pattern: Pattern для поиска ключей.
@@ -84,8 +80,7 @@ class AdminService:
         return await get_admin_cache_storage_provider().list_cache_keys(pattern)
 
     async def get_cache_value(self, key: str) -> Any:
-        """
-        Возвращает значение по ключу кэша.
+        """Возвращает значение по ключу кэша.
 
         Args:
             key: Ключ кэша.
@@ -97,8 +92,7 @@ class AdminService:
         return await get_admin_cache_storage_provider().get_cache_value(key)
 
     async def invalidate_cache(self) -> Any:
-        """
-        Полностью инвалидирует кэш.
+        """Полностью инвалидирует кэш.
 
         Returns:
             Any: Результат операции очистки кэша.
@@ -107,8 +101,7 @@ class AdminService:
         return await get_admin_cache_storage_provider().invalidate_cache()
 
     async def invalidate_cache_by_pattern(self, pattern: str) -> dict[str, Any]:
-        """
-        Инвалидирует кэш по glob-паттерну.
+        """Инвалидирует кэш по glob-паттерну.
 
         Args:
             pattern: Glob pattern для поиска ключей (e.g., "entity:orders:*").
@@ -123,8 +116,7 @@ class AdminService:
         return {"pattern": pattern, "removed": removed}
 
     async def invalidate_cache_by_tag(self, tags: list[str]) -> dict[str, Any]:
-        """
-        Инвалидирует кэш по одному или нескольким тегам.
+        """Инвалидирует кэш по одному или нескольким тегам.
 
         Args:
             tags: Список тегов для инвалидации
@@ -140,8 +132,7 @@ class AdminService:
         return {"tags": tags, "removed": removed}
 
     async def invalidate_table(self, table: str) -> dict[str, Any]:
-        """
-        Инвалидирует кэш по имени таблицы.
+        """Инвалидирует кэш по имени таблицы.
 
         Args:
             table: Имя таблицы для инвалидации.
@@ -233,8 +224,7 @@ class AdminService:
 
 @app_state_singleton("admin_service", factory=AdminService)
 def get_admin_service() -> AdminService:
-    """
-    Фабрика административного сервиса.
+    """Фабрика административного сервиса.
 
     Returns:
         AdminRouteService: Экземпляр сервиса admin-роутов.

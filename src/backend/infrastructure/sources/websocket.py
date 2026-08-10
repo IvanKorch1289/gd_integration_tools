@@ -88,7 +88,7 @@ class WebSocketSource:
 
     async def _run(self, on_event: EventCallback) -> None:
         try:
-            import websockets
+            import websockets  # noqa: F401 — availability probe
         except ImportError as exc:
             raise RuntimeError(
                 "websockets не установлен; добавь его в pyproject.toml.",

@@ -14,8 +14,7 @@ class GraylogHandler:
     """Обработчик для подключения к Graylog и настройки логирования."""
 
     def __init__(self, config: LogStorageSettings):
-        """
-        Инициализирует обработчик Graylog.
+        """Инициализирует обработчик Graylog.
 
         Args:
             config (LogStorageSettings): Настройки логирования для Graylog.
@@ -35,8 +34,7 @@ class GraylogHandler:
         return bool(self.config.host and self.config.udp_port)
 
     def connect(self) -> Handler | None:
-        """
-        Устанавливает соединение с сервером Graylog.
+        """Устанавливает соединение с сервером Graylog.
 
         Returns:
             logging.Handler | None: Настроенный обработчик Graylog или None.
@@ -49,7 +47,7 @@ class GraylogHandler:
             return None
 
         try:
-            import graypy
+            import graypy  # noqa: F401 — availability probe
         except ImportError:
             _logger.warning(
                 "graypy не установлен — Graylog-обработчик отключён "
@@ -78,8 +76,7 @@ class GraylogHandler:
             self.handler = None
 
     async def check_connection(self) -> bool:
-        """
-        Проверяет доступность сервера Graylog.
+        """Проверяет доступность сервера Graylog.
 
         Returns:
             bool: True, если соединение успешно.

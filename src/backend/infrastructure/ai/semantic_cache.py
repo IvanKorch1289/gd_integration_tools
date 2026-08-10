@@ -51,7 +51,7 @@ def _ensure_tier_metrics() -> None:
     if _tier_initialized:
         return
     try:
-        from src.backend.core.utils.metrics_registry import metrics_registry
+        from src.backend.core.utils.metrics_registry import metrics_registry  # noqa: F401 — availability probe
 
         _tier_counter = metrics_registry.counter(
             "ai_tier_router_ops_total",
@@ -109,7 +109,7 @@ class SemanticCache:
 
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — availability probe
                 get_redis_client as redis_client,
             )
         except ImportError:
@@ -132,7 +132,7 @@ class SemanticCache:
 
         """
         try:
-            from src.backend.infrastructure.clients.storage.redis import (
+            from src.backend.infrastructure.clients.storage.redis import (  # noqa: F401 — availability probe
                 get_redis_client as redis_client,
             )
         except ImportError:

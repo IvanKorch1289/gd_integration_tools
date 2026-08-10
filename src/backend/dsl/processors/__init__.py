@@ -20,14 +20,14 @@ Sprint 36+:
 
 from __future__ import annotations
 
-from src.backend.dsl.processors.batch_processor import BatchProcessor
+from src.backend.dsl.processors.batch_processor import BatchProcessor  # noqa: F401 — re-export
 from src.backend.dsl.processors.plan_execute_processor import (
     PlanExecuteMixin,
     PlanExecuteProcessor,
     PlanResult,
     PlanStep,
 )
-from src.backend.dsl.processors.saga_lra_processor import SagaLRAProcessor
+from src.backend.dsl.processors.saga_lra_processor import SagaLRAProcessor  # noqa: F401 — re-export
 
 __all__ = (
     "BatchProcessor",

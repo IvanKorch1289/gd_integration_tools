@@ -230,7 +230,7 @@ class MCPClientRegistry:
             return self._http_client
 
         try:
-            from src.backend.core.net.outbound_http import OutboundHttpClient
+            from src.backend.core.net.outbound_http import OutboundHttpClient  # noqa: F401 — availability probe
 
             waf_policy = spec.waf_policy if spec.waf_policy else "strict"
             self._http_client = OutboundHttpClient(waf_policy=waf_policy)
@@ -292,7 +292,7 @@ def _check_capability(capability: str, client_name: str) -> None:
 
     """
     try:
-        from src.backend.core.security.capability_gate import CapabilityGate  # type: ignore[import-not-found]
+        from src.backend.core.security.capability_gate import CapabilityGate  # type: ignore[import-not-found]  # noqa: F401 — availability probe
 
         gate = CapabilityGate.get_instance()
         plugin = "mcp_client_registry"

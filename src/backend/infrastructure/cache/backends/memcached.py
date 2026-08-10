@@ -42,7 +42,7 @@ class MemcachedBackend(CacheBackend):
         self, host: str = "127.0.0.1", port: int = 11211, *, default_ttl: int = 3600,
     ) -> None:
         try:
-            import aiomcache
+            import aiomcache  # noqa: F401 — availability probe
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
                 "Memcached-бэкенд требует пакет 'aiomcache'. "

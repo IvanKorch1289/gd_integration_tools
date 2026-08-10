@@ -22,8 +22,7 @@ type DatabaseSettings = (
 
 @dataclass
 class DatabaseBundle:
-    """
-    Контейнер инфраструктурных объектов одной БД.
+    """Контейнер инфраструктурных объектов одной БД.
 
     Принцип проекта — async-first: все hot-path SQL-вызовы идут через
     ``async_engine`` / ``async_session_maker``. Sync-варианты (Wave F.3

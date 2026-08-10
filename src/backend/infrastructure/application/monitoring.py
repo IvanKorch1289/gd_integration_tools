@@ -135,8 +135,7 @@ async def metrics_fastapi_endpoint() -> Response:
 
 
 def setup_monitoring(app: ASGIApp) -> None:
-    """
-    Настраивает Prometheus metrics для FastAPI.
+    """Настраивает Prometheus metrics для FastAPI.
 
     Заменяет ``prometheus-fastapi-instrumentator`` (несовместим с starlette>=1.0).
     Собирает: request count, latency histogram, in-progress gauge.

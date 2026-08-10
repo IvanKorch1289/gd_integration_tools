@@ -146,7 +146,7 @@ class WebhookSignatureProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Проверяет HMAC-подпись webhook-запроса и применяет политику при несовпадении."""
         try:
-            from src.backend.core.config.features import feature_flags
+            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
 
             if not feature_flags.proc_webhook_signature:
                 exchange.set_property("webhook_signature_status", "skipped")
@@ -155,7 +155,7 @@ class WebhookSignatureProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1705: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags unavailable.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "webhook_signature.feature_flag_fallback",
                 extra={"error": str(ff_exc)},
@@ -174,7 +174,7 @@ class WebhookSignatureProcessor(BaseProcessor):
 
         verified = False
         try:
-            from standardwebhooks import Webhook  # type: ignore[import-not-found]
+            from standardwebhooks import Webhook  # type: ignore[import-not-found]  # noqa: F401 — availability probe
 
             wh = Webhook(self._secret)
             try:

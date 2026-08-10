@@ -29,8 +29,7 @@ from src.backend.infrastructure.repositories.base.base import (
 
 
 class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[ConcreteTable]):
-    """
-    Базовый класс для взаимодействия с БД с использованием SQLAlchemy.
+    """Базовый класс для взаимодействия с БД с использованием SQLAlchemy.
     Реализует методы для работы с конкретной моделью таблицы.
     """
 
@@ -91,8 +90,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
             query_or_object: Select | ConcreteTable,  # type: ignore
             is_return_list: bool = False,
         ) -> ConcreteTable | list[ConcreteTable] | None:  # type: ignore
-            """
-            Выполняет запрос или подгружает связи для объекта.
+            """Выполняет запрос или подгружает связи для объекта.
 
             :param session: Асинхронная сессия SQLAlchemy.
             :param query_or_object: Запрос или объект для загрузки.
@@ -199,8 +197,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         by: str | None = "id",
         order: str = "asc",
     ) -> ConcreteTable | list[ConcreteTable] | dict[str, Any] | None:
-        """
-        Получить объект по ключу и значению или по фильтру.
+        """Получить объект по ключу и значению или по фильтру.
 
         :param session: Асинхронная сессия SQLAlchemy.
         :param key: Название поля для фильтрации (опционально).
@@ -255,8 +252,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         by: str | None = "id",
         order: str = "asc",
     ) -> dict[str, Any]:
-        """
-        Получить список объектов с пагинацией.
+        """Получить список объектов с пагинацией.
 
         :param session: Асинхронная сессия SQLAlchemy.
         :param filter: Фильтр для запроса (опционально).
@@ -292,8 +288,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
     @main_session_manager.connection(commit=False)
     async def count(self, session: AsyncSession) -> int:
-        """
-        Получить количество объектов в таблице.
+        """Получить количество объектов в таблице.
 
         :param session: Асинхронная сессия SQLAlchemy.
         :return: Количество объектов.
@@ -309,8 +304,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
     async def first_or_last(
         self, session: AsyncSession, limit: int = 1, by: str = "id", order: str = "asc",
     ) -> list[ConcreteTable]:
-        """
-        Получить первый/-е или последний/-е объект в таблице, отсортированный по указанному полю.
+        """Получить первый/-е или последний/-е объект в таблице, отсортированный по указанному полю.
 
         :param session: Асинхронная сессия SQLAlchemy.
         :param by: Поле для сортировки.
@@ -329,8 +323,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
     @main_session_manager.connection()
     async def add(self, session: AsyncSession, data: dict[str, Any]) -> ConcreteTable:
-        """
-        Добавить новый объект в таблицу.
+        """Добавить новый объект в таблицу.
 
         :param session: Асинхронная сессия SQLAlchemy.
         :param data: Данные для создания объекта.
@@ -348,8 +341,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
         ignore_none: bool = True,  # По умолчанию игнорируем пустые значения
         load_into_memory: bool = False,  # По умолчанию объект загружается в память. False - если не требуется выводить измененные данные
     ) -> ConcreteTable:
-        """
-        Обновить объект в таблице.
+        """Обновить объект в таблице.
 
         :param session: Асинхронная сессия SQLAlchemy.
         :param key: Название поля для поиска объекта.
@@ -374,8 +366,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
 
     @main_session_manager.connection()
     async def delete(self, session: AsyncSession, key: str, value: Any) -> int | None:
-        """
-        Удалить объект из таблицы по ключу и значению.
+        """Удалить объект из таблицы по ключу и значению.
 
         S83 W2 (V2 P0 N1): возвращает ID удалённого объекта (или None),
         чтобы caller мог залогировать audit event. Раньше возвращал None
@@ -418,8 +409,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
     async def restore_to_version(
         self, session: AsyncSession, object_id: int, transaction_id: int,
     ) -> dict[str, Any]:
-        """
-        Восстановить объект до указанной версии и вернуть информацию о транзакции.
+        """Восстановить объект до указанной версии и вернуть информацию о транзакции.
 
         :param session: Асинхронная сессия SQLAlchemy.
         :param object_id: ID объекта.

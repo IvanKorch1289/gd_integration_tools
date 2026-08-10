@@ -12,8 +12,7 @@ __all__ = ("ExecutionContext",)
 
 @dataclass(slots=True)
 class ExecutionContext:
-    """
-    Контекст выполнения DSL-маршрута.
+    """Контекст выполнения DSL-маршрута.
 
     Хранит зависимости и shared-state, которые нужны процессорам во время
     обработки Exchange, но не должны попадать в payload сообщения.
@@ -77,8 +76,7 @@ class ExecutionContext:
         )
 
     def get(self, key: str, default: Any = None) -> Any:
-        """
-        Возвращает значение из shared-state.
+        """Возвращает значение из shared-state.
 
         Args:
             key: Ключ.
@@ -91,8 +89,7 @@ class ExecutionContext:
         return self.state.get(key, default)
 
     def set(self, key: str, value: Any) -> None:
-        """
-        Сохраняет значение в shared-state.
+        """Сохраняет значение в shared-state.
 
         Args:
             key: Ключ.

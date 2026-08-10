@@ -39,8 +39,7 @@ class EventPublishSpec:
 
 @dataclass(slots=True)
 class InvocationSpec:
-    """
-    DSL-описание invocation-поведения action.
+    """DSL-описание invocation-поведения action.
 
     Attributes:
         model: Pydantic-схема invocation options.

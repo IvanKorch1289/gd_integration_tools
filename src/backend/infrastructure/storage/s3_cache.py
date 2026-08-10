@@ -1,5 +1,4 @@
-"""
-Кэш-адаптер для S3: read-through caching через Redis.
+"""Кэш-адаптер для S3: read-through caching через Redis.
 
 Схема работы:
 
@@ -39,8 +38,7 @@ DEFAULT_UNSCOPED_PREFIX = "tenant:_unscoped_:"
 
 
 class S3ClientProtocol(Protocol):
-    """
-    Минимальный контракт S3-клиента, достаточный для кэш-адаптера.
+    """Минимальный контракт S3-клиента, достаточный для кэш-адаптера.
 
     Существующий ``src.infrastructure.clients.storage.s3_pool.S3Client``
     удовлетворяет этому протоколу.
@@ -82,8 +80,7 @@ class S3ClientProtocol(Protocol):
 
 
 class CacheClientProtocol(Protocol):
-    """
-    Минимальный контракт cache-клиента (Redis-совместимый).
+    """Минимальный контракт cache-клиента (Redis-совместимый).
 
     Позволяет подменить Redis на in-memory для тестов.
     """
@@ -128,8 +125,7 @@ class CacheClientProtocol(Protocol):
 
 
 class S3CacheAdapter:
-    """
-    Read-through кэш для S3 на базе Redis.
+    """Read-through кэш для S3 на базе Redis.
 
     Атрибуты:
         s3: Источник данных (конкретная реализация S3-клиента).
@@ -156,8 +152,7 @@ class S3CacheAdapter:
         ttl_seconds: int = 300,
         key_prefix: str = "s3cache:",
     ) -> None:
-        """
-        Args:
+        """Args:
             s3: S3-клиент.
             cache: Redis-клиент.
             ttl_seconds: TTL для кэша. Значения < ``min_ttl_threshold`` (60)
@@ -209,8 +204,7 @@ class S3CacheAdapter:
         return f"{self._tenant_prefix()}{self.key_prefix}{key}"
 
     async def get(self, key: str) -> bytes | None:
-        """
-        Возвращает объект из кэша или S3 (read-through).
+        """Возвращает объект из кэша или S3 (read-through).
 
         Args:
             key: Ключ объекта S3.
@@ -239,8 +233,7 @@ class S3CacheAdapter:
         return data
 
     async def put(self, key: str, data: bytes, content_type: str | None = None) -> None:
-        """
-        Записывает объект в S3 и инвалидирует Redis-ключ.
+        """Записывает объект в S3 и инвалидирует Redis-ключ.
 
         Args:
             key: Ключ объекта в S3.
@@ -256,8 +249,7 @@ class S3CacheAdapter:
                 logger.warning("S3CacheAdapter: ошибка инвалидации: %s", exc)
 
     async def delete(self, key: str) -> None:
-        """
-        Удаляет объект из S3 и инвалидирует Redis-ключ.
+        """Удаляет объект из S3 и инвалидирует Redis-ключ.
 
         Args:
             key: Ключ объекта в S3.

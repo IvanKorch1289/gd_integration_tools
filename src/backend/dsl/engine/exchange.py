@@ -28,8 +28,7 @@ class ExchangeStatus(StrEnum):
 
 
 class Message[T](BaseModel):
-    """
-    Универсальное сообщение DSL.
+    """Универсальное сообщение DSL.
 
     Attributes:
         headers: Транспортно-агностичные заголовки.
@@ -49,8 +48,7 @@ class Message[T](BaseModel):
     watermark: float | None = Field(default=None)
 
     def get_header(self, key: str, default: Any = None) -> Any:
-        """
-        Возвращает заголовок по ключу.
+        """Возвращает заголовок по ключу.
 
         Args:
             key: Имя заголовка.
@@ -63,8 +61,7 @@ class Message[T](BaseModel):
         return self.headers.get(key, default)
 
     def set_header(self, key: str, value: Any) -> None:
-        """
-        Устанавливает заголовок.
+        """Устанавливает заголовок.
 
         Args:
             key: Имя заголовка.
@@ -79,8 +76,7 @@ class Message[T](BaseModel):
 
 
 class ExchangeMeta(BaseModel):
-    """
-    Служебные метаданные Exchange.
+    """Служебные метаданные Exchange.
 
     Attributes:
         exchange_id: Уникальный идентификатор конкретного обмена.
@@ -105,8 +101,7 @@ class ExchangeMeta(BaseModel):
 
 
 class Exchange[T](BaseModel):
-    """
-    Контейнер, который движется по DSL-маршруту.
+    """Контейнер, который движется по DSL-маршруту.
 
     Аналог Camel Exchange:
     - `in_message` — входные данные;
@@ -124,8 +119,7 @@ class Exchange[T](BaseModel):
     error: str | None = None
 
     def get_property(self, key: str, default: Any = None) -> Any:
-        """
-        Возвращает runtime-свойство маршрута.
+        """Возвращает runtime-свойство маршрута.
 
         Args:
             key: Ключ свойства.
@@ -138,8 +132,7 @@ class Exchange[T](BaseModel):
         return self.properties.get(key, default)
 
     def set_property(self, key: str, value: Any) -> None:
-        """
-        Устанавливает runtime-свойство маршрута.
+        """Устанавливает runtime-свойство маршрута.
 
         Args:
             key: Ключ свойства.
@@ -149,8 +142,7 @@ class Exchange[T](BaseModel):
         self.properties[key] = value
 
     def set_out(self, body: Any = None, headers: dict[str, Any] | None = None) -> None:
-        """
-        Устанавливает выходное сообщение.
+        """Устанавливает выходное сообщение.
 
         Args:
             body: Результирующее тело.
@@ -160,8 +152,7 @@ class Exchange[T](BaseModel):
         self.out_message = Message(body=body, headers=headers or {})
 
     def complete(self, body: Any = None, headers: dict[str, Any] | None = None) -> None:
-        """
-        Завершает Exchange успешно.
+        """Завершает Exchange успешно.
 
         Args:
             body: Результирующее тело.
@@ -173,8 +164,7 @@ class Exchange[T](BaseModel):
         self.error = None
 
     def fail(self, reason: str) -> None:
-        """
-        Завершает Exchange ошибкой.
+        """Завершает Exchange ошибкой.
 
         Args:
             reason: Текст ошибки.

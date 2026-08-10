@@ -149,7 +149,7 @@ class HealthAggregator:
         if not self._include_registry:
             return {}
         try:
-            from src.backend.infrastructure.registry import ConnectorRegistry
+            from src.backend.infrastructure.registry import ConnectorRegistry  # noqa: F401 — availability probe
         except ImportError:
             return {}
         registry = ConnectorRegistry.instance()

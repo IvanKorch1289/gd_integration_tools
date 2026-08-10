@@ -174,7 +174,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 },
             )
             try:
-                from src.backend.core.audit.facade import emit_audit_safe
+                from src.backend.core.audit.facade import emit_audit_safe  # noqa: F401 — availability probe
 
                 emit_audit_safe(
                     event="ai.budget.tenant_less_invocation",
@@ -193,7 +193,7 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 # cycle-9/D-AUDIT-984: narrow exceptions + observability.
                 # ImportError — audit facade missing, AttributeError —
                 # schema change, RuntimeError — backend unavailable.
-                import logging
+                import logging  # noqa: F401 — availability probe
                 logging.getLogger(__name__).debug(
                     "enforced_invoke.audit_emit_failed",
                     extra={"error": str(audit_exc)},

@@ -7,8 +7,7 @@ __all__ = ("CacheEnvelope",)
 
 @dataclass(slots=True)
 class CacheEnvelope:
-    """
-    Унифицированная оболочка записи кэша.
+    """Унифицированная оболочка записи кэша.
 
     value:
         Полезное значение.

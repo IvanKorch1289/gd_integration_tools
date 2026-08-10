@@ -79,7 +79,7 @@ class FeatureFlagCheckProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Проверяет flag через TenantFeatureFlagResolver."""
         try:
-            from src.backend.core.tenancy.feature_flag_scope import (
+            from src.backend.core.tenancy.feature_flag_scope import (  # noqa: F401 — availability probe
                 TenantFeatureFlagResolver,
             )
         except ImportError as exc:

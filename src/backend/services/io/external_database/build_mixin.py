@@ -47,8 +47,7 @@ class BuildMixin(_ExternalDatabaseProtocol):
     def _build_arguments_sql(
         self, meta: ExternalDBObjectMeta, prepared_params: list[PreparedDBParameter],
     ) -> str:
-        """
-        Строит SQL-фрагмент списка аргументов.
+        """Строит SQL-фрагмент списка аргументов.
 
         Примеры:
         - named: p_id => :employee_id, p_force => :force

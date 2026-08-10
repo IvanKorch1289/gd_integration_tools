@@ -114,7 +114,7 @@ class LiteLLMGateway:
         if not self._enabled:
             raise GatewayUnavailable("LiteLLMGateway отключён (LITELLM_ENABLED=false).")
         try:
-            import litellm  # type: ignore[import-not-found]
+            import litellm  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         except ImportError as exc:
             raise GatewayUnavailable(
                 "Пакет 'litellm' не установлен — добавьте extra '[ai-2026]'.",

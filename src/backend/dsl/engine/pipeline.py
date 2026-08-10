@@ -58,8 +58,7 @@ class Pipeline:
     security: tuple[str, ...] = field(default_factory=tuple)  # Sprint 1: requires_permission
 
     def add_processor(self, processor: BaseProcessor) -> Pipeline:
-        """
-        Добавляет процессор в конец маршрута.
+        """Добавляет процессор в конец маршрута.
 
         Args:
             processor: Экземпляр процессора.
@@ -72,8 +71,7 @@ class Pipeline:
         return self
 
     def extend(self, processors: list[BaseProcessor]) -> Pipeline:
-        """
-        Добавляет несколько процессоров.
+        """Добавляет несколько процессоров.
 
         Args:
             processors: Список процессоров.
@@ -131,7 +129,7 @@ class Pipeline:
 
         """
         try:
-            import yaml
+            import yaml  # noqa: F401 — availability probe
         except ImportError as exc:
             raise ImportError("PyYAML required: pip install pyyaml") from exc
         return yaml.dump(self.to_dict(), allow_unicode=True, sort_keys=False)

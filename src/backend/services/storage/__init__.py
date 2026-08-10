@@ -5,7 +5,7 @@ Canonical entry point for extensions: :class:`StorageFacade`.
 
 from __future__ import annotations
 
-from src.backend.services.storage.facade import StorageFacade
+from src.backend.services.storage.facade import StorageFacade  # noqa: F401 — re-export
 
 __all__ = ("StorageFacade", "get_storage_facade")
 

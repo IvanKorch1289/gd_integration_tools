@@ -18,8 +18,7 @@ type DatabaseSettings = (
 
 
 class ExternalDatabaseRegistry:
-    """
-    Реестр внешних БД.
+    """Реестр внешних БД.
 
     Поднимает и хранит инициализаторы внешних подключений
     по `profile_name`.

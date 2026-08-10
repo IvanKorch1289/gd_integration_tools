@@ -49,7 +49,7 @@ class BrotliCompressionMiddleware:
     @staticmethod
     def _try_import_brotli() -> Any | None:
         try:
-            import brotli
+            import brotli  # noqa: F401 — availability probe
 
             return brotli
         except ImportError:

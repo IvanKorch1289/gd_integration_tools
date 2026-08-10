@@ -231,7 +231,7 @@ class SmartSessionManager:
 
         """
         try:
-            from src.backend.core.config.features import feature_flags
+            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
 
             if not feature_flags.multi_replica_failover:
                 return False
@@ -240,7 +240,7 @@ class SmartSessionManager:
             # ImportError — feature_flags missing, AttributeError — config
             # not initialized, RuntimeError — flags unavailable. Bare `except
             # Exception` маскировал unrelated runtime errors.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "smart_session_manager.feature_flags_fallback",
                 extra={"error": str(ff_exc)},

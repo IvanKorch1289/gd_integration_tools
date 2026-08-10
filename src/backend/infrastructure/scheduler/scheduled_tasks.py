@@ -8,8 +8,7 @@ scheduler_logger = get_logger("scheduler")
 
 
 async def check_all_services():
-    """
-    Проверяет статус всех сервисов через HealthAggregator.
+    """Проверяет статус всех сервисов через HealthAggregator.
     Если какой-либо сервис неактивен, отправляет уведомление по электронной почте через Redis Stream.
     """
     from src.backend.infrastructure.application.health_aggregator import (
@@ -45,8 +44,7 @@ async def check_all_services():
 
 
 async def consolidate_idle_sessions():
-    """
-    APScheduler-cron job (Sprint 19 K4 W4b): LangMem consolidation.
+    """APScheduler-cron job (Sprint 19 K4 W4b): LangMem consolidation.
 
     Запускает :meth:`LangMemService.consolidate()` для idle-эпизодов.
     Регистрируется только если ``langmem_settings.consolidation_schedule_cron``

@@ -25,8 +25,7 @@ _BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 @dataclass
 class PreparedDBParameter:
-    """
-    Подготовленный параметр для DB-вызова.
+    """Подготовленный параметр для DB-вызова.
 
     bind_name:
         Имя bind-параметра в SQLAlchemy text(...).

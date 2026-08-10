@@ -45,8 +45,7 @@ class UnknownAntivirusVerdictError(Exception):
 
 
 class AntivirusService:
-    """
-    Сервис антивирусной проверки файлов.
+    """Сервис антивирусной проверки файлов.
 
     Сценарии:
     - Проверка файла, уже лежащего в S3.
@@ -193,8 +192,7 @@ class AntivirusService:
         return guessed_content_type or settings.antivirus.default_content_type
 
     def _extract_clean_flag(self, response_data: Any) -> bool:
-        """
-        Адаптер вердикта антивируса.
+        """Адаптер вердикта антивируса.
 
         Подстрой под фактический ответ вашего AV API.
         Сейчас обрабатывает наиболее типичные случаи:

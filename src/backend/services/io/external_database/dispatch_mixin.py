@@ -151,8 +151,7 @@ class DispatchMixin(_ExternalDatabaseProtocol):
         prepared_params: list[PreparedDBParameter],
         execute_params: dict[str, Any],
     ) -> dict[str, str]:
-        """
-        Выполняет разрешённую процедуру.
+        """Выполняет разрешённую процедуру.
 
         Для POST-запросов именно сюда обычно приходит body,
         который уже был:

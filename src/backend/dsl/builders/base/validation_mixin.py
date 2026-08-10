@@ -64,7 +64,7 @@ class ValidationMixin(_RouteBuilderProtocol):
         Вызывается в .build() (можно отключить validate_actions=False).
         """
         try:
-            from src.backend.dsl.commands.registry import action_handler_registry
+            from src.backend.dsl.commands.registry import action_handler_registry  # noqa: F401 — availability probe
 
             available = set(action_handler_registry.list_actions())
         except (ImportError, AttributeError):

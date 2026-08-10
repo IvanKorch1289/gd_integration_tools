@@ -9,8 +9,7 @@ __all__ = ("ExternalDatabaseConnectionSettings",)
 
 
 class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
-    """
-    Итоговые настройки подключения к внешней реляционной БД.
+    """Итоговые настройки подключения к внешней реляционной БД.
 
     Это уже "разрешённая" модель:
     - общие настройки подмешаны;

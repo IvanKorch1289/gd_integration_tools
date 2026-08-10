@@ -22,8 +22,7 @@ __all__ = (
 
 
 class RouteRegistry:
-    """
-    Реестр DSL-маршрутов приложения.
+    """Реестр DSL-маршрутов приложения.
 
     Хранит route_id -> Pipeline и предоставляет
     единый runtime-access для HTTP, stream и других entrypoints.
@@ -33,8 +32,7 @@ class RouteRegistry:
         self._routes: dict[str, Pipeline] = {}
 
     def register(self, pipeline: Pipeline) -> None:
-        """
-        Регистрирует маршрут.
+        """Регистрирует маршрут.
 
         Args:
             pipeline: Готовый Pipeline.
@@ -50,8 +48,7 @@ class RouteRegistry:
         self._routes[route_id] = pipeline
 
     def get(self, route_id: str) -> Pipeline:
-        """
-        Возвращает маршрут по route_id.
+        """Возвращает маршрут по route_id.
 
         Args:
             route_id: Идентификатор маршрута.
@@ -66,8 +63,7 @@ class RouteRegistry:
         return self._routes[route_id]
 
     def get_optional(self, route_id: str) -> Pipeline | None:
-        """
-        Возвращает маршрут или None.
+        """Возвращает маршрут или None.
 
         Args:
             route_id: Идентификатор маршрута.
@@ -79,8 +75,7 @@ class RouteRegistry:
         return self._routes.get(route_id)
 
     def is_registered(self, route_id: str) -> bool:
-        """
-        Проверяет наличие маршрута.
+        """Проверяет наличие маршрута.
 
         Args:
             route_id: Идентификатор маршрута.
@@ -110,8 +105,7 @@ class RouteRegistry:
         return dict(pipeline.route_overrides)
 
     def list_routes(self) -> tuple[str, ...]:
-        """
-        Возвращает список зарегистрированных маршрутов.
+        """Возвращает список зарегистрированных маршрутов.
 
         Returns:
             tuple[str, ...]: Отсортированный список route_id.
@@ -120,8 +114,7 @@ class RouteRegistry:
         return tuple(sorted(self._routes.keys()))
 
     def list_enabled_routes(self) -> tuple[str, ...]:
-        """
-        Возвращает маршруты, доступные для выполнения.
+        """Возвращает маршруты, доступные для выполнения.
 
         Исключает маршруты, чей feature_flag находится
         в ``disabled_feature_flags``.
@@ -140,8 +133,7 @@ class RouteRegistry:
         )
 
     def list_disabled_routes(self) -> tuple[str, ...]:
-        """
-        Возвращает маршруты, заблокированные feature-флагом.
+        """Возвращает маршруты, заблокированные feature-флагом.
 
         Returns:
             tuple[str, ...]: Отсортированный список route_id.
@@ -157,8 +149,7 @@ class RouteRegistry:
         )
 
     def get_route_feature_flags(self) -> dict[str, str]:
-        """
-        Возвращает маппинг route_id → feature_flag для всех
+        """Возвращает маппинг route_id → feature_flag для всех
         маршрутов, защищённых флагами.
 
         Returns:
@@ -173,8 +164,7 @@ class RouteRegistry:
 
     @staticmethod
     def toggle_feature_flag(flag_name: str, *, enable: bool) -> None:
-        """
-        Включает или отключает feature-флаг.
+        """Включает или отключает feature-флаг.
 
         Args:
             flag_name: Имя feature-флага.

@@ -11,7 +11,7 @@ dynamic imports невидимы для static analysis (S27, ADR-001).
 
 Usage::
 
-    from src.backend.core.logging import get_logger
+    from src.backend.core.logging import get_logger  # noqa: F401 — re-export
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     # Static contract for the runtime-lazy facade below.  The implementation
     # remains infrastructure-backed, while core callers depend on a Protocol.
-    from src.backend.core.interfaces.multi_protocol import LoggerProtocol
+    from src.backend.core.interfaces.multi_protocol import LoggerProtocol  # noqa: F401 — re-export
 
     get_logger: Callable[[str], LoggerProtocol]
 

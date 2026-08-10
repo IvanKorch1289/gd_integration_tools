@@ -30,7 +30,7 @@ async def _register_pools_in_unified_manager() -> None:
     all backend pools.
     """
     try:
-        from src.backend.infrastructure.clients.unified_pool_manager import (
+        from src.backend.infrastructure.clients.unified_pool_manager import (  # noqa: F401 — availability probe
             get_unified_pool_manager,
         )
     except ImportError:
@@ -222,7 +222,7 @@ async def _register_pools_in_unified_manager() -> None:
     # Central registration would require a new accessor (e.g. get_kafka_producer)
     # which is out of scope for S90. See ADR-0172.
     try:
-        from src.backend.infrastructure.messaging.dlq.kafka_writer import (
+        from src.backend.infrastructure.messaging.dlq.kafka_writer import (  # noqa: F401 — availability probe
             KafkaDLQWriter,
         )
     except ImportError:
@@ -232,7 +232,7 @@ async def _register_pools_in_unified_manager() -> None:
     # Регистрирует Kafka producer pool если доступен (через FastStream/aiokafka).
     # Pool registered как LOGICAL pool с custom ping_fn для liveness check.
     try:
-        from src.backend.infrastructure.messaging.kafka_pool_registration import (
+        from src.backend.infrastructure.messaging.kafka_pool_registration import (  # noqa: F401 — availability probe
             register_kafka_pool_if_available,
         )
 

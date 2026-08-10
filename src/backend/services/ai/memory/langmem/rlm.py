@@ -184,8 +184,7 @@ class RLMConsolidator:
         self.threshold = threshold
 
     async def consolidate(self, batch_size: int = 100) -> dict:
-        """
-        1. Fetch entries with penalty > threshold from Qdrant.
+        """1. Fetch entries with penalty > threshold from Qdrant.
         2. Re-embed via current embedding model.
         3. Upsert updated vectors.
         4. Delete stale entries.
@@ -248,8 +247,7 @@ class RLMConsolidator:
         }
 
     async def schedule_reindex(self, doc_ids: list[str]) -> dict:
-        """
-        Reindex specific documents by ID.
+        """Reindex specific documents by ID.
         Triggered when penalty >= reindex_threshold.
         """
         if not doc_ids:

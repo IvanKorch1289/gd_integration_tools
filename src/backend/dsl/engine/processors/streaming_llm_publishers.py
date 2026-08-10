@@ -77,9 +77,9 @@ class WebhookChunkedPublisher(_BasePublisher):
 
     async def _send(self, url: str, payload: dict[str, Any]) -> None:
         try:
-            import httpx
+            import httpx  # noqa: F401 — availability probe
 
-            from src.backend.core.net import OutboundHttpClient
+            from src.backend.core.net import OutboundHttpClient  # noqa: F401 — availability probe
         except ImportError:
             return
         try:

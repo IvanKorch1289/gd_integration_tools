@@ -4,6 +4,6 @@ from src.backend.services.ai.embeddings.ab_migration import (
     EmbeddingABRouter,
     EmbeddingMigrationStatus,
 )
-from src.backend.services.ai.embeddings.migration_runner import EmbeddingMigrationRunner
+from src.backend.services.ai.embeddings.migration_runner import EmbeddingMigrationRunner  # noqa: F401 — re-export
 
 __all__ = ("EmbeddingABRouter", "EmbeddingMigrationRunner", "EmbeddingMigrationStatus")

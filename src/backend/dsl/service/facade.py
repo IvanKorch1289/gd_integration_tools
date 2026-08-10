@@ -10,8 +10,7 @@ __all__ = ("DslService", "get_dsl_service")
 
 
 class DslService:
-    """
-    Facade над RouteRegistry + ExecutionEngine.
+    """Facade над RouteRegistry + ExecutionEngine.
 
     Нужен для entrypoints, чтобы они не работали
     напрямую с low-level объектами DSL.
@@ -28,8 +27,7 @@ class DslService:
         headers: dict[str, Any] | None = None,
         context: ExecutionContext | None = None,
     ) -> Exchange[Any]:
-        """
-        Выполняет зарегистрированный DSL-маршрут.
+        """Выполняет зарегистрированный DSL-маршрут.
 
         Args:
             route_id: Идентификатор маршрута.
@@ -141,8 +139,7 @@ class DslService:
 
 @lru_cache(maxsize=1)
 def get_dsl_service() -> DslService:
-    """
-    Возвращает facade DSL.
+    """Возвращает facade DSL.
 
     Singleton на процесс (R1.4): `ExecutionEngine` создаётся один раз,
     устраняя linear scan `_find_timeout_middleware` при каждом вызове.

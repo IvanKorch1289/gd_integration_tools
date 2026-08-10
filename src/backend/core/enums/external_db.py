@@ -22,8 +22,7 @@ class ExternalDBObjectTypeChoices(StrEnum):
 
 
 class ExternalDBParameterModeChoices(StrEnum):
-    """
-    Режим передачи аргументов в вызов БД.
+    """Режим передачи аргументов в вызов БД.
 
     named:
         Используется именованная нотация, например:
@@ -40,8 +39,7 @@ class ExternalDBParameterModeChoices(StrEnum):
 
 
 class ExternalDBParameterMeta(BaseModel):
-    """
-    Метаданные одного аргумента внешнего DB-вызова.
+    """Метаданные одного аргумента внешнего DB-вызова.
 
     body_field:
         Имя поля во входном payload/body.
@@ -113,8 +111,7 @@ class ExternalDBParameterMeta(BaseModel):
 
 
 class ExternalDBObjectMeta(BaseModel):
-    """
-    Метаданные разрешённого объекта внешней БД.
+    """Метаданные разрешённого объекта внешней БД.
 
     Используется как value для enum-элемента в ExternalDBObjectChoices.
     """
@@ -266,8 +263,7 @@ class ExternalDBObjectMeta(BaseModel):
 
     @property
     def qualified_name(self) -> str:
-        """
-        Возвращает полное имя объекта.
+        """Возвращает полное имя объекта.
 
         Форматы:
         - schema.object_name
@@ -298,8 +294,7 @@ class ExternalDBObjectMeta(BaseModel):
 
 
 class ExternalDBObjectChoices(Enum):
-    """
-    Реестр разрешённых объектов внешних БД.
+    """Реестр разрешённых объектов внешних БД.
 
     Важно:
     - сюда попадают только whitelist-объекты;

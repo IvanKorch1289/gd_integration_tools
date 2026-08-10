@@ -139,7 +139,7 @@ class DSPyOptimizer:
     def is_enabled(self) -> bool:
         """Проверяет feature-flag ``dspy_eval_pipeline_enabled``."""
         try:
-            from src.backend.core.config.features import feature_flags
+            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
 
             return bool(feature_flags.dspy_eval_pipeline_enabled)
         except (ImportError, AttributeError) as exc:
@@ -148,7 +148,7 @@ class DSPyOptimizer:
 
     def _is_sdk_available(self) -> bool:
         try:
-            import dspy
+            import dspy  # noqa: F401 — availability probe
 
             return True
         except ImportError:
@@ -233,8 +233,8 @@ def _default_bootstrap(
         return _token_overlap_bootstrap(pipeline, train)
 
     try:
-        import dspy
-        from dspy.teleprompt import BootstrapFewShot
+        import dspy  # noqa: F401 — availability probe
+        from dspy.teleprompt import BootstrapFewShot  # noqa: F401 — availability probe
     except ImportError:
         return _token_overlap_bootstrap(pipeline, train)
 

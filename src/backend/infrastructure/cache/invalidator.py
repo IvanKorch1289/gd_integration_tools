@@ -1,5 +1,4 @@
-"""
-Инвалидатор кэша при write-операциях (create / update / delete).
+"""Инвалидатор кэша при write-операциях (create / update / delete).
 
 Использует tag-based инвалидацию: каждый закэшированный результат
 помечается набором тегов (обычно ``entity:<name>`` и
@@ -44,16 +43,14 @@ logger = get_logger("cache.invalidator")
 
 @runtime_checkable
 class CacheBackendProtocol(Protocol):
-    """
-    Минимальный контракт cache backend'а для инвалидатора.
+    """Минимальный контракт cache backend'а для инвалидатора.
 
     Конкретные реализации (Redis, Memcached, disk) регистрируют набор
     ключей под тегом и умеют удалять весь набор за один вызов.
     """
 
     async def delete_by_tag(self, tag: str) -> int:
-        """
-        Удаляет все ключи, привязанные к тегу.
+        """Удаляет все ключи, привязанные к тегу.
 
         Args:
             tag: Тег, например ``entity:orders`` или ``entity:orders:42``.
@@ -65,8 +62,7 @@ class CacheBackendProtocol(Protocol):
         ...
 
     async def delete_by_pattern(self, pattern: str) -> int:
-        """
-        Удаляет все ключи, matching glob pattern.
+        """Удаляет все ключи, matching glob pattern.
 
         Args:
             pattern: Glob pattern (e.g., "entity:*").
@@ -79,8 +75,7 @@ class CacheBackendProtocol(Protocol):
 
 
 class InMemoryCacheBackend:
-    """
-    In-memory реализация ``CacheBackendProtocol`` для тестов.
+    """In-memory реализация ``CacheBackendProtocol`` для тестов.
 
     Не потокобезопасна для multi-process — использовать только в тестах
     и в качестве fallback-а при недоступности Redis (dev-окружение).
@@ -98,8 +93,7 @@ class InMemoryCacheBackend:
         self._keys.add(key)
 
     async def delete_by_tag(self, tag: str) -> int:
-        """
-        Удаляет ключи, связанные с тегом, и сам тег из карты.
+        """Удаляет ключи, связанные с тегом, и сам тег из карты.
 
         Args:
             tag: Имя тега.
@@ -114,8 +108,7 @@ class InMemoryCacheBackend:
         return len(keys)
 
     async def delete_by_pattern(self, pattern: str) -> int:
-        """
-        Удаляет все ключи, matching glob pattern.
+        """Удаляет все ключи, matching glob pattern.
 
         Args:
             pattern: Glob pattern (e.g., "entity:*" or "cache:orders:*").
@@ -134,8 +127,7 @@ class InMemoryCacheBackend:
 
 
 class CacheInvalidator:
-    """
-    Инвалидатор кэша через один или несколько backend'ов.
+    """Инвалидатор кэша через один или несколько backend'ов.
 
     Принимает набор тегов и параллельно вызывает ``delete_by_tag`` у
     каждого backend'а. Не падает, если тег отсутствует в backend'е —
@@ -143,8 +135,7 @@ class CacheInvalidator:
     """
 
     def __init__(self, backends: list[CacheBackendProtocol] | None = None) -> None:
-        """
-        Args:
+        """Args:
             backends: Список backend'ов. Если None — создаётся пустой
                 список, backend'ы добавляются через ``add_backend``.
 
@@ -156,8 +147,7 @@ class CacheInvalidator:
         self._backends.append(backend)
 
     async def invalidate(self, *tags: str) -> int:
-        """
-        Инвалидирует все ключи, помеченные указанными тегами, во всех
+        """Инвалидирует все ключи, помеченные указанными тегами, во всех
         зарегистрированных backend'ах параллельно.
 
         Args:
@@ -182,8 +172,7 @@ class CacheInvalidator:
         return total
 
     async def invalidate_pattern(self, pattern: str) -> int:
-        """
-        Инвалидирует все ключи, matching glob pattern, во всех backend'ах.
+        """Инвалидирует все ключи, matching glob pattern, во всех backend'ах.
 
         Args:
             pattern: Glob pattern (e.g., "entity:*" or "table:orders:*").
@@ -205,8 +194,7 @@ class CacheInvalidator:
         return total
 
     async def invalidate_tags(self, *tags: str) -> int:
-        """
-        Инвалидирует все ключи, помеченные указанными тегами, во всех
+        """Инвалидирует все ключи, помеченные указанными тегами, во всех
         backend'ах. Alias для :meth:`invalidate`.
 
         Args:
@@ -230,8 +218,7 @@ def get_cache_invalidator() -> CacheInvalidator:
 
 
 def set_cache_invalidator(invalidator: CacheInvalidator) -> None:
-    """
-    Подменяет глобальный инвалидатор (для тестов и lifespan).
+    """Подменяет глобальный инвалидатор (для тестов и lifespan).
 
     Args:
         invalidator: Новый ``CacheInvalidator``.

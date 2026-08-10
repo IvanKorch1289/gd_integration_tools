@@ -38,7 +38,7 @@ __all__ = (
 )
 
 try:
-    import msgspec
+    import msgspec  # noqa: F401 — availability probe
 
     _ENCODER = msgspec.json.Encoder()
     _DECODER = msgspec.json.Decoder()
@@ -50,7 +50,7 @@ except ImportError:  # pragma: no cover — fallback path
     MSGSPEC_AVAILABLE = False
 
 try:
-    import orjson
+    import orjson  # noqa: F401 — availability probe
 except ImportError:  # pragma: no cover
     orjson = None  # type: ignore[assignment]
 

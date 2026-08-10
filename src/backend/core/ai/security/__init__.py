@@ -13,7 +13,7 @@ Single import location для всего agent-security пайплайна, чт
 
 Использование (extension/plugin code)::
 
-    from src.backend.core.ai.security import get_agent_security_framework
+    from src.backend.core.ai.security import get_agent_security_framework  # noqa: F401 — re-export
 
     framework = get_agent_security_framework()
     decision = framework.validate_prompt(prompt)

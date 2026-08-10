@@ -11,8 +11,7 @@ __all__ = ("DatabaseListener",)
 
 
 class DatabaseListener:
-    """
-    SQLAlchemy listeners для telemetry и безопасного логирования запросов.
+    """SQLAlchemy listeners для telemetry и безопасного логирования запросов.
 
     Ответственность:
     - измерение времени выполнения SQL;
@@ -32,8 +31,7 @@ class DatabaseListener:
         self.register_handlers()
 
     def register_handlers(self) -> None:
-        """
-        Регистрирует обработчики SQLAlchemy для sync_engine,
+        """Регистрирует обработчики SQLAlchemy для sync_engine,
         лежащего под AsyncEngine.
         """
         sync_engine = self.async_engine.sync_engine
@@ -70,8 +68,7 @@ class DatabaseListener:
 
         @event.listens_for(sync_engine, "handle_error")
         def handle_error(exception_context):
-            """
-            Логирует ошибку драйвера/соединения.
+            """Логирует ошибку драйвера/соединения.
 
             Важно:
             параметры запроса целиком не логируются,

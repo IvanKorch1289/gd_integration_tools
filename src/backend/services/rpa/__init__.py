@@ -6,6 +6,6 @@ Wave: ``[wave:s8/k3-rpa-universal-stage1]``. Public API:
 
 from __future__ import annotations
 
-from src.backend.services.rpa.browser_pool import PlaywrightBrowserPool
+from src.backend.services.rpa.browser_pool import PlaywrightBrowserPool  # noqa: F401 — re-export
 
 __all__ = ("PlaywrightBrowserPool",)

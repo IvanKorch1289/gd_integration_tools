@@ -1,5 +1,4 @@
-"""
-MCP-Playwright integration tests (S171 M6).
+"""MCP-Playwright integration tests (S171 M6).
 
 These tests run via the same Playwright code path that @playwright/mcp
 server would use (Python playwright lib + headless chromium).

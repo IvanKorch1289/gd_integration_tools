@@ -32,17 +32,17 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
-from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
-from src.backend.core.interfaces.cache import CacheBackend
-from src.backend.core.interfaces.doc_store import DocStoreBackend
-from src.backend.core.interfaces.metrics import MetricsBackend
+from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult  # noqa: F401 — re-export
+from src.backend.core.interfaces.audit import AuditBackend, AuditRecord  # noqa: F401 — re-export
+from src.backend.core.interfaces.cache import CacheBackend  # noqa: F401 — re-export
+from src.backend.core.interfaces.doc_store import DocStoreBackend  # noqa: F401 — re-export
+from src.backend.core.interfaces.metrics import MetricsBackend  # noqa: F401 — re-export
 from src.backend.core.interfaces.notification import (
     NotificationAdapter,
     NotificationMessage,
 )
-from src.backend.core.interfaces.secrets import SecretsBackend
-from src.backend.core.interfaces.storage import ObjectStorage
+from src.backend.core.interfaces.secrets import SecretsBackend  # noqa: F401 — re-export
+from src.backend.core.interfaces.storage import ObjectStorage  # noqa: F401 — re-export
 from src.backend.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -62,7 +62,7 @@ _CIRCUIT_BREAKER_REEXPORTS = (
 if TYPE_CHECKING:
     from src.backend.core.resilience.breaker import BreakerSpec as CircuitBreakerConfig
     from src.backend.core.resilience.breaker import BreakerState as CircuitState
-    from src.backend.core.resilience.breaker import CircuitBreaker
+    from src.backend.core.resilience.breaker import CircuitBreaker  # noqa: F401 — re-export
     from src.backend.core.resilience.breaker import (
         CircuitOpen as CircuitBreakerOpenError,
     )
@@ -88,7 +88,7 @@ def __getattr__(name: str) -> Any:
             BreakerSpec as CircuitBreakerConfig,
         )
         from src.backend.core.resilience.breaker import BreakerState as CircuitState
-        from src.backend.core.resilience.breaker import CircuitBreaker
+        from src.backend.core.resilience.breaker import CircuitBreaker  # noqa: F401 — re-export
         from src.backend.core.resilience.breaker import (
             CircuitOpen as CircuitBreakerOpenError,
         )

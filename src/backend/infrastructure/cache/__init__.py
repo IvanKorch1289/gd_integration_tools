@@ -1,5 +1,4 @@
-"""
-Пакет инфраструктуры кэша.
+"""Пакет инфраструктуры кэша.
 
 Публикует синглтон ``cache_config_registry`` для регистрации источников
 кэша по всему приложению и валидатор ``CacheLayerValidator`` для проверки
@@ -11,7 +10,7 @@ from src.backend.infrastructure.cache.backends import (
     MemoryBackend,
     RedisBackend,
 )
-from src.backend.infrastructure.cache.factory import create_cache_backend
+from src.backend.infrastructure.cache.factory import create_cache_backend  # noqa: F401 — re-export
 from src.backend.infrastructure.cache.invalidator import (
     CacheBackendProtocol,
     CacheInvalidator,

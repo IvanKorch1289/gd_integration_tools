@@ -25,7 +25,7 @@ def _ensure_lru_metrics() -> None:
     """Lazy-initialize LRU metrics counters."""
     global _lru_snapshot
     try:
-        from src.backend.infrastructure.cache.lru_cache import (
+        from src.backend.infrastructure.cache.lru_cache import (  # noqa: F401 — availability probe
             _metric_hits,
             _metric_misses,
         )
@@ -48,8 +48,7 @@ def record_lru_miss(scope: str = "l1") -> None:
 
 
 def get_cache_metrics_snapshot() -> dict[str, Any]:
-    """
-    Returns aggregated cache metrics snapshot from all tiers.
+    """Returns aggregated cache metrics snapshot from all tiers.
 
     Includes:
     - lru_cache_hits: Total L1 LRU cache hits

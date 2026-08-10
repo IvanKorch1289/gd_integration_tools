@@ -53,8 +53,7 @@ class CoreMixin(_ExternalDatabaseProtocol):
         db_object: ExternalDBObjectChoices,
         payload: dict[str, Any] | BaseModel | None = None,
     ) -> Any:
-        """
-        Унифицированная точка входа для вызова внешнего DB-объекта.
+        """Унифицированная точка входа для вызова внешнего DB-объекта.
 
         Args:
             db_object: Разрешённый объект внешней БД из enum.
@@ -112,8 +111,7 @@ class CoreMixin(_ExternalDatabaseProtocol):
     def _validate_request(
         self, meta: ExternalDBObjectMeta, payload: dict[str, Any] | BaseModel | None,
     ) -> dict[str, Any]:
-        """
-        Валидирует входной payload и возвращает обычный dict.
+        """Валидирует входной payload и возвращает обычный dict.
 
         Логика:
         - dict остаётся dict;
@@ -151,8 +149,7 @@ class CoreMixin(_ExternalDatabaseProtocol):
     def _build_db_params(
         self, meta: ExternalDBObjectMeta, payload: dict[str, Any],
     ) -> list[PreparedDBParameter]:
-        """
-        Преобразует входной payload в параметры DB-вызова.
+        """Преобразует входной payload в параметры DB-вызова.
 
         Для function/procedure используется явное описание parameters.
         Для query, если parameters не заданы, payload передаётся как есть.

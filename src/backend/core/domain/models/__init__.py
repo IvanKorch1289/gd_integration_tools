@@ -33,8 +33,8 @@ from extensions.core_entities.files.domain.models import (
 from extensions.core_entities.orderkinds.domain.models import (
     OrderKind,
 )
-from extensions.core_entities.orders.domain.models import Order
-from extensions.core_entities.users.domain.models import User
+from extensions.core_entities.orders.domain.models import Order  # noqa: F401 — re-export
+from extensions.core_entities.users.domain.models import User  # noqa: F401 — re-export
 from src.backend.core.domain.models.base import (
     Base,
     BaseModel,
@@ -42,13 +42,13 @@ from src.backend.core.domain.models.base import (
     metadata,
     nullable_str,
 )
-from src.backend.core.domain.models.cert import CertHistory, CertRecord
-from src.backend.core.domain.models.dsl_snapshot import DslSnapshot
+from src.backend.core.domain.models.cert import CertHistory, CertRecord  # noqa: F401 — re-export
+from src.backend.core.domain.models.dsl_snapshot import DslSnapshot  # noqa: F401 — re-export
 from src.backend.core.domain.models.langmem_models import (
     LangMemEpisodic,
     LangMemProcedural,
 )
-from src.backend.core.domain.models.outbox import OutboxMessage
+from src.backend.core.domain.models.outbox import OutboxMessage  # noqa: F401 — re-export
 from src.backend.core.domain.models.rule_engine import (
     RuleEngineBase,
     RuleEngineRulesetORM,

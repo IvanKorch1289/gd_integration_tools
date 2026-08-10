@@ -33,8 +33,7 @@ Base = mapper_registry.generate_base()
 
 
 class BaseModel(AsyncAttrs, Base):  # type: ignore
-    """
-    Базовый класс для всех моделей SQLAlchemy.
+    """Базовый класс для всех моделей SQLAlchemy.
 
     Атрибуты:
         id (Mapped[int]): Уникальный идентификатор записи.
@@ -58,8 +57,7 @@ class BaseModel(AsyncAttrs, Base):  # type: ignore
     @declared_attr.directive
     @classmethod
     def __tablename__(cls) -> str:
-        """
-        Генерирует имя таблицы на основе имени класса.
+        """Генерирует имя таблицы на основе имени класса.
 
         Возвращает:
             str: Имя таблицы в нижнем регистре с добавлением 's'.
@@ -68,8 +66,7 @@ class BaseModel(AsyncAttrs, Base):  # type: ignore
 
     @staticmethod
     async def get_value_from_secret_str(data: dict[str, Any]) -> dict[str, Any]:
-        """
-        Преобразует все SecretStr в словаре в обычные строки.
+        """Преобразует все SecretStr в словаре в обычные строки.
 
         Аргументы:
             data (dict[str, Any]): Словарь, который может содержать SecretStr.
@@ -83,8 +80,7 @@ class BaseModel(AsyncAttrs, Base):  # type: ignore
         }
 
     async def to_dict(self) -> dict[str, Any]:
-        """
-        Преобразует модель в словарь.
+        """Преобразует модель в словарь.
 
         Возвращает:
             dict[str, Any]: Словарь с атрибутами модели.

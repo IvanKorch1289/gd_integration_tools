@@ -107,8 +107,8 @@ def get_ad_client(
     # Cycle 30 P1 fix: use core-owned contract + DI provider only.
     # No runtime core→services import (layer violation eliminated).
     try:
-        from src.backend.core.auth.ldap_contract import AdServerConfig
-        from src.backend.core.di.providers.auth import get_ad_directory_client_provider
+        from src.backend.core.auth.ldap_contract import AdServerConfig  # noqa: F401 — availability probe
+        from src.backend.core.di.providers.auth import get_ad_directory_client_provider  # noqa: F401 — availability probe
 
         config = AdServerConfig(
             server_uri=settings.server_uri,

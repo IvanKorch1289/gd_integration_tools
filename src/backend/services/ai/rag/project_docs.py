@@ -223,7 +223,7 @@ class DocsIndexer:
             # ConnectionError для network issues. Bare `except Exception`
             # маскировал unrelated errors (KeyError, TypeError).
             try:
-                from qdrant_client.models import Distance, VectorParams
+                from qdrant_client.models import Distance, VectorParams  # noqa: F401 — availability probe
 
                 self._qdrant.create_collection(
                     collection_name=self._collection_name,
@@ -319,7 +319,7 @@ class DocsIndexer:
     ) -> list[Any]:
         """PointStruct (Qdrant) → dict (fallback) — automatic dispatch."""
         try:
-            from qdrant_client.models import PointStruct
+            from qdrant_client.models import PointStruct  # noqa: F401 — availability probe
 
             return [
                 PointStruct(
@@ -335,7 +335,7 @@ class DocsIndexer:
             # API changed, TypeError — schema mismatch, KeyError — chunk
             # missing required field. Bare `except Exception` маскировал
             # unrelated runtime errors (ValueError, RuntimeError).
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "project_docs._build_points_fallback",
                 extra={"error": str(point_exc), "chunks_count": len(chunks)},

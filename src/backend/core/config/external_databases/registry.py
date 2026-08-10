@@ -15,8 +15,7 @@ __all__ = ("ExternalDatabasesSettings", "external_databases_settings")
 
 
 class ExternalDatabasesSettings(BaseSettingsWithLoader):
-    """
-    Настройки внешних реляционных БД.
+    """Настройки внешних реляционных БД.
 
     Структура YAML:
     external_databases:
@@ -146,8 +145,7 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
 
     @staticmethod
     def _normalize_profile_name(profile_name: str) -> str:
-        """
-        Нормализует profile_name для env-переменных.
+        """Нормализует profile_name для env-переменных.
 
         Пример:
             oracle-1 -> ORACLE_1
@@ -157,8 +155,7 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
         return normalized.upper()
 
     def _get_secret_from_env(self, profile_name: str, field_name: str) -> str | None:
-        """
-        Получает значение секрета из env.
+        """Получает значение секрета из env.
 
         Формат:
             EXT_DB_<PROFILE_NAME>_<FIELD_NAME>
@@ -175,8 +172,7 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
     def _resolve_connection(
         self, connection: ExternalDatabaseItemSettings,
     ) -> ExternalDatabaseConnectionSettings:
-        """
-        Собирает итоговую конфигурацию подключения:
+        """Собирает итоговую конфигурацию подключения:
         - берёт top-level defaults;
         - применяет profile-specific overrides;
         - подмешивает username/password из env.

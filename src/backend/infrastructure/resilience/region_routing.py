@@ -1,5 +1,4 @@
-"""
-Multi-region routing infrastructure (S36 w3).
+"""Multi-region routing infrastructure (S36 w3).
 
 Provides:
 - ``Region`` — dataclass defining a region/datacenter
@@ -30,8 +29,7 @@ class RegionStatus(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class Region:
-    """
-    A geographic region / datacenter.
+    """A geographic region / datacenter.
 
     Attributes
     ----------
@@ -132,8 +130,7 @@ if TYPE_CHECKING:
 
 
 class RegionRouter:
-    """
-    Routes requests to the appropriate region based on tenant context.
+    """Routes requests to the appropriate region based on tenant context.
 
     Routing strategy (fallback chain):
       1. Tenant's preferred region (from ``TenantContext.region``)
@@ -151,8 +148,7 @@ class RegionRouter:
         self._default = default_region
 
     def route_url(self, tenant_ctx: TenantContext | None = None) -> str:
-        """
-        Return the primary URL for the best available region.
+        """Return the primary URL for the best available region.
 
         Parameters
         ----------

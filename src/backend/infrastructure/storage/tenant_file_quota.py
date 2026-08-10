@@ -386,7 +386,7 @@ def get_tenant_file_quota_manager() -> TenantFileQuotaManager:
     Создаёт singleton с redis_client из app_state (если доступен).
     """
     try:
-        from src.backend.core.di.app_state import app_state_singleton
+        from src.backend.core.di.app_state import app_state_singleton  # noqa: F401 — availability probe
 
         redis = app_state_singleton("redis_kv_client", factory=None)
         return TenantFileQuotaManager(redis_client=redis)

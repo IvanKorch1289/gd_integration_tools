@@ -211,7 +211,7 @@ async def llm_activity(input_: LLMActivityInput) -> LLMActivityOutput:
     """
     heartbeat = None
     try:
-        from temporalio import activity as temporal_activity
+        from temporalio import activity as temporal_activity  # noqa: F401 — availability probe
 
         heartbeat = temporal_activity.heartbeat
     except (ImportError, AttributeError):
@@ -226,7 +226,7 @@ async def llm_activity(input_: LLMActivityInput) -> LLMActivityOutput:
 
 # Опционально пытаемся пометить функцию как @activity.defn.
 try:
-    from temporalio import activity as _temporal_activity_mod
+    from temporalio import activity as _temporal_activity_mod  # noqa: F401 — availability probe
 
     llm_activity = _temporal_activity_mod.defn(name="ai.llm.call")(llm_activity)
 except (ImportError, AttributeError) as _temporal_decorate_exc:

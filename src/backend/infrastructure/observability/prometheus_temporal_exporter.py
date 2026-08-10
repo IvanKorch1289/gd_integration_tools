@@ -33,7 +33,7 @@ def _ensure_metrics() -> dict[str, Any]:
     if _metrics:
         return _metrics
     try:
-        from src.backend.core.utils.metrics_registry import metrics_registry
+        from src.backend.core.utils.metrics_registry import metrics_registry  # noqa: F401 — availability probe
 
         _metrics = {
             "task_queue_depth": metrics_registry.gauge(

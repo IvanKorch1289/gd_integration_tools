@@ -6,7 +6,7 @@ fallback-цепочкой. Sprint 1+ доводит до production: на это
 живой shim, default-OFF.
 """
 
-from src.backend.services.ai.gateway.client import LiteLLMGateway, get_litellm_gateway
+from src.backend.services.ai.gateway.client import LiteLLMGateway, get_litellm_gateway  # noqa: F401 — re-export
 from src.backend.services.ai.gateway.exceptions import (
     GatewayError,
     GatewayRateLimited,

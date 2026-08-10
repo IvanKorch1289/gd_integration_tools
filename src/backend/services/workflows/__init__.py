@@ -5,6 +5,6 @@ capability-gate проверкой (`workflow.start` / `workflow.signal`),
 чтобы плагины и DSL-routes не имели прямого доступа к backend.
 """
 
-from src.backend.services.workflows.facade import WorkflowFacade
+from src.backend.services.workflows.facade import WorkflowFacade  # noqa: F401 — re-export
 
 __all__ = ("WorkflowFacade",)

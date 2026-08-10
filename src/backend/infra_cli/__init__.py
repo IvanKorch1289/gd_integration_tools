@@ -7,8 +7,8 @@ storage) в :class:`ConnectorRegistry` через :class:`HealthAdapter`,
 
 Импорт из manage.py или entrypoints::
 
-    from src.backend.infra_cli.register import register_connector
-    from src.backend.infra_cli.register import get_aggregator_with_registry
+    from src.backend.infra_cli.register import register_connector  # noqa: F401 — re-export
+    from src.backend.infra_cli.register import get_aggregator_with_registry  # noqa: F401 — re-export
 """
 
 from src.backend.infra_cli.register import (

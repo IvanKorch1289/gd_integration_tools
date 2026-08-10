@@ -4,8 +4,7 @@ __all__ = ("setup_tracing",)
 
 
 def setup_tracing(app: FastAPI):
-    """
-    Настраивает трассировку для FastAPI-приложения с использованием OpenTelemetry.
+    """Настраивает трассировку для FastAPI-приложения с использованием OpenTelemetry.
 
     Args:
         app (FastAPI): Экземпляр FastAPI-приложения, для которого настраивается трассировка.

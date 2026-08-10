@@ -9,6 +9,6 @@ Modules:
 
 from __future__ import annotations
 
-from src.backend.core.ai.gateway.orchestrator.enforced_invoke import EnforcedInvokeMixin
+from src.backend.core.ai.gateway.orchestrator.enforced_invoke import EnforcedInvokeMixin  # noqa: F401 — re-export
 
 __all__ = ("EnforcedInvokeMixin",)

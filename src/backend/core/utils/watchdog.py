@@ -51,7 +51,7 @@ class Watchdog:
 
     def _capture_sentry(self) -> None:
         try:
-            import sentry_sdk
+            import sentry_sdk  # noqa: F401 — availability probe
         except ImportError:
             return
         try:

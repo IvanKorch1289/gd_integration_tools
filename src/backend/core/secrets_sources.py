@@ -61,7 +61,7 @@ class VaultSettingsSource:
             return self._data
 
         try:
-            import hvac
+            import hvac  # noqa: F401 — availability probe
         except ImportError:
             logger.debug("hvac not installed, Vault source disabled")
             self._data = {}
@@ -122,8 +122,8 @@ class AwsSecretsManagerSource:
             return self._data
 
         try:
-            import boto3
-            import orjson
+            import boto3  # noqa: F401 — availability probe
+            import orjson  # noqa: F401 — availability probe
         except ImportError:
             logger.debug("boto3 not installed, AWS Secrets source disabled")
             self._data = {}

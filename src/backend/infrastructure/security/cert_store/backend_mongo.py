@@ -87,7 +87,7 @@ class MongoCertBackend(CertBackend):
         """Лениво создаёт клиент и возвращает Database."""
         if self._client is None:
             try:
-                from pymongo import AsyncMongoClient
+                from pymongo import AsyncMongoClient  # noqa: F401 — availability probe
             except ImportError as exc:
                 raise RuntimeError(
                     "MongoCertBackend требует пакет 'pymongo>=4.9'. "

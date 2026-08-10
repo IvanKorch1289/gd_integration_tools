@@ -1,5 +1,4 @@
-"""
-Conftest для интеграционных тестов.
+"""Conftest для интеграционных тестов.
 
 Поднимает реальные контейнеры через testcontainers:
   - PostgreSQL (SQLAlchemy async engine)

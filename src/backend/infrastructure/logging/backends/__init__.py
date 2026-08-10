@@ -12,10 +12,10 @@ Wave 2.5 (Roadmap V10):
 
 from __future__ import annotations
 
-from src.backend.infrastructure.logging.backends.console_json import ConsoleJsonLogSink
+from src.backend.infrastructure.logging.backends.console_json import ConsoleJsonLogSink  # noqa: F401 — re-export
 from src.backend.infrastructure.logging.backends.disk_rotating import (
     DiskRotatingLogSink,
 )
-from src.backend.infrastructure.logging.backends.graylog_gelf import GraylogGelfLogSink
+from src.backend.infrastructure.logging.backends.graylog_gelf import GraylogGelfLogSink  # noqa: F401 — re-export
 
 __all__ = ("ConsoleJsonLogSink", "DiskRotatingLogSink", "GraylogGelfLogSink")

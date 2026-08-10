@@ -19,6 +19,6 @@ from src.backend.services.billing.no_op_billing import (
     BILLING_ENABLED,
     NoOpBillingFacade,
 )
-from src.backend.services.billing.quotas_service import QuotasService
+from src.backend.services.billing.quotas_service import QuotasService  # noqa: F401 — re-export
 
 __all__ = ("BILLING_ENABLED", "NoOpBillingFacade", "QuotasService")

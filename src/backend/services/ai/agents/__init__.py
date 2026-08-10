@@ -19,7 +19,7 @@ from src.backend.services.ai.agents.langgraph_postgres_saver import (
     LangGraphPostgresSaverWrapper,
     get_langgraph_postgres_saver,
 )
-from src.backend.services.ai.agents.search_agent import SearchAgent, get_search_agent
+from src.backend.services.ai.agents.search_agent import SearchAgent, get_search_agent  # noqa: F401 — re-export
 
 __all__ = (
     "AnalyticsAgent",

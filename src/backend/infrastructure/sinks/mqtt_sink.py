@@ -114,7 +114,7 @@ class MqttSink(Sink):
         await limiter.check(f"{self.sink_id}_mqtt")
 
         try:
-            import aiomqtt
+            import aiomqtt  # noqa: F401 — availability probe
         except ImportError:
             return SinkResult(ok=False, details={"error": "aiomqtt not installed"})
 
@@ -156,7 +156,7 @@ class MqttSink(Sink):
     async def health(self, mode: str = "fast") -> HealthResult:
         """Health: connect к брокеру без публикации (CONNECT/DISCONNECT)."""
         try:
-            import aiomqtt
+            import aiomqtt  # noqa: F401 — availability probe
         except ImportError:
             return HealthResult.failed(error="aiomqtt not installed", mode=mode)
         start = time.perf_counter()

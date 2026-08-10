@@ -1,5 +1,4 @@
-"""
-Регистрация всех бизнес-сервисов в едином DI-контейнере ``svcs_registry``.
+"""Регистрация всех бизнес-сервисов в едином DI-контейнере ``svcs_registry``.
 
 Располагается в infrastructure/application/ (не в core/) согласно Clean
 Architecture: composition root должен знать о всех слоях проекта и
@@ -183,8 +182,7 @@ def _register_external_database_facade() -> None:
 
 
 def register_all_services() -> None:
-    """
-    Регистрирует все бизнес-сервисы приложения в svcs_registry.
+    """Регистрирует все бизнес-сервисы приложения в svcs_registry.
 
     Импорты фабрик сервисов делаются lazy (внутри функции), чтобы
     избежать cycle-импортов и держать холодный старт быстрым.

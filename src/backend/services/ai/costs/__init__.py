@@ -1,6 +1,6 @@
 """Сервисы cost-аналитики AI Stack (Wave D.5 + K4 S6 W3 dashboard)."""
 
-from src.backend.services.ai.costs.alerts import CostAlert, CostAlertService
+from src.backend.services.ai.costs.alerts import CostAlert, CostAlertService  # noqa: F401 — re-export
 from src.backend.services.ai.costs.dashboard import (
     AICostDashboard,
     CostByTenant,
@@ -8,7 +8,7 @@ from src.backend.services.ai.costs.dashboard import (
     TokenRateTrend,
     UsageByModel,
 )
-from src.backend.services.ai.costs.langfuse_reader import LangFuseReader
+from src.backend.services.ai.costs.langfuse_reader import LangFuseReader  # noqa: F401 — re-export
 
 __all__ = (
     "AICostDashboard",

@@ -16,15 +16,13 @@ __all__ = ("SchedulerManager", "get_scheduler_manager", "scheduler_manager")
 
 
 class SchedulerManager:
-    """
-    Менеджер для управления экземпляром APScheduler.
+    """Менеджер для управления экземпляром APScheduler.
     Класс инициализирует и управляет жизненным циклом планировщика,
     включая его запуск и остановку.
     """
 
     def __init__(self):
-        """
-        Инициализирует планировщик с указанной конфигурацией.
+        """Инициализирует планировщик с указанной конфигурацией.
 
         Default jobstore — SQLAlchemyJobStore поверх sync_engine (durable).
         Если sync_engine отсутствует (Wave F.3: sync-драйвер не установлен),
@@ -73,8 +71,7 @@ class SchedulerManager:
         )
 
     async def start(self):
-        """
-        Запускает планировщик при старте приложения.
+        """Запускает планировщик при старте приложения.
 
         Sprint 16 Wave 5 (M-9/CP-22): подключает Prometheus-listeners для
         ``scheduler_job_executions_total`` + регистрирует тип jobstore
@@ -115,8 +112,7 @@ class SchedulerManager:
         self.scheduler.shutdown()
 
     def register_job_cleanup(self, job_name: str):
-        """
-        Регистрирует обработчик для автоматической очистки задач с указанным именем.
+        """Регистрирует обработчик для автоматической очистки задач с указанным именем.
 
         Args:
             job_name (str): Имя задачи, для которой регистрируется обработчик.
@@ -147,8 +143,7 @@ class SchedulerManager:
         self.logger.info(f"Зарегистрирован обработчик для задачи '{job_name}'.")
 
     def unregister_job_cleanup(self, job_name: str):
-        """
-        Удаляет обработчик для задач с указанным именем.
+        """Удаляет обработчик для задач с указанным именем.
 
         Args:
             job_name (str): Имя задачи, для которой удаляется обработчик.
@@ -164,8 +159,7 @@ class SchedulerManager:
         self.logger.info(f"Обработчик для задачи '{job_name}' удалён.")
 
     def cleanup_all_jobs_by_name(self, job_name: str):
-        """
-        Очищает все задачи с указанным именем.
+        """Очищает все задачи с указанным именем.
 
         Args:
             job_name (str): Имя задачи, которую необходимо очистить.

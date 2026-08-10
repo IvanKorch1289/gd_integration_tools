@@ -138,7 +138,7 @@ class RouteHotReloader:
     async def _watch_iter(self) -> AsyncIterator[set[tuple[Any, str]]]:
         """Yield batches изменений через watchfiles (lazy-import)."""
         try:
-            from watchfiles import awatch
+            from watchfiles import awatch  # noqa: F401 — availability probe
         except ImportError:
             _logger.warning("hot_reloader.watchfiles_unavailable")
             return

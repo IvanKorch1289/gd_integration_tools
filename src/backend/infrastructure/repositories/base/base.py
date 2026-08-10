@@ -9,8 +9,7 @@ from src.backend.core.domain.models.base import BaseModel
 
 
 class AbstractRepository[ConcreteTable: BaseModel](ABC):
-    """
-    Абстрактный базовый класс для репозиториев.
+    """Абстрактный базовый класс для репозиториев.
     Определяет интерфейс для работы с базой данных.
     """
 

@@ -15,7 +15,7 @@
 Использование:
     Через pydantic-settings (env_prefix=FEATURE_):
 
-        from src.backend.core.config.features import feature_flags
+        from src.backend.core.config.features import feature_flags  # noqa: F401 — re-export
 
         if feature_flags.waf_outbound_via_facade:
             await OutboundHttpClient.request(...)

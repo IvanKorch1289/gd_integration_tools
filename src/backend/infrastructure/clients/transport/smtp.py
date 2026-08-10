@@ -42,8 +42,7 @@ class SmtpClient(BaseSmtpClient):
     """Расширенный SMTP-клиент с поддержкой пула соединений и механизмами отказоустойчивости."""
 
     def __init__(self, settings: MailSettings) -> None:
-        """
-        Инициализирует SMTP-клиент с настройками.
+        """Инициализирует SMTP-клиент с настройками.
 
         Args:
             settings (MailSettings): Настройки для работы с SMTP.
@@ -73,8 +72,7 @@ class SmtpClient(BaseSmtpClient):
         )
 
     async def __aenter__(self):
-        """
-        Вход в асинхронный контекстный менеджер для инициализации пула соединений.
+        """Вход в асинхронный контекстный менеджер для инициализации пула соединений.
 
         Returns:
             SmtpClient: Экземпляр SMTP-клиента.
@@ -88,8 +86,7 @@ class SmtpClient(BaseSmtpClient):
         await self.close_pool()
 
     async def initialize_pool(self) -> None:
-        """
-        Инициализирует и заполняет пул SMTP-соединений.
+        """Инициализирует и заполняет пул SMTP-соединений.
 
         Raises:
             RuntimeError: Если инициализация пула не удалась.
@@ -127,8 +124,7 @@ class SmtpClient(BaseSmtpClient):
         self.logger.info("Пул SMTP-соединений закрыт")
 
     async def _create_connection(self) -> SMTP:
-        """
-        Создает новое аутентифицированное SMTP-соединение с обработкой тайм-аутов.
+        """Создает новое аутентифицированное SMTP-соединение с обработкой тайм-аутов.
 
         Returns:
             SMTP: Установленное SMTP-соединение.
@@ -168,8 +164,7 @@ class SmtpClient(BaseSmtpClient):
 
     @asynccontextmanager
     async def get_connection(self) -> AsyncGenerator[SMTP]:
-        """
-        Контекстный менеджер для получения SMTP-соединения с поддержкой отказоустойчивости.
+        """Контекстный менеджер для получения SMTP-соединения с поддержкой отказоустойчивости.
 
         Использует canonical ``Breaker.guard()`` (S130 W2) — ранее
         ``core.utils.circuit_breaker.check_state`` + ``record_success/failure``.
@@ -277,8 +272,7 @@ class SmtpClient(BaseSmtpClient):
             self.logger.warning("Ошибка закрытия SMTP-соединения", exc_info=True)
 
     def metrics(self) -> dict[str, Any]:
-        """
-        Возвращает текущие метрики сервиса.
+        """Возвращает текущие метрики сервиса.
 
         Returns:
             dict[str, Any]: Словарь с метриками пула и состоянием Circuit Breaker.
@@ -324,8 +318,7 @@ class SmtpClient(BaseSmtpClient):
             await smtp.send_message(message)
 
     async def test_connection(self) -> bool:
-        """
-        Выполняет end-to-end тест соединения с отправкой тестового письма.
+        """Выполняет end-to-end тест соединения с отправкой тестового письма.
 
         Returns:
             bool: True, если тестовое сообщение было принято сервером.

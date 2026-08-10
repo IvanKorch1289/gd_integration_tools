@@ -10,8 +10,7 @@ __all__ = ("DatabaseConnectionSettings", "db_connection_settings")
 
 
 class DatabaseConnectionSettings(BaseSettingsWithLoader):
-    """
-    Настройки подключения к реляционным базам данных.
+    """Настройки подключения к реляционным базам данных.
 
     Содержит параметры для подключения и управления пулом соединений.
     Поддерживаемые СУБД: PostgreSQL, Oracle.
@@ -212,8 +211,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         return self._build_dsn(is_async=False)
 
     def _build_dsn(self, is_async: bool) -> str:
-        """
-        Внутренний метод генерации строки подключения.
+        """Внутренний метод генерации строки подключения.
 
         Примечание:
             Для Oracle поле `name` трактуется как `service_name`.

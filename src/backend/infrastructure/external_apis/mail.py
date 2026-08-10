@@ -13,8 +13,7 @@ class MailService:
     """Сервис для работы с электронной почтой, поддерживающий использование шаблонов."""
 
     def __init__(self, mail_client: SmtpClient):
-        """
-        Инициализирует сервис для работы с электронной почтой.
+        """Инициализирует сервис для работы с электронной почтой.
 
         Args:
             mail_client (SmtpClient): Клиент для работы с SMTP-сервером.
@@ -32,8 +31,7 @@ class MailService:
         message: str,
         html_message: str | None = None,
     ):
-        """
-        Асинхронно отправляет электронное письмо.
+        """Асинхронно отправляет электронное письмо.
 
         Args:
             to_emails (list[str]): Список адресов получателей.
@@ -64,8 +62,7 @@ class MailService:
             raise RuntimeError("Ошибка при отправке письма") from exc
 
     def _prepare_message(self, to_emails, subject, message, html_message):
-        """
-        Формирует MIME-сообщение с заголовками и содержимым.
+        """Формирует MIME-сообщение с заголовками и содержимым.
 
         Args:
             to_emails (list[str]): Список адресов получателей.
@@ -114,8 +111,7 @@ class MailService:
         template_name: str,
         template_context: dict[str, Any] | None = None,
     ):
-        """
-        Отправляет письмо, используя шаблон.
+        """Отправляет письмо, используя шаблон.
 
         Args:
             to_emails (list[str]): Список адресов получателей.
@@ -161,8 +157,7 @@ class MailService:
 
 @asynccontextmanager
 async def get_mail_service() -> AsyncGenerator[MailService]:
-    """
-    Фабрика для создания экземпляра MailService с изолированными зависимостями.
+    """Фабрика для создания экземпляра MailService с изолированными зависимостями.
 
     Yields:
         MailService: Экземпляр сервиса для работы с электронной почтой.

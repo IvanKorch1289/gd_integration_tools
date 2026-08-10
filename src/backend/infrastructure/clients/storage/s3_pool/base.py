@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from typing import Any, ParamSpec, TypeVar
 
 try:
-    from botocore.exceptions import (  # type: ignore[import-not-found]
+    from botocore.exceptions import (  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         ClientError as BotoClientError,  # type: ignore[import-not-found]  # type: ignore  # type: ignore[unused-ignore]
     )
 except ImportError:  # botocore — опциональная зависимость dev_light

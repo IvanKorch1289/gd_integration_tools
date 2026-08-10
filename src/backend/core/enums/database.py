@@ -4,8 +4,7 @@ __all__ = ("DatabaseProfileChoices", "DatabaseTypeChoices", "IsolationLevelChoic
 
 
 class DatabaseTypeChoices(StrEnum):
-    """
-    Перечисление поддерживаемых реляционных СУБД.
+    """Перечисление поддерживаемых реляционных СУБД.
 
     Значения:
         postgresql (str): PostgreSQL.
@@ -28,8 +27,7 @@ class DatabaseTypeChoices(StrEnum):
 
 
 class IsolationLevelChoices(StrEnum):
-    """
-    Перечисление допустимых уровней изоляции транзакций.
+    """Перечисление допустимых уровней изоляции транзакций.
 
     Значения:
         read_committed (str): Уровень READ COMMITTED.
@@ -43,8 +41,7 @@ class IsolationLevelChoices(StrEnum):
 
 
 class DatabaseProfileChoices(StrEnum):
-    """
-    Перечисление профилей подключения к БД.
+    """Перечисление профилей подключения к БД.
 
     Значения:
         main (str): Основная БД проекта.

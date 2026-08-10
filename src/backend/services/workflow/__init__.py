@@ -5,7 +5,7 @@ Re-export canonical ``infrastructure.workflow.registry`` symbols.
 
 Использование::
 
-    from src.backend.services.workflow import WorkflowDescriptor, workflow_registry
+    from src.backend.services.workflow import WorkflowDescriptor, workflow_registry  # noqa: F401 — re-export
 
 Layer policy: entrypoints -> services (allowed per V22).
 Этот facade — единственный разрешённый путь для entrypoints доступа

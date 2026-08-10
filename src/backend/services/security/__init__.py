@@ -5,7 +5,7 @@ Single entry-point для security primitives (HMAC signature verification)
 
 Использование::
 
-    from src.backend.services.security import verify_signature, DEFAULT_TIMESTAMP_WINDOW
+    from src.backend.services.security import verify_signature, DEFAULT_TIMESTAMP_WINDOW  # noqa: F401 — re-export
 
     valid = verify_signature(payload, signature, secret, timestamp_window=DEFAULT_TIMESTAMP_WINDOW)
 

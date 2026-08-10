@@ -115,8 +115,8 @@ class GraphQLSubscriptionSource:
 
         """
         try:
-            import gql
-            from gql.transport.websockets import WebsocketsTransport
+            import gql  # noqa: F401 — availability probe
+            from gql.transport.websockets import WebsocketsTransport  # noqa: F401 — availability probe
         except ImportError as exc:
             raise RuntimeError(
                 "gql не установлен; добавь 'gql[websockets]' в pyproject.toml.",

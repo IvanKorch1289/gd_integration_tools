@@ -1,5 +1,4 @@
-"""
-Тесты CacheLayerValidator (ADR-004).
+"""Тесты CacheLayerValidator (ADR-004).
 
 Проверяют:
     * Валидная конфигурация (кэш только в Service) — проходит.

@@ -53,8 +53,7 @@ class TelegramAdapter:
         upstream_name: str = "telegram-api",
         parse_mode: str = "HTML",
     ) -> None:
-        """
-        Args:
+        """Args:
             bot_token_provider: Legacy callable, возвращающий токен
                 ``{bot_id}:{secret_key}``. Если задан — используется
                 вместо ``telegram_bot_settings``.

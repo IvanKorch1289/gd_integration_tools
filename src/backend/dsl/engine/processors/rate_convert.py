@@ -162,7 +162,7 @@ class RateConvertProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         try:
-            from src.backend.core.config.features import feature_flags
+            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
 
             if not feature_flags.proc_rate_convert:
                 exchange.set_property("rate_convert_status", "skipped")
@@ -170,7 +170,7 @@ class RateConvertProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1711: narrow exceptions + observability (mirror
             # D-AUDIT-1710 html_template).
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "rate_convert.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

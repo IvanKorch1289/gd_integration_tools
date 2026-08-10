@@ -171,7 +171,7 @@ class EmailIMAPSource:
 
         """
         try:
-            import aioimaplib
+            import aioimaplib  # noqa: F401 — availability probe
         except ImportError:
             logger.warning(
                 "EmailIMAPSource: aioimaplib не установлен — источник отключён. "

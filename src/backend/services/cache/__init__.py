@@ -5,7 +5,7 @@ Canonical entry point for extensions: :class:`UnifiedCacheFacade`.
 
 from __future__ import annotations
 
-from src.backend.services.cache.facade import CacheResult, UnifiedCacheFacade
+from src.backend.services.cache.facade import CacheResult, UnifiedCacheFacade  # noqa: F401 — re-export
 
 __all__ = ("CacheResult", "UnifiedCacheFacade", "get_unified_cache_facade")
 

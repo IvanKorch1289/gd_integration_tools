@@ -125,7 +125,7 @@ def get_ai_agent_service() -> AIAgentService:
     silent-fallback на broken service.
     """
     try:
-        from src.backend.core.di.app_state import get_app_ref
+        from src.backend.core.di.app_state import get_app_ref  # noqa: F401 — availability probe
 
         app = get_app_ref()
         if app is not None:

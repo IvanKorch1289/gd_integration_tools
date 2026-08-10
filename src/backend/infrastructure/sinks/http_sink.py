@@ -57,9 +57,9 @@ class HttpSink(Sink):
         await limiter.check(f"{self.sink_id}_{self.kind}")
 
         try:
-            import httpx
+            import httpx  # noqa: F401 — availability probe
 
-            from src.backend.core.net import OutboundHttpClient
+            from src.backend.core.net import OutboundHttpClient  # noqa: F401 — availability probe
         except ImportError:
             return SinkResult(ok=False, details={"error": "httpx not installed"})
 
@@ -92,9 +92,9 @@ class HttpSink(Sink):
     async def health(self, mode: str = "fast") -> HealthResult:
         """HEAD-запрос на URL; ``ok`` при 2xx/3xx/4xx (адрес отвечает)."""
         try:
-            import httpx
+            import httpx  # noqa: F401 — availability probe
 
-            from src.backend.core.net import OutboundHttpClient
+            from src.backend.core.net import OutboundHttpClient  # noqa: F401 — availability probe
         except ImportError:
             return HealthResult.failed(error="httpx not installed", mode=mode)
         start = time.perf_counter()

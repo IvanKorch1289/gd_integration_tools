@@ -15,8 +15,7 @@ __all__ = ("ExternalDatabaseItemSettings",)
 
 
 class ExternalDatabaseItemSettings(BaseModel):
-    """
-    Настройки одного внешнего подключения.
+    """Настройки одного внешнего подключения.
 
     Используется как элемент списка `connections` внутри группы
     `external_databases` в активном профиле (`config_profiles/<APP_PROFILE>.yml`).

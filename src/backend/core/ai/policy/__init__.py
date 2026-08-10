@@ -17,7 +17,7 @@
 
 Использование (S25 W2+):
 
-    from src.backend.core.ai.policy import AIPolicySpec, PolicyResolver
+    from src.backend.core.ai.policy import AIPolicySpec, PolicyResolver  # noqa: F401 — re-export
 
     resolver = PolicyResolver(roots=[Path("ai_policies"), Path("extensions/*/ai_policies")])
     policy = await resolver.resolve(workflow_id="credit_check", tenant_id="t-1")
@@ -25,7 +25,7 @@
 См. docs/adr/0067-ai-policy-spec-dsl.md.
 """
 
-from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer
+from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer  # noqa: F401 — re-export
 from src.backend.core.ai.policy.resolver import (
     PolicyLoadError,
     PolicyNotResolvedError,

@@ -105,8 +105,7 @@ class RedisBackend(CacheBackend):
         await self._client.sadd(self._tag_index_key(tag), key)  # type: ignore[misc]
 
     async def delete_by_tag(self, tag: str) -> int:
-        """
-        Удаляет все ключи, привязанные к тегу.
+        """Удаляет все ключи, привязанные к тегу.
 
         Алгоритм:
         1. SMEMBERS — получить все ключи с этим тегом

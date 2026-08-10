@@ -53,7 +53,7 @@ def _current_tenant_label() -> str:
         # cycle-9/D-AUDIT-1032: narrow exceptions + observability.
         # ImportError — tenancy missing, AttributeError — context API
         # change, RuntimeError — context unavailable.
-        import logging
+        import logging  # noqa: F401 — availability probe
         logging.getLogger(__name__).debug(
             "pool_warmup.current_tenant_fallback",
             extra={"error": str(ten_exc)},

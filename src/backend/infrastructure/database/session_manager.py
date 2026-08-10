@@ -34,8 +34,7 @@ R = TypeVar("R")
 
 
 class DatabaseSessionManager:
-    """
-    Менеджер асинхронных сессий SQLAlchemy.
+    """Менеджер асинхронных сессий SQLAlchemy.
 
     Используется на сервисном уровне:
     - create_session() для read-only или ручного управления;
@@ -107,8 +106,7 @@ class DatabaseSessionManager:
     def connection(
         self, isolation_level: str | None = None, commit: bool = True,
     ) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
-        """
-        Декоратор сервисного метода.
+        """Декоратор сервисного метода.
 
         Поведение сохраняется прежним:
         - в метод пробрасывается `session=...`;

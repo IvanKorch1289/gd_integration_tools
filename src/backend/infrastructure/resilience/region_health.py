@@ -42,8 +42,7 @@ class RegionHealthChecker:
     """
 
     def __init__(self, timeout: float = 5.0, unhealth_threshold: int = 3) -> None:
-        """
-        Parameters
+        """Parameters
         ----------
         timeout
             Seconds to wait for a region health probe response.
@@ -60,8 +59,7 @@ class RegionHealthChecker:
         ) = None
 
     async def probe(self, region: Region) -> bool:
-        """
-        Send a synthetic health check to a region.
+        """Send a synthetic health check to a region.
 
         Returns True if the region responds within ``self._timeout``.
         Override this method to implement custom probe logic (e.g. HTTP GET).
@@ -126,8 +124,7 @@ class RegionHealthChecker:
                 self.on_status_change(code, current, new_status)
 
     async def start(self, interval: float = 30.0) -> None:
-        """
-        Continuously check region health every ``interval`` seconds.
+        """Continuously check region health every ``interval`` seconds.
 
         Cancel with ``checker.stop()``.
         """

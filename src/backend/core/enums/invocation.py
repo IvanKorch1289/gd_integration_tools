@@ -4,8 +4,7 @@ __all__ = ("BrokerKind", "InvokeMode")
 
 
 class InvokeMode(StrEnum):
-    """
-    Режим выполнения действия.
+    """Режим выполнения действия.
 
     Attributes:
         direct: Выполнить use case напрямую в рамках HTTP-запроса.
@@ -18,8 +17,7 @@ class InvokeMode(StrEnum):
 
 
 class BrokerKind(StrEnum):
-    """
-    Поддерживаемые типы брокеров для публикации команды.
+    """Поддерживаемые типы брокеров для публикации команды.
 
     Attributes:
         redis: Redis Streams.

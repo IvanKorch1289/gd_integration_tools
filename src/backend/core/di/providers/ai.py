@@ -230,7 +230,7 @@ def get_skill_registry() -> Any:
 
     """
     try:
-        from src.backend.core.di import app_state_singleton
+        from src.backend.core.di import app_state_singleton  # noqa: F401 — availability probe
 
         return app_state_singleton("skill_registry", factory=None)()
     except (ImportError, AttributeError, RuntimeError, KeyError, TypeError) as di_exc:
@@ -238,7 +238,7 @@ def get_skill_registry() -> Any:
         # ImportError — app_state_singleton missing, AttributeError — API
         # change, RuntimeError — DI unavailable, KeyError — singleton not
         # registered, TypeError — factory type.
-        import logging
+        import logging  # noqa: F401 — availability probe
         logging.getLogger(__name__).debug(
             "di.providers.skill_registry_fallback",
             extra={"error": str(di_exc)},

@@ -98,7 +98,7 @@ class MqttHandler:
     async def _listen(self) -> None:
         """Основной цикл подписки."""
         try:
-            import aiomqtt
+            import aiomqtt  # noqa: F401 — availability probe
         except ImportError:
             logger.warning("aiomqtt не установлен — MQTT отключён")
             return
@@ -176,8 +176,8 @@ class MqttHandler:
     async def publish(self, topic: str, data: dict[str, Any]) -> None:
         """Публикует сообщение в MQTT-топик."""
         try:
-            import aiomqtt
-            import orjson
+            import aiomqtt  # noqa: F401 — availability probe
+            import orjson  # noqa: F401 — availability probe
 
             async with aiomqtt.Client(
                 hostname=self._settings.broker_host,

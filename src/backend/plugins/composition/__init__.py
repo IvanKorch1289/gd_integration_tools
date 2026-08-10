@@ -6,8 +6,8 @@
 (entrypoints, services, infrastructure, schemas, core).
 """
 
-from src.backend.plugins.composition.app_factory import create_app
-from src.backend.plugins.composition.lifecycle import lifespan
-from src.backend.plugins.composition.setup_infra import ending, starting
+from src.backend.plugins.composition.app_factory import create_app  # noqa: F401 — re-export
+from src.backend.plugins.composition.lifecycle import lifespan  # noqa: F401 — re-export
+from src.backend.plugins.composition.setup_infra import ending, starting  # noqa: F401 — re-export
 
 __all__ = ("create_app", "ending", "lifespan", "starting")

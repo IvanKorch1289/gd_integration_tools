@@ -97,7 +97,7 @@ class tenant_scope:
 
 
 # Re-exports после определения symbols (порядок важен для избежания циклов).
-from src.backend.core.tenancy.quotas import QuotaExceeded, QuotaTracker
+from src.backend.core.tenancy.quotas import QuotaExceeded, QuotaTracker  # noqa: F401 — re-export
 from src.backend.core.tenancy.slo import (
     SLOEvaluation,
     TenantSLO,

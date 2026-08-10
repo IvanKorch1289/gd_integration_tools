@@ -95,7 +95,7 @@ class _BankingAIProcessor(BaseProcessor):
         from src.backend.core.resilience.retry import make_async_retry
 
         try:
-            from src.backend.services.ai.ai_agent import get_ai_agent_service
+            from src.backend.services.ai.ai_agent import get_ai_agent_service  # noqa: F401 — availability probe
         except ImportError as exc:
             exchange.fail(f"AI agent service unavailable: {exc}")
             return None

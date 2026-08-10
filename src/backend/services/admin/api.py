@@ -27,8 +27,7 @@ class AdminAuthorizationError(RuntimeError):
 
 
 class AdminService:
-    """
-    Admin API с AuthorizationGateway RBAC + audit trail.
+    """Admin API с AuthorizationGateway RBAC + audit trail.
 
     Все методы принимают ``actor`` (идентификаторprincipal'а) и
     выполняют AuthZ-проверку перед действием.
@@ -43,8 +42,7 @@ class AdminService:
         authorization_gateway: Any | None = None,
         audit_callback: Any | None = None,
     ) -> None:
-        """
-        Args:
+        """Args:
             authorization_gateway: Экземпляр AuthorizationGateway.
                                   При None используется глобальный из
                                   ``core.security.authorization_gateway``.
@@ -87,8 +85,7 @@ class AdminService:
         action: str,
         context: dict[str, Any] | None = None,
     ) -> None:
-        """
-        Check authorization via AuthorizationGateway.
+        """Check authorization via AuthorizationGateway.
 
         D-AUDIT-801 fix (cycle 8): re-verify fail-CLOSED по умолчанию (cycle-1 fix
         D-AUDIT-A3-01, commit ``da9d6173``). Cycle-4 phase-1/03-services.md
@@ -167,8 +164,7 @@ class AdminService:
     async def toggle_feature_flag(
         self, *, flag_name: str, enabled: bool, actor: str = "system",
     ) -> dict[str, Any]:
-        """
-        Toggle a feature flag by name (S19 K5 W5b).
+        """Toggle a feature flag by name (S19 K5 W5b).
 
         Requires AuthZ: ``admin.feature_flag:write``.
         Emits ``admin.action`` audit event.
@@ -201,8 +197,7 @@ class AdminService:
         return {"flag": flag_name, "old": old_value, "new": bool(enabled)}
 
     async def get_feature_flags(self, *, actor: str = "system") -> list[dict[str, Any]]:
-        """
-        List all feature flags with their values (S19 K5 W5b).
+        """List all feature flags with their values (S19 K5 W5b).
 
         Requires AuthZ: ``admin.feature_flag:read``.
         """
@@ -234,8 +229,7 @@ class AdminService:
     async def get_audit_log(
         self, *, actor: str = "system", limit: int = 100, event_type: str | None = None,
     ) -> list[dict[str, Any]]:
-        """
-        Retrieve audit log entries (S19 K5 W5b).
+        """Retrieve audit log entries (S19 K5 W5b).
 
         Requires AuthZ: ``admin.audit:read``.
         Returns entries emitted via ``emit_admin_action`` / ``_audit_emit``.
@@ -260,8 +254,7 @@ class AdminService:
     async def list_active_sessions(
         self, *, actor: str = "system",
     ) -> list[dict[str, Any]]:
-        """
-        List active sessions (placeholder, S19 K5 W5b).
+        """List active sessions (placeholder, S19 K5 W5b).
 
         Requires AuthZ: ``admin.sessions:read``.
         Returns empty list until session tracking is implemented.
