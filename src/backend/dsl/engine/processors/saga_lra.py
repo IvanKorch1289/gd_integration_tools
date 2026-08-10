@@ -281,7 +281,15 @@ class SagaLRAProcessor(BaseProcessor):
             from src.backend.infrastructure.workflow.saga_state import (
                 WorkflowStateRepository,
             )
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError) as dep_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-977: narrow exceptions + observability.
+            # ImportError — deps missing, AttributeError — API change,
+            # RuntimeError — manager unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "saga_lra.lazy_load_repo_failed",
+                extra={"error": str(dep_exc)},
+            )
             return None
         return _RepoProxy(sm, WorkflowStateRepository)
 
