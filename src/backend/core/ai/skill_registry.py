@@ -610,8 +610,14 @@ class SkillRegistry:
                         with open(schema_path) as f:
                             input_schema = json.load(f)
                         tool_def["function"]["parameters"] = input_schema
-                except Exception:
-                    pass  # Skip schema if not loadable
+                except (OSError, ValueError, UnicodeDecodeError, AttributeError) as schema_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-998: narrow exceptions + observability
+                    # (mirror D-AUDIT-996 для openai_tools path).
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "skill_registry.openai_schema_load_failed",
+                        extra={"skill_id": skill.id, "error": str(schema_exc)},
+                    )
 
             tools.append(tool_def)
 
