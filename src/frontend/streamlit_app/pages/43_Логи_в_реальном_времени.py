@@ -102,9 +102,14 @@ def _render_log_stream() -> None:
             import orjson
 
             batch.append(orjson.loads(q.get_nowait()))
-        except Exception:  # noqa: BLE001
+        except (ValueError, TypeError) as json_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1051: narrow exceptions + observability.
+            # ValueError для malformed JSON (orjson.JSONDecodeError isa
+            # ValueError), TypeError для wrong payload type.
             st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
-            logger.debug("failed to parse log payload from SSE queue", exc_info=True)
+            logger.debug(
+                "failed to parse log payload from SSE queue: %s", json_exc, exc_info=True
+            )
             continue
 
     if "log_history" not in st.session_state:
