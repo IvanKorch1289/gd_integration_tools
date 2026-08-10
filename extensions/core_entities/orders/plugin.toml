@@ -13,6 +13,16 @@ description = "Order CRUD plugin (migrated from src/backend/services/core/orders
 trust_tier = "A"
 
 # ─── Runtime capabilities (capability-gate) ───────────────────────
+# Cycle-17 (D-AUDIT-1701): ранее здесь было два ``db.read`` (scope='orders' +
+# scope='orderkinds'). CapabilityGate.declare использует ``ref.name`` (без scope)
+# как bucket-key (declaration_mixin.py:62-66) и reject'ит дубликаты — второй
+# был silently dropped (см. test_core_entities_capability xfail в pre-cycle-17).
+#
+# FK на orderkinds реализован через ``relationship("OrderKind", lazy="joined")``
+# в ``extensions/core_entities/orders/domain/models.py:74`` — JOIN не
+# триггерит отдельный capability check, поэтому отдельная декларация
+# не нужна. Если в будущем понадобится validate_order_kind через отдельный
+# SELECT — добавить новый capability (например ``db.cross.read``).
 [[capabilities]]
 name = "db.read"
 scope = "orders"
@@ -20,12 +30,6 @@ scope = "orders"
 [[capabilities]]
 name = "db.write"
 scope = "orders"
-
-# Order пересекается с OrderKind (FK через order_kind_id) — нужны
-# read-права на orderkinds для validate_order_kind в репозитории.
-[[capabilities]]
-name = "db.read"
-scope = "orderkinds"
 
 # ─── Декларативный inventory ──────────────────────────────────────
 [provides]

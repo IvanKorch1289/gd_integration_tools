@@ -53,11 +53,11 @@ _CORE_ENTITIES: Final[tuple[tuple[str, str, str], ...]] = (
     ("orderkinds", "extensions.core_entities.orderkinds.plugin", "OrderKindsPlugin"),
 )
 
-# Сущности с pre-existing known-issue в ``plugin.toml``: orders
-# декларирует ``db.read`` дважды с разными scope'ами — gate.declare
-# отвергает дубликат имени, и второй capability тихо теряется. Это
-# вне явного скоупа sub-task'а (plugin.py, не plugin.toml); см. отчёт.
-_XFAIL_GATE_DECLARE: Final[frozenset[str]] = frozenset({"orders"})
+# Cycle-17 (D-AUDIT-1701): pre-cycle-17 orders дублировал ``db.read`` —
+# фикс убрал второй scope='orderkinds' (silently dropped gate'ом).
+# _XFAIL_GATE_DECLARE оставлен как ``frozenset()`` для совместимости
+# signature теста; новые сущности с дубликатами должны попадать сюда.
+_XFAIL_GATE_DECLARE: Final[frozenset[str]] = frozenset()
 
 
 # ── Plugin class instantiable ──────────────────────────────────────────
