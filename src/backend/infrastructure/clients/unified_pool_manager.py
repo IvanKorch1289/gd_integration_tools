@@ -178,8 +178,17 @@ class UnifiedPoolManager:
                     if hasattr(pool, attr):
                         try:
                             metrics[attr] = getattr(pool, attr)
-                        except Exception:
-                            pass
+                        except (AttributeError, TypeError, ValueError) as attr_exc:  # noqa: BLE001
+                            # cycle-9/D-AUDIT-956: narrow exceptions + observability.
+                            # AttributeError для property raised on access,
+                            # TypeError для wrong return type, ValueError
+                            # для invalid value. Bare `except Exception`
+                            # маскировал unrelated runtime errors.
+                            import logging
+                            logging.getLogger(__name__).debug(
+                                "unified_pool_manager.attr_probe_failed",
+                                extra={"name": name, "attr": attr, "error": str(attr_exc)},
+                            )
 
             result[name] = metrics
         return result
