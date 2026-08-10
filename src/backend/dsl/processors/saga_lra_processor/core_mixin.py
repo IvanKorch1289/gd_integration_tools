@@ -109,9 +109,15 @@ class CoreMixin(_SagaLRAProcessorProtocol):
         if old_state != new_state and self._on_state_change is not None:
             try:
                 self._on_state_change(old_state or "", new_state, exchange)
-            except Exception:
+            except (ImportError, AttributeError, RuntimeError, TypeError, ValueError) as cb_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-960: narrow exceptions + observability.
+                # ImportError — callback dep missing, AttributeError — API
+                # change, RuntimeError — callback raised, TypeError/ValueError
+                # — wrong arg types/values.
                 _lra_logger.exception(
-                    "SagaLRA on_state_change callback raised: saga_id=%s", self._saga_id
+                    "SagaLRA on_state_change callback raised: saga_id=%s error=%s",
+                    self._saga_id,
+                    cb_exc,
                 )
 
     async def _invoke(
