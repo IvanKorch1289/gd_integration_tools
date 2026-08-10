@@ -211,7 +211,7 @@ async def llm_activity(input_: LLMActivityInput) -> LLMActivityOutput:
         from temporalio import activity as temporal_activity
 
         heartbeat = temporal_activity.heartbeat
-    except (ImportError, AttributeError) as temporal_exc:  # noqa: BLE001
+    except (ImportError, AttributeError):  # noqa: BLE001
         # cycle-9/D-AUDIT-903: narrow exceptions — temporalio optional
         # dep; ImportError when not installed, AttributeError when API
         # surface differs between versions. Bare `except Exception` masks

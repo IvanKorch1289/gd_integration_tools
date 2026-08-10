@@ -7,7 +7,6 @@ if TYPE_CHECKING:
         DQRemediationResult,
         DQRule,
         DQViolation,
-        DQSeverity,
     )
 
 """Data Quality Monitor — авто-детект схемы + аномалии.

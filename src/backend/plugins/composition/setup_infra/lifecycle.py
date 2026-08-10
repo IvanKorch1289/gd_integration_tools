@@ -28,7 +28,6 @@ from src.backend.plugins.composition.setup_infra.workflow_audit import (
     _init_workflow_audit_sink,
 )
 from src.backend.infrastructure.workflow.temporal_worker_runtime import (
-    start_temporal_worker_runtime,
     stop_temporal_worker_runtime,
 )
 

@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     # импорта infrastructure.workflow.registry на module-level.
     from src.backend.core.ai.workflow_protocol import (
         WorkflowDescriptorProtocol,
-        WorkflowRegistryProtocol,
     )
 
 __all__ = ("FastMCPserver",)

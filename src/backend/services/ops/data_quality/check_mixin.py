@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # cycle-8/D-AUDIT-803: canonical DQ types live in __init__.py
-    from src.backend.services.ops.data_quality import DQCheckResult, DQRule, DQSeverity, DQViolation
+    from src.backend.services.ops.data_quality import DQCheckResult, DQRule, DQViolation
 
 """Data Quality Monitor — авто-детект схемы + аномалии.
 

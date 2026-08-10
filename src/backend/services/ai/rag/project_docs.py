@@ -231,7 +231,7 @@ class DocsIndexer:
                         size=_EMBED_DIM, distance=Distance.COSINE
                     ),
                 )
-            except (ImportError, AttributeError) as create_exc:  # noqa: BLE001
+            except (ImportError, AttributeError):  # noqa: BLE001
                 # cycle-9/D-AUDIT-906: см. выше — narrow для fallback API
                 # (legacy qdrant без VectorParams — old signature).
                 self._qdrant.create_collection(self._collection_name)
