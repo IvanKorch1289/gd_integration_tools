@@ -326,7 +326,17 @@ class WindowedCollectProcessor(BaseProcessor):
             try:
                 text = raw.decode() if isinstance(raw, bytes) else raw
                 items.append(_json_loads(text))
-            except Exception:
+            except (ValueError, TypeError, UnicodeDecodeError, AttributeError) as parse_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-951: narrow exceptions + observability.
+                # ValueError для JSON parse, TypeError для wrong type,
+                # UnicodeDecodeError для bytes decode, AttributeError для
+                # API change. Bare `except Exception` маскировал unrelated
+                # runtime errors (KeyError, RuntimeError).
+                import logging
+                logging.getLogger(__name__).debug(
+                    "windowed_dedup.parse_item_failed",
+                    extra={"error": str(parse_exc)},
+                )
                 continue
 
         return _dedup_batch(items, by=self._dedup_by, mode=self._dedup_mode)
@@ -364,7 +374,13 @@ class WindowedCollectProcessor(BaseProcessor):
                 try:
                     text = raw.decode() if isinstance(raw, bytes) else raw
                     items.append(_json_loads(text))
-                except Exception:
+                except (ValueError, TypeError, UnicodeDecodeError, AttributeError) as parse_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-951: см. выше — тот же narrow для get_current_batch.
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "windowed_dedup.get_current_batch_parse_failed",
+                        extra={"error": str(parse_exc)},
+                    )
                     continue
             return _dedup_batch(items, by=self._dedup_by, mode=self._dedup_mode)
         except Exception as exc:
