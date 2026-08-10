@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 from collections.abc import Mapping
 from typing import Any
 
@@ -171,23 +172,21 @@ class E2BExecutionBackend:
         )
 
         # Sync E2B API → asyncio.to_thread
-        loop = asyncio.get_event_loop()
-        start = loop.time()
+        start = time.monotonic()
         sandbox_id = ""
         cells_executed = 0
         errors: list[str] = []
 
         try:
-            sandbox_id, cells_executed, errors = await loop.run_in_executor(
-                None,
-                lambda: self._execute_sync(nb, params_cells, code_cells, parameters),
+            sandbox_id, cells_executed, errors = await asyncio.to_thread(
+                self._execute_sync, nb, params_cells, code_cells, parameters,
             )
         except E2BExecutionError:
             raise
         except Exception as exc:
             raise E2BExecutionError(f"E2B execution failed: {exc}") from exc
 
-        duration = loop.time() - start
+        duration = time.monotonic() - start
 
         # Persist output notebook (optional)
         if output_path is None:

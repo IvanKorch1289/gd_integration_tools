@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 from collections.abc import Mapping
 from typing import Any
 
@@ -137,25 +138,22 @@ class PapermillExecutionBackend:
         )
 
         # Sync papermill call в thread (не block event loop).
-        loop = asyncio.get_event_loop()
-        start = loop.time()
+        start = time.monotonic()
         try:
-            await loop.run_in_executor(
-                None,
-                lambda: pm.execute_notebook(
-                    input_path=notebook_path,
-                    output_path=output_path,
-                    parameters=dict(parameters),
-                    kernel_name=self._kernel_name,
-                    progress_bar=self._progress_bar,
-                    log_output=False,
-                ),
+            await asyncio.to_thread(
+                pm.execute_notebook,
+                input_path=notebook_path,
+                output_path=output_path,
+                parameters=dict(parameters),
+                kernel_name=self._kernel_name,
+                progress_bar=self._progress_bar,
+                log_output=False,
             )
         except PMError as exc:
             raise JupyterExecutionError(
                 f"Papermill execution failed для {notebook_path}: {exc}"
             ) from exc
-        duration = loop.time() - start
+        duration = time.monotonic() - start
 
         # Read executed notebook для cell count + error collection.
         import nbformat
