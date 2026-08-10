@@ -49,7 +49,15 @@ def _current_tenant_label() -> str:
     """
     try:
         ctx = current_tenant()
-    except Exception:  # noqa: BLE001 — best-effort metric label
+    except (ImportError, AttributeError, RuntimeError) as ten_exc:  # noqa: BLE001 — best-effort metric label
+        # cycle-9/D-AUDIT-1032: narrow exceptions + observability.
+        # ImportError — tenancy missing, AttributeError — context API
+        # change, RuntimeError — context unavailable.
+        import logging
+        logging.getLogger(__name__).debug(
+            "pool_warmup.current_tenant_fallback",
+            extra={"error": str(ten_exc)},
+        )
         return _TENANT_GLOBAL
     if ctx is None or not getattr(ctx, "tenant_id", None):
         return _TENANT_GLOBAL
