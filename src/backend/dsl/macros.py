@@ -62,10 +62,18 @@ def _emit_deprecation_once() -> None:
                 DeprecationWarning,
                 stacklevel=3,
             )
-    except Exception:
+    except (ImportError, AttributeError, RuntimeError) as dep_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-959: narrow exceptions + observability.
+        # ImportError — settings module missing, AttributeError — config
+        # not initialized, RuntimeError — bootstrap unavailable. Bare
+        # `except Exception` маскировал unrelated runtime errors.
         # Bootstrap-окружение без settings — молча игнорируем.
         # Deprecation-warning не критичен, чтобы из-за него падал импорт.
-        pass
+        import logging
+        logging.getLogger(__name__).debug(
+            "macros._emit_deprecation_skipped",
+            extra={"error": str(dep_exc)},
+        )
 
 
 _emit_deprecation_once()
