@@ -23,7 +23,7 @@ try:
     )
 
     _flag_enabled: bool = bool(getattr(_ff, "dlq_unified_enabled", False))
-except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError):  # noqa: BLE001
     # cycle-9/D-AUDIT-1059: narrow exceptions + observability.
     # ImportError — features module missing, AttributeError — API change,
     # RuntimeError — feature_flags unavailable.

@@ -198,7 +198,7 @@ with tab_live:
             records = api._request("GET", "/api/v1/admin/audit/tail", params=params)
             if isinstance(records, list):
                 return records
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as tail_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):  # noqa: BLE001
             # cycle-9/D-AUDIT-1047: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -208,7 +208,7 @@ with tab_live:
                 records = api._request("GET", "/api/v1/admin/audit", params=params)
                 if isinstance(records, list):
                     return records
-            except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as audit_exc:  # noqa: BLE001
+            except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):  # noqa: BLE001
                 # cycle-9/D-AUDIT-1047: см. выше — тот же narrow для fallback path.
                 return []
         return []

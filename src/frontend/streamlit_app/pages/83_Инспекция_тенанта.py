@@ -77,7 +77,7 @@ def _safe_metric(name: str, default: str = "—") -> str:
         metrics = client.get_metrics() if hasattr(client, "get_metrics") else {}
         if isinstance(metrics, dict):
             return str(metrics.get(name, default))
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, AttributeError, TypeError) as metric_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, AttributeError, TypeError):  # noqa: BLE001
         # cycle-9/D-AUDIT-1043: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid metrics, AttributeError —
@@ -159,7 +159,7 @@ try:
     raw = client.get("/admin/scheduler/dlq", params={"limit": 10})
     if isinstance(raw, list):
         dlq_entries = raw
-except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as dlq_exc:  # noqa: BLE001
+except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):  # noqa: BLE001
     # cycle-9/D-AUDIT-1044: narrow exceptions + observability.
     # ConnectionError/TimeoutError — server unreachable, RuntimeError —
     # API failure, ValueError — invalid response, TypeError — wrong type.

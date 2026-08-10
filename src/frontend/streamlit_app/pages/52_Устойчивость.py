@@ -48,7 +48,7 @@ try:
     )
 
     _flag_enabled: bool = bool(getattr(_ff, "resilience_dashboard_enabled", False))
-except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError):  # noqa: BLE001
     # cycle-9/D-AUDIT-1053: narrow exceptions + observability.
     # ImportError — features module missing, AttributeError — API change,
     # RuntimeError — feature_flags unavailable.
@@ -154,7 +154,7 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
         )
         if isinstance(_data, dict) and _data:
             return _data, True
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError) as snap_exc:  # noqa: BLE001, S110 — graceful fallback, endpoint может ещё не существовать
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError):  # noqa: BLE001, S110 — graceful fallback, endpoint может ещё не существовать
         # cycle-9/D-AUDIT-1054: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError — wrong

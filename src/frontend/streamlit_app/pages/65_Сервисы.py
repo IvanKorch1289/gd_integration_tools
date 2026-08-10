@@ -65,7 +65,7 @@ def _build_services() -> list[ServiceInfo]:
         config = {}
     try:
         client.get_health()  # verify endpoint reachable
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError) as svc_exc:  # noqa: S110
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError):  # noqa: S110
         # cycle-9/D-AUDIT-1038: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError —
         # API failure, ValueError — invalid response, KeyError — missing key.

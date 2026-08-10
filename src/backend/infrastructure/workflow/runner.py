@@ -188,6 +188,9 @@ class DurableWorkflowRunner:
         self._pending_instance_ids: asyncio.Queue[UUID] = asyncio.Queue()
         self._active_executions: set[UUID] = set()
         self._active_lock = asyncio.Lock()
+        # Cycle-32 (D-AUDIT-3202): shutdown Event для wakeup LISTEN/poll loops
+        # без busy-wait (ASYNC110).
+        self._shutdown_event: asyncio.Event = asyncio.Event()
 
     # -- Lifecycle --------------------------------------------------
 
@@ -219,6 +222,8 @@ class DurableWorkflowRunner:
     async def stop(self) -> None:
         """Stop the workflow runner and wait for active executions to complete."""
         self._running = False
+        # Cycle-32 (D-AUDIT-3202): wakeup LISTEN/poll loops via shutdown Event.
+        self._shutdown_event.set()
         for task in (self._listen_task, self._backup_task):
             if task is not None:
                 task.cancel()
@@ -264,8 +269,14 @@ class DurableWorkflowRunner:
             _logger.info("listening on channel 'workflow_pending'")
             # Держим соединение открытым; asyncpg sama маршрутизирует
             # уведомления в callback.
+            # Cycle-32 (D-AUDIT-3202): asyncio.Event вместо busy-wait (ASYNC110).
             while self._running:
-                await asyncio.sleep(5.0)
+                try:
+                    await asyncio.wait_for(self._shutdown_event.wait(), timeout=5.0)
+                except asyncio.TimeoutError:
+                    pass
+                if self._shutdown_event.is_set():
+                    break
         except asyncio.CancelledError:
             raise
         except Exception as exc:

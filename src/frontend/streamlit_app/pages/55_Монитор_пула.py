@@ -42,7 +42,7 @@ try:
     )
 
     _flag_enabled: bool = bool(getattr(_ff, "pool_monitor_enabled", False))
-except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError):  # noqa: BLE001
     # cycle-9/D-AUDIT-1056: narrow exceptions + observability.
     # ImportError — features module missing, AttributeError — API change,
     # RuntimeError — feature_flags unavailable.
@@ -148,7 +148,7 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
         )
         if isinstance(_data, dict) and _data:
             return _data, True
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError) as pool_exc:  # noqa: BLE001, S110 — endpoint может ещё не существовать
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError):  # noqa: BLE001, S110 — endpoint может ещё не существовать
         # cycle-9/D-AUDIT-1057: narrow exceptions + observability (mirror
         # D-AUDIT-1054 для resilience/snapshot).
         st.error("Не удалось выполнить запрос — проверьте подключение к серверу")

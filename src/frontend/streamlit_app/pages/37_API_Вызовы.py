@@ -69,7 +69,7 @@ if st.button("Отправить", type="primary"):
             st.metric("Время, мс", f"{elapsed_ms:.1f}")
             try:
                 st.json(resp.json())
-            except (ValueError, TypeError) as json_exc:  # noqa: BLE001
+            except (ValueError, TypeError):  # noqa: BLE001
                 # cycle-9/D-AUDIT-1039: narrow exceptions + observability.
                 # ValueError для malformed JSON, TypeError для wrong
                 # response type.
