@@ -105,7 +105,16 @@ class FtpUploadProcessor(BaseProcessor):
                 finally:
                     try:
                         ftp.quit()
-                    except Exception:
+                    except (OSError, ConnectionError, RuntimeError) as quit_exc:  # noqa: BLE001
+                        # cycle-9/D-AUDIT-949: narrow exceptions + observability.
+                        # OSError/ConnectionError для FTP network, RuntimeError
+                        # для server error. Bare `except Exception` маскировал
+                        # unrelated runtime errors.
+                        import logging
+                        logging.getLogger(__name__).debug(
+                            "ftpupload.ftp_quit_failed",
+                            extra={"error": str(quit_exc)},
+                        )
                         ftp.close()
                 return
 
@@ -133,7 +142,14 @@ class FtpUploadProcessor(BaseProcessor):
             finally:
                 try:
                     ftp.quit()
-                except Exception:
+                except (OSError, ConnectionError, RuntimeError) as tls_quit_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-950: см. D-AUDIT-949 — тот же narrow для
+                    # TLS path.
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "ftpupload.ftp_tls_quit_failed",
+                        extra={"error": str(tls_quit_exc)},
+                    )
                     ftp.close()
 
         await asyncio.to_thread(_upload)
