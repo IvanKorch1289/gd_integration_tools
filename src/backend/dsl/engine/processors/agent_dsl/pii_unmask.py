@@ -39,8 +39,8 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "token": {'type': 'string'},
-        "scope": {'enum': ['admin', 'system']},
+        "token": {"type": "string"},
+        "scope": {"enum": ["admin", "system"]},
         },
         "required": ["token"],
     },

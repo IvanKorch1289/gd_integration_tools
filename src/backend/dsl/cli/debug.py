@@ -289,7 +289,7 @@ def _get_processor_info(processor_class: str) -> dict[str, Any]:
 
     for module_name in modules_to_try:
         try:
-            import importlib
+            import importlib  # noqa: F401 — availability probe
 
             module = importlib.import_module(module_name)
             if hasattr(module, processor_class):

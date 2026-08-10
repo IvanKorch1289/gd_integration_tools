@@ -27,8 +27,8 @@ __all__ = ("TokenStreamLLMProcessor",)
 class TokenStreamLLMProcessor(BaseProcessor):
     """Стримит токены LLM в SSE / WS / Webhook publisher."""
 
-    required_capability: ClassVar[str | None] = 'llm.stream'
-    audit_event: ClassVar[str | None] = 'llm.stream'
+    required_capability: ClassVar[str | None] = "llm.stream"
+    audit_event: ClassVar[str | None] = "llm.stream"
 
     def __init__(
         self,
@@ -133,7 +133,7 @@ class TokenStreamLLMProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         # S202 audit fix: capability gate
-        if not await self.auth_check(exchange, action='stream'):
+        if not await self.auth_check(exchange, action="stream"):
             return
         """Выполняет потоковую генерацию LLM: стримит чанки через publisher и накапливает полный текст.
 

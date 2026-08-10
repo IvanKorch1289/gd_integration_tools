@@ -75,8 +75,8 @@ def get_object_storage() -> ObjectStorage:
         return get_local_fs_storage()
 
     try:
-        from src.backend.core.config.services.storage import fs_settings
-        from src.backend.infrastructure.storage.s3 import S3ObjectStorage
+        from src.backend.core.config.services.storage import fs_settings  # noqa: F401 — availability probe
+        from src.backend.infrastructure.storage.s3 import S3ObjectStorage  # noqa: F401 — availability probe
 
         primary = S3ObjectStorage(fs_settings)
     except ImportError as exc:

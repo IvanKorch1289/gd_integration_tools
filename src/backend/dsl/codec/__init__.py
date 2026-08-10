@@ -19,7 +19,7 @@ from __future__ import annotations as annotations
 
 from typing import Any as Any
 
-from src.backend.dsl.codec.base64 import decode_base64, encode_base64
+from src.backend.dsl.codec.base64 import decode_base64, encode_base64  # noqa: F401 — re-export
 from src.backend.dsl.codec.converters import (
     convert_numpy_types,
     convert_pattern,
@@ -123,7 +123,7 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
     """Банковские форматы — opt-in через extras `gdi[banking]`."""
     if fmt == "mt":
         try:
-            from swiftmt import parser  # type: ignore[import-not-found]
+            from swiftmt import parser  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         except ImportError:
             raise RuntimeError(
                 "swiftmt не установлен — установите gdi[banking]",
@@ -131,7 +131,7 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
         return parser.parse(raw if isinstance(raw, str) else raw.decode("utf-8"))
     if fmt == "hl7":
         try:
-            import hl7apy.parser  # type: ignore[import-not-found]
+            import hl7apy.parser  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         except ImportError:
             raise RuntimeError(
                 "hl7apy не установлен — установите gdi[banking]",
@@ -141,7 +141,7 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
         )
     if fmt == "iso8583":
         try:
-            import iso8583  # type: ignore[import-not-found]
+            import iso8583  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         except ImportError:
             raise RuntimeError(
                 "iso8583 не установлен — установите gdi[banking]",

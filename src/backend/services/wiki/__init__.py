@@ -2,6 +2,6 @@
 
 from __future__ import annotations as annotations
 
-from src.backend.services.wiki.whoosh_index import Hit, WhooshIndex, get_wiki_index
+from src.backend.services.wiki.whoosh_index import Hit, WhooshIndex, get_wiki_index  # noqa: F401 — re-export
 
 __all__ = ("Hit", "WhooshIndex", "get_wiki_index")

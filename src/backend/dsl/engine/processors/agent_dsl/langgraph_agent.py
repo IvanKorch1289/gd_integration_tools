@@ -31,8 +31,8 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "graph_id": {'type': 'string'},
-        "state": {'type': 'object'},
+        "graph_id": {"type": "string"},
+        "state": {"type": "object"},
         },
         "required": ["graph_id"],
     },

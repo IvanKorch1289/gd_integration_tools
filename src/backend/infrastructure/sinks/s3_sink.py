@@ -68,7 +68,7 @@ class S3Sink(Sink):
         await limiter.check(f"{self.sink_id}_{self.kind}", scope=self.key)
 
         try:
-            from src.backend.infrastructure.clients.storage.s3_pool import (
+            from src.backend.infrastructure.clients.storage.s3_pool import (  # noqa: F401 — availability probe
                 storage_client,
             )
         except ImportError as exc:
@@ -106,7 +106,7 @@ class S3Sink(Sink):
         проверкой импорта клиента — как в большинстве Sink-классов.
         """
         try:
-            from src.backend.infrastructure.clients.storage.s3_pool import (
+            from src.backend.infrastructure.clients.storage.s3_pool import (  # noqa: F401 — availability probe
                 storage_client,
             )
         except ImportError:
@@ -125,10 +125,10 @@ def _coerce_payload(payload: Any) -> bytes:
     if isinstance(payload, str):
         return payload.encode("utf-8")
     try:
-        import orjson
+        import orjson  # noqa: F401 — availability probe
 
         return orjson.dumps(payload, default=str)
     except ImportError:
-        import json
+        import json  # noqa: F401 — availability probe
 
         return json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")

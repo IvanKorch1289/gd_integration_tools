@@ -177,7 +177,7 @@ class RerankerProcessor(BaseProcessor):
             return self._model
 
         try:
-            from sentence_transformers import CrossEncoder
+            from sentence_transformers import CrossEncoder  # noqa: F401 — availability probe
 
             self._model = CrossEncoder(self._model_name)
             logger.info(

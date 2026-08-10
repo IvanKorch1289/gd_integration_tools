@@ -18,7 +18,7 @@ from functools import lru_cache as lru_cache
 from typing import Any as Any
 
 from src.backend.core.codec.json import json_dumps as json_dumps
-from src.backend.infrastructure.decorators.caching.decorator import CachingDecorator
+from src.backend.infrastructure.decorators.caching.decorator import CachingDecorator  # noqa: F401 — re-export
 
 __all__ = (
     "CachingDecorator",

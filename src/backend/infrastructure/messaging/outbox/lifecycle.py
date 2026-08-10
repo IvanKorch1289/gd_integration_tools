@@ -138,7 +138,7 @@ def _build_default_dlq_handler(state: Any) -> DLQHandler | None:
     if session_factory is None:
         return None
     try:
-        from src.backend.infrastructure.messaging.dlq.inbox_writer import InboxDLQWriter
+        from src.backend.infrastructure.messaging.dlq.inbox_writer import InboxDLQWriter  # noqa: F401 — availability probe
     except ImportError:
         return None
 

@@ -125,7 +125,7 @@ def get_three_tier_rag_cache_from_state() -> Any:
         # cycle-9/D-AUDIT-992: narrow exceptions + observability.
         # ImportError — get_app_ref missing, AttributeError — API change,
         # RuntimeError — app_state unavailable.
-        import logging
+        import logging  # noqa: F401 — availability probe
         logging.getLogger(__name__).debug(
             "app_state.three_tier_rag_cache_fallback",
             extra={"error": str(app_exc)},

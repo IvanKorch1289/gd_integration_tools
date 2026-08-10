@@ -220,7 +220,7 @@ class ExecutionEngine:
                 exchange.status = ExchangeStatus.completed
 
         try:
-            from src.backend.infrastructure.application.slo_tracker import (
+            from src.backend.infrastructure.application.slo_tracker import (  # noqa: F401 — availability probe
                 get_slo_tracker,
             )
 

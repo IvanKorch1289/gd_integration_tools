@@ -97,7 +97,7 @@ class SchemaRegistry:
         if not schema:
             raise SchemaRegistryError(f"JSON schema not found: {subject}")
         try:
-            from jsonschema import validate
+            from jsonschema import validate  # noqa: F401 — availability probe
 
             validate(instance=payload, schema=schema)
         except ImportError:
@@ -125,10 +125,10 @@ class SchemaRegistry:
         if not schema_str:
             raise SchemaRegistryError(f"Avro schema not found: {subject}")
         try:
-            import fastavro
+            import fastavro  # noqa: F401 — availability probe
 
             schema = fastavro.parse_schema(json.loads(schema_str))
-            import io
+            import io  # noqa: F401 — availability probe
 
             bio = io.BytesIO(payload)
             return fastavro.schemaless_reader(bio, schema)  # type: ignore[return-value]

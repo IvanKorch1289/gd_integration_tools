@@ -122,7 +122,7 @@ class HvacVaultClient:
         if self._client is not None:
             return self._client
         try:
-            import hvac  # type: ignore[import-not-found]
+            import hvac  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         except ImportError as exc:
             raise SsoRegistryVaultError(
                 "hvac not installed; установите 'hvac' для production Vault",

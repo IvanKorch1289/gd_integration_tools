@@ -147,7 +147,7 @@ class LiteLLMImageGenerationService:
         if not self.enabled:
             return False
         try:
-            import litellm  # type: ignore[import-not-found]
+            import litellm  # type: ignore[import-not-found]  # noqa: F401 — availability probe
 
             return True
         except ImportError:
@@ -182,7 +182,7 @@ class LiteLLMImageGenerationService:
             )
 
         try:
-            import litellm
+            import litellm  # noqa: F401 — availability probe
         except ImportError as exc:
             raise ImageGenerationUnavailable(
                 "Пакет 'litellm' не установлен — добавьте extra '[ai-2026]'.",

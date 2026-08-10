@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 Client: Any = None
 try:
-    from fastmcp import Client  # type: ignore[import-not-found,no-redef]
+    from fastmcp import Client  # type: ignore[import-not-found,no-redef]  # noqa: F401 — availability probe
 except ImportError:
     pass
 
@@ -58,8 +58,8 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "tool_name": {'type': 'string'},
-        "arguments": {'type': 'object'},
+        "tool_name": {"type": "string"},
+        "arguments": {"type": "object"},
         },
         "required": ["tool_name"],
     },

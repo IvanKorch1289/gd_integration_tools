@@ -10,9 +10,9 @@
 Сборка через :func:`create_cache_backend` (см. ``factory.py``).
 """
 
-from src.backend.infrastructure.cache.backends.disk import DiskCacheBackend
-from src.backend.infrastructure.cache.backends.keydb import KeyDBBackend
-from src.backend.infrastructure.cache.backends.memory import MemoryBackend
-from src.backend.infrastructure.cache.backends.redis import RedisBackend
+from src.backend.infrastructure.cache.backends.disk import DiskCacheBackend  # noqa: F401 — re-export
+from src.backend.infrastructure.cache.backends.keydb import KeyDBBackend  # noqa: F401 — re-export
+from src.backend.infrastructure.cache.backends.memory import MemoryBackend  # noqa: F401 — re-export
+from src.backend.infrastructure.cache.backends.redis import RedisBackend  # noqa: F401 — re-export
 
 __all__ = ("DiskCacheBackend", "KeyDBBackend", "MemoryBackend", "RedisBackend")

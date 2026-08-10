@@ -37,7 +37,7 @@ logger = get_logger(__name__)
 # Exceptions: aioftp использует OSError для connection issues, asyncio
 # TimeoutError — для timeout, ConnectionError — для refused connection.
 try:
-    from src.backend.core.resilience.retry import make_async_retry
+    from src.backend.core.resilience.retry import make_async_retry  # noqa: F401 — availability probe
 except ImportError:  # pragma: no cover
     make_async_retry = None  # type: ignore[assignment]
 

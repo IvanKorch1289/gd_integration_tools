@@ -45,7 +45,7 @@ async def _register_health_checks() -> None:
     Aggregator exposes unified /health endpoint for K8s probes.
     """
     try:
-        from src.backend.infrastructure.application.health_aggregator import (
+        from src.backend.infrastructure.application.health_aggregator import (  # noqa: F401 — availability probe
             get_health_aggregator,
         )
     except ImportError:
@@ -55,7 +55,7 @@ async def _register_health_checks() -> None:
 
     # Redis
     async def _redis_health() -> dict[str, Any]:
-        import time
+        import time  # noqa: F401 — availability probe
 
         start = time.monotonic()
         try:
@@ -71,9 +71,9 @@ async def _register_health_checks() -> None:
 
     # DB main
     async def _db_health() -> dict[str, Any]:
-        import time
+        import time  # noqa: F401 — availability probe
 
-        from sqlalchemy import text
+        from sqlalchemy import text  # noqa: F401 — availability probe
 
         start = time.monotonic()
         try:
@@ -88,7 +88,7 @@ async def _register_health_checks() -> None:
 
     # S3
     async def _s3_health() -> dict[str, Any]:
-        import time
+        import time  # noqa: F401 — availability probe
 
         start = time.monotonic()
         try:
@@ -102,7 +102,7 @@ async def _register_health_checks() -> None:
 
     # ClickHouse
     async def _clickhouse_health() -> dict[str, Any]:
-        import time
+        import time  # noqa: F401 — availability probe
 
         start = time.monotonic()
         try:
@@ -116,10 +116,10 @@ async def _register_health_checks() -> None:
 
     # Kafka — lightweight TCP probe (avoids aiokafka import overhead)
     async def _kafka_health() -> dict[str, Any]:
-        import asyncio
-        import time
+        import asyncio  # noqa: F401 — availability probe
+        import time  # noqa: F401 — availability probe
 
-        from src.backend.core.config.services.queue import queue_settings
+        from src.backend.core.config.services.queue import queue_settings  # noqa: F401 — availability probe
 
         if queue_settings.type != "kafka":
             return {"status": "skipped", "reason": "queue.type != kafka"}
@@ -142,8 +142,8 @@ async def _register_health_checks() -> None:
 
     # NATS — lightweight TCP probe
     async def _nats_health() -> dict[str, Any]:
-        import asyncio
-        import time
+        import asyncio  # noqa: F401 — availability probe
+        import time  # noqa: F401 — availability probe
 
         start = time.monotonic()
         try:

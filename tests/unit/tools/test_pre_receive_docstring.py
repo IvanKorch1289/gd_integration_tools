@@ -324,7 +324,7 @@ def test_cli_module_level_skips_init_file(tmp_path: Path) -> None:
     target.write_text(
         "from .foo import bar\n"
         "from .baz import qux\n"
-        "__all__ = (\"bar\", \"qux\")\n",
+        '__all__ = ("bar", "qux")\n',
         encoding="utf-8",
     )
     proc = subprocess.run(

@@ -46,7 +46,7 @@ class HuggingFaceModelRegistry(ModelRegistryAdapter):
         if self._api is not None:
             return self._api
         try:
-            from huggingface_hub import HfApi
+            from huggingface_hub import HfApi  # noqa: F401 — availability probe
         except ImportError as exc:
             raise RuntimeError(
                 "huggingface_hub не установлен; добавьте extra "

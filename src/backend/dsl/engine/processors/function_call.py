@@ -144,7 +144,7 @@ class CallFunctionProcessor(BaseProcessor):
                 whitelist |= set(raw)
         if not whitelist:
             try:
-                from src.backend.core.config.settings import settings as app_settings
+                from src.backend.core.config.settings import settings as app_settings  # noqa: F401 — availability probe
 
                 global_wl = getattr(
                     getattr(app_settings, "security", app_settings),
@@ -159,7 +159,7 @@ class CallFunctionProcessor(BaseProcessor):
                 # change, RuntimeError — settings unavailable, ValueError —
                 # invalid config, TypeError — wrong type. Bare `except
                 # Exception` маскировал unrelated runtime errors.
-                import logging
+                import logging  # noqa: F401 — availability probe
                 logging.getLogger(__name__).debug(
                     "function_call.global_wl_failed",
                     extra={"error": str(wl_exc)},

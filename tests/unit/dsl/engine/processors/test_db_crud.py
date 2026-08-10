@@ -310,10 +310,10 @@ def test_build_upsert_sql_merge_uses_merge_into() -> None:
     )
     assert sql.startswith("MERGE INTO")
     assert "USING (SELECT" in sql
-    assert "ON t.\"id\" = src.\"id\"" in sql
+    assert 'ON t."id" = src."id"' in sql
     assert "WHEN MATCHED THEN UPDATE SET" in sql
     assert "WHEN NOT MATCHED THEN INSERT" in sql
-    assert "src.\"name\"" in sql
+    assert 'src."name"' in sql
     assert params == {"id": 1, "name": "Alice"}
 
 
@@ -428,7 +428,7 @@ def test_execute_dml_method_present_on_persistence_mixin() -> None:
         pytest.skip("persistence module not found")
     src = p.read_text(encoding="utf-8")
     assert "def execute_dml(" in src, "PersistenceMixin.execute_dml missing"
-    assert "dialect: str = \"postgresql\"" in src, "execute_dml default dialect missing"
+    assert 'dialect: str = "postgresql"' in src, "execute_dml default dialect missing"
     # Сигнатура многострочная — собираем строки до первого '): RouteBuilder'.
     lines = src.splitlines()
     start_idx = next(

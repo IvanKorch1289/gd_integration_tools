@@ -38,7 +38,7 @@ _backend: BaseLoggerBackend | None = None
 def _create_backend(name: str) -> BaseLoggerBackend:
     if name == "structlog":
         try:
-            from src.backend.infrastructure.logging.structlog_backend import (
+            from src.backend.infrastructure.logging.structlog_backend import (  # noqa: F401 — availability probe
                 StructlogGraylogBackend,
             )
 
@@ -77,7 +77,7 @@ def configure_logging(backend: str = "structlog", **settings: Any) -> BaseLogger
 
     if backend == "auto":
         try:
-            import structlog
+            import structlog  # noqa: F401 — availability probe
 
             backend = "structlog"
         except ImportError:

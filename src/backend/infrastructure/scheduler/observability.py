@@ -50,7 +50,7 @@ def _ensure_metrics() -> tuple[Any | None, Any | None]:
         return _JOB_EXECUTIONS, _JOBSTORE_TYPE
 
     try:
-        from src.backend.core.utils.metrics_registry import metrics_registry
+        from src.backend.core.utils.metrics_registry import metrics_registry  # noqa: F401 — availability probe
     except ImportError:
         _logger.debug("MetricsRegistry недоступен — scheduler metrics no-op")
         return None, None

@@ -154,7 +154,7 @@ class CancelWorkflowProcessor(BaseProcessor):
         await backend.cancel_workflow(handle=handle)
 
         try:
-            from src.backend.services.audit.workflow_audit_sink import (
+            from src.backend.services.audit.workflow_audit_sink import (  # noqa: F401 — availability probe
                 get_workflow_audit_sink,
             )
 
@@ -174,7 +174,7 @@ class CancelWorkflowProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-1715: narrow exceptions + observability.
             # ImportError — audit facade missing, AttributeError — API
             # change, RuntimeError — backend unavailable.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "cancel_workflow.audit_failed",
                 extra={"error": str(audit_exc)},

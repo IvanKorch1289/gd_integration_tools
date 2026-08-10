@@ -72,7 +72,7 @@ class Sprints1821Flags(BaseSettings):
             # ImportError — AppBaseSettings module missing, AttributeError
             # — environment attribute change, RuntimeError — settings
             # unavailable, ValueError — invalid env value.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "sprints_18_21.app_env_fallback",
                 extra={"error": str(app_exc)},

@@ -92,7 +92,7 @@ class NATSJetStreamSource:
 
         """
         try:
-            import nats
+            import nats  # noqa: F401 — availability probe
         except ImportError as exc:
             raise ImportError(
                 "nats-py не установлен. Добавьте 'nats-py>=2.7' в зависимости "

@@ -53,7 +53,7 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = None
     try:
-        from sqlalchemy import inspect
+        from sqlalchemy import inspect  # noqa: F401 — availability probe
 
         inspector = inspect(bind)
     except ImportError:

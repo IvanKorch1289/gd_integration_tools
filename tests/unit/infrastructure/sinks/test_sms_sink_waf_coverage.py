@@ -57,6 +57,6 @@ class TestSmsSinkUsesOutboundHttpClient:
         from src.backend.infrastructure.sinks.sms_sink import SmsSink
 
         src = inspect.getsource(SmsSink)
-        assert "plugin=f\"sms_sink.{self.provider}\"" in src, (
+        assert 'plugin=f"sms_sink.{self.provider}"' in src, (
             "OutboundHttpClient plugin name должен быть 'sms_sink.<provider>'"
         )

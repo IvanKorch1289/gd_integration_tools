@@ -27,7 +27,7 @@ from src.backend.services.ai.rag_ingest_service import RagIngestService
 # Round 24 fix: forward-looking тесты RAG endpoint PII masking (Sprint 1.1 L5 Security).
 _XFAIL_RAG_PII = pytest.mark.xfail(
     reason=(
-        'RAG endpoint PII masking: forward-looking TDD для enhanced masking на endpoint level. Дефолтное _maybe_mask_pii (Round 7) применяется на ingest, но response path может требовать отдельной маскировки (DEFER scope).'
+        "RAG endpoint PII masking: forward-looking TDD для enhanced masking на endpoint level. Дефолтное _maybe_mask_pii (Round 7) применяется на ingest, но response path может требовать отдельной маскировки (DEFER scope)."
     ),
     strict=True,
 )

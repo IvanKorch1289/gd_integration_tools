@@ -151,7 +151,7 @@ def _make_send_wrapper(
                 # ImportError — provider missing, AttributeError — API
                 # change, RuntimeError — DI unavailable, TypeError —
                 # wrong tenant_id, ValueError — invalid tenant_id.
-                import logging
+                import logging  # noqa: F401 — availability probe
                 logging.getLogger(__name__).debug(
                     "tenant_middleware.correlation_setter_failed",
                     extra={"tenant_id": tenant_id, "error": str(corr_exc)},

@@ -163,7 +163,10 @@ def _configure_business_routers(app: FastAPI) -> None:
         stream_client.redis_router is not None
         or stream_client.rabbit_router is not None
     ):
-        from src.backend.entrypoints.stream import invoker_subscribers, subscribers
+        from src.backend.entrypoints.stream import (  # noqa: F401 — availability probe
+            invoker_subscribers,
+            subscribers,
+        )
 
     if stream_client.redis_router is not None:
         app.include_router(

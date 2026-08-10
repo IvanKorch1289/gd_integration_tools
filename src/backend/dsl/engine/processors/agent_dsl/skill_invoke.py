@@ -47,8 +47,8 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "skill_name": {'type': 'string'},
-        "input": {'type': 'object'},
+        "skill_name": {"type": "string"},
+        "input": {"type": "object"},
         },
         "required": ["skill_name"],
     },

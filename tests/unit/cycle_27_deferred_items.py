@@ -63,7 +63,7 @@ class TestWaitSignalOnTimeout:
         with open(path) as f:
             content = f.read()
         # On timeout raise: re-raise as TimeoutError
-        assert "if decl.on_timeout == \"raise\"" in content
+        assert 'if decl.on_timeout == "raise"' in content
         assert "raise TimeoutError" in content
 
     def test_continue_behavior_preserved(self):

@@ -144,7 +144,7 @@ class TemporalClientFactory:
         )
         interceptors: list[Any] = []
         try:
-            from temporalio.opentelemetry import OpenTelemetryTracingInterceptor
+            from temporalio.opentelemetry import OpenTelemetryTracingInterceptor  # noqa: F401 — availability probe
 
             interceptors.append(OpenTelemetryTracingInterceptor())
             _logger.debug("temporal.otel.interceptor.enabled")
@@ -261,7 +261,7 @@ class TemporalWorkerPool:
                 return
             interceptors: list[Any] = []
             try:
-                from temporalio.opentelemetry import OpenTelemetryTracingInterceptor
+                from temporalio.opentelemetry import OpenTelemetryTracingInterceptor  # noqa: F401 — availability probe
 
                 interceptors.append(OpenTelemetryTracingInterceptor())
             except ImportError:

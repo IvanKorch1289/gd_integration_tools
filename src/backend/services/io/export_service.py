@@ -113,7 +113,7 @@ class ExcelExporter:
         if not data:
             return b""
         try:
-            from openpyxl import Workbook
+            from openpyxl import Workbook  # noqa: F401 — availability probe
         except ImportError as exc:
             raise RuntimeError("openpyxl не установлен") from exc
 
@@ -177,10 +177,10 @@ class PdfExporter:
         if not data:
             return b""
         try:
-            from reportlab.lib import colors
-            from reportlab.lib.pagesizes import A4, landscape
-            from reportlab.lib.styles import getSampleStyleSheet
-            from reportlab.platypus import (
+            from reportlab.lib import colors  # noqa: F401 — availability probe
+            from reportlab.lib.pagesizes import A4, landscape  # noqa: F401 — availability probe
+            from reportlab.lib.styles import getSampleStyleSheet  # noqa: F401 — availability probe
+            from reportlab.platypus import (  # noqa: F401 — availability probe
                 Paragraph,
                 SimpleDocTemplate,
                 Spacer,

@@ -69,8 +69,8 @@ class GrpcSink(Sink):
         await limiter.check(f"{self.sink_id}_grpc", scope=self.full_method)
 
         try:
-            from grpc import aio as grpc_aio
-            from grpc import ssl_channel_credentials
+            from grpc import aio as grpc_aio  # noqa: F401 — availability probe
+            from grpc import ssl_channel_credentials  # noqa: F401 — availability probe
         except ImportError:
             return SinkResult(ok=False, details={"error": "grpcio not installed"})
 
@@ -108,8 +108,8 @@ class GrpcSink(Sink):
     async def health(self, mode: str = "fast") -> HealthResult:
         """Health: попытка установить gRPC-канал и сразу закрыть."""
         try:
-            from grpc import aio as grpc_aio
-            from grpc import ssl_channel_credentials
+            from grpc import aio as grpc_aio  # noqa: F401 — availability probe
+            from grpc import ssl_channel_credentials  # noqa: F401 — availability probe
         except ImportError:
             return HealthResult.failed(error="grpcio not installed", mode=mode)
         start = time.perf_counter()

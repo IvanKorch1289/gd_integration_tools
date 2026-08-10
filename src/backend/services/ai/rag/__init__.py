@@ -8,7 +8,7 @@ from src.backend.services.ai.rag.classifier import (
     QueryClassifier,
     benchmark_accuracy,
 )
-from src.backend.services.ai.rag.dense_retriever import DenseResult, DenseRetriever
+from src.backend.services.ai.rag.dense_retriever import DenseResult, DenseRetriever  # noqa: F401 — re-export
 from src.backend.services.ai.rag.hybrid_retriever import (
     HybridResult,
     HybridRetriever,

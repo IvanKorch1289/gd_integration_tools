@@ -27,8 +27,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 try:
-    import pendulum
-    from pendulum import DateTime as _PendulumDateTime
+    import pendulum  # noqa: F401 — availability probe
+    from pendulum import DateTime as _PendulumDateTime  # noqa: F401 — availability probe
 
     _HAS_PENDULUM = True
 except ImportError:  # pragma: no cover — fallback на stdlib

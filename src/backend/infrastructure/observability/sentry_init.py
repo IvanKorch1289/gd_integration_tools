@@ -46,10 +46,10 @@ def init_sentry(
         return False
 
     try:
-        import sentry_sdk
-        from sentry_sdk.integrations.asyncio import AsyncioIntegration
-        from sentry_sdk.integrations.fastapi import FastApiIntegration
-        from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+        import sentry_sdk  # noqa: F401 — availability probe
+        from sentry_sdk.integrations.asyncio import AsyncioIntegration  # noqa: F401 — availability probe
+        from sentry_sdk.integrations.fastapi import FastApiIntegration  # noqa: F401 — availability probe
+        from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration  # noqa: F401 — availability probe
     except ImportError:
         logger.warning("sentry-sdk not installed, error tracking disabled")
         return False
@@ -140,7 +140,7 @@ def _scrub_with_presidio(event: dict[str, Any]) -> None:
     окружении функция тихо ничего не делает.
     """
     try:
-        from src.backend.infrastructure.security.presidio_sanitizer import (
+        from src.backend.infrastructure.security.presidio_sanitizer import (  # noqa: F401 — availability probe
             get_presidio_sanitizer,
         )
 

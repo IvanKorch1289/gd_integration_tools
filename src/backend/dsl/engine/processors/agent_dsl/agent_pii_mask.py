@@ -105,7 +105,7 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "mode": {'enum': ['strict', 'warn', 'log']},
+        "mode": {"enum": ["strict", "warn", "log"]},
         },
         "required": ["mode"],
     },

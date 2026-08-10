@@ -97,7 +97,7 @@ def register_e2b_sandbox() -> None:
             )
             return NoOpSandbox()
         try:
-            import e2b_code_interpreter
+            import e2b_code_interpreter  # noqa: F401 — availability probe
         except ImportError:
             _logger.warning(
                 "e2b-code-interpreter не установлен (опц. extra [ai]); "

@@ -88,7 +88,7 @@ class VaultBackend:
             return self._client
 
         try:
-            import hvac
+            import hvac  # noqa: F401 — availability probe
         except ImportError as exc:  # pragma: no cover — hvac уже в стеке
             raise RuntimeError(
                 "hvac не установлен; добавьте 'hvac>=2.3.0' в зависимости",
@@ -121,7 +121,7 @@ class VaultBackend:
             return self._client
 
         try:
-            import hvac
+            import hvac  # noqa: F401 — availability probe
         except ImportError as exc:  # pragma: no cover — hvac уже в стеке
             raise RuntimeError(
                 "hvac не установлен; добавьте 'hvac>=2.3.0' в зависимости",

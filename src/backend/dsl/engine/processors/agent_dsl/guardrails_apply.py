@@ -56,8 +56,8 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "ruleset": {'type': 'string'},
-        "on_violation": {'enum': ['block', 'warn']},
+        "ruleset": {"type": "string"},
+        "on_violation": {"enum": ["block", "warn"]},
         },
         "required": ["ruleset"],
     },

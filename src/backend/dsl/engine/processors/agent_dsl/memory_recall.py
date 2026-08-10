@@ -49,8 +49,8 @@ from src.backend.dsl.registry import processor  # D-AGENTS-P1-002 fix (cycle 27)
     spec_schema={
         "type": "object",
         "properties": {
-        "query": {'type': 'string'},
-        "top_k": {'type': 'integer', 'minimum': 1, 'maximum': 100},
+        "query": {"type": "string"},
+        "top_k": {"type": "integer", "minimum": 1, "maximum": 100},
         },
         "required": ["query"],
     },

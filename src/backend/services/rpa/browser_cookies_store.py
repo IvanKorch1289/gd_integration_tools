@@ -92,8 +92,8 @@ def _load_or_create_fernet_key() -> bytes:
 
     raise RuntimeError(
         "BROWSER_COOKIES_FERNET_KEY required in non-dev_light profile. "
-        "Generate via: python -c \"from cryptography.fernet import Fernet; "
-        "print(Fernet.generate_key().decode())\". Store in Vault or k8s "
+        'Generate via: python -c "from cryptography.fernet import Fernet; '
+        'print(Fernet.generate_key().decode())". Store in Vault or k8s '
         "secret and inject as env var.",
     )
 

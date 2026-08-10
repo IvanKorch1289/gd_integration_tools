@@ -26,7 +26,7 @@ class TokenBudgetProcessor(BaseProcessor):
     def _get_encoder(self) -> Any:
         if self._encoder is None:
             try:
-                import tiktoken
+                import tiktoken  # noqa: F401 — availability probe
 
                 self._encoder = tiktoken.encoding_for_model("gpt-4")
             except ImportError:

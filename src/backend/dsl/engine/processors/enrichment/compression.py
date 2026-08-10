@@ -41,15 +41,15 @@ class CompressProcessor(BaseProcessor):
             data = orjson.dumps(body, default=str)
         try:
             if self._algo == "gzip":
-                import gzip
+                import gzip  # noqa: F401 — availability probe
 
                 compressed = gzip.compress(data, compresslevel=self._level)
             elif self._algo == "brotli":
-                import brotli
+                import brotli  # noqa: F401 — availability probe
 
                 compressed = brotli.compress(data, quality=self._level)
             elif self._algo == "zstd":
-                import zstandard
+                import zstandard  # noqa: F401 — availability probe
 
                 cctx = zstandard.ZstdCompressor(level=self._level)
                 compressed = cctx.compress(data)
@@ -97,15 +97,15 @@ class DecompressProcessor(BaseProcessor):
                 algo = "brotli"
         try:
             if algo == "gzip":
-                import gzip
+                import gzip  # noqa: F401 — availability probe
 
                 data = gzip.decompress(body)
             elif algo == "brotli":
-                import brotli
+                import brotli  # noqa: F401 — availability probe
 
                 data = brotli.decompress(body)
             elif algo == "zstd":
-                import zstandard
+                import zstandard  # noqa: F401 — availability probe
 
                 dctx = zstandard.ZstdDecompressor()
                 data = dctx.decompress(body)

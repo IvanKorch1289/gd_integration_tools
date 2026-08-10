@@ -68,7 +68,7 @@ class ResolveMixin(_LLMStructuredProcessorProtocol):
 
         # 2) Имя класса — поиск в ServiceSchemaRegistry meta.
         try:
-            from src.backend.services.schema_registry import (
+            from src.backend.services.schema_registry import (  # noqa: F401 — availability probe
                 SchemaKind,
                 get_schema_registry,
             )
@@ -80,7 +80,7 @@ class ResolveMixin(_LLMStructuredProcessorProtocol):
         if entry is not None:
             module_name = entry.meta.get("module")
             if module_name:
-                import importlib
+                import importlib  # noqa: F401 — availability probe
 
                 module = importlib.import_module(module_name)
                 cls = getattr(module, ref, None)

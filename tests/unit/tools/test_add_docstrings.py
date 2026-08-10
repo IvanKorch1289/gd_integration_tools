@@ -40,7 +40,7 @@ class TestAddDocstringsToFile:
         content = target.read_text(encoding="utf-8")
         # Docstring должен быть первой stmt тела класса.
         assert '"""Test class.' in content
-        assert "class Foo:\n    \"\"\"Test class." in content
+        assert 'class Foo:\n    """Test class.' in content
 
     def test_function_without_docstring_gets_one(self, tmp_path: Path) -> None:
         """Функция без docstring → docstring добавлен после def-line."""

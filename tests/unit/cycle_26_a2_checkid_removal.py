@@ -75,7 +75,7 @@ class TestCheckpointIdRemoved:
         docstring_section = content[idx:end]
         # Docstring may show checkpoint_id as removed/cleaned
         # We just verify no instruction to pass checkpoint_id
-        assert "checkpoint_id: \"my_checkpoint\"" not in docstring_section
+        assert 'checkpoint_id: "my_checkpoint"' not in docstring_section
 
 
 class TestBackwardCompat:

@@ -45,7 +45,7 @@ async def _check_rate_limit(
 ) -> None:
     """Применяет rate limit через RedisRateLimiter."""
     try:
-        from src.backend.core.di.providers import (
+        from src.backend.core.di.providers import (  # noqa: F401 — availability probe
             get_rate_limit_classes_provider,
             get_rate_limiter_provider,
         )

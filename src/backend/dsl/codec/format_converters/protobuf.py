@@ -43,7 +43,7 @@ class ProtobufEncodeProcessor(BaseProcessor):
             exchange.fail("protobuf_encode: body must be dict or bytes")
             return
         try:
-            from google.protobuf.json_format import ParseDict
+            from google.protobuf.json_format import ParseDict  # noqa: F401 — availability probe
 
             msg = ParseDict(body, cls())
         except ImportError:
@@ -81,7 +81,7 @@ class ProtobufDecodeProcessor(BaseProcessor):
         msg = cls()
         msg.ParseFromString(bytes(body))
         try:
-            from google.protobuf.json_format import MessageToDict
+            from google.protobuf.json_format import MessageToDict  # noqa: F401 — availability probe
 
             decoded = MessageToDict(msg, preserving_proto_field_name=True)
         except ImportError:

@@ -244,7 +244,7 @@ class BreakerRegistry:
         При недоступности — silent pass.
         """
         try:
-            from src.backend.core.interfaces.observability import (
+            from src.backend.core.interfaces.observability import (  # noqa: F401 — availability probe
                 CircuitBreakerMetricsRecorder,
             )
 
@@ -254,7 +254,7 @@ class BreakerRegistry:
                 # Import внутри функции — AST walker видит модуль,
                 # но это bridge pattern (protocol→impl в runtime).
                 try:
-                    from src.backend.core.di.providers.infrastructure_locator import (
+                    from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — availability probe
                         get_client_metrics_module as _get_cm_mod_fn,
                     )
                     client_metrics = _get_cm_mod_fn()
@@ -267,7 +267,7 @@ class BreakerRegistry:
                     # ImportError — client_metrics module missing,
                     # AttributeError — API change, RuntimeError — recorder
                     # unavailable, TypeError — wrong arg type.
-                    import logging
+                    import logging  # noqa: F401 — availability probe
                     logging.getLogger(__name__).debug(
                         "breaker.record_circuit_state_failed",
                         extra={"client": client, "error": str(cm_exc)},
@@ -277,7 +277,7 @@ class BreakerRegistry:
             recorder(client=name, host=host, state=state)
         except (ImportError, AttributeError, RuntimeError, TypeError) as recorder_exc:
             # cycle-9/D-AUDIT-978: см. выше — outer recorder fail-soft.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "breaker.recorder_failed",
                 extra={"name": name, "error": str(recorder_exc)},

@@ -200,7 +200,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         if port is None:
             port = log_settings.port
         try:
-            import structlog
+            import structlog  # noqa: F401 — availability probe
         except ImportError as exc:
             raise ImportError(
                 "structlog не установлен. Добавьте: pip install structlog",
@@ -216,7 +216,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         # Graylog GELF handler
         if host and port:
             try:
-                import graypy
+                import graypy  # noqa: F401 — availability probe
 
                 handler_cls = (
                     graypy.GELFTLSHandler if use_tls else graypy.GELFUDPHandler
@@ -237,7 +237,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
 
         # File handler
         if log_file and log_dir:
-            from pathlib import Path
+            from pathlib import Path  # noqa: F401 — availability probe
 
             log_path = Path(log_dir)
             log_path.mkdir(parents=True, exist_ok=True)
@@ -273,7 +273,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         ) -> dict:
             """Автоматически добавляет correlation_id/request_id/tenant_id в каждый лог."""
             try:
-                from src.backend.infrastructure.observability.correlation import (
+                from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — availability probe
                     get_correlation_id,
                     get_request_id,
                     get_tenant_id,
@@ -356,11 +356,11 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             return self._loggers[name]
 
         try:
-            import structlog
+            import structlog  # noqa: F401 — availability probe
 
             inner = structlog.get_logger(name)
         except ImportError:
-            import logging as _logging
+            import logging as _logging  # noqa: F401 — availability probe
 
             inner = _logging.getLogger(name)
 
@@ -380,7 +380,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         """
         # 1) sync-close GELF sinks (если router инициализирован)
         try:
-            from src.backend.infrastructure.logging.router import (
+            from src.backend.infrastructure.logging.router import (  # noqa: F401 — availability probe
                 get_router,
                 is_router_configured,
             )
@@ -405,7 +405,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             # ImportError — router module missing, AttributeError —
             # API change, RuntimeError — router unavailable.
             # router может быть ещё не инициализирован — no-op
-            import logging as _stdlogging
+            import logging as _stdlogging  # noqa: F401 — availability probe
             _stdlogging.getLogger(__name__).debug(
                 "structlog_backend.router_access_failed",
                 extra={"error": str(router_exc)},

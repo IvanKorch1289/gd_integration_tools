@@ -171,7 +171,7 @@ class TemporalSchedulerBackend:
 
         client = await self._factory.get_client(self._namespace)
         try:
-            from temporalio.client import ScheduleActionStartWorkflow
+            from temporalio.client import ScheduleActionStartWorkflow  # noqa: F401 — availability probe
         except ImportError as exc:
             raise ImportError(
                 "temporalio не установлен. Установите: "
@@ -389,7 +389,7 @@ class TemporalSchedulerBackend:
 
         """
         try:
-            from temporalio.client import ScheduleSpec
+            from temporalio.client import ScheduleSpec  # noqa: F401 — availability probe
         except ImportError as exc:
             raise ImportError(
                 "temporalio не установлен. Установите: "

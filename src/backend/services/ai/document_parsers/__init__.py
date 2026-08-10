@@ -22,6 +22,6 @@ from src.backend.services.ai.document_parsers._orchestrator import (
     SUPPORTED_MIME_TYPES,
     parse_document,
 )
-from src.backend.services.ai.document_parsers._sniffer import sniff_mime
+from src.backend.services.ai.document_parsers._sniffer import sniff_mime  # noqa: F401 — re-export
 
 __all__ = ("SUPPORTED_MIME_TYPES", "parse_document", "sniff_mime")

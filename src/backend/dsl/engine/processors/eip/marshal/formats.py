@@ -20,7 +20,7 @@ from src.backend.core.logging import get_logger
 # surface; stdlib ET is only used for the controlled marshal path (we generate
 # the tree ourselves from a dict, never parse untrusted XML).
 try:
-    import defusedxml.ElementTree as DET  # type: ignore[import-not-found]
+    import defusedxml.ElementTree as DET  # type: ignore[import-not-found]  # noqa: F401 — availability probe
 except ImportError:  # pragma: no cover — dev-light fallback
     DET = None  # type: ignore[assignment]
 from src.backend.dsl.engine.processors.eip.marshal.base import (
@@ -207,7 +207,7 @@ class MessagePackDataFormat(DataFormat):
     def __init__(self) -> None:
         """Lazy-validate msgpack dependency, raise ``ImportError`` если нет."""
         try:
-            import msgpack  # type: ignore[import-not-found]
+            import msgpack  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         except ImportError as exc:
             raise ImportError(
                 "MessagePackDataFormat requires 'msgpack' package: uv add msgpack",

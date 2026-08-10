@@ -86,7 +86,7 @@ class FeedbackProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         # S202 audit fix: capability gate
-        if not await self.auth_check(exchange, action='submit'):
+        if not await self.auth_check(exchange, action="submit"):
             return
         """Сохраняет ответ + label в FeedbackService."""
         rating: Any = (

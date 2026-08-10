@@ -104,7 +104,7 @@ class LLMResult:
 # ────────────────────────────────────────────────────────────────────────────
 
 try:
-    from pydantic_ai.models import Model as _PydanticAIModel
+    from pydantic_ai.models import Model as _PydanticAIModel  # noqa: F401 — availability probe
 
     _PYDANTIC_AI_AVAILABLE = True
 except ImportError:  # pragma: no cover — optional dep
@@ -224,14 +224,14 @@ class PydanticAIClient:
 
         if not _internal_gateway_call:
             try:
-                from src.backend.core.config.features import feature_flags
+                from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
             except ImportError:
                 feature_flags = None  # type: ignore[assignment]
             if feature_flags is not None and feature_flags.ai_gateway_enforce:
                 # TD-012: log audit-trail warning перед raise — operators
                 # need to know о bypass-попытке (кто-то забыл marker).
                 try:
-                    from src.backend.core.logging import get_logger as _gl
+                    from src.backend.core.logging import get_logger as _gl  # noqa: F401 — availability probe
 
                     _audit_log = _gl("ai.safety.audit")
                     _audit_log.warning(
@@ -435,7 +435,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
     from pydantic_ai.usage import Usage as _Usage
 
     try:
-        from pydantic_ai.tools import (
+        from pydantic_ai.tools import (  # noqa: F401 — availability probe
             AbstractNativeTool as _AbstractNativeTool,  # type: ignore[attr-defined]
         )
     except ImportError:  # pragma: no cover — version-specific

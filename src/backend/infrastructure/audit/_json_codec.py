@@ -26,7 +26,7 @@ from typing import Any
 # Использует те же defaults что и dsl/codec/dumps_str: sort_keys/indent
 # опциональны, default=str для non-serializable values.
 try:
-    import orjson
+    import orjson  # noqa: F401 — availability probe
 
     def dumps_str(value: Any, *, sort_keys: bool = False, indent: bool = False) -> str:
         """Локальный orjson-based JSON сериализатор (UTF-8 str).
@@ -44,7 +44,7 @@ try:
 
 except ImportError:
     # Fallback для environments без orjson (dev-light, tests).
-    import json
+    import json  # noqa: F401 — availability probe
 
     def dumps_str(value: Any, *, sort_keys: bool = False, indent: bool = False) -> str:
         """Fallback stdlib JSON сериализатор (если orjson недоступен)."""

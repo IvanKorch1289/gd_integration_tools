@@ -148,7 +148,7 @@ class WorkflowTemplateRegistry:
     ) -> list[tuple[WorkflowTemplate, float]]:
         """Fallback fuzzy search через rapidfuzz или word-overlap."""
         try:
-            from rapidfuzz import fuzz
+            from rapidfuzz import fuzz  # noqa: F401 — availability probe
 
             scored_rf: list[tuple[WorkflowTemplate, float]] = []
             for t in templates:

@@ -18,8 +18,8 @@ __all__ = (
 class EventPublishProcessor(BaseProcessor):
     """Публикует событие из pipeline через EventBus."""
 
-    required_capability: ClassVar[str | None] = 'event.publish'
-    audit_event: ClassVar[str | None] = 'event.publish'
+    required_capability: ClassVar[str | None] = "event.publish"
+    audit_event: ClassVar[str | None] = "event.publish"
 
     def __init__(
         self,
@@ -34,7 +34,7 @@ class EventPublishProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Обработать exchange: integration call для EventPublishProcessor."""
         # S202 audit fix: capability gate
-        if not await self.auth_check(exchange, action='publish'):
+        if not await self.auth_check(exchange, action="publish"):
             return
         from pydantic import BaseModel
 

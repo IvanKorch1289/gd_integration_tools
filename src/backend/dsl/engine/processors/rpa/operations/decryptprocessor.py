@@ -50,7 +50,7 @@ class DecryptProcessor(BaseProcessor):
         if not await self.auth_check(exchange, action="execute"):
             return
         try:
-            from cryptography.fernet import Fernet
+            from cryptography.fernet import Fernet  # noqa: F401 — availability probe
         except ImportError:
             exchange.fail("cryptography not installed: pip install cryptography")
             return

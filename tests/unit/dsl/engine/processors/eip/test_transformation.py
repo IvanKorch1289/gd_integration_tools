@@ -225,7 +225,7 @@ def test_claim_check_builder_methods_wire_to_processor() -> None:
     assert "def claim_check_in(" in src
     assert "def claim_check_out(" in src
     # claim_check_in должен принимать store / ttl / threshold
-    assert "store: str = \"redis\"" in src
+    assert 'store: str = "redis"' in src
     assert "ttl_seconds: int = 3600" in src
     assert "threshold_bytes: int = 256 * 1024" in src
     # mode="store" / mode="retrieve" — реальная инстанциация ClaimCheckProcessor

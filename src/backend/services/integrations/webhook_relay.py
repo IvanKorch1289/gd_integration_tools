@@ -173,7 +173,7 @@ class WebhookRelay:
     async def transform(self, payload: dict[str, Any], expression: str) -> Any:
         """Применяет JMESPath к payload (для диагностики)."""
         try:
-            import jmespath
+            import jmespath  # noqa: F401 — availability probe
 
             return jmespath.search(expression, payload)
         except ImportError:
@@ -198,7 +198,7 @@ class WebhookRelay:
 
         if rule.jmespath_expression:
             try:
-                import jmespath
+                import jmespath  # noqa: F401 — availability probe
 
                 transformed = jmespath.search(rule.jmespath_expression, payload)
                 if not isinstance(transformed, dict) or not all(

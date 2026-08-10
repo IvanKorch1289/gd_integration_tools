@@ -47,7 +47,7 @@ _logger = get_logger(__name__)
 # Ponytail: список узкий — только сетевые/IO сбои Redis, чтобы не маскировать
 # баги (TypeError, ValueError и RuntimeError продолжают пробрасываться).
 try:
-    import redis.exceptions as _redis_exceptions
+    import redis.exceptions as _redis_exceptions  # noqa: F401 — availability probe
 
     _REDIS_DOWN_EXC: tuple[type[BaseException], ...] = (
         _redis_exceptions.ConnectionError,

@@ -24,6 +24,6 @@ Architecture::
            └──► Compressed content (gzip-aware)
 """
 
-from src.backend.entrypoints.api.mobile.router import get_mobile_router, mobile_router
+from src.backend.entrypoints.api.mobile.router import get_mobile_router, mobile_router  # noqa: F401 — re-export
 
 __all__ = ("get_mobile_router", "mobile_router")

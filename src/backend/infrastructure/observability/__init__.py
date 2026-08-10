@@ -5,7 +5,7 @@ from src.backend.infrastructure.observability.correlation import (
     new_correlation_id,
     set_correlation_context,
 )
-from src.backend.infrastructure.observability.pii_filter import redact_for_observability
+from src.backend.infrastructure.observability.pii_filter import redact_for_observability  # noqa: F401 — re-export
 
 __all__ = (
     "get_correlation_id",

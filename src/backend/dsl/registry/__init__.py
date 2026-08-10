@@ -13,8 +13,8 @@ Public API:
 
 from __future__ import annotations as annotations
 
-from src.backend.dsl.commands.registry import RouteRegistry as RouteRegistry
-from src.backend.dsl.commands.registry import route_registry as route_registry
+from src.backend.dsl.commands.registry import RouteRegistry as RouteRegistry  # noqa: F401 — re-export
+from src.backend.dsl.commands.registry import route_registry as route_registry  # noqa: F401 — re-export
 from src.backend.dsl.registry.errors import (
     CapabilityDeniedError,
     ProcessorConflictError,

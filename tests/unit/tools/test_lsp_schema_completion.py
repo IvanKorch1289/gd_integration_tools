@@ -36,4 +36,4 @@ class TestSchemaCompletion:
             snippet = get_step_snippet(label)
             if snippet:
                 # YAML формат — содержит `key: value`
-                assert isinstance(snippet, dict) and "properties" in snippet, f"snippet \"{label}\" not JSON-Schema: {snippet}"
+                assert isinstance(snippet, dict) and "properties" in snippet, f'snippet "{label}" not JSON-Schema: {snippet}'

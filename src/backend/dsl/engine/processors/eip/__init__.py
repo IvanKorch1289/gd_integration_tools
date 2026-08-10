@@ -39,7 +39,7 @@ from src.backend.dsl.engine.processors.eip.flow_control import (
     ThrottlerProcessor,
     WireTapProcessor,
 )
-from src.backend.dsl.engine.processors.eip.fork_join import ForkJoinProcessor
+from src.backend.dsl.engine.processors.eip.fork_join import ForkJoinProcessor  # noqa: F401 — re-export
 from src.backend.dsl.engine.processors.eip.glom_ops import (
     GlomExtractProcessor,
     GlomFlattenProcessor,
@@ -86,7 +86,7 @@ from src.backend.dsl.engine.processors.eip.routing_slip import (
     RoutingSlipProcessor,
     SimpleRegistry,
 )
-from src.backend.dsl.engine.processors.eip.sequencing import ResequencerProcessor
+from src.backend.dsl.engine.processors.eip.sequencing import ResequencerProcessor  # noqa: F401 — re-export
 from src.backend.dsl.engine.processors.eip.transactional import (
     ProcessManagerProcessor,
     TransactionalClientProcessor,
