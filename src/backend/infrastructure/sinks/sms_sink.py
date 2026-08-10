@@ -135,8 +135,16 @@ class SmsSink(Sink):
                         sms_id = payload_resp.get("sms_id")
                         if sms_id is not None:
                             details["external_id"] = str(sms_id)
-                except Exception:
-                    pass
+                except (ValueError, TypeError) as json_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-929: narrow exceptions + observability.
+                    # ValueError для malformed JSON, TypeError для invalid
+                    # response type. Bare `except Exception` маскировал
+                    # unrelated runtime errors (KeyError).
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "sms_sink.json_parse_failed",
+                        extra={"error": str(json_exc)},
+                    )
                 return SinkResult(ok=ok, details=details)
         except Exception as exc:
             return SinkResult(
