@@ -175,7 +175,7 @@ class DeadLetterProcessor(BaseProcessor):
         raise RuntimeError(
             f"DLQ send failed for exchange {exchange.meta.exchange_id}: "
             f"redis={stage1_error!r}, jsonl="
-            f"{(stage2_error if stage2_error else 'not_configured')!r}",
+            f"{(stage2_error or 'not_configured')!r}",
         ) from stage1_error
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:

@@ -240,7 +240,7 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         except Exception as exc:
             logger.warning("memory_gateway.get_scratchpad_failed: %s", exc)
             return None
-        return value if value else None
+        return value or None
 
     async def save_scratchpad(
         self, *, tenant_id: str, session_id: str, content: str,

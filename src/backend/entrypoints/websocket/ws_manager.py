@@ -94,7 +94,7 @@ class ConnectionManager:
         await websocket.accept()
         self._connections[client_id] = websocket
 
-        bound_action = action_id if action_id else DEFAULT_ACTION_ID
+        bound_action = action_id or DEFAULT_ACTION_ID
         self._connections_by_action.setdefault(bound_action, set()).add(client_id)
 
         for group in groups or []:

@@ -39,7 +39,7 @@ class LLMCostBreakdown:
     """Детализация LLM-стоимости по моделям (S12 K4 W2)."""
 
     per_model: dict[str, Decimal] = field(default_factory=dict)
-    total_usd: Decimal = Decimal("0")
+    total_usd: Decimal = Decimal(0)
     total_tokens: int = 0
 
 
@@ -53,7 +53,7 @@ class CostEstimate:
     p50_duration_ms: float
     p95_duration_ms: float
     estimated_llm_tokens: int = 0
-    estimated_cost_usd: Decimal = Decimal("0")
+    estimated_cost_usd: Decimal = Decimal(0)
     estimated_compute_seconds: float = 0.0
     estimated_storage_bytes: int = 0
     llm_breakdown: LLMCostBreakdown | None = None
@@ -176,7 +176,7 @@ class WorkflowCostEstimator:
         except Exception as _:
             llm_breakdown = None
 
-        estimated_cost_usd = llm_breakdown.total_usd if llm_breakdown else Decimal("0")
+        estimated_cost_usd = llm_breakdown.total_usd if llm_breakdown else Decimal(0)
         estimated_tokens = llm_breakdown.total_tokens if llm_breakdown else 0
 
         return CostEstimate(
@@ -228,12 +228,12 @@ class WorkflowCostEstimator:
 
             price = pricing.get_price(model_name)
             cost = (Decimal(tokens) / Decimal(1000)) * price
-            per_model[model_name] = per_model.get(model_name, Decimal("0")) + cost
+            per_model[model_name] = per_model.get(model_name, Decimal(0)) + cost
 
         if not per_model:
             return None
 
-        total_usd = sum(per_model.values(), Decimal("0"))
+        total_usd = sum(per_model.values(), Decimal(0))
         return LLMCostBreakdown(
             per_model=per_model, total_usd=total_usd, total_tokens=total_tokens,
         )

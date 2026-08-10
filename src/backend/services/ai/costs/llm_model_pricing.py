@@ -45,9 +45,9 @@ _PRICING_USD_PER_1K_TOKENS: dict[str, Decimal] = {
     "claude-haiku-4-5-20251001": Decimal("0.0008"),
     "claude-haiku-4-5": Decimal("0.0008"),
     # OSS / self-hosted (compute-only)
-    "llama-3.3-70b": Decimal("0"),
-    "qwen-2.5-72b": Decimal("0"),
-    "bge-m3": Decimal("0"),
+    "llama-3.3-70b": Decimal(0),
+    "qwen-2.5-72b": Decimal(0),
+    "bge-m3": Decimal(0),
 }
 
 

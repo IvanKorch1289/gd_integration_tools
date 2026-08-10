@@ -58,8 +58,8 @@ class L3RetrievalCache:
 
         """
         digest = hashlib.sha256(query.encode("utf-8")).hexdigest()
-        tenant_part = tenant if tenant else _UNSCOPED_TENANT
-        namespace_part = namespace if namespace else _GLOBAL_NAMESPACE
+        tenant_part = tenant or _UNSCOPED_TENANT
+        namespace_part = namespace or _GLOBAL_NAMESPACE
         return f"{self._prefix}tenant:{tenant_part}:{namespace_part}:{digest}"
 
     def _ensure_client(self) -> Any:

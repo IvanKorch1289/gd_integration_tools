@@ -179,8 +179,8 @@ class SshCommandProcessor(BaseProcessor):
         try:
             async with asyncssh.connect(self._host, **connect_kwargs) as conn:
                 result = await conn.run(self._command, timeout=self._timeout)
-                stdout = result.stdout if result.stdout else ""
-                stderr = result.stderr if result.stderr else ""
+                stdout = result.stdout or ""
+                stderr = result.stderr or ""
                 exit_code = result.exit_code
 
                 result_data = {

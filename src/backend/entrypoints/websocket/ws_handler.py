@@ -237,7 +237,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         return
 
     # S163 W33: per-action pool enforcement.
-    bound_action: str = action_id_param if action_id_param else DEFAULT_ACTION_ID
+    bound_action: str = action_id_param or DEFAULT_ACTION_ID
     pool_limit = _resolve_pool_limit(action_id_param)
     if pool_limit is not None:
         current = ws_manager.action_count(bound_action)

@@ -99,8 +99,7 @@ class JwtVerifyProcessor(BaseProcessor):
             exchange.fail("PyJWT not installed")
             return
         raw = exchange.in_message.headers.get(self._header, "")
-        if raw.startswith("Bearer "):
-            raw = raw[7:]
+        raw = raw.removeprefix("Bearer ")
         if not raw:
             exchange.fail(f"Missing JWT in header '{self._header}'")
             return

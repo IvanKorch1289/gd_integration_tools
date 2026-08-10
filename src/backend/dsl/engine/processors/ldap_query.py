@@ -139,7 +139,7 @@ class LdapQueryProcessor(BaseProcessor):
             for e in conn.entries:
                 entry: dict[str, Any] = {"dn": e.entry_dn}
                 for attr in (
-                    self._attributes if self._attributes else e.entry_attributes
+                    self._attributes or e.entry_attributes
                 ):
                     val = getattr(e, attr, None)
                     if val is not None:

@@ -106,7 +106,7 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](AbstractRepository[Concrete
                     objects: list[ConcreteTable] = (  # type: ignore
                         result.scalars().unique().all()
                     )
-                    return objects if objects else []
+                    return objects or []
                 # Возвращаем один объект
                 obj: ConcreteTable | None = result.scalars().first()  # type: ignore
                 return obj

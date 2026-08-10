@@ -92,7 +92,7 @@ class TestLdapClientFactoryMigration:
         # Module-level (not indented) direct import is forbidden
         import re
         direct_module_level = re.findall(
-            r"^from src\.backend\.services", content, re.M,
+            r"^from src\.backend\.services", content, re.MULTILINE,
         )
         assert len(direct_module_level) == 0, (
             f"Found {len(direct_module_level)} module-level services imports. "
@@ -112,7 +112,7 @@ class TestLdapClientFactoryMigration:
         # Module-level (no indent) services import is forbidden
         import re
         direct_module_level = re.findall(
-            r"^from src\.backend\.services", content, re.M,
+            r"^from src\.backend\.services", content, re.MULTILINE,
         )
         assert len(direct_module_level) == 0, (
             f"Found {len(direct_module_level)} module-level services imports. "
@@ -133,7 +133,7 @@ class TestNoCoreWorkflowBuilder:
             # No direct services/infrastructure imports
             direct = re.findall(
                 r"^from src\.backend\.(?:services|infrastructure)[^:]+import",
-                content, re.M,
+                content, re.MULTILINE,
             )
             assert not direct, f"Direct upper-layer imports: {direct}"
 
@@ -152,7 +152,7 @@ class TestLayerViolationsClosed:
         # and not at module level
         # Allow up to 1 direct import (the except fallback)
         direct = re.findall(
-            r"^from src\.backend\.services[^:]+import", content, re.M,
+            r"^from src\.backend\.services[^:]+import", content, re.MULTILINE,
         )
         # Should be 0 (in except block — line starts with spaces)
         assert len(direct) == 0, (

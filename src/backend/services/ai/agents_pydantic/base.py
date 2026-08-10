@@ -282,7 +282,7 @@ class BasePydanticAgent[ResultT: BaseModel]:
                 как transient (TypeError, ValueError и т.д.).
 
         """
-        deps_arg = deps if deps else None
+        deps_arg = deps or None
         primary = self._ensure_agent()
         try:
             result = await self._retry_call(primary, user_input, deps_arg)

@@ -234,7 +234,7 @@ class MCPClientRegistry:
                 OutboundHttpClient,  # noqa: F401 — availability probe
             )
 
-            waf_policy = spec.waf_policy if spec.waf_policy else "strict"
+            waf_policy = spec.waf_policy or "strict"
             self._http_client = OutboundHttpClient(waf_policy=waf_policy)
             return self._http_client
         except ImportError as exc:
