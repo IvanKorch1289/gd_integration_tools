@@ -30,8 +30,16 @@ def render_visual_tab() -> None:
                 if len(reordered_steps) == len(current_steps):
                     st.session_state.yaml = build_yaml_from_steps(meta, reordered_steps)
                     push_history()
-        except Exception:  # noqa: BLE001,S110
-            pass
+        except (TypeError, ValueError, KeyError) as reparse_exc:  # noqa: BLE001,S110
+            # cycle-9/D-AUDIT-1042: narrow exceptions + observability.
+            # TypeError — wrong step type, ValueError — invalid YAML,
+            # KeyError — missing step key, yaml.YAMLError — YAML parse
+            # failure.
+            import logging
+            logging.getLogger(__name__).debug(
+                "streamlit_tab_visual.reorder_yaml_rebuild_failed",
+                extra={"error": str(reparse_exc)},
+            )
         # Clear the query param
         query_params.clear()
         st.rerun()
