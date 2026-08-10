@@ -374,8 +374,15 @@ class PydanticAIClient:
             counter = getattr(self._metrics_registry, name, None)
             if counter is not None and hasattr(counter, "labels"):
                 counter.labels(**labels).inc()
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError) as counter_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-986: narrow exceptions + observability.
+            # AttributeError — counter API change, TypeError — wrong arg
+            # type, ValueError — invalid label value.
+            import logging
+            logging.getLogger(__name__).debug(
+                "pydantic_ai_client.counter_emit_failed",
+                extra={"name": name, "error": str(counter_exc)},
+            )
 
     def _emit_histogram(self, name: str, value: int, labels: dict[str, str]) -> None:
         """Эмитит Prometheus histogram через MetricsRegistry."""
@@ -385,8 +392,13 @@ class PydanticAIClient:
             histogram = getattr(self._metrics_registry, name, None)
             if histogram is not None and hasattr(histogram, "labels"):
                 histogram.labels(**labels).observe(value)
-        except Exception:
-            pass
+        except (AttributeError, TypeError, ValueError) as hist_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-986: см. выше — тот же narrow для histogram.
+            import logging
+            logging.getLogger(__name__).debug(
+                "pydantic_ai_client.histogram_emit_failed",
+                extra={"name": name, "error": str(hist_exc)},
+            )
 
 
 # ── LiteLLMModelAdapter (S168 W16 P1-5) ────────────────────────────────────
