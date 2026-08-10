@@ -327,8 +327,7 @@ class TestCompositionRootWiring:
         """Подменить ВСЕ тяжёлые конструкторы, кроме AuthorizationGateway."""
 
         def _stub_factory(_attr: str) -> MagicMock:
-            m = MagicMock()
-            return m
+            return MagicMock()
 
         monkeypatch.setattr(
             "src.backend.infrastructure.security.api_key_manager.APIKeyManager",

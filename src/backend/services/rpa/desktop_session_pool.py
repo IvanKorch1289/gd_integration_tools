@@ -128,7 +128,7 @@ class DesktopRPASessionPool:
         headers: dict[str, str] = {}
         if self._api_key:
             headers["X-API-Key"] = self._api_key
-        client = make_http_client(
+        return make_http_client(
             plugin="desktop_rpa",
             base_url=self._base_url,
             timeout=httpx.Timeout(self._timeout),
@@ -138,7 +138,6 @@ class DesktopRPASessionPool:
         # Default-OFF path возвращает httpx.AsyncClient; runtime-flag=ON
         # переключение на OutboundHttpClient — отдельный wave (см. S18 W1
         # carryover: headers/limits passthrough в migration_helper).
-        return client  # type: ignore[return-value]
 
     async def _get_or_create(self, app_name: str) -> _PooledSession:
         """Возвращает session по app_name; создаёт при отсутствии."""

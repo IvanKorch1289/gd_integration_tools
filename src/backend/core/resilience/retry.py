@@ -166,8 +166,7 @@ def with_retry(
                         if budget is not None and attempt_no > 1:
                             if not await budget.try_retry():
                                 raise RetryBudgetExhausted(budget.name)
-                        result = await func(*args, **kwargs)
-                        return result
+                        return await func(*args, **kwargs)
             except RetryError as exc:
                 logger.debug("Retry exhausted for %s: %s", func.__name__, exc)
                 raise

@@ -159,10 +159,9 @@ class ProcessorHealthService:
             """Выполнить один check с timeout."""
             start = time.monotonic()
             try:
-                result = await asyncio.wait_for(
+                return await asyncio.wait_for(
                     check(), timeout=self._timeout_per_check_s,
                 )
-                return result
             except TimeoutError:
                 return ProcessorHealthResult(
                     processor_name=name,

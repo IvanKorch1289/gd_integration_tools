@@ -39,8 +39,7 @@ class _StubBulkWriter:
 
     async def flush_now(self) -> int:
         self.flush_called += 1
-        flushed = len(self.rows)
-        return flushed
+        return len(self.rows)
 
     async def aclose(self) -> None:
         self.close_called += 1

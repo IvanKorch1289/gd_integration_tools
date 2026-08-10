@@ -211,12 +211,11 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 BudgetExceeded,
             )
 
-            snapshot = await enforce_pre_call(
+            return await enforce_pre_call(
                 budget=budget,
                 tenant_id=tenant_id,
                 estimated_tokens=estimated_tokens,
             )
-            return snapshot
         except BudgetExceeded as exc:
             logger.warning(
                 "ai.budget.exceeded.pre",
@@ -278,13 +277,12 @@ class EnforcedInvokeMixin(_PipelineStepsMixin):
                 BudgetExceeded,
             )
 
-            snapshot = await enforce_post_call(
+            return await enforce_post_call(
                 budget=budget,
                 tenant_id=tenant_id,
                 estimated_tokens=estimated_tokens,
                 actual_tokens=actual_tokens,
             )
-            return snapshot
         except BudgetExceeded as exc:
             logger.warning(
                 "ai.budget.exceeded.post",

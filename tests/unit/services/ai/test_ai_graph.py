@@ -19,13 +19,12 @@ import pytest
 @pytest.fixture()
 def fake_litellm_gateway() -> Any:
     """Минимальная подмена :class:`LiteLLMGateway` для тестов."""
-    gw = SimpleNamespace(
+    return SimpleNamespace(
         _default_model="openai/gpt-4o-mini",
         _fallbacks=["anthropic/claude-sonnet-4-6", "local/llama-3-8b"],
         _timeout=30.0,
         _num_retries=2,
     )
-    return gw
 
 
 @pytest.fixture()

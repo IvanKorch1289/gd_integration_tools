@@ -93,11 +93,10 @@ class ExpressionResolver:
         # existing exchange.body resolver; leave as-is).
         # 3. ${properties.key} — passthrough.
         # 4. ${env:VAR_NAME} — resolve here.
-        value = _resolve_env(value)
+        return _resolve_env(value)
         # 5. ${secret:vault/path} — passthrough (resolved by SecretsResolver
         # at runtime; only tokenize the path).
 
-        return value
 
 
 async def resolve_expression(value: str, store: DSLVariableStore | None = None) -> str:

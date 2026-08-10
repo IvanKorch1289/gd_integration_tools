@@ -56,8 +56,7 @@ def redact_for_observability(value: Any) -> Any:
         v = _RU_PASSPORT.sub("<passport>", v)
         v = _INN.sub("<inn>", v)
         v = _EMAIL.sub("<email>", v)
-        v = _PHONE.sub("<phone>", v)
-        return v
+        return _PHONE.sub("<phone>", v)
     if isinstance(value, dict):
         return {k: redact_for_observability(v) for k, v in value.items()}
     if isinstance(value, list):

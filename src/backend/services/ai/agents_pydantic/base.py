@@ -204,11 +204,10 @@ class BasePydanticAgent[ResultT: BaseModel]:
         """Конструирует fallback-агента (с другой моделью / prompt)."""
         if self._fallback_model is None:
             raise RuntimeError("fallback_model не сконфигурирован")
-        agent = self._build_agent(
+        return self._build_agent(
             self._fallback_model.model_name,
             self._fallback_model.system_prompt_override or self._system_prompt,
         )
-        return agent
 
     # ------------------------------------------------------------------
     # Retry + fallback wrapper.

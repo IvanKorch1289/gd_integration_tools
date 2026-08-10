@@ -275,8 +275,7 @@ class MCPClientRegistry:
                     logger.debug("EnvSecretsBackend init failed: %s", exc)
 
             if broker is not None:
-                result = await broker.get_secret(f"mcp/{client_name}/api_key")
-                return result
+                return await broker.get_secret(f"mcp/{client_name}/api_key")
             return None
         except Exception as _:
             return None

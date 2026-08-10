@@ -102,8 +102,7 @@ class NotificationHub:
     @staticmethod
     def _map_channel(channel: str | Channel) -> str:
         """Map Channel enum → Gateway channel name."""
-        ch = channel.value if isinstance(channel, Channel) else str(channel)
-        return ch
+        return channel.value if isinstance(channel, Channel) else str(channel)
 
     async def send(
         self,

@@ -45,9 +45,8 @@ def _make_storage(langfuse_flag: bool = False) -> LangfusePromptStorage:
     # `from src.backend.core.config.features import feature_flags`).
     with patch.object(mod, "feature_flags") as mock_ff:
         mock_ff.prompt_registry_langfuse = langfuse_flag
-        storage = mod.LangfusePromptStorage()
+        return mod.LangfusePromptStorage()
 
-    return storage
 
 
 # ─── Тест 1 ─────────────────────────────────────────────────────────────────

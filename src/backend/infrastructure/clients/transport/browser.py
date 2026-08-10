@@ -173,8 +173,7 @@ class BrowserClient:
                 )
                 await self._human_delay()
                 elements = await page.query_selector_all(selector)
-                texts = [await el.inner_text() for el in elements]
-                return texts
+                return [await el.inner_text() for el in elements]
             finally:
                 await ctx.close()
 

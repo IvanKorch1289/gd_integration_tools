@@ -13,10 +13,9 @@ import pytest
 def source():
     from src.backend.infrastructure.sources.nats_jetstream import NATSJetStreamSource
 
-    src = NATSJetStreamSource(
+    return NATSJetStreamSource(
         subject="orders.created", stream="ORDERS", durable="orders-consumer",
     )
-    return src
 
 
 @pytest.mark.asyncio

@@ -36,8 +36,7 @@ def test_streamlit_loads() -> bool:
             title = page.title()
             # Streamlit main page redirects to 00_Главная via switch_page
             body = page.content()
-            has_streamlit = "streamlit" in body.lower() or "GD Integration" in title
-            return has_streamlit
+            return "streamlit" in body.lower() or "GD Integration" in title
         finally:
             browser.close()
 

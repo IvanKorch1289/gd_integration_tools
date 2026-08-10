@@ -264,10 +264,9 @@ class FlagsmithBackend:
             )
         # Если Flagsmith вернул default — даём шанс fallback.
         if value == default:
-            fb = await self.fallback.resolve_boolean_value(
+            return await self.fallback.resolve_boolean_value(
                 flag_key, default, evaluation_context,
             )
-            return fb
         return bool(value)
 
     async def resolve_string_value(

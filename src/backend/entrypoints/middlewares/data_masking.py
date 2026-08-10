@@ -176,8 +176,7 @@ class DataMaskingMiddleware:
             return [self._mask_value(item) for item in obj]
         if isinstance(obj, str):
             result = _EMAIL_RE.sub(self._mask_email, obj)
-            result = _PHONE_RE.sub(self._mask_phone, result)
-            return result
+            return _PHONE_RE.sub(self._mask_phone, result)
         return obj
 
     @staticmethod

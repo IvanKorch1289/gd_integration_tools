@@ -102,8 +102,7 @@ class LocalMCPClient:
         if not self._session:
             raise RuntimeError("MCP client not connected")
 
-        result = await self._session.call_tool(name, arguments or {})
-        return result
+        return await self._session.call_tool(name, arguments or {})
 
     async def list_resources(self) -> list[dict[str, Any]]:
         """Получает список ресурсов."""

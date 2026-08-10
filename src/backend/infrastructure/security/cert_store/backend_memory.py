@@ -98,5 +98,4 @@ class MemoryCertBackend(CertBackend):
 
     async def delete(self, service_id: str) -> bool:
         """In-memory delete — pop из dict. Возвращает ``True`` если запись была."""
-        existed = self._data.pop(service_id, None) is not None
-        return existed
+        return self._data.pop(service_id, None) is not None

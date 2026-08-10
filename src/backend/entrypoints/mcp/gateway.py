@@ -86,12 +86,11 @@ def _resolve_auth_provider() -> Any | None:
             return None
 
         try:
-            verifier = JWTVerifier(
+            return JWTVerifier(
                 jwks_uri=f"{issuer_url}/.well-known/jwks.json",
                 issuer=issuer_url,
                 audience=audience,
             )
-            return verifier
         except Exception as exc:
             logger.warning("JWTVerifier init failed: %s", exc)
             return None

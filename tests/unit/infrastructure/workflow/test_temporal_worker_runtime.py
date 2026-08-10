@@ -28,8 +28,7 @@ def _reset_state() -> None:
 
 def _make_workflow_class(name: str = "FakeWorkflow") -> type:
     """Workflow-класс, проходящий ``workflow_registry._is_workflow_class``."""
-    cls = type(name, (), {"_is_workflow": True})
-    return cls
+    return type(name, (), {"_is_workflow": True})
 
 
 def _patch_temporalio() -> tuple[MagicMock, MagicMock]:

@@ -417,12 +417,11 @@ class S3Client(BaseS3Client):
         """Генерирует предварительно подписанный URL для временного доступа."""
         async with self.client_context() as client:
             try:
-                url = await client.generate_presigned_url(
+                return await client.generate_presigned_url(
                     "get_object",
                     Params={"Bucket": self._settings.bucket, "Key": key},
                     ExpiresIn=expiration,
                 )
-                return url
             except Exception as exc:
                 self.logger.error(
                     f"Ошибка генерации предварительно подписанного URL: {exc!s}",

@@ -24,8 +24,7 @@ def fresh_audit_log(monkeypatch: pytest.MonkeyPatch) -> AuditEventLog:
     monkeypatch.setattr(
         "src.backend.infrastructure.audit.event_log._audit_log", None, raising=False,
     )
-    log = AuditEventLog(table="audit_events", batch_size=2)
-    return log
+    return AuditEventLog(table="audit_events", batch_size=2)
 
 
 @pytest.fixture

@@ -143,8 +143,7 @@ class RequestMixin(_HttpClientProtocol):
 
         try:
             async with self.circuit_breaker.guard():
-                result = await _do_request()
-                return result
+                return await _do_request()
         except Exception as exc:
             last_exception = exc
             if raise_for_status:

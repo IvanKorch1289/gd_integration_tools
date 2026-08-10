@@ -119,8 +119,7 @@ class SemanticCache:
         key = self._exact_key(query)
         raw = getattr(redis_client, "_raw_client", None) or redis_client
         try:
-            v = await raw.get(key)
-            return v
+            return await raw.get(key)
         except Exception as exc:
             logger.debug("SemanticCache get fail: %s", exc)
             return None
