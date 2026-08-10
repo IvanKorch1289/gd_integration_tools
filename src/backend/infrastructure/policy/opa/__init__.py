@@ -11,7 +11,7 @@ Rego-policies:
     импортирует. См. ``policies/authz_default.rego`` для reference-scaffold.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.infrastructure.policy.opa.client import (  # noqa: F401 — re-export
     OPAClient,

@@ -4,7 +4,7 @@ Wave: ``[wave:s8/k3-rpa-universal-stage1]``. Public API:
 * :class:`PlaywrightBrowserPool` — пул контекстов patchright/playwright.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.rpa.browser_pool import (
     PlaywrightBrowserPool,  # noqa: F401 — re-export

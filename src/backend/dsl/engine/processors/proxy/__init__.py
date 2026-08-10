@@ -10,7 +10,7 @@
     )
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.proxy.expose import (
     ExposeProxyProcessor,

@@ -12,21 +12,28 @@ Core (2) остается в __init__.py: __init__, execute_next (82 LOC, BIG).
 Backward-compat: ``from src.backend.infrastructure.workflow.executor import DSLStepExecutor`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Literal
+from collections.abc import Callable as Callable
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+    Literal as Literal,
+)
 
 if TYPE_CHECKING:
     pass
 
-from src.backend.core.domain.models.workflow_event import WorkflowEventType
-from src.backend.core.logging import get_logger
+from src.backend.core.domain.models.workflow_event import WorkflowEventType as WorkflowEventType
+from src.backend.core.logging import get_logger as get_logger
 from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,
     WorkflowState,
 )
-from src.backend.infrastructure.workflow.runner import StepOutcome, StepResult
+from src.backend.infrastructure.workflow.runner import (
+    StepOutcome as StepOutcome,
+    StepResult as StepResult,
+)
 
 _logger = get_logger("workflow.executor")
 

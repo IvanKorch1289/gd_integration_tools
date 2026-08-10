@@ -24,7 +24,7 @@ backend-services-only, см. ``tools/check_layers.py`` R3.10d).
 ``check_layers.py``.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.dsl_portal.builder_facade import (
     Pipeline,

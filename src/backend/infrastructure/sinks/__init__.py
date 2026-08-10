@@ -26,7 +26,7 @@
 ``SinkResult(ok=False, details={"error": "<lib> not installed"})``).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.infrastructure.sinks.email_sink import (
     EmailSink,  # noqa: F401 — re-export
@@ -40,19 +40,19 @@ from src.backend.infrastructure.sinks.grpc_sink import (
 from src.backend.infrastructure.sinks.http_sink import (
     HttpSink,  # noqa: F401 — re-export
 )
-from src.backend.infrastructure.sinks.mq_sink import MqSink  # noqa: F401 — re-export
+from src.backend.infrastructure.sinks.mq_sink import MqSink  # noqa: F401 — re-export as MqSink  # noqa: F401 — re-export
 from src.backend.infrastructure.sinks.mqtt_sink import (
     MqttSink,  # noqa: F401 — re-export
 )
-from src.backend.infrastructure.sinks.s3_sink import S3Sink  # noqa: F401 — re-export
-from src.backend.infrastructure.sinks.sms_sink import SmsSink  # noqa: F401 — re-export
+from src.backend.infrastructure.sinks.s3_sink import S3Sink  # noqa: F401 — re-export as S3Sink  # noqa: F401 — re-export
+from src.backend.infrastructure.sinks.sms_sink import SmsSink  # noqa: F401 — re-export as SmsSink  # noqa: F401 — re-export
 from src.backend.infrastructure.sinks.soap_sink import (
     SoapSink,  # noqa: F401 — re-export
 )
 from src.backend.infrastructure.sinks.webhook_sink import (
     WebhookSink,  # noqa: F401 — re-export
 )
-from src.backend.infrastructure.sinks.ws_sink import WsSink  # noqa: F401 — re-export
+from src.backend.infrastructure.sinks.ws_sink import WsSink  # noqa: F401 — re-export as WsSink  # noqa: F401 — re-export
 
 __all__ = (
     "EmailSink",

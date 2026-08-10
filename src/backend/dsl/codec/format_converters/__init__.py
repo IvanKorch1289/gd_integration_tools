@@ -10,7 +10,7 @@
 Backward-compat: ``from src.backend.dsl.codec.format_converters import AvroEncodeProcessor`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.codec.format_converters.avro import (
     AvroDecodeProcessor,  # S58 W3: re-export

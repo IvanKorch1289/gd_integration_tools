@@ -11,7 +11,7 @@
     PluginDependencyCycleError — циклическая зависимость на bootstrap.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.plugin_runtime.dependency_resolver import (
     PluginDependencyCycleError,

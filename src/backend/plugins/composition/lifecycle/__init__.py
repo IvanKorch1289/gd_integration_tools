@@ -6,7 +6,7 @@ Sibling S82 already extracted: protocols (W1), bootstrap (W2), v11 (W3), watcher
 S66 W3: lifespan -> lifespan.py.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.plugins.composition.lifecycle import (
     bootstrap,

@@ -13,7 +13,7 @@ not yet integrated). При ``BILLING_ENABLED=False`` (default) фасад
 * :class:`src.backend.core.auth.quotas_protocol.QuotasBackend` — контракт.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.billing.no_op_billing import (
     BILLING_ENABLED,

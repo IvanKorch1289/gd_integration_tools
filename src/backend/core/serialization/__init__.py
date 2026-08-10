@@ -1,6 +1,6 @@
 """Сериализаторы hot-path (S10 K2 W1, PERF-6.5)."""
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.serialization.msgspec_hotpath import (
     MSGSPEC_AVAILABLE,

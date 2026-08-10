@@ -11,17 +11,23 @@ Core (4) остается в __init__.py: __init__, _service_error_boundary, _en
 Backward-compat: ``from src.backend.services.core.base import BaseService`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 if TYPE_CHECKING:
     pass
 
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager as asynccontextmanager
 
-from src.backend.core.errors import NotFoundError, ServiceError
-from src.backend.schemas.base import BaseSchema
+from src.backend.core.errors import (
+    NotFoundError as NotFoundError,
+    ServiceError as ServiceError,
+)
+from src.backend.schemas.base import BaseSchema as BaseSchema
 
 
 def _is_orm_model(instance: Any) -> bool:
@@ -29,8 +35,8 @@ def _is_orm_model(instance: Any) -> bool:
     return hasattr(cls, "__tablename__") and hasattr(cls, "__table__")
 
 
-from src.backend.services.core.base.cache_mixin import CacheMixin  # S61 W1: MRO
-from src.backend.services.core.base.crud_mixin import CrudMixin  # S61 W1: MRO
+from src.backend.services.core.base.cache_mixin import CacheMixin  # S61 W1: MRO as CacheMixin  # S61 W1: MRO
+from src.backend.services.core.base.crud_mixin import CrudMixin  # S61 W1: MRO as CrudMixin  # S61 W1: MRO
 from src.backend.services.core.base.helpers import (
     _is_orm_model,  # S61 W1: re-export
     create_service_class,  # S61 W1: re-export

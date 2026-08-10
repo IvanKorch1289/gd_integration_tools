@@ -10,7 +10,7 @@
 Backward-compat: ``from src.backend.dsl.commands.setup import register_action_handlers`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.commands.setup.helpers import (
     _register_crud_actions,  # S66 W2: re-export

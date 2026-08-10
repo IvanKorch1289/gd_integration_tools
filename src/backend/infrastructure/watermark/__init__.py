@@ -5,9 +5,12 @@ PG-реализация импортируется лениво (через ``__
 psycopg/SQLAlchemy-стека (dev_light/unit-тесты).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 from src.backend.infrastructure.watermark.factory import (
     create_watermark_store,  # noqa: F401 — re-export

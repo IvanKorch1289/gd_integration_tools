@@ -5,7 +5,7 @@ Sprint 40 W5 (v15 §10 RAG over project documentation):
   docs/devs/*.md → Qdrant collection ``project_docs`` (default).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.rag.project_docs import (  # noqa: F401 — re-export
     DocsIndexer,

@@ -10,7 +10,7 @@
 сингл-инстанса — через :func:`get_reply_channel_registry`.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.infrastructure.messaging.invocation_replies.email import (
     EmailReplyChannel,

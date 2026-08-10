@@ -9,7 +9,7 @@
 Backward-compat: ``from src.backend.dsl.engine.processors.control_flow import ChoiceProcessor`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.control_flow.choice import (
     ChoiceBranch,  # S55 W2: re-export

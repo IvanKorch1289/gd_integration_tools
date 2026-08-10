@@ -9,7 +9,7 @@
 Backward-compat: ``from src.backend.dsl.yaml_loader import load_pipeline_from_yaml`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.yaml_loader.build import (
     _apply_processor,  # S62 W4: re-export

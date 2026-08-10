@@ -11,7 +11,7 @@ Refs:
     https://docs.temporal.io/best-practices
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.workflow.best_practices.claim_check import (
     WorkflowClaimCheckProcessor,

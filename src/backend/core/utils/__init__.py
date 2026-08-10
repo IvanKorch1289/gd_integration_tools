@@ -18,7 +18,7 @@ from src.backend.core.utils.async_helpers import (
     AsyncChunkIterator,
     async_chunk_iterator,
 )
-from src.backend.core.utils.cache_keys import build_cache_key  # noqa: F401 — re-export
+from src.backend.core.utils.cache_keys import build_cache_key  # noqa: F401 — re-export as build_cache_key  # noqa: F401 — re-export
 from src.backend.core.utils.datetime_utils import (
     ensure_utc,
     humanize_delta,
@@ -47,7 +47,7 @@ from src.backend.core.utils.task_registry import (
     get_task_registry,
     reset_task_registry,
 )
-from src.backend.core.utils.watchdog import Watchdog  # noqa: F401 — re-export
+from src.backend.core.utils.watchdog import Watchdog  # noqa: F401 — re-export as Watchdog  # noqa: F401 — re-export
 
 __all__ = (
     "AsyncChunkIterator",

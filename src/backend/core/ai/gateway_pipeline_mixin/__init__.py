@@ -10,9 +10,9 @@
 Backward-compat: ``from src.backend.core.ai.gateway_pipeline_mixin import PipelineStepsMixin`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
@@ -41,7 +41,7 @@ Mixin не имеет ``__init__`` — relies on facade's ``__init__`` для ``
 * :class:`AuditContextMixin` — :mod:`core.ai.gateway_audit_mixin`.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass

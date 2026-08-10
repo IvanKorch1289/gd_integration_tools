@@ -33,17 +33,17 @@ Feature-flag
 * docs/adr/0070-agent-dsl-processors.md.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.agent_dsl.agent_branch import (
     AgentBranchProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.agent_graph import AgentGraphProcessor
-from src.backend.dsl.engine.processors.agent_dsl.agent_loop import AgentLoopProcessor
+from src.backend.dsl.engine.processors.agent_dsl.agent_graph import AgentGraphProcessor as AgentGraphProcessor
+from src.backend.dsl.engine.processors.agent_dsl.agent_loop import AgentLoopProcessor as AgentLoopProcessor
 from src.backend.dsl.engine.processors.agent_dsl.agent_parallel import (
     AgentParallelProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.agent_run import AgentRunProcessor
+from src.backend.dsl.engine.processors.agent_dsl.agent_run import AgentRunProcessor as AgentRunProcessor
 
 # S187: export agent_security_check processor
 from src.backend.dsl.engine.processors.agent_dsl.agent_security_check import (
@@ -60,15 +60,15 @@ from src.backend.dsl.engine.processors.agent_dsl.guardrails_apply import (
 from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
     LangGraphAgentProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import MCPToolProcessor
+from src.backend.dsl.engine.processors.agent_dsl.mcp_tool import MCPToolProcessor as MCPToolProcessor
 from src.backend.dsl.engine.processors.agent_dsl.memory_recall import (
     MemoryRecallProcessor,
 )
 from src.backend.dsl.engine.processors.agent_dsl.memory_store import (
     MemoryStoreProcessor,
 )
-from src.backend.dsl.engine.processors.agent_dsl.pii_mask import PIIMaskProcessor
-from src.backend.dsl.engine.processors.agent_dsl.pii_unmask import PIIUnmaskProcessor
+from src.backend.dsl.engine.processors.agent_dsl.pii_mask import PIIMaskProcessor as PIIMaskProcessor
+from src.backend.dsl.engine.processors.agent_dsl.pii_unmask import PIIUnmaskProcessor as PIIUnmaskProcessor
 from src.backend.dsl.engine.processors.agent_dsl.plan_execute import (
     PlanExecuteProcessor,
 )

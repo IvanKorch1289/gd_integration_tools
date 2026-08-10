@@ -16,7 +16,7 @@
 приведёт к ImportError — это by design (только активный PII layer использует их).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.pii.recognizers._base import (
     RegexPiiRecognizer,  # noqa: F401 — re-export

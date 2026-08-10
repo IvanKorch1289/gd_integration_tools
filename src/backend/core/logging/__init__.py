@@ -14,10 +14,13 @@ Usage::
     from src.backend.core.logging import get_logger  # noqa: F401 — re-export
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable as Callable
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 if TYPE_CHECKING:
     # Static contract for the runtime-lazy facade below.  The implementation

@@ -12,15 +12,15 @@ Core (2) остается в __init__.py: __init__, _server_to_ws_url.
 Backward-compat: ``from src.backend.services.jupyter.execution_service import NotebookExecutionService`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
 
-from src.backend.core.clients.jupyter_hub import JupyterHubClient
-from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
+from src.backend.core.clients.jupyter_hub import JupyterHubClient as JupyterHubClient
+from src.backend.core.config.services.jupyter_hub import JupyterHubSettings as JupyterHubSettings
 from src.backend.services.jupyter.execution_service.backend import (
     NbClientExecutionBackend,  # S60 W1: re-export
 )

@@ -6,4 +6,4 @@
   через :class:`Invoker` (W22 этап B).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations

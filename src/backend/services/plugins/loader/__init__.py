@@ -10,10 +10,10 @@ Public surface (__init__ + loaded + successful + discover_and_load + shutdown_al
 Backward-compat: ``from src.backend.services.plugins.loader import PluginLoader`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from pathlib import Path
-from typing import TYPE_CHECKING
+from pathlib import Path as Path
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.core.interfaces.plugin import (
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     )
     from src.backend.core.security.capabilities import CapabilityGate
 
-from src.backend.core.logging import get_logger
+from src.backend.core.logging import get_logger as get_logger
 from src.backend.core.plugin_runtime.compat_checker import (
     CompatViolation,
     check_compatibility,
@@ -38,7 +38,7 @@ from src.backend.services.plugins.loader.discovery import (
     LoadedPlugin,  # S52 W3: re-export для backward compat
     PluginInventoryConflictError,  # S52 W3: re-export для backward compat
 )
-from src.backend.services.plugins.loader.loading import LoadingMixin  # S52 W3: MRO
+from src.backend.services.plugins.loader.loading import LoadingMixin  # S52 W3: MRO as LoadingMixin  # S52 W3: MRO
 from src.backend.services.plugins.loader.models_discovery import (  # cycle-15: D-AUDIT-1502
     ManifestWithPath,
     load_plugin_manifests_for_migrations,
@@ -322,7 +322,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
 # which expects a get_plugin_loader() singleton. If app.state.plugin_loader
 # is set, returns it; otherwise raises (caught by try/except in startup,
 # falls back to bootstrap_v11_plugin_loader).
-from src.backend.core.di.app_state import app_state_singleton
+from src.backend.core.di.app_state import app_state_singleton as app_state_singleton
 
 
 def _empty_plugin_loader_factory() -> PluginLoader:

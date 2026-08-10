@@ -11,7 +11,7 @@
 Запуск: ``python manage.py http3-serve``.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.entrypoints.http3.config import (
     Http3ServerConfig,  # noqa: F401 — re-export

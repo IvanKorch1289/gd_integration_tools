@@ -8,7 +8,7 @@ S36-W23: добавлены single entry points для объектного хр
 без прямого импорта из ``services.storage.facade`` (boundary rule).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 # S36-W23: re-export DI providers для single entry point
 from src.backend.core.di.providers import (

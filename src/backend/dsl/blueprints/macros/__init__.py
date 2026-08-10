@@ -7,7 +7,7 @@
 Backward-compat: ``from src.backend.dsl.blueprints.macros import etl_pipeline`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.blueprints.macros.ai_qa_pipeline import (
     ai_qa_pipeline,  # S68 W1: re-export

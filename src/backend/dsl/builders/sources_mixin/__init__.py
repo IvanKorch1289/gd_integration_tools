@@ -19,7 +19,7 @@ S132 W4: добавлен 10-й mixin — external_sources_mixin.py (1): from_gr
 Backward-compat: ``from src.backend.dsl.builders.sources_mixin import SourcesMixin`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.builders.sources_mixin.cdc_sources_mixin import (
     CdcSourcesMixin,  # S57 W2: MRO

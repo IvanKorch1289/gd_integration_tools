@@ -1,6 +1,6 @@
 """Индексеры (Wave 9.3 + 12): logs/orders → ES, notebooks → RAG."""
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.io.indexers.log_indexer import (  # noqa: F401 — re-export
     LogIndexer,

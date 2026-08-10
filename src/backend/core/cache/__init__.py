@@ -21,7 +21,7 @@ Backends (Redis / Memcached / KeyDB / Disk) live in
 ``src.backend.infrastructure.cache`` and are wired by the DI provider
 via the ``UnifiedCacheFacade`` Protocol (Rule 1).
 """
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.cache.facade import (
     CacheError,
@@ -30,7 +30,7 @@ from src.backend.core.cache.facade import (
     MemoryCacheFacade,
     UnifiedCacheFacade,
 )
-from src.backend.core.cache.rag import ThreeTierRagCache  # noqa: F401 — re-export
+from src.backend.core.cache.rag import ThreeTierRagCache  # noqa: F401 — re-export as ThreeTierRagCache  # noqa: F401 — re-export
 
 __all__ = (
     "CacheError",

@@ -5,9 +5,9 @@ ADR-0207: services/scheduler/cron_dashboard_service.py импортирует
 переносит публичную поверхность в ``core.scheduler``.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import Any
+from typing import Any as Any
 
 from src.backend.core.di.providers.infrastructure_locator import (
     get_scheduler_manager_class as _get_sm_cls,

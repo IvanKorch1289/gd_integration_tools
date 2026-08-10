@@ -9,7 +9,7 @@
 Backward-compat: ``from src.backend.infrastructure.workflow.pg_runner_internals import WorkflowState`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.infrastructure.workflow.pg_runner_internals.event_store import (
     WorkflowEventStore,  # S55 W3: re-export

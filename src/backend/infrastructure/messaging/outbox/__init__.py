@@ -16,7 +16,7 @@ DLQ-store API; dispatcher использует его для handoff неусп�
 Wave: ``[wave:s8/k2-w2-outbox-dispatcher]``.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.infrastructure.messaging.outbox.dispatcher import (
     DLQHandler,

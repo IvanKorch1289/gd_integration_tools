@@ -16,7 +16,7 @@ fallback на pypdf/python-docx).
   markitdown расширений: PPTX, XLSX, HTML, CSV, JSON).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.document_parsers._orchestrator import (
     SUPPORTED_MIME_TYPES,

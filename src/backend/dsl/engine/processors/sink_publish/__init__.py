@@ -8,7 +8,7 @@
 Backward-compat: ``from src.backend.dsl.engine.processors.sink_publish import GrpcCallProcessor`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.sink_publish.generic import (
     GenericSinkPublishProcessor,  # S57 W4: re-export

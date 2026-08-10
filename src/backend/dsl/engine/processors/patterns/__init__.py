@@ -13,17 +13,17 @@ Modules:
 Ponytail: Phase 1 = re-export из legacy godfile (zero-risk).
 Phase 2 = физическое разделение в thematic files (S175.5+).
 """
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.patterns._helpers import (
     _SafeDict,  # noqa: F401 — re-export
 )
-from src.backend.dsl.engine.processors.patterns.batch_window import BatchWindowProcessor
-from src.backend.dsl.engine.processors.patterns.debounce import DebounceProcessor
-from src.backend.dsl.engine.processors.patterns.deduplicate import DeduplicateProcessor
-from src.backend.dsl.engine.processors.patterns.formatter import FormatterProcessor
-from src.backend.dsl.engine.processors.patterns.merge import MergeProcessor
-from src.backend.dsl.engine.processors.patterns.switch import SwitchProcessor
+from src.backend.dsl.engine.processors.patterns.batch_window import BatchWindowProcessor as BatchWindowProcessor
+from src.backend.dsl.engine.processors.patterns.debounce import DebounceProcessor as DebounceProcessor
+from src.backend.dsl.engine.processors.patterns.deduplicate import DeduplicateProcessor as DeduplicateProcessor
+from src.backend.dsl.engine.processors.patterns.formatter import FormatterProcessor as FormatterProcessor
+from src.backend.dsl.engine.processors.patterns.merge import MergeProcessor as MergeProcessor
+from src.backend.dsl.engine.processors.patterns.switch import SwitchProcessor as SwitchProcessor
 
 __all__ = (
     "BatchWindowProcessor",

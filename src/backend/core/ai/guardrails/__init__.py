@@ -9,7 +9,7 @@
     Используйте ``LlamaGuardRuntime`` или ``LakeraClient`` как замену.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.ai.guardrails.llamaguard import (  # noqa: F401 — re-export
     GuardResult,

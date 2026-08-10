@@ -11,18 +11,24 @@ Core (__init__ + vocabulary + policy) остается в __init__.py.
 Backward-compat: ``from src.backend.core.security.capabilities.gate import CapabilityGate`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from collections.abc import Callable, Iterable
-from threading import Lock
-from typing import TYPE_CHECKING, Final
+from collections.abc import (
+    Callable as Callable,
+    Iterable as Iterable,
+)
+from threading import Lock as Lock
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Final as Final,
+)
 
 from src.backend.core.security.capabilities.errors import (
     CapabilityNotFoundError,
     CapabilitySupersetError,
 )
-from src.backend.core.security.capabilities.models import CapabilityRef
-from src.backend.core.security.capabilities.policy import CapabilityPolicy
+from src.backend.core.security.capabilities.models import CapabilityRef as CapabilityRef
+from src.backend.core.security.capabilities.policy import CapabilityPolicy as CapabilityPolicy
 from src.backend.core.security.capabilities.vocabulary import (
     CapabilityVocabulary,
     build_default_vocabulary,  # S79 W2 fix: S54 W4 decomp forgot import

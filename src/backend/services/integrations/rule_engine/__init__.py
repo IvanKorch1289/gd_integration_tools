@@ -6,7 +6,7 @@ Public API:
       (feature flag ``rule_engine_hot_reload``).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.integrations.rule_engine.registry import (
     RuleEngineRegistry,

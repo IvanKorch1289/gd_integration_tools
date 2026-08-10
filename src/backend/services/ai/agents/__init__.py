@@ -8,7 +8,7 @@
 Все агенты экспозятся через REST ``POST /api/v1/ai/agents/{name}/invoke``.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.agents.analytics_agent import (
     AnalyticsAgent,

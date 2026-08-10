@@ -10,7 +10,7 @@
 Backward-compat: ``from src.backend.dsl.engine.processors.eip.routing import DynamicRouterProcessor`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.eip.routing.dynamic import (
     DynamicRouterProcessor,  # S63 W2: re-export

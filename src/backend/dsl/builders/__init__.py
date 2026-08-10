@@ -14,9 +14,9 @@ Marker-mixin'ы (CoreMixin/EIPMixin/...) — placeholder для doc/typing
 групп методов.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import Any
+from typing import Any as Any
 
 __all__ = (
     "AIMixin",

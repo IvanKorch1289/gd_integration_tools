@@ -7,12 +7,12 @@
 эти типы при работе.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from enum import StrEnum
-from typing import Any
+from enum import StrEnum as StrEnum
+from typing import Any as Any
 
-from src.backend.core.auth.api_key_backend import APIKeyAuth  # noqa: F401 — re-export
+from src.backend.core.auth.api_key_backend import APIKeyAuth  # noqa: F401 — re-export as APIKeyAuth  # noqa: F401 — re-export
 from src.backend.core.auth.auth_context_helpers import (
     extract_tenant_id,
     extract_user_groups,

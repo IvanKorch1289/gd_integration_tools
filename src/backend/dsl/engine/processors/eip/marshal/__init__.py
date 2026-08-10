@@ -8,7 +8,7 @@
 Backward-compat: ``from src.backend.dsl.engine.processors.eip.marshal import MarshalProcessor`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.eip.marshal.base import (
     DataFormat,  # S63 W3: re-export

@@ -1,6 +1,6 @@
 """Пакет RAG-сервисов (text, image, audio и мультимодальный)."""
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.rag.classifier import (
     AccuracyBenchmarkResult,

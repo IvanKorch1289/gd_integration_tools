@@ -1,6 +1,6 @@
 """Express dialogs/sessions stores (Wave 9.2.4)."""
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.integrations.express.dialog_store import (
     ExpressDialog,

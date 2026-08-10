@@ -20,7 +20,7 @@ Capability:
     и идут через feature-flag ``saml_ad_login_enabled``.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.auth.ad_directory_client import (
     AdAuthError,

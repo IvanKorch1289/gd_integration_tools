@@ -7,7 +7,7 @@
 Backward-compat: ``from src.backend.services.auth.ad_directory_client import AdDirectoryClient`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.auth.ad_directory_client.client import (
     AdDirectoryClient,  # S67 W4: re-export

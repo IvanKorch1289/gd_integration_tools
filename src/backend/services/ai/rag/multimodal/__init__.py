@@ -22,7 +22,7 @@
     * ``get_multimodal_rag`` — DI-singleton фасада.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.rag.multimodal._legacy import (
     MultimodalEntry,  # noqa: F401 — re-export

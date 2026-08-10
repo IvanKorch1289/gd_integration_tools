@@ -9,7 +9,7 @@
 Backward-compat: ``from src.backend.dsl.workflow.spec import WorkflowDeclaration`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.workflow.spec.activity_declarations import (
     ActivityDeclaration,  # S56 W1: re-export

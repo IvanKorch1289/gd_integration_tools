@@ -7,9 +7,9 @@
 Backward-compat: ``from src.backend.infrastructure.clients.storage.s3_pool import S3Client`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import Any
+from typing import Any as Any
 
 from src.backend.core.config.settings import (
     settings,  # S71 W1 fix: S56 W3 decomp lost this import

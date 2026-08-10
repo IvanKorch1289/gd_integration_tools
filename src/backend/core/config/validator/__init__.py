@@ -11,9 +11,9 @@ Public surface (``validate``, ``_is_prod``, ``validate_startup_config``)
 Backward-compat: ``from src.backend.core.config.validator import ConfigValidator`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.core.config.settings import Settings

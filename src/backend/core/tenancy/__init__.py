@@ -5,10 +5,10 @@ Tenant resolver читает header ``X-Tenant-ID`` или subdomain, устан
 metrics) используют контекст для изоляции.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from contextvars import ContextVar
-from dataclasses import dataclass
+from contextvars import ContextVar as ContextVar
+from dataclasses import dataclass as dataclass
 
 __all__ = (
     "QuotaExceeded",
@@ -101,4 +101,7 @@ from src.backend.core.tenancy.quotas import (  # noqa: F401 — re-export
     QuotaExceeded,
     QuotaTracker,
 )
-from src.backend.core.tenancy.slo import SLOEvaluation, TenantSLO
+from src.backend.core.tenancy.slo import (
+    SLOEvaluation as SLOEvaluation,
+    TenantSLO as TenantSLO,
+)

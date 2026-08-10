@@ -4,4 +4,4 @@ Sub-modules:
 - skb: re-export of services.integrations.skb
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations

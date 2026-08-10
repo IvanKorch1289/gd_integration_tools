@@ -14,21 +14,24 @@ research/agent-framework/REPORT.md F4.1, F4.2.
 Backward-compat: ``from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from src.backend.core.ai.policy.spec import ToolsSpec  # S76 W3
     from src.backend.core.messaging.dlq import DLQWriter
-from src.backend.core.ai.policy.enforcer.handle_mixin import HandleMixin  # S67 W2: MRO
+from src.backend.core.ai.policy.enforcer.handle_mixin import HandleMixin  # S67 W2: MRO as HandleMixin  # S67 W2: MRO
 from src.backend.core.ai.policy.enforcer.input_guard_mixin import (
     InputGuardMixin,  # S67 W2: MRO
 )

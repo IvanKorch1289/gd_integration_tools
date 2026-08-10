@@ -10,7 +10,7 @@
 Backward-compat: ``from src.backend.entrypoints.grpc.grpc_server import OrderGRPCServicer`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.entrypoints.grpc.grpc_server._safe_error import (
     _safe_error,  # S65 W3: top-level func re-export

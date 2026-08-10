@@ -8,7 +8,7 @@
 Backward-compat: ``from src.backend.services.ai.semantic_cache import SemanticCache`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.semantic_cache.helpers import (
     get_l3_retrieval_cache,  # S67 W3: helper re-export

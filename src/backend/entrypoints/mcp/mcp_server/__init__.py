@@ -14,11 +14,11 @@ Public API: ``create_mcp_server()``, ``register_mcp_tools()``.
 Backward-compat: ``from src.backend.entrypoints.mcp.mcp_server import X`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import Any
+from typing import Any as Any
 
-from src.backend.core.logging import get_logger
+from src.backend.core.logging import get_logger as get_logger
 from src.backend.entrypoints.mcp.mcp_server.helpers import (
     _action_input_schema_json,
     _check_mcp_tool_authz,

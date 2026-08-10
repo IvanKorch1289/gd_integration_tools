@@ -25,12 +25,18 @@ Sprint 173 M2.4: backward-compat re-exports для
 ``core.interfaces.log_sink`` → ``core.interfaces.__init__``.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum
-from typing import TYPE_CHECKING, Any
+from abc import (
+    ABC as ABC,
+    abstractmethod as abstractmethod,
+)
+from dataclasses import dataclass as dataclass
+from enum import Enum as Enum
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 from src.backend.core.interfaces.antivirus import (  # noqa: F401 — re-export
     AntivirusBackend,
@@ -40,18 +46,18 @@ from src.backend.core.interfaces.audit import (  # noqa: F401 — re-export
     AuditBackend,
     AuditRecord,
 )
-from src.backend.core.interfaces.cache import CacheBackend  # noqa: F401 — re-export
+from src.backend.core.interfaces.cache import CacheBackend  # noqa: F401 — re-export as CacheBackend  # noqa: F401 — re-export
 from src.backend.core.interfaces.doc_store import (
     DocStoreBackend,  # noqa: F401 — re-export
 )
-from src.backend.core.interfaces.metrics import MetricsBackend  # noqa: F401 — re-export
+from src.backend.core.interfaces.metrics import MetricsBackend  # noqa: F401 — re-export as MetricsBackend  # noqa: F401 — re-export
 from src.backend.core.interfaces.notification import (
     NotificationAdapter,
     NotificationMessage,
 )
-from src.backend.core.interfaces.secrets import SecretsBackend  # noqa: F401 — re-export
-from src.backend.core.interfaces.storage import ObjectStorage  # noqa: F401 — re-export
-from src.backend.core.logging import get_logger
+from src.backend.core.interfaces.secrets import SecretsBackend  # noqa: F401 — re-export as SecretsBackend  # noqa: F401 — re-export
+from src.backend.core.interfaces.storage import ObjectStorage  # noqa: F401 — re-export as ObjectStorage  # noqa: F401 — re-export
+from src.backend.core.logging import get_logger as get_logger
 
 logger = get_logger(__name__)
 

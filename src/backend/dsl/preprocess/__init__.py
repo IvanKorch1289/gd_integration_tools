@@ -1,6 +1,6 @@
 """DSL preprocessors (S10 K3 W7): Jinja2 macros over YAML."""
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.preprocess.jinja_macros import (  # noqa: F401 — re-export
     has_jinja_syntax,

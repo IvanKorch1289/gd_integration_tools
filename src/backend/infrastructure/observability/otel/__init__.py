@@ -17,7 +17,7 @@
 default-off, чтобы не влиять на dev_light и CI без OTLP-эндпоинта.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.infrastructure.observability.otel.setup import (
     configure_otel,

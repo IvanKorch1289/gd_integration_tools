@@ -19,7 +19,7 @@
 ``src/backend/infrastructure/policy/``.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.security.authorization_gateway.policies.casbin_policy_decider import (
     CasbinPolicyDecider,

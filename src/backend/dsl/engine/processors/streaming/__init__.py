@@ -9,7 +9,7 @@
 Backward-compat: ``from src.backend.dsl.engine.processors.streaming import X`` works для всех 13 классов.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.streaming.message_meta import (  # S53 W2
     CorrelationIdProcessor,

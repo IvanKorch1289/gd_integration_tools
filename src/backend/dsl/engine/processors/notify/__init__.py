@@ -8,12 +8,15 @@
                               default-OFF под feature_flag.notification_dsl_enabled.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
-from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.exchange import Exchange as Exchange
+from src.backend.dsl.engine.processors.base import BaseProcessor as BaseProcessor
 
 if TYPE_CHECKING:  # pragma: no cover
     from src.backend.dsl.engine.context import ExecutionContext

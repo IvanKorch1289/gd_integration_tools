@@ -31,7 +31,7 @@ Public API:
       не импортирует I/O.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.workflow.compiler.activity_bridge import (
     ActivityBridge,

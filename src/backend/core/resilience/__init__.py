@@ -23,7 +23,7 @@ Step 3.2 объединил ``infrastructure/resilience/{breaker,retry}.py`` и
 backward-compat shim'ы (re-export).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.resilience.adaptive_timeout import (
     AdaptiveTimeoutConfig,

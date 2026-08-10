@@ -17,6 +17,6 @@
     * ``express_chain``     — Express → Email → Slack  (W26.4)
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 __all__ = ()

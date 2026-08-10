@@ -8,7 +8,7 @@
 Backward-compat: ``from src.backend.entrypoints.api.v1.endpoints.admin_plugins import PluginSummary`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.entrypoints.api.v1.endpoints.admin_plugins.endpoints import (
     diff_plugin_versions,  # S62 W1: re-export

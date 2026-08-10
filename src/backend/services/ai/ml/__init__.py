@@ -1,6 +1,6 @@
 """AI ML services — model loader, inference utilities."""
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.ml.model_loader import (  # noqa: F401 — re-export
     MLModelLoader,

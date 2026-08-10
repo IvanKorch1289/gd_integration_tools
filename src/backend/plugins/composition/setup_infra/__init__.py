@@ -9,7 +9,7 @@
 Backward-compat: ``from src.backend.plugins.composition.setup_infra import perform_infrastructure_operation`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.plugins.composition.setup_infra.health import (
     _get_watcher_manager,  # S60 W3: re-export

@@ -5,6 +5,6 @@
       backends (W22.3): memory polling, WebSocket push.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 __all__: tuple[str, ...] = ()

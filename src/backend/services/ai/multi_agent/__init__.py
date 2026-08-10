@@ -26,7 +26,7 @@
     ``feature_flags.multi_agent_supervisor_enabled`` (default-OFF).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.multi_agent.supervisor import (
     AgentSpec,

@@ -8,7 +8,7 @@
 Backward-compat: ``from src.backend.services.audit.clickhouse_audit_service import ClickHouseAuditService`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.audit.clickhouse_audit_service.helpers import (
     _make_default_event_id,  # S68 W2: helper re-export

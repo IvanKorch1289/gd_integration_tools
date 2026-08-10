@@ -8,16 +8,16 @@ Backward-compat: ``from src.backend.dsl.builders.transport import TransportMixin
 работает как раньше (MRO композитный).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import Self
+from typing import Self as Self
 
-from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
-from src.backend.dsl.builders.transport.external import ExternalMixin
-from src.backend.dsl.builders.transport.persistence import PersistenceMixin
-from src.backend.dsl.builders.transport.proxy import ProxyMixin
-from src.backend.dsl.builders.transport.sinks import SinksMixin
-from src.backend.dsl.builders.transport.sources import SourcesMixin
+from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol as _RouteBuilderProtocol
+from src.backend.dsl.builders.transport.external import ExternalMixin as ExternalMixin
+from src.backend.dsl.builders.transport.persistence import PersistenceMixin as PersistenceMixin
+from src.backend.dsl.builders.transport.proxy import ProxyMixin as ProxyMixin
+from src.backend.dsl.builders.transport.sinks import SinksMixin as SinksMixin
+from src.backend.dsl.builders.transport.sources import SourcesMixin as SourcesMixin
 
 
 class TransportMixin(

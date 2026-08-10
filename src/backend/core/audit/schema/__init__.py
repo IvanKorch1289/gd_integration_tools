@@ -1,6 +1,6 @@
 """Audit schema definitions (ADR-0071, S27 W5)."""
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 __all__ = ("AIInvocationEvent", "AIInvocationEventType", "AIInvocationPayload")
 

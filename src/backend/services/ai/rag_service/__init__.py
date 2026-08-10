@@ -12,12 +12,12 @@ Core (1) остается в __init__.py: __init__.
 Backward-compat: ``from src.backend.services.ai.rag_service import RAGService`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
-from src.backend.core.di import app_state_singleton
-from src.backend.core.interfaces.vector_store import BaseVectorStore
+from src.backend.core.di import app_state_singleton as app_state_singleton
+from src.backend.core.interfaces.vector_store import BaseVectorStore as BaseVectorStore
 from src.backend.services.ai.embedding_providers import (
     EmbeddingProvider,
     get_embedding_provider,
@@ -32,7 +32,7 @@ from src.backend.services.ai.rag_service.augment_mixin import (
 from src.backend.services.ai.rag_service.collection_mixin import (
     CollectionMixin,  # S64 W4: MRO
 )
-from src.backend.services.ai.rag_service.ingest_mixin import IngestMixin  # S64 W4: MRO
+from src.backend.services.ai.rag_service.ingest_mixin import IngestMixin  # S64 W4: MRO as IngestMixin  # S64 W4: MRO
 from src.backend.services.ai.rag_service.search_mixin import (
     SearchMixin,  # S64 W4: MRO
     _extract_source_id,  # S152 W2: re-export для tests
@@ -41,7 +41,7 @@ from src.backend.services.ai.rag_service.search_mixin import (
     _format_context_with_sources,  # S152 W2: re-export для tests
     _resolve_effective_tenant_id,  # Sprint 2.6: tenant resolution helper
 )
-from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-export
+from src.backend.services.ai.rag_service.state import RAGCitation  # S64 W4: re-export as RAGCitation  # S64 W4: re-export
 from src.backend.services.ai.rag_types import (  # noqa: F401 — re-export
     AugmentResult,
     FreshnessLabel,

@@ -25,7 +25,7 @@ backend-selection factory без жёсткой зависимости от exte
     get_openfeature_backend / is_flagsmith_backend_enabled / create_inmemory_backend.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.feature_flags.flagsmith_client import (
     FlagsmithClient,

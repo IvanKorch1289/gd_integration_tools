@@ -3,7 +3,7 @@
 Canonical entry point for extensions: :class:`UnifiedCacheFacade`.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.cache.facade import (  # noqa: F401 — re-export
     CacheResult,

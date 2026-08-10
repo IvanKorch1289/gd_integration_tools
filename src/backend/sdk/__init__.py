@@ -17,17 +17,17 @@ Extension points:
     - Clock — монотонные часы для метрик и timeouts
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from src.backend.core.clock import Clock  # noqa: F401 — re-export
-from src.backend.core.di.app_state import app_state_singleton  # noqa: F401 — re-export
-from src.backend.core.errors import BaseError  # noqa: F401 — re-export
+from src.backend.core.clock import Clock  # noqa: F401 — re-export as Clock  # noqa: F401 — re-export
+from src.backend.core.di.app_state import app_state_singleton  # noqa: F401 — re-export as app_state_singleton  # noqa: F401 — re-export
+from src.backend.core.errors import BaseError  # noqa: F401 — re-export as BaseError  # noqa: F401 — re-export
 from src.backend.core.svcs_registry import (  # noqa: F401 — re-export
     get_service,
     register_factory,
 )
-from src.backend.dsl.engine.exchange import Exchange  # noqa: F401 — re-export
-from src.backend.dsl.engine.pipeline import Pipeline  # noqa: F401 — re-export
+from src.backend.dsl.engine.exchange import Exchange  # noqa: F401 — re-export as Exchange  # noqa: F401 — re-export
+from src.backend.dsl.engine.pipeline import Pipeline  # noqa: F401 — re-export as Pipeline  # noqa: F401 — re-export
 
 __all__ = [
     # AI Tool Policy (S170 P0-7)

@@ -4,9 +4,9 @@ Entry points and services must import ``get_audit_log`` from here,
 not from ``infrastructure.audit.event_log`` directly.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import Any
+from typing import Any as Any
 
 __all__ = ("get_audit_log",)
 

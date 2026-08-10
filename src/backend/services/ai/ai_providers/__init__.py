@@ -11,7 +11,7 @@
 Backward-compat: ``from src.backend.services.ai.ai_providers import ClaudeProvider`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.ai_providers.claude import (
     ClaudeProvider,  # S68 W4: re-export

@@ -11,7 +11,7 @@ parameters, callable) и может быть использован LangChain/La
 агентами, а также экспортирован через REST (``GET /api/v1/ai/tools``).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.tools.registry import (
     AgentTool,

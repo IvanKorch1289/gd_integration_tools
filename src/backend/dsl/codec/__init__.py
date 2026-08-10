@@ -15,9 +15,9 @@
     payload = encode_as('parquet', dataframe)
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import Any
+from typing import Any as Any
 
 from src.backend.dsl.codec.base64 import (  # noqa: F401 — re-export
     decode_base64,

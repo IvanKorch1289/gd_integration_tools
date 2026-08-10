@@ -16,7 +16,7 @@ Public API:
 - Type aliases: ``IdFactory``, ``ExpirationResolver``, ``RedeliveryAttempt``
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.eip.reliability._legacy import (
     HEADER_CORRELATION_ID,

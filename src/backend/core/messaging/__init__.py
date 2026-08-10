@@ -5,7 +5,7 @@
 до полной выкатки реальных backend'ов в Sprint 5 К2.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.messaging.outbox import (
     FakeOutbox,

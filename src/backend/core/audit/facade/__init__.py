@@ -24,17 +24,17 @@ References:
 
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from pathlib import Path
-from typing import TYPE_CHECKING
+from pathlib import Path as Path
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
 # Canonical re-exports (backward compat с pre-S107 callers)
 from src.backend.core.audit.facade._base import (  # noqa: F401 — re-export
     emit_audit,
     emit_audit_safe,
 )
-from src.backend.core.audit.facade.ai import emit_ai_workspace  # noqa: F401 — re-export
+from src.backend.core.audit.facade.ai import emit_ai_workspace  # noqa: F401 — re-export as emit_ai_workspace  # noqa: F401 — re-export
 from src.backend.core.audit.facade.audit_service import (
     AuditService,
     get_unified_audit_service,

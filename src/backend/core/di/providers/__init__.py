@@ -24,8 +24,16 @@ History:
 - workflow.py  (30 funcs) — actions, scheduler, workflow state, resilience, loggers
 """
 
-from src.backend.core.di.module_registry import resolve_module
-from src.backend.core.di.providers import ai, auth, cache, db, http, storage, workflow
+from src.backend.core.di.module_registry import resolve_module as resolve_module
+from src.backend.core.di.providers import (
+    ai as ai,
+    auth as auth,
+    cache as cache,
+    db as db,
+    http as http,
+    storage as storage,
+    workflow as workflow,
+)
 
 # --- ai.py (12) ---
 from src.backend.core.di.providers.ai import (

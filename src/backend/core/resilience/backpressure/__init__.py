@@ -10,7 +10,7 @@
 Backward-compat: ``from src.backend.core.resilience.backpressure import StreamingBackpressureController`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.resilience.backpressure.bulkhead import (
     AdaptiveBulkhead,  # S67 W1: re-export

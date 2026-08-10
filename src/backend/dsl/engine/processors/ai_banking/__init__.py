@@ -8,7 +8,7 @@ Backward-compat: ``from src.backend.dsl.engine.processors.ai_banking import
 KycAmlResult, KycAmlVerifyProcessor`` works через re-exports ниже.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.ai_banking._base import (
     _BankingAIProcessor,  # S50 W3: base

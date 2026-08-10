@@ -5,7 +5,7 @@ Wave 2.5: вводит ``LogSink``-стек поверх structlog.
 ``logging.getLogger``) сохранена.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.infrastructure.logging.factory import (
     configure_logging,

@@ -6,7 +6,7 @@
 здесь — повторяющийся триггер.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.entrypoints.scheduler.invoker_schedule import (
     ScheduleSpec,

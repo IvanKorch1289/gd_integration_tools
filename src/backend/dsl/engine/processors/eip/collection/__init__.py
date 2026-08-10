@@ -9,7 +9,7 @@
 Backward-compat: ``from src.backend.dsl.engine.processors.eip.collection import CollectProcessor`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.eip.collection.aggregators import (
     MaxByProcessor,  # S57 W3: re-export

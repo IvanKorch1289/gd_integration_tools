@@ -14,7 +14,7 @@
 промптинга из подтверждённых реальных примеров.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.feedback.feedback_indexer import (
     FeedbackIndexer,

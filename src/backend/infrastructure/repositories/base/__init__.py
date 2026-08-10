@@ -5,9 +5,12 @@ Sprint 36 — ponytail (D111): PEP 562 ``__getattr__`` для разрыва imp
 ``infrastructure.repositories.base.sqlalchemy`` ↔ ``infrastructure.database.session_manager``.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 if TYPE_CHECKING:
     from src.backend.infrastructure.repositories.base.base import (

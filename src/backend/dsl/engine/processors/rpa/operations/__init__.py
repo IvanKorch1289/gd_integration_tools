@@ -13,7 +13,7 @@ import FileDeleteProcessor`` падал с ImportError. Все 8 missing доб�
 ниже (1 дополнительный — FilteredDirectoryScanProcessor из D166).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.rpa.operations.archiveprocessor import (
     ArchiveProcessor,  # S65 W2: re-export

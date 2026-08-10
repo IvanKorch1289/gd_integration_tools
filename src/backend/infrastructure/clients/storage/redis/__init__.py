@@ -11,21 +11,27 @@ Core (4) остается в __init__.py: __init__, _base_url, _db_for_kind, _re
 Backward-compat: ``from src.backend.infrastructure.clients.storage.redis import RedisClient`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 if TYPE_CHECKING:
     pass
 
 import asyncio
-from typing import Literal
+from typing import Literal as Literal
 
-from redis.asyncio import Redis
+from redis.asyncio import Redis as Redis
 
-from src.backend.core.config.settings import RedisSettings, settings
-from src.backend.core.logging import get_logger
-from src.backend.infrastructure.resilience.client_breaker import ClientCircuitBreaker
+from src.backend.core.config.settings import (
+    RedisSettings as RedisSettings,
+    settings as settings,
+)
+from src.backend.core.logging import get_logger as get_logger
+from src.backend.infrastructure.resilience.client_breaker import ClientCircuitBreaker as ClientCircuitBreaker
 
 redis_logger = get_logger("redis")
 

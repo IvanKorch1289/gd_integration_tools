@@ -8,20 +8,20 @@ All 61 methods now distributed across 5 mixin files.
 Stateless: использует ``self._add`` / ``self._add_lazy`` через MRO.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder  # S52 W1: forward ref only
 
-from src.backend.dsl.builders.ai_rpa.ai_llm import AILlMMixin  # S51 W1: MRO
+from src.backend.dsl.builders.ai_rpa.ai_llm import AILlMMixin  # S51 W1: MRO as AILlMMixin  # S51 W1: MRO
 from src.backend.dsl.builders.ai_rpa.banking_scripts import (
     BankingScriptsMixin,  # S52 W1: MRO
 )
-from src.backend.dsl.builders.ai_rpa.rpa import RPAMixin  # S51 W2: MRO
-from src.backend.dsl.builders.ai_rpa.system_ops import SystemOpsMixin  # S52 W1: MRO
-from src.backend.dsl.builders.ai_rpa.text_ops import TextOpsMixin  # S52 W1: MRO
+from src.backend.dsl.builders.ai_rpa.rpa import RPAMixin  # S51 W2: MRO as RPAMixin  # S51 W2: MRO
+from src.backend.dsl.builders.ai_rpa.system_ops import SystemOpsMixin  # S52 W1: MRO as SystemOpsMixin  # S52 W1: MRO
+from src.backend.dsl.builders.ai_rpa.text_ops import TextOpsMixin  # S52 W1: MRO as TextOpsMixin  # S52 W1: MRO
 
 
 class AIRPAMixin(

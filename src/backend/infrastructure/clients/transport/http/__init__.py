@@ -13,9 +13,12 @@ Core (2) остается в __init__.py: __init__, close.
 Backward-compat: ``from src.backend.infrastructure.clients.transport.http import HttpClient`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 if TYPE_CHECKING:
     pass
@@ -24,8 +27,8 @@ import asyncio
 
 import httpx
 
-from src.backend.core.config.settings import settings
-from src.backend.core.logging import get_logger
+from src.backend.core.config.settings import settings as settings
+from src.backend.core.logging import get_logger as get_logger
 from src.backend.infrastructure.clients.transport.http.base import (
     BaseHttpClient,  # S61 W4: re-export
     FilePart,  # S61 W4: re-export

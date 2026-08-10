@@ -1,6 +1,6 @@
 """Wiki — full-text поиск по docs/ через Whoosh-reloaded (Wave 10.2)."""
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.wiki.whoosh_index import (  # noqa: F401 — re-export
     Hit,

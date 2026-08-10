@@ -9,7 +9,7 @@ Wave: ``[wave:s8/k4-model-registry]``. Public API:
 * :class:`ModelRecord` — доменная запись модели в реестре.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.model_registry.adapter import (
     ModelRecord,

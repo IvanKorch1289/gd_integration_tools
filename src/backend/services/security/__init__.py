@@ -12,7 +12,7 @@ Single entry-point для security primitives (HMAC signature verification)
 Layer policy: entrypoints -> services (allowed per V22).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.infrastructure.security.signatures import (
     DEFAULT_TIMESTAMP_WINDOW,

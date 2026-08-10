@@ -12,11 +12,14 @@ Core (__init__ + _get_http_client + _extract_agent_response) остается в
 Backward-compat: ``from src.backend.services.ai.ai_agent import AIAgentService, get_ai_agent_service`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
-from src.backend.core.di.providers.ai import get_ai_sanitizer_provider
+from src.backend.core.di.providers.ai import get_ai_sanitizer_provider as get_ai_sanitizer_provider
 
 if TYPE_CHECKING:
     from src.backend.core.di.providers.ai import get_ai_sanitizer_provider
@@ -32,8 +35,8 @@ from src.backend.services.ai.ai_agent.agent_orchestration_mixin import (
 from src.backend.services.ai.ai_agent.http_providers_mixin import (
     HttpProvidersMixin,  # S54 W2: MRO
 )
-from src.backend.services.ai.ai_agent.policy_mixin import PolicyMixin  # S54 W2: MRO
-from src.backend.services.ai.ai_agent.rag_mixin import RagMixin  # S54 W2: MRO
+from src.backend.services.ai.ai_agent.policy_mixin import PolicyMixin  # S54 W2: MRO as PolicyMixin  # S54 W2: MRO
+from src.backend.services.ai.ai_agent.rag_mixin import RagMixin  # S54 W2: MRO as RagMixin  # S54 W2: MRO
 from src.backend.services.ai.ai_agent.web_methods_mixin import (
     WebMethodsMixin,  # S54 W2: MRO
 )

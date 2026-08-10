@@ -13,17 +13,20 @@ Core (1) остается в __init__.py: __init__.
 Backward-compat: ``from src.backend.services.io.external_database import ExternalDatabaseService`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 if TYPE_CHECKING:
     pass
 
 import re
-from typing import Final
+from typing import Final as Final
 
-from src.backend.core.logging import get_logger
+from src.backend.core.logging import get_logger as get_logger
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
 #

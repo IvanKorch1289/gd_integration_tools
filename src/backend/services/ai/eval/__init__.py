@@ -19,7 +19,7 @@ Public API:
     * :data:`REFERENCE_SUITES` — реестр default-suite.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.eval.inspect_runner import (
     InspectRunner,

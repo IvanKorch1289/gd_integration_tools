@@ -61,7 +61,7 @@ def test_capability_denied_propagates() -> None:
         pass
 
     def deny(*_args: object) -> None:
-        raise _Denied()
+        raise _Denied
 
     backend = _FakeBackend()
     backend.push(SecretValue(name="db/pg", value="x"))

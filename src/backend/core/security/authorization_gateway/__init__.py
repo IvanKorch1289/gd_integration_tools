@@ -12,18 +12,21 @@ Core (5) остается в __init__.py: __init__, authorize (91 LOC, BIG), _fi
 Backward-compat: ``from src.backend.core.security.authorization_gateway import AuthorizationGateway`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 if TYPE_CHECKING:
     pass
 
 import uuid
-from collections.abc import Sequence
+from collections.abc import Sequence as Sequence
 
-from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
-from src.backend.core.logging import get_logger
+from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol as CapabilityGatewayProtocol
+from src.backend.core.logging import get_logger as get_logger
 from src.backend.core.security.authorization_gateway.audit_mixin import (
     AuditMixin,  # S60 W4: MRO
 )
@@ -42,7 +45,7 @@ from src.backend.core.security.authorization_gateway.state import (
     AuthorizationReason,  # S60 W4: re-export
     PolicyDecider,  # S60 W4: re-export
 )
-from src.backend.core.utils.metrics_registry import metrics_registry
+from src.backend.core.utils.metrics_registry import metrics_registry as metrics_registry
 
 __all__ = (
     "AuditCallback",

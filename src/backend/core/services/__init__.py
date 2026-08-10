@@ -16,8 +16,8 @@ Related:
 - ADR-0207 (S120 W5 closure)
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from src.backend.services.core.base_external_api import BaseExternalAPIClient
+from src.backend.services.core.base_external_api import BaseExternalAPIClient as BaseExternalAPIClient
 
 __all__ = ("BaseExternalAPIClient",)

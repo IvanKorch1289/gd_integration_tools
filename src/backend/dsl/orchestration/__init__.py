@@ -9,16 +9,26 @@ Scaffold для операционных примитивов оркестрац
 * `HumanApproval` — пауза pipeline до явного approve через API/Streamlit.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
-from typing import Any
+from collections.abc import (
+    Awaitable as Awaitable,
+    Callable as Callable,
+)
+from dataclasses import (
+    dataclass as dataclass,
+    field as field,
+)
+from datetime import (
+    UTC as UTC,
+    date as date,
+    datetime as datetime,
+)
+from typing import Any as Any
 
-from src.backend.core.logging import get_logger
-from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.core.logging import get_logger as get_logger
+from src.backend.core.utils.task_registry import get_task_registry as get_task_registry
 
 __all__ = ("Backfill", "DryRun", "HumanApproval", "Sensor")
 

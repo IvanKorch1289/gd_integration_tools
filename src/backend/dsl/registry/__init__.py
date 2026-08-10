@@ -11,7 +11,7 @@ Public API:
       :class:`ProcessorNotFoundError`, :class:`CapabilityDeniedError`.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.commands.registry import (
     RouteRegistry as RouteRegistry,  # noqa: F401 — re-export

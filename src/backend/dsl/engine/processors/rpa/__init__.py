@@ -7,7 +7,7 @@ Backward-compat: ``from src.backend.dsl.engine.processors.rpa import ArchiveProc
 works через re-exports ниже.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.rpa.documents import (  # S50 W4: re-export
     ExcelReadProcessor,

@@ -11,16 +11,16 @@ Core (1) остается в __init__.py: _register_crud_action_metadata.
 Backward-compat: ``from src.backend.entrypoints.api.generator.actions.crud import CrudMixin`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
-from pydantic import BaseModel
+from pydantic import BaseModel as BaseModel
 
-from src.backend.core.interfaces.action_dispatcher import ActionMetadata
-from src.backend.dsl.commands.action_registry import action_handler_registry
+from src.backend.core.interfaces.action_dispatcher import ActionMetadata as ActionMetadata
+from src.backend.dsl.commands.action_registry import action_handler_registry as action_handler_registry
 from src.backend.entrypoints.api.generator.actions.crud.query_mixin import (
     QueryMixin,  # S58 W1: MRO
 )
@@ -33,7 +33,10 @@ from src.backend.entrypoints.api.generator.actions.crud.versioning_mixin import 
 from src.backend.entrypoints.api.generator.actions.crud.write_mixin import (
     WriteMixin,  # S58 W1: MRO
 )
-from src.backend.entrypoints.api.generator.specs import CrudSpec, HttpMethod
+from src.backend.entrypoints.api.generator.specs import (
+    CrudSpec as CrudSpec,
+    HttpMethod as HttpMethod,
+)
 
 __all__ = ("CrudMixin",)
 

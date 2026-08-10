@@ -10,7 +10,7 @@
 Backward-compat: ``from src.backend.dsl.engine.processors.enrichment import GeoIpProcessor`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.enrichment.compression import (
     CompressProcessor,  # S61 W2: re-export

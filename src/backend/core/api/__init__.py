@@ -26,9 +26,9 @@ History:
   pattern) to avoid circular dependencies.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import Any
+from typing import Any as Any
 
 # Re-export from existing single entry point (src/backend/sdk).
 # This facade does NOT replace SDK; it complements it with explicit

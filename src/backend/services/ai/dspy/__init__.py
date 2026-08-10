@@ -16,7 +16,7 @@
     * ``DSPyOptimizer.compile()`` возвращает ``CompileReport`` с lift-метрикой.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.services.ai.dspy.optimizer import (
     BaselineDataset,

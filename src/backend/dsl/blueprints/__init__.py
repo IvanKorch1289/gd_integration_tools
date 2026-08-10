@@ -25,7 +25,7 @@ Backwards compatibility:
       сохранён, теперь это пакет вместо модуля.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.blueprints._python_blueprints import (
     api_normalize_persist_webhook,

@@ -12,7 +12,7 @@
 * :class:`PluginManifest` — pydantic-схема `plugin.yaml`.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.plugin_runtime.manifest_toml import (  # S168 W15-17: yaml manifest.py superseded
     PluginManifest,

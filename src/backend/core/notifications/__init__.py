@@ -11,9 +11,9 @@ home via inline lazy-imports (per ARC-005 analysis doc, top-1 of
 isolation per M-rules.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import Any
+from typing import Any as Any
 
 
 def _get_notif_gateway() -> Any:

@@ -6,7 +6,7 @@ Backward-compat: ``from src.backend.dsl.builders.agent_dsl import AgentDSLMixin`
 works через re-export ниже.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.builders.agent_dsl.infra import (
     InfraMixin,  # S51 W3: MRO composition

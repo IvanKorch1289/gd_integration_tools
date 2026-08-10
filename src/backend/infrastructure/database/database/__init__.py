@@ -9,7 +9,7 @@
 Backward-compat: ``from src.backend.infrastructure.database.database import DatabaseInitializer`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.infrastructure.database.database.accessors import (
     __getattr__,  # S64 W3: accessor re-export

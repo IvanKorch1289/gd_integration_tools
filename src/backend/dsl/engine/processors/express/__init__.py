@@ -13,7 +13,7 @@
     )
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.express.edit import (
     ExpressEditProcessor,  # noqa: F401 — re-export

@@ -10,7 +10,7 @@
 Backward-compat: ``from src.backend.dsl.processors.event_store import EventStore`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.processors.event_store.cqrs import (
     CommandBus,  # S66 W1: re-export

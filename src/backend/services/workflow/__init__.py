@@ -12,7 +12,7 @@ Layer policy: entrypoints -> services (allowed per V22).
 к WorkflowRegistry без layer-violation.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.infrastructure.workflow.registry import (
     WorkflowDescriptor,

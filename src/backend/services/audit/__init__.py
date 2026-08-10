@@ -16,7 +16,7 @@ S45 QW10: AuditService + get_unified_audit_service теперь импортир
 из canonical ``core.audit.facade.audit_service`` (shim удалён в S45 W1).
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.audit.facade.audit_service import (
     AuditService,

@@ -15,7 +15,7 @@ Stream E.6 — экспорт AsyncAPI 3.0.0 спецификации через
 ``entrypoints/api/v1/endpoints/asyncapi.py``.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.entrypoints.asyncapi.exporter import (
     build_asyncapi_json,

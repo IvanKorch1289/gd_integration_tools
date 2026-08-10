@@ -11,11 +11,11 @@ Core (1) остается в __init__.py: __init__.
 Backward-compat: ``from src.backend.dsl.engine.processors.llm_structured import LLMStructuredProcessor`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as TYPE_CHECKING
 
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor as BaseProcessor
 from src.backend.dsl.registry import processor as _processor_reg
 
 if TYPE_CHECKING:

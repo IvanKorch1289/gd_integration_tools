@@ -1,16 +1,26 @@
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 import inspect
 import os
-from collections.abc import Awaitable, Callable, Sequence
-from inspect import Parameter, Signature
-from typing import Any
+from collections.abc import (
+    Awaitable as Awaitable,
+    Callable as Callable,
+    Sequence as Sequence,
+)
+from inspect import (
+    Parameter as Parameter,
+    Signature as Signature,
+)
+from typing import Any as Any
 
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi import (
+    APIRouter as APIRouter,
+    Request as Request,
+)
+from fastapi.responses import JSONResponse as JSONResponse
 
-from src.backend.core.actions.spec_to_metadata import action_spec_to_metadata
-from src.backend.dsl.commands.action_registry import action_handler_registry
+from src.backend.core.actions.spec_to_metadata import action_spec_to_metadata as action_spec_to_metadata
+from src.backend.dsl.commands.action_registry import action_handler_registry as action_handler_registry
 from src.backend.entrypoints.api.generator.actions.crud import (
     CrudMixin,  # S49 W3: MRO composition per ADR-0107
 )

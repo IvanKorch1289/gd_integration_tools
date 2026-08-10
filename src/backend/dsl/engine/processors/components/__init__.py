@@ -5,7 +5,7 @@
 Backward-compat: ``from src.backend.dsl.engine.processors.components import HttpCallProcessor`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.dsl.engine.processors.components.databasequeryprocessor import (
     DatabaseQueryProcessor,  # S65 W1: re-export

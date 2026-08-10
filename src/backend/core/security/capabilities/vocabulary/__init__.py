@@ -8,7 +8,7 @@
 Backward-compat: ``from src.backend.core.security.capabilities.vocabulary import build_default_vocabulary`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 from src.backend.core.security.capabilities.vocabulary.defaults import (
     build_default_vocabulary,  # S62 W2: re-export

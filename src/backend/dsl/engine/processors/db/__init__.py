@@ -10,7 +10,7 @@ Migration path:
 Future cycles will physically move the files here.
 """
 
-from src.backend.dsl.engine.processors.db_call_procedure import DbCallProcedureProcessor
+from src.backend.dsl.engine.processors.db_call_procedure import DbCallProcedureProcessor as DbCallProcedureProcessor
 from src.backend.dsl.engine.processors.db_crud import (
     DbCrudProcessor,  # noqa: F401 — re-export
 )

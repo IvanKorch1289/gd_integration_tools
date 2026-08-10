@@ -22,16 +22,19 @@ References:
 
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
 # S4 fix (S36-W10): 4 shim-модуля удалены (files/orders/orderkinds/users).
 # Импорт напрямую из extensions/core_entities/ (S168 W14 P2-10 closure).
-from extensions.core_entities.files.domain.models import File, OrderFile
-from extensions.core_entities.orderkinds.domain.models import OrderKind
+from extensions.core_entities.files.domain.models import (
+    File as File,
+    OrderFile as OrderFile,
+)
+from extensions.core_entities.orderkinds.domain.models import OrderKind as OrderKind
 from extensions.core_entities.orders.domain.models import (
     Order,  # noqa: F401 — re-export
 )
-from extensions.core_entities.users.domain.models import User  # noqa: F401 — re-export
+from extensions.core_entities.users.domain.models import User  # noqa: F401 — re-export as User  # noqa: F401 — re-export
 from src.backend.core.domain.models.base import (
     Base,
     BaseModel,

@@ -18,14 +18,20 @@ SagaBuilder (4 methods) preserved as separate class.
 Backward-compat: ``from src.backend.dsl.workflow.builder import WorkflowBuilder`` works.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Any as Any,
+)
 
 if TYPE_CHECKING:
     pass
 
-from typing import TYPE_CHECKING, Self
+from typing import (
+    TYPE_CHECKING as TYPE_CHECKING,
+    Self as Self,
+)
 
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
@@ -37,16 +43,16 @@ from src.backend.dsl.workflow.spec import (
 if TYPE_CHECKING:
     pass
 
-from src.backend.dsl.workflow.builder.ai_mixin import AiAgentMixin  # S58 W4: MRO
+from src.backend.dsl.workflow.builder.ai_mixin import AiAgentMixin  # S58 W4: MRO as AiAgentMixin  # S58 W4: MRO
 from src.backend.dsl.workflow.builder.gateway_mixin import (
     GatewayMixin,  # cycle 33 restore: BPMN gateway DSL (P0 #8 + #9)
 )
 from src.backend.dsl.workflow.builder.lifecycle_mixin import (
     LifecycleMixin,  # S58 W4: MRO
 )
-from src.backend.dsl.workflow.builder.sla_mixin import SlaMixin  # S58 W4: MRO
-from src.backend.dsl.workflow.builder.wait_mixin import WaitMixin  # S58 W4: MRO
-from src.backend.dsl.workflow.builder.workflow_mixin import WorkflowMixin  # S58 W4: MRO
+from src.backend.dsl.workflow.builder.sla_mixin import SlaMixin  # S58 W4: MRO as SlaMixin  # S58 W4: MRO
+from src.backend.dsl.workflow.builder.wait_mixin import WaitMixin  # S58 W4: MRO as WaitMixin  # S58 W4: MRO
+from src.backend.dsl.workflow.builder.workflow_mixin import WorkflowMixin  # S58 W4: MRO as WorkflowMixin  # S58 W4: MRO
 
 __all__ = ("SagaBuilder", "WorkflowBuilder")
 

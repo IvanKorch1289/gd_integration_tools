@@ -11,9 +11,13 @@
 :func:`get_chunker` возвращает реализацию по имени стратегии.
 """
 
-from __future__ import annotations
+from __future__ import annotations as annotations
 
-from typing import Literal, Protocol, runtime_checkable
+from typing import (
+    Literal as Literal,
+    Protocol as Protocol,
+    runtime_checkable as runtime_checkable,
+)
 
 __all__ = ("ChunkStrategy", "Chunker", "get_chunker")
 
