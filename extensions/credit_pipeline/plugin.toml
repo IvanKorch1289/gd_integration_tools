@@ -19,6 +19,15 @@ entry_class = "extensions.credit_pipeline.plugin.CreditPipelinePlugin"
 tenant_aware = true
 description = "Credit pipeline plugin (S76 — real agents: score/parse/decide)"
 
+# Cycle-17 (D-AUDIT-1701): declare SQLAlchemy ORM models для Alembic
+# auto-discovery (env.py теперь сканирует ``extensions/*/plugin.toml``
+# и импортирует каждый путь в ``models_module``). Раньше Alembic
+# autogenerate видел только 4 hardcoded core_entities — drift
+# плагинов не обнаруживался до prod.
+models_module = [
+    "extensions.credit_pipeline.domain.models",
+]
+
 [[capabilities]]
 name = "db.read"
 scope = "credit_reports"
