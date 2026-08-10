@@ -167,8 +167,15 @@ class ScanFileProcessor(BaseProcessor):
             )
 
             record_antivirus_scan(threat=threat)
-        except Exception:
-            pass
+        except (ImportError, AttributeError, RuntimeError, OSError) as metrics_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-945: narrow exceptions + observability.
+            # ImportError — metrics missing, AttributeError — schema change,
+            # RuntimeError — metrics unavailable, OSError — backend failure.
+            import logging
+            logging.getLogger(__name__).debug(
+                "scan_file.metrics_failed",
+                extra={"error": str(metrics_exc)},
+            )
 
     def to_spec(self) -> dict[str, Any] | None:
         """YAML-spec round-trip."""
