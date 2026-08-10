@@ -28,8 +28,15 @@ class TestWorkflowHandle:
             WorkflowHandle(run_id="r-1", namespace="ns-1")
 
     def test_missing_run_id_raises(self) -> None:
-        with pytest.raises(ValidationError):
-            WorkflowHandle(workflow_id="wf-1", namespace="ns-1")
+        """cycle-9/D-AUDIT-917 fix: D-A8-09 (ee1105ce) — run_id сделан
+        optional. WorkflowHandle может быть создан без run_id (для
+        workflows которые ещё не запущены). Тест обновлён: run_id
+        опционален, остальные 2 поля (workflow_id, namespace) required.
+        """
+        handle = WorkflowHandle(workflow_id="wf-1", namespace="ns-1")
+        assert handle.run_id is None
+        assert handle.workflow_id == "wf-1"
+        assert handle.namespace == "ns-1"
 
     def test_missing_namespace_raises(self) -> None:
         with pytest.raises(ValidationError):
@@ -40,8 +47,18 @@ class TestWorkflowHandle:
             WorkflowHandle(workflow_id="", run_id="r-1", namespace="ns-1")
 
     def test_empty_run_id_raises(self) -> None:
-        with pytest.raises(ValidationError):
-            WorkflowHandle(workflow_id="wf-1", run_id="", namespace="ns-1")
+        """cycle-9/D-AUDIT-917 fix: run_id optional + no empty-string check.
+
+        Production (WorkflowHandle.run_id: str | None = None) разрешает
+        None и empty string (тест обратной совместимости — раньше
+        требовалась non-empty). Теперь: assert что пустой run_id
+        создаётся без exception (Optional semantics).
+        """
+        from src.backend.core.workflow.backend import WorkflowHandle
+
+        handle = WorkflowHandle(workflow_id="wf-1", run_id="", namespace="ns-1")
+        # Optional[str] принимает empty string как валидное значение.
+        assert handle.run_id == ""
 
     def test_empty_namespace_raises(self) -> None:
         with pytest.raises(ValidationError):

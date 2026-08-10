@@ -55,15 +55,27 @@ class TestSetCorrelationIdCompat:
 
 
 class TestStartSpanCompat:
-    """``start_span`` — no-op context manager (OTEL SDK carryover)."""
+    """``start_span`` — no-op context manager (OTEL SDK carryover).
+
+    cycle-9/D-AUDIT-916 fix: production code теперь возвращает
+    ``NonRecordingSpan`` (real OTel context manager), а не None.
+    Раньше тест был рассчитан на no-op fallback. Тест обновлён:
+    проверяет что ``start_span`` возвращает context manager (т.е.
+    можно вызвать __enter__/__exit__ без exception) и что result
+    является либо None (legacy no-op), либо OTel-совместимым span
+    object. Production code сейчас выбирает NonRecordingSpan.
+    """
 
     @pytest.mark.asyncio
-    async def test_start_span_yields_none(self) -> None:
-        """``start_span`` всегда yields ``None`` (OTEL carryover)."""
+    async def test_start_span_yields_context_manager(self) -> None:
+        """``start_span`` возвращает context manager (None или OTel span)."""
         from src.backend.core.observability.correlation import start_span
 
         with start_span("test_span", attributes={"key": "value"}) as span:
-            assert span is None
+            # Принимаем None (legacy no-op) или OTel NonRecordingSpan-like
+            # (OTel real SDK). Главное — context manager работает
+            # без exception и span атрибут доступен.
+            assert span is None or hasattr(span, "get_span_context")
 
     @pytest.mark.asyncio
     async def test_start_span_no_attributes(self) -> None:
@@ -71,7 +83,7 @@ class TestStartSpanCompat:
         from src.backend.core.observability.correlation import start_span
 
         with start_span("test_span") as span:
-            assert span is None
+            assert span is None or hasattr(span, "get_span_context")
 
     @pytest.mark.asyncio
     async def test_start_span_does_not_raise(self) -> None:
