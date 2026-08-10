@@ -181,8 +181,14 @@ class InnerRequestLoggingMiddleware:
             try:
                 with GzipFile(fileobj=BytesIO(body)) as gzip_file:
                     body = gzip_file.read()
-            except Exception:
-                self.logger.debug("Не удалось распаковать gzip response body")
+            except (OSError, EOFError) as gzip_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-994: narrow exceptions + observability.
+                # OSError — gzip read failure, EOFError — truncated stream.
+                # (zlib.error raised internally не экспортирован, OSError
+                #  covers both gzip and underlying zlib errors.)
+                self.logger.debug(
+                    "Не удалось распаковать gzip response body: %s", gzip_exc
+                )
 
         if len(body) > self.max_body_size:
             body = "<тело ответа слишком велико для логирования>".encode("utf-8")
