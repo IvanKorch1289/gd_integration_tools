@@ -97,6 +97,14 @@ class FallbackCertBackend(CertBackend):
                 continue
             try:
                 results.append(await backend.delete(service_id))
-            except Exception:
-                pass
+            except (OSError, ConnectionError, RuntimeError, ValueError) as delete_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-935: narrow exceptions + observability.
+                # OSError/ConnectionError для vault backend, RuntimeError
+                # для not-initialized, ValueError для invalid args. Bare
+                # `except Exception` маскировал unrelated runtime errors.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "cert_store_fallback.delete_failed",
+                    extra={"service_id": service_id, "error": str(delete_exc)},
+                )
         return any(results)
