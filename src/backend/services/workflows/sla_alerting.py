@@ -161,7 +161,9 @@ def _emit_sla_metric(
     global _sla_counter
     if _sla_counter is None:
         try:
-            from src.backend.core.observability.metrics import metrics_registry  # noqa: F401 — availability probe
+            from src.backend.core.observability.metrics import (
+                metrics_registry,  # noqa: F401 — availability probe
+            )
 
             _sla_counter = metrics_registry.counter(
                 "workflow_sla_compliance_total",

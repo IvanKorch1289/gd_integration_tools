@@ -68,7 +68,9 @@ class FeedbackTrainer:
             import dspy  # noqa: F401 — availability probe
 
             examples = self._dataset_builder.to_dspy_examples(records)
-            from dspy.teleprompt import BootstrapFewShot  # noqa: F401 — availability probe
+            from dspy.teleprompt import (
+                BootstrapFewShot,  # noqa: F401 — availability probe
+            )
 
             optimizer = BootstrapFewShot(metric=lambda *_a, **_k: 1.0)
             program = dspy.Predict("prompt -> completion")

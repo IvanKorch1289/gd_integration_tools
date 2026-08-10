@@ -236,7 +236,9 @@ class OutboundHttpClient:
         При недоступности — silent pass.
         """
         try:
-            from src.backend.core.interfaces.observability import CorrelationIdProvider  # noqa: F401 — availability probe
+            from src.backend.core.interfaces.observability import (
+                CorrelationIdProvider,  # noqa: F401 — availability probe
+            )
 
             def _get_cid() -> str | None:
                 from src.backend.core.di.providers.infrastructure_locator import (

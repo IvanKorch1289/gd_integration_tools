@@ -161,7 +161,9 @@ class DebeziumEventsCDCBackend(CDCSource):
         if self._consumer is not None:
             return self._consumer
         try:
-            from aiokafka import AIOKafkaConsumer  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            from aiokafka import (
+                AIOKafkaConsumer,  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            )
         except ImportError as exc:
             raise RuntimeError(
                 "aiokafka is required for DebeziumEventsCDCBackend; "

@@ -40,7 +40,9 @@ if TYPE_CHECKING:
 
 Client: Any = None
 try:
-    from fastmcp import Client  # type: ignore[import-not-found,no-redef]  # noqa: F401 — availability probe
+    from fastmcp import (
+        Client,  # type: ignore[import-not-found,no-redef]  # noqa: F401 — availability probe
+    )
 except ImportError:
     pass
 

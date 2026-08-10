@@ -469,7 +469,9 @@ class VaultClient:
                     threshold=threshold_seconds,
                 )
                 try:
-                    from src.backend.core.audit.facade import emit_audit_safe  # noqa: F401 — availability probe
+                    from src.backend.core.audit.facade import (
+                        emit_audit_safe,  # noqa: F401 — availability probe
+                    )
 
                     emit_audit_safe(
                         event="vault.token.renewed",

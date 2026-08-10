@@ -8,14 +8,26 @@ from src.backend.core.config.services.graphql import (  # S163 W13
     GraphQLSettings,
     graphql_settings,
 )
-from src.backend.core.config.services.invoker import InvokerSettings, invoker_settings  # noqa: F401 — re-export
+from src.backend.core.config.services.invoker import (  # noqa: F401 — re-export
+    InvokerSettings,
+    invoker_settings,
+)
 from src.backend.core.config.services.jupyter_hub import (
     JupyterHubSettings,
     jupyter_hub_settings,
 )
-from src.backend.core.config.services.llm import LLMSettings, llm_settings  # S164 W2  # noqa: F401 — re-export
-from src.backend.core.config.services.logging import LogStorageSettings, log_settings  # noqa: F401 — re-export
-from src.backend.core.config.services.mail import MailSettings, mail_settings  # noqa: F401 — re-export
+from src.backend.core.config.services.llm import (  # S164 W2  # noqa: F401 — re-export
+    LLMSettings,
+    llm_settings,
+)
+from src.backend.core.config.services.logging import (  # noqa: F401 — re-export
+    LogStorageSettings,
+    log_settings,
+)
+from src.backend.core.config.services.mail import (  # noqa: F401 — re-export
+    MailSettings,
+    mail_settings,
+)
 from src.backend.core.config.services.queue import (
     GRPCSettings,
     QueueSettings,
@@ -30,13 +42,22 @@ from src.backend.core.config.services.resilience import (
     ResilienceSettings,
     resilience_settings,
 )
-from src.backend.core.config.services.rpa import RPASettings, rpa_settings  # S164 W4  # noqa: F401 — re-export
-from src.backend.core.config.services.sms import SMSSettings, sms_settings  # noqa: F401 — re-export
+from src.backend.core.config.services.rpa import (  # S164 W4  # noqa: F401 — re-export
+    RPASettings,
+    rpa_settings,
+)
+from src.backend.core.config.services.sms import (  # noqa: F401 — re-export
+    SMSSettings,
+    sms_settings,
+)
 from src.backend.core.config.services.snapshot import (
     SnapshotSettings,
     snapshot_settings,
 )
-from src.backend.core.config.services.storage import FileStorageSettings, fs_settings  # noqa: F401 — re-export
+from src.backend.core.config.services.storage import (  # noqa: F401 — re-export
+    FileStorageSettings,
+    fs_settings,
+)
 from src.backend.core.config.services.watermark import (
     WatermarkSettings,
     watermark_settings,

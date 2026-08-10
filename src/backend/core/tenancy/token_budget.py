@@ -283,7 +283,9 @@ class TokenBudget:
         current behavior (per-tenant config takes effect).
         """
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             if getattr(feature_flags, "token_budget_fail_closed", False):
                 return "closed"

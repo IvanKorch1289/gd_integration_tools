@@ -94,7 +94,9 @@ def require_capability(
             tenant_id: str | None = None
             if scope == "tenant":
                 try:
-                    from src.backend.core.tenancy import current_tenant  # noqa: F401 — availability probe
+                    from src.backend.core.tenancy import (
+                        current_tenant,  # noqa: F401 — availability probe
+                    )
 
                     ctx = current_tenant()
                     if ctx is not None:
@@ -191,7 +193,9 @@ async def check_source_capability(
 
     tenant_id: str | None = None
     try:
-        from src.backend.core.tenancy import current_tenant  # noqa: F401 — availability probe
+        from src.backend.core.tenancy import (
+            current_tenant,  # noqa: F401 — availability probe
+        )
 
         ctx = current_tenant()
         if ctx is not None:

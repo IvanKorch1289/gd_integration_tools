@@ -108,7 +108,10 @@ async def watch_policy_files(
 
     """
     try:
-        from watchfiles import Change, awatch  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+        from watchfiles import (  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            Change,
+            awatch,
+        )
     except ImportError as exc:
         raise ImportError(
             "watchfiles required для hot-reload. "

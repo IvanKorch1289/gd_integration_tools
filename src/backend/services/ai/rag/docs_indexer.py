@@ -209,7 +209,10 @@ class DocsIndexer:
                 extra={"error": str(qdrant_exc), "collection": self._collection_name},
             )
             try:
-                from qdrant_client.models import Distance, VectorParams  # noqa: F401 — availability probe
+                from qdrant_client.models import (  # noqa: F401 — availability probe
+                    Distance,
+                    VectorParams,
+                )
 
                 self._qdrant.create_collection(
                     collection_name=self._collection_name,
@@ -290,7 +293,9 @@ class DocsIndexer:
     ) -> list[Any]:
         """PointStruct → Qdrant, dict fallback → in-memory substitute."""
         try:
-            from qdrant_client.models import PointStruct  # noqa: F401 — availability probe
+            from qdrant_client.models import (
+                PointStruct,  # noqa: F401 — availability probe
+            )
 
             return [
                 PointStruct(

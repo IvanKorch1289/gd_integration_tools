@@ -126,7 +126,9 @@ class ObservabilityFacade:
             # D-A1-04 fix (cycle 33): narrow exceptions + observability.
             # Bare `except Exception` маскировал correlation_id failures
             # (отсутствующий correlation context, broken tracing backend).
-            from src.backend.core.logging import get_logger  # noqa: F401 — availability probe
+            from src.backend.core.logging import (
+                get_logger,  # noqa: F401 — availability probe
+            )
             get_logger(__name__).debug(
                 "observability.correlation_id_resolve_failed",
                 extra={"error": str(cid_exc)},

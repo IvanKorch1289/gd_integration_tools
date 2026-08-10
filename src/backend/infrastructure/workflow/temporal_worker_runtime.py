@@ -260,7 +260,9 @@ async def start_temporal_worker_runtime(
         return
 
     try:
-        from src.backend.core.config.settings import settings  # noqa: F401 — availability probe
+        from src.backend.core.config.settings import (
+            settings,  # noqa: F401 — availability probe
+        )
 
         target = getattr(settings, "temporal_target_host", "localhost:7233")
         namespace = getattr(settings, "temporal_namespace", "default")

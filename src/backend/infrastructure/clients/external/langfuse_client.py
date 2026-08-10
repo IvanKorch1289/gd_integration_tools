@@ -95,7 +95,9 @@ class LangFuseClient:
             return None
 
         try:
-            from langfuse.callback import CallbackHandler  # noqa: F401 — availability probe
+            from langfuse.callback import (
+                CallbackHandler,  # noqa: F401 — availability probe
+            )
 
             return CallbackHandler()
         except ImportError:

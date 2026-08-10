@@ -178,8 +178,13 @@ class PdfExporter:
             return b""
         try:
             from reportlab.lib import colors  # noqa: F401 — availability probe
-            from reportlab.lib.pagesizes import A4, landscape  # noqa: F401 — availability probe
-            from reportlab.lib.styles import getSampleStyleSheet  # noqa: F401 — availability probe
+            from reportlab.lib.pagesizes import (  # noqa: F401 — availability probe
+                A4,
+                landscape,
+            )
+            from reportlab.lib.styles import (
+                getSampleStyleSheet,  # noqa: F401 — availability probe
+            )
             from reportlab.platypus import (  # noqa: F401 — availability probe
                 Paragraph,
                 SimpleDocTemplate,

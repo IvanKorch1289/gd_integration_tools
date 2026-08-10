@@ -139,7 +139,9 @@ class RegexExtractorProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Извлекает данные из текста по regex (first/all/named/groups) и пишет в target."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             if not feature_flags.proc_regex_extractor:
                 exchange.set_property("regex_extractor_status", "skipped")

@@ -97,7 +97,9 @@ class CDCSource:
 
     async def _run(self, on_event: EventCallback) -> None:
         try:
-            from psycopg import AsyncConnection  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            from psycopg import (
+                AsyncConnection,  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            )
             from psycopg.replication import (  # type: ignore[import-not-found]  # noqa: F401 — availability probe
                 LogicalReplicationConnection,  # type: ignore[import-not-found]  # type: ignore  # type: ignore[unused-ignore]
             )

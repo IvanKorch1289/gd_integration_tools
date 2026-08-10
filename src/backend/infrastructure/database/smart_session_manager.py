@@ -231,7 +231,9 @@ class SmartSessionManager:
 
         """
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             if not feature_flags.multi_replica_failover:
                 return False

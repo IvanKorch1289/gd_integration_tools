@@ -135,7 +135,9 @@ class CoquiTTSService:
         if not self.enabled:
             return False
         try:
-            from TTS.api import TTS  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            from TTS.api import (
+                TTS,  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            )
 
             return True
         except ImportError:

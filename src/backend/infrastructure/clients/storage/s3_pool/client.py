@@ -88,7 +88,9 @@ class S3Client(BaseS3Client):
         # skip без crash (тесты unrelated до S3 продолжают собираться).
         try:
             from aiobotocore.config import AioConfig  # noqa: F401 — availability probe
-            from aiobotocore.session import get_session  # noqa: F401 — availability probe
+            from aiobotocore.session import (
+                get_session,  # noqa: F401 — availability probe
+            )
         except ImportError:
             self._session = None
             self._config = None

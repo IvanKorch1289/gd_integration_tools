@@ -13,7 +13,9 @@ from __future__ import annotations as annotations
 from typing import TYPE_CHECKING as TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.backend.dsl.builder import RouteBuilder  # S52 W1: forward ref only  # noqa: F401 — TYPE_CHECKING probe
+    from src.backend.dsl.builder import (
+        RouteBuilder,  # S52 W1: forward ref only  # noqa: F401 — TYPE_CHECKING probe
+    )
 
 from src.backend.dsl.builders.ai_rpa.ai_llm import (
     AILlMMixin,  # S51 W1: MRO as AILlMMixin  # S51 W1: MRO

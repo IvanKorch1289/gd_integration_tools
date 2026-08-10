@@ -21,8 +21,14 @@ Scaffolding-адаптеры — placeholder'ы с правильным инте
 интеграция подключается per-customer в deployment-конфиге.
 """
 
-from src.backend.infrastructure.notifications.adapters.base import NotificationChannel  # noqa: F401 — re-export
-from src.backend.infrastructure.notifications.adapters.express import ExpressAdapter  # noqa: F401 — re-export
-from src.backend.infrastructure.notifications.adapters.telegram import TelegramAdapter  # noqa: F401 — re-export
+from src.backend.infrastructure.notifications.adapters.base import (
+    NotificationChannel,  # noqa: F401 — re-export
+)
+from src.backend.infrastructure.notifications.adapters.express import (
+    ExpressAdapter,  # noqa: F401 — re-export
+)
+from src.backend.infrastructure.notifications.adapters.telegram import (
+    TelegramAdapter,  # noqa: F401 — re-export
+)
 
 __all__ = ("ExpressAdapter", "NotificationChannel", "TelegramAdapter")

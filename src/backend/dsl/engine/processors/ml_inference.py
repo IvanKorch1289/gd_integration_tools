@@ -160,7 +160,9 @@ class StreamingLLMProcessor(BaseProcessor):
             session_id = exchange.meta.correlation_id
 
         try:
-            from src.backend.services.ai.ai_agent import get_ai_agent_service  # noqa: F401 — availability probe
+            from src.backend.services.ai.ai_agent import (
+                get_ai_agent_service,  # noqa: F401 — availability probe
+            )
 
             agent = get_ai_agent_service()
 
@@ -345,7 +347,9 @@ class OutboxTransactionProcessor(BaseProcessor):
         from sqlalchemy import text
 
         try:
-            from src.backend.infrastructure.database.database import db_initializer  # noqa: F401 — availability probe
+            from src.backend.infrastructure.database.database import (
+                db_initializer,  # noqa: F401 — availability probe
+            )
         except ImportError:
             exchange.fail("Database not configured for outbox")
             return

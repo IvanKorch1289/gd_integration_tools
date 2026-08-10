@@ -63,7 +63,9 @@ def _register_yaml_tools(mcp: Any) -> None:
         from src.backend.dsl.registry import route_registry
 
         try:
-            from src.backend.dsl.yaml_loader import load_pipeline_from_yaml  # noqa: F401 — availability probe
+            from src.backend.dsl.yaml_loader import (
+                load_pipeline_from_yaml,  # noqa: F401 — availability probe
+            )
         except ImportError:
             return encode_json({"error": "yaml_loader not available"}).decode("utf-8")
 

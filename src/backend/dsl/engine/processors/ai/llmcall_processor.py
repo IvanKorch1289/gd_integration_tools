@@ -138,15 +138,21 @@ class LLMCallProcessor(BaseProcessor):
 
         # S27 closure: при ai_gateway_enforce=True — все LLM-вызовы через AIGateway.
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
         except ImportError:
             feature_flags = None  # type: ignore[assignment]
 
         if feature_flags is not None and feature_flags.ai_gateway_enforce:
             try:
                 import src.backend.core.ai.gateway  # noqa: F401 — availability probe
-                from src.backend.core.ai.gateway_models import AIRequest  # noqa: F401 — availability probe
-                from src.backend.services.ai.gateway_adapter import get_ai_gateway  # noqa: F401 — availability probe
+                from src.backend.core.ai.gateway_models import (
+                    AIRequest,  # noqa: F401 — availability probe
+                )
+                from src.backend.services.ai.gateway_adapter import (
+                    get_ai_gateway,  # noqa: F401 — availability probe
+                )
             except ImportError as exc:
                 exchange.fail(f"AIGateway unavailable: {exc}")
                 return
@@ -223,7 +229,9 @@ class LLMCallProcessor(BaseProcessor):
         from src.backend.core.resilience.retry import make_async_retry
 
         try:
-            from src.backend.services.ai.ai_agent import get_ai_agent_service  # noqa: F401 — availability probe
+            from src.backend.services.ai.ai_agent import (
+                get_ai_agent_service,  # noqa: F401 — availability probe
+            )
         except ImportError as exc:
             exchange.fail(f"AI agent service unavailable: {exc}")
             return

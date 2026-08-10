@@ -65,7 +65,9 @@ class WebhookSink(Sink):
         try:
             import httpx  # noqa: F401 — availability probe
 
-            from src.backend.core.net import OutboundHttpClient  # noqa: F401 — availability probe
+            from src.backend.core.net import (
+                OutboundHttpClient,  # noqa: F401 — availability probe
+            )
         except ImportError:
             return SinkResult(ok=False, details={"error": "httpx not installed"})
 
@@ -141,7 +143,9 @@ class WebhookSink(Sink):
         try:
             import httpx  # noqa: F401 — availability probe
 
-            from src.backend.core.net import OutboundHttpClient  # noqa: F401 — availability probe
+            from src.backend.core.net import (
+                OutboundHttpClient,  # noqa: F401 — availability probe
+            )
         except ImportError:
             return HealthResult.failed(error="httpx not installed", mode=mode)
         start = time.perf_counter()

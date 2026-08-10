@@ -261,7 +261,9 @@ class OtelMiddleware:
         tenant_id = headers_dict.get("x-tenant-id", "")
         if not tenant_id:
             try:
-                from src.backend.core.tenancy import current_tenant  # noqa: F401 — availability probe
+                from src.backend.core.tenancy import (
+                    current_tenant,  # noqa: F401 — availability probe
+                )
 
                 ctx = current_tenant()
                 if ctx is not None:
@@ -306,7 +308,10 @@ class OtelMiddleware:
     def _mark_error(span: Any, exc: BaseException) -> None:
         """Cycle 56: помечает span как error + records exception."""
         try:
-            from opentelemetry.trace import Status, StatusCode  # noqa: F401 — availability probe
+            from opentelemetry.trace import (  # noqa: F401 — availability probe
+                Status,
+                StatusCode,
+            )
 
             span.set_status(Status(StatusCode.ERROR, str(exc)))
         except ImportError:

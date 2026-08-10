@@ -19,7 +19,10 @@ from __future__ import annotations as annotations
 
 from typing import Any as Any
 
-from src.backend.dsl.codec.base64 import decode_base64, encode_base64  # noqa: F401 — re-export
+from src.backend.dsl.codec.base64 import (  # noqa: F401 — re-export
+    decode_base64,
+    encode_base64,
+)
 from src.backend.dsl.codec.converters import (
     convert_numpy_types,
     convert_pattern,
@@ -123,7 +126,9 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
     """Банковские форматы — opt-in через extras `gdi[banking]`."""
     if fmt == "mt":
         try:
-            from swiftmt import parser  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            from swiftmt import (
+                parser,  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            )
         except ImportError:
             raise RuntimeError(
                 "swiftmt не установлен — установите gdi[banking]",

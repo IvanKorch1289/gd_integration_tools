@@ -46,7 +46,10 @@ from src.backend.services.ai.rag_service.search_mixin import (
 from src.backend.services.ai.rag_service.state import (
     RAGCitation,  # S64 W4: re-export as RAGCitation  # S64 W4: re-export
 )
-from src.backend.services.ai.rag_types import AugmentResult, FreshnessLabel  # noqa: F401 — re-export
+from src.backend.services.ai.rag_types import (  # noqa: F401 — re-export
+    AugmentResult,
+    FreshnessLabel,
+)
 
 __all__ = (
     "AugmentResult",

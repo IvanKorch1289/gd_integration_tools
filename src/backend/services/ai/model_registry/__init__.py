@@ -18,8 +18,12 @@ from src.backend.services.ai.model_registry.adapter import (
 from src.backend.services.ai.model_registry.hf_hub_backend import (
     HuggingFaceModelRegistry,
 )
-from src.backend.services.ai.model_registry.local_fs_backend import LocalFSModelRegistry  # noqa: F401 — re-export
-from src.backend.services.ai.model_registry.mlflow_backend import MlflowModelRegistry  # noqa: F401 — re-export
+from src.backend.services.ai.model_registry.local_fs_backend import (
+    LocalFSModelRegistry,  # noqa: F401 — re-export
+)
+from src.backend.services.ai.model_registry.mlflow_backend import (
+    MlflowModelRegistry,  # noqa: F401 — re-export
+)
 
 __all__ = (
     "HuggingFaceModelRegistry",

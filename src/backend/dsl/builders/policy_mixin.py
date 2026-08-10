@@ -217,7 +217,9 @@ class PolicyChain:
 
         """
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             if not feature_flags.policy_chainable_enabled:
                 # Flag OFF — добавляем no-op маркер для traceability
@@ -264,7 +266,9 @@ class PolicyMarkerProcessor:
     async def process(self, exchange: Any, context: Any) -> None:
         """Записать факт применения policy в exchange.properties."""
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             if not feature_flags.policy_chainable_enabled:
                 return

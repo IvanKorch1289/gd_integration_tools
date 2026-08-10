@@ -57,8 +57,13 @@ def _get_storage_facade(context: ExecutionContext) -> Any:
     """Lazy resolve StorageFacade (fallback на bare ObjectStorage для тестов)."""
     plugin = context.route_id or "dsl"
     try:
-        from src.backend.core.svcs_registry import get_service, has_service  # noqa: F401 — availability probe
-        from src.backend.services.storage import StorageFacade  # noqa: F401 — availability probe
+        from src.backend.core.svcs_registry import (  # noqa: F401 — availability probe
+            get_service,
+            has_service,
+        )
+        from src.backend.services.storage import (
+            StorageFacade,  # noqa: F401 — availability probe
+        )
 
         if has_service(StorageFacade):
             facade = get_service(StorageFacade)

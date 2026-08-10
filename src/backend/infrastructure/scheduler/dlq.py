@@ -224,7 +224,9 @@ def attach_scheduler_dlq(
         set_scheduler_dlq_store(store)
 
     try:
-        from apscheduler.events import EVENT_JOB_ERROR  # noqa: F401 — availability probe
+        from apscheduler.events import (
+            EVENT_JOB_ERROR,  # noqa: F401 — availability probe
+        )
     except ImportError:
         _logger.warning("attach_scheduler_dlq: apscheduler not installed — no-op")
         return store

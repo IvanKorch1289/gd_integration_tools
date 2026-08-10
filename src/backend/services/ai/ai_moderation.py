@@ -138,7 +138,11 @@ class RagasEvaluator:
         try:
             from datasets import Dataset  # noqa: F401 — availability probe
             from ragas import evaluate  # noqa: F401 — availability probe
-            from ragas.metrics import answer_relevancy, context_precision, faithfulness  # noqa: F401 — availability probe
+            from ragas.metrics import (  # noqa: F401 — availability probe
+                answer_relevancy,
+                context_precision,
+                faithfulness,
+            )
         except ImportError:
             logger.debug("ragas not installed, skipping evaluation")
             return {"ragas_available": 0.0}

@@ -18,7 +18,9 @@
 
 from __future__ import annotations as annotations
 
-from src.backend.services.ai.pii.recognizers._base import RegexPiiRecognizer  # noqa: F401 — re-export
+from src.backend.services.ai.pii.recognizers._base import (
+    RegexPiiRecognizer,  # noqa: F401 — re-export
+)
 from src.backend.services.ai.pii.recognizers.address_ru_recognizer import (
     AddressRuRecognizer,
 )
@@ -31,11 +33,15 @@ from src.backend.services.ai.pii.recognizers.credit_case_recognizer import (
 from src.backend.services.ai.pii.recognizers.driver_license_ru_recognizer import (
     DriverLicenseRuRecognizer,
 )
-from src.backend.services.ai.pii.recognizers.inn_recognizer import InnRecognizer  # noqa: F401 — re-export
+from src.backend.services.ai.pii.recognizers.inn_recognizer import (
+    InnRecognizer,  # noqa: F401 — re-export
+)
 from src.backend.services.ai.pii.recognizers.passport_ru_recognizer import (
     PassportRuRecognizer,
 )
-from src.backend.services.ai.pii.recognizers.snils_recognizer import SnilsRecognizer  # noqa: F401 — re-export
+from src.backend.services.ai.pii.recognizers.snils_recognizer import (
+    SnilsRecognizer,  # noqa: F401 — re-export
+)
 
 __all__ = (
     "AddressRuRecognizer",

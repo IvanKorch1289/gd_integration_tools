@@ -49,7 +49,10 @@ class ExpressClient:
         if self._bot is not None:
             return self._bot
         try:
-            from pybotx import Bot, BotAccountWithSecret  # noqa: F401 — availability probe
+            from pybotx import (  # noqa: F401 — availability probe
+                Bot,
+                BotAccountWithSecret,
+            )
         except ImportError as exc:
             raise RuntimeError(
                 "pybotx не установлен. Установите: pip install pybotx",

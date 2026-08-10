@@ -76,7 +76,9 @@ class AgentMetricsService:
         if self._initialized:
             return
         try:
-            from src.backend.core.observability.metrics import metrics_registry  # noqa: F401 — availability probe
+            from src.backend.core.observability.metrics import (
+                metrics_registry,  # noqa: F401 — availability probe
+            )
 
             self._histogram = metrics_registry.histogram(
                 "agent_execution_seconds",

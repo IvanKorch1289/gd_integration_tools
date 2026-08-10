@@ -147,7 +147,9 @@ class PdfTemplateProcessor(BaseProcessor):
 
         """
         try:
-            from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
+                feature_flags,  # noqa: F401 — availability probe
+            )
 
             if not feature_flags.proc_pdf_template:
                 exchange.set_property("pdf_template_status", "skipped")
@@ -163,14 +165,21 @@ class PdfTemplateProcessor(BaseProcessor):
 
         # Lazy-import reportlab + jinja2
         try:
-            from reportlab.lib.pagesizes import A3, A4, A5, LETTER  # noqa: F401 — availability probe
+            from reportlab.lib.pagesizes import (  # noqa: F401 — availability probe
+                A3,
+                A4,
+                A5,
+                LETTER,
+            )
             from reportlab.pdfgen import canvas  # noqa: F401 — availability probe
         except ImportError as exc:
             exchange.fail(f"pdf_template: reportlab not available: {exc}")
             return
 
         try:
-            from jinja2.sandbox import SandboxedEnvironment  # noqa: F401 — availability probe
+            from jinja2.sandbox import (
+                SandboxedEnvironment,  # noqa: F401 — availability probe
+            )
         except ImportError as exc:
             exchange.fail(f"pdf_template: jinja2 not available: {exc}")
             return

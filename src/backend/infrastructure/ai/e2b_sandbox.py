@@ -87,7 +87,9 @@ class E2BSandbox(CodeSandbox):
             self._capability_check(self._plugin, "code.execute", scope)
 
         try:
-            from e2b_code_interpreter import Sandbox as _E2BSandbox  # noqa: F401 — availability probe
+            from e2b_code_interpreter import (
+                Sandbox as _E2BSandbox,  # noqa: F401 — availability probe
+            )
         except ImportError as exc:
             raise RuntimeError(
                 "e2b-code-interpreter не установлен; добавьте "

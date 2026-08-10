@@ -104,7 +104,9 @@ def __getattr__(name: str) -> Any:
     """Lazy module-level attribute access for DI providers + classes."""
     # DI providers
     if name == "get_scheduler_provider":
-        from src.backend.core.di.providers.scheduler import get_scheduler_provider  # noqa: F401 — re-export
+        from src.backend.core.di.providers.scheduler import (
+            get_scheduler_provider,  # noqa: F401 — re-export
+        )
 
         return get_scheduler_provider
     if name == "get_redis_client_class":
@@ -133,12 +135,16 @@ def __getattr__(name: str) -> Any:
         return get_clickhouse_client_class
     # AIGateway
     if name == "AIGateway":
-        from src.backend.core.ai.gateway.gateway import AIGateway  # noqa: F401 — re-export
+        from src.backend.core.ai.gateway.gateway import (
+            AIGateway,  # noqa: F401 — re-export
+        )
 
         return AIGateway
     # === Domain Facades (Cycle 31 P2.1) ===
     if name == "get_storage_facade_provider":
-        from src.backend.core.di.providers.storage import get_storage_facade_provider  # noqa: F401 — re-export
+        from src.backend.core.di.providers.storage import (
+            get_storage_facade_provider,  # noqa: F401 — re-export
+        )
 
         return get_storage_facade_provider
     if name == "get_external_db_facade":
@@ -146,15 +152,21 @@ def __getattr__(name: str) -> Any:
 
         return ExternalDBFacade.get_default
     if name == "get_auth_facade":
-        from src.backend.core.auth.facade import get_auth_facade  # noqa: F401 — re-export
+        from src.backend.core.auth.facade import (
+            get_auth_facade,  # noqa: F401 — re-export
+        )
 
         return get_auth_facade
     if name == "get_cache_facade":
-        from src.backend.core.di.providers.cache import get_cache_facade  # noqa: F401 — re-export
+        from src.backend.core.di.providers.cache import (
+            get_cache_facade,  # noqa: F401 — re-export
+        )
 
         return get_cache_facade
     if name == "emit_audit_safe":
-        from src.backend.core.audit.facade import emit_audit_safe  # noqa: F401 — re-export
+        from src.backend.core.audit.facade import (
+            emit_audit_safe,  # noqa: F401 — re-export
+        )
 
         return emit_audit_safe
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

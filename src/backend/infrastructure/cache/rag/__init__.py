@@ -10,12 +10,25 @@
 и ``services/ai/semantic_cache.py``. Sprint 4/5 будут наращивать поверх.
 """
 
-from src.backend.infrastructure.cache.rag.exact import L1ExactCache  # noqa: F401 — re-export
-from src.backend.infrastructure.cache.rag.invalidation import RagInvalidationBus  # noqa: F401 — re-export
-from src.backend.infrastructure.cache.rag.metrics import record_hit, record_miss  # noqa: F401 — re-export
-from src.backend.infrastructure.cache.rag.retrieval import L3RetrievalCache  # noqa: F401 — re-export
-from src.backend.infrastructure.cache.rag.semantic import L2SemanticRagCache  # noqa: F401 — re-export
-from src.backend.infrastructure.cache.rag.three_tier import ThreeTierRagCache  # noqa: F401 — re-export
+from src.backend.infrastructure.cache.rag.exact import (
+    L1ExactCache,  # noqa: F401 — re-export
+)
+from src.backend.infrastructure.cache.rag.invalidation import (
+    RagInvalidationBus,  # noqa: F401 — re-export
+)
+from src.backend.infrastructure.cache.rag.metrics import (  # noqa: F401 — re-export
+    record_hit,
+    record_miss,
+)
+from src.backend.infrastructure.cache.rag.retrieval import (
+    L3RetrievalCache,  # noqa: F401 — re-export
+)
+from src.backend.infrastructure.cache.rag.semantic import (
+    L2SemanticRagCache,  # noqa: F401 — re-export
+)
+from src.backend.infrastructure.cache.rag.three_tier import (
+    ThreeTierRagCache,  # noqa: F401 — re-export
+)
 
 __all__ = (
     "L1ExactCache",

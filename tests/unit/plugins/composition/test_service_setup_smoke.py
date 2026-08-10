@@ -333,25 +333,6 @@ def _mock_all_service_factories() -> None:
 
     # Собираем список (module_path, factory_name) — все они вызываются в
     # ``register_all_services`` без аргументов, поэтому MagicMock() подходит.
-    lazy_factories = [
-        (
-            "extensions.core_entities.orderkinds.services.orderkinds.get_order_kind_service",
-        ),
-        ("extensions.core_entities.orders.services.orders.get_order_service",),
-        ("extensions.core_entities.users.services.users.get_user_service",),
-        ("src.backend.services.ai.ai_agent.get_ai_agent_service",),
-        ("src.backend.services.core.admin.get_admin_service",),
-        ("src.backend.services.core.tech.get_tech_service",),
-        ("src.backend.services.integrations.dadata.get_dadata_service",),
-        ("src.backend.services.integrations.skb.get_skb_service",),
-        ("src.backend.services.io.files.get_file_service",),
-        ("src.backend.services.ai.agent_memory.get_agent_memory_service",),
-        ("src.backend.services.ai.rag_service.get_rag_service",),
-        ("src.backend.services.io.search.get_search_service",),
-        ("src.backend.services.ops.analytics.get_analytics_service",),
-        ("src.backend.services.ops.webhook_scheduler.get_webhook_scheduler",),
-        ("src.backend.services.ai.memory.langmem_service.get_langmem_service",),
-    ]
 
     # Применяем monkeypatch через patch.object — каждый ``register_factory`` зовётся
     # с уже импортированным callable, но фактически *внутри* ``register_all_services``

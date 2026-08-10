@@ -309,7 +309,9 @@ class SkillRegistry:
         # enforced). Production deployment должен передавать whitelist.
         if whitelist is None:
             try:
-                from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+                from src.backend.core.config.features import (
+                    feature_flags,  # noqa: F401 — availability probe
+                )
 
                 strict = bool(
                     getattr(feature_flags, "call_function_whitelist_strict", True),
@@ -505,7 +507,9 @@ class SkillRegistry:
 
         """
         try:
-            from langchain_core.tools import StructuredTool  # noqa: F401 — availability probe
+            from langchain_core.tools import (
+                StructuredTool,  # noqa: F401 — availability probe
+            )
         except ImportError:
             # langchain not installed — return empty list
             return []

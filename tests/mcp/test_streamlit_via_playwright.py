@@ -129,7 +129,7 @@ def main() -> int:
         try:
             t0 = time.monotonic()
             ok = fn()
-            elapsed = (time.monotonic() - t0) * 1000
+            (time.monotonic() - t0) * 1000
             if ok:
                 passed += 1
             else:

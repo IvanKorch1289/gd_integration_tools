@@ -23,8 +23,12 @@ Public API:
 файлы импортируются в dev_light без установленного Temporal.
 """
 
-from src.backend.dsl.workflow.builder import SagaBuilder as SagaBuilder  # noqa: F401 — re-export
-from src.backend.dsl.workflow.builder import WorkflowBuilder as WorkflowBuilder  # noqa: F401 — re-export
+from src.backend.dsl.workflow.builder import (
+    SagaBuilder as SagaBuilder,  # noqa: F401 — re-export
+)
+from src.backend.dsl.workflow.builder import (
+    WorkflowBuilder as WorkflowBuilder,  # noqa: F401 — re-export
+)
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     PauseDeclaration,

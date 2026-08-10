@@ -223,7 +223,10 @@ class DocsIndexer:
             # ConnectionError для network issues. Bare `except Exception`
             # маскировал unrelated errors (KeyError, TypeError).
             try:
-                from qdrant_client.models import Distance, VectorParams  # noqa: F401 — availability probe
+                from qdrant_client.models import (  # noqa: F401 — availability probe
+                    Distance,
+                    VectorParams,
+                )
 
                 self._qdrant.create_collection(
                     collection_name=self._collection_name,
@@ -319,7 +322,9 @@ class DocsIndexer:
     ) -> list[Any]:
         """PointStruct (Qdrant) → dict (fallback) — automatic dispatch."""
         try:
-            from qdrant_client.models import PointStruct  # noqa: F401 — availability probe
+            from qdrant_client.models import (
+                PointStruct,  # noqa: F401 — availability probe
+            )
 
             return [
                 PointStruct(

@@ -67,7 +67,9 @@ def _ensure_stale_metric() -> None:
     if _stale_warning_counter is not None:
         return
     try:
-        from src.backend.core.utils.metrics_registry import metrics_registry  # noqa: F401 — availability probe
+        from src.backend.core.utils.metrics_registry import (
+            metrics_registry,  # noqa: F401 — availability probe
+        )
 
         _stale_warning_counter = metrics_registry.counter(
             "db_fallback_used_with_stale_snapshot_total",

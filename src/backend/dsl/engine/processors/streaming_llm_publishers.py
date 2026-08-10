@@ -79,7 +79,9 @@ class WebhookChunkedPublisher(_BasePublisher):
         try:
             import httpx  # noqa: F401 — availability probe
 
-            from src.backend.core.net import OutboundHttpClient  # noqa: F401 — availability probe
+            from src.backend.core.net import (
+                OutboundHttpClient,  # noqa: F401 — availability probe
+            )
         except ImportError:
             return
         try:

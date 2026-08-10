@@ -43,7 +43,9 @@ def _is_exchange_wrapping_enabled() -> bool:
     Exchange API.
     """
     try:
-        from src.backend.core.config.features import feature_flags  # noqa: F401 — availability probe
+        from src.backend.core.config.features import (
+            feature_flags,  # noqa: F401 — availability probe
+        )
 
         return bool(getattr(feature_flags, "workflow_exchange_wrapping", True))
     except (ImportError, AttributeError, RuntimeError) as ff_exc:

@@ -213,7 +213,9 @@ class AgentOrchestrationMixin:
         sanitized = self._sanitizer.sanitize_text(prompt)
 
         try:
-            from src.backend.services.ai.ai_graph import build_and_run_agent  # noqa: F401 — availability probe
+            from src.backend.services.ai.ai_graph import (
+                build_and_run_agent,  # noqa: F401 — availability probe
+            )
 
             result = await build_and_run_agent(
                 prompt=sanitized.sanitized, tool_actions=tools or [], durable=durable,

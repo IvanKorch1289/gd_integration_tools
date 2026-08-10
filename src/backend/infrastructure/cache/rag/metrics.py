@@ -37,7 +37,9 @@ def _ensure() -> None:
     if _initialized:
         return
     try:
-        from src.backend.core.utils.metrics_registry import metrics_registry  # noqa: F401 — availability probe
+        from src.backend.core.utils.metrics_registry import (
+            metrics_registry,  # noqa: F401 — availability probe
+        )
 
         _hits = metrics_registry.counter(
             "rag_cache_hits_total",
