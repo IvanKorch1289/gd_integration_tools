@@ -413,8 +413,15 @@ class WebhookTrigger:
                     for r in self._app.router.routes
                     if getattr(r, "name", "") != f"webhook_{self.name}"
                 ]
-            except Exception:
-                pass
+            except (AttributeError, TypeError, RuntimeError) as router_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-971: narrow exceptions + observability.
+                # AttributeError — router API change, TypeError — wrong
+                # routes type, RuntimeError — router mutated concurrently.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "WebhookTrigger.router_unmount_failed",
+                    extra={"name": self.name, "error": str(router_exc)},
+                )
         self._route_added = False
         _log.info("WebhookTrigger: %s stopped", self.name)
 
