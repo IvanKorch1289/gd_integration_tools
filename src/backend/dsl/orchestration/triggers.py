@@ -194,8 +194,16 @@ class IntervalTrigger:
             await get_dsl_service().dispatch(
                 route_id=self.route_id, body=body, headers={"x-trigger": self.name}
             )
-        except Exception:
-            _log.exception("IntervalTrigger %s: dispatch failed", self.name)
+        except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError) as dispatch_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-968: narrow exceptions + observability.
+            # ImportError — DSL service missing, AttributeError — service
+            # API change, RuntimeError — dispatch failure, ConnectionError/
+            # OSError — backend unavailable.
+            _log.exception(
+                "IntervalTrigger %s: dispatch failed: %s",
+                self.name,
+                dispatch_exc,
+            )
 
     async def tick(self) -> bool:
         """Manual tick — возвращает True если trigger должен dispatch'ить сейчас.
