@@ -471,8 +471,17 @@ class VaultClient:
                         },
                         severity="info",
                     )
-                except Exception:
-                    pass  # audit is best-effort
+                except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-925: narrow exceptions + observability.
+                    # ImportError — audit facade missing, AttributeError
+                    # — schema change, RuntimeError — backend unavailable.
+                    # Bare `except Exception` маскировал unrelated runtime
+                    # errors.
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "vault_client.token_renew_audit_failed",
+                        extra={"error": str(audit_exc)},
+                    )
             else:
                 logger.debug(
                     "vault_client.token_renew_skipped",
