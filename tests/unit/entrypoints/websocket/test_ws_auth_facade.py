@@ -169,7 +169,6 @@ class TestWSAuthenticatorJWT:
         """Имитация отсутствующего joserfc / AuthError при ImportError."""
 
         # Подменяем import на стороне jwt_backend: он бросит ImportError.
-        from src.backend.core.auth import jwt_backend as jbmod
 
         # Симулируем ImportError на строке `from joserfc import jwt`.
 

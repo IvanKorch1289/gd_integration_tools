@@ -30,6 +30,7 @@ from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.tracer import get_tracer
 from src.backend.dsl.registry import route_registry
 from src.backend.services.workflows.template_registry import get_template_registry
+from src.backend.dsl.workflow.spec.workflow import WorkflowDeclaration
 
 
 def list_workflow_templates() -> list[Any]:
