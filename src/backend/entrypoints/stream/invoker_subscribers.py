@@ -136,7 +136,16 @@ def _summarize_poison(body: Any, *, max_len: int = 256) -> str:
     """Краткое summary body для error log (truncate to ``max_len``)."""
     try:
         rendered = repr(body)
-    except Exception:
+    except (TypeError, ValueError) as repr_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1012: narrow exceptions + observability (mirror
+        # D-AUDIT-1011).
+        # TypeError для unrepresentable type, ValueError для invalid
+        # repr value.
+        import logging
+        logging.getLogger(__name__).debug(
+            "stream_invoker_subscribers.summarize_poison_fallback",
+            extra={"error": str(repr_exc)},
+        )
         rendered = "<unrepresentable body>"
     if len(rendered) > max_len:
         return rendered[: max_len - 3] + "..."
