@@ -69,7 +69,10 @@ if st.button("Отправить", type="primary"):
             st.metric("Время, мс", f"{elapsed_ms:.1f}")
             try:
                 st.json(resp.json())
-            except Exception:  # noqa: BLE001
+            except (ValueError, TypeError) as json_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-1039: narrow exceptions + observability.
+                # ValueError для malformed JSON, TypeError для wrong
+                # response type.
                 st.code(resp.text[:10_000])
 
             st.session_state["api_history"].insert(
