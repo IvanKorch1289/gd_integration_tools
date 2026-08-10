@@ -140,8 +140,14 @@ class ZipArchiveProcessor(BaseProcessor):
             if not feature_flags.proc_zip_archive:
                 exchange.set_property("zip_archive_status", "skipped")
                 return
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1706: narrow exceptions + observability (mirror
+            # D-AUDIT-1705 webhook_signature).
+            import logging
+            logging.getLogger(__name__).debug(
+                "zip_archive.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         src_value = self._resolve_source(exchange)
 

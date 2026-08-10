@@ -166,8 +166,14 @@ class RateConvertProcessor(BaseProcessor):
             if not feature_flags.proc_rate_convert:
                 exchange.set_property("rate_convert_status", "skipped")
                 return
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1711: narrow exceptions + observability (mirror
+            # D-AUDIT-1710 html_template).
+            import logging
+            logging.getLogger(__name__).debug(
+                "rate_convert.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         amount = self._resolve_amount(exchange)
         if amount is None:

@@ -128,9 +128,16 @@ class HtmlTemplateProcessor(BaseProcessor):
             if not feature_flags.proc_html_template:
                 exchange.set_property("html_template_status", "skipped")
                 return
-        except Exception as _:
-            # feature flags недоступны — продолжаем работу (для unit-тестов)
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1710: narrow exceptions + observability.
+            # ImportError — features module missing, AttributeError —
+            # config not initialized, RuntimeError — feature_flags
+            # unavailable. feature flags недоступны — продолжаем работу (для unit-тестов).
+            import logging
+            logging.getLogger(__name__).debug(
+                "html_template.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         try:
             from jinja2.sandbox import SandboxedEnvironment

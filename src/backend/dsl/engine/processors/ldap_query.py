@@ -158,8 +158,14 @@ class LdapQueryProcessor(BaseProcessor):
             if not feature_flags.proc_ldap_query:
                 exchange.set_property("ldap_query_status", "skipped")
                 return
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1707: narrow exceptions + observability (mirror
+            # D-AUDIT-1705/1706 pattern).
+            import logging
+            logging.getLogger(__name__).debug(
+                "ldap_query.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         # Primary path: ldap3 + asyncio.to_thread (стабильный wheel py3.14).
         try:
