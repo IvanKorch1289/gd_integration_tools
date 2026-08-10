@@ -383,11 +383,25 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                     if hasattr(sink, "close_sync"):
                         try:
                             sink.close_sync()
-                        except Exception:  # noqa: BLE001 — best-effort cleanup
-                            pass
-        except Exception:  # noqa: BLE001
+                        except (OSError, RuntimeError, AttributeError) as sink_exc:  # noqa: BLE001 — best-effort cleanup
+                            # cycle-9/D-AUDIT-1027: narrow exceptions + observability.
+                            # OSError — sink close failure, RuntimeError —
+                            # sink unavailable, AttributeError — API change.
+                            import logging as _stdlogging
+                            _stdlogging.getLogger(__name__).debug(
+                                "structlog_backend.sink_close_sync_failed",
+                                extra={"error": str(sink_exc)},
+                            )
+        except (ImportError, AttributeError, RuntimeError) as router_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1027: см. выше — outer для router access.
+            # ImportError — router module missing, AttributeError —
+            # API change, RuntimeError — router unavailable.
             # router может быть ещё не инициализирован — no-op
-            pass
+            import logging as _stdlogging
+            _stdlogging.getLogger(__name__).debug(
+                "structlog_backend.router_access_failed",
+                extra={"error": str(router_exc)},
+            )
 
         # 2) flush + close stdlib handlers
         for handler in logging.root.handlers[:]:
