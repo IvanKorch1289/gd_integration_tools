@@ -98,7 +98,15 @@ def require_capability(
                     ctx = current_tenant()
                     if ctx is not None:
                         tenant_id = ctx.tenant_id
-                except Exception:  # pragma: no cover
+                except (ImportError, AttributeError, RuntimeError) as ten_exc:  # pragma: no cover
+                    # cycle-9/D-AUDIT-1037: narrow exceptions + observability.
+                    # ImportError — tenancy missing, AttributeError — context
+                    # API change, RuntimeError — context unavailable.
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "connector_auth.current_tenant_fallback",
+                        extra={"error": str(ten_exc)},
+                    )
                     tenant_id = None
 
             facade = get_authorization_facade()
