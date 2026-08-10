@@ -30,7 +30,8 @@ violation (``core/ → entrypoints/``).
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.auth.auth_selector import (

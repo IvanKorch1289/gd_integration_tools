@@ -16,7 +16,8 @@ Post-FW2: ``from_event_subscribe(channel=..., consumer_group=...)``
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder

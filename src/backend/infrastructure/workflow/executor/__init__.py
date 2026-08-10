@@ -14,7 +14,8 @@ Backward-compat: ``from src.backend.infrastructure.workflow.executor import DSLS
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Literal
+from collections.abc import Callable
 
 if TYPE_CHECKING:
     pass

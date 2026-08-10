@@ -13,7 +13,7 @@ Full split (4 files) — separate WIP.
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.resilience.region_routing import (

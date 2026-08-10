@@ -14,7 +14,8 @@ task_factory callback that's invoked lazily.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, cast
+from collections.abc import Callable
 
 from src.backend.dsl.builders.eip._base import EIPMixinBase
 

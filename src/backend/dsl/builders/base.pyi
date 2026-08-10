@@ -7,7 +7,8 @@ introspection ``RouteBuilder``. Не редактировать вручную �
 
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable, ForwardRef, Self, Union
+from typing import Any, ForwardRef, Self, Union
+from collections.abc import Awaitable, Callable
 
 from datetime import datetime
 
