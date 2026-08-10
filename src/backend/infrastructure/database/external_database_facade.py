@@ -334,7 +334,14 @@ class ExternalDatabaseFacade:
                 result = await session.execute(text(sql), params or {})
                 try:
                     return [dict(row) for row in result.mappings().all()]
-                except Exception:  # noqa: BLE001
+                except (TypeError, ValueError, KeyError, AttributeError) as mapping_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-1029: см. D-AUDIT-1028 — mirror для
+                    # async path (call_procedure).
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "external_database_facade.async_row_mapping_failed",
+                        extra={"error": str(mapping_exc)},
+                    )
                     return None
         except DatabaseError:
             raise
