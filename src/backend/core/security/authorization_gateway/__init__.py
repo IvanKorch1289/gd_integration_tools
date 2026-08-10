@@ -84,7 +84,15 @@ def get_authorization_gateway() -> "AuthorizationGateway | None":
         from src.backend.core.di.app_state import get_app_ref
 
         app = get_app_ref()
-    except Exception:  # noqa: BLE001 — defensive, returns None per test_lazy_resolver_swallows_exceptions
+    except (ImportError, AttributeError, RuntimeError) as app_exc:  # noqa: BLE001 — defensive, returns None per test_lazy_resolver_swallows_exceptions
+        # cycle-9/D-AUDIT-1036: narrow exceptions + observability.
+        # ImportError — get_app_ref missing, AttributeError — API
+        # change, RuntimeError — app_state unavailable.
+        import logging
+        logging.getLogger(__name__).debug(
+            "authorization_gateway.app_state_fallback",
+            extra={"error": str(app_exc)},
+        )
         return None
     if app is None:
         return None
