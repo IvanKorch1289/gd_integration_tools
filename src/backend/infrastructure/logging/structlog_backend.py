@@ -394,8 +394,16 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             try:
                 handler.flush()
                 handler.close()
-            except Exception:  # noqa: BLE001
-                pass
+            except (OSError, RuntimeError, AttributeError, TypeError) as handler_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-1026: narrow exceptions + observability.
+                # OSError — handler flush failure, RuntimeError —
+                # handler unavailable, AttributeError — handler API
+                # change, TypeError — wrong arg type.
+                import logging as _stdlogging
+                _stdlogging.getLogger(__name__).debug(
+                    "structlog_backend.handler_flush_close_failed",
+                    extra={"error": str(handler_exc)},
+                )
 
         self._loggers.clear()
         self._configured = False
