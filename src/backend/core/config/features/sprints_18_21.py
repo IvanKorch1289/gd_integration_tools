@@ -67,7 +67,16 @@ class Sprints1821Flags(BaseSettings):
         # Try to read app environment from AppBaseSettings singleton.
         try:
             app_env = AppBaseSettings().environment  # type: ignore[attr-defined]
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError, ValueError) as app_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-983: narrow exceptions + observability.
+            # ImportError — AppBaseSettings module missing, AttributeError
+            # — environment attribute change, RuntimeError — settings
+            # unavailable, ValueError — invalid env value.
+            import logging
+            logging.getLogger(__name__).debug(
+                "sprints_18_21.app_env_fallback",
+                extra={"error": str(app_exc)},
+            )
             # AppBaseSettings not yet initialized (e.g. unit tests without env).
             # Default to NOT-prod для safety (rate limit OFF як default).
             return not prod_value
