@@ -239,8 +239,14 @@ class PydanticAIClient:
                             "для вызовов из AIGateway-pipeline",
                         },
                     )
-                except Exception:  # noqa: BLE001
-                    pass  # audit-log — best-effort, не должен блокировать raise
+                except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-1035: narrow exceptions + observability.
+                    # ImportError — audit facade missing, AttributeError
+                    # — API change, RuntimeError — backend unavailable.
+                    # audit-log — best-effort, не должен блокировать raise.
+                    logger.debug(
+                        "PydanticAIClient bypass audit failed: %s", audit_exc
+                    )
                 raise RuntimeError(
                     "PydanticAIClient.run() bypasses AIGateway; "
                     "use AIGateway.invoke() instead"
