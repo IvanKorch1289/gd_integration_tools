@@ -57,7 +57,7 @@ def install_signal_handlers() -> asyncio.Event:
             # Windows / non-Unix / not in main thread → fallback.
             try:
                 signal.signal(
-                    sig, lambda signum, frame: _on_signal(sig_name, shutdown_event)
+                    sig, lambda _, __: _on_signal(sig_name, shutdown_event)
                 )
                 installed = True
             except (ValueError, OSError):
