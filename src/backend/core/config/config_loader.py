@@ -299,7 +299,17 @@ class ConsulConfigSettingsSource(FilteredSettingsSource):
                 field_name = key[len(prefix) :] if key.startswith(prefix) else key
                 data[field_name] = value
             return data
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError) as items_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-982: narrow exceptions + observability.
+            # AttributeError — store.items API change, TypeError — wrong
+            # store type, ValueError — invalid prefix, KeyError — missing
+            # expected key. Bare `except Exception` маскировал unrelated
+            # runtime errors.
+            import logging
+            logging.getLogger(__name__).debug(
+                "config_loader.prefix_items_failed",
+                extra={"prefix": prefix, "error": str(items_exc)},
+            )
             return {}
 
 
