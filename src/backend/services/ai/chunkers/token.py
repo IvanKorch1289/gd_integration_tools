@@ -40,7 +40,7 @@ class TokenChunker:
     def _load_encoding(name: str) -> Any | None:
         """Возвращает tiktoken encoding или ``None``, если пакет недоступен."""
         try:
-            import tiktoken
+            import tiktoken  # noqa: F401 — availability probe
         except ImportError:
             logger.info(
                 "tiktoken не установлен — TokenChunker работает в "

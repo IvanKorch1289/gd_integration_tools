@@ -34,7 +34,7 @@ class TemplateRenderProcessor(BaseProcessor):
         if not await self.auth_check(exchange, action="read"):
             return
         try:
-            from jinja2.sandbox import (
+            from jinja2.sandbox import (  # noqa: F401 — availability probe
                 SandboxedEnvironment,
             )
         except ImportError:

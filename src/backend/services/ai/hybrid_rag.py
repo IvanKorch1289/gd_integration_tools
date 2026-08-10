@@ -59,7 +59,7 @@ class HybridRAGSearch:
         # BM25 — lexical (rank_bm25 в core deps с S172, ImportError теперь не ожидается,
         # но проверка остаётся для dev_light стендов без numpy).
         try:
-            from rank_bm25 import BM25Okapi
+            from rank_bm25 import BM25Okapi  # noqa: F401 — availability probe
 
             logger.debug("rank_bm25 available for hybrid search")
         except ImportError:
@@ -80,7 +80,7 @@ class HybridRAGSearch:
     def index_bm25(self, documents: list[dict[str, Any]]) -> None:
         """Создаёт BM25 индекс (in-memory, per-instance)."""
         try:
-            from rank_bm25 import BM25Okapi
+            from rank_bm25 import BM25Okapi  # noqa: F401 — availability probe
         except ImportError:
             return
 

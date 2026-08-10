@@ -50,7 +50,7 @@ def _emit_deprecation_once() -> None:
     (импорты до загрузки settings) исключения не должны ломать импорт.
     """
     try:
-        from src.backend.core.config.features import (
+        from src.backend.core.config.features import (  # noqa: F401 — availability probe
             feature_flags,
         )
 
@@ -71,7 +71,7 @@ def _emit_deprecation_once() -> None:
         # `except Exception` маскировал unrelated runtime errors.
         # Bootstrap-окружение без settings — молча игнорируем.
         # Deprecation-warning не критичен, чтобы из-за него падал импорт.
-        import logging
+        import logging  # noqa: F401 — availability probe
         logging.getLogger(__name__).debug(
             "macros._emit_deprecation_skipped",
             extra={"error": str(dep_exc)},

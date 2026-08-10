@@ -224,7 +224,7 @@ def attach_scheduler_dlq(
         set_scheduler_dlq_store(store)
 
     try:
-        from apscheduler.events import (
+        from apscheduler.events import (  # noqa: F401 — availability probe
             EVENT_JOB_ERROR,
         )
     except ImportError:

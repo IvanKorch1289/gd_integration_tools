@@ -334,7 +334,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
     def _resolve_gateway() -> Any | None:
         """Lazy-резолв AIGateway через DI."""
         try:
-            from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]
+            from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]  # noqa: F401 — availability probe
                 get_ai_gateway,
             )
 
@@ -342,7 +342,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
         except (ImportError, AttributeError, RuntimeError) as di_exc:
             # cycle-9/D-AUDIT-967: narrow exceptions + observability (mirror
             # D-AUDIT-966 для plan_execute).
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "reflection_loop.ai_gateway_resolve_fallback",
                 extra={"error": str(di_exc)},

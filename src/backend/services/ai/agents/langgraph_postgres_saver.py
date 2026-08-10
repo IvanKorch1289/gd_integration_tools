@@ -93,7 +93,7 @@ class LangGraphPostgresSaverWrapper:
         if self._dsn:
             return self._dsn
         try:
-            from src.backend.core.config.application_settings import (
+            from src.backend.core.config.application_settings import (  # noqa: F401 — availability probe
                 settings,  # type: ignore[import-not-found]
             )
 
@@ -106,7 +106,7 @@ class LangGraphPostgresSaverWrapper:
             # cycle-9/D-AUDIT-1728: narrow exceptions + observability.
             # ImportError — application_settings missing, AttributeError
             # — settings.database missing, RuntimeError — settings unavailable.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "langgraph_postgres_saver.dsn_resolve_failed",
                 extra={"error": str(dsn_exc)},
@@ -133,7 +133,7 @@ class LangGraphPostgresSaverWrapper:
         if self._saver is not None:
             return self._saver
         try:
-            from langchain_postgres import (
+            from langchain_postgres import (  # noqa: F401 — availability probe
                 AsyncPostgresSaver,
             )
         except ImportError as exc:

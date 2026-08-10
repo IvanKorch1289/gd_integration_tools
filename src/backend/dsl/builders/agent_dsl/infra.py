@@ -219,7 +219,7 @@ class InfraMixin:
                 "(isolated=True default с S3). Audit-event emitted.",
             )
             try:
-                from src.backend.core.audit.facade import (
+                from src.backend.core.audit.facade import (  # noqa: F401 — availability probe
                     emit_audit_safe,
                 )
 
@@ -233,7 +233,7 @@ class InfraMixin:
                 # ImportError — audit facade missing, AttributeError —
                 # schema change, RuntimeError — backend unavailable.
                 # audit is best-effort.
-                import logging
+                import logging  # noqa: F401 — availability probe
                 logging.getLogger(__name__).debug(
                     "agent_dsl_infra.audit_emit_failed",
                     extra={"error": str(audit_exc)},

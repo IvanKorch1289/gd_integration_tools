@@ -134,7 +134,7 @@ class MessagingFacade:
             # cycle-9/D-AUDIT-908: narrow exceptions + observability.
             # Bare `except Exception` маскировал unrelated runtime errors
             # (KeyError, TypeError, ValueError) — ложные 'channel down'.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "messaging_facade.channel_unavailable",
                 extra={

@@ -33,7 +33,7 @@ def _ensure_metrics() -> dict[str, Any]:
     if _metrics:
         return _metrics
     try:
-        from src.backend.core.utils.metrics_registry import (
+        from src.backend.core.utils.metrics_registry import (  # noqa: F401 — availability probe
             metrics_registry,
         )
 

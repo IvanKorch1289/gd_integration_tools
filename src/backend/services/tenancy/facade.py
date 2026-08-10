@@ -70,7 +70,7 @@ class TenantFacade:
             return True
 
         try:
-            from src.backend.core.security.capabilities.tenant import (
+            from src.backend.core.security.capabilities.tenant import (  # noqa: F401 — availability probe
                 SYSTEM_TENANT_ID,
             )
 
@@ -79,7 +79,7 @@ class TenantFacade:
             # D-A1-04 fix (cycle 32): narrow exceptions + observability.
             # Bare `except Exception` маскировал security-critical
             # SYSTEM_TENANT_ID import failure → silent permission grant.
-            from src.backend.core.logging import (
+            from src.backend.core.logging import (  # noqa: F401 — availability probe
                 get_logger,
             )
             get_logger(__name__).warning(

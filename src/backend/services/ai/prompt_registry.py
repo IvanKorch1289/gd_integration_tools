@@ -62,7 +62,7 @@ class PromptRegistry:
 
     def _try_init_langfuse(self) -> None:
         try:
-            from langfuse import Langfuse
+            from langfuse import Langfuse  # noqa: F401 — availability probe
 
             self._langfuse = Langfuse()
             logger.info("Langfuse prompt registry initialized")

@@ -87,7 +87,7 @@ class E2BSandbox(CodeSandbox):
             self._capability_check(self._plugin, "code.execute", scope)
 
         try:
-            from e2b_code_interpreter import (
+            from e2b_code_interpreter import (  # noqa: F401 — availability probe
                 Sandbox as _E2BSandbox,
             )
         except ImportError as exc:

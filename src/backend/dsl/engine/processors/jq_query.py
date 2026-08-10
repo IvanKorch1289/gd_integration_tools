@@ -94,7 +94,7 @@ class JqProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет JMESPath-выражение над body и пишет результат в target."""
         try:
-            from src.backend.core.config.features import (
+            from src.backend.core.config.features import (  # noqa: F401 — availability probe
                 feature_flags,
             )
 
@@ -104,14 +104,14 @@ class JqProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1709: narrow exceptions + observability (mirror
             # D-AUDIT-1705/1706/1707/1708).
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "jq_query.feature_flag_fallback",
                 extra={"error": str(ff_exc)},
             )
 
         try:
-            import jmespath
+            import jmespath  # noqa: F401 — availability probe
         except ImportError as exc:
             exchange.fail(f"jq: jmespath not available: {exc}")
             return

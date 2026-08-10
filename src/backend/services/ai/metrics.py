@@ -76,7 +76,7 @@ class AgentMetricsService:
         if self._initialized:
             return
         try:
-            from src.backend.core.observability.metrics import (
+            from src.backend.core.observability.metrics import (  # noqa: F401 — availability probe
                 metrics_registry,
             )
 

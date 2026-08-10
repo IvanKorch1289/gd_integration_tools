@@ -213,7 +213,7 @@ class AgentOrchestrationMixin:
         sanitized = self._sanitizer.sanitize_text(prompt)
 
         try:
-            from src.backend.services.ai.ai_graph import (
+            from src.backend.services.ai.ai_graph import (  # noqa: F401 — availability probe
                 build_and_run_agent,
             )
 

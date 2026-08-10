@@ -80,7 +80,7 @@ class CLIPEmbedder:
             return self._model
 
         try:
-            from sentence_transformers import (
+            from sentence_transformers import (  # noqa: F401 — availability probe
                 SentenceTransformer,
             )
         except ImportError as exc:
@@ -112,7 +112,7 @@ class CLIPEmbedder:
             vec = model.encode(content, convert_to_numpy=True)
         elif isinstance(content, (bytes, bytearray)):
             try:
-                from PIL import Image
+                from PIL import Image  # noqa: F401 — availability probe
             except ImportError as exc:
                 raise LazyImportError(
                     "Pillow не установлен — обработка изображений недоступна.",
@@ -173,7 +173,7 @@ class ColpaliEmbedder:
 
         """
         try:
-            import colpali_engine  # type: ignore[import-not-found]
+            import colpali_engine  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         except ImportError as exc:
             raise LazyImportError(
                 "colpali_engine не установлен. "

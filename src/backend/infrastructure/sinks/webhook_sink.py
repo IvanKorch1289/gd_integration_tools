@@ -63,9 +63,9 @@ class WebhookSink(Sink):
         policy поведение остаётся прежним (legacy ad-hoc try/except).
         """
         try:
-            import httpx
+            import httpx  # noqa: F401 — availability probe
 
-            from src.backend.core.net import (
+            from src.backend.core.net import (  # noqa: F401 — availability probe
                 OutboundHttpClient,
             )
         except ImportError:
@@ -141,9 +141,9 @@ class WebhookSink(Sink):
     async def health(self, mode: str = "fast") -> HealthResult:
         """HEAD-запрос на webhook-URL; ``ok`` если адрес отвечает."""
         try:
-            import httpx
+            import httpx  # noqa: F401 — availability probe
 
-            from src.backend.core.net import (
+            from src.backend.core.net import (  # noqa: F401 — availability probe
                 OutboundHttpClient,
             )
         except ImportError:

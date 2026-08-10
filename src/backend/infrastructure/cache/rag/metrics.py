@@ -37,7 +37,7 @@ def _ensure() -> None:
     if _initialized:
         return
     try:
-        from src.backend.core.utils.metrics_registry import (
+        from src.backend.core.utils.metrics_registry import (  # noqa: F401 — availability probe
             metrics_registry,
         )
 

@@ -27,13 +27,13 @@ History:
 from src.backend.core.di.module_registry import (
     resolve_module as resolve_module,
 )
-from src.backend.core.di.providers import ai as ai
-from src.backend.core.di.providers import auth as auth
-from src.backend.core.di.providers import cache as cache
-from src.backend.core.di.providers import db as db
-from src.backend.core.di.providers import http as http
-from src.backend.core.di.providers import storage as storage
-from src.backend.core.di.providers import workflow as workflow
+from src.backend.core.di.providers import ai as ai  # noqa: F401 — re-export
+from src.backend.core.di.providers import auth as auth  # noqa: F401 — re-export
+from src.backend.core.di.providers import cache as cache  # noqa: F401 — re-export
+from src.backend.core.di.providers import db as db  # noqa: F401 — re-export
+from src.backend.core.di.providers import http as http  # noqa: F401 — re-export
+from src.backend.core.di.providers import storage as storage  # noqa: F401 — re-export
+from src.backend.core.di.providers import workflow as workflow  # noqa: F401 — re-export
 
 # --- ai.py (12) ---
 from src.backend.core.di.providers.ai import (

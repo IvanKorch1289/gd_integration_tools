@@ -203,7 +203,7 @@ class LLMJudge:
             pass
 
         try:
-            import orjson as _orjson
+            import orjson as _orjson  # noqa: F401 — availability probe
 
             redis_client = get_redis_stream_client_provider()
             await redis_client.add_to_stream(

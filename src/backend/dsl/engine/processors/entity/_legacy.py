@@ -48,14 +48,14 @@ class _BaseEntityProcessor(BaseProcessor):
         if self._payload_from is None:
             return exchange.in_message.body
         try:
-            import jmespath
+            import jmespath  # noqa: F401 — availability probe
             return jmespath.search(self._payload_from, exchange.in_message.body)
         except (ImportError, AttributeError, TypeError, ValueError, jmespath.exceptions.ParseError) as jmespath_exc:
             # cycle-9/D-AUDIT-975: narrow exceptions + observability.
             # ImportError — jmespath missing, AttributeError — jmespath
             # API change, TypeError — wrong body type, ValueError — invalid
             # search syntax, jmespath.exceptions.ParseError — bad query.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "entity_legacy.jmespath_search_fallback",
                 extra={"error": str(jmespath_exc)},

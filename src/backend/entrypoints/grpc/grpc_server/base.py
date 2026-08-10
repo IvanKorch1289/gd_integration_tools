@@ -56,7 +56,7 @@ class BaseGRPCServicer:
                 correlation_id = extracted
         if correlation_id:
             try:
-                from src.backend.core.observability.correlation import (
+                from src.backend.core.observability.correlation import (  # noqa: F401 — availability probe
                     set_correlation_context,
                 )
 

@@ -65,10 +65,10 @@ class FeedbackTrainer:
             tenant_id=tenant_id, limit=limit, only_positive=True,
         )
         try:
-            import dspy
+            import dspy  # noqa: F401 — availability probe
 
             examples = self._dataset_builder.to_dspy_examples(records)
-            from dspy.teleprompt import (
+            from dspy.teleprompt import (  # noqa: F401 — availability probe
                 BootstrapFewShot,
             )
 

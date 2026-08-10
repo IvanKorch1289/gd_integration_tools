@@ -16,17 +16,17 @@ __all__ = ("LiteLLMModel",)
 from contextlib import asynccontextmanager
 
 try:
-    from pydantic_ai.messages import (
+    from pydantic_ai.messages import (  # noqa: F401 — availability probe
         ModelMessage,
         ModelResponse,
         TextPart,
     )
-    from pydantic_ai.models import (
+    from pydantic_ai.models import (  # noqa: F401 — availability probe
         Model,
         ModelRequestParameters,
     )
-    from pydantic_ai.result import StreamedResponse
-    from pydantic_ai.settings import ModelSettings
+    from pydantic_ai.result import StreamedResponse  # noqa: F401 — availability probe
+    from pydantic_ai.settings import ModelSettings  # noqa: F401 — availability probe
 
     HAS_PYDANTIC_AI = True
 except ImportError:

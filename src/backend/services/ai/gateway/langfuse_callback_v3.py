@@ -60,9 +60,9 @@ class LangFuseCallbackV3:
             return self._lf
         self._inited = True
         try:
-            from langfuse import Langfuse
+            from langfuse import Langfuse  # noqa: F401 — availability probe
 
-            from src.backend.core.config.ai_stack import (
+            from src.backend.core.config.ai_stack import (  # noqa: F401 — availability probe
                 langfuse_settings,
             )
 

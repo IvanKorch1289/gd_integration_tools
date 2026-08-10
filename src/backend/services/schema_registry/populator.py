@@ -115,7 +115,7 @@ def populate_from_actions(registry: ServiceSchemaRegistry | None = None) -> int:
     """Импортирует action handlers в schema_registry."""
     reg = registry or get_schema_registry()
     try:
-        from src.backend.dsl.commands.registry import (
+        from src.backend.dsl.commands.registry import (  # noqa: F401 — availability probe
             action_handler_registry,
         )
     except (ImportError, AttributeError):
@@ -162,7 +162,7 @@ def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> in
     """
     reg = registry or get_schema_registry()
     try:
-        from src.backend.core.plugin_runtime.registry import (
+        from src.backend.core.plugin_runtime.registry import (  # noqa: F401 — availability probe
             get_plugin_registry,  # type: ignore[import-not-found]
         )
     except ImportError:
@@ -175,7 +175,7 @@ def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> in
         # ImportError — plugin_runtime missing, AttributeError — malformed
         # registry, RuntimeError — not initialized. Bare `except Exception`
         # маскировал unrelated runtime errors (KeyError, TypeError).
-        import logging
+        import logging  # noqa: F401 — availability probe
         logging.getLogger(__name__).debug(
             "schema_registry.populator_plugin_registry_unavailable",
             extra={"error": str(plugin_reg_exc)},

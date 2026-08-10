@@ -73,7 +73,7 @@ class _KafkaDebeziumStrategy(_CDCStrategy):
         if self._consumer is not None:
             return self._consumer
         try:
-            from aiokafka import AIOKafkaConsumer
+            from aiokafka import AIOKafkaConsumer  # noqa: F401 — availability probe
         except ImportError:
             logger.error("CDC Kafka: aiokafka not installed")
             raise

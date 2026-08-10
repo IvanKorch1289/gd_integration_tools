@@ -46,14 +46,14 @@ def init_sentry(
         return False
 
     try:
-        import sentry_sdk
-        from sentry_sdk.integrations.asyncio import (
+        import sentry_sdk  # noqa: F401 — availability probe
+        from sentry_sdk.integrations.asyncio import (  # noqa: F401 — availability probe
             AsyncioIntegration,
         )
-        from sentry_sdk.integrations.fastapi import (
+        from sentry_sdk.integrations.fastapi import (  # noqa: F401 — availability probe
             FastApiIntegration,
         )
-        from sentry_sdk.integrations.sqlalchemy import (
+        from sentry_sdk.integrations.sqlalchemy import (  # noqa: F401 — availability probe
             SqlalchemyIntegration,
         )
     except ImportError:
@@ -146,7 +146,7 @@ def _scrub_with_presidio(event: dict[str, Any]) -> None:
     окружении функция тихо ничего не делает.
     """
     try:
-        from src.backend.infrastructure.security.presidio_sanitizer import (
+        from src.backend.infrastructure.security.presidio_sanitizer import (  # noqa: F401 — availability probe
             get_presidio_sanitizer,
         )
 

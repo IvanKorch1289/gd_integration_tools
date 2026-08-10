@@ -181,7 +181,7 @@ class SchemaValidateProcessor(BaseProcessor):
         super().__init__(name="schema_validate")
         self.schema = schema
         try:
-            import jsonschema
+            import jsonschema  # noqa: F401 — availability probe
 
             self._strict = True
         except ImportError:
@@ -191,7 +191,7 @@ class SchemaValidateProcessor(BaseProcessor):
         """Обработать exchange: SchemaValidateProcessor processor."""
         body = exchange.in_message.body
         if self._strict:
-            import jsonschema
+            import jsonschema  # noqa: F401 — availability probe
 
             jsonschema.validate(instance=body, schema=self.schema)
             return

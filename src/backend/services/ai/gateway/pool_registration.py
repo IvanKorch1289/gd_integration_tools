@@ -69,7 +69,7 @@ async def _litellm_ping(gateway: LiteLLMGateway) -> bool:
     """
     try:
         # Lazy-import litellm (opt-in dep, [ai] extra)
-        import litellm
+        import litellm  # noqa: F401 — availability probe
     except ImportError:
         _logger.warning("litellm not installed, ping returns False")
         return False

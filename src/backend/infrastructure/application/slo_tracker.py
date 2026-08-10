@@ -18,7 +18,7 @@ __all__ = ("SLOTracker", "get_slo_tracker")
 
 
 try:
-    from hdrh.histogram import (
+    from hdrh.histogram import (  # noqa: F401 — availability probe
         HdrHistogram as _HdrHistogram,
     )
 
@@ -160,7 +160,7 @@ class SLOTracker:
         """Записывает результат выполнения маршрута + экспорт в Prometheus."""
         self._stats[route_id].record(latency_ms, is_error)
         try:
-            from src.backend.infrastructure.observability.metrics import (
+            from src.backend.infrastructure.observability.metrics import (  # noqa: F401 — availability probe
                 record_pipeline_execution,
             )
 

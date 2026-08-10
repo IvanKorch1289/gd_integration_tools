@@ -60,7 +60,7 @@ class _AdminConnectorsFacade:
         """Список всех зарегистрированных коннекторов с health-status."""
         # Wave 6.5a: registry резолвится через core.di.providers (lazy).
         try:
-            from src.backend.core.di.providers import (
+            from src.backend.core.di.providers import (  # noqa: F401 — availability probe
                 get_connector_registry_provider,
             )
 
@@ -97,7 +97,7 @@ class _AdminConnectorsFacade:
         """Hot-reload коннектора: переподключение к upstream + health-check."""
         # Wave 6.5a: registry + error class — через DI providers.
         try:
-            from src.backend.core.di.providers import (
+            from src.backend.core.di.providers import (  # noqa: F401 — availability probe
                 get_connector_registry_errors_provider,
                 get_connector_registry_provider,
             )
@@ -161,7 +161,7 @@ class _AdminConnectorsFacade:
         reload_status: dict[str, Any] = {"attempted": False}
         try:
             # Wave 6.5a: registry + error class — через DI providers.
-            from src.backend.core.di.providers import (
+            from src.backend.core.di.providers import (  # noqa: F401 — availability probe
                 get_connector_registry_errors_provider,
                 get_connector_registry_provider,
             )

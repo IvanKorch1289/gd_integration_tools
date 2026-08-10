@@ -139,12 +139,12 @@ def _build_jwt_blacklist_or_none() -> Any:
     if not getattr(secure_settings, "jwt_blacklist_enabled", False):
         return None
     try:
-        from src.backend.core.auth.jwt_blacklist import (
+        from src.backend.core.auth.jwt_blacklist import (  # noqa: F401 — availability probe
             RedisJwtBlacklist,
         )
 
         # Late import — avoids module-level circular dep (auth ↔ cache).
-        from src.backend.core.di.providers.cache import (
+        from src.backend.core.di.providers.cache import (  # noqa: F401 — availability probe
             get_redis_kv_client_provider,
         )
 
@@ -155,7 +155,7 @@ def _build_jwt_blacklist_or_none() -> Any:
         # ImportError — module missing, AttributeError — API change,
         # RuntimeError — DI unavailable, ConnectionError/OSError — Redis
         # network failure.
-        import logging
+        import logging  # noqa: F401 — availability probe
         logging.getLogger(__name__).debug(
             "auth_provider.redis_jwt_blacklist_unavailable",
             extra={"error": str(redis_exc)},

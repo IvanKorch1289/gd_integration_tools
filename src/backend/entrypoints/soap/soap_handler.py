@@ -51,7 +51,7 @@ def _parse_soap_request(xml_body: bytes) -> tuple[str, dict[str, Any]]:
     - ``simple_name`` (например, ``GetOrder``)
     """
     try:
-        from defusedxml.ElementTree import (
+        from defusedxml.ElementTree import (  # noqa: F401 — availability probe
             fromstring as safe_fromstring,
         )
 
@@ -319,7 +319,7 @@ def _parse_invoker_envelope(xml_body: bytes) -> InvocationRequest:
     вложенности) либо плоские дочерние элементы.
     """
     try:
-        from defusedxml.ElementTree import (
+        from defusedxml.ElementTree import (  # noqa: F401 — availability probe
             fromstring as safe_fromstring,
         )
 

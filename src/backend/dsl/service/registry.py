@@ -30,7 +30,7 @@ class ServiceDSLRegistry:
         При default-OFF feature-flag ``service_toml_loader`` — no-op.
         """
         try:
-            from src.backend.core.config.features import (
+            from src.backend.core.config.features import (  # noqa: F401 — availability probe
                 feature_flags,
             )
 

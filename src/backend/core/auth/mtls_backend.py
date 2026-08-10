@@ -199,8 +199,8 @@ def default_cryptography_parser() -> CertParser:
 
     """
     try:
-        from cryptography import x509
-        from cryptography.hazmat.primitives import (
+        from cryptography import x509  # noqa: F401 — availability probe
+        from cryptography.hazmat.primitives import (  # noqa: F401 — availability probe
             hashes,
         )
     except ImportError as exc:  # pragma: no cover — opt-in

@@ -230,9 +230,9 @@ class RAGASEvaluator:
     def _evaluate_sync(self, records: list[RAGASRecord]) -> RAGASReport:
         """Синхронный путь evaluation (ragas API — sync)."""
         try:
-            from datasets import Dataset
-            from ragas import evaluate
-            from ragas.metrics import (
+            from datasets import Dataset  # noqa: F401 — availability probe
+            from ragas import evaluate  # noqa: F401 — availability probe
+            from ragas.metrics import (  # noqa: F401 — availability probe
                 answer_relevancy,
                 context_precision,
                 faithfulness,
@@ -255,7 +255,7 @@ class RAGASEvaluator:
 
         if has_ground_truth:
             try:
-                from ragas.metrics import (
+                from ragas.metrics import (  # noqa: F401 — availability probe
                     context_recall,
                 )
 

@@ -180,7 +180,7 @@ class CdcPostgresLogicalSource:
     async def start(self, on_event: EventCallback) -> None:
         """Запустить чтение через CDCSource + ack-cursor запись."""
         try:
-            from src.backend.core.config.features import (
+            from src.backend.core.config.features import (  # noqa: F401 — availability probe
                 feature_flags,
             )
 
@@ -194,7 +194,7 @@ class CdcPostgresLogicalSource:
             # cycle-9/D-AUDIT-1712: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags unavailable.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "cdc_postgres_logical.feature_flag_fallback",
                 extra={"source_id": self.source_id, "error": str(ff_exc)},

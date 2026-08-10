@@ -123,7 +123,7 @@ class IPRestrictionStore:
             logger.debug("IP restriction config not found: %s", file_path)
             return False
         try:
-            import yaml
+            import yaml  # noqa: F401 — availability probe
         except ImportError as exc:
             raise RuntimeError("PyYAML required for IP restriction reload") from exc
 

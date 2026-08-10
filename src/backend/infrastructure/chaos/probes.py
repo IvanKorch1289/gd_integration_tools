@@ -317,7 +317,7 @@ def is_chaos_enabled() -> bool:
         # ImportError — feature_flag service missing, AttributeError —
         # service not initialized, RuntimeError — backend unavailable.
         # Bare `except Exception` маскировал unrelated runtime errors.
-        import logging
+        import logging  # noqa: F401 — availability probe
         logging.getLogger(__name__).debug(
             "chaos_probes.is_chaos_enabled_fallback_false",
             extra={"error": str(ff_exc)},

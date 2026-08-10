@@ -38,7 +38,7 @@ from extensions.core_entities.orderkinds.domain.models import (
 from extensions.core_entities.orders.domain.models import (
     Order,
 )
-from extensions.core_entities.users.domain.models import User
+from extensions.core_entities.users.domain.models import User  # noqa: F401 — re-export
 from src.backend.core.domain.models.base import (
     Base,
     BaseModel,

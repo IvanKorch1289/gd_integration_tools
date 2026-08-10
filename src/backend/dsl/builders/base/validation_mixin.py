@@ -64,7 +64,7 @@ class ValidationMixin(_RouteBuilderProtocol):
         Вызывается в .build() (можно отключить validate_actions=False).
         """
         try:
-            from src.backend.dsl.commands.registry import (
+            from src.backend.dsl.commands.registry import (  # noqa: F401 — availability probe
                 action_handler_registry,
             )
 

@@ -146,7 +146,7 @@ class CodecFacade:
     def _encode_msgpack(self, data: Any) -> bytes:
         if self._msgpack_available is None:
             try:
-                import msgpack
+                import msgpack  # noqa: F401 — availability probe
 
                 self._msgpack_available = True
             except ImportError:
@@ -162,7 +162,7 @@ class CodecFacade:
     def _decode_msgpack(self, data: bytes) -> Any:
         if self._msgpack_available is None:
             try:
-                import msgpack
+                import msgpack  # noqa: F401 — availability probe
 
                 self._msgpack_available = True
             except ImportError:

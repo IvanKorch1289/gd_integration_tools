@@ -249,7 +249,7 @@ class FlagsmithProvider:
             return self._client
 
         try:
-            from src.backend.core.net.migration_helper import (
+            from src.backend.core.net.migration_helper import (  # noqa: F401 — availability probe
                 make_http_client,
             )
         except ImportError as exc:  # pragma: no cover

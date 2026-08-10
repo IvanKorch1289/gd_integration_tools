@@ -111,7 +111,7 @@ class UnifiedRateLimiter:
             return self._backend_cache["backend"]
 
         try:
-            from src.backend.core.di.providers.infrastructure_locator import (
+            from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — availability probe
                 get_redis_rate_limiter_class,
             )
 
@@ -121,7 +121,7 @@ class UnifiedRateLimiter:
             # cycle-9/D-AUDIT-961: narrow exceptions + observability.
             # ImportError — redis class missing, AttributeError — class
             # API change, RuntimeError — class unavailable.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "unified_rate_limiter.backend_resolve_fallback",
                 extra={"error": str(backend_exc)},

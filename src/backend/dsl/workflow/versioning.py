@@ -371,7 +371,7 @@ def patched(patch_id: str) -> bool:
 
     """
     try:
-        from temporalio import (
+        from temporalio import (  # noqa: F401 — availability probe
             workflow as temporal_workflow,
         )
     except ImportError:

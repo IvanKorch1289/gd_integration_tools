@@ -113,25 +113,25 @@ class MqSink(Sink):
         """Lazy-конструирование FastStream-broker по типу."""
         try:
             if self.broker == "kafka":
-                from faststream.kafka import (
+                from faststream.kafka import (  # noqa: F401 — availability probe
                     KafkaBroker,
                 )
 
                 return KafkaBroker(self.url)
             if self.broker == "rabbit":
-                from faststream.rabbit import (
+                from faststream.rabbit import (  # noqa: F401 — availability probe
                     RabbitBroker,
                 )
 
                 return RabbitBroker(self.url)
             if self.broker == "redis":
-                from faststream.redis import (
+                from faststream.redis import (  # noqa: F401 — availability probe
                     RedisBroker,
                 )
 
                 return RedisBroker(self.url)
             if self.broker == "nats":
-                from faststream.nats import (
+                from faststream.nats import (  # noqa: F401 — availability probe
                     NatsBroker,
                 )
 

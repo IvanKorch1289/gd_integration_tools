@@ -75,10 +75,10 @@ def get_object_storage() -> ObjectStorage:
         return get_local_fs_storage()
 
     try:
-        from src.backend.core.config.services.storage import (
+        from src.backend.core.config.services.storage import (  # noqa: F401 — availability probe
             fs_settings,
         )
-        from src.backend.infrastructure.storage.s3 import (
+        from src.backend.infrastructure.storage.s3 import (  # noqa: F401 — availability probe
             S3ObjectStorage,
         )
 

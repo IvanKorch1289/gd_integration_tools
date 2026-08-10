@@ -45,7 +45,7 @@ class ImageResizeProcessor(BaseProcessor):
         import io
 
         try:
-            from PIL import Image
+            from PIL import Image  # noqa: F401 — availability probe
         except ImportError:
             exchange.fail("Pillow not installed: pip install Pillow")
             return

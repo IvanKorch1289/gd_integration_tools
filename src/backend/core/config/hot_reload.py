@@ -118,7 +118,7 @@ class ConfigHotReloader:
     async def _watch_loop(self) -> None:
         """Главный цикл: слушает watchfiles, дебаунсит, вызывает callback'и."""
         try:
-            from watchfiles import awatch
+            from watchfiles import awatch  # noqa: F401 — availability probe
         except ImportError:
             logger.warning("watchfiles не установлен — hot-reload отключён")
             return

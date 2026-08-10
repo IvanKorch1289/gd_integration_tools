@@ -145,7 +145,7 @@ class E2BExecutionBackend:
 
         # Lazy-import papermill для .ipynb parsing
         try:
-            import nbformat
+            import nbformat  # noqa: F401 — availability probe
         except ImportError as exc:
             raise E2BExecutionError(
                 "nbformat required. Install: uv sync --extra jupyter",
@@ -223,7 +223,7 @@ class E2BExecutionBackend:
         """
         # Lazy-import e2b (opt-in dep)
         try:
-            from e2b_code_interpreter import Sandbox
+            from e2b_code_interpreter import Sandbox  # noqa: F401 — availability probe
         except ImportError as exc:
             raise E2BExecutionError(
                 "e2b_code_interpreter required. Install: uv sync --extra ai",

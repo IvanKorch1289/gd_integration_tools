@@ -124,7 +124,7 @@ class HtmlTemplateProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         try:
-            from src.backend.core.config.features import (
+            from src.backend.core.config.features import (  # noqa: F401 — availability probe
                 feature_flags,
             )
 
@@ -136,14 +136,14 @@ class HtmlTemplateProcessor(BaseProcessor):
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags
             # unavailable. feature flags недоступны — продолжаем работу (для unit-тестов).
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "html_template.feature_flag_fallback",
                 extra={"error": str(ff_exc)},
             )
 
         try:
-            from jinja2.sandbox import (
+            from jinja2.sandbox import (  # noqa: F401 — availability probe
                 SandboxedEnvironment,
             )
         except ImportError as exc:

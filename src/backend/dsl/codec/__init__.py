@@ -126,7 +126,7 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
     """Банковские форматы — opt-in через extras `gdi[banking]`."""
     if fmt == "mt":
         try:
-            from swiftmt import (
+            from swiftmt import (  # noqa: F401 — availability probe
                 parser,  # type: ignore[import-not-found]
             )
         except ImportError:
@@ -136,7 +136,7 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
         return parser.parse(raw if isinstance(raw, str) else raw.decode("utf-8"))
     if fmt == "hl7":
         try:
-            import hl7apy.parser  # type: ignore[import-not-found]
+            import hl7apy.parser  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         except ImportError:
             raise RuntimeError(
                 "hl7apy не установлен — установите gdi[banking]",
@@ -146,7 +146,7 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
         )
     if fmt == "iso8583":
         try:
-            import iso8583  # type: ignore[import-not-found]
+            import iso8583  # type: ignore[import-not-found]  # noqa: F401 — availability probe
         except ImportError:
             raise RuntimeError(
                 "iso8583 не установлен — установите gdi[banking]",

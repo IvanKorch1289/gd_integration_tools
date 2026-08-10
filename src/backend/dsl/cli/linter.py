@@ -265,7 +265,7 @@ class DSLLinter:
         """Проверяет один *.dsl.yaml."""
         issues: list[LintIssue] = []
         try:
-            import yaml
+            import yaml  # noqa: F401 — availability probe
         except ImportError:
             return [
                 LintIssue(

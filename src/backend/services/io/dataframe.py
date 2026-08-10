@@ -20,7 +20,7 @@ from typing import Any
 # polars — optional dep (Ponytail YAGNI). Runtime fallback на None
 # если polars отсутствует; обращение к pl.X даёт понятную ошибку.
 try:
-    import polars as pl
+    import polars as pl  # noqa: F401 — availability probe
 except ImportError:
     pl = None  # type: ignore[assignment]
 

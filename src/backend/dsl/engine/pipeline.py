@@ -129,7 +129,7 @@ class Pipeline:
 
         """
         try:
-            import yaml
+            import yaml  # noqa: F401 — availability probe
         except ImportError as exc:
             raise ImportError("PyYAML required: pip install pyyaml") from exc
         return yaml.dump(self.to_dict(), allow_unicode=True, sort_keys=False)

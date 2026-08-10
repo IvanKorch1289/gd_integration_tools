@@ -93,7 +93,7 @@ class IOMixin(_NotebookExecutionProtocol):
 
         # 1. Read local notebook
         try:
-            import nbformat
+            import nbformat  # noqa: F401 — availability probe
 
             def _read_nbformat() -> Any:
                 with open(notebook_path, encoding="utf-8") as fh:
@@ -158,7 +158,7 @@ class IOMixin(_NotebookExecutionProtocol):
         Falls back to manual JSON if nbformat is not installed.
         """
         try:
-            import nbformat
+            import nbformat  # noqa: F401 — availability probe
 
             nb_cells = []
             for cell in cells:

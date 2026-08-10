@@ -81,10 +81,10 @@ class FileWatchProcessor(BaseProcessor):
             return
         """Блокирует выполнение до появления файлов в директории (watchdog, синхронно)."""
         try:
-            from watchdog.events import (
+            from watchdog.events import (  # noqa: F401 — availability probe
                 FileSystemEventHandler,
             )
-            from watchdog.observers import Observer
+            from watchdog.observers import Observer  # noqa: F401 — availability probe
         except ImportError as exc:
             raise RuntimeError(
                 "watchdog required: uv add watchdog",

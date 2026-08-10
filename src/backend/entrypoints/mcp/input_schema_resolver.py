@@ -184,8 +184,8 @@ def validate_input_schema(
 
     # Lazy-import jsonschema
     try:
-        import jsonschema
-        from jsonschema import (
+        import jsonschema  # noqa: F401 — availability probe
+        from jsonschema import (  # noqa: F401 — availability probe
             ValidationError as JsonSchemaValidationError,
         )
     except ImportError as exc:

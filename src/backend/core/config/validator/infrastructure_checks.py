@@ -182,7 +182,7 @@ class InfrastructureChecksMixin:
         flags = getattr(settings, "features", None)
         if flags is None:
             try:
-                from src.backend.core.config.features import (
+                from src.backend.core.config.features import (  # noqa: F401 — availability probe
                     feature_flags as _flags,
                 )
             except ImportError:

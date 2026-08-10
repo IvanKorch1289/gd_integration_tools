@@ -122,7 +122,7 @@ class UnitConversionProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         try:
-            from src.backend.core.config.features import (
+            from src.backend.core.config.features import (  # noqa: F401 — availability probe
                 feature_flags,
             )
 
@@ -132,14 +132,14 @@ class UnitConversionProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1720: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1719).
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "unit_conversion.feature_flag_fallback",
                 extra={"error": str(ff_exc)},
             )
 
         try:
-            import pint
+            import pint  # noqa: F401 — availability probe
         except ImportError as exc:
             exchange.fail(f"unit_conversion: pint not available: {exc}")
             return

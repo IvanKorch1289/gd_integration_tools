@@ -50,7 +50,7 @@ def _ensure_metrics() -> tuple[Any | None, Any | None]:
         return _JOB_EXECUTIONS, _JOBSTORE_TYPE
 
     try:
-        from src.backend.core.utils.metrics_registry import (
+        from src.backend.core.utils.metrics_registry import (  # noqa: F401 — availability probe
             metrics_registry,
         )
     except ImportError:

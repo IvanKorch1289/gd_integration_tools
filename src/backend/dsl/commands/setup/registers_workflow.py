@@ -212,7 +212,7 @@ def _register_webhook_relay() -> None:
     # invariants (dsl → services — allowed, dsl → entrypoints — нет).
     # backward-compat shim в entrypoints оставлен для extensions/tests.
     try:
-        from src.backend.services.integrations.webhook_relay import (
+        from src.backend.services.integrations.webhook_relay import (  # noqa: F401 — availability probe
             get_webhook_relay,
         )
     except ImportError:

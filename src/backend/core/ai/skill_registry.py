@@ -309,7 +309,7 @@ class SkillRegistry:
         # enforced). Production deployment должен передавать whitelist.
         if whitelist is None:
             try:
-                from src.backend.core.config.features import (
+                from src.backend.core.config.features import (  # noqa: F401 — availability probe
                     feature_flags,
                 )
 
@@ -321,7 +321,7 @@ class SkillRegistry:
                 # ImportError — features module missing, AttributeError —
                 # config not initialized, RuntimeError — feature_flags
                 # unavailable.
-                import logging
+                import logging  # noqa: F401 — availability probe
                 logging.getLogger(__name__).debug(
                     "skill_registry.feature_flag_fallback",
                     extra={"error": str(ff_exc)},
@@ -345,7 +345,7 @@ class SkillRegistry:
         try:
             # CapabilityChecker is a type alias, not an instance.
             # Try to get the global check function from the sandbox module.
-            import src.backend.core.plugin_runtime.sandbox as sandbox_module
+            import src.backend.core.plugin_runtime.sandbox as sandbox_module  # noqa: F401 — availability probe
 
             _capability_check = getattr(
                 sandbox_module, "_global_capability_check", None,
@@ -507,7 +507,7 @@ class SkillRegistry:
 
         """
         try:
-            from langchain_core.tools import (
+            from langchain_core.tools import (  # noqa: F401 — availability probe
                 StructuredTool,
             )
         except ImportError:

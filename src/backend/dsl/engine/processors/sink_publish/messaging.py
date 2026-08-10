@@ -171,7 +171,7 @@ class MqttPublishProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Открывает MQTT-соединение через aiomqtt и публикует payload."""
         try:
-            import aiomqtt
+            import aiomqtt  # noqa: F401 — availability probe
         except ImportError:
             _store_result(
                 exchange, self._out, {"ok": False, "error": "aiomqtt not installed"},

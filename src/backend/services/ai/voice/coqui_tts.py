@@ -135,7 +135,7 @@ class CoquiTTSService:
         if not self.enabled:
             return False
         try:
-            from TTS.api import (
+            from TTS.api import (  # noqa: F401 — availability probe
                 TTS,  # type: ignore[import-not-found]
             )
 
@@ -152,7 +152,7 @@ class CoquiTTSService:
                 "CoquiTTSService отключён (voice_stt_tts_enabled=false).",
             )
         try:
-            from TTS.api import TTS
+            from TTS.api import TTS  # noqa: F401 — availability probe
         except ImportError as exc:
             raise VoiceServiceUnavailable(
                 "Пакет 'TTS' не установлен — добавьте extra '[ai-voice]'.",

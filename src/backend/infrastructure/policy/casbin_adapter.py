@@ -26,7 +26,7 @@ class CasbinAdapter:
     def _ensure_enforcer(self):
         if self._enforcer is None:
             try:
-                import casbin
+                import casbin  # noqa: F401 — availability probe
 
                 if self.policy_path:
                     self._enforcer = casbin.Enforcer(self.model_path, self.policy_path)

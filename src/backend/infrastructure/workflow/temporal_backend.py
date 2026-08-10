@@ -147,7 +147,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
         ADR-046 в R3).
         """
         try:
-            from temporalio.client import Client
+            from temporalio.client import Client  # noqa: F401 — availability probe
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
                 "temporalio SDK not installed. Install via `uv sync --extra workflow`.",
@@ -289,10 +289,10 @@ class TemporalWorkflowBackend(WorkflowBackend):
         вместо silent-обхода через ``cast(str → type)``.
         """
         try:
-            from temporalio.client import (
+            from temporalio.client import (  # noqa: F401 — availability probe
                 WorkflowHistory,
             )
-            from temporalio.worker import Replayer
+            from temporalio.worker import Replayer  # noqa: F401 — availability probe
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError("temporalio SDK not installed") from exc
 
@@ -350,10 +350,10 @@ class TemporalWorkflowBackend(WorkflowBackend):
         TCancelled: type[Exception]
         TFailureError: type[Exception]
         try:
-            from temporalio.exceptions import (
+            from temporalio.exceptions import (  # noqa: F401 — availability probe
                 CancelledError as _TCancelled,
             )
-            from temporalio.exceptions import (
+            from temporalio.exceptions import (  # noqa: F401 — availability probe
                 FailureError as _TFailureError,
             )
         except ImportError:  # pragma: no cover

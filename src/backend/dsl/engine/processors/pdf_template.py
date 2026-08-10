@@ -147,7 +147,7 @@ class PdfTemplateProcessor(BaseProcessor):
 
         """
         try:
-            from src.backend.core.config.features import (
+            from src.backend.core.config.features import (  # noqa: F401 — availability probe
                 feature_flags,
             )
 
@@ -157,7 +157,7 @@ class PdfTemplateProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1716: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1715).
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "pdf_template.feature_flag_fallback",
                 extra={"error": str(ff_exc)},
@@ -165,19 +165,19 @@ class PdfTemplateProcessor(BaseProcessor):
 
         # Lazy-import reportlab + jinja2
         try:
-            from reportlab.lib.pagesizes import (
+            from reportlab.lib.pagesizes import (  # noqa: F401 — availability probe
                 A3,
                 A4,
                 A5,
                 LETTER,
             )
-            from reportlab.pdfgen import canvas
+            from reportlab.pdfgen import canvas  # noqa: F401 — availability probe
         except ImportError as exc:
             exchange.fail(f"pdf_template: reportlab not available: {exc}")
             return
 
         try:
-            from jinja2.sandbox import (
+            from jinja2.sandbox import (  # noqa: F401 — availability probe
                 SandboxedEnvironment,
             )
         except ImportError as exc:

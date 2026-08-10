@@ -52,7 +52,7 @@ class AdvancedAlchemyMissing(RuntimeError):
 
 def _resolve_repository_cls() -> type[Any]:
     try:
-        from advanced_alchemy.repository import (
+        from advanced_alchemy.repository import (  # noqa: F401 — availability probe
             SQLAlchemyAsyncRepository,
         )
     except ImportError as exc:  # pragma: no cover — uv sync не пройден

@@ -61,20 +61,20 @@ def configure_otel(
 
     """
     try:
-        from opentelemetry import propagate, trace
-        from opentelemetry.sdk.resources import (
+        from opentelemetry import propagate, trace  # noqa: F401 — availability probe
+        from opentelemetry.sdk.resources import (  # noqa: F401 — availability probe
             Resource,
         )
-        from opentelemetry.sdk.trace import (
+        from opentelemetry.sdk.trace import (  # noqa: F401 — availability probe
             TracerProvider,
         )
-        from opentelemetry.sdk.trace.export import (
+        from opentelemetry.sdk.trace.export import (  # noqa: F401 — availability probe
             BatchSpanProcessor,
             ConsoleSpanExporter,
             SimpleSpanProcessor,
             SpanExporter,
         )
-        from opentelemetry.trace.propagation.tracecontext import (
+        from opentelemetry.trace.propagation.tracecontext import (  # noqa: F401 — availability probe
             TraceContextTextMapPropagator,
         )
     except ImportError as exc:
@@ -101,7 +101,7 @@ def configure_otel(
             span_exporter = ConsoleSpanExporter()
         else:
             try:
-                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # noqa: F401 — availability probe
                     OTLPSpanExporter,
                 )
 
@@ -131,7 +131,7 @@ def configure_otel(
     # Composite propagator: W3C TraceContext (обязателен) + опционально B3.
     propagators: list[Any] = [TraceContextTextMapPropagator()]
     try:
-        from opentelemetry.propagators.b3 import (
+        from opentelemetry.propagators.b3 import (  # noqa: F401 — availability probe
             B3MultiFormat,
         )
 
@@ -143,7 +143,7 @@ def configure_otel(
 
     if len(propagators) > 1:
         try:
-            from opentelemetry.propagators.composite import (
+            from opentelemetry.propagators.composite import (  # noqa: F401 — availability probe
                 CompositePropagator,
             )
 
@@ -195,16 +195,16 @@ def setup_otel_metrics(
     global _meter_provider_ref
 
     try:
-        from opentelemetry import metrics
-        from opentelemetry.sdk.metrics import (
+        from opentelemetry import metrics  # noqa: F401 — availability probe
+        from opentelemetry.sdk.metrics import (  # noqa: F401 — availability probe
             MeterProvider,
         )
-        from opentelemetry.sdk.metrics.export import (
+        from opentelemetry.sdk.metrics.export import (  # noqa: F401 — availability probe
             ConsoleMetricExporter,
             MetricExporter,
             PeriodicExportingMetricReader,
         )
-        from opentelemetry.sdk.resources import (
+        from opentelemetry.sdk.resources import (  # noqa: F401 — availability probe
             Resource,
         )
     except ImportError as exc:
@@ -225,7 +225,7 @@ def setup_otel_metrics(
     metric_exporter: MetricExporter
     if endpoint:
         try:
-            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (  # noqa: F401 — availability probe
                 OTLPMetricExporter,
             )
 
@@ -276,7 +276,7 @@ def _register_base_meters(meter_provider: Any) -> None:
 
     """
     try:
-        from opentelemetry import metrics
+        from opentelemetry import metrics  # noqa: F401 — availability probe
     except ImportError:
         return
 

@@ -298,7 +298,7 @@ class ActivityBridge:
         Worker. Идемпотентен: повторный вызов не добавляет декораторы.
         """
         try:
-            from temporalio import activity
+            from temporalio import activity  # noqa: F401 — availability probe
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
                 "temporalio SDK not installed. Install via `uv sync --extra workflow`.",

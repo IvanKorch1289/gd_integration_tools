@@ -227,7 +227,7 @@ def _resolve_exception_types() -> tuple[
     timeout_types: list[type[BaseException]] = [asyncio.TimeoutError, TimeoutError]
     circuit_types: list[type[BaseException]] = []
     try:
-        from purgatory.domain.model import (
+        from purgatory.domain.model import (  # noqa: F401 — availability probe
             OpenedState,
         )
 

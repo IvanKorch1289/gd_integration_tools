@@ -328,10 +328,10 @@ class AuthFacade:
         # "admin" в groups membership-only — privilege escalation risk
         # (любой IdP group с именем "admin" получал bypass).
         try:
-            from src.backend.core.auth import (
+            from src.backend.core.auth import (  # noqa: F401 — availability probe
                 AuthContext,
             )
-            from src.backend.core.auth.admin_roles import (
+            from src.backend.core.auth.admin_roles import (  # noqa: F401 — availability probe
                 AdminRole,
                 extract_admin_roles,
             )
@@ -357,7 +357,7 @@ class AuthFacade:
             # change, TypeError — wrong auth ctx, ValueError — invalid
             # auth fields. Fallback: если AdminRole import failed — НЕ
             # bypass (fail-closed).
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "auth_facade.super_admin_check_failed",
                 extra={"error": str(auth_exc)},
@@ -488,7 +488,7 @@ class AuthFacade:
         # SAML requires ACS flow; fail-closed unless dev_mode flag is on.
         dev_mode = False
         try:
-            from src.backend.core.config.features import (
+            from src.backend.core.config.features import (  # noqa: F401 — availability probe
                 feature_flags,
             )
 
@@ -498,7 +498,7 @@ class AuthFacade:
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags
             # unavailable.
-            import logging
+            import logging  # noqa: F401 — availability probe
             logging.getLogger(__name__).debug(
                 "auth_facade.saml_dev_mode_fallback",
                 extra={"error": str(ff_exc)},

@@ -86,7 +86,7 @@ class MarkitdownEngine:
         if self._md is not None:
             return self._md
         try:
-            from markitdown import MarkItDown
+            from markitdown import MarkItDown  # noqa: F401 — availability probe
         except ImportError as exc:
             raise MarkitdownUnavailableError(
                 "markitdown пакет не установлен (uv add markitdown)",

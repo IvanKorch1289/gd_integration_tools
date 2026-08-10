@@ -64,7 +64,7 @@ class OnnxInferenceProcessor(BaseProcessor):
                 return self._model_cache[self._path]
 
         try:
-            import onnxruntime as ort
+            import onnxruntime as ort  # noqa: F401 — availability probe
 
             session = ort.InferenceSession(
                 self._path, providers=["CPUExecutionProvider"],
@@ -160,7 +160,7 @@ class StreamingLLMProcessor(BaseProcessor):
             session_id = exchange.meta.correlation_id
 
         try:
-            from src.backend.services.ai.ai_agent import (
+            from src.backend.services.ai.ai_agent import (  # noqa: F401 — availability probe
                 get_ai_agent_service,
             )
 
@@ -347,7 +347,7 @@ class OutboxTransactionProcessor(BaseProcessor):
         from sqlalchemy import text
 
         try:
-            from src.backend.infrastructure.database.database import (
+            from src.backend.infrastructure.database.database import (  # noqa: F401 — availability probe
                 db_initializer,
             )
         except ImportError:

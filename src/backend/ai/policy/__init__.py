@@ -35,7 +35,7 @@ def _default_tool_policy() -> AgentToolPolicy:
 
 
 try:
-    from src.backend.core.svcs_registry import (
+    from src.backend.core.svcs_registry import (  # noqa: F401 — availability probe
         register_factory,
     )
 

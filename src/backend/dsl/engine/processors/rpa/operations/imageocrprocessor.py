@@ -36,8 +36,8 @@ class ImageOcrProcessor(BaseProcessor):
         import io
 
         try:
-            import pytesseract
-            from PIL import Image
+            import pytesseract  # noqa: F401 — availability probe
+            from PIL import Image  # noqa: F401 — availability probe
         except ImportError:
             exchange.fail(
                 "pytesseract/Pillow not installed: pip install pytesseract Pillow",

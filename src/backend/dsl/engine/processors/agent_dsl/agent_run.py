@@ -257,7 +257,7 @@ class AgentRunProcessor(BaseAIProcessor):
     def _resolve_gateway() -> Any | None:
         """Lazy-резолв :class:`AIGateway` через DI singleton."""
         try:
-            from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]
+            from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]  # noqa: F401 — availability probe
                 get_ai_gateway,
             )
 

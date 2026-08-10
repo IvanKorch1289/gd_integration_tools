@@ -32,7 +32,7 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 try:
-    from src.backend.infrastructure.clients.external.cdc import (
+    from src.backend.infrastructure.clients.external.cdc import (  # noqa: F401 — availability probe
         get_cdc_client,
     )
 except ImportError:

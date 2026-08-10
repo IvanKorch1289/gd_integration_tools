@@ -23,7 +23,7 @@ from typing import Any, TypeVar
 import orjson
 
 try:
-    import msgspec as _msgspec
+    import msgspec as _msgspec  # noqa: F401 — availability probe
 
     _HAS_MSGSPEC = True
 except ImportError:  # pragma: no cover — degraded mode без msgspec

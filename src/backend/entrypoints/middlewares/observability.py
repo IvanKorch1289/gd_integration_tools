@@ -70,7 +70,7 @@ class ObservabilityConfig:
 def _emit_otel(event: dict[str, Any], service_name: str) -> None:
     """Emit to OpenTelemetry tracer (если opentelemetry установлен)."""
     try:
-        from opentelemetry import trace
+        from opentelemetry import trace  # noqa: F401 — availability probe
 
         tracer = trace.get_tracer(service_name)
         with tracer.start_as_current_span(
@@ -115,7 +115,7 @@ def _emit_prometheus(event: dict[str, Any]) -> None:
 def _emit_audit(event: dict[str, Any]) -> None:
     """Emit audit event в ClickHouse (если client доступен)."""
     try:
-        from src.backend.core.di.providers import (
+        from src.backend.core.di.providers import (  # noqa: F401 — availability probe
             get_clickhouse_client_provider,
         )
 
@@ -144,7 +144,7 @@ def _emit_audit(event: dict[str, Any]) -> None:
         # ImportError — ClickHouse client missing, AttributeError — API
         # change, RuntimeError — ClickHouse unavailable, OSError — network.
         # Audit failures не блокируют request — gracefully no-op.
-        import logging
+        import logging  # noqa: F401 — availability probe
         logging.getLogger(__name__).debug(
             "observability_middleware.clickhouse_insert_failed",
             extra={"error": str(ch_exc)},

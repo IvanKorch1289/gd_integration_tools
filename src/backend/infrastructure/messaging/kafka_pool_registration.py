@@ -37,7 +37,7 @@ async def kafka_ping_fn() -> bool:
 
     """
     try:
-        from src.backend.infrastructure.messaging.kafka_producer import (
+        from src.backend.infrastructure.messaging.kafka_producer import (  # noqa: F401 — availability probe
             KafkaProducer,
         )
 
@@ -48,7 +48,7 @@ async def kafka_ping_fn() -> bool:
         # ImportError — Kafka SDK missing, RuntimeError — broker unavailable,
         # OSError/ConnectionError — network, AttributeError — producer API
         # change. Bare `except Exception` маскировал unrelated runtime errors.
-        import logging
+        import logging  # noqa: F401 — availability probe
         logging.getLogger(__name__).debug(
             "kafka_pool.ping_failed",
             extra={"error": str(ping_exc)},
@@ -74,7 +74,7 @@ def register_kafka_pool_if_available(
 
     """
     try:
-        from src.backend.infrastructure.messaging.kafka_producer import (
+        from src.backend.infrastructure.messaging.kafka_producer import (  # noqa: F401 — availability probe
             KafkaProducer,
         )
 
@@ -93,7 +93,7 @@ def register_kafka_pool_if_available(
         # RuntimeError — manager.register failed, AttributeError — manager
         # API change, ValueError — invalid args. Bare `except Exception`
         # маскировал unrelated runtime errors (KeyError, TypeError).
-        import logging
+        import logging  # noqa: F401 — availability probe
         logging.getLogger(__name__).debug(
             "kafka_pool.register_failed",
             extra={"name": name, "error": str(reg_exc)},

@@ -38,7 +38,7 @@ def _inject_correlation_id_headers(headers: dict[str, Any] | None) -> dict[str, 
     if "correlation_id" in result:
         return result
     try:
-        from src.backend.infrastructure.observability.correlation import (
+        from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — availability probe
             get_correlation_id,
         )
     except ImportError:
@@ -180,7 +180,7 @@ class StreamClient:
             )
             return
         try:
-            from faststream.kafka.fastapi import (
+            from faststream.kafka.fastapi import (  # noqa: F401 — availability probe
                 KafkaRouter,
             )
         except ImportError as exc:
