@@ -124,8 +124,13 @@ def test_unprotected_path_is_not_verified(app: FastAPI) -> None:
     assert response.status_code == 200
 
 
-def test_protected_prefix_without_secret_passes_through() -> None:
-    """Если path в protected, но secret не задан — middleware не блокирует."""
+def test_protected_prefix_without_secret_fails_closed() -> None:
+    """Если path в protected, но secret не задан — middleware fail-CLOSED 503.
+
+    cycle-9/D-AUDIT-914 fix: production теперь fail-closed (раньше
+    pass-through был security-hole: unconfigured webhook без secret
+    принимал любой unsigned payload). Тест обновлён.
+    """
     app = FastAPI()
 
     @app.post("/webhooks/unconfigured")
@@ -137,7 +142,7 @@ def test_protected_prefix_without_secret_passes_through() -> None:
     )
     client = TestClient(app)
     response = client.post("/webhooks/unconfigured", json={"x": 1})
-    assert response.status_code == 200
+    assert response.status_code == 503
 
 
 def test_most_specific_prefix_wins() -> None:

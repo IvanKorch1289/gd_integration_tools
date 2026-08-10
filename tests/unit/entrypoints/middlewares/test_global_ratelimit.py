@@ -137,8 +137,20 @@ async def test_checker_failure_falls_through() -> None:
     )
     send = _RecordingSend()
     await middleware({"type": "http", "client": ("1.2.3.4", 0)}, _empty_receive, send)
-    # Не SPoF: запрос проходит дальше.
-    assert inner.called is True
+    # cycle-9/D-AUDIT-913 fix: fail-CLOSED на rate-limit checker exception.
+    # Раньше тест ожидал fail-OPEN ("Не SPoF: запрос проходит дальше"),
+    # но security best-practice: rate-limiter failure → deny, чтобы не
+    # ослаблять protection при сбое upstream-зависимости. Production
+    # код в src/backend/entrypoints/middlewares/global_ratelimit.py
+    # уже fail-CLOSED через `fail_mode=closed`; тест обновлён.
+    assert inner.called is False
+    # Verify fail-CLOSED response: status 429 (Too Many Requests) sent
+    response_starts = [
+        e for e in send.events
+        if e.get("type") == "http.response.start"
+    ]
+    assert len(response_starts) == 1
+    assert response_starts[0].get("status") == 429
 
 
 @pytest.mark.asyncio

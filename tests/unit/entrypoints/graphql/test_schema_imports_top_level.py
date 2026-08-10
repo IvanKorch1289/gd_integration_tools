@@ -44,28 +44,53 @@ def test_no_lazy_dsl_imports_in_resolvers() -> None:
 
 
 def test_top_level_dsl_imports() -> None:
-    """Top-level imports section содержит 4 dsl modules."""
-    source = Path("src/backend/entrypoints/graphql/schema.py").read_text()
-    # First 30 lines (top-level imports before any class def)
-    top_section = "\n".join(source.split("\n")[:30])
+    """Top-level imports section содержит 4 canonical dsl modules.
 
-    # All 4 dsl modules должны быть в top-level
-    assert "from src.backend.dsl.service import get_dsl_service" in top_section
-    assert "from src.backend.dsl.registry import route_registry" in top_section
-    assert (
-        "from src.backend.dsl.commands.registry import action_handler_registry"
-        in top_section
+    cycle-9/D-AUDIT-915 fix: schema.py grew with docstring (S168 W11
+    P2-4 DECISION block ~30 lines). Тест больше не привязан к "first
+    30 lines"; проверяет наличие 4 canonical dsl imports в любом месте
+    top-level (module-level) источника. Lazy imports в функциях НЕ
+    считаются (S69 W3 refactor).
+    """
+    import ast
+
+    source = Path("src/backend/entrypoints/graphql/schema.py").read_text()
+    tree = ast.parse(source)
+    # Top-level imports
+    top_imports: list[str] = []
+    for node in tree.body:
+        if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith(
+            "src.backend.dsl"
+        ):
+            top_imports.append(node.module)
+
+    # All 4 canonical dsl modules must be top-level
+    canonical = {
+        "src.backend.dsl.service",
+        "src.backend.dsl.registry",
+        "src.backend.dsl.commands.registry",
+        "src.backend.dsl.engine.tracer",
+    }
+    assert canonical.issubset(set(top_imports)), (
+        f"Missing canonical dsl imports: {canonical - set(top_imports)}. "
+        f"Found: {top_imports}"
     )
-    assert "from src.backend.dsl.engine.tracer import get_tracer" in top_section
 
 
 def test_no_duplicate_dsl_imports() -> None:
-    """No duplicate dsl module imports (был get_tracer imported 2x)."""
+    """No duplicate dsl module imports (был get_tracer imported 2x).
+
+    cycle-9/D-AUDIT-915 fix: schema.py grew to 5 dsl imports (canonical
+    4 + 1 additional per concurrent work). Тест не привязан к
+    фиксированному count=4, проверяет только отсутствие дубликатов.
+    """
     source = Path("src/backend/entrypoints/graphql/schema.py").read_text()
-    dsl_imports = source.count("from src.backend.dsl")
-    # Should be 4 (one per module: service, registry, commands.registry, engine.tracer)
-    assert dsl_imports == 4, (
-        f"Found {dsl_imports} `from src.backend.dsl` imports, expected 4"
+    import re
+
+    dsl_imports = re.findall(r"^from src\.backend\.dsl[.\w]* import", source, re.MULTILINE)
+    assert len(dsl_imports) == len(set(dsl_imports)), (
+        f"Duplicate dsl imports: {dsl_imports}. "
+        f"Counts: {[(m, dsl_imports.count(m)) for m in set(dsl_imports) if dsl_imports.count(m) > 1]}"
     )
 
 
