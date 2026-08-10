@@ -117,8 +117,14 @@ class ResultUnwrapProcessor(BaseProcessor):
             if not feature_flags.result_unwrap_processor:
                 exchange.set_property("result_unwrap_status", "skipped")
                 return
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1718: narrow exceptions + observability (mirror
+            # D-AUDIT-1706..1717).
+            import logging
+            logging.getLogger(__name__).debug(
+                "result_unwrap.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         # Lazy-import result library (extra)
         try:

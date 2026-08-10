@@ -150,8 +150,14 @@ class PdfTemplateProcessor(BaseProcessor):
             if not feature_flags.proc_pdf_template:
                 exchange.set_property("pdf_template_status", "skipped")
                 return
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1716: narrow exceptions + observability (mirror
+            # D-AUDIT-1706..1715).
+            import logging
+            logging.getLogger(__name__).debug(
+                "pdf_template.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         # Lazy-import reportlab + jinja2
         try:

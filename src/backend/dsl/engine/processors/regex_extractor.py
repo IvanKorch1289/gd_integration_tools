@@ -143,8 +143,14 @@ class RegexExtractorProcessor(BaseProcessor):
             if not feature_flags.proc_regex_extractor:
                 exchange.set_property("regex_extractor_status", "skipped")
                 return
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1717: narrow exceptions + observability (mirror
+            # D-AUDIT-1706..1716).
+            import logging
+            logging.getLogger(__name__).debug(
+                "regex_extractor.feature_flag_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         text = self._resolve_source(exchange)
         match self._mode:
