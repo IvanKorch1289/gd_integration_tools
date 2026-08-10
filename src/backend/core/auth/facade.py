@@ -475,8 +475,16 @@ class AuthFacade:
             from src.backend.core.config.features import feature_flags
 
             dev_mode = bool(getattr(feature_flags, "saml_sp_initiated_enabled", False))
-        except Exception:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-981: narrow exceptions + observability.
+            # ImportError — features module missing, AttributeError —
+            # config not initialized, RuntimeError — feature_flags
+            # unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "auth_facade.saml_dev_mode_fallback",
+                extra={"error": str(ff_exc)},
+            )
 
         if not dev_mode:
             logger.debug("SAML: dev_mode disabled, fail-closed")
