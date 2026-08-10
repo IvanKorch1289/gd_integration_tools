@@ -385,9 +385,12 @@ class WebhookTrigger:
                     headers={"x-webhook": self.name, "x-webhook-path": self.path},
                 )
                 return {"status": "dispatched", "route_id": self.route_id}
-            except Exception as e:
-                _log.exception("WebhookTrigger %s: dispatch failed", self.name)
-                return {"status": "error", "error": str(e)}
+            except (ImportError, AttributeError, RuntimeError, ConnectionError, OSError, TypeError, ValueError) as dispatch_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-970: narrow exceptions + observability (mirror
+                # D-AUDIT-968/969 для WebhookTrigger). TypeError/ValueError
+                # включены т.к. body может быть malformed.
+                _log.exception("WebhookTrigger %s: dispatch failed: %s", self.name, dispatch_exc)
+                return {"status": "error", "error": str(dispatch_exc)}
 
         app.add_api_route(
             self.path, _handler, methods=[self.method], name=f"webhook_{self.name}"
