@@ -38,7 +38,17 @@ class PdfExtractProcessor:
             for page in reader.pages:
                 try:
                     text_parts.append(page.extract_text() or "")
-                except Exception:
+                except (AttributeError, TypeError, ValueError, RuntimeError) as page_exc:  # noqa: BLE001
+                    # cycle-9/D-AUDIT-947: narrow exceptions + observability.
+                    # AttributeError — page.extract_text API change,
+                    # TypeError — wrong type, ValueError — invalid page,
+                    # RuntimeError — parser failure. Bare `except Exception`
+                    # маскировал unrelated runtime errors.
+                    import logging
+                    logging.getLogger(__name__).debug(
+                        "pdf_extract.page_failed",
+                        extra={"error": str(page_exc)},
+                    )
                     continue
             return "\n".join(text_parts) or None
         except Exception as exc:
