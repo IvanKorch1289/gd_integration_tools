@@ -115,7 +115,15 @@ class UnifiedRateLimiter:
 
             get_redis_rate_limiter_class()
             backend = "redis"
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError) as backend_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-961: narrow exceptions + observability.
+            # ImportError — redis class missing, AttributeError — class
+            # API change, RuntimeError — class unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "unified_rate_limiter.backend_resolve_fallback",
+                extra={"error": str(backend_exc)},
+            )
             backend = "unknown"
 
         self._backend_cache["backend"] = str(backend)
