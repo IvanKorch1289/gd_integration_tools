@@ -98,8 +98,15 @@ class LangGraphPostgresSaverWrapper:
                 dsn = getattr(db, "dsn", None) or getattr(db, "url", None)
                 if dsn:
                     return str(dsn)
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError) as dsn_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1728: narrow exceptions + observability.
+            # ImportError — application_settings missing, AttributeError
+            # — settings.database missing, RuntimeError — settings unavailable.
+            import logging
+            logging.getLogger(__name__).debug(
+                "langgraph_postgres_saver.dsn_resolve_failed",
+                extra={"error": str(dsn_exc)},
+            )
         raise LangGraphPostgresSaverUnavailable(
             "DSN для AsyncPostgresSaver не передан и не найден в settings.database"
         )

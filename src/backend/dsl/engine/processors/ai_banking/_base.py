@@ -148,6 +148,14 @@ class _BankingAIProcessor(BaseProcessor):
             try:
                 parsed = orjson.loads(text[start:end])
                 return output_model.model_validate(parsed)
-            except Exception as _:
-                pass
+            except (ValueError, TypeError, orjson.JSONDecodeError) as parse_exc:  # noqa: BLE001
+                # cycle-9/D-AUDIT-1723: narrow exceptions + observability.
+                # ValueError — malformed JSON, TypeError — wrong payload
+                # type, orjson.JSONDecodeError (subclass of ValueError)
+                # — explicitly captured for clarity.
+                import logging
+                logging.getLogger(__name__).debug(
+                    "ai_banking._base.json_parse_failed",
+                    extra={"error": str(parse_exc)},
+                )
         return None

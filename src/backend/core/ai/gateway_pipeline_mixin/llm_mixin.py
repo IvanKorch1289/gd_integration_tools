@@ -118,8 +118,16 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
 
         try:
             get_context_strategy(strategy_type)
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, KeyError, TypeError, ValueError) as strategy_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1726: narrow exceptions + observability.
+            # ImportError — strategy module missing, AttributeError —
+            # API change, KeyError — strategy name not registered,
+            # TypeError — wrong arg type, ValueError — invalid config.
+            import logging
+            logging.getLogger(__name__).debug(
+                "llm_mixin.context_strategy_resolve_failed",
+                extra={"strategy_type": strategy_type, "error": str(strategy_exc)},
+            )
 
             # Fallback strategy used below
 

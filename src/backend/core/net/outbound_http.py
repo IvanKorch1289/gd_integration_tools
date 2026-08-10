@@ -320,8 +320,16 @@ class OutboundHttpClient:
                     loop.create_task(coro)
                 except RuntimeError:
                     pass  # no running loop → drop coroutine (sync context)
-        except Exception as _:
-            pass  # never raise from audit emission
+        except (ImportError, AttributeError, RuntimeError) as audit_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1727: narrow exceptions + observability.
+            # ImportError — audit facade missing, AttributeError — API
+            # change, RuntimeError — backend unavailable. never raise from
+            # audit emission (best-effort).
+            import logging
+            logging.getLogger(__name__).debug(
+                "outbound_http.audit_emit_failed",
+                extra={"error": str(audit_exc)},
+            )
 
 
 SyncOutboundFactory = Callable[..., Awaitable[OutboundHttpClient]]

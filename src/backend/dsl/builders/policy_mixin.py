@@ -223,8 +223,16 @@ class PolicyChain:
                 )
                 self._builder._processors.append(marker)  # type: ignore[attr-defined]
                 return self._builder
-        except Exception as _:
-            pass
+        except (ImportError, AttributeError, RuntimeError, TypeError) as marker_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1724: narrow exceptions + observability.
+            # ImportError — PolicyMarkerProcessor missing, AttributeError
+            # — API change, RuntimeError — DI unavailable, TypeError —
+            # wrong kwargs.
+            import logging
+            logging.getLogger(__name__).debug(
+                "policy_mixin.disabled_marker_failed",
+                extra={"policy_name": name, "error": str(marker_exc)},
+            )
 
         marker = PolicyMarkerProcessor(policy_name=name, params=kwargs, enabled=True)
         self._builder._processors.append(marker)  # type: ignore[attr-defined]
@@ -257,7 +265,14 @@ class PolicyMarkerProcessor:
 
             if not feature_flags.policy_chainable_enabled:
                 return
-        except Exception as _:
+        except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+            # cycle-9/D-AUDIT-1725: narrow exceptions + observability (mirror
+            # D-AUDIT-1724 для marker path).
+            import logging
+            logging.getLogger(__name__).debug(
+                "policy_mixin.chainable_check_failed",
+                extra={"policy_name": self.policy_name, "error": str(ff_exc)},
+            )
             pass
 
         if not self.enabled:

@@ -193,5 +193,13 @@ async def _emit_saga_audit(
             tenant_id=None,
             payload={"caller": "dsl.saga", **payload},
         )
-    except Exception as _:
-        pass
+    except (OSError, ConnectionError, RuntimeError, AttributeError, TypeError) as emit_exc:  # noqa: BLE001
+        # cycle-9/D-AUDIT-1722: narrow exceptions + observability.
+        # OSError/ConnectionError — sink transport failure, RuntimeError
+        # — backend unavailable, AttributeError — sink API change,
+        # TypeError — wrong payload type.
+        import logging
+        logging.getLogger(__name__).debug(
+            "saga.sink_emit_failed",
+            extra={"event_type": event_type, "error": str(emit_exc)},
+        )
