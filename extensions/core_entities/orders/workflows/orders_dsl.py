@@ -312,7 +312,14 @@ def order_processing_workflow_spec() -> WorkflowDeclaration:
                 },
             )
         )
-        .then(SleepDeclaration(name="initial_delay", duration_s=float(consts.INITIAL_DELAY)))
+        # cycle-12/D-AUDIT-1201 fix: removed invalid `name="initial_delay"` kwarg.
+        # SleepDeclaration (Pydantic BaseModel) не имеет поля `name`
+        # (model_config = ConfigDict(extra="forbid")), при наличии
+        # kwargs возникает ValidationError. Полная цепочка была сломана
+        # в production при первом вызове order_processing_workflow_spec().
+        # Внешний step через .then() идентифицирует шаг по индексу;
+        # имя не требуется (есть уже в комментарии spec-функции).
+        .then(SleepDeclaration(duration_s=float(consts.INITIAL_DELAY)))
         .then(
             ActivityDeclaration(
                 name="step_poll",
