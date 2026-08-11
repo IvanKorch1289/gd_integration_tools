@@ -115,7 +115,7 @@ class FakeCDCSource(CDCSource):
     """
 
     def __init__(self, *, events: list[CDCEvent]) -> None:
-        """Параметры:
+        """Параметры.
 
         :param events: события, которые `subscribe()` отдаст по порядку.
         """
