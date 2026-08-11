@@ -248,7 +248,7 @@ class PydanticToProtoConverter:
             return ProtoField(name=name, type_name="google.protobuf.Any", number=number)
 
         # dict[K, V] → google.protobuf.Any (proto3 map тяжёл для адаптера)
-        if origin == dict:
+        if origin is dict:
             self._record_any(f"{name}: dict — fallback to Any")
             return ProtoField(name=name, type_name="google.protobuf.Any", number=number)
 
