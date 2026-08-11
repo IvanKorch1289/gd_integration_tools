@@ -29,4 +29,4 @@ def __getattr__(name: str) -> Any:
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-__all__ = ("DLQEnvelope", "DLQReason", "DLQWriter")
+__all__ = ("DLQEnvelope", "DLQReason", "DLQWriter")  # noqa: F822 — lazy __getattr__ exports
