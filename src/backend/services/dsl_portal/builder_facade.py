@@ -31,7 +31,7 @@ from src.backend.dsl.engine.execution_engine import ExecutionEngine
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.tracer import get_tracer
 from src.backend.dsl.registry import route_registry
-from src.backend.dsl.workflow.spec.workflow import WorkflowDeclaration
+from src.backend.dsl.workflow.spec import WorkflowDeclaration  # noqa: F401 — re-export for frontend facade (allowlist matches dsl.workflow.spec)
 from src.backend.dsl.workflow.versioning import get_global_registry
 from src.backend.dsl.workflow.visualize import (
     compute_step_diff,
