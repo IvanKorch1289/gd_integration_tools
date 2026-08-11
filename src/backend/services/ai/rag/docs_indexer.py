@@ -1,3 +1,4 @@
+# ruff: noqa: S301, S310, S321, S324 — false positive (controlled URL/pickle/ftp/hash usage)
 """DocsIndexer — ingest project markdown docs (CLAUDE.md, .claude/, docs/)
 в Qdrant для RAG-powered search.
 

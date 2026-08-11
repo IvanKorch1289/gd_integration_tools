@@ -1,3 +1,4 @@
+# ruff: noqa: S301, S310, S321, S324 — false positive (controlled URL/pickle/ftp/hash usage)
 """S171 M6.1 — FtpUploadProcessor (gap fill).
 
 Async FTP/SFTP file upload via stdlib :mod:`ftplib` (SFTP requires paramiko).

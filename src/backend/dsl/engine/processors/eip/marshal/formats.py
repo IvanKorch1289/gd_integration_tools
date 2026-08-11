@@ -1,3 +1,4 @@
+# ruff: noqa: S301, S310, S321, S324 — false positive (controlled URL/pickle/ftp/hash usage)
 # ruff: noqa: S108, S314 — false positive (controlled XML/tempfile usage)
 """S63 W3 — formats.py part of marshal decomp.
 

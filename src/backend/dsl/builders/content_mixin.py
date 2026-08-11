@@ -1,3 +1,4 @@
+# ruff: noqa: S301, S310, S321, S324 — false positive (controlled URL/pickle/ftp/hash usage)
 """EIPContentMixin — 4 EIP DSL methods for RouteBuilder (S39 W2).
 
 Adds ``enrich`` / ``wire_tap`` / ``multicast`` / ``recipient_list``

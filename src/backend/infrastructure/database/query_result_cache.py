@@ -1,3 +1,4 @@
+# ruff: noqa: S301, S310, S321, S324 — false positive (controlled URL/pickle/ftp/hash usage)
 """Кэш результатов SQL-запросов (S38.2).
 
 Поверх любого :class:`core.interfaces.CacheBackend` (Redis / KeyDB / Memory).

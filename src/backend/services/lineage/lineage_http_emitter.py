@@ -1,3 +1,4 @@
+# ruff: noqa: S301, S310, S321, S324 — false positive (controlled URL/pickle/ftp/hash usage)
 """OpenLineage HTTP emitter — production-grade transport для Marquez / OpenLineage server.
 
 Использование::
