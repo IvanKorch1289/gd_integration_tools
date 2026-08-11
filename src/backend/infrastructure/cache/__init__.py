@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """Пакет инфраструктуры кэша.
 
 Публикует синглтон ``cache_config_registry`` для регистрации источников

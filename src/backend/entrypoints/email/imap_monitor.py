@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """IMAP-мониторинг входящих email.
 
 Async-реализация на ``aioimaplib`` (A2 / ADR-004). Синхронный ``imaplib``

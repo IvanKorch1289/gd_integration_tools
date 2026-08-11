@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """Фабрика логирования — единая точка получения логгеров.
 
 Автоматически выбирает бэкенд:

@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """CoquiTTSService — text-to-speech поверх Coqui ``TTS`` (K4 S7).
 
 Назначение:

@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """Адаптер кэширования для httpx через Hishel (RFC 7234).
 
 K2 Sprint 7 — httpx unified transport stack. Реализует ленивый импорт

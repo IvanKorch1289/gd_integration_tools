@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """Универсальные неспецифические процессоры: shadow mode, bulkhead,
 lineage, SSE, schema validation, A/B test router, feature flag guard.
 

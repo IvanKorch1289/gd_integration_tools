@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """S60 W3 — pools.py part of setup_infra decomp.
 
 Funcs: _register_pools_in_unified_manager, _warmup_connection_pools, _redis_enabled, _s3_enabled, _clickhouse_enabled.

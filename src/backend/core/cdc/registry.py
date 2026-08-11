@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """CDC backend registry — единая точка входа для всех CDC-source (S101 W1).
 
 DEEP-RESEARCH D15 finding (S92): split-brain между R2.1 scaffold

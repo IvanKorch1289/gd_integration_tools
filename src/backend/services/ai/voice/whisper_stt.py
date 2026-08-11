@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """WhisperSTTService — speech-to-text поверх ``openai-whisper`` (K4 S7).
 
 Назначение:

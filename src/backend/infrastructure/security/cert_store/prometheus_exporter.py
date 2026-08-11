@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """Prometheus exporter для cert_store (S171 M23, D259).
 
 Метрики для мониторинга cert_expiring через Prometheus:

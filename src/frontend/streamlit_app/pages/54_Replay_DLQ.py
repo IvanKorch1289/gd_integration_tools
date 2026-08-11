@@ -18,9 +18,7 @@ st.header("Воспроизведение DLQ")
 
 # Feature-flag guard
 try:
-    from src.backend.core.frontend_facade import (
-        feature_flags as _ff,
-    )
+    from src.backend.core.frontend_facade import feature_flags as _ff
 
     _flag_enabled: bool = bool(getattr(_ff, "dlq_unified_enabled", False))
 except (ImportError, AttributeError, RuntimeError):

@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """LangGraph агентский граф (LiteLLMGateway-backed).
 
 Определяет граф ReAct-агента, который использует зарегистрированные actions

@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """Фабрика cache-бэкендов (Wave 2.2).
 
 Собирает корректную реализацию :class:`core.interfaces.CacheBackend`

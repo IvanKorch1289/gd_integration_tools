@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """DSPyOptimizer — wrapper над DSPy compile API (K4 S6 W2).
 
 Назначение:

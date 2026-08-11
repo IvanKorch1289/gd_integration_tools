@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """AI / RPA / Banking-AI миксин для ``RouteBuilder`` (S52 W1 closure).
 
 S51 W1: AILlMMixin (18 AI/LLM methods).

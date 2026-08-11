@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """Sprint 3 (V16.1 P1) — :class:`EmailSource`.
 
 Полноценный Source для IMAP-ящиков. Отличия от

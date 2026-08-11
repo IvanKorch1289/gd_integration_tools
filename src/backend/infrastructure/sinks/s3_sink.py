@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """S3Sink — выгрузка payload в S3/MinIO (Sprint 3 W1 K3, GAP-03 symmetry).
 
 Закрывает ассиметрию: S3-чтение уже представлено

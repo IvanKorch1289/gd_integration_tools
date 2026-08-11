@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """DSL процессор: Прямой LLM-вызов через AI Gateway с cost-tracking и retry-логикой."""
 
 from __future__ import annotations

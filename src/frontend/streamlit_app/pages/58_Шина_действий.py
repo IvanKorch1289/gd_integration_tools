@@ -32,9 +32,7 @@ st.header("Шина действий")
 # Feature-flag guard
 # ---------------------------------------------------------------------------
 try:
-    from src.backend.core.frontend_facade import (
-        feature_flags as _ff,
-    )
+    from src.backend.core.frontend_facade import feature_flags as _ff
 
     _flag_enabled: bool = _ff.frontend_action_bus_ui
 except (ImportError, AttributeError, RuntimeError) as ff_exc:

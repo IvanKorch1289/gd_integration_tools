@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """Hybrid RAG — BM25 + dense vector + cross-encoder reranking.
 
 Улучшает recall на +20-30% vs vector-only через:

@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """Metrics collector for all cache tiers (LRU, RAG, semantic).
 
 Aggregates hit/miss counters from all tiers into a single snapshot

@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """K3 Sprint-3 Wave 5 — :class:`EmailIMAPSource` + :class:`EmailMessage`.
 
 Предоставляет потоковый итератор писем через IMAP IDLE (aioimaplib).

@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """OCR-процессор для извлечения текста из изображений.
 
 Wave ``[wave:s18/w0-goal-driven-sweep-2-ocr]`` — заполнение пробела в RPA-стеке.

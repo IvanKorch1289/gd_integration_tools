@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """LiteLLMImageGenerationService — wrapper над ``litellm.image_generation()``.
 
 Назначение:

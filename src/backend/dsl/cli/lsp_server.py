@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """LSP-сервер для DSL route.toml + *.dsl.yaml через pygls.
 
 Wave ``[wave:s6/k3-dsl-linter-lsp]``.

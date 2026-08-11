@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """ForwardToProcessor — outbound pass-through в backend-сервис.
 
 Wave 3.5. Полагается на уже существующие клиенты проекта:

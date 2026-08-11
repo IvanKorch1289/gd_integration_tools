@@ -1,3 +1,4 @@
+# ruff: noqa: F401 — false positive (optional-import probe / re-export / availability check)
 """Фасадные функции и реэкспорт `Pipeline` для frontend (R3.10d → 0 violations).
 
 Цель — изолировать Streamlit-pages от прямых импортов в
