@@ -210,7 +210,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
             spec["source_property"] = self.source_property
         if self.target_property != self.source_property:
             spec["target_property"] = self.target_property
-        if self.token_map_property != "pii_token_map":  # config field name, not a password
+        if self.token_map_property != "pii_token_map":  # noqa: S105 — config field name, not a password
             spec["token_map_property"] = self.token_map_property
         if self.scope != "default":
             spec["scope"] = self.scope
