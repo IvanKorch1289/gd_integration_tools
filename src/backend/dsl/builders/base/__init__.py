@@ -1,9 +1,13 @@
 """RouteBuilder package (S57 W1 decomp from base.py 648 LOC).
-32 methods decomposed в 7 mixin files:
-- fluent_mixin.py (5), config_mixin.py (5), validation_mixin.py (4)
-- deps_mixin.py (1), feature_mixin.py (4)
-- resilience_mixin.py (3), compliance_mixin.py (4)
-Core (6) остается в __init__.py: from_, from_registered_source, _add, _add_lazy, process, build.
+
+76 mixin-классов в MRO (36 top-level declared в class-decl ниже + 40
+sub-mixin'ов от composite-mixin'ов: ``IntegrationMixin``, ``AgentDSLMixin``,
+``EIPMixin``, ``TransportSourcesMixin``, ``AIRPAMixin`` и т.д.).
+Ядро (6 core-методов) остаётся в этом ``__init__.py``:
+``from_``, ``from_registered_source``, ``_add``, ``_add_lazy``, ``process``,
+``build``. Decomp pattern: god-class → mixin-tree, чтобы новые фичи
+добавлялись отдельным mixin-файлом без правки RouteBuilder MRO.
+
 Backward-compat: ``from src.backend.dsl.builders.base import RouteBuilder`` works.
 """
 
@@ -132,7 +136,18 @@ class RouteBuilder(  # type: ignore[misc]
     IPRestrictionMixin,
     TransportSourcesMixin,  # S97 W1: SSE/CDC/messaging builders (orphan в S94)
 ):
-    """RouteBuilder — DSL core (10 mixins = 32+ methods + 6 core).
+    """RouteBuilder — DSL core (76 mixin-классов в MRO + 6 core-методов).
+
+    Composition (см. class-decl выше): AIRPAMixin, BatchMixin,
+    CollectionMixin, EIPContentMixin, ContentMixin, ControlFlowMixin,
+    DataStoreStepMixin, DataStoreMixin, DeferredExecutionMixin, EIPMixin,
+    EventBusMixin, IntegrationMixin, ConvertersMixin, FormatConvertersMixin,
+    RequestReplyMixin, SagaLRAMixin, TemplateEngineChainMixin,
+    TemplateEngineMixin, InfrastructureDSL, AgentDSLMixin, PlanExecuteMixin,
+    ReflectionLoopMixin, RouterSpecialistMixin, NotebookMixin, VariableMixin,
+    PolicyMixin, FluentMixin, ConfigMixin, ValidationMixin, DepsMixin,
+    FeatureMixin, ResilienceMixin, ComplianceMixin, MiddlewareMixin,
+    IPRestrictionMixin, TransportSourcesMixin.
 
     S168 W9 P0-3: added NotebookMixin, VariableMixin, PolicyMixin to MRO
     (per ARCHITECTURAL_AUDIT_V2.md:102-117). Раньше они были defined
