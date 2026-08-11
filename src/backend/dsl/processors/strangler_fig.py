@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (load balancing, sampling, chaos testing)
 """StranglerFigProcessor — Strangler Fig pattern (v21 §2.3, #3 of 3 P0 gaps).
 
 Closes v21 gap #3: Strangler Fig. Zero-downtime миграция legacy systems:

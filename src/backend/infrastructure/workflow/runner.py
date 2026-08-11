@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (workflow scheduling jitter)
 """Durable workflow runner — background execution driver для IL-WF1.
 
 Архитектура (ADR-031):

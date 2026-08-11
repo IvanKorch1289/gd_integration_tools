@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (load balancing, sampling, chaos testing)
 """Async browser automation client через Playwright.
 
 Поддерживает: navigation, clicks, form fill, extraction, screenshots.

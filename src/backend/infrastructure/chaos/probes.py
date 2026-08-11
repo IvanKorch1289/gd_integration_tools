@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (load balancing, sampling, chaos testing)
 """Chaos engineering probes — controlled fault injection (S37.4).
 
 Назначение:

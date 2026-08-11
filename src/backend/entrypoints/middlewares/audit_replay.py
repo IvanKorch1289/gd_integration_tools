@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (load balancing, sampling, chaos testing)
 """Audit Replay Middleware — record request/response в Redis stream (cycle 45 pure ASGI).
 
 Используется для:
