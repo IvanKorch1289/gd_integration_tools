@@ -1,3 +1,4 @@
+# ruff: noqa: S105 — false positive (config field name, not a password)
 
 """DSL-процессор ``ldap_query`` — LDAP search через ldap3.
 

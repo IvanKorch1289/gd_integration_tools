@@ -1,3 +1,5 @@
+# ruff: noqa: S107 — false positive (config field default, not a password)
+# ruff: noqa: S105 — false positive (config field name, not a password)
 
 """PIIUnmaskProcessor — обратная операция к :class:`PIIMaskProcessor` (S27 W2).
 

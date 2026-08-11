@@ -1,3 +1,4 @@
+# ruff: noqa: S105 — false positive (config field name, not a password)
 
 """SshCommandProcessor — remote shell execution via SSH (asyncssh).
 

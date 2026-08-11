@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — false positive (non-cryptographic random: backoff/load balancing/sampling)
 
 """Локальный dry-run executor для DSL routes (S10 K3 W4, DSL-1.5).
 

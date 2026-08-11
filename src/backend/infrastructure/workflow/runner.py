@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — false positive (non-cryptographic random: backoff/load balancing/sampling)
 
 """Durable workflow runner — background execution driver для IL-WF1.
 

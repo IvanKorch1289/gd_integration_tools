@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — false positive (non-cryptographic random: backoff/load balancing/sampling)
 
 """ABTestProcessor — A/B-эксперимент в DSL pipeline (S10 K3 W3, DSL-1.4).
 

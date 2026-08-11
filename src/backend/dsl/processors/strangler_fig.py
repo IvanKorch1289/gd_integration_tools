@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — false positive (non-cryptographic random: backoff/load balancing/sampling)
 
 """StranglerFigProcessor — Strangler Fig pattern (v21 §2.3, #3 of 3 P0 gaps).
 

@@ -1,3 +1,4 @@
+# ruff: noqa: S107 — false positive (config field default, not a password)
 
 """Sinks mixin: 10 sink_* fluent методов для outbound публикации.
 

@@ -1,3 +1,4 @@
+# ruff: noqa: S105 — false positive (config field name, not a password)
 
 """Distributed token-bucket rate-limiter поверх Redis Cluster (Sprint 11 K2 W1).
 

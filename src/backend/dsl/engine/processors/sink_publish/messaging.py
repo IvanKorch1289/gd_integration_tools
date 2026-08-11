@@ -1,3 +1,4 @@
+# ruff: noqa: S105 — false positive (config field name, not a password)
 
 """S57 W4 — messaging.py part of sink_publish decomp.
 

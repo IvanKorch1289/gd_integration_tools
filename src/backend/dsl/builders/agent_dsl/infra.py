@@ -1,3 +1,4 @@
+# ruff: noqa: S107 — false positive (config field default, not a password)
 
 """Agent DSL миксин для ``RouteBuilder`` (S27 W1-W3).
 

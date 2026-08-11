@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — false positive (non-cryptographic random: backoff/load balancing/sampling)
 
 """Audit Replay Middleware — record request/response в Redis stream (cycle 45 pure ASGI).
 

@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — false positive (non-cryptographic random: backoff/load balancing/sampling)
 
 """Scraping Pipeline DSL processors — structured extraction, pagination, API proxy.
 

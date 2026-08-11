@@ -1,3 +1,4 @@
+# ruff: noqa: S107 — false positive (config field default, not a password)
 
 """Notify / Shell / Email / SSH / IMAP миксин для RouteBuilder."""
 

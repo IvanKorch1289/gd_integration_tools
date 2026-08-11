@@ -1,3 +1,4 @@
+# ruff: noqa: S105 — false positive (config field name, not a password)
 
 """DSL-процессор ``webdav_io`` — WebDAV upload/download/list через webdav4.
 

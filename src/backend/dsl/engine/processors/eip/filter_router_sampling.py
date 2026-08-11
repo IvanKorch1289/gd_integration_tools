@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — false positive (non-cryptographic random: backoff/load balancing/sampling)
 
 """Content-Based Router, Message Filter, Sampling EIP processors (S55 W2).
 

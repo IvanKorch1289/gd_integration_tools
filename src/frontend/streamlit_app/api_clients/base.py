@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — false positive (non-cryptographic random: backoff/load balancing/sampling)
 """Базовый HTTP-клиент с retry, timeout и JWT token propagation.
 
 Sprint 45 W2: добавлена реальная retry-логика с exponential backoff.
