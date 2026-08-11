@@ -1,3 +1,4 @@
+# ruff: noqa: S107 — config field name (не password)
 """Agent DSL миксин для ``RouteBuilder`` (S27 W1-W3).
 
 Группа: agent_run / ai_invoke / agent_branch / agent_loop / agent_parallel

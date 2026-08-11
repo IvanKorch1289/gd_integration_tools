@@ -1,3 +1,4 @@
+# ruff: noqa: S107 — config field name (не password)
 """Notify / Shell / Email / SSH / IMAP миксин для RouteBuilder."""
 
 from __future__ import annotations

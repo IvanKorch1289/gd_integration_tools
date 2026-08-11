@@ -1,3 +1,4 @@
+# ruff: noqa: S107 — config field name (не password)
 """InfrastructureDSL (S38 W4 → S175 #5 hybrid): 9 phantom-stub helper methods.
 
 Stateless mixin для :class:`RouteBuilder`. Каждый wrapper — тонкая обёртка

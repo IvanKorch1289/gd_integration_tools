@@ -1,3 +1,4 @@
+# ruff: noqa: S107 — config field name (не password)
 """PIIUnmaskProcessor — обратная операция к :class:`PIIMaskProcessor` (S27 W2).
 
 Восстанавливает оригинальный PII из ``exchange.properties["pii_token_map"]``
