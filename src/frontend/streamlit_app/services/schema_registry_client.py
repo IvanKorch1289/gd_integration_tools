@@ -51,6 +51,7 @@ def list_schemas(kind: str) -> list[Path]:
 
     Returns:
         Отсортированный список абсолютных :class:`~pathlib.Path` к файлам.
+
     """
     if kind not in _KIND_CONFIG:
         return []
@@ -76,6 +77,7 @@ def read_schema(path: Path) -> str:
     Raises:
         FileNotFoundError: Если файл не найден.
         OSError: При проблемах чтения файла.
+
     """
     return path.read_text(encoding="utf-8")
 
@@ -95,6 +97,7 @@ def validate_openapi(content: str) -> tuple[bool, str]:
     Returns:
         Кортеж ``(is_valid, message)`` — флаг успеха и описание результата
         или ошибки.
+
     """
     # Пробуем JSON, затем YAML
     data: dict | None = None
@@ -143,6 +146,7 @@ def diff_schemas(a: str, b: str) -> str:
 
     Returns:
         Строка в формате unified-diff. Пустая строка — если схемы идентичны.
+
     """
     lines_a = a.splitlines(keepends=True)
     lines_b = b.splitlines(keepends=True)

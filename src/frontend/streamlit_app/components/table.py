@@ -16,6 +16,7 @@ def paginated_table(
         data: Список словарей для отображения.
         page_size: Количество строк на странице.
         key: Уникальный ключ для session_state.
+
     """
     if not data:
         st.info("Нет данных для отображения.")
@@ -56,6 +57,7 @@ def render_metrics_table(metrics: dict[str, Any]) -> None:
 
     Args:
         metrics: Словарь метрик (ключ → значение).
+
     """
     if not metrics:
         st.warning("Метрики недоступны.")

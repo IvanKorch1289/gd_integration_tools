@@ -83,6 +83,7 @@ def _is_transport_error(exc: Exception) -> bool:
 
     Returns:
         True если это httpx.TransportError или OSError (backend недоступен).
+
     """
     try:
         import httpx  # noqa: PLC0415
@@ -100,6 +101,7 @@ def list_actions() -> list[dict[str, Any]]:
 
     Returns:
         Список словарей с ключами: name, description, namespace, tier.
+
     """
     try:
         import httpx  # noqa: PLC0415
@@ -134,6 +136,7 @@ def invoke(name: str, payload: dict[str, Any], mode: str) -> dict[str, Any]:
     Returns:
         Словарь с результатом вызова. При ошибке бэкенда содержит
         ключи ``error`` и ``detail``.
+
     """
     body: dict[str, Any] = {"action": name, "payload": payload, "mode": mode}
     try:
@@ -178,6 +181,7 @@ def get_action_spec(name: str) -> dict[str, Any] | None:
 
     Returns:
         Словарь спецификации action или None если action не найден.
+
     """
     try:
         import httpx  # noqa: PLC0415

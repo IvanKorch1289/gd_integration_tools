@@ -12,6 +12,7 @@ def init_state(**kwargs: Any) -> None:
 
     Args:
         **kwargs: Пары key=value для инициализации.
+
     """
     for key, value in kwargs.items():
         if key not in st.session_state:
@@ -27,6 +28,7 @@ def get_state(key: str, default: Any = None) -> Any:
 
     Returns:
         Значение из session_state или default.
+
     """
     return st.session_state.get(key, default)
 
@@ -36,6 +38,7 @@ def clear_state(*keys: str) -> None:
 
     Args:
         *keys: Ключи для очистки.
+
     """
     for key in keys:
         if key in st.session_state:

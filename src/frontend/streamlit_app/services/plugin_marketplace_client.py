@@ -96,6 +96,7 @@ def _is_transport_error(exc: Exception) -> bool:
 
     Returns:
         True если это httpx.TransportError или OSError (backend недоступен).
+
     """
     try:
         import httpx  # noqa: PLC0415
@@ -118,6 +119,7 @@ def list_plugins(status_filter: str = "all") -> list[dict[str, Any]]:
     Returns:
         Список словарей с ключами: name, version, status, capabilities,
         routes_count, actions_count, tenant_aware, description.
+
     """
     try:
         import httpx  # noqa: PLC0415
@@ -160,6 +162,7 @@ def get_plugin_manifest(name: str) -> dict[str, Any] | None:
 
     Returns:
         Словарь manifest плагина или None если плагин не найден.
+
     """
     try:
         import httpx  # noqa: PLC0415
@@ -194,6 +197,7 @@ def toggle_plugin(name: str, active: bool) -> bool:  # noqa: FBT001
     Returns:
         True если операция успешна (или backend недоступен — dev-fallback),
         False при HTTP-ошибке (4xx/5xx) от backend.
+
     """
     body: dict[str, Any] = {"name": name, "active": active}
     try:

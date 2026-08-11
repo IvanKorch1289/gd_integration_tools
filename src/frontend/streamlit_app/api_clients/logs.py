@@ -33,6 +33,7 @@ class LogsClient(BaseAPIClient):
 
         Returns:
             Список step-логов (dict). При ошибке backend поднимает RuntimeError.
+
         """
         params: dict[str, Any] = {
             k: v
@@ -64,6 +65,7 @@ class LogsClient(BaseAPIClient):
 
         Returns:
             Подробности workflow со списком всех steps.
+
         """
         try:
             result = self._request(

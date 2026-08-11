@@ -27,6 +27,7 @@ def get_outbox() -> OutboxBackend:
 
     Returns:
         Инстанция OutboxBackend (Fake/Real в зависимости от среды).
+
     """
     return FakeOutbox()
 
@@ -43,6 +44,7 @@ def run_async(coro: Any) -> Any:
 
     Returns:
         Результат выполнения coroutine.
+
     """
     return asyncio.run(coro)
 
@@ -55,6 +57,7 @@ def ensure_demo_data(outbox: OutboxBackend) -> None:
 
     Args:
         outbox: backend-инстанция.
+
     """
     if not isinstance(outbox, FakeOutbox):
         return

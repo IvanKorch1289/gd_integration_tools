@@ -42,6 +42,7 @@ def emit_admin_error_event(
     Notes:
         Lazy-import ``emit_audit_safe`` (dev-envs без DI не сломаются).
         Graceful fallback.
+
     """
     emit_streamlit_page_event(
         event="frontend.admin.error",
@@ -81,6 +82,7 @@ def emit_streamlit_page_event(
     Notes:
         Same facade as :func:`emit_audit_safe` wrapper. Graceful
         fallback (warning log + return) при недоступности facade.
+
     """
     try:
         from src.backend.core.frontend_facade import emit_audit_safe

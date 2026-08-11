@@ -88,6 +88,7 @@ def _cached_list_actions() -> list[dict]:
 
     Returns:
         Список словарей action-метаданных.
+
     """
     return list_actions()
 

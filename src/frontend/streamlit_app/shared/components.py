@@ -327,6 +327,7 @@ def related_pages_footer(current_key: str) -> None:
 
     Args:
         current_key: Filename-stem текущей page (например "16_Воркфлоу").
+
     """
     from src.frontend.streamlit_app.shared.page_registry import PAGE_METADATA
 
@@ -366,6 +367,7 @@ def require_auth(*, label: str = "этот раздел") -> bool:
 
     Returns:
         True если пользователь аутентифицирован (выполнение продолжается).
+
     """
     from src.frontend.streamlit_app.shared.auth_state import is_authenticated
 
@@ -411,6 +413,7 @@ def setup_page(
         layout: "centered" or "wide" (default: "wide").
         initial_sidebar_state: "auto" | "expanded" | "collapsed".
         auto_resolve: If True, use page_registry to fill missing args.
+
     """
     if auto_resolve and (title is None or icon is None):
         import inspect
@@ -450,6 +453,7 @@ def metric_row(metrics: list[tuple[str, Any]]) -> None:
     Args:
         metrics: List of (label, value) tuples. Also accepts 2-tuples
             with optional delta as 3rd element.
+
     """
     if not metrics:
         return
@@ -474,6 +478,7 @@ def dataframe_view(df: pd.DataFrame, **kwargs: Any) -> None:
     Args:
         df: pandas DataFrame to display.
         **kwargs: Forwarded to st.dataframe.
+
     """
     kwargs.setdefault("width", "stretch")
     st.dataframe(df, **kwargs)

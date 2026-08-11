@@ -79,6 +79,7 @@ class AuthClient(BaseAPIClient):
         Raises:
             PermissionError: 401 — invalid credentials.
             httpx.HTTPStatusError: 4xx/5xx — другие ошибки.
+
         """
         payload = self.post(
             "/api/v1/auth/login",

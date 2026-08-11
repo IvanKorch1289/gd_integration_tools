@@ -10,8 +10,9 @@ def status_badge(status: str | bool, label: str | None = None) -> None:
 
     Args:
         status: Статус (True/False для ok/fail, или строка
-'ok'/'fail'/'pending'/'retry').
+    'ok'/'fail'/'pending'/'retry').
         label: Опциональный текст (по умолчанию — status).
+
     """
     text = label or str(status)
     if status is True or status == "ok":
@@ -32,6 +33,7 @@ def health_badge(name: str, healthy: bool) -> None:
     Args:
         name: Имя компонента.
         healthy: True если здоров.
+
     """
     if healthy:
         st.success(f"✓ {name}")

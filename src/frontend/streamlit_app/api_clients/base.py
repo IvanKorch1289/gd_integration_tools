@@ -157,6 +157,7 @@ class BaseAPIClient:
             PermissionError: 401 Unauthorized (NOT retried).
             httpx.HTTPStatusError: 4xx (other than 401/408/429) — won't help.
             httpx.TransportError: after max_retries exhausted on 5xx/transport.
+
         """
         headers = {**self._headers(), **kwargs.pop("headers", {})}
         last_exc: Exception | None = None

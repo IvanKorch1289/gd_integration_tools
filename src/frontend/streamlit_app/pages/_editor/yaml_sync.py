@@ -35,6 +35,7 @@ def yaml_to_steps(yaml_str: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         * ``steps`` — ``[{"type": str, "params": dict}, ...]``
 
         На любой ошибке парсинга возвращает ``({}, [])``.
+
     """
     try:
         data = _yaml.safe_load(yaml_str) or {}
@@ -69,6 +70,7 @@ def build_yaml_from_steps(meta: dict[str, Any], steps: list[dict[str, Any]]) -> 
     Returns:
         YAML-строка с UTF-8 unicode и sort_keys=False (порядок полей
         сохраняется: route_id → source → description → processors).
+
     """
     out: dict[str, Any] = {"route_id": meta.get("route_id") or "my.route"}
     if meta.get("source"):
@@ -88,6 +90,7 @@ def try_load(yaml_str: str) -> tuple[Pipeline | None, str | None]:
 
     Returns:
         ``(pipeline, None)`` при успехе, ``(None, error_str)`` при ошибке.
+
     """
     try:
         return load_pipeline_from_yaml(yaml_str), None

@@ -19,6 +19,7 @@ class InventoryClient(BaseAPIClient):
             ``{"enabled": bool, "plugins": [...], "reason": str | None}``.
             Если loader выключен через feature-flag — ``enabled=False``
             и пустой массив.
+
         """
         try:
             return self._request("GET", "/api/v1/plugins/inventory")

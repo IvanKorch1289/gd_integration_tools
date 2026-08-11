@@ -134,6 +134,7 @@ class K4APIClient(APIClient):
 
         Returns:
             dict with task_id, status, doc_ids, errors, etc.
+
         """
         try:
             return self._request(

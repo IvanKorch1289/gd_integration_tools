@@ -84,6 +84,7 @@ def assert_audit_event(
         # ... code that appends to events ...
         record = assert_audit_event(events, event="authorization.decision")
         assert record["outcome"] == "allow"
+
     """
     if not events:
         raise _AssertionError("assert_audit_event: events list is empty")
@@ -161,6 +162,7 @@ def assert_metric_recorded(
         backend.inc_counter("auth.login", labels={"tenant": "acme"})
         val = assert_metric_recorded(backend, "auth.login", labels={"tenant": "acme"}, at_least=2.0)
         assert val >= 2.0
+
     """
     snapshot = backend.snapshot()
 

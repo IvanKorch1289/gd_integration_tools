@@ -37,6 +37,7 @@ def handle_api_error(
         exc: Перехваченное исключение.
         default_message: Сообщение по умолчанию.
         show_details: Показывать ли детали ошибки.
+
     """
     if isinstance(exc, PermissionError):
         st.error("⛔ Недостаточно прав для выполнения операции")
@@ -70,6 +71,7 @@ def try_except(
 
     Returns:
         Декорированная функция.
+
     """
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -95,6 +97,7 @@ def require_api_client(func: Callable[..., Any]) -> Callable[..., Any]:
 
     Returns:
         Декорированная функция.
+
     """
 
     def wrapper(*args: Any, **kwargs: Any) -> Any:

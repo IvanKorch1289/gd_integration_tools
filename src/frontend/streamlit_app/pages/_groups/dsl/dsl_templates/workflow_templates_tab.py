@@ -49,6 +49,7 @@ def render_workflow_templates(client: APIClient) -> None:
         2. Опционально — semantic search по query (``registry.search_semantic``).
         3. Per template — expander с ``_render_template_card`` (YAML tab +
            Mermaid tab + Deploy input + Deploy button).
+
     """
     import streamlit as st
 
@@ -93,6 +94,7 @@ def _render_template_card(tmpl, client: APIClient) -> None:
     Args:
         tmpl: WorkflowTemplate dataclass (raw dict + metadata).
         client: API client (для Deploy POST).
+
     """
     import streamlit as st
     import yaml as _yaml
@@ -134,6 +136,7 @@ def _deploy_template(tmpl, target: str, client: APIClient) -> None:
         client: API client.
 
     Side effects: streamlit error/success message в текущей колонке.
+
     """
     import streamlit as st
 

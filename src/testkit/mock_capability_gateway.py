@@ -66,6 +66,7 @@ class MockCapabilityGateway:
         check_calls: List of all ``(plugin, capability, scope)`` tuples
             passed to :meth:`check` since construction or the last
             :meth:`reset_calls` call.
+
     """
 
     def __init__(self, *, default_allowed: bool = True) -> None:
@@ -76,6 +77,7 @@ class MockCapabilityGateway:
                 that hasn't been explicitly configured via
                 :meth:`add_check_result` will be allowed. Set to ``False``
                 to require explicit configuration for all expected checks.
+
         """
         self._declared: dict[str, tuple[str, ...]] = {}
         self._check_results: dict[tuple[str, str], bool] = {}
@@ -129,6 +131,7 @@ class MockCapabilityGateway:
             capability: Capability name.
             allowed: If ``True``, ``check()`` will pass; if ``False``,
                 ``check()`` will raise ``CapabilityDeniedError``.
+
         """
         self._check_results[(plugin, capability)] = allowed
 

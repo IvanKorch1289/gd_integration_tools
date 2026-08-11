@@ -55,6 +55,7 @@ def text_search(label: str, *, placeholder: str = "", key: str | None = None) ->
 
     Returns:
         Trimmed query string (empty если ничего не введено).
+
     """
     raw = st.text_input(label, value="", placeholder=placeholder, key=key)
     return raw.strip() if raw else ""
@@ -77,6 +78,7 @@ def multiselect_filter(
 
     Returns:
         Selected options (subset of `options`).
+
     """
     return st.multiselect(
         label, options=options, default=default if default is not None else [], key=key
@@ -94,6 +96,7 @@ def date_range_filter(
 
     Returns:
         (from_date, to_date) tuple. Either may be None.
+
     """
     prefix = key_prefix or label
     cols = st.columns(2)  # type: ignore[union-attr]
@@ -120,6 +123,7 @@ def selectbox_filter(
 
     Returns:
         Selected option or None if options is empty.
+
     """
     if not options:
         return None
@@ -150,6 +154,7 @@ def slider_filter(
 
     Returns:
         Selected integer value.
+
     """
     return st.slider(
         label,

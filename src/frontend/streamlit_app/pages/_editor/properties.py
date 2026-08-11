@@ -24,6 +24,7 @@ def render_properties_panel(client: Any) -> None:
     Args:
         client: API client instance (e.g., ``get_api_client()``) для
             ``create_dsl_route`` / ``update_dsl_route`` calls.
+
     """
     st.subheader("⚙️ Свойства")
 

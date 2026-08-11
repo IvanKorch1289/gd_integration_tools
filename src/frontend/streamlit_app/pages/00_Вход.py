@@ -234,6 +234,7 @@ def _emit_login_submit_event(*, outcome: str, method: str) -> None:
 
         Signature: ``emit_audit_safe(*, event, action='', outcome,
         details=None, severity=None, extra=None)``.
+
     """
     try:
         from src.backend.core.frontend_facade import emit_audit_safe

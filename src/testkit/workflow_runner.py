@@ -60,6 +60,7 @@ class WorkflowRunner:
             by this runner. Tests can inspect ``backend._instances``,
             use ``backend.set_result()``, or call ``backend.signals_for()``
             to verify workflow behavior.
+
     """
 
     def __init__(
@@ -77,6 +78,7 @@ class WorkflowRunner:
                 :meth:`FakeWorkflowBackend.set_result`.
             query_handlers: Static responses returned from
                 :meth:`FakeWorkflowBackend.query_workflow` by query name.
+
         """
         # Lazy import to avoid pulling in heavy infrastructure dependencies
         # when only FakeWorkflowBackend is needed.
@@ -108,6 +110,7 @@ class WorkflowRunner:
 
         Returns:
             WorkflowRunResult with output, status, and optional failure.
+
         """
         handle = await self.backend.start_workflow(
             workflow_name=workflow_name,
@@ -150,6 +153,7 @@ class WorkflowRunner:
             WorkflowHandle that can be used with
             :meth:`FakeWorkflowBackend.await_completion`,
             :meth:`FakeWorkflowBackend.signal_workflow`, etc.
+
         """
         return await self.backend.start_workflow(
             workflow_name=workflow_name,

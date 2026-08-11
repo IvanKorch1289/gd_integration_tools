@@ -92,6 +92,7 @@ def _mock_snapshot() -> dict[str, Any]:
 
     Returns:
         Снапшот по 4 категориям resilience-блоков.
+
     """
     return {
         "timestamp": datetime.now(UTC).isoformat(),
@@ -142,6 +143,7 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
 
     Returns:
         (snapshot, is_live). is_live=False означает fallback на mock.
+
     """
     try:
         from src.frontend.streamlit_app.api_clients import (  # noqa: PLC0415
@@ -179,6 +181,7 @@ def _render_circuit_breakers(items: list[dict[str, Any]]) -> None:
 
     Args:
         items: список словарей CB-снапшота.
+
     """
     st.subheader("Circuit Breaker'ы")
     if not items:
@@ -203,6 +206,7 @@ def _render_rate_limiters(items: list[dict[str, Any]]) -> None:
 
     Args:
         items: список словарей RL-снапшота.
+
     """
     st.subheader("Rate Limiter'ы")
     if not items:
@@ -226,6 +230,7 @@ def _render_bulkheads(items: list[dict[str, Any]]) -> None:
 
     Args:
         items: список словарей Bulkhead-снапшота.
+
     """
     st.subheader("Bulkhead'ы")
     if not items:
@@ -249,6 +254,7 @@ def _render_degradation(items: list[dict[str, Any]]) -> None:
 
     Args:
         items: список chain-снапшотов.
+
     """
     st.subheader("Цепочки деградации")
     if not items:

@@ -76,6 +76,7 @@ def login(
         username: Имя пользователя.
         password: Пароль.
         method: ``"password"`` или ``"ldap"`` (S58 W6d).
+
     """
     client = _client()
     response = client.login(method=method, username=username, password=password)

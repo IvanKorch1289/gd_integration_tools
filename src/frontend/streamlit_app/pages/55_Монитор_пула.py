@@ -81,6 +81,7 @@ def _mock_pools_snapshot() -> dict[str, Any]:
 
     Returns:
         Снапшот worker + connection pools.
+
     """
     return {
         "timestamp": datetime.now(UTC).isoformat(),
@@ -136,6 +137,7 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
 
     Returns:
         (snapshot, is_live). is_live=False — fallback на mock.
+
     """
     try:
         from src.frontend.streamlit_app.api_clients import (  # noqa: PLC0415
@@ -173,6 +175,7 @@ def _push_trend(pool_name: str, in_use: int) -> list[int]:
 
     Returns:
         Список последних N точек (где N = _TREND_WINDOW).
+
     """
     _key = f"pool_trend_{pool_name}"
     _trend = st.session_state.get(_key)
@@ -191,6 +194,7 @@ def _render_worker_pool(wp: dict[str, Any]) -> None:
 
     Args:
         wp: словарь снапшота worker pool.
+
     """
     st.subheader("Пул воркеров (Granian)")
     _in_use = int(wp.get("in_use", 0))
@@ -212,6 +216,7 @@ def _render_connection_pools(pools: list[dict[str, Any]]) -> None:
 
     Args:
         pools: список словарей connection pool снапшотов.
+
     """
     st.subheader("Пулы соединений")
     if not pools:

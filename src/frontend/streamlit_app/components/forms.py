@@ -27,6 +27,7 @@ def text_input(
 
     Returns:
         Введённое значение.
+
     """
     return st.text_input(
         label, value=value, placeholder=placeholder, help=help, key=key
@@ -56,6 +57,7 @@ def number_input(
 
     Returns:
         Введённое значение.
+
     """
     return st.number_input(
         label,
@@ -87,6 +89,7 @@ def select_input(
 
     Returns:
         Выбранная опция.
+
     """
     return st.selectbox(label, options=options, index=index, help=help, key=key)
 
@@ -110,6 +113,7 @@ def multiselect_input(
 
     Returns:
         Список выбранных опций.
+
     """
     return st.multiselect(label, options=options, default=default, help=help, key=key)
 
@@ -127,6 +131,7 @@ def date_input(
 
     Returns:
         Выбранная дата.
+
     """
     return st.date_input(label, value=value, help=help, key=key)
 
@@ -143,6 +148,7 @@ def form_submit(
 
     Returns:
         True если форма отправлена.
+
     """
     return st.form_submit_button(label, disabled=disabled, help=help)
 
@@ -152,6 +158,7 @@ def on_submit_callback(callback: Callable[[], None]) -> None:
 
     Args:
         callback: Функция-обработчик.
+
     """
     # Streamlit формы используют st.form_submit_button
     # Callback логика реализуется через session_state

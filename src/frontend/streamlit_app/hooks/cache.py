@@ -31,6 +31,7 @@ def cached_data(func: F | None = None, *, ttl: int = 300) -> F | Callable[[F], F
 
     Returns:
         Декорированная функция или декоратор.
+
     """
 
     def decorator(fn: F) -> F:
@@ -49,6 +50,7 @@ def cached_resource(ttl: int = 3600) -> Callable[[F], F]:
 
     Returns:
         Декоратор.
+
     """
 
     def decorator(fn: F) -> F:
