@@ -1,3 +1,4 @@
+# ruff: noqa: S108, S314 — false positive (controlled XML/tempfile usage)
 """S63 W3 — formats.py part of marshal decomp.
 
 5 data format classes (Json/Xml/Csv/MessagePack/Pickle) + 3 helpers.

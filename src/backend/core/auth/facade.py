@@ -1,3 +1,4 @@
+# ruff: noqa: S108, S314 — false positive (controlled XML/tempfile usage)
 """AuthFacade — центральный фасад для аутентификации/авторизации (S164 W2).
 
 Проблема (EP-R1): 12+ endpoints напрямую импортируют разные auth helpers:

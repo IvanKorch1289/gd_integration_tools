@@ -1,3 +1,4 @@
+# ruff: noqa: S108, S314 — false positive (controlled XML/tempfile usage)
 from __future__ import annotations
 
 """SOAP-сервер: приём и обработка SOAP-запросов через FastAPI.
