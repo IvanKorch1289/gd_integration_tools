@@ -173,7 +173,7 @@ class ColpaliEmbedder:
 
         """
         try:
-            import colpali_engine  # type: ignore[import-not-found]
+            import colpali_engine  # noqa: F401 — availability probe  # type: ignore[import-not-found]
         except ImportError as exc:
             raise LazyImportError(
                 "colpali_engine не установлен. "
