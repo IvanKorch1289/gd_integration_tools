@@ -19,10 +19,7 @@ from __future__ import annotations as annotations
 
 from typing import Any as Any
 
-from src.backend.dsl.codec.base64 import (
-    decode_base64,
-    encode_base64,
-)
+from src.backend.dsl.codec.base64 import decode_base64, encode_base64
 from src.backend.dsl.codec.converters import (
     convert_numpy_types,
     convert_pattern,

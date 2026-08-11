@@ -19,9 +19,7 @@
 не заданы.
 """
 
-from src.backend.services.execution.middlewares.audit_middleware import (
-    AuditMiddleware,
-)
+from src.backend.services.execution.middlewares.audit_middleware import AuditMiddleware
 from src.backend.services.execution.middlewares.idempotency_middleware import (
     IdempotencyMiddleware,
 )

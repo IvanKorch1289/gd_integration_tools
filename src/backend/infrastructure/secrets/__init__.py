@@ -18,15 +18,9 @@ from src.backend.infrastructure.secrets.broker import (
     SecretValue,
     SubscriberCallback,
 )
-from src.backend.infrastructure.secrets.env_backend import (
-    EnvBackend,
-)
-from src.backend.infrastructure.secrets.rotation import (
-    RotationScheduler,
-)
-from src.backend.infrastructure.secrets.vault_backend import (
-    VaultBackend,
-)
+from src.backend.infrastructure.secrets.env_backend import EnvBackend
+from src.backend.infrastructure.secrets.rotation import RotationScheduler
+from src.backend.infrastructure.secrets.vault_backend import VaultBackend
 
 __all__ = (
     "EnvBackend",

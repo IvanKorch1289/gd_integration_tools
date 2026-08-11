@@ -6,8 +6,6 @@ infrastructure-реализации (in-memory, MongoDB, Postgres).
 
 from __future__ import annotations as annotations
 
-from src.backend.core.repositories.feedback import (
-    FeedbackRepository,
-)
+from src.backend.core.repositories.feedback import FeedbackRepository
 
 __all__ = ("FeedbackRepository",)

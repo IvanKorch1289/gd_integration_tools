@@ -18,17 +18,13 @@ from src.backend.core.workflow.backend import (
     WorkflowResult,
     WorkflowStatus,
 )
-from src.backend.core.workflow.fake_backend import (
-    FakeWorkflowBackend,
-)
+from src.backend.core.workflow.fake_backend import FakeWorkflowBackend
 
 
 def __getattr__(name: str) -> Any:
     """Lazy re-export create_workflow_backend из infrastructure (ponytail)."""
     if name == "create_workflow_backend":
-        from src.backend.infrastructure.workflow.factory import (
-            create_workflow_backend,
-        )
+        from src.backend.infrastructure.workflow.factory import create_workflow_backend
 
         return create_workflow_backend
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

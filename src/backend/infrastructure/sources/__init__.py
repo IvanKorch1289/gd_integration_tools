@@ -9,12 +9,7 @@
 оставался работоспособным.
 """
 
-from src.backend.infrastructure.sources.factory import (
-    build_source,
-)
-from src.backend.infrastructure.sources.file_watcher import (
-    FileEvent,
-    FileWatcherSource,
-)
+from src.backend.infrastructure.sources.factory import build_source
+from src.backend.infrastructure.sources.file_watcher import FileEvent, FileWatcherSource
 
 __all__ = ("FileEvent", "FileWatcherSource", "build_source")

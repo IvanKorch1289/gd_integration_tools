@@ -23,10 +23,7 @@ from src.backend.infrastructure.notifications.gateway import (
     SendResult,
     get_gateway,
 )
-from src.backend.infrastructure.notifications.priority import (
-    Priority,
-    PriorityRouter,
-)
+from src.backend.infrastructure.notifications.priority import Priority, PriorityRouter
 from src.backend.infrastructure.notifications.templates import (
     TemplateRegistry,
     get_template_registry,

@@ -19,24 +19,12 @@ backwards-compat для S8 importers.
 
 from __future__ import annotations as annotations
 
-from src.backend.infrastructure.messaging.dlq.fanout_writer import (
-    FanoutDLQWriter,
-)
-from src.backend.infrastructure.messaging.dlq.inbox_writer import (
-    InboxDLQWriter,
-)
-from src.backend.infrastructure.messaging.dlq.kafka_writer import (
-    KafkaDLQWriter,
-)
-from src.backend.infrastructure.messaging.dlq.memory_writer import (
-    InMemoryDLQWriter,
-)
-from src.backend.infrastructure.messaging.dlq.nats_writer import (
-    NATSDLQWriter,
-)
-from src.backend.infrastructure.messaging.dlq.rabbit_writer import (
-    RabbitDLQWriter,
-)
+from src.backend.infrastructure.messaging.dlq.fanout_writer import FanoutDLQWriter
+from src.backend.infrastructure.messaging.dlq.inbox_writer import InboxDLQWriter
+from src.backend.infrastructure.messaging.dlq.kafka_writer import KafkaDLQWriter
+from src.backend.infrastructure.messaging.dlq.memory_writer import InMemoryDLQWriter
+from src.backend.infrastructure.messaging.dlq.nats_writer import NATSDLQWriter
+from src.backend.infrastructure.messaging.dlq.rabbit_writer import RabbitDLQWriter
 from src.backend.infrastructure.messaging.dlq_base import (
     DLQEnvelope,
     DLQReason,

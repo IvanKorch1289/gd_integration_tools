@@ -13,9 +13,6 @@ Rego-policies:
 
 from __future__ import annotations as annotations
 
-from src.backend.infrastructure.policy.opa.client import (
-    OPAClient,
-    PolicyDecision,
-)
+from src.backend.infrastructure.policy.opa.client import OPAClient, PolicyDecision
 
 __all__ = ("OPAClient", "PolicyDecision")

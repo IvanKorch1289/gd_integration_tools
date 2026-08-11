@@ -10,12 +10,8 @@ from __future__ import annotations as annotations
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any
 
-from src.backend.infrastructure.watermark.factory import (
-    create_watermark_store,
-)
-from src.backend.infrastructure.watermark.memory_store import (
-    MemoryWatermarkStore,
-)
+from src.backend.infrastructure.watermark.factory import create_watermark_store
+from src.backend.infrastructure.watermark.memory_store import MemoryWatermarkStore
 
 if TYPE_CHECKING:
     from src.backend.infrastructure.watermark.postgres_store import (

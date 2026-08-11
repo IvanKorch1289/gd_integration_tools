@@ -10,8 +10,6 @@ audit_callback pattern (same as RouteLoader):
 
 from src.backend.services.admin.api import AdminService  # noqa: F401 — re-export
 from src.backend.services.admin.audit import emit_admin_action  # noqa: F401 — re-export
-from src.backend.services.admin.sqladmin_setup import (
-    register_admin,
-)
+from src.backend.services.admin.sqladmin_setup import register_admin
 
 __all__ = ("AdminService", "emit_admin_action", "register_admin")

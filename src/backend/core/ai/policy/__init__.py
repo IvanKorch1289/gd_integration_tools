@@ -25,9 +25,7 @@
 См. docs/adr/0067-ai-policy-spec-dsl.md.
 """
 
-from src.backend.core.ai.policy.enforcer import (
-    AIPolicyEnforcer,
-)
+from src.backend.core.ai.policy.enforcer import AIPolicyEnforcer
 from src.backend.core.ai.policy.resolver import (
     PolicyLoadError,
     PolicyNotResolvedError,

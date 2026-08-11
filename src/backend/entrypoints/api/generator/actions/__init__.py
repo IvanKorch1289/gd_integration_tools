@@ -34,10 +34,7 @@ from src.backend.entrypoints.api.generator.reflection import (
     make_signature,
     request_parameter,
 )
-from src.backend.entrypoints.api.generator.specs import (
-    ActionSpec,
-    CrudSpec,
-)
+from src.backend.entrypoints.api.generator.specs import ActionSpec, CrudSpec
 from src.backend.schemas.invocation import (
     InvocationOptionsSchema,
     InvocationResultSchema,

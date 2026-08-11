@@ -5,14 +5,8 @@ facade) с пакетом ``dsl/service/`` (ServiceDSLRegistry). Раньше Py
 делал shadowing — теперь обе вещи в одном пакете.
 """
 
-from src.backend.dsl.service.facade import (
-    DslService,
-    get_dsl_service,
-)
-from src.backend.dsl.service.registry import (
-    ServiceDSLRegistry,
-    get_service_registry,
-)
+from src.backend.dsl.service.facade import DslService, get_dsl_service
+from src.backend.dsl.service.registry import ServiceDSLRegistry, get_service_registry
 from src.backend.dsl.service.toml_loader import (
     ServiceSpec,
     load_service_toml,

@@ -9,9 +9,7 @@ from src.backend.infrastructure.eventing.cloudevents import (
     parse_envelope,
 )
 from src.backend.infrastructure.eventing.inbox import Inbox  # noqa: F401 — re-export
-from src.backend.infrastructure.eventing.schema_registry import (
-    SchemaRegistry,
-)
+from src.backend.infrastructure.eventing.schema_registry import SchemaRegistry
 
 __all__ = (
     "CloudEvent",

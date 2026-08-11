@@ -17,9 +17,7 @@ from src.backend.plugins.composition.lifecycle import (
     startup,
     watchers,
 )
-from src.backend.plugins.composition.lifecycle import (
-    lifespan as lifespan_module,
-)
+from src.backend.plugins.composition.lifecycle import lifespan as lifespan_module
 from src.backend.plugins.composition.lifecycle.bootstrap import (
     bootstrap_resilience_coordinator,
     bootstrap_snapshot_job,

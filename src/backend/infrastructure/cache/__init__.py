@@ -10,9 +10,7 @@ from src.backend.infrastructure.cache.backends import (
     MemoryBackend,
     RedisBackend,
 )
-from src.backend.infrastructure.cache.factory import (
-    create_cache_backend,
-)
+from src.backend.infrastructure.cache.factory import create_cache_backend
 from src.backend.infrastructure.cache.invalidator import (
     CacheBackendProtocol,
     CacheInvalidator,

@@ -19,10 +19,7 @@ Usage::
     result = policy.check("shell_exec")    # ToolPermission.DENY
 """
 
-from src.backend.ai.policy.tool_policy import (
-    AgentToolPolicy,
-    ToolPermission,
-)
+from src.backend.ai.policy.tool_policy import AgentToolPolicy, ToolPermission
 
 
 # Round 79: register default AgentToolPolicy в svcs_registry для

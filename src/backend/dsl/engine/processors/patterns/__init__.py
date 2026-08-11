@@ -15,9 +15,7 @@ Phase 2 = физическое разделение в thematic files (S175.5+).
 """
 from __future__ import annotations as annotations
 
-from src.backend.dsl.engine.processors.patterns._helpers import (
-    _SafeDict,
-)
+from src.backend.dsl.engine.processors.patterns._helpers import _SafeDict
 from src.backend.dsl.engine.processors.patterns.batch_window import (
     BatchWindowProcessor as BatchWindowProcessor,
 )

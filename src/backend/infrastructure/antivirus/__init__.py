@@ -14,21 +14,11 @@
   ``infrastructure/external_apis/antivirus.py``).
 """
 
-from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
-    ClamAVTcpBackend,
-)
-from src.backend.infrastructure.antivirus.backends.clamav_unix import (
-    ClamAVUnixBackend,
-)
-from src.backend.infrastructure.antivirus.backends.http import (
-    HttpAntivirusBackend,
-)
-from src.backend.infrastructure.antivirus.factory import (
-    create_antivirus_backend,
-)
-from src.backend.infrastructure.antivirus.hash_cache import (
-    AntivirusHashCache,
-)
+from src.backend.infrastructure.antivirus.backends.clamav_tcp import ClamAVTcpBackend
+from src.backend.infrastructure.antivirus.backends.clamav_unix import ClamAVUnixBackend
+from src.backend.infrastructure.antivirus.backends.http import HttpAntivirusBackend
+from src.backend.infrastructure.antivirus.factory import create_antivirus_backend
+from src.backend.infrastructure.antivirus.hash_cache import AntivirusHashCache
 from src.backend.infrastructure.antivirus.service import (
     AntivirusService,
     UnknownAntivirusVerdictError,

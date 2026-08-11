@@ -25,23 +25,14 @@ from src.backend.core.utils.datetime_utils import (
     parse_dt,
     utc_now,
 )
-from src.backend.core.utils.json_utils import (
-    dumps_bytes,
-    dumps_str,
-    loads,
-)
-from src.backend.core.utils.metrics_registry import (
-    MetricsRegistry,
-    metrics_registry,
-)
+from src.backend.core.utils.json_utils import dumps_bytes, dumps_str, loads
+from src.backend.core.utils.metrics_registry import MetricsRegistry, metrics_registry
 from src.backend.core.utils.redis_fallback import (
     FallbackCache,
     RedisErrorCategory,
     RedisLike,
 )
-from src.backend.core.utils.route_timeout import (
-    RouteTimeoutSpec,
-)
+from src.backend.core.utils.route_timeout import RouteTimeoutSpec
 from src.backend.core.utils.task_registry import (
     TaskRegistry,
     get_task_registry,

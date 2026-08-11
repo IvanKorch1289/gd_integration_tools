@@ -42,11 +42,7 @@ from src.backend.core.auth.sso_registry import (
     SsoRegistryVaultError,
     VaultClientProtocol,
 )
-from src.backend.core.auth.sso_types import (
-    GroupsToCapabilities,
-    IdpConfig,
-    SSOUserInfo,
-)
+from src.backend.core.auth.sso_types import GroupsToCapabilities, IdpConfig, SSOUserInfo
 
 __all__ = (
     "APIKeyAuth",

@@ -22,10 +22,7 @@ from __future__ import annotations as annotations
 from src.backend.core.clock import Clock  # noqa: F401 — re-export
 from src.backend.core.di.app_state import app_state_singleton  # noqa: F401 — re-export
 from src.backend.core.errors import BaseError  # noqa: F401 — re-export
-from src.backend.core.svcs_registry import (
-    get_service,
-    register_factory,
-)
+from src.backend.core.svcs_registry import get_service, register_factory
 from src.backend.dsl.engine.exchange import Exchange  # noqa: F401 — re-export
 from src.backend.dsl.engine.pipeline import Pipeline  # noqa: F401 — re-export
 
@@ -78,21 +75,15 @@ def __getattr__(name: str):
 
         return register_provider
     if name == "run_hub_notebook":
-        from src.backend.services.jupyter.hub_run_orchestrator import (
-            run_hub_notebook,
-        )
+        from src.backend.services.jupyter.hub_run_orchestrator import run_hub_notebook
 
         return run_hub_notebook
     if name == "NotebookSpec":
-        from src.backend.services.jupyter.notebook_registry import (
-            NotebookSpec,
-        )
+        from src.backend.services.jupyter.notebook_registry import NotebookSpec
 
         return NotebookSpec
     if name == "NotebookRegistry":
-        from src.backend.services.jupyter.notebook_registry import (
-            NotebookRegistry,
-        )
+        from src.backend.services.jupyter.notebook_registry import NotebookRegistry
 
         return NotebookRegistry
     if name == "AgentToolPolicy":
@@ -100,9 +91,7 @@ def __getattr__(name: str):
 
         return AgentToolPolicy
     if name == "get_scheduler_provider":
-        from src.backend.core.di.providers.scheduler import (
-            get_scheduler_provider,
-        )
+        from src.backend.core.di.providers.scheduler import get_scheduler_provider
 
         return get_scheduler_provider
     if name == "SchedulerManager":
@@ -112,9 +101,7 @@ def __getattr__(name: str):
 
         return SchedulerManager
     if name == "WorkflowBuilder":
-        from src.backend.dsl.workflow.builder import (
-            WorkflowBuilder,
-        )
+        from src.backend.dsl.workflow.builder import WorkflowBuilder
 
         return WorkflowBuilder
     # S172 M3 ARC-006 — Extension DI infrastructure-module registry.
@@ -127,15 +114,11 @@ def __getattr__(name: str):
 
         return unregister_extension_module
     if name == "ExtensionRegistrationError":
-        from src.backend.core.di.module_registry import (
-            ExtensionRegistrationError,
-        )
+        from src.backend.core.di.module_registry import ExtensionRegistrationError
 
         return ExtensionRegistrationError
     if name == "is_extension_path":
-        from src.backend.core.di.module_registry import (
-            is_extension_path,
-        )
+        from src.backend.core.di.module_registry import is_extension_path
 
         return is_extension_path
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
