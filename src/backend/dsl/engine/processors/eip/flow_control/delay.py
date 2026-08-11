@@ -33,7 +33,6 @@ class DelayProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Async sleep до scheduled_time или delay_ms (whichever specified)."""
-
         if self._scheduled_fn is not None:
             target = self._scheduled_fn(exchange)
             now = time.time()

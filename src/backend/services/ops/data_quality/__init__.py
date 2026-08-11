@@ -74,6 +74,7 @@ __all__ = (
 # 5 module surfaces (4 mixin files + this __init__).
 class DQSeverity(StrEnum):
     """Severity enum (INFO / WARNING / ERROR / CRITICAL)."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -83,6 +84,7 @@ class DQSeverity(StrEnum):
 @dataclass
 class DQViolation:
     """Single data-quality violation (field, severity, message)."""
+
     rule: str
     field: str
     severity: DQSeverity

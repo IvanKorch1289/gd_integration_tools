@@ -327,7 +327,6 @@ class ChromaVectorStore(BaseVectorStore):
         metadatas: list[dict[str, Any]] | None = None,
     ) -> None:
         """Insert или update vectors в Chroma collection (async via to_thread)."""
-
         collection = await self._ensure_collection()
         kwargs: dict[str, Any] = {
             "ids": ids,
@@ -350,7 +349,6 @@ class ChromaVectorStore(BaseVectorStore):
             list[dict] с ``id``, ``document``, ``metadata``, ``distance``.
 
         """
-
         collection = await self._ensure_collection()
         kwargs: dict[str, Any] = {
             "query_embeddings": [embedding],
@@ -381,13 +379,11 @@ class ChromaVectorStore(BaseVectorStore):
 
     async def delete(self, ids: list[str]) -> None:
         """Удалить vectors по list of IDs (async via to_thread)."""
-
         collection = await self._ensure_collection()
         await asyncio.to_thread(collection.delete, ids=ids)
 
     async def count(self) -> int:
         """Количество vectors в Chroma collection."""
-
         collection = await self._ensure_collection()
         return await asyncio.to_thread(collection.count)
 
@@ -401,7 +397,6 @@ class ChromaVectorStore(BaseVectorStore):
             int count удалённых vectors (``before - after``).
 
         """
-
         collection = await self._ensure_collection()
         before = await asyncio.to_thread(collection.count)
         await asyncio.to_thread(collection.delete, where=where)
@@ -418,7 +413,6 @@ class ChromaVectorStore(BaseVectorStore):
             int count (через ``collection.get(where=...)``).
 
         """
-
         collection = await self._ensure_collection()
         result = await asyncio.to_thread(collection.get, where=where, include=[])
         ids = (

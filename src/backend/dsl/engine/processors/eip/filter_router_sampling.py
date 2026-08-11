@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 """Content-Based Router, Message Filter, Sampling EIP processors (S55 W2).
 
 Apache Camel references:

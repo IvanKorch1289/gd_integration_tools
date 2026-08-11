@@ -153,12 +153,12 @@ class S3CacheAdapter:
         key_prefix: str = "s3cache:",
     ) -> None:
         """Args:
-            s3: S3-клиент.
-            cache: Redis-клиент.
-            ttl_seconds: TTL для кэша. Значения < ``min_ttl_threshold`` (60)
-                будут проигнорированы: адаптер выведет предупреждение и
-                отключит кэширование.
-            key_prefix: Префикс ключей в Redis.
+        s3: S3-клиент.
+        cache: Redis-клиент.
+        ttl_seconds: TTL для кэша. Значения < ``min_ttl_threshold`` (60)
+            будут проигнорированы: адаптер выведет предупреждение и
+            отключит кэширование.
+        key_prefix: Префикс ключей в Redis.
 
         """
         self.s3 = s3

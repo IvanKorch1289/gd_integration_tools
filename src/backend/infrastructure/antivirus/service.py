@@ -201,7 +201,6 @@ class AntivirusService:
         - {"status": "clean"} / {"verdict": "infected"}
         - "OK", "CLEAN", "INFECTED"
         """
-
         if isinstance(response_data, dict):
             if isinstance(response_data.get("is_clean"), bool):
                 return response_data["is_clean"]

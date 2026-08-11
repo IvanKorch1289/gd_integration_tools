@@ -213,7 +213,6 @@ def _configure_auto_registered_actions(app: FastAPI) -> None:
     отсутствующих опциональных зависимостей (dev_light) — log + skip,
     стартап приложения не блокируем.
     """
-
     from src.backend.entrypoints.api.generator.auto_register import (
         auto_register_unrouted_actions,
     )
@@ -251,7 +250,6 @@ def _configure_auto_graphql_schema(app: FastAPI) -> None:
     существующий ``graphql_router`` (``/graphql`` остаётся живым).
     Любые ошибки сборки логгируются и не блокируют старт приложения.
     """
-
     try:
         from src.backend.entrypoints.graphql.auto_schema import (
             auto_register_strawberry_schema,

@@ -43,7 +43,7 @@ class ExternalSourcesMixin:
         request_kwargs: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> RouteBuilder:
-        """gRPC server-streaming source. See GrpcSource in infrastructure.sources.grpc.
+        """GRPC server-streaming source. See GrpcSource in infrastructure.sources.grpc.
 
         Лениво импортирует :class:`GrpcSource` из
         ``infrastructure.sources.grpc`` (``grpcio`` + ``grpc-interceptor``).

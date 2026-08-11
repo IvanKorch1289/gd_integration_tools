@@ -68,7 +68,6 @@ class ThrottlerProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Token-bucket throttle: await if bucket empty, otherwise consume 1 token."""
-
         async with self._lock:
             now = time.monotonic()
             if self._last_refill == 0.0:

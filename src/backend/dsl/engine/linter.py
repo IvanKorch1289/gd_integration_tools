@@ -22,6 +22,7 @@ __all__ = ("DSLLinter", "LintIssue", "dsl_linter")
 @dataclass(slots=True)
 class LintIssue:
     """Метод LintIssue (см. signature)."""
+
     code: str
     severity: str  # "error" | "warning" | "info"
     message: str

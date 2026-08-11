@@ -29,6 +29,7 @@ logger = get_logger("policy.opa")
 @dataclass(slots=True)
 class PolicyDecision:
     """Метод PolicyDecision (см. signature)."""
+
     allow: bool
     reasons: list[str]
 

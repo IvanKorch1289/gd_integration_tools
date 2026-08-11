@@ -54,7 +54,6 @@ def register_workflow_declarations(
         же именами замещаются — bulk_register идемпотентен по name).
 
     """
-
     return workflow_compiler_registry.bulk_register(declarations)
 
 
@@ -75,7 +74,6 @@ async def start_workflow_runtime(app: Any) -> None:
         app: FastAPI-приложение (с атрибутом ``state``).
 
     """
-
     state = getattr(app, "state", None)
     if state is not None:
         state.workflow_compiler_registry = workflow_compiler_registry

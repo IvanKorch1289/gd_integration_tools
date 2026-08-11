@@ -482,7 +482,6 @@ async def compile_agent_invoke_step(
         ctx: Рантайм-контекст workflow (содержит ``_input`` и ``_outputs``).
 
     """
-
     # Resolve input context
     if decl.input_context is None:
         raw_input = ctx.get("_input", {})

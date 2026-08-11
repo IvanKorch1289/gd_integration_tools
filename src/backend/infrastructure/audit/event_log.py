@@ -45,6 +45,7 @@ logger = get_logger(__name__)
 @dataclass(slots=True)
 class AuditEvent:
     """Метод AuditEvent (см. signature)."""
+
     who: str
     what: str
     entity_type: str

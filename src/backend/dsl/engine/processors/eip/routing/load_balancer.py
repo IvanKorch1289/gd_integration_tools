@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 """S63 W2 — load_balancer.py part of routing decomp.
 
 Classes: LoadBalancerProcessor.

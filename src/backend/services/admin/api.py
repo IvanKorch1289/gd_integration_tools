@@ -43,11 +43,11 @@ class AdminService:
         audit_callback: Any | None = None,
     ) -> None:
         """Args:
-            authorization_gateway: Экземпляр AuthorizationGateway.
-                                  При None используется глобальный из
-                                  ``core.security.authorization_gateway``.
-            audit_callback: Не используется напрямую — audit идёт через
-                           ``emit_admin_action``.
+        authorization_gateway: Экземпляр AuthorizationGateway.
+                              При None используется глобальный из
+                              ``core.security.authorization_gateway``.
+        audit_callback: Не используется напрямую — audit идёт через
+                       ``emit_admin_action``.
 
         """
         self._authz = authorization_gateway

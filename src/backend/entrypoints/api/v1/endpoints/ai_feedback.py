@@ -105,7 +105,7 @@ def _list_response_handler(result: list[Any], _: dict[str, Any]) -> dict[str, An
 
 
 def _get_doc_handler(result: Any | None, kwargs: dict[str, Any]) -> dict[str, Any]:
-    """doc → dict; 404 если None."""
+    """Doc → dict; 404 если None."""
     if result is None:
         doc_id = kwargs.get("doc_id")
         raise HTTPException(status_code=404, detail=f"Feedback {doc_id!r} not found")

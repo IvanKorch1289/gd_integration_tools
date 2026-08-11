@@ -56,7 +56,6 @@ class ProcessorPluginRegistry:
 
     def register(self, name: str, dotted_path: str) -> None:
         """Регистрирует процессор по dotted path (deprecation: см. модульный docstring)."""
-
         warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
 
         module_path, class_name = dotted_path.rsplit(".", 1)
@@ -71,7 +70,6 @@ class ProcessorPluginRegistry:
 
     def register_class(self, name: str, cls: type[BaseProcessor]) -> None:
         """Регистрирует класс процессора напрямую (deprecation: см. модульный docstring)."""
-
         warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         self._register_class_internal(name, cls)
 
@@ -88,7 +86,6 @@ class ProcessorPluginRegistry:
 
     def get(self, name: str) -> type[BaseProcessor] | None:
         """Возвращает класс процессора по короткому имени или None."""
-
         try:
             spec = self._registry.get(f"{_DEPRECATION_NAMESPACE}:{name}")
         except ProcessorNotFoundError:
@@ -97,7 +94,6 @@ class ProcessorPluginRegistry:
 
     def create(self, name: str, **kwargs: Any) -> BaseProcessor:
         """Создаёт экземпляр процессора по имени."""
-
         cls = self.get(name)
         if cls is None:
             raise KeyError(f"Processor plugin '{name}' not registered")
@@ -105,7 +101,6 @@ class ProcessorPluginRegistry:
 
     def list_plugins(self) -> dict[str, str]:
         """Возвращает {name: class_name} для legacy-namespace."""
-
         return {
             spec.name: spec.cls.__name__
             for spec in sorted(

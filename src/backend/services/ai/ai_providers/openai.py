@@ -39,7 +39,7 @@ class OpenAIProvider:
         ).rstrip("/")
 
     def extract_text(self, response: dict[str, Any]) -> str:
-        """litellm нормализует все ответы к OpenAI-формату."""
+        """Litellm нормализует все ответы к OpenAI-формату."""
         try:
             choices = response.get("choices", [])
             if choices:

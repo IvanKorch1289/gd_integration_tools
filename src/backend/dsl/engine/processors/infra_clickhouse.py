@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 )
 class InfraClickHouseQueryProcessor(BaseProcessor):
     """Метод InfraClickHouseQueryProcessor (см. signature)."""
+
     def __init__(self, sql: str, *, to: str = "body.result") -> None:
         super().__init__(name="infra_clickhouse_query")
         self.sql = sql

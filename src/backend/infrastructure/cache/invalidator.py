@@ -136,8 +136,8 @@ class CacheInvalidator:
 
     def __init__(self, backends: list[CacheBackendProtocol] | None = None) -> None:
         """Args:
-            backends: Список backend'ов. Если None — создаётся пустой
-                список, backend'ы добавляются через ``add_backend``.
+        backends: Список backend'ов. Если None — создаётся пустой
+            список, backend'ы добавляются через ``add_backend``.
 
         """
         self._backends: list[CacheBackendProtocol] = list(backends or [])

@@ -259,7 +259,7 @@ def _instrument_pymongo() -> None:
 
 
 def _instrument_grpc_client() -> None:
-    """gRPC client-side spans (unary + streaming).
+    """GRPC client-side spans (unary + streaming).
 
     Server-side уже инструментируется отдельно при старте gRPC server-а.
     Требует opentelemetry-instrumentation-grpc.
@@ -276,7 +276,7 @@ def _instrument_grpc_client() -> None:
 
 
 def _instrument_asyncpg() -> None:
-    """asyncpg raw-driver spans.
+    """Asyncpg raw-driver spans.
 
     SQLAlchemy spans покрывают ORM-уровень; asyncpg instrumentation
     добавляет detail-level spans с ``db.statement`` атрибутами для

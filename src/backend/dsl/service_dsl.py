@@ -42,6 +42,7 @@ logger = get_logger(__name__)
 @dataclass(slots=True)
 class ServiceMeta:
     """Service metadata dataclass (name, version, capabilities)."""
+
     name: str
     service_cls: type
     service_getter: Callable

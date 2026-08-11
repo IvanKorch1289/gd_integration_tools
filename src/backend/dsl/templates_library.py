@@ -34,6 +34,7 @@ __all__ = ("TemplateInfo", "list_templates", "templates")
 
 class TemplateInfo:
     """Метод TemplateInfo (см. signature)."""
+
     __slots__ = ("builder", "description", "name", "parameters")
 
     def __init__(

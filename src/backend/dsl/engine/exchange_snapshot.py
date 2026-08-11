@@ -146,7 +146,7 @@ def to_dict_fast(obj: Any, *, use_msgspec: bool = True) -> dict[str, Any]:
 
 
 def from_dict_fast[T](cls: type[T], data: dict[str, Any]) -> T:
-    """dict → typed object. msgspec.convert первым; fallback ``cls(**data)``.
+    """Dict → typed object. msgspec.convert первым; fallback ``cls(**data)``.
 
     Args:
         cls: Целевой тип. Поддерживает ``msgspec.Struct``, ``@dataclass``,

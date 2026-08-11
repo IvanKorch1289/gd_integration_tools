@@ -54,14 +54,14 @@ class TelegramAdapter:
         parse_mode: str = "HTML",
     ) -> None:
         """Args:
-            bot_token_provider: Legacy callable, возвращающий токен
-                ``{bot_id}:{secret_key}``. Если задан — используется
-                вместо ``telegram_bot_settings``.
-            default_bot: Имя бота из ``telegram_bot_settings`` (W15.2).
-                Используется когда ``bot_token_provider`` не задан.
-            upstream_name: Имя HTTP upstream-профиля (зарезервировано
-                для совместимости IL2.2; в W15.3 не используется).
-            parse_mode: Режим разметки текста по умолчанию.
+        bot_token_provider: Legacy callable, возвращающий токен
+            ``{bot_id}:{secret_key}``. Если задан — используется
+            вместо ``telegram_bot_settings``.
+        default_bot: Имя бота из ``telegram_bot_settings`` (W15.2).
+            Используется когда ``bot_token_provider`` не задан.
+        upstream_name: Имя HTTP upstream-профиля (зарезервировано
+            для совместимости IL2.2; в W15.3 не используется).
+        parse_mode: Режим разметки текста по умолчанию.
 
         """
         self._bot_token_provider = bot_token_provider

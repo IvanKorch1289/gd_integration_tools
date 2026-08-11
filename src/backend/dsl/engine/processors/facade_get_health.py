@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 )
 class FacadeGetHealthProcessor(BaseProcessor):
     """Метод FacadeGetHealthProcessor (см. signature)."""
+
     def __init__(self, name: str, *, to: str = "body.health") -> None:
         super().__init__(name=f"facade_get_health:{name}")
         self.component_name = name

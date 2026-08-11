@@ -67,6 +67,7 @@ warnings.warn(
 
 class Channel(StrEnum):
     """Метод Channel (см. signature)."""
+
     EMAIL = "email"
     EXPRESS = "express"
     WEBHOOK = "webhook"
@@ -156,7 +157,7 @@ class NotificationHub:
         is_direct: bool = False,
         **extras: Any,
     ) -> dict[str, Any]:
-        """eXpress через Gateway."""
+        """EXpress через Gateway."""
         return await self.send(
             Channel.EXPRESS, to, subject, message, is_direct=is_direct, **extras,
         )

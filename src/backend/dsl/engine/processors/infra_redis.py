@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 )
 class InfraRedisGetProcessor(BaseProcessor):
     """Метод InfraRedisGetProcessor (см. signature)."""
+
     def __init__(self, key: str, *, to: str = "body.value") -> None:
         super().__init__(name=f"infra_redis_get:{key}")
         self.key = key

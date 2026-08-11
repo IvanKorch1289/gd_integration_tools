@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 """ABTestProcessor — A/B-эксперимент в DSL pipeline (S10 K3 W3, DSL-1.4).
 
 Делит трафик между двумя ветками (variant A / variant B) по

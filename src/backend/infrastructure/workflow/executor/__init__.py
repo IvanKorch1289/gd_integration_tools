@@ -81,7 +81,7 @@ def _compensate_handler(
     state: WorkflowState,
     instance: WorkflowInstanceRow,
 ) -> StepResult:
-    """compensate kind: no-op в normal forward flow.
+    """Compensate kind: no-op в normal forward flow.
 
     Возвращает CONTINUE.
     """

@@ -272,7 +272,6 @@ class VaultClient:
                 c. If validation passes, activate new secret
                 d. If validation fails, keep old secret active
         """
-
         if self._client is None:
             self._client = await self._get_client()
 

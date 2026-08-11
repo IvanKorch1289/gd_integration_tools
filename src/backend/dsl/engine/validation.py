@@ -12,6 +12,7 @@ __all__ = ("PipelineValidator", "ValidationResult")
 @dataclass(slots=True)
 class ValidationIssue:
     """Метод ValidationIssue (см. signature)."""
+
     level: str  # "error", "warning", "info"
     message: str
     processor_index: int | None = None
@@ -21,6 +22,7 @@ class ValidationIssue:
 @dataclass(slots=True)
 class ValidationResult:
     """Метод ValidationResult (см. signature)."""
+
     valid: bool
     issues: list[ValidationIssue] = field(default_factory=list)
 

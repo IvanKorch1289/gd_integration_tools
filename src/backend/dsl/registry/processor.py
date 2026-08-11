@@ -95,7 +95,6 @@ class ProcessorSpec:
     @property
     def fqn(self) -> str:
         """Полное имя ``namespace:name`` (для ключа реестра)."""
-
         return f"{self.namespace}:{self.name}"
 
 
@@ -130,7 +129,6 @@ class ProcessorRegistry:
                 запись не зарегистрирована.
 
         """
-
         with self._lock:
             if spec.fqn in self._by_fqn and spec.replaces != spec.fqn:
                 raise ProcessorConflictError(
@@ -148,13 +146,11 @@ class ProcessorRegistry:
 
     def unregister(self, fqn: str) -> None:
         """Удаляет процессор по полному имени (для тестов/hot-reload)."""
-
         with self._lock:
             self._by_fqn.pop(fqn, None)
 
     def get(self, fqn: str) -> ProcessorSpec:
         """Возвращает спецификацию по ``namespace:name``."""
-
         with self._lock:
             spec = self._by_fqn.get(fqn)
             if spec is None:
@@ -170,7 +166,6 @@ class ProcessorRegistry:
         ``prefer_namespace`` (по умолчанию ``core``). Если в ``prefer_namespace``
         нет — возвращает первый найденный (отсортированный для детерминизма).
         """
-
         with self._lock:
             preferred_fqn = f"{prefer_namespace}:{name}"
             if preferred_fqn in self._by_fqn:
@@ -188,7 +183,6 @@ class ProcessorRegistry:
 
     def list_specs(self) -> list[ProcessorSpec]:
         """Возвращает копию списка всех зарегистрированных спецификаций."""
-
         with self._lock:
             return list(self._by_fqn.values())
 
@@ -199,7 +193,6 @@ class ProcessorRegistry:
             Копия списка всех зарегистрированных спецификаций.
 
         """
-
         return self.list_specs()
 
     def export_schemas(self) -> dict[str, dict[str, Any]]:
@@ -216,7 +209,6 @@ class ProcessorRegistry:
             Словарь ``{fqn: schema_dict}``, где ``fqn = namespace:name``.
 
         """
-
         result: dict[str, dict[str, Any]] = {}
         with self._lock:
             specs = list(self._by_fqn.values())
@@ -237,7 +229,6 @@ class ProcessorRegistry:
             Словарь JSON-Schema.
 
         """
-
         base_id = (
             f"https://gd-integration-tools/schemas/processors"
             f"/{spec.namespace}/{spec.name}/{spec.version}"
@@ -274,7 +265,6 @@ class ProcessorRegistry:
 
     def list_by_namespace(self, namespace: str) -> list[ProcessorSpec]:
         """Возвращает все процессоры из конкретного namespace."""
-
         with self._lock:
             return [s for s in self._by_fqn.values() if s.namespace == namespace]
 
@@ -297,7 +287,6 @@ _REGISTRY: ProcessorRegistry = ProcessorRegistry()
 
 def get_processor_registry() -> ProcessorRegistry:
     """Возвращает global-singleton :class:`ProcessorRegistry`."""
-
     return _REGISTRY
 
 

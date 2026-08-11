@@ -29,6 +29,7 @@ logger = get_logger(__name__)
 
 class ReplayStatus(StrEnum):
     """Метод ReplayStatus (см. signature)."""
+
     STORED = "stored"
     REPLAYED = "replayed"
     FAILED = "failed"
@@ -38,6 +39,7 @@ class ReplayStatus(StrEnum):
 @dataclass(slots=True)
 class ReplayMessage:
     """Метод ReplayMessage (см. signature)."""
+
     id: str = field(default_factory=lambda: uuid4().hex[:16])
     source: str = ""
     action: str = ""

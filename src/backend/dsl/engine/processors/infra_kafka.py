@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 )
 class InfraKafkaProduceProcessor(BaseProcessor):
     """Метод InfraKafkaProduceProcessor (см. signature)."""
+
     def __init__(self, topic: str, value: Any, key: str | None = None) -> None:
         super().__init__(name=f"infra_kafka_produce:{topic}")
         self.topic = topic

@@ -55,7 +55,6 @@ def _run_uvicorn() -> None:
     patchability (``patch("src.backend.main.uvicorn")`` теперь работает
     без ``create=True``).
     """
-
     is_dev = settings.app.environment in {"development", "testing"}
     uvicorn_kwargs: dict[str, object] = {
         "app": "src.backend.main:app",
@@ -87,7 +86,6 @@ def _run_granian() -> None:
     S146 W3: ``from granian import ...`` перенесён в module level для
     test patchability (``patch("src.backend.main.Granian")`` работает).
     """
-
     http_mode = {"auto": HTTPModes.auto, "1": HTTPModes.http1, "2": HTTPModes.http2}[
         settings.app.granian_http
     ]

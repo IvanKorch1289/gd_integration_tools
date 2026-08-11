@@ -31,7 +31,7 @@ class _DummyHeadersRequest:
     def __init__(self, headers: dict[str, str]) -> None:
         """Инициализирует middleware.
 
-:param headers: значение headers.
+        :param headers: значение headers.
         """
         self.headers = headers
 
@@ -78,7 +78,7 @@ class McpAuthMiddleware:
     def __init__(self, app: Callable[..., Awaitable[None]]) -> None:
         """Инициализирует middleware.
 
-:param app: значение app.
+        :param app: значение app.
         """
         self._app = app
 

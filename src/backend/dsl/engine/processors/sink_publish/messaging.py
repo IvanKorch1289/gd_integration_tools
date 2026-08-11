@@ -154,7 +154,6 @@ class MqttPublishProcessor(BaseProcessor):
         name: str | None = None,
     ) -> None:
         """Сохраняет MQTT broker config; клиент создаётся при ``process``."""
-
         if port is None:
             port = MqttSettings().broker_port
         super().__init__(name=name or f"mqtt_publish:{topic}")

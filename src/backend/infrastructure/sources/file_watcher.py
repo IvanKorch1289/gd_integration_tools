@@ -151,7 +151,6 @@ class FileWatcherSource:
 
     async def _run_watch(self) -> None:
         """Background task: run watch loop and emit events."""
-
         from src.backend.core.interfaces.source import SourceEvent
 
         try:

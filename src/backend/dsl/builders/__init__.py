@@ -41,7 +41,6 @@ def __getattr__(name: str) -> Any:
     а ``dsl.builder`` — тонкий фасад. Lazy-resolve остаётся для
     обратной совместимости marker-mixin'ов (B1 phase-1).
     """
-
     if name == "RouteBuilder":
         from src.backend.dsl.builders.base import RouteBuilder as _R
 

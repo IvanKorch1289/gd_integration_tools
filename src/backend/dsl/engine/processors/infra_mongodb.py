@@ -37,6 +37,7 @@ if TYPE_CHECKING:
 )
 class InfraMongoDBFindProcessor(BaseProcessor):
     """Метод InfraMongoDBFindProcessor (см. signature)."""
+
     def __init__(self, collection: str, query: dict[str, Any] | None = None, *, to: str = "body.result") -> None:
         super().__init__(name=f"infra_mongodb_find:{collection}")
         self.collection = collection

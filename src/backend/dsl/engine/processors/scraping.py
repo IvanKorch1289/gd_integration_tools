@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 """Scraping Pipeline DSL processors — structured extraction, pagination, API proxy.
 
 Provides web scraping capabilities within DSL routes:

@@ -77,6 +77,6 @@ def resolve_saml_admin_roles(
 def resolve_mtls_admin_roles(
     *, cn: str, mapping: AdminRoleMapping,
 ) -> frozenset[AdminRole]:
-    """mTLS x509 CN → AdminRole через whitelist."""
+    """MTLS x509 CN → AdminRole через whitelist."""
     role = mapping.mtls_cn_to_role.get(cn)
     return frozenset({role}) if role else frozenset()

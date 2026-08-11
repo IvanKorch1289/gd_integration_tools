@@ -64,7 +64,6 @@ async def _agent_invoke_activity(payload: dict[str, Any]) -> Any:
     Выполняет stateless AI-инвокацию вне workflow-sandbox'а.
     Payload содержит сериализованный :class:`AIRequest` как dict.
     """
-
     from src.backend.core.ai.gateway_models import AIRequest
     from src.backend.services.ai.gateway_adapter import (  # type: ignore[attr-defined]
         get_ai_gateway,

@@ -36,6 +36,7 @@ logger = get_logger("services.ai_moderation")
 @dataclass(slots=True)
 class ModerationResult:
     """Метод ModerationResult (см. signature)."""
+
     flagged: bool
     categories: dict[str, bool]
     scores: dict[str, float]

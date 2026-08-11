@@ -54,7 +54,7 @@ class VersionedRouter(APIRouter):
     ) -> None:
         """Инициализирует middleware.
 
-:param version: значение version.
+        :param version: значение version.
         """
         self.api_version = APIVersion(
             version=version,
@@ -77,8 +77,8 @@ class DeprecationMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """Инициализирует middleware.
 
-:param app: значение app.
-:param versions: значение versions.
+        :param app: значение app.
+        :param versions: значение versions.
         """
         super().__init__(app)
         self._versions = versions or {}

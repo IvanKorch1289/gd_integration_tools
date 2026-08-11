@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 )
 class InfraDbQueryProcessor(BaseProcessor):
     """Метод InfraDbQueryProcessor (см. signature)."""
+
     def __init__(self, sql: str, *, to: str = "body.result") -> None:
         super().__init__(name="infra_db_query")
         self.sql = sql

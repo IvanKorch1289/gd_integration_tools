@@ -166,6 +166,7 @@ class SagaBuilder:
     Manual stub — генератор пока не умеет emit-ить same-module classes.
     Block сохранён через _MANUAL_CLASS_BLOCKS при regen.
     """
+
     def forward(
         self,
         name: str,

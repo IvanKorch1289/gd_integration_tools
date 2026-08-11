@@ -293,7 +293,7 @@ class DurableWorkflowRunner:
     def _on_notify(
         self, connection: Any, _pid: int, channel: str, payload: str,
     ) -> None:
-        """asyncpg callback (sync) — только enqueue."""
+        """Asyncpg callback (sync) — только enqueue."""
         if not payload:
             return
         try:

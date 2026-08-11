@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 
 
 def _dict_to_xml_stdlib(data: Any, root: str = "root") -> str:
-    """dict → XML string через stdlib (безопасная serialization — мы генерируем дерево)."""
+    """Dict → XML string через stdlib (безопасная serialization — мы генерируем дерево)."""
     if not isinstance(data, dict):
         data = {root: data}
     root_el = ET.Element(root)

@@ -42,6 +42,7 @@ if TYPE_CHECKING:
 )
 class InfraElasticsearchSearchProcessor(BaseProcessor):
     """ES processor: InfraElasticsearchSearchProcessor (search/index operation)."""
+
     def __init__(
         self,
         index: str,
@@ -84,6 +85,7 @@ class InfraElasticsearchSearchProcessor(BaseProcessor):
 )
 class InfraElasticsearchIndexProcessor(BaseProcessor):
     """ES processor: InfraElasticsearchIndexProcessor (search/index operation)."""
+
     def __init__(
         self,
         index: str,

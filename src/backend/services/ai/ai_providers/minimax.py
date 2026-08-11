@@ -47,5 +47,5 @@ class MiniMaxProvider:
         return await self._delegate.embeddings(texts, **kwargs)
 
     def extract_text(self, response: dict[str, Any]) -> str:
-        """litellm нормализует ответ к OpenAI-формату."""
+        """Litellm нормализует ответ к OpenAI-формату."""
         return self._delegate.extract_text(response)

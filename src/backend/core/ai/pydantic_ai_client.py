@@ -586,12 +586,12 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
 
         @property
         def supported_builtin_tools(self) -> frozenset[type[_AbstractNativeTool]]:  # type: ignore[valid-type]
-            """frozenset builtin tools (web_search, code_execution)."""
+            """Frozenset builtin tools (web_search, code_execution)."""
             return frozenset()
 
         @property
         def supported_native_tools(self) -> frozenset[type[_AbstractNativeTool]]:  # type: ignore[valid-type]
-            """frozenset native tools (function_calling)."""
+            """Frozenset native tools (function_calling)."""
             return frozenset()
 
         async def compact_messages(

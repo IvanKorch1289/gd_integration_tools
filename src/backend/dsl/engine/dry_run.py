@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 """Локальный dry-run executor для DSL routes (S10 K3 W4, DSL-1.5).
 
 Эмулирует выполнение route'а в memory без side-effects:

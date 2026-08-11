@@ -31,6 +31,7 @@ logger = get_logger("services.ai.guardrails_metrics")
 
 class GuardrailVerdict(StrEnum):
     """Метод GuardrailVerdict (см. signature)."""
+
     ALLOW = "allow"
     BLOCK = "block"
     REDACT = "redact"
@@ -38,6 +39,7 @@ class GuardrailVerdict(StrEnum):
 
 class GuardrailReason(StrEnum):
     """Метод GuardrailReason (см. signature)."""
+
     PII = "pii"
     TOXIC = "toxic"
     OFF_TOPIC = "off_topic"

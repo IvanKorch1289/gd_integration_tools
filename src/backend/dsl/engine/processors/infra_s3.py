@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 )
 class InfraS3GetProcessor(BaseProcessor):
     """Метод InfraS3GetProcessor (см. signature)."""
+
     def __init__(self, key: str, *, to: str = "body.content") -> None:
         super().__init__(name=f"infra_s3_get:{key}")
         self.key = key

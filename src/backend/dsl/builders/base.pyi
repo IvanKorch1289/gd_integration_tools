@@ -1036,7 +1036,7 @@ class RouteBuilder:
         request_kwargs: dict[str, Any] | None = ...,
         **kwargs: Any,
     ) -> RouteBuilder:
-        """gRPC server-streaming source. See GrpcSource in infrastructure.sources.grpc."""
+        """GRPC server-streaming source. See GrpcSource in infrastructure.sources.grpc."""
 
     def from_html_unescape(self, html_string: str | None = ...) -> RouteBuilder:
         """HTML-unescape string (entities → ``<>&"'`` chars)."""

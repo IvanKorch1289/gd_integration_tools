@@ -32,7 +32,6 @@ def generate_openapi(pipeline: Pipeline) -> dict[str, Any]:
         '3.0.3'
 
     """
-
     route_id = pipeline.route_id
     base_url = _extract_base_url(pipeline)
 

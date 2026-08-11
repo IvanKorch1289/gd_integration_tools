@@ -46,7 +46,6 @@ def _schema_filename(spec: ProcessorSpec) -> str:
         Строка имени файла без пути.
 
     """
-
     if spec.namespace == "core":
         return f"{spec.name}.schema.json"
     return f"{spec.namespace}__{spec.name}.schema.json"
@@ -72,7 +71,6 @@ def export_processors_schema(output_dir: Path) -> int:
         OSError: При проблемах с созданием директории или записью файлов.
 
     """
-
     output_dir.mkdir(parents=True, exist_ok=True)
     registry = get_processor_registry()
     schemas: dict[str, dict[str, Any]] = registry.export_schemas()

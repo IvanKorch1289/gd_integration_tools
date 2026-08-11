@@ -1,3 +1,4 @@
+# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 """Streaming- и expiration-процессоры для DSL.
 
 Реализация недостающих EIP-паттернов банковской интеграционной шины:
