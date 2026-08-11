@@ -8,7 +8,7 @@ from src.backend.infrastructure.eventing.cloudevents import (
     envelope,
     parse_envelope,
 )
-from src.backend.infrastructure.eventing.inbox import Inbox  # noqa: F401 — re-export
+from src.backend.infrastructure.eventing.inbox import Inbox
 from src.backend.infrastructure.eventing.schema_registry import SchemaRegistry
 
 __all__ = (

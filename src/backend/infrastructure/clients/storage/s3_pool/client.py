@@ -14,7 +14,7 @@ from typing import Any, ParamSpec, TypeVar
 from src.backend.infrastructure.clients.storage.s3_pool.base import BaseS3Client
 
 try:
-    from botocore.exceptions import (  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+    from botocore.exceptions import (  # type: ignore[import-not-found]
         ClientError as BotoClientError,  # type: ignore[import-not-found]  # type: ignore  # type: ignore[unused-ignore]
     )
 except ImportError:  # botocore — опциональная зависимость dev_light
@@ -87,8 +87,8 @@ class S3Client(BaseS3Client):
         # без extras `[sources-cdc,...]` модуль отсутствует — graceful
         # skip без crash (тесты unrelated до S3 продолжают собираться).
         try:
-            from aiobotocore.config import AioConfig  # noqa: F401 — availability probe
-            from aiobotocore.session import (  # noqa: F401 — availability probe
+            from aiobotocore.config import AioConfig
+            from aiobotocore.session import (
                 get_session,
             )
         except ImportError:

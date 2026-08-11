@@ -179,7 +179,7 @@ class PIIMaskingResponseMiddleware:
     def _is_enabled() -> bool:
         """Lazy-проверка feature-flag ``pii_response_middleware_enabled``."""
         try:
-            from src.backend.core.config.features import (  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
                 feature_flags,
             )
 
@@ -190,7 +190,7 @@ class PIIMaskingResponseMiddleware:
             # cycle-9/D-AUDIT-1002: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError —
             # config not initialized, RuntimeError — feature_flags unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "pii_masking_response.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

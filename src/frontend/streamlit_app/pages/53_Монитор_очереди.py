@@ -35,7 +35,7 @@ def _render_queue_monitor() -> None:
     try:
         with st.spinner("Загрузка очередей..."):
             summary = client._request("GET", "/api/v1/admin/queues/summary")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Ошибка: {exc}")
         summary = {}
         st.warning(f"Не удалось получить сводку: {exc}")

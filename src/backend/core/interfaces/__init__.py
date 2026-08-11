@@ -36,15 +36,15 @@ from typing import Any as Any
 
 from src.backend.core.interfaces.antivirus import AntivirusBackend, AntivirusScanResult
 from src.backend.core.interfaces.audit import AuditBackend, AuditRecord
-from src.backend.core.interfaces.cache import CacheBackend  # noqa: F401 — re-export
+from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.interfaces.doc_store import DocStoreBackend
-from src.backend.core.interfaces.metrics import MetricsBackend  # noqa: F401 — re-export
+from src.backend.core.interfaces.metrics import MetricsBackend
 from src.backend.core.interfaces.notification import (
     NotificationAdapter,
     NotificationMessage,
 )
-from src.backend.core.interfaces.secrets import SecretsBackend  # noqa: F401 — re-export
-from src.backend.core.interfaces.storage import ObjectStorage  # noqa: F401 — re-export
+from src.backend.core.interfaces.secrets import SecretsBackend
+from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger as get_logger
 
 logger = get_logger(__name__)

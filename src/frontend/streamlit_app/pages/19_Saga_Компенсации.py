@@ -73,7 +73,7 @@ try:
         ("С ошибкой", stats["failed"]),
         ("Средняя длительность (мс)", f"{stats['avg_duration_ms']:.0f}"),
     ])
-except Exception as exc:  # noqa: BLE001
+except Exception as exc:
     st.warning(f"Не удалось загрузить stats: {exc}")
 
 
@@ -94,7 +94,7 @@ if workflow_id:
                     st.json(ev["payload"])
                     if ev.get("duration_ms"):
                         st.caption(f"duration_ms = {ev['duration_ms']}")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось загрузить timeline: {exc}")
 
 related_pages_footer("19_Saga_Компенсации")

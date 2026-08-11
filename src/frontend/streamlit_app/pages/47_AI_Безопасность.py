@@ -39,7 +39,7 @@ def _fetch_metrics() -> list[dict]:
         resp = client.get("/admin/guardrails-metrics")
         resp.raise_for_status()
         return resp.json().get("items", [])
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось получить метрики: {exc}")
         return []
 
@@ -96,7 +96,7 @@ else:
                     ).raise_for_status()
                     st.success(f"Записано {fp_count} FP для {metric['tenant_id']}")
                     st.rerun()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Ошибка отправки: {exc}")
 
 related_pages_footer("47_AI_Безопасность")

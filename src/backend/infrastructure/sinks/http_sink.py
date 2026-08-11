@@ -57,9 +57,9 @@ class HttpSink(Sink):
         await limiter.check(f"{self.sink_id}_{self.kind}")
 
         try:
-            import httpx  # noqa: F401 — availability probe
+            import httpx
 
-            from src.backend.core.net import (  # noqa: F401 — availability probe
+            from src.backend.core.net import (
                 OutboundHttpClient,
             )
         except ImportError:
@@ -94,9 +94,9 @@ class HttpSink(Sink):
     async def health(self, mode: str = "fast") -> HealthResult:
         """HEAD-запрос на URL; ``ok`` при 2xx/3xx/4xx (адрес отвечает)."""
         try:
-            import httpx  # noqa: F401 — availability probe
+            import httpx
 
-            from src.backend.core.net import (  # noqa: F401 — availability probe
+            from src.backend.core.net import (
                 OutboundHttpClient,
             )
         except ImportError:

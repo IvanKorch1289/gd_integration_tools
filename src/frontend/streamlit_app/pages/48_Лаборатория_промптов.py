@@ -43,7 +43,7 @@ with tab_list:
         names_response = client.get("/admin/prompt-versions")
         names_response.raise_for_status()
         names = names_response.json().get("items", [])
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось получить список prompt'ов: {exc}")
         names = []
 
@@ -55,7 +55,7 @@ with tab_list:
             versions_resp = client.get(f"/admin/prompt-versions/{selected_name}")
             versions_resp.raise_for_status()
             versions = versions_resp.json().get("items", [])
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Не удалось получить версии: {exc}")
             versions = []
 
@@ -89,7 +89,7 @@ with tab_list:
                             ).raise_for_status()
                             st.success(f"v{ver['version']} активирована")
                             st.rerun()
-                        except Exception as exc:  # noqa: BLE001
+                        except Exception as exc:
                             st.error(f"Ошибка активации: {exc}")
 
 
@@ -114,7 +114,7 @@ with tab_compare:
                 st.write(f"{color} {metric}")
             with st.expander("Сырое сравнение"):
                 st.json(data)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Ошибка сравнения: {exc}")
 
 
@@ -149,7 +149,7 @@ with tab_create:
                 created = resp.json()
                 st.success(f"Создано {created['name']}:v{created['version']}")
                 st.json(created)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Ошибка создания: {exc}")
 
 related_pages_footer("48_Лаборатория_промптов")

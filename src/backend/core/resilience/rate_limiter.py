@@ -53,7 +53,7 @@ def __getattr__(name: str) -> Any:
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-__all__ = (  # noqa: F822 — lazy __getattr__ exports
+__all__ = (
     "RateLimit",
     "RateLimitExceeded",
     "RateLimiter",

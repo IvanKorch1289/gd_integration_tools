@@ -136,7 +136,7 @@ class OutboxRepository:
         result: dict[str, Any] = dict(headers or {})
         if "correlation_id" not in result:
             try:
-                from src.backend.infrastructure.observability.correlation import (  # noqa: F401 — availability probe
+                from src.backend.infrastructure.observability.correlation import (
                     get_correlation_id,
                 )
 

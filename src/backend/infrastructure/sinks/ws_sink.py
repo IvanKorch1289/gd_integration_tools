@@ -54,7 +54,7 @@ class WsSink(Sink):
     async def send(self, payload: Any) -> SinkResult:
         """Сериализует payload (JSON) и публикует через короткое WS-соединение."""
         try:
-            import websockets  # noqa: F401 — availability probe
+            import websockets
         except ImportError:
             return SinkResult(ok=False, details={"error": "websockets not installed"})
 
@@ -78,7 +78,7 @@ class WsSink(Sink):
     async def health(self, mode: str = "fast") -> HealthResult:
         """Health: успешный handshake + close без отправки данных."""
         try:
-            import websockets  # noqa: F401 — availability probe
+            import websockets
         except ImportError:
             return HealthResult.failed(error="websockets not installed", mode=mode)
         start = time.perf_counter()

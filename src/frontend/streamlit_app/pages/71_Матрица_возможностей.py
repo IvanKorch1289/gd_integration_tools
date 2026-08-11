@@ -32,13 +32,13 @@ st.caption(
 client = get_api_client()
 try:
     catalog = client.get_capability_catalog()
-except Exception as exc:  # noqa: BLE001
+except Exception as exc:
     st.error(f"Ошибка API: {exc}")
     st.info("Backend недоступен или вернул ошибку.", icon="ℹ️")
     st.stop()
 try:
     plugins_inv = client.get_plugins_inventory()
-except Exception as exc:  # noqa: BLE001
+except Exception as exc:
     st.error(f"Ошибка API: {exc}")
     st.info("Backend недоступен или вернул ошибку.", icon="ℹ️")
     st.stop()

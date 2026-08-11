@@ -44,7 +44,7 @@ DEFAULT_TEMPLATES_DIR = Path("resources/templates/notifications")
 def _read_yaml(path: Path) -> dict[str, Any]:
     """Читает YAML-файл. PyYAML — soft dep, поэтому импорт ленивый."""
     try:
-        import yaml  # noqa: F401 — availability probe
+        import yaml
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
             "PyYAML недоступен; установите pyyaml для загрузки YAML-шаблонов",

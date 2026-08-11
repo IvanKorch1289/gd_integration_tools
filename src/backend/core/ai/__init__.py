@@ -33,7 +33,7 @@ from src.backend.core.ai.errors import (
     WorkspaceQuotaExceededError,
     WorkspaceTTLExpiredError,
 )
-from src.backend.core.ai.fs_facade import AIFsFacade  # noqa: F401 — re-export
+from src.backend.core.ai.fs_facade import AIFsFacade
 from src.backend.core.ai.gateway import AIGateway, AIRequest, AIResponse
 from src.backend.core.ai.workspace_manager import AIWorkspaceManager, WorkspaceHandle
 

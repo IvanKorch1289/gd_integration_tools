@@ -1,4 +1,4 @@
-# ruff: noqa: S608 — false positive (internal query with controlled parameters)
+
 """S60 W2 — strategies.py part of cdc decomp.
 
 Classes: _CDCStrategy, _PollingStrategy, _ListenNotifyStrategy, _LogMinerStrategy.
@@ -57,7 +57,7 @@ class _PollingStrategy(_CDCStrategy):
     async def _get_cursor(self, key: str, default: datetime) -> datetime:
         """Загружает cursor из Redis (или возвращает default при недоступности)."""
         try:
-            from src.backend.infrastructure.clients.storage.redis_coordinator import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.clients.storage.redis_coordinator import (
                 RedisCursor,
             )
 
@@ -70,7 +70,7 @@ class _PollingStrategy(_CDCStrategy):
     async def _advance_cursor(self, key: str, new_value: datetime) -> None:
         """Atomic advance cursor через Redis CAS."""
         try:
-            from src.backend.infrastructure.clients.storage.redis_coordinator import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.clients.storage.redis_coordinator import (
                 RedisCursor,
             )
 
@@ -97,9 +97,9 @@ class _PollingStrategy(_CDCStrategy):
 
         """
         try:
-            from sqlalchemy import text  # noqa: F401 — availability probe
+            from sqlalchemy import text
 
-            from src.backend.infrastructure.database.database.accessors import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.database.database.accessors import (
                 get_external_db_registry,
             )
         except ImportError:
@@ -200,10 +200,10 @@ class _ListenNotifyStrategy(_CDCStrategy):
 
         """
         try:
-            import asyncpg  # noqa: F401 — availability probe
-            import orjson  # noqa: F401 — availability probe
+            import asyncpg
+            import orjson
 
-            from src.backend.core.config.external_databases.registry import (  # noqa: F401 — availability probe
+            from src.backend.core.config.external_databases.registry import (
                 external_databases_settings,
             )
         except ImportError:
@@ -302,9 +302,9 @@ class _LogMinerStrategy(_CDCStrategy):
 
         """
         try:
-            from sqlalchemy import text  # noqa: F401 — availability probe
+            from sqlalchemy import text
 
-            from src.backend.infrastructure.database.database.accessors import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.database.database.accessors import (
                 get_external_db_registry,
             )
         except ImportError:

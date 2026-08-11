@@ -1,5 +1,5 @@
-# ruff: noqa: S301, S310, S321, S324 — false positive (controlled URL/pickle/ftp/hash usage)
-# ruff: noqa: S108, S314 — false positive (controlled XML/tempfile usage)
+
+
 """S63 W3 — formats.py part of marshal decomp.
 
 5 data format classes (Json/Xml/Csv/MessagePack/Pickle) + 3 helpers.
@@ -22,7 +22,7 @@ from src.backend.core.logging import get_logger
 # surface; stdlib ET is only used for the controlled marshal path (we generate
 # the tree ourselves from a dict, never parse untrusted XML).
 try:
-    import defusedxml.ElementTree as DET  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+    import defusedxml.ElementTree as DET  # type: ignore[import-not-found]
 except ImportError:  # pragma: no cover — dev-light fallback
     DET = None  # type: ignore[assignment]
 from src.backend.dsl.engine.processors.eip.marshal.base import (
@@ -209,7 +209,7 @@ class MessagePackDataFormat(DataFormat):
     def __init__(self) -> None:
         """Lazy-validate msgpack dependency, raise ``ImportError`` если нет."""
         try:
-            import msgpack  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            import msgpack  # type: ignore[import-not-found]
         except ImportError as exc:
             raise ImportError(
                 "MessagePackDataFormat requires 'msgpack' package: uv add msgpack",

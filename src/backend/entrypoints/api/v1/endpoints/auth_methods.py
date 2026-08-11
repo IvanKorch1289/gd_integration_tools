@@ -1,4 +1,4 @@
-# ruff: noqa: S105 — false positive (config field name, not a password)
+
 """Auth methods endpoint (S58 W6e).
 
 ``GET /auth/methods`` — endpoint который фронт вызывает для

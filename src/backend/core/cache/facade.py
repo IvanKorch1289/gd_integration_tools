@@ -1,4 +1,4 @@
-# ruff: noqa: S108, S314 — false positive (controlled XML/tempfile usage)
+
 """S165 W1: UnifiedCacheFacade (Rule 1, Rule 6).
 
 Single entry point для cache capability (TTL + invalidation policy).

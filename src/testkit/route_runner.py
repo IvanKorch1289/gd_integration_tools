@@ -23,7 +23,7 @@ from typing import Any
 
 from testkit._route_adapter import run_route
 
-__all__ = ("RouteRunner", "RouteRunResult")
+__all__ = ("RouteRunResult", "RouteRunner")
 
 
 @dataclass(slots=True, frozen=True)

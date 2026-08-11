@@ -58,7 +58,7 @@ class WhisperSTT:
         if self._model is not None:
             return
         try:
-            import whisper  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            import whisper  # type: ignore[import-not-found]
         except ImportError as exc:
             raise RuntimeError(
                 "Whisper STT requires `pip install gd_advanced_tools[ai-voice]`"

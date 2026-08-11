@@ -44,7 +44,7 @@ with tab_list:
         for prof in profiles:
             with st.expander(f"📦 {prof.get('name', '?')}"):
                 st.json(prof)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось получить профили: {exc}")
 
 
@@ -115,7 +115,7 @@ with tab_edit:
                     params=params,
                 )
                 st.success(f"Профиль '{name}' сохранён.")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Сохранение не удалось: {exc}")
 
 
@@ -146,7 +146,7 @@ with tab_compare:
                     st.json(tenant_p)
                 else:
                     st.info("Tenant override отсутствует.")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Сравнение не удалось: {exc}")
 
 related_pages_footer("79_Редактор_профиля_устойчивости")

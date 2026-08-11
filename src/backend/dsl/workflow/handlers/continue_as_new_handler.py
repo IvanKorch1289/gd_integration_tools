@@ -86,7 +86,7 @@ class ContinueAsNewHandler:
         Должен вызываться ТОЛЬКО внутри Temporal workflow context.
         """
         try:
-            from temporalio import workflow  # noqa: F401 — availability probe
+            from temporalio import workflow
         except ImportError as exc:
             _logger.warning(
                 "continue_as_new.temporalio.unavailable",

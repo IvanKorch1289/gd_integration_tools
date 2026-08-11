@@ -370,7 +370,7 @@ class ResilienceCoordinator:
         ломало работу coordinator'а.
         """
         try:
-            from src.backend.infrastructure.observability.client_metrics import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.observability.client_metrics import (
                 record_degradation_mode,
             )
 

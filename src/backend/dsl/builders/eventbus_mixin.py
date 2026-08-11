@@ -36,7 +36,7 @@ def _resolve_event_bus_facade() -> Any:
 
     """
     try:
-        from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401 — availability probe
+        from src.backend.core.di.providers.infrastructure_locator import (
             get_event_bus_facade_provider,
         )
 

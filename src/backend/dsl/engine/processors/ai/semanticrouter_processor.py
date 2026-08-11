@@ -66,7 +66,7 @@ class SemanticRouterProcessor(BaseProcessor):
             return
 
         try:
-            from src.backend.services.ai.rag_service import (  # noqa: F401 — availability probe
+            from src.backend.services.ai.rag_service import (
                 get_rag_service,
             )
 

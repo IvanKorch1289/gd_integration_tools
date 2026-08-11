@@ -17,7 +17,6 @@ Use:
   → Navigate to "Outbox Stuck Monitor" в sidebar.
 """
 
-# ruff: noqa: I001
 
 from __future__ import annotations
 

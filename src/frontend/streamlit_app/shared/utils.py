@@ -47,4 +47,4 @@ def chunked(iterable: list[Any], size: int) -> list[list[Any]]:
     return [list(chunk) for chunk in itertools.batched(iterable, size)]
 
 
-__all__ = ["sanitize_label", "format_bytes", "format_duration", "chunked"]
+__all__ = ["chunked", "format_bytes", "format_duration", "sanitize_label"]

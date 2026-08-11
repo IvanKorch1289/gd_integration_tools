@@ -52,7 +52,7 @@ if st.button("Выполнить", type="primary"):
                 st.info("Запрос выполнен, но вернул 0 строк.")
             if result.get("error"):
                 st.error(result["error"])
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(str(exc))
 
 related_pages_footer("64_SQL_Админ")

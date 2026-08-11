@@ -102,7 +102,7 @@ class AdminClient(BaseAPIClient):
         """GET /ready — агрегированный health status всех подсистем."""
         try:
             return self.get("/ready")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as ready_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as ready_exc:
             # cycle-9/D-AUDIT-1073: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -118,7 +118,7 @@ class AdminClient(BaseAPIClient):
         """GET /api/v1/admin/capabilities."""
         try:
             return self.get("/api/v1/admin/capabilities")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as exc:
             # cycle-9/D-AUDIT-1073: см. выше — mirror для capability_catalog.
             import logging
             logging.getLogger(__name__).debug(
@@ -136,7 +136,7 @@ class AdminClient(BaseAPIClient):
             params["namespace"] = namespace
         try:
             return self.get("/api/v1/dsl/processors/search", params=params)
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as exc:
             # cycle-9/D-AUDIT-1073: см. выше — mirror для processor_catalog.
             import logging
             logging.getLogger(__name__).debug(
@@ -159,7 +159,7 @@ class AdminClient(BaseAPIClient):
             if isinstance(response, list):
                 return response
             return response.get("events", []) if isinstance(response, dict) else []
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as audit_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as audit_exc:
             # cycle-9/D-AUDIT-1073: см. выше — mirror для audit_events.
             import logging
             logging.getLogger(__name__).debug(
@@ -172,14 +172,14 @@ class AdminClient(BaseAPIClient):
         """GET /api/v1/admin/plugins/dependency-graph."""
         try:
             return self.get("/api/v1/admin/plugins/dependency-graph")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"nodes": [], "edges": [], "error": str(exc)}
 
     def get_capability_graph(self) -> dict[str, Any]:
         """GET /api/v1/admin/capabilities/graph."""
         try:
             return self.get("/api/v1/admin/capabilities/graph")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"nodes": [], "edges": [], "error": str(exc)}
 
     def scaffold_plugin(
@@ -201,7 +201,7 @@ class AdminClient(BaseAPIClient):
         }
         try:
             return self.post("/api/v1/admin/plugins/scaffold", json=body)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"name": name, "created": False, "error": str(exc)}
 
     def get_langgraph_sessions(
@@ -215,5 +215,5 @@ class AdminClient(BaseAPIClient):
                 "/api/v1/admin/langgraph/checkpoints",
                 params={"limit": limit, "offset": offset},
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"sessions": [], "count": 0, "error": str(exc)}

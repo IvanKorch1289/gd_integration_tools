@@ -36,7 +36,7 @@ try:
     from src.backend.core.frontend_facade import get_global_registry
 
     all_ids = sorted(get_global_registry().all_workflow_ids())
-except (ImportError, AttributeError, RuntimeError) as reg_exc:  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError) as reg_exc:
     # cycle-9/D-AUDIT-1061: narrow exceptions + observability.
     # ImportError — frontend_facade missing, AttributeError — API
     # change, RuntimeError — registry unavailable.
@@ -111,7 +111,7 @@ if st.button("Оценить", type="primary", disabled=not workflow_id):
                     st.subheader("По моделям")
                     for model, cost in breakdown["per_model"].items():
                         st.write(f"**{model}**: ${cost}")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Ошибка оценки: {exc}")
 
 related_pages_footer("15_Оценка_стоимости_Workflow")

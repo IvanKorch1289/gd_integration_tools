@@ -11,7 +11,6 @@ Use:
   → Navigate to "Покрытие EIP" в sidebar.
 """
 
-# ruff: noqa: I001
 
 from __future__ import annotations
 

@@ -230,7 +230,7 @@ class MCPClientRegistry:
             return self._http_client
 
         try:
-            from src.backend.core.net.outbound_http import (  # noqa: F401 — availability probe
+            from src.backend.core.net.outbound_http import (
                 OutboundHttpClient,
             )
 
@@ -293,7 +293,7 @@ def _check_capability(capability: str, client_name: str) -> None:
 
     """
     try:
-        from src.backend.core.security.capability_gate import (  # noqa: F401 — availability probe
+        from src.backend.core.security.capability_gate import (
             CapabilityGate,  # type: ignore[import-not-found]
         )
 

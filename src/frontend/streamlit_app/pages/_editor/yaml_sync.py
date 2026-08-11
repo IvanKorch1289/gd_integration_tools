@@ -94,7 +94,7 @@ def try_load(yaml_str: str) -> tuple[Pipeline | None, str | None]:
     """
     try:
         return load_pipeline_from_yaml(yaml_str), None
-    except Exception as exc:  # noqa: BLE001 — UI должен показать любую ошибку.
+    except Exception as exc:
         return None, str(exc)
 
 

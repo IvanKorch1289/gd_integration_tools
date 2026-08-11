@@ -15,12 +15,12 @@ from src.frontend.streamlit_app.components.table import (
 )
 
 __all__ = [
-    "status_badge",
+    "error_msg",
     "health_badge",
+    "info_msg",
     "paginated_table",
     "render_metrics_table",
+    "status_badge",
     "success_msg",
-    "error_msg",
     "warning_msg",
-    "info_msg",
 ]

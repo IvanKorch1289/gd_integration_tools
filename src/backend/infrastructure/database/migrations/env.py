@@ -141,7 +141,7 @@ async def run_async_migrations() -> None:
 
     # MI-1: distributed lock для Alembic — избегаем race condition при старте N инстансов
     try:
-        from src.backend.infrastructure.clients.storage.redis_lock import (  # noqa: F401 — availability probe
+        from src.backend.infrastructure.clients.storage.redis_lock import (
             distributed_lock,
         )
 
@@ -149,7 +149,7 @@ async def run_async_migrations() -> None:
             "alembic:migrations", ttl_seconds=300, blocking_timeout=60.0,
         )
     except ImportError:
-        import contextlib  # noqa: F401 — availability probe
+        import contextlib
 
         @contextlib.asynccontextmanager
         async def _lock_ctx():

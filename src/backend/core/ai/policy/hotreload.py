@@ -108,7 +108,7 @@ async def watch_policy_files(
 
     """
     try:
-        from watchfiles import (  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+        from watchfiles import (  # type: ignore[import-not-found]
             Change,
             awatch,
         )

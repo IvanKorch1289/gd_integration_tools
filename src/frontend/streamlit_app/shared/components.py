@@ -28,11 +28,11 @@ if TYPE_CHECKING:
     import pandas as pd
 
 __all__ = (
-    "setup_page",
-    "metric_row",
     "dataframe_view",
-    "require_auth",
+    "metric_row",
     "related_pages_footer",
+    "require_auth",
+    "setup_page",
 )
 
 

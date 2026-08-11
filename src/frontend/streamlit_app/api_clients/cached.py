@@ -28,7 +28,7 @@ TTL_METRICS = int(os.getenv("STREAMLIT_CACHE_TTL_METRICS", "10"))
 TTL_HEALTH = int(os.getenv("STREAMLIT_CACHE_TTL_HEALTH", "5"))
 TTL_ORDERS = int(os.getenv("STREAMLIT_CACHE_TTL_ORDERS", "15"))
 
-__all__ = ("cached_get_metrics", "cached_get_health", "cached_get_orders")
+__all__ = ("cached_get_health", "cached_get_metrics", "cached_get_orders")
 
 
 # ──────────── Cached wrappers (module-level для cache_data) ────────────
@@ -43,7 +43,7 @@ def cached_get_metrics() -> dict[str, Any]:
     client = BaseAPIClient()
     try:
         return client._request("GET", "/api/v1/admin/metrics")
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as metrics_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as metrics_exc:
         # cycle-9/D-AUDIT-1048: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError — wrong.
@@ -64,7 +64,7 @@ def cached_get_health() -> dict[str, Any]:
     client = BaseAPIClient()
     try:
         return client._request("GET", "/api/v1/health/components")
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as health_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as health_exc:
         # cycle-9/D-AUDIT-1049: narrow exceptions + observability (mirror
         # D-AUDIT-1048).
         import logging
@@ -86,7 +86,7 @@ def cached_get_orders(page: int = 1, size: int = 50) -> Any:
         return client._request(
             "GET", "/api/v1/orders/all/", params={"page": page, "size": size}
         )
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as orders_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as orders_exc:
         # cycle-9/D-AUDIT-1064: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError — wrong.

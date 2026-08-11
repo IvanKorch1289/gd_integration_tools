@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.backend.core.frontend_facade import get_dsl_builder_service  # noqa: E402
+from src.backend.core.frontend_facade import get_dsl_builder_service
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
@@ -102,7 +102,7 @@ def _render() -> None:
     if save_clicked and write_enabled:
         try:
             result = svc.save_route(route_id)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Save failed: {exc}")
             return
         if result.written:

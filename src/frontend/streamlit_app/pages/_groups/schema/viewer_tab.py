@@ -87,7 +87,7 @@ def render_viewer_tab() -> None:
                         st.markdown(f"**Port** `{port_name}` — `{port.binding.name}`")
                         operations = sorted(port.binding._operations.keys())
                         st.write({"operations": operations})
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Не удалось загрузить WSDL: {exc}")
         else:
             st.info("Укажите URL/путь к WSDL для просмотра.")
@@ -109,7 +109,7 @@ def render_viewer_tab() -> None:
                 root = etree.fromstring(xml_text.encode(), parser=parser)
                 ns = root.nsmap.get("xs") or root.nsmap.get("xsd")
                 is_xsd = root.tag.endswith("schema") and (
-                    ns and "XMLSchema" in ns or "XMLSchema" in (root.tag or "")
+                    (ns and "XMLSchema" in ns) or "XMLSchema" in (root.tag or "")
                 )
                 if is_xsd:
                     xs = "{http://www.w3.org/2001/XMLSchema}"
@@ -128,7 +128,7 @@ def render_viewer_tab() -> None:
                     st.code(
                         etree.tostring(root, pretty_print=True).decode(), language="xml"
                     )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Парсинг XML/XSD не удался: {exc}")
         else:
             st.info("Вставьте XML или XSD контент в поле выше.")

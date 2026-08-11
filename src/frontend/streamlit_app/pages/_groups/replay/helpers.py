@@ -11,7 +11,7 @@ from typing import Any
 
 import streamlit as st
 
-from src.backend.core.frontend_facade import (  # noqa: E402, F401
+from src.backend.core.frontend_facade import (
     FakeOutbox,
     OutboxBackend,
     OutboxEvent,
@@ -61,7 +61,7 @@ def ensure_demo_data(outbox: OutboxBackend) -> None:
     """
     if not isinstance(outbox, FakeOutbox):
         return
-    if outbox._events:  # noqa: SLF001 — Fake-only debug-доступ к локальному store
+    if outbox._events:
         return
 
     samples = [
@@ -91,6 +91,6 @@ def ensure_demo_data(outbox: OutboxBackend) -> None:
     async def _seed() -> None:
         for ev in samples:
             await outbox.enqueue(ev)
-            await outbox._force_to_dlq(ev.event_id, RuntimeError("demo failure"))  # noqa: SLF001
+            await outbox._force_to_dlq(ev.event_id, RuntimeError("demo failure"))
 
     run_async(_seed())

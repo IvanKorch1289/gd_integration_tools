@@ -102,5 +102,5 @@ def render_workflow_diff() -> None:
                             st.write(f"{icon} `{r.identity}` — {status_ru}")
                 else:
                     st.info("Выберите две разные версии для сравнения.")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Ошибка инициализации diff-view: {exc}")

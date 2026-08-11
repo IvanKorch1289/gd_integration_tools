@@ -29,7 +29,7 @@ def _try_litellm_cost(model: str, prompt_tokens: int, completion_tokens: int) ->
     ponytail: ceiling — litellm может не знать pricing для custom/Ollama models.
     """
     try:
-        from litellm import completion_cost  # noqa: F401 — availability probe
+        from litellm import completion_cost
 
         cost = completion_cost(
             model=model,
@@ -43,7 +43,7 @@ def _try_litellm_cost(model: str, prompt_tokens: int, completion_tokens: int) ->
         # API change, ValueError — invalid cost value, TypeError — wrong
         # arg type, RuntimeError — model unknown. Bare `except Exception`
         # маскировал unrelated runtime errors (KeyError).
-        import logging  # noqa: F401 — availability probe
+        import logging
         logging.getLogger(__name__).debug(
             "llmcall_processor.litellm_cost_fallback",
             extra={"model": model, "error": str(cost_exc)},
@@ -138,7 +138,7 @@ class LLMCallProcessor(BaseProcessor):
 
         # S27 closure: при ai_gateway_enforce=True — все LLM-вызовы через AIGateway.
         try:
-            from src.backend.core.config.features import (  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
                 feature_flags,
             )
         except ImportError:
@@ -146,11 +146,11 @@ class LLMCallProcessor(BaseProcessor):
 
         if feature_flags is not None and feature_flags.ai_gateway_enforce:
             try:
-                import src.backend.core.ai.gateway  # noqa: F401 — availability probe
-                from src.backend.core.ai.gateway_models import (  # noqa: F401 — availability probe
+                import src.backend.core.ai.gateway
+                from src.backend.core.ai.gateway_models import (
                     AIRequest,
                 )
-                from src.backend.services.ai.gateway_adapter import (  # noqa: F401 — availability probe
+                from src.backend.services.ai.gateway_adapter import (
                     get_ai_gateway,
                 )
             except ImportError as exc:
@@ -229,7 +229,7 @@ class LLMCallProcessor(BaseProcessor):
         from src.backend.core.resilience.retry import make_async_retry
 
         try:
-            from src.backend.services.ai.ai_agent import (  # noqa: F401 — availability probe
+            from src.backend.services.ai.ai_agent import (
                 get_ai_agent_service,
             )
         except ImportError as exc:

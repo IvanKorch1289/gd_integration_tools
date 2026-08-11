@@ -75,7 +75,7 @@ class SentenceTransformerEmbeddingProvider:
         if self._model is not None:
             return self._model
         try:
-            from sentence_transformers import (  # noqa: F401 — availability probe
+            from sentence_transformers import (
                 SentenceTransformer,
             )
         except ImportError as exc:
@@ -131,7 +131,7 @@ class FastembedEmbeddingProvider:
         if self._model is not None:
             return self._model
         try:
-            from fastembed import TextEmbedding  # noqa: F401 — availability probe
+            from fastembed import TextEmbedding
         except ImportError as exc:
             raise EmbeddingProviderUnavailable(
                 "fastembed не установлен — это legacy-extra. Установите "

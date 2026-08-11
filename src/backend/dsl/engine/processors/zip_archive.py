@@ -136,7 +136,7 @@ class ZipArchiveProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Запаковывает или распаковывает ZIP-архив из exchange body."""
         try:
-            from src.backend.core.config.features import (  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
                 feature_flags,
             )
 
@@ -146,7 +146,7 @@ class ZipArchiveProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1706: narrow exceptions + observability (mirror
             # D-AUDIT-1705 webhook_signature).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "zip_archive.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

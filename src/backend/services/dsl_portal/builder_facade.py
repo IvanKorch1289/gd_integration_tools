@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from src.backend.services.workflows.saga_history import SagaHistoryRecord
 
-from src.backend.dsl.engine.dry_run import (  # noqa: F401 — re-exported
+from src.backend.dsl.engine.dry_run import (
     dry_run_route,
     waterfall_lines,
 )
@@ -34,23 +34,23 @@ from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.tracer import get_tracer
 from src.backend.dsl.registry import route_registry
 from src.backend.dsl.workflow.spec.workflow import (
-    WorkflowDeclaration,  # noqa: F401 — re-exported as WorkflowDeclaration
+    WorkflowDeclaration,
 )
 from src.backend.dsl.workflow.versioning import (
-    get_global_registry,  # noqa: F401 — re-exported
+    get_global_registry,
 )
-from src.backend.dsl.workflow.visualize import (  # noqa: F401 — re-exported
+from src.backend.dsl.workflow.visualize import (
     compute_step_diff,
     to_graphviz,
     to_mermaid,
 )
-from src.backend.dsl.workflow.yaml_io import (  # noqa: F401 — re-exported
+from src.backend.dsl.workflow.yaml_io import (
     load_all_workflows_from_directory,
     load_workflow_from_file,
     load_workflow_from_yaml,
 )
 from src.backend.dsl.yaml_loader.loaders import (
-    load_pipeline_from_yaml,  # noqa: F401 — re-exported
+    load_pipeline_from_yaml,
 )
 from src.backend.services.workflows.template_registry import get_template_registry
 

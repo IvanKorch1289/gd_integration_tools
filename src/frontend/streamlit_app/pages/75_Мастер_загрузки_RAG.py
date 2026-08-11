@@ -52,7 +52,7 @@ elif step == 3:
     st.subheader("3. Выбор embedding-провайдера")
     try:
         _providers = client.list_embedding_providers()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Ошибка API: {exc}")
         _providers = None
     providers = _providers or [
@@ -73,7 +73,7 @@ elif step == 4:
     if st.button("Старт", type="primary"):
         try:
             result = client.rag_ingest_start(files=files, collection=collection)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Ошибка API: {exc}")
             result = {}
         st.session_state["ingest_task_id"] = result.get("task_id")
@@ -92,7 +92,7 @@ elif step == 5:
             status = client.rag_ingest_status(task_id) or st.session_state.get(
                 "ingest_result", {}
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Ошибка API: {exc}")
             status = {}
         st.json(status)

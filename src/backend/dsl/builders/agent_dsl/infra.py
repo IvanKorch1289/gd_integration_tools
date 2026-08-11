@@ -1,4 +1,4 @@
-# ruff: noqa: S107 — config field name (не password)
+
 """Agent DSL миксин для ``RouteBuilder`` (S27 W1-W3).
 
 Группа: agent_run / ai_invoke / agent_branch / agent_loop / agent_parallel
@@ -220,7 +220,7 @@ class InfraMixin:
                 "(isolated=True default с S3). Audit-event emitted.",
             )
             try:
-                from src.backend.core.audit.facade import (  # noqa: F401 — availability probe
+                from src.backend.core.audit.facade import (
                     emit_audit_safe,
                 )
 
@@ -234,7 +234,7 @@ class InfraMixin:
                 # ImportError — audit facade missing, AttributeError —
                 # schema change, RuntimeError — backend unavailable.
                 # audit is best-effort.
-                import logging  # noqa: F401 — availability probe
+                import logging
                 logging.getLogger(__name__).debug(
                     "agent_dsl_infra.audit_emit_failed",
                     extra={"error": str(audit_exc)},

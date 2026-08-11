@@ -116,7 +116,7 @@ class BaseAPIClient:
         backoff = min(self._initial_backoff * (2**attempt), _MAX_BACKOFF)
         if self._jitter_ratio > 0.0:
             # S311: not for crypto; this is for backoff spread only.
-            factor = random.uniform(  # noqa: S311
+            factor = random.uniform(
                 1.0 - self._jitter_ratio, 1.0 + self._jitter_ratio
             )
             backoff = max(0.0, backoff * factor)
@@ -142,7 +142,7 @@ class BaseAPIClient:
         """HTTP DELETE к API endpoint ``path`` (с retry/timeout через ``_request``)."""
         return self._request("DELETE", path, **kwargs)
 
-    def _request(self, method: str, path: str, **kwargs: Any) -> Any:  # noqa: BLE001
+    def _request(self, method: str, path: str, **kwargs: Any) -> Any:
         """Выполнить HTTP запрос с retry, exponential backoff и обработкой ошибок.
 
         Args:

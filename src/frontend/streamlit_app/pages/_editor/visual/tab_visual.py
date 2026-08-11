@@ -30,7 +30,7 @@ def render_visual_tab() -> None:
                 if len(reordered_steps) == len(current_steps):
                     st.session_state.yaml = build_yaml_from_steps(meta, reordered_steps)
                     push_history()
-        except (TypeError, ValueError, KeyError) as reparse_exc:  # noqa: BLE001,S110
+        except (TypeError, ValueError, KeyError) as reparse_exc:
             # cycle-9/D-AUDIT-1042: narrow exceptions + observability.
             # TypeError — wrong step type, ValueError — invalid YAML,
             # KeyError — missing step key, yaml.YAMLError — YAML parse

@@ -33,11 +33,11 @@ st.header("Шина действий")
 # ---------------------------------------------------------------------------
 try:
     from src.backend.core.frontend_facade import (
-        feature_flags as _ff,  # noqa: E402, F401
+        feature_flags as _ff,
     )
 
     _flag_enabled: bool = _ff.frontend_action_bus_ui
-except (ImportError, AttributeError, RuntimeError) as ff_exc:  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError) as ff_exc:
     # cycle-9/D-AUDIT-1062: narrow exceptions + observability.
     # ImportError — features module missing, AttributeError — API
     # change, RuntimeError — feature_flags unavailable.
@@ -71,7 +71,7 @@ if not _flag_enabled:
 # ---------------------------------------------------------------------------
 # Клиент
 # ---------------------------------------------------------------------------
-from src.frontend.streamlit_app.services.action_bus_client import (  # noqa: PLC0415, E402
+from src.frontend.streamlit_app.services.action_bus_client import (
     get_action_spec,
     invoke,
     list_actions,

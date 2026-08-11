@@ -166,7 +166,7 @@ def render_dashboard() -> None:
     # KPI Метрики
     try:
         metrics = cached_get_metrics()
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError) as metrics_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError) as metrics_exc:
         # cycle-9/D-AUDIT-1014: narrow exceptions + observability.
         # ConnectionError/TimeoutError — backend unreachable, RuntimeError
         # — API failure, ValueError — invalid response, KeyError —
@@ -193,7 +193,7 @@ def render_dashboard() -> None:
     st.subheader("Здоровье компонентов")
     try:
         health = cached_get_health()
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError) as health_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, KeyError) as health_exc:
         # cycle-9/D-AUDIT-1015: narrow exceptions + observability (mirror
         # D-AUDIT-1014).
         import logging

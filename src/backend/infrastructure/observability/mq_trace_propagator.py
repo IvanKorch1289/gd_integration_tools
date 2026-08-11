@@ -76,7 +76,7 @@ def inject_into_headers(headers: dict[str, str]) -> None:
 
     """
     try:
-        from opentelemetry.propagate import inject  # noqa: F401 — availability probe
+        from opentelemetry.propagate import inject
     except ImportError:
         _logger.debug("OTel propagate unavailable — skip traceparent inject")
         return
@@ -103,7 +103,7 @@ def extract_from_headers(headers: Mapping[str, Any]) -> Any:
 
     """
     try:
-        from opentelemetry.propagate import extract  # noqa: F401 — availability probe
+        from opentelemetry.propagate import extract
     except ImportError:
         _logger.debug("OTel propagate unavailable — return empty context")
         return None

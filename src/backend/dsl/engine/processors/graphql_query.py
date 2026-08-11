@@ -1,4 +1,4 @@
-# ruff: noqa: S105 — false positive (config field name, not a password)
+
 """DSL-шаг ``graphql_query`` — execute GraphQL queries/mutations from DSL pipeline.
 
 Wave: ``[wave:net/graphql]``. Provides a Camel-style component for executing

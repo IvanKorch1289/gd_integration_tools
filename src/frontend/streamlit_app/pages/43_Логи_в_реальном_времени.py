@@ -15,7 +15,7 @@ from typing import Any
 import httpx
 import streamlit as st
 
-from src.backend.core.frontend_facade import get_logger  # noqa: E402, F401
+from src.backend.core.frontend_facade import get_logger
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
@@ -67,7 +67,7 @@ def _start_sse_thread() -> None:
                                 st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
                                 q.get_nowait()  # вытесняем старое
                                 q.put_nowait(payload)
-        except (OSError, ConnectionError, RuntimeError, AttributeError, ValueError) as sse_exc:  # noqa: BLE001
+        except (OSError, ConnectionError, RuntimeError, AttributeError, ValueError) as sse_exc:
             # cycle-9/D-AUDIT-1050: narrow exceptions + observability.
             # OSError/ConnectionError — SSE transport failure, RuntimeError
             # — server error, AttributeError — SSE API change, ValueError
@@ -102,7 +102,7 @@ def _render_log_stream() -> None:
             import orjson
 
             batch.append(orjson.loads(q.get_nowait()))
-        except (ValueError, TypeError) as json_exc:  # noqa: BLE001
+        except (ValueError, TypeError) as json_exc:
             # cycle-9/D-AUDIT-1051: narrow exceptions + observability.
             # ValueError для malformed JSON (orjson.JSONDecodeError isa
             # ValueError), TypeError для wrong payload type.

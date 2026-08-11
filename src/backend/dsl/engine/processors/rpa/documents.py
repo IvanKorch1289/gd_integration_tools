@@ -66,7 +66,7 @@ class PdfReadProcessor(BaseProcessor):
         }
         if self._tables:
             try:
-                import pdfplumber  # noqa: F401 — availability probe
+                import pdfplumber
 
                 def _extract_tables() -> list[Any]:
                     with pdfplumber.open(
@@ -112,7 +112,7 @@ class PdfMergeProcessor(BaseProcessor):
         import io
 
         try:
-            from pypdf import PdfReader, PdfWriter  # noqa: F401 — availability probe
+            from pypdf import PdfReader, PdfWriter
         except ImportError:
             exchange.fail("pypdf not installed: pip install pypdf")
             return
@@ -161,7 +161,7 @@ class WordReadProcessor(BaseProcessor):
         import io
 
         try:
-            from docx import Document  # noqa: F401 — availability probe
+            from docx import Document
         except ImportError:
             exchange.fail("python-docx not installed: pip install python-docx")
             return
@@ -212,7 +212,7 @@ class WordWriteProcessor(BaseProcessor):
         import io
 
         try:
-            from docx import Document  # noqa: F401 — availability probe
+            from docx import Document
         except ImportError:
             exchange.fail("python-docx not installed: pip install python-docx")
             return
@@ -269,7 +269,7 @@ class ExcelReadProcessor(BaseProcessor):
         import io
 
         try:
-            from openpyxl import load_workbook  # noqa: F401 — availability probe
+            from openpyxl import load_workbook
         except ImportError:
             exchange.fail("openpyxl not installed: pip install openpyxl")
             return

@@ -100,7 +100,7 @@ class DSPyDatasetBuilder:
         тесты могут работать без [ai] extra.
         """
         try:
-            import dspy  # noqa: F401 — availability probe
+            import dspy
         except ImportError:
             logger.info("dspy-ai not installed — returning dict examples")
             return [

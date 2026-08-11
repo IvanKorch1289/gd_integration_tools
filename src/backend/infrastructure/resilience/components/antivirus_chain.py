@@ -34,7 +34,7 @@ def _wrap_backend(backend: AntivirusBackend) -> AntivirusCallable:
 
 def _build_clamav_unix() -> AntivirusCallable | None:
     try:
-        from src.backend.infrastructure.antivirus.backends.clamav_unix import (  # noqa: F401 — availability probe
+        from src.backend.infrastructure.antivirus.backends.clamav_unix import (
             ClamAVUnixBackend,
         )
     except ImportError:
@@ -44,7 +44,7 @@ def _build_clamav_unix() -> AntivirusCallable | None:
 
 def _build_clamav_tcp() -> AntivirusCallable | None:
     try:
-        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (  # noqa: F401 — availability probe
+        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
             ClamAVTcpBackend,
         )
     except ImportError:

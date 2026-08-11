@@ -15,17 +15,17 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients.auth import AuthClient
 
 __all__ = (
-    "is_authenticated",
+    "get_current_auth_method",
     "get_current_token",
     "get_current_username",
-    "get_current_auth_method",
+    "is_authenticated",
     "login",
     "logout",
     "require_auth",
 )
 
 
-_SESSION_KEY_TOKEN = "auth_token"  # noqa: S105 — это dict key, не пароль
+_SESSION_KEY_TOKEN = "auth_token"
 _SESSION_KEY_USERNAME = "auth_username"
 _SESSION_KEY_METHOD = "auth_method"
 _SESSION_KEY_ISSUED_AT = "auth_issued_at"

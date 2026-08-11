@@ -1,4 +1,4 @@
-# ruff: noqa: S311 — non-cryptographic use (workflow scheduling jitter)
+
 """Durable workflow runner — background execution driver для IL-WF1.
 
 Архитектура (ADR-031):
@@ -37,7 +37,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+import random
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -256,7 +256,7 @@ class DurableWorkflowRunner:
 
     async def _listen_loop(self) -> None:
         try:
-            import asyncpg  # noqa: F401 — availability probe
+            import asyncpg
         except ImportError:
             _logger.warning("asyncpg not installed; LISTEN path disabled")
             return

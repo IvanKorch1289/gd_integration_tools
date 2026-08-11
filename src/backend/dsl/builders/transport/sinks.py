@@ -1,4 +1,4 @@
-# ruff: noqa: S107 — config field name (не password)
+
 """Sinks mixin: 10 sink_* fluent методов для outbound публикации.
 
 Извлечено из TransportMixin в S84 W2 (B1, ADR-0107 pending).

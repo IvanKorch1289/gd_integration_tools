@@ -1,4 +1,4 @@
-# ruff: noqa: S608 — false positive (internal query with controlled parameters)
+
 """Periodic DLQ cleanup job — удаляет старые записи по policy (S13 K3 W4).
 
 Запускается через APScheduler / TaskRegistry: scan DLQ ClickHouse table,

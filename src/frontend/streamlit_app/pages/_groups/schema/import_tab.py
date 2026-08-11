@@ -45,7 +45,7 @@ def render_import_tab() -> None:
         return "wsdl"
 
     if uploaded and st.button("Импортировать", key="imp_btn"):
-        from src.backend.core.frontend_facade import (  # noqa: E402, F401
+        from src.backend.core.frontend_facade import (
             ImportSource,
             ImportSourceKind,
             get_import_service,
@@ -63,7 +63,7 @@ def render_import_tab() -> None:
                     source, register_actions=not dry_run
                 )
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Ошибка импорта: {exc}")
         else:
             st.success(f"Готово: {result['status']} (connector={result['connector']})")

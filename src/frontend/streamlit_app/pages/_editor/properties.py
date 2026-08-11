@@ -89,7 +89,7 @@ def render_properties_panel(client: Any) -> None:
             try:
                 result = client.create_dsl_route(st.session_state.yaml_output)
                 st.success(f"Создано: {result.get('route_id', 'OK')}")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Ошибка создания: {exc}")
 
     with col_upd:
@@ -99,7 +99,7 @@ def render_properties_panel(client: Any) -> None:
                 try:
                     client.update_dsl_route(route_id, st.session_state.yaml_output)
                     st.success(f"Обновлено: {route_id}")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Ошибка обновления: {exc}")
         else:
             st.caption("Укажите route_id чтобы включить обновление")
@@ -114,5 +114,5 @@ def render_properties_panel(client: Any) -> None:
             st.json(pipeline.to_dict())
         with st.expander("Python код"):
             st.code(pipeline.to_python(), language="python")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.caption(f"Спецификация недоступна: {exc}")

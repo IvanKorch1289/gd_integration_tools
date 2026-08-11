@@ -49,7 +49,7 @@ __all__ = ("S3ObjectStorage",)
 def _import_aioboto3() -> Any:
     """Lazy-import aioboto3; raises ImportError с инструкцией по установке."""
     try:
-        import aioboto3  # noqa: F401 — availability probe
+        import aioboto3
     except ImportError as exc:
         raise ImportError(
             "S3ObjectStorage requires aioboto3. Install: uv pip install aioboto3",

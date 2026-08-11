@@ -60,7 +60,7 @@ try:
     payload = client.get_processor_catalog(
     query=query, namespace=namespace or None, limit=limit
     )
-except Exception as exc:  # noqa: BLE001
+except Exception as exc:
     st.error(f"Ошибка API: {exc}")
     payload = {}
 

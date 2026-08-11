@@ -41,7 +41,7 @@ async def _get(path: str, **params: Any) -> list[dict[str, Any]] | dict[str, Any
                 resp = await client.get(url, params=clean)
             resp.raise_for_status()
             return resp.json()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Ошибка запроса: {exc}")
         return []
 

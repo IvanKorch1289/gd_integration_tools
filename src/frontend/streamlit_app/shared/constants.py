@@ -53,4 +53,4 @@ PROCESSOR_COLORS: dict[str, str] = {
     "notify": "orange",
 }
 
-__all__ = ["VISUAL_PROCESSORS", "PROCESSOR_ICONS", "PROCESSOR_COLORS"]
+__all__ = ["PROCESSOR_COLORS", "PROCESSOR_ICONS", "VISUAL_PROCESSORS"]

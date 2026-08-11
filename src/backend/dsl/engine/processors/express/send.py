@@ -118,7 +118,7 @@ class ExpressSendProcessor(BaseProcessor):
                 sync_id=str(sync_id) if sync_id else None,
             )
             try:
-                from src.backend.infrastructure.observability.metrics import (  # noqa: F401 — availability probe
+                from src.backend.infrastructure.observability.metrics import (
                     record_express_message_sent,
                 )
 
@@ -128,7 +128,7 @@ class ExpressSendProcessor(BaseProcessor):
                 # ImportError — metrics missing, AttributeError — schema
                 # change, RuntimeError — metrics unavailable, OSError —
                 # backend failure.
-                import logging  # noqa: F401 — availability probe
+                import logging
                 logging.getLogger(__name__).debug(
                     "express_send.metrics_ok_failed",
                     extra={"error": str(metrics_exc)},
@@ -137,14 +137,14 @@ class ExpressSendProcessor(BaseProcessor):
             _logger.warning("ExpressSend: ошибка отправки: %s", exc)
             exchange.set_property(f"{self._result_property}_error", str(exc))
             try:
-                from src.backend.infrastructure.observability.metrics import (  # noqa: F401 — availability probe
+                from src.backend.infrastructure.observability.metrics import (
                     record_express_message_sent,
                 )
 
                 record_express_message_sent(self._bot, status="error")
             except (ImportError, AttributeError, RuntimeError, OSError) as err_metrics_exc:
                 # cycle-9/D-AUDIT-974: см. выше — тот же narrow для error path.
-                import logging  # noqa: F401 — availability probe
+                import logging
                 logging.getLogger(__name__).debug(
                     "express_send.metrics_error_failed",
                     extra={"error": str(err_metrics_exc)},

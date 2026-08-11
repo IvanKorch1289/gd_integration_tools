@@ -231,7 +231,7 @@ class SmartSessionManager:
 
         """
         try:
-            from src.backend.core.config.features import (  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
                 feature_flags,
             )
 
@@ -242,7 +242,7 @@ class SmartSessionManager:
             # ImportError — feature_flags missing, AttributeError — config
             # not initialized, RuntimeError — flags unavailable. Bare `except
             # Exception` маскировал unrelated runtime errors.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "smart_session_manager.feature_flags_fallback",
                 extra={"error": str(ff_exc)},

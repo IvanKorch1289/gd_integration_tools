@@ -149,7 +149,7 @@ async def run_hub_notebook(
 
     # 1. Feature flag gate
     try:
-        from src.backend.core.config.features import (  # noqa: F401 — availability probe
+        from src.backend.core.config.features import (
             feature_flags,
         )
 
@@ -177,7 +177,7 @@ async def run_hub_notebook(
         # явного admin-opt-in через secure_settings.jupyter_inline_content_enabled.
         # Default False = deny (fail-closed). Registry-based notebooks остаются
         # доступны — они проходят ревью при регистрации в NotebookRegistry.
-        from src.backend.core.config.security import (  # noqa: F401 — availability probe
+        from src.backend.core.config.security import (
             secure_settings,
         )
 
@@ -195,7 +195,7 @@ async def run_hub_notebook(
 
         # Audit-event: inline notebook use (даже при enabled — для traceability).
         try:
-            from src.backend.core.audit.facade import (  # noqa: F401 — availability probe
+            from src.backend.core.audit.facade import (
                 emit_audit_safe,
             )
 
@@ -385,7 +385,7 @@ async def _save_inline_notebook(
 def _build_execution_service() -> NotebookExecutionService:
     """Lazy-resolve execution service через DI singleton."""
     try:
-        from src.backend.core.di.providers.jupyter import (  # noqa: F401 — availability probe
+        from src.backend.core.di.providers.jupyter import (
             get_notebook_execution_service_provider,
         )
 

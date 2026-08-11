@@ -59,8 +59,8 @@ class SpecializedFormatsMixin(_FormatConvertProtocol):
 
     def _to_jwt(self, data: Any) -> str:
         try:
-            from joserfc import jwt as _jwt  # noqa: F401 — availability probe
-            from joserfc.jwk import OctKey  # noqa: F401 — availability probe
+            from joserfc import jwt as _jwt
+            from joserfc.jwk import OctKey
         except ImportError as exc:
             raise ImportError(
                 "to_jwt requires 'joserfc' (pip install joserfc)",
@@ -97,8 +97,8 @@ class SpecializedFormatsMixin(_FormatConvertProtocol):
         verify signature → возвращает ``Token`` c атрибутом ``claims``.
         """
         try:
-            from joserfc import jwt as _jwt  # noqa: F401 — availability probe
-            from joserfc.jwk import OctKey  # noqa: F401 — availability probe
+            from joserfc import jwt as _jwt
+            from joserfc.jwk import OctKey
         except ImportError as exc:
             raise ImportError(
                 "from_jwt requires 'joserfc' (pip install joserfc)",

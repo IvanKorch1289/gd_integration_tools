@@ -1,4 +1,4 @@
-# ruff: noqa: S608 — false positive (internal query with controlled parameters)
+
 """Storage extensions — Graph DB (Neo4j), Time Series (InfluxDB), Priority Queue.
 
 Все клиенты lazy-imported. Graceful fallback если библиотеки не установлены.
@@ -68,7 +68,7 @@ class Neo4jQueryProcessor(BaseProcessor):
 
         """
         try:
-            from neo4j import AsyncGraphDatabase  # noqa: F401 — availability probe
+            from neo4j import AsyncGraphDatabase
         except ImportError:
             exchange.fail("neo4j driver not installed")
             return
@@ -178,11 +178,11 @@ class TimeSeriesWriteProcessor(BaseProcessor):
 
     async def _write_influxdb(self, points: list[dict]) -> None:
         try:
-            from influxdb_client import (  # noqa: F401 — availability probe
+            from influxdb_client import (
                 InfluxDBClient,
                 Point,
             )
-            from influxdb_client.client.write_api import (  # noqa: F401 — availability probe
+            from influxdb_client.client.write_api import (
                 SYNCHRONOUS,
             )
         except ImportError as exc:

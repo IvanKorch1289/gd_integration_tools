@@ -1,4 +1,4 @@
-# ruff: noqa: S107 — config field name (не password)
+
 """PIIUnmaskProcessor — обратная операция к :class:`PIIMaskProcessor` (S27 W2).
 
 Восстанавливает оригинальный PII из ``exchange.properties["pii_token_map"]``
@@ -211,7 +211,7 @@ class PIIUnmaskProcessor(BaseAIProcessor):
             spec["source_property"] = self.source_property
         if self.target_property != self.source_property:
             spec["target_property"] = self.target_property
-        if self.token_map_property != "pii_token_map":  # noqa: S105 — config field name, not a password
+        if self.token_map_property != "pii_token_map":
             spec["token_map_property"] = self.token_map_property
         if self.scope != "default":
             spec["scope"] = self.scope

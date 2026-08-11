@@ -43,7 +43,7 @@ def _is_exchange_wrapping_enabled() -> bool:
     Exchange API.
     """
     try:
-        from src.backend.core.config.features import (  # noqa: F401 — availability probe
+        from src.backend.core.config.features import (
             feature_flags,
         )
 
@@ -53,7 +53,7 @@ def _is_exchange_wrapping_enabled() -> bool:
         # ImportError — features module missing, AttributeError — config
         # not initialized, RuntimeError — feature_flags unavailable. Bare
         # `except Exception` маскировал unrelated runtime errors.
-        import logging  # noqa: F401 — availability probe
+        import logging
         logging.getLogger(__name__).debug(
             "sequential_mixin.workflow_exchange_wrapping_fallback",
             extra={"error": str(ff_exc)},

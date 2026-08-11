@@ -27,8 +27,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 try:
-    import pendulum  # noqa: F401 — availability probe
-    from pendulum import (  # noqa: F401 — availability probe
+    import pendulum
+    from pendulum import (
         DateTime as _PendulumDateTime,
     )
 

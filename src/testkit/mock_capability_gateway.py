@@ -43,7 +43,7 @@ from typing import Any
 
 from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
 
-__all__ = ("MockCapabilityGateway", "CapabilityDeniedError")
+__all__ = ("CapabilityDeniedError", "MockCapabilityGateway")
 
 
 class CapabilityDeniedError(PermissionError):

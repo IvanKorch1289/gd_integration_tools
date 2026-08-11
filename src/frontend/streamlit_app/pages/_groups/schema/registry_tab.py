@@ -107,11 +107,11 @@ def render_registry_tab() -> None:
     """Render Schema Registry tab content (6 sub-tabs for schema types)."""
     try:
         from src.backend.core.frontend_facade import (
-            feature_flags as _ff,  # noqa: E402, F401
+            feature_flags as _ff,
         )
 
         _FLAG_ENABLED = _ff.frontend_schema_registry_ui
-    except (ImportError, AttributeError, RuntimeError):  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError):
         # cycle-9/D-AUDIT-1040: narrow exceptions + observability.
         # ImportError — features module missing, AttributeError — API
         # change, RuntimeError — feature_flags unavailable.

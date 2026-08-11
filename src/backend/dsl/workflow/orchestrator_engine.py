@@ -156,7 +156,7 @@ class OrchestratorEngine:
 
         """
         try:
-            from src.backend.core.config.features import (  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
                 feature_flags,
             )
 

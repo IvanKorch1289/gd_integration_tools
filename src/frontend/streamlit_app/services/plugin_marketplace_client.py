@@ -99,7 +99,7 @@ def _is_transport_error(exc: Exception) -> bool:
 
     """
     try:
-        import httpx  # noqa: PLC0415
+        import httpx
 
         return isinstance(exc, (httpx.TransportError, httpx.ConnectError, OSError))
     except ImportError:
@@ -122,7 +122,7 @@ def list_plugins(status_filter: str = "all") -> list[dict[str, Any]]:
 
     """
     try:
-        import httpx  # noqa: PLC0415
+        import httpx
 
         with httpx.Client(timeout=5.0) as client:
             response = client.get(f"{_BASE_URL}/api/v1/admin/plugins/list")
@@ -133,7 +133,7 @@ def list_plugins(status_filter: str = "all") -> list[dict[str, Any]]:
                 if isinstance(data, list)
                 else data.get("plugins", data.get("items", []))
             )
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as plugins_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as plugins_exc:
         # cycle-9/D-AUDIT-1077: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError — wrong.
@@ -165,15 +165,15 @@ def get_plugin_manifest(name: str) -> dict[str, Any] | None:
 
     """
     try:
-        import httpx  # noqa: PLC0415
+        import httpx
 
         with httpx.Client(timeout=5.0) as client:
             response = client.get(f"{_BASE_URL}/api/v1/admin/plugins/{name}/manifest")
-            if response.status_code == 404:  # noqa: PLR2004
+            if response.status_code == 404:
                 return None
             response.raise_for_status()
             return response.json()
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, httpx.HTTPError) as manifest_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, httpx.HTTPError) as manifest_exc:
         # cycle-9/D-AUDIT-1077: см. выше — mirror для get_plugin_manifest
         # (+httpx.HTTPError для HTTP transport).
         import logging
@@ -184,7 +184,7 @@ def get_plugin_manifest(name: str) -> dict[str, Any] | None:
         return _MOCK_MANIFESTS.get(name)
 
 
-def toggle_plugin(name: str, active: bool) -> bool:  # noqa: FBT001
+def toggle_plugin(name: str, active: bool) -> bool:
     """Включает или отключает плагин через backend.
 
     Выполняет POST /api/v1/admin/plugins/{name}/toggle. При недоступности
@@ -201,14 +201,14 @@ def toggle_plugin(name: str, active: bool) -> bool:  # noqa: FBT001
     """
     body: dict[str, Any] = {"name": name, "active": active}
     try:
-        import httpx  # noqa: PLC0415
+        import httpx
 
         with httpx.Client(timeout=10.0) as client:
             response = client.post(
                 f"{_BASE_URL}/api/v1/admin/plugins/{name}/toggle", json=body
             )
-            return response.status_code < 400  # noqa: PLR2004
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, httpx.HTTPError) as toggle_exc:  # noqa: BLE001
+            return response.status_code < 400
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, httpx.HTTPError) as toggle_exc:
         # cycle-9/D-AUDIT-1077: см. выше — mirror для toggle.
         import logging
         logging.getLogger(__name__).debug(

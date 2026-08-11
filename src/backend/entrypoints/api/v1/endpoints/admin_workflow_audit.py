@@ -1,4 +1,4 @@
-# ruff: noqa: S608 — false positive (internal query with controlled parameters)
+
 """Admin workflow_audit endpoints — Sprint 12 K1 W1.
 
 Endpoints (mount /api/v1/admin/workflow-audit):

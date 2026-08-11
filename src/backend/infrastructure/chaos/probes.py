@@ -1,4 +1,4 @@
-# ruff: noqa: S311 — non-cryptographic use (load balancing, sampling, chaos testing)
+
 """Chaos engineering probes — controlled fault injection (S37.4).
 
 Назначение:
@@ -49,7 +49,7 @@ S168 W11 P2-1 DECISION (per master prompt v8):
 from __future__ import annotations
 
 import asyncio
-import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+import random
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Any
@@ -318,7 +318,7 @@ def is_chaos_enabled() -> bool:
         # ImportError — feature_flag service missing, AttributeError —
         # service not initialized, RuntimeError — backend unavailable.
         # Bare `except Exception` маскировал unrelated runtime errors.
-        import logging  # noqa: F401 — availability probe
+        import logging
         logging.getLogger(__name__).debug(
             "chaos_probes.is_chaos_enabled_fallback_false",
             extra={"error": str(ff_exc)},

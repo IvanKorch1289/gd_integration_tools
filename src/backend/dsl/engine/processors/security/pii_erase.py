@@ -1,4 +1,4 @@
-# ruff: noqa: S608 — false positive (internal query with controlled parameters)
+
 """PII Erasure DSL processor — 152-ФЗ compliance (S183).
 
 ADR-152FZ: тенант имеет право требовать полного удаления всех PII данных

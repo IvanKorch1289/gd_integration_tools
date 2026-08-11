@@ -80,7 +80,7 @@ async def _stream_invocation(
                     chunks.append(json.loads(raw))
                 except json.JSONDecodeError:
                     chunks.append({"raw": raw})
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return chunks, f"{type(exc).__name__}: {exc}"
 
 
@@ -121,7 +121,7 @@ if submitted:
         payload = json.loads(payload_raw or "{}")
         if not isinstance(payload, dict):
             raise ValueError("payload must be a JSON object")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Невалидный payload: {exc}")
         st.stop()
 
@@ -183,7 +183,7 @@ if submitted:
             with httpx.Client(timeout=30) as client:
                 resp = client.post(f"{BASE_URL}/api/v1/invocations", json=body)
             elapsed_ms = (time.perf_counter() - started) * 1000
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"HTTP error: {exc}")
             st.stop()
 
@@ -213,7 +213,7 @@ if submitted:
             st.session_state["invocation_history"] = st.session_state[
                 "invocation_history"
             ][:20]
-        except (ValueError, TypeError, AttributeError, KeyError) as inv_exc:  # noqa: BLE001
+        except (ValueError, TypeError, AttributeError, KeyError) as inv_exc:
             # cycle-9/D-AUDIT-1068: narrow exceptions + observability.
             # ValueError для invalid response, TypeError — wrong type,
             # AttributeError — API change, KeyError — missing key.
@@ -243,11 +243,11 @@ if st.button("Опросить") and poll_id:
             st.metric("HTTP", resp.status_code)
             try:
                 st.json(resp.json())
-            except (ValueError, TypeError):  # noqa: BLE001
+            except (ValueError, TypeError):
                 # cycle-9/D-AUDIT-1055: narrow exceptions + observability.
                 # ValueError для malformed JSON, TypeError для wrong type.
                 st.code(resp.text[:10_000])
-    except (ConnectionError, TimeoutError, RuntimeError, OSError) as poll_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, OSError) as poll_exc:
         # cycle-9/D-AUDIT-1055: см. выше — narrow для outer HTTP error.
         st.error(f"HTTP error: {poll_exc}")
 

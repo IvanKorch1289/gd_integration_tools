@@ -38,11 +38,11 @@ st.header("Монитор пулов")
 # ---------------------------------------------------------------------------
 try:
     from src.backend.core.frontend_facade import (
-        feature_flags as _ff,  # noqa: E402, F401
+        feature_flags as _ff,
     )
 
     _flag_enabled: bool = bool(getattr(_ff, "pool_monitor_enabled", False))
-except (ImportError, AttributeError, RuntimeError):  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError):
     # cycle-9/D-AUDIT-1056: narrow exceptions + observability.
     # ImportError — features module missing, AttributeError — API change,
     # RuntimeError — feature_flags unavailable.
@@ -140,17 +140,17 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
 
     """
     try:
-        from src.frontend.streamlit_app.api_clients import (  # noqa: PLC0415
+        from src.frontend.streamlit_app.api_clients import (
             get_api_client,
         )
 
         _client = get_api_client()
-        _data = _client._request(  # noqa: SLF001 — generic REST proxy
+        _data = _client._request(
             "GET", "/api/v1/admin/pools/snapshot"
         )
         if isinstance(_data, dict) and _data:
             return _data, True
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError):  # noqa: BLE001, S110 — endpoint может ещё не существовать
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError):
         # cycle-9/D-AUDIT-1057: narrow exceptions + observability (mirror
         # D-AUDIT-1054 для resilience/snapshot).
         st.error("Не удалось выполнить запрос — проверьте подключение к серверу")

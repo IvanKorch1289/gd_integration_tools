@@ -160,7 +160,7 @@ class InspectRunner:
     def _is_sdk_available(self) -> bool:
         """Проверяет наличие ``inspect-ai`` SDK (extra ``ai``)."""
         try:
-            import inspect_ai  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            import inspect_ai  # type: ignore[import-not-found]
 
             return True
         except ImportError:

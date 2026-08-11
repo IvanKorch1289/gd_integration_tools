@@ -38,7 +38,7 @@ class CertPrometheusExporter:
 
     def __init__(self) -> None:
         try:
-            from prometheus_client import (  # noqa: F401 — availability probe
+            from prometheus_client import (
                 CollectorRegistry,
                 Counter,
                 Gauge,

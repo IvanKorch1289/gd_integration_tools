@@ -33,7 +33,7 @@ with tab_route:
         with st.spinner("Загрузка маршрутов..."):
             routes = client.get("/api/v1/routes")
         names = [r.get("route_id", "") for r in routes.get("routes", []) if r]
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as routes_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as routes_exc:
         # cycle-9/D-AUDIT-1060: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError — wrong.
@@ -77,7 +77,7 @@ with tab_route:
                     for h in hints:
                         icon = "💡" if h["severity"] == "info" else "⚠️"
                         st.info(f"{icon} **{h['rule']}**: {h['message']}")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Анализ не удался: {exc}")
 
 
@@ -97,7 +97,7 @@ with tab_topn:
                 try:
                     rep = client.get(f"/api/v1/admin/routes/{rid}/parallelism-report")
                     results.append((rid, rep.get("estimated_speedup", 1.0)))
-                except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as rep_exc:  # noqa: BLE001, S112
+                except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as rep_exc:
                     # cycle-9/D-AUDIT-1067: narrow exceptions + observability.
                     # ConnectionError/TimeoutError — server unreachable,
                     # RuntimeError — API failure, ValueError — invalid
@@ -111,7 +111,7 @@ with tab_topn:
             results.sort(key=lambda x: x[1], reverse=True)
             for rid, speedup in results[:n]:
                 st.markdown(f"- **{rid}** — `{speedup:.2f}x` speedup")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Top-N не удался: {exc}")
 
 related_pages_footer("80_Параллелизм_конвейера")

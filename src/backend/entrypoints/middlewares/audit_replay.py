@@ -1,4 +1,4 @@
-# ruff: noqa: S311 — non-cryptographic use (load balancing, sampling, chaos testing)
+
 """Audit Replay Middleware — record request/response в Redis stream (cycle 45 pure ASGI).
 
 Используется для:
@@ -163,7 +163,7 @@ class AuditReplayMiddleware:
     ) -> None:
         """Отправляет запись в Redis stream (cycle 45 helper)."""
         try:
-            from src.backend.core.di.providers import (  # noqa: F401 — availability probe
+            from src.backend.core.di.providers import (
                 get_redis_stream_client_provider,
             )
 

@@ -92,7 +92,7 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
 
     """
     try:
-        from temporalio import (  # noqa: F401 — availability probe
+        from temporalio import (
             workflow as temporal_workflow,
         )
     except ImportError as exc:  # pragma: no cover

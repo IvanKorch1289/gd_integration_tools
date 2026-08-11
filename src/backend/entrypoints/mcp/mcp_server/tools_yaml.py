@@ -32,7 +32,7 @@ def _register_yaml_tools(mcp: Any) -> None:
         from src.backend.dsl.registry import route_registry
 
         try:
-            import yaml  # noqa: F401 — availability probe
+            import yaml
         except ImportError:
             return encode_json({"error": "PyYAML not installed"}).decode("utf-8")
 
@@ -63,7 +63,7 @@ def _register_yaml_tools(mcp: Any) -> None:
         from src.backend.dsl.registry import route_registry
 
         try:
-            from src.backend.dsl.yaml_loader import (  # noqa: F401 — availability probe
+            from src.backend.dsl.yaml_loader import (
                 load_pipeline_from_yaml,
             )
         except ImportError:

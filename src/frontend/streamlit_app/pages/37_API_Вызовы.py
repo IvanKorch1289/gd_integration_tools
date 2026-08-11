@@ -44,7 +44,7 @@ if "api_history" not in st.session_state:
 if st.button("Отправить", type="primary"):
     try:
         headers = json.loads(headers_raw) if headers_raw.strip() else {}
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Невалидные headers: {exc}")
         headers = None
 
@@ -52,7 +52,7 @@ if st.button("Отправить", type="primary"):
     if method != "GET" and body_raw.strip():
         try:
             body = json.loads(body_raw)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Невалидный body: {exc}")
             body = None
 
@@ -69,7 +69,7 @@ if st.button("Отправить", type="primary"):
             st.metric("Время, мс", f"{elapsed_ms:.1f}")
             try:
                 st.json(resp.json())
-            except (ValueError, TypeError):  # noqa: BLE001
+            except (ValueError, TypeError):
                 # cycle-9/D-AUDIT-1039: narrow exceptions + observability.
                 # ValueError для malformed JSON, TypeError для wrong
                 # response type.
@@ -85,7 +85,7 @@ if st.button("Отправить", type="primary"):
                 },
             )
             st.session_state["api_history"] = st.session_state["api_history"][:20]
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(str(exc))
 
 st.divider()

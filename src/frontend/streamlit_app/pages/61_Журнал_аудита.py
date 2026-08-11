@@ -54,7 +54,7 @@ try:
         records = client._request("GET", "/api/v1/admin/audit", params=params)
     if not isinstance(records, list):
         records = []
-except Exception as exc:  # noqa: BLE001
+except Exception as exc:
     st.error(f"Ошибка: {exc}")
     records = []
     st.warning(f"Не удалось получить аудит: {exc}")

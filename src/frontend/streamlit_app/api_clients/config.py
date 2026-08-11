@@ -16,7 +16,7 @@ class ConfigClient(BaseAPIClient):
         """Метод get_config (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/config")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as cfg_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as cfg_exc:
             # cycle-9/D-AUDIT-1069: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -34,7 +34,7 @@ class ConfigClient(BaseAPIClient):
             return self._request(
                 "GET", "/api/v1/admin/trace-logs", params={"limit": limit}
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as trace_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as trace_exc:
             # cycle-9/D-AUDIT-1069: см. выше — mirror для trace-logs.
             import logging
             logging.getLogger(__name__).debug(

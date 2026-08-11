@@ -86,10 +86,10 @@ class VaultSecretProcessor(BaseProcessor):
         if not await self.auth_check(exchange, action="read"):
             return
         try:
-            from src.backend.infrastructure.secrets.vault_backend import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.secrets.vault_backend import (
                 VaultBackend,
             )
-            from src.backend.infrastructure.secrets.vault_client import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.secrets.vault_client import (
                 VaultConfig,
             )
         except ImportError as exc:

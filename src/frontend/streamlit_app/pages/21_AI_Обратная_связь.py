@@ -158,7 +158,7 @@ def _render_dspy_tab() -> None:
     )
     try:
         data = client.get("/admin/feedback/training-runs?limit=10")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Ошибка: {exc}")
         data = {"runs": [], "count": 0}
     runs = data.get("runs", []) if isinstance(data, dict) else []
@@ -182,7 +182,7 @@ def _render_counts_tab() -> None:
         )
         count = data.get("count", 0) if isinstance(data, dict) else 0
         st.metric("Размеченные ответы", count)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Ошибка: {exc}")
 
 

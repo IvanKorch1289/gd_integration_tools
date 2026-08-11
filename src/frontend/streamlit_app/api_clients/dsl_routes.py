@@ -21,7 +21,7 @@ class DSLRoutesClient(BaseAPIClient):
         try:
             result = self._request("GET", "/api/v1/admin/dsl-routes")
             return result if isinstance(result, list) else []
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as list_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as list_exc:
             # cycle-9/D-AUDIT-1066: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -37,7 +37,7 @@ class DSLRoutesClient(BaseAPIClient):
         """GET /api/v1/admin/dsl-routes/{id} — yaml + spec + python."""
         try:
             return self._request("GET", f"/api/v1/admin/dsl-routes/{route_id}")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as get_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as get_exc:
             # cycle-9/D-AUDIT-1066: см. выше — mirror для get.
             import logging
             logging.getLogger(__name__).debug(
@@ -63,7 +63,7 @@ class DSLRoutesClient(BaseAPIClient):
         try:
             self._request("DELETE", f"/api/v1/admin/dsl-routes/{route_id}")
             return True
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as del_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as del_exc:
             # cycle-9/D-AUDIT-1071: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -81,7 +81,7 @@ class DSLRoutesClient(BaseAPIClient):
             return self._request(
                 "POST", "/api/v1/admin/dsl-routes/validate", json={"yaml": yaml_str}
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as exc:
             return {"valid": False, "error": str(exc)}
 
     def diff_dsl_route(self, route_id: str, yaml_str: str) -> dict[str, Any] | None:
@@ -92,7 +92,7 @@ class DSLRoutesClient(BaseAPIClient):
                 f"/api/v1/admin/dsl-routes/{route_id}/diff",
                 json={"yaml": yaml_str},
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as diff_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as diff_exc:
             # cycle-9/D-AUDIT-1071: см. выше — mirror для diff.
             import logging
             logging.getLogger(__name__).debug(
@@ -116,7 +116,7 @@ class DSLRoutesClient(BaseAPIClient):
                 params={"limit": limit},
             )
             return result if isinstance(result, list) else []
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as traces_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as traces_exc:
             # cycle-9/D-AUDIT-1071: см. выше — mirror для traces.
             import logging
             logging.getLogger(__name__).debug(
@@ -139,7 +139,7 @@ class DSLRoutesClient(BaseAPIClient):
                 "/api/v1/dsl/execute-registered",
                 json={"route_id": route_id, "body": body or {}},
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"status": "error", "error": str(exc), "body": None, "trace": []}
 
     def dry_run(
@@ -156,7 +156,7 @@ class DSLRoutesClient(BaseAPIClient):
                 "/api/v1/dsl/dry-run",
                 json={"route": route, "sample_payload": sample_payload, "seed": seed},
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {
                 "error": str(exc),
                 "route_id": None,

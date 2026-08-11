@@ -164,7 +164,7 @@ class MongoSource:
 
         """
         try:
-            import motor.motor_asyncio  # type: ignore[import-not-found]  # noqa: F401 — availability probe
+            import motor.motor_asyncio  # type: ignore[import-not-found]
         except ImportError as exc:
             raise ImportError(
                 "motor not installed. Add 'motor>=3.3' to dependencies "

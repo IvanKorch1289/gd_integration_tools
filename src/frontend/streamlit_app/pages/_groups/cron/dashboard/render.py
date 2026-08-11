@@ -44,7 +44,7 @@ def _render_body() -> None:
             if hasattr(client, "list_schedules")
             else []
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось получить список schedules: {exc}")
         rows = []
 
@@ -93,7 +93,7 @@ def _render_body() -> None:
                     try:
                         asyncio.run(client.pause_schedule(name))
                         st.success(f"Paused {name}")
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         st.error(f"Ошибка pause: {exc}")
             if action_cols[1].button("Resume", key=f"resume_{name}"):
                 if not hasattr(client, "resume_schedule"):
@@ -102,7 +102,7 @@ def _render_body() -> None:
                     try:
                         asyncio.run(client.resume_schedule(name))
                         st.success(f"Resumed {name}")
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         st.error(f"Ошибка resume: {exc}")
             if action_cols[2].button("Run now", key=f"run_{name}"):
                 if not hasattr(client, "run_schedule_now"):
@@ -111,7 +111,7 @@ def _render_body() -> None:
                     try:
                         asyncio.run(client.run_schedule_now(name))
                         st.success(f"Triggered {name}")
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         st.error(f"Ошибка run-now: {exc}")
             if action_cols[3].button("Удалить", key=f"delete_{name}"):
                 try:
@@ -119,7 +119,7 @@ def _render_body() -> None:
                         client, "delete_schedule"
                     ) else None
                     st.success(f"Deleted {name}")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Ошибка delete: {exc}")
 
 

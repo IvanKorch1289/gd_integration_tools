@@ -1,4 +1,4 @@
-# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+
 """Scraping Pipeline DSL processors — structured extraction, pagination, API proxy.
 
 Provides web scraping capabilities within DSL routes:
@@ -86,7 +86,7 @@ _ACCEPT_LANGUAGES = [
 
 def _stealth_headers(referer: str | None = None) -> dict[str, str]:
     """Generate randomized browser-like headers for each request."""
-    import random  # noqa: S311 — non-cryptographic use (scraping user-agent rotation)
+    import random
 
     headers = {
         "User-Agent": random.choice(  # non-cryptographic use
@@ -108,7 +108,7 @@ def _stealth_headers(referer: str | None = None) -> dict[str, str]:
 async def _random_delay(min_s: float = 1.0, max_s: float = 3.0) -> None:
     """Random delay between requests to avoid rate-limiting."""
     import asyncio
-    import random  # noqa: S311 — non-cryptographic use (scraping user-agent rotation)
+    import random
 
     await asyncio.sleep(
         min_s + random.random() * (max_s - min_s),  # non-cryptographic use
@@ -189,7 +189,7 @@ class ScrapeProcessor(BaseProcessor):
             return
 
         try:
-            from selectolax.parser import HTMLParser  # noqa: F401 — availability probe
+            from selectolax.parser import HTMLParser
 
             tree = HTMLParser(html)
         except ImportError:
@@ -286,7 +286,7 @@ class PaginateProcessor(BaseProcessor):
             return
 
         try:
-            from selectolax.parser import HTMLParser  # noqa: F401 — availability probe
+            from selectolax.parser import HTMLParser
         except ImportError:
             exchange.fail("selectolax not installed")
             return

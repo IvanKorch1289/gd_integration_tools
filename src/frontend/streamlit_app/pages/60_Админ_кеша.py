@@ -39,7 +39,7 @@ with tab_redis:
         )
         if not isinstance(keys, list):
             keys = []
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         keys = []
         st.error(f"Не удалось получить ключи: {exc}")
 
@@ -50,13 +50,13 @@ with tab_redis:
             try:
                 data = client._request("GET", f"/api/v1/admin/cache/{key}")
                 st.json(data)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(str(exc))
             if st.button("Удалить", key=f"del_{key}"):
                 try:
                     client._request("DELETE", f"/api/v1/admin/cache/{key}")
                     st.success("Удалено")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(str(exc))
 
     st.divider()
@@ -72,7 +72,7 @@ with tab_redis:
                 params={"pattern": invalidate_pattern},
             )
             st.success(f"Удалено: {resp}")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(str(exc))
 
 with tab_rag:

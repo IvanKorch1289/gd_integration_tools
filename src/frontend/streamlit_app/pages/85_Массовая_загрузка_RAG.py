@@ -35,7 +35,7 @@ def _check_feature_flag() -> bool:
         if isinstance(flags, dict):
             return bool(flags.get(FEATURE_FLAG_NAME, False))
         return False
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError) as ff_exc:  # noqa: BLE001
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError) as ff_exc:
         # cycle-9/D-AUDIT-1063: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError —
@@ -90,7 +90,7 @@ with tab_file:
             for f in uploaded_files:
                 try:
                     content = f.read().decode("utf-8", errors="replace")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Ошибка чтения {getattr(f, 'name', 'file')}: {exc}")
                     continue
 
@@ -111,7 +111,7 @@ with tab_file:
                         )
                         st.success("Массовая загрузка завершена!")
                         st.json(result)
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         st.error(f"Ошибка загрузки: {exc}")
 
 # ─── Tab 2: JSON Input ───────────────────────────────────────────────────────
@@ -195,7 +195,7 @@ with tab_json:
                         )
                         st.success("Массовая загрузка завершена!")
                         st.json(result)
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         st.error(f"Ошибка загрузки: {exc}")
         except json.JSONDecodeError as exc:
             st.error(f"JSON decode error: {exc}")
@@ -221,7 +221,7 @@ if st.button("Обновить статус", key="refresh_status"):
                     st.json(item)
         else:
             st.info("Нет последних задач ingest.")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.warning(f"Could not fetch recent tasks: {exc}")
 
 related_pages_footer("85_Массовая_загрузка_RAG")

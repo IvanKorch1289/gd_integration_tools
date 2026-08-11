@@ -115,7 +115,7 @@ def _render_template_card(tmpl, client: APIClient) -> None:
             mermaid = to_mermaid(decl)
             st.code(mermaid, language="mermaid")
             st.caption("Скопируйте Mermaid-код в mermaid.live для рендера.")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Mermaid render failed: {exc}")
 
     target = st.text_input(
@@ -153,5 +153,5 @@ def _deploy_template(tmpl, target: str, client: APIClient) -> None:
             st.success(f"Workflow {tmpl.name!r} развёрнут в {target}")
         else:
             st.error(f"HTTP {resp.status_code}: {resp.text}")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Deploy failed: {exc}")

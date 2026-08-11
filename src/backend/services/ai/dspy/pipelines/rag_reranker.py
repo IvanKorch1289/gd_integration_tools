@@ -56,7 +56,7 @@ def _resolve_bge_reranker() -> Any:
         return None
 
     try:
-        from FlagEmbedding import (  # noqa: F401 — availability probe
+        from FlagEmbedding import (
             FlagReranker,  # type: ignore[import-not-found]
         )
     except ImportError as exc:

@@ -1,4 +1,4 @@
-# ruff: noqa: S608 — false positive (internal query with controlled parameters)
+
 """Immutable append-only audit log с HMAC-chain (IL-SEC2).
 
 Каждое событие содержит:

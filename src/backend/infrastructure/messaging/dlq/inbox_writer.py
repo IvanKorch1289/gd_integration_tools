@@ -1,4 +1,4 @@
-# ruff: noqa: S608 — false positive (internal query with controlled parameters)
+
 """InboxDLQWriter — пишет DLQEnvelope в Postgres table (Sprint 9 K2 W1).
 
 Используется когда messaging не настроен (dev_light) или как fallback при

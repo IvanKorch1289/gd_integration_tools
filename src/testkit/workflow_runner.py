@@ -27,7 +27,7 @@ from typing import Any
 
 from src.backend.core.workflow import WorkflowHandle, WorkflowResult
 
-__all__ = ("WorkflowRunner", "WorkflowRunResult")
+__all__ = ("WorkflowRunResult", "WorkflowRunner")
 
 
 @dataclass(slots=True, frozen=True)

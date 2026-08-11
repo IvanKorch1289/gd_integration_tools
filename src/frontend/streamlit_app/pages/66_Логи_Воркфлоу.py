@@ -14,7 +14,7 @@ UTC = UTC
 import pandas as pd
 import streamlit as st
 
-from src.backend.core.frontend_facade import feature_flags  # noqa: E402, F401
+from src.backend.core.frontend_facade import feature_flags
 from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
@@ -198,7 +198,7 @@ with tab_live:
             records = api._request("GET", "/api/v1/admin/audit/tail", params=params)
             if isinstance(records, list):
                 return records
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):
             # cycle-9/D-AUDIT-1047: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -208,7 +208,7 @@ with tab_live:
                 records = api._request("GET", "/api/v1/admin/audit", params=params)
                 if isinstance(records, list):
                     return records
-            except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):  # noqa: BLE001
+            except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):
                 # cycle-9/D-AUDIT-1047: см. выше — тот же narrow для fallback path.
                 return []
         return []

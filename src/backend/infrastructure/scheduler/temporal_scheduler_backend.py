@@ -171,7 +171,7 @@ class TemporalSchedulerBackend:
 
         client = await self._factory.get_client(self._namespace)
         try:
-            from temporalio.client import (  # noqa: F401 — availability probe
+            from temporalio.client import (
                 ScheduleActionStartWorkflow,
             )
         except ImportError as exc:
@@ -391,7 +391,7 @@ class TemporalSchedulerBackend:
 
         """
         try:
-            from temporalio.client import (  # noqa: F401 — availability probe
+            from temporalio.client import (
                 ScheduleSpec,
             )
         except ImportError as exc:

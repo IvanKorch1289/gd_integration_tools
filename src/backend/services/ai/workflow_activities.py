@@ -211,7 +211,7 @@ async def llm_activity(input_: LLMActivityInput) -> LLMActivityOutput:
     """
     heartbeat = None
     try:
-        from temporalio import (  # noqa: F401 — availability probe
+        from temporalio import (
             activity as temporal_activity,
         )
 
@@ -228,7 +228,7 @@ async def llm_activity(input_: LLMActivityInput) -> LLMActivityOutput:
 
 # Опционально пытаемся пометить функцию как @activity.defn.
 try:
-    from temporalio import (  # noqa: F401 — availability probe
+    from temporalio import (
         activity as _temporal_activity_mod,
     )
 

@@ -1,4 +1,4 @@
-# ruff: noqa: S105 — false positive (config field name, not a password)
+
 """DSL-процессор ``ldap_query`` — LDAP search через ldap3.
 
 Wave ``[wave:s5/k3-w3-processor-pack-3]``.
@@ -155,7 +155,7 @@ class LdapQueryProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         try:
-            from src.backend.core.config.features import (  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
                 feature_flags,
             )
 
@@ -165,7 +165,7 @@ class LdapQueryProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1707: narrow exceptions + observability (mirror
             # D-AUDIT-1705/1706 pattern).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "ldap_query.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

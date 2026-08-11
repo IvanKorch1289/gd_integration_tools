@@ -86,7 +86,7 @@ def _is_transport_error(exc: Exception) -> bool:
 
     """
     try:
-        import httpx  # noqa: PLC0415
+        import httpx
 
         return isinstance(exc, (httpx.TransportError, httpx.ConnectError, OSError))
     except ImportError:
@@ -104,7 +104,7 @@ def list_actions() -> list[dict[str, Any]]:
 
     """
     try:
-        import httpx  # noqa: PLC0415
+        import httpx
 
         with httpx.Client(timeout=5.0) as client:
             response = client.get(f"{_BASE_URL}/api/v1/admin/actions/list")
@@ -114,7 +114,7 @@ def list_actions() -> list[dict[str, Any]]:
             if isinstance(data, list):
                 return data
             return data.get("actions", data.get("items", []))
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         if _is_transport_error(exc) or not _is_transport_error(exc):
             # возвращаем mock при любой ошибке — цель: dev без backend
             return list(_MOCK_ACTIONS)
@@ -140,13 +140,13 @@ def invoke(name: str, payload: dict[str, Any], mode: str) -> dict[str, Any]:
     """
     body: dict[str, Any] = {"action": name, "payload": payload, "mode": mode}
     try:
-        import httpx  # noqa: PLC0415
+        import httpx
 
         with httpx.Client(timeout=30.0) as client:
             response = client.post(
                 f"{_BASE_URL}/api/v1/admin/actions/invoke", json=body
             )
-            if response.status_code >= 400:  # noqa: PLR2004
+            if response.status_code >= 400:
                 try:
                     detail = response.json()
                 except json.JSONDecodeError:
@@ -158,7 +158,7 @@ def invoke(name: str, payload: dict[str, Any], mode: str) -> dict[str, Any]:
                     "mode": mode,
                 }
             return response.json()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         # mock fallback — эмулируем успешный ответ для dev
         return {
             "status": "mock",
@@ -184,15 +184,15 @@ def get_action_spec(name: str) -> dict[str, Any] | None:
 
     """
     try:
-        import httpx  # noqa: PLC0415
+        import httpx
 
         with httpx.Client(timeout=5.0) as client:
             response = client.get(f"{_BASE_URL}/api/v1/admin/actions/{name}/spec")
-            if response.status_code == 404:  # noqa: PLR2004
+            if response.status_code == 404:
                 return None
             response.raise_for_status()
             return response.json()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         # fallback к локальному mock-словарю
         _ = exc  # транспортная ошибка — отдаём заглушку
         return _MOCK_SPECS.get(name)

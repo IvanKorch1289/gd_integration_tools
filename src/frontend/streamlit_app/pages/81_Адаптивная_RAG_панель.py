@@ -32,7 +32,7 @@ def _fetch() -> dict | None:
         return None
     try:
         return APIClient().get("/admin/rag/strategy-stats")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось получить stats: {exc}")
         return None
 

@@ -26,7 +26,7 @@ def _supported_timezones() -> list[str]:
         from zoneinfo import available_timezones
 
         return sorted(available_timezones())
-    except (ImportError, AttributeError, RuntimeError, OSError) as tz_exc:  # noqa: BLE001
+    except (ImportError, AttributeError, RuntimeError, OSError) as tz_exc:
         # cycle-9/D-AUDIT-1041: narrow exceptions + observability.
         # ImportError — zoneinfo missing (Python <3.9), AttributeError
         # — API change, RuntimeError — system tzdata unavailable,
@@ -100,7 +100,7 @@ def _render_body() -> None:
                 },
                 timeout=5,
             ).json()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.error(f"Ошибка проверки выражения: {exc}")
             body = None
 
@@ -147,7 +147,7 @@ def _render_body() -> None:
                     st.success(f"Задача {job_name!r} зарегистрирована")
                 else:
                     st.error(f"HTTP {resp.status_code}: {resp.text}")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Ошибка регистрации: {exc}")
 
     with st.expander("Dry-run (manage.py workflow dryrun)"):

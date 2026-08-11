@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     pass
 
-__all__ = ("list_schemas", "read_schema", "validate_openapi", "diff_schemas")
+__all__ = ("diff_schemas", "list_schemas", "read_schema", "validate_openapi")
 
 # Корень проекта относительно расположения этого файла:
 # services/ → streamlit_app/ → frontend/ → src/ → <root>
@@ -105,10 +105,10 @@ def validate_openapi(content: str) -> tuple[bool, str]:
         data = json.loads(content)
     except json.JSONDecodeError:
         try:
-            import yaml  # noqa: PLC0415 — lazy import
+            import yaml
 
             data = yaml.safe_load(content)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return False, f"Не удалось распарсить схему: {exc}"
 
     if not isinstance(data, dict):

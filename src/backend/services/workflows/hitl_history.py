@@ -1,4 +1,4 @@
-# ruff: noqa: S608 — false positive (internal query with controlled parameters)
+
 """HITL history service — Sprint 12 K5 W2.
 
 Читает workflow_audit ClickHouse записи с event_type IN

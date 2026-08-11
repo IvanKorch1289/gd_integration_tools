@@ -30,7 +30,7 @@ from src.backend.core.cache.facade import (
     MemoryCacheFacade,
     UnifiedCacheFacade,
 )
-from src.backend.core.cache.rag import ThreeTierRagCache  # noqa: F401 — re-export
+from src.backend.core.cache.rag import ThreeTierRagCache
 
 __all__ = (
     "CacheError",

@@ -39,10 +39,10 @@ def build_clamav_scanner_if_enabled() -> ClamAVPayloadScanner | None:
         return None
 
     try:
-        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (  # noqa: F401 — availability probe
+        from src.backend.infrastructure.antivirus.backends.clamav_tcp import (
             ClamAVTcpBackend,
         )
-        from src.backend.infrastructure.antivirus.payload_scanner import (  # noqa: F401 — availability probe
+        from src.backend.infrastructure.antivirus.payload_scanner import (
             ClamAVPayloadScanner,
         )
     except ImportError as exc:

@@ -20,7 +20,7 @@ class MetricsClient(BaseAPIClient):
         """Метод get_metrics (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/metrics")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as metrics_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as metrics_exc:
             # cycle-9/D-AUDIT-1065: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError — wrong.
@@ -35,7 +35,7 @@ class MetricsClient(BaseAPIClient):
         """Метод get_health (см. signature)."""
         try:
             return self._request("GET", "/api/v1/health/components")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as health_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as health_exc:
             # cycle-9/D-AUDIT-1065: см. выше — mirror для health.
             import logging
             logging.getLogger(__name__).debug(

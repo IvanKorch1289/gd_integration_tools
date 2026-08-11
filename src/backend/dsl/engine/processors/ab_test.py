@@ -1,4 +1,4 @@
-# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+
 """ABTestProcessor — A/B-эксперимент в DSL pipeline (S10 K3 W3, DSL-1.4).
 
 Делит трафик между двумя ветками (variant A / variant B) по
@@ -37,7 +37,7 @@ configurable split (например 0.7 / 0.3) и трекает выбранн
 from __future__ import annotations
 
 import hashlib
-import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+import random
 from typing import Any
 
 from src.backend.core.logging import get_logger

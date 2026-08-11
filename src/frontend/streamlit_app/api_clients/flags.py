@@ -16,7 +16,7 @@ class FlagsClient(BaseAPIClient):
         """Метод get_flags (см. signature)."""
         try:
             return self._request("GET", "/api/v1/admin/feature-flags")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as flags_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as flags_exc:
             # cycle-9/D-AUDIT-1070: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -37,7 +37,7 @@ class FlagsClient(BaseAPIClient):
                 json={"enabled": enabled},
             )
             return True
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as toggle_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as toggle_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для toggle.
             import logging
             logging.getLogger(__name__).debug(
@@ -54,7 +54,7 @@ class FlagsClient(BaseAPIClient):
         """
         try:
             return self._request("GET", "/api/v1/admin/feature-flags")
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as list_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as list_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для list_overrides.
             import logging
             logging.getLogger(__name__).debug(
@@ -73,7 +73,7 @@ class FlagsClient(BaseAPIClient):
                 f"/api/v1/admin/feature-flags/{flag}",
                 json={"value": value, "tenant_id": tenant_id, "actor": actor},
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as set_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as set_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для set_override.
             import logging
             logging.getLogger(__name__).debug(
@@ -93,7 +93,7 @@ class FlagsClient(BaseAPIClient):
             return self._request(
                 "DELETE", f"/api/v1/admin/feature-flags/{flag}", params=params
             )
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as clear_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as clear_exc:
             # cycle-9/D-AUDIT-1070: см. выше — mirror для clear_override.
             import logging
             logging.getLogger(__name__).debug(

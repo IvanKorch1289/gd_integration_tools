@@ -1,4 +1,4 @@
-# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+
 """Локальный dry-run executor для DSL routes (S10 K3 W4, DSL-1.5).
 
 Эмулирует выполнение route'а в memory без side-effects:
@@ -16,7 +16,7 @@ Dry-run — это "what would happen" для preview.
 
 from __future__ import annotations
 
-import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+import random
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Any

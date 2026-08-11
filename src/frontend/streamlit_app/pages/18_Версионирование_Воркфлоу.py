@@ -31,7 +31,7 @@ try:
 
     registry = get_global_registry()
     all_ids = sorted(registry.all_workflow_ids())
-except Exception as exc:  # noqa: BLE001
+except Exception as exc:
     all_ids = []
     st.warning(f"Registry недоступен: {exc}")
 
@@ -72,7 +72,7 @@ else:
                             st.rerun()
                         else:
                             st.error(f"HTTP {resp.status_code}: {resp.text}")
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         st.error(f"Ошибка закрепления: {exc}")
             else:
                 cols[1].write("")
@@ -102,7 +102,7 @@ else:
                         st.rerun()
                     else:
                         st.error(f"HTTP {resp.status_code}: {resp.text}")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Ошибка отката: {exc}")
 
     st.divider()
@@ -127,7 +127,7 @@ else:
                     "Нет running executions или Temporal Client не поддерживает "
                     "count_running_per_version."
                 )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.warning(f"Счётчик запущенных недоступен: {exc}")
 
 related_pages_footer("18_Версионирование_Воркфлоу")

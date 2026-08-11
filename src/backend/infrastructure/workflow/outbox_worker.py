@@ -110,7 +110,7 @@ def start_outbox_worker(*, interval_seconds: int = 5, batch_size: int = 100) -> 
     if _scheduler is not None:
         return
     try:
-        from apscheduler.schedulers.asyncio import (  # noqa: F401 — availability probe
+        from apscheduler.schedulers.asyncio import (
             AsyncIOScheduler,
         )
     except ImportError:

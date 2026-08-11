@@ -53,7 +53,7 @@ with tab_status:
     def _load_snapshot():
         try:
             return client.get("/tech/degradation/snapshot")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"error": str(exc)}
 
     snapshot = _load_snapshot()
@@ -98,7 +98,7 @@ with tab_switch:
                 )
                 st.success(f"Переключено на {new_mode}")
                 st.cache_data.clear()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Переключение не удалось: {exc}")
 
 
@@ -121,7 +121,7 @@ with tab_history:
                     if t.get("reason"):
                         st.caption(t["reason"])
                     st.divider()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось получить историю переходов режима: {exc}")
 
 related_pages_footer("78_Плавная_деградация")

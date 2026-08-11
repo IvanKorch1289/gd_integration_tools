@@ -176,7 +176,7 @@ class BasePydanticAgent[ResultT: BaseModel]:
     def _build_agent(self, model_name: str | None, system_prompt: str | None) -> Any:
         """Создаёт ``pydantic_ai.Agent`` с указанной моделью/prompt."""
         try:
-            from pydantic_ai import Agent  # noqa: F401 — availability probe
+            from pydantic_ai import Agent
         except ImportError as exc:
             raise PydanticAIUnavailable(
                 "pydantic-ai не установлен — добавьте extra '[ai-2026]'.",

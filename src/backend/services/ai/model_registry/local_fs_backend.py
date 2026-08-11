@@ -1,4 +1,4 @@
-# ruff: noqa: S108, S314 — false positive (controlled XML/tempfile usage)
+
 """Local filesystem Model Registry backend.
 
 Wave: ``[wave:s29/local-models-repository]``.

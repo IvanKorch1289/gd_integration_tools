@@ -33,7 +33,7 @@ client = get_api_client()
 with st.spinner("Загрузка тенантов..."):
     try:
         tenants_payload = client.get_tenants()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Ошибка API: {exc}")
         st.info("Backend недоступен или вернул ошибку.", icon="ℹ️")
         st.stop()

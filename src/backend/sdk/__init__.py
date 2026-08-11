@@ -19,12 +19,12 @@ Extension points:
 
 from __future__ import annotations as annotations
 
-from src.backend.core.clock import Clock  # noqa: F401 — re-export
-from src.backend.core.di.app_state import app_state_singleton  # noqa: F401 — re-export
-from src.backend.core.errors import BaseError  # noqa: F401 — re-export
+from src.backend.core.clock import Clock
+from src.backend.core.di.app_state import app_state_singleton
+from src.backend.core.errors import BaseError
 from src.backend.core.svcs_registry import get_service, register_factory
-from src.backend.dsl.engine.exchange import Exchange  # noqa: F401 — re-export
-from src.backend.dsl.engine.pipeline import Pipeline  # noqa: F401 — re-export
+from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.pipeline import Pipeline
 
 __all__ = [
     # AI Tool Policy (S170 P0-7)
@@ -87,7 +87,7 @@ def __getattr__(name: str):
 
         return NotebookRegistry
     if name == "AgentToolPolicy":
-        from src.backend.ai.policy import AgentToolPolicy  # noqa: F401 — re-export
+        from src.backend.ai.policy import AgentToolPolicy
 
         return AgentToolPolicy
     if name == "get_scheduler_provider":

@@ -28,19 +28,19 @@ from src.backend.entrypoints.mcp.namespaces import get_namespace_for_action
 logger = get_logger(__name__)
 
 try:
-    from fastmcp import FastMCP  # noqa: F401 — availability probe
+    from fastmcp import FastMCP
 except ImportError:  # pragma: no cover - optional FastMCP dependency
     FastMCP = None  # type: ignore[misc,assignment]
 
 try:
-    from fastmcp.server.auth.providers.jwt import (  # noqa: F401 — availability probe
+    from fastmcp.server.auth.providers.jwt import (
         JWTVerifier,
     )
 except ImportError:  # pragma: no cover - optional FastMCP 3.x dependency
     JWTVerifier = None  # type: ignore[misc,assignment]
 
 try:
-    from src.backend.core.ai.skill_registry import (  # noqa: F401 — availability probe
+    from src.backend.core.ai.skill_registry import (
         SkillRegistry,
     )
 except ImportError:  # pragma: no cover - optional skill registry dependency

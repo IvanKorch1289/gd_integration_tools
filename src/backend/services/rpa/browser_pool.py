@@ -191,7 +191,7 @@ class PlaywrightBrowserPool:
         """Lazy-import patchright (preferred) или playwright (fallback)."""
         if self._prefer_patchright:
             try:
-                from patchright import (  # noqa: F401 — availability probe
+                from patchright import (
                     async_api,  # type: ignore[import-not-found]
                 )
 
@@ -202,7 +202,7 @@ class PlaywrightBrowserPool:
                     "установите: uv sync --extra rpa",
                 )
         try:
-            from playwright import async_api  # noqa: F401 — availability probe
+            from playwright import async_api
 
             return async_api
         except ImportError as exc:

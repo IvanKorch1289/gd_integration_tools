@@ -74,7 +74,7 @@ def render_macros(
     env = Environment(  # nosec B701
         loader=FileSystemLoader(loader_path),
         undefined=StrictUndefined,
-        autoescape=False,  # noqa: S701 — internal macro preprocessing (нет user input в macro definitions)
+        autoescape=False,
         keep_trailing_newline=True,
         trim_blocks=True,
         lstrip_blocks=True,

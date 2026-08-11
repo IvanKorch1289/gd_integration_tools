@@ -217,7 +217,7 @@ class PolicyChain:
 
         """
         try:
-            from src.backend.core.config.features import (  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
                 feature_flags,
             )
 
@@ -233,7 +233,7 @@ class PolicyChain:
             # ImportError — PolicyMarkerProcessor missing, AttributeError
             # — API change, RuntimeError — DI unavailable, TypeError —
             # wrong kwargs.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "policy_mixin.disabled_marker_failed",
                 extra={"policy_name": name, "error": str(marker_exc)},
@@ -266,7 +266,7 @@ class PolicyMarkerProcessor:
     async def process(self, exchange: Any, context: Any) -> None:
         """Записать факт применения policy в exchange.properties."""
         try:
-            from src.backend.core.config.features import (  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
                 feature_flags,
             )
 
@@ -275,7 +275,7 @@ class PolicyMarkerProcessor:
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1725: narrow exceptions + observability (mirror
             # D-AUDIT-1724 для marker path).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "policy_mixin.chainable_check_failed",
                 extra={"policy_name": self.policy_name, "error": str(ff_exc)},
@@ -291,7 +291,7 @@ class PolicyMarkerProcessor:
 
         # Интеграция с ResilienceCoordinator (опционально)
         try:
-            from src.backend.infrastructure.resilience.coordinator import (  # noqa: F401 — availability probe
+            from src.backend.infrastructure.resilience.coordinator import (
                 ResilienceCoordinator,
             )
 

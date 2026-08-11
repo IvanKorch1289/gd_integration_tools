@@ -249,7 +249,7 @@ async def start_temporal_worker_runtime(
         return
 
     try:
-        from src.backend.infrastructure.workflow.temporal_client import (  # noqa: F401 — availability probe
+        from src.backend.infrastructure.workflow.temporal_client import (
             TemporalClientFactory,
         )
     except ImportError as exc:
@@ -260,7 +260,7 @@ async def start_temporal_worker_runtime(
         return
 
     try:
-        from src.backend.core.config.settings import (  # noqa: F401 — availability probe
+        from src.backend.core.config.settings import (
             settings,
         )
 
@@ -298,7 +298,7 @@ async def start_temporal_worker_runtime(
     # Pre-seed factory cache — чтобы :meth:`TemporalWorkerPool.register_worker`
     # использовал уже подключённый client, а не переподключался.
     try:
-        from src.backend.infrastructure.workflow.temporal_client import (  # noqa: F401 — availability probe
+        from src.backend.infrastructure.workflow.temporal_client import (
             TemporalWorkerPool,
             _ClientCacheEntry,
         )

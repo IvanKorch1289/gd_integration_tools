@@ -51,7 +51,7 @@ client = get_api_client()
 try:
     with st.spinner("Загрузка конфигурации..."):
         config = client._request("GET", "/api/v1/admin/config")
-except Exception as exc:  # noqa: BLE001
+except Exception as exc:
     config = {}
     st.error(f"Не удалось получить конфиг: {exc}")
 
@@ -89,7 +89,7 @@ if st.button("Hot-reload конфига"):
     try:
         resp = client._request("POST", "/api/v1/admin/config/reload")
         st.success(f"Reload: {resp}")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(str(exc))
 
 related_pages_footer("73_Просмотр_конфига")

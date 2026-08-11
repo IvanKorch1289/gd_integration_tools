@@ -82,7 +82,7 @@ def has_gpu() -> bool:
 
     """
     try:
-        import torch  # noqa: F401 — availability probe
+        import torch
 
         return torch.cuda.is_available()
     except ImportError:

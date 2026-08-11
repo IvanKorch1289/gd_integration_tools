@@ -98,13 +98,13 @@ class PresidioSanitizerAdapter:
         if self._available is not None:
             return self._available
         try:
-            from presidio_analyzer import (  # noqa: F401 — availability probe
+            from presidio_analyzer import (
                 AnalyzerEngine,
             )
-            from presidio_analyzer.nlp_engine import (  # noqa: F401 — availability probe
+            from presidio_analyzer.nlp_engine import (
                 NlpEngineProvider,
             )
-            from presidio_anonymizer import (  # noqa: F401 — availability probe
+            from presidio_anonymizer import (
                 AnonymizerEngine,
             )
         except ImportError as exc:

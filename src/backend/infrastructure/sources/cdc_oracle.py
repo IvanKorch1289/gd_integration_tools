@@ -1,4 +1,4 @@
-# ruff: noqa: S608 — false positive (internal query with controlled parameters)
+
 """Oracle CDC source без Kafka (S171 M18.2, D249).
 
 Polling-based CDC для Oracle через oracledb (async).
@@ -97,7 +97,7 @@ class OracleCDCSource:
 
         """
         try:
-            import oracledb  # type: ignore[import-not-found]  # lazy, optional  # noqa: F401 — availability probe
+            import oracledb  # type: ignore[import-not-found]  # lazy, optional
         except ImportError as exc:
             raise ImportError(
                 "oracledb не установлен. Установите: pip install oracledb>=2.0",

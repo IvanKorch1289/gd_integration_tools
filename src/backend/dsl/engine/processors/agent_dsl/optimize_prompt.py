@@ -60,7 +60,7 @@ class OptimizePromptProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Запустить optimization."""
         try:
-            from src.backend.core.config.features import (  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
                 feature_flags,
             )
 
@@ -74,7 +74,7 @@ class OptimizePromptProcessor(BaseProcessor):
             # cycle-9/D-AUDIT-962: narrow exceptions + observability.
             # ImportError — features module missing, AttributeError — config
             # not initialized, RuntimeError — feature_flags unavailable.
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "optimize_prompt.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

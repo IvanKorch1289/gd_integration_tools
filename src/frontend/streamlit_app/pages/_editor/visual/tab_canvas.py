@@ -70,7 +70,7 @@ def render_canvas_tab(client) -> None:
         routes = []
         try:
             routes = client.list_dsl_routes()
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError):
             # cycle-9/D-AUDIT-1045: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -90,7 +90,7 @@ def render_canvas_tab(client) -> None:
                     sync_yaml()
                     st.success(f"Загружено: {selected_route}")
                     st.rerun()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Ошибка загрузки: {exc}")
 
         if st.button("🆕 Новый маршрут", width='stretch'):
@@ -274,7 +274,7 @@ def render_canvas_tab(client) -> None:
                 try:
                     load_pipeline_from_yaml(st.session_state.yaml_output)
                     st.success("✅ YAML валиден!")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"❌ Невалидно: {exc}")
 
         with col_down:

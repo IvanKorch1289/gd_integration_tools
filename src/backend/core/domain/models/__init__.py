@@ -30,7 +30,7 @@ from extensions.core_entities.files.domain.models import File as File
 from extensions.core_entities.files.domain.models import OrderFile as OrderFile
 from extensions.core_entities.orderkinds.domain.models import OrderKind as OrderKind
 from extensions.core_entities.orders.domain.models import Order
-from extensions.core_entities.users.domain.models import User  # noqa: F401 — re-export
+from extensions.core_entities.users.domain.models import User
 from src.backend.core.domain.models.base import (
     Base,
     BaseModel,

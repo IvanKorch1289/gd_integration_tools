@@ -14,7 +14,7 @@ Commands:
 наличии entry-point в pyproject, как ``gdi dsl <command>``.
 """
 
-from src.backend.dsl.cli.lint import lint_file  # noqa: F401 — re-export
+from src.backend.dsl.cli.lint import lint_file
 from src.backend.dsl.cli.linter import DSLLinter, LintIssue, lint_path
 
 __all__ = ("DSLLinter", "LintIssue", "lint_file", "lint_path")

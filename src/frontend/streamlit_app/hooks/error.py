@@ -78,7 +78,7 @@ def try_except(
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return func(*args, **kwargs)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 handle_api_error(exc, default_message=message)
                 if reraise:
                     raise

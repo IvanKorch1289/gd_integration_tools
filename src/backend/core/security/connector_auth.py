@@ -94,7 +94,7 @@ def require_capability(
             tenant_id: str | None = None
             if scope == "tenant":
                 try:
-                    from src.backend.core.tenancy import (  # noqa: F401 — availability probe
+                    from src.backend.core.tenancy import (
                         current_tenant,
                     )
 
@@ -105,7 +105,7 @@ def require_capability(
                     # cycle-9/D-AUDIT-1037: narrow exceptions + observability.
                     # ImportError — tenancy missing, AttributeError — context
                     # API change, RuntimeError — context unavailable.
-                    import logging  # noqa: F401 — availability probe
+                    import logging
                     logging.getLogger(__name__).debug(
                         "connector_auth.current_tenant_fallback",
                         extra={"error": str(ten_exc)},
@@ -193,7 +193,7 @@ async def check_source_capability(
 
     tenant_id: str | None = None
     try:
-        from src.backend.core.tenancy import (  # noqa: F401 — availability probe
+        from src.backend.core.tenancy import (
             current_tenant,
         )
 
@@ -204,7 +204,7 @@ async def check_source_capability(
         # cycle-9/D-AUDIT-1078: narrow exceptions + observability.
         # ImportError — tenancy missing, AttributeError — context API
         # change, RuntimeError — context unavailable.
-        import logging  # noqa: F401 — availability probe
+        import logging
         logging.getLogger(__name__).debug(
             "connector_auth.tenant_id_fallback",
             extra={"error": str(ten_exc)},

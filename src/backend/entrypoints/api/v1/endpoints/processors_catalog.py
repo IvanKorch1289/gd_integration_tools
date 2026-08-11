@@ -222,7 +222,7 @@ class _ProcessorsCatalogFacade:
             }
 
         try:
-            from rapidfuzz import fuzz, process  # noqa: F401 — availability probe
+            from rapidfuzz import fuzz, process
         except ImportError:
             return {
                 "query": q,

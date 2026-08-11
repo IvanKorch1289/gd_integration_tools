@@ -1,4 +1,4 @@
-# ruff: noqa: S105 — false positive (config field name, not a password)
+
 """DSL-процессор ``webdav_io`` — WebDAV upload/download/list через webdav4.
 
 Wave ``[wave:s5/k3-w3-processor-pack-3]``.
@@ -169,7 +169,7 @@ class WebDavProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         try:
-            from src.backend.core.config.features import (  # noqa: F401 — availability probe
+            from src.backend.core.config.features import (
                 feature_flags,
             )
 
@@ -179,7 +179,7 @@ class WebDavProcessor(BaseProcessor):
         except (ImportError, AttributeError, RuntimeError) as ff_exc:
             # cycle-9/D-AUDIT-1719: narrow exceptions + observability (mirror
             # D-AUDIT-1706..1718).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "webdav_io.feature_flag_fallback",
                 extra={"error": str(ff_exc)},

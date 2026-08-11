@@ -68,14 +68,14 @@ def render_editor_sidebar(client) -> None:
                 client.create_dsl_route(st.session_state.yaml)
                 st.success(f"Создан {pipeline_check.route_id!r}")
                 st.rerun()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Ошибка создания: {exc}")
         if st.button("Обновить (PUT)", width='stretch'):
             try:
                 client.update_dsl_route(pipeline_check.route_id, st.session_state.yaml)
                 st.success(f"Обновлён {pipeline_check.route_id!r}")
                 st.rerun()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Ошибка обновления: {exc}")
         if st.session_state.last_load_route and st.button(
             "Удалить", width='stretch'

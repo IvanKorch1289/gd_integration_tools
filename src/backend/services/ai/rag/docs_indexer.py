@@ -1,4 +1,4 @@
-# ruff: noqa: S301, S310, S321, S324 — false positive (controlled URL/pickle/ftp/hash usage)
+
 """DocsIndexer — ingest project markdown docs (CLAUDE.md, .claude/, docs/)
 в Qdrant для RAG-powered search.
 
@@ -210,7 +210,7 @@ class DocsIndexer:
                 extra={"error": str(qdrant_exc), "collection": self._collection_name},
             )
             try:
-                from qdrant_client.models import (  # noqa: F401 — availability probe
+                from qdrant_client.models import (
                     Distance,
                     VectorParams,
                 )
@@ -226,7 +226,7 @@ class DocsIndexer:
                 # InMemoryQdrantFallback (только name, без vectors_config).
                 # Bare `except Exception` маскировал unrelated runtime errors
                 # (KeyError, ValueError).
-                import logging  # noqa: F401 — availability probe
+                import logging
                 logging.getLogger(__name__).debug(
                     "docs_indexer._ensure_collection_legacy_fallback",
                     extra={
@@ -294,7 +294,7 @@ class DocsIndexer:
     ) -> list[Any]:
         """PointStruct → Qdrant, dict fallback → in-memory substitute."""
         try:
-            from qdrant_client.models import (  # noqa: F401 — availability probe
+            from qdrant_client.models import (
                 PointStruct,
             )
 
@@ -312,7 +312,7 @@ class DocsIndexer:
             # API change, TypeError/KeyError — schema mismatch. Bare
             # `except Exception` маскировал unrelated runtime errors
             # (ValueError, RuntimeError).
-            import logging  # noqa: F401 — availability probe
+            import logging
             logging.getLogger(__name__).debug(
                 "docs_indexer._build_points_fallback",
                 extra={"error": str(point_exc), "chunks_count": len(chunks)},

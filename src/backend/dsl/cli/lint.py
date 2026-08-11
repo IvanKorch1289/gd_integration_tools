@@ -18,7 +18,7 @@ __all__ = ("lint_file",)
 def lint_file(path: str | Path) -> list[str]:
     """Возвращает список ошибок. Пустой список = lint passed."""
     try:
-        import yaml  # noqa: F401 — availability probe
+        import yaml
     except ImportError:
         return ["PyYAML не установлен"]
 

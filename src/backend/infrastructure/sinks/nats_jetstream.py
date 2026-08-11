@@ -78,7 +78,7 @@ class NATSJetStreamSink(Sink):
         await limiter.check(f"{self.sink_id}_nats_js", scope=subject)
 
         try:
-            import nats  # noqa: F401 — availability probe
+            import nats
         except ImportError:
             return SinkResult(ok=False, details={"error": "nats-py not installed"})
 
@@ -143,7 +143,7 @@ class NATSJetStreamSink(Sink):
     async def health(self, mode: str = "fast") -> HealthResult:
         """Health: подключение к NATS без публикации (CONNECT/DISCONNECT)."""
         try:
-            import nats  # noqa: F401 — availability probe
+            import nats
         except ImportError:
             return HealthResult.failed(error="nats-py not installed", mode=mode)
         start = time.perf_counter()

@@ -26,7 +26,7 @@ from typing import Any
 
 import streamlit as st
 
-from src.frontend.streamlit_app.api_clients import get_api_client  # noqa: TID252
+from src.frontend.streamlit_app.api_clients import get_api_client
 from src.frontend.streamlit_app.api_clients.dsl_routes import DSLRoutesClient
 from src.frontend.streamlit_app.shared.components import (
     metric_row,
@@ -96,7 +96,7 @@ def _fetch_traces(route_id: str, limit: int = 100) -> tuple[list[dict[str, Any]]
             return events, "backend"
         # Backend returned empty list — это легитимный ответ.
         return [], "backend"
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Ошибка: {exc}")
         st.warning(f"Backend недоступен ({exc!r}), показаны demo data.")
         return DEMO_TRACE, "demo"

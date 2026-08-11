@@ -129,7 +129,7 @@ class LangMemService:
         # Определяем enabled: из аргумента или из feature_flags
         if enabled is None:
             try:
-                from src.backend.core.config.features import (  # noqa: F401 — availability probe
+                from src.backend.core.config.features import (
                     feature_flags,
                 )
 
@@ -456,10 +456,10 @@ class LangMemService:
                 "Включите feature flag для consolidation.",
             )
         try:
-            from src.backend.core.config.ai_stack import (  # noqa: F401 — availability probe
+            from src.backend.core.config.ai_stack import (
                 langmem_settings,
             )
-            from src.backend.services.ai.memory.langmem.consolidation import (  # noqa: F401 — availability probe
+            from src.backend.services.ai.memory.langmem.consolidation import (
                 ConsolidationEngine,
             )
 

@@ -33,11 +33,11 @@ class LoginResponse:
 
     __slots__ = (
         "access_token",
-        "token_type",
         "auth_method",
-        "username",
-        "is_superuser",
         "expires_in",
+        "is_superuser",
+        "token_type",
+        "username",
     )
 
     def __init__(self, payload: dict[str, Any]) -> None:

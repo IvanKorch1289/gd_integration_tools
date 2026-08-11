@@ -23,12 +23,12 @@ class InventoryClient(BaseAPIClient):
         """
         try:
             return self._request("GET", "/api/v1/plugins/inventory")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"enabled": False, "plugins": [], "reason": str(exc)}
 
     def get_routes_inventory(self) -> dict[str, Any]:
         """GET /api/v1/routes/inventory — V11 routes inventory."""
         try:
             return self._request("GET", "/api/v1/routes/inventory")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"enabled": False, "routes": [], "reason": str(exc)}

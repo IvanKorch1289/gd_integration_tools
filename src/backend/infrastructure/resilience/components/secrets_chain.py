@@ -58,7 +58,7 @@ async def _env_keyring_resolve(ref: str) -> str | None:
     """Fallback: env-переменная или keyring (если установлен)."""
     if ref.startswith("keyring:"):
         try:
-            import keyring  # noqa: F401 — availability probe
+            import keyring
         except ImportError:
             return None
         _, service, user = ref.split(":", 2)

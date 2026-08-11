@@ -16,7 +16,7 @@ class CapabilityClient(BaseAPIClient):
         """Sprint 14 K1 W4 / pre-K5 — GET /api/v1/admin/capabilities."""
         try:
             return self._request("GET", "/api/v1/admin/capabilities")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"vocabulary": [], "catalog": [], "error": str(exc)}
 
     def get_processor_catalog(
@@ -28,7 +28,7 @@ class CapabilityClient(BaseAPIClient):
             params["namespace"] = namespace
         try:
             return self._request("GET", "/api/v1/dsl/processors/search", params=params)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"query": query, "items": [], "total": 0, "error": str(exc)}
 
     def get_audit_events(
@@ -47,7 +47,7 @@ class CapabilityClient(BaseAPIClient):
             if isinstance(response, list):
                 return response
             return response.get("events", []) if isinstance(response, dict) else []
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as cap_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as cap_exc:
             # cycle-9/D-AUDIT-1072: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -63,14 +63,14 @@ class CapabilityClient(BaseAPIClient):
         """Sprint 14 K5 W3: GET /api/v1/admin/plugins/dependency-graph."""
         try:
             return self._request("GET", "/api/v1/admin/plugins/dependency-graph")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"nodes": [], "edges": [], "error": str(exc)}
 
     def get_capability_graph(self) -> dict[str, Any]:
         """Sprint 14 K5 W5: GET /api/v1/admin/capabilities/graph."""
         try:
             return self._request("GET", "/api/v1/admin/capabilities/graph")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"nodes": [], "edges": [], "error": str(exc)}
 
     def scaffold_plugin(
@@ -92,5 +92,5 @@ class CapabilityClient(BaseAPIClient):
         }
         try:
             return self._request("POST", "/api/v1/admin/plugins/scaffold", json=body)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"name": name, "created": False, "error": str(exc)}

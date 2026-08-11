@@ -33,7 +33,7 @@ st.caption(
 client = get_api_client()
 try:
     inventory = client.get_plugins_inventory()
-except Exception as exc:  # noqa: BLE001
+except Exception as exc:
     st.error(f"Ошибка API: {exc}")
     st.info("Backend недоступен или вернул ошибку.", icon="ℹ️")
     st.stop()
@@ -144,7 +144,7 @@ selected_name = st.selectbox("Плагин", options=names, index=0)
 selected = next((p for p in filtered if p["name"] == selected_name), None)
 if selected is None:
     st.stop()
-assert selected is not None  # noqa: S101
+assert selected is not None
 
 col_meta, col_lists = st.columns([1, 2])
 

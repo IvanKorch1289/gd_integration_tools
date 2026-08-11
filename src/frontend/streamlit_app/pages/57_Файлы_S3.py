@@ -181,7 +181,7 @@ with tab_api:
             items = client._request("GET", "/api/v1/storage/list", params=params)
         if not isinstance(items, list):
             items = []
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         items = []
         st.error(f"Не удалось получить список файлов: {exc}")
 
@@ -215,7 +215,7 @@ with tab_api:
                         else str(content)[:10_000]
                     )
                     st.code(preview)
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Предпросмотр не удался: {exc}")
 
             if cols[4].button("Скачать", key=f"dl_{idx}_{key}"):
@@ -237,7 +237,7 @@ with tab_api:
                             file_name=key.rsplit("/", 1)[-1] or "file",
                             key=f"save_{idx}_{key}",
                         )
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Скачивание не удалось: {exc}")
 
 related_pages_footer("57_Файлы_S3")

@@ -53,7 +53,7 @@ with tab_plugins:
             plugins = client._request("GET", "/api/v1/admin/plugins")
         if not isinstance(plugins, list):
             plugins = []
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         plugins = []
         st.warning(f"Не удалось получить список плагинов: {exc}")
 
@@ -82,7 +82,7 @@ with tab_plugins:
                         f"Плагин `{name}` → {'отключён' if is_active else 'активен'}"
                     )
                     st.rerun()
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Не удалось переключить плагин: {exc}")
                     emit_admin_error_event(
                         action="toggle_plugin",
@@ -103,7 +103,7 @@ with tab_users:
             users = client._request("GET", "/api/v1/users/all")
         if not isinstance(users, list):
             users = []
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         users = []
         st.warning(f"Не удалось получить пользователей: {exc}")
 
@@ -120,7 +120,7 @@ with tab_flags:
 
     try:
         flags = client.get_flags()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         flags = []
         st.warning(f"Не удалось получить флаги: {exc}")
 

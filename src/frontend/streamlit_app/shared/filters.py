@@ -35,11 +35,11 @@ from typing import TypeVar
 import streamlit as st
 
 __all__ = (
-    "text_search",
-    "multiselect_filter",
     "date_range_filter",
+    "multiselect_filter",
     "selectbox_filter",
     "slider_filter",
+    "text_search",
 )
 
 T = TypeVar("T")

@@ -26,8 +26,8 @@ setup_page()
 st.header(":speech_balloon: Экспресс-боты")
 
 try:
-    from src.backend.core.frontend_facade import express_settings  # noqa: E402, F401
-except Exception as exc:  # noqa: BLE001
+    from src.backend.core.frontend_facade import express_settings
+except Exception as exc:
     st.error(f"Не удалось загрузить настройки Express: {exc}")
     st.stop()
 
@@ -93,7 +93,7 @@ with tab_send:
                 st.error("Заполните chat_id и текст сообщения.")
             else:
                 try:
-                    from src.backend.core.frontend_facade import (  # noqa: E402, F401  # noqa: E402, F401  # noqa: E402, F401
+                    from src.backend.core.frontend_facade import (
                         get_express_bot_client_factory_provider,
                         get_express_botx_message_class_provider,
                     )
@@ -112,7 +112,7 @@ with tab_send:
 
                     sync_id = asyncio.run(_send())
                     st.success(f"Отправлено. sync_id = ``{sync_id}``")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Ошибка отправки: {exc}")
 
 with tab_buttons:

@@ -31,9 +31,9 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.shared.components import (
-    dataframe_view,  # noqa: E402
+    dataframe_view,
     related_pages_footer,
-    setup_page,  # noqa: E402
+    setup_page,
 )
 
 setup_page()
@@ -44,11 +44,11 @@ st.header("Дашборд устойчивости")
 # ---------------------------------------------------------------------------
 try:
     from src.backend.core.frontend_facade import (
-        feature_flags as _ff,  # noqa: E402, F401
+        feature_flags as _ff,
     )
 
     _flag_enabled: bool = bool(getattr(_ff, "resilience_dashboard_enabled", False))
-except (ImportError, AttributeError, RuntimeError):  # noqa: BLE001
+except (ImportError, AttributeError, RuntimeError):
     # cycle-9/D-AUDIT-1053: narrow exceptions + observability.
     # ImportError — features module missing, AttributeError — API change,
     # RuntimeError — feature_flags unavailable.
@@ -146,17 +146,17 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
 
     """
     try:
-        from src.frontend.streamlit_app.api_clients import (  # noqa: PLC0415
+        from src.frontend.streamlit_app.api_clients import (
             get_api_client,
         )
 
         _client = get_api_client()
-        _data = _client._request(  # noqa: SLF001 — generic REST proxy
+        _data = _client._request(
             "GET", "/api/v1/admin/resilience/snapshot"
         )
         if isinstance(_data, dict) and _data:
             return _data, True
-    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError):  # noqa: BLE001, S110 — graceful fallback, endpoint может ещё не существовать
+    except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, AttributeError):
         # cycle-9/D-AUDIT-1054: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError — wrong

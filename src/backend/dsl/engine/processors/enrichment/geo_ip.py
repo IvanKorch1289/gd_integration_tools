@@ -49,7 +49,7 @@ class GeoIpProcessor(BaseProcessor):
             import os
 
             try:
-                import geoip2.database  # noqa: F401 — availability probe
+                import geoip2.database
 
                 path = os.environ.get("GEOIP_DB_PATH", "/data/geoip/GeoLite2-City.mmdb")
                 self._reader = geoip2.database.Reader(path)

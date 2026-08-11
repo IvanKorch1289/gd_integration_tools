@@ -38,7 +38,7 @@ def _client() -> APIClient:
 def _list_models() -> list[dict]:
     try:
         resp = _client().get("/admin/model-registry/models")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось получить модели: {exc}")
         return []
     if not isinstance(resp, dict):
@@ -85,7 +85,7 @@ def main() -> None:
                 )
                 st.success("Сгенерирован DSL snippet:")
                 st.code(resp.get("snippet", ""), language="python")
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 st.error(f"Ошибка: {exc}")
 
 

@@ -48,7 +48,7 @@ def _render_route_blueprints() -> None:
         templates = client._request("GET", "/api/v1/admin/templates")
         if not isinstance(templates, list):
             templates = []
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         templates = []
         st.warning(f"Каталог шаблонов недоступен: {exc}")
 
@@ -77,7 +77,7 @@ def _render_route_blueprints() -> None:
                         "POST", f"/api/v1/admin/templates/{name}/instantiate", json={}
                     )
                     st.success(f"Создан route: {resp}")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(str(exc))
 
 
@@ -130,7 +130,7 @@ def _render_workflow_templates() -> None:
                     mermaid = to_mermaid(decl)
                     st.code(mermaid, language="mermaid")
                     st.caption("Скопируйте Mermaid-код в mermaid.live для рендера.")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Mermaid render failed: {exc}")
 
             target = st.text_input(
@@ -157,7 +157,7 @@ def _render_workflow_templates() -> None:
                         st.success(f"Workflow {tmpl.name!r} развёрнут в {target}")
                     else:
                         st.error(f"HTTP {resp.status_code}: {resp.text}")
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     st.error(f"Deploy failed: {exc}")
 
 

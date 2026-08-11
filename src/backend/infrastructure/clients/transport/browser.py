@@ -1,4 +1,4 @@
-# ruff: noqa: S311 — non-cryptographic use (load balancing, sampling, chaos testing)
+
 """Async browser automation client через Playwright.
 
 Поддерживает: navigation, clicks, form fill, extraction, screenshots.
@@ -14,7 +14,7 @@ Lifecycle-методы (start/stop) — без обёртки.
 from __future__ import annotations
 
 import asyncio
-import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+import random
 from typing import Any
 
 # NB: порядок импортов критичен (S163 W3 lesson, см. ftp.py).

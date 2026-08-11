@@ -52,8 +52,8 @@ def _snapshot_to_dict(snapshot: object) -> dict[str, Any]:
 
 
 try:
-    from src.frontend.streamlit_app.utils.api_client import api_get  # type: ignore[import-not-found]  # noqa: I001
-except (ImportError, AttributeError, ModuleNotFoundError):  # noqa: BLE001
+    from src.frontend.streamlit_app.utils.api_client import api_get  # type: ignore[import-not-found]
+except (ImportError, AttributeError, ModuleNotFoundError):
     # cycle-9/D-AUDIT-1046: narrow exceptions + observability.
     # ImportError — api_client module missing, AttributeError — name
     # API change, ModuleNotFoundError — module path broken.
@@ -135,7 +135,7 @@ def _fallback_snapshot(window_hours: int) -> dict[str, Any]:
             top_n=top_n,
         )
         return _snapshot_to_dict(snapshot)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return {"backend": "error", "error": str(exc)}
 
 
@@ -143,7 +143,7 @@ try:
     data = _fetch_snapshot(
         window_hours, tenant_filter, model_filter, pipeline_filter, top_n
     )
-except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, KeyError) as fetch_exc:  # noqa: BLE001
+except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, KeyError) as fetch_exc:
     # cycle-9/D-AUDIT-1052: narrow exceptions + observability.
     # ConnectionError/TimeoutError — server unreachable, RuntimeError —
     # API failure, ValueError — invalid response, TypeError — wrong type,

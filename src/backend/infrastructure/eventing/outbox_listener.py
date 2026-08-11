@@ -101,7 +101,7 @@ class OutboxListener:
         if self._started:
             return
         try:
-            import asyncpg  # noqa: F401 — availability probe
+            import asyncpg
         except ImportError as exc:
             logger.warning("asyncpg not installed; outbox listener disabled: %s", exc)
             return

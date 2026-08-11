@@ -1,4 +1,4 @@
-# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+
 """Streaming- и expiration-процессоры для DSL.
 
 Реализация недостающих EIP-паттернов банковской интеграционной шины:
@@ -22,7 +22,7 @@ Exchange/ExecutionContext.
 
 from __future__ import annotations
 
-import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+import random
 from typing import Any
 
 from src.backend.core.logging import get_logger

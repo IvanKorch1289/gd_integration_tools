@@ -23,7 +23,7 @@ class RAGClient(BaseAPIClient):
         try:
             resp = self.get("/api/v1/rag/stats", params=params)
             return resp if isinstance(resp, dict) else {}
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as stats_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as stats_exc:
             # cycle-9/D-AUDIT-1076: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError
             # — API failure, ValueError — invalid response, TypeError —
@@ -44,7 +44,7 @@ class RAGClient(BaseAPIClient):
             body["namespace"] = namespace
         try:
             return self.post("/api/v1/rag/search", json=body)
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as search_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as search_exc:
             # cycle-9/D-AUDIT-1076: см. выше — mirror для search.
             import logging
             logging.getLogger(__name__).debug(
@@ -68,7 +68,7 @@ class RAGClient(BaseAPIClient):
             data["metadata_json"] = metadata_json
         try:
             return self._multipart_post("/api/v1/rag/upload", files=files, data=data)
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, OSError) as upload_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError, OSError) as upload_exc:
             # cycle-9/D-AUDIT-1076: см. выше — mirror для upload (добавлен
             # OSError для multipart I/O).
             import logging
@@ -87,7 +87,7 @@ class RAGClient(BaseAPIClient):
             body["namespace"] = namespace
         try:
             return self.post("/api/v1/rag/augment", json=body)
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as augment_exc:  # noqa: BLE001
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError) as augment_exc:
             # cycle-9/D-AUDIT-1076: см. выше — mirror для augment.
             import logging
             logging.getLogger(__name__).debug(

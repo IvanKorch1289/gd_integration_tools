@@ -19,7 +19,6 @@
 Все строки UI — на русском языке (CLAUDE.md правило).
 """
 
-# ruff: noqa: B008
 
 from __future__ import annotations
 
@@ -54,7 +53,7 @@ def _list_workflow_ids(limit: int = 50) -> list[str]:
             for row in rows
             if isinstance(row, dict)
         ]
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось получить список workflows: {exc}")
         emit_streamlit_page_event(
             event="frontend.api.workflows_list_failed",
@@ -75,7 +74,7 @@ def _fetch_events(workflow_id: str, page: int, size: int) -> list[dict[str, Any]
             if isinstance(result, dict):
                 return list(result.get("items") or result.get("data") or [])
             return list(result or [])
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось получить events: {exc}")
         emit_streamlit_page_event(
             event="frontend.api.events_list_failed",
@@ -197,7 +196,7 @@ if _wf_id_compens:
         from src.backend.core.frontend_facade import get_saga_history
 
         records = get_saga_history(_wf_id_compens, limit=50)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         records = []
         st.warning(f"Saga history недоступна: {exc}")
 

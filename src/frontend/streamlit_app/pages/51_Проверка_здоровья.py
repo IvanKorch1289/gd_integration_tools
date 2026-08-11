@@ -30,7 +30,7 @@ def _render_health_dashboard() -> None:
     try:
         with st.spinner("Проверка состояния..."):
             data = client.get_ready()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         data = {"status": "error", "components": {}}
         st.error(f"Не удалось получить /ready: {exc}")
 

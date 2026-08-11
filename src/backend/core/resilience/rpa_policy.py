@@ -1,4 +1,4 @@
-# ruff: noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+
 """RPACallPolicy — единый resilience-фасад для RPA/CDC/FileWatcher/Webhook/DesktopRPA.
 
 Источник: PLAN.md V22.2 §4 + ADR-NEW-13 + B-02 closure.
@@ -32,7 +32,7 @@
 from __future__ import annotations
 
 import asyncio
-import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
+import random
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field

@@ -89,7 +89,7 @@ def _load_yaml() -> list[dict[str, Any]]:
         try:
             with path.open(encoding="utf-8") as fh:
                 raw = yaml.safe_load(fh) or {}
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             st.warning(f"Не удалось загрузить {path.name}: {exc}")
             continue
         if not raw.get("blueprint"):
@@ -148,7 +148,7 @@ def _yaml_preview(bp: dict[str, Any]) -> str:
             allow_unicode=True,
             sort_keys=False,
         )
-    except (TypeError, ValueError, AttributeError) as yaml_exc:  # noqa: BLE001
+    except (TypeError, ValueError, AttributeError) as yaml_exc:
         # cycle-9/D-AUDIT-1058: narrow exceptions + observability.
         # TypeError для wrong bp type, ValueError для invalid YAML,
         # AttributeError для yaml.safe_dump API change.

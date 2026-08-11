@@ -68,7 +68,7 @@ if st.button("Загрузить") and uploaded is not None:
             namespace=upload_ns,
             metadata_json=data.get("metadata_json"),
         )
-    except Exception as exc:  # noqa: BLE001 — пользователь должен видеть ошибку upload
+    except Exception as exc:
         st.error(f"Ошибка загрузки файла: {exc}")
     else:
         st.json(result)

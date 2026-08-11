@@ -37,7 +37,7 @@ def _fetch_pending(tenant: str | None) -> list[dict]:
         response = client.get("/hitl/pending", params=params)
         response.raise_for_status()
         return response.json().get("items", [])
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось получить pending-сигналы: {exc}")
         return []
 
@@ -105,7 +105,7 @@ def _resolve(signal_id: str, action: str, operator: str, comment: str) -> None:
         st.success(f"Сигнал {signal_id} обработан: {action}")
         st.session_state["operator_name"] = operator.strip()
         st.rerun()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось обработать: {exc}")
 
 
@@ -165,7 +165,7 @@ if st.button("Загрузить историю", type="primary"):
                 )
             except ImportError:
                 pass
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         st.error(f"Не удалось загрузить историю: {exc}")
 
 related_pages_footer("72_HITL_Панель")

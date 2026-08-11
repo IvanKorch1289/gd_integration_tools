@@ -54,7 +54,7 @@ class LogsClient(BaseAPIClient):
             if isinstance(result, list):
                 return result
             return []
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             raise RuntimeError(f"Failed to fetch step logs: {e}") from e
 
     def get_step_detail(self, workflow_id: str) -> dict[str, Any]:
@@ -74,5 +74,5 @@ class LogsClient(BaseAPIClient):
             if isinstance(result, dict):
                 return result
             return {}
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             raise RuntimeError(f"Failed to fetch step detail: {e}") from e

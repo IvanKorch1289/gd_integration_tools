@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.frontend_facade import get_logger  # noqa: E402, F401
+from src.backend.core.frontend_facade import get_logger
 from src.frontend.streamlit_app.api_clients.generic import APIClient
 
 logger = get_logger(__name__)
@@ -36,7 +36,7 @@ class K4APIClient(APIClient):
         """Получить RAG cache stats (hit/miss/TTL по tier)."""
         try:
             return self._request("GET", "/api/v1/admin/rag-cache/stats")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("get_rag_cache_stats failed: %s", exc)
             return {}
 
@@ -45,7 +45,7 @@ class K4APIClient(APIClient):
         params: dict[str, Any] = {"tier": tier} if tier else {}
         try:
             return self._request("POST", "/api/v1/admin/rag-cache/flush", params=params)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("flush_rag_cache_tier(tier=%r) failed: %s", tier, exc)
             return {}
 
@@ -55,7 +55,7 @@ class K4APIClient(APIClient):
             return self._request(
                 "GET", "/api/v1/admin/rag-cache/events", params={"limit": limit}
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "get_rag_invalidation_events(limit=%d) failed: %s", limit, exc
             )
@@ -65,7 +65,7 @@ class K4APIClient(APIClient):
         """Получить litellm-gateway usage stats (tokens, cost)."""
         try:
             return self._request("GET", "/api/v1/admin/litellm-gateway/stats")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("litellm_gateway_stats failed: %s", exc)
             return {}
 
@@ -78,7 +78,7 @@ class K4APIClient(APIClient):
             if isinstance(payload, dict):
                 return [str(x) for x in payload.get("providers", [])]
             return []
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("list_embedding_providers failed: %s", exc)
             return []
 
@@ -99,7 +99,7 @@ class K4APIClient(APIClient):
                 files=file_payload,
                 data={"collection": collection},
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "rag_ingest_start(collection=%r) failed: %s", collection, exc
             )
@@ -109,7 +109,7 @@ class K4APIClient(APIClient):
         """Получить статус RAG ingestion task."""
         try:
             return self._request("GET", f"/api/v1/rag/ingest/status/{task_id}")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("rag_ingest_status(task_id=%r) failed: %s", task_id, exc)
             return {}
 
@@ -119,7 +119,7 @@ class K4APIClient(APIClient):
             return self._request(
                 "GET", "/api/v1/rag/search", params={"query": query, "top_k": top_k}
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("rag_search_preview(query=%r) failed: %s", query, exc)
             return []
 
@@ -142,7 +142,7 @@ class K4APIClient(APIClient):
                 "/api/v1/rag/bulk-ingest",
                 json={"documents": documents, "collection": collection},
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "bulk_rag_ingest(collection=%r, %d docs) failed: %s",
                 collection,

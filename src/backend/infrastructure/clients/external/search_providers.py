@@ -326,7 +326,7 @@ def get_web_search_service() -> WebSearchService:
     _web_search = WebSearchService()
 
     try:
-        from src.backend.core.config.settings import (  # noqa: F401 — availability probe
+        from src.backend.core.config.settings import (
             settings,
         )
 
@@ -343,7 +343,7 @@ def get_web_search_service() -> WebSearchService:
     # SearXNG registration через env var (без отдельного Settings класса).
     # Включается только если SEARXNG_BASE_URL задан И feature-flag активен.
     try:
-        from src.backend.core.config.features import (  # noqa: F401 — availability probe
+        from src.backend.core.config.features import (
             feature_flags,
         )
 

@@ -1,4 +1,4 @@
-# ruff: noqa: S105 — false positive (config field name, not a password)
+
 """S57 W4 — messaging.py part of sink_publish decomp.
 
 Classes: MqPublishProcessor, WsPublishProcessor, MqttPublishProcessor.
@@ -171,7 +171,7 @@ class MqttPublishProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Открывает MQTT-соединение через aiomqtt и публикует payload."""
         try:
-            import aiomqtt  # noqa: F401 — availability probe
+            import aiomqtt
         except ImportError:
             _store_result(
                 exchange, self._out, {"ok": False, "error": "aiomqtt not installed"},
