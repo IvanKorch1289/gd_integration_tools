@@ -40,7 +40,6 @@ __all__ = ("assert_audit_event", "assert_metric_recorded")
 class _AssertionError(AssertionError):
     """Raised when an assertion helper fails."""
 
-    ...
 
 
 def assert_audit_event(

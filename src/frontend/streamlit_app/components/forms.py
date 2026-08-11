@@ -162,4 +162,3 @@ def on_submit_callback(callback: Callable[[], None]) -> None:
     """
     # Streamlit формы используют st.form_submit_button
     # Callback логика реализуется через session_state
-    pass
