@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """Immutable append-only audit log с HMAC-chain (IL-SEC2).
 

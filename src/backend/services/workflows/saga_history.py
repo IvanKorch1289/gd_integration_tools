@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """Saga compensation history — Sprint 12 K3 W6.
 

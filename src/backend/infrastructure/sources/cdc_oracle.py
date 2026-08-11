@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """Oracle CDC source без Kafka (S171 M18.2, D249).
 

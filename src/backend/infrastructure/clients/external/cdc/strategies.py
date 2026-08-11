@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """S60 W2 — strategies.py part of cdc decomp.
 

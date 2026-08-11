@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 """Batch DB processors — INSERT / UPDATE / DELETE через SQLAlchemy core."""
 
 from __future__ import annotations

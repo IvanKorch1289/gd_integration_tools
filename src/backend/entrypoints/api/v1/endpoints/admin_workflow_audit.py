@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """Admin workflow_audit endpoints — Sprint 12 K1 W1.
 

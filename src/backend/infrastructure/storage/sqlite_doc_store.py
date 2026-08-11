@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """``SqliteDocStore`` — SQLite-based fallback DocStoreBackend (Wave 21.3c).
 

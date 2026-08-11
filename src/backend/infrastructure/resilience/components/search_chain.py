@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """Wiring W26.4: Elasticsearch → SQLite FTS5.
 

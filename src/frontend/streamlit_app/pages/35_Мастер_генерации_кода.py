@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[4]
 def _run(args: list[str]) -> tuple[int, str, str]:
     """Запускает CLI как subprocess, возвращает (rc, stdout, stderr)."""
     python = shutil.which("python") or sys.executable
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603 — fixed python interpreter (shutil.which или sys.executable)
         [python, *args], cwd=str(ROOT), capture_output=True, text=True, check=False
     )
     return result.returncode, result.stdout, result.stderr

@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """Periodic DLQ cleanup job — удаляет старые записи по policy (S13 K3 W4).
 

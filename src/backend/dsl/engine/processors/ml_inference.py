@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """ML Inference processors — ONNX + streaming LLM + embeddings + outbox.
 

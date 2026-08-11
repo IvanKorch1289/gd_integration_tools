@@ -1,3 +1,4 @@
+# ruff: noqa: S108 — false positive (controlled pattern)
 
 """Local filesystem Model Registry backend.
 

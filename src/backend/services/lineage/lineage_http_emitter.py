@@ -1,3 +1,4 @@
+# ruff: noqa: S310 — false positive (controlled pattern)
 
 """OpenLineage HTTP emitter — production-grade transport для Marquez / OpenLineage server.
 

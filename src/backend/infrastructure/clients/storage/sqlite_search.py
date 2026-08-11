@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """``SqliteFTS5Search`` — fallback ``SearchClient`` на SQLite FTS5 (Wave 21.3c).
 

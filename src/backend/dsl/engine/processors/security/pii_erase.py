@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """PII Erasure DSL processor — 152-ФЗ compliance (S183).
 

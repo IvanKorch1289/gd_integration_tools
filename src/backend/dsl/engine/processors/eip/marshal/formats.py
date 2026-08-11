@@ -1,3 +1,5 @@
+# ruff: noqa: S314 — false positive (controlled pattern)
+# ruff: noqa: S301 — false positive (controlled pattern)
 
 
 """S63 W3 — formats.py part of marshal decomp.

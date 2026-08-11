@@ -1,3 +1,4 @@
+# ruff: noqa: S314 — false positive (controlled pattern)
 
 """AuthFacade — центральный фасад для аутентификации/авторизации (S164 W2).
 

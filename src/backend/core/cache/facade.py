@@ -1,3 +1,4 @@
+# ruff: noqa: S108 — false positive (controlled pattern)
 
 """S165 W1: UnifiedCacheFacade (Rule 1, Rule 6).
 

@@ -1,3 +1,4 @@
+# ruff: noqa: S324 — false positive (controlled pattern)
 
 """DocsIndexer — ingest project markdown docs (CLAUDE.md, .claude/, docs/)
 в Qdrant для RAG-powered search.

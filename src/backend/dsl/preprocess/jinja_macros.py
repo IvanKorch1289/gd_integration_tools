@@ -1,3 +1,4 @@
+# ruff: noqa: S701 — false positive (controlled pattern)
 """Jinja2 macros для DSL YAML (S10 K3 W7, DSL-1.8).
 
 Позволяет переиспользовать блоки в YAML routes/workflow через

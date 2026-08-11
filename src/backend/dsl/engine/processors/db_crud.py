@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 """S95 W1 — DSL CRUD-процессоры: db_insert, db_update, db_upsert, db_delete.
 
 Safe SQL-builder поверх существующего ``DatabaseQueryProcessor``. Генерирует

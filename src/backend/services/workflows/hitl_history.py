@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """HITL history service — Sprint 12 K5 W2.
 

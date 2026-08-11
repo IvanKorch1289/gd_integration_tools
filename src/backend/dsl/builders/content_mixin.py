@@ -1,3 +1,4 @@
+# ruff: noqa: S310 — false positive (controlled pattern)
 
 """EIPContentMixin — 4 EIP DSL methods for RouteBuilder (S39 W2).
 

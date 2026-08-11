@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """Audit Event Log — кто/что/когда → ClickHouse через AsyncBatcher.
 

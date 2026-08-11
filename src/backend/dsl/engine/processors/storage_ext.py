@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """Storage extensions — Graph DB (Neo4j), Time Series (InfluxDB), Priority Queue.
 

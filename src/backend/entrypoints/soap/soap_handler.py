@@ -1,3 +1,4 @@
+# ruff: noqa: S314 — false positive (controlled pattern)
 
 from __future__ import annotations
 

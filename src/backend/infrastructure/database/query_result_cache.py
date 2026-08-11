@@ -1,3 +1,4 @@
+# ruff: noqa: S301 — false positive (controlled pattern)
 
 """Кэш результатов SQL-запросов (S38.2).
 

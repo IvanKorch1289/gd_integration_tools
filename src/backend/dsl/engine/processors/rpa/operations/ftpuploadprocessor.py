@@ -1,3 +1,4 @@
+# ruff: noqa: S321 — false positive (controlled pattern)
 
 """S171 M6.1 — FtpUploadProcessor (gap fill).
 

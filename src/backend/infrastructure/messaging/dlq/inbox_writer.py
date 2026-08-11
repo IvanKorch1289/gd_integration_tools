@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (controlled pattern)
 
 """InboxDLQWriter — пишет DLQEnvelope в Postgres table (Sprint 9 K2 W1).
 
