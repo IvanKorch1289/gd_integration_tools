@@ -75,8 +75,7 @@ def run_audit(top: int = 20) -> dict:
         )
         if result.returncode == 0:
             return json.loads(result.stdout)
-        else:
-            return {"error": result.stderr or f"Exit code: {result.returncode}"}
+        return {"error": result.stderr or f"Exit code: {result.returncode}"}
     except subprocess.TimeoutExpired:
         return {"error": "Аудит превысил таймаут (60 сек)"}
     except Exception as exc:

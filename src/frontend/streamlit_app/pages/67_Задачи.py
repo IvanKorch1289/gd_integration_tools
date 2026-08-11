@@ -78,35 +78,34 @@ with tab3:
         st.info("Нет запланированных webhooks")
 
     st.divider()
-    with st.expander("Запланировать webhook"):
-        with st.form("schedule_webhook"):
-            url = st.text_input("URL", help="HTTP endpoint для webhook (https://...)")
-            payload = st.text_area("Полезная нагрузка (JSON)", value="{}")
-            cron = st.text_input("Cron (опционально)", placeholder="*/5 * * * *")
-            delay = st.number_input(
+    with st.expander("Запланировать webhook"), st.form("schedule_webhook"):
+        url = st.text_input("URL", help="HTTP endpoint для webhook (https://...)")
+        payload = st.text_area("Полезная нагрузка (JSON)", value="{}")
+        cron = st.text_input("Cron (опционально)", placeholder="*/5 * * * *")
+        delay = st.number_input(
         "Задержка, сек (опционально)",
         min_value=0,
         value=0,
         help="Задержка перед первым запуском задачи",
     )
-            if st.form_submit_button("Запланировать"):
-                import json
+        if st.form_submit_button("Запланировать"):
+            import json
 
-                try:
-                    payload_dict = json.loads(payload)
-                    result = client._request(
-                        "POST",
-                        "/api/v1/webhook/schedule",
-                        json={
-                            "url": url,
-                            "payload": payload_dict,
-                            "cron": cron or None,
-                            "delay_seconds": delay if delay > 0 else None,
-                        },
-                    )
-                    st.success(f"Запланировано: {result}")
-                except Exception as exc:
-                    st.error(f"Ошибка: {exc}")
+            try:
+                payload_dict = json.loads(payload)
+                result = client._request(
+                    "POST",
+                    "/api/v1/webhook/schedule",
+                    json={
+                        "url": url,
+                        "payload": payload_dict,
+                        "cron": cron or None,
+                        "delay_seconds": delay if delay > 0 else None,
+                    },
+                )
+                st.success(f"Запланировано: {result}")
+            except Exception as exc:
+                st.error(f"Ошибка: {exc}")
 
 if st.button("Обновить"):
     st.rerun()
