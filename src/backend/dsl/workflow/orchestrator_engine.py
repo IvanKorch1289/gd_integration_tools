@@ -156,9 +156,7 @@ class OrchestratorEngine:
 
         """
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             return getattr(feature_flags, "workflow_orchestrator_enabled", False)
         except ImportError:

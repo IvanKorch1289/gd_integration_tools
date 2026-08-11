@@ -139,11 +139,7 @@ class RagasEvaluator:
         try:
             from datasets import Dataset
             from ragas import evaluate
-            from ragas.metrics import (
-                answer_relevancy,
-                context_precision,
-                faithfulness,
-            )
+            from ragas.metrics import answer_relevancy, context_precision, faithfulness
         except ImportError:
             logger.debug("ragas not installed, skipping evaluation")
             return {"ragas_available": 0.0}

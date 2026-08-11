@@ -236,9 +236,7 @@ class OutboundHttpClient:
         При недоступности — silent pass.
         """
         try:
-            from src.backend.core.interfaces.observability import (
-                CorrelationIdProvider,
-            )
+            from src.backend.core.interfaces.observability import CorrelationIdProvider
 
             def _get_cid() -> str | None:
                 from src.backend.core.di.providers.infrastructure_locator import (

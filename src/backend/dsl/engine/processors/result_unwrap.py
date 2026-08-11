@@ -113,9 +113,7 @@ class ResultUnwrapProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Разворачивает Result(Ok/Err) и пишет значение в target, при Err — fail."""
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.result_unwrap_processor:
                 exchange.set_property("result_unwrap_status", "skipped")
@@ -131,10 +129,7 @@ class ResultUnwrapProcessor(BaseProcessor):
 
         # Lazy-import result library (extra)
         try:
-            from result import (  # type: ignore[import-not-found]
-                Err,
-                Ok,
-            )
+            from result import Err, Ok  # type: ignore[import-not-found]
         except ImportError as exc:
             exchange.fail(f"result_unwrap: result>=0.17 not available: {exc}")
             return

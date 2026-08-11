@@ -79,9 +79,7 @@ class WebhookChunkedPublisher(_BasePublisher):
         try:
             import httpx
 
-            from src.backend.core.net import (
-                OutboundHttpClient,
-            )
+            from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return
         try:

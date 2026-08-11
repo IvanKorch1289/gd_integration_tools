@@ -37,9 +37,7 @@ async def kafka_ping_fn() -> bool:
 
     """
     try:
-        from src.backend.infrastructure.messaging.kafka_producer import (
-            KafkaProducer,
-        )
+        from src.backend.infrastructure.messaging.kafka_producer import KafkaProducer
 
         producer = KafkaProducer()
         return producer.is_available()
@@ -74,9 +72,7 @@ def register_kafka_pool_if_available(
 
     """
     try:
-        from src.backend.infrastructure.messaging.kafka_producer import (
-            KafkaProducer,
-        )
+        from src.backend.infrastructure.messaging.kafka_producer import KafkaProducer
 
         producer = KafkaProducer(bootstrap_servers=bootstrap_servers or [])
         manager.register(

@@ -122,9 +122,7 @@ class UnitConversionProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_unit_conversion:
                 exchange.set_property("unit_conversion_status", "skipped")

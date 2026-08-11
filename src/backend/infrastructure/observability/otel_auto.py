@@ -63,9 +63,7 @@ def instrument_asyncpg_if_enabled() -> bool:
         return False
 
     try:
-        from opentelemetry.instrumentation.asyncpg import (
-            AsyncPGInstrumentor,
-        )
+        from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
 
         AsyncPGInstrumentor().instrument()
         _ASYNCPG_INSTRUMENTED = True
@@ -109,15 +107,9 @@ def init_otel(*, app: Any = None, service_name: str | None = None) -> bool:
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
             OTLPSpanExporter,
         )
-        from opentelemetry.sdk.resources import (
-            Resource,
-        )
-        from opentelemetry.sdk.trace import (
-            TracerProvider,
-        )
-        from opentelemetry.sdk.trace.export import (
-            BatchSpanProcessor,
-        )
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
     except ImportError as exc:
         logger.warning("OpenTelemetry SDK not installed: %s", exc)
         return False
@@ -152,9 +144,7 @@ def _instrument_fastapi(app: Any) -> None:
     if app is None:
         return
     try:
-        from opentelemetry.instrumentation.fastapi import (
-            FastAPIInstrumentor,
-        )
+        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
         FastAPIInstrumentor.instrument_app(app)
         logger.debug("OTel FastAPI instrumented")
@@ -164,9 +154,7 @@ def _instrument_fastapi(app: Any) -> None:
 
 def _instrument_httpx() -> None:
     try:
-        from opentelemetry.instrumentation.httpx import (
-            HTTPXClientInstrumentor,
-        )
+        from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
         HTTPXClientInstrumentor().instrument()
         logger.debug("OTel httpx instrumented")
@@ -176,9 +164,7 @@ def _instrument_httpx() -> None:
 
 def _instrument_sqlalchemy() -> None:
     try:
-        from opentelemetry.instrumentation.sqlalchemy import (
-            SQLAlchemyInstrumentor,
-        )
+        from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
         SQLAlchemyInstrumentor().instrument()
         logger.debug("OTel SQLAlchemy instrumented")
@@ -188,9 +174,7 @@ def _instrument_sqlalchemy() -> None:
 
 def _instrument_redis() -> None:
     try:
-        from opentelemetry.instrumentation.redis import (
-            RedisInstrumentor,
-        )
+        from opentelemetry.instrumentation.redis import RedisInstrumentor
 
         RedisInstrumentor().instrument()
         logger.debug("OTel Redis instrumented")
@@ -200,9 +184,7 @@ def _instrument_redis() -> None:
 
 def _instrument_logging() -> None:
     try:
-        from opentelemetry.instrumentation.logging import (
-            LoggingInstrumentor,
-        )
+        from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
         LoggingInstrumentor().instrument(set_logging_format=True)
         logger.debug("OTel Logging instrumented")
@@ -215,9 +197,7 @@ def _instrument_aiokafka() -> None:
     opentelemetry-instrumentation-aiokafka.
     """
     try:
-        from opentelemetry.instrumentation.aiokafka import (
-            AIOKafkaInstrumentor,
-        )
+        from opentelemetry.instrumentation.aiokafka import AIOKafkaInstrumentor
 
         AIOKafkaInstrumentor().instrument()
         logger.debug("OTel aiokafka instrumented")
@@ -230,9 +210,7 @@ def _instrument_aiopika() -> None:
     opentelemetry-instrumentation-aio-pika.
     """
     try:
-        from opentelemetry.instrumentation.aio_pika import (
-            AioPikaInstrumentor,
-        )
+        from opentelemetry.instrumentation.aio_pika import AioPikaInstrumentor
 
         AioPikaInstrumentor().instrument()
         logger.debug("OTel aio-pika instrumented")
@@ -248,9 +226,7 @@ def _instrument_pymongo() -> None:
     opentelemetry-instrumentation-pymongo.
     """
     try:
-        from opentelemetry.instrumentation.pymongo import (
-            PymongoInstrumentor,
-        )
+        from opentelemetry.instrumentation.pymongo import PymongoInstrumentor
 
         PymongoInstrumentor().instrument()
         logger.debug("OTel pymongo instrumented")
@@ -265,9 +241,7 @@ def _instrument_grpc_client() -> None:
     Требует opentelemetry-instrumentation-grpc.
     """
     try:
-        from opentelemetry.instrumentation.grpc import (
-            GrpcAioInstrumentorClient,
-        )
+        from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorClient
 
         GrpcAioInstrumentorClient().instrument()
         logger.debug("OTel gRPC async client instrumented")
@@ -285,9 +259,7 @@ def _instrument_asyncpg() -> None:
     opentelemetry-instrumentation-asyncpg.
     """
     try:
-        from opentelemetry.instrumentation.asyncpg import (
-            AsyncPGInstrumentor,
-        )
+        from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
 
         AsyncPGInstrumentor().instrument()
         logger.debug("OTel asyncpg instrumented")

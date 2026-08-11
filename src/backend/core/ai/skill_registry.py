@@ -309,9 +309,7 @@ class SkillRegistry:
         # enforced). Production deployment должен передавать whitelist.
         if whitelist is None:
             try:
-                from src.backend.core.config.features import (
-                    feature_flags,
-                )
+                from src.backend.core.config.features import feature_flags
 
                 strict = bool(
                     getattr(feature_flags, "call_function_whitelist_strict", True),
@@ -507,9 +505,7 @@ class SkillRegistry:
 
         """
         try:
-            from langchain_core.tools import (
-                StructuredTool,
-            )
+            from langchain_core.tools import StructuredTool
         except ImportError:
             # langchain not installed — return empty list
             return []

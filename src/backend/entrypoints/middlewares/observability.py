@@ -115,9 +115,7 @@ def _emit_prometheus(event: dict[str, Any]) -> None:
 def _emit_audit(event: dict[str, Any]) -> None:
     """Emit audit event в ClickHouse (если client доступен)."""
     try:
-        from src.backend.core.di.providers import (
-            get_clickhouse_client_provider,
-        )
+        from src.backend.core.di.providers import get_clickhouse_client_provider
 
         ch = get_clickhouse_client_provider()
         if ch is None:

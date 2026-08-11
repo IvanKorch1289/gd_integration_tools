@@ -320,9 +320,7 @@ class ServiceSchemaRegistry:
     def _validate_entry(self, entry: SchemaEntry) -> None:
         """Проверяет spec_schema / output_schema через jsonschema."""
         try:
-            from jsonschema import (
-                Draft202012Validator,
-            )
+            from jsonschema import Draft202012Validator
         except ImportError:
             logger.warning("jsonschema not available; skipping schema validation")
             return

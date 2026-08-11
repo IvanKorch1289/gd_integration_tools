@@ -123,9 +123,7 @@ def _decode_banking(fmt: str, raw: bytes | str) -> Any:
     """Банковские форматы — opt-in через extras `gdi[banking]`."""
     if fmt == "mt":
         try:
-            from swiftmt import (
-                parser,  # type: ignore[import-not-found]
-            )
+            from swiftmt import parser  # type: ignore[import-not-found]
         except ImportError:
             raise RuntimeError(
                 "swiftmt не установлен — установите gdi[banking]",

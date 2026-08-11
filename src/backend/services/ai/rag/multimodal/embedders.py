@@ -80,9 +80,7 @@ class CLIPEmbedder:
             return self._model
 
         try:
-            from sentence_transformers import (
-                SentenceTransformer,
-            )
+            from sentence_transformers import SentenceTransformer
         except ImportError as exc:
             raise LazyImportError(
                 "sentence-transformers не установлен. "

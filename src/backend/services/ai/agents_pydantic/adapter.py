@@ -16,15 +16,8 @@ __all__ = ("LiteLLMModel",)
 from contextlib import asynccontextmanager
 
 try:
-    from pydantic_ai.messages import (
-        ModelMessage,
-        ModelResponse,
-        TextPart,
-    )
-    from pydantic_ai.models import (
-        Model,
-        ModelRequestParameters,
-    )
+    from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
+    from pydantic_ai.models import Model, ModelRequestParameters
     from pydantic_ai.result import StreamedResponse
     from pydantic_ai.settings import ModelSettings
 

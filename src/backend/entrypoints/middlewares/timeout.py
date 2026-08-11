@@ -117,9 +117,7 @@ class TimeoutMiddleware:
     def _is_per_route_enabled() -> bool:
         """Lazy-проверка feature-flag ``per_route_timeout_enabled``."""
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "per_route_timeout_enabled", False))
         except (ImportError, AttributeError, RuntimeError) as ff_exc:

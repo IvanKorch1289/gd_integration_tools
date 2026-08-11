@@ -231,9 +231,7 @@ class SmartSessionManager:
 
         """
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.multi_replica_failover:
                 return False

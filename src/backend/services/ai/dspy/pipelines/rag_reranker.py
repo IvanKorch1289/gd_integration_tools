@@ -56,9 +56,7 @@ def _resolve_bge_reranker() -> Any:
         return None
 
     try:
-        from FlagEmbedding import (
-            FlagReranker,  # type: ignore[import-not-found]
-        )
+        from FlagEmbedding import FlagReranker  # type: ignore[import-not-found]
     except ImportError as exc:
         logger.warning(
             "FlagEmbedding не установлен (extra '[rag-advanced]'), "

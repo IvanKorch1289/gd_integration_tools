@@ -169,9 +169,7 @@ class WebDavProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_webdav:
                 exchange.set_property("webdav_status", "skipped")

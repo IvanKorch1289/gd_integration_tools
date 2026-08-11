@@ -62,12 +62,8 @@ def configure_otel(
     """
     try:
         from opentelemetry import propagate, trace
-        from opentelemetry.sdk.resources import (
-            Resource,
-        )
-        from opentelemetry.sdk.trace import (
-            TracerProvider,
-        )
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import (
             BatchSpanProcessor,
             ConsoleSpanExporter,
@@ -131,9 +127,7 @@ def configure_otel(
     # Composite propagator: W3C TraceContext (обязателен) + опционально B3.
     propagators: list[Any] = [TraceContextTextMapPropagator()]
     try:
-        from opentelemetry.propagators.b3 import (
-            B3MultiFormat,
-        )
+        from opentelemetry.propagators.b3 import B3MultiFormat
 
         propagators.append(B3MultiFormat())
     except ImportError:
@@ -143,9 +137,7 @@ def configure_otel(
 
     if len(propagators) > 1:
         try:
-            from opentelemetry.propagators.composite import (
-                CompositePropagator,
-            )
+            from opentelemetry.propagators.composite import CompositePropagator
 
             propagate.set_global_textmap(CompositePropagator(propagators))
         except ImportError:
@@ -196,17 +188,13 @@ def setup_otel_metrics(
 
     try:
         from opentelemetry import metrics
-        from opentelemetry.sdk.metrics import (
-            MeterProvider,
-        )
+        from opentelemetry.sdk.metrics import MeterProvider
         from opentelemetry.sdk.metrics.export import (
             ConsoleMetricExporter,
             MetricExporter,
             PeriodicExportingMetricReader,
         )
-        from opentelemetry.sdk.resources import (
-            Resource,
-        )
+        from opentelemetry.sdk.resources import Resource
     except ImportError as exc:
         logger.warning(
             "OTel metrics SDK не установлен — metrics-конфигурация пропущена: %s", exc,

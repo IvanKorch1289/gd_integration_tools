@@ -51,9 +51,7 @@ def _ensure_tier_metrics() -> None:
     if _tier_initialized:
         return
     try:
-        from src.backend.core.utils.metrics_registry import (
-            metrics_registry,
-        )
+        from src.backend.core.utils.metrics_registry import metrics_registry
 
         _tier_counter = metrics_registry.counter(
             "ai_tier_router_ops_total",

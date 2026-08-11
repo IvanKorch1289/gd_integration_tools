@@ -280,9 +280,7 @@ class UnifiedPoolManager:
         """
         result: dict[str, str] = {}
         try:
-            from src.backend.infrastructure.database.pool_warmup import (
-                PoolWarmup,
-            )
+            from src.backend.infrastructure.database.pool_warmup import PoolWarmup
 
             warmup = PoolWarmup()
             for name, reg in self._pools.items():

@@ -144,9 +144,7 @@ class CallFunctionProcessor(BaseProcessor):
                 whitelist |= set(raw)
         if not whitelist:
             try:
-                from src.backend.core.config.settings import (
-                    settings as app_settings,
-                )
+                from src.backend.core.config.settings import settings as app_settings
 
                 global_wl = getattr(
                     getattr(app_settings, "security", app_settings),

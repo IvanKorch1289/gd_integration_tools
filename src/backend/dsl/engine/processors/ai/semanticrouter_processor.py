@@ -66,9 +66,7 @@ class SemanticRouterProcessor(BaseProcessor):
             return
 
         try:
-            from src.backend.services.ai.rag_service import (
-                get_rag_service,
-            )
+            from src.backend.services.ai.rag_service import get_rag_service
 
             rag = get_rag_service()
             results = await rag.search(query=query, top_k=1, namespace=self._namespace)

@@ -136,9 +136,7 @@ class ZipArchiveProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Запаковывает или распаковывает ZIP-архив из exchange body."""
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_zip_archive:
                 exchange.set_property("zip_archive_status", "skipped")

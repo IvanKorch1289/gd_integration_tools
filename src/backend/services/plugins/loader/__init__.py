@@ -288,9 +288,7 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):
         # нужно видеть, какие плагины были выгружены и в каком
         # контексте (per-plugin shutdown vs full unload).
         try:
-            from src.backend.core.audit.facade import (
-                emit_audit_safe,
-            )
+            from src.backend.core.audit.facade import emit_audit_safe
 
             emit_audit_safe(
                 event="plugin.unload",

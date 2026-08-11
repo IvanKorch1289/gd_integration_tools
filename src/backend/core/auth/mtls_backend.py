@@ -200,9 +200,7 @@ def default_cryptography_parser() -> CertParser:
     """
     try:
         from cryptography import x509
-        from cryptography.hazmat.primitives import (
-            hashes,
-        )
+        from cryptography.hazmat.primitives import hashes
     except ImportError as exc:  # pragma: no cover — opt-in
         raise RuntimeError(
             "cryptography package not installed; mTLS PEM-validation disabled",

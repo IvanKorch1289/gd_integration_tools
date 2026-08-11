@@ -139,14 +139,10 @@ def _build_jwt_blacklist_or_none() -> Any:
     if not getattr(secure_settings, "jwt_blacklist_enabled", False):
         return None
     try:
-        from src.backend.core.auth.jwt_blacklist import (
-            RedisJwtBlacklist,
-        )
+        from src.backend.core.auth.jwt_blacklist import RedisJwtBlacklist
 
         # Late import — avoids module-level circular dep (auth ↔ cache).
-        from src.backend.core.di.providers.cache import (
-            get_redis_kv_client_provider,
-        )
+        from src.backend.core.di.providers.cache import get_redis_kv_client_provider
 
         redis = get_redis_kv_client_provider()
         return RedisJwtBlacklist(redis)

@@ -326,13 +326,8 @@ class AgentGraphProcessor(BaseAIProcessor):
         )
 
         try:
-            from src.backend.ai.policy import (
-                AgentToolPolicy,
-            )
-            from src.backend.core.svcs_registry import (
-                get_service,
-                has_service,
-            )
+            from src.backend.ai.policy import AgentToolPolicy
+            from src.backend.core.svcs_registry import get_service, has_service
         except ImportError:
             _logger.warning(
                 "agent_graph tool_policy: AgentToolPolicy import failed; "

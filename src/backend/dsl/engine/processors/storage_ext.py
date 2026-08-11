@@ -178,13 +178,8 @@ class TimeSeriesWriteProcessor(BaseProcessor):
 
     async def _write_influxdb(self, points: list[dict]) -> None:
         try:
-            from influxdb_client import (
-                InfluxDBClient,
-                Point,
-            )
-            from influxdb_client.client.write_api import (
-                SYNCHRONOUS,
-            )
+            from influxdb_client import InfluxDBClient, Point
+            from influxdb_client.client.write_api import SYNCHRONOUS
         except ImportError as exc:
             # Round 14 fix: ``from exc`` сохраняет original ImportError traceback
             # (без него original exception скрыт отладчиком/логов).

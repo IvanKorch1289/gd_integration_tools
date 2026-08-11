@@ -40,9 +40,7 @@ if TYPE_CHECKING:
 
 Client: Any = None
 try:
-    from fastmcp import (
-        Client,  # type: ignore[import-not-found,no-redef]
-    )
+    from fastmcp import Client  # type: ignore[import-not-found,no-redef]
 except ImportError:
     pass
 

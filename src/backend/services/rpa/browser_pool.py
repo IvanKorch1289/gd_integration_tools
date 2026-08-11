@@ -191,9 +191,7 @@ class PlaywrightBrowserPool:
         """Lazy-import patchright (preferred) или playwright (fallback)."""
         if self._prefer_patchright:
             try:
-                from patchright import (
-                    async_api,  # type: ignore[import-not-found]
-                )
+                from patchright import async_api  # type: ignore[import-not-found]
 
                 return async_api
             except ImportError:

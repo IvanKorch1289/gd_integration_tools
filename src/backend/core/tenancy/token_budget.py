@@ -283,9 +283,7 @@ class TokenBudget:
         current behavior (per-tenant config takes effect).
         """
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if getattr(feature_flags, "token_budget_fail_closed", False):
                 return "closed"

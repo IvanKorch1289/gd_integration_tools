@@ -284,9 +284,7 @@ class StepAuditMiddleware:
     ) -> None:
         """Best-effort OTel span attribute set (no-op без подключения OTel)."""
         try:
-            from opentelemetry import (
-                trace as _otel_trace,
-            )
+            from opentelemetry import trace as _otel_trace
 
             span = _otel_trace.get_current_span()
             if not span or not span.is_recording():

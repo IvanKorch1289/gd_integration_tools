@@ -42,9 +42,7 @@ class BGEM3EmbeddingProvider:
         if self._model is not None:
             return self._model
         try:
-            from FlagEmbedding import (
-                BGEM3FlagModel,  # type: ignore[import-not-found]
-            )
+            from FlagEmbedding import BGEM3FlagModel  # type: ignore[import-not-found]
         except ImportError as exc:
             raise BGEUnavailable(
                 "FlagEmbedding не установлен — добавьте extra '[ai-2026]'.",

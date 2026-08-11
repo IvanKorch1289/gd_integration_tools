@@ -126,14 +126,10 @@ def build_chat_model(
         chat_kwargs["fallbacks"] = fallbacks
 
     try:
-        from langchain_litellm import (
-            ChatLiteLLM,  # type: ignore[import-not-found]
-        )
+        from langchain_litellm import ChatLiteLLM  # type: ignore[import-not-found]
     except ImportError:
         try:
-            from langchain_community.chat_models import (
-                ChatLiteLLM,
-            )
+            from langchain_community.chat_models import ChatLiteLLM
         except ImportError as exc:
             raise ImportError(
                 "ChatLiteLLM недоступен: установите 'langchain-litellm' "
@@ -179,17 +175,13 @@ async def build_and_run_agent(
 
     """
     try:
-        from langgraph.prebuilt import (
-            create_react_agent,
-        )
+        from langgraph.prebuilt import create_react_agent
 
         # S85 W2 (V2 P0 #1): enforcement check через AIGateway
         # перед LiteLLM call. Если enforcement не пройден —
         # возврат с error без silent pass-through.
         import src.backend.core.ai.gateway
-        from src.backend.core.config.features import (
-            feature_flags,
-        )
+        from src.backend.core.config.features import feature_flags
 
         # S85 W2: pre-flight enforcement check.
         # AIGateway._enforced_invoke внутри вызывает _resolve_policy и
@@ -197,17 +189,13 @@ async def build_and_run_agent(
         # если ai_gateway_enforce=False, бросаем сразу (silent pass-through
         # запрещён, см. S85 W1).
         if not feature_flags.ai_gateway_enforce:
-            from src.backend.core.ai.errors import (
-                AIGatewayEnforcementRequiredError,
-            )
+            from src.backend.core.ai.errors import AIGatewayEnforcementRequiredError
 
             raise AIGatewayEnforcementRequiredError(
                 "ai_graph.build_and_run_agent requires ai_gateway_enforce=True "
                 "(S85 W2: bypass via LiteLLMGateway is no longer supported)",
             )
-        from src.backend.services.ai.gateway_adapter import (
-            get_ai_gateway,
-        )
+        from src.backend.services.ai.gateway_adapter import get_ai_gateway
         ai_gateway = get_ai_gateway()
         _ = ai_gateway
 
@@ -229,9 +217,7 @@ async def build_and_run_agent(
                     "LangGraph Checkpointer: PostgresSaver unavailable, "
                     "using MemorySaver",
                 )
-                from langgraph.checkpoint.memory import (
-                    MemorySaver,
-                )
+                from langgraph.checkpoint.memory import MemorySaver
 
                 checkpointer = MemorySaver()
 

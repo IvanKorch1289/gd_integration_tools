@@ -34,9 +34,7 @@ class TemplateRenderProcessor(BaseProcessor):
         if not await self.auth_check(exchange, action="read"):
             return
         try:
-            from jinja2.sandbox import (
-                SandboxedEnvironment,
-            )
+            from jinja2.sandbox import SandboxedEnvironment
         except ImportError:
             exchange.fail("jinja2 not installed: pip install Jinja2")
             return

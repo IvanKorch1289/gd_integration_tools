@@ -129,9 +129,7 @@ class LangMemService:
         # Определяем enabled: из аргумента или из feature_flags
         if enabled is None:
             try:
-                from src.backend.core.config.features import (
-                    feature_flags,
-                )
+                from src.backend.core.config.features import feature_flags
 
                 enabled = feature_flags.langmem_enabled
             except (ImportError, AttributeError):
@@ -456,9 +454,7 @@ class LangMemService:
                 "Включите feature flag для consolidation.",
             )
         try:
-            from src.backend.core.config.ai_stack import (
-                langmem_settings,
-            )
+            from src.backend.core.config.ai_stack import langmem_settings
             from src.backend.services.ai.memory.langmem.consolidation import (
                 ConsolidationEngine,
             )

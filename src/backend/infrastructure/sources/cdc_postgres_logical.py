@@ -180,9 +180,7 @@ class CdcPostgresLogicalSource:
     async def start(self, on_event: EventCallback) -> None:
         """Запустить чтение через CDCSource + ack-cursor запись."""
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.cdc_postgres_enabled:
                 _logger.info(

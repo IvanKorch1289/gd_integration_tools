@@ -82,9 +82,7 @@ class SemanticCache:
         try:
             import orjson
 
-            from src.backend.core.di.providers import (
-                get_redis_stream_client_provider,
-            )
+            from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
         except ImportError:
@@ -107,9 +105,7 @@ class SemanticCache:
         try:
             import orjson
 
-            from src.backend.core.di.providers import (
-                get_redis_stream_client_provider,
-            )
+            from src.backend.core.di.providers import get_redis_stream_client_provider
 
             redis_client = get_redis_stream_client_provider()
         except ImportError:
@@ -136,9 +132,7 @@ class SemanticCache:
     ) -> dict[str, Any] | None:
         """Vector similarity поиск через RAG service."""
         try:
-            from src.backend.services.ai.rag_service import (
-                get_rag_service,
-            )
+            from src.backend.services.ai.rag_service import get_rag_service
 
             rag = get_rag_service()
         except ImportError:
@@ -171,9 +165,7 @@ class SemanticCache:
     ) -> None:
         """Сохраняет query + response в vector store для semantic search."""
         try:
-            from src.backend.services.ai.rag_service import (
-                get_rag_service,
-            )
+            from src.backend.services.ai.rag_service import get_rag_service
 
             rag = get_rag_service()
         except ImportError:
@@ -201,9 +193,7 @@ class SemanticCache:
                     # Bare `except Exception` маскировал ImportError (rag_ingest_service
                     # недоступен), RuntimeError/ValueError (sanitizer failure).
                     # Fallback: ingest raw query (raw + pii_masked=False flag).
-                    from src.backend.core.logging import (
-                        get_logger,
-                    )
+                    from src.backend.core.logging import get_logger
                     get_logger(__name__).warning(
                         "semantic_cache.pii_mask_failed",
                         extra={"error": str(pii_mask_exc)},

@@ -230,9 +230,7 @@ class MCPClientRegistry:
             return self._http_client
 
         try:
-            from src.backend.core.net.outbound_http import (
-                OutboundHttpClient,
-            )
+            from src.backend.core.net.outbound_http import OutboundHttpClient
 
             waf_policy = spec.waf_policy or "strict"
             self._http_client = OutboundHttpClient(waf_policy=waf_policy)

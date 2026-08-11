@@ -121,9 +121,7 @@ async def receive_command(request: Request) -> JSONResponse:
     )
 
     try:
-        from src.backend.core.di.providers import (
-            get_express_metrics_recorder_provider,
-        )
+        from src.backend.core.di.providers import get_express_metrics_recorder_provider
 
         recorder = get_express_metrics_recorder_provider()
         bot_name = str(payload.get("bot_id", "main_bot"))

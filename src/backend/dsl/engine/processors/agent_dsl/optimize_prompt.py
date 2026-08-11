@@ -60,9 +60,7 @@ class OptimizePromptProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Запустить optimization."""
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.dspy_eval_pipeline_enabled:
                 exchange.set_property(

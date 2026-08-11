@@ -160,9 +160,7 @@ def from_environment() -> OCRProcessor:
 
     """
     try:
-        from src.backend.core.config.features import (
-            feature_flags,
-        )
+        from src.backend.core.config.features import feature_flags
 
         if not feature_flags.rpa_ocr_enabled:
             return NoOpOCRProcessor()
@@ -172,9 +170,7 @@ def from_environment() -> OCRProcessor:
         # feature_flags module not ready) и AttributeError (feature_flags
         # missing rpa_ocr_enabled attribute). Fallback NoOpOCRProcessor
         # корректен — caller проверяет availability отдельно.
-        from src.backend.core.logging import (
-            get_logger,
-        )
+        from src.backend.core.logging import get_logger
         get_logger(__name__).debug(
             "rpa.ocr.feature_flags_resolve_failed",
             extra={"error": str(feature_exc)},

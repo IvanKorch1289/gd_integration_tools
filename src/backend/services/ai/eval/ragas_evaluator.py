@@ -232,11 +232,7 @@ class RAGASEvaluator:
         try:
             from datasets import Dataset
             from ragas import evaluate
-            from ragas.metrics import (
-                answer_relevancy,
-                context_precision,
-                faithfulness,
-            )
+            from ragas.metrics import answer_relevancy, context_precision, faithfulness
         except ImportError as exc:
             logger.warning("ragas/datasets not installed: %s", exc)
             return RAGASReport(
@@ -255,9 +251,7 @@ class RAGASEvaluator:
 
         if has_ground_truth:
             try:
-                from ragas.metrics import (
-                    context_recall,
-                )
+                from ragas.metrics import context_recall
 
                 metrics_list.append(context_recall)
                 metric_names.append("context_recall")

@@ -289,9 +289,7 @@ class TemporalWorkflowBackend(WorkflowBackend):
         вместо silent-обхода через ``cast(str → type)``.
         """
         try:
-            from temporalio.client import (
-                WorkflowHistory,
-            )
+            from temporalio.client import WorkflowHistory
             from temporalio.worker import Replayer
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError("temporalio SDK not installed") from exc
@@ -350,12 +348,8 @@ class TemporalWorkflowBackend(WorkflowBackend):
         TCancelled: type[Exception]
         TFailureError: type[Exception]
         try:
-            from temporalio.exceptions import (
-                CancelledError as _TCancelled,
-            )
-            from temporalio.exceptions import (
-                FailureError as _TFailureError,
-            )
+            from temporalio.exceptions import CancelledError as _TCancelled
+            from temporalio.exceptions import FailureError as _TFailureError
         except ImportError:  # pragma: no cover
             TCancelled = Exception
             TFailureError = Exception

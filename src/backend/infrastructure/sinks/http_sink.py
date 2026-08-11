@@ -59,9 +59,7 @@ class HttpSink(Sink):
         try:
             import httpx
 
-            from src.backend.core.net import (
-                OutboundHttpClient,
-            )
+            from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return SinkResult(ok=False, details={"error": "httpx not installed"})
 
@@ -96,9 +94,7 @@ class HttpSink(Sink):
         try:
             import httpx
 
-            from src.backend.core.net import (
-                OutboundHttpClient,
-            )
+            from src.backend.core.net import OutboundHttpClient
         except ImportError:
             return HealthResult.failed(error="httpx not installed", mode=mode)
         start = time.perf_counter()

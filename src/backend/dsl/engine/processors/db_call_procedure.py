@@ -141,9 +141,7 @@ class DbCallProcedureProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Вызывает хранимую SQL-процедуру через внешний session manager."""
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.db_call_procedure_enabled:
                 exchange.set_property("db_call_procedure_status", "skipped")

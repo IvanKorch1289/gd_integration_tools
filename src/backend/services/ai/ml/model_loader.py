@@ -197,10 +197,7 @@ class MLModelLoader:
 
     def _load_catboost(self, path: Path) -> Any:
         try:
-            from catboost import (
-                CatBoostClassifier,
-                CatBoostRegressor,
-            )
+            from catboost import CatBoostClassifier, CatBoostRegressor
         except ImportError as exc:
             raise RuntimeError(
                 "catboost не установлен; установите: uv add catboost",

@@ -85,9 +85,7 @@ class _BankingAIProcessor(BaseProcessor):
         """Выполняет AI-обработку: строит prompt, вызывает LLM через instructor+litellm и пишет результат."""
         # Feature gate
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.banking_ai_processors_enabled:
                 exchange.set_property(f"{self.name}_status", "skipped")

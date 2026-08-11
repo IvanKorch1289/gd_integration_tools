@@ -186,9 +186,7 @@ class WSAuthenticator:
         token = token.replace("Bearer ", "").strip()
 
         try:
-            from src.backend.core.di.providers import (
-                get_api_key_manager_provider,
-            )
+            from src.backend.core.di.providers import get_api_key_manager_provider
 
             mgr = get_api_key_manager_provider()
             info = await mgr.validate(token)
@@ -315,9 +313,7 @@ class WSAuthenticator:
         if not api_key_hash:
             return set()
         try:
-            from src.backend.core.di.providers import (
-                get_redis_kv_client_provider,
-            )
+            from src.backend.core.di.providers import get_redis_kv_client_provider
 
             raw = get_redis_kv_client_provider()
             members = await raw.smembers(f"ws:groups:{api_key_hash}")
@@ -336,9 +332,7 @@ class WSAuthenticator:
     async def grant_group(self, api_key_hash: str, group: str) -> None:
         """Выдаёт доступ к группе (admin operation)."""
         try:
-            from src.backend.core.di.providers import (
-                get_redis_kv_client_provider,
-            )
+            from src.backend.core.di.providers import get_redis_kv_client_provider
 
             raw = get_redis_kv_client_provider()
             await raw.sadd(f"ws:groups:{api_key_hash}", group)
@@ -348,9 +342,7 @@ class WSAuthenticator:
     async def revoke_group(self, api_key_hash: str, group: str) -> None:
         """Отзывает доступ к группе."""
         try:
-            from src.backend.core.di.providers import (
-                get_redis_kv_client_provider,
-            )
+            from src.backend.core.di.providers import get_redis_kv_client_provider
 
             raw = get_redis_kv_client_provider()
             await raw.srem(f"ws:groups:{api_key_hash}", group)

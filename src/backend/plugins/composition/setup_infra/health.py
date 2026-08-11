@@ -119,9 +119,7 @@ async def _register_health_checks() -> None:
         import asyncio
         import time
 
-        from src.backend.core.config.services.queue import (
-            queue_settings,
-        )
+        from src.backend.core.config.services.queue import queue_settings
 
         if queue_settings.type != "kafka":
             return {"status": "skipped", "reason": "queue.type != kafka"}

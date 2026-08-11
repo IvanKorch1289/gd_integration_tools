@@ -260,9 +260,7 @@ async def start_temporal_worker_runtime(
         return
 
     try:
-        from src.backend.core.config.settings import (
-            settings,
-        )
+        from src.backend.core.config.settings import settings
 
         target = getattr(settings, "temporal_target_host", "localhost:7233")
         namespace = getattr(settings, "temporal_namespace", "default")

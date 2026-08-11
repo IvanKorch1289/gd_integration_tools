@@ -75,9 +75,7 @@ class SentenceTransformerEmbeddingProvider:
         if self._model is not None:
             return self._model
         try:
-            from sentence_transformers import (
-                SentenceTransformer,
-            )
+            from sentence_transformers import SentenceTransformer
         except ImportError as exc:
             raise RuntimeError(
                 "sentence-transformers не установлен — добавьте extras [rag]: "

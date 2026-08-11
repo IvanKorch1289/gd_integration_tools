@@ -278,9 +278,7 @@ async def maybe_start_broadcaster(
 
     """
     try:
-        from src.backend.core.config.features import (
-            feature_flags,
-        )
+        from src.backend.core.config.features import feature_flags
     except ImportError:
         return None
     if not getattr(feature_flags, "tenant_feature_flag_ui", False):

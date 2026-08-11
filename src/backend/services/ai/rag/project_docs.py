@@ -223,10 +223,7 @@ class DocsIndexer:
             # ConnectionError для network issues. Bare `except Exception`
             # маскировал unrelated errors (KeyError, TypeError).
             try:
-                from qdrant_client.models import (
-                    Distance,
-                    VectorParams,
-                )
+                from qdrant_client.models import Distance, VectorParams
 
                 self._qdrant.create_collection(
                     collection_name=self._collection_name,
@@ -322,9 +319,7 @@ class DocsIndexer:
     ) -> list[Any]:
         """PointStruct (Qdrant) → dict (fallback) — automatic dispatch."""
         try:
-            from qdrant_client.models import (
-                PointStruct,
-            )
+            from qdrant_client.models import PointStruct
 
             return [
                 PointStruct(

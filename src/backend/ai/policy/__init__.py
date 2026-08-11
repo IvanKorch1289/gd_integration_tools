@@ -32,9 +32,7 @@ def _default_tool_policy() -> AgentToolPolicy:
 
 
 try:
-    from src.backend.core.svcs_registry import (
-        register_factory,
-    )
+    from src.backend.core.svcs_registry import register_factory
 
     register_factory(AgentToolPolicy, _default_tool_policy)
 except ImportError:  # pragma: no cover — svcs_registry optional

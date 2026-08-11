@@ -204,9 +204,7 @@ async def _publish_diagnostics(ls: Any, uri: str) -> None:
 
     # Запускаем linter (strict-mode читаем из feature_flag).
     try:
-        from src.backend.core.config.features import (
-            feature_flags,
-        )
+        from src.backend.core.config.features import feature_flags
 
         strict = bool(getattr(feature_flags, "dsl_linter_strict", False))
     except ImportError:

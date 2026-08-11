@@ -18,9 +18,7 @@ __all__ = ("SLOTracker", "get_slo_tracker")
 
 
 try:
-    from hdrh.histogram import (
-        HdrHistogram as _HdrHistogram,
-    )
+    from hdrh.histogram import HdrHistogram as _HdrHistogram
 
     _HDRH_AVAILABLE = True
 except ImportError:

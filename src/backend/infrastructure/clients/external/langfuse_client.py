@@ -95,9 +95,7 @@ class LangFuseClient:
             return None
 
         try:
-            from langfuse.callback import (
-                CallbackHandler,
-            )
+            from langfuse.callback import CallbackHandler
 
             return CallbackHandler()
         except ImportError:

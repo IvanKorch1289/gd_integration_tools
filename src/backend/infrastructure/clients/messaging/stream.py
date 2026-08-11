@@ -180,9 +180,7 @@ class StreamClient:
             )
             return
         try:
-            from faststream.kafka.fastapi import (
-                KafkaRouter,
-            )
+            from faststream.kafka.fastapi import KafkaRouter
         except ImportError as exc:
             stream_logger.warning(
                 "faststream[kafka] not installed — Kafka router skipped: %s", exc,

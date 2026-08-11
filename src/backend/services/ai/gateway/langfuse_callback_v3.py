@@ -62,9 +62,7 @@ class LangFuseCallbackV3:
         try:
             from langfuse import Langfuse
 
-            from src.backend.core.config.ai_stack import (
-                langfuse_settings,
-            )
+            from src.backend.core.config.ai_stack import langfuse_settings
 
             if not langfuse_settings.enabled:
                 logger.debug("LangFuse v3 disabled via langfuse_settings.enabled=False")

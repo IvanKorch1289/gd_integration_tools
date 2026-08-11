@@ -235,9 +235,7 @@ def _default_whitelist_check(tenant_id: str, tool_name: str) -> bool:
 
     """
     try:
-        from src.backend.core.security.capabilities import (
-            CapabilityGate,
-        )
+        from src.backend.core.security.capabilities import CapabilityGate
 
         # ``check`` signals allow by returning normally and deny by raising.
         gate = CapabilityGate()

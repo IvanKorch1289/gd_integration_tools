@@ -182,9 +182,7 @@ class InfrastructureChecksMixin:
         flags = getattr(settings, "features", None)
         if flags is None:
             try:
-                from src.backend.core.config.features import (
-                    feature_flags as _flags,
-                )
+                from src.backend.core.config.features import feature_flags as _flags
             except ImportError:
                 return []
             flags = _flags

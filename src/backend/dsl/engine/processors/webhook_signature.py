@@ -146,9 +146,7 @@ class WebhookSignatureProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Проверяет HMAC-подпись webhook-запроса и применяет политику при несовпадении."""
         try:
-            from src.backend.core.config.features import (
-                feature_flags,
-            )
+            from src.backend.core.config.features import feature_flags
 
             if not feature_flags.proc_webhook_signature:
                 exchange.set_property("webhook_signature_status", "skipped")
@@ -176,9 +174,7 @@ class WebhookSignatureProcessor(BaseProcessor):
 
         verified = False
         try:
-            from standardwebhooks import (
-                Webhook,  # type: ignore[import-not-found]
-            )
+            from standardwebhooks import Webhook  # type: ignore[import-not-found]
 
             wh = Webhook(self._secret)
             try:

@@ -81,9 +81,7 @@ class RedisLockProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Приобретает Redis lock или fail'ит exchange."""
         try:
-            from src.backend.infrastructure.clients.storage.redis_lock import (
-                RedisLock,
-            )
+            from src.backend.infrastructure.clients.storage.redis_lock import RedisLock
         except ImportError as exc:
             exchange.fail(f"redis_lock: redis dependencies not installed: {exc}")
             return

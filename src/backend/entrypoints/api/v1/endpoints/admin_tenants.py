@@ -52,9 +52,7 @@ async def _query_audit_safe(
     модуля — вызывающий должен fallback'нуть на stub-структуру.
     """
     try:
-        from src.backend.core.audit import (
-            get_audit_log,
-        )
+        from src.backend.core.audit import get_audit_log
     except ImportError:
         return None
 

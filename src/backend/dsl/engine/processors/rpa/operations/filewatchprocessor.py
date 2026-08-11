@@ -81,9 +81,7 @@ class FileWatchProcessor(BaseProcessor):
             return
         """Блокирует выполнение до появления файлов в директории (watchdog, синхронно)."""
         try:
-            from watchdog.events import (
-                FileSystemEventHandler,
-            )
+            from watchdog.events import FileSystemEventHandler
             from watchdog.observers import Observer
         except ImportError as exc:
             raise RuntimeError(
