@@ -98,7 +98,7 @@ def _validate_select_sql(sql: str) -> None:
 
 
 def _validate_write_sql(sql: str) -> None:
-    """Reject destructive DDL/DML that the capability gate does not cover.
+    r"""Reject destructive DDL/DML that the capability gate does not cover.
 
     The AgentSecurityFramework already lists DROP DATABASE/SCHEMA, TRUNCATE,
     DELETE FROM x;, UPDATE x SET ...; — we mirror that blocklist here as a

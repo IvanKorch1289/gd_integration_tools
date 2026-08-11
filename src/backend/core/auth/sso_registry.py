@@ -287,7 +287,7 @@ class SsoRegistry:
 
 
 def _parse_idp_config(raw: dict[str, Any]) -> IdpConfig:
-    """Парсит raw Vault payload → :class:`IdpConfig`.
+    r"""Парсит raw Vault payload → :class:`IdpConfig`.
 
     Ожидаемый формат (per ADR-0054 §2)::
 

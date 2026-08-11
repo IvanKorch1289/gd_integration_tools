@@ -1,4 +1,4 @@
-"""GD Integration Tools — Streamlit entry point с structured navigation (S173).
+r"""GD Integration Tools — Streamlit entry point с structured navigation (S173).
 
 Заменяет flat auto-discovery из ``pages/`` на явную ``st.navigation()``
 (Streamlit ≥1.30). 9 секций по доменам вместо плоского списка из 70 ссылок.

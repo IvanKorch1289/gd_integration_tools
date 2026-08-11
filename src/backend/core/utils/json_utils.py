@@ -37,7 +37,7 @@ _BASE_OPTIONS = orjson.OPT_NON_STR_KEYS | orjson.OPT_NAIVE_UTC
 def dumps_str(
     obj: Any, *, default: Callable[[Any], Any] | None = None, indent: bool = False,
 ) -> str:
-    """Serialize Python object → JSON string (для ClickHouse String columns, logs).
+    r"""Serialize Python object → JSON string (для ClickHouse String columns, logs).
 
     Args:
         obj: Python object (dict, list, primitive, dataclass, datetime).

@@ -1,4 +1,4 @@
-"""DSL processor ``audit_clickhouse`` (K8 Wave 4, V15 audit trail).
+r"""DSL processor ``audit_clickhouse`` (K8 Wave 4, V15 audit trail).
 
 Записывает security/business событие в ClickHouse audit trail
 через :class:`~src.backend.services.audit.ClickHouseAuditService`.

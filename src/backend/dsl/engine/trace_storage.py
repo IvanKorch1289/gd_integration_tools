@@ -1,4 +1,4 @@
-"""S46 W3 (TD-026): TraceStorage abstraction + JSON file implementation.
+r"""S46 W3 (TD-026): TraceStorage abstraction + JSON file implementation.
 
 S44 W1 добавил in-memory ring buffer (maxlen=1000 per route) в
 ``ExecutionTracer``. Buffer теряется при restart. Этот модуль добавляет

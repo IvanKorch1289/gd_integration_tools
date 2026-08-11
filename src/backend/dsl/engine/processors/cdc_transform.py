@@ -68,7 +68,7 @@ def _normalize_timestamp(raw: Any) -> str:
 
 
 class TransformCdcEventProcessor(BaseProcessor):
-    """Нормализация + фильтрация + проекция CDC-событий.
+    r"""Нормализация + фильтрация + проекция CDC-событий.
 
     Args:
         operations: Список допустимых операций (``["INSERT", "UPDATE"]``).

@@ -1,4 +1,4 @@
-"""DSL processor ``render_docx`` / ``render_xlsx`` (S5 doc-generation).
+r"""DSL processor ``render_docx`` / ``render_xlsx`` (S5 doc-generation).
 
 Wave: ``[wave:s5/doc-generation-dsl]``. Декларативная генерация отчётных
 документов (Word/Excel) на основе шаблонов с подстановкой значений из

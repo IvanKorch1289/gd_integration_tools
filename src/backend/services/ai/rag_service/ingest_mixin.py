@@ -33,7 +33,7 @@ class IngestMixin(_RAGServiceProtocol):
         return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
     def chunk_text(self, text: str) -> list[str]:
-        """Разбивает текст на overlap-чанки согласно ``rag_settings``.
+        r"""Разбивает текст на overlap-чанки согласно ``rag_settings``.
 
         cycle-4/D-AUDIT-140: использует :class:`RecursiveChunker` через
         ``get_chunker("recursive", ...)`` вместо naive sliding-window

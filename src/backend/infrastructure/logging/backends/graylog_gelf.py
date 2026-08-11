@@ -1,4 +1,4 @@
-"""``GraylogGelfLogSink`` — отправка логов в Graylog по протоколу GELF.
+r"""``GraylogGelfLogSink`` — отправка логов в Graylog по протоколу GELF.
 
 Поддерживаются два транспорта:
 

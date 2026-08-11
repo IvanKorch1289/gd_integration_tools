@@ -32,7 +32,7 @@ def _cert_id_to_env(service_id: str) -> str:
 
 
 class EnvInlineCertBackend(CertBackend):
-    """Backend чтения PEM из ENV vars ``CERT_INLINE_<cert_id>``.
+    r"""Backend чтения PEM из ENV vars ``CERT_INLINE_<cert_id>``.
 
     Пример:
         export CERT_INLINE_SKB_API='---BEGIN CERT---\n...\n---END CERT---'

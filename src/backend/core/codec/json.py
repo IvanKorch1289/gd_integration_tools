@@ -152,7 +152,7 @@ def loads(payload: bytes | bytearray | memoryview | str) -> Any:
 
 
 def canonical_json_bytes(value: Any) -> bytes:
-    """Детерминированный JSON для криптографических digest'ов / HMAC.
+    r"""Детерминированный JSON для криптографических digest'ов / HMAC.
 
     Используется там, где байт-стабильность важнее производительности:
 

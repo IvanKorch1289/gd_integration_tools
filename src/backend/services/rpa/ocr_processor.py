@@ -130,7 +130,7 @@ class NoOpOCRProcessor:
     """
 
     async def is_available(self) -> bool:
-        """NoOp всегда ``available`` в смысле \"не падает\"."""
+        r"""NoOp всегда ``available`` в смысле \"не падает\"."""
         return True
 
     async def recognize(self, image_path: str | Path, *, lang: str = "eng") -> str:

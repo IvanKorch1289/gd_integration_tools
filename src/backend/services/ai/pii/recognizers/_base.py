@@ -1,4 +1,4 @@
-"""Base class для PII recognizer'ов (S218).
+r"""Base class для PII recognizer'ов (S218).
 
 ADR-018 PII layer: 8 recognizers в ``services/ai/pii/recognizers/`` следуют
 единому паттерну — class attributes (PATTERNS, CONTEXT) + ``__init__``

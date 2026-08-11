@@ -1,4 +1,4 @@
-"""DSL processor ``mask_pii`` — явная маскировка PII в request/response.
+r"""DSL processor ``mask_pii`` — явная маскировка PII в request/response.
 
 Wave ``[wave:s8/k1-w4-pii-dsl-step]``.
 

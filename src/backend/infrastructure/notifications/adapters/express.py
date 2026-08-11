@@ -1,4 +1,4 @@
-"""Express NotificationChannel — уведомления через корпоративный мессенджер.
+r"""Express NotificationChannel — уведомления через корпоративный мессенджер.
 
 Реализует протокол :class:`NotificationChannel` для Express BotX.
 Отправляет уведомления через :class:`ExpressBotClient`.

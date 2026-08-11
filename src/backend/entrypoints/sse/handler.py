@@ -221,7 +221,7 @@ def _extract_auth_from_request(
     dependencies=[Depends(require_auth([AuthMethod.API_KEY, AuthMethod.JWT]))],
 )
 async def sse_invoke(request: Request, body: _InvokeRequest) -> StreamingResponse:
-    """Однократный action-вызов с SSE-ответом.
+    r"""Однократный action-вызов с SSE-ответом.
 
     Поток событий:
 

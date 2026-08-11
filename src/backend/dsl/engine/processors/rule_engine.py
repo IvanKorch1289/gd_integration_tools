@@ -1,4 +1,4 @@
-"""DSL processor ``evaluate_rules`` (S8 rule-engine scaffold).
+r"""DSL processor ``evaluate_rules`` (S8 rule-engine scaffold).
 
 Wave: ``[wave:s8/rule-engine-scaffold]``. Минимальный безопасный evaluator
 выражений поверх библиотеки :mod:`simpleeval` (уже в lock-файле как

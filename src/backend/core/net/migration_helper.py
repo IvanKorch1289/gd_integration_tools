@@ -1,4 +1,4 @@
-"""Sprint 8A K1 W1 — миграционный helper для WAF Phase-2.
+r"""Sprint 8A K1 W1 — миграционный helper для WAF Phase-2.
 
 Цель: дать callsite'ам единый API для исходящих HTTP-запросов без полного
 переписывания. Под feature-flag ``waf_outbound_via_facade``:

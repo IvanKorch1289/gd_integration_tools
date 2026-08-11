@@ -93,7 +93,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         start_immediately: bool = False,
         payload: dict[str, Any] | None = None,
     ) -> RouteBuilder:
-        """Camel-style ``from(\"timer:foo?period=...\")`` — periodic trigger.
+        r"""Camel-style ``from(\"timer:foo?period=...\")`` — periodic trigger.
 
         Регистрирует IntervalTrigger в TriggerRegistry, который каждые
         ``interval_s`` секунд запускает route. При register() / startup
@@ -127,7 +127,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         timezone_name: str = "UTC",
         payload: dict[str, Any] | None = None,
     ) -> RouteBuilder:
-        """Camel-style ``from(\"cron:*/5 * * * *\")`` — cron periodic trigger (S168 W10 P1-2).
+        r"""Camel-style ``from(\"cron:*/5 * * * *\")`` — cron periodic trigger (S168 W10 P1-2).
 
         Real periodic dispatch (loop until stop) per ``cron_expr``.
         Отличие от ``RouteBuilder.schedule(cron=...)`` (который defers
@@ -160,7 +160,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         return self  # type: ignore
 
     def from_webhook(self, path: str, *, method: str = "POST") -> RouteBuilder:
-        """Camel-style ``from(\"http:host/path\")`` — HTTP webhook trigger.
+        r"""Camel-style ``from(\"http:host/path\")`` — HTTP webhook trigger.
 
         Регистрирует FastAPI route на ``path``. При вызове (любой JSON body)
         → dsl_service.dispatch(route_id, body, headers).
@@ -187,7 +187,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         recursive: bool = False,
         poll_interval_s: float = 1.0,
     ) -> RouteBuilder:
-        """Camel-style ``from(\"file:directory?pattern=*\")`` — file sensor trigger.
+        r"""Camel-style ``from(\"file:directory?pattern=*\")`` — file sensor trigger.
 
         Apache Airflow FileSensor analogue. При появлении/изменении файла
         (matching pattern) → dsl_service.dispatch(route_id, {}, headers).
@@ -246,7 +246,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         predicate: str | None = None,
         poll_interval_s: float = 5.0,
     ) -> RouteBuilder:
-        """Camel-style ``from(\"sql:...\")`` — SQL sensor trigger.
+        r"""Camel-style ``from(\"sql:...\")`` — SQL sensor trigger.
 
         Apache Airflow SqlSensor analogue. Polls query до match (any row
         или JMESPath predicate). При match → dsl_service.dispatch.
@@ -301,7 +301,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         body_match: str | None = None,
         poll_interval_s: float = 10.0,
     ) -> RouteBuilder:
-        """Camel-style ``from(\"http:url\")`` — HTTP sensor trigger.
+        r"""Camel-style ``from(\"http:url\")`` — HTTP sensor trigger.
 
         Apache Airflow HttpSensor analogue. Polls endpoint до match.
         При match → dsl_service.dispatch.
@@ -360,7 +360,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         endpoint_url: str | None = None,
         poll_interval_s: float = 30.0,
     ) -> RouteBuilder:
-        """Camel-style ``from(\"aws-s3:bucket/key\")`` — S3 sensor trigger.
+        r"""Camel-style ``from(\"aws-s3:bucket/key\")`` — S3 sensor trigger.
 
         Apache Airflow S3KeySensor analogue. Polls S3 head_object до match.
         При match → dsl_service.dispatch.

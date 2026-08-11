@@ -65,7 +65,7 @@ class FeedbackIndexResult:
 
 
 class FeedbackIndexer:
-    """Переводит размеченные feedback-ответы в RAG-индекс.
+    r"""Переводит размеченные feedback-ответы в RAG-индекс.
 
     Вызывается вручную из UI или CLI. Для каждого документа
     формирует текстовый чанк ``Q: {query}\\nA: {response}`` и

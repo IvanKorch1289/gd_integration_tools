@@ -42,7 +42,7 @@ class PromptVersion:
 
 
 class PromptRegistry:
-    """Реестр промптов с поддержкой Langfuse + fallback на in-memory.
+    r"""Реестр промптов с поддержкой Langfuse + fallback на in-memory.
 
     Регистрация (fallback mode)::
 

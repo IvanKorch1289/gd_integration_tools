@@ -154,7 +154,7 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
 
     @staticmethod
     def _parse_example(content: str) -> dict[str, str]:
-        """Парсит чанк вида ``Q: ...\\nA: ...`` в словарь.
+        r"""Парсит чанк вида ``Q: ...\\nA: ...`` в словарь.
 
         Args:
             content: Текст чанка из RAG-store.

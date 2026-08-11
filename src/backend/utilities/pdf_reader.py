@@ -42,7 +42,7 @@ class PdfReaderUnavailable(RuntimeError):
 
 
 def _read_pypdfium2(path: str) -> str:
-    """Извлечь текст всех страниц через pypdfium2.
+    r"""Извлечь текст всех страниц через pypdfium2.
 
     Args:
         path: Абсолютный путь к PDF-файлу.
@@ -69,7 +69,7 @@ def _read_pypdfium2(path: str) -> str:
 
 
 def _read_pypdf(path: str) -> str:
-    """Fallback: pypdf reader (без OCR; работает для text-based PDF).
+    r"""Fallback: pypdf reader (без OCR; работает для text-based PDF).
 
     Args:
         path: Абсолютный путь к PDF-файлу.
@@ -95,7 +95,7 @@ def _read_pypdf_bytes(data: bytes) -> str:
 
 
 def read_pdf(path: Path | str | bytes) -> str:
-    """Прочитать текст из PDF-файла или bytes.
+    r"""Прочитать текст из PDF-файла или bytes.
 
     Каскад: pypdfium2 → pypdf → :class:`PdfReaderUnavailable`.
 

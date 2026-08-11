@@ -1,4 +1,4 @@
-"""ClamAV через unix socket (Wave 2.4).
+r"""ClamAV через unix socket (Wave 2.4).
 
 Самый быстрый путь — 2–5 ms на сканирование, без TCP-overhead.
 

@@ -1,4 +1,4 @@
-"""DSL processor ``cancel_workflow`` (Sprint 12 K3 W7).
+r"""DSL processor ``cancel_workflow`` (Sprint 12 K3 W7).
 
 Связывает DSL pipeline с :class:`WorkflowBackend` — отменяет workflow
 по его ``workflow_id``. Запись об отмене эмитится в

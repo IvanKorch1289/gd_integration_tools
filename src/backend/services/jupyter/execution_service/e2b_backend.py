@@ -1,4 +1,4 @@
-"""S75 W1 — E2BExecutionBackend: cloud sandbox notebook execution.
+r"""S75 W1 — E2BExecutionBackend: cloud sandbox notebook execution.
 
 FINAL_REPORT_V2 #2 + направление #1 (e2b sandbox): безопасное
 выполнение untrusted notebooks в облачной sandbox-инфраструктуре

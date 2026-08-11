@@ -197,7 +197,7 @@ class SnapshotView:
 
     @property
     def version(self) -> str:
-        """Версия snapshot формата (``\"2.0\"`` для текущего реестра)."""
+        r"""Версия snapshot формата (``\"2.0\"`` для текущего реестра)."""
         version_raw: Any = self._payload.get("version", "")
         return version_raw if isinstance(version_raw, str) else ""
 

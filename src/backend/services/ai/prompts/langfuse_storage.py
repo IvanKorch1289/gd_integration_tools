@@ -1,4 +1,4 @@
-"""LangfusePromptStorage — storage backend для prompt-registry.
+r"""LangfusePromptStorage — storage backend для prompt-registry.
 
 Назначение:
     Адаптер для хранения и версионирования промптов через Langfuse SDK.

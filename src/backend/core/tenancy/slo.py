@@ -1,4 +1,4 @@
-"""Multi-tenant SLO — Service Level Objectives per tenant (S178 #4).
+r"""Multi-tenant SLO — Service Level Objectives per tenant (S178 #4).
 
 Лёгкий atomic модуль для per-tenant SLO (latency, availability, error rate).
 Дефолтные значения — production-grade для всех тенантов без per-tenant

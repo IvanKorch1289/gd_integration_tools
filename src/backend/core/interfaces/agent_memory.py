@@ -1,4 +1,4 @@
-"""Block 4.1 (gap-ai-4.1, ADR-0075): :class:`AgentMemoryGateway` Protocol.
+r"""Block 4.1 (gap-ai-4.1, ADR-0075): :class:`AgentMemoryGateway` Protocol.
 
 Единая абстракция памяти AI-агентов поверх двух существующих сервисов:
 

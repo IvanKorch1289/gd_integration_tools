@@ -26,7 +26,7 @@ class CoreMixin(_NotebookExecutionProtocol):
         *,
         timeout_seconds: float | None = None,
     ) -> list[dict[str, Any]]:
-        """Выполнить notebook и вернуть outputs.
+        r"""Выполнить notebook и вернуть outputs.
 
         Steps:
         1. Spawn user server (if not ready).
