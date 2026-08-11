@@ -63,15 +63,15 @@ def fake_correlation(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _make_event(**overrides: Any) -> AuditEvent:
     """Создаёт AuditEvent с разумными defaults для тестов."""
-    base: dict[str, Any] = dict(
-        who="alice",
-        what="x",
-        entity_type="order",
-        entity_id="ord-1",
-        action="update",
-        before={"status": "old"},
-        after={"status": "new"},
-    )
+    base: dict[str, Any] = {
+        "who": "alice",
+        "what": "x",
+        "entity_type": "order",
+        "entity_id": "ord-1",
+        "action": "update",
+        "before": {"status": "old"},
+        "after": {"status": "new"},
+    }
     base.update(overrides)
     return AuditEvent(**base)
 

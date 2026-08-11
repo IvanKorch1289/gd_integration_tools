@@ -149,7 +149,7 @@ async def test_poll_some_delivered_and_acked(outbox: FakeOutbox) -> None:
         await asyncio.sleep(0.01)
     await dispatcher.stop(timeout=1.0)
 
-    assert {eid for eid in ack.acked} == {e.event_id for e in events}
+    assert set(ack.acked) == {e.event_id for e in events}
     assert deliverer.calls == 2
     # Статус событий обновлён в DELIVERED.
     assert all(e.status is OutboxEventStatus.DELIVERED for e in events)
