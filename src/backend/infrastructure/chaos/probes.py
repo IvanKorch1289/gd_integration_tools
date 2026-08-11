@@ -48,7 +48,7 @@ S168 W11 P2-1 DECISION (per master prompt v8):
 from __future__ import annotations
 
 import asyncio
-import random
+import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Any

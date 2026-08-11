@@ -85,7 +85,7 @@ _ACCEPT_LANGUAGES = [
 
 def _stealth_headers(referer: str | None = None) -> dict[str, str]:
     """Generate randomized browser-like headers for each request."""
-    import random
+    import random  # noqa: S311 — non-cryptographic use (scraping user-agent rotation)
 
     headers = {
         "User-Agent": random.choice(  # non-cryptographic use
@@ -107,7 +107,7 @@ def _stealth_headers(referer: str | None = None) -> dict[str, str]:
 async def _random_delay(min_s: float = 1.0, max_s: float = 3.0) -> None:
     """Random delay between requests to avoid rate-limiting."""
     import asyncio
-    import random
+    import random  # noqa: S311 — non-cryptographic use (scraping user-agent rotation)
 
     await asyncio.sleep(
         min_s + random.random() * (max_s - min_s),  # non-cryptographic use

@@ -31,7 +31,7 @@
 from __future__ import annotations
 
 import asyncio
-import random
+import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field

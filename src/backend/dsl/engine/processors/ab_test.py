@@ -36,7 +36,7 @@ configurable split (например 0.7 / 0.3) и трекает выбранн
 from __future__ import annotations
 
 import hashlib
-import random
+import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 from typing import Any
 
 from src.backend.core.logging import get_logger

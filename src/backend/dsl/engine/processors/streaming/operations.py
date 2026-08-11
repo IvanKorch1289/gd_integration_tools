@@ -21,7 +21,7 @@ Exchange/ExecutionContext.
 
 from __future__ import annotations
 
-import random
+import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 from typing import Any
 
 from src.backend.core.logging import get_logger

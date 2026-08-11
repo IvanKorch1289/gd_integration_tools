@@ -15,7 +15,7 @@ Dry-run — это "what would happen" для preview.
 
 from __future__ import annotations
 
-import random
+import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Any

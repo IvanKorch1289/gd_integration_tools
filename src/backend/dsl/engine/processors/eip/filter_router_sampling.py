@@ -19,7 +19,7 @@ traffic в test environment или для метрик.
 
 from __future__ import annotations
 
-import random
+import random  # noqa: S311 — non-cryptographic use (backoff jitter, load balancing, sampling)
 import threading
 from collections.abc import Callable
 from typing import Any
