@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (internal query with controlled parameters)
 """Audit Event Log — кто/что/когда → ClickHouse через AsyncBatcher.
 
 M4 note: secondary ES-индексация через ``log_indexer`` (см. ``flush()``)

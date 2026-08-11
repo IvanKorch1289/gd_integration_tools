@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (internal query with controlled parameters)
 """Wiring W26.4: Elasticsearch → SQLite FTS5.
 
 Контракт callable: ``async def search(index: str, query: str, *, limit: int = 20) -> list[dict]``.

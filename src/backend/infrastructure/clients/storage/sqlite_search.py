@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (internal query with controlled parameters)
 """``SqliteFTS5Search`` — fallback ``SearchClient`` на SQLite FTS5 (Wave 21.3c).
 
 Используется в dev_light, где Elasticsearch недоступен. SQLite FTS5

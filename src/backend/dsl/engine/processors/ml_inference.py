@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (internal query with controlled parameters)
 """ML Inference processors — ONNX + streaming LLM + embeddings + outbox.
 
 CPU-only inference через ONNX Runtime. Graceful fallback если onnxruntime

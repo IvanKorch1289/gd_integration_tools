@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (internal query with controlled parameters)
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any

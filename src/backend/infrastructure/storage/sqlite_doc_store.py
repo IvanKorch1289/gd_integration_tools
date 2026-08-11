@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (internal query with controlled parameters)
 """``SqliteDocStore`` — SQLite-based fallback DocStoreBackend (Wave 21.3c).
 
 Структура таблицы (одна на namespace, создаётся лениво):

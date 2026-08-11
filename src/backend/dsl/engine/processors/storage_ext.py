@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (internal query with controlled parameters)
 """Storage extensions — Graph DB (Neo4j), Time Series (InfluxDB), Priority Queue.
 
 Все клиенты lazy-imported. Graceful fallback если библиотеки не установлены.

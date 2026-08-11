@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (internal query with controlled parameters)
 """Saga compensation history — Sprint 12 K3 W6.
 
 API:

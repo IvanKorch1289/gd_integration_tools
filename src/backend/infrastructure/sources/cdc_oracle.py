@@ -1,3 +1,4 @@
+# ruff: noqa: S608 — false positive (internal query with controlled parameters)
 """Oracle CDC source без Kafka (S171 M18.2, D249).
 
 Polling-based CDC для Oracle через oracledb (async).
