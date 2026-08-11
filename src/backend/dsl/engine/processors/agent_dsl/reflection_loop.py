@@ -220,7 +220,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
         """Вызвать generator_workflow_id и вернуть draft-текст."""
         context = self._build_context(exchange)
         response = await self._call_workflow(
-            gateway, self.generator_workflow_id, context,
+            gateway, self.generator_workflow_id, context, exchange,
         )
         if response is None:
             return None
@@ -236,7 +236,7 @@ class ReflectionLoopProcessor(BaseAIProcessor):
             "iteration": iteration,
         }
         response = await self._call_workflow(
-            gateway, self.reflector_workflow_id, context,
+            gateway, self.reflector_workflow_id, context, exchange,
         )
         if response is None:
             return None
@@ -257,21 +257,30 @@ class ReflectionLoopProcessor(BaseAIProcessor):
             "critique": critique,
             "iteration": iteration,
         }
-        response = await self._call_workflow(gateway, self.refiner_workflow_id, context)
+        response = await self._call_workflow(
+            gateway, self.refiner_workflow_id, context, exchange,
+        )
         if response is None:
             return None
         return self._extract_text(response)
 
     async def _call_workflow(
-        self, gateway: Any, workflow_id: str, context: dict[str, Any],
+        self,
+        gateway: Any,
+        workflow_id: str,
+        context: dict[str, Any],
+        exchange: Exchange[Any],
     ) -> Any | None:
         """Один LLM-вызов через AIGateway."""
         from src.backend.core.ai.gateway import AIRequest
 
+        # PONYTAIL: tenant_id/correlation_id propagated из exchange.meta
+        # (DOMAIN-P0-003 fix). Раньше были hardcoded sentinels 'unknown'/'reflection-loop',
+        # что ломало per-tenant budget lineage и audit-trail корреляцию.
         request = AIRequest(
             workflow_id=workflow_id,
-            tenant_id="unknown",
-            correlation_id="reflection-loop",
+            tenant_id=exchange.meta.tenant_id or "unknown",
+            correlation_id=exchange.meta.correlation_id,
             prompt_inline=f"Context: {json.dumps(context, ensure_ascii=False)}",
         )
         try:

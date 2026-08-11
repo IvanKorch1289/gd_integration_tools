@@ -216,7 +216,9 @@ class PlanExecuteProcessor(BaseAIProcessor):
     ) -> list[dict[str, Any]] | None:
         """Вызвать planner_workflow_id и распарсить JSON-план."""
         context = self._build_context(exchange, previous_errors)
-        response = await self._call_workflow(gateway, self.planner_workflow_id, context)
+        response = await self._call_workflow(
+            gateway, self.planner_workflow_id, context, exchange,
+        )
         if response is None:
             return None
         return self._parse_plan(response)
@@ -237,7 +239,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
             "step_input": step.get("input", {}),
         }
         response = await self._call_workflow(
-            gateway, self.executor_workflow_id, context,
+            gateway, self.executor_workflow_id, context, exchange,
         )
         if response is None:
             return None
@@ -263,7 +265,7 @@ class PlanExecuteProcessor(BaseAIProcessor):
             "step_structured": exec_result.get("structured"),
         }
         response = await self._call_workflow(
-            gateway, self.verifier_workflow_id, context,
+            gateway, self.verifier_workflow_id, context, exchange,
         )
         if response is None:
             return None
@@ -279,15 +281,24 @@ class PlanExecuteProcessor(BaseAIProcessor):
             return {"verdict": "ok" if "ok" in content.lower() else "fail"}
 
     async def _call_workflow(
-        self, gateway: Any, workflow_id: str, context: dict[str, Any],
+        self,
+        gateway: Any,
+        workflow_id: str,
+        context: dict[str, Any],
+        exchange: Exchange[Any],
     ) -> Any | None:
         """Один LLM-вызов через AIGateway."""
         from src.backend.core.ai.gateway import AIRequest
 
+        # PONYTAIL: tenant_id/correlation_id propagated из exchange.meta
+        # (DOMAIN-P0-003 fix). Раньше были hardcoded sentinels 'unknown'/'plan-exec',
+        # что ломало per-tenant budget lineage и audit-trail корреляцию.
+        # Fallback 'unknown' для tenant_id — null-безопасный (AIRequest.tenant_id
+        # non-nullable, см. core/ai/gateway_models.py:51).
         request = AIRequest(
             workflow_id=workflow_id,
-            tenant_id="unknown",
-            correlation_id="plan-exec",
+            tenant_id=exchange.meta.tenant_id or "unknown",
+            correlation_id=exchange.meta.correlation_id,
             prompt_inline=f"Context: {json.dumps(context, ensure_ascii=False)}",
         )
         try:

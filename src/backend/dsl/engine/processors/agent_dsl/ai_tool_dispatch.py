@@ -142,7 +142,7 @@ class AIToolDispatchProcessor(BaseAIProcessor):
 
         tools_desc = self._resolve_tools_description()
         selection = await self._ask_llm_for_tool_selection(
-            query=query, tools_desc=tools_desc,
+            exchange=exchange, query=query, tools_desc=tools_desc,
         )
         if selection is None:
             # LLM unavailable, parse error, или не выбрал tool
@@ -245,7 +245,11 @@ class AIToolDispatchProcessor(BaseAIProcessor):
         )
 
     async def _ask_llm_for_tool_selection(
-        self, *, query: str, tools_desc: str,
+        self,
+        *,
+        exchange: Exchange[Any],
+        query: str,
+        tools_desc: str,
     ) -> dict[str, Any] | None:
         """Build prompt + call AIGateway + parse JSON tool selection.
 
@@ -262,14 +266,17 @@ class AIToolDispatchProcessor(BaseAIProcessor):
             _logger.debug("%s: AIGateway import failed (%s) — skip", self.name, exc)
             return None
 
-        # Lazy AIRequest construction. tenant_id/correlation_id best-effort
+        # tenant_id / correlation_id propagated из exchange.meta
         # (audit-sink в _base.AuditMixin.process подхватит их позже).
+        # PONYTAIL: AIRequest.tenant_id non-nullable (gateway_models.py:51),
+        # поэтому fallback к 'unknown' вместо 'default'/'""' — sentinels
+        # ломали per-tenant budget lineage (DOMAIN-P0-003).
         try:
             gateway = get_ai_gateway()
             request = AIRequest(
                 workflow_id="ai_tool_dispatch",
-                tenant_id="default",
-                correlation_id="",
+                tenant_id=exchange.meta.tenant_id or "unknown",
+                correlation_id=exchange.meta.correlation_id,
                 prompt_inline=prompt,
                 context={
                     "model": self.model,
