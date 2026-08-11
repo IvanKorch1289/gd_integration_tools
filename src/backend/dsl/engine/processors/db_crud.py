@@ -104,7 +104,7 @@ def build_insert_sql(table: str, data: dict[str, Any]) -> tuple[str, dict[str, A
     table_q = _quote_identifier(table)
     cols_q = ", ".join(_quote_identifier(c) for c in cols)
     placeholders = ", ".join(f":{c}" for c in cols)
-    sql = f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders})"
+    sql = f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders})"  # noqa: S608 — table/cols проквотированы через _quote_identifier (line 72)
     return sql, dict(data)
 
 
@@ -138,15 +138,15 @@ def build_upsert_sql(
     update_cols = [c for c in cols if c not in conflict_keys]
     if not update_cols:
         # All columns are conflict keys → DO NOTHING
-        update_clause = "DO NOTHING"
+        update_clause = "DO NOTHING"  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
     else:
         update_set = ", ".join(
             f"{_quote_identifier(c)} = EXCLUDED.{_quote_identifier(c)}"
             for c in update_cols
         )
-        update_clause = f"DO UPDATE SET {update_set}"
-    sql = (
-        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "
+        update_clause = f"DO UPDATE SET {update_set}"  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
+    sql = (  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
+        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "  # noqa: S608 — identifiers проквотированы _quote_identifier
         f"ON CONFLICT ({conflict_q}) {update_clause}"
     )
     return sql, dict(data)
@@ -167,8 +167,8 @@ def build_delete_sql(table: str, where: dict[str, Any]) -> tuple[str, dict[str, 
     for col in where:
         _quote_identifier(col)
     table_q = _quote_identifier(table)
-    conditions = " AND ".join(f"{_quote_identifier(c)} = :{c}" for c in where)
-    sql = f"DELETE FROM {table_q} WHERE {conditions}"
+    conditions = " AND ".join(f"{_quote_identifier(c)} = :{c}" for c in where)  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
+    sql = f"DELETE FROM {table_q} WHERE {conditions}"  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
     return sql, dict(where)
 
 
@@ -202,10 +202,10 @@ def build_update_sql(
     set_clause = ", ".join(
         f"{_quote_identifier(c)} = :set_{c}" for c in data
     )
-    conditions = " AND ".join(
+    conditions = " AND ".join(  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
         f"{_quote_identifier(c)} = :where_{c}" for c in where
     )
-    sql = f"UPDATE {table_q} SET {set_clause} WHERE {conditions}"
+    sql = f"UPDATE {table_q} SET {set_clause} WHERE {conditions}"  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
     # Merge params with prefixed keys to avoid collisions between SET and WHERE.
     params: dict[str, Any] = {}
     params.update({f"set_{k}": v for k, v in data.items()})
@@ -234,14 +234,14 @@ def build_upsert_sql_mysql(
     placeholders = ", ".join(f":{c}" for c in cols)
     update_cols = [c for c in cols if c not in conflict_keys]
     if not update_cols:
-        update_clause = "c = c"  # no-op to keep ON DUPLICATE KEY valid
+        update_clause = "c = c"  # no-op to keep ON DUPLICATE KEY valid  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
     else:
-        update_clause = ", ".join(
+        update_clause = ", ".join(  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
             f"{_quote_identifier(c)} = VALUES({_quote_identifier(c)})"
             for c in update_cols
         )
-    sql = (
-        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "
+    sql = (  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
+        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "  # noqa: S608 — identifiers проквотированы _quote_identifier
         f"ON DUPLICATE KEY UPDATE {update_clause}"
     )
     return sql, dict(data)
@@ -277,7 +277,7 @@ def build_upsert_sql_merge(
         insert_cols = ", ".join(_quote_identifier(c) for c in cols)
         insert_vals = ", ".join(f"src.{_quote_identifier(c)}" for c in cols)
         not_matched_clause = (
-            f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"
+            f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"  # noqa: S608 — identifiers quoted via _quote_identifier
             # Identifiers quoted via ``_quote_identifier`` (whitelist regex);
             # all values bound via ``:name`` placeholders in MERGE ... USING.
         )
@@ -290,12 +290,12 @@ def build_upsert_sql_merge(
         insert_cols = ", ".join(_quote_identifier(c) for c in cols)
         insert_vals = ", ".join(f"src.{_quote_identifier(c)}" for c in cols)
         not_matched_clause = (
-            f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"
+            f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"  # noqa: S608 — identifiers quoted via _quote_identifier
             # Same whitelist as the ``if`` branch above; values bound.
         )
     # Identifiers above go through ``_quote_identifier`` (whitelist regex)
     # and every user value is bound via ``:name`` placeholders.
-    sql = (
+    sql = (  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
         f"MERGE INTO {table_q} AS t "
         f"USING (SELECT {', '.join(f':{c} AS {_quote_identifier(c)}' for c in cols)}) AS src "
         f"ON {on_clause} {matched_clause} {not_matched_clause}"
@@ -412,6 +412,6 @@ class DbCrudProcessor(BaseProcessor):
         )
 
         query_proc = DatabaseQueryProcessor(
-            sql=sql, result_property=self._result_property,
+            sql=sql, result_property=self._result_property,  # noqa: S608 — table/cols проквотированы _quote_identifier (regex)
         )
         await query_proc.process(exchange, context)
