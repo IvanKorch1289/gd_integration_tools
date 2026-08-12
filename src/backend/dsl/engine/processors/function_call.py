@@ -15,12 +15,15 @@
 from __future__ import annotations
 
 import importlib
+import logging
 import os
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.security.module_whitelist import validate_module_whitelist
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -119,7 +122,17 @@ class CallFunctionProcessor(BaseProcessor):
             from src.backend.core.config.features import feature_flags
 
             return bool(feature_flags.call_function_whitelist_strict)
-        except Exception as _:
+        except ImportError as exc:
+            # D-AUDIT-12401 fix (cycle 124): narrow от bare
+            # 'except Exception: _' (которое swallow'ило ВСЕ exceptions
+            # включая SystemExit/KeyboardInterrupt) до конкретного
+            # ImportError от feature_flags module. Fallback False
+            # — safe default (whitelist strict mode OFF в degraded env).
+            logger.debug(
+                "_is_strict_environment: feature_flags import failed "
+                "(exc_type=%s exc_msg=%s) — returning False",
+                type(exc).__name__, exc,
+            )
             return False
 
     @staticmethod
