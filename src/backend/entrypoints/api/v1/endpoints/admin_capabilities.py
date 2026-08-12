@@ -74,20 +74,37 @@ async def list_capabilities() -> dict[str, Any]:
 async def get_capability_audit_events(limit: int = 100) -> dict[str, Any]:
     """Последние denied capability-checks.
 
-    В отсутствие живого ClickHouse audit log возвращает пустой список —
-    Streamlit page 71 toleratет stub-режим.
+    D-AUDIT-9801 fix (cycle 98, API-P1-008): на ImportError логируется
+    WARNING (раньше silent return с stub=True). На query failure —
+    ERROR (раньше WARNING без structured context). Caller получает
+    stub=True (Streamlit page 71 tolerates), но ops увидит degradation
+    в observability.
     """
     safe_limit = max(1, min(int(limit), 1000))
     try:
         from src.backend.core.audit import get_audit_log
-    except ImportError:
+    except ImportError as exc:
+        logger.warning(
+            "get_audit_log import failed (audit module unavailable): "
+            "exc_type=%s exc_msg=%s — returning stub=True",
+            type(exc).__name__,
+            exc,
+        )
         return {"events": [], "limit": safe_limit, "stub": True}
 
     log = get_audit_log()
     try:
         rows = await log.query(entity_type="capability", limit=safe_limit)
     except Exception as exc:  # pragma: no cover — ClickHouse offline
-        logger.warning("audit-log query failed: %s", exc)
+        # D-AUDIT-9801: structured ERROR-лог с exc_type/exc_msg.
+        # Раньше: bare warning → signal терялся среди сотен WARNING
+        # (Datadog/Sentry alert fatigue).
+        logger.error(
+            "audit-log query failed (capability_denied events): "
+            "exc_type=%s exc_msg=%s — returning stub=True",
+            type(exc).__name__,
+            exc,
+        )
         rows = []
 
     return {"events": rows, "limit": safe_limit, "stub": not rows}
