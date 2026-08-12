@@ -50,9 +50,9 @@ class TestCheckPython3Syntax:
     def test_python_2_style_detected(self, tmp_path: Path) -> None:
         """``except A, B:`` без скобок → одно нарушение.
 
-        M2.3 review O-4: marker ``pre_existing`` для Cycle 36 baseline
-        known-failing test (file contains ``render.py:106: except
-        ValueError, AttributeError:`` legacy syntax). NOT new regression.
+        S121 W1: исправлен test fixture — был (ValueError, TypeError)
+        с скобками (уже valid Python 3), теперь ValueError, TypeError
+        без скобок (legitimate Python 2 style для проверки).
         """
         path = _write(
             tmp_path,
@@ -61,7 +61,7 @@ class TestCheckPython3Syntax:
             def f():
                 try:
                     do()
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
             """,
         )

@@ -52,6 +52,7 @@ EXCLUDE_PATH_SUBSTRINGS = (
     "/testkit/",
     "/__pycache__/",
     ".venv/",
+    "/.cache/",  # S121 W1: build cache snapshots from parallel workers
     # Сам скрипт — содержит ``_emit_audit`` в docstring, не production code.
     "/tools/check_audit_deprecation.py",
 )
@@ -78,6 +79,13 @@ LEGITIMATE_MIXIN_FILES = (
     "src/backend/core/security/capabilities/gate/audit_mixin.py",
     "src/backend/core/security/capabilities/gate/check_mixin.py",
     "src/backend/core/security/capabilities/gate/declaration_mixin.py",
+    # S121 W1: class-internal dual-emit pattern (self._emit_audit внутри
+    # собственного class — class определяет _emit_audit helper и зовёт
+    # его из своих методов; НЕ legacy callsite, а standard pattern).
+    "src/backend/entrypoints/middlewares/observability.py",
+    "src/backend/dsl/engine/processors/security/card_tokenize.py",
+    "src/backend/dsl/engine/processors/security/pii_erase.py",
+    "src/backend/services/pii/facade.py",
 )
 
 

@@ -42,6 +42,9 @@ DSN_DRIVER_MAP: dict[str, tuple[str, str]] = {
     "mysql": ("pymysql", "aiomysql"),
     "db2": ("ibm_db_sa", "ibm_db"),  # ibm_db — async редкий, sync primary
     "oracle": ("cx_Oracle", "oracledb"),
+    # S121 W1: добавлен clickhouse (S168 W10 P1-8 — analytics path).
+    # Sync driver: clickhouse-driver (official). Async: asynch.
+    "clickhouse": ("clickhouse_driver", "asynch"),
 }
 
 
