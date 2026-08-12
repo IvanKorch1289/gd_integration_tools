@@ -19,9 +19,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
+
+from src.backend.core.logging import get_logger
 
 __all__ = ("WorkflowLauncher", "WorkflowResolutionError")
+
+_logger = get_logger(__name__)
 
 
 class WorkflowResolutionError(ValueError):
@@ -155,7 +159,16 @@ class WorkflowLauncher:
                 v = Version(version_str)
                 if v in spec_set:
                     matching.append((v, version_str))
-            except Exception as _:
+            except InvalidVersion as exc:
+                # D-AUDIT-12201 fix (cycle 122): narrow от broad
+                # 'except Exception: _' (которое swallow'ило ANY exception
+                # включая SystemExit, KeyboardInterrupt) до конкретного
+                # InvalidVersion от packaging. Debug-лог для observability
+                # invalid version strings (вместо silent skip).
+                _logger.debug(
+                    "resolve_best_match: skip invalid version string %r: %s",
+                    version_str, exc,
+                )
                 continue
 
         if not matching:
