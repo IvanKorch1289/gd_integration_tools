@@ -18,7 +18,8 @@ def test_is_enabled_falls_back_to_static_registry(svc: FeatureFlagService) -> No
     """Без override возвращается значение из static registry."""
     # Известный default-OFF флаг из реестра
     result = svc.is_enabled("openfeature_external")
-    assert result is True  # default=True per code (S171 M11 R2 sync)
+    # S121 W1: default=False per D-AUDIT-FIX-184-2 (code matches doc).
+    assert result is False  # default=False per experimental.py:79
 
 
 def test_is_enabled_respects_runtime_override(svc: FeatureFlagService) -> None:

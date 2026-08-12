@@ -422,7 +422,7 @@ def _build_ai_gateway_singleton() -> Any:
     )
 
 
-def get_ai_gateway_provider() -> Any:
+def get_ai_gateway_provider() -> AIGateway:
     """Возвращает :class:`AIGateway` с обязательными DI (Sprint 1.3).
 
     Сначала проверяет override из :func:`set_ai_gateway_provider`

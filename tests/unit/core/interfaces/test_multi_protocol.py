@@ -131,6 +131,9 @@ class TestVaultRefresherProtocol:
 class TestLoggerProtocol:
     def test_is_runtime_checkable(self) -> None:
         class Impl:
+            def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+                pass
+
             def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
                 pass
 

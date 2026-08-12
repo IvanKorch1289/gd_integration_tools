@@ -304,8 +304,7 @@ class ConsulConfigSettingsSource(FilteredSettingsSource):
             # store type, ValueError — invalid prefix, KeyError — missing
             # expected key. Bare `except Exception` маскировал unrelated
             # runtime errors.
-            import logging
-            logging.getLogger(__name__).debug(
+            _logger.debug(
                 "config_loader.prefix_items_failed",
                 extra={"prefix": prefix, "error": str(items_exc)},
             )

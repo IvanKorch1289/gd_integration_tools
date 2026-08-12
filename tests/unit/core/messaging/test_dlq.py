@@ -7,6 +7,7 @@ mock-backed behaviour of the underlying writer protocol. Sprint 39 carryover.
 from __future__ import annotations
 
 import asyncio
+import importlib
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
@@ -333,7 +334,9 @@ def test_dlq_module_does_not_eagerly_import_infrastructure() -> None:
     try:
         sys.modules.pop("src.backend.core.messaging.dlq", None)
 
-        # dlq module loaded successfully even when base was evicted
+        # S121 W1: actual import — without infrastructure dlq_base, dlq
+        # должен re-export через TYPE_CHECKING guard.
+        importlib.import_module("src.backend.core.messaging.dlq")
         assert "src.backend.core.messaging.dlq" in sys.modules
     finally:
         if saved is not None:
