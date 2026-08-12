@@ -1,3 +1,4 @@
+# ruff: noqa: S101
 """Tests for OSINT agent workflow."""
 
 from __future__ import annotations
