@@ -4,8 +4,15 @@
 директории. Активируется при ``FS_PROVIDER=local``.
 
 В **production** не использовать — нет шифрования, репликации, CDN.
-При запуске вне dev-окружения выводит ``warnings.warn``, чтобы предупредить
-оператора о небезопасной конфигурации.
+Проверка окружения и fail-stop теперь живут в composition root
+(:func:`infrastructure.storage.factory.get_local_fs_storage` /
+:func:`get_object_storage`) — они вызываются из
+``composition.service_setup.register_all_services`` при старте lifespan'а
+и поднимают :class:`core.config.validator.ProductionConfigError`,
+если ``settings.app.environment == "production"``. Раньше тот же check
+был реализован через :func:`warnings.warn` в ``__init__`` — это ненадёжно
+(логи могут быть скрыты, оператор увидит warning только при первом
+instantiate, а не до старта приложения).
 
 Особенности:
 
@@ -20,7 +27,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-import warnings
 from pathlib import Path
 from typing import Any
 
@@ -52,6 +58,10 @@ class LocalFSStorage(ObjectStorage):
     safe-path layout. Используется в app_factory для auto-prefixing
     ключей (``<tenant_id>/<key>``) — это позволяет LocalFS-режиму
     изолировать файлы по tenant'ам без изменения ObjectStorage.Protocol.
+
+    Production-safety check вынесен в composition root
+    (:func:`infrastructure.storage.factory`) — здесь только
+    filesystem-инициализация.
     """
 
     def __init__(
@@ -60,20 +70,10 @@ class LocalFSStorage(ObjectStorage):
         *,
         tenant_root_prefix: str = "tenants",
     ) -> None:
+        """Инициализирует backend и создаёт ``base_path``."""
         self._base = Path(base_path).expanduser().resolve()
         self._base.mkdir(parents=True, exist_ok=True)
         self._tenant_root_prefix = tenant_root_prefix
-
-        env = os.environ.get("APP_ENVIRONMENT") or os.environ.get(
-            "ENVIRONMENT", "development",
-        )
-        if env.lower() in {"prod", "production"}:
-            warnings.warn(
-                "LocalFSStorage активирован в production — это небезопасно. "
-                "Используйте S3/MinIO/AWS вместо provider=local.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
 
     def tenant_root(self, tenant_id: str | None) -> Path:
         """Возвращает корень tenant'а в local FS.
@@ -93,7 +93,6 @@ class LocalFSStorage(ObjectStorage):
             raise ValueError(f"Небезопасный tenant_id для LocalFSStorage: {tenant_id!r}")
         slug = tenant_id if tenant_id is not None else "_system"
         return self._base / self._tenant_root_prefix / slug
-
 
     def _safe_path(self, key: str) -> Path:
         """Резолвит ``key`` относительно base_path, отсекая path-traversal."""
