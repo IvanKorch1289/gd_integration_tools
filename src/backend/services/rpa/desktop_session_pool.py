@@ -303,8 +303,16 @@ class DesktopRPASessionPool:
         for s in sessions:
             try:
                 await s.client.aclose()
-            except Exception as _:
-                _logger.debug("desktop_rpa_pool: error closing %s", s.app_name)
+            except Exception as exc:
+                # D-AUDIT-13301 fix (cycle 133): narrow от bare
+                # 'except Exception: _' (swallow'ил exc_type/exc_msg).
+                # Добавлен exc_type/exc_msg в debug log — pool shutdown
+                # log теперь содержит конкретный failure context.
+                _logger.debug(
+                    "desktop_rpa_pool: error closing %s (exc_type=%s "
+                    "exc_msg=%s)",
+                    s.app_name, type(exc).__name__, exc,
+                )
 
 
 # Module-level singleton
