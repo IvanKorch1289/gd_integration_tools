@@ -5,12 +5,15 @@ Split из eip/flow_control.py godfile.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
+logger = logging.getLogger(__name__)
 
 __all__ = ("LoopProcessor",)
 
@@ -60,7 +63,18 @@ class LoopProcessor(BaseProcessor):
                 try:
                     if self._until(exchange):
                         break
-                except Exception as _:
+                except Exception as exc:
+                    # D-AUDIT-12901 fix (cycle 129): narrow от bare
+                    # 'except Exception: _' (swallow'ил SystemExit/
+                    # KeyboardInterrupt от user callback) + structured
+                    # warn log. Soft-fail behavior сохранён (bad user
+                    # callback → break loop, prevent crash).
+                    logger.warning(
+                        "LoopProcessor: _until callback raised "
+                        "(exc_type=%s exc_msg=%s) — breaking loop at "
+                        "iteration=%d",
+                        type(exc).__name__, exc, iteration,
+                    )
                     break
 
             exchange.set_property("loop_index", iteration)
