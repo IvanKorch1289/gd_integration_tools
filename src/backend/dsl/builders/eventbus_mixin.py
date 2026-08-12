@@ -19,7 +19,10 @@ pattern).
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.backend.dsl.builders.base import RouteBuilder
@@ -76,7 +79,16 @@ class EventBusPublishProcessor:
 
             if not feature_flags.eventbus_dsl_enabled:
                 return
-        except Exception as _:
+        except ImportError as exc:
+            # D-AUDIT-14201 fix (cycle 142): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt)
+            # до конкретного ImportError. Soft-fail behavior сохранён
+            # (return → eventbus publish skipped в degraded env).
+            logger.debug(
+                "eventbus_mixin: feature_flags import failed "
+                "(exc_type=%s exc_msg=%s) — eventbus publish skipped",
+                type(exc).__name__, exc,
+            )
             return
 
         payload = self._resolve_payload(exchange)
@@ -197,7 +209,16 @@ class EventBusSubscribeProcessor:
 
             if not feature_flags.eventbus_dsl_enabled:
                 return
-        except Exception as _:
+        except ImportError as exc:
+            # D-AUDIT-14201 fix (cycle 142): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt)
+            # до конкретного ImportError. Soft-fail behavior сохранён
+            # (return → eventbus publish skipped в degraded env).
+            logger.debug(
+                "eventbus_mixin: feature_flags import failed "
+                "(exc_type=%s exc_msg=%s) — eventbus publish skipped",
+                type(exc).__name__, exc,
+            )
             return
 
         # Всегда пишем декларацию в metadata для трейсинга.
