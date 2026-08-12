@@ -1,7 +1,7 @@
 """Sprint 183 W1.2 — D-AUDIT-95 regression tests.
 
 Строгие ассерты per D-LESSON-11:
-- pre-fix падают (нет --shutdown-timeout флага),
+- pre-fix падают (нет --workers-kill-timeout флага),
 - post-fix проходят (флаг + валидация диапазона).
 """
 
@@ -21,7 +21,7 @@ def _import_granian_tuning():
 
 
 def test_graceful_shutdown_default_emits_flag() -> None:
-    """Default graceful_shutdown_timeout=30 → --shutdown-timeout 30 в CLI."""
+    """Default graceful_shutdown_timeout=30 → --workers-kill-timeout 30 в CLI."""
     GranianTuning = _import_granian_tuning()
     cfg = GranianTuning()
 
@@ -31,17 +31,17 @@ def test_graceful_shutdown_default_emits_flag() -> None:
     ):
         cmd = cfg.build_cli_command(app="src.main:app")
 
-    assert "--shutdown-timeout" in cmd, (
-        f"ожидался --shutdown-timeout в CLI, получено: {cmd!r}"
+    assert "--workers-kill-timeout" in cmd, (
+        f"ожидался --workers-kill-timeout в CLI, получено: {cmd!r}"
     )
-    idx = cmd.index("--shutdown-timeout")
+    idx = cmd.index("--workers-kill-timeout")
     assert cmd[idx + 1] == "30", (
         f"ожидалось значение 30, получено {cmd[idx + 1]!r}"
     )
 
 
 def test_graceful_shutdown_explicit_value_emits_flag() -> None:
-    """graceful_shutdown_timeout=300 → --shutdown-timeout 300 в CLI."""
+    """graceful_shutdown_timeout=300 → --workers-kill-timeout 300 в CLI."""
     GranianTuning = _import_granian_tuning()
     cfg = GranianTuning(graceful_shutdown_timeout=300)
 
@@ -51,10 +51,10 @@ def test_graceful_shutdown_explicit_value_emits_flag() -> None:
     ):
         cmd = cfg.build_cli_command(app="src.main:app")
 
-    assert "--shutdown-timeout" in cmd, (
-        f"ожидался --shutdown-timeout в CLI, получено: {cmd!r}"
+    assert "--workers-kill-timeout" in cmd, (
+        f"ожидался --workers-kill-timeout в CLI, получено: {cmd!r}"
     )
-    idx = cmd.index("--shutdown-timeout")
+    idx = cmd.index("--workers-kill-timeout")
     assert cmd[idx + 1] == "300", (
         f"ожидалось значение 300, получено {cmd[idx + 1]!r}"
     )
@@ -71,8 +71,8 @@ def test_graceful_shutdown_zero_omits_flag() -> None:
     ):
         cmd = cfg.build_cli_command(app="src.main:app")
 
-    assert "--shutdown-timeout" not in cmd, (
-        f"--shutdown-timeout НЕ должен эмититься при value=0, "
+    assert "--workers-kill-timeout" not in cmd, (
+        f"--workers-kill-timeout НЕ должен эмититься при value=0, "
         f"получено: {cmd!r}"
     )
 
@@ -101,7 +101,7 @@ def test_graceful_shutdown_rejects_negative() -> None:
 
 
 def test_graceful_shutdown_flag_positioned_before_app() -> None:
-    """--shutdown-timeout эмитится ДО app (порядок аргументов важен для Granian)."""
+    """--workers-kill-timeout эмитится ДО app (порядок аргументов важен для Granian)."""
     GranianTuning = _import_granian_tuning()
     cfg = GranianTuning(graceful_shutdown_timeout=15)
 
@@ -111,9 +111,9 @@ def test_graceful_shutdown_flag_positioned_before_app() -> None:
     ):
         cmd = cfg.build_cli_command(app="src.main:app")
 
-    idx_flag = cmd.index("--shutdown-timeout")
+    idx_flag = cmd.index("--workers-kill-timeout")
     idx_app = cmd.index("src.main:app")
     assert idx_flag < idx_app, (
-        f"--shutdown-timeout (idx={idx_flag}) должен идти раньше "
+        f"--workers-kill-timeout (idx={idx_flag}) должен идти раньше "
         f"app (idx={idx_app}); полная команда: {cmd!r}"
     )

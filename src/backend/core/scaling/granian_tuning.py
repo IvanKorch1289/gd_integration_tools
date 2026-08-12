@@ -127,7 +127,7 @@ class GranianTuning(BaseSettingsWithLoader):
         default=30,
         title="Graceful shutdown timeout (секунды)",
         description=(
-            "Granian --shutdown-timeout: сколько секунд ждать drain in-flight "
+            "Granian --workers-kill-timeout: сколько секунд ждать drain in-flight "
             "запросов после SIGTERM. Default 30 (k8s terminationGracePeriodSeconds). "
             "0 — отключить эмиссию флага (escape hatch)."
         ),
@@ -221,9 +221,13 @@ class GranianTuning(BaseSettingsWithLoader):
             cmd.append("--access-log")
         # blocking-threads — Granian флаг --threads
         cmd.extend(["--threads", str(self.resolved_blocking_threads)])
-        # D-AUDIT-95 fix (S183 W1.2): SIGTERM drain window.
+        # D-AUDIT-9201 fix (cycle 92, ENVSET-P0-001): SIGTERM drain window.
+        # Granian 2.8.0 использует '--workers-kill-timeout' (НЕ
+        # '--shutdown-timeout' — невалидный флаг, вызывает
+        # 'Error: No such option: --shutdown-timeout', exit 2).
+        # Verified: 'python -m granian --help' 2026-08-11.
         if self.graceful_shutdown_timeout > 0:
-            cmd.extend(["--shutdown-timeout", str(self.graceful_shutdown_timeout)])
+            cmd.extend(["--workers-kill-timeout", str(self.graceful_shutdown_timeout)])
         cmd.append(app)
         return cmd
 
