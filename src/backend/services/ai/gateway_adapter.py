@@ -24,6 +24,16 @@
 * Шаг 3 (S27 closure) — flag ``ai_gateway_enforce`` → ``True`` в production;
   все callers идут через AIGateway, legacy-paths остаются как fallback.
 
+Sprint 1.5 (L5 Security Chain) — добавлен :func:`adapt_capability_gate` и
+:func:`get_ai_gateway`. Canonical ``CapabilityGate`` ожидает сигнатуру
+``(plugin, capability, scope)``, а AIGateway читает ``_capability_gate.check``
+с теми же 3 аргументами. До Sprint 1.5 pipeline вызывал ``check(capability)``
+с одним аргументом — :class:`TypeError` ловился silent ``except`` →
+fail-open. Адаптер делает связь явной, и используется composition root'ом
+для регистрации AIGateway в ``app.state.ai_gateway`` (см.
+``setup_ai_stack.register_ai_stack_providers`` и
+``plugins.composition.lifecycle.startup.run_startup``).
+
 Опасности
 ---------
 * Adapter **не** подменяет публичный API существующих LLM-сервисов —
@@ -40,15 +50,19 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.ai import AIGateway, AIRequest
+from src.backend.core.interfaces.capability_gateway import CapabilityGatewayProtocol
+from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
+    pass
 
 __all__ = (
     "AIGatewayAdapter",
+    "AdaptedCapabilityGate",
     "adapt_capability_gate",
     "get_ai_gateway",
     "invoke_via_gateway",
@@ -169,6 +183,71 @@ def get_ai_gateway() -> AIGateway:
                 },
             )
             return AIGateway()  # B-05 fix (cycle 1)
+
+CapabilityChecker = Callable[[str, str, str | None], None]
+
+
+class AdaptedCapabilityGate:
+    """Wrapper ``CapabilityGatewayProtocol`` для AIGateway (Sprint 1.5).
+
+    AIGateway внутри читает ``self._capability_gate.check(...)`` через
+    :func:`getattr`. Возвращаем объект с методом ``check``, который
+    пробрасывает canonical 3-arg signature. Поведение fail-closed
+    сохраняется: ``CapabilityDeniedError`` от gate пробрасывается дальше
+    (см. :mod:`core.ai.gateway_pipeline_mixin.policy_mixin._check_capability`).
+    """
+
+    __slots__ = ("_gate",)
+
+    def __init__(self, gate: CapabilityGatewayProtocol) -> None:
+        """Инициализация.
+
+        Args:
+            gate: Capability gateway с трёхаргументным ``check``.
+        """
+        self._gate = gate
+
+    def check(self, plugin: str, capability: str, scope: str | None) -> None:
+        """Пробросить проверку без изменения fail-closed семантики gate."""
+        self._gate.check(plugin, capability, scope)
+
+
+def adapt_capability_gate(gate: CapabilityGatewayProtocol) -> CapabilityGatewayProtocol:
+    """Адаптировать canonical ``CapabilityGate.check`` к AI-пайплайну.
+
+    Args:
+        gate: Capability gateway с трёхаргументным ``check``.
+
+    Returns:
+        Объект с методом ``.check(plugin, capability, scope)``,
+        совместимый с :attr:`AIGateway._capability_gate`.
+    """
+    return AdaptedCapabilityGate(gate)
+
+
+def get_ai_gateway() -> AIGateway:
+    """Вернуть singleton AIGateway из composition root или dev-fallback.
+
+    В production отсутствие регистрации не превращается в allow-all: созданный
+    fallback остановится встроенным production-wiring guard при ``invoke``.
+    """
+    try:
+        from src.backend.core.di.app_state import get_app_ref
+
+        app = get_app_ref()
+        if app is not None:
+            gateway = getattr(app.state, "ai_gateway", None)
+            if gateway is not None:
+                return gateway
+    except Exception as exc:
+        logger.debug("AIGateway app.state lookup skipped: %s", exc)
+
+    try:
+        from src.backend.core.di.providers.ai import get_ai_gateway_provider
+
+        return get_ai_gateway_provider()
+    except (KeyError, RuntimeError):
+        return AIGateway()
 
 
 async def invoke_via_gateway(

@@ -189,49 +189,121 @@ class SearchMixin(_RAGServiceProtocol):
     ) -> list[dict[str, Any]]:
         """Семантический поиск с использованием L3 retrieval-tier.
 
-        Sprint 2.6: добавлен ``tenant_id`` kwarg для cross-tenant изоляции.
-        При active ``tenant_scope`` (или explicit ``tenant_id``) фильтр
-        применяется в трёх местах: (1) ``where`` для vector store, (2)
-        ``tenant`` для L3 cache keys, (3) post-filter для defence-in-depth
-        против backend'ов, игнорирующих ``where`` (FAISS/in-memory).
+        Args:
+            query: Поисковый запрос (embeddings считаются на лету).
+            top_k: Количество возвращаемых chunks.
+            namespace: Логическая партиция (knowledge base / collection).
+            tenant_id: Tenant scope фильтр. ``None`` (default) — резолвится
+                из текущего :class:`TenantContext` (ContextVar). Пустая
+                строка ``""`` — явный opt-out (legacy поведение без
+                tenant-фильтра, для миграций). При ненулевом значении —
+                добавляется в metadata-filter ``where`` плюс post-filter
+                cache-hit (defence-in-depth).
 
-        ``tenant_id=""`` — явный opt-out (legacy passthrough даже при
-        active scope); ``tenant_id=None`` — fallback на ``TenantContext``
-        ContextVar (default multi-tenant behavior).
+        Returns:
+            Список chunks ``{id, document, metadata, distance/score}``,
+            ограниченных одновременно ``namespace`` и ``tenant_id``.
         """
         effective_tenant = _resolve_effective_tenant_id(tenant_id)
 
         if self._cache is not None:
             chunks, tier = await self._cache.lookup_chunks(
-                query, tenant=effective_tenant, namespace=namespace,
+                query, tenant=effective_tenant, namespace=namespace
             )
             if chunks is not None:
-                filtered = _filter_chunks_by_tenant(chunks, effective_tenant)
-                if filtered:
+                chunks = _filter_chunks_by_tenant(chunks, effective_tenant)
+                if not chunks:
                     logger.debug(
-                        "RAG retrieval hit on tier %s (tenant=%s, namespace=%s)",
+                        "RAG cache hit dropped by tenant filter "
+                        "(tier=%s, namespace=%s, tenant_id=%s)",
                         tier,
-                        effective_tenant,
                         namespace,
+                        effective_tenant,
                     )
-                    return filtered
-                # Cache вернул только чужие chunks (cross-tenant pollution) —
-                # fall through в vector store, не возвращаем пустой результат
-                # как 200 (silent-leak risk).
+                    # Continue to vector store below rather than returning
+                    # empty — underlying store may still have valid hits
+                    # if cache was poisoned by prior cross-tenant write.
+                else:
+                    logger.debug(
+                        "RAG retrieval hit on tier %s (namespace=%s)", tier, namespace
+                    )
+                    return chunks
 
         embedding = (await self._embed([query]))[0]
 
-        where = _build_where(namespace, effective_tenant)
+        where = _build_where(namespace=namespace, tenant_id=effective_tenant)
 
         results = await self._store.query(embedding=embedding, top_k=top_k, where=where)
         results = _filter_by_embedding_version(results)
+        # Post-filter ещё раз на случай, если backend игнорирует where
+        # (например, FAISSVectorStore в текущей реализации — см. задачу).
         results = _filter_chunks_by_tenant(results, effective_tenant)
 
         if self._cache is not None and results:
             try:
                 await self._cache.store_chunks(
-                    query, results, tenant=effective_tenant, namespace=namespace,
+                    query, results, tenant=effective_tenant, namespace=namespace
                 )
             except Exception as exc:
                 logger.debug("RAG L3 store skipped: %s", exc)
         return results
+
+
+def _resolve_effective_tenant_id(explicit: str | None) -> str | None:
+    """Резолв effective tenant_id: kwarg → ContextVar.
+
+    Логика:
+        * explicit ``""`` → ``None`` (явный opt-out, legacy no-filter);
+        * explicit non-empty → возвращается as-is;
+        * explicit ``None`` → читается из ``current_tenant()`` ContextVar
+          (если tenant scope активен и tenant_id непустой) → возврат;
+        * иначе → ``None`` (legacy поведение, no-filter).
+
+    Используется Sprint 2.6 (L5 RAG/Memory tenant-scope): без явного
+    tenant-контекста фильтрация не активируется, чтобы не сломать
+    существующие callers / unit-тесты без tenant_scope.
+    """
+    if explicit is not None:
+        # explicit="" → None (opt-out); explicit="x" → "x".
+        return explicit or None
+    try:
+        from src.backend.core.tenancy import current_tenant
+    except Exception:
+        return None
+    ctx = current_tenant()
+    if ctx is None:
+        return None
+    return getattr(ctx, "tenant_id", None) or None
+
+
+def _build_where(
+    *, namespace: str | None, tenant_id: str | None
+) -> dict[str, Any] | None:
+    """Собрать metadata-filter ``where`` для vector-store query.
+
+    Compound: ``{namespace: ..., tenant_id: ...}`` если оба заданы.
+    Возвращает ``None`` если оба None (legacy passthrough).
+    """
+    where: dict[str, Any] = {}
+    if namespace:
+        where["namespace"] = namespace
+    if tenant_id:
+        where["tenant_id"] = tenant_id
+    return where or None
+
+
+def _filter_chunks_by_tenant(
+    chunks: list[dict[str, Any]], tenant_id: str | None
+) -> list[dict[str, Any]]:
+    """Post-filter chunks по ``metadata.tenant_id``.
+
+    Применяется после cache-hit и после vector-store query как
+    defence-in-depth: если backend (FAISSVectorStore) или cache не
+    учитывает tenant_id в ключе, этот фильтр всё равно отрежет чужие
+    chunks. При ``tenant_id is None`` — passthrough.
+    """
+    if tenant_id is None:
+        return chunks
+    return [
+        c for c in chunks if (c.get("metadata") or {}).get("tenant_id") == tenant_id
+    ]

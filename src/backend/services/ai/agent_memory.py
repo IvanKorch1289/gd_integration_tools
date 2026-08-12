@@ -37,6 +37,19 @@ _SCRATCHPAD = "agent_memory_scratchpad"
 _FACTS = "agent_memory_facts"
 
 
+def _scope_session_id(session_id: str, tenant_id: str | None) -> str:
+    """Добавить tenant-префикс к session_id для изоляции памяти.
+
+    ``tenant_id=None`` сохраняет legacy-вызовы, где caller уже передаёт
+    namespaced session_id. REST API всегда передаёт явный tenant_id.
+    """
+    if tenant_id is None:
+        return session_id
+    if not tenant_id:
+        raise ValueError("tenant_id обязателен для tenant-scoped agent memory")
+    return f"{tenant_id}:{session_id}"
+
+
 class AgentMemoryService:
     """Persistence-слой для agent memory через MongoDB.
 
@@ -98,30 +111,15 @@ class AgentMemoryService:
             logger.warning("AgentMemory: ensure_indexes failed: %s", exc)
 
     async def get_conversation(
-        self,
-        session_id: str,
-        last_n: int = 20,
-        *,
-        tenant_id: str,
+        self, session_id: str, last_n: int = 20, *, tenant_id: str | None = None
     ) -> list[dict[str, Any]]:
-        """Get conversation history for a session.
-
-        Args:
-            session_id: Session identifier.
-            last_n: Number of recent messages.
-            tenant_id: Tenant identifier (cycle-6/D-AUDIT-606: required для multi-tenant
-                isolation; иначе Tenant A читает сообщения Tenant B при одинаковом
-                session_id).
-
-        Returns:
-            List of message dicts.
-
-        """
+        """Получить историю диалога в tenant-scoped сессии."""
+        scoped_session_id = _scope_session_id(session_id, tenant_id)
         client = self._client()
         docs = await client.find(
             _MESSAGES,
-            query={"session_id": session_id, "tenant_id": tenant_id},
-            projection={"_id": 0, "session_id": 0, "tenant_id": 0},
+            query={"session_id": scoped_session_id},
+            projection={"_id": 0, "session_id": 0},
             limit=last_n,
             sort=[("ts", -1)],
         )
@@ -134,54 +132,32 @@ class AgentMemoryService:
         content: str,
         metadata: dict[str, Any] | None = None,
         *,
-        tenant_id: str,
+        tenant_id: str | None = None,
     ) -> None:
-        """Add a message to conversation history.
-
-        Args:
-            session_id: Session identifier.
-            role: Message role (user/assistant/system).
-            content: Message content.
-            metadata: Optional metadata.
-            tenant_id: Tenant identifier (cycle-6/D-AUDIT-606: required kwarg,
-                иначе multi-tenant data breach при одинаковых session_id).
-
-        Raises:
-            TypeError: при отсутствии ``tenant_id`` (kw-only, no default).
-
-        """
+        """Добавить сообщение в tenant-scoped историю диалога."""
+        scoped_session_id = _scope_session_id(session_id, tenant_id)
         client = self._client()
         doc = {
-            "session_id": session_id,
-            "tenant_id": tenant_id,
+            **(metadata or {}),
+            "session_id": scoped_session_id,
             "role": role,
             "content": content,
             "ts": time.time(),
-            **(metadata or {}),
         }
         await client.insert_one(_MESSAGES, doc)
         # Periodic trim: run only every ~N inserts to avoid O(N) overhead.
         self._trim_counter += 1
         if self._trim_counter >= self._trim_interval:
-            await self._trim_messages(session_id, tenant_id=tenant_id)
+            await self._trim_messages(scoped_session_id)
             self._trim_counter = 0
 
-    async def _trim_messages(
-        self, session_id: str, *, tenant_id: str,
-    ) -> None:
-        """Trim messages to keep only max_messages most recent.
-
-        Args:
-            session_id: Session identifier.
-            tenant_id: Tenant identifier (cycle-6/D-AUDIT-606: фильтруем trim
-                только в рамках tenant, чтобы не удалить чужие сообщения).
-
-        """
+    async def _trim_messages(self, session_id: str) -> None:
+        """Оставить только заданное число последних сообщений сессии."""
         async with self._trim_lock:
             client = self._client()
             keep_doc = await client.find(
                 _MESSAGES,
-                query={"session_id": session_id, "tenant_id": tenant_id},
+                query={"session_id": session_id},
                 projection={"ts": 1, "_id": 0},
                 limit=1,
                 skip=self._max_messages,
@@ -192,82 +168,76 @@ class AgentMemoryService:
                 await client.collection(_MESSAGES).delete_many(
                     {
                         "session_id": session_id,
-                        "tenant_id": tenant_id,
                         "ts": {"$lt": cutoff},
                     },
                 )
 
-    async def clear_conversation(self, session_id: str) -> None:
-        """Clear all messages for a session.
-
-        Args:
-            session_id: Session identifier.
-
-        """
+    async def clear_conversation(
+        self, session_id: str, *, tenant_id: str | None = None
+    ) -> None:
+        """Удалить сообщения только из tenant-scoped сессии."""
+        scoped_session_id = _scope_session_id(session_id, tenant_id)
         client = self._client()
-        await client.collection(_MESSAGES).delete_many({"session_id": session_id})
+        await client.collection(_MESSAGES).delete_many(
+            {"session_id": scoped_session_id}
+        )
 
-    async def get_scratchpad(self, session_id: str) -> str:
-        """Get scratchpad content for a session.
-
-        Args:
-            session_id: Session identifier.
-
-        Returns:
-            Scratchpad content string.
-
-        """
+    async def get_scratchpad(
+        self, session_id: str, *, tenant_id: str | None = None
+    ) -> str:
+        """Получить scratchpad tenant-scoped сессии."""
+        scoped_session_id = _scope_session_id(session_id, tenant_id)
         client = self._client()
-        doc = await client.find_one(_SCRATCHPAD, {"session_id": session_id})
+        doc = await client.find_one(_SCRATCHPAD, {"session_id": scoped_session_id})
         return doc.get("content", "") if doc else ""
 
-    async def set_scratchpad(self, session_id: str, content: str) -> None:
-        """Set scratchpad content for a session.
-
-        Args:
-            session_id: Session identifier.
-            content: Scratchpad content.
-
-        """
+    async def set_scratchpad(
+        self, session_id: str, content: str, *, tenant_id: str | None = None
+    ) -> None:
+        """Сохранить scratchpad в tenant-scoped сессии."""
+        scoped_session_id = _scope_session_id(session_id, tenant_id)
         client = self._client()
         await client.update_one(
             _SCRATCHPAD,
-            query={"session_id": session_id},
+            query={"session_id": scoped_session_id},
             update={
-                "session_id": session_id,
+                "session_id": scoped_session_id,
                 "content": content,
                 "updated_at": time.time(),
             },
             upsert=True,
         )
 
-    async def get_facts(self, session_id: str) -> dict[str, str]:
-        """Get all facts for a session.
-
-        Args:
-            session_id: Session identifier.
-
-        Returns:
-            Dict mapping fact keys to values.
-
-        """
+    async def get_facts(
+        self, session_id: str, *, tenant_id: str | None = None
+    ) -> dict[str, str]:
+        """Получить факты tenant-scoped сессии."""
+        scoped_session_id = _scope_session_id(session_id, tenant_id)
         client = self._client()
         docs = await client.find(
             _FACTS,
-            query={"session_id": session_id},
+            query={"session_id": scoped_session_id},
             projection={"_id": 0, "fact_key": 1, "value": 1},
             limit=1000,
         )
         return {d["fact_key"]: d["value"] for d in docs}
 
-    async def set_fact(self, session_id: str, fact_key: str, value: str) -> None:
-        """Метод set_fact (см. signature)."""
+    async def set_fact(
+        self,
+        session_id: str,
+        fact_key: str,
+        value: str,
+        *,
+        tenant_id: str | None = None,
+    ) -> None:
+        """Сохранить факт в tenant-scoped сессии."""
+        scoped_session_id = _scope_session_id(session_id, tenant_id)
         client = self._client()
         await client.update_one(
             _FACTS,
-            query={"session_id": session_id, "fact_key": fact_key},
+            query={"session_id": scoped_session_id, "fact_key": fact_key},
             update={
-                "session_id": session_id,
+                "session_id": scoped_session_id,
                 "fact_key": fact_key,
                 "value": value,
                 "updated_at": time.time(),
@@ -275,33 +245,47 @@ class AgentMemoryService:
             upsert=True,
         )
 
-    async def delete_fact(self, session_id: str, fact_key: str) -> None:
-        """Метод delete_fact (см. signature)."""
+    async def delete_fact(
+        self, session_id: str, fact_key: str, *, tenant_id: str | None = None
+    ) -> None:
+        """Удалить факт только из tenant-scoped сессии."""
+        scoped_session_id = _scope_session_id(session_id, tenant_id)
         client = self._client()
         await client.delete_one(
-            _FACTS, {"session_id": session_id, "fact_key": fact_key},
+            _FACTS, {"session_id": scoped_session_id, "fact_key": fact_key}
         )
 
-    async def load_memory(self, session_id: str) -> dict[str, Any]:
-        """Метод load_memory (см. signature)."""
+    async def load_memory(
+        self, session_id: str, *, tenant_id: str | None = None
+    ) -> dict[str, Any]:
+        """Загрузить всю память tenant-scoped сессии."""
         return {
-            "conversation": await self.get_conversation(session_id),
-            "scratchpad": await self.get_scratchpad(session_id),
-            "facts": await self.get_facts(session_id),
+            "conversation": await self.get_conversation(
+                session_id, tenant_id=tenant_id
+            ),
+            "scratchpad": await self.get_scratchpad(session_id, tenant_id=tenant_id),
+            "facts": await self.get_facts(session_id, tenant_id=tenant_id),
         }
 
-    async def save_memory(self, session_id: str, memory: dict[str, Any]) -> None:
-        """Метод save_memory (см. signature)."""
+    async def save_memory(
+        self, session_id: str, memory: dict[str, Any], *, tenant_id: str | None = None
+    ) -> None:
+        """Сохранить память в tenant-scoped сессии."""
         if "scratchpad" in memory:
-            await self.set_scratchpad(session_id, memory["scratchpad"])
+            await self.set_scratchpad(
+                session_id, memory["scratchpad"], tenant_id=tenant_id
+            )
         if "facts" in memory:
             for k, v in memory["facts"].items():
-                await self.set_fact(session_id, k, v)
+                await self.set_fact(session_id, k, v, tenant_id=tenant_id)
 
-    async def session_exists(self, session_id: str) -> bool:
-        """Метод session_exists (см. signature)."""
+    async def session_exists(
+        self, session_id: str, *, tenant_id: str | None = None
+    ) -> bool:
+        """Проверить наличие сообщений в tenant-scoped сессии."""
+        scoped_session_id = _scope_session_id(session_id, tenant_id)
         client = self._client()
-        return bool(await client.count(_MESSAGES, {"session_id": session_id}))
+        return bool(await client.count(_MESSAGES, {"session_id": scoped_session_id}))
 
 
 @app_state_singleton("agent_memory_service", factory=AgentMemoryService)

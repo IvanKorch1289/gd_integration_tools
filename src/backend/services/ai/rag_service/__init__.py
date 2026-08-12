@@ -39,9 +39,9 @@ from src.backend.services.ai.rag_service.search_mixin import (
     SearchMixin,  # S64 W4: MRO
     _extract_source_id,  # S152 W2: re-export для tests
     _filter_by_embedding_version,  # S152 W1: re-export для tests
-    _filter_chunks_by_tenant,  # Sprint 2.6: tenant post-filter helper
+    _filter_chunks_by_tenant,  # S2.6: re-export для tests
     _format_context_with_sources,  # S152 W2: re-export для tests
-    _resolve_effective_tenant_id,  # Sprint 2.6: tenant resolution helper
+    _resolve_effective_tenant_id,  # S2.6: re-export для tests
 )
 from src.backend.services.ai.rag_service.state import (
     RAGCitation,  # S64 W4: re-export as RAGCitation  # S64 W4: re-export

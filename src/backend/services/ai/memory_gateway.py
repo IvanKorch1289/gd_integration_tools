@@ -30,6 +30,10 @@ from src.backend.core.interfaces.agent_memory import (
     MemoryMessage,
 )
 from src.backend.core.logging import get_logger
+from src.backend.services.ai.embedding_providers import (
+    EmbeddingProvider,
+    get_embedding_provider,
+)
 
 __all__ = ("UnifiedMemoryGateway", "get_memory_gateway")
 
@@ -64,11 +68,58 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
     """
 
     def __init__(
-        self, *, short_term: Any, long_term: Any | None = None, mem0: Any | None = None,
+        self,
+        *,
+        short_term: Any,
+        long_term: Any | None = None,
+        mem0: Any | None = None,
+        embedding_provider: EmbeddingProvider | None = None,
     ) -> None:
         self._short = short_term
         self._long = long_term
         self._mem0 = mem0
+        self._embedding_provider = embedding_provider
+
+    def _get_embedding_provider(self) -> EmbeddingProvider:
+        """Лениво возвращает существующий embedding-провайдер RAG."""
+        if self._embedding_provider is None:
+            self._embedding_provider = get_embedding_provider()
+        return self._embedding_provider
+
+    async def _recall_semantic_entries(
+        self, *, tenant_id: str, query: str | None, top_k: int
+    ) -> list[Any]:
+        """Адаптирует tenant-scoped recall к canonical LangMem API."""
+        return await self._long.recall(tenant_id, "semantic", query=query, top_k=top_k)
+
+    async def _remember_fact(
+        self,
+        *,
+        tenant_id: str,
+        content: str,
+        confidence: float,
+        source_session_id: str | None,
+        tags: tuple[str, ...],
+    ) -> str:
+        """Адаптирует запись факта к canonical и deprecated LangMem API."""
+        remember_fact = getattr(self._long, "remember_fact", None)
+        if callable(remember_fact):
+            vectors = await self._get_embedding_provider().embed([content])
+            if len(vectors) != 1:
+                raise ValueError("embedding provider должен вернуть один вектор")
+            entry = await remember_fact(tenant_id, content, vectors[0])
+            return str(entry.entry_id)
+
+        fact_id = await self._long.add_semantic(
+            text=content,
+            tenant=tenant_id,
+            meta={
+                "confidence": confidence,
+                "source_session_id": source_session_id,
+                "tags": list(tags),
+            },
+        )
+        return str(fact_id)
 
     async def get_messages(
         self, *, tenant_id: str, session_id: str, limit: int = 50,
@@ -146,8 +197,8 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         if self._long is None:
             return []
         try:
-            results = await self._long.recall(
-                tenant_id=tenant_id, query="", top_k=limit,
+            results = await self._recall_semantic_entries(
+                tenant_id=tenant_id, query=None, top_k=limit
             )
         except Exception as exc:
             logger.warning("memory_gateway.get_facts_long_failed: %s", exc)
@@ -170,14 +221,13 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         """
         if self._long is not None:
             try:
-                fact_id = await self._long.add_semantic(
+                return await self._remember_fact(
                     tenant_id=tenant_id,
                     content=content,
                     confidence=confidence,
                     source_session_id=source_session_id,
-                    tags=list(tags),
+                    tags=tags,
                 )
-                return str(fact_id)
             except Exception as exc:
                 logger.warning("memory_gateway.save_fact_long_failed: %s", exc)
 
@@ -197,8 +247,8 @@ class UnifiedMemoryGateway(AgentMemoryGateway):
         if self._long is None:
             return []
         try:
-            results = await self._long.recall(
-                tenant_id=tenant_id, query=query, top_k=top_k,
+            results = await self._recall_semantic_entries(
+                tenant_id=tenant_id, query=query, top_k=top_k
             )
         except Exception as exc:
             logger.warning("memory_gateway.recall_failed: %s", exc)

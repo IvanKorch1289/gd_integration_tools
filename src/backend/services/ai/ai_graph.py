@@ -181,8 +181,8 @@ async def build_and_run_agent(
         # S85 W2 (V2 P0 #1): enforcement check через AIGateway
         # перед LiteLLM call. Если enforcement не пройден —
         # возврат с error без silent pass-through.
-        import src.backend.core.ai.gateway
         from src.backend.core.config.features import feature_flags
+        from src.backend.services.ai.gateway_adapter import get_ai_gateway
 
         # S85 W2: pre-flight enforcement check.
         # AIGateway._enforced_invoke внутри вызывает _resolve_policy и
@@ -196,9 +196,9 @@ async def build_and_run_agent(
                 "ai_graph.build_and_run_agent requires ai_gateway_enforce=True "
                 "(S85 W2: bypass via LiteLLMGateway is no longer supported)",
             )
-        from src.backend.services.ai.gateway_adapter import get_ai_gateway
-        ai_gateway = get_ai_gateway()
-        _ = ai_gateway
+        ai_gateway = (  # noqa: F841  # enforce instance для downstream hooks
+            get_ai_gateway()
+        )
 
         tools = [_make_action_tool(action) for action in tool_actions]
         llm = build_chat_model(gateway=gateway, model=model, temperature=temperature)
