@@ -1,10 +1,11 @@
 """L3 Retrieval cache (Redis prefix ``rag:l3:v2:``).
 
-Версионированный prefix (Sprint 2.1): legacy-ключи ``rag:l3:*`` (без
-``v2``) считаются устаревшими и недостижимыми. Ключ включает
-``tenant`` + ``namespace`` сегменты с sentinel-значениями
-``_unscoped_`` / ``_global_`` для backward-compat вызовов без
-явного scope.
+Sprint 2.1 (L5 RAG/Memory tenant-scope): добавлен tenant-prefix к ключу
+для закрытия cross-tenant cache poisoning в L3 (L1/L2 уже tenant-aware).
+Consistent с :class:`TenantCacheBackend` ``tenant:{id}:` / `_unscoped_`
+sentinel. Версионированный namespace (``v2``) обеспечивает backward-compat:
+старые ключи ``rag:l3:*`` остаются в Redis, но больше не достижимы
+(новые ключи — под ``rag:l3:v2:*``); collision невозможен.
 """
 
 from __future__ import annotations
@@ -44,7 +45,11 @@ class L3RetrievalCache:
         self._prefix = prefix or self.PREFIX
 
     def _key(
-        self, query: str, *, tenant: str | None = None, namespace: str | None = None,
+        self,
+        query: str,
+        *,
+        tenant: str | None = None,
+        namespace: str | None = None,
     ) -> str:
         """Строит tenant-aware ключ: ``{prefix}tenant:{t}:{ns}:{digest}``.
 
@@ -71,13 +76,17 @@ class L3RetrievalCache:
         return self._client
 
     async def get(
-        self, query: str, *, tenant: str | None = None, namespace: str | None = None,
+        self,
+        query: str,
+        *,
+        tenant: str | None = None,
+        namespace: str | None = None,
     ) -> list[dict[str, Any]] | None:
         """Get cached retrieval results.
 
         Args:
             query: Query string.
-            tenant: Optional tenant scope (изоляция между tenant'ами).
+            tenant: Optional tenant scope (Sprint 2.1).
             namespace: Optional namespace scope.
 
         Returns:
@@ -117,7 +126,7 @@ class L3RetrievalCache:
         Args:
             query: Query string.
             chunks: List of chunk dictionaries.
-            tenant: Optional tenant scope (изоляция между tenant'ами).
+            tenant: Optional tenant scope (Sprint 2.1).
             namespace: Optional namespace scope.
 
         """
@@ -132,13 +141,17 @@ class L3RetrievalCache:
             logger.debug("L3 cache set failed: %s", exc)
 
     async def invalidate(
-        self, query: str, *, tenant: str | None = None, namespace: str | None = None,
+        self,
+        query: str,
+        *,
+        tenant: str | None = None,
+        namespace: str | None = None,
     ) -> None:
         """Invalidate cache entry.
 
         Args:
             query: Query string.
-            tenant: Optional tenant scope (invalidate только указанного).
+            tenant: Optional tenant scope (Sprint 2.1).
             namespace: Optional namespace scope.
 
         """
