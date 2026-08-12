@@ -214,7 +214,16 @@ def _parse_facts(text: str) -> list[ExtractedFact]:
         return []
     try:
         data = orjson.loads(text)
-    except Exception as _:
+    except (orjson.JSONDecodeError, ValueError, TypeError) as exc:
+        # D-AUDIT-14801 fix (cycle 148): narrow от bare
+        # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+        # + unexpected exceptions) до конкретных orjson/JSON exceptions.
+        # Soft-fail behavior сохранён (return [] → caller без facts).
+        logger.debug(
+            "_parse_facts: orjson decode failed (exc_type=%s exc_msg=%s) — "
+            "returning empty facts list",
+            type(exc).__name__, exc,
+        )
         return []
     facts: list[ExtractedFact] = []
     if not isinstance(data, list):
