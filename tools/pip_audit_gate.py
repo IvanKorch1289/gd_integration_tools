@@ -4,14 +4,18 @@
 S29 W1: pip-audit 2.10.0 always exits 0 even with vulnerabilities.
 This wrapper parses JSON output and enforces the gate properly.
 
-# cycle-3/D-AUDIT-02: 8 stale CVE удалены per phase-3/C3-02 (DEPS-P0-001).
-# PYSEC-2026-87 (lxml) удалён из IGNORED_VULNS ниже — installed lxml уже
-# содержит fix. Остальные 7 ID удалены из .security/pip-audit-allowlist.txt
-# (PYSEC-2026-161 starlette, CVE-2026-46645 sqladmin, CVE-2026-45739
-# strawberry-graphql, GHSA-mv93-w799-cj2w gitpython, PYSEC-2026-142/141
-# urllib3, CVE-2026-45409 idna — все fix closed в installed versions).
-# Hardcoded IGNORED_VULNS сводится к пустому frozenset — все игноры
-# теперь живут только в allowlist.txt (canonical source of truth).
+D-AUDIT-10301 fix (cycle 103, DEPENDENCIES-P0-001): canonical allowlist
+теперь LOADED from ``.security/pip-audit-allowlist.txt`` at runtime
+— eliminates 4-way drift между:
+  - .security/pip-audit-allowlist.txt (canonical source, 27 IDs)
+  - .github/workflows/security.yml (inline --ignore-vuln)
+  - .gitlab/ci/.gitlab-ci.yml (inline --ignore-vuln)
+  - tools/pip_audit_gate.py (hardcoded IGNORED_VULNS, ранее пустой)
+
+Раньше: каждый CI path использовал свой subset allowlist → drift.
+Теперь: canonical source of truth = allowlist.txt, gate loads from it
+на startup. CI workflows остаются source для inline-ignore при первом
+scan (output JSON), но gate делает final decision через allowlist.
 """
 
 from __future__ import annotations
@@ -20,30 +24,78 @@ import json
 import sys
 from pathlib import Path
 
-# cycle-3/D-AUDIT-02: PYSEC-2026-87 (lxml) удалён — installed lxml ≥ fix;
-# canonical allowlist живёт в .security/pip-audit-allowlist.txt.
+# Canonical allowlist path. Если файл отсутствует — gate использует
+# hardcoded IGNORED_VULNS (legacy fallback, 0 entries по умолчанию).
+_CANONICAL_ALLOWLIST = Path(".security/pip-audit-allowlist.txt")
+
+# Hardcoded fallback. Loaded from allowlist.txt at runtime (см. _load_allowlist).
+# Оставлен для backward compat — если файл отсутствует, gate работает
+# как раньше (без ignores).
 IGNORED_VULNS: frozenset[str] = frozenset(
     [
-        # NOTE: PYSEC-2026-161 (starlette) FIXED in s30/w1 — installed
-        # starlette 1.3.1 > 1.1.0 (CVE patched).
         # D-AUDIT-10201 fix (cycle 102, DEPENDENCIES-P0-004): removed
         # СТАРЫЙ комментарий "CVE-2025-69872 (diskcache) REMOVED in
         # s170 — diskcache dependency eliminated" — это НЕВЕРНО.
         # Фактчек 2026-08-11: diskcache 5.6.3 всё ещё установлен и
         # используется (src/backend/infrastructure/decorators/caching/
-        # storage/disk.py). Если CVE-2025-69872 ещё актуален, его
-        # нужно либо fix в allowlist, либо upgrade.
+        # storage/disk.py).
     ]
 )
 
 
+def _load_allowlist() -> frozenset[str]:
+    """Загрузить canonical allowlist из .security/pip-audit-allowlist.txt.
+
+    D-AUDIT-10301 fix (cycle 103): один source of truth вместо
+    hardcoded + inline-ignore drift.
+
+    Формат файла: одна CVE ID на строку (CVE-..., GHSA-..., PYSEC-...).
+    Пустые строки и строки начинающиеся с '#' игнорируются.
+    Поддержка inline-комментариев: 'CVE-...  # comment'.
+    """
+    if not _CANONICAL_ALLOWLIST.exists():
+        print(
+            f"WARN: canonical allowlist {_CANONICAL_ALLOWLIST} not found; "
+            f"using hardcoded IGNORED_VULNS ({len(IGNORED_VULNS)} entries)",
+            file=sys.stderr,
+        )
+        return IGNORED_VULNS
+
+    ids: set[str] = set()
+    try:
+        for line in _CANONICAL_ALLOWLIST.read_text().splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            # Поддержка inline-комментариев: 'CVE-...  # comment'
+            cve_id = stripped.split("#", 1)[0].strip()
+            if cve_id:
+                ids.add(cve_id)
+    except OSError as exc:
+        print(
+            f"WARN: failed to read {_CANONICAL_ALLOWLIST}: {exc}; "
+            f"using hardcoded IGNORED_VULNS",
+            file=sys.stderr,
+        )
+        return IGNORED_VULNS
+
+    return frozenset(ids)
+
+
 def main() -> None:
-    """Run pip-audit gate — exits non-zero on empty/invalid JSON или unignored vulns.
+    """Run pip-audit gate — exits non-zero на empty/invalid JSON или unignored vulns.
 
     D-AUDIT-11-1 fix (cycle 1): добавлена явная проверка non-empty ``dependencies``.
     Без этого gate возвращал PASS для ``{"dependencies": []}`` (валидный JSON
     без actual deps), что позволяло CVE от доработок проходить без блокировки.
+
+    D-AUDIT-10301 fix (cycle 103, DEPENDENCIES-P0-001): allowlist loaded
+    from canonical source (.security/pip-audit-allowlist.txt) at startup.
     """
+    # D-AUDIT-10301: load canonical allowlist вместо hardcoded IGNORED_VULNS.
+    ignored = _load_allowlist()
+    print(f"Allowlist loaded: {len(ignored)} entries from {_CANONICAL_ALLOWLIST}")
+
     json_path = Path("pip-audit.json")
     if not json_path.exists():
         print("ERROR: pip-audit.json not found", file=sys.stderr)
@@ -57,8 +109,6 @@ def main() -> None:
         sys.exit(1)
 
     # D-AUDIT-11-1 fix (cycle 1): enforce non-empty dependencies — fail-CLOSED.
-    # Без этой проверки {"dependencies": []} проходит как PASS, маскируя
-    # реальные CVE от новых зависимостей (silent fail-OPEN security gate).
     if not isinstance(report, dict) or not report.get("dependencies"):
         print(
             "ERROR: pip-audit.json has no 'dependencies' key or empty list. "
@@ -78,7 +128,7 @@ def main() -> None:
             continue
         for vuln in vulns:
             vuln_id = vuln.get("id", "")
-            if vuln_id in IGNORED_VULNS:
+            if vuln_id in ignored:
                 print(f"IGNORED: {dep['name']} {vuln_id}")
                 continue
             print(
