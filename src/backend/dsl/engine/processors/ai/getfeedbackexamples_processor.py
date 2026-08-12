@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
+
+logger = logging.getLogger(__name__)
 
 
 class GetFeedbackExamplesProcessor(BaseProcessor):
@@ -132,7 +135,20 @@ class GetFeedbackExamplesProcessor(BaseProcessor):
             results = await rag.search(
                 query=query, top_k=top_k * 2, namespace=self._NAMESPACE,
             )
-        except Exception as _:
+        except (ImportError, AttributeError, ConnectionError, TimeoutError, OSError, RuntimeError) as exc:
+            # D-AUDIT-13001 fix (cycle 130): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt
+            # + любые unexpected exceptions) до конкретных типов:
+            # - ImportError: rag_service module unavailable
+            # - AttributeError: API mismatch в get_rag_service
+            # - ConnectionError/TimeoutError/OSError: network failures
+            # Soft-fail сохранён (return [] → caller continues без
+            # feedback examples), но теперь structured WARN-лог.
+            logger.warning(
+                "GetFeedbackExamples: RAG search failed (exc_type=%s "
+                "exc_msg=%s) — returning empty examples list",
+                type(exc).__name__, exc,
+            )
             return []
 
         examples: list[dict[str, str]] = []
