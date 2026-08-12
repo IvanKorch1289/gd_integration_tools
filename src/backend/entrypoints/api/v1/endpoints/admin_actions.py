@@ -103,12 +103,16 @@ def _get_registry() -> Any:
     используют mock-данные (placeholder).
     """
     try:
-        from src.backend.core.actions.registry import (  # type: ignore[import-not-found]
-            ActionHandlerRegistry,  # lazy import
-        )
+        # D-AUDIT-11601 fix (cycle 116): canonical path
+        # src.backend.dsl.commands.action_registry (НЕ
+        # src.backend.core.actions.registry — модуль НЕ существует,
+        # type: ignore suppress'ил lint но runtime всегда падал
+        # в except → mock-fallback). Реальный класс:
+        # src/backend/dsl/commands/action_registry.py
+        from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
 
         return ActionHandlerRegistry.get_instance()
-    except Exception as _:
+    except (ImportError, AttributeError, RuntimeError):
         logger.warning("ActionHandlerRegistry недоступен — используется mock")
         return None
 
