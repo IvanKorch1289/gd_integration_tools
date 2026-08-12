@@ -211,7 +211,16 @@ class HttpxClient:
             from src.backend.core.config.features import feature_flags
 
             return bool(getattr(feature_flags, "httpx_unified_transport", False))
-        except Exception as _:
+        except ImportError as exc:
+            # D-AUDIT-15401 fix (cycle 154): narrow от bare
+            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt)
+            # до конкретного ImportError. Soft-fail behavior сохранён
+            # (return False → default HTTP transport).
+            logger.debug(
+                "http_httpx: feature_flags import failed "
+                "(exc_type=%s exc_msg=%s) — using default transport",
+                type(exc).__name__, exc,
+            )
             return False
 
     def _build_cert_tuple(self) -> tuple[str, str] | tuple[str, str, str] | None:
